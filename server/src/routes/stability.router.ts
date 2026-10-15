@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { requireEditorAccessForWrites } from '../../middleware/orgMembership';
 import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { getPool } from '../../db';
 import { getTenantScope } from '../../db/tenantStore';
@@ -26,9 +27,14 @@ import { parse } from 'csv-parse/sync';
 import { toBuffer as barcodePng } from 'bwip-js/node';
 import { format } from 'date-fns';
 import { insertAllDayEvent, calendarEnabled } from '../services/calendar';
+import {
+  callerOwnsPlatformIntegrations,
+  notYourIntegrationNote,
+} from '../../services/integrations/platform-integration-owner';
 import { authedActorName } from '../../utils/authedActor';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
+import { applySessionScope, clearSessionScope, switchPinTerms } from '../../db/sessionScope';
 
 /**
  * The VERIFIED acting principal, for GxP attribution columns
@@ -113,7 +119,6 @@ const upload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: ['pdf', 'csv', 'txt', 'json', 'xml', 'xls', 'xlsx', 'docx', 'zip', 'png', 'jpg', 'jpeg'],
     mimeTypes: [...ALLOWED_MIME_TYPES],
-    allowMimePrefixes: [],
   }),
 });
 
@@ -196,9 +201,11 @@ async function withTenantClient<T>(fn: (client: PoolClient) => Promise<T>): Prom
   const client = await rawPool.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`SELECT set_config('app.current_tenant_id', $1, true)`, [String(tenantId)]);
-    await client.query(`SELECT set_config('app.current_org_id', $1, true)`, [scope?.orgUuid ?? '']);
-    await client.query(`SELECT set_config('app.current_user_role', $1, true)`, [scope?.role ?? '']);
+    await client.query(
+      `SELECT set_config('app.current_tenant_id', $1, true), set_config('app.current_org_id', $2, true), ` +
+        `set_config('app.current_user_role', $3, true), ${switchPinTerms(true)}`,
+      [String(tenantId), scope?.orgUuid ?? '', scope?.role ?? ''],
+    );
     const out = await fn(client);
     await client.query('COMMIT');
     return out;
@@ -224,9 +231,7 @@ async function tenantConnect(): Promise<PoolClient> {
   }
   const client = await rawPool.connect();
   try {
-    await client.query(`SELECT set_config('app.current_tenant_id', $1, false)`, [String(tenantId)]);
-    await client.query(`SELECT set_config('app.current_org_id', $1, false)`, [scope?.orgUuid ?? '']);
-    await client.query(`SELECT set_config('app.current_user_role', $1, false)`, [scope?.role ?? '']);
+    await applySessionScope(client, { tenantId: String(tenantId), orgUuid: scope?.orgUuid ?? '', role: scope?.role ?? '' });
   } catch (err) {
     client.release();
     throw err;
@@ -236,12 +241,8 @@ async function tenantConnect(): Promise<PoolClient> {
   // another tenant with our vars still set.
   const origRelease = client.release.bind(client) as PoolClient['release'];
   (client as unknown as { release: (...a: unknown[]) => void }).release = (...args: unknown[]) => {
-    void client
-      .query(
-        `SELECT set_config('app.current_tenant_id', '', false),
-                set_config('app.current_org_id', '', false),
-                set_config('app.current_user_role', '', false)`,
-      )
+    // The tenant variables and the isolation switches (server/db/sessionScope.ts).
+    void clearSessionScope(client)
       .catch(() => {})
       .finally(() => (origRelease as (...a: unknown[]) => void)(...args));
   };
@@ -622,6 +623,10 @@ router.use((req, res, next) => {
   if (!auditActor(req)) return res.status(401).json({ error: 'Actor identity required' });
   return next();
 });
+// A viewer reads stability and writes none of it (the CMC write-role gate's
+// rule, server/api/cmc/cmc-write-role-gate.ts): this router is mounted at
+// /api/stability, outside /api/cmc, so that gate does not cover it.
+router.use(requireEditorAccessForWrites);
 
 // GET /api/stability/studies - List all studies
 router.get('/studies', async (req, res) => {
@@ -2927,6 +2932,16 @@ router.post('/studies/:id/timepoints/push-calendar', async (req, res) => {
   if (!calendarEnabled()) {
     // Nothing was pushed, so this is not a success.
     return res.status(503).json({ error: 'Calendar integration is not configured; use the ICS schedule instead' });
+  }
+  /* 2026-10-01 (D6, decision P-8): the calendar is the deployment's own
+     account, and it is written only for the organisation it belongs to
+     (services/integrations/platform-integration-owner.ts). Any organisation's
+     stability study pushed its sampling dates onto it. */
+  if (!callerOwnsPlatformIntegrations()) {
+    return res.status(503).json({
+      error: `${notYourIntegrationNote('team calendar')} Use the ICS schedule instead.`,
+      code: 'CALENDAR_NOT_YOURS',
+    });
   }
   try {
     const tps = await withTenantClient(async tx => {

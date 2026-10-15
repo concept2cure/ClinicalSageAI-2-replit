@@ -1,0 +1,9 @@
+# mutation: the capture's INSERT and its chained row written outside the transaction (capture(pool))
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row 295ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a re-capture names what it supersedes, and the retired capture names its successor 27ms
+ × tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a failed audit write rolls the capture back 20ms
+   → expected [ { '?column?': 1 } ] to have a length of +0 but got 1
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > who captured a file, and where its bytes are stored, cannot be changed 17ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > control: a system source writes no data-room row and names no capturer 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)

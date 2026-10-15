@@ -1,0 +1,65 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > turns a thrown 409 SECTION_CHANGED into the editor’s conflict, not a generic failure 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > names the act and says nothing was written, carrying the server’s sentence 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > reports a thrown 401 as an unauthenticated session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > does not swallow a failure that is not an API refusal 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 409 SECTION_CHANGED as the conflict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 401 as an unauthenticated session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a reason under eight characters with no request at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a cover-page save with no field to change 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the section save carries the concurrency token and the status > sends expectedUpdatedAt, status and the reason on the section PATCH 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > finalize sends the meaning, the reason and the credentials for the server to re-verify 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a disposition carries the decision with the signature 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a rejected password is reported as a rejected password, not an expired session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a refused finalize names the act and carries the server’s reason 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > refuses a reason under eight characters with no request at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > posts severity, a boolean safety impact, the rationale and the reason 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses no severity chosen with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses safety impact left open with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses no rationale with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > risk → POST /api/protocol-risks/documents/:id/risks with domain fields + reason 26ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > milestone → POST /api/protocol-milestones/documents/:id/milestones 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > amendment → POST /api/protocol-amendments/amendments with protocolDocumentId in the body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > deviation → POST /api/protocol-deviations/deviations with protocolDocumentId in the body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > rejects a governed reason under 8 chars before any network call 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > surfaces a server rejection honestly (nothing persisted) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > ProtocolRegisterForm — onDone only after the server confirms > renders the governed create form for a register kind 139ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > objective → POST /api/protocol-development/documents/:id/objectives 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > eligibility → POST /api/protocol-development/documents/:id/eligibility with the arm 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > refuses every one of them below the reason floor — nothing is sent 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports a concurrent change in the words the route used 704ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports any other refusal in the route’s own words too 190ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports a save the canvas refused with no server reason as exactly that 66ms
+ ✓ tests/routes/protocol-dev-client-5xx-message.test.ts > a 500 from the protocol routes is shown as a failure in a sentence, never the code > submitProtocolRegister (POST /api/protocol-risks/…) says the server sentence and that nothing was persisted 18ms
+ ✓ tests/routes/protocol-dev-client-5xx-message.test.ts > a 500 from the protocol routes is shown as a failure in a sentence, never the code > addScheduleVisit (POST /api/protocol-development/…) says the server sentence and that nothing was written 2ms
+ ✓ tests/routes/protocol-dev-client-5xx-message.test.ts > a 500 from the protocol routes is shown as a failure in a sentence, never the code > a coded 4xx refusal still reads as it did (code-only body shows the code; a sentence shows the sentence) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > are each at least 24 × 24px 9ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > fit side by side inside the visit column, so the grid does not widen 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > mounts the canonical rich section editor on the stored content 866ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row 129ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 16ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked 20ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so 14ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank 17ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature 27ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing 25ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned 10ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words 12ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > refuses to save until a governed reason is given, and writes nothing 383ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > saves through the section PATCH with the reason and the concurrency token 330ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > reports a concurrent change as a refusal, and does not report a save 206ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded: shows the signed state and opens nothing 271ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing 67ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing 51ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > an open review still offers the signature, to anyone who may record it 32ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > an open review assigned to someone else stays disabled, with that reason 29ms
+
+ Test Files  8 passed (8)
+      Tests  55 passed (55)
+   Start at  08:15:25
+   Duration  7.21s (transform 2.17s, setup 1.43s, import 4.45s, tests 3.79s, environment 6.41s)
+

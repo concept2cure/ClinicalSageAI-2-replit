@@ -1,0 +1,18 @@
+# IAM-25/INF-35, 2026-10-01T16:22:47Z: npx eslint <the 8 changed code files>
+# Result: 0 errors; 1 warning, the registry's max-lines (1277), which it had before this change (block below). 0 new warnings.
+
+/home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ui-v2.ts
+  549:1  warning  File has too many lines (1277). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+
+exit=0
+
+# --- before (captured at the start of this round, same command) ---
+
+/home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ui-v2.ts
+  549:1  warning  File has too many lines (1277). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+
+exit=0

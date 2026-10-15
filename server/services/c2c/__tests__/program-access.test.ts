@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
 import {
   canCreateProgram,
   canMutateProgram,
+  programInOrganization,
   resolveProgramQuotaMode,
   resolveProgramAuthzMode,
 } from '../program-access.js';
@@ -166,5 +168,128 @@ describe('resolveProgramAuthzMode', () => {
     expect(
       resolveProgramAuthzMode({ PROGRAM_AUTHZ_MODE: 'off' } as NodeJS.ProcessEnv)
     ).toBe('enforce');
+  });
+});
+
+describe('programInOrganization — the one program check (D3, 2026-10-01)', () => {
+  const PROGRAM = '33333333-3333-4333-8333-333333333333';
+  const answering = (rows: unknown[]) => {
+    const calls: Array<{ sql: string; params?: unknown[] }> = [];
+    return {
+      calls,
+      db: { query: async (sql: string, params?: unknown[]) => (calls.push({ sql, params }), { rows }) },
+    };
+  };
+
+  it('asks regulatory_programs for a live program of this organization', async () => {
+    const { db, calls } = answering([{ id: PROGRAM }]);
+    expect(await programInOrganization(db, PROGRAM, 7)).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].sql).toMatch(/FROM regulatory_programs WHERE id = \$1 AND organization_id = \$2 AND deleted_at IS NULL/);
+    expect(calls[0].params).toEqual([PROGRAM, 7]);
+  });
+
+  it('is false when the query finds nothing', async () => {
+    expect(await programInOrganization(answering([]).db, PROGRAM, 7)).toBe(false);
+  });
+
+  it('admits a deleted program only when the caller opts in by name', async () => {
+    const { db, calls } = answering([{ id: PROGRAM }]);
+    await programInOrganization(db, PROGRAM, 7, { includeDeleted: true });
+    expect(calls[0].sql).not.toMatch(/deleted_at/);
+  });
+
+  it.each([['not-a-uuid'], [''], [42], [null], [undefined]])('refuses %j without asking the database', async id => {
+    const { db, calls } = answering([{ id: PROGRAM }]);
+    expect(await programInOrganization(db, id, 7)).toBe(false);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('reads a digit-string organization as that organization, and nothing else as one', async () => {
+    const ok = answering([{ id: PROGRAM }]);
+    expect(await programInOrganization(ok.db, PROGRAM, '7')).toBe(true);
+    expect(ok.calls[0].params).toEqual([PROGRAM, 7]);
+    for (const org of ['7a', '', '0', 0, -1, Number.NaN, 1.5]) {
+      const { db, calls } = answering([{ id: PROGRAM }]);
+      expect(await programInOrganization(db, PROGRAM, org as number)).toBe(false);
+      expect(calls).toHaveLength(0);
+    }
+  });
+
+  it('throws VerificationUnavailableError, not false, when the query cannot run', async () => {
+    const broken = { query: async () => { throw Object.assign(new Error('relation does not exist'), { code: '42P01' }); } };
+    await expect(programInOrganization(broken, PROGRAM, 7)).rejects.toMatchObject({
+      name: 'VerificationUnavailableError',
+      detail: '42P01: relation does not exist',
+    });
+  });
+
+  it('resolves a connection given as a function inside the check, so "no pool" is "could not check"', async () => {
+    const noPool = () => { throw new Error('Database connection not available'); };
+    await expect(programInOrganization(noPool, PROGRAM, 7)).rejects.toMatchObject({ name: 'VerificationUnavailableError' });
+    const { db } = answering([{ id: PROGRAM }]);
+    expect(await programInOrganization(() => db, PROGRAM, 7)).toBe(true);
+  });
+});
+
+describe('program ownership with a caller-owned shared row reservation', () => {
+  const LIVE = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const DELETED = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const MISSING = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  let pg: PGlite;
+  const calls: Array<{sql: string; params?: unknown[]}> = [];
+  const q = { query: async (sql: string, params?: unknown[]) => {
+    calls.push({ sql, params });
+    return pg.query(sql, params);
+  } };
+  beforeAll(async () => {
+    pg = new PGlite();
+    await pg.exec(`CREATE TABLE regulatory_programs
+      (id uuid PRIMARY KEY, organization_id integer NOT NULL, deleted_at timestamptz);
+      INSERT INTO regulatory_programs VALUES ('${LIVE}',7,NULL),('${DELETED}',7,now());`);
+  });
+  afterAll(async () => { await pg.close(); });
+
+  it('holds the live matching row using the supplied transaction executor and bound identity', async () => {
+    calls.length = 0;
+    await pg.exec('BEGIN');
+    try {
+      expect(await programInOrganization(() => q, LIVE, '7', { forShare: true })).toBe(true);
+      expect(calls).toEqual([{ sql: 'SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR SHARE', params: [LIVE, 7] }]);
+    } finally { await pg.exec('ROLLBACK'); }
+  });
+
+  it('refuses a missing, foreign or deleted row in held live mode', async () => {
+    await pg.exec('BEGIN');
+    try {
+      expect(await programInOrganization(q, MISSING, 7, { forShare: true })).toBe(false);
+      expect(await programInOrganization(q, LIVE, 9, { forShare: true })).toBe(false);
+      expect(await programInOrganization(q, DELETED, 7, { forShare: true })).toBe(false);
+    } finally { await pg.exec('ROLLBACK'); }
+  });
+
+  it('holds a deleted row only with the explicit retained-record option', async () => {
+    calls.length = 0;
+    await pg.exec('BEGIN');
+    try {
+      expect(await programInOrganization(q, DELETED, 7, { forShare: true, includeDeleted: true })).toBe(true);
+      expect(calls[0]).toEqual({ sql: 'SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1 FOR SHARE', params: [DELETED, 7] });
+      expect(await programInOrganization(q, DELETED, 9, { forShare: true, includeDeleted: true })).toBe(false);
+    } finally { await pg.exec('ROLLBACK'); }
+  });
+
+  it('preserves ordinary behavior when holding is absent or explicitly false', async () => {
+    calls.length = 0;
+    expect(await programInOrganization(q, LIVE, 7)).toBe(true);
+    expect(await programInOrganization(q, LIVE, 7, { forShare: false })).toBe(true);
+    expect(calls.every(call => !call.sql.includes('FOR SHARE'))).toBe(true);
+    expect(calls[0]).toEqual(calls[1]);
+  });
+
+  it.each([false, true])('a held lookup failure remains unavailable rather than false (includeDeleted=%s)', async includeDeleted => {
+    const failing = { query: async () => { throw Object.assign(new Error('held query unavailable'), { code: '42501' }); } };
+    await expect(programInOrganization(failing, LIVE, 7, { forShare: true, includeDeleted })).rejects.toMatchObject({
+      name: 'VerificationUnavailableError', detail: '42501: held query unavailable',
+    });
   });
 });

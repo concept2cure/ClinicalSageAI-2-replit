@@ -41,7 +41,7 @@ function appWith(org: number | null) {
   const app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: 55 };
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: 55, role: 'member' };
     next();
   });
   app.use('/api/cmc-changes', cmcRouter);

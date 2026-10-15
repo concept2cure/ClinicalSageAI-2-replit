@@ -45,3 +45,48 @@ export function isBatchDraftFailure(result: unknown): result is BatchDraftFailur
     !('content' in (result as object))
   );
 }
+
+/** Tool receipts retain every requested slot. Generation is never persistence;
+ * only the governed authoring tool may return a saved document identity. */
+export function batchSectionRecord(raw: unknown): Record<string, unknown> {
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+}
+
+export function batchDraftReceipt(
+  rawSections: unknown[],
+  requests: Array<{ requestIndex: number; sectionType: string; sourceContext?: import('./draft-project-sources.js').DraftSourceContext }>,
+  results: BatchDraftResult[],
+) {
+  const byIndex = new Map(requests.map((r, i) => [r.requestIndex, results[i]]));
+  const sections = rawSections.map((raw, requestIndex) => {
+    const section = batchSectionRecord(raw);
+    const sectionType = typeof section.section_type === 'string' ? section.section_type.trim() : '';
+    const base = { requestIndex, sectionType, saved: false, authoringDocId: null };
+    if (!byIndex.has(requestIndex)) {
+      return { ...base, status: 'failed', error: 'INVALID_SECTION', message: 'This section requires section_type and instructions; repair it before retrying.' };
+    }
+    const result = byIndex.get(requestIndex);
+    if (isBatchDraftFailure(result)) {
+      return { ...base, status: 'failed', error: result.error, message: result.message };
+    }
+    if (!result || !result.content?.trim()) {
+      return { ...base, status: 'failed', error: 'DRAFT_FAILED', message: 'No usable draft was returned for this section. Retry this section only.' };
+    }
+    const context = requests.find(r => r.requestIndex === requestIndex)?.sourceContext;
+    return { ...base, status: 'drafted', content: result.content, model: result.model, latencyMs: result.latencyMs,
+      sourceStatus: context?.status ?? 'unassessed',
+      sources: context?.sources.map(({ text: _text, ...receipt }) => receipt) ?? [],
+      sourceQualification: 'unassessed' };
+  });
+  const retryIndices = sections.filter((s) => s.status === 'failed').map((s) => s.requestIndex);
+  const failed = retryIndices.length;
+  return {
+    status: failed === 0 ? 'drafted' : failed === sections.length ? 'failed' : 'partial',
+    count: sections.length - failed,
+    failed,
+    requested: sections.length,
+    savedCount: 0,
+    sections,
+    retryIndices,
+  };
+}

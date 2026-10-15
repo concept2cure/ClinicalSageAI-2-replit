@@ -1,0 +1,242 @@
+{
+  "branch": "concept2cure-v2",
+  "base": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "capturedAtUtc": "2026-10-14T07:50:01.366734+00:00",
+  "pins": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_insights-library-fixture.tsx",
+      "bytes": 3808,
+      "sha256": "0d6da9925dadb44f23abf8785b66b6230acec49e1bd8efcd6a3d4023bf061b54"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "bytes": 16017,
+      "sha256": "306f19661793263f83964e72c97f8ef81d9ab3bac36aabdc266f7143c2f20800"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "bytes": 21973,
+      "sha256": "df530808d3111b0bffbb50f02272475900bdeb90eceee11aabcecb53603e6ee2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "bytes": 8957,
+      "sha256": "ea11462dc8d3a222724fab591cd121b0c6e8523da3e27f7bbe354870a92abb45"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "bytes": 120736,
+      "sha256": "c092d1ed9f10799c0d513fa75d6b23997b9922bfab27fea58f695712e8c411a8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "bytes": 6843,
+      "sha256": "37ad4b808994d04f329fbcc347870da5ba99401a40edc786647003523b377d6f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+      "bytes": 24385,
+      "sha256": "e84b4dbca5d23b045a01a5fd1f29c13671509c25cee22829343f8b70494a235a"
+    },
+    {
+      "path": "scripts/ci/eslint-warning-baseline.json",
+      "bytes": 1189,
+      "sha256": "10ffa5f874a0c932373b0ed2295f840545fbcb0658fd6d4c6ff0487481f87650"
+    },
+    {
+      "path": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+      "bytes": 38514,
+      "sha256": "4d625b81dabc0e1e1584a61a4bd561fff76cb2689c76e079c3e7a985eb280352"
+    },
+    {
+      "path": "server/routes/__tests__/insights-canvas-catalog.test.ts",
+      "bytes": 12988,
+      "sha256": "c1469e4f5a5f044379002ecad919a1f9836e4de42d66db49f6d70c0293c3e702"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "bytes": 25221,
+      "sha256": "db6ce27cd1e14185b61d62f4cb13051308415ca002dd35fd73a98bc5caae4e4e"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+      "bytes": 20383,
+      "sha256": "62747edb188295cc9d3a67849e7330549a6b91b06053a112aec18540cad71c9b"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-report-pack-export.test.ts",
+      "bytes": 23851,
+      "sha256": "30094bdbd5ee422a5c1bb972ed959a4d678e523a0cb5e8c1dcdf7bc4563276a3"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-saved-read-access.test.ts",
+      "bytes": 17440,
+      "sha256": "1446a17a38671b149ddbf1fd2cf70eddb8e85cfc4d7724eed70d4516758816de"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "bytes": 402665,
+      "sha256": "18ed2f0b503a27cae5596665a5bfde7b0f8166041809d37c2849d7421bb148d1"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-route-access-requestdb.test.ts",
+      "bytes": 10434,
+      "sha256": "ced387b197d4fc17e9cee2578e4efc025f324a34fba2a3f9b19a54eaf3b4ab03"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts",
+      "bytes": 14192,
+      "sha256": "295d6dc4a40dde06c361a99f8c49edb0c0f32a57e2bb2c965285bf4645894fa2"
+    },
+    {
+      "path": "server/routes/c2c/project-route-access.ts",
+      "bytes": 6385,
+      "sha256": "c13ede00095922ea1f960f47ac1ad6c49f86b929650d38be87130e5c6589b4b3"
+    },
+    {
+      "path": "server/routes/insights-canvas-routes.ts",
+      "bytes": 27920,
+      "sha256": "cd35c490f961af8c2a5a2c4e19850eb8fe949b24227c602cc210ed0075e29a65"
+    },
+    {
+      "path": "server/routes/report-os.ts",
+      "bytes": 136120,
+      "sha256": "018e54f647d7e01851ffd48375c2de2d6158cc2125670395d6942f66a4b56ba4"
+    },
+    {
+      "path": "server/services/__tests__/usage-alignment.test.ts",
+      "bytes": 18657,
+      "sha256": "62f2e1f2b8f157aa11e3f497fe2d7a5be8612f98dd9ef0b889b14a8fe57e0480"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+      "bytes": 15011,
+      "sha256": "bc8544a570c80a7c4f5c4163e72570fd68ade06b62dfdee2a2d798c037fd1169"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "bytes": 41841,
+      "sha256": "4dedd462b75978a2715638304c75498db4c9b2e4a7c6f50ef4adc1e9b617eec0"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts",
+      "bytes": 14801,
+      "sha256": "ff0b2c3b9d0d707342225e19b4de758a728d98c53fcdb091dc2d02c2048374ce"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+      "bytes": 36741,
+      "sha256": "6aa98459acb5223208f692d9da708c38cd5038858f18f76e4f7ec2e99ce25fc9"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+      "bytes": 6963,
+      "sha256": "57ea90e4126828bcafecf411c2be3ac5145a4c4681e665a3acaacdafd4251395"
+    },
+    {
+      "path": "server/services/entitlements/resolver.ts",
+      "bytes": 6785,
+      "sha256": "7a25b8d54c23b17c5f13088a35517e03745c1160f2f6f80d7550bdacdf6a52c0"
+    },
+    {
+      "path": "server/services/governance/__tests__/permissions.test.ts",
+      "bytes": 5932,
+      "sha256": "0bf55da2f16a381006708d3e2c957f8b8fe3b8257bf762a33f7a770923d9ba02"
+    },
+    {
+      "path": "server/services/governance/permissions.ts",
+      "bytes": 10229,
+      "sha256": "c5c74c6b4abaddff2a69ed3ee3c70684b08cdc5a5b99ac538b37dc6381c42a1d"
+    },
+    {
+      "path": "server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts",
+      "bytes": 8748,
+      "sha256": "1d53630a1c1a7c54372c18c1ec75118eeb79a121e5717dc97242628453b1573e"
+    },
+    {
+      "path": "server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts",
+      "bytes": 3378,
+      "sha256": "fcd5d3f38c50282d9261e2737e237c3b3dada8eb1ea5aa336d245d77d7a62f84"
+    },
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 14438,
+      "sha256": "dd9a4cd8f6c7837355ca8c5acecf039963cdfcf95d2b6d947d4e759bbdba105d"
+    },
+    {
+      "path": "server/services/part11/resolve-signer-role.ts",
+      "bytes": 2577,
+      "sha256": "75bb7d16e54b6a1582024e3c61cf648dc2c31c6bd5a99709d0f86b41b4c1616b"
+    },
+    {
+      "path": "server/services/part11/signing-authority-gate.ts",
+      "bytes": 3045,
+      "sha256": "2de1904c7109dfc31f7a33a7c494ab089659168248cef40e57e5b0434df1da74"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts",
+      "bytes": 29149,
+      "sha256": "8befc7998e94d26c4e6a5e6a8aaff17de241d649e711bed130caddc5e19af818"
+    },
+    {
+      "path": "server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts",
+      "bytes": 4641,
+      "sha256": "565d5fec8fef7a2345d36f39fcfe25b851a3a0a8e86d915a7d793f530f36210b"
+    },
+    {
+      "path": "server/services/report-os/entitlement-map.ts",
+      "bytes": 5164,
+      "sha256": "a20777e0a7222051dcab47d69edb847f866f3543affe1d0b0386ac122286e05a"
+    },
+    {
+      "path": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
+      "bytes": 4203,
+      "sha256": "8a7258bda1612007731674e0b9d21a808e6531335bb258d3590f6f4cf92815b5"
+    },
+    {
+      "path": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
+      "bytes": 9430,
+      "sha256": "ed51a253b9efd73628b32f6fc97427295a7967b3fee17a6c7000e3668ed639af"
+    },
+    {
+      "path": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
+      "bytes": 13574,
+      "sha256": "ac39e29b819d816090ce92a12b602ec797320032036acd1c02163e380de19c6f"
+    },
+    {
+      "path": "server/services/report-os/pdf/bundle-pdf.ts",
+      "bytes": 10715,
+      "sha256": "494a9281da5f313f349495d22628806df310a9feb49171eabb52b8bf9515fc39"
+    },
+    {
+      "path": "server/services/report-os/pdf/run-pdf.ts",
+      "bytes": 12507,
+      "sha256": "7f0453a4c0eee7639a5911db01281f5a8dd7e1d919150b32d617acb7db9280fe"
+    },
+    {
+      "path": "server/services/report-os/pdf/writer.ts",
+      "bytes": 12620,
+      "sha256": "e0f5359fe4b15697e1e882007c42790de9213ad859afbb41a94780ef179be099"
+    },
+    {
+      "path": "tests/db/protocol-authority-after-parent.dbtest.ts",
+      "bytes": 21609,
+      "sha256": "7f0c041cceca89bbf16e4da64719536886471f095ec58c59dd3740dd973110bb"
+    },
+    {
+      "path": "tests/db/report-pack-export.dbtest.ts",
+      "bytes": 25855,
+      "sha256": "10fe0dc88d9cf7f741b475af381fb4d6fb9ff79fbac307a6fbd333b12e03df10"
+    },
+    {
+      "path": "tests/golden-journeys/cer-eu-mdr.journey.test.ts",
+      "bytes": 40639,
+      "sha256": "d1f6416838357ad0767db813be99f0ca0f69414823208a22aed011a6bbb311d1"
+    },
+    {
+      "path": "tests/golden-journeys/device-510k-estar.journey.test.ts",
+      "bytes": 77981,
+      "sha256": "633c5b881155917739efea09e41dcdb60fd0881fe18bbfd5139043dbeae533eb"
+    }
+  ]
+}

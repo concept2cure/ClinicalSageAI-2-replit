@@ -24,13 +24,16 @@
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 
 import { db, pool } from '../../db';
-import { cdiscPrmStudies, concept2cureArtifacts, projects, unifiedTasks } from '../../../shared/schema';
+import { cdiscPrmStudies, concept2cureArtifacts, unifiedTasks } from '../../../shared/schema';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
+import { resolveProgramProjectAnchor } from '../c2c/program-project-anchor';
 import { recordGovernedAction } from '../../routes/c2c/actions';
-import { computationEngine } from '../ana-biostats/computation-engine';
+import { computationEngine, ComputationRefusal } from '../ana-biostats/computation-engine';
 import { judgmentEngine } from '../ana-biostats/judgment-engine';
 import type { ComputationResult, JudgmentResult, StatisticalDocumentType, StatisticalInput } from '../ana-biostats/types';
 import { STATS_ENGINE, STATS_ENGINE_VERSION, hashInputs } from '../stats/computation-provenance';
+import { recordComputationRun, reproduceComputationRun, SAMPLE_SIZE_METHOD } from '../stats/computation-runs';
+import type { ReproductionResult } from '../stats/computation-runs';
 import {
   isUuid,
   loadStudyDesign,
@@ -79,6 +82,13 @@ export interface ProgramFilingContext {
   projectId: number | null;
 }
 
+/** The engine's refusal, as the wire carries it. */
+export interface DesignComputationRefusal {
+  code: 'missing_input' | 'not_supported' | 'invalid_input';
+  message: string;
+  field?: string;
+}
+
 export interface DesignAssessment {
   studyId: string;
   title: string;
@@ -86,6 +96,13 @@ export interface DesignAssessment {
   adapter: DesignAdapterResult;
   computation: ComputationResult | null;
   judgment: JudgmentResult | null;
+  /**
+   * Set when the engine declined to size this design, with its own sentence.
+   * `computation` and `judgment` are then null — a refusal never travels
+   * beside a figure. Null when the engine computed, or when the adapter's
+   * blocking gaps meant the engine was never called (`adapter.input` null).
+   */
+  refusal: DesignComputationRefusal | null;
   /** The design gates' report (ICH E9 / E9(R1) / E10 / E3), as /api/study-design returns it. */
   validation: DesignValidationReport;
   /** The reviewer's risk table and defensibility verdict, assembled from the gates and the engines. */
@@ -154,17 +171,16 @@ export async function programFilingContext(organizationId: number, programId: st
     .from(regulatoryPrograms)
     .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
-  const [project] = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(and(eq(projects.regulatoryProgramId, programId), eq(projects.organizationId, organizationId)))
-    .limit(1);
+  // The one anchor reader (PF-08), strict: a read that fails still throws, as it did.
+  const projectId = await resolveProgramProjectAnchor(db, {
+    programId, orgId: organizationId, context: 'biostatistics-bridge.programFilingContext', strict: true,
+  });
   const programType = program?.programType ?? null;
   return {
     programId,
     programType,
     applicationType: applicationTypeForProgramType(programType),
-    projectId: project?.id ?? null,
+    projectId,
   };
 }
 
@@ -213,11 +229,43 @@ export async function existingBlueprintKeys(organizationId: number, studyId: str
   return keys;
 }
 
-function computeFor(adapter: DesignAdapterResult): { computation: ComputationResult | null; judgment: JudgmentResult | null; inputsSha256: string | null } {
-  if (!adapter.input) return { computation: null, judgment: null, inputsSha256: null };
-  const computation = computationEngine.compute(adapter.input);
-  const judgment = judgmentEngine.judge(adapter.input, computation);
-  return { computation, judgment, inputsSha256: hashInputs(adapter.input) };
+/**
+ * What the engines say about one adapted design — or, when the engine declines
+ * to produce a figure, WHY, in the engine's own words.
+ *
+ * Until 2026-10-11 this called `computationEngine.compute` with no catch, so a
+ * `ComputationRefusal` propagated out of `assessDesign`, through
+ * `server/routes/biostat-bridge.ts`, into `serverError` and reached the browser
+ * as **500 INTERNAL_ERROR, "Something went wrong while assessing the design."**
+ * The engine had said exactly what it needed and the read path threw the
+ * sentence away. (The IVD case never showed it, because the adapter blocks
+ * before the engine runs — but any design whose adapter yields an input the
+ * engine then refuses read as a server fault.)
+ *
+ * A refusal is not a fault: it is the assessment's answer, carried on
+ * `refusal` so the surface can render the sentence beside the inputs it
+ * refused, with no figure.
+ */
+function computeFor(adapter: DesignAdapterResult): {
+  computation: ComputationResult | null;
+  judgment: JudgmentResult | null;
+  inputsSha256: string | null;
+  refusal: DesignComputationRefusal | null;
+} {
+  if (!adapter.input) return { computation: null, judgment: null, inputsSha256: null, refusal: null };
+  try {
+    const computation = computationEngine.compute(adapter.input);
+    const judgment = judgmentEngine.judge(adapter.input, computation);
+    return { computation, judgment, inputsSha256: hashInputs(adapter.input), refusal: null };
+  } catch (err) {
+    if (!(err instanceof ComputationRefusal)) throw err;
+    return {
+      computation: null,
+      judgment: null,
+      inputsSha256: hashInputs(adapter.input),
+      refusal: { code: err.code, message: err.message, field: err.field },
+    };
+  }
 }
 
 /**
@@ -225,13 +273,42 @@ function computeFor(adapter: DesignAdapterResult): { computation: ComputationRes
  * design lacks, where its deliverables file, and which tasks that implies.
  * Nothing is written.
  */
+/**
+ * Re-run a stored computation and say whether it still produces what was filed.
+ *
+ * `reproduceComputationRun` (stats/computation-runs.ts) re-executes the engine
+ * on a run's STORED inputs and compares the hash of the result with the hash
+ * stored at the time, plus the integrity of the stored inputs and outputs
+ * against their own hashes. It answers the two questions a sponsor gets asked
+ * under statistical defence — *"reproduce the planned sample size in your SAP
+ * from the inputs you filed"* and *"prove this N was not edited after it was
+ * computed"* — and it was reachable from nothing: no route, no tool, no client.
+ * `recordComputationRun` has been writing those rows since 2026-10-08
+ * (migrations/20261008f), so the records existed and could not be checked.
+ *
+ * Tenant-scoped: the run id is matched against the caller's organization in
+ * the query, so a run in another tenant reads as not found rather than as a
+ * failed reproduction.
+ */
+export async function reproduceSizingRun(
+  organizationId: number,
+  runId: number,
+): Promise<ReproductionResult> {
+  const client = await pool.connect();
+  try {
+    return await reproduceComputationRun(client, organizationId, runId);
+  } finally {
+    client.release();
+  }
+}
+
 export async function assessDesign(organizationId: number, studyId: string): Promise<DesignAssessment | null> {
   const loaded = await loadStudyDesign(studyId, organizationId);
   if (!loaded) return null;
   const { design, validation } = loaded;
 
   const adapter = studyDesignToStatisticalInput(design);
-  const { computation, judgment, inputsSha256 } = computeFor(adapter);
+  const { computation, judgment, inputsSha256, refusal } = computeFor(adapter);
   const review = buildStatisticalReview({ validation, judgment, computation, input: adapter.input, gaps: adapter.gaps });
   const filing = await programFilingContext(organizationId, design.programId);
   const [existingDeliverables, existingTaskKeys] = await Promise.all([
@@ -256,6 +333,7 @@ export async function assessDesign(organizationId: number, studyId: string): Pro
     adapter,
     computation,
     judgment,
+    refusal,
     validation,
     review,
     provenance: { engine: STATS_ENGINE, engineVersion: STATS_ENGINE_VERSION, inputsSha256, reproducible: true },
@@ -276,6 +354,8 @@ export interface ApplySampleSizeResult {
   power: number;
   /** The power the engine computed for this N (at or just above the target). */
   achievedPower: number;
+  /** The stored run that computed this N (stats_computation_runs, S5b). */
+  computationRunId: number;
   actionId: string;
   auditId: string;
   sha256Chain: string;
@@ -286,6 +366,30 @@ export class BridgeError extends Error {
   constructor(public readonly code: 'NOT_FOUND' | 'CANNOT_SIZE' | 'REASON_REQUIRED' | 'NO_TASKS' | 'NO_PROJECT', message: string, public readonly details?: unknown) {
     super(message);
   }
+}
+
+/** The sizing run, stored against the design's own row (its id and project, this organization's). */
+async function recordSizingRun(
+  client: import('pg').PoolClient,
+  args: { organizationId: number; userId: number; studyId: string },
+  input: StatisticalInput,
+  computation: ComputationResult,
+) {
+  const { rows } = await client.query(
+    'SELECT id, program_id FROM cdisc_prm_studies WHERE study_id = $1 AND tenant_id = $2 LIMIT 1',
+    [args.studyId, args.organizationId],
+  );
+  return recordComputationRun(client, {
+    organizationId: args.organizationId,
+    programId: rows[0]?.program_id ?? null,
+    studyRef: rows[0]?.id != null ? Number(rows[0].id) : null,
+    method: SAMPLE_SIZE_METHOD,
+    methodVersion: computation.method,
+    inputs: input,
+    outputs: computation,
+    purpose: 'study-design:planned-sample-size',
+    userId: args.userId,
+  });
 }
 
 /**
@@ -310,13 +414,18 @@ export async function applySampleSizeToDesign(args: {
     throw new BridgeError('CANNOT_SIZE', 'The design cannot be sized until its blocking gaps are resolved.', adapter.gaps.filter((g) => g.severity === 'blocking'));
   }
   const computation = computationEngine.compute(adapter.input);
-  const inputsSha256 = hashInputs(adapter.input);
-  const patch = computationToPlanPatch(adapter.input, computation, { engine: STATS_ENGINE, version: STATS_ENGINE_VERSION, inputsSha256 });
-  const next = applyPlanPatch(loaded.design, patch);
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    /* The run is stored first, in this transaction, so the figure the design
+       records names it (S5b): its inputs, outputs and their hashes, and a
+       recompute that can be checked (stats/computation-runs.ts). */
+    const run = await recordSizingRun(client, args, adapter.input, computation);
+    const inputsSha256 = run.inputsSha256;
+    const patch = computationToPlanPatch(adapter.input, computation,
+      { engine: STATS_ENGINE, version: STATS_ENGINE_VERSION, inputsSha256, runId: run.runId });
+    const next = applyPlanPatch(loaded.design, patch);
     const studyId = await persistStudyDesignTx(client, next, { tenantId: args.organizationId, userId: args.userId });
     const gov = await recordGovernedAction(client, {
       orgId: args.organizationId,
@@ -337,6 +446,8 @@ export async function applySampleSizeToDesign(args: {
         engine: STATS_ENGINE,
         engineVersion: STATS_ENGINE_VERSION,
         inputsSha256,
+        computationRunId: run.runId,
+        outputsSha256: run.outputsSha256,
         previousPlannedSampleSize: loaded.design.statisticalPlan?.plannedSampleSize ?? null,
       },
       domain: 'biostatistics',
@@ -349,6 +460,7 @@ export async function applySampleSizeToDesign(args: {
       plannedSampleSize: patch.plannedSampleSize as number,
       power: patch.power as number,
       achievedPower: computation.power,
+      computationRunId: run.runId,
       ...gov,
       design: next,
     };
@@ -437,7 +549,9 @@ export async function createTasksForDesign(args: {
           sourceEntityId: args.studyId,
           blueprintKey: b.key,
         },
-        reason: args.reason ?? `Raised from the biostatistics assessment of "${assessment.title}" (${b.trigger})`,
+        // The reason the request stated, or none (D5); what happened is the summary.
+        reason: args.reason,
+        summary: `Raised from the biostatistics assessment of "${assessment.title}" (${b.trigger})`,
       });
       created.push({ taskId: task.taskId, key: b.key, title: b.title, priority: b.priority });
     }

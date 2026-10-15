@@ -46,8 +46,10 @@ describe.each([
   {
     file: 'db/migrations/20260617_audit_events_hmac_seal.sql',
     what: 'audit_events.hmac_seal',
-    // SELECT … hmac_seal FROM audit_events (21 CFR Part 11 §11.70 seal verification)
-    reader: ['server/services/audit/chain.ts', /hmac_seal\s*\n?\s*FROM audit_events/],
+    // SELECT … hmac_seal FROM audit_events (21 CFR Part 11 §11.70 seal verification).
+    // The walk moved from chain.ts to seal-coverage.ts on 2026-10-15 (2f28ce51d);
+    // chain.ts re-exports it.
+    reader: ['server/services/audit/seal-coverage.ts', /hmac_seal\s*\n?\s*FROM audit_events/],
   },
   {
     file: 'db/migrations/20260905_gdpr_dsar_execution_evidence.sql',

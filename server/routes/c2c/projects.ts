@@ -28,13 +28,13 @@ import {
   type ScaffoldResult,
 } from '../../services/c2c/scaffold-project-documents.js';
 import {
-  ensureProgramProjectAnchor,
-  type AnchorResult,
+  ProgramAnchorUnavailableError,
+  requireProgramProjectAnchor,
 } from '../../services/c2c/program-project-anchor.js';
 import {
   canCreateProgram,
   canMutateProgram,
-  resolveProgramAuthzMode,
+  programInOrganization,
   resolveProgramQuotaMode,
 } from '../../services/c2c/program-access.js';
 import { checkProgramQuota } from '../../services/license-manager.js';
@@ -47,11 +47,8 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
-import {
-  productTypeForFilingType,
-  DEVICE_FAMILY_PRODUCT_TYPES,
-  workstreamSqlCase,
-} from '../../../shared/constants/domain/product-types.js';
+import { workstreamSqlCase } from '../../../shared/constants/domain/product-types.js';
+import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
    VALID_PRODUCT_TYPES / DRUG_APPLICATION_TYPES) and its canonical
    submission-spine plumbing live in ./project-intake.ts — pure domain helpers
@@ -59,10 +56,10 @@ import {
    line-count gate. */
 import {
   VALID_PROGRAM_TYPES,
-  VALID_PRODUCT_TYPES,
   DRUG_APPLICATION_TYPES,
   ensureSubmissionSpine,
   baseCodeFrom,
+  productTypeForIntake,
 } from './project-intake.js';
 import {
   devicePathFor,
@@ -77,13 +74,45 @@ import {
    create failure could not be looked up in the logs — the reference the UI
    invited the user to quote pointed at nothing. */
 import { serverError } from '../../lib/api-response.js';
+import { requireGovernedReason } from '../governed-reason.js';
+import { addProjectMarket, AddMarketRefusal } from '../../services/c2c/add-project-market.js';
+import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { uploadedBinaryAvailableSql } from '../../services/document-data-disposition/eligibility.js';
+import { lockDocumentDispositionProgram } from '../../services/document-data-disposition/program-lock.js';
+import { readRecordedUploadLineage } from '../../services/document-data-disposition/recorded-lineage.js';
+import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } from '../../services/ana/uploaded-file-access.js';
+import { supersededSql } from '../../services/vault/vault-version-family.js';
+import { documentAgencyFor, marketOfferGivenOutline, type FilingOffer, type MarketInput } from '../../services/regulatory/market-support.js';
+import { installProjectRouteAccess, requireProjectRouteAccess, requireProjectCreationAccess, withProjectWriteReservation, sendProjectAccessFailure } from './project-route-access';
+import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { assertAnaUploadAccess } from '../../services/ana/source-context-admission';
+import { AnaProjectScopeError } from '../../services/ana/project-scope-admission';
+import { readProjectAuthoringRecords } from '../../services/c2c/project-authoring-records';
+import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
+
+/** A filing the market verdict does not offer, found once the scaffold has
+ *  resolved its outline. Thrown inside the creation transaction so it rolls
+ *  back, and answered 422 FILING_NOT_OFFERED. */
+class FilingNotOfferedError extends Error {
+  readonly offer: FilingOffer;
+  constructor(offer: FilingOffer) {
+    super(offer.reason);
+    this.name = 'FilingNotOfferedError';
+    this.offer = offer;
+  }
+}
+
+function sendFilingNotOffered(res: Response, offer: FilingOffer) {
+  return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: offer.reason, marketSupport: offer });
+}
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
 // members, so the join dropped the name of anyone who had left
 // (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
+installProjectRouteAccess(router, 'projects');
 
 /**
  * A 42P01 (undefined_table) as an actionable 503 — actionable for the OPERATOR,
@@ -195,6 +224,52 @@ async function pendingStore(
 
 const logger = createScopedLogger('c2c-projects');
 
+/** What the person creating the program is told, per reason. No schema names. */
+const PROJECT_RECORD_REFUSAL: Record<'NO_CLIENT_WORKSPACE' | 'AMBIGUOUS_CLIENT_WORKSPACE', string> = {
+  NO_CLIENT_WORKSPACE:
+    'The project was not created: this organization has no workspace set up yet, so the project ' +
+    'could not be given its record. Nothing was saved. Share the reference below with your system ' +
+    'administrator or Concept2Cure support.',
+  AMBIGUOUS_CLIENT_WORKSPACE:
+    'The project was not created: this organization has several workspaces and none is set as its ' +
+    'own, so the project could not be given its record. Nothing was saved. Share the reference below ' +
+    'with your system administrator or Concept2Cure support.',
+};
+
+/**
+ * Intake refused the program because it could not be given its project record
+ * (P-19). The refusal rolled the transaction back, so nothing was written. The
+ * reason's detail names schema objects and goes to the log, keyed by the same
+ * reference the person is shown; the response carries a sentence.
+ */
+async function sendProjectRecordRefusal(
+  err: ProgramAnchorUnavailableError,
+  req: Request,
+  res: Response,
+  orgId: number,
+) {
+  if (err.reason === 'PENDING_ANCHOR_COLUMN') {
+    // An unapplied migration: the operator's problem, reported as every other
+    // unprovisioned store on this route is.
+    const pending = await pendingStore(err, 'creating the project', req);
+    logger.error('Program refused: the anchor column is not provisioned', {
+      correlationId: pending?.correlationId ?? null, orgId, reason: err.reason, detail: err.detail,
+    });
+    if (pending) return res.status(503).json(pending);
+    return serverError(res, logger, 'creating the project', err);
+  }
+  const correlationId = (req as unknown as { requestId?: string }).requestId || randomUUID();
+  logger.error('Program refused: its project record could not be written', {
+    correlationId, orgId, reason: err.reason, detail: err.detail,
+  });
+  return res.status(409).json({
+    error: err.code,
+    reason: err.reason,
+    message: PROJECT_RECORD_REFUSAL[err.reason],
+    correlationId,
+  });
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function resolveUserId(req: Request): number | null {
@@ -211,12 +286,6 @@ function resolveOrgId(req: Request): number | null {
   if (raw == null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
-}
-
-function resolveOrgRole(req: Request): string | null {
-  const r = req as any;
-  const raw = r.userRole ?? r.user?.role;
-  return typeof raw === 'string' && raw ? raw : null;
 }
 
 /** Parse a ?limit/?offset value: anything non-numeric falls back to `fallback`,
@@ -310,30 +379,6 @@ async function readinessByProject(
 }
 
 /**
- * The org-scoped existence check every :id route runs, but returning the one
- * column an authorization decision needs. `SELECT 1 … WHERE organization_id`
- * only ever proved tenancy; the lead is what tells us whether THIS caller may
- * change THIS program (see services/c2c/program-access.ts).
- *
- * Returns null when the program does not exist in the caller's org — callers
- * must keep answering 404 for that, exactly as before, so the response never
- * distinguishes "not yours" from "not there".
- */
-async function loadProgramForAuthz(
-  programId: string,
-  orgId: number,
-): Promise<{ leadUserId: number | null } | null> {
-  const { rows } = await pool.query(
-    `SELECT lead_user_id FROM regulatory_programs
-      WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-    [programId, orgId],
-  );
-  if (rows.length === 0) return null;
-  const leadUserId = (rows[0] as { lead_user_id: number | null }).lead_user_id;
-  return { leadUserId: leadUserId == null ? null : Number(leadUserId) };
-}
-
-/**
  * Write one hash-chained domain audit row for a program mutation.
  *
  * Takes the querier rather than reaching for the pool, so a caller inside a
@@ -389,11 +434,16 @@ async function writeProgramAudit(
  * Authorize a MUTATING program route. Returns true when the handler may
  * continue; when it returns false the 403 has already been sent.
  *
- * Warn mode logs the denial and continues, mirroring the rollout idiom in
- * middleware/authBoundary.ts: a tenant whose programs predate lead_user_id
- * being meaningful can soak the rule and see who it would have rejected before
- * it starts rejecting them.
+ * Uses the role freshly admitted by this router, never a stale token role.
  */
+/** Whether this caller may change this program, by the role this router admitted. The one decision
+ *  behind allowProgramMutation and the detail read's `canChange` (FILING_SPINE F22 review, 2026-10-15). */
+function mayChangeProgram(req: Request, res: Response, program: { leadUserId: number | null }): boolean {
+  const userId = resolveUserId(req);
+  const orgRole = res.locals.currentProgramAccess?.actor?.role;
+  return !!orgRole && canCreateProgram({ orgRole }) && canMutateProgram({ actor: { userId, orgRole }, program });
+}
+
 function allowProgramMutation(
   req: Request,
   res: Response,
@@ -401,20 +451,10 @@ function allowProgramMutation(
   route: string,
 ): boolean {
   const userId = resolveUserId(req);
-  const orgRole = resolveOrgRole(req);
-  if (canMutateProgram({ actor: { userId, orgRole }, program })) return true;
-
-  if (resolveProgramAuthzMode() === 'enforce') {
-    send403(res);
-    return false;
-  }
-
-  logger.warn(
-    'Program mutation allowed without authorization (mode=warn). ' +
-      'This request would be rejected in enforce mode.',
-    { route, programId: String(req.params.id), userId, orgRole, leadUserId: program.leadUserId },
-  );
-  return true;
+  if (mayChangeProgram(req, res, program)) return true;
+  logger.warn('Program mutation refused by current access', { route, programId: String(req.params.id), userId });
+  send403(res);
+  return false;
 }
 
 /** Present a program_type as the portfolio workstream bucket.
@@ -500,14 +540,19 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
  * while the card beside it showed the real share. `progress_percent` is left
  * out of the projection: a column nothing maintains is not offered to a reader.
  * Null when the aggregate could not be read: not assessed, never 0.
+ * `readinessAsOf` is when this read measured it, null with no figure.
  */
 async function readProgramDetail(id: string, orgId: number): Promise<Record<string, unknown> | null> {
   const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId]);
   if (!rows.length) return null;
   const measured = await readinessByProject([id], orgId);
+  const readiness = measured?.get(id) ?? null;
   return {
     ...serializeProgramDetail(rows[0] as Record<string, unknown>),
-    readiness: measured?.get(id) ?? null,
+    readiness,
+    // When it was measured: on this read, and a project page stays open for
+    // hours. No figure, no time (filing-spine design review, open item 9).
+    readinessAsOf: readiness === null ? null : new Date().toISOString(),
   };
 }
 
@@ -541,6 +586,7 @@ router.get('/', async (req: Request, res: Response) => {
   const includeArchived = String((req.query as any).includeArchived ?? '') === 'true';
 
   try {
+    const scope = await getCurrentAccessibleProgramScope(pool, { organizationId: orgId, userId: resolveUserId(req) ?? undefined });
     // Fetch one row beyond the page so hasMore is a fact, not a second COUNT(*)
     // over the same predicate.
     const { rows } = await pool.query(
@@ -554,14 +600,18 @@ router.get('/', async (req: Request, res: Response) => {
               COALESCE(u.name, u.email, '—')                        AS lead,
               NULL::text                                            AS blocker,
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
+              -- The date itself, so the screen can count days to filing. \`due\`
+              -- is display text, and the "Filing < 60 days" figure that matched
+              -- it against /days/ could never be anything but 0.
+              to_char(p.target_submission_date, 'YYYY-MM-DD')      AS due_date,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
          LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
-        WHERE p.organization_id = $1 AND p.deleted_at IS NULL
+        WHERE p.organization_id = $1 AND p.deleted_at IS NULL AND p.id=ANY($5::uuid[])
           AND ($4::boolean OR p.status <> 'archived')
         ORDER BY p.updated_at DESC
         LIMIT $2 OFFSET $3`,
-      [orgId, limit + 1, offset, includeArchived],
+      [orgId, limit + 1, offset, includeArchived, scope.programIds],
     );
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
@@ -585,11 +635,13 @@ router.get('/', async (req: Request, res: Response) => {
       p.readiness = real?.get(p.id) ?? null;
     }
 
+    await requireProgramScopeStillCurrent(pool, { organizationId: orgId, userId: resolveUserId(req) ?? undefined }, scope);
     return res.json({
       data: page,
-      meta: { count: page.length, limit, offset, hasMore },
+      meta: { count: page.length, limit, offset, hasMore, scope: scope.scope, reconciliationRequired: scope.reconciliationRequired },
     });
   } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({
         data: [],
@@ -609,17 +661,22 @@ router.get('/', async (req: Request, res: Response) => {
 // Drug program types (DRUG_APPLICATION_TYPES) additionally create/link the
 // canonical `submissions` row in the same transaction — the spine the
 // IndLifecycle checklist, NdaCockpit, SubmissionCenter and DispatchReadiness
-// surfaces read. Every program type additionally ensures a PM-spine `projects`
+// surfaces read. Every program type additionally writes its PM-spine `projects`
 // row carrying `regulatory_program_id` (Document Identity Contract slice C1),
-// which is what lets governed exports be registry-placed and the Vault be
-// filtered by program — WHERE the workspace is unambiguous; see
-// services/c2c/program-project-anchor.ts for why a skip is the honest outcome
-// otherwise, and meta.projectAnchorSkipped for how a skip is surfaced.
+// which the schedule, unified work, AnA's project context, the Vault and
+// governed exports read the program through. A program that cannot have that
+// row (no workspace can be chosen; see services/c2c/program-project-anchor.ts)
+// is refused, not created without it (P-19).
 //
 // Body (from the wizard): { name, productName?, programType, productType?,
 // primaryAgency?, submissionTypeId?, indication?, targetSubmissionDate?,
 // teamMembers?, code? }. Org-scoped; the creating user becomes the lead.
-// 400 on a missing/invalid required field; 503 PENDING_STORE on 42P01.
+// 400 on a missing/invalid required field; 503 PENDING_STORE on 42P01 or an
+// absent anchor column; 409 PROJECT_RECORD_UNAVAILABLE when no workspace can be
+// chosen for the program's record; 422 FILING_NOT_OFFERED, with the reason, for
+// a filing the product does not offer in that market (the one verdict,
+// services/regulatory/market-support.ts `offer`). Nothing is written on any
+// refusal: a refusal found after the scaffold rolls the transaction back.
 
 router.post('/', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -631,7 +688,9 @@ router.post('/', async (req: Request, res: Response) => {
   // become its lead_user_id — permanently authorized to mutate its evidence.
   // An unidentified caller could too: userId was read but never required.
   if (!orgId || !userId) return send403(res);
-  if (!canCreateProgram({ orgRole: resolveOrgRole(req) })) return send403(res);
+  try {
+    await requireProjectCreationAccess(pool, orgId, userId);
+  } catch (err) { return sendProjectAccessFailure(res, err); }
 
   const body = (req.body ?? {}) as Record<string, unknown>;
   const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
@@ -659,35 +718,33 @@ router.post('/', async (req: Request, res: Response) => {
   if (!VALID_PROGRAM_TYPES.has(programType)) {
     return send400(res, `programType must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
   }
-  // The product class. Derived from the FILING TYPE when the client omits it —
-  // a 510(k) is a device submission, an EU IVDR technical file is about an IVD,
-  // and neither can be about a drug. The old derivation ended in a bare
-  // `return 'drug'`, so `mdr` and `ivdr` — absent from every branch — persisted
-  // EU device and IVD technical files as drug programmes.
-  let productType = str(body.productType).toLowerCase();
-  if (!productType) productType = productTypeForFilingType(programType) ?? '';
-  if (!VALID_PRODUCT_TYPES.has(productType)) {
-    return send400(res, `productType must be one of: ${[...VALID_PRODUCT_TYPES].join(', ')}`);
-  }
-
-  // A device or IVD filing may not be recorded as a medicinal product, whatever
-  // the client sent. This is the defect the MDX UAT found — the wizard derived
-  // the product class from the UI segment, so a 510(k) started while the
-  // Pharma & Biotech tab was open was submitted as `productType: 'biologic'`
-  // and the server accepted it over its own correct derivation. The filing type
-  // is a regulatory fact; the client does not get to contradict it.
-  const impliedClass = productTypeForFilingType(programType);
-  if (
-    impliedClass &&
-    DEVICE_FAMILY_PRODUCT_TYPES.includes(impliedClass) &&
-    !DEVICE_FAMILY_PRODUCT_TYPES.includes(productType as never)
-  ) {
-    return send400(
-      res,
-      `A ${programType} filing is a device submission and cannot be recorded as ` +
-        `"${productType}". Use one of: ${DEVICE_FAMILY_PRODUCT_TYPES.join(', ')}.`,
-    );
-  }
+  // A filing the product does not offer in this market is refused, with the
+  // verdict's own reason (WORKFLOW_DECISION_2026-10-08 §4 Q2; FILING_SPINE F19,
+  // services/regulatory/market-support.ts `offer`). Health Canada, an MHRA
+  // "IND", a new Japanese application, an agency with no outline or none
+  // mapped: each used to create a program with an empty outline, or a spine for
+  // a sequence the agency would reject. The verdict is the one the market rows
+  // and the New project picker read (GET /api/submissions/market-support), so
+  // the picker never offers what this refuses. An agency-assigned number marks
+  // a continuing application.
+  //
+  // Two points, one verdict. Here, before anything is written: whatever no
+  // outline could lift. After the scaffold, which reads the pack for this class
+  // in the verdict's own order: a filing with no outline, rolled back (below).
+  const marketInput: MarketInput = {
+    applicationType: programType,
+    market: primaryAgency,
+    continuingLifecycle: applicationNumber != null,
+  };
+  const offer = marketOfferGivenOutline(marketInput, true);
+  if (offer.tier === 'not_offered') return sendFilingNotOffered(res, offer);
+  // The product class: the filing type's when it fixes one (a 510(k) is a
+  // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
+  // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
+  // not be recorded as medicinal. The rules are productTypeForIntake's.
+  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase());
+  if ('refusal' in classDecision) return send400(res, classDecision.refusal);
+  const { productType } = classDecision;
 
   // Licensed program count. The org's `max_projects` entitlement was sold and
   // billed but never checked on this path, so the wizard could create programs
@@ -811,10 +868,11 @@ router.post('/', async (req: Request, res: Response) => {
   // program types, which create no submission spine.
   const applicationType = DRUG_APPLICATION_TYPES[programType] ?? null;
   let submissionSpine: { id: number; created: boolean } | null = null;
-  let projectAnchor: AnchorResult = { projectId: null, created: false };
+  let projectAnchor: { projectId: number; created: boolean } | null = null;
   try {
     try {
       await client.query('BEGIN');
+      await requireProjectCreationAccess(client, orgId, userId, true);
       let created;
       try {
         created = await insert(client, base);
@@ -825,6 +883,7 @@ router.post('/', async (req: Request, res: Response) => {
         if ((e as { code?: string })?.code === '23505') {
           await client.query('ROLLBACK');
           await client.query('BEGIN');
+          await requireProjectCreationAccess(client, orgId, userId, true);
           createdCode = `${base}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
           created = await insert(client, createdCode);
         } else {
@@ -838,10 +897,24 @@ router.post('/', async (req: Request, res: Response) => {
       // (unmapped program type, no pack) is returned rather than thrown — the
       // project is still legitimately created — and surfaced in the 201 body so
       // it is never silent.
+      // The class is resolved from the agency the verdict judged (2026-10-08,
+      // F19b review): 'us' and 'EU' read as FDA and EMA, and an 'EU / Notified
+      // Body' device filing as the 'ema' key its packs carry. Without this the
+      // verdict offered those filings and the scaffold, which knows only agency
+      // names, found no class and the creation was refused with a false "no
+      // outline" reason. The program keeps the agency as it was sent.
       scaffold = await scaffoldProjectDocuments({
         client, orgId, userId, projectId: newId,
-        programType, primaryAgency, productName,
+        programType, primaryAgency: documentAgencyFor(marketInput) ?? primaryAgency, productName,
       });
+      // No outline for this class (no pack, or no document class for the
+      // program type): nothing to author, so the filing is not offered. Until
+      // 2026-10-08 the project was created anyway with an empty Vault and the
+      // skip reported in the 201. Rolled back, never half-created.
+      if (scaffold.skipped === 'NO_RULE_PACK' || scaffold.skipped === 'UNMAPPED_PROGRAM_TYPE') {
+        const noOutline = marketOfferGivenOutline(marketInput, false);
+        if (noOutline.tier === 'not_offered') throw new FilingNotOfferedError(noOutline);
+      }
 
       // Canonical submission spine, SAME transaction. Intake wrote
       // regulatory_programs + the document scaffold but never a `submissions`
@@ -861,20 +934,24 @@ router.post('/', async (req: Request, res: Response) => {
 
       // PM-spine anchor, SAME transaction (Document Identity Contract, slice
       // C1). `concept2cure_artifacts.project_id` is an integer FK to
-      // `projects.id`, so without a projects row carrying this program's uuid
-      // the governed artifact registry has nowhere to put a 510(k)/CER export
-      // and the Vault cannot be filtered by program at all. Mirrors
+      // `projects.id`, and the schedule, unified work, AnA's project context
+      // and the Vault all read the program through this row. Mirrors
       // ensureSubmissionSpine exactly: caller-owned transaction, idempotent,
       // and any error propagates so the whole creation rolls back — never a
       // program with a half-written anchor.
       //
-      // A SKIP is not an error. `projects.client_workspace_id` is NOT NULL and
-      // nothing in program data names a workspace, so the anchor is created
-      // only where the org has exactly one (the unambiguous case). Otherwise
-      // the program is created without it and the reason is reported — in the
-      // 201 body and in the sealed audit payload below.
-      projectAnchor = await ensureProgramProjectAnchor({
+      // Nor a program with NO anchor (P-19). `projects.client_workspace_id` is
+      // NOT NULL and nothing in program data names a workspace, so the row is
+      // written only where the workspace is unambiguous. Where it is not, this
+      // throws ProgramAnchorUnavailableError and the catch below refuses the
+      // creation: until 2026-10-08 a skip here still created the program, and
+      // it answered "no record" on every surface keyed by its project.
+      // The project record carries the registry context the readiness digest
+      // reads (projects.metadata). Intake wrote none, so readiness was never
+      // computed for any program (QA 2026-10-08, j8).
+      projectAnchor = await requireProgramProjectAnchor({
         client, orgId, userId, programId: newId, name, code: createdCode, priority,
+        metadata: registryContextForProgram({ submissionTypeId, programType, primaryAgency }),
       });
 
       // Domain audit row for the creation, in the SAME transaction as the
@@ -905,19 +982,10 @@ router.post('/', async (req: Request, res: Response) => {
               submission_application_type: applicationType,
             }
           : {}),
-        // The PM-spine anchor, present or absent, is part of the record. An
-        // absent one is recorded WITH its reason: a regulated tenant asking
-        // later why this program's exports were never registry-placed gets the
-        // answer from the audit row rather than from a support ticket.
-        ...(projectAnchor.projectId !== null
-          ? {
-              project_anchor_id: projectAnchor.projectId,
-              project_anchor_created: projectAnchor.created,
-            }
-          : {
-              project_anchor_id: null,
-              project_anchor_skipped: projectAnchor.skipped ?? null,
-            }),
+        // The PM-spine anchor is part of the record. It is always present: a
+        // program that could not have one was refused above (P-19).
+        project_anchor_id: projectAnchor.projectId,
+        project_anchor_created: projectAnchor.created,
       };
       await writeProgramAudit(client, {
         orgId, userId, programId: newId,
@@ -946,6 +1014,10 @@ router.post('/', async (req: Request, res: Response) => {
               COALESCE(u.name, u.email, '—')                        AS lead,
               NULL::text                                            AS blocker,
               COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
+              -- The date itself, so the screen can count days to filing. \`due\`
+              -- is display text, and the "Filing < 60 days" figure that matched
+              -- it against /days/ could never be anything but 0.
+              to_char(p.target_submission_date, 'YYYY-MM-DD')      AS due_date,
               'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
          FROM regulatory_programs p
          LEFT JOIN LATERAL public.actor_name(p.lead_user_id) u ON TRUE
@@ -965,24 +1037,26 @@ router.post('/', async (req: Request, res: Response) => {
         documentId: scaffold.documentId,
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
+        // What the product offers for this market (build and sequence, or
+        // author documents only), with its reason: the verdict creation used.
+        marketSupport: offer,
         // Surfaced so the spine linkage is never silent: present for drug
         // programs (submissionCreated=false means a spine already anchored to
         // this program was reused), absent for device/CER/MDR program types.
         ...(submissionSpine
           ? { submissionId: submissionSpine.id, submissionCreated: submissionSpine.created }
           : {}),
-        // Never silent, same idiom as the scaffold skip above: either the
-        // anchor id, or the reason there is none.
-        ...(projectAnchor.projectId !== null
-          ? { projectAnchorId: projectAnchor.projectId, projectAnchorCreated: projectAnchor.created }
-          : {
-              projectAnchorId: null,
-              projectAnchorSkipped: projectAnchor.skipped,
-              projectAnchorDetail: projectAnchor.detail,
-            }),
+        // The program's project record, written in the same transaction.
+        projectAnchorId: projectAnchor.projectId,
+        projectAnchorCreated: projectAnchor.created,
       },
     });
   } catch (err: unknown) {
+    if (err instanceof FilingNotOfferedError) return sendFilingNotOffered(res, err.offer);
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
+    if (err instanceof ProgramAnchorUnavailableError) {
+      return sendProjectRecordRefusal(err, req, res, orgId);
+    }
     if ((err as { code?: string })?.code === '42P01') {
       const pending = await pendingStore(err, 'creating the project', req);
       if (pending) return res.status(503).json(pending);
@@ -1006,7 +1080,10 @@ router.get('/:id', async (req: Request, res: Response) => {
     // PROGRAM_DETAIL_SQL / serializeProgramDetail above.
     const program = await readProgramDetail(id, orgId);
     if (!program) return send404(res);
-    return res.json(program);
+    // Whether this caller may change the project (add a market, close it out), by the same decision the
+    // writes take, so a screen can say so before a form rather than meet a 403 after it.
+    const lead = program.lead_user_id == null ? null : Number(program.lead_user_id);
+    return res.json({ ...program, canChange: mayChangeProgram(req, res, { leadUserId: lead }) });
   } catch (err: unknown) {
     return serverError(res, logger, 'loading the project', err, { programId: String(req.params.id) });
   }
@@ -1025,12 +1102,7 @@ router.get('/:id/workstreams', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    // Verify project access.
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1072,11 +1144,7 @@ router.get('/:id/drafts', async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(String((req.query as any).limit ?? '7'), 10) || 7, 50);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1184,11 +1252,7 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1239,24 +1303,22 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
   }
 
   try {
-    // Pinned evidence is the set the AI generation path reads, so changing it
-    // is a mutation of the project's regulatory input — not something every
-    // member of the org is entitled to do just by being in the org.
-    const program = await loadProgramForAuthz(String(req.params.id), orgId);
-    if (!program) return send404(res);
-    if (!allowProgramMutation(req, res, program, 'POST /:id/evidence')) return;
-
-    const { rows } = await pool.query(
+    const rows = await withProjectWriteReservation(req, res, async q => {
+      const result = await q.query(
       `INSERT INTO c2c_project_pinned_evidence
          (project_id, evidence_kind, evidence_ref, title, meta, pinned_by, reason)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (project_id, evidence_kind, evidence_ref) DO NOTHING
        RETURNING *`,
       [req.params.id, evidenceKind, evidenceRef, title, meta ?? null, userId, reason ?? null],
-    );
-
+      );
+      if (result.rows.length) await writeProgramAudit(q, { orgId, userId, programId: String(req.params.id),
+        action: 'c2c.project.evidence.pin', details: { evidenceKind, evidenceRef, reason: reason ?? null } });
+      return result.rows;
+    });
     return res.status(201).json(rows[0] ?? { message: 'already pinned' });
   } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     return serverError(res, logger, 'pinning the evidence', err, { programId: String(req.params.id) });
   }
 });
@@ -1269,20 +1331,21 @@ router.delete('/:id/evidence/:evId', async (req: Request, res: Response) => {
   if (!userId || !orgId) return send403(res);
 
   try {
-    const program = await loadProgramForAuthz(String(req.params.id), orgId);
-    if (!program) return send404(res);
-    if (!allowProgramMutation(req, res, program, 'DELETE /:id/evidence/:evId')) return;
-
-    const del = await pool.query(
+    const del = await withProjectWriteReservation(req, res, async q => {
+      const result = await q.query(
       `DELETE FROM c2c_project_pinned_evidence
        WHERE id = $1 AND project_id = $2
        RETURNING id`,
       [req.params.evId, req.params.id],
-    );
-
+      );
+      if (result.rows.length) await writeProgramAudit(q, { orgId, userId, programId: String(req.params.id),
+        action: 'c2c.project.evidence.unpin', details: { evidenceId: String(req.params.evId) } });
+      return result;
+    });
     if (del.rows.length === 0) return send404(res);
     return res.status(204).send();
   } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     return serverError(res, logger, 'unpinning the evidence', err, { programId: String(req.params.id) });
   }
 });
@@ -1298,11 +1361,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   if (!UUID_RE.test(String(req.params.id))) return send404(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     // Columns aliased from what audit_logs ACTUALLY has (table_name /
     // record_id / new_values — see migrations/0000_sweet_joseph.sql plus the
@@ -1359,16 +1418,23 @@ const PROJECT_RECORD_READS: ReadonlyArray<readonly [string, string]> = [
   ['submissions', `SELECT id, title, application_type, primary_region, status, lifecycle_stage
                      FROM submissions WHERE program_id = $1 AND organization_id = $2 AND deleted_at IS NULL
                     ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 200`],
+  // The Data room's live-source predicate (listClientDocuments with
+  // currentOnly): a withdrawn source is not in it, a source a re-upload retired
+  // (is_current = false) is not in it, and only client documents are. A row
+  // older than the is_current column still counts (IS NOT FALSE).
   ['sources', `SELECT id, title, source_type, checksum, created_at
                  FROM cre_evidence_sources WHERE client_program_id = $1 AND organization_id = $2
+                  AND deleted_at IS NULL AND source_type = 'client_document'
+                  AND is_current IS NOT FALSE
                 ORDER BY created_at DESC LIMIT 200`],
-  ['authoringDocuments', `SELECT id, title, status, created_at
-                            FROM authoring_documents WHERE client_program_id = $1 AND tenant_id = $2
-                           ORDER BY created_at DESC LIMIT 200`],
+  // A document is its current version (the Vault tree's rule, VR-09): a row a
+  // live later version supersedes is one of the document's versions, not a
+  // document of its own.
   ['vaultDocuments', `SELECT d.id, d.document_code, d.document_title, d.version, d.created_at
                         FROM vault.documents d
                         JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
-                       WHERE d.program_id = $1 AND d.deleted_at IS NULL
+                       WHERE d.program_id = $1 AND d.organization_id=$2 AND d.deleted_at IS NULL
+                         AND NOT ${supersededSql('d')}
                        ORDER BY d.created_at DESC LIMIT 200`],
   ['studyDesigns', `SELECT study_id AS id, protocol_title AS title, study_phase, protocol_status
                       FROM cdisc_prm_studies WHERE program_id = $1 AND tenant_id = $2
@@ -1395,13 +1461,10 @@ router.get('/:id/records', async (req: Request, res: Response) => {
   const id = String(req.params.id);
   if (!UUID_RE.test(id)) return send404(res);
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, id, orgId))) return send404(res);
     const records: Record<string, RecordSection> = {};
     for (const [section, sql] of PROJECT_RECORD_READS) records[section] = await readRecordSection(sql, id, orgId);
+    records.authoringDocuments = await readProjectAuthoringRecords(pool, { organizationId: orgId, userId: resolveUserId(req) ?? undefined, programId: id });
     return res.json({ projectId: id, records });
   } catch (err: unknown) {
     return serverError(res, logger, 'listing the project records', err, { programId: id });
@@ -1418,76 +1481,170 @@ router.get('/:id/records', async (req: Request, res: Response) => {
 // organization's; the same bytes already in this project are that source, not
 // a second one, and adopting again writes nothing.
 
+class AdoptionRefusal extends Error {
+  constructor(readonly status: 404 | 409, readonly code: string, message: string) { super(message); }
+}
+type AdoptionFileRow = {
+  id: string; original_name: string | null; mime_type: string | null;
+  storage_path: string | null; checksum_sha256: string | null;
+};
+
+function requireUnboundConversationUpload(alreadyBound: boolean): void {
+  if (alreadyBound) throw new AdoptionRefusal(409, 'FILE_ALREADY_PROJECT_BOUND', 'This file already has a recorded project association. Nothing was adopted.');
+}
+
+/** The pre-read takes no row lock. Recheck under FOR UPDATE only after the
+ * shared disposition advisory lock, so save/withdrawal cannot invert locks. */
+async function authorizeAdoptionProgram(client: PoolClient, req: Request, res: Response, scope: { orgId: number; programId: string }, lock: boolean): Promise<boolean> {
+  const { orgId, programId } = scope;
+  await requireProjectRouteAccess(req, res, { kind: 'projects', executor: client, forShare: lock });
+  const program = await client.query(
+    `SELECT lead_user_id FROM regulatory_programs
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL${lock ? ' FOR UPDATE' : ''}`,
+    [programId, orgId],
+  );
+  if (program.rows.length === 0) { send404(res); return false; }
+  const lead = (program.rows[0] as { lead_user_id: number | null }).lead_user_id;
+  return allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'POST /:id/adopt');
+}
+
+/** Caller already holds the program advisory and impact-table reservations.
+ * The loader is the sole byte/tenant integrity engine; the final row lock binds
+ * its verified bytes to the current eligible database identity until commit. */
+async function verifiedAdoptionUpload(client: PoolClient, fileUploadId: string, orgId: number, userId: number, programId: string): Promise<{ file: AdoptionFileRow; upload: UploadedFile; sha256: string; alreadyBound: boolean }> {
+  await assertAnaUploadAccess(client, { organizationId: orgId, userId, fileIds: [fileUploadId] });
+  const bindings = await client.query(`SELECT client_program_id::text AS program_id FROM cre_evidence_sources
+    WHERE organization_id=$1 AND provenance->>'fileUploadId'=$2
+    UNION ALL SELECT NULL::text FROM concept2cure_artifacts WHERE organization_id=$1 AND metadata->>'fileId'=$2`, [orgId, fileUploadId]);
+  if (bindings.rows.some(row => row.program_id !== programId)) throw new AdoptionRefusal(409, 'FILE_ALREADY_PROJECT_BOUND', 'This file already has a recorded project association. It cannot be adopted as an unbound conversation file.');
+  const sql = `SELECT f.id, f.original_name, f.mime_type, f.storage_path, f.checksum_sha256
+    FROM file_uploads f WHERE f.id = $1 AND f.organization_id = $2
+      AND ${uploadedBinaryAvailableSql('f')}`;
+  const initial = await client.query<AdoptionFileRow>(sql, [fileUploadId, orgId]);
+  if (!initial.rows[0]) throw new AdoptionRefusal(404, 'FILE_NOT_FOUND', 'File not found');
+  if (!initial.rows[0].checksum_sha256) throw new AdoptionRefusal(409, 'FILE_IDENTITY_UNKNOWN', 'This file has no recorded checksum, so its identity cannot be established. Upload it again with the project open.');
+  const upload = await loadUploadedFile(fileUploadId, orgId, { userId });
+  if (upload.integrity !== 'verified') throw new AdoptionRefusal(409, 'FILE_IDENTITY_UNKNOWN', 'This file has no recorded checksum, so its identity cannot be established. Upload it again with the project open.');
+  const sha256 = sha256Hex(upload.buffer);
+  const final = await client.query<AdoptionFileRow>(`${sql} FOR SHARE OF f`, [fileUploadId, orgId]);
+  await assertAnaUploadAccess(client, { organizationId: orgId, userId, fileIds: [fileUploadId] });
+  const file = final.rows[0];
+  if (!file || file.id !== upload.fileId || file.storage_path !== upload.storagePath || file.checksum_sha256 !== sha256) {
+    throw new AdoptionRefusal(409, 'FILE_CHANGED', 'The file identity or availability changed during adoption. Nothing was captured. Read or upload the file again.');
+  }
+  return { file, upload, sha256, alreadyBound: bindings.rows.length > 0 };
+}
+
+function adoptionRefusalResponse(res: Response, err: unknown): Response | null {
+  if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
+  if (err instanceof AnaProjectScopeError) return res.status(err.status).json({ error: err.code, message: err.message });
+  if (err instanceof AdoptionRefusal) return res.status(err.status).json({ error: err.message, code: err.code });
+  if (!(err instanceof UploadedFileError)) return null;
+  const failures = {
+    UPLOAD_NOT_FOUND: { status: 404, error: 'File not found' },
+    UPLOAD_BYTES_MISSING: { status: 410, error: 'The file bytes are no longer available. Upload it again with the project open.' },
+    UPLOAD_INTEGRITY_FAILED: { status: 409, error: 'The file failed its integrity check. Nothing was captured. Upload it again with the project open.' },
+  };
+  const failure = failures[err.code];
+  return res.status(failure.status).json({ error: failure.error, code: err.code });
+}
+
+/**
+ * Read, classify and version an adopted file, as an upload is
+ * (data-room-processing.ts). After the commit: the adopt is the record and
+ * stands without its derived text. Processing status is separate from capture.
+ */
+async function processAdopted(orgId: number, programId: string, sourceId: number, f: AdoptionFileRow, upload: UploadedFile): Promise<Omit<import('../../services/clinical-regulatory-evidence/data-room-processing.js').SourceProcessingResult, 'extracted'>> {
+  try {
+    const { processCapturedSource } = await import('../../services/clinical-regulatory-evidence/data-room-processing.js');
+    const done = await processCapturedSource(orgId, sourceId, {
+      bytes: upload.buffer, fileName: f.original_name ?? upload.fileName, mimeType: f.mime_type ?? upload.mimeType,
+      programId, expectedWorkspaceId: null, processedBy: 'adopt',
+    });
+    return { ok: done.ok, processed: done.processed, status: done.status, ...(done.reasonCode ? { reasonCode: done.reasonCode } : {}) };
+  } catch (err) {
+    logger.warn('Adopted capture processing unavailable', { sourceId, err: err instanceof Error ? err.message : String(err) });
+    return { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' };
+  }
+}
+
 router.post('/:id/adopt', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
   if (!orgId || !userId) return send403(res);
-  const programId = String(req.params.id);
+  const programId = String(req.params.id).toLowerCase();
   if (!UUID_RE.test(programId)) return send404(res);
   const fileUploadId = typeof req.body?.fileUploadId === 'string' ? req.body.fileUploadId.trim() : '';
   if (!fileUploadId) return send400(res, 'fileUploadId is required.');
+  const scope = { orgId, programId };
 
   const client = await pool.connect();
+  let clientOwned = true;
+  const releaseCaptureClient = () => {
+    if (clientOwned) { clientOwned = false; client.release(); }
+  };
   try {
     await client.query('BEGIN');
-    const program = await client.query(
-      `SELECT lead_user_id FROM regulatory_programs
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
-      [programId, orgId],
-    );
-    if (program.rows.length === 0) { await client.query('ROLLBACK'); return send404(res); }
-    const lead = (program.rows[0] as { lead_user_id: number | null }).lead_user_id;
-    if (!allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'POST /:id/adopt')) {
+    if (!await authorizeAdoptionProgram(client, req, res, scope, false)) {
       await client.query('ROLLBACK');
       return;
     }
-    const file = await client.query(
-      `SELECT id, original_name, mime_type, file_size, storage_path, checksum_sha256
-         FROM file_uploads WHERE id = $1 AND organization_id = $2`,
-      [fileUploadId, orgId],
-    );
-    const f = file.rows[0] as
-      | { id: string; original_name: string | null; mime_type: string | null; file_size: number | null; storage_path: string | null; checksum_sha256: string | null }
-      | undefined;
-    if (!f) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'File not found', code: 'FILE_NOT_FOUND' }); }
-    if (!f.checksum_sha256) {
+    await lockDocumentDispositionProgram(client, orgId, programId);
+    if (!await authorizeAdoptionProgram(client, req, res, scope, true)) {
       await client.query('ROLLBACK');
-      return res.status(409).json({
-        error: 'This file has no recorded checksum, so its identity cannot be established. Upload it again with the project open.',
-        code: 'FILE_IDENTITY_UNKNOWN',
-      });
+      return;
     }
-    const existing = await findSourceByChecksum(orgId, f.checksum_sha256, {
+    // Availability is organization-wide: reserve disposition impact tables in
+    // their established order before any eligible identity read, including a
+    // withdrawal associated with a different program. No dispositions-table
+    // lock is acquired here, which would invert withdrawal's impact lock order.
+    await client.query('LOCK TABLE public.cre_evidence_sources, public.file_uploads IN ROW EXCLUSIVE MODE');
+    const { file: f, upload, sha256, alreadyBound } = await verifiedAdoptionUpload(client, fileUploadId, orgId, userId, programId);
+    const lineage = await readRecordedUploadLineage(client, orgId, upload.fileId, sha256);
+    const existing = await findSourceByChecksum(orgId, sha256, {
       sourceType: 'client_document', clientProgramId: programId, clientWorkspaceId: null,
-    });
+    }, client);
     if (existing) {
       await client.query('ROLLBACK');
-      return res.json({ adopted: false, sourceId: existing.id, message: 'This file is already in the project’s Data Room.' });
+      releaseCaptureClient();
+      const processing = await processAdopted(orgId, programId, existing.id, f, upload);
+      return res.json({ adopted: false, sourceId: existing.id, processed: processing.processed, processing,
+        message: 'This file already has a capture in the project’s Data Room.' });
     }
+    requireUnboundConversationUpload(alreadyBound);
     const source = await createSource(orgId, {
       sourceType: 'client_document',
       visibilityClass: 'project_private',
       clientProgramId: programId,
       clientWorkspaceId: null,
       title: f.original_name,
-      storedArtifactRef: f.storage_path,
-      checksum: f.checksum_sha256,
+      storedArtifactRef: upload.storagePath,
+      checksum: sha256,
       ingestionStatus: 'ingested',
-      provenance: { origin: 'adopt', fileUploadId: f.id, storagePath: f.storage_path, adoptedByUserId: userId, adoptedFrom: 'conversation' },
-      metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: f.file_size },
+      extractionStatus: 'pending',
+      createdBy: userId,
+      provenance: { origin: 'adopt', fileUploadId: upload.fileId, storagePath: upload.storagePath, adoptedByUserId: userId, adoptedFrom: 'conversation', ...(lineage ?? {}) },
+      metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: upload.buffer.length,
+        ...(lineage ? { scientificQualification: 'unassessed', formulaResults: 'not_recalculated' } : {}) },
     }, client);
     await writeProgramAudit(client, {
       orgId, userId, programId,
       action: 'c2c.project.adopt',
-      details: { file_upload_id: f.id, source_id: source.id, checksum: f.checksum_sha256, from: 'conversation' },
+      details: { file_upload_id: upload.fileId, source_id: source.id, checksum: sha256, from: 'conversation' },
     });
     await client.query('COMMIT');
-    return res.status(201).json({ adopted: true, sourceId: source.id });
+    // Processing opens its own short transactions. Return this connection
+    // first so concurrent captures cannot occupy the whole pool while waiting.
+    releaseCaptureClient();
+    const processing = await processAdopted(orgId, programId, source.id, f, upload);
+    return res.status(201).json({ adopted: true, sourceId: source.id, processed: processing.processed, processing });
   } catch (err: unknown) {
-    await client.query('ROLLBACK').catch(() => {});
+    if (clientOwned) await client.query('ROLLBACK').catch(() => {});
+    const refusal = adoptionRefusalResponse(res, err);
+    if (refusal) return refusal;
     return serverError(res, logger, 'adopting the file into the project', err, { programId });
   } finally {
-    client.release();
+    releaseCaptureClient();
   }
 });
 
@@ -1509,19 +1666,17 @@ router.get('/:id/conversation-files', async (req: Request, res: Response) => {
   const programId = String(req.params.id);
   if (!UUID_RE.test(programId)) return send404(res);
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [programId, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, programId, orgId))) return send404(res);
     const { rows } = await pool.query(
       `SELECT f.id, f.original_name, f.mime_type, f.file_size, f.created_at
          FROM file_uploads f
         WHERE f.organization_id = $1 AND f.user_id = $2 AND f.checksum_sha256 IS NOT NULL
+          AND ${uploadedBinaryAvailableSql('f')}
           AND NOT EXISTS (
                 SELECT 1 FROM cre_evidence_sources s
                  WHERE s.organization_id = $1 AND s.checksum = f.checksum_sha256
                    AND (s.client_program_id IS NOT NULL OR s.client_workspace_id IS NOT NULL))
+          AND NOT EXISTS (SELECT 1 FROM concept2cure_artifacts a WHERE a.organization_id=$1 AND a.metadata->>'fileId'=f.id)
         ORDER BY f.created_at DESC
         LIMIT $3`,
       [orgId, userId, CONVERSATION_FILES_WINDOW + 1],
@@ -1683,36 +1838,116 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
 // project does not own must never appear as though it does.
 // ════════════════════════════════════════════════════════════════════════════
 
-/** How many of a project's sources /:id/sources returns, newest first. */
-const SOURCES_WINDOW = 200;
+// Search, filters and paging (Data Room catalog S2, 2026-10-08): `q` (full
+// text over title and the text read from the file), `status`, `kind`, `from`,
+// `to`, `current=true`, `limit` (1-200, default 200) and `offset`, with the
+// real `total`. With none of them the answer is what it was: the newest 200,
+// superseded included. An unreadable filter is a 400, never a wider list.
+
+type ShapeableSource = EvidenceSourceRow & { snippet?: string | null; charCount?: number | null; pageCount?: number | null; studyRef?: number | null };
+type EvidenceSourceRow = import('../../services/clinical-regulatory-evidence/types.js').EvidenceSource;
+type SourceUsageSummary = { sourceId: number; sections: number; documents: number; changedSections: number };
+
+/** One Data Room source as GET /:id/sources answers it. */
+function shapeSource(s: ShapeableSource, usage: Map<number, SourceUsageSummary>) {
+  const meta = (s.metadata ?? {}) as Record<string, any>;
+  const prov = (s.provenance ?? {}) as Record<string, unknown>;
+  return {
+    id: s.id,
+    title: s.title,
+    checksum: s.checksum,
+    isCurrent: s.isCurrent !== false,
+    dataEligible: s.dataEligible !== false,
+    originalFileAvailable: s.originalFileAvailable !== false,
+    disposition: s.disposition ?? null,
+    ingestionStatus: s.ingestionStatus,
+    extractionStatus: s.extractionStatus,
+    textAvailable: s.textAvailable ?? null,
+    processing: s.processing ?? sourceProcessingSummary(meta),
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+    // Reported from recorded citations only. Nothing here is inferred from
+    // titles or text similarity: a usage exists because someone recorded it.
+    usage: usage.get(s.id) ?? { sourceId: s.id, sections: 0, documents: 0, changedSections: 0 },
+    ...sourceFileFacts(meta, prov),
+    // Where a search matched, and how much was read (S2). Null outside a search.
+    snippet: s.snippet ?? null,
+    charCount: s.charCount ?? null,
+    pageCount: s.pageCount ?? null,
+    catalog: catalogSummary(s, meta),
+  };
+}
+
+/**
+ * What the catalog found a source IS (S3), each from a rule or the project's
+ * record; null fields were not found, never guessed. The dataset profile is
+ * summarized here: tables, their CDISC standard and domain, rows and columns.
+ */
+function catalogSummary(s: ShapeableSource, meta: Record<string, any>) {
+  const profile = meta.datasetProfile as { format?: string; tableCount?: number; tables?: Array<Record<string, any>> } | undefined;
+  return {
+    studyRef: s.studyRef ?? null,
+    trialRegistryIdentifier: s.trialRegistryIdentifier ?? null,
+    protocolNumber: meta.catalogEvidence?.protocolNumber?.value ?? null,
+    documentDate: s.documentDate ?? null,
+    dataCutDate: meta.dataCutDate ?? null,
+    product: s.product ?? null,
+    dataset: profile
+      ? {
+          format: profile.format ?? null,
+          tableCount: profile.tableCount ?? 0,
+          tables: (profile.tables ?? []).slice(0, 10).map(t => ({
+            name: t.name, standard: t.cdisc?.standard ?? null, domain: t.cdisc?.domain ?? null,
+            rowCount: t.rowCount ?? 0, columnCount: t.columnCount ?? 0,
+          })),
+        }
+      : null,
+  };
+}
+
+/** What kind of file a source is and how it arrived, without a second round trip. */
+function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown>) {
+  return {
+    mimeType: meta.mimeType ?? null,
+    fileSize: meta.fileSize ?? null,
+    artifactId: meta.artifactId ?? null,
+    origin: prov.origin ?? null,
+    fileUploadId: prov.fileUploadId ?? null,
+    extractionMethod: prov.extractionMethod ?? null,
+    evidenceKind: (meta.dossier?.evidenceKind as string | undefined) ?? null,
+  };
+}
 
 router.get('/:id/sources', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
-    // Verify project access before reading anything scoped to it.
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
     );
+    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError } = await import(
+      '../../services/clinical-regulatory-evidence/data-room-search.js'
+    );
 
     const programId = String(req.params.id);
-    /* One past the window, so a full one can say so: the reader's default cap
-       was 200 and nothing said when it was reached. Superseded sources stay in
-       the list — the authoring canvas and sources rail read this route too —
-       and each carries isCurrent, so a reader that counts can count once. */
-    const read = await listClientDocuments(orgId, { programId, limit: SOURCES_WINDOW + 1 });
-    const truncated = read.length > SOURCES_WINDOW;
-    const sources = truncated ? read.slice(0, SOURCES_WINDOW) : read;
+    let query;
+    try {
+      query = parseDataRoomQuery(programId, req.query as Record<string, unknown>);
+    } catch (e) {
+      if (e instanceof DataRoomQueryError) return send400(res, e.message);
+      throw e;
+    }
+    /* Superseded sources stay in the list unless current=true: the authoring
+       canvas and sources rail read this route too, and each carries isCurrent,
+       so a reader that counts can count once. */
+    const { total, currentTotal, sources } = await searchDataRoom(orgId, query);
+    const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'
-        ? await listClientDocuments(orgId, { includeUnscoped: true, limit: 50 })
+        ? await listClientDocuments(pool, orgId, { userId: resolveUserId(req) ?? undefined, includeUnscoped: true, limit: 50 })
             // `includeUnscoped` with no scope returns ONLY ownerless rows, but
             // filter defensively so a future change to that query can never
             // leak another project's documents into this list.
@@ -1727,39 +1962,25 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       '../../services/clinical-regulatory-evidence/source-usage.service.js'
     );
     const usage = await summarizeSourceUsage(
-      orgId,
+      pool, orgId,
       [...sources, ...unscoped].map((s) => s.id),
+      { userId: resolveUserId(req) ?? undefined },
     );
 
-    const shape = (s: (typeof sources)[number]) => ({
-      id: s.id,
-      title: s.title,
-      checksum: s.checksum,
-      isCurrent: s.isCurrent !== false,
-      ingestionStatus: s.ingestionStatus,
-      extractionStatus: s.extractionStatus,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-      // Reported from recorded citations only. Nothing here is inferred from
-      // titles or text similarity: a usage exists because someone recorded it.
-      usage: usage.get(s.id) ?? { sourceId: s.id, sections: 0, documents: 0, changedSections: 0 },
-      // Surfaced so the Data Room can show what kind of file this is and how it
-      // arrived, without a second round trip.
-      mimeType: (s.metadata as Record<string, unknown> | null)?.mimeType ?? null,
-      fileSize: (s.metadata as Record<string, unknown> | null)?.fileSize ?? null,
-      artifactId: (s.metadata as Record<string, unknown> | null)?.artifactId ?? null,
-      origin: (s.provenance as Record<string, unknown> | null)?.origin ?? null,
-      fileUploadId: (s.provenance as Record<string, unknown> | null)?.fileUploadId ?? null,
-      extractionMethod: (s.provenance as Record<string, unknown> | null)?.extractionMethod ?? null,
-    });
+    const shape = (s: ShapeableSource) => shapeSource(s, usage);
 
     return res.json({
       projectId: programId,
       sources: sources.map(shape),
       unscoped: unscoped.map(shape),
+      total,
+      currentTotal,
+      page: { limit: query.limit, offset: query.offset },
       window: { shown: sources.length, truncated },
+      usageScope: 'accessible-citations',
     });
   } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);
     return serverError(res, logger, 'loading the sources', err, { programId: String(req.params.id) });
   }
 });
@@ -1785,19 +2006,18 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    /* The canonical program check (PF-11): it refuses a deleted program, and a
+       non-UUID id, which the inline query sent to a uuid column. */
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { listChangedSourceUsages } = await import(
       '../../services/clinical-regulatory-evidence/source-usage.service.js'
     );
-    const changes = await listChangedSourceUsages(orgId, { programId: String(req.params.id) });
+    const changes = await listChangedSourceUsages(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
 
     return res.json({ projectId: String(req.params.id), changes, count: changes.length });
   } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);
     return serverError(res, logger, 'loading the source changes', err, { programId: String(req.params.id) });
   }
 });
@@ -1893,6 +2113,7 @@ async function transitionProgram(
     if (rows.length === 0) { await client.query('ROLLBACK'); send404(res); return; }
 
     const row = rows[0] as { lead_user_id: number | null; status: string; deleted_at: string | null };
+    await requireProjectRouteAccess(req, res, { kind: 'projects', executor: client, forShare: true, includeDeleted: true });
     if (!allowProgramMutation(req, res, { leadUserId: row.lead_user_id == null ? null : Number(row.lead_user_id) }, opts.action)) {
       await client.query('ROLLBACK');
       return;
@@ -1918,6 +2139,7 @@ async function transitionProgram(
     res.json({ ok: true, projectId: String(req.params.id) });
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof ProgramReadAccessError) { sendProjectAccessFailure(res, err); return; }
     // 42P01 is an unprovisioned store, not a failed close-out — keep the
     // documented PENDING_STORE contract the rest of this router uses rather
     // than reporting a missing table as an internal error.
@@ -1930,6 +2152,65 @@ async function transitionProgram(
     client.release();
   }
 }
+
+/** The market a POST /:id/markets body names, its strings trimmed; unknown client types dropped. */
+function readMarketBody(body: Record<string, unknown> | undefined) {
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  const clientType = str(body?.clientType);
+  return {
+    agency: str(body?.agency),
+    applicationType: str(body?.applicationType),
+    title: str(body?.title) || undefined,
+    clientType: ['pharma', 'biotech', 'mdx', 'ivd'].includes(clientType) ? clientType : undefined,
+  };
+}
+
+/* ── POST /:id/markets — add a market (FILING_SPINE.md F22) ──────────────────
+   The market's own Module 1 and 3.2.R, the market on target_agencies, its
+   anchored submission and the governed action, in one transaction, for a stated
+   reason, by someone who may change the project (add-project-market.ts). A
+   market the platform does not offer, a device program, a class with no outline
+   and a repeat are refused by name, and nothing is written. */
+router.post('/:id/markets', async (req: Request, res: Response) => {
+  const userId = resolveUserId(req);
+  const orgId = resolveOrgId(req);
+  if (!userId || !orgId) { send403(res); return; }
+  const market = readMarketBody(req.body);
+  if (!market.agency || !market.applicationType) { send400(res, 'Name the agency and the application type of the market to add.'); return; }
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) { res.status(400).json({ error: 'REASON_REQUIRED', message: reason.error }); return; }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT lead_user_id, status FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+      [req.params.id, orgId],
+    );
+    if (rows.length === 0) { await client.query('ROLLBACK'); send404(res); return; }
+    if ((rows[0] as { status?: string }).status === 'archived') {
+      await client.query('ROLLBACK');
+      res.status(409).json({ error: 'PROJECT_ARCHIVED', message: 'This project is archived, so no market can be added to it. Nothing was added.' });
+      return;
+    }
+    await requireProjectRouteAccess(req, res, { kind: 'projects', executor: client, forShare: true });
+    const lead = (rows[0] as { lead_user_id: number | null }).lead_user_id;
+    if (!allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'c2c.project.add_market')) {
+      await client.query('ROLLBACK');
+      return;
+    }
+    const added = await addProjectMarket({ client, orgId, userId, programId: String(req.params.id), ...market, reason: reason.reason });
+    await client.query('COMMIT');
+    res.status(201).json({ ok: true, ...added });
+  } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof AddMarketRefusal) { res.status(err.status).json({ error: err.code, message: err.message }); return; }
+    if (err instanceof ProgramReadAccessError) { sendProjectAccessFailure(res, err); return; }
+    serverError(res, logger, 'c2c.project.add_market', err, { programId: String(req.params.id) });
+  } finally {
+    client.release();
+  }
+});
 
 router.post('/:id/archive', async (req: Request, res: Response) => {
   await transitionProgram(req, res, {

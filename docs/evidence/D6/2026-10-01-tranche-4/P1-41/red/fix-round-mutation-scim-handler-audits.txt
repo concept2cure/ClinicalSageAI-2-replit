@@ -1,0 +1,95 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts
+{
+  "timestamp": "2026-10-01T06:51:05.986Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:51:05.989Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts
+{
+  "timestamp": "2026-10-01T06:51:05.989Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is 1ms
+ × server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap exactly while the handler leaves no row 6ms
+   → expected 'A member who was removed leaves no me…' not to match /role change (?:made|that arrives) thr…/
+ × server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap exactly while the handler leaves no row 2ms
+   → expected 'Acceptance of an invitation is not re…' not to match /role change (?:made|that arrives) thr…/
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap exactly while the handler leaves no row
+AssertionError: expected 'A member who was removed leaves no me…' not to match /role change (?:made|that arrives) thr…/
+
+- Expected:
+/role change (?:made|that arrives) through a SCIM group[^.]*is not recorded/
+
++ Received:
+"A member who was removed leaves no membership record, so removed members do not appear. A removal made by an administrator in the product or through SCIM provisioning is recorded and appears in the administrative changes report. Removals and role changes an administrator made before the product began recording them were not recorded. A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is not recorded, so a role the identity provider assigned has no record of when it was assigned or what it replaced. This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record. The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only."
+
+ ❯ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts:120:37
+    118|   it.each(['access-review', 'administrative-changes'])('%s states the …
+    119|     const text = findReport(id)!.notRecorded.join(' ');
+    120|     if (recordsIt) expect(text).not.toMatch(disclosure);
+       |                                     ^
+    121|     else expect(text).toMatch(disclosure);
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap exactly while the handler leaves no row
+AssertionError: expected 'Acceptance of an invitation is not re…' not to match /role change (?:made|that arrives) thr…/
+
+- Expected:
+/role change (?:made|that arrives) through a SCIM group[^.]*is not recorded/
+
++ Received:
+"Acceptance of an invitation is not recorded. A role change that arrives through a SCIM group is not recorded. Tenant configuration changes and resets are recorded by section and by the names of the fields changed. Values before and after are recorded only for the security settings (the second-factor requirement, password policy, session timeout and IP restrictions) and the audit-trail retention period; other values, which include webhook addresses, are not recorded. Member role changes and removals made by an administrator, and tenant configuration changes, made before the product began recording them were not recorded. Changes to the organisation settings are recorded by section name only, without the values before or after the change. Administration of SCIM tokens and of the IP allow-list is not recorded. SAML single sign-on is configured from the server environment, so its configuration has no change record. Suspensions by the platform operator and grants of platform roles are recorded in the platform's records, not the organisation's, so they do not appear here."
+
+ ❯ server/services/audit/compliance-reports/__tests__/zz-p141-mutant-tmp.test.ts:120:37
+    118|   it.each(['access-review', 'administrative-changes'])('%s states the …
+    119|     const text = findReport(id)!.notRecorded.join(' ');
+    120|     if (recordsIt) expect(text).not.toMatch(disclosure);
+       |                                     ^
+    121|     else expect(text).toMatch(disclosure);
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 16 passed (18)
+   Start at  06:51:03
+   Duration  2.55s (transform 1.34s, setup 107ms, import 1.95s, tests 26ms, environment 0ms)
+

@@ -9,6 +9,8 @@
 **What this is not:** the row's closing evidence, which is the contract against
 staging with the production image, owed with D1.
 
+> **2026-09-30:** the list moved to `scripts/db/security-definer-allowlist.json`, and the 48 unreviewed functions (including `ectd.seed_project_hierarchy`) are no longer executable by the runtime role: the grant recipe revokes them on every deploy. See `../2026-09-30-definer-revoke/`. The counts below are as of 2026-09-29.
+
 ## The class
 
 A `SECURITY DEFINER` function runs as its owner. Everything it reads or writes

@@ -1,0 +1,123 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 5ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 5ms
+   → expected [ …(4) ] to include 'A member\'s role on a past date is no…'
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 2ms
+   → expected 'A member who was removed leaves no me…' to match /A removal made by an administrator in…/
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded 3ms
+   → Role changes, with the role before and after, are listed in the administrative changes report.: expected 'Role changes, with the role before an…' to match /made by an administrator in the produ…/
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is 2ms
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap exactly while the handler leaves no row 1ms
+   → expected 'A member who was removed leaves no me…' to match /role change (?:made|that arrives) thr…/
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap exactly while the handler leaves no row 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded
+AssertionError: expected [ …(4) ] to include 'A member\'s role on a past date is no…'
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:78:27
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded
+AssertionError: expected 'A member who was removed leaves no me…' to match /A removal made by an administrator in…/
+
+- Expected:
+/A removal made by an administrator in the product or through SCIM provisioning is recorded/
+
++ Received:
+"A member who was removed leaves no membership record, so removed members do not appear. Removals and role changes made by an administrator in the product, and removals made through SCIM provisioning, are recorded and appear in the administrative changes report. Those an administrator made before the product began recording them were not recorded. A member's role on a past date is not reconstructed: the role shown is the current one. Role changes, with the role before and after, are listed in the administrative changes report. This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record. The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:89:18
+     87|     expect(text).not.toMatch(/role changes are not recorded/);
+     88|     expect(text).not.toMatch(/not written to the audit trail/);
+     89|     expect(text).toMatch(/A removal made by an administrator in the pr…
+       |                  ^
+     90|     expect(text).toMatch(/A role change made by an administrator in th…
+     91|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded
+AssertionError: Role changes, with the role before and after, are listed in the administrative changes report.: expected 'Role changes, with the role before an…' to match /made by an administrator in the produ…/
+
+- Expected:
+/made by an administrator in the product/
+
++ Received:
+"Role changes, with the role before and after, are listed in the administrative changes report."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:100:36
+     98|         if (!/\b(are|is) (listed|recorded)\b/.test(sentence) || /\bnot…
+     99|         if (!/role change/i.test(sentence)) continue;
+    100|         expect(sentence, sentence).toMatch(/made by an administrator i…
+       |                                    ^
+    101|       }
+    102|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap exactly while the handler leaves no row
+AssertionError: expected 'A member who was removed leaves no me…' to match /role change (?:made|that arrives) thr…/
+
+- Expected:
+/role change (?:made|that arrives) through a SCIM group[^.]*is not recorded/
+
++ Received:
+"A member who was removed leaves no membership record, so removed members do not appear. Removals and role changes made by an administrator in the product, and removals made through SCIM provisioning, are recorded and appear in the administrative changes report. Those an administrator made before the product began recording them were not recorded. A member's role on a past date is not reconstructed: the role shown is the current one. Role changes, with the role before and after, are listed in the administrative changes report. This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record. The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:121:23
+    119|     const text = findReport(id)!.notRecorded.join(' ');
+    120|     if (recordsIt) expect(text).not.toMatch(disclosure);
+    121|     else expect(text).toMatch(disclosure);
+       |                       ^
+    122|   });
+    123| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 14 passed (18)
+   Start at  06:50:14
+   Duration  3.74s (transform 2.25s, setup 126ms, import 2.89s, tests 38ms, environment 0ms)
+
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-01T06:50:18.450Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:50:18.460Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | Object.warn (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:171:13)
+{
+  "timestamp": "2026-10-01T06:50:18.461Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+

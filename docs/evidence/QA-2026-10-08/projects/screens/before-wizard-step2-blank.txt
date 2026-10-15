@@ -1,0 +1,58 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Projects
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+Projects
+/
+New project
+WORKSPACE
+New project
+
+Choose the filing type, describe the product, then review what will be recorded. The filing type decides the dossier outline this programme is built against.
+
+STEP 1
+Choose filing type
+2
+STEP 2
+Configure project
+3
+STEP 3
+Review & create
+Configure your Investigational New Drug Application project
+Project name
+Product name
+Therapeutic area
+Solid tumors
+Hematologic malignancies
+Oncology (general)
+CNS / neurodegeneration
+Neuromuscular
+Rheumatology / autoimmune
+Dermatology / inflammation
+Heart failure / cardiology
+Metabolic / endocrine
+Vaccines
+Anti-infectives
+Rare genetic disease
+COPD / asthma
+Other / not specified
+Target submission date
+Team members
+Team assignment isn't available yet
+You'll be able to add teammates once the project exists and org members can be listed.
+Cancel
+Back
+Continue

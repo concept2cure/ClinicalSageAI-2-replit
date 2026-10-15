@@ -1,0 +1,81 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-01T03:28:35.997Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused correspondence write is not sent: 503, no chain row, nothing recorded
+{
+  "timestamp": "2026-10-01T03:28:36.351Z",
+  "level": "error",
+  "message": "[report-os] report delivery not recorded; rolled back",
+  "context": {
+    "deliveryId": "24bc5e29-9056-4144-abf7-063eb36849ad",
+    "channel": "platform_send",
+    "error": "statement refused: secret-detail-xyz"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > answers 'sent' only after the correspondence row, the delivery record and report_os.delivery_sent commit 72ms
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused delivery record is not sent: 503, the letter rolls back with it, no chain row
+{
+  "timestamp": "2026-10-01T03:28:36.373Z",
+  "level": "error",
+  "message": "[report-os] report delivery not recorded; rolled back",
+  "context": {
+    "deliveryId": "1621e9a0-af53-47a8-9570-4e211fefb944",
+    "channel": "platform_send",
+    "error": "Failed query: insert into \"project_memory_entries\" (\"id\", \"project_profile_id\", \"project_id\", \"organization_id\", \"category\", \"subcategory\", \"title\", \"content\", \"source_document_name\", \"source_document_type\", \"confidence_score\", \"importance_level\", \"is_verified_by_user\", \"embedding\", \"status\", \"extracted_by\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, default, $8, $9, $10, default, default, default, $11, default, default)\nparams: 3,12,7,regulatory,report_delivery_record,delivery:1621e9a0-af53-47a8-9570-4e211fefb944,{\"deliveryRecord\":{\"deliveryId\":\"1621e9a0-af53-47a8-9570-4e211fefb944\",\"organizationId\":7,\"projectId\":12,\"runId\":41,\"submissionId\":\"00000000-0000-4000-8000-0000000000aa\",\"channel\":\"platform_send\",\"recipients\":[\"agency-contact\"],\"subject\":\"Transmittal of the readiness digest\",\"message\":\"Please find the readiness digest for the clarification requested.\",\"status\":\"sent\",\"requestedBy\":5,\"createdAt\":\"2026-10-01T03:28:36.360Z\",\"correspondenceId\":\"cc3997e1-dba2-41e6-bd53-b9bf0480c0ab\"}},report_os_state,0.92,high,report_os_delivery"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused chain row is not sent: 503, the letter and the record roll back with it
+{
+  "timestamp": "2026-10-01T03:28:36.422Z",
+  "level": "error",
+  "message": "[report-os] report delivery not recorded; rolled back",
+  "context": {
+    "deliveryId": "3b6bbe51-0d79-4133-8ddb-7f1aa4d56bd5",
+    "channel": "platform_send",
+    "error": "audit_logs refused the row: secret-detail-xyz"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused correspondence write is not sent: 503, no chain row, nothing recorded 30ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused delivery record is not sent: 503, the letter rolls back with it, no chain row 22ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused chain row is not sent: 503, the letter and the record roll back with it 61ms
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts > POST /correspondence/capture: a letter that was not stored is not a 201 (P1-44, the helper's other caller) > answers 503 with nothing captured when the letter is refused, and writes no learning memory
+{
+  "timestamp": "2026-10-01T03:28:36.571Z",
+  "level": "error",
+  "message": "[report-os] correspondence capture not recorded; rolled back",
+  "context": {
+    "projectId": 12,
+    "error": "statement refused: secret-detail-xyz"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > the learning memory is written inside the same transaction 39ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with a message at the schema limit is stored whole, so it can be listed again 18ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with no project is refused (422), not answered and stored nowhere 4ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a final report is sent inside the platform without an e-signature (the platform channel has no signature gate) 15ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > records 'exported' with report_os.delivery_exported on one transaction, and no letter 18ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a final run without an e-signature (409 E_SIGNATURE_REQUIRED) and records nothing 5ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a bundle holding a run that is final NOW, whatever the bundle recorded when it was made 4ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /correspondence/capture: a letter that was not stored is not a 201 (P1-44, the helper's other caller) > writes the letter, its issues and the learning memory on one transaction 19ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /correspondence/capture: a letter that was not stored is not a 201 (P1-44, the helper's other caller) > answers 503 with nothing captured when the letter is refused, and writes no learning memory 6ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  03:28:32
+   Duration  4.58s (transform 2.00s, setup 157ms, import 3.45s, tests 327ms, environment 0ms)
+

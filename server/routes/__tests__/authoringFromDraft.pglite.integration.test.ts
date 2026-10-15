@@ -12,10 +12,11 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
+import { createHash, randomUUID } from 'node:crypto';
 import type express from 'express';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import {
-  PREREQ, AUTHOR, TENANTLESS, PROGRAM, PROGRAM_B, OTHER_PROGRAM, FILING_B, ORG,
+  PREREQ, AUTHORING_ACCESS_DDL, VAULT_DDL, AUTHOR, TENANTLESS, PROGRAM, PROGRAM_B, OTHER_PROGRAM, FILING_B, ORG,
   mint, makeApp, asToken, M25_SECTIONS,
 } from './_authoring-canvas-fixture';
 import { recordDocumentAlias, DocumentAliasConflictError, type AliasExecutor } from '../../services/c2c/document-alias-map';
@@ -37,7 +38,7 @@ let tenantless: (r: request.Test) => request.Test;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -58,6 +59,9 @@ beforeAll(async () => {
       'migrations/20260921_audit_logs_chain_seq.sql',
       // The column under test.
       'migrations/20260921_authoring_document_provenance.sql',
+      'migrations/20260905_document_catalog.sql',
+      'migrations/20261008e_document_catalog_attribution.sql',
+      'migrations/20261006_document_data_dispositions.sql',
     ],
   });
   h.db = jdb.db;
@@ -80,6 +84,38 @@ const draftBody = (over: Record<string, unknown> = {}) => ({
   sections: M25_SECTIONS,
   provenance: { source: 'ana', conversationId: 'thread_abc', turnId: 'turn_7', note: 'drafted in the test' },
   ...over,
+});
+
+describe('direct from-draft private project boundary', () => {
+  it('refuses direct private-program source references before reading source text or creating evidence', async () => {
+    const source = randomUUID();
+    const text = 'Private source clinical data: 18.0% of participants experienced nausea.';
+    const hash = createHash('sha256').update(text).digest('hex');
+    await jdb.pool.query(`INSERT INTO vault.documents(id,program_id,organization_id,document_code,document_title,document_type,content_hash,extracted_text)
+      VALUES($1,$2,$3,'PRIVATE-DRAFT-SOURCE','Private clinical source','csr',$4,$5)`, [source, PROGRAM, ORG, hash, text]);
+    await jdb.pool.query(`INSERT INTO vault.document_catalog(document_id,content_hash,catalog_status,extraction_method,char_count)
+      VALUES($1,$2,'extracted','plain-text',$3)`, [source, hash, text.length]);
+    await jdb.pool.query("UPDATE projects SET owner_id=7,created_by_id=7 WHERE id=42");
+    await jdb.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
+    const counts = async () => (await jdb.pool.query(`SELECT
+      (SELECT count(*) FROM authoring_documents)::int AS docs,(SELECT count(*) FROM authoring_sections)::int AS sections,
+      (SELECT count(*) FROM doc_revisions)::int AS revisions,(SELECT count(*) FROM authoring_audit_trail)::int AS audits`)).rows[0];
+    const before = await counts();
+    const reads = vi.spyOn(jdb.pglite, 'query');
+    try {
+      const response = await author(request(app).post('/api/authoring/docs/from-draft')).send(draftBody({ sections: [{ code: '2.7.4', title: 'Safety',
+        content: '<p>The investigator will review this source.</p>', sourceReferences: [{ documentId: source, contentHash: hash, span: { start: 0, end: text.length, totalChars: text.length } }] }] }));
+      expect(response.status, JSON.stringify(response.body)).toBe(403);
+      expect(response.body.data).toBeUndefined();
+      expect(reads.mock.calls.some(([sql]) => typeof sql === 'string' && /FROM vault.documents d/.test(sql))).toBe(false);
+      expect(await counts()).toEqual(before);
+    } finally {
+      reads.mockRestore();
+      await jdb.pool.query('UPDATE projects SET owner_id=$1,created_by_id=$1 WHERE id=42', [Number(AUTHOR.id)]);
+      await jdb.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42");
+    }
+  });
+
 });
 
 describe('POST /docs/from-draft', () => {
@@ -176,6 +212,7 @@ describe('POST /docs/from-draft', () => {
     expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
   });
 
+
   it('refuses 400 on a provenance source it does not know', async () => {
     const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(
       draftBody({ provenance: { source: 'magic' } }),
@@ -245,8 +282,69 @@ describe('a program holds many documents (control tower, 2026-09-21)', () => {
     const titles = listed.body.documents.map((d: { title: string }) => d.title);
     expect(titles).toEqual(expect.arrayContaining(['IB — Investigator Brochure', 'Protocol synopsis', 'Module 2.5 draft #2']));
 
+    // Each listed document says which filing it is the editing copy of, so the
+    // outline offers "start this section" only in that copy (FILING_SPINE F4).
+    const bindingOf = (docs: Array<{ title: string; c2c_document_id: string | null }>, title: string) =>
+      docs.find(d => d.title === title)?.c2c_document_id;
+    expect(bindingOf(listed.body.documents, 'IB — Investigator Brochure')).toBe(FILING_B);
+    expect(bindingOf(listed.body.documents, 'Protocol synopsis')).toBeNull();
+    expect(bindingOf(listed.body.documents, 'Module 2.5 draft #2')).toBeNull();
+    const firstGot = await author(request(app).get(`/api/authoring/docs/${first.body.document.id}`));
+    expect(firstGot.body.document.c2c_document_id).toBe(FILING_B);
+    const thirdGot = await author(request(app).get(`/api/authoring/docs/${third.body.data.doc.id}`));
+    expect(thirdGot.body.document.c2c_document_id).toBeNull();
+
     // Another program's documents stay out of it.
     const other = await author(request(app).get('/api/authoring/docs').query({ programId: OTHER_PROGRAM }));
     expect(other.body.documents.map((d: { title: string }) => d.title)).not.toContain('Protocol synopsis');
+  });
+});
+
+describe('POST /docs/from-draft: a model\'s image is never a figure (item 18)', () => {
+  /* Work-orders item 18 (2026-10-05), from the figure rule's refute-review
+     (O2): a model's image is never an uploaded figure. The from-draft path kept
+     a model's inline PNG and a model-written governed reference to someone's
+     existing upload as figures, and stored "<p></p>" for a section that held
+     only a non-figure image. */
+  it('a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>', async () => {
+    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(
+      draftBody({
+        title: 'Model figures',
+        sections: [
+          { code: '2.5.1', title: 'Inline', content: '<p>Results.</p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" alt="Figure 1">' },
+          { code: '2.5.2', title: 'Reference', content: '<p>Results.</p><img src="/api/authoring/images/file_1727500000000_k3v9qa">' },
+          { code: '2.5.3', title: 'Pre', content: '<p>Results.</p><pre><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="></pre>' },
+        ],
+      }),
+    );
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const stored = (res.body.data.sections as Array<{ content: string }>).map(x => String(x.content));
+    for (const c of stored) {
+      expect(c).not.toMatch(/<img/i);
+      expect(c).toContain('Results.');
+    }
+  });
+
+  it("a machine draft's section that held only an image is stored empty (a gap), not as <p></p>", async () => {
+    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(
+      draftBody({
+        title: 'Image only',
+        sections: [{ code: '2.5.1', title: 'Only a figure', content: '<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="></p>' }],
+      }),
+    );
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.sections[0].content).toBe('');
+  });
+
+  it('an imported draft keeps its governed figure (a person placed it)', async () => {
+    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(
+      draftBody({
+        title: 'Imported',
+        provenance: { source: 'import', note: 'from the sponsor file' },
+        sections: [{ code: '2.5.1', title: 'With figure', content: '<p>Results.</p><img src="/api/authoring/images/file_1727500000000_k3v9qa">' }],
+      }),
+    );
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.sections[0].content).toMatch(/<img src="\/api\/authoring\/images\/file_1727500000000_k3v9qa"/);
   });
 });

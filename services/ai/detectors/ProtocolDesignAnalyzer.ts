@@ -190,7 +190,7 @@ export class ProtocolDesignAnalyzer {
         category: 'SAFETY',
         severity: 'CRITICAL',
         description: 'Protocol does not include stopping rules for safety',
-        fdaGuidance: 'ICH E6(R2) - GCP',
+        fdaGuidance: 'ICH E6(R3) - GCP',
         recommendation: 'Define clear stopping rules including criteria for pausing enrollment and terminating study'
       });
     }

@@ -91,6 +91,13 @@ const LINK_ICONS: Record<string, string> = {
    destructured here and never read, which is exactly the shape the union
    exists to forbid: a surface that hides the rail while still holding the
    handle that writes into it. */
+/**
+ * How many attention items the AnA context carries. The feed on screen is not
+ * capped; this bounds only what the narrator is handed, and the context declares
+ * the total beside it so a truncated list cannot read as the whole board.
+ */
+const ATTENTION_CONTEXT_CAP = 8;
+
 export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
@@ -187,10 +194,22 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       asOf: bd.asOf,
       summary: bd.summary,
       /* The punch-list the overview leads with, capped — enough for AnA to name
-         an item back to the user, not the whole board. */
-      attention: (bd.attention ?? [])
-        .slice(0, 8)
-        .map(a => ({ severity: a.sev, kind: a.kind, tab: a.nav, title: a.t, detail: a.d })),
+         an item back to the user, not the whole board.
+         THE CAP IS DECLARED, not silent (coverage review C-6). It used to publish
+         `slice(0, 8)` alone, so a severity-ranked regulatory attention list with
+         nine items reached the narrator as eight with nothing saying so, and the
+         model could then answer "these are the items needing attention" over a
+         truncated list. Under Rule 2 the engine supplies the figures; a figure
+         the narrator cannot tell is partial is worse than no figure. The
+         total-beside-the-cap shape is the one CommunicationCenter.tsx already
+         uses for its agency inbox.
+         The HUMAN feed is NOT capped — RbmSurfacesA.tsx renders `board.attention`
+         in full — so this is the narrator's view only, and the review's claim
+         that item 9 is hidden from a reader does not hold. */
+      attentionTotal: (bd.attention ?? []).length,
+      attentionShown: Math.min(ATTENTION_CONTEXT_CAP, (bd.attention ?? []).length),
+      attentionOrdering: 'severity-ranked (critical, high, medium); the items below are the most severe',
+      attention: (bd.attention ?? []).slice(0, ATTENTION_CONTEXT_CAP).map(a => ({ severity: a.sev, kind: a.kind, tab: a.nav, title: a.t, detail: a.d })),
       reportApproved: bd.report ? bd.report.approved : null,
       storeProvisioned: bd.pendingStore ? false : true,
     };

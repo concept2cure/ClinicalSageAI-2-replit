@@ -6,7 +6,7 @@ import { z } from 'zod';
 import postgres from 'postgres';
 import { authMiddleware } from '../auth';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
-import { requirePlatformAdmin, isPlatformAdmin } from '../middleware/requirePlatformAdmin';
+import { requirePlatformAdmin, resolvePlatformAdmin } from '../middleware/requirePlatformAdmin';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
@@ -27,15 +27,16 @@ const router = Router();
 // SECURITY: All tenant management endpoints require authentication
 router.use(authMiddleware);
 
-// Platform-operator (cross-tenant) authorization uses the STRICT isPlatformAdmin
-// from ../middleware/requirePlatformAdmin, which has NO org-`admin` bypass
-// (PLATFORM_ROLES = super_admin / platform_admin / support only). A file-local
-// helper previously counted org `admin` as a platform operator, so GET /api/tenants
-// leaked the full cross-tenant organization directory to any tenant admin — the
-// exact bypass the write routes (requirePlatformAdmin) already exclude. The read
-// path now shares that strict check. (The sync helper omits the platform_role_grants
-// DB fallback the middleware has, so a grant-only platform admin whose JWT lacks a
-// platform role falls to the member-scoped view — an under-privilege, safe direction.)
+// Platform-operator (cross-tenant) authorization uses resolvePlatformAdmin from
+// ../middleware/requirePlatformAdmin, the decision the write routes'
+// requirePlatformAdmin makes: the owner's own sign-in on the allowlist, or an
+// active platform_role_grants row, with NO org-`admin` bypass. A file-local helper
+// previously counted org `admin` as a platform operator, so GET /api/tenants
+// leaked the full cross-tenant organization directory to any tenant admin. The
+// read path then used the synchronous isPlatformAdmin, which skipped the grant
+// lookup (a designated staff member got the member-scoped view) and, until
+// 2026-10-05, read the request role, which is the tenant membership role (D6,
+// docs/evidence/D6/2026-10-05-cross-tenant-staff/).
 
 /**
  * Clean a database URL by removing common wrapper artifacts
@@ -124,7 +125,7 @@ router.get('/', async (req, res) => {
     // slugs, domains, tiers) to any authenticated user. Platform admins still
     // get the full list for tenant management.
     const userId = Number((req as any).user?.id ?? (req as any).user?.userId ?? 0);
-    const result = isPlatformAdmin(req)
+    const result = (await resolvePlatformAdmin(req))
       ? await sql`
           SELECT id, name, slug, domain, logo, tier, max_users as "maxUsers",
                  max_projects as "maxProjects", max_storage as "maxStorage",
@@ -206,36 +207,12 @@ router.post('/', requirePlatformAdmin, async (req, res) => {
       await provisionLaunchModules(Number(newTenant.id), { actorEmail: null });
     }
 
-    // Fire-and-forget: seed every regulatory precedent pattern library for
-    // the new org. The seeders are idempotent and the orchestrator never
-    // rejects, so failure here cannot block tenant creation. Real FDA / ICH
-    // citations land per org so the CRL/RTF/AC engines have data to score
-    // against from day one.
-    if (newTenant?.id != null) {
-      const orgIdStr = String(newTenant.id);
-      void (async () => {
-        try {
-          const { seedAllRegulatoryPatterns } = await import(
-            '../services/regulatory-precedent-intelligence'
-          );
-          const r = await seedAllRegulatoryPatterns(orgIdStr);
-          log.debug('Regulatory patterns seeded for new tenant', {
-            tenantId: newTenant.id,
-            inserted: {
-              crl: r.crl.inserted,
-              rtfNonclinical: r.rtfNonclinical.inserted,
-              rtfCmc: r.rtfCmc.inserted,
-              advisoryCommittee: r.advisoryCommittee.inserted,
-            },
-          });
-        } catch (seedErr) {
-          log.error('Regulatory pattern seed failed for new tenant', {
-            tenantId: newTenant.id,
-            error: seedErr instanceof Error ? seedErr.message : String(seedErr),
-          });
-        }
-      })();
-    }
+    // No regulatory precedent library is seeded into a new organisation
+    // (2026-10-15). Until then every tenant made here got ~2,000 lines of
+    // patterns carrying uncited rates — "frequencyRate 0.18", "55% resolution
+    // success", calibration accuracy its own file called placeholders — and
+    // the pre-submission gate scored CRL/RTF risk from them. The library is the
+    // organisation's own record (ADR 0013) and starts empty.
 
     res.status(201).json(newTenant);
   } catch (error) {
@@ -315,7 +292,7 @@ router.get('/:tenantId/users', async (req, res) => {
     // SECURITY: only a platform admin, or a member of the tenant, may list its
     // users (emails, names, roles). Otherwise any authenticated user could read
     // any tenant's directory by changing the path id.
-    if (!isPlatformAdmin(req) && authedOrgId(req) !== tenantId) {
+    if (authedOrgId(req) !== tenantId && !(await resolvePlatformAdmin(req))) {
       return res.status(403).json({ error: 'Tenant context mismatch' });
     }
 
@@ -354,10 +331,15 @@ router.get('/:tenantId/users', async (req, res) => {
  *         unmet (no export evidence, retention window still open). The caller
  *         can retry the same request once it satisfies the precondition.
  *   409 — the organization is in a state that conflicts with the request
- *         (already purged, not scheduled for deletion). Retrying will not help.
+ *         (already purged, not scheduled for deletion, or retained document
+ *         lineage blocks erasure). Review the governed records before retrying.
+ *   403 — the purge cannot be attributed to a person (no user id on the
+ *         request). The purge's audit row names who purged; a purge by nobody
+ *         is refused.
  */
 function offboardingHttpStatus(code: string): number {
   if (code === 'TENANT_NOT_FOUND') return 404;
+  if (code === 'PURGE_ACTOR_REQUIRED') return 403;
   if (code === 'EXPORT_EVIDENCE_REQUIRED' || code === 'RETENTION_WINDOW_OPEN') return 422;
   return 409;
 }
@@ -474,7 +456,10 @@ router.post('/:id/cancel-deletion', requirePlatformAdmin, async (req, res) => {
  * data-return obligation was discharged.
  *
  * The organization ROW survives in status `purged`, carrying the offboarding
- * evidence. Deleting it would delete the audit trail of the deletion.
+ * evidence. Deleting it would delete the audit trail of the deletion. The purge
+ * also writes one chained audit row in its own transaction — who, from where,
+ * on which export, what it deleted — and does not happen if that row cannot be
+ * written (services/tenant/tenant-purge-audit.ts).
  */
 router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
   try {
@@ -502,6 +487,7 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       organizationId: tenantId,
       purgedByUserId: Number(req.user?.userId ?? req.user?.id ?? 0),
       preconditions: { finalExportDigest, overrideRetentionWindowReason: overrideReason },
+      auditContext: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
     });
 
     // Every membership in this org just vanished — revoke cached
@@ -514,8 +500,14 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       organizationId: record.organizationId,
       status: record.status,
       purgedAt: record.purgedAt,
+      // Rows deleted per table: the counts the purge's audit row records.
+      deletedRows: record.deletedRows,
       // What happened to the vault's stored bytes, stated rather than implied.
       storageErasure: record.storageErasure,
+      // The AnA turn records erased; each turn's chained audit row is kept.
+      turnRecordErasure: record.turnRecordErasure,
+      // An artifact's signatures and lock snapshots erased; each signing's chained ledger row is kept.
+      artifactRecordErasure: record.artifactRecordErasure,
     });
   } catch (error) {
     if (error instanceof OffboardingStateError) {

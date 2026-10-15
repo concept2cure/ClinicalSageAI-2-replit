@@ -1,0 +1,133 @@
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says how many specific claims were not found in this turn's sources, and quotes them by kind 88ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > names the flags by kind and quotes the first 30ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names what it checked against 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a label check that ran and failed shows what failed — it is not "not assessed" 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > earns its check mark only when every specific claim was found 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > a failed label check with no counts still shows what failed, beside the engine's check 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > with no source consulted, the claims are not checked — never found, never a pass 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > clean labels carry no check mark: a label is not verification 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > nothing to check is not a pass 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names a verdict the answer states, and says where verdicts come from 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with no check either, says the answer was not assessed and shows no count 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > names a source the check could not read 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > with a check, the unassessed labels add nothing to it 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > lists three claims and counts the rest 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > renders nothing when the turn carries no verdict at all 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — not assessed is not a clean bill of health > never states a verdict in colour alone 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — AnA's labels are hers > reports labels as labelled, never as grounded, and never as sources 8ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes what a model wrote inside the capture 48ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside 17ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart 7ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture opened inside another also notes into the outer one 4ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a generation that failed wrote nothing the tool could return 3656ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the tool calls a model chose inside the capture are noted too 3ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part 3ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the stream captures every tool handler it runs 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > finds a figure a tool returned, and flags one it did not 23ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > reads a percentage as its proportion too 4ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > needs both bounds of a confidence interval, and does not read "95% CI" as a result 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a tool only echoed from what the model passed in 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > a figure an engine returned beside a model-written one is still found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > finds the identifiers the evidence holds 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not find a truncated or altered identifier inside a longer one 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not credit an identifier a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an outage envelope that echoes the query finds nothing 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a zero-hit result finds nothing, and neither does the query its provenance echoes 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a hit returns the identifier in a record, and is found 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a result that is not structured cannot tell an echo from data, and finds nothing the model asked for 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a quote the model searched for is found only in a returned passage 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an identifier the model did not ask for is found wherever the result holds it 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation looked up is found in the record the lookup returns, not in the echo of a miss 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation formatted from what the model gave, and not verified, finds nothing 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation the tool verified against a source is found 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation a model wrote inside the tool call is not credited by it 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a successful result is a source, named by its tool 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a failed, stopped or empty step is not 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a governed write is not: its output is the content it stored 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a result whose generations are unknown, or too many to keep, is not 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > with only the person's own message, claims are unchecked, never "not found" 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > a source the check cannot read is named, not counted as read 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > names the engine that checked 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > names a readiness, compliance or approval verdict the answer states 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > includes the §14 prohibited claims, and not a verdict the answer declines to give 0ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > flags when no evidence check ran 4ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > reports clean labels as AnA's labels, not as "Verified", and not as sources 4ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > marks labels with caveats, and says how many claims need verification 1ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > marks labels that did not pass 0ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > leads with the engine's check when there is one 1ms
+ ✓ server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > appends the reviewer risk summary when present 7ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > surfaces ungrounded regulatory claims with their text 8ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > surfaces overclaims using strong language without [KNOWN] backing 2ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > surfaces internal contradictions 1ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > omits flagged_claims when claims are grounded by nearby labels 1ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > reports a short response as UNASSESSED, not as verified 3ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > a short response carrying a real regulatory claim is not called verified 0ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > says the check was not run, in the words the user actually sees 1ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > still verifies a long, well-grounded answer — the working path 0ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > bounds the flagged list and trims long claims 2ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > does not flag the same claim text twice 0ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — itemized flagged claims > does NOT validate a self-contradictory response even when claims are grounded 0ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — a declared gap is not grounding > a claim whose only label is [MISSING] is not grounded, and is counted as missing support 0ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — a declared gap is not grounding > [MISSING] is not counted as a source, and the labels are reported as AnA wrote them 7ms
+ ✓ server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — a declared gap is not grounding > a [KNOWN] claim beside it is still grounded 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readGroundingStrip > carries attempted, the label counts and the engine's check 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readGroundingStrip > an event with no labels reads as not assessed, never as passed 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readAnswerCheck > a check with a field of the wrong type is no check 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readStoredVerification > reads a stored message the way the live event was read 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readStoredVerification > a message stored before checks were kept shows none 0ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 6244ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 12ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > with no tool run, a turn still says what was checked: claims unchecked, not grounded 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 2ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > is a no-op when there is no evidence to check against 7ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an NCT id that appears in the evidence 11ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated NCT id not present in the evidence 9ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a quote that appears in the evidence, tolerant of punctuation 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated quote not found in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > ignores short or label-like quotes to avoid false positives 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > deduplicates repeated claims 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > truncates long unsupported quotes in the report 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an ISRCTN id present in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated ISRCTN id not in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a EudraCT number present in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated EudraCT number not in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > counts NCT, ISRCTN and EudraCT ids together across registries 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a PMID that appears in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated PMID, reporting the labeled form but matching by number 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a DOI present in the evidence, trimming trailing punctuation 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated DOI not in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not extract an FDA submission number from inside a grounded DOI suffix 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not misclassify a fabricated DOI suffix as an FDA number 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not extract a EudraCT-shaped number from inside a DOI suffix 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > still grounds a standalone EudraCT number after the precision guard 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a 510(k) predicate number present in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags fabricated 510(k), PMA and De Novo numbers together 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not let NCT or ISRCTN ids mis-trigger the FDA number patterns 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an NDA number present in the evidence, regardless of spacing 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags fabricated NDA, BLA and ANDA numbers and reports the labeled form 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not let an ANDA citation double-count as an NDA 0ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags a CFR section the evidence does not hold 30ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > grounds a CFR section the evidence holds, whatever the spelling 9ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags an ICH code the evidence does not hold, and grounds one it does 3ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > reads a revisioned code without the ICH prefix, and leaves a bare letter-number alone 1ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > is still a no-op when no tools ran 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 85ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > the person's message and the project data are sources; AnA's memory is not 11ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > every curated fixture meets its expected outcome 17ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > achieves perfect fabrication detection on the fixture set 2ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > grounded cases have a mean grounding ratio of 1 1ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > flags a fabricated identifier and reports its kind 1ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > detects a deliberately broken expectation (harness self-check) 0ms
+ ✓ server/services/evidence/__tests__/grounding-eval.test.ts > grounding eval harness > covers every checkable identifier kind across the fixtures 0ms
+ ✓ tests/ai-safety/grounding-eval.test.ts > AI safety: grounding / hallucination eval (blocking gate) > runs the full curated fixture set 8ms
+ ✓ tests/ai-safety/grounding-eval.test.ts > AI safety: grounding / hallucination eval (blocking gate) > reports an aggregate metrics object of the expected shape 2ms
+ ✓ tests/ai-safety/grounding-eval.test.ts > AI safety: grounding / hallucination eval (blocking gate) > passes every fixture case (no eval regression) 1ms
+ ✓ tests/ai-safety/grounding-eval.test.ts > AI safety: grounding / hallucination eval (blocking gate) > detects every fabrication (recall === 1.0, no hallucination slips through) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > "Draft with AnA" opens the pane and shows the request in it 999ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > an empty section shows BOTH draft controls, and the toolbar one still asks for the section 690ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > the pane composer sends into the same conversation 474ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows real work, evidence, and follow-up actions from AnA 676ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows an honest empty pane rather than pretending a conversation exists 737ms
+ Test Files  13 passed (13)
+      Tests  131 passed (131)

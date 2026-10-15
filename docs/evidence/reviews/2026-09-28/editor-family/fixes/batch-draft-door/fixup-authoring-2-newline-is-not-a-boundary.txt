@@ -1,0 +1,158 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T19:29:29.122Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:29:29.123Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T19:29:29.124Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-28T19:29:29.292Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 73ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 10ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 11ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 10ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 8ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 18ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing 7ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason 3ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > accepts a completed draft that reports its finish reason 19ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > the batch records what it produced: one turn record holding the draft, its id and hash on the result 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a forged claim with no record behind it yields no accepted_machine_draft span, and the claim is disclosed 19ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a real record id does not launder the accepter's own text as AnA's 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a draft accepted with its record id is AnA's, accepted by this person, under the record's model 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a model named in the body is ignored; the model comes from the record 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record from another tenant does not verify 28ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record that no longer verifies whole does not verify a claim 28ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of "not-a-uuid" is disclosed as malformed_turn_record_id, not answered with a 500 13ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of 12345 is disclosed as no_turn_record_id, not answered with a 500 13ms
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-28T19:29:34.285Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ai_generation ai_drafting_surface",
+  "context": {
+    "userId": 501,
+    "tenantId": 77,
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-28T19:29:34.289Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:417:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-28T19:29:34.290Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-28T19:29:34.292Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:397:36",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+    at TamperProofAuditLog.log (./server/lib/tamper-proof-audit.ts:430:39)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at AuditService.logAction (./server/services/auditService.ts:455:9)
+    at ./server/routes/ana-intelligence.ts:105:7
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-28T19:29:34.295Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of {"id":"3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b"} is disclosed as no_turn_record_id, not answered with a 500 16ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > the accepter's own words, stored in the record as their request, do not verify as AnA's 28ms
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one verified claim does not carry a forged one: only the recorded draft is AnA's 31ms
+   → expected [ 'author_assertion' ] to deeply equal []
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept 38ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > refuses an image that is not an uploaded figure, and writes nothing 324ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > accepts an uploaded figure reference 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one verified claim does not carry a forged one: only the recorded draft is AnA's
+AssertionError: expected [ 'author_assertion' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "author_assertion",
++ ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:475:30
+    473|     // beside it, is the person's own.
+    474|     const whose = await whoseSpans(id, DRAFT.length);
+    475|     expect(whose.straddling).toEqual([]);
+       |                              ^
+    476|     expect(whose.before.length).toBeGreaterThanOrEqual(1);
+    477|     expect(whose.before).toEqual(whose.before.map(() => 'accepted_mach…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 passed (26)
+   Start at  19:29:27
+   Duration  7.49s (transform 1.68s, setup 102ms, import 3.60s, tests 3.60s, environment 0ms)
+

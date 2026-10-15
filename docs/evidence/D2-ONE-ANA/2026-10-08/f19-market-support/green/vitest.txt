@@ -1,0 +1,218 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 389ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)"
+An update to MarketSupportLine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 144ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 116ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 188ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 191ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 193ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words 169ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say 234ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a read in flight claims nothing about the market 3ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > says nothing, and reads nothing, without both an application type and a market 1ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing 0ms
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-08T15:00:43.142Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T15:00:43.143Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-08T15:00:43.144Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-08T15:00:43.625Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline
+{
+  "timestamp": "2026-10-08T15:00:47.542Z",
+  "level": "error",
+  "message": "[submissions-routes] submissions route error",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > without a market, states every region the platform names for the application type, from one pack read 268ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > with a market, states that one 8ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > refuses a request with no application type 4ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline 6ms
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T15:00:48.580Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T15:00:48.582Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T15:00:48.582Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no channel 2ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Structured Module 1 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no channel 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Unmapped 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is refused at creation, with the reason 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 2ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 1ms
+stdout | tests/services/regulatory/submission-resolver.test.ts
+{
+  "timestamp": "2026-10-08T15:00:49.901Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T15:00:49.902Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+{
+  "timestamp": "2026-10-08T15:00:49.903Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | tests/services/regulatory/submission-resolver.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > resolves a biologic marketing filing: US by gateway; EU and JP neither region-correct nor sent 4ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > routes by product class — BLA and NDA pick different US filings 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > honours an explicit region subset 0ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > never tells a client their MAA can be sent through CESP 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > does not tell an orphan, PIP or PRIME applicant the centralised procedure applies (fix round 2) 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > sends an EU clinical trial application to CTIS, not to a dossier gateway 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — coverage matrix > US cells support build + submit; EU and JP cells support neither (F19) 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — registry lookups > picks a regional entry by family + product class 0ms
+
+ Test Files  5 passed (5)
+      Tests  42 passed (42)
+   Start at  15:00:36
+   Duration  13.48s (transform 5.25s, setup 316ms, import 9.32s, tests 1.96s, environment 1.09s)
+

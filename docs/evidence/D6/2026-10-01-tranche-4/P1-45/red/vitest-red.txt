@@ -1,0 +1,1461 @@
+# P1-45 red: the four new test files (final versions) run against an export of HEAD 0e58e794044c3cd8f528ccc1a23e3f27cf4551f0 (git archive HEAD server shared tests/setup.ts vitest.config.ts tsconfig.json package.json; node_modules symlinked), i.e. the source WITHOUT the fix.
+# Captured 2026-10-01T06:31Z. Command (in the export): NODE_OPTIONS=--max-old-space-size=2560 npx vitest run <the four files>
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/54adf5a4-792f-5e11-8798-ae17682e5284/scratchpad/headtree
+
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ × server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > refuses MOONSHOT_API_KEY in production, naming it and ADR-0014 §1 11ms
+   → expected [Function] to throw error matching /REFUSING TO BOOT: .*MOONSHOT_API_KEY.…/ but got '(0 , __vite_ssr_import_4__.assertAiPr…'
+ × server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > refuses KIMI_API_KEY in production, naming it and ADR-0014 §1 2ms
+   → expected [Function] to throw error matching /REFUSING TO BOOT: .*KIMI_API_KEY.*ADR…/ but got '(0 , __vite_ssr_import_4__.assertAiPr…'
+ × server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > names both variables when both are set 1ms
+   → expected [Function] to throw error matching /KIMI_API_KEY.*MOONSHOT_API_KEY/ but got '(0 , __vite_ssr_import_4__.assertAiPr…'
+ × server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > has no acceptance: no other variable makes it boot 1ms
+   → expected [Function] to throw error matching /MOONSHOT_API_KEY/ but got '(0 , __vite_ssr_import_4__.assertAiPr…'
+ × server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > boots in production when neither is set (or set empty) 2ms
+   → expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_4__…' was thrown
+ × server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > is a no-op outside production: Moonshot remains a development lane 1ms
+   → expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_4__…' was thrown
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ × server/startup/__tests__/ai-provider-election-posture.test.ts > the server configuration fires it on import (a real production boot) > refuses to boot production with MOONSHOT_API_KEY set 348ms
+   → expected 'LOADED\n' to match /REFUSED: .*MOONSHOT_API_KEY/
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ × server/startup/__tests__/ai-provider-election-posture.test.ts > the server configuration fires it on import (a real production boot) > refuses to boot production with KIMI_API_KEY set 339ms
+   → expected 'LOADED\n' to match /REFUSED: .*KIMI_API_KEY/
+ ✓ server/startup/__tests__/ai-provider-election-posture.test.ts > the server configuration fires it on import (a real production boot) > boots production without either key (control) 309ms
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+{
+  "timestamp": "2026-10-01T06:30:59.520Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:30:59.522Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+{
+  "timestamp": "2026-10-01T06:30:59.522Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/production-provider-election.test.ts
+[database] Database connection successful
+
+ × server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production with no election, allows exactly anthropic, bedrock and local 4ms
+   → PRODUCTION_DEFAULT_PROVIDERS is not iterable
+ × server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production, openai / azure / vertex are allowed once named 1ms
+   → providerElectionRefusal is not a function
+ × server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production, moonshot is refused even when named 1ms
+   → providerElectionRefusal is not a function
+ × server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > reads NODE_ENV the way config load does (trimmed, any case) 1ms
+   → providerElectionRefusal is not a function
+ × server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > outside production refuses nothing 0ms
+   → providerElectionRefusal is not a function
+ × server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > effectiveAllowedProviders > production: absent → the default set; a list → that list without moonshot 1ms
+   → effectiveAllowedProviders is not a function
+ × server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > effectiveAllowedProviders > outside production: absent → no constraint; a list → that list 0ms
+   → effectiveAllowedProviders is not a function
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > production: an administrator can elect openai explicitly 2ms
+ × server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > production: a list that names moonshot is refused, naming ADR-0014 §1 4ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > production: NULL providers with a shared-only substrate list is satisfiable by the default set 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > outside production: moonshot may still be elected (development lane) 0ms
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists
+{
+  "timestamp": "2026-10-01T06:30:59.766Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election
+{
+  "timestamp": "2026-10-01T06:30:59.780Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI
+{
+  "timestamp": "2026-10-01T06:30:59.784Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before
+{
+  "timestamp": "2026-10-01T06:30:59.787Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 0ms org=4502 user=- caller=embedding-provider req=0de3c58a-8ca6-460d-bbc1-6cb4dab074be
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:21962) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21962) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:21962) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:21962) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:21962) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists 20ms
+   → promise resolved "{ …(4) }" instead of rejecting
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election 5ms
+   → promise resolved "{ …(4) }" instead of rejecting
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI 3ms
+   → promise resolved "{ …(4) }" instead of rejecting
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development 1ms
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > no placement row + Anthropic failing → no OpenAI call, and the honest 503 29ms
+   → expected [ 'anthropic', 'anthropic', …(5) ] to not include 'openai'
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > a row whose allowedProviders is NULL is the default set too: no OpenAI fallback 5ms
+   → expected [ 'anthropic', 'anthropic', …(5) ] to not include 'openai'
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > streaming and tool-bearing requests inherit the same election 4ms
+   → expected [ 'anthropic', 'anthropic', …(12) ] to not include 'openai'
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > a caller that names OpenAI does not get it without the election 2ms
+   → expected [ 'openai' ] to not include 'openai'
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > the last mile refuses OpenAI when selection is bypassed 7ms
+   → promise resolved "{ content: 'ok', …(7) }" instead of rejecting
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > Azure and Vertex are not default lanes either 3ms
+   → expected [ 'anthropic', 'anthropic', …(5) ] to not include 'vertex'
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > a public payload the tenant opted in still does not reach a vendor it never named 2ms
+   → expected [ 'anthropic', 'anthropic', …(5) ] to not include 'openai'
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: no elected lane configured, or no organization bound > with OpenAI the only configured lane, the request is refused and OpenAI is never called 2ms
+   → expected "dispatchProvider" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st dispatchProvider call:
+
+    Array [
+      Object {
+        "capabilities": Array [
+          "chat",
+          "document_analysis",
+          "structured_output",
+          "regulatory_review",
+          "code_generation",
+          "summarization",
+          "general",
+        ],
+        "contextWindow": 128000,
+        "costPer1kInput": 0.005,
+        "costPer1kOutput": 0.015,
+        "enabled": true,
+        "id": "gpt-4o",
+        "model": "gpt-4o",
+        "provider": "openai",
+        "qualityScore": 95,
+        "supportsSamplingParams": true,
+        "thinkingMode": "none",
+      },
+      Object {
+        "messages": Array [
+          Object {
+            "content": "Summarize the unpublished 12-month stability results for lot 7 of the drug substance.",
+            "role": "user",
+          },
+        ],
+        "organizationId": 4501,
+        "regulatoryContentDetected": false,
+        "sensitiveDataClass": "none",
+        "sensitiveTenantPolicy": Object {
+          "boundFrom": "explicit",
+          "organizationId": 4501,
+          "resolution": "absent",
+        },
+        "taskType": "chat",
+      },
+      "aa79c8ab-2f48-4219-a26e-3b4897940364",
+      1790836259828,
+    ]
+
+
+Number of calls: 1
+
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: no elected lane configured, or no organization bound > platform work with no organization (system scope) gets the default set 3ms
+   → expected [ 'anthropic', 'anthropic', …(5) ] to not include 'openai'
+ ✓ server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization that elected OpenAI keeps it > allowedProviders ['anthropic','openai'] + Anthropic failing → the OpenAI fallback still answers 3ms
+ ✓ server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization that elected OpenAI keeps it > allowedProviders ['openai'] alone is honoured: OpenAI is the tenant's lane 14ms
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: Moonshot (Kimi) is never a lane > a Moonshot key that slipped through initialises no client and enables no model 4ms
+   → expected OpenAI{ …(37) } to be null
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: Moonshot (Kimi) is never a lane > an override that enables moonshot is dropped in production too 3ms
+   → expected OpenAI{ …(37) } to be null
+ × server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: Moonshot (Kimi) is never a lane > a stored policy that names moonshot does not make it reachable 2ms
+   → expected [ 'anthropic', 'anthropic', …(5) ] to not include 'moonshot'
+ ✓ server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 outside production: behaviour unchanged > no placement row + Anthropic failing → falls back to OpenAI as before 2ms
+ ✓ server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 outside production: behaviour unchanged > Moonshot stays a development lane 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 31 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > refuses MOONSHOT_API_KEY in production, naming it and ADR-0014 §1
+AssertionError: expected [Function] to throw error matching /REFUSING TO BOOT: .*MOONSHOT_API_KEY.…/ but got '(0 , __vite_ssr_import_4__.assertAiPr…'
+
+- Expected:
+/REFUSING TO BOOT: .*MOONSHOT_API_KEY.*ADR-0014 §1/
+
++ Received:
+"(0 , __vite_ssr_import_4__.assertAiProviderElectionPostureForProduction) is not a function"
+
+ ❯ server/startup/__tests__/ai-provider-election-posture.test.ts:24:7
+     22|     expect(() =>
+     23|       assertAiProviderElectionPostureForProduction({ NODE_ENV: 'produc…
+     24|     ).toThrow(new RegExp(`REFUSING TO BOOT: .*${variable}.*ADR-0014 §1…
+       |       ^
+     25|   });
+     26|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/31]⎯
+
+ FAIL  server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > refuses KIMI_API_KEY in production, naming it and ADR-0014 §1
+AssertionError: expected [Function] to throw error matching /REFUSING TO BOOT: .*KIMI_API_KEY.*ADR…/ but got '(0 , __vite_ssr_import_4__.assertAiPr…'
+
+- Expected:
+/REFUSING TO BOOT: .*KIMI_API_KEY.*ADR-0014 §1/
+
++ Received:
+"(0 , __vite_ssr_import_4__.assertAiProviderElectionPostureForProduction) is not a function"
+
+ ❯ server/startup/__tests__/ai-provider-election-posture.test.ts:24:7
+     22|     expect(() =>
+     23|       assertAiProviderElectionPostureForProduction({ NODE_ENV: 'produc…
+     24|     ).toThrow(new RegExp(`REFUSING TO BOOT: .*${variable}.*ADR-0014 §1…
+       |       ^
+     25|   });
+     26|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/31]⎯
+
+ FAIL  server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > names both variables when both are set
+AssertionError: expected [Function] to throw error matching /KIMI_API_KEY.*MOONSHOT_API_KEY/ but got '(0 , __vite_ssr_import_4__.assertAiPr…'
+
+- Expected:
+/KIMI_API_KEY.*MOONSHOT_API_KEY/
+
++ Received:
+"(0 , __vite_ssr_import_4__.assertAiProviderElectionPostureForProduction) is not a function"
+
+ ❯ server/startup/__tests__/ai-provider-election-posture.test.ts:34:7
+     32|         MOONSHOT_API_KEY: 'sk-b',
+     33|       }),
+     34|     ).toThrow(/KIMI_API_KEY.*MOONSHOT_API_KEY/);
+       |       ^
+     35|   });
+     36|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/31]⎯
+
+ FAIL  server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > has no acceptance: no other variable makes it boot
+AssertionError: expected [Function] to throw error matching /MOONSHOT_API_KEY/ but got '(0 , __vite_ssr_import_4__.assertAiPr…'
+
+- Expected:
+/MOONSHOT_API_KEY/
+
++ Received:
+"(0 , __vite_ssr_import_4__.assertAiProviderElectionPostureForProduction) is not a function"
+
+ ❯ server/startup/__tests__/ai-provider-election-posture.test.ts:44:7
+     42|         AI_GOVERNANCE_ACCEPT_PERMISSIVE: 'true',
+     43|       }),
+     44|     ).toThrow(/MOONSHOT_API_KEY/);
+       |       ^
+     45|   });
+     46|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/31]⎯
+
+ FAIL  server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > boots in production when neither is set (or set empty)
+AssertionError: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_4__…' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"TypeError: (0 , __vite_ssr_import_4__.assertAiProviderElectionPostureForProduction) is not a function"
+
+ ❯ server/startup/__tests__/ai-provider-election-posture.test.ts:48:96
+     46|
+     47|   it('boots in production when neither is set (or set empty)', () => {
+     48|     expect(() => assertAiProviderElectionPostureForProduction({ NODE_E…
+       |                                                                                                ^
+     49|     expect(() =>
+     50|       assertAiProviderElectionPostureForProduction({ NODE_ENV: 'produc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/31]⎯
+
+ FAIL  server/startup/__tests__/ai-provider-election-posture.test.ts > assertAiProviderElectionPostureForProduction > is a no-op outside production: Moonshot remains a development lane
+AssertionError: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_4__…' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"TypeError: (0 , __vite_ssr_import_4__.assertAiProviderElectionPostureForProduction) is not a function"
+
+ ❯ server/startup/__tests__/ai-provider-election-posture.test.ts:58:13
+     56|       expect(() =>
+     57|         assertAiProviderElectionPostureForProduction({ NODE_ENV, MOONS…
+     58|       ).not.toThrow();
+       |             ^
+     59|     }
+     60|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/31]⎯
+
+ FAIL  server/startup/__tests__/ai-provider-election-posture.test.ts > the server configuration fires it on import (a real production boot) > refuses to boot production with MOONSHOT_API_KEY set
+AssertionError: expected 'LOADED\n' to match /REFUSED: .*MOONSHOT_API_KEY/
+
+- Expected:
+/REFUSED: .*MOONSHOT_API_KEY/
+
++ Received:
+"LOADED
+"
+
+ ❯ server/startup/__tests__/ai-provider-election-posture.test.ts:102:58
+    100|
+    101|   it('refuses to boot production with MOONSHOT_API_KEY set', () => {
+    102|     expect(loadConfig({ MOONSHOT_API_KEY: 'sk-probe' })).toMatch(/REFU…
+       |                                                          ^
+    103|   }, 60_000);
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/31]⎯
+
+ FAIL  server/startup/__tests__/ai-provider-election-posture.test.ts > the server configuration fires it on import (a real production boot) > refuses to boot production with KIMI_API_KEY set
+AssertionError: expected 'LOADED\n' to match /REFUSED: .*KIMI_API_KEY/
+
+- Expected:
+/REFUSED: .*KIMI_API_KEY/
+
++ Received:
+"LOADED
+"
+
+ ❯ server/startup/__tests__/ai-provider-election-posture.test.ts:106:54
+    104|
+    105|   it('refuses to boot production with KIMI_API_KEY set', () => {
+    106|     expect(loadConfig({ KIMI_API_KEY: 'sk-probe' })).toMatch(/REFUSED:…
+       |                                                      ^
+    107|   }, 60_000);
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > no placement row + Anthropic failing → no OpenAI call, and the honest 503
+AssertionError: expected [ 'anthropic', 'anthropic', …(5) ] to not include 'openai'
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:167:38
+    165|     const err = await gateway.route(chat()).catch(e => e);
+    166|
+    167|     expect(dispatched(dispatch)).not.toContain('openai');
+       |                                      ^
+    168|     expect(dispatched(dispatch).length).toBeGreaterThan(0);
+    169|     expect(dispatched(dispatch).every(p => p === 'anthropic')).toBe(tr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > a row whose allowedProviders is NULL is the default set too: no OpenAI fallback
+AssertionError: expected [ 'anthropic', 'anthropic', …(5) ] to not include 'openai'
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:182:38
+    180|     const err = await gateway.route(chat()).catch(e => e);
+    181|
+    182|     expect(dispatched(dispatch)).not.toContain('openai');
+       |                                      ^
+    183|     expect(httpOutcome(err).status).toBe(503);
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > streaming and tool-bearing requests inherit the same election
+AssertionError: expected [ 'anthropic', 'anthropic', …(12) ] to not include 'openai'
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:203:38
+    201|       .catch(() => undefined);
+    202|
+    203|     expect(dispatched(dispatch)).not.toContain('openai');
+       |                                      ^
+    204|   });
+    205|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > a caller that names OpenAI does not get it without the election
+AssertionError: expected [ 'openai' ] to not include 'openai'
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:214:38
+    212|     await gateway.route(chat({ provider: 'openai' })).catch(() => unde…
+    213|
+    214|     expect(dispatched(dispatch)).not.toContain('openai');
+       |                                      ^
+    215|   });
+    216|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > the last mile refuses OpenAI when selection is bypassed
+AssertionError: promise resolved "{ content: 'ok', …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cached": false,
++   "content": "ok",
++   "latencyMs": 1,
++   "model": "gpt-4o",
++   "placementReasonCode": "ALLOW_NON_SENSITIVE",
++   "provider": "openai",
++   "requestId": "fake",
++   "usage": {
++     "completionTokens": 1,
++     "estimatedCostUsd": 0,
++     "promptTokens": 1,
++     "totalTokens": 2,
++   },
+  }
+
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:234:5
+    232|         Date.now(),
+    233|       ),
+    234|     ).rejects.toMatchObject({ name: GatewayPolicyError.name, message: …
+       |     ^
+    235|     expect(dispatch).not.toHaveBeenCalled();
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > Azure and Vertex are not default lanes either
+AssertionError: expected [ 'anthropic', 'anthropic', …(5) ] to not include 'vertex'
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:247:38
+    245|
+    246|     expect(dispatched(dispatch)).not.toContain('azure');
+    247|     expect(dispatched(dispatch)).not.toContain('vertex');
+       |                                      ^
+    248|   });
+    249|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: an organization with no election never reaches OpenAI > a public payload the tenant opted in still does not reach a vendor it never named
+AssertionError: expected [ 'anthropic', 'anthropic', …(5) ] to not include 'openai'
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:258:38
+    256|     await gateway.route(chat({ payloadProvenance: 'public' })).catch((…
+    257|
+    258|     expect(dispatched(dispatch)).not.toContain('openai');
+       |                                      ^
+    259|   });
+    260| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: no elected lane configured, or no organization bound > with OpenAI the only configured lane, the request is refused and OpenAI is never called
+AssertionError: expected "dispatchProvider" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st dispatchProvider call:
+
+    Array [
+      Object {
+        "capabilities": Array [
+          "chat",
+          "document_analysis",
+          "structured_output",
+          "regulatory_review",
+          "code_generation",
+          "summarization",
+          "general",
+        ],
+        "contextWindow": 128000,
+        "costPer1kInput": 0.005,
+        "costPer1kOutput": 0.015,
+        "enabled": true,
+        "id": "gpt-4o",
+        "model": "gpt-4o",
+        "provider": "openai",
+        "qualityScore": 95,
+        "supportsSamplingParams": true,
+        "thinkingMode": "none",
+      },
+      Object {
+        "messages": Array [
+          Object {
+            "content": "Summarize the unpublished 12-month stability results for lot 7 of the drug substance.",
+            "role": "user",
+          },
+        ],
+        "organizationId": 4501,
+        "regulatoryContentDetected": false,
+        "sensitiveDataClass": "none",
+        "sensitiveTenantPolicy": Object {
+          "boundFrom": "explicit",
+          "organizationId": 4501,
+          "resolution": "absent",
+        },
+        "taskType": "chat",
+      },
+      "aa79c8ab-2f48-4219-a26e-3b4897940364",
+      1790836259828,
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:271:26
+    269|     const err = await gateway.route(chat()).catch(e => e);
+    270|
+    271|     expect(dispatch).not.toHaveBeenCalled();
+       |                          ^
+    272|     expect(err).toBeInstanceOf(GatewayPolicyError);
+    273|     expect(String(err?.message)).toMatch(/openai is not an AI service …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: no elected lane configured, or no organization bound > platform work with no organization (system scope) gets the default set
+AssertionError: expected [ 'anthropic', 'anthropic', …(5) ] to not include 'openai'
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:290:38
+    288|
+    289|     expect(dispatched(dispatch).length).toBeGreaterThan(0);
+    290|     expect(dispatched(dispatch)).not.toContain('openai');
+       |                                      ^
+    291|   });
+    292| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: Moonshot (Kimi) is never a lane > a Moonshot key that slipped through initialises no client and enables no model
+AssertionError: expected OpenAI{ …(37) } to be null
+
+- Expected:
+null
+
++ Received:
+OpenAI {
+  "_options": {
+    "adminAPIKey": null,
+    "apiKey": "sk-slipped-through",
+    "baseURL": "https://api.moonshot.ai/v1",
+    "organization": null,
+    "project": null,
+    "provider": undefined,
+    "webhookSecret": null,
+    "workloadIdentity": undefined,
+  },
+  "_provider": undefined,
+  "admin": Admin {
+    "_client": [Circular],
+    "organization": Organization {
+      "_client": [Circular],
+      "adminAPIKeys": AdminAPIKeys {
+        "_client": [Circular],
+      },
+      "auditLogs": AuditLogs {
+        "_client": [Circular],
+      },
+      "certificates": Certificates {
+        "_client": [Circular],
+      },
+      "dataRetention": DataRetention {
+        "_client": [Circular],
+      },
+      "groups": Groups {
+        "_client": [Circular],
+        "roles": Roles {
+          "_client": [Circular],
+        },
+        "users": Users {
+          "_client": [Circular],
+        },
+      },
+      "invites": Invites {
+        "_client": [Circular],
+      },
+      "projects": Projects {
+        "_client": [Circular],
+        "apiKeys": APIKeys {
+          "_client": [Circular],
+        },
+        "certificates": Certificates {
+          "_client": [Circular],
+        },
+        "dataRetention": DataRetention {
+          "_client": [Circular],
+        },
+        "groups": Groups {
+          "_client": [Circular],
+          "roles": Roles {
+            "_client": [Circular],
+          },
+        },
+        "hostedToolPermissions": HostedToolPermissions {
+          "_client": [Circular],
+        },
+        "modelPermissions": ModelPermissions {
+          "_client": [Circular],
+        },
+        "rateLimits": RateLimits {
+          "_client": [Circular],
+        },
+        "roles": Roles {
+          "_client": [Circular],
+        },
+        "serviceAccounts": ServiceAccounts {
+          "_client": [Circular],
+        },
+        "spendAlerts": SpendAlerts {
+          "_client": [Circular],
+        },
+        "users": Users {
+          "_client": [Circular],
+          "roles": Roles {
+            "_client": [Circular],
+          },
+        },
+      },
+      "roles": Roles {
+        "_client": [Circular],
+      },
+      "spendAlerts": SpendAlerts {
+        "_client": [Circular],
+      },
+      "usage": Usage {
+        "_client": [Circular],
+      },
+      "users": Users {
+        "_client": [Circular],
+        "roles": Roles {
+          "_client": [Circular],
+        },
+      },
+    },
+  },
+  "adminAPIKey": null,
+  "apiKey": "sk-slipped-through",
+  "audio": Audio {
+    "_client": [Circular],
+    "speech": Speech {
+      "_client": [Circular],
+    },
+    "transcriptions": Transcriptions {
+      "_client": [Circular],
+    },
+    "translations": Translations {
+      "_client": [Circular],
+    },
+  },
+  "baseURL": "https://api.moonshot.ai/v1",
+  "batches": Batches {
+    "_client": [Circular],
+  },
+  "beta": Beta {
+    "_client": [Circular],
+    "assistants": Assistants {
+      "_client": [Circular],
+    },
+    "chatkit": ChatKit {
+      "_client": [Circular],
+      "sessions": Sessions {
+        "_client": [Circular],
+      },
+      "threads": Threads {
+        "_client": [Circular],
+      },
+    },
+    "realtime": Realtime {
+      "_client": [Circular],
+      "sessions": Sessions {
+        "_client": [Circular],
+      },
+      "transcriptionSessions": TranscriptionSessions {
+        "_client": [Circular],
+      },
+    },
+    "threads": Threads {
+      "_client": [Circular],
+      "messages": Messages {
+        "_client": [Circular],
+      },
+      "runs": Runs {
+        "_client": [Circular],
+        "steps": Steps {
+          "_client": [Circular],
+        },
+      },
+    },
+  },
+  "chat": Chat {
+    "_client": [Circular],
+    "completions": Completions {
+      "_client": [Circular],
+      "messages": Messages {
+        "_client": [Circular],
+      },
+    },
+  },
+  "completions": Completions {
+    "_client": [Circular],
+  },
+  "containers": Containers {
+    "_client": [Circular],
+    "files": Files {
+      "_client": [Circular],
+      "content": Content {
+        "_client": [Circular],
+      },
+    },
+  },
+  "conversations": Conversations {
+    "_client": [Circular],
+    "items": Items {
+      "_client": [Circular],
+    },
+  },
+  "embeddings": Embeddings {
+    "_client": [Circular],
+  },
+  "evals": Evals {
+    "_client": [Circular],
+    "runs": Runs {
+      "_client": [Circular],
+      "outputItems": OutputItems {
+        "_client": [Circular],
+      },
+    },
+  },
+  "fetch": [Function fetch],
+  "fetchOptions": undefined,
+  "files": Files {
+    "_client": [Circular],
+  },
+  "fineTuning": FineTuning {
+    "_client": [Circular],
+    "alpha": Alpha {
+      "_client": [Circular],
+      "graders": Graders {
+        "_client": [Circular],
+      },
+    },
+    "checkpoints": Checkpoints {
+      "_client": [Circular],
+      "permissions": Permissions {
+        "_client": [Circular],
+      },
+    },
+    "jobs": Jobs {
+      "_client": [Circular],
+      "checkpoints": Checkpoints {
+        "_client": [Circular],
+      },
+    },
+    "methods": Methods {
+      "_client": [Circular],
+    },
+  },
+  "graders": Graders {
+    "_client": [Circular],
+    "graderModels": GraderModels {
+      "_client": [Circular],
+    },
+  },
+  "images": Images {
+    "_client": [Circular],
+  },
+  "logLevel": "warn",
+  "logger": Console {
+    "assert": [Function assert],
+    "clear": [Function clear],
+    "count": [Function count],
+    "countReset": [Function countReset],
+    "debug": [Function debug],
+    "dir": [Function dir],
+    "dirxml": [Function dirxml],
+    "error": [Function error],
+    "group": [Function group],
+    "groupCollapsed": [Function groupCollapsed],
+    "groupEnd": [Function groupEnd],
+    "info": [Function info],
+    "log": [Function log],
+    "table": [Function table],
+    "time": [Function time],
+    "timeEnd": [Function timeEnd],
+    "timeLog": [Function timeLog],
+    "trace": [Function trace],
+    "warn": [Function warn],
+  },
+  "maxRetries": 2,
+  "models": Models {
+    "_client": [Circular],
+  },
+  "moderations": Moderations {
+    "_client": [Circular],
+  },
+  "organization": null,
+  "project": null,
+  "realtime": Realtime {
+    "_client": [Circular],
+    "calls": Calls {
+      "_client": [Circular],
+    },
+    "clientSecrets": ClientSecrets {
+      "_client": [Circular],
+    },
+  },
+  "responses": Responses {
+    "_client": [Circular],
+    "inputItems": InputItems {
+      "_client": [Circular],
+    },
+    "inputTokens": InputTokens {
+      "_client": [Circular],
+    },
+  },
+  "skills": Skills {
+    "_client": [Circular],
+    "content": Content {
+      "_client": [Circular],
+    },
+    "versions": Versions {
+      "_client": [Circular],
+      "content": Content {
+        "_client": [Circular],
+      },
+    },
+  },
+  "timeout": 600000,
+  "uploads": Uploads {
+    "_client": [Circular],
+    "parts": Parts {
+      "_client": [Circular],
+    },
+  },
+  "vectorStores": VectorStores {
+    "_client": [Circular],
+    "fileBatches": FileBatches {
+      "_client": [Circular],
+    },
+    "files": Files {
+      "_client": [Circular],
+    },
+  },
+  "videos": Videos {
+    "_client": [Circular],
+  },
+  "webhookSecret": null,
+  "webhooks": Webhooks {
+    "_client": [Circular],
+  },
+}
+
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:328:45
+    326|     const gateway = new AIGateway({ deterministicMode: false, auditEna…
+    327|
+    328|     expect((gateway as any).moonshotClient).toBeNull();
+       |                                             ^
+    329|     expect(gateway.getEnabledProviders()).not.toContain('moonshot');
+    330|     expect(gateway.getModels().filter(m => m.provider === 'moonshot' &…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: Moonshot (Kimi) is never a lane > an override that enables moonshot is dropped in production too
+AssertionError: expected OpenAI{ …(37) } to be null
+
+- Expected:
+null
+
++ Received:
+OpenAI {
+  "_options": {
+    "adminAPIKey": null,
+    "apiKey": "not-used",
+    "baseURL": "https://api.moonshot.ai/v1",
+    "organization": null,
+    "project": null,
+    "provider": undefined,
+    "webhookSecret": null,
+    "workloadIdentity": undefined,
+  },
+  "_provider": undefined,
+  "admin": Admin {
+    "_client": [Circular],
+    "organization": Organization {
+      "_client": [Circular],
+      "adminAPIKeys": AdminAPIKeys {
+        "_client": [Circular],
+      },
+      "auditLogs": AuditLogs {
+        "_client": [Circular],
+      },
+      "certificates": Certificates {
+        "_client": [Circular],
+      },
+      "dataRetention": DataRetention {
+        "_client": [Circular],
+      },
+      "groups": Groups {
+        "_client": [Circular],
+        "roles": Roles {
+          "_client": [Circular],
+        },
+        "users": Users {
+          "_client": [Circular],
+        },
+      },
+      "invites": Invites {
+        "_client": [Circular],
+      },
+      "projects": Projects {
+        "_client": [Circular],
+        "apiKeys": APIKeys {
+          "_client": [Circular],
+        },
+        "certificates": Certificates {
+          "_client": [Circular],
+        },
+        "dataRetention": DataRetention {
+          "_client": [Circular],
+        },
+        "groups": Groups {
+          "_client": [Circular],
+          "roles": Roles {
+            "_client": [Circular],
+          },
+        },
+        "hostedToolPermissions": HostedToolPermissions {
+          "_client": [Circular],
+        },
+        "modelPermissions": ModelPermissions {
+          "_client": [Circular],
+        },
+        "rateLimits": RateLimits {
+          "_client": [Circular],
+        },
+        "roles": Roles {
+          "_client": [Circular],
+        },
+        "serviceAccounts": ServiceAccounts {
+          "_client": [Circular],
+        },
+        "spendAlerts": SpendAlerts {
+          "_client": [Circular],
+        },
+        "users": Users {
+          "_client": [Circular],
+          "roles": Roles {
+            "_client": [Circular],
+          },
+        },
+      },
+      "roles": Roles {
+        "_client": [Circular],
+      },
+      "spendAlerts": SpendAlerts {
+        "_client": [Circular],
+      },
+      "usage": Usage {
+        "_client": [Circular],
+      },
+      "users": Users {
+        "_client": [Circular],
+        "roles": Roles {
+          "_client": [Circular],
+        },
+      },
+    },
+  },
+  "adminAPIKey": null,
+  "apiKey": "not-used",
+  "audio": Audio {
+    "_client": [Circular],
+    "speech": Speech {
+      "_client": [Circular],
+    },
+    "transcriptions": Transcriptions {
+      "_client": [Circular],
+    },
+    "translations": Translations {
+      "_client": [Circular],
+    },
+  },
+  "baseURL": "https://api.moonshot.ai/v1",
+  "batches": Batches {
+    "_client": [Circular],
+  },
+  "beta": Beta {
+    "_client": [Circular],
+    "assistants": Assistants {
+      "_client": [Circular],
+    },
+    "chatkit": ChatKit {
+      "_client": [Circular],
+      "sessions": Sessions {
+        "_client": [Circular],
+      },
+      "threads": Threads {
+        "_client": [Circular],
+      },
+    },
+    "realtime": Realtime {
+      "_client": [Circular],
+      "sessions": Sessions {
+        "_client": [Circular],
+      },
+      "transcriptionSessions": TranscriptionSessions {
+        "_client": [Circular],
+      },
+    },
+    "threads": Threads {
+      "_client": [Circular],
+      "messages": Messages {
+        "_client": [Circular],
+      },
+      "runs": Runs {
+        "_client": [Circular],
+        "steps": Steps {
+          "_client": [Circular],
+        },
+      },
+    },
+  },
+  "chat": Chat {
+    "_client": [Circular],
+    "completions": Completions {
+      "_client": [Circular],
+      "messages": Messages {
+        "_client": [Circular],
+      },
+    },
+  },
+  "completions": Completions {
+    "_client": [Circular],
+  },
+  "containers": Containers {
+    "_client": [Circular],
+    "files": Files {
+      "_client": [Circular],
+      "content": Content {
+        "_client": [Circular],
+      },
+    },
+  },
+  "conversations": Conversations {
+    "_client": [Circular],
+    "items": Items {
+      "_client": [Circular],
+    },
+  },
+  "embeddings": Embeddings {
+    "_client": [Circular],
+  },
+  "evals": Evals {
+    "_client": [Circular],
+    "runs": Runs {
+      "_client": [Circular],
+      "outputItems": OutputItems {
+        "_client": [Circular],
+      },
+    },
+  },
+  "fetch": [Function fetch],
+  "fetchOptions": undefined,
+  "files": Files {
+    "_client": [Circular],
+  },
+  "fineTuning": FineTuning {
+    "_client": [Circular],
+    "alpha": Alpha {
+      "_client": [Circular],
+      "graders": Graders {
+        "_client": [Circular],
+      },
+    },
+    "checkpoints": Checkpoints {
+      "_client": [Circular],
+      "permissions": Permissions {
+        "_client": [Circular],
+      },
+    },
+    "jobs": Jobs {
+      "_client": [Circular],
+      "checkpoints": Checkpoints {
+        "_client": [Circular],
+      },
+    },
+    "methods": Methods {
+      "_client": [Circular],
+    },
+  },
+  "graders": Graders {
+    "_client": [Circular],
+    "graderModels": GraderModels {
+      "_client": [Circular],
+    },
+  },
+  "images": Images {
+    "_client": [Circular],
+  },
+  "logLevel": "warn",
+  "logger": Console {
+    "assert": [Function assert],
+    "clear": [Function clear],
+    "count": [Function count],
+    "countReset": [Function countReset],
+    "debug": [Function debug],
+    "dir": [Function dir],
+    "dirxml": [Function dirxml],
+    "error": [Function error],
+    "group": [Function group],
+    "groupCollapsed": [Function groupCollapsed],
+    "groupEnd": [Function groupEnd],
+    "info": [Function info],
+    "log": [Function log],
+    "table": [Function table],
+    "time": [Function time],
+    "timeEnd": [Function timeEnd],
+    "timeLog": [Function timeLog],
+    "trace": [Function trace],
+    "warn": [Function warn],
+  },
+  "maxRetries": 2,
+  "models": Models {
+    "_client": [Circular],
+  },
+  "moderations": Moderations {
+    "_client": [Circular],
+  },
+  "organization": null,
+  "project": null,
+  "realtime": Realtime {
+    "_client": [Circular],
+    "calls": Calls {
+      "_client": [Circular],
+    },
+    "clientSecrets": ClientSecrets {
+      "_client": [Circular],
+    },
+  },
+  "responses": Responses {
+    "_client": [Circular],
+    "inputItems": InputItems {
+      "_client": [Circular],
+    },
+    "inputTokens": InputTokens {
+      "_client": [Circular],
+    },
+  },
+  "skills": Skills {
+    "_client": [Circular],
+    "content": Content {
+      "_client": [Circular],
+    },
+    "versions": Versions {
+      "_client": [Circular],
+      "content": Content {
+        "_client": [Circular],
+      },
+    },
+  },
+  "timeout": 600000,
+  "uploads": Uploads {
+    "_client": [Circular],
+    "parts": Parts {
+      "_client": [Circular],
+    },
+  },
+  "vectorStores": VectorStores {
+    "_client": [Circular],
+    "fileBatches": FileBatches {
+      "_client": [Circular],
+    },
+    "files": Files {
+      "_client": [Circular],
+    },
+  },
+  "videos": Videos {
+    "_client": [Circular],
+  },
+  "webhookSecret": null,
+  "webhooks": Webhooks {
+    "_client": [Circular],
+  },
+}
+
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:337:45
+    335|     const gateway = buildGateway(['anthropic', 'moonshot']);
+    336|
+    337|     expect((gateway as any).moonshotClient).toBeNull();
+       |                                             ^
+    338|     expect(gateway.getModels().filter(m => m.provider === 'moonshot' &…
+    339|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/31]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/production-provider-election.test.ts > P1-45 production: Moonshot (Kimi) is never a lane > a stored policy that names moonshot does not make it reachable
+AssertionError: expected [ 'anthropic', 'anthropic', …(5) ] to not include 'moonshot'
+ ❯ server/services/ai-gateway/__tests__/production-provider-election.test.ts:352:38
+    350|     const err = await gateway.route(chat()).catch(e => e);
+    351|
+    352|     expect(dispatched(dispatch)).not.toContain('moonshot');
+       |                                      ^
+    353|     expect(httpOutcome(err).status).toBe(503);
+    354|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/31]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production with no election, allows exactly anthropic, bedrock and local
+TypeError: PRODUCTION_DEFAULT_PROVIDERS is not iterable
+ ❯ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts:24:16
+     22| describe('providerElectionRefusal', () => {
+     23|   it('in production with no election, allows exactly anthropic, bedroc…
+     24|     expect([...PRODUCTION_DEFAULT_PROVIDERS].sort()).toEqual(['anthrop…
+       |                ^
+     25|     for (const p of ['anthropic', 'bedrock', 'local'] as const) {
+     26|       expect(providerElectionRefusal(p, undefined, PROD)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/31]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production, openai / azure / vertex are allowed once named
+TypeError: providerElectionRefusal is not a function
+ ❯ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts:34:12
+     32|
+     33|   it('in production, openai / azure / vertex are allowed once named', …
+     34|     expect(providerElectionRefusal('openai', ['anthropic', 'openai'], …
+       |            ^
+     35|     expect(providerElectionRefusal('azure', ['azure'], PROD)).toBeNull…
+     36|     expect(providerElectionRefusal('vertex', ['vertex'], PROD)).toBeNu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/31]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production, moonshot is refused even when named
+TypeError: providerElectionRefusal is not a function
+ ❯ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts:41:12
+     39|
+     40|   it('in production, moonshot is refused even when named', () => {
+     41|     expect(providerElectionRefusal('moonshot', ['moonshot'], PROD)).to…
+       |            ^
+     42|   });
+     43|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/31]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > reads NODE_ENV the way config load does (trimmed, any case)
+TypeError: providerElectionRefusal is not a function
+ ❯ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts:45:12
+     43|
+     44|   it('reads NODE_ENV the way config load does (trimmed, any case)', ()…
+     45|     expect(providerElectionRefusal('openai', undefined, { NODE_ENV: ' …
+       |            ^
+     46|   });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/31]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > outside production refuses nothing
+TypeError: providerElectionRefusal is not a function
+ ❯ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts:50:14
+     48|   it('outside production refuses nothing', () => {
+     49|     for (const p of ['openai', 'azure', 'vertex', 'moonshot'] as const…
+     50|       expect(providerElectionRefusal(p, undefined, DEV)).toBeNull();
+       |              ^
+     51|     }
+     52|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/31]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > effectiveAllowedProviders > production: absent → the default set; a list → that list without moonshot
+TypeError: effectiveAllowedProviders is not a function
+ ❯ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts:57:12
+     55| describe('effectiveAllowedProviders', () => {
+     56|   it('production: absent → the default set; a list → that list without…
+     57|     expect(effectiveAllowedProviders(null, PROD)?.sort()).toEqual(['an…
+       |            ^
+     58|     expect(effectiveAllowedProviders(['anthropic', 'openai', 'moonshot…
+     59|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/31]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > effectiveAllowedProviders > outside production: absent → no constraint; a list → that list
+TypeError: effectiveAllowedProviders is not a function
+ ❯ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts:62:12
+     60|
+     61|   it('outside production: absent → no constraint; a list → that list',…
+     62|     expect(effectiveAllowedProviders(null, DEV)).toBeNull();
+       |            ^
+     63|     expect(effectiveAllowedProviders(['moonshot'], DEV)).toEqual(['moo…
+     64|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/31]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > production: a list that names moonshot is refused, naming ADR-0014 §1
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts:93:23
+     91|     process.env.NODE_ENV = 'production';
+     92|     const parsed = parsePlacementPolicyInput(body(['anthropic', 'moons…
+     93|     expect(parsed.ok).toBe(false);
+       |                       ^
+     94|     expect(!parsed.ok && parsed.message).toMatch(/moonshot.*ADR-0014 §…
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/31]⎯
+
+ FAIL  server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "embeddings": [
++     [
++       0.1,
++       0.2,
++       0.3,
++     ],
++   ],
++   "inputTokens": 3,
++   "model": "text-embedding-3-small",
++   "provider": "openai",
+  }
+
+ ❯ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts:108:25
+    106|     const attempt = provider.embed({ input: PLAIN_TEXT, organizationId…
+    107|
+    108|     await expect(attempt).rejects.toBeInstanceOf(GatewayPolicyError);
+       |                         ^
+    109|     await expect(attempt).rejects.toMatchObject({ message: expect.stri…
+    110|     expect(sdk.construct).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/31]⎯
+
+ FAIL  server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "embeddings": [
++     [
++       0.1,
++       0.2,
++       0.3,
++     ],
++   ],
++   "inputTokens": 3,
++   "model": "text-embedding-3-small",
++   "provider": "openai",
+  }
+
+ ❯ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts:124:5
+    122|     await expect(
+    123|       runWithTenantScope({ tenantId: String(ORG), source: 'test' }, ()…
+    124|     ).rejects.toBeInstanceOf(GatewayPolicyError);
+       |     ^
+    125|     expect(sdk.create).not.toHaveBeenCalled();
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/31]⎯
+
+ FAIL  server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "embeddings": [
++     [
++       0.1,
++       0.2,
++       0.3,
++     ],
++   ],
++   "inputTokens": 3,
++   "model": "text-embedding-3-small",
++   "provider": "openai",
+  }
+
+ ❯ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts:133:5
+    131|     await expect(
+    132|       runWithSystemTenantScope('embedding-provider-election.test', () …
+    133|     ).rejects.toBeInstanceOf(GatewayPolicyError);
+       |     ^
+    134|     expect(sdk.create).not.toHaveBeenCalled();
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/31]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  31 failed | 10 passed (41)
+   Start at  06:30:56
+   Duration  3.21s (transform 3.79s, setup 184ms, import 6.90s, tests 1.17s, environment 1ms)
+

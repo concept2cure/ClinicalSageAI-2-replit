@@ -1,0 +1,71 @@
+# R3 decision, MUTANT A: stamp = the event's own instant, comparison strict (start < stamp), no wait. The rule before this round. Run 2026-10-01T14:07:31Z
+{"level":30,"time":"2026-10-01T13:09:35.408Z","pid":20743,"hostname":"vm","context":{"userId":1880,"tenantId":"93330","resourceId":"1880"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:10:05.000Z","pid":20743,"hostname":"vm","context":{"userId":1881,"tenantId":93330,"resourceId":"1881"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:10:05.000Z","pid":20743,"hostname":"vm","context":{"userId":1881,"tenantId":"93330","resourceId":"1881"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that second has begun 1075ms
+   → the stamp is not the first whole second after the change: expected 1790860175 to be 1790860176 // Object.is equality
+   → the change answered before the second its stamp names had begun: expected 408 to be greater than or equal to 1000
+{"level":30,"time":"2026-10-01T13:10:35.100Z","pid":20743,"hostname":"vm","context":{"userId":1881,"tenantId":93330,"resourceId":"1881"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:10:35.600Z","pid":20743,"hostname":"vm","context":{"userId":1881,"tenantId":93330,"resourceId":"1881"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T13:11:05.000Z","pid":20743,"hostname":"vm","context":{"userId":1881,"tenantId":"93330","resourceId":"1881"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing 602ms
+   → a sign-in begun before the password change became a session after it: {"success":true,"accessToken":"<token>","refreshToken":"<token>","expiresIn":86400,"user":{"id":"1881","email":"dbste-halfway-20743_muplzalz@example.invalid","firstName":"Lane","lastName":"Termination halfway","displayName":"Lane Termination halfway","roles":["admin","user"],"permissions":["governed:write","report:finalize"],"organizationId":"93330","organizationName":"dbste-93330-20743_muplzalz","organizationUuid":"6914d67b-3a92-45c0-80ec-fe5ec41a2235","mfaEnabled":true,"mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}],"mustChangePassword":false},"mfaRequired":false}: expected 200 to be 401 // Object.is equality
+ ↓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door
+AssertionError: a session begun in the second of the password change, before it: the /api gate still admitted it: {"userId":1879,"role":"admin"}: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ expectEnded tests/db/session-termination.dbtest.ts:150:92
+    148|
+    149| function expectEnded(d: Awaited<ReturnType<typeof doors>>, what: strin…
+    150|   expect(d.gate.status, `${what}: the /api gate still admitted it: ${s…
+       |                                                                                            ^
+    151|   expect(d.routerGate.status, `${what}: a router's own gate still admi…
+    152|   expect(d.probe.status, `${what}: the session probe still reported it…
+ ❯ tests/db/session-termination.dbtest.ts:554:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that second has begun
+AssertionError: the stamp is not the first whole second after the change: expected 1790860175 to be 1790860176 // Object.is equality
+- Expected
++ Received
+- 1790860176
++ 1790860175
+ ❯ tests/db/session-termination.dbtest.ts:579:98
+    577|     expect(refreshed.status, shown(refreshed.body)).toBe(200);
+    578|     // How: the stamp names the first whole second after the change, a…
+    579|     expect.soft(await stampOf(m.id), 'the stamp is not the first whole…
+       |                                                                                                  ^
+    580|     expect.soft(answeredAfterMs, 'the change answered before the secon…
+    581|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that second has begun
+AssertionError: the change answered before the second its stamp names had begun: expected 408 to be greater than or equal to 1000
+ ❯ tests/db/session-termination.dbtest.ts:580:101
+    578|     // How: the stamp names the first whole second after the change, a…
+    579|     expect.soft(await stampOf(m.id), 'the stamp is not the first whole…
+    580|     expect.soft(answeredAfterMs, 'the change answered before the secon…
+       |                                                                                                     ^
+    581|   });
+    582|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing
+AssertionError: a sign-in begun before the password change became a session after it: {"success":true,"accessToken":"<token>","refreshToken":"<token>","expiresIn":86400,"user":{"id":"1881","email":"dbste-halfway-20743_muplzalz@example.invalid","firstName":"Lane","lastName":"Termination halfway","displayName":"Lane Termination halfway","roles":["admin","user"],"permissions":["governed:write","report:finalize"],"organizationId":"93330","organizationName":"dbste-93330-20743_muplzalz","organizationUuid":"6914d67b-3a92-45c0-80ec-fe5ec41a2235","mfaEnabled":true,"mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}],"mustChangePassword":false},"mfaRequired":false}: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ tests/db/session-termination.dbtest.ts:601:122
+    599|       .post('/api/auth/mfa/verify')
+    600|       .send({ challengeId: login.body.challengeId, code: totp(m.secret…
+    601|     expect(verify.status, `a sign-in begun before the password change …
+       |                                                                                                                          ^
+    602|     expect(verify.body.accessToken).toBeUndefined();
+    603|     expect(verify.body.refreshToken).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 skipped (16)
+   Start at  14:07:32
+   Duration  8.90s (transform 2.63s, setup 102ms, import 309ms, tests 8.05s, environment 0ms)

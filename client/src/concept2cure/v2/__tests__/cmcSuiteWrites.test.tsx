@@ -48,6 +48,12 @@ function res(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
 }
 
+/* The list as the server returns it: scoped to ?programId when given (QA j3 finding (b)). */
+function submissionList<T extends { programId?: string | null }>(rows: T[], url: string): T[] {
+  const program = new URL(url, 'http://localhost').searchParams.get('programId');
+  return program ? rows.filter((row) => row.programId === program) : rows;
+}
+
 /** Every call the surface made, as [method, url, body] triples. */
 const calls = () => apiRequest.mock.calls as Array<[string, string, unknown?]>;
 const callsTo = (method: string, url: string) =>
@@ -94,6 +100,10 @@ afterEach(() => {
 
 /* ══════════════════ Analytical method library ══════════════════ */
 
+/* The method library reads the open program's methods: analytical_methods
+   records its program since migrations/20261005_cmc_core_registers_project.sql. */
+const METHODS_READ = `/api/cmc/analytical-methods?projectId=${encodeURIComponent(PROJECT)}`;
+
 describe('CmMethodLibrary — the write half of the register', () => {
   const persisted = {
     id: 31,
@@ -110,7 +120,7 @@ describe('CmMethodLibrary — the write half of the register', () => {
 
   it('opens a drawer and POSTs the mapped body to the register endpoint', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/analytical-methods') return res({ success: true, data: [] });
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [] });
       if (m === 'POST' && u === '/api/cmc/analytical-methods') return res({ success: true, data: persisted });
       return res({});
     });
@@ -142,7 +152,7 @@ describe('CmMethodLibrary — the write half of the register', () => {
 
   it('shows the SERVER’s row, not the values that were typed', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/analytical-methods') return res({ success: true, data: [] });
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [] });
       // The server normalises the code; the table must show what was persisted.
       if (m === 'POST') return res({ success: true, data: { ...persisted, methodCode: 'AM-0014' } });
       return res({});
@@ -163,7 +173,7 @@ describe('CmMethodLibrary — the write half of the register', () => {
 
   it('a rejected write adds nothing and names the rejected field', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/analytical-methods') return res({ success: true, data: [] });
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [] });
       if (m === 'POST') {
         return res(
           { success: false, error: 'Invalid payload', details: [{ path: ['matrix'], message: 'Required' }] },
@@ -190,7 +200,7 @@ describe('CmMethodLibrary — the write half of the register', () => {
 
   it('an edit PUTs against the row and keeps the validation record it was seeded with', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
-      if (m === 'GET' && u === '/api/cmc/analytical-methods') return res({ success: true, data: [persisted] });
+      if (m === 'GET' && u === METHODS_READ) return res({ success: true, data: [persisted] });
       if (m === 'PUT') return res({ success: true, data: { ...persisted, status: 'retired' } });
       return res({});
     });
@@ -486,8 +496,8 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
           data: { totalSections: 2, approvedSections: 2, staleSections: 0, openCriticalContradictions: 0, exportReady: true },
         });
       }
-      if (m === 'GET' && u === '/api/submissions') {
-        return res([{ id: 10, title: 'ABC-123 IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active' }]);
+      if (m === 'GET' && (u === '/api/submissions' || u.startsWith('/api/submissions?'))) {
+        return res(submissionList([{ id: 10, title: 'ABC-123 IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active', programId: PROJECT }], u));
       }
       if (m === 'GET' && u === '/api/submissions/10/sequences') {
         return res([
@@ -498,9 +508,13 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
       return null;
     });
 
+  /* The shared filing picker (filingTarget.tsx) the Vault and Authoring
+     placements use, and the one placement reason field. */
+  const REASON = 'Initial IND: approved Module 3 for sequence 0002.';
   const pickTargets = async () => {
     fireEvent.change(await screen.findByLabelText('Target submission'), { target: { value: '10' } });
-    fireEvent.change(await screen.findByLabelText('Target sequence'), { target: { value: '20' } });
+    fireEvent.change(await screen.findByLabelText('Sequence'), { target: { value: '20' } });
+    fireEvent.change(screen.getByLabelText(/Reason for this placement/), { target: { value: REASON } });
   };
 
   it('places approved sections into a chosen sequence through the placement endpoint', async () => {
@@ -523,7 +537,7 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     await pickTargets();
 
     // The dispatched sequence is offered only as a disabled option, with the reason.
-    const locked = screen.getByRole('option', { name: /0001 · dispatched — leaves are immutable/ }) as HTMLOptionElement;
+    const locked = screen.getByRole('option', { name: /0001 · original · Dispatched — leaves immutable/ }) as HTMLOptionElement;
     expect(locked.disabled).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: /Place into the submission/i }));
@@ -533,11 +547,34 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     expect(callsTo('POST', '/api/cmc/module3-os/place-into-submission/' + PROJECT)[0][2]).toEqual({
       submissionId: 10,
       sequenceId: 20,
+      reason: REASON,
     });
     expect(await screen.findByText(/1 section placed into the submission/)).toBeTruthy();
     expect(screen.getByText(/m3\.2\.S\.4/)).toBeTruthy();
     // A skipped section is stated, never silently dropped.
     expect(screen.getByText(/§3\.2\.S\.7 \(No compiled narrative to place\.\)/)).toBeTruthy();
+  });
+
+  it('does not place without a stated reason, and offers only this program’s submissions', async () => {
+    wirePlacement((m, u) =>
+      m === 'GET' && (u === '/api/submissions' || u.startsWith('/api/submissions?'))
+        ? res(submissionList([
+            { id: 10, title: 'ABC-123 IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active', programId: PROJECT },
+            { id: 11, title: 'Another program IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active', programId: '99999999-0000-4000-8000-000000000099' },
+          ], u))
+        : null,
+    );
+    render(<CmModule3Build ask={() => {}} />);
+    await screen.findByText('Control of Drug Substance');
+    fireEvent.change(await screen.findByLabelText('Target submission'), { target: { value: '10' } });
+    expect(screen.queryByRole('option', { name: /Another program IND/ })).toBeNull();
+    fireEvent.change(await screen.findByLabelText('Sequence'), { target: { value: '20' } });
+    const place = screen.getByRole('button', { name: /Place into the submission/i }) as HTMLButtonElement;
+    expect(place.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(/Reason for this placement/), { target: { value: 'short' } });
+    expect(place.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(/Reason for this placement/), { target: { value: REASON } });
+    expect(place.disabled).toBe(false);
   });
 
   it('shows a placement refusal as the gate verdict it is, verbatim', async () => {

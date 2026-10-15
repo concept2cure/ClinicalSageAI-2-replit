@@ -1,0 +1,127 @@
+# RED: the P0-11 assertions (tests/boot_contract.tftest.hcl, new) against the UNFIXED terraform/stack
+# (main.tf/variables.tf as in the working tree before this change, other lanes' uncommitted P0-8 edits included).
+# The unfixed stack requires openai_api_key, so it is supplied by -var exactly as the old test file supplied it.
+# 2026-10-01T06:56:36Z
+$ cd terraform/stack && terraform test -no-color -var openai_api_key=test-openai-key
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... pass
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... pass
+  run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket"... pass
+  run "the_site_is_served_with_security_headers"... pass
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... pass
+  run "staging_is_distinct_from_production"... pass
+  run "provision_workflow_names_are_the_ones_terraform_creates"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_a_short_audit_export_key"... pass
+  run "refuses_an_audit_export_key_equal_to_the_jwt_secret"... pass
+  run "refuses_an_audit_export_key_equal_to_an_audit_seal_key"... pass
+  run "refuses_phi_approval_without_zero_retention"... pass
+  run "refuses_an_unknown_data_class"... pass
+  run "refuses_a_non_boolean_zero_retention_flag"... pass
+  run "refuses_a_non_string_intended_use"... pass
+  run "refuses_a_missing_region"... pass
+  run "accepts_the_fail_closed_interim_approvals"... pass
+  run "refuses_an_uppercase_domain_alias"... pass
+  run "refuses_a_domain_alias_with_a_scheme"... pass
+  run "refuses_a_domain_alias_with_a_trailing_dot"... pass
+  run "every_container_can_send_login_codes"... pass
+  run "refuses_an_smtp_port_without_required_tls"... pass
+  run "the_primary_model_key_is_a_secret_in_both_containers"... fail
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 746, in run "the_primary_model_key_is_a_secret_in_both_containers":
+ 746:     condition = alltrue([
+ 747:       for defs in [module.ecs.api_container, module.ecs.worker_container] :
+ 748:       one([for s in defs.secrets : s.valueFrom if s.name == "ANTHROPIC_API_KEY"]) == lookup(module.secrets.secret_arns, "anthropic_api_key", "<no such secret>")
+ 749:       && !contains([for e in defs.environment : e.name], "ANTHROPIC_API_KEY")
+ 750:     ])
+    ├────────────────
+    │ module.ecs.api_container is object with 8 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+    │ module.secrets.secret_arns is object with 13 attributes
+
+Both containers must read ANTHROPIC_API_KEY from the stack's
+anthropic_api_key secret, and never as a plain variable: without it no task
+can draft.
+  run "openai_is_absent_unless_a_tenant_ordered_it"... fail
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 759, in run "openai_is_absent_unless_a_tenant_ordered_it":
+ 759:     condition     = !contains(keys(module.secrets.secret_arns), "openai_api_key")
+    ├────────────────
+    │ module.secrets.secret_arns is object with 13 attributes
+
+With openai_enabled false (the default) the stack may store no OpenAI key:
+the DPA keeps OpenAI disabled unless a tenant's Order Form elects it.
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 763, in run "openai_is_absent_unless_a_tenant_ordered_it":
+ 763:     condition = alltrue([
+ 764:       for defs in [module.ecs.api_container, module.ecs.worker_container] :
+ 765:       !contains(concat([for e in defs.environment : e.name], [for s in defs.secrets : s.name]), "OPENAI_API_KEY")
+ 766:     ])
+    ├────────────────
+    │ module.ecs.api_container is object with 8 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+
+With openai_enabled false neither container may carry OPENAI_API_KEY, as a
+secret or a plain variable.
+  run "openai_is_provisioned_when_a_tenant_ordered_it"... fail
+
+Warning: Value for undeclared variable
+
+  on tests/boot_contract.tftest.hcl line 774, in run "openai_is_provisioned_when_a_tenant_ordered_it":
+ 774:     openai_enabled = true
+
+The module under test does not declare a variable named "openai_enabled", but
+it is declared in run block "openai_is_provisioned_when_a_tenant_ordered_it".
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 779, in run "openai_is_provisioned_when_a_tenant_ordered_it":
+ 779:     condition = alltrue([
+ 780:       for defs in [module.ecs.api_container, module.ecs.worker_container] :
+ 781:       one([for s in defs.secrets : s.valueFrom if s.name == "OPENAI_API_KEY"]) == lookup(module.secrets.secret_arns, "openai_api_key", "<no such secret>")
+ 782:       && !contains([for e in defs.environment : e.name], "OPENAI_API_KEY")
+ 783:       && contains([for s in defs.secrets : s.name], "ANTHROPIC_API_KEY")
+ 784:     ])
+    ├────────────────
+    │ module.ecs.api_container is object with 8 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+    │ module.secrets.secret_arns is object with 13 attributes
+
+With openai_enabled true both containers must read OPENAI_API_KEY from the
+openai_api_key secret, never as a plain variable, and keep ANTHROPIC_API_KEY.
+
+  run "refuses_openai_enabled_without_a_key"... fail
+
+Warning: Value for undeclared variable
+
+  on tests/boot_contract.tftest.hcl line 810, in run "refuses_openai_enabled_without_a_key":
+ 810:     openai_enabled = true
+
+The module under test does not declare a variable named "openai_enabled", but
+it is declared in run block "refuses_openai_enabled_without_a_key".
+
+Error: Missing expected failure
+
+  on tests/boot_contract.tftest.hcl line 812, in run "refuses_openai_enabled_without_a_key":
+ 812:   expect_failures = [terraform_data.boot_contract]
+
+The checkable object, terraform_data.boot_contract, was expected to report an
+error but did not.
+
+  run "refuses_an_openai_key_no_tenant_ordered"... skip
+  run "refuses_a_missing_anthropic_key"... skip
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 26 passed, 4 failed, 2 skipped.
+exit=1

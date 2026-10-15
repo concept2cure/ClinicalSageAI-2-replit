@@ -1,0 +1,12 @@
+Mutant M17-stream-no-capture: a tool handler runs outside the capture
+
+--- server/routes/ana-ri/stream.ts
+- runCapturingGenerations(generated, () =>
++ ((_g: unknown, f: () => any) => f())(generated, () =>
+
+Tests run: server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 63ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

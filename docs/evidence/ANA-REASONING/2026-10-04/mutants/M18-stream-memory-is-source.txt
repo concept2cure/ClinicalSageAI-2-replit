@@ -1,0 +1,17 @@
+Mutant M18-stream-memory-is-source: AnA's memory of earlier turns is a source
+
+--- server/routes/ana-ri/stream.ts
+- authoringContextBlock,
+        enrichment.block,
+      ].filter(
++ authoringContextBlock,
+        enrichment.block,
+        memoryBlock,
+      ].filter(
+
+Tests run: server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > the person's message and the project data are sources; AnA's memory is not 12ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,125 @@
+2026-10-01T08:28:06Z
+# knowledge-base.ts at working-tree content BEFORE the fix-round edit (sha256 below)
+4f2233eb74b855f92dab34ad8eaaf3b07bb21ac27d22e6d9c51ed445361387b1  server/routes/knowledge-base.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /search-connectors 32ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > POST /upload 39ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /context/:projectId 5ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > leaves the 422 answer unchanged 4ms
+ × server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > GET /context/:projectId (JSON 500) 12ms
+   → expected '{"detail":"SENTINEL-SHADOW psycopg2.e…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+ × server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-ind-section (plain-text 503) 5ms
+   → expected 'Traceback (most recent call last): SE…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+ × server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /upload (JSON 500) 15ms
+   → expected '{"detail":"SENTINEL-SHADOW psycopg2.e…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+ × server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-docx (binary relay, plain-text 500) 4ms
+   → expected 'Traceback (most recent call last): SE…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+ × server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-ind-package (binary relay, plain-text 500) 7ms
+   → expected 'Traceback (most recent call last): SE…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > still relays a shadow 4xx answer with its status and body (intended behaviour) 4ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > still relays a successful binary render unchanged 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > GET /context/:projectId (JSON 500)
+AssertionError: expected '{"detail":"SENTINEL-SHADOW psycopg2.e…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+
+- Expected:
+/SENTINEL-SHADOW|psycopg2|UndefinedTable|\/srv\/shadow|Traceback/
+
++ Received:
+"{\"detail\":\"SENTINEL-SHADOW psycopg2.errors.UndefinedTable: relation \\\"kb_chunks\\\" does not exist File \\\"/srv/shadow/knowledge.py\\\", line 88\"}"
+
+ ❯ expectShadowFailureContained server/routes/__tests__/knowledge-base-5xx-containment.test.ts:107:24
+    105|
+    106| function expectShadowFailureContained(res: request.Response, status: n…
+    107|   expect(res.text).not.toMatch(/SENTINEL-SHADOW|psycopg2|UndefinedTabl…
+       |                        ^
+    108|   expect(res.status).toBe(status);
+    109|   expect(res.body).toEqual({ error: 'Shadow service failed' });
+ ❯ server/routes/__tests__/knowledge-base-5xx-containment.test.ts:116:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-ind-section (plain-text 503)
+AssertionError: expected 'Traceback (most recent call last): SE…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+
+- Expected:
+/SENTINEL-SHADOW|psycopg2|UndefinedTable|\/srv\/shadow|Traceback/
+
++ Received:
+"Traceback (most recent call last): SENTINEL-SHADOW psycopg2.errors.UndefinedTable: relation \"kb_chunks\" does not exist File \"/srv/shadow/knowledge.py\", line 88"
+
+ ❯ expectShadowFailureContained server/routes/__tests__/knowledge-base-5xx-containment.test.ts:107:24
+    105|
+    106| function expectShadowFailureContained(res: request.Response, status: n…
+    107|   expect(res.text).not.toMatch(/SENTINEL-SHADOW|psycopg2|UndefinedTabl…
+       |                        ^
+    108|   expect(res.status).toBe(status);
+    109|   expect(res.body).toEqual({ error: 'Shadow service failed' });
+ ❯ server/routes/__tests__/knowledge-base-5xx-containment.test.ts:121:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /upload (JSON 500)
+AssertionError: expected '{"detail":"SENTINEL-SHADOW psycopg2.e…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+
+- Expected:
+/SENTINEL-SHADOW|psycopg2|UndefinedTable|\/srv\/shadow|Traceback/
+
++ Received:
+"{\"detail\":\"SENTINEL-SHADOW psycopg2.errors.UndefinedTable: relation \\\"kb_chunks\\\" does not exist File \\\"/srv/shadow/knowledge.py\\\", line 88\"}"
+
+ ❯ expectShadowFailureContained server/routes/__tests__/knowledge-base-5xx-containment.test.ts:107:24
+    105|
+    106| function expectShadowFailureContained(res: request.Response, status: n…
+    107|   expect(res.text).not.toMatch(/SENTINEL-SHADOW|psycopg2|UndefinedTabl…
+       |                        ^
+    108|   expect(res.status).toBe(status);
+    109|   expect(res.body).toEqual({ error: 'Shadow service failed' });
+ ❯ server/routes/__tests__/knowledge-base-5xx-containment.test.ts:130:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-docx (binary relay, plain-text 500)
+ FAIL  server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base shadow relays: a shadow 5xx body stays in the log > POST /generate-ind-package (binary relay, plain-text 500)
+AssertionError: expected 'Traceback (most recent call last): SE…' not to match /SENTINEL-SHADOW|psycopg2|Undefine…/srv\
+
+- Expected:
+/SENTINEL-SHADOW|psycopg2|UndefinedTable|\/srv\/shadow|Traceback/
+
++ Received:
+"Traceback (most recent call last): SENTINEL-SHADOW psycopg2.errors.UndefinedTable: relation \"kb_chunks\" does not exist File \"/srv/shadow/knowledge.py\", line 88"
+
+ ❯ expectShadowFailureContained server/routes/__tests__/knowledge-base-5xx-containment.test.ts:107:24
+    105|
+    106| function expectShadowFailureContained(res: request.Response, status: n…
+    107|   expect(res.text).not.toMatch(/SENTINEL-SHADOW|psycopg2|UndefinedTabl…
+       |                        ^
+    108|   expect(res.status).toBe(status);
+    109|   expect(res.body).toEqual({ error: 'Shadow service failed' });
+ ❯ server/routes/__tests__/knowledge-base-5xx-containment.test.ts:135:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+   Start at  08:28:07
+   Duration  3.46s (transform 1.71s, setup 150ms, import 2.76s, tests 136ms, environment 0ms)
+

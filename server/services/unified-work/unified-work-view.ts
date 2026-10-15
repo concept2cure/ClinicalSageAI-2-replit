@@ -348,6 +348,14 @@ export interface LoadUnifiedWorkInput {
   organizationId: number;
   /** Narrow to one project. Omit for the whole org. */
   projectId?: number;
+  /**
+   * Also read board tasks (unified_tasks) that are completed or cancelled. The
+   * other stores are read in every status; the board alone is read open-only,
+   * because the work queues that call this show outstanding work. A caller that
+   * needs a completion ratio sets this, or completed board work would be in
+   * neither the total nor the done count.
+   */
+  includeCompleted?: boolean;
 }
 
 export interface UnifiedWorkResult {
@@ -412,7 +420,7 @@ async function readSource<T>(
  * is true when any did not, and the driver's reason is logged.
  */
 export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<UnifiedWorkResult> {
-  const { organizationId, projectId } = input;
+  const { organizationId, projectId, includeCompleted = false } = input;
 
   const tasks = await readSource<TaskRowLike>(
     'project_tasks',
@@ -455,6 +463,7 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<Unif
   // rows mirrored FROM project_tasks are excluded because source 1 already
   // carries them — the same task must not appear twice.
   const openStatuses = ['pending', 'in-progress', 'review', 'blocked'];
+  const boardStatuses = includeCompleted ? [...openStatuses, 'completed', 'cancelled'] : openStatuses;
   const notAMirror = sqlDistinctFromProjectTask();
   const boardTasks = await readSource<UnifiedTaskRowLike>(
     'unified_tasks',
@@ -466,13 +475,13 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<Unif
           ? and(
               eq(unifiedTasks.organizationId, organizationId),
               eq(unifiedTasks.projectId, projectId),
-              inArray(unifiedTasks.status, openStatuses),
+              inArray(unifiedTasks.status, boardStatuses),
               isNull(unifiedTasks.deletedAt),
               notAMirror,
             )
           : and(
               eq(unifiedTasks.organizationId, organizationId),
-              inArray(unifiedTasks.status, openStatuses),
+              inArray(unifiedTasks.status, boardStatuses),
               isNull(unifiedTasks.deletedAt),
               notAMirror,
             ),

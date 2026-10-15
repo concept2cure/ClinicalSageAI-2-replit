@@ -1,0 +1,16 @@
+# Broader runs on this change (final tree, after the lint refactors), vitest.config.ts, RLS_ENFORCE=off.
+
+## 1. Server suites, every golden journey and tests/lineage
+Paths: tests/golden-journeys tests/lineage server/services/ectd server/services/submission-service server/services/ind-lifecycle server/routes/ind-lifecycle server/services/ind-forms server/services/report-os server/services/clinical-regulatory-evidence server/services/ana/__tests__/lineage-dossier-{decisions-unavailable,provenance-completeness,policy-holds}.test.ts server/routes/__tests__/{ind-forms.contract.integration,report-os-run-engine,insights-canvas-catalog,insights-canvas-open-program,insights-canvas-portfolio-unavailable,record-exports-recorded,report-os-audit-recording}.test.ts
+ Test Files  241 passed | 1 skipped (242)
+      Tests  2873 passed | 2 skipped (2875)
+
+## 2. The full client v2 suite (client/src/concept2cure/v2/__tests__)
+ Test Files  456 passed (456)
+      Tests  4793 passed (4793)
+
+## 3. Item-2 consequence, found by an earlier broad run (ectd, submission-service, ind-lifecycle, journeys)
+withdrawal-approval-binding.pglite.test.ts: 4 cases failed once IND amendments were held to their Form 1571 (the fixture's
+amendments carried none). Fixed in the fixture (each amendment files a 1571 at m1.1): 16 / 16.
+The same run showed 41 failures 'signatureSpentBy is not defined' from another fixer's file in mid-edit; they did not
+reproduce with this change's sources served at HEAD (82/82) nor later on the full tree (above).

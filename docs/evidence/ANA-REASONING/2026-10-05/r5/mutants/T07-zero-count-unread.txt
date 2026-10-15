@@ -1,0 +1,13 @@
+Mutant T07-zero-count-unread: a count of 0 reads as a success
+
+--- server/services/ana/tool-outcome.ts
+- const zeroCount = COUNT_KEYS.some((k) => r[k] === 0);
++ const zeroCount = false;
+
+Tests run: tests/services/tool-outcome.test.ts
+Result: KILLED
+
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a lookup or search that found nothing 5ms
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a CMC lookup that found nothing indexed says so as found: 0 (cmc-knowledge-tools.ts) 1ms
+      Tests  2 failed | 9 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

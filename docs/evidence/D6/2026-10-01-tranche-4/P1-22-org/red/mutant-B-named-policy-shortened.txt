@@ -1,0 +1,144 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:34:04.312Z","pid":29301,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:34:04.314Z","pid":29301,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:34:04.314Z","pid":29301,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/org-retention-period.dbtest.ts > the runtime posture this suite proves under > serves as app_service, not a superuser, without BYPASSRLS, with enforcement on 10ms
+ ✓ tests/db/org-retention-period.dbtest.ts > the runtime posture this suite proves under > the setting table is tenant-isolated by the sweep: RLS enabled and forced, tenant_isolation_policy present 4ms
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+[database] Database connection successful
+
+stderr | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T06:34:05.379Z","pid":29301,"hostname":"vm","context":{"filename":"DBTEST-P122ORG-1.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+Warning: Indexing all PDF objects
+
+(node:29301) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-01T06:34:05.705Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:34:05.780Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated
+{
+  "timestamp": "2026-10-01T06:34:05.868Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "15ef899a-6dab-4b09-b26f-42081fba94ab",
+    "code": "DBTEST-P122ORG-1",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > with no setting, a document is kept 25 years from admission — never undated 1439ms
+{"level":40,"time":"2026-10-01T06:34:05.921Z","pid":29301,"hostname":"vm","context":{"filename":"DBTEST-P122ORG-2.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:34:05.924Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:34:05.925Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > the next admission is dated from the organisation's 30 years
+{
+  "timestamp": "2026-10-01T06:34:05.944Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0f4a50a4-c423-49f6-8f1b-9b3438180ff8",
+    "code": "DBTEST-P122ORG-2",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:34:05.953Z","pid":29301,"hostname":"vm","context":{"filename":"DBTEST-P122ORG-3.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:34:05.956Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:34:05.957Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS
+{
+  "timestamp": "2026-10-01T06:34:05.968Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "83c82a20-4ab6-4a12-adec-76f377e238c8",
+    "code": "DBTEST-P122ORG-3",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS
+[database] Database connection successful { timestamp: '2026-10-01T06:34:05.981Z', poolSize: 1 }
+
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > reads 25 years, the default, for an organisation that has set nothing 9ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > an administrator sets 30 years; the change and its chained audit row are one transaction 28ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > the next admission is dated from the organisation's 30 years 34ms
+ ✓ tests/db/org-retention-period.dbtest.ts > admission dates a record from the organisation period (ADR-0014 §6) > another organisation's setting does not apply, cannot be read, and is invisible under RLS 38ms
+{"level":40,"time":"2026-10-01T06:34:06.035Z","pid":29301,"hostname":"vm","context":{"filename":"DBTEST-P122ORG-4.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:34:06.037Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:34:06.038Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins
+{
+  "timestamp": "2026-10-01T06:34:06.056Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "505e94c5-9e12-4930-9bd1-b4244a167319",
+    "code": "DBTEST-P122ORG-4",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:34:06.064Z","pid":29301,"hostname":"vm","context":{"filename":"DBTEST-P122ORG-5.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:34:06.066Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:34:06.066Z","pid":29301,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins
+{
+  "timestamp": "2026-10-01T06:34:06.075Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "cb63b0b1-c548-4b4d-8a37-0c96e1ff5164",
+    "code": "DBTEST-P122ORG-5",
+    "type": "OTHER",
+    "size": 88,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > below 25 years without a reason and the governing rule: 400, and nothing changes 21ms
+ ✓ tests/db/org-retention-period.dbtest.ts > shortening is a governed act > the database refuses a shorter period with no reason, whatever path writes it 2ms
+ × tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins 74ms
+   → a named policy is never shortened silently: expected '2036-10-01' to be '2041-10-12' // Object.is equality
+{"level":50,"time":"2026-10-01T06:34:06.101Z","pid":29301,"hostname":"vm","context":{"orgId":73,"err":"probe: the audit store refused the row","correlationId":null,"code":null},"msg":"[vault-retention-period] changing the retention period failed"}
+ ✓ tests/db/org-retention-period.dbtest.ts > authority and atomicity > a member can neither read nor set the period: 403, and nothing changes 10ms
+ ✓ tests/db/org-retention-period.dbtest.ts > authority and atomicity > a refused audit row takes the change down with it, and the 500 carries no error text 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/org-retention-period.dbtest.ts > shortening is a governed act > with a reason naming the governing rule it is recorded; a named policy that is longer still wins
+AssertionError: a named policy is never shortened silently: expected '2036-10-01' to be '2041-10-12' // Object.is equality
+
+Expected: "2041-10-12"
+Received: "2036-10-01"
+
+ ❯ tests/db/org-retention-period.dbtest.ts:298:71
+    296|     expect(plain.until).toBe(plain.y10);
+    297|     const named = await admit(mine, { retentionPolicy: POLICY });
+    298|     expect(named.until, 'a named policy is never shortened silently').…
+       |                                                                       ^
+    299|   });
+    300| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  06:34:02
+   Duration  4.11s (transform 1.67s, setup 80ms, import 1.84s, tests 1.75s, environment 0ms)
+

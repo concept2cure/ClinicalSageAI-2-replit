@@ -1,0 +1,12 @@
+# eslint per touched file: HEAD (stdin) vs working tree (final); counts are errors/warnings
+server/routes/cortex-unified.ts HEAD=0/32 now=0/32
+server/lib/tamper-proof-audit.ts HEAD=0/3 now=0/3
+server/services/auditService.ts HEAD=0/5 now=0/5
+server/startup/audit-trail.ts HEAD=0/1 now=0/1
+server/services/multi-agent-council.ts HEAD=0/9 now=0/9
+scripts/check-security-patterns.ts HEAD=0/1 now=0/1
+server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts HEAD=0/0 now=0/0
+server/routes/__tests__/cortex-unified-tenant-context.test.ts (new) now=0/0
+server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts (new) now=0/0
+server/startup/__tests__/audit-trail-tenant.test.ts (new) now=0/0
+tests/db/tamper-proof-log-tenant-column.dbtest.ts (new) now=0/0

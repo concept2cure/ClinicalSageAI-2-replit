@@ -4,11 +4,14 @@ import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 import {
   authoringPrincipalFromRequest,
+  isReadOnlyAuthoringPrincipal,
   decideAuthoringPermission,
   resolveAuthoringDocumentScope,
   resolveAuthoringSectionScope,
   type AuthoringObjectScope,
   type AuthoringPermissionAction,
+  type AuthoringPermissionDecision,
+  type AuthoringPrincipal,
 } from '../services/authoring/authoring-permissions';
 
 const logger = createScopedLogger('authoring-object-authorization');
@@ -20,10 +23,26 @@ interface ObjectTarget {
   resolve: () => Promise<AuthoringObjectScope | null>;
 }
 
+/**
+ * The request's path below /authoring, or null for any other route.
+ *
+ * It must name every spelling the authoring router accepts. Express routes
+ * match without case and ignore a trailing slash (Router defaults: caseSensitive
+ * false, strict false; authoring.router.ts sets neither), so
+ * POST /api/Authoring/Documents/:id/Request-Review/ runs the same handler as
+ * the lowercase path. Until 2026-10-08 this gate compared the literal path, so
+ * such a spelling skipped it and the handler ran with no object check (wave 2D
+ * review, docs/evidence/D2-ONE-ANA/2026-10-08/ana-2d-review-loop-closes/). The
+ * prefix is now compared without case, trailing slashes are dropped, and every
+ * route pattern in targetForRequest matches without case. Ids keep the
+ * spelling the caller sent.
+ */
 function relativeAuthoringPath(req: Request): string | null {
-  if (req.path === AUTHORING_PREFIX) return '/';
-  if (!req.path.startsWith(`${AUTHORING_PREFIX}/`)) return null;
-  return req.path.slice(AUTHORING_PREFIX.length) || '/';
+  const path = req.path.replace(/\/+$/, '') || '/';
+  const lower = path.toLowerCase();
+  if (lower === AUTHORING_PREFIX) return '/';
+  if (!lower.startsWith(`${AUTHORING_PREFIX}/`)) return null;
+  return path.slice(AUTHORING_PREFIX.length) || '/';
 }
 
 function actionFromPath(path: string): AuthoringPermissionAction {
@@ -39,8 +58,31 @@ function actionFromPath(path: string): AuthoringPermissionAction {
   if (/(?:^|\/)(?:comment|comments)(?:\/|$)/.test(lower)) return 'comment';
   // Produce the record without changing the document — see the 'export'
   // action in authoring-permissions.ts (2026-09-28).
-  if (/(?:^|\/)(?:export|file-to-vault|send-to-packager)(?:\/|$)/.test(lower)) return 'export';
+  // A working copy is produced the same way and needs the same permission.
+  if (/(?:^|\/)(?:export|file-to-vault|send-to-packager|working-copy)(?:\/|$)/.test(lower)) return 'export';
   return 'edit';
+}
+
+/**
+ * POST /docs/:id/e-sign carrying the REVIEWER meaning: the review signature.
+ *
+ * QA 2026-10-08 (browser walk j4-authoring): every /e-sign was an approval, so
+ * the REVIEWER role on a document (view, comment, review) could not apply the
+ * review signature — and the Vault carries an Authoring approval only after a
+ * review signature by a different person (authoring-approval-carryover.ts). A
+ * review signature approves and freezes nothing (the route flips status only
+ * for APPROVER), so it is the 'review' act: REVIEWER, APPROVER or OWNER. Every
+ * other meaning, and every freeze, stays 'approve'. The §11.10(g) signing-role
+ * check on the route still applies to all of them.
+ */
+function isReviewSignature(req: Request, path: string): boolean {
+  if (!/^\/docs\/[^/]+\/e-sign$/i.test(path)) return false;
+  return String((req.body as { meaning?: unknown } | undefined)?.meaning ?? '') === 'REVIEWER';
+}
+
+/** The action a /docs/:id/… request is judged as: its path's, except the review signature. */
+function documentAction(req: Request, path: string): AuthoringPermissionAction {
+  return isReviewSignature(req, path) ? 'review' : actionFromPath(path);
 }
 
 async function resolveCommentScope(
@@ -107,22 +149,76 @@ async function resolveCitationScope(
   };
 }
 
+/**
+ * The routes under /documents/:id that this gate classifies. Each is matched
+ * exactly; anything else under /documents/ keeps its own route rules.
+ *
+ * The tracked-change-decision routes sit under /documents/:id, not /docs/:id
+ * — a naming split from the rest of this file, and the reason this gate never
+ * ran on them at all: `docMatch` only matches /docs/. actionFromPath's
+ * `review` alternatives look like they should classify this path (they list
+ * 'tracked-change' and 'decision'), but do not: each alternative requires a
+ * whole path segment, and the real segment here is `tracked-change-decisions`
+ * — `tracked-change` is followed by `-`, not `/` or end-of-string, so the
+ * regex does not match and actionFromPath falls through to its final `return
+ * 'edit'`. That fallthrough is the right action independently of the regex
+ * miss: the content an accepted/rejected suggestion changes is persisted by
+ * PATCH /sections/:sectionId, which this middleware already gates as 'edit'
+ * via sectionMatch, so anyone who can persist the change can record the
+ * decision, and nobody who cannot persist it (REVIEWER/APPROVER, who pass
+ * 'review' but not 'edit') is newly denied anything they could complete
+ * today.
+ *
+ * Sending a document for review (POST /documents/:id/request-review) is the
+ * sender's act, not the reviewer's: it names who reviews the document, with a
+ * reason on its audit row, and a re-request reopens a recorded verdict. Until
+ * 2026-10-08 it was unclassified, so any authenticated member of the
+ * organization could send any of its documents for review, to anyone (wave
+ * 2C, docs/evidence/D2-ONE-ANA/2026-10-08/ana-2c-send-for-review/; fixed in
+ * wave 2D). 'edit' is the action exactly OWNER and AUTHOR hold
+ * (authoring-permissions.ts ROLE_ACTIONS); a global admin passes as on every
+ * other object route. A REVIEWER or APPROVER grant does not send the document
+ * out. 'edit' also refuses a sealed document (FROZEN, APPROVED, …) with 409: a
+ * review request would reopen verdicts on a record that is already signed.
+ *
+ * Native review reads require whole-document view access; verdicts require
+ * review access. The service independently rechecks current membership, ACL,
+ * assignment, authorship and saved content on its request-pinned transaction.
+ */
+const DOCUMENTS_ROUTES: ReadonlyArray<{ pattern: RegExp; action: AuthoringPermissionAction }> = [
+  { pattern: /^\/documents\/([^/]+)\/tracked-change-decisions(?:\/bulk)?$/i, action: 'edit' },
+  { pattern: /^\/documents\/([^/]+)\/request-review$/i, action: 'edit' },
+  { pattern: /^\/documents\/([^/]+)\/review$/i, action: 'review' },
+  { pattern: /^\/documents\/([^/]+)\/reviews$/i, action: 'view' },
+];
+
+/** The classified /documents/:id route `path` names, with its document id, or null. */
+function documentsRouteTarget(path: string): { action: AuthoringPermissionAction; docId: string } | null {
+  for (const route of DOCUMENTS_ROUTES) {
+    const match = route.pattern.exec(path);
+    if (match) return { action: route.action, docId: match[1] };
+  }
+  return null;
+}
+
 function targetForRequest(req: Request, tenantId: number, path: string): ObjectTarget | null {
   const pool = getPool();
+  // Compared without case, as the router matches (relativeAuthoringPath).
+  const lower = path.toLowerCase();
 
   // Creating a document has no object to authorize yet. The database trigger in
   // 20260727_authoring_object_permissions.sql atomically grants its creator
   // OWNER + AUTHOR permissions.
-  if (req.method === 'POST' && path === '/docs') return null;
+  if (req.method === 'POST' && lower === '/docs') return null;
   // POST /docs/from-draft creates a document too (WM, 2026-09-21: a drafted
   // document becomes an authoring document in one transaction). Without this
   // line the docMatch below read `from-draft` as a document id and answered
   // 404 AUTHORING_OBJECT_NOT_FOUND for every call. Same grant on creation.
-  if (req.method === 'POST' && path === '/docs/from-draft') return null;
+  if (req.method === 'POST' && lower === '/docs/from-draft') return null;
 
   // Creating a section is a document mutation; the parent id comes from the
   // existing authoring contract.
-  if (req.method === 'POST' && path === '/sections') {
+  if (req.method === 'POST' && lower === '/sections') {
     const docId = String(req.body?.doc_id ?? '').trim();
     if (!docId) {
       return { action: 'edit', resolve: async () => null };
@@ -133,7 +229,7 @@ function targetForRequest(req: Request, tenantId: number, path: string): ObjectT
     };
   }
 
-  const sectionMatch = /^\/sections\/([^/]+)(?:\/.*)?$/.exec(path);
+  const sectionMatch = /^\/sections\/([^/]+)(?:\/.*)?$/i.exec(path);
   if (sectionMatch) {
     const sectionId = sectionMatch[1];
     return {
@@ -142,48 +238,26 @@ function targetForRequest(req: Request, tenantId: number, path: string): ObjectT
     };
   }
 
-  // The tracked-change-decision routes sit under /documents/:id, not /docs/:id
-  // — a naming split from the rest of this file, and the reason this gate
-  // never ran on them at all: `docMatch` below only matches /docs/. Matched
-  // narrowly and BEFORE docMatch, on purpose. actionFromPath's `review`
-  // alternatives look like they should classify this path (they list
-  // 'tracked-change' and 'decision'), but do not: each alternative requires a
-  // whole path segment, and the real segment here is `tracked-change-decisions`
-  // — `tracked-change` is followed by `-`, not `/` or end-of-string, so the
-  // regex does not match and actionFromPath falls through to its final `return
-  // 'edit'`. That fallthrough is the right action independently of the regex
-  // miss: the content an accepted/rejected suggestion changes is persisted by
-  // PATCH /sections/:sectionId, which this middleware already gates as 'edit'
-  // via sectionMatch above, so anyone who can persist the change can record
-  // the decision, and nobody who cannot persist it (REVIEWER/APPROVER, who
-  // pass 'review' but not 'edit') is newly denied anything they could
-  // complete today. A broader match on all of /documents/ was considered and
-  // rejected: it also covers /documents/:id/review and
-  // /documents/:id/request-review, whose reviewers are assigned via
-  // POST /documents/:id/request-review — a flow that writes only
-  // authoring_reviews and grants no doc_permissions row — so classifying
-  // those as 'review'/'edit' here would 403 every non-admin reviewer using
-  // the review workflow as designed.
-  const trackedChangeDecisionMatch =
-    /^\/documents\/([^/]+)\/tracked-change-decisions(?:\/bulk)?$/.exec(path);
-  if (trackedChangeDecisionMatch) {
-    const docId = trackedChangeDecisionMatch[1];
+  // The /documents/:id routes this gate classifies (DOCUMENTS_ROUTES, above),
+  // matched narrowly and BEFORE docMatch, which only matches /docs/.
+  const documentsRoute = documentsRouteTarget(path);
+  if (documentsRoute) {
     return {
-      action: 'edit',
-      resolve: () => resolveAuthoringDocumentScope(pool, tenantId, docId),
+      action: documentsRoute.action,
+      resolve: () => resolveAuthoringDocumentScope(pool, tenantId, documentsRoute.docId),
     };
   }
 
-  const docMatch = /^\/docs\/([^/]+)(?:\/.*)?$/.exec(path);
+  const docMatch = /^\/docs\/([^/]+)(?:\/.*)?$/i.exec(path);
   if (docMatch) {
     const docId = docMatch[1];
     return {
-      action: actionFromPath(path),
+      action: documentAction(req, path),
       resolve: () => resolveAuthoringDocumentScope(pool, tenantId, docId),
     };
   }
 
-  const commentMatch = /^\/comments\/([^/]+)(?:\/.*)?$/.exec(path);
+  const commentMatch = /^\/comments\/([^/]+)(?:\/.*)?$/i.exec(path);
   if (commentMatch) {
     return {
       action: 'comment',
@@ -191,7 +265,7 @@ function targetForRequest(req: Request, tenantId: number, path: string): ObjectT
     };
   }
 
-  const citationMatch = /^\/citations\/([^/]+)(?:\/.*)?$/.exec(path);
+  const citationMatch = /^\/citations\/([^/]+)(?:\/.*)?$/i.exec(path);
   if (citationMatch) {
     return {
       action: 'edit',
@@ -216,13 +290,39 @@ function targetForRequest(req: Request, tenantId: number, path: string): ObjectT
  * necessary but not sufficient to mutate a governed document. Any policy-store
  * or query failure returns 503 and denies the write.
  */
+function unavailableObjectRefusal(res: Response, decision: AuthoringPermissionDecision): Response | null {
+  if (decision.reason === 'object-not-found') return res.status(404).json({
+    error: { code: 'AUTHORING_OBJECT_NOT_FOUND', message: 'Authoring object not found.' },
+  });
+  if (decision.reason === 'document-immutable') return res.status(409).json({
+    error: { code: 'AUTHORING_DOCUMENT_IMMUTABLE',
+      message: `Document status ${decision.scope?.documentStatus ?? 'unknown'} does not permit this action.` },
+  });
+  return null;
+}
+
+function skipsObjectAuthorization(req: Request, path: string | null): boolean {
+  if (path == null) return true;
+  if (req.method === 'GET' && /^\/documents\/[^/]+\/reviews$/i.test(path)) return false;
+  return SAFE_METHODS.has(req.method);
+}
+
+function forbiddenAuthoringAction(res: Response): Response {
+  return res.status(403).json({ error: { code: 'AUTHORING_OBJECT_FORBIDDEN',
+    message: 'You do not have permission to perform this action on the authoring object.' } });
+}
+
+function readOnlyCreation(req: Request, path: string, principal: AuthoringPrincipal): boolean {
+  return req.method === 'POST' && /^\/docs(?:\/from-draft)?$/i.test(path) && isReadOnlyAuthoringPrincipal(principal);
+}
+
 export async function authoringObjectAuthorization(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void | Response> {
   const authoringPath = relativeAuthoringPath(req);
-  if (authoringPath == null || SAFE_METHODS.has(req.method)) {
+  if (skipsObjectAuthorization(req, authoringPath)) {
     next();
     return;
   }
@@ -238,8 +338,12 @@ export async function authoringObjectAuthorization(
     });
   }
 
-  const target = targetForRequest(req, tenantId, authoringPath);
+  const target = targetForRequest(req, tenantId, authoringPath!);
   if (!target) {
+    // Creation has no object ACL yet; it still changes a governed record.
+    if (readOnlyCreation(req, authoringPath!, principal)) {
+      return forbiddenAuthoringAction(res);
+    }
     next();
     return;
   }
@@ -253,19 +357,8 @@ export async function authoringObjectAuthorization(
       action: target.action,
     });
 
-    if (decision.reason === 'object-not-found') {
-      return res.status(404).json({
-        error: { code: 'AUTHORING_OBJECT_NOT_FOUND', message: 'Authoring object not found.' },
-      });
-    }
-    if (decision.reason === 'document-immutable') {
-      return res.status(409).json({
-        error: {
-          code: 'AUTHORING_DOCUMENT_IMMUTABLE',
-          message: `Document status ${decision.scope?.documentStatus ?? 'unknown'} does not permit this action.`,
-        },
-      });
-    }
+    const refusal = unavailableObjectRefusal(res, decision);
+    if (refusal) return refusal;
     if (!decision.allowed) {
       logger.warn('Authoring object mutation denied', {
         tenantId,
@@ -277,12 +370,7 @@ export async function authoringObjectAuthorization(
         sectionId: decision.scope?.sectionId,
         reason: decision.reason,
       });
-      return res.status(403).json({
-        error: {
-          code: 'AUTHORING_OBJECT_FORBIDDEN',
-          message: 'You do not have permission to perform this action on the authoring object.',
-        },
-      });
+      return forbiddenAuthoringAction(res);
     }
 
     res.locals.authoringAuthorization = {

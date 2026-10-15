@@ -1,0 +1,5 @@
+{
+  "semgrep_executable": null,
+  "semgrep_python_module": "None",
+  "focused_semgrep_scan": "NOT_RUN: local Semgrep executable and module unavailable; no dependency or rule changes made"
+}

@@ -1,0 +1,18 @@
+# Gates whose names mention ana, tool or capability (package.json scripts), 2026-10-08T09:47:49Z, RLS_ENFORCE=off
+
+## npm run ci:ana-surface-context
+
+[ci:ana-surface-context] OK — 116 of 121 routable surface ids publish screen state (baseline 116 exact), 5 exempt, 0 still blind.
+  112 through usePublishSurfaceContext; 4 through their own useAnaChat moduleContext (conversation-thread, document-authoring, ectd-coauthor, rbm) — surfaces that own the
+exit=0
+
+## npm run test:ana
+ Test Files  4 passed (4)
+      Tests  303 passed (303)
+exit=0
+
+## manifest:ana
+The generator (scripts/generate-ana-capability-manifest.ts). Run to a copy; only the search_connected_repositories entry was taken (other entries carry other lanes' drift).
+
+## verify:ana
+Not run: drives POST /api/ana-ri/stream on a running instance with a live model (scripts/ops/verify-ana-answers.mjs).

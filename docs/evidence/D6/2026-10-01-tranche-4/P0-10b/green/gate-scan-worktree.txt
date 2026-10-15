@@ -1,0 +1,11 @@
+server/routes/irb.ts: no sign-ledger write site
+server/routes/iacuc.ts: no sign-ledger write site
+server/routes/ibc.ts: no sign-ledger write site
+server/routes/rim.ts: no sign-ledger write site
+server/routes/protocol-consent.ts: no sign-ledger write site
+server/routes/protocol-deviations.ts: no sign-ledger write site
+server/routes/biopharma/bla-workbench.ts: no sign-ledger write site
+server/api/cmc/batchRecordRoutes.ts:434  recordGovernedAction  ok
+server/api/cmc/routes.ts:902  recordGovernedAction  ok
+server/api/cmc/specificationRoutes.ts:369  recordGovernedAction  ok
+WORKTREE: 0 unceremonied sign site(s) in the P0-10b files

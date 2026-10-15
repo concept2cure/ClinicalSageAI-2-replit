@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is true for the caller's own live program 14ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for another organization's program 3ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for a deleted program — and true only when the caller opts in by name 2ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for a program only the legacy registry holds 2ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > answers the same with the organization as a digit string 2ms
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > throws VerificationUnavailableError, not false, when it cannot run 9ms
+ × tests/db/program-ownership.dbtest.ts > the RBM site-risk read asks whether the caller owns the program, not whether it mentions it > refuses tenant B a read for tenant A's program, though B holds a KRI naming it (RLS enforcing) 31ms
+   → expected { ok: true, rows: [] } to deeply equal { ok: false, reason: 'not_in_tenant' }
+ × tests/db/program-ownership.dbtest.ts > the RBM site-risk read asks whether the caller owns the program, not whether it mentions it > does not refuse tenant A its own program for having no RBM records yet 6ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/program-ownership.dbtest.ts > the RBM site-risk read asks whether the caller owns the program, not whether it mentions it > refuses tenant B a read for tenant A's program, though B holds a KRI naming it (RLS enforcing)
+AssertionError: expected { ok: true, rows: [] } to deeply equal { ok: false, reason: 'not_in_tenant' }
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
+-   "reason": "not_in_tenant",
++   "ok": true,
++   "rows": [],
+  }
+
+ ❯ tests/db/program-ownership.dbtest.ts:153:17
+    151|     // Before 2026-10-01: { ok: true, rows: [] } — a foreign program r…
+    152|     // a healthy study with no sites.
+    153|     expect(out).toEqual({ ok: false, reason: 'not_in_tenant' });
+       |                 ^
+    154|   });
+    155|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/program-ownership.dbtest.ts > the RBM site-risk read asks whether the caller owns the program, not whether it mentions it > does not refuse tenant A its own program for having no RBM records yet
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/program-ownership.dbtest.ts:160:20
+    158|     // refused until some RBM record named the program.
+    159|     const out = await withSession(scratch.runtimePool!, enforced(ORG_A…
+    160|     expect(out.ok).toBe(true);
+       |                    ^
+    161|   });
+    162| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  06:19:19
+   Duration  5.02s (transform 1.49s, setup 94ms, import 2.83s, tests 1.67s, environment 0ms)
+

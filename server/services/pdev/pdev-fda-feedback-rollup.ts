@@ -25,9 +25,8 @@
  */
 
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
   qSubmissions,
   qSubQuestions,
@@ -41,6 +40,7 @@ import {
   type PdevActivityState,
 } from './pdev-activity-registry';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
+import { programInOrganization } from '../c2c/program-access';
 
 const logger = createScopedLogger('pdev-fda-feedback-rollup');
 
@@ -223,17 +223,7 @@ export class PdevFdaFeedbackRollupService {
     organizationId: number,
     options?: { minConfidence?: number }
   ): Promise<PdevFdaFeedbackProposalReport | null> {
-    const programRows = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(
-          eq(regulatoryPrograms.id, programId),
-          eq(regulatoryPrograms.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-    if (!programRows[0]) return null;
+        if (!(await programInOrganization(pool, programId, organizationId))) return null;
 
     const subs = await db
       .select({ id: qSubmissions.id })
@@ -310,17 +300,7 @@ export class PdevFdaFeedbackRollupService {
    */
   async applyRollup(input: PdevFdaFeedbackApplyInput): Promise<PdevFdaFeedbackApplyResult> {
     // Tenant gate.
-    const programRows = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(
-          eq(regulatoryPrograms.id, input.programId),
-          eq(regulatoryPrograms.organizationId, input.organizationId)
-        )
-      )
-      .limit(1);
-    if (!programRows[0]) {
+        if (!(await programInOrganization(pool, input.programId, input.organizationId))) {
       throw new Error('PDEV program not found in tenant');
     }
 

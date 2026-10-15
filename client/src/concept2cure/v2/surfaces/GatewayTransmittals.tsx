@@ -15,7 +15,12 @@
  *   • GET  /gateways/transmittals/:id/status — poll the gateway
  *   • GET  /gateways/transmittals/:id/ack    — download the ACK (binary)
  *   • POST /gateways/transmittals/:id/rollback — governed rollback (reason ≥8)
+ *   • POST /gateways/transmittals/:id/technical-rejection — the agency did not
+ *          load the sequence this transmittal filed: a governed sign (reason,
+ *          §11.50 meaning, re-auth) carrying the agency's notice as a Vault
+ *          document; the one act that takes a sequence off the filed history
  *
+
  * HONESTY: gateways and the transmittal log render live data or honest
  * empty/error states. Transmit/rollback are real awaited writes gated by the
  * server's re-auth; a 401 (re-auth failed), 412 (credentials not configured),
@@ -47,6 +52,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
+import { gatewayLabel, transmittalStatusTone as statusTone } from '../gatewayLabels';
 
 interface GatewayInfo { region?: string; gateway?: string; name?: string; configured?: boolean; environment?: string; [k: string]: unknown; }
 interface Transmittal {
@@ -57,10 +63,28 @@ interface Transmittal {
   transmission_id?: string | null; status?: string | null; error_class?: string | null; error_message?: string | null;
   submitted_at?: string | null; ack_received_at?: string | null; completed_at?: string | null;
   submitted_by?: number | null; submitted_by_name?: string | null;
+  /** The submission package the transmittal sent; null for a non-package send. */
+  package_id?: number | null;
   /** 2026-09-28 (Q-0928-3): `signature` is stamped by the governed transmit in the
    *  same transaction as the electronic signature; absent on rows transmitted
-   *  before that, or whose signature transaction was lost. */
-  metadata?: { signature?: { meaning?: string | null; signatureId?: number | null } | null; [k: string]: unknown } | null;
+   *  before that, or whose signature transaction was lost. `technicalRejection`
+   *  is written by the governed technical-rejection action (sweep F19). */
+  metadata?: {
+    signature?: { meaning?: string | null; signatureId?: number | null } | null;
+    technicalRejection?: { sequence?: string | null; recordedAt?: string | null } | null;
+    /** 2026-10-01 (D7): whose account the transmit went out under, stamped by the
+     *  guarded transmit. Absent on rows transmitted before the choice existed. */
+    gatewayAccount?: { mode?: string | null; senderIdentifier?: string | null } | null;
+    [k: string]: unknown;
+  } | null;
+}
+
+/** Whose account a transmittal went out under, as recorded on it; nothing when it was not recorded. */
+export function accountLine(t: Pick<Transmittal, 'metadata'>): string | null {
+  const a = t.metadata?.gatewayAccount;
+  if (a?.mode === 'platform') return 'via the platform account';
+  if (a?.mode === 'client') return a.senderIdentifier ? `via your account (${a.senderIdentifier})` : 'via your account';
+  return null;
 }
 
 interface RefusalFinding { ruleId?: string; severity?: string; message?: string }
@@ -89,15 +113,35 @@ interface PackageOption { id: number; packageId?: string; title?: string; status
  * when the list could not be loaded the field falls back to the numeric id and
  * says so — never an empty picker presented as "no packages".
  */
-const PACKAGE_FIELD = (def: string | undefined, packages: PackageOption[] | null): C2CFormField =>
+/**
+ * Separation of duties, said where the package is chosen. `independence` is the
+ * server's dry-run of the transmit's own check (GET
+ * /api/mdx/gateways/transmit-independence), passed by the TRANSMIT form only:
+ * the creator of a package may not transmit it, and that check runs after the
+ * password, so without this the creator learned it by being refused. Unknown
+ * (no entry, or 'unverified') adds nothing — it is not "you cannot".
+ */
+const TRANSMIT_NOTE: Record<string, string> = {
+  author: ' — you created this; a colleague must transmit it',
+  'no-creator': ' — no creator recorded; it cannot be transmitted',
+};
+const PACKAGE_FIELD = (
+  def: string | undefined,
+  packages: PackageOption[] | null,
+  independence?: Record<string, string> | null,
+): C2CFormField =>
   packages && packages.length > 0
     ? {
         key: 'packageId', label: 'Package', type: 'select', required: true, half: true, default: def,
         options: packages.map((p) => ({
           value: String(p.id),
-          label: `#${p.id} · ${p.title ?? p.packageId ?? 'untitled'} · ${p.status ?? 'status unknown'}`,
+          label: `#${p.id} · ${p.title ?? p.packageId ?? 'untitled'} · ${p.status ?? 'status unknown'}${
+            TRANSMIT_NOTE[independence?.[String(p.id)] ?? ''] ?? ''
+          }`,
         })),
-        desc: 'Only a locked package can be assembled and transmitted.',
+        desc: independence && packages.some((p) => independence[String(p.id)] === 'author')
+          ? 'Only a locked package can be transmitted, and not by the person who created it (separation of duties).'
+          : 'Only a locked package can be assembled and transmitted.',
       }
     : {
         key: 'packageId', label: 'Package id', type: 'number', required: true, half: true, default: def,
@@ -108,16 +152,22 @@ const PACKAGE_FIELD = (def: string | undefined, packages: PackageOption[] | null
 const IDENTIFIERS_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · governed change',
   title: 'Record regulatory identifiers',
-  sub: 'The agency application number and applicant identity the Module 1 backbone carries. Recorded on the package with your reason. A bundle assembled under different identifiers is cleared and must be assembled again.',
+  sub: 'The agency application number, applicant identity and regulatory contact the Module 1 backbone carries. Recorded on the package with your reason. A bundle assembled under different identifiers is cleared and must be assembled again.',
   // The default banner asserts an audit entry will be written; this route
   // documents the case where it cannot be, so say what actually happens.
   governed: 'Governed change — your reason is recorded with it in the audit trail. If the ledger entry cannot be written, the change is still applied and the response says so.',
   submitLabel: 'Record',
   fields: [
     PACKAGE_FIELD(def, packages),
-    { key: 'applicationNumber', label: 'Application number', type: 'text', required: true, half: true, placeholder: 'e.g. IND123456', desc: 'Letters, digits, ".", "_" or "-"; up to 64 characters.' },
-    { key: 'applicantId', label: 'Applicant id', type: 'text', required: true, half: true, placeholder: 'e.g. DUNS number', desc: 'Same character set as the application number.' },
+    /* FDA's own forms (sweep F05, F07b, 2026-10-01): the example was
+       'e.g. IND123456', which taught operators to record what FDA refuses; the
+       server now refuses it for an FDA eCTD package and never rewrites it. */
+    { key: 'applicationNumber', label: 'Application number', type: 'text', required: true, half: true, placeholder: 'e.g. 123456', desc: 'FDA eCTD (IND, NDA, ANDA, BLA, DMF): the six digits FDA assigned, leading zeros kept, no prefix. 510(k) / eSTAR: the K-number.' },
+    { key: 'applicantId', label: 'Applicant id', type: 'text', required: true, half: true, placeholder: 'e.g. 123456789', desc: 'FDA: the company’s D-U-N-S number, nine digits with no dashes.' },
     { key: 'applicantName', label: 'Applicant name', type: 'text', required: true },
+    { key: 'contactName', label: 'Regulatory contact', type: 'text', half: true, desc: 'Named in FDA’s Module 1 backbone; an FDA eCTD package needs the name, telephone and e-mail.' },
+    { key: 'contactPhone', label: 'Contact telephone', type: 'text', half: true, placeholder: 'e.g. +1 301 555 0100' },
+    { key: 'contactEmail', label: 'Contact e-mail', type: 'text', half: true },
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the change.' },
   ],
 });
@@ -132,11 +182,21 @@ const ASSEMBLE_FORM = (def: string | undefined, packages: PackageOption[] | null
     { key: 'region', label: 'Region', type: 'select', options: ['FDA', 'EMA', 'PMDA', 'CA'], default: 'FDA', half: true },
     { key: 'sequence', label: 'Sequence', type: 'text', default: '0000', half: true, placeholder: '0000', desc: 'Four digits. 0000 is the original filing.' },
     {
-      key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. Efficacy Supplement',
-      // "amendment" is the word that comes to mind and the one FDA has no code
-      // for, so the example here is a term that files. The full list travels
-      // with the refusal rather than being restated in a field description.
-      desc: 'Required for any sequence after 0000: only the original is an original by definition. FDA files from a fixed list — Original Application, Efficacy Supplement, Annual Report and others; other regions take their own term. A term that cannot be filed is refused with the list.',
+      key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. Original Application',
+      // "amendment" is the word that comes to mind and the one FDA has no
+      // submission-type code for: on FDA it is a SUB-type (below). The full
+      // list travels with the refusal rather than being restated here.
+      desc: 'Required for any sequence after 0000: only the original is an original by definition. FDA matches a term from its fixed list exactly — an IND amendment is an Original Application; supplements are for an approved NDA or BLA. Other regions take their own term. A term that cannot be filed is refused with the list.',
+    },
+    /* FDA's sub-type and submission-id (sweep F04, 2026-10-01): without them
+       every follow-up was declared the Original of a new regulatory activity. */
+    {
+      key: 'submissionSubType', label: 'Sub-type (FDA)', type: 'text', half: true, placeholder: 'e.g. Amendment',
+      desc: 'What this sequence is within its regulatory activity: Original, Amendment, Resubmission, Report, Correspondence… Required for an FDA sequence after 0000.',
+    },
+    {
+      key: 'submissionId', label: 'Activity it continues (FDA)', type: 'text', half: true, placeholder: 'e.g. 0000',
+      desc: 'The first sequence of the regulatory activity this one belongs to — 0000 for an amendment to the original IND. Leave empty for a sequence that opens its own.',
     },
     {
       key: 'withdraw', label: 'Withdraw from the application', type: 'textarea',
@@ -166,30 +226,7 @@ export function parseWithdrawals(raw: string | undefined): Array<{ ctdSection: s
     .filter((w) => w.ctdSection && w.fileName);
 }
 
-/* ── Gateway names ───────────────────────────────────────────────────────────
-   GET /api/mdx/gateways answers { region, gateway, transport, configured } — a
-   registry key, no display name — and the table rendered `g.name ?? g.gateway`,
-   so the operator read "pmda_gateway", "hc_cesg", "swissmedic_egateway". The
-   names below are the ones each implementation's own header gives
-   (server/services/submission-gateways/*.ts). A key not listed here is shown
-   as sent, never guessed at. */
-const GATEWAY_LABEL: Record<string, string> = {
-  esg: 'FDA ESG',
-  cesp: 'CESP',
-  eudamed: 'EUDAMED',
-  pmda_gateway: 'PMDA Gateway',
-  hc_cesg: 'Health Canada CESG',
-  mhra_gateway: 'MHRA Gateway',
-  nmpa_gateway: 'NMPA Gateway',
-  tga_ebs: 'TGA eBusiness Services',
-  swissmedic_egateway: 'Swissmedic eGateway',
-  anvisa_gateway: 'ANVISA Gateway',
-  cdsco_sugam: 'CDSCO SUGAM',
-  mfds_dbio: 'MFDS dBio',
-  hsa_prism: 'HSA PRISM',
-};
-const gatewayLabel = (key: string | null | undefined): string =>
-  key ? (GATEWAY_LABEL[key] ?? key) : '—';
+/* Gateway names: gatewayLabels.ts (one map, shared with the Submission Center). */
 
 /* The transmit form's options carry the route's keys as values and a name as
    the label — it offered the raw keys ("pmda_gateway") and lowercase region
@@ -215,14 +252,11 @@ async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, b
     return { ok: false, status: 0, data: null, raw: null };
   }
 }
-function statusTone(s: string) {
-  const v = s.toLowerCase();
-  if (v.includes('ack') || v.includes('complete') || v.includes('success')) return 'ok';
-  if (v.includes('fail') || v.includes('error') || v.includes('reject')) return 'err';
-  return 'warn';
-}
-
-const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
+const TRANSMIT_FORM = (
+  def: string | undefined,
+  packages: PackageOption[] | null,
+  independence: Record<string, string> | null = null,
+): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · §11 re-authentication',
   title: 'Transmit to agency gateway',
   sub: 'The transmit is gated server-side: your credentials are re-verified, the structural gate runs, and the transmittal is recorded before transport.',
@@ -230,7 +264,7 @@ const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null
   fields: [
     { key: 'region', label: 'Region', type: 'select', options: REGIONS, default: 'fda', half: true },
     { key: 'gateway', label: 'Gateway', type: 'select', options: GATEWAYS, default: 'esg', half: true },
-    PACKAGE_FIELD(def, packages),
+    PACKAGE_FIELD(def, packages, independence),
     { key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. original' },
     { key: 'reason', label: 'Reason for transmission (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the transmittal.' },
     // §11.50: what the signer asserts by transmitting. Recorded on the electronic signature.
@@ -239,7 +273,9 @@ const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null
       { value: 'approval', label: 'Approval — I approve this package for submission' },
       { value: 'responsibility', label: 'Responsibility — I take responsibility for this package' },
       { value: 'review', label: 'Review — I reviewed this package' },
-      { value: 'authorship', label: 'Authorship — I authored this package' },
+      // No "Authorship": transmitting is a release, and the server refuses a
+      // transmission signed as author (assertTransmitterIndependent). Offering
+      // it would only lead to a refusal after the password was typed.
     ] },
     { key: 'password', label: 'Password (re-authentication)', type: 'password', required: true, half: true },
     { key: 'totp', label: 'Authentication code (if enabled)', type: 'text', half: true },
@@ -258,6 +294,99 @@ const ROLLBACK_FORM = (id: number): C2CFormConfig => ({
     { key: 'totp', label: 'Authentication code', type: 'text', half: true },
   ],
 });
+/* The agency did not load a filed sequence (a technical rejection — for FDA, a
+   failed Ack3). Recording it is the one act that takes the sequence off the
+   package's filed history, so its number can be used again. It is not a
+   rollback: a rolled-back sequence stays on file, because the agency still holds
+   it. The evidence is the agency's notice, uploaded to the Vault first; the
+   signature is bound to that document's content hash (sweep F19). */
+const TECHNICAL_REJECTION_FORM = (id: number): C2CFormConfig => ({
+  eyebrow: 'Regulatory dispatch · §11 re-authentication',
+  title: `Record the agency’s technical rejection of transmittal #${id}`,
+  sub: 'Only for a sequence the agency did not load (for FDA, a failed Ack3). Recording it takes the sequence off this '
+     + 'package’s filed history, and the next assembly reuses its number. This is not a rollback: a rolled-back sequence '
+     + 'stays on file, because the agency still holds it. Only the latest sequence on file qualifies, and a transmittal '
+     + 'the agency accepted is refused.',
+  governed: 'Governed signature — your reason, the declared meaning and the agency’s notice are recorded together, and '
+     + 'the signature is bound to the notice. If any part cannot be written, nothing changes.',
+  submitLabel: 'Record rejection',
+  fields: [
+    {
+      key: 'evidenceDocumentId', label: 'Agency notice (Vault document id)', type: 'text', required: true,
+      placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+      desc: 'Upload the agency’s rejection notice to the Vault first, then enter that document’s id.',
+    },
+    { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — for example, what the notice says the agency could not load.' },
+    // §11.50: what the signer asserts by recording the rejection.
+    { key: 'meaning', label: 'Signature meaning', type: 'select', required: true, default: 'responsibility', options: [
+      { value: 'responsibility', label: 'Responsibility — I take responsibility for this record' },
+      { value: 'review', label: 'Review — I reviewed the agency’s notice' },
+      { value: 'approval', label: 'Approval — I approve this record' },
+      { value: 'authorship', label: 'Authorship — I authored this record' },
+    ] },
+    { key: 'password', label: 'Password (re-authentication)', type: 'password', required: true, half: true },
+    { key: 'totp', label: 'Authentication code (if enabled)', type: 'text', half: true },
+  ],
+});
+
+/** Only a package's transmittal files a sequence, and a rejection is recorded once. */
+const canRecordRejection = (t: Transmittal): boolean => t.package_id != null && !t.metadata?.technicalRejection;
+/** The line under a transmittal's status once its technical rejection is recorded (sweep F19). */
+function technicalRejectionNote(t: Transmittal): React.ReactNode {
+  const recorded = t.metadata?.technicalRejection;
+  if (!recorded) return null;
+  return (
+    <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>
+      technical rejection recorded{recorded.sequence ? ` · sequence ${recorded.sequence} off file` : ''}
+    </div>
+  );
+}
+
+/** A refused governed act in the server's own words; when it gave none, only
+ *  what is known — a request that never completed may still have landed. */
+function refusalReason(raw: unknown, status: number): string {
+  return serverMessage(raw)
+    ?? (status === 0
+      ? 'the request did not complete; reload the transmittal log to see whether it was recorded.'
+      : `the server gave no reason (HTTP ${status}); nothing changed.`);
+}
+
+/** What the technical-rejection route answers with, as the confirmation needs it. */
+interface RejectionRecorded {
+  sequence?: string;
+  transmittalStatus?: { previous?: string; current?: string } | null;
+  staleBundleCleared?: { sequence?: string } | null;
+}
+/** The confirmation of a recorded technical rejection, from what the server recorded. */
+function rejectionRecordedMessage(id: number, r: RejectionRecorded, signer: string | null, meaning: string): string {
+  const signed = ` Signed by ${signer ?? 'you'} — meaning: ${meaning}.`;
+  if (!r.sequence) return `Recorded: the agency’s technical rejection of transmittal #${id}.${signed}`;
+  const status = r.transmittalStatus;
+  const moved = status?.current && status.current !== status.previous ? ` Transmittal #${id} is now ${status.current}.` : '';
+  const cleared = r.staleBundleCleared?.sequence
+    ? ` The stored bundle for sequence ${r.staleBundleCleared.sequence} was built on it and was cleared; assemble it again.`
+    : '';
+  return `Recorded: the agency did not load sequence ${r.sequence} (transmittal #${id}). It is off the filed history, `
+    + `and the next assembly reuses sequence ${r.sequence}.${moved}${cleared}${signed}`;
+}
+
+/**
+ * The toast for a transmit 409. Two refusals answer 409 and are told apart by
+ * the code in `details`: a sequence already on file as another bundle is not
+ * the active-transmittal lock, and its remedy is not a rollback — a rollback
+ * does not un-file (sweep F19) — so that one is said in the server's own words.
+ * The error envelope is { error, details }: the lock holder's id and status
+ * travel in details (they were read from a `data` key that an error response
+ * never carries, so the toast always said "#?" / "in flight").
+ */
+function transmitConflictMessage(raw: any): string {
+  const held = raw?.details ?? raw?.data ?? raw;
+  if (held?.code === 'SEQUENCE_ALREADY_FILED') {
+    return 'Not transmitted — ' + (serverMessage(raw)
+      ?? `${held.sequence ? `sequence ${held.sequence}` : 'this sequence'} is already on file as a different bundle.`);
+  }
+  return `Not transmitted — transmittal #${held?.transmittalId ?? '?'} is already active (${held?.status ?? 'in flight'}). Roll it back first.`;
+}
 
 export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
   /* AnA on this surface. It discarded SurfaceViewProps entirely as `_props`, on
@@ -266,12 +395,21 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      explaining. */
   const ask = onAsk;
   const [gateways, setGateways] = useState<GatewayInfo[]>([]);
+  /* Whether this person may sign a transmit or a technical rejection, as the
+     server's signing-authority check answers it (GET /gateways meta.signing).
+     false hides the two signed acts; null (not answered, or not readable) hides
+     nothing, because unknown is not "you cannot" and the server still decides.
+     QA 2026-10-08 (j6): a manager reached the transmit's password. */
+  const [canSign, setCanSign] = useState<boolean | null>(null);
   /* The org's submission packages for the picker; null = the list could not be
      loaded (the forms then fall back to the numeric id and say so). */
   const [packages, setPackages] = useState<PackageOption[] | null>(null);
+  /* Per package: would this user's transmit pass separation of duties? From
+     the server's dry-run of the transmit's own check; null = not known. */
+  const [independence, setIndependence] = useState<Record<string, string> | null>(null);
   const [rows, setRows] = useState<Transmittal[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [dialog, setDialog] = useState<'transmit' | 'identifiers' | 'assemble' | { rollback: number } | null>(null);
+  const [dialog, setDialog] = useState<'transmit' | 'identifiers' | 'assemble' | { rollback: number } | { rejection: number } | null>(null);
   /* The package id of the operator's last action, so the next form is prefilled
      with it — the record → assemble → transmit loop is worked on one package. */
   const [lastPackageId, setLastPackageId] = useState<string>('');
@@ -303,7 +441,17 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     ]);
     // The package list feeds the picker only; its failure must not hide the
     // gateways or the transmittal log, so it degrades to the numeric id.
-    setPackages(p.ok && Array.isArray(p.data) ? p.data : null);
+    const pkgs: PackageOption[] | null = p.ok && Array.isArray(p.data) ? p.data : null;
+    setPackages(pkgs);
+    // Asked after the list, for the packages it holds. A failed read leaves it
+    // null and the picker unmarked; the transmit itself still decides.
+    if (pkgs && pkgs.length > 0) {
+      const ids = pkgs.slice(0, 100).map((x) => x.id).join(',');
+      const ind = await readData<Record<string, string>>('GET', `/api/mdx/gateways/transmit-independence?packageIds=${ids}`);
+      setIndependence(ind.ok && ind.data && typeof ind.data === 'object' ? ind.data : null);
+    } else {
+      setIndependence(null);
+    }
     // Fail to 'error' if EITHER read fails. Previously this required BOTH to
     // fail (&&), so a single failed read (e.g. the transmittal log) rendered its
     // honest-empty copy ("No transmittals yet") as if the org genuinely had
@@ -312,6 +460,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // what has or hasn't already been sent.
     if (!t.ok || !g.ok) { setState('error'); return; }
     setGateways(Array.isArray(g.data) ? g.data : []);
+    const signing = g.raw?.meta?.signing?.canSign;
+    setCanSign(typeof signing === 'boolean' ? signing : null);
     setRows(Array.isArray(t.data) ? t.data : []);
     setState('ready');
   }, []);
@@ -333,13 +483,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // Every refusal closes the drawer: the rejected password must not sit in
     // the field for a resubmit, and the toast carries the reason.
     if (status === 401) { setDialog(null); fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
+    // Signing authority (§11.10(g)), refused before the password: the server's sentence.
+    if (status === 403 && serverMessage(raw)) { setDialog(null); fireToast('Not transmitted — ' + serverMessage(raw), 'error'); return; }
     if (status === 409) {
-      // The error envelope is { error, details }: the holder's id and status
-      // travel in details (they were read from a `data` key that an error
-      // response never carries, so the toast always said "#?" / "in flight").
-      const held = (raw as any)?.details ?? (raw as any)?.data ?? raw;
+      // The active-transmittal lock, or a sequence already on file as another bundle.
       setDialog(null);
-      fireToast(`Not transmitted — transmittal #${held?.transmittalId ?? '?'} is already active (${held?.status ?? 'in flight'}). Roll it back first.`, 'error');
+      fireToast(transmitConflictMessage(raw), 'error');
       return;
     }
     if (status === 412) { setDialog(null); fireToast('Not transmitted — gateway credentials are not configured for this environment.', 'error'); return; }
@@ -351,7 +500,15 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       // The structural gate ran — a 422 from it is that evidence — so an empty list
       // is a refusal that carried no findings, not a clean bundle.
       setRefusal({ source: 'transmit', message, findings, findingsState: assessmentState({ scopeExists: true, findingCount: findings.length, assessmentRan: Array.isArray((raw as any)?.details?.findings) }) });
-      fireToast('Not transmitted — the structural gate rejected the bundle: ' + message + '.', 'error');
+      /* QA 2026-10-08 (j6): the server sentence already ends in a period, so the
+         toast ended "..", and a gateway this organization has no credentials for
+         went unmentioned although it is the next refusal waiting. Both from the
+         data on this screen: the refusal, and the gateway table's credential state. */
+      const rows = gateways.filter((g) => g.gateway === gateway && String(g.region ?? '').toLowerCase() === region.toLowerCase());
+      const noCredentials = rows.length > 0 && rows.every((g) => g.configured === false)
+        ? ` ${gatewayLabel(gateway)} credentials are also not configured for this organization, so nothing could be sent through it yet.`
+        : '';
+      fireToast('Not transmitted — the structural gate rejected the bundle: ' + message.replace(/[.\s]+$/, '') + '.' + noCredentials, 'error');
       return;
     }
     if (!ok) { setDialog(null); fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
@@ -386,7 +543,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       ledgerLost || contentChanged ? 'error' : undefined,
     );
     void load();
-  }, [load, fireToast, signerName]);
+  }, [load, fireToast, signerName, gateways]);
 
   const checkStatus = useCallback(async (id: number) => {
     const { ok, status, data, raw } = await readData<Record<string, unknown>>('GET', `/api/mdx/gateways/transmittals/${id}/status`);
@@ -434,6 +591,10 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     setLastPackageId(v.packageId ?? '');
     const { ok, status, raw } = await readData('PUT', `/api/submission-ops/packages/${encodeURIComponent(v.packageId)}/regulatory-identifiers`, {
       applicationNumber: v.applicationNumber, applicantId: v.applicantId, applicantName: v.applicantName, reason: v.reason,
+      // Sent only when any of its fields is filled: a 510(k) or non-US package needs none.
+      ...([v.contactName, v.contactPhone, v.contactEmail].some((x) => x?.trim())
+        ? { contact: { name: v.contactName?.trim() || undefined, phone: v.contactPhone?.trim() || undefined, email: v.contactEmail?.trim() || undefined } }
+        : {}),
     });
     if (status === 400) { fireToast('Not recorded — ' + ((raw as any)?.error ?? 'validation failed') + (String((raw as any)?.error ?? '').endsWith('.') ? '' : '.'), 'error'); return; }
     if (status === 404) { fireToast('Not recorded — no package with that id in this tenant.', 'error'); return; }
@@ -512,6 +673,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // submission type a follow-up sequence is refused for want of a value the
     // operator supplied and this never forwarded.
     if (v.submissionType?.trim()) body.submissionType = v.submissionType.trim();
+    if (v.submissionSubType?.trim()) body.submissionSubType = v.submissionSubType.trim();
+    if (v.submissionId?.trim()) body.submissionId = v.submissionId.trim();
     const withdraw = parseWithdrawals(v.withdraw);
     if (withdraw.length > 0) body.withdraw = withdraw;
     const id = encodeURIComponent(v.packageId);
@@ -605,17 +768,42 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
   }, [lastPackageId, loadFindings]);
 
   const rollback = useCallback(async (v: Record<string, string>) => {
-    if (!dialog || typeof dialog !== 'object') return;
+    if (!dialog || typeof dialog !== 'object' || !('rollback' in dialog)) return;
     const id = dialog.rollback;
+    // The drawer closes first, on every outcome: a refused password must not
+    // sit in it for a resubmit, and the toast must not sit beneath it.
+    setDialog(null);
     const { ok, status, raw } = await readData('POST', `/api/mdx/gateways/transmittals/${id}/rollback`, {
       reason: v.reason, reauth: v.password ? { password: v.password, totp: v.totp || undefined } : undefined,
     });
     if (status === 401) { fireToast('Not rolled back — re-authentication failed.', 'error'); return; }
-    if (!ok) { fireToast(`Rollback failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing changed') + '.', 'error'); return; }
-    setDialog(null);
+    if (!ok) { fireToast('Not rolled back — ' + refusalReason(raw, status), 'error'); return; }
     fireToast(`Transmittal #${id} marked rolled back in the audit trail. The agency still holds the transmitted bytes — file the agency-side retraction separately.`);
     void load();
   }, [dialog, load, fireToast]);
+
+  /* The agency did not load the sequence this transmittal filed. The server
+     takes it off the filed history only with the agency's notice as evidence,
+     under re-authentication and a declared meaning, and refuses anything but
+     the latest sequence on file; every refusal is said in its own words. */
+  const recordRejection = useCallback(async (v: Record<string, string>) => {
+    if (!dialog || typeof dialog !== 'object' || !('rejection' in dialog)) return;
+    const id = dialog.rejection;
+    // Closes first, as rollback does.
+    setDialog(null);
+    const meaning = v.meaning || 'responsibility';
+    const { ok, status, data, raw } = await readData<RejectionRecorded>('POST', `/api/mdx/gateways/transmittals/${id}/technical-rejection`, {
+      evidenceDocumentId: (v.evidenceDocumentId ?? '').trim(),
+      reason: v.reason,
+      meaning,
+      reauth: v.password ? { password: v.password, totp: v.totp || undefined } : undefined,
+    });
+    if (status === 401) { fireToast('Not recorded — re-authentication failed. Nothing changed.', 'error'); return; }
+    if (!ok) { fireToast('Not recorded — ' + refusalReason(raw, status), 'error'); return; }
+    // A 2xx is a recorded rejection even when its body cannot be read.
+    fireToast(rejectionRecordedMessage(id, data ?? {}, signerName, meaning));
+    void load();
+  }, [dialog, load, fireToast, signerName]);
 
   /* WHAT ANA SEES HERE. This is the last screen before bytes leave for an
      agency, so the payload is deliberately about CAPABILITY and OUTCOME, not
@@ -633,6 +821,9 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      own toast, and the context says so too, so AnA cannot offer to undo a
      transmission. */
   const configuredGateways = gateways.filter((g) => g.configured);
+  /** A technical rejection is a signed act: offered only on a row that can take
+   *  one, and not to someone the server says may not sign. */
+  const offerRejection = (t: Transmittal): boolean => canSign !== false && canRecordRejection(t);
   const anaContext = useMemo(
     () => ({
       summary: state === 'loading'
@@ -675,9 +866,16 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             {ask && <button className="reg-cta" onClick={() => ask('Explain our agency gateway posture: which gateways hold credentials and can transmit, what the unconfigured ones are missing, and which transmittals are still awaiting acknowledgement. Do not treat an unreachable dispatch layer as having no gateways.')}>{I.sparkles} Explain gateway posture</button>}
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('identifiers')}>{I.penLine} Record identifiers</button>
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('assemble')}>{I.layers} Assemble bundle</button>
-            <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload} Transmit</button>
+            {canSign !== false && <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload} Transmit</button>}
           </span>
         </div>
+        {canSign === false && (
+          <div className="pj-card-b" role="note" style={{ fontSize: 12 }}>
+            Transmitting is an electronic signature, and your role does not sign (21 CFR Part 11 §11.10(g)), so Transmit and
+            Technical rejection are not offered to you. A colleague whose role carries signing authority sends the package; you
+            can still record identifiers and assemble it.
+          </div>
+        )}
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading gateways…" /></div>
             : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t reach the dispatch layer" hint="The dispatch layer didn’t respond. Sign in to your tenant and retry." /></div>
@@ -703,12 +901,14 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                   <td className="mono">#{t.id}</td>
                   {/* region is nullable on partially-migrated transmittal rows; the gateways
                       table above already renders the same field the same way when it is absent. */}
-                  <td>{String(t.region ?? '—').toUpperCase()} / {gatewayLabel(t.gateway)}{t.submission_type ? ' · ' + t.submission_type : ''}</td>
+                  <td>{String(t.region ?? '—').toUpperCase()} / {gatewayLabel(t.gateway)}{t.submission_type ? ' · ' + t.submission_type : ''}
+                    {accountLine(t) && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>{accountLine(t)}</div>}</td>
                   <td className="mono" style={{ fontSize: 12 }}>{t.transmission_id ?? '—'}</td>
                   {/* status is likewise nullable (a row written before its gateway replied);
                       no chip is honest, an invented tone is not — same guard as error_message below. */}
                   <td>{t.status && <span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>}
-                    {t.error_message && <div style={{ fontSize: 11, color: 'var(--error)' }}>{t.error_message}</div>}</td>
+                    {t.error_message && <div style={{ fontSize: 11, color: 'var(--error)' }}>{t.error_message}</div>}
+                    {technicalRejectionNote(t)}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{t.submitted_at ? new Date(t.submitted_at).toLocaleString() : '—'}</td>
                   {/* Who: resolved to a person by the server; a bare id is shown as such, never as a name. */}
                   <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}
@@ -720,6 +920,10 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rollback: t.id })}>{I.rotateCcw} Rollback</button>
+                    {offerRejection(t) && (
+                      <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rejection: t.id })}
+                        title="Record that the agency did not load the sequence this transmittal filed">{I.alertTriangle} Technical rejection</button>
+                    )}
                   </td>
                 </tr>))}</tbody></table>}
         </div>
@@ -785,10 +989,11 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {dialog === 'transmit' && <C2CForm config={TRANSMIT_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={transmit} />}
+      {dialog === 'transmit' && <C2CForm config={TRANSMIT_FORM(lastPackageId || undefined, packages, independence)} onCancel={() => setDialog(null)} onSubmit={transmit} />}
       {dialog === 'identifiers' && <C2CForm config={IDENTIFIERS_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={recordIdentifiers} />}
       {dialog === 'assemble' && <C2CForm config={ASSEMBLE_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={assemble} />}
-      {dialog && typeof dialog === 'object' && <C2CForm config={ROLLBACK_FORM(dialog.rollback)} onCancel={() => setDialog(null)} onSubmit={rollback} />}
+      {dialog && typeof dialog === 'object' && 'rollback' in dialog && <C2CForm config={ROLLBACK_FORM(dialog.rollback)} onCancel={() => setDialog(null)} onSubmit={rollback} />}
+      {dialog && typeof dialog === 'object' && 'rejection' in dialog && <C2CForm config={TECHNICAL_REJECTION_FORM(dialog.rejection)} onCancel={() => setDialog(null)} onSubmit={recordRejection} />}
       <C2CToast msg={toast} />
     </div>
   );

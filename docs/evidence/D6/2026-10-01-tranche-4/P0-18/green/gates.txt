@@ -1,0 +1,10 @@
+# 2026-10-01T06:49:18Z
+=== npm run ci:migration-set-order
+[ci:migration-set-order] OK — 342 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit 0
+=== npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 342 migrations, 35 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit 0
+=== npm run ci:column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+exit 0

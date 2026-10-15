@@ -1,0 +1,124 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T18:52:23.768Z","pid":6866,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T18:52:23.770Z","pid":6866,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T18:52:23.770Z","pid":6866,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-13T18:52:23.911Z', poolSize: 1 }
+
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-registry-seed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 17ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 14ms
+{"level":50,"time":"2026-10-13T18:52:26.184Z","pid":6866,"hostname":"843541c42987","context":{"error":"Report run could not be recorded on the audit chain"},"msg":"[report-os] report run not recorded on the audit chain; rolled back"}
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 138ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a run and its chain row, together > when report_os.run_created is refused, the run and its snapshot roll back with it (503, nothing saved) 50ms
+{"level":50,"time":"2026-10-13T18:52:26.310Z","pid":6866,"hostname":"843541c42987","context":{"runId":3,"error":"refused by the review round 1 dbtest"},"msg":"[report-os] report finalize not recorded on the audit chain; rolled back"}
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a member: nothing is sealed and nothing is recorded 12ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a password that is not the signer's: nothing is sealed, signed or recorded 42ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed) 37ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > an admin finalizes: status, seal, one chained row and the signature, together 38ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > a second finalize is refused: the seal stands and nothing more is recorded 23ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > refuses a manager whose role carries no signing authority, with the right password: nothing sealed, signed or recorded 28ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > the signed final report is exported with no second ceremony, and the chain row names its signature 39ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > reads the seal back and re-verifies it, with the signer and the act (GET /runs/:id/seal) 21ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > another organisation's session reads neither the seal nor the sealed document: 404, nothing in the body 29ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > shows the final run as the stored sealed document (GET /runs/:id/rendered) 23ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > a stored document changed after sealing reads as a mismatch, not intact 38ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: what a rewrite of the mutable rows cannot hide > a sealed document removed from the snapshot reads as a mismatch, and nothing is re-rendered in its place 38ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: what a rewrite of the mutable rows cannot hide > a run whose status was rewritten after finalizing reads as a mismatch, not as a run never sealed 64ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the export of the sealed record > exports the final run as its sealed document, signed and verified, and records the export id it prints 786ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: a forgery by the app role is not the record > a run given final status, a forged sealed document and an unchained finalization row reads as a mismatch 94ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a bundle export on the record (review round 1, DP-50) > a bundle export is recorded on the chain with the hash of the bytes sent 227ms
+{"level":30,"time":"2026-10-13T18:52:29.128Z","pid":6920,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T18:52:29.129Z","pid":6920,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T18:52:29.130Z","pid":6920,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-reports.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-13T18:52:29.911Z', poolSize: 1 }
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-13T18:52:29.925Z', poolSize: 2 }
+
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 85ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 34ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 15ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 15ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 20ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 27ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 31ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 23ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row 22ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not 33ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one 14ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 20ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 7ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only 17ms
+stdout | tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why
+[database] Database connection successful { timestamp: '2026-10-13T18:52:30.330Z', poolSize: 3 }
+
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why 118ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 17ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's 19ms
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > an account created by single sign-on is not reported as having the emailed code 21ms
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > the retention policies section says it is as at generation, not as at the period 23ms
+{"level":30,"time":"2026-10-13T18:52:31.950Z","pid":6937,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T18:52:31.951Z","pid":6937,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T18:52:31.951Z","pid":6937,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-tenant-from-session.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-13T18:52:32.004Z', poolSize: 1 }
+
+stdout | tests/db/report-os-tenant-from-session.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-tenant-from-session.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 71ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 19ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 80ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 20ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 25ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 15ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 22ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 18ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 23ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 71ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 22ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 33ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > the removed correspondence capture door writes nothing 13ms
+{"level":30,"time":"2026-10-13T18:52:34.447Z","pid":6952,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T18:52:34.449Z","pid":6952,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T18:52:34.449Z","pid":6952,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-delivery-recording.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-13T18:52:34.532Z', poolSize: 1 }
+
+stdout | tests/db/report-os-delivery-recording.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-delivery-recording.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a plain member cannot deliver: 403, no letter and no chain row (DP-61) 106ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > platform_send as app_service under RLS: 'sent', with the letter, the record and one chained row 73ms
+{"level":50,"time":"2026-10-13T18:52:35.450Z","pid":6952,"hostname":"843541c42987","context":{"deliveryId":"b4e6cc58-c962-4223-b389-c3625cc42a17","channel":"platform_send","code":"P0001"},"msg":"[report-os] report delivery not recorded; rolled back"}
+{"level":50,"time":"2026-10-13T18:52:35.503Z","pid":6952,"hostname":"843541c42987","context":{"deliveryId":"139b8079-a0e1-4baf-9a8b-aea12d019546","channel":"platform_send","code":"P0001"},"msg":"[report-os] report delivery not recorded; rolled back"}
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused correspondence write is not sent: 503, and no record or chain row claims it 52ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused chain row is not sent: the letter and the record roll back with it 51ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > external_pdf_export of a final report with no signature is refused: 409, nothing recorded 25ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a delivery record refused by the database: 503, and no log line carries the subject, the letter or a recipient 45ms
+
+ Test Files  4 passed (4)
+      Tests  58 passed (58)
+   Start at  18:52:21
+   Duration  14.36s (transform 2.90s, setup 179ms, import 8.83s, tests 4.60s, environment 0ms)

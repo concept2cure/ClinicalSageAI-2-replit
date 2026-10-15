@@ -1,0 +1,11 @@
+{
+  "reproduction_base": "1473342ab8371155fddc479590ba5de51846bc40",
+  "publication_base": "561a11a7cddfbed16614c448a9b96dc1bb658aba",
+  "preserved_paths": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "typed_source_and_ui_unchanged": true,
+  "candidate_source_pins_unchanged": true,
+  "reason": "Preserve automated repository-health report refresh; test/build qualification remains valid because only these two report files changed. Full current hook runs against new publication base."
+}

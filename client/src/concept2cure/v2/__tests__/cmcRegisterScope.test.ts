@@ -42,17 +42,17 @@ describe('scopedRegisterPath', () => {
     expect(scopedRegisterPath('/api/cmc/process-validation', PROJECT)).toBe('/api/cmc/process-validation');
   });
 
-  it('does not narrow a register whose table records no program', () => {
-    /* public.drug_substances / drug_products / stability_studies /
-       analytical_methods have no project_id column at all, so a projectId the
-       handler cannot honour would be a filter that silently does nothing. The
-       card says the list is unnarrowed instead. */
+  it('narrows the registers whose tables now record their program', () => {
+    /* drug_substances / drug_products / stability_studies / analytical_methods
+       carry project_id since migrations/20261005_cmc_core_registers_project.sql.
+       Before it, an edit made with another program open filed a second copy of
+       the record under that program, and these lists could not be narrowed. */
     for (const path of [
       '/api/cmc/drug-substances', '/api/cmc/drug-products',
       '/api/cmc/stability-studies', '/api/cmc/analytical-methods',
     ]) {
-      expect(REGISTER_SCOPE[path]).toBe('program-unscoped-store');
-      expect(scopedRegisterPath(path, PROJECT)).toBe(path);
+      expect(REGISTER_SCOPE[path]).toBe('program');
+      expect(scopedRegisterPath(path, PROJECT)).toBe(`${path}?projectId=${PROJECT}`);
     }
   });
 

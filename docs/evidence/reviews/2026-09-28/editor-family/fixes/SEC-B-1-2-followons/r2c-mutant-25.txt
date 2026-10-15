@@ -1,0 +1,408 @@
+R2C MUTANT 25: the row stores the paragraphs while the result returns the model body as it came back
+file: server/services/authoring/section-generation-service.ts
+sha256 before: 51f6b06cafd0f5ffb7eb1cdcfcf90ba230a63bbd574b5496b44045cd40cbfd5a
+sha256 after restore: 51f6b06cafd0f5ffb7eb1cdcfcf90ba230a63bbd574b5496b44045cd40cbfd5a
+--- mutation (diff vs the fix) ---
+--- <scratch>/fixes2/figure-writers/r2c/mutant-tmp-section-generation-service.ts	2026-09-28 23:50:29.683506678 +0000
++++ ./server/services/authoring/section-generation-service.ts	2026-09-28 23:50:29.683990391 +0000
+@@ -152,7 +152,7 @@
+   });
+ 
+   logger.info('Generated section draft', { documentId: doc.id, sectionCode: params.sectionCode, organizationId: ctx.organizationId });
+-  return { documentId: doc.id, sectionCode: params.sectionCode, body, citations, ungrounded };
++  return { documentId: doc.id, sectionCode: params.sectionCode, body: modelBody, citations, ungrounded };
+ }
+ 
+ export default { generateSection, AuthoringError };
+
+--- test run ---
+
+ RUN  v4.1.7 ./
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:50:33.522Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:50:33.636Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:50:33.671Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+{
+  "timestamp": "2026-09-28T23:50:33.698Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:33.715Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored 117ms
+   → expected '<p>The product is stable for 24 month…' to be '<p>&lt;p&gt;The product is stable for…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored 35ms
+   → expected '<p>The product is stable for 24 month…' to be '<p>&lt;p&gt;The product is stable for…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored 26ms
+   → expected '<p>The product is stable for 24 month…' to be '<p>&lt;p&gt;The product is stable for…' // Object.is equality
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element 18ms
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:33.740Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:33.755Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:33.768Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:33.782Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:33.805Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:33.825Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote 25ms
+   → expected 'Impurity B was <LOQ in all 3 batches;…' to be '<p>Impurity B was &lt;LOQ in all 3 ba…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote 15ms
+   → expected 'ALT remained <ULN (n=40) & no Hy\'s l…' to be '<p>ALT remained &lt;ULN (n=40) &amp; …' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote 13ms
+   → expected 'See <https://www.fda.gov/guidance> fo…' to be '<p>See &lt;https://www.fda.gov/guidan…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote 14ms
+   → expected 'Mean change 2.1 (p < 0.05) & sustaine…' to be '<p>Mean change 2.1 (p &lt; 0.05) &amp…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote 23ms
+   → expected 'R&D summary [E1].' to be '<p>R&amp;D summary [E1].</p>' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote 20ms
+   → expected 'The source prints the limit as "&lt;L…' to be '<p>The source prints the limit as "&a…' // Object.is equality
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard)
+{
+  "timestamp": "2026-09-28T23:50:33.847Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard)
+{
+  "timestamp": "2026-09-28T23:50:33.848Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote 22ms
+   → expected '## 2.3.P.8 Stability\n\nNo trend was …' to be '<p>## 2.3.P.8 Stability</p><p>No tren…' // Object.is equality
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard) 1ms
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard) 1ms
+   → expected '## 2.3.P.8 Stability\n\nNo trend was …' to be '<p>## 2.3.P.8 Stability</p><p>No tren…' // Object.is equality
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > the editor converts plain text with the function that stores it (one implementation) 0ms
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 3 passed (14)
+   Start at  23:50:30
+   Duration  3.04s (transform 981ms, setup 128ms, import 2.38s, tests 335ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored
+AssertionError: expected '<p>The product is stable for 24 month…' to be '<p>&lt;p&gt;The product is stable for…' // Object.is equality
+
+Expected: "<p>&lt;p&gt;The product is stable for 24 months.&lt;/p&gt;&lt;img src="https://collector.example/p.png?d=1" alt="Figure 1"&gt;</p>"
+Received: "<p>The product is stable for 24 months.</p><img src="https://collector.example/p.png?d=1" alt="Figure 1">"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:166:25
+    164|     expect(elementsIn(stored)).not.toContain('img');
+    165|     expectEveryReaderReads(stored, modelBody);
+    166|     expect(result.body).toBe(stored);
+       |                         ^
+    167|     // The trailer is still read.
+    168|     expect(result.citations).toEqual([{ claim: 'Stable', evidenceId: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored
+AssertionError: expected '<p>The product is stable for 24 month…' to be '<p>&lt;p&gt;The product is stable for…' // Object.is equality
+
+Expected: "<p>&lt;p&gt;The product is stable for 24 months.&lt;/p&gt;&lt;img src="/api/authoring/images/../../tenant-export/full" alt="Figure 1"&gt;</p>"
+Received: "<p>The product is stable for 24 months.</p><img src="/api/authoring/images/../../tenant-export/full" alt="Figure 1">"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:166:25
+    164|     expect(elementsIn(stored)).not.toContain('img');
+    165|     expectEveryReaderReads(stored, modelBody);
+    166|     expect(result.body).toBe(stored);
+       |                         ^
+    167|     // The trailer is still read.
+    168|     expect(result.citations).toEqual([{ claim: 'Stable', evidenceId: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored
+AssertionError: expected '<p>The product is stable for 24 month…' to be '<p>&lt;p&gt;The product is stable for…' // Object.is equality
+
+Expected: "<p>&lt;p&gt;The product is stable for 24 months.&lt;/p&gt;&lt;img src="data:image/svg+xml;base64,PHN2Zz4=" alt="Figure 1"&gt;</p>"
+Received: "<p>The product is stable for 24 months.</p><img src="data:image/svg+xml;base64,PHN2Zz4=" alt="Figure 1">"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:166:25
+    164|     expect(elementsIn(stored)).not.toContain('img');
+    165|     expectEveryReaderReads(stored, modelBody);
+    166|     expect(result.body).toBe(stored);
+       |                         ^
+    167|     // The trailer is still read.
+    168|     expect(result.citations).toEqual([{ claim: 'Stable', evidenceId: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+AssertionError: expected 'Impurity B was <LOQ in all 3 batches;…' to be '<p>Impurity B was &lt;LOQ in all 3 ba…' // Object.is equality
+
+Expected: "<p>Impurity B was &lt;LOQ in all 3 batches; assay was 99.1%.</p>"
+Received: "Impurity B was <LOQ in all 3 batches; assay was 99.1%."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:195:25
+    193|     const stored = storedContent();
+    194|     expectEveryReaderReads(stored, modelBody);
+    195|     expect(result.body).toBe(stored);
+       |                         ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+AssertionError: expected 'ALT remained <ULN (n=40) & no Hy\'s l…' to be '<p>ALT remained &lt;ULN (n=40) &amp; …' // Object.is equality
+
+Expected: "<p>ALT remained &lt;ULN (n=40) &amp; no Hy's law case was seen.</p>"
+Received: "ALT remained <ULN (n=40) & no Hy's law case was seen."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:195:25
+    193|     const stored = storedContent();
+    194|     expectEveryReaderReads(stored, modelBody);
+    195|     expect(result.body).toBe(stored);
+       |                         ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+AssertionError: expected 'See <https://www.fda.gov/guidance> fo…' to be '<p>See &lt;https://www.fda.gov/guidan…' // Object.is equality
+
+Expected: "<p>See &lt;https://www.fda.gov/guidance&gt; for the method.</p>"
+Received: "See <https://www.fda.gov/guidance> for the method."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:195:25
+    193|     const stored = storedContent();
+    194|     expectEveryReaderReads(stored, modelBody);
+    195|     expect(result.body).toBe(stored);
+       |                         ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote
+AssertionError: expected 'Mean change 2.1 (p < 0.05) & sustaine…' to be '<p>Mean change 2.1 (p &lt; 0.05) &amp…' // Object.is equality
+
+Expected: "<p>Mean change 2.1 (p &lt; 0.05) &amp; sustained; &gt; 90% of subjects responded.</p>"
+Received: "Mean change 2.1 (p < 0.05) & sustained; > 90% of subjects responded."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:195:25
+    193|     const stored = storedContent();
+    194|     expectEveryReaderReads(stored, modelBody);
+    195|     expect(result.body).toBe(stored);
+       |                         ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote
+AssertionError: expected 'R&D summary [E1].' to be '<p>R&amp;D summary [E1].</p>' // Object.is equality
+
+Expected: "<p>R&amp;D summary [E1].</p>"
+Received: "R&D summary [E1]."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:195:25
+    193|     const stored = storedContent();
+    194|     expectEveryReaderReads(stored, modelBody);
+    195|     expect(result.body).toBe(stored);
+       |                         ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+AssertionError: expected 'The source prints the limit as "&lt;L…' to be '<p>The source prints the limit as "&a…' // Object.is equality
+
+Expected: "<p>The source prints the limit as "&amp;lt;LOQ" and the sponsor as "R&amp;amp;D".</p>"
+Received: "The source prints the limit as "&lt;LOQ" and the sponsor as "R&amp;D"."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:195:25
+    193|     const stored = storedContent();
+    194|     expectEveryReaderReads(stored, modelBody);
+    195|     expect(result.body).toBe(stored);
+       |                         ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote
+AssertionError: expected '## 2.3.P.8 Stability\n\nNo trend was …' to be '<p>## 2.3.P.8 Stability</p><p>No tren…' // Object.is equality
+
+- Expected
++ Received
+
+- <p>## 2.3.P.8 Stability</p><p>No trend was observed at 25 °C/60% RH [E1].</p><p>- Assay: 98.7–101.2%<br>- **Total impurities**: 0.4% (&lt;0.5% limit)</p>
++ ## 2.3.P.8 Stability
++
++ No trend was observed at 25 °C/60% RH [E1].
++
++ - Assay: 98.7–101.2%
++ - **Total impurities**: 0.4% (<0.5% limit)
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:195:25
+    193|     const stored = storedContent();
+    194|     expectEveryReaderReads(stored, modelBody);
+    195|     expect(result.body).toBe(stored);
+       |                         ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard)
+AssertionError: expected '## 2.3.P.8 Stability\n\nNo trend was …' to be '<p>## 2.3.P.8 Stability</p><p>No tren…' // Object.is equality
+
+- Expected
++ Received
+
+- <p>## 2.3.P.8 Stability</p><p>No trend was observed at 25 °C/60% RH [E1].</p><p>- Assay: 98.7–101.2%<br>- **Total impurities**: 0.4%</p><p>| Batch | Assay |<br>|---|---|<br>| 1 | 99.1% |</p>
++ ## 2.3.P.8 Stability
++
++ No trend was observed at 25 °C/60% RH [E1].
++
++ - Assay: 98.7–101.2%
++ - **Total impurities**: 0.4%
++
++ | Batch | Assay |
++ |---|---|
++ | 1 | 99.1% |
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:216:25
+    214|         '<p>| Batch | Assay |<br>|---|---|<br>| 1 | 99.1% |</p>',
+    215|     );
+    216|     expect(result.body).toBe(stored);
+       |                         ^
+    217|     expect(coauthorEditorShows(stored)).toEqual({ text: prose, lossy: …
+    218|     expect(exportReads(stored)).toBe(linesOf(prose));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+

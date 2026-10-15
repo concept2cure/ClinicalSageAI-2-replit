@@ -1,0 +1,9 @@
+{
+  "regressionHead": "64bdf9cea891d9df5dd090e18aa51de01517f220",
+  "mergedUpstream": "2df2adde85d0c83695f3090557f68151605d79ed",
+  "integratedHead": "e29fd29c53e2b0422642940bef1fe104b9b04c4a",
+  "regressionBindings": 324,
+  "changedRegressionBindings": [
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx"
+  ]
+}

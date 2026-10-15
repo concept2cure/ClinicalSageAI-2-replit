@@ -1,0 +1,7 @@
+# insightsExportProducesFile with the two new cases, against Insights.tsx before the wording change
+ × client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > says an already-final run is sealed, not "held below final" (RUN_ALREADY_FINAL) 5043ms
+ × client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > tells a member who may finalize instead of echoing "Insufficient permissions" 5045ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > says an already-final run is sealed, not "held below final" (RUN_ALREADY_FINAL)
+ FAIL  client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > tells a member who may finalize instead of echoing "Insufficient permissions"
+      Tests  2 failed | 5 passed (7)

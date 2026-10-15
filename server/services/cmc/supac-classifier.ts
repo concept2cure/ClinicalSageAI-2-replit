@@ -467,7 +467,7 @@ function validationRequirementsFor(input: VariationInput): string[] {
     reqs.push('Process re-validation per FDA Process Validation Guidance (2011) — Stage 2 PPQ');
   }
   if (input.changeCategory === 'analytical_method') {
-    reqs.push('Analytical method comparability per ICH Q2(R1) and Q14');
+    reqs.push('Analytical method comparability per ICH Q2(R2) and Q14');
   }
   if (input.changeCategory === 'container_closure') {
     reqs.push('Container-closure compatibility + leachables under product contact');

@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:36:56.845Z","pid":29262,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:36:56.847Z","pid":29262,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:36:56.847Z","pid":29262,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:36:56.958Z', poolSize: 1 }
+
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over 1657ms
+{"level":30,"time":"2026-10-01T15:36:57.095Z","pid":29262,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:36:57.096Z","pid":29262,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:36:57.096Z","pid":29262,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:36:57.119Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-01T15:36:57.237Z","pid":29262,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over 158ms
+{"level":30,"time":"2026-10-01T15:36:57.238Z","pid":29262,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:36:57.238Z","pid":29262,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:36:57.269Z', poolSize: 1 }
+
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over 150ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  15:36:54
+   Duration  2.66s (transform 946ms, setup 83ms, import 28ms, tests 2.26s, environment 0ms)
+

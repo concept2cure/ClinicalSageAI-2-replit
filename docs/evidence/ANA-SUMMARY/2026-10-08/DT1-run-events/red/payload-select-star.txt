@@ -1,0 +1,9 @@
+# mutation: payload-select-star
+# test: server/routes/ana-ri/__tests__/runs-read.pglite.test.ts -t "10."
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 10. nothing excluded leaks > sentinels in every excluded column appear in no payload, for the asker or an admin 135ms
+   → asker carries sentinel-owner-instance: expected '{"id":"run_t1","organization_id":9137…' not to contain 'sentinel-owner-instance'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 10. nothing excluded leaks > sentinels in every excluded column appear in no payload, for the asker or an admin
+AssertionError: asker carries sentinel-owner-instance: expected '{"id":"run_t1","organization_id":9137…' not to contain 'sentinel-owner-instance'
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)

@@ -1,0 +1,42 @@
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > ships both good and bad samples (a linter only seen passing has not been tested)
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-short-fact
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-three-paragraphs-one-bold-one-citation
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-user-asked-for-list
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-first-turn-greeting
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-tool-result-as-sentence
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-consequential-next-move
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-bad-memo-shape
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-bad-bold-table-reintroduction
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-bad-restates-filler-menu-long-paragraph
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-bad-too-many-paragraphs
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > classifies every chat sample as chat
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written artifact samples > artifact-good-section-draft
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written artifact samples > artifact-bad-chat-interjection
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written artifact samples > a chat-shaped memo is not mistaken for an artifact by one header
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > strips ana-grounding / ana-action blocks before measuring
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > counts a bold-only line as a header in disguise, not as bold
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > allows one bold term and flags the second
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > a genuinely enumerable list of three passes; a two-item list fails; the user asking for one passes
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > a greeting is a ritual after the first turn and a human reply on it
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > a consequential next move in prose is not a next-step ritual; a labelled block is
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > paragraph ceilings are configurable
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > score never goes below zero and deducts per violation
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > summarizes a batch
+ × server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > lets one earned exclamation stand on real news in an open room
+ ✓ server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > refuses any exclamation in a serious room, derived or labelled
+ ✓ server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > refuses more than one, a stacked one, one on a ritual, and one on a figure
+ × server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > does not count `!=` in inline code as a feeling
+ × server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > lets an emoji mirror the person in a light moment, and only then
+ × server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > derives the serious room fail-closed, and honours a labeller who knows better
+ × server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > fails any exclamation mark or emoji inside an artifact
+ × server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > reports how often replies carry one, so "most have none" is measurable
+ × server/eval/register/__tests__/register-linter.test.ts > exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01) > finds a playful line that repeats, because repetition turns charm into a tic
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'exclamation' ] to deeply equal []
+AssertionError: expected [ 'exclamation' ] to deeply equal []
+AssertionError: expected [ 'emoji' ] to deeply equal []
+TypeError: deriveRoom is not a function
+AssertionError: expected [] to include 'exclamation'
+AssertionError: expected undefined to be 0.33 // Object.is equality
+TypeError: findCatchphrases is not a function
+      Tests  7 failed | 26 passed (33)

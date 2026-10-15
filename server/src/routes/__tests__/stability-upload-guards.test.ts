@@ -32,6 +32,7 @@ function app() {
   const a = express();
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as any).user = { id: 1, organizationId: 7, role: 'editor' };
+    (req as any).userRole = 'member'; // a writing role (requireEditorAccessForWrites)
     next();
   });
   a.use('/api/stability', router);

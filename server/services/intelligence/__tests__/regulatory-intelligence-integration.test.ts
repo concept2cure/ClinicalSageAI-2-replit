@@ -6,10 +6,12 @@
  * orchestrator through realistic scenarios without a live Postgres.
  *
  * Covers:
- *   - Cold-start: no model, no priors → rule-based score, source=cold_start.
+ *   - Cold-start: no model, no priors → rule-based score, source=cold_start,
+ *     probability null (not assessed; it was a pinned 0.5 until 2026-10-15).
  *   - Network-prior fallback: priors present, no model → blended toward prior.
  *   - Trained model active: score uses the model, blends with prior.
- *   - Persistence: every predict writes a risk_predictions row.
+ *   - Persistence: an assessed prediction writes a risk_predictions row;
+ *     an unsupported device-pathway request refuses before any DB work.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -25,7 +27,7 @@ vi.mock('../../../db/runtime', () => ({
   getDb: () => mockPool,
 }));
 
-const { scoreSubmissionDraft } = await import('../regulatory-intelligence');
+const { scoreSubmissionDraft, CompletenessNotAssessedError } = await import('../regulatory-intelligence');
 const { _invalidateModelCacheForTests } = await import('../risk-model');
 
 // Helper: build a sequence of mock query responses. The orchestrator runs:
@@ -82,10 +84,13 @@ describe('scoreSubmissionDraft — cold start', () => {
     expect(result.rtf.source).toBe('cold_start');
     expect(result.crl.source).toBe('cold_start');
     expect(result.firstCycleApproval.source).toBe('cold_start');
-    // Cold start uses the default 0.5 probability → mid-range score band.
-    expect(result.rtf.probability).toBeCloseTo(0.5);
-    // Rule-based completeness still drives the blendedReadiness when no model.
-    expect(result.blendedReadiness).toBe(result.completeness.rtfRisk.rtfScore);
+    // 2026-10-15: this pinned "Cold start uses the default 0.5 probability →
+    // mid-range score band". Nothing estimated that 0.5; it is not assessed.
+    expect(result.rtf.probability).toBeNull();
+    expect(result.rtf.score).toBeNull();
+    expect(result.rtf.band).toBeNull();
+    // With no model the refuse-to-file score is the rule-based RTF score.
+    expect(result.refuseToFileScore).toBe(result.completeness.rtfRisk.rtfScore);
     // Recommendations should call out that the layer is cold.
     expect(result.recommendations.some(r => r.toLowerCase().includes('cold-start') || r.includes('no comparable'))).toBe(true);
   });
@@ -176,18 +181,24 @@ describe('scoreSubmissionDraft — trained model + prior', () => {
 });
 
 describe('scoreSubmissionDraft — persistence', () => {
-  it('writes a risk_predictions row on every score call', async () => {
+  it('writes a risk_predictions row for an assessed NDA score call', async () => {
+    // A network prior makes the RTF prediction an assessed one. This used to run
+    // with no prior and no model, and pinned the cold-start 0.5 being persisted;
+    // a target nothing estimated is no longer written (2026-10-15).
     const inserts: string[] = [];
     mockPool.query.mockImplementation((text: string) => {
       if (/INSERT INTO intelligence\.risk_predictions/.test(text)) {
         inserts.push(text);
       }
-      return Promise.resolve({ rows: [] });
+      if (/network_risk_priors[\s\S]*WHERE target = \$1/.test(text)) {
+        return Promise.resolve({ rows: [{ noised_rate: '0.3', sample_size: 20, tenant_count: 5, epsilon: '1.0' }] });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
     });
 
     await scoreSubmissionDraft({
       organizationId: 7,
-      submissionType: 'PMA',
+      submissionType: 'NDA',
       targetAgency: 'FDA',
       presentSections: [],
     });
@@ -198,6 +209,24 @@ describe('scoreSubmissionDraft — persistence', () => {
     expect(inserts[0]).toContain('organization_id');
     expect(inserts[0]).toContain('predicted_prob');
     expect(inserts[0]).toContain('blended_score');
+  });
+
+  it('refuses the original PMA request before prediction, prior/model lookup or persistence', async () => {
+    const scoring = scoreSubmissionDraft({
+      organizationId: 7,
+      submissionType: 'PMA',
+      targetAgency: 'FDA',
+      presentSections: [],
+    });
+    await expect(scoring).rejects.toBeInstanceOf(CompletenessNotAssessedError);
+    await expect(scoring).rejects.toMatchObject({
+      code: 'COMPLETENESS_NOT_ASSESSED', status: 422,
+      completeness: {
+        submissionType: 'PMA',
+        assessment: { status: 'not_assessed', assessWith: { engine: 'assessEstarFilingReadiness' } },
+      },
+    });
+    expect(mockPool.query).not.toHaveBeenCalled();
   });
 });
 

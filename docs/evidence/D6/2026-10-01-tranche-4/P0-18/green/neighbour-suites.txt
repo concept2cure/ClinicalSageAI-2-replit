@@ -1,0 +1,144 @@
+# 2026-10-01T06:49:18Z; NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/qms/__tests__/changeControl.pglite.integration.test.ts server/routes/__tests__/qms-document-approval-signature.test.ts server/routes/__tests__/mdx-qms-retire.test.ts server/routes/__tests__/qms-effective-only-by-signature.test.ts tests/schema-contract/c2c-apply-path.contract.test.ts tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the council provisioning migration no longer defines lumen.data_atoms 6ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the canonical definition is the one in db/migrations 1ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the apply script installs the canonical prerequisite BEFORE the file that reads it 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > is in C2C_MIGRATION_FILES, and is the LAST entry 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the batch-2 files are wired ahead of it 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the once-excluded files are now wired, having been RESOLVED not skipped 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > still refuses the _consolidated tree, which was never merely unwired 70ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > DOES wire enhanced_cortex, whose identity conflict C-36 resolved 1ms
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+   ✓ QMS quality: 9 controlled docs, 12 training acks, 6 changes, 9 links seeded
+
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log 23ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records 9ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > training compliance has a real (partial) roster number 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed 65ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > rejects an illegal transition (closed is terminal) 8ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing 15ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > adds and removes a cross-reference link 12ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > produces the canonical 12-column shape, not the minimal one 36ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > accepts a write carrying the provenance columns the minimal shape lacked 5ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > the council seed still lands (the file is self-sufficient without its own atoms table) 2ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a viewer before touching the database or the signer (403) 90ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an empty body with 400 naming the missing signature components, and writes nothing 101ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a meaning other than APPROVED — an approval means one thing 40ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a signer whose org role carries no signing authority with 403, before checking the password 17ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a wrong password with 401, counts it against the account, and writes nothing 5ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a locked account with 423 before its password is compared (F-27) 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an account that is not active before its password is compared (F-28) 7ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the password alone from a signer with an authenticator enrolled 13ms
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text
+{
+  "timestamp": "2026-10-01T06:47:01.805Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > a reason alone does not retire: 400 ESIGNATURE_COMPONENT_MISSING naming password and meaning; nothing verified, nothing written 31ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > an empty body names every missing component 10ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a reason shorter than the floor (8) before verifying anything 20ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a meaning other than APPROVED 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled 7ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back 7ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT 16ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text 6ms
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature
+{
+  "timestamp": "2026-10-01T06:47:01.850Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the author approving their own document with 403 and rolls back 25ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a document that is not draft/in_review with 409 6ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > 404s a document outside the tenant 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT 5ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor 19ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature 16ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the canonical lumen_data_atoms.id is an integer, not a uuid 15ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > every atom-referencing column is an integer, so the FKs are implementable 15ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the two previously-impossible foreign keys now exist 5ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the services' real JOIN typechecks (it could not before) 3ms
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+{
+  "timestamp": "2026-10-01T06:47:06.336Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+{
+  "timestamp": "2026-10-01T06:47:06.814Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:47:06.814Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+{
+  "timestamp": "2026-10-01T06:47:06.814Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=effective on a document in review and changes nothing 35ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=retired on a document in review and changes nothing 5ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=superseded on a document in review and changes nothing 6ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=retired on an effective document: retirement is the signed retire route 7ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > refuses status=effective before any write 5ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > still creates a draft 5ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses status=effective before any write 3ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses to edit an effective document: that is a revision 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > still edits a draft and routes it for review 6ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > says a missing document is missing, not controlled 4ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced 49ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > policies electronic_signatures — the Part 11 record that had no tenant key 10ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > actually blocks a cross-tenant read on a table it sweeps 181ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > a TEXT tenant key is SKIPPED, not raised — a deploy must not halt on pre-existing drift 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > never clobbers a policy a subsystem installed for itself 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > FORCES a table that had the policy but no FORCE (owner-bypass close, C-43) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a policy-LESS RLS table un-forced (no owner default-deny surprise) 24ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44) 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a clean allowlisted table unpoliced (the first loop honors the allowlist) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > skips the allowlist, tables with no tenant column, and views 2ms
+
+ Test Files  6 passed (6)
+      Tests  71 passed (71)
+   Start at  06:46:50
+   Duration  26.62s (transform 4.77s, setup 529ms, import 8.53s, tests 41.41s, environment 1ms)
+

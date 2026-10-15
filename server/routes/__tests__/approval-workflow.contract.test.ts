@@ -29,16 +29,19 @@ vi.mock('../../db', () => ({ get db() { return holder.db; } }));
 // Faked JWT verifier — `verifyJwtWithRotation` is the only auth dependency of
 // the router. A mutable identity lets each test set/clear the "current user".
 const auth = vi.hoisted(() => ({
-  current: null as null | { userId: string; organizationId?: string },
+  current: null as null | { userId: string; organizationId?: string; type?: string },
 }));
+// An access token unless a case says otherwise: since IAM-23 (bf83e12b) the
+// router refuses any other token class (requireAccessTokenReason).
 vi.mock('../../utils/jwtVerify.js', () => ({
   verifyJwtWithRotation: vi.fn(() => {
     if (!auth.current) throw new Error('invalid token');
-    return auth.current;
+    return { type: 'access', ...auth.current };
   }),
 }));
 
 import approvalWorkflowRouter from '../approval-workflow';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
 
 // ── In-process PGlite schema (mirrors shared/schema/unified_workflow.ts) ──────
 const WORKFLOW_DDL = `
@@ -213,8 +216,10 @@ beforeAll(async () => {
   await pglite.query(`INSERT INTO users (id, email, name) VALUES ($1,'u1@example.com','User One')`, [Number(USER)]);
   // Initiator names resolve through public.actor_name (D3 2026-09-29), created
   // from the real migration; minimal stand-ins for the two tables it reads.
-  await pglite.exec(`CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);
-                     CREATE TABLE IF NOT EXISTS audit_logs (id serial, tenant_id integer, actor_id integer);`);
+  // audit_logs is the shared fixture (every column the audit writer writes), so
+  // a governed write reached from this suite can land (ci:audit-logs-fixture).
+  await pglite.exec(`CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);`);
+  await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
   await pglite.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260929_actor_names.sql'), 'utf8'));
   holder.db = drizzle(pglite);
   app = makeApp();
@@ -239,6 +244,12 @@ describe('auth gating', () => {
 
   it('401 when the token fails verification', async () => {
     auth.current = null; // verifier throws
+    const res = await authed().get('/api/approval-workflows/pending');
+    expect(res.status).toBe(401);
+  });
+
+  it('401 for a token that is not an access token (an MFA challenge), IAM-23', async () => {
+    auth.current = { userId: USER, organizationId: String(ORG), type: 'mfa_challenge' };
     const res = await authed().get('/api/approval-workflows/pending');
     expect(res.status).toBe(401);
   });
@@ -301,8 +312,8 @@ describe('input validation (400)', () => {
   });
 });
 
-describe('happy path: start → approve → status', () => {
-  it('starts a workflow, advances on first approval, completes on the last, and reports status', async () => {
+describe('start → status; no approval without a signature (P-25 follow-up)', () => {
+  it('starts a workflow, moves the document to review, and reports status', async () => {
     // Build a template with two steps via the create-template route (real path).
     const create = await authed().post('/api/approval-workflows/templates').send({
       name: 'Release flow',
@@ -321,48 +332,38 @@ describe('happy path: start → approve → status', () => {
     );
     const documentId = doc.rows[0].id;
 
-    // start
     const start = await authed().post('/api/approval-workflows/start').send({ documentId, templateId });
     expect(start.status).toBe(201);
     expect(start.body.success).toBe(true);
     expect(typeof start.body.workflowId).toBe('number');
     expect(start.body.approvalIds).toHaveLength(2);
-    const { workflowId, approvalIds } = start.body;
+    const { workflowId } = start.body;
 
-    // document moved to in_review
-    const afterStart = await pglite.query<{ status: string }>(
-      `SELECT status FROM unified_documents WHERE id = $1`,
-      [documentId],
-    );
+    const afterStart = await pglite.query<{ status: string }>(`SELECT status FROM unified_documents WHERE id = $1`, [documentId]);
     expect(afterStart.rows[0].status).toBe('in_review');
 
-    // approve step 1 → workflow advances
-    const approve1 = await authed().post(`/api/approval-workflows/${approvalIds[0]}/approve`).send({ comments: 'looks good' });
-    expect(approve1.status).toBe(200);
-    expect(approve1.body.workflowAdvanced).toBe(true);
-    expect(approve1.body.workflowCompleted).toBe(false);
-    expect(approve1.body.nextStep).toBe(2);
-
-    // approve step 2 → workflow completes
-    const approve2 = await authed().post(`/api/approval-workflows/${approvalIds[1]}/approve`).send({});
-    expect(approve2.status).toBe(200);
-    expect(approve2.body.workflowCompleted).toBe(true);
-    expect(approve2.body.message).toMatch(/completed/i);
-
-    // document is now approved
-    const afterDone = await pglite.query<{ status: string }>(
-      `SELECT status FROM unified_documents WHERE id = $1`,
-      [documentId],
-    );
-    expect(afterDone.rows[0].status).toBe('approved');
-
-    // status route reflects the completed workflow + ordered approvals + history
     const status = await authed().get(`/api/approval-workflows/${workflowId}/status`);
     expect(status.status).toBe(200);
-    expect(status.body.workflow.status).toBe('completed');
+    expect(status.body.workflow.status).toBe('active');
     expect(status.body.workflow.totalSteps).toBe(2);
-    expect(status.body.workflow.approvals.every((a: any) => a.status === 'approved')).toBe(true);
-    expect(status.body.workflow.history.length).toBeGreaterThanOrEqual(2);
+    expect(status.body.workflow.approvals.every((a: any) => a.status === 'pending')).toBe(true);
+  });
+
+  /* POST /:id/approve marked a step approved, and on the last step the document
+     'approved', from a session alone: no re-verification, no electronic
+     signature, no meaning. Nothing called it (its client hook had no caller since
+     the Communication Center's Approvals surface was deleted in 2895218b8), and
+     the launch-scope API gate refused it. Removed 2026-10-08; a document is
+     approved through a signing ceremony (services/part11/reverify-signer.ts). */
+  it('POST /:id/approve is not a route: 404, and nothing is approved', async () => {
+    const { workflowId, approvalIds, documentId } = await seedTwoStepWorkflow();
+    const res = await authed().post(`/api/approval-workflows/${approvalIds[0]}/approve`).send({ comments: 'looks good' });
+    expect(res.status).toBe(404);
+    const status = await authed().get(`/api/approval-workflows/${workflowId}/status`);
+    expect(status.body.workflow.status).toBe('active');
+    expect(status.body.workflow.approvals.every((a: any) => a.status === 'pending')).toBe(true);
+    const docNow = await pglite.query<{ status: string }>(`SELECT status FROM unified_documents WHERE id = $1`, [documentId]);
+    expect(docNow.rows[0].status).not.toBe('approved');
   });
 
   it('GET /:workflowId/status → 404 for an unknown workflow', async () => {
@@ -371,10 +372,10 @@ describe('happy path: start → approve → status', () => {
     expect(res.body.error).toMatch(/not found/i);
   });
 
-  it('POST /:id/approve → 400 when the performer is not an assigned approver', async () => {
+  it('POST /:id/reject → 400 when the performer is not an assigned approver', async () => {
     const { approvalIds } = await seedTwoStepWorkflow();
     auth.current = { userId: 'someone-else', organizationId: String(ORG) };
-    const res = await authed().post(`/api/approval-workflows/${approvalIds[0]}/approve`).send({});
+    const res = await authed().post(`/api/approval-workflows/${approvalIds[0]}/reject`).send({ comments: 'Missing safety data' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/not assigned/i);
   });

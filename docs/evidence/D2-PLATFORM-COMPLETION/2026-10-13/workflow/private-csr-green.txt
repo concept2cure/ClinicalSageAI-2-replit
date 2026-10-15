@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs before any section read 73ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses unrelated organization member access to retained jobs/sections before any section read 35ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > refuses cancellation by an unrelated member before section reads or changing the queued job 22ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > checks the current share on every retained read after an authorized member is revoked 137ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > keeps completed status and content readable to an authorized member after project archival 64ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR job HTTP reads and cancellation enforce current private-project permission > guards submission-summary CSR source reads and allows retained content only to a currently authorized actor 35ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows a current organization member who created the private project without an explicit share entry 33ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > allows the private project member with current use permission and preserves the requester 42ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > refuses a private project to an unrelated organization member before enqueue 58ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure before source access when the project share is revoked after enqueue 65ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > persists failure when the private project creator leaves the organization after enqueue 50ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > uses the current role when an organization administrator is downgraded after enqueue 41ms
+ ✓ server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts > CSR worker rechecks current private-project permission > fails closed and persists failure when current membership cannot be read 35ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  19:20:36
+   Duration  7.76s (transform 1.50s, setup 91ms, import 2.28s, tests 4.89s, environment 0ms)

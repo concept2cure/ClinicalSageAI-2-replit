@@ -25,7 +25,11 @@ vi.mock('../../../db', () => ({
   db: {
     select: () => ({
       from: () => ({
-        where: () => ({ limit: () => Promise.resolve(selectRows()) }),
+        where: () => {
+          const limit = () => Promise.resolve(selectRows());
+          // The anchor read orders by id (PF-08); the task-key read does not.
+          return { limit, orderBy: () => ({ limit }) };
+        },
       }),
     }),
   },

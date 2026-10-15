@@ -1,0 +1,244 @@
+FIX-UP MUTANT 8b: round-1 M8 re-run on the fix-up: the template check reads only the first seed
+file: server/services/authoring/authoring-documents.ts
+--- mutation (diff vs the fix) ---
+--- <scratch>/fixes2/figure-writers/mutant-tmp-authoring-documents.ts	2026-09-28 19:32:57.488074245 +0000
++++ ./server/services/authoring/authoring-documents.ts	2026-09-28 19:32:57.488440090 +0000
+@@ -515,7 +515,7 @@
+   if (template_id) {
+     const resolved = await resolveTemplateSections(ctx.pool, ctx.tenantId, String(template_id));
+     if (!Array.isArray(resolved)) return resolved;
+-    const seedRefusal = await refuseTemplateFigures(resolved);
++    const seedRefusal = await refuseTemplateFigures(resolved.slice(0, 1));
+     if (seedRefusal) return seedRefusal;
+     templateSections = resolved;
+   }
+
+--- test run ---
+
+ RUN  v4.1.7 ./
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent
+{
+  "timestamp": "2026-09-28T19:33:02.552Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone
+{
+  "timestamp": "2026-09-28T19:33:02.556Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T19:33:02.567Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790623982567_4fzzzx",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T19:33:02.571Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T19:33:02.572Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790623982571_i",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T19:33:02.575Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T19:33:02.576Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790623982576_9",
+    "bytes": 9
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing 357ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing 10ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing 10ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section 8ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > returns a long refused src shortened, so a megabyte data: URI is not echoed back 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone 3ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T19:33:02.579Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T19:33:02.580Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790623982580_",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-28T19:33:02.583Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard)
+{
+  "timestamp": "2026-09-28T19:33:02.604Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > 400 naming the template section, and no document is created
+{
+  "timestamp": "2026-09-28T19:33:02.615Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 600a7122-1756-4ef1-b9e7-5a6c95874d36 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > 400 naming the template section, and no document is created
+{
+  "timestamp": "2026-09-28T19:33:02.615Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 600a7122-1756-4ef1-b9e7-5a6c95874d36 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-09-28T19:33:02.631Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7a79a3da-e7de-4ce5-a096-b5c1e83cdca1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-09-28T19:33:02.631Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7a79a3da-e7de-4ce5-a096-b5c1e83cdca1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload) 27ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > an external address: 400 with the sentence, nothing read or written 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > dot segments: 400 with the sentence, nothing read or written 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > an inline SVG: 400 with the sentence, nothing read or written 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > refuses content that is not text, which the driver would store as JSON unchecked 3ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard) 9ms
+ × server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > 400 naming the template section, and no document is created 14ms
+   → {"success":true,"document":{},"sections_seeded":2,"message":"Document created successfully","governance":{"bound":false,"reason":"No project is open, so this document is org-wide and not bound to a filing."}}: expected 201 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > tells the person what they can do: choose another template, never "save again" 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard) 4ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 passed (22)
+   Start at  19:32:58
+   Duration  4.04s (transform 1.54s, setup 106ms, import 3.21s, tests 516ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard)
+{
+  "timestamp": "2026-09-28T19:33:02.605Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.CREATE",
+    "resourceType": "authoring_section",
+    "resourceId": "8c78664a-0fd8-4b92-8ce4-2cf5b8a4dffd",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard)
+[authoring] audit_logs index entry NOT written for authoring.section.CREATE on authoring_section 8c78664a-0fd8-4b92-8ce4-2cf5b8a4dffd; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > 400 naming the template section, and no document is created
+{
+  "timestamp": "2026-09-28T19:33:02.614Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "600a7122-1756-4ef1-b9e7-5a6c95874d36",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-09-28T19:33:02.631Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "7a79a3da-e7de-4ce5-a096-b5c1e83cdca1",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > 400 naming the template section, and no document is created
+AssertionError: {"success":true,"document":{},"sections_seeded":2,"message":"Document created successfully","governance":{"bound":false,"reason":"No project is open, so this document is org-wide and not bound to a filing."}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/authoring-section-figure-refs.test.ts:313:50
+    311|     const res = await createFromTemplate();
+    312|
+    313|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    314|     expect(String(res.body.error)).toMatch(
+    315|       /^Template section 2\.3\.2 holds an image that is not an uploade…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

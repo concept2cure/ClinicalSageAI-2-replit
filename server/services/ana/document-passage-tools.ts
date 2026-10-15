@@ -26,7 +26,8 @@
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
-import { requireCatalog, withCaughtErrors, type RegisterFn } from './document-tools-shared.js';
+import { requireDocumentAccess, withCaughtErrors, type RegisterFn } from './document-tools-shared.js';
+import { catalogScope } from './catalog-scope.js';
 
 /**
  * What sits OUTSIDE this index no matter how complete the vault side is.
@@ -65,22 +66,23 @@ function coverageNote(
 ): string {
   if (!c) {
     return (
-      'How much of the vault is in the passage index could not be read, so this result does not say ' +
+      'How much of the accessible Vault scope is in the passage index could not be read, so this result does not say ' +
       'what it did not cover.'
     );
   }
-  if (c.total === 0) return `No documents are filed in this vault yet.${outsideIndexNote(c)}`;
+  if (c.total === 0) return `No documents with verified access are filed in this scope yet.${outsideIndexNote(c)}`;
   if (c.indexed === 0) {
     /* The index is EMPTY — a different statement from "nothing matched", and a
        very different one from "the embedding provider is unreachable", which is
        what this used to report because the query was embedded before anyone
-       checked whether there was anything to search. An empty index almost
-       always means the ana.vault_chunking feature is off, so the answer routes
-       to a switch instead of to a shrug. */
+       checked whether there was anything to search. Every ingest builds the
+       index since 2026-10-08, with or without an embedding key, so an empty
+       one means the documents predate it: the backfill indexes them. */
     return (
       `None of the ${c.total} document(s) in this vault are in the passage index, so nothing was ` +
-      'searched — this is not a result about what the documents say. The index is built by the ' +
-      'ana.vault_chunking feature; if it is off, say so plainly rather than reporting the content as ' +
+      'searched — this is not a result about what the documents say. They were filed before the ' +
+      'passage index was built at every upload, and an operator backfill indexes them ' +
+      '(scripts/backfill-vault-chunks.mjs). Say so plainly rather than reporting the content as ' +
       'absent, and read the file itself with read_project_document to answer from it.' +
       outsideIndexNote(c)
     );
@@ -109,8 +111,10 @@ async function handleSearchDocumentPassages(
   input: Record<string, unknown>,
   ctx?: ToolContext,
 ): Promise<string> {
-  const gate = await requireCatalog(ctx, 'search_document_passages');
-  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  // Keyless and flag-free (D2, 2026-10-08): the passage index is written at
+  // every ingest and searched by text when nothing can embed the query.
+  const gate = await requireDocumentAccess(ctx, 'search_document_passages');
+  if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, code: gate.code });
   const { orgId } = gate;
 
   const query = typeof input.query === 'string' ? input.query.trim() : '';
@@ -122,24 +126,37 @@ async function handleSearchDocumentPassages(
   const limit =
     typeof input.limit === 'number' && input.limit > 0 ? Math.min(25, Math.floor(input.limit)) : 8;
 
+  // One open project, or the actor's verified accessible library.
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
+
   const { searchDocumentPassages, PassageSearchUnavailableError } = await import(
     '../vault/document-passage-search.js'
   );
   try {
     const result = await searchDocumentPassages(
-      { organizationId: orgId, organizationUuid: ctx?.organizationUuid, query },
-      { limit },
+      scope.executor,
+      { organizationId: orgId, userId:scope.accessibleScope.actor.userId, organizationUuid: ctx?.organizationUuid, query },
+      { limit, programId: scope.programId, sourceReadScope: scope.admittedScope },
     );
-    const note = coverageNote(result.coverage);
+    const note = 'Within the current actor’s accessible source scope: ' + coverageNote(result.coverage);
+    // Ranked by text alone: no embedding provider answered. The model says so
+    // rather than implying a meaning-based search ran.
+    const ranked = result.ranking === 'text'
+      ? ' Ranked by text match (no embedding is configured, so the search matched words, not meaning; ' +
+        'try the terms a document would use).'
+      : '';
     return JSON.stringify({
       ok: true,
       query,
+      scope: { actorFiltered: true, ...(scope.programId ? { programId: scope.programId } : scope.admittedScope.projectId !== null ? { openProject: true, programId: null } : { accessibleProjects: true }) },
       passages: result.hits,
       coverage: result.coverage,
+      ranking: result.ranking,
       message:
         result.hits.length === 0
           ? `No passage matched "${query}". ${note}`
-          : `${result.hits.length} passage(s). ${note} Quote them with their document title and locator; ` +
+          : `${result.hits.length} passage(s).${ranked} ${note} Quote them with their document title and locator; ` +
             'open the whole file with read_project_document when the answer needs the surrounding context.',
     });
   } catch (err) {
@@ -161,6 +178,6 @@ async function handleSearchDocumentPassages(
 export function registerDocumentPassageHandlers(register: RegisterFn): void {
   register(
     'search_document_passages',
-    withCaughtErrors('search_document_passages', handleSearchDocumentPassages),
+    withCaughtErrors('search_document_passages', handleSearchDocumentPassages, { safeOutcome: true }),
   );
 }

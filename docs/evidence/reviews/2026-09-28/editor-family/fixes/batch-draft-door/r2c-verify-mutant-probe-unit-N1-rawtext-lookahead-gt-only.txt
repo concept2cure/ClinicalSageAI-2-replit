@@ -1,0 +1,154 @@
+# mutant N1-rawtext-lookahead-gt-only
+# - '|noscript)[\\s/>])[a-z]'
+# + '|noscript)>)[a-z]'
+# exit 1
+
+ RUN  v4.1.7 ./
+
+stdout | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:06.740Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:45:06.741Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts
+[database] Database connection successful
+
+ × ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > PROBE-C (unit): a raw-text element whose tag the clause splitter puts in another clause > xmp, paragraph breaks: the clause holding the shown words is not the machine's 16ms
+   → words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > PROBE-C (unit): a raw-text element whose tag the clause splitter puts in another clause > plaintext, paragraph break: the clause holding the shown words is not the machine's 2ms
+   → words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > PROBE-C (unit): a raw-text element whose tag the clause splitter puts in another clause > textarea, a comma clause break: the clause holding the shown words is not the machine's 2ms
+   → words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > N1 probe: a raw-text element with attributes keeps its protection > plaintext with an attribute: not the machine's 1ms
+   → words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > N1 probe: a raw-text element with attributes keeps its protection > xmp with a class, end tag with a space: not the machine's 1ms
+   → words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > N1 probe: a raw-text element with attributes keeps its protection > textarea with rows, end tag with a space: not the machine's 1ms
+   → words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+ ✓ ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > N5 probe: the lineage compares content as shown, never read as markdown > a significance asterisk added to the machine's clause makes it not the machine's 1ms
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  01:45:04
+   Duration  2.88s (transform 1.45s, setup 105ms, import 2.40s, tests 29ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:06.742Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:06.952Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > PROBE-C (unit): a raw-text element whose tag the clause splitter puts in another clause > xmp, paragraph breaks: the clause holding the shown words is not the machine's
+ FAIL  ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > PROBE-C (unit): a raw-text element whose tag the clause splitter puts in another clause > plaintext, paragraph break: the clause holding the shown words is not the machine's
+ FAIL  ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > PROBE-C (unit): a raw-text element whose tag the clause splitter puts in another clause > textarea, a comma clause break: the clause holding the shown words is not the machine's
+AssertionError: words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "The primary endpoint was met <b 3 patients died of hepatic failure> at week twelve in the trial population.",
++ ]
+
+ ❯ ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts:17:91
+     15|     ['textarea, a comma clause break', '<textarea>Reviewer note, The p…
+     16|   ])('%s: the clause holding the shown words is not the machine\'s', (…
+     17|     expect(machineClauses(content), 'words a browser shows were credit…
+       |                                                                                           ^
+     18|   });
+     19| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > N1 probe: a raw-text element with attributes keeps its protection > plaintext with an attribute: not the machine's
+AssertionError: words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "The primary endpoint was met <plaintext x><b 3 patients died of hepatic failure> at week twelve in the trial population.",
++ ]
+
+ ❯ ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts:27:91
+     25|     ['textarea with rows, end tag with a space', 'The primary endpoint…
+     26|   ])('%s: not the machine\'s', (_, content) => {
+     27|     expect(machineClauses(content), 'words a browser shows were credit…
+       |                                                                                           ^
+     28|   });
+     29| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > N1 probe: a raw-text element with attributes keeps its protection > xmp with a class, end tag with a space: not the machine's
+AssertionError: words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "The primary endpoint was met <xmp class=\"q\"><b 3 patients died of hepatic failure></xmp > at week twelve in the trial population.",
++ ]
+
+ ❯ ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts:27:91
+     25|     ['textarea with rows, end tag with a space', 'The primary endpoint…
+     26|   ])('%s: not the machine\'s', (_, content) => {
+     27|     expect(machineClauses(content), 'words a browser shows were credit…
+       |                                                                                           ^
+     28|   });
+     29| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts > N1 probe: a raw-text element with attributes keeps its protection > textarea with rows, end tag with a space: not the machine's
+AssertionError: words a browser shows were credited to the machine: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "The primary endpoint was met <textarea rows=\"2\"><b 3 patients died of hepatic failure></textarea > at week twelve in the trial population.",
++ ]
+
+ ❯ ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/unit-probe.test.ts:27:91
+     25|     ['textarea with rows, end tag with a space', 'The primary endpoint…
+     26|   ])('%s: not the machine\'s', (_, content) => {
+     27|     expect(machineClauses(content), 'words a browser shows were credit…
+       |                                                                                           ^
+     28|   });
+     29| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+

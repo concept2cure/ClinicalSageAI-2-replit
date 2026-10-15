@@ -1,0 +1,357 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:25:58.458Z","pid":28736,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:25:58.460Z","pid":28736,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:25:58.460Z","pid":28736,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/domain-history-append-only.dbtest.ts > the probe runs as the runtime role, under RLS > is app_service-shaped: not the owner, not a superuser, no BYPASSRLS, RLS enforced 1991ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 14ms
+ × tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses an UPDATE from the runtime role 16ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses a DELETE from the runtime role 11ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses a TRUNCATE, even by the owner 10ms
+   → the change was applied: expected 'applied (0 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > is installed under its own names, enabled 9ms
+   → expected [] to deeply equal ArrayContaining{…}
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 13ms
+ × tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses an UPDATE from the runtime role 14ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses a DELETE from the runtime role 17ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses a TRUNCATE, even by the owner 14ms
+   → the change was applied: expected 'applied (0 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > is installed under its own names, enabled 2ms
+   → expected [] to deeply equal ArrayContaining{…}
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 8ms
+ × tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses an UPDATE from the runtime role 7ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses a DELETE from the runtime role 6ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses a TRUNCATE, even by the owner 12ms
+   → the change was applied: expected 'applied (0 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > is installed under its own names, enabled 2ms
+   → expected [] to deeply equal ArrayContaining{…}
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 9ms
+ × tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses an UPDATE from the runtime role 13ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses a DELETE from the runtime role 14ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses a TRUNCATE, even by the owner 23ms
+   → the change was applied: expected 'applied (0 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > is installed under its own names, enabled 2ms
+   → expected [] to deeply equal ArrayContaining{…}
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 6ms
+ × tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses an UPDATE from the runtime role 8ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses a DELETE from the runtime role 14ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses a TRUNCATE, even by the owner 9ms
+   → the change was applied: expected 'applied (0 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > is installed under its own names, enabled 2ms
+   → expected [] to deeply equal ArrayContaining{…}
+ × tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting a unified document with an audit row and a workflow history is refused 16ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting a document workflow with history is refused 7ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ × tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting an AnA conversation that governed actions name is refused (its SET NULL is an UPDATE) 7ms
+   → the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > a parent with no history is still deleted — the guard is on the history, not the parent 8ms
+ × tests/db/domain-history-append-only.dbtest.ts > replay (CLAUDE.md Rule 1: the file re-runs on every deploy) > re-applies cleanly and re-arms a trigger someone disabled 2ms
+   → trigger "trg_c2c_ana_actions_append_only" for table "c2c_ana_actions" does not exist
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses an UPDATE from the runtime role
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses an UPDATE from the runtime role
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses an UPDATE from the runtime role
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses an UPDATE from the runtime role
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses an UPDATE from the runtime role
+AssertionError: the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"applied (1 row(s))"
+
+ ❯ refused tests/db/domain-history-append-only.dbtest.ts:100:89
+     98|
+     99| const refused = (r: Outcome) => {
+    100|   expect(r.ok ? `applied (${r.rowCount} row(s))` : r.message, 'the cha…
+       |                                                                                         ^
+    101|     /IMMUTABILITY_VIOLATION/,
+    102|   );
+ ❯ tests/db/domain-history-append-only.dbtest.ts:283:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses a DELETE from the runtime role
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses a DELETE from the runtime role
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses a DELETE from the runtime role
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses a DELETE from the runtime role
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses a DELETE from the runtime role
+AssertionError: the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"applied (1 row(s))"
+
+ ❯ refused tests/db/domain-history-append-only.dbtest.ts:100:89
+     98|
+     99| const refused = (r: Outcome) => {
+    100|   expect(r.ok ? `applied (${r.rowCount} row(s))` : r.message, 'the cha…
+       |                                                                                         ^
+    101|     /IMMUTABILITY_VIOLATION/,
+    102|   );
+ ❯ tests/db/domain-history-append-only.dbtest.ts:288:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses a TRUNCATE, even by the owner
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses a TRUNCATE, even by the owner
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses a TRUNCATE, even by the owner
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses a TRUNCATE, even by the owner
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses a TRUNCATE, even by the owner
+AssertionError: the change was applied: expected 'applied (0 row(s))' to match /IMMUTABILITY_VIOLATION/
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"applied (0 row(s))"
+
+ ❯ refused tests/db/domain-history-append-only.dbtest.ts:100:89
+     98|
+     99| const refused = (r: Outcome) => {
+    100|   expect(r.ok ? `applied (${r.rowCount} row(s))` : r.message, 'the cha…
+       |                                                                                         ^
+    101|     /IMMUTABILITY_VIOLATION/,
+    102|   );
+ ❯ tests/db/domain-history-append-only.dbtest.ts:296:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > is installed under its own names, enabled
+AssertionError: expected [] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_workflow_history_append_only",
+-   },
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_workflow_history_no_truncate",
+-   },
+- ]
++ []
+
+ ❯ tests/db/domain-history-append-only.dbtest.ts:304:18
+    302|       [`public.${store}`],
+    303|     );
+    304|     expect(rows).toEqual(
+       |                  ^
+    305|       expect.arrayContaining([
+    306|         { tgname: `trg_${store}_append_only`, tgenabled: 'O' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > is installed under its own names, enabled
+AssertionError: expected [] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_document_audit_logs_append_only",
+-   },
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_document_audit_logs_no_truncate",
+-   },
+- ]
++ []
+
+ ❯ tests/db/domain-history-append-only.dbtest.ts:304:18
+    302|       [`public.${store}`],
+    303|     );
+    304|     expect(rows).toEqual(
+       |                  ^
+    305|       expect.arrayContaining([
+    306|         { tgname: `trg_${store}_append_only`, tgenabled: 'O' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > is installed under its own names, enabled
+AssertionError: expected [] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_regulatory_audit_logs_append_only",
+-   },
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_regulatory_audit_logs_no_truncate",
+-   },
+- ]
++ []
+
+ ❯ tests/db/domain-history-append-only.dbtest.ts:304:18
+    302|       [`public.${store}`],
+    303|     );
+    304|     expect(rows).toEqual(
+       |                  ^
+    305|       expect.arrayContaining([
+    306|         { tgname: `trg_${store}_append_only`, tgenabled: 'O' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > is installed under its own names, enabled
+AssertionError: expected [] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_c2c_ana_actions_append_only",
+-   },
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_c2c_ana_actions_no_truncate",
+-   },
+- ]
++ []
+
+ ❯ tests/db/domain-history-append-only.dbtest.ts:304:18
+    302|       [`public.${store}`],
+    303|     );
+    304|     expect(rows).toEqual(
+       |                  ^
+    305|       expect.arrayContaining([
+    306|         { tgname: `trg_${store}_append_only`, tgenabled: 'O' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > is installed under its own names, enabled
+AssertionError: expected [] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_authoring_signatures_append_only",
+-   },
+-   {
+-     "tgenabled": "O",
+-     "tgname": "trg_authoring_signatures_no_truncate",
+-   },
+- ]
++ []
+
+ ❯ tests/db/domain-history-append-only.dbtest.ts:304:18
+    302|       [`public.${store}`],
+    303|     );
+    304|     expect(rows).toEqual(
+       |                  ^
+    305|       expect.arrayContaining([
+    306|         { tgname: `trg_${store}_append_only`, tgenabled: 'O' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting a unified document with an audit row and a workflow history is refused
+AssertionError: the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"applied (1 row(s))"
+
+ ❯ refused tests/db/domain-history-append-only.dbtest.ts:100:89
+     98|
+     99| const refused = (r: Outcome) => {
+    100|   expect(r.ok ? `applied (${r.rowCount} row(s))` : r.message, 'the cha…
+       |                                                                                         ^
+    101|     /IMMUTABILITY_VIOLATION/,
+    102|   );
+ ❯ tests/db/domain-history-append-only.dbtest.ts:319:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting a document workflow with history is refused
+AssertionError: the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"applied (1 row(s))"
+
+ ❯ refused tests/db/domain-history-append-only.dbtest.ts:100:89
+     98|
+     99| const refused = (r: Outcome) => {
+    100|   expect(r.ok ? `applied (${r.rowCount} row(s))` : r.message, 'the cha…
+       |                                                                                         ^
+    101|     /IMMUTABILITY_VIOLATION/,
+    102|   );
+ ❯ tests/db/domain-history-append-only.dbtest.ts:325:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting an AnA conversation that governed actions name is refused (its SET NULL is an UPDATE)
+AssertionError: the change was applied: expected 'applied (1 row(s))' to match /IMMUTABILITY_VIOLATION/
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"applied (1 row(s))"
+
+ ❯ refused tests/db/domain-history-append-only.dbtest.ts:100:89
+     98|
+     99| const refused = (r: Outcome) => {
+    100|   expect(r.ok ? `applied (${r.rowCount} row(s))` : r.message, 'the cha…
+       |                                                                                         ^
+    101|     /IMMUTABILITY_VIOLATION/,
+    102|   );
+ ❯ tests/db/domain-history-append-only.dbtest.ts:331:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯
+
+ FAIL  tests/db/domain-history-append-only.dbtest.ts > replay (CLAUDE.md Rule 1: the file re-runs on every deploy) > re-applies cleanly and re-arms a trigger someone disabled
+error: trigger "trg_c2c_ana_actions_append_only" for table "c2c_ana_actions" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ tests/db/domain-history-append-only.dbtest.ts:350:7
+    348|     try {
+    349|       await client.query('BEGIN');
+    350|       await client.query('ALTER TABLE public.c2c_ana_actions DISABLE T…
+       |       ^
+    351|       await client.query(fs.readFileSync(path.join(ROOT, MIGRATION), '…
+    352|       const { rows } = await client.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 151, severity: 'ERROR', code: '42704', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'trigger.c', routine: 'EnableDisableTrigger' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  24 failed | 7 passed (31)
+   Start at  03:25:55
+   Duration  3.31s (transform 1.12s, setup 88ms, import 46ms, tests 2.65s, environment 0ms)
+

@@ -1,0 +1,4 @@
+ × server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > the submission register stays linear on a CSR-sized text > screens 300 KB in well under a second, with the same verdicts 6200ms
+   → expected 6195.048756 to be less than 1000
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 113 skipped (114)

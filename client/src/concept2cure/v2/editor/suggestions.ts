@@ -36,6 +36,19 @@
  * recognise falls back to the original paragraph behaviour: text is never
  * dropped, only ever left as-is.
  *
+ * `proposeReplacement` is the door AnA's ANCHORED proposals come through: a
+ * quoted passage of the section, and what AnA would put in its place. It finds
+ * the quote, requires that it names exactly one place, and redlines it — the
+ * quote struck, the replacement inserted after it, both under the same
+ * attribution. It refuses, with a reason the person is shown, anything it
+ * cannot place honestly (see ProposeRefusal).
+ *
+ * Both doors keep one contract: Reject all leaves the section exactly as it
+ * was, Accept all leaves exactly what was proposed. Drafted blocks therefore
+ * never split a paragraph, and a paragraph a suggestion made (or wholly
+ * replaced) goes with it when that suggestion is decided away — see
+ * "Placing drafted content" and `ownsBlock`.
+ *
  * KNOWN v1 LIMITS (deliberate, documented rather than hidden):
  *   - Only same-textblock deletions are reinterpreted as suggestions.
  *     Structural edits (joining/splitting paragraphs, deleting across block
@@ -43,19 +56,25 @@
  *   - Formatting-only changes (bold, heading level) are not tracked.
  *   - Undo/redo and remote collaboration transactions pass through untouched:
  *     an undo must restore the previous state, not generate counter-suggestions,
- *     and a collaborator's edits arrive already marked by their editor.
+ *     and a collaborator's edits arrive already marked by their editor. Undo
+ *     and Redo do stop at a recorded accept or reject (see
+ *     markRecordedDecision).
  *   - The markdown subset is a SUBSET (see MARKDOWN SUBSET below): no nested
  *     lists, no code fences, no images (the schema has no image node), no
  *     underscore emphasis, no inline links. Unsupported syntax survives
  *     verbatim as paragraph text rather than being reinterpreted or dropped.
  */
 
-import { Extension, Mark } from '@tiptap/core';
-import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
-import type { Transaction } from '@tiptap/pm/state';
+import { Extension, Mark, type CommandProps, type Editor } from '@tiptap/core';
+import { closeHistory, redoDepth, undoDepth } from '@tiptap/pm/history';
+import { Plugin, PluginKey, Selection, TextSelection } from '@tiptap/pm/state';
+import type { EditorState, Transaction } from '@tiptap/pm/state';
 import { ReplaceStep, Transform } from '@tiptap/pm/transform';
 import { Fragment, Slice } from '@tiptap/pm/model';
-import type { Node as PMNode, Mark as PMMark, Schema } from '@tiptap/pm/model';
+import type { Node as PMNode, Mark as PMMark, MarkType, ResolvedPos, Schema } from '@tiptap/pm/model';
+
+import type { FindMatch } from './findReplace';
+import { ANA_SUGGESTION_AUTHOR_ID } from './anaInsertGate';
 
 /* ── Attribution ──────────────────────────────────────────────── */
 
@@ -79,6 +98,22 @@ function minuteBucket(now = new Date()): string {
   const iso = now.toISOString();
   return iso.slice(0, 16) + ':00Z'; // YYYY-MM-DDTHH:MM:00Z
 }
+
+/** The attributes a suggestion mark carries. A struck quote and AnA's
+ *  replacement are one suggestion from one author and one turn, so both are
+ *  made from the same call; a selection the person struck for a draft is
+ *  theirs, made from their author at the same minute. */
+function suggestionMarkAttrs(author: SuggestionAuthor, at: string, applicationId?: string) {
+  return {
+    authorId: author.id,
+    authorName: author.name,
+    at,
+    sourceRecord: author.sourceRecord ?? null,
+    applicationId: applicationId ?? null,
+  };
+}
+
+type SuggestionMarkAttrs = ReturnType<typeof suggestionMarkAttrs>;
 
 /* Transactions carrying this meta are the editor's own suggestion machinery
    (accept/reject/AI-insert) and must not be reinterpreted by the plugin. */
@@ -109,6 +144,36 @@ const suggestionAttrs = {
     renderHTML: (attrs: Record<string, unknown>) =>
       attrs.sourceRecord ? { 'data-source-record': String(attrs.sourceRecord) } : {},
   },
+  applicationId: {
+    default: null as string | null,
+    parseHTML: (el: HTMLElement) => el.getAttribute('data-application-id'),
+    renderHTML: (attrs: Record<string, unknown>) =>
+      attrs.applicationId ? { 'data-application-id': String(attrs.applicationId) } : {},
+  },
+};
+
+/**
+ * `ownsBlock`: this suggestion is the whole reason its paragraph exists (an
+ * insertion), or the whole of what the paragraph said (a deletion), so the
+ * decision that takes its text away takes the paragraph too — rejecting a
+ * drafted paragraph, accepting the strike of a replaced one. Without it the
+ * decision left an empty paragraph standing where the draft had been, and a
+ * rejected redline was not the section as it was (2026-10-01, 2-fixes.txt
+ * finding 1). Set only by the doors that create or replace whole blocks
+ * (insertSuggestedContent, proposeReplacement), never by typing: an empty
+ * paragraph a person typed into was there before them, and stays.
+ *
+ * Carried in the saved HTML as `data-owns-block`, because a redline is
+ * decided after a reload as often as before one. Removing the paragraph is
+ * still conditional at decision time — see deleteDecided.
+ */
+const ownsBlockAttr = {
+  ownsBlock: {
+    default: false,
+    parseHTML: (el: HTMLElement) => el.getAttribute('data-owns-block') === 'true',
+    renderHTML: (attrs: Record<string, unknown>) =>
+      attrs.ownsBlock ? { 'data-owns-block': 'true' } : {},
+  },
 };
 
 /* ── The two suggestion marks ─────────────────────────────────── */
@@ -123,7 +188,7 @@ export const InsertionMark = Mark.create({
   // Above StarterKit marks so nothing else claims <ins> first.
   priority: 1000,
   addAttributes() {
-    return suggestionAttrs;
+    return { ...suggestionAttrs, ...ownsBlockAttr };
   },
   parseHTML() {
     return [{ tag: 'ins' }];
@@ -142,7 +207,7 @@ export const DeletionMark = Mark.create({
   // Typing at the edge of struck text must not extend the strike.
   inclusive: false,
   addAttributes() {
-    return suggestionAttrs;
+    return { ...suggestionAttrs, ...ownsBlockAttr };
   },
   parseHTML() {
     return [{ tag: 'del' }];
@@ -163,6 +228,8 @@ export interface SuggestionRange {
   at: string | null;
   /** The AnA turn record the text came from, when the mark carries one. */
   sourceRecord: string | null;
+  /** One explicit replacement attempt; ordinary typing and older marks omit it. */
+  applicationId?: string | null;
   text: string;
 }
 
@@ -181,7 +248,8 @@ function continuesRange(
     prev.to === pos &&
     prev.kind === kind &&
     prev.authorId === ((attrs.authorId as string | null) ?? null) &&
-    prev.sourceRecord === ((attrs.sourceRecord as string | null) ?? null)
+    prev.sourceRecord === ((attrs.sourceRecord as string | null) ?? null) &&
+    (prev.applicationId ?? null) === ((attrs.applicationId as string | null) ?? null)
   );
 }
 
@@ -209,6 +277,7 @@ export function collectSuggestions(doc: PMNode): SuggestionRange[] {
       authorName: (mark.attrs.authorName as string | null) ?? null,
       at: (mark.attrs.at as string | null) ?? null,
       sourceRecord: (mark.attrs.sourceRecord as string | null) ?? null,
+      ...(mark.attrs.applicationId ? { applicationId: String(mark.attrs.applicationId) } : {}),
       text: node.text ?? '',
     });
   });
@@ -236,6 +305,139 @@ function markFragmentDeleted(
     nodes.push(hasDel ? node : node.mark(delMark.addToSet(node.marks)));
   });
   return Fragment.from(nodes);
+}
+
+/**
+ * Strike `ranges` in `t` as a pending deletion under `attrs`, and return
+ * where the last of them now ends. (Ranges, not one range: a table cell
+ * selection is one range per cell, and the text between the cells it names is
+ * not selected.)
+ *
+ * The rule is markFragmentDeleted's, the one a hand deletion gets from the
+ * tracking plugin: a pending insertion inside the range really goes (the
+ * person selected it to be replaced, and withdrawing a proposal is not a
+ * change to the record), text already struck keeps its original attribution,
+ * everything else gains this deletion mark. Only inline content is struck, so
+ * a selection that spans paragraphs leaves the paragraphs standing with their
+ * text struck, rather than joining them untracked.
+ *
+ * Text struck as the WHOLE of its paragraph is marked as owning it
+ * (ownsBlockAttr): it was everything the paragraph said, so accepting the
+ * strike takes the emptied paragraph too, as accepting a replacement should.
+ *
+ * Returns null, with `t` untouched, when any of the text to strike cannot
+ * carry the deletion mark: inline code (its mark excludes every other) or a
+ * code block (it allows no marks at all). addMark skipped that text without a
+ * word, so the proposal reported success with the quote standing unstruck, and
+ * Accept all kept words nobody proposed to keep beside the replacement
+ * (2026-10-01, 2-fixes-round2.txt D1). All of it is checked before anything is
+ * marked, so a range that is half code changes nothing either.
+ */
+function strikeRanges(
+  t: Transform,
+  ranges: readonly FindMatch[],
+  deletionType: MarkType,
+  attrs: SuggestionMarkAttrs,
+): number | null {
+  const { insertion, deletion } = t.doc.type.schema.marks;
+  const firstStep = t.steps.length;
+  const strike: Array<FindMatch & { whole: boolean }> = [];
+  const withdraw: FindMatch[] = [];
+  let unmarkable = false;
+  for (const { from, to } of ranges) {
+    t.doc.nodesBetween(from, to, (node, pos, parent) => {
+      if (!node.isInline) return true;
+      const a = Math.max(from, pos);
+      const b = Math.min(to, pos + node.nodeSize);
+      if (b <= a) return false;
+      if (insertion.isInSet(node.marks)) withdraw.push({ from: a, to: b });
+      else if (!deletion.isInSet(node.marks)) {
+        if (!canCarry(parent, node, deletionType)) unmarkable = true;
+        const $a = t.doc.resolve(a);
+        const whole = $a.parent.type.name === 'paragraph' && from <= $a.start() && to >= $a.end();
+        strike.push({ from: a, to: b, whole });
+      }
+      return false;
+    });
+  }
+  if (unmarkable) return null;
+  // Marks first: adding one moves nothing, so the recorded ranges stay valid.
+  for (const r of strike) t.addMark(r.from, r.to, deletionType.create({ ...attrs, ownsBlock: r.whole }));
+  // Then the withdrawals, last first, so earlier positions survive.
+  withdraw.sort((x, y) => y.from - x.from);
+  for (const r of withdraw) t.delete(r.from, r.to);
+  const end = Math.max(...ranges.map((r) => r.to));
+  return t.mapping.slice(firstStep).map(end, -1);
+}
+
+/** Whether `node`, inside `parent`, can take a mark of `type` — what addMark
+ *  would silently skip otherwise. */
+function canCarry(parent: PMNode | null, node: PMNode, type: MarkType): boolean {
+  if (parent && !parent.type.allowsMarkType(type)) return false;
+  const mark = type.create();
+  return Boolean(mark.isInSet(mark.addToSet(node.marks)));
+}
+
+/**
+ * Remove the text of a decided suggestion — a rejected insertion, an accepted
+ * deletion — and, when that text is the whole of a paragraph it owns
+ * (ownsBlockAttr), the paragraph with it.
+ *
+ * Checked now, at the decision, not when the mark was made: a paragraph keeps
+ * standing if anything else is in it by then (a person typed into the draft),
+ * if any of its text is not owned (the empty paragraph a draft was poured
+ * into, which was there before it), or if its container needs it (the only
+ * paragraph of a table cell — the emptied table goes as a whole in
+ * pruneEmptiedContainers instead).
+ *
+ * A list item is the exception to "its container needs it": an item whose
+ * only content is that paragraph was nothing but those words, so the item
+ * goes with them — accepting the strike of a whole item left an empty bullet
+ * where the item had been, and rejecting AnA's drafted items left one bullet
+ * per item (2026-10-01, 2-fixes-round2.txt D3). Unless it is the list's last
+ * item: then the list goes as a whole in pruneEmptiedContainers.
+ */
+function deleteDecided(tr: Transform, from: number, to: number, type: MarkType): void {
+  const $from = tr.doc.resolve(from);
+  const block = $from.parent;
+  if (
+    block.type.name === 'paragraph' &&
+    $from.depth > 0 &&
+    from === $from.start() &&
+    to === $from.end() &&
+    ownedThroughout(block, type)
+  ) {
+    const container = $from.node($from.depth - 1);
+    const index = $from.index($from.depth - 1);
+    if (container.canReplace(index, index + 1)) {
+      tr.delete($from.before(), $from.after());
+      return;
+    }
+    if (LIST_ITEMS.has(container.type.name) && container.childCount === 1 && $from.depth > 1) {
+      const list = $from.node($from.depth - 2);
+      const item = $from.index($from.depth - 2);
+      if (list.canReplace(item, item + 1)) {
+        tr.delete($from.before($from.depth - 1), $from.after($from.depth - 1));
+        return;
+      }
+    }
+  }
+  tr.delete(from, to);
+}
+
+/** The nodes that are one item of a list. */
+const LIST_ITEMS = new Set(['listItem', 'taskItem']);
+const LISTS = new Set(['bulletList', 'orderedList', 'taskList']);
+
+/** Whether every inline node of `block` carries `type` as owning the block. */
+function ownedThroughout(block: PMNode, type: MarkType): boolean {
+  if (block.childCount === 0) return false;
+  let owned = true;
+  block.forEach((child) => {
+    const mark = type.isInSet(child.marks);
+    if (!mark || !mark.attrs.ownsBlock) owned = false;
+  });
+  return owned;
 }
 
 /* ── Emptied-structure cleanup ────────────────────────────────── */
@@ -584,6 +786,302 @@ function structuredNodes(schema: Schema, clean: string, mark: PMMark): PMNode[] 
   return out;
 }
 
+/**
+ * Proposed text → nodes carrying the pending `mark`: the markdown subset where
+ * it converts soundly, flat paragraphs — the behaviour that shipped — the
+ * moment anything about that conversion is not. Text is never dropped either
+ * way. Shared by insertSuggestedContent and proposeReplacement so the two
+ * doors read AnA's text identically.
+ */
+function draftNodes(schema: Schema, clean: string, mark: PMMark): PMNode[] {
+  let nodes: PMNode[];
+  try {
+    nodes = structuredNodes(schema, clean, mark);
+  } catch {
+    nodes = [];
+  }
+  return nodes.length ? nodes : plainParagraphNodes(schema, clean, mark);
+}
+
+/* ── Placing drafted content so a decision can take it back out ── */
+
+/*
+ * The contract every door below keeps (2026-10-01, 2-fixes.txt finding 1):
+ * Reject all leaves the section exactly as it was, and Accept all leaves
+ * exactly what was proposed. It did not: content was put in with ProseMirror's
+ * fitting, which splits the paragraph at the caret to make room for a block —
+ * a split that is structure, so no mark recorded it and no decision undid it.
+ * Rejecting a two-paragraph replacement in mid-sentence left the sentence in
+ * two halves with empty paragraphs between them.
+ *
+ * So drafted blocks never split a paragraph. They go BETWEEN blocks — after
+ * the paragraph, or before it when the caret is at its start — and every text
+ * node in them owns its paragraph (ownsBlockAttr), so rejecting the draft
+ * removes the paragraphs it made rather than emptying them. Where the draft
+ * continues text that is already there (a replacement after its struck
+ * quote, a draft poured into an empty paragraph), its first paragraph goes
+ * inline into that paragraph, not owning it, and the rest follow as blocks.
+ *
+ * Two more rules keep the saved HTML able to say what the live editor says:
+ *
+ *   - An inline edit's edge space is dropped where the document already has
+ *     a space at that edge (or a paragraph boundary). HTML collapses the two
+ *     into one when the section is reloaded, and the one it kept was inside
+ *     <ins>: '25 C' → '30 C ' before ' for use.' reloaded as
+ *     `<ins>30 C </ins>for use.`, so Reject all gave "25 Cfor use."
+ *     (2026-10-01, 2-fixes-round2.txt D2). See fitEdges.
+ *   - Blocks replacing the whole of a list item cannot go inside the item:
+ *     accepting would leave its emptied first paragraph (an item must start
+ *     with one) and the draft nested under a blank bullet. A list goes in as
+ *     sibling items after the struck one; paragraphs stay in the item, the
+ *     first continuing it; anything else is refused (D3). See wholeListItem.
+ *
+ * KNOWN LIMIT (StarterKit's TrailingNode, not this module): ANY transaction —
+ * a proposal anywhere in the section, a decision, a keystroke, even a click —
+ * on a section whose last top-level block is not a paragraph (a list, a table,
+ * a heading, a code block) appends an empty paragraph after it. That paragraph
+ * is the editor's, carries no mark and no decision removes it, so a section
+ * loaded ending in a list or table reads one empty paragraph longer after
+ * Reject all than it was loaded. It is empty, and indistinguishable from an
+ * empty last paragraph the author kept.
+ */
+
+type Draft =
+  | { kind: 'none' }
+  | { kind: 'inline'; content: Fragment }
+  | { kind: 'blocks'; nodes: PMNode[] };
+
+/** Strip blank lines at either end and nothing else: the spaces at the edges
+ *  of an inline edit are part of the edit ('25 C ' → '30 C '), and trimming
+ *  them took a word's separating space out of the record with no mark. */
+function withoutBlankEdges(text: string): string {
+  return text.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/(?:\r?\n[ \t]*)+$/, '');
+}
+
+/** `content` with its insertion marks set to own, or not own, their block. */
+function withOwnership(content: Fragment, type: MarkType, owns: boolean): Fragment {
+  const nodes: PMNode[] = [];
+  content.forEach((node) => {
+    nodes.push(
+      node.mark(node.marks.map((m) => (m.type === type ? type.create({ ...m.attrs, ownsBlock: owns }) : m))),
+    );
+  });
+  return Fragment.fromArray(nodes);
+}
+
+/** Drafted text as blocks (the markdown subset), every text node owning its block. */
+function draftBlocks(schema: Schema, text: string, attrs: SuggestionMarkAttrs): Draft {
+  const clean = text.trim();
+  if (!clean) return { kind: 'none' };
+  const nodes = draftNodes(schema, clean, schema.marks.insertion.create({ ...attrs, ownsBlock: true }));
+  return { kind: 'blocks', nodes };
+}
+
+/** A replacement: one plain paragraph is an INLINE edit, its whitespace kept;
+ *  anything else is blocks. */
+function replacementDraft(schema: Schema, text: string, attrs: SuggestionMarkAttrs): Draft {
+  const body = withoutBlankEdges(text ?? '');
+  if (!body) return { kind: 'none' };
+  const one = draftNodes(schema, body, schema.marks.insertion.create(attrs));
+  if (one.length === 1 && one[0].type === schema.nodes.paragraph) {
+    return one[0].content.size ? { kind: 'inline', content: one[0].content } : { kind: 'none' };
+  }
+  return draftBlocks(schema, body, attrs);
+}
+
+/**
+ * How a draft relates to the place it goes:
+ *   - caret: new content at a collapsed caret — its own paragraphs;
+ *   - selection: replacing text the person selected and struck;
+ *   - quote: replacing a passage AnA quoted and struck.
+ * The two replacements differ in one case only: blocks for words in the
+ * middle of a sentence. The person chose that selection and asked for the
+ * draft, so it goes after the paragraph; AnA's quote is refused (`structural`)
+ * rather than redlined somewhere it did not name.
+ */
+type Placing = 'caret' | 'selection' | 'quote';
+
+/**
+ * Put `text` into `t` at `at` as a pending insertion under `attrs`, by the
+ * rules above. Returns where the inserted content ends, or null — with `t`
+ * untouched — when it cannot go there reversibly.
+ */
+function placeDraft(
+  t: Transform,
+  at: number,
+  text: string,
+  attrs: SuggestionMarkAttrs,
+  placing: Placing,
+): number | null {
+  const schema = t.doc.type.schema;
+  const insertion = schema.marks.insertion;
+  const draft = placing === 'caret' ? draftBlocks(schema, text, attrs) : replacementDraft(schema, text, attrs);
+  if (draft.kind === 'none') return at;
+  const $at = t.doc.resolve(at);
+
+  // Between blocks (the end of a table-cell selection, a gap cursor): only
+  // blocks can go here, and an inline replacement becomes its own paragraph,
+  // whose edges are paragraph boundaries (fitEdges).
+  if (!$at.parent.isTextblock) {
+    const nodes =
+      draft.kind === 'blocks'
+        ? draft.nodes
+        : [schema.nodes.paragraph.create(null, withOwnership(trimEdges(draft.content, true, true), insertion, true))];
+    return insertBetween(t, at, null, at, nodes) ?? insertBetween(t, at, null, at, plainOwned(schema, text, attrs));
+  }
+
+  if (draft.kind === 'inline') {
+    const content = fitEdges(draft.content, $at);
+    if (!content.size) return at;
+    if (!$at.parent.canReplace($at.index(), $at.index(), content)) return null;
+    t.step(new ReplaceStep(at, at, new Slice(content, 0, 0)));
+    return at + content.size;
+  }
+
+  const empty = $at.parent.content.size === 0;
+  const atEnd = at === $at.end();
+  const atStart = at === $at.start();
+
+  // Replacing the whole of a list item: its own rule (wholeListItem), and no
+  // falling back to flat paragraphs — '## Heading' kept as literal text in the
+  // item is not what was proposed either.
+  if (placing !== 'caret' && wholeListItem($at)) {
+    const nodes = draft.nodes;
+    if (nodes.every((n) => LISTS.has(n.type.name))) {
+      const items: PMNode[] = [];
+      for (const list of nodes) list.forEach((item) => items.push(item));
+      return insertBetween(t, $at.after($at.depth - 1), null, at, items);
+    }
+    if (nodes[0].type !== schema.nodes.paragraph) return null;
+  }
+
+  const attempt = (nodes: PMNode[]): number | null => {
+    if (!nodes.length) return at;
+    // A quote ending mid-sentence has no block boundary to put blocks at.
+    if (placing === 'quote' && !atEnd) return null;
+    // Whether the first paragraph continues the textblock `at` is in: the
+    // text after a struck quote or selection that ends its paragraph, or a
+    // caret's empty paragraph.
+    const continues =
+      nodes[0].type === schema.nodes.paragraph && (placing === 'caret' ? empty : atEnd);
+    // New paragraphs before the caret's paragraph when the caret is at its
+    // start (or it is empty and the draft does not open with a paragraph,
+    // keeping that empty paragraph after the draft, where the caret was);
+    // after it otherwise.
+    const before = placing === 'caret' && !continues && (empty || atStart);
+    const boundary = before ? $at.before() : $at.after();
+    const rest = continues ? nodes.slice(1) : nodes;
+    const lead = continues ? leadOf(nodes[0], insertion, $at) : null;
+    if (!lead && !rest.length) return at;
+    return insertBetween(t, boundary, lead, at, rest);
+  };
+  return attempt(draft.nodes) ?? attempt(plainOwned(schema, text, attrs));
+}
+
+/** A draft's first paragraph continuing the textblock at `$at`: inline
+ *  content not owning that block, ending at a paragraph boundary, so the same
+ *  edge rule as an inline edit applies (fitEdges). Null when nothing is left. */
+function leadOf(paragraph: PMNode, insertion: MarkType, $at: ResolvedPos): Fragment | null {
+  const lead = fitEdges(withOwnership(paragraph.content, insertion, false), $at);
+  return lead.size ? lead : null;
+}
+
+/**
+ * Whether `$at` ends a paragraph that is the whole of a list item and is
+ * struck throughout as owning it — the item a replacement is replacing. Its
+ * strike, accepted, takes the item (deleteDecided); what replaces it has to be
+ * able to stand where the item stood.
+ */
+function wholeListItem($at: ResolvedPos): boolean {
+  if ($at.depth < 2 || $at.parent.type.name !== 'paragraph' || $at.pos !== $at.end()) return false;
+  const item = $at.node($at.depth - 1);
+  return (
+    LIST_ITEMS.has(item.type.name) &&
+    item.childCount === 1 &&
+    ownedThroughout($at.parent, $at.doc.type.schema.marks.deletion)
+  );
+}
+
+/**
+ * `content`, an inline edit going in at `$at`, without an edge space the
+ * document already has there.
+ *
+ * HTML collapses a run of spaces across the <ins> boundary, and drops a space
+ * at the start or end of a paragraph, when the section is loaded again. So a
+ * space on the edge of an insertion next to the document's own space (or a
+ * paragraph boundary, or a line break before it) does not survive a save: one
+ * of the two is gone after the reload, and when the one kept is the
+ * insertion's, Reject all takes the document's space out with it. Dropping
+ * the insertion's copy means no space is ever owned only by a suggestion where
+ * the document already has one (2026-10-01, 2-fixes-round2.txt D2). A space
+ * the document does not have is part of the edit, and stays.
+ */
+function fitEdges(content: Fragment, $at: ResolvedPos): Fragment {
+  const before = $at.nodeBefore;
+  const after = $at.nodeAfter;
+  const spaceBefore =
+    !before || before.type.name === 'hardBreak' || (before.isText && /\s$/.test(before.text ?? ''));
+  const spaceAfter = !after || (after.isText && /^\s/.test(after.text ?? ''));
+  return trimEdges(content, spaceBefore, spaceAfter);
+}
+
+/** `content` with the whitespace at its start and/or end removed. */
+function trimEdges(content: Fragment, start: boolean, end: boolean): Fragment {
+  const nodes: PMNode[] = [];
+  content.forEach((node) => nodes.push(node));
+  // Several text nodes can make up an edge (a bold word, then a space), and
+  // one that was nothing but whitespace goes entirely.
+  while (start && nodes.length && nodes[0].isText) {
+    const text = (nodes[0].text ?? '').replace(/^\s+/, '');
+    if (text) {
+      nodes[0] = nodes[0].type.schema.text(text, nodes[0].marks);
+      break;
+    }
+    nodes.shift();
+  }
+  while (end && nodes.length && nodes[nodes.length - 1].isText) {
+    const last = nodes[nodes.length - 1];
+    const text = (last.text ?? '').replace(/\s+$/, '');
+    if (text) {
+      nodes[nodes.length - 1] = last.type.schema.text(text, last.marks);
+      break;
+    }
+    nodes.pop();
+  }
+  return Fragment.fromArray(nodes);
+}
+
+/** The floor every structured draft falls back to: flat paragraphs, owned. */
+function plainOwned(schema: Schema, text: string, attrs: SuggestionMarkAttrs): PMNode[] {
+  const clean = text.trim();
+  return clean ? plainParagraphNodes(schema, clean, schema.marks.insertion.create({ ...attrs, ownsBlock: true })) : [];
+}
+
+/**
+ * Insert `blocks` at the block boundary `boundary` and, when given, `lead` as
+ * inline content at `at` (which is before the boundary), all or nothing.
+ * Returns where the last inserted content ends, or null with `t` untouched.
+ */
+function insertBetween(
+  t: Transform,
+  boundary: number,
+  lead: Fragment | null,
+  at: number,
+  blocks: PMNode[],
+): number | null {
+  const frag = Fragment.fromArray(blocks);
+  const $b = t.doc.resolve(boundary);
+  if (frag.size && !$b.parent.canReplace($b.index(), $b.index(), frag)) return null;
+  const $at = t.doc.resolve(at);
+  if (lead && !$at.parent.canReplace($at.index(), $at.index(), lead)) return null;
+  if (!frag.size && !lead) return null;
+  // The boundary first: it is after `at`, so the lead's position still holds.
+  if (frag.size) t.step(new ReplaceStep(boundary, boundary, new Slice(frag, 0, 0)));
+  if (lead) t.step(new ReplaceStep(at, at, new Slice(lead, 0, 0)));
+  const leadSize = lead ? lead.size : 0;
+  return frag.size ? boundary + frag.size + leadSize : at + leadSize;
+}
+
 /* ── The tracking plugin ──────────────────────────────────────── */
 
 interface TrackChangesStorage {
@@ -622,13 +1120,170 @@ interface TrackChangesStorage {
   acceptedInsertions: AcceptedInsertion[];
 }
 
-/** One accepted insertion: whose it was, and what it said. */
+/** One accepted insertion: whose it was, what it said, and which turn wrote it. */
 export interface AcceptedInsertion {
   authorId: string;
   text: string;
+  /**
+   * The AnA turn record this text came from, or null when the mark named none
+   * (round 15, SEC-A-7 door 1).
+   *
+   * The id is on the mark already — AnA's suggestion carries it as
+   * `sourceRecord` and it rides on `SuggestionRange` — and it stopped here,
+   * because this type held only the author and the words. So the save could
+   * tell the server WHICH words a machine wrote and never WHICH TURN wrote
+   * them, and the server's own verifier had nothing to hold the claim against.
+   *
+   * Null is not a forgery: a plain paste, an older bundle and text typed by
+   * hand all name no turn. The clause still travels, and the server records it
+   * as the person's own words with the reason.
+   */
+  turnRecordId: string | null;
 }
 
-const trackKey = new PluginKey('c2cTrackChanges');
+/** The last recorded decision as an undo and a redo floor. */
+interface DecisionFloor {
+  /** Undo events from before the decision that history held before the last
+   *  transaction. `undoFloorAt` takes off any that transaction cut. */
+  undo: number;
+  /** Redo events from before the decision, until the redo stack empties. */
+  redo: number;
+  /** Undo depth before the last transaction. */
+  seen: number;
+  /** Whether the last transaction was an Undo. */
+  undid: boolean;
+}
+const NO_FLOOR: DecisionFloor = { undo: 0, redo: 0, seen: 0, undid: false };
+
+const trackKey = new PluginKey<DecisionFloor>('c2cTrackChanges');
+
+/* ── A recorded decision is an undo and redo floor ────────────── */
+
+/* Carried by accept/reject transactions only: the ones whose decision the host
+   records as they run. An AnA insert records nothing, so it sets no floor. */
+const DECISION_META = 'c2c-suggestion-decision';
+const PROPOSAL_ACCEPTED_META = 'c2c-proposal-accepted';
+
+/** Accepted application identities on the transaction that actually resolved them. */
+export function acceptedProposalApplications(tr: Transaction): readonly string[] {
+  const ids: unknown = tr.getMeta(PROPOSAL_ACCEPTED_META);
+  return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string' && !!id) : [];
+}
+
+function recordProposalDecision(tr: Transaction, range: SuggestionRange, action: 'accept' | 'reject'): void {
+  if (action !== 'accept' || !range.applicationId) return;
+  tr.setMeta(PROPOSAL_ACCEPTED_META, [...acceptedProposalApplications(tr), range.applicationId]);
+}
+
+/**
+ * Mark `tr` as a recorded decision.
+ *
+ * Kept out of history, and more: the decision is posted to the audit trail at
+ * once, so nothing before it may be undone, or redone, either. The reviewer's
+ * own typing is the entry ⌘Z finds after they accept it, and the tracking
+ * plugin lets an undo through untracked, so Undo removed an accepted insertion
+ * of their own and brought back, unmarked, a deletion they had accepted, while
+ * the record kept "accept" (periodic review 2026-09-28, editor family, P11-B-4
+ * remaining gap (e)). Closing the history group keeps typing after the
+ * decision out of the entry before it, so that typing stays undoable on its
+ * own.
+ */
+function markRecordedDecision(tr: Transaction): void {
+  tr.setMeta(SUGGESTION_ACTION_META, true);
+  tr.setMeta('addToHistory', false);
+  tr.setMeta(DECISION_META, true);
+  closeHistory(tr);
+}
+
+/** Whether `tr` is an Undo or a Redo, from prosemirror-history's own meta. */
+function historyStepOf(tr: Transaction): 'undo' | 'redo' | null {
+  const history = tr.getMeta('history$') as { redo?: boolean } | undefined;
+  if (!history) return null;
+  return history.redo ? 'redo' : 'undo';
+}
+
+/**
+ * The undo floor as it stands in `state`. `floor` is the plugin state held
+ * with `state`, so `seen` and `undid` describe the transaction that made it.
+ *
+ * prosemirror-history keeps 100 undo events (its default depth) plus an
+ * overflow of 20, and on the next new event it cuts the oldest 21. A floor
+ * kept as the undo depth at the decision went on counting events that were
+ * gone, so it sat above the decision: in a long session, Undo of anything
+ * typed after an accept did nothing at all (second adversarial review of gap
+ * (e)). An Undo lowers the depth by exactly one and cuts nothing. Any other
+ * transaction adds at most one event, and a cut takes at least 21. So a depth
+ * lower than `seen` after anything but an Undo is a cut of `seen + 1 - depth`
+ * events, all from the bottom of the stack, where the events from before the
+ * decision are. The floor drops by as many, and stays at 0 once none of them
+ * is left.
+ */
+function undoFloorAt(floor: DecisionFloor, state: EditorState): number {
+  const depth = undoDepth(state);
+  if (floor.undo === 0 || floor.undid || depth >= floor.seen) return floor.undo;
+  return Math.max(0, floor.undo - (floor.seen + 1 - depth));
+}
+
+/**
+ * Depths are read from the old state: in the new one the history plugin may
+ * not have applied yet. So apply takes in a cut one transaction late, and
+ * decisionFloorAllows, reading the floor through the same `undoFloorAt`,
+ * takes it in at once.
+ *
+ * The redo floor is needed because a decision stays out of history, so
+ * prosemirror-history keeps the redo stack across it. A step undone before the
+ * decision could be redone after it: delete a pending insertion, undo the
+ * delete, accept the insertion, and Redo deleted the accepted text again
+ * (adversarial review of gap (e)). The floor lapses once the redo stack is
+ * empty. A new edit empties it, and the undo floor keeps anything from before
+ * the decision out of it after that. Noticing the empty stack one transaction
+ * late is still in time, because only an Undo refills it, and that Undo is a
+ * transaction of its own.
+ *
+ * The redo floor needs no adjustment for a cut. History cuts a stack only as it
+ * adds to it, and only an Undo adds to the redo stack. Until a new edit empties
+ * that stack, neither depth has moved since the decision, so every Undo is
+ * refused at the undo floor and nothing is added.
+ */
+const decisionFloor = {
+  init: (): DecisionFloor => NO_FLOOR,
+  apply: (tr: Transaction, floor: DecisionFloor, oldState: EditorState): DecisionFloor => {
+    const seen = undoDepth(oldState);
+    const undid = historyStepOf(tr) === 'undo';
+    if (tr.getMeta(DECISION_META)) return { undo: seen, redo: redoDepth(oldState), seen, undid };
+    const redo = floor.redo > 0 && redoDepth(oldState) === 0 ? 0 : floor.redo;
+    return { undo: undoFloorAt(floor, oldState), redo, seen, undid };
+  },
+};
+
+/**
+ * Whether the last recorded decision lets an Undo, or a Redo, through in
+ * `state`. False only when history holds one and it would reach past the
+ * floor. So it is true when there is nothing to undo or redo, and under live
+ * co-editing, where prosemirror-history holds nothing.
+ *
+ * filterTransaction asks this for every Undo and Redo. `can().undo()` and
+ * `can().redo()` do not run filterTransaction, so at a floor they stay true
+ * and a press does nothing. An Undo or Redo is applied exactly when both are
+ * true.
+ */
+export function decisionFloorAllows(state: EditorState, step: 'undo' | 'redo'): boolean {
+  const floor = trackKey.getState(state) ?? NO_FLOOR;
+  const depth = step === 'redo' ? redoDepth(state) : undoDepth(state);
+  return depth === 0 || depth > (step === 'redo' ? floor.redo : undoFloorAt(floor, state));
+}
+
+/**
+ * Refuse an undo or a redo that would reach past the last recorded decision.
+ *
+ * Yjs undo under live co-editing does not travel as `history$`, so this does
+ * not see it. Co-editing is off; before it is switched on, a decision must also
+ * clear the Yjs undo stack.
+ */
+function historyStepPassesFloor(tr: Transaction, state: EditorState): boolean {
+  const step = historyStepOf(tr);
+  return step === null || decisionFloorAllows(state, step);
+}
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -647,8 +1302,22 @@ declare module '@tiptap/core' {
        * `text` is read as the markdown subset documented above: tables,
        * headings and lists become real nodes, anything else becomes
        * paragraphs, and every node carries the pending `insertion` mark.
+       * Selected text is not removed: it is struck as a pending deletion by
+       * the same author, and the content goes in after it.
        */
       insertSuggestedContent: (text: string, author: SuggestionAuthor) => ReturnType;
+      /**
+       * Replace the whole document as it is — its settled text settled, its
+       * pending suggestions still attributed to whoever proposed them — without
+       * recording the replacement as the current author's edit. For content
+       * that is not being written now: a stored section seeding a live
+       * document, or an unsaved draft restored from this browser. Through
+       * plain setContent the tracking plugin marked the whole document as one
+       * pending insertion by the current author and, insertion marks
+       * excluding each other, took the authorship of any AnA suggestion in it
+       * (2026-09-29, D5).
+       */
+      setContentUntracked: (content: string) => ReturnType;
     };
   }
 }
@@ -666,6 +1335,10 @@ export function rememberAcceptedAuthor(
   authorId: string | null,
   authorName: string | null,
   text: string,
+  /* The mark's `sourceRecord`. Per INSERTION, not per author: two AnA drafts
+     from different turns can be accepted in one editing session, and the models
+     that served one turn say nothing about the other. */
+  turnRecordId?: string | null,
 ): void {
   if (kind !== 'insertion' || action !== 'accept') return;
   if (!authorId && !authorName) return;
@@ -673,7 +1346,7 @@ export function rememberAcceptedAuthor(
   // The text first, per insertion — before the once-per-author return below,
   // or a second accepted draft from the same author would lose its words.
   if (typeof text === 'string' && text.trim().length > 0) {
-    store.acceptedInsertions.push({ authorId: id, text });
+    store.acceptedInsertions.push({ authorId: id, text, turnRecordId: turnRecordId ?? null });
   }
   if (store.acceptedAuthors.some((a) => a.id === id)) return;
   store.acceptedAuthors.push({ id, name: authorName ?? id });
@@ -746,11 +1419,11 @@ function settledTextblocks(doc: PMNode): string[] {
  * compliance record that loses a decision is worse than no record.
  *
  * So the id is the merge key PLUS a digest of the change's own text. Two runs
- * in the same minute with different words get different ids, the editor's mark
- * schema is untouched, and nothing about merging changes. The remaining
- * collision — the same author proposing the identical text twice inside one
- * minute — is genuinely the same change by every field that identifies one, and
- * the decision for it is the same either way.
+ * in the same minute with different words get different ids, and ordinary
+ * typing-run merging stays unchanged. Explicit replacement attempts additionally
+ * carry an application identity: rejecting then retrying the identical proposal
+ * in the same minute must preserve two decisions. That identity is minted once
+ * per explicit operation, never per keystroke.
  *
  * FNV-1a rather than SHA-256 because this must be synchronous (WebCrypto's
  * digest is not) and it is an index key, not a security boundary: the change's
@@ -772,6 +1445,9 @@ export function changeIdOf(range: SuggestionRange): string {
      against its own turn. A range with no turn record keeps its old id. */
   const parts = [range.kind, range.authorId ?? '', range.at ?? '', range.text];
   if (range.sourceRecord) parts.push(range.sourceRecord);
+  // Explicit attempts stay distinct after a same-minute rejection and retry.
+  // Legacy typing keys and their merging remain unchanged.
+  if (range.applicationId) parts.push(range.applicationId);
   const key = parts.join('\u0000');
   // Two differently-seeded 32-bit passes → 64 bits of digest.
   return `${range.kind}:${fnv1a(key, 0x811c9dc5)}${fnv1a(key, 0x01000193)}`;
@@ -791,6 +1467,7 @@ export interface SuggestionDecision {
   at: string | null;
   /** The AnA turn record the proposed text came from, when known. */
   sourceRecord: string | null;
+  applicationId?: string | null;
 }
 
 /** Build the decision record for one resolved range. */
@@ -807,6 +1484,7 @@ export function decisionOf(
     authorName: range.authorName,
     at: range.at,
     sourceRecord: range.sourceRecord,
+    ...(range.applicationId ? { applicationId: range.applicationId } : {}),
   };
 }
 
@@ -831,6 +1509,90 @@ export function notifyResolved(
   }
 }
 
+/** Commands.setContentUntracked: the meta tells the tracking plugin this
+ *  transaction is not an edit; setContent runs on the same transaction. */
+const setContentUntracked =
+  (content: string) =>
+  ({ tr, commands }: CommandProps): boolean => {
+    tr.setMeta(SUGGESTION_ACTION_META, true);
+    return commands.setContent(content);
+  };
+
+/** `fragment` with each suggestion mark (insertion or deletion) `swap` replaces swapped, at any depth. */
+function swapSuggestionMarks(fragment: Fragment, swap: (mark: PMMark) => PMMark | null): Fragment {
+  const nodes: PMNode[] = [];
+  fragment.forEach((node) => {
+    if (!node.isText) {
+      nodes.push(node.copy(swapSuggestionMarks(node.content, swap)));
+      return;
+    }
+    const mark = node.marks.find((m) => m.type.name === 'insertion' || m.type.name === 'deletion');
+    const next = mark ? swap(mark) : null;
+    nodes.push(mark && next ? node.mark(next.addToSet(mark.removeFromSet(node.marks))) : node);
+  });
+  return Fragment.from(nodes);
+}
+
+/**
+ * The paste door (AnA reasoning round 11, GRD-missed). AnA's text enters a
+ * section through the insert, which admits only an answer the governed-write
+ * rule admits (anaInsertGate.ts). A paste or a drop of an AnA suggestion was a
+ * second way in: with track changes off (the database default) it kept her
+ * name and turn, never met that rule, and its accept was filed as hers. A
+ * pasted AnA suggestion now keeps her name only when the host admits its turn
+ * (one its insert gate admitted); any other becomes the pasting person's, at
+ * this minute. Other authors' suggestions are left as they are.
+ *
+ * It keeps the turn (round 13, round 11's UI review, Part 11 §11.10(e)). The
+ * person is the proposer now, but the words came from AnA's turn, and the
+ * swap had dropped it: the decision then filed AnA's words as the person's
+ * own, with no source. With the turn kept, the decision names it, and the
+ * server verifies the words against it and records which models wrote them
+ * (round 10). A pasted deletion is swapped as an insertion is.
+ */
+export function reattributePasted(
+  slice: Slice,
+  person: SuggestionAuthor,
+  admitsAnaSource?: (sourceRecord: string | null) => boolean,
+): Slice {
+  const swap = (mark: PMMark): PMMark | null => {
+    if (mark.attrs.authorId !== ANA_SUGGESTION_AUTHOR_ID) return null;
+    if (admitsAnaSource?.((mark.attrs.sourceRecord as string | null) ?? null)) return null;
+    return mark.type.create({ ...mark.attrs, authorId: person.id, authorName: person.name, at: minuteBucket() });
+  };
+  return new Slice(swapSuggestionMarks(slice.content, swap), slice.openStart, slice.openEnd);
+}
+
+/**
+ * The turns a pasted run's insertions came from, by position, so the person's
+ * insertion that replaces them can still name each (round 13). Only an
+ * insertion's turn is AnA's words: a deletion's turn proposed striking text
+ * she did not write.
+ */
+function pastedTurns(doc: PMNode, from: number, to: number): Array<[number, number, string]> {
+  const runs: Array<[number, number, string]> = [];
+  doc.nodesBetween(from, to, (node, pos) => {
+    if (!node.isText) return;
+    const turn = node.marks.find((m) => m.type.name === 'insertion')?.attrs.sourceRecord;
+    if (typeof turn === 'string' && turn) runs.push([Math.max(from, pos), Math.min(to, pos + node.nodeSize), turn]);
+  });
+  return runs;
+}
+
+/**
+ * Track changes on: mark [from, to) as the person's pending insertion, clearing
+ * any deletion mark it inherited. A paste or a drop (`edit`'s uiEvent) is the
+ * person's insertion still naming the turn its words came from (round 13);
+ * text they type carries no turn.
+ */
+function markPersonInsertion(fix: Transaction, from: number, to: number, insMark: PMMark, edit: Transaction): void {
+  const ui = edit.getMeta('uiEvent');
+  const turns = ui === 'paste' || ui === 'drop' ? pastedTurns(fix.doc, from, to) : [];
+  fix.removeMark(from, to, fix.doc.type.schema.marks.deletion);
+  fix.addMark(from, to, insMark);
+  for (const [x, y, turn] of turns) fix.addMark(x, y, insMark.type.create({ ...insMark.attrs, sourceRecord: turn }));
+}
+
 export const TrackChanges = Extension.create<
   {
     author: SuggestionAuthor;
@@ -844,13 +1606,16 @@ export const TrackChanges = Extension.create<
      *  the record at all. Fire-and-forget by contract: recording a decision
      *  must never block or undo the editor action the reviewer just took. */
     onResolve?: (decision: SuggestionDecision) => void;
+    /** Whether a pasted AnA suggestion from this turn record keeps AnA's name
+     *  (the paste door, reattributePasted). Absent, none does. */
+    admitsAnaSource?: (sourceRecord: string | null) => boolean;
   },
   TrackChangesStorage
 >({
   name: 'c2cTrackChanges',
 
   addOptions() {
-    return { author: { id: 'unknown', name: 'Unknown author' }, enabled: false, onResolve: undefined };
+    return { author: { id: 'unknown', name: 'Unknown author' }, enabled: false, onResolve: undefined, admitsAnaSource: undefined };
   },
 
   addStorage() {
@@ -876,11 +1641,12 @@ export const TrackChanges = Extension.create<
           this.storage.author = author;
           return true;
         },
+      setContentUntracked,
       resolveSuggestion:
         (range: SuggestionRange, action: 'accept' | 'reject') =>
         ({ state, tr, dispatch }) => {
           const { insertion, deletion } = state.schema.marks;
-          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName, range.text);
+          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName, range.text, range.sourceRecord);
           /* Before the mark is stripped, for the same reason
              rememberAcceptedAuthor is: stripping it erases the text and the
              attribution the decision record is about. */
@@ -890,18 +1656,19 @@ export const TrackChanges = Extension.create<
           if (keepText) {
             tr.removeMark(range.from, range.to, range.kind === 'insertion' ? insertion : deletion);
           } else {
-            tr.delete(range.from, range.to);
+            deleteDecided(tr, range.from, range.to, range.kind === 'insertion' ? insertion : deletion);
             pruneEmptiedContainers(tr, [range.from]);
           }
-          tr.setMeta(SUGGESTION_ACTION_META, true);
           /* Not undoable. The decision was reported above and the host records
              it at once, so ⌘Z restoring the suggestion left the recorded
              "accept" standing over a pending redline, on a canvas back at its
              saved baseline that no unsaved-work guard would flag. Both undo
              engines (prosemirror-history, and Yjs under live co-editing) honour
-             this flag. Rejecting is how an accept is reversed, and it is
-             recorded too. Periodic review 2026-09-28, editor family, P11-B-4. */
-          tr.setMeta('addToHistory', false);
+             the addToHistory flag. Rejecting is how an accept is reversed, and
+             it is recorded too. Periodic review 2026-09-28, editor family,
+             P11-B-4; the undo and redo floor is its remaining gap (e). */
+          markRecordedDecision(tr);
+          recordProposalDecision(tr, range, action);
           if (dispatch) dispatch(tr);
           return true;
         },
@@ -914,64 +1681,64 @@ export const TrackChanges = Extension.create<
           const removedAt: number[] = [];
           // Descending order so earlier positions stay valid as text is removed.
           for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
-            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName, r.text);
+            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName, r.text, r.sourceRecord);
             notifyResolved(this.options.onResolve, r, action);
+            recordProposalDecision(tr, r, action);
             const keepText = (r.kind === 'insertion') === (action === 'accept');
             if (keepText) {
               tr.removeMark(r.from, r.to, r.kind === 'insertion' ? insertion : deletion);
             } else {
-              tr.delete(r.from, r.to);
+              deleteDecided(tr, r.from, r.to, r.kind === 'insertion' ? insertion : deletion);
               removedAt.push(r.from);
             }
           }
           pruneEmptiedContainers(tr, removedAt);
-          tr.setMeta(SUGGESTION_ACTION_META, true);
           // Every decision here was reported too — see resolveSuggestion.
-          tr.setMeta('addToHistory', false);
+          markRecordedDecision(tr);
           if (dispatch) dispatch(tr);
           return true;
         },
       insertSuggestedContent:
         (text: string, author: SuggestionAuthor) =>
         ({ state, tr, dispatch }) => {
-          const clean = (text ?? '').trim();
-          if (!clean) return false;
-          const { insertion } = state.schema.marks;
-          const mark = insertion.create({
-            authorId: author.id,
-            authorName: author.name,
-            at: minuteBucket(),
-            sourceRecord: author.sourceRecord ?? null,
-          });
-          // AnA answers in markdown; a Module 3 answer IS a table. Convert the
-          // subset we understand into real nodes, and fall back to flat
-          // paragraphs — the behaviour that shipped — the moment anything about
-          // that conversion is not sound. Text is never dropped either way.
-          let nodes: PMNode[];
-          try {
-            nodes = structuredNodes(state.schema, clean, mark);
-          } catch {
-            nodes = [];
+          if (!(text ?? '').trim()) return false;
+          const bucket = minuteBucket();
+          const drafted = suggestionMarkAttrs(author, bucket);
+          // Built on a scratch Transform and copied over only once it is
+          // whole: inside a chain `tr` is the chain's transaction, which is
+          // dispatched even when this command returns false, so a half-built
+          // draft must never be written into it.
+          const t = new Transform(tr.doc);
+          let end: number | null;
+          if (!tr.selection.empty) {
+            /* A selection is text the draft REPLACES, and replacing is a
+               deletion. This ran `replaceSelection` straight over it under
+               SUGGESTION_ACTION_META — the meta that tells the tracking plugin
+               to leave the transaction alone — so the selected words left the
+               record with no mark, no author and nothing to reject. They are
+               struck now, and the draft goes in after them, by position — the
+               selection still covers the struck text — exactly as
+               proposeReplacement puts a replacement after its quote
+               (2026-10-01, D2 step 4).
+               The strike is the PERSON's: their selection chose what goes,
+               so it carries their name (this editor's author), not AnA's and
+               not AnA's turn record; the words that come in are AnA's
+               (2026-10-01, 2-fixes.txt finding 2). */
+            const ranges = tr.selection.ranges.map((r) => ({ from: r.$from.pos, to: r.$to.pos }));
+            const person = suggestionMarkAttrs(this.storage.author, bucket);
+            const at = strikeRanges(t, ranges, state.schema.marks.deletion, person);
+            // Text that cannot be struck (code): nothing changes, rather than
+            // a draft beside words that silently stay (2-fixes-round2.txt D1).
+            end = at == null ? null : placeDraft(t, at, text, drafted, 'selection');
+          } else {
+            // AnA answers in markdown; a Module 3 answer IS a table. Convert
+            // the subset we understand into real nodes (draftNodes), placed
+            // between blocks, never splitting the caret's paragraph.
+            end = placeDraft(t, tr.selection.from, text, drafted, 'caret');
           }
-          if (!nodes.length) nodes = plainParagraphNodes(state.schema, clean, mark);
-
-          let slice = new Slice(Fragment.fromArray(nodes), 0, 0);
-          try {
-            // Probe on a scratch Transform — NOT on `state.tr`, which inside a
-            // command IS this very transaction (tiptap's chainable state), so
-            // probing there would apply the draft twice. If this geometry
-            // cannot be fitted at the selection (a table inside a table cell,
-            // say), the real transaction must not be left half-applied.
-            const { from, to } = state.selection;
-            new Transform(state.doc).replaceRange(from, to, slice);
-          } catch {
-            slice = new Slice(
-              Fragment.fromArray(plainParagraphNodes(state.schema, clean, mark)),
-              0,
-              0,
-            );
-          }
-          tr.replaceSelection(slice);
+          if (end == null) return false;
+          for (const step of t.steps) tr.step(step);
+          tr.setSelection(Selection.near(tr.doc.resolve(end), -1));
           tr.setMeta(SUGGESTION_ACTION_META, true);
           /* Out of history as well, or it is the entry ⌘Z finds once the
              decision on it is not: undo after accepting a fresh draft deleted
@@ -986,19 +1753,26 @@ export const TrackChanges = Extension.create<
 
   addProseMirrorPlugins() {
     const storage = this.storage;
+    const options = this.options;
     /** Last delete-key direction, so the caret lands where the next press of
      *  the same key continues the strike instead of re-striking struck text. */
     let deleteDir: 'back' | 'fwd' | null = null;
 
     return [
-      new Plugin({
+      new Plugin<DecisionFloor>({
         key: trackKey,
+        state: decisionFloor,
+        filterTransaction: historyStepPassesFloor,
         props: {
           handleKeyDown(_view, event) {
             if (event.key === 'Backspace') deleteDir = 'back';
             else if (event.key === 'Delete') deleteDir = 'fwd';
             else deleteDir = null;
             return false;
+          },
+          /* A paste or a drop is a second way in for AnA's text (round 11). */
+          transformPasted(slice) {
+            return reattributePasted(slice, storage.author, options.admitsAnaSource);
           },
         },
         appendTransaction(transactions, _oldState, newState) {
@@ -1089,8 +1863,7 @@ export const TrackChanges = Extension.create<
                   const a = fix.mapping.map(insStart, -1) + restoredSize;
                   const b = a + step.slice.size;
                   if (b > a) {
-                    fix.removeMark(a, b, delType);
-                    fix.addMark(a, b, insMark);
+                    markPersonInsertion(fix, a, b, insMark, tr);
                     mutated = true;
                   }
                 }
@@ -1114,3 +1887,275 @@ export const TrackChanges = Extension.create<
     ];
   },
 });
+
+/* ── Anchored proposals (AnA's "replace this passage") ────────── */
+
+/**
+ * A passage of the section and what to put in its place, written the way the
+ * section reader (server/services/authoring/authoring-read.ts) showed AnA the
+ * section — so it is matched the way that reader writes it:
+ *   - `quote` is the words, case and all, not a guess at them; but every run
+ *     of whitespace, a non-breaking space included, is one space on both
+ *     sides, because the reader collapses what the editor keeps;
+ *   - `prefix`/`suffix` are the text just before and after it. When given,
+ *     they must fit the occurrence chosen — they are an anchor, not a hint.
+ *     The reader's block markers (`#` headings, `-` and `1.` list items, the
+ *     ` | ` between table cells) are not in the editor's text and are read
+ *     past; a paragraph break is whitespace.
+ * An empty `replacement` proposes a deletion and nothing else. A replacement
+ * that is one paragraph is an inline edit and keeps its whitespace; one that
+ * is several blocks goes in as blocks (see placeDraft).
+ */
+export interface ReplacementProposal {
+  quote: string;
+  replacement: string;
+  prefix?: string;
+  suffix?: string;
+}
+
+/**
+ * Why a proposal was not applied. Shown to the person, so each one says what
+ * is actually the case:
+ *   - not-found: the quote is not in the section as it stands, or its
+ *     prefix/suffix fit no occurrence of it. A quote that runs across a
+ *     paragraph, list item or table cell boundary is not found either: it
+ *     names no one run of text to strike, and is refused rather than guessed;
+ *   - ambiguous: it is there more than once, and the context did not single
+ *     one occurrence out — guessing would redline a place AnA did not mean;
+ *   - not-editable: the section cannot take suggestions (frozen, read-only,
+ *     source mode, or an editor without track changes);
+ *   - overlaps-suggestion: the quote is only found where it runs into text
+ *     that is already a pending suggestion. Striking someone's pending
+ *     insertion would turn their proposal into AnA's deletion of it, and
+ *     restriking struck text would take its attribution; that is for the
+ *     person to decide first;
+ *   - structural: the replacement is several paragraphs, a list or a table,
+ *     and the quote ends inside a sentence. Blocks there would split the
+ *     paragraph, a change no mark records and no rejection undoes. Likewise
+ *     blocks a list item cannot hold (a heading, a table) replacing the whole
+ *     of a list item;
+ *   - unsupported-content: the quote is, or runs through, text that cannot
+ *     carry a suggestion — inline code, a code block. It cannot be struck, so
+ *     a redline there would leave it standing beside the replacement.
+ */
+export type ProposeRefusal =
+  | 'not-found'
+  | 'ambiguous'
+  | 'not-editable'
+  | 'overlaps-suggestion'
+  | 'structural'
+  | 'unsupported-content';
+
+export type ProposeResult = { ok: true; applicationId?: string } | { ok: false; reason: ProposeRefusal };
+
+/** Whitespace as the reader writes it: any run, NBSP included, is one space.
+ *  A pipe is whitespace too, on both sides: the reader joins table cells with
+ *  ` | `, and a literal pipe in the text compares equal either way. */
+const comparable = (s: string): string => s.replace(/\|/g, ' ').replace(/\s+/g, ' ');
+
+/** A line start's reader marker: a heading's hashes, a list item's bullet or
+ *  number (indented when nested), a table caption's label. */
+const READER_MARKER = /^\s*(?:#{1,6}\s+|[-*+]\s+|\d{1,9}[.)]\s+|Table:\s+)/;
+
+/**
+ * Context as the editor's text would read it: the reader's line-start
+ * markers dropped. In a suffix the first line continues the quote's own
+ * line — its start is content, not a marker — so it is kept as written. (In a
+ * prefix the first line may be partial too; dropping what looks like a marker
+ * there only shortens what has to match, never adds to it.)
+ */
+function withoutReaderMarkers(text: string, firstLineIsContent: boolean): string {
+  return text
+    .split(/\r?\n/)
+    .map((line, i) => (i === 0 && firstLineIsContent ? line : line.replace(READER_MARKER, '')))
+    .join('\n');
+}
+
+/** Whether the text around `m` carries the given prefix and suffix. Text
+ *  inside pending suggestions is compared as plain text, where the reader
+ *  labels it; context running through one does not fit, and is refused. */
+function contextFits(doc: PMNode, m: FindMatch, prefix?: string, suffix?: string): boolean {
+  // Each read both ways — markers read past, and as written — because a
+  // paragraph's REAL text can start with what looks like one ('- 5 mg daily.',
+  // '1. high'), and stripping it then made context that is literally there
+  // fail to fit (2026-10-01, 2-fixes-round2.txt D5). Either reading fitting is
+  // the text being there; neither fitting is still a refusal.
+  if (prefix && prefix.trim()) {
+    // Block boundaries and inline atoms read as whitespace, as they do in the
+    // section text a reader is given.
+    const before = comparable(doc.textBetween(0, m.from, ' ', ' ')).trimEnd();
+    const fits = (p: string) => before.endsWith(comparable(p).trimEnd());
+    if (!fits(withoutReaderMarkers(prefix, false)) && !fits(prefix)) return false;
+  }
+  if (suffix && suffix.trim()) {
+    const after = comparable(doc.textBetween(m.to, doc.content.size, ' ', ' ')).trimStart();
+    const fits = (s: string) => after.startsWith(comparable(s).trimStart());
+    if (!fits(withoutReaderMarkers(suffix, true)) && !fits(suffix)) return false;
+  }
+  return true;
+}
+
+/** Whether any inline content in `m` is already a pending suggestion. */
+function touchesSuggestion(doc: PMNode, m: FindMatch): boolean {
+  const { insertion, deletion } = doc.type.schema.marks;
+  let hit = false;
+  doc.nodesBetween(m.from, m.to, (node) => {
+    if (hit) return false;
+    if (!node.isInline) return true;
+    if (insertion.isInSet(node.marks) || deletion.isInSet(node.marks)) hit = true;
+    return false;
+  });
+  return hit;
+}
+
+/** Stands in for a non-text inline node (a hard break, an inline atom): no
+ *  quote contains it, so no match crosses one. */
+const INLINE_ATOM = '\u0000';
+
+/**
+ * Every occurrence of `quote` in `doc`, overlapping ones included (for
+ * counting, "aa" is in "aaa" twice). Matching is per textblock, over its text
+ * with each whitespace run read as one space; each character keeps the
+ * document range it stands for, so a match strikes exactly the characters —
+ * the whole run of spaces — it read.
+ */
+function quoteMatches(doc: PMNode, quote: string): FindMatch[] {
+  // Pipes stay pipes here: a quote is the words of one textblock, where a
+  // pipe is content, never the reader's cell separator.
+  const needle = quote.replace(/\s+/g, ' ');
+  const out: FindMatch[] = [];
+  doc.descendants((node, pos) => {
+    if (!node.isTextblock) return true;
+    let text = '';
+    const from: number[] = [];
+    const to: number[] = [];
+    let inSpace = false;
+    node.forEach((child, offset) => {
+      const start = pos + 1 + offset;
+      if (!child.isText) {
+        text += INLINE_ATOM;
+        from.push(start);
+        to.push(start + child.nodeSize);
+        inSpace = false;
+        return;
+      }
+      const chars = child.text ?? '';
+      for (let i = 0; i < chars.length; i++) {
+        const space = /\s/.test(chars[i]);
+        if (space && inSpace) {
+          to[to.length - 1] = start + i + 1;
+          continue;
+        }
+        text += space ? ' ' : chars[i];
+        from.push(start + i);
+        to.push(start + i + 1);
+        inSpace = space;
+      }
+    });
+    for (let at = text.indexOf(needle); at !== -1; at = text.indexOf(needle, at + 1)) {
+      out.push({ from: from[at], to: to[at + needle.length - 1] });
+    }
+    return false;
+  });
+  return out;
+}
+
+/**
+ * The one place `proposal` names, or why there is not exactly one.
+ *
+ * Occurrences that run into a pending suggestion are not counted: they cannot
+ * be redlined (see overlaps-suggestion), so they cannot make a live occurrence
+ * ambiguous either; when they are the only ones, that is the refusal. Given
+ * context must fit: the one occurrence a contradicting prefix or suffix
+ * "describes" is not the passage AnA read.
+ */
+function locateProposal(
+  doc: PMNode,
+  proposal: ReplacementProposal,
+): FindMatch | 'not-found' | 'ambiguous' | 'overlaps-suggestion' {
+  const quote = proposal.quote ?? '';
+  if (!quote.trim()) return 'not-found';
+  const matches = quoteMatches(doc, quote);
+  if (matches.length === 0) return 'not-found';
+  const live = matches.filter((m) => !touchesSuggestion(doc, m));
+  if (live.length === 0) return 'overlaps-suggestion';
+  const anchored = Boolean(proposal.prefix?.trim() || proposal.suffix?.trim());
+  const fitting = anchored ? live.filter((m) => contextFits(doc, m, proposal.prefix, proposal.suffix)) : live;
+  if (fitting.length === 0) return 'not-found';
+  return fitting.length === 1 ? fitting[0] : 'ambiguous';
+}
+
+/**
+ * Redline the one passage `proposal.quote` names: strike it as a pending
+ * deletion by `author` and insert `replacement` (the markdown subset, as
+ * insertSuggestedContent reads it) as a pending insertion by `author` right
+ * after it. Both carry the same author, minute, turn record and application UUID.
+ *
+ * Nothing changes unless the result is `{ ok: true }`. The transaction is the
+ * editor's own suggestion machinery (SUGGESTION_ACTION_META, so the tracking
+ * plugin does not re-attribute it to the person whose editor it is) and is not
+ * an undo entry — the same rule, for the same reason, as insertSuggestedContent:
+ * a proposal is withdrawn by rejecting it, which is recorded.
+ *
+ * The person's caret and scroll stay where they were. A proposal arrives from
+ * the conversation while someone may be typing in the section; it used to
+ * move their caret to the end of the redline and scroll there, so the next
+ * keystroke landed inside AnA's proposal. The selection is mapped through the
+ * change instead — the same words stay selected — and nothing scrolls (see
+ * keptSelection for the one position that needed more than mapping).
+ */
+export function proposeReplacement(
+  editor: Editor,
+  proposal: ReplacementProposal & { author: SuggestionAuthor },
+): ProposeResult {
+  if (editor.isDestroyed || !editor.isEditable) return { ok: false, reason: 'not-editable' };
+  const { state } = editor;
+  const { insertion, deletion } = state.schema.marks;
+  if (!insertion || !deletion) return { ok: false, reason: 'not-editable' };
+
+  const target = locateProposal(state.doc, proposal);
+  if (typeof target === 'string') return { ok: false, reason: target };
+
+  const applicationId = globalThis.crypto.randomUUID();
+  const attrs = suggestionMarkAttrs(proposal.author, minuteBucket(), applicationId);
+  const t = new Transform(state.doc);
+  // The range holds no suggestion (locateProposal), so this is a plain strike
+  // — of text that can take one, or of nothing.
+  const at = strikeRanges(t, [target], deletion, attrs);
+  if (at == null) return { ok: false, reason: 'unsupported-content' };
+  if (placeDraft(t, at, proposal.replacement ?? '', attrs, 'quote') == null) {
+    // A textblock that takes no marks takes no insertion either; anything
+    // else that cannot go there is a question of structure.
+    const placeable = t.doc.resolve(at).parent.type.allowsMarkType(insertion);
+    return { ok: false, reason: placeable ? 'structural' : 'unsupported-content' };
+  }
+  const tr = state.tr;
+  for (const step of t.steps) tr.step(step);
+  const kept = keptSelection(state.selection, tr);
+  if (kept) tr.setSelection(kept);
+  tr.setMeta(SUGGESTION_ACTION_META, true);
+  tr.setMeta('addToHistory', false);
+  editor.view.dispatch(tr);
+  return { ok: true, applicationId };
+}
+
+/**
+ * The person's text selection carried through a proposal without growing.
+ *
+ * Plain mapping puts a position that sits exactly where AnA's words go in
+ * AFTER them, so a selection of the quote — or ending at it — came back
+ * covering the insertion too, and a caret at the end of the quote jumped past
+ * it (2026-10-01, 2-fixes-round2.txt D4). So the end of a selection, and a
+ * caret, stay before an insertion at their position, and the start of a
+ * selection stays after one: the person keeps the same words, no more. Null
+ * when plain mapping already says that, or for a selection that is not text.
+ */
+function keptSelection(selection: Selection, tr: Transaction): TextSelection | null {
+  if (!(selection instanceof TextSelection)) return null;
+  const { anchor, head, empty } = selection;
+  const startIsAnchor = anchor <= head;
+  const from = tr.mapping.map(Math.min(anchor, head), empty ? -1 : 1);
+  const to = tr.mapping.map(Math.max(anchor, head), -1);
+  const kept = startIsAnchor ? TextSelection.create(tr.doc, from, to) : TextSelection.create(tr.doc, to, from);
+  return kept.eq(tr.selection) ? null : kept;
+}

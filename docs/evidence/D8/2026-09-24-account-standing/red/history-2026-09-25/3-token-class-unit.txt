@@ -1,0 +1,95 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > accepts a normal access token (returns null)
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (mfaPending claim)
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (pending_mfa role)
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects a refresh token
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA challenge token
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > is case-insensitive on the type claim
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects UNKNOWN explicit token classes (allow-list, not deny-list)
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > accepts only an explicit access token
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects a token with NO type claim (missing_token_type)
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects every non-access class, known or unknown
+ × server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > every first-party authenticator refuses it, on either entry point 6ms
+   → expected null to be 'delegated_token' // Object.is equality
+ × server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > refuses any delegated use, known or unknown, and whatever the type claim says 1ms
+   → expected null to be 'delegated_token' // Object.is equality
+ × server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > the connector, and only a caller naming that use, accepts its own tokens 1ms
+   → expected null to be 'delegated_token' // Object.is equality
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > an absent or null claim is not a delegated token 0ms
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > accepts valid regions without throwing
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > defaults to US_EAST when empty/undefined
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects an unknown region
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects a SQL-injection payload that breaks out of the array literal
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > accepts valid snake_case field names
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > defaults to the standard PHI fields when empty/undefined
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects a field name containing a quote / injection characters
+ ↓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects an uppercase / non-identifier field name
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > every first-party authenticator refuses it, on either entry point
+AssertionError: expected null to be 'delegated_token' // Object.is equality
+
+- Expected:
+"delegated_token"
+
++ Received:
+null
+
+ ❯ server/__tests__/security/security-swarm-hardening.test.ts:99:54
+     97|
+     98|   it('every first-party authenticator refuses it, on either entry poin…
+     99|     expect(requireAccessTokenReason(connectorToken)).toBe('delegated_t…
+       |                                                      ^
+    100|     expect(nonAccessTokenReason(connectorToken)).toBe('delegated_token…
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > refuses any delegated use, known or unknown, and whatever the type claim says
+AssertionError: expected null to be 'delegated_token' // Object.is equality
+
+- Expected:
+"delegated_token"
+
++ Received:
+null
+
+ ❯ server/__tests__/security/security-swarm-hardening.test.ts:104:87
+    102|
+    103|   it('refuses any delegated use, known or unknown, and whatever the ty…
+    104|     expect(requireAccessTokenReason({ type: 'access', token_use: 'some…
+       |                                                                                       ^
+    105|     expect(nonAccessTokenReason({ token_use: 'mcp' })).toBe('delegated…
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > the connector, and only a caller naming that use, accepts its own tokens
+AssertionError: expected null to be 'delegated_token' // Object.is equality
+
+- Expected:
+"delegated_token"
+
++ Received:
+null
+
+ ❯ server/__tests__/security/security-swarm-hardening.test.ts:111:103
+    109|     expect(requireAccessTokenReason(connectorToken, { delegatedUse: 'm…
+    110|     // Naming a use admits that use and no other.
+    111|     expect(requireAccessTokenReason({ type: 'access', token_use: 'othe…
+       |                                                                                                       ^
+    112|     // It admits nothing the rule otherwise refuses.
+    113|     expect(requireAccessTokenReason({ type: 'refresh', token_use: 'mcp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed | 18 skipped (22)
+   Start at  02:34:12
+   Duration  617ms (transform 112ms, setup 91ms, import 236ms, tests 12ms, environment 0ms)
+

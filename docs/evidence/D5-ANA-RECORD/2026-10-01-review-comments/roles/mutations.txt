@@ -1,0 +1,29 @@
+## r1: a member is read-only again (the old map)
+- ['member', REVIEW],
++ 
+exit=1
+ × tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a member doing the work comments and asks for changes 29ms
+      Tests  1 failed | 9 passed (10)
+
+## r2: a manager cannot assign
+- ['manager', LEAD],
++ ['manager', REVIEW],
+exit=1
+ × tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a member cannot reassign the thread; a manager can, and resolves it 44ms
+      Tests  1 failed | 9 passed (10)
+
+## r3: a viewer may comment
+- ['owner', LEAD],
++ ['viewer', REVIEW],
+  ['owner', LEAD],
+exit=1
+ × tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a viewer reads and cannot comment 73ms
+      Tests  1 failed | 9 passed (10)
+
+## r4: a member may reassign
+- ['member', REVIEW],
++ ['member', LEAD],
+exit=1
+ × tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a member cannot reassign the thread; a manager can, and resolves it 21ms
+      Tests  1 failed | 9 passed (10)
+

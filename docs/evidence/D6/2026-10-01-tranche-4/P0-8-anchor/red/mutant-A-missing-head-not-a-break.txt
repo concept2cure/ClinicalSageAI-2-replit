@@ -1,0 +1,62 @@
+# MUTANT (must fail): mutant-A-missing-head-not-a-break
+# 2026-10-01T06:55:38.692516Z
+# file: server/services/audit/chain-anchor.ts
+# - "if (row?.present !== true) return { ...at, kind: 'head_missing' };"
+# + 'if (row?.present !== true) return null;'
+$ npx vitest run --config vitest.db.config.ts server/services/audit/__tests__/chain-anchor.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 32ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 207ms
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 57ms
+   → expected 'ok' to be 'broken' // Object.is equality
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 35ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 21ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 9ms
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 24ms
+   → expected 'ok' to be 'broken' // Object.is equality
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 12ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  06:55:37
+   Duration  1.31s (transform 299ms, setup 98ms, import 231ms, tests 576ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken
+AssertionError: expected 'ok' to be 'broken' // Object.is equality
+
+Expected: "broken"
+Received: "ok"
+
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:212:28
+    210|     expect(await withClient((c) => verifyAuditChain(c, { tenantId: 7 }…
+    211|     const verdict = await withClient((c) => verifyAuditChainAnchor(c, …
+    212|     expect(verdict.status).toBe('broken');
+       |                            ^
+    213|     expect(verdict.breaks).toEqual([
+    214|       { organizationId: 7, rowId: seven[3], kind: 'head_missing', anch…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks
+AssertionError: expected 'ok' to be 'broken' // Object.is equality
+
+Expected: "broken"
+Received: "ok"
+
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:288:36
+    286|     expect(await tamper('DELETE FROM audit_logs WHERE id = $1', [recen…
+    287|     const afterTruncation = await withClient((c) => verifyAuditChainAn…
+    288|     expect(afterTruncation.status).toBe('broken');
+       |                                    ^
+    289|     expect(afterTruncation.breaks).toEqual([
+    290|       { organizationId: 9, rowId: recent[1], kind: 'head_missing', anc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit=1

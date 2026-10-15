@@ -29,6 +29,8 @@ export {
   type SubmissionTypeContext,
 };
 
+import type { ResolvedGatewayAccount } from './gateway-accounts';
+
 export type Region =
   | 'fda'   // US — FDA
   | 'ema'   // EU — EMA / EUDAMED
@@ -126,6 +128,10 @@ export interface SubmissionBundle {
      *  manifests recorded before 2026-09-29, which cannot be acted on. */
     leafId?: string;
     backbone?: string;
+    /** md5 of the bytes the packager was HANDED, when it changed them (PDF/A
+     *  normalization) — the comparand for the next sequence's "unchanged"
+     *  decision. `md5` is the checksum of what shipped. */
+    sourceMd5?: string;
   }>;
   /** Optional human-readable display name. */
   displayName?: string;
@@ -273,6 +279,13 @@ export interface GatewayTransmitRequest {
   submissionType?: string;
   /** Free-form metadata stored on the transmittal row. */
   metadata?: Record<string, unknown>;
+  /**
+   * The organisation's chosen account for this gateway and environment —
+   * the platform's or its own (gateway-accounts.ts). Set by the guard in
+   * ./index.ts from the database, never by a caller; a gateway that can send
+   * under a client's credentials reads them from here.
+   */
+  account?: ResolvedGatewayAccount;
 }
 
 export interface GatewayTransmitResult {
@@ -298,6 +311,8 @@ export interface GatewayTransmitResult {
     /** PDF entries whose security was judged from the signed bundle, and agency forms shipped as issued. */
     leafSecurity: { pdfEntries: number; agencyFormsAsIssued: string[] } | null;
   };
+  /** Whose account it went out under, attached by the guard (gateway-accounts.ts). */
+  gatewayAccount?: { mode: 'platform' | 'client'; senderIdentifier: string | null };
 }
 
 export interface GatewayStatusResult {
@@ -327,7 +342,14 @@ export interface GatewayAcknowledgment {
   transmissionId: string;
   contentType: string;
   buffer: Buffer;
-  receivedAt: Date;
+  /**
+   * When the transmittal row recorded the acknowledgement, or null when it
+   * recorded none — a pending transmission, a rejection, an MDN that could not
+   * be tied to the message. Both builders used to fall back to `new Date()`,
+   * so a receipt nobody recorded read as received at the moment of download,
+   * and AnA's get_submission_ack reported that time (2026-10-15).
+   */
+  receivedAt: Date | null;
   /**
    * Who authored these bytes.
    *

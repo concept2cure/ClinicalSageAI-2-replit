@@ -1,0 +1,196 @@
+# Separation of duties on the release path: the bypass closed, and the creator told in advance
+
+**Rows:** D5 (Part 11 independence), D7 (the governed path to one real sequence).
+**Date:** 2026-10-05. **Asked by the founder:** "make these pop up warnings or
+reminders … in the correct place and time."
+
+## The warning asked for
+
+A sequence's creator cannot sign its freeze or dispatch (separation of duties,
+`assertSignerIsNotAuthor`). For a two-or-three-person regulatory team, the
+creator found that out only after opening the signing dialog and typing a
+password and second factor — the server refused afterwards.
+
+Now:
+
+- `GET /sequences/:seqId/dispatch-readiness` also returns `signer` — whether
+  THIS user may sign, from `resolveTargetAuthors`, the same lookup the sign step
+  enforces (not a client copy). `independent | author | unresolved | unverified`;
+  a failed lookup is `unverified`, never `independent`.
+- The Dispatch tab shows the warning **from the moment the sequence exists**
+  (draft onward, until dispatched), so the team can arrange the signer before it
+  is needed: *"You created this sequence, so you cannot sign its freeze or
+  dispatch. Separation of duties requires a different colleague with signing
+  rights to sign both steps — arrange who that is before the sequence is ready."*
+- The Freeze and Dispatch buttons are not offered to someone the server will
+  refuse. `unresolved` (no creator recorded) says nobody can sign. `unverified`
+  hides nothing and says the check runs again at signing.
+
+Chosen over an AnA reminder: the tab is where the step is taken, it is shown to
+whoever opens the sequence, and it needs no model — the verdict is the
+deterministic server lookup (RULE 2: the model narrates, it does not decide).
+
+## The bypass found while building it — BLOCKER, fixed
+
+The Freeze/Dispatch signing dialog offered every §11.50 meaning, including
+**"Authorship"**. The sign route skips separation of duties for an authorship
+meaning (`requiresIndependence` — correct for a document author signing as
+author). Gate 1 (`governedSignatureVerdict`) checked the declared step, never the
+meaning, and the release resolver accepted the signature. So the sequence's
+creator could pick "Authorship" and **release their own submission** — the one
+guarantee recorded in the 2026-10-05 decision (`separation-of-duties.ts`,
+`SINGLE_AUTHOR['ectd-sequence']`).
+
+Fixed at the step, so it holds for any client:
+- Gate 1 refuses a freeze, dispatch or transmit signature whose meaning is an
+  authorship meaning (via the canonical `requiresIndependence`; "author" and
+  "Authorship" both caught).
+- The dialog no longer offers it: freeze `approval | responsibility`, dispatch
+  `release | approval | responsibility`.
+
+## Falsification
+
+| Probe | Result |
+|---|---|
+| Gate 1 refusal removed | 2 failed / 19 passed — exactly the two authorship cases |
+| `!cannotSign` button guard removed | 3 failed |
+| creator notice removed | 2 failed |
+
+The authorship cases also assert the same sequence freezes and dispatches on an
+approval/release meaning, so the refusal is specific, not blanket; a signature
+recording no meaning is unchanged (it was checked for independence when signed).
+
+## Results
+
+- `freeze-gate-binding.pglite.test.ts` 21 passed (real freeze/dispatch path, PGlite)
+- client dispatch/freeze/honesty suites 31 passed
+- `tsc --noEmit` exit 0, no errors
+
+## The agency gateway — fixed the same day
+
+Found while building the warning above and first handed on to the Package-model
+spine lane. That lane last touched these files on 2026-10-01, and this repo's
+convention passes a held file's findings to its lane only until 24 hours have
+passed; its sweep (`docs/evidence/W5/2026-09-30-package-spine-sweep/`) did not
+track signer independence. So it was fixed here, narrowly.
+
+**The defect.** `POST /api/mdx/gateways/:region/:gateway/transmit` →
+`executeGovernedTransmit` re-authenticated the human and recorded their declared
+meaning, but never asked whether they were independent of the package, and the
+form offered "Authorship — I authored this package". Whoever assembled a package
+could transmit it to FDA themselves, under any meaning.
+
+**The fix**, through the same canonical check as the submissions spine, so the
+two paths to an agency cannot disagree about who may release:
+- `separation-of-duties.ts` — `SINGLE_AUTHOR['submission-package']`: the
+  package's `created_by_id`, tenant-scoped.
+- `governed-transmit-checks.ts` — `assertTransmitterIndependent`: refuses an
+  authorship meaning (`AUTHORSHIP_NOT_A_RELEASE`, 422) before any lookup; the
+  creator (`SIGNER_IS_AUTHOR`, 403); a package with no recorded creator
+  (`SIGNER_INDEPENDENCE_UNRESOLVED`, 409); a failed lookup fails closed as an
+  internal error.
+- `governed-transmit.ts` — called as the **last check before sending**, not the
+  first. First placement made a foreign or missing package read "no creator
+  recorded" instead of its own refusal; the existing cross-tenant test caught
+  it, and moving the call made those refusals keep their codes.
+- `GatewayTransmittals.tsx` — the transmit form no longer offers "Authorship".
+  The rejection-record form keeps it: recording an agency's notice is authorship.
+
+**Falsification.** Check not called → the two membership cases (unit) and the
+two route cases fail; authorship allowed → 2 fail; creator allowed through → 2
+fail. 16 transmit suites, 337 tests pass; `tsc` exit 0.
+
+Two harnesses answered every `FROM c2c_submission_packages` query with a
+metadata row and never modelled a creator; they now answer the creator lookup
+with a colleague (4242) of the acting user (777), and a route case pins the
+creator refusal. Two unit suites that test the signature record, not
+independence, model the signer as independent; independence is tested in
+`governed-transmit-independence.test.ts`. One unrelated failure seen while
+running these, `transmit-guard-reports-checks.test.ts` (tenant-RLS fail-closed
+under `RLS_ENFORCE=on`), fails identically without this change.
+
+## Handed on
+
+**AnA-created packages have no recorded creator, so they now cannot be
+transmitted** — refused with `SIGNER_INDEPENDENCE_UNRESOLVED`, never guessed.
+`server/services/ana-ri/command-executor.ts:1969` inserts into
+`c2c_submission_packages` without `created_by_id`; the HTTP route
+(`submission-ops.ts:267`) sets it. The fix is one column: `created_by_id` =
+`ctx.userId`. That file was changed at 2026-10-05 02:14 by another lane, inside
+its 24-hour window, so it is that lane's until then. Before launch (D1 is not
+green) this is a refusal with a reason, not a silent pass.
+
+Also still open: no per-org setting exists to tighten separation of duties
+("admin may tighten" has no mechanism), and Gateway Transmittals has no
+advance warning like the Dispatch tab's — the creator learns at the refusal,
+which now says why and that a colleague must transmit.
+
+## 2026-10-12 — the same warning on Gateway Transmittals
+
+The Dispatch tab told a sequence's creator in advance; the agency gateway did
+not. `assertTransmitterIndependent` runs after re-authentication, so a package's
+creator learned the rule by typing a password and being refused. (The role half
+was already handled by SEC-1008-1 on 2026-10-08: the screen hides Transmit from
+a role that may not sign, from the server's signing check.)
+
+- `governed-transmit-checks.ts` — `transmitIndependenceOf`: a dry-run of
+  `assertTransmitterIndependent` itself, with a release meaning, mapped to
+  `independent | author | no-creator | unverified`. No second copy of the rule;
+  a failed lookup is `unverified`, never `independent`.
+- `GET /api/mdx/gateways/transmit-independence?packageIds=…` — per package,
+  1–100 ids, validated (422 otherwise). Scoped to the caller's organization, so
+  another tenant's package reads exactly like a nonexistent one (`no-creator`).
+- `GatewayTransmittals.tsx` — the Transmit form's package picker marks a
+  package the signer created ("— you created this; a colleague must transmit
+  it") or one with no recorded creator, and its hint names the rule. Only the
+  Transmit form: assembling and recording identifiers are not refused to the
+  creator. An unread answer marks nothing.
+- Not changed: `C2CForm.tsx` (another lane's SEC-C-7 follow-on holds it), so
+  options are labelled rather than disabled; the server still refuses.
+
+**Falsification** — each reverted: picker not given the verdicts → 1 fail;
+verdicts leaking into the assemble form → 1 fail; failed lookup reported as
+independent → 1 fail; id validation removed → 1 fail.
+23 transmit/gateway suites, 425 tests; `tsc` exit 0; `ci:launch-scope-api`,
+`ci:org-path-param-guards`, `ci:unauthenticated-fetch`,
+`ci:tenant-isolation:no-regression`, `ci:server-error-leaks`,
+`check:security-patterns` pass.
+
+**Still waiting:** AnA's create-package insert (`command-executor.ts:1969`) omits
+`created_by_id`, so AnA-created packages read `no-creator` and are refused at
+transmit — now also marked as such in the picker. That file was changed at
+2026-10-11 22:07 UTC by another session, inside its 24-hour window until
+2026-10-12 22:07 UTC; the fix is one column (`created_by_id` = `ctx.userId`).
+
+## 2026-10-13 — the two items left open, closed once their windows passed
+
+**AnA-created packages record their creator** (`5252eac91`).
+`createSubmissionPackage` (`command-executor.ts`) inserted without
+`created_by_id`, so every package AnA created read "no creator recorded" and
+nobody could transmit it to the agency. It now records `ctx.userId`, as the HTTP
+route does. Tested on the real table (PGlite, the real `0002` migration) through
+the transmit's own check: the creator reads `author`, a colleague `independent`.
+Red first against the unfixed insert (`expected null to be 42`). ana-ri suites:
+81 files, 1,439 tests.
+
+**The Dispatch tab's signer check asks the enforcing function.** On 2026-10-05
+`GET /sequences/:seqId/dispatch-readiness` re-derived the author rule inline
+from `resolveTargetAuthors` — a second copy of the sign step's rule, untested at
+route level. It now calls `signerIndependenceOf`
+(`separation-of-duties.ts`), a dry-run of `assertSignerIsNotAuthor` with an
+approval meaning, beside the gateway's `transmitIndependenceOf`. The unused
+`sources` field is gone from both sides.
+
+New: `server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts`
+(the route asks the check for this sequence, organization and user, and passes
+each state through), and five `signerIndependenceOf` cases in the SoD suite.
+
+Falsification, each reverted:
+- the route's previous inline code restored verbatim → 5 fail (it never asks
+  the enforcing check);
+- a failed lookup reported as independent → 1 fails;
+- the dry-run asking with an authorship meaning, so the check never runs →
+  4 fail.
+
+Route directory 435 files / 4,224 tests; governance and client dispatch
+suites 61 tests; `tsc` exit 0.

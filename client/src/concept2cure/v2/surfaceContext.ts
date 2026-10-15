@@ -57,6 +57,14 @@ export interface SurfaceContext {
   /** Structured facts: ids, counts, scores, selection. Kept small on purpose. */
   facts?: Record<string, unknown>;
   /**
+   * The registry id of the document type this surface authors (e.g.
+   * ICH_PROTOCOL, ICH_IB, ICH_CSR), when it authors one. The server accepts it
+   * only as a registry id and turns it into that type's outline for the turn
+   * (server/services/ana-ri/open-document.ts); a saved record's own template
+   * outranks it.
+   */
+  documentType?: string;
+  /**
    * What the user can do here, phrased as the actions the surface offers. Gives
    * AnA a vocabulary for "drive the screen" requests rather than guessing at
    * capability names.
@@ -225,8 +233,7 @@ export function toModuleContext(
   if (!source) return null;
   const out: Record<string, unknown> = { surface: source.surfaceId, summary: source.summary };
   if (ctx?.facts && Object.keys(ctx.facts).length > 0) out.facts = ctx.facts;
-  if (ctx?.availableActions && ctx.availableActions.length > 0) {
-    out.available_actions = ctx.availableActions;
-  }
+  if (ctx?.documentType) out.document_type = ctx.documentType;
+  if (ctx?.availableActions && ctx.availableActions.length > 0) out.available_actions = ctx.availableActions;
   return out;
 }

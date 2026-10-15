@@ -1,0 +1,27 @@
+$ TEST_DATABASE_URL='postgresql://postgres@127.0.0.1:5432/c2c_testdb?sslmode=disable' APP_DATABASE_URL='postgresql://app_service:local-testdb-app-service-password@127.0.0.1:5432/c2c_testdb?sslmode=disable' RLS_ENFORCE=on NODE_OPTIONS=--max-old-space-size=3072 npx vitest run --config vitest.db.config.ts tests/db/report-os-registry-seed.dbtest.ts   # after: migration generated and listed, route records
+# run at 2026-10-01T00:24:55Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T00:24:57.898Z","pid":16483,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T00:24:57.899Z","pid":16483,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T00:24:57.899Z","pid":16483,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T00:24:58.086Z', poolSize: 1 }
+
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-registry-seed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 17ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 19ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 125ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  00:24:55
+   Duration  3.40s (transform 1.49s, setup 74ms, import 2.62s, tests 406ms, environment 0ms)
+
+exit=0

@@ -1,0 +1,53 @@
+# HEAD 0e58e794 + this change, 2026-10-01T06:42:10Z, PostgreSQL 16.13, after the migration
+--- as the runtime role: psql as app_service (NOSUPERUSER NOBYPASSRLS), app.rls_enforce=on, tenant 93180
+BEGIN;
+BEGIN
+SELECT set_config('app.rls_enforce','on',true) AS rls, set_config('app.current_tenant_id','93180',true) AS tenant, current_user;
+ rls | tenant | current_user 
+-----+--------+--------------
+ on  | 93180  | app_service
+(1 row)
+
+SELECT r.rolsuper, r.rolbypassrls FROM pg_roles r WHERE r.rolname = current_user;
+ rolsuper | rolbypassrls 
+----------+--------------
+ f        | f
+(1 row)
+
+UPDATE qms_documents SET status = 'effective' WHERE doc_number = 'dbqsr-psql-repro-e' RETURNING doc_number, status;
+     doc_number     |  status   
+--------------------+-----------
+ dbqsr-psql-repro-e | effective
+(1 row)
+
+UPDATE 1
+COMMIT;
+ERROR:  QMS_SIGNATURE_REQUIRED: qms_documents 53 (organization 93180) may become 'effective' only in the transaction that writes its 'qms-document-approval' electronic signature (21 CFR Part 11 §11.50/§11.70) — refused.
+HINT:  Approve or retire the document through POST /api/mdx/qms/documents/:id/approve or /retire.
+CONTEXT:  PL/pgSQL function qms_documents_signed_status_guard() line 27 at RAISE
+BEGIN;
+BEGIN
+SELECT set_config('app.rls_enforce','on',true) AS rls, set_config('app.current_tenant_id','93180',true) AS tenant;
+ rls | tenant 
+-----+--------
+ on  | 93180
+(1 row)
+
+UPDATE qms_documents SET status = 'retired' WHERE doc_number = 'dbqsr-psql-repro-r' RETURNING doc_number, status;
+     doc_number     | status  
+--------------------+---------
+ dbqsr-psql-repro-r | retired
+(1 row)
+
+UPDATE 1
+COMMIT;
+ERROR:  QMS_SIGNATURE_REQUIRED: qms_documents 54 (organization 93180) may become 'retired' only in the transaction that writes its 'qms-document-retirement' electronic signature (21 CFR Part 11 §11.50/§11.70) — refused.
+HINT:  Approve or retire the document through POST /api/mdx/qms/documents/:id/approve or /retire.
+CONTEXT:  PL/pgSQL function qms_documents_signed_status_guard() line 27 at RAISE
+--- what is stored afterwards (owner read)
+     doc_number     | status | signatures 
+--------------------+--------+------------
+ dbqsr-psql-repro-e | draft  |          0
+ dbqsr-psql-repro-r | draft  |          0
+(2 rows)
+

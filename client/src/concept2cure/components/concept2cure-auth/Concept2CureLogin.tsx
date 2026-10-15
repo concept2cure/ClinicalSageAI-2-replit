@@ -72,10 +72,21 @@ function PasswordField({
   return (
     <div className={styles.field}>
       <div className={styles.fieldLabelRow}>
-        <label htmlFor={id} className={styles.label}>
+        <label id={`${id}-label`} htmlFor={id} className={styles.label}>
           {label}
         </label>
-        <button type="button" className={styles.toggle} onClick={() => setShow(s => !s)}>
+        {/* A bare "Show" named nothing (WCAG 2.4.6). The name is this button's
+            own text followed by the field's label — "Show Password" — composed
+            from the two translated strings already on screen (ARIA9), so every
+            locale is covered and the name starts with what is seen (2.5.3). */}
+        <button
+          type="button"
+          id={`${id}-toggle`}
+          className={styles.toggle}
+          aria-labelledby={`${id}-toggle ${id}-label`}
+          aria-controls={id}
+          onClick={() => setShow(s => !s)}
+        >
           {show ? t('action.hide') : t('action.show')}
         </button>
       </div>
@@ -273,9 +284,15 @@ export const Concept2CureLogin: React.FC = () => {
     try {
       const result = await login({ email: email.trim(), password, rememberDevice: rememberMe });
       if (!result.success) {
+        // AUTH_001 is the server's "Invalid credentials" — one answer for a
+        // wrong password, an unknown address and an invitee with no password
+        // yet, so it is said the same way for all three (QA 2026-10-08, j9).
         setError({
           field: 'password',
-          message: result.error?.message || t('error.signInFailed'),
+          message:
+            result.error?.code === 'AUTH_001'
+              ? t('error.invalidCredentials')
+              : result.error?.message || t('error.signInFailed'),
           code: result.error?.code,
         });
         return;

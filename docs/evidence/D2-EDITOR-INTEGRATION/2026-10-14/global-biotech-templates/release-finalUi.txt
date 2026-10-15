@@ -1,0 +1,67 @@
+Source log: global-biotech-final-ui.log
+SHA-256: 511992d36f698be02c49a3ad07ec5996d6c548841800819ee632101da29aab46
+Selected verification output; request bodies and repetitive runtime logs omitted.
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Review document ask 635ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Prepare targeted fixes ask 311ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Review document 274ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Prepare targeted fixes 311ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > uses the existing provenance line to identify the preparation worksheet 165ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps mismatched source metadata unavailable instead of guessing preparation limits 359ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps missing source metadata unavailable instead of guessing preparation limits 297ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves US_NDA scope after the working document is renamed 344ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves CA_CTA scope after the working document is renamed 248ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves EU_CTA scope after the working document is renamed 289ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves JP_CTN scope after the working document is renamed 294ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > marks malformed recorded regional identity unavailable rather than dropping it 232ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template context is scoped to the saved document currently open > bounds long handoff limits explicitly and points to complete saved-review pages 260ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template context is scoped to the saved document currently open > does not carry late prior-document metadata into another document ask 397ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > section reads saved template limits before proposing changes 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > document reads saved template limits before proposing changes 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > evidence reads saved template limits before proposing changes 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > fixes reads saved template limits before proposing changes 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a lost reply is unknown, blocks repeat export, and offers the existing history 330ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an untyped 502 does not assert that nothing was recorded 46ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an untyped 500 does not assert that nothing was recorded 37ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a body-read failure after success refreshes the real record without claiming delivery 38ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an empty body is not passed to the download primitive 40ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a typed rendering failure is retryable without an unknown-outcome claim 125ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > the server’s confirmed-record delivery failure refreshes history 40ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > does not overlap export requests across formats 62ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > a delayed old document export cannot download or refresh the new document 69ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after document round-trip 83ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after project switch 82ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after unmount 79ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > with no project open, New document is disabled, says why, and nothing is posted 14ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the empty states’ New document (the event path) does not open a form that can only be refused 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the event path opens the form when a project is open 7ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > creates the document in the open project 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a document via POST /docs and adopts the server row 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > tells the user when the new document is not bound to a filing 14ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > does not cry unbound when the document IS bound 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a section via POST /sections in the open document 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports the assembled document as Word via POST /docs/:id/export 65ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports a real PDF via POST /docs/:id/export {format: pdf} 132ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > says a PDF is the plain-text rendering when the server reports one 42ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a download the browser blocks is never reported as exported to the device 38ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a governance refusal (409, not frozen) is not blamed on the connection 79ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > offers no controlled export on a draft document, and says why beside it 28ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > filters Modules 1–5 and displays the actual preparation limits 284ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > posts exact template/project identity and retains the created ID if the host keeps its leave guard open 72ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > gives AnA the exact loadable template identity and asks for every source-requirement page 58ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > keeps a renamed working document reachable by its saved template ID 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > prevents duplicate creates while the exact request is pending 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"client_program_id":"22222222-2222-4222-8222-222222222222"} without opening it 49ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"template_id":"44444444-4444-4444-8444-444444444444"} without opening it 51ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > recovers an uncertain create through the existing scoped document list before offering another POST 82ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > offers a real retry for a refused create 61ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > suppresses a delayed old-project receipt after the host switches project 50ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > holds creation when the existing working documents could not be checked 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > module outlines stay in the same IND library > offers the module template through the same creation action 36ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > submits the second exact ID when two templates have the same display name 60ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > derives the builtin module M1 instead of the current M4 tree selection 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > derives the builtin module null instead of the current M4 tree selection 39ms
+ Test Files  3 passed (3)
+      Tests  59 passed (59)
+   Start at  21:00:27
+   Duration  12.46s (transform 1.81s, setup 388ms, import 2.67s, tests 6.98s, environment 1.83s)

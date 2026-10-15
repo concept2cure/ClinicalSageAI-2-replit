@@ -1,0 +1,20 @@
+{
+  "starting_published_commit": "7fa964baf87fea7856e5c6307d7705c9d1e68ded",
+  "publication_base": "21d5ff347359313e573823263417693df6f283e3",
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "files": {
+    "server/routes/ana-ri/seal-verified.ts": "1e5def2a5028cc3b516ccc10adba00a2169b3744",
+    "server/services/ana/docx-fidelity.ts": "309a9898d0faa0de21a55eea21c3080ddf07d1eb",
+    "server/services/ana/turn-record-verify.ts": "575be7fc60ac25dfd96218d06912453a2eae5f95",
+    "server/services/ana/verifiedSealService.ts": "fe5e9b5a5be71c1362461e77adbb143bb1e8b230",
+    "server/services/ana/recorded-docx-fidelity.ts": "2b42c1a167ea9d3720558a1b95169bf4e4f4abd0",
+    "server/routes/ana-ri/__tests__/seal-verified-scope.test.ts": "7730b77d677cbbb933fe1fee21b79b64520dcddc",
+    "server/services/ana/__tests__/recorded-docx-fidelity.pglite.test.ts": "fb36b80453f7b42ab978e2baed779cc4933f6b11"
+  },
+  "unchanged_gate_blobs": {
+    ".husky/pre-push": "4bdf530435e05325d9190253d0c1a82cf5750e86",
+    ".husky/pre-commit": "f34550ef6bc560e191aa827b5f7dfee49734b56e",
+    ".typecheck-baseline.json": "2a3cec07f7828f6765bd25c28f5a90acec581657",
+    "scripts/ci/typecheck-no-regression.mjs": "f4d812afe2285d9686a734dcbdd694130813fc35"
+  }
+}

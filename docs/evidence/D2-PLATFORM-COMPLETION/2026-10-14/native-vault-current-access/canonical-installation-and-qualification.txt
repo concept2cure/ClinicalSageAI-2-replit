@@ -1,0 +1,15 @@
+Original strict fresh installation on the new isolated b7d60e29 database:
+install-fresh: exit0 (strict; no allow-incomplete)
+deploy-migrate: exit0
+runtime grant audit: exit0
+Original overall private expectation attempt: exit1
+Actual posture refusal in both checks: Vault canonical non-FORCE programme-policy posture differs.
+Native cases executed by that original expectation attempt:0.
+Global role/credential/membership/global-setting hashes unchanged:true.
+
+Root-authorized stronger FORCE=true read-only qualify-installed phase: exit0.
+The exact original three successful strict steps, original refusal,1111 unchanged inputs and unchanged global hashes were required.
+No CREATE DATABASE, installer, deploy, grant refresh, schema repair or role/password mint was rerun.
+Actual PostgreSQL runtime/table owner/RLS/policy/coverage/guard-body/index/trigger checks passed twice.
+The original overall failed expectation attempt remains exit1 and is referenced by its actual result checksum.
+Python/Node syntax checks alone were not PostgreSQL parser validation.

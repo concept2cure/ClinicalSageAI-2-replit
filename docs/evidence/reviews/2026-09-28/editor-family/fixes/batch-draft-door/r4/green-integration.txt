@@ -1,0 +1,256 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:32.947Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:55:32.948Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:32.948Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:32.947Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:55:32.949Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:32.949Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:32.963Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:55:32.965Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:32.965Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:33.127Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:33.127Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:55:33.127Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 99ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 10ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 15ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 13ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 11ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 25ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason 5ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > accepts a completed draft that reports its finish reason 36ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 186ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > the batch records what it produced: one turn record holding the draft, its id and hash on the result 55ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a forged claim with no record behind it yields no accepted_machine_draft span, and the claim is disclosed 34ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a real record id does not launder the accepter's own text as AnA's 45ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1: a tag inside <pre>: the clause is the accepter's, and the accept does not name AnA 133ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b"…">, which the leaf and the export print: the clause is the accepter's, and the accept does not name AnA 54ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b/…>: the clause is the accepter's, and the accept does not name AnA 35ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > textarea, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 46ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > plaintext after an earlier paragraph: the clause holding the shown words is the accepter's, though the draft verified 66ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a draft accepted with its record id is AnA's, accepted by this person, under the record's model 56ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a model named in the body is ignored; the model comes from the record 65ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp on one line, split at " and " (the splitter keeps " and" on the clause): the clause holding the shown words is the accepter's, though the draft verified 60ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it does not verify (round 4), and credits nothing 81ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record from another tenant does not verify 41ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record that no longer verifies whole does not verify a claim 32ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of "not-a-uuid" is disclosed as malformed_turn_record_id, not answered with a 500 16ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of 12345 is disclosed as no_turn_record_id, not answered with a 500 27ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of {"id":"3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b"} is disclosed as no_turn_record_id, not answered with a 500 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <xmp class="q"> the record does not have is not AnA's text, and is disclosed 36ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <textarea rows="2"> the record does not have is not AnA's text, and is disclosed 45ms
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-10-04T20:55:40.668Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ai_generation ai_drafting_surface",
+  "context": {
+    "userId": 501,
+    "tenantId": 77,
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-10-04T20:55:40.685Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:435:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-10-04T20:55:40.687Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-10-04T20:55:40.693Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:470:36",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+    at TamperProofAuditLog.log (<repo>/server/lib/tamper-proof-audit.ts:503:39)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at AuditService.logAction (<repo>/server/services/auditService.ts:473:9)
+    at <repo>/server/routes/ana-intelligence.ts:105:7
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-10-04T20:55:40.700Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > the accepter's own words, stored in the record as their request, do not verify as AnA's 44ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one verified claim does not carry a forged one: only the recorded draft is AnA's 41ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > content read as plain text shows every `<…>` > a tag-shaped token typed into AnA's sentence, in content with no known tag, is not AnA's 52ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > a clause accepted as AnA's, carried into a raw-text region by a later save > loses AnA's name: the words the region now shows were never compared 69ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept 87ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-A: words typed inside < … > into the draft: does not verify, and every clause is the accepter's 32ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the recorded draft and the accepter's own paragraph, as one claim: does not verify, and every clause is the accepter's 33ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the editor opens in source mode: the clause is the accepter's, and the accept does not name AnA 37ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the fidelity gate may send to source mode: the clause is the accepter's, and the accept does not name AnA 35ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > an HTML draft (control): verifies, and its words are AnA's 41ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > markdown bold: verifies, and its words are AnA's 48ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown bullet list: verifies, and its words are AnA's 34ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the draft with an asterisk AnA never wrote: does not verify, and every clause is the accepter's 28ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-B: words typed inside < … > into a verified draft are the accepter's, not AnA's 42ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > a draft recorded as markdown verifies as the text it shows 36ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > HTML with a footnote asterisk: verifies, and its words are AnA's 45ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown table with an escaped pipe: verifies, and its words are AnA's 35ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a verified claim of one word credits nothing, and the accept does not say AnA's text was accepted 44ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D5: an image alt the leaf prints: the clause is the accepter's, and the accept does not name AnA 451ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D6: a footnote the export prints: the clause is the accepter's, and the accept does not name AnA 30ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1 is also closed in the readers since 737c4e67c: the leaf reads <pre> as markup 2ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words of the record a reader is not shown are not AnA's either (D3) > <template> hides "not" from the eCTD leaf: the clause is the accepter's 44ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > N8: a claim with no comparable text (`<p></p>`) verifies nothing 35ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > accepting the same draft again names AnA: its clauses are AnA's, carried forward and accepted again 62ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a later accept that verifies nothing does not name AnA, though AnA's earlier clauses carry forward 73ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the verifier reads the record as markdown shows it (D8) > record "5*10 mg/kg", claim and content "510 mg/kg": does not verify, nothing is AnA's 63ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > an inline style: the split does not cut inside the tag: every clause is AnA's, and the accept names AnA 40ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > "<LLOQ" and a later ">3×ULN" in plain text: every clause is AnA's, and the accept names AnA 37ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > a markdown draft with an XML example holding <title>: every clause is AnA's, and the accept names AnA 54ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > the inline-style draft is one clause, not two cut at the ": " inside its tag 33ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > authorId "constructor" is not a machine author: it is dropped, and nothing is credited to it 25ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > a verified claim names the record's author, whatever the claim said 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > the record holds the sentence once; the same claim sent three times credits one of three 33ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor does accepting the same draft again: the clause carried forward counts against the record 60ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor do overlapping claims: three claims each holding the sentence credit one of three 37ms
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the figure rule reads <template> as a browser does (FIG, closed at HEAD by 737c4e67c) > an external <img> inside <template> is refused, and nothing is written 19ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a claim with no record behind it: the audit reason, the version summary and lastDraftSource say what verified 32ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > no claim at all: the audit reason, the version summary and lastDraftSource say what verified 22ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft: the audit reason, the version summary and lastDraftSource say what verified 33ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft beside a forged paragraph: the audit reason, the version summary and lastDraftSource say what verified 39ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > refuses an image that is not an uploaded figure, and writes nothing 439ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > accepts an uploaded figure reference 29ms
+
+ Test Files  3 passed (3)
+      Tests  73 passed (73)
+   Start at  20:55:30
+   Duration  10.67s (transform 5.25s, setup 247ms, import 12.39s, tests 18.34s, environment 0ms)
+

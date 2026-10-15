@@ -1,0 +1,12 @@
+-- vault.documents live rows for the program (what the records panel counts)
+[{"live_rows":12}]
+-- vault.documents live rows that a later version supersedes (the same predicate vault-version-checkin.ts uses for current)
+[{"superseded_rows":2}]
+-- vault.documents current rows (not superseded)
+[{"current_rows":10}]
+-- superseded vault rows, by id and title
+[{"id":"f8ae72cb-3ca9-4100-8edf-233758cc0c49","document_title":"Vorelinib-Stability-Protocol-STB-0042","version":"1.0"},{"id":"daa7a666-6252-4198-8914-29b83b69c047","document_title":"Vorelinib-Stability-Protocol-STB-0042","version":"1.0"}]
+-- cre_evidence_sources for the program (what the records panel counts)
+[{"total":22}]
+-- cre_evidence_sources current (is_current IS NOT FALSE, the Data room currentOnly filter)
+[{"current":20}]

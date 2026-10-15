@@ -1,0 +1,20 @@
+# Green: npx vitest run client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > the stream’s refusal becomes that text, with the code recorded on the message
+[useAnaChat] stream failed: This conversation belongs to another project. Start a new conversation in the project you have open.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > a refusal with no code records none
+[useAnaChat] stream failed: Something failed
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > says the conversation belongs to another project and that nothing was sent 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > the stream’s refusal becomes that text, with the code recorded on the message 23ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > a refusal with no code records none 5ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  06:03:32
+   Duration  1.85s (transform 530ms, setup 259ms, import 530ms, tests 35ms, environment 815ms)
+

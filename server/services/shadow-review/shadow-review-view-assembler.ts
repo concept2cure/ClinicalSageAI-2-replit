@@ -22,8 +22,14 @@
  * The recorded score is the run's verdict, so it travels with the row. It is nullable —
  * `rtf_risk_score` is a nullable column and a run may hold none — and a null is passed
  * through AS null, never coerced to 0: a score nothing recorded is not a score of zero.
+ *
+ * 2026-10-05 (Rule 2): a run now records only the aggregate of its findings'
+ * severities. Runs recorded under prompt v1.0 kept the higher of that and the
+ * model's own estimate, so each row says which it is (`scoreBasis`), and the
+ * surface words the score accordingly.
  */
 import { pool } from '../../db';
+import { scoreBasisOf } from './shadow-review-service';
 
 /** Canonical lens order the surface presents (catalog order), for a stable list. */
 const LENS_ORDER = ['fda_filing', 'ema_d120', 'pmda', 'nb_mdr', 'nb_ivdr'];
@@ -44,13 +50,19 @@ const score = (v: unknown): number | null => {
 export async function assembleOrgShadowReview(orgId: number): Promise<Record<string, unknown>[]> {
   // Latest COMPLETE run per lens for the org (soft-delete aware).
   const runsRes = await pool.query(
-    `SELECT DISTINCT ON (lens) id, lens, rtf_risk_score, crl_risk_score
+    `SELECT DISTINCT ON (lens) id, lens, rtf_risk_score, crl_risk_score, prompt_version
        FROM shadow_review_runs
       WHERE organization_id = $1 AND status = 'complete' AND deleted_at IS NULL
       ORDER BY lens, created_at DESC NULLS LAST, id DESC`,
     [orgId],
   );
-  const runs = runsRes.rows as Array<{ id: number; lens: string; rtf_risk_score: unknown; crl_risk_score: unknown }>;
+  const runs = runsRes.rows as Array<{
+    id: number;
+    lens: string;
+    rtf_risk_score: unknown;
+    crl_risk_score: unknown;
+    prompt_version: string | null;
+  }>;
   if (runs.length === 0) return [];
 
   const runIds = runs.map((r) => Number(r.id));
@@ -83,6 +95,7 @@ export async function assembleOrgShadowReview(orgId: number): Promise<Record<str
       runId: Number(r.id),
       rtfRiskScore: score(r.rtf_risk_score),
       crlRiskScore: score(r.crl_risk_score),
+      scoreBasis: scoreBasisOf(r.prompt_version),
       findings: findingsByRun.get(Number(r.id)) ?? [],
     }))
     .sort((a, b) => lensRank(a.lens) - lensRank(b.lens));

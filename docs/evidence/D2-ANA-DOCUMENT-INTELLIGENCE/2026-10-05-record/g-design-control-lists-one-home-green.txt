@@ -1,0 +1,221 @@
+# green: design-controls-qmsr.test.ts + importer tests of the three changed files + the crosswalk test, working tree 2026-10-05T11:15:10Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > DHF_ELEMENTS is the crosswalk §7.3.x ids, in crosswalk order 47ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > a DHF with no design inputs as of 2026-10-04 cites ISO 13485:2016 §7.3.3 via 820.10(c), 820.30(c) only as "formerly" 23ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > as of 2026-10-04 a review without an independent reviewer is an advisory citing ISO 13485:2016 §7.3.5, not a blocker 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > before 2026-02-02 the QSR rule and citation apply: no independent reviewer blocks, citing 21 CFR 820.30(e) 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > no review recorded at all is still a gap after the effective date 0ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > a malformed asOf fails closed rather than guessing a regime 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > as of 2026-10-04 every element cites citeQms(id, asOf), in crosswalk order 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > as of 2026-10-04 the design-review expectation does not require an independent reviewer 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > before 2026-02-02 the elements cite 21 CFR 820.30(b)…(j) 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > listDesignControlElements(asOf) is the same list 0ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > DesignControls.tsx checklist reads the crosswalk > as of 2026-10-04 each element ref is citeQms(id, asOf), in crosswalk order, labels unchanged 5835ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx > Design controls — an unprovisioned store is not an empty DHF > says the store is not provisioned, instead of "no design inputs defined yet" 803ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx > Design controls — an unprovisioned store is not an empty DHF > does not claim a live connection to a store that does not exist 212ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx > Design controls — an unprovisioned store is not an empty DHF > renders differently from a provisioned-but-empty store 1314ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx > Design controls — an unprovisioned store is not an empty DHF > does not publish an 820.30 completeness claim over a store that does not exist 281ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — real rows render > renders the org design inputs from GET /api/design-controls 1289ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — real rows render > derives the 820.30 checklist from the real rows (no hardcoded have/have-not) 1786ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — real rows render > never presents a "Sample data" pill 483ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — honest empty and error states > shows an honest empty state (no seed rows) when the org has no design inputs 174ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — honest empty and error states > shows an honest error (no cached sample) when the store fails 118ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — no fixture symbols survive in source > imports the fixture-free hooks, not the live-or-fixture ones 0ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — no fixture symbols survive in source > carries no inline design-input fixture and no sample-state branch 0ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx > Design controls — an unprovisioned store is not an empty DHF > announces a refused write as a failure, not with the success tick 1495ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx > Design controls — an unprovisioned store is not an empty DHF > still shows the ordinary empty state when the store IS provisioned and holds nothing 113ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry versioning > exposes a semver registry version 1ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > is non-empty 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > has unique ids 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > gives every archetype a label and valid domain 2ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > populates every array facet with non-empty string entries 75ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > scopes applicability to known specializations 4ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > represents both domains 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > covers the required device and ivd archetype ids 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > listArchetypes > returns copies that cannot mutate the registry 1ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > archetypesForSpecialization > returns the full registry for "both" 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > archetypesForSpecialization > filters device-only queries to applicable archetypes 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > archetypesForSpecialization > returns companion-diagnostic archetypes for that specialization 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > archetypesForSpecialization > includes the ivd detection-capability archetype for ivd_diagnostics 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > getArchetype > resolves a known id 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > getArchetype > returns undefined for an unknown id 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > getArchetype > returns a copy, not the registry object 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > one catalog, one count > the catalog is exactly the active registry 2ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > one catalog, one count > segment counts and the tree sum to the same total 31ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > one catalog, one count > client ids are unique and lowercase-canonical 83ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > the Investigator's Brochure is Module 1 for a US IND, not Module 5 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > a SUSAR is an E2B transmission, not an eCTD M5 document 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > abbreviated generic pathways carry their BE evidence in Module 5 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > PSP and PIP are separate filings to separate agencies 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > a CEP is issued by EDQM and a GMP certificate by a national authority — not EMA 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > MedWatch / FAERS is not a filing type; the two real obligations are 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > Module 1 is regional: one row per modeled agency, no combined row 61ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > nothing the retired mirrors offered was lost > every legacy mirror id resolves to a catalog entry 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > nothing the retired mirrors offered was lost > device and IVD rows all carry a pathway (a missing key means "US NDA" downstream) 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > BP-W1-4 — every module assignment is traceable to a named authority > no active entry carries a ctdModule without a moduleAuthority 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > W2-1 / W2-2 — the EMA does not assess devices, and a device dossier is not a CTD > no EU device or IVD filing is attributed to the EMA, except the two consultations that are 19ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > W2-1 / W2-2 — the EMA does not assess devices, and a device dossier is not a CTD > keeps the EMA exactly where the Regulations put it 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > W2-1 / W2-2 — the EMA does not assess devices, and a device dossier is not a CTD > no device or IVD filing carries a CTD or eCTD dossier standard 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > authoring → in_review requires content 39ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > in_review → approved requires a review sign-off 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > a review bound to other content, or to no content, does not satisfy the approval gate 53ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > approved → placed requires an approval signature AND a complete placement 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > packaged → submitted requires packaging validation 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > approved cannot transition back to authoring (must supersede) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > approved can be superseded 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > submitted cannot go back to packaged (terminal-forward) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > legal back-transitions > in_review can request revision back to authoring 18ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > placement completeness > requires registryId, module, and section 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > audit event > captures from/to, actor, version, and placement for a transition 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > progress + wiring > progress increases monotonically across the forward spine 37ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > progress + wiring > every stage has a subsystem binding (no orphaned stage) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an intact trail verifies, and reports that its hashes were recomputed 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an event whose actor was edited with its hashes left in place is broken, at that event 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an event with no hash at all is broken when hashes are recomputed 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > without a hasher it says so: linkage only, never a claim that hashes were checked 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > a signature is its own trail event > records the sign-off at the current stage, naming the signer and the signature 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > agencies — one spelling > accepts the canonical form unchanged 2ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > agencies — one spelling > collapses the case variants that were live in the codebase 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > agencies — one spelling > refuses rather than guesses 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > agencies — one spelling > does not treat a standards body as an agency 2ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > jurisdictions — territory, not authority > collapses the five spellings of Japan that were in use 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > jurisdictions — territory, not authority > collapses the five spellings of Canada 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > jurisdictions — territory, not authority > maps every jurisdiction to exactly one agency 2ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > jurisdictions — territory, not authority > refuses the values that are not jurisdictions at all 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > ranks by position, which is what string comparison gets wrong 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > accepts the historical spellings within a scale 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > keeps the scales apart — the same word can mean different ranks 62ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > returns null for a non-member instead of a default rank 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > translates across scales proportionally, and says so by being explicit 7ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > every scale is ordered least-severe first 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > Investigator's Brochure is Module 1 for a US IND, not Module 5 41ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > ANDA carries Module 5 — its bioequivalence evidence has to go somewhere 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > ANDS (Health Canada) carries Module 5 for the same reason 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > PSP and PIP are separate submissions and no longer alias each other 100ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > MedWatch/FAERS is gone as a filing type; the two real obligations replace it 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > the ICF is filable — it had no format and no module at all 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > every corrected module assignment names the specification that decides it 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > produces byte-identical output for identical input 2ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > always emits the universal lifecycle scaffolding 17ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > keeps dependsOn edges pointing only at in-plan packages 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives IVD programs analytical + clinical performance, not bench/clinical-evidence 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives physical devices bench + clinical evidence, not analytical performance 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > adds SaMD software emphasis deliverables 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives "both" the full evidence spread 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > emits each package id exactly once (no per-filing duplication) 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > emits ONE analytical-performance package unioning all three filings 29ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > unions applicableMarkets across US (510k/clia) and EU (ivdr) filings 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > unions clinical-performance sections across CLIA and IVDR 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > has no duplicate strings within a package section/market list 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — pathway normalization > is tolerant of case/format variants and ignores unknown tokens 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — pathway normalization > derives US market from a US-only filing when markets are unspecified 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > numeric outline levels > orders 10 after 9 rather than after 1 38ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > numeric outline levels > puts a parent before its children 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > numeric outline levels > sorts the same regardless of creation order — the W1-2 complaint 28ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > orders drug substance before drug product, per ICH M4Q 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > orders all four parts S, P, A, R 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > is not what alphabetical collation produces — the defect, stated 138ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > keeps the sub-parts of drug substance in numeric order under it 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > keeps a numeric level ahead of a named part at the same depth 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > orders an unrecognised letter predictably, behind every known part 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > is case-insensitive 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sortBySectionCode > sorts objects without mutating the input 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionInsertIndex > places a new code at its position in an ordered list 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionInsertIndex > converges on full code order when sections are created out of order 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionInsertIndex > reads a manual order rather than imposing code order over it 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > duplicateSectionCodes > finds a code filed twice 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > duplicateSectionCodes > ignores case and surrounding space, and reports nothing when clean 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reports a document whose stored order disagrees with its codes 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reports nothing for a document already in order 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reports a code filed twice 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > does NOT report a skipped number as a gap 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reads the order it is given, not a sorted copy of it 0ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > identity bridges integer and UUID writers > canonical id must be a UUID 21ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > identity bridges integer and UUID writers > normalises an integer native id (unified_documents) to a string ref 17ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > identity bridges integer and UUID writers > normalises a UUID native id (concept2cure_artifacts) to a string ref 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > identity bridges integer and UUID writers > records the id-kind of every known source system 3ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > a valid authoring version has no violations 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > rejects a non-UUID canonical id 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > an approved version must be immutable and signed 0ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > a placed version must carry a placement 0ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > a packaged version must carry BOTH md5 and sha256 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > flags two source rows claiming the same facet (the duplication guard) 0ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > convergence map > binds every facet to a single blessed subsystem 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > append-only audit chain > accepts a correctly linked chain and rejects a broken link 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > registry shape > every modality has a frame and a label — the record cannot outgrow the derivation 80ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > registry shape > every named centre is justified, and every pathway names its fee programme 61ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > accepts canonical members, spacing and case variants 1ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > accepts the live domain spellings 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > refuses to sharpen a class word into a modality 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > mAbs and therapeutic proteins review in CDER — BLA does not imply CBER 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > CBER holds vaccines and cell & gene therapy 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > BsUFA is 351(k) only; an innovator BLA pays PDUFA; an ANDA pays GDUFA 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > an ADC carries BOTH CMC cores — Q5E for the antibody, Q3A/Q3B for the payload–linker 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > oligonucleotides are drugs: CDER and NDA, not a BLA 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > a combination product derives no centre — the summary is the Part 3 rule, not a default 68ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > frameSummary leads with the centre and the default pathway everywhere else 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > every modality carries the common Module 3 base 103ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > a mAb is told about cell banks, potency and Q5E comparability — a small molecule is not 1ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > a small molecule is told about polymorphism, impurities and dissolution — a mAb is not 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > an ADC carries BOTH the biologic core and payload–linker chemistry 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > a combination product gets the Part 3 per-constituent rule, not a borrowed model 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > maps the drug and biologic applications to CTD 2ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > maps the device applications to eSTAR and the EU trial application to CTIS 1ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > maps an IRB submission to the IRB slots 41ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > is case and whitespace insensitive 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > defaults an unknown, empty or absent application type to CTD 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — CTD, unchanged > accepts the codes the gate always accepted 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — CTD, unchanged > still refuses a bare module, because a container is not a place a document can go 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — CTD, unchanged > still refuses a path fragment — the defect the gate was written for 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — CTD, unchanged > refuses an eSTAR code on a CTD submission, and names CTD in the refusal 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > accepts a hyphenated device section identifier 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > refuses a slash, a space or punctuation, because the value becomes a folder 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > accepts a capitalised identifier and canonicalises it 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > does not pretend to know the published eSTAR section list 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > judges CTIS by the same shape rule and says CTIS in the refusal 55ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — IRB, a closed list > accepts every declared slot 29ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — IRB, a closed list > refuses a misspelled slot and lists the real ones 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — IRB, a closed list > refuses a CTD code on an IRB package 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — IRB, a closed list > carries the slots the design document names 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — shared rules > refuses an empty code in every vocabulary 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — shared rules > names the vocabulary that judged the code, in every verdict 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — shared rules > is deterministic 0ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > the registry slot list > is namespaced, sorted and closed 3ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > the registry slot list > recognises its own slots and nothing else 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > the registry slot list > maps every declared projection module onto a declared slot 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > validateSectionCode — registry > accepts a declared slot and canonicalises its case 21ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > validateSectionCode — registry > refuses a code that is not a slot, naming the vocabulary and real slots 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > validateSectionCode — registry > refuses an IRB slot and a CTD code, because membership is checked 0ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > validateSectionCode — registry > is in the vocabulary list 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > vocabularyForApplicationType — registry types > maps registry-specific application types 0ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > vocabularyForApplicationType — registry types > does not repurpose any existing application type 1ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > buildTraceabilityMatrix > marks fully traced inputs 55ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > buildTraceabilityMatrix > detects an input with no output and a dangling verification 1ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > assessDhfCompleteness > a complete DHF is audit-ready 2ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > assessDhfCompleteness > blocks when no design review has an independent reviewer (QSR, before 2026-02-02) 50ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > assessDhfCompleteness > blocks when validation is not on production-equivalent units 0ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsHonesty.test.tsx > Design controls — the lead may not invent open V&V work > withholds the "missing V&V protocols" offer when every input is fully traced 1918ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsHonesty.test.tsx > Design controls — the lead may not invent open V&V work > still offers to draft them when inputs are genuinely untraced 182ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsHonesty.test.tsx > Design controls — a populated read is never reported as an empty DHF > never renders "No design inputs defined yet" over a read that returned rows 338ms
+ ✓ client/src/concept2cure/v2/__tests__/designControlsHonesty.test.tsx > Design controls — a populated read is never reported as an empty DHF > still shows the honest empty state when the store genuinely holds nothing 30ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > no longer says the QMSR retains the Device Master Record 2ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > gives every clause a current QMSR basis that cites no removed section 2ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > leads every fdaMapping with the QMSR and names a removed section only as "formerly" 5ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > names the ISO 13485 medical device file and design and development file as ISO clauses, not FDA terms 0ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > builds FDA_QMSR_NOTE from the crosswalk and states the QMSR as in force 1ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > takes each clause basis from the crosswalk row of the same id 23ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > reads its effective date from the us-qmsr currency fact 0ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > cites the QMSR with the QSR section as "formerly" on and after the effective date 0ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > cites the QSR section alone before the effective date 3ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > fails closed on a date that is not YYYY-MM-DD and on an unknown id 16ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > carries the nine design-control elements, ISO 13485:2016 §7.3.2 to §7.3.10 against 820.30(b) to (j) 1ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > gives every row a well-formed basis tied to the us-qmsr fact, with unique ids 7ms
+
+ Test Files  17 passed (17)
+      Tests  210 passed (210)
+   Start at  11:15:15
+   Duration  37.19s (transform 11.60s, setup 9.47s, import 17.44s, tests 18.99s, environment 27.60s)
+

@@ -1,0 +1,8 @@
+{
+  "compiler": "5.6.3",
+  "helper_blob": "9866391314b83ebb762720141b584f350ecdace2",
+  "processes": 3,
+  "pendingAfter": 0,
+  "cachedDiagnosticFileCount": 0,
+  "purpose": "Native incremental cache preparation only; not the qualification verdict."
+}

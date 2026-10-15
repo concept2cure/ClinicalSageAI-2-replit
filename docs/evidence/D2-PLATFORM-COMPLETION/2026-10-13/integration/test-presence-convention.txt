@@ -1,0 +1,41 @@
+Warning: modified files without companion tests (non-blocking):
+ - client/src/concept2cure/v2/TaskTray.tsx
+ - client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx
+ - client/src/concept2cure/v2/surfaces/ComplianceAttestation.tsx
+ - client/src/concept2cure/v2/surfaces/ComplianceReportResult.tsx
+ - client/src/concept2cure/v2/surfaces/ComplianceReviewRecords.tsx
+ - client/src/concept2cure/v2/surfaces/Insights.tsx
+ - client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx
+ - client/src/concept2cure/v2/surfaces/InsightsRunsPanel.tsx
+ - client/src/concept2cure/v2/surfaces/InsightsSchedulesPanel.tsx
+ - client/src/concept2cure/v2/surfaces/adaptiveMonitoring.tsx
+ - client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts
+ - client/src/concept2cure/v2/surfaces/insightsLibraryShared.tsx
+ - server/routes/__tests__/_report-os-route-harness.ts
+ - server/routes/csr-builder-routes.ts
+ - server/routes/csr-jobs.ts
+ - server/routes/csr-workflow-routes.ts
+ - server/routes/ectd-compile.ts
+ - server/routes/insights-canvas-routes.ts
+ - server/routes/report-os-insights.ts
+ - server/routes/report-os.ts
+ - server/services/audit/signedAuditExport.ts
+ - server/services/csr-builder.ts
+ - server/services/csr/load-csr-inputs-for-project.ts
+ - server/services/notifications/notification-service.ts
+ - server/services/report-os/compute-run.ts
+ - server/services/report-os/orchestrator.ts
+ - server/services/report-os/pdf/writer.ts
+ - server/services/report-os/research-compliance-report-providers.ts
+ - server/services/report-os/scheduling/cadence.ts
+ - server/services/report-os/taxonomy.ts
+ - server/services/research-compliance/compliance-briefing.ts
+ - shared/schema/report-os.ts
+Missing corresponding tests for:
+ - server/services/audit/compliance-reports/snapshot-export.ts
+ - server/services/csr/project-scope.ts
+ - server/services/report-os/client-scope.ts
+ - server/services/report-os/project-access.ts
+ - server/services/report-os/registry-context.ts
+VERIFY_TESTS_STRICT is not enabled; continuing with warning-only mode.
+Test presence verified for added/renamed source files.

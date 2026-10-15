@@ -1,0 +1,35 @@
+2026-10-14T19:41:47.8926673Z ##[group]Run ./scripts/ci/require-migration-headers.sh
+2026-10-14T19:41:47.8927037Z [36;1m./scripts/ci/require-migration-headers.sh[0m
+2026-10-14T19:41:47.8982098Z shell: /usr/bin/bash -e {0}
+2026-10-14T19:41:47.8982332Z ##[endgroup]
+2026-10-14T19:41:47.9079526Z 🔍 Checking migrations for eCTD regulatory audit headers...
+2026-10-14T19:41:47.9080291Z    (Scope: 2026+ date-prefixed migrations + vault prerequisite, in db/migrations migrations)
+2026-10-14T19:41:47.9080738Z 
+2026-10-14T19:41:47.9174978Z    (Base: HEAD~1)
+2026-10-14T19:41:47.9202780Z ❌ Missing eCTD header: db/migrations/20260314_phase12_multi_user_review.sql
+2026-10-14T19:41:47.9251941Z 
+2026-10-14T19:41:47.9252943Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-10-14T19:41:47.9253684Z REQUIRED: Add the standard eCTD audit header to the files listed above.
+2026-10-14T19:41:47.9254026Z 
+2026-10-14T19:41:47.9254241Z Template (paste at line 1 of migration):
+2026-10-14T19:41:47.9254568Z 
+2026-10-14T19:41:47.9254745Z -- =============================================================================
+2026-10-14T19:41:47.9255105Z -- eCTD REGULATORY AUDIT CONTEXT
+2026-10-14T19:41:47.9255534Z -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+2026-10-14T19:41:47.9255976Z -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+2026-10-14T19:41:47.9256619Z -- Purpose: <ONE SENTENCE: what this migration enables>
+2026-10-14T19:41:47.9256875Z --
+2026-10-14T19:41:47.9257051Z -- eCTD/CTD Context:
+2026-10-14T19:41:47.9257361Z --   - Module(s): <e.g., Module 1 / Module 2 / Module 5>
+2026-10-14T19:41:47.9257963Z --   - Integrity Risk Addressed: <e.g., broken cross-refs, tenant isolation>
+2026-10-14T19:41:47.9258415Z --
+2026-10-14T19:41:47.9258658Z -- Determinism Contract:
+2026-10-14T19:41:47.9259159Z --   - Schema changes must not undermine deterministic evidence pointers.
+2026-10-14T19:41:47.9259743Z --   - Any change impacting canonical schemas requires spec version bump.
+2026-10-14T19:41:47.9260025Z --
+2026-10-14T19:41:47.9260176Z -- Notes:
+2026-10-14T19:41:47.9260497Z --   - RLS policies must enforce program_id isolation where applicable.
+2026-10-14T19:41:47.9260950Z --   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+2026-10-14T19:41:47.9261345Z -- =============================================================================
+2026-10-14T19:41:47.9261815Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-10-14T19:41:47.9272034Z ##[error]Process completed with exit code 1.

@@ -12,6 +12,9 @@
 
 import type { AnaTool } from '../ai-gateway/types';
 import { PLACEABLE_DOCUMENT_TABLE_LIST } from '../ectd/leaf-document-tables';
+import { DOCUMENT_TEMPLATES } from '../market-specs/document-template-library';
+import type { RmfJurisdiction } from '../market-specs/risk-management-structure';
+import { MDR_FACT_VOCABULARY, IVDR_FACT_VOCABULARY } from '../market-specs/device-classification';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Submission-center tools — give AnA reach over the canonical core + ingestion
@@ -84,7 +87,7 @@ export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
 export const GENERATE_STF: AnaTool = {
   name: 'generate_stf',
   description:
-    'Generate FDA Study Tagging File (stf.xml) content for each study from its tagged study-report leaves. You pass the leaves with their study id, file tag, CTD section, href, title, and operation; you get one stf.xml per study, grouped by file tag, plus a summary. Pure computation — nothing is written to the package. Use it when assembling Module 4 or 5 so each study folder carries a correct STF.',
+    "Generate the ICH Study Tagging File (stf-<study-id>.xml) for each study from its tagged leaves. You pass each leaf with its study id, file tag, CTD section, package path, title, operation, its leaf ID in index.xml and the STF folder's relative path to index.xml; you get one STF per study (a doc-content per leaf pointing at index.xml#ID, holding the file-tag), a summary and warnings. A .xpt or define.xml tagged outside FDA validation 1735's list is refused. Pure computation — nothing is written to the package; the packager generates the STFs it ships itself.",
   input_schema: {
     type: 'object',
     properties: {
@@ -95,13 +98,15 @@ export const GENERATE_STF: AnaTool = {
           type: 'object',
           properties: {
             study_id: { type: 'string', description: 'Controlling study identifier.' },
-            file_tag: { type: 'string', description: "STF file-tag, e.g. 'study-report-body', 'protocol-or-amendment'." },
+            file_tag: { type: 'string', description: "STF file-tag, e.g. 'study-report', 'protocol-or-amendment'." },
             ctd_section: { type: 'string', description: 'CTD section, e.g. "5.3.5.1".' },
-            href: { type: 'string', description: 'Relative href of the leaf in the package.' },
+            href: { type: 'string', description: 'Package-relative path of the leaf file (decides whether it is a dataset or define.xml).' },
             title: { type: 'string', description: 'Leaf title.' },
             operation: { type: 'string', enum: ['new', 'append', 'replace', 'delete'], description: 'Lifecycle operation.' },
+            index_leaf_id: { type: 'string', description: "The leaf's ID attribute in index.xml." },
+            index_rel_path: { type: 'string', description: "Relative path from the STF's folder to index.xml, e.g. '../../../index.xml'." },
           },
-          required: ['study_id', 'file_tag', 'ctd_section', 'href', 'title', 'operation'],
+          required: ['study_id', 'file_tag', 'ctd_section', 'href', 'title', 'operation', 'index_leaf_id', 'index_rel_path'],
         },
       },
       study_meta: {
@@ -231,12 +236,12 @@ export const CHECK_ECTD_CROSS_REFERENCES: AnaTool = {
 export const CLASSIFY_SUBMISSION_DOCUMENT: AnaTool = {
   name: 'classify_submission_document',
   description:
-    'Classify a submission document to its CTD section through the ingestion pipeline, and optionally draft a leaf placement in a target sequence. The document, tenant, and acting user come from the active context — you pass only the document id and an optional sequence id. The proposal is persisted onto the document and the AI call is audited. Use this when a user uploads a document and asks where it belongs.',
+    'Classify a submission document to its CTD section through the ingestion pipeline. It PROPOSES and changes nothing: the document keeps its section and nothing is placed. With a sequence id the result also carries proposedLeaf, the leaf a person would place there; to place it, call place_into_sequence with that section, a separate step the person confirms with the section in view. The document, tenant, and acting user come from the active context. The AI call is audited. Use this when a user uploads a document and asks where it belongs.',
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'number', description: 'Id of the coauthor document to classify.' },
-      sequence_id: { type: 'number', description: 'Optional target sequence; when set and owned, a draft leaf is placed.' },
+      sequence_id: { type: 'number', description: 'Optional target sequence; the result then carries the leaf to place there. Nothing is placed.' },
     },
     required: ['document_id'],
   },
@@ -245,7 +250,7 @@ export const CLASSIFY_SUBMISSION_DOCUMENT: AnaTool = {
 export const EXTRACT_SUBMISSION_DOCUMENT: AnaTool = {
   name: 'extract_submission_document',
   description:
-    "Extract a submission document's structure, claims, and referenced sources through the ingestion pipeline, and record a provenance link from the target section to the document. You pass the document id, the CTD section it maps to, and the submission id; tenant and acting user come from the active context. The result is persisted and audited. Use this after classification to capture what a document supports.",
+    "Extract a submission document's structure, claims, and referenced sources through the ingestion pipeline, and record a provenance link from the target section to the document. You pass the document id, the CTD section it maps to, and the submission id; tenant and acting user come from the active context. The result is returned and audited, and the provenance link is recorded; the document itself is not changed. Use this after classification to capture what a document supports.",
   input_schema: {
     type: 'object',
     properties: {
@@ -260,7 +265,7 @@ export const EXTRACT_SUBMISSION_DOCUMENT: AnaTool = {
 export const RUN_SHADOW_REVIEW: AnaTool = {
   name: 'run_shadow_review',
   description:
-    'Run a shadow review on an assembled sequence — a simulated reviewer pass that returns severity-scored Refuse-to-File and Complete-Response-risk findings, each with a regulatory basis and a fix, plus rtf/crl risk scores. You pass the sequence id and an optional reviewer lens; tenant and acting user come from the active context. The run and its findings are persisted and the AI call is audited. Use this before dispatch to surface what a reviewer would reject.',
+    'Run a shadow review on an assembled sequence — a simulated reviewer pass that returns severity-scored Refuse-to-File and Complete-Response-risk findings, each with a regulatory basis and a fix, plus rtf/crl gate scores computed by the server from the severities of those findings (scoreBasis: severity_aggregate; the reviewer model reports no figure). You pass the sequence id and an optional reviewer lens; tenant and acting user come from the active context. The run and its findings are persisted and the AI call is audited. Use this before dispatch to surface what a reviewer would reject.',
   input_schema: {
     type: 'object',
     properties: {
@@ -353,23 +358,6 @@ export const EXPLAIN_VALIDATION_FINDINGS: AnaTool = {
   },
 };
 
-export const CROSS_REGION_GAP_ANALYSIS: AnaTool = {
-  name: 'cross_region_gap_analysis',
-  description:
-    'Given a submission prepared for a source region, compute what is additionally needed to file the same product in target regions: Module 1 deltas, bridging-study needs (ICH E5), translation scope, and format conversion. Tenant comes from the active context; the call is audited.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      source_region: { type: 'string', enum: ['fda', 'eu', 'jp'] },
-      target_regions: { type: 'array', items: { type: 'string', enum: ['fda', 'eu', 'jp'] } },
-      application_type: { type: 'string', description: 'e.g. nda, maa, jnda.' },
-      sections_present: { type: 'array', items: { type: 'string' }, description: 'Optional CTD section codes already prepared.' },
-      submission_id: { type: 'number', description: 'Optional submission id for the audit entry.' },
-    },
-    required: ['source_region', 'target_regions', 'application_type'],
-  },
-};
-
 export const DISPATCH_QC_CHECK: AnaTool = {
   name: 'dispatch_qc_check',
   description:
@@ -409,12 +397,12 @@ export const TRACE_PROVENANCE: AnaTool = {
 export const CHECK_CONSISTENCY: AnaTool = {
   name: 'check_consistency',
   description:
-    'Cross-check a claim against other parts of the dossier for consistency along a named dimension (e.g. subject-counts, spec-vs-qos, label-vs-safety), and record each verdict (match or conflict) as a consistency finding. Tenant comes from the active context; the call is audited. Use it to catch contradictions before review.',
+    'Compare the labelled figures in a claim (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other parts of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context; the call is audited.',
   input_schema: {
     type: 'object',
     properties: {
       submission_id: { type: 'number', description: 'The submission.' },
-      dimension: { type: 'string', description: 'What is being checked, e.g. "subject-counts".' },
+      dimension: { type: 'string', description: 'What is being checked, recorded with each finding, e.g. "subject-counts".' },
       left: {
         type: 'object',
         description: 'The claim under review.',
@@ -552,14 +540,80 @@ export const GET_MARKET_SUBMISSION_SPEC: AnaTool = {
   },
 };
 
+/**
+ * The get_document_template outlines that are read from a canonical record, and
+ * that record. Every other outline in market-specs/document-template-library.ts is
+ * a heading list kept by hand against its cited basis, and the description says
+ * so. An outline joins this map only when the library derives its sections from
+ * the record — __tests__/document-template-description.test.ts proves each entry
+ * against the record and fails on an entry it cannot prove.
+ */
+export const TEMPLATE_OUTLINES_FROM_RECORD: Readonly<Record<string, string>> = {
+  clinical_study_report: 'ICH E3',
+  smpc: 'QRD SmPC',
+  dsur: 'corrected ICH E2F',
+};
+
+/** These are canonical platform scaffolds, not a verified agency document structure. */
+export const TEMPLATE_OUTLINES_FROM_BLUEPRINT: Readonly<Record<string, string>> = Object.fromEntries(
+  DOCUMENT_TEMPLATES.flatMap((t) => t.outlineSource?.kind === 'project-blueprint'
+    ? [[t.id, t.outlineSource.blueprintId]]
+    : []),
+);
+
+/** What a hand-kept outline is, where that needs saying. Kept terse: see the order note below. */
+const HAND_KEPT_OUTLINE_NOTES: Readonly<Record<string, string>> = {
+  pbrer: 'interim E2C(R2)',
+  cover_letter: 'platform headings',
+};
+
+const recordDerivedOutlines = DOCUMENT_TEMPLATES
+  .filter((t) => t.id in TEMPLATE_OUTLINES_FROM_RECORD)
+  .map((t) => `${t.id} (${TEMPLATE_OUTLINES_FROM_RECORD[t.id]})`)
+  .join('; ');
+
+const blueprintOutlines = Object.keys(TEMPLATE_OUTLINES_FROM_BLUEPRINT).join('; ');
+
+const handKeptOutlines = DOCUMENT_TEMPLATES
+  .filter((t) => !(t.id in TEMPLATE_OUTLINES_FROM_RECORD) && !(t.id in TEMPLATE_OUTLINES_FROM_BLUEPRINT))
+  .map((t) => (HAND_KEPT_OUTLINE_NOTES[t.id] ? `${t.id} (${HAND_KEPT_OUTLINE_NOTES[t.id]})` : t.id))
+  .join('; ');
+
+/**
+ * Order matters. OpenAI-compatible providers trim a tool description at 1024
+ * characters (ai-gateway/gateway.ts, OPENAI_MAX_TOOL_DESCRIPTION_CHARS). The
+ * purpose, the presentation rule, the input usage and the record-derived list come
+ * first; the hand-kept list comes last, so a trim can only drop trailing hand-kept
+ * ids — the description then understates where an outline came from, never
+ * overstates it. The test pins both the order and the length.
+ */
 export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   name: 'get_document_template',
   description:
-    "Look up the canonical SECTION STRUCTURE (heading skeleton) of a key submission document — the ordered sections (number + heading + purpose + required) with the regulatory basis. Covers the CTD Module 2 summaries (Quality Overall Summary 2.3, Nonclinical Overview 2.4, Clinical Overview 2.5, Clinical Summary 2.7), the cover letter, the FDA 510(k) Summary (21 CFR 807.92), the EU SmPC, the MDR/IVDR GSPR checklist, the IVDR Performance Evaluation Report, and the CTA IMPD. These are factual document spines from published guidance, not drafted prose — use them to scaffold authoring or to check a document's completeness. Static reference data, read-only. Pass `template_id` for one (e.g. 'clinical_overview', 'k510_summary', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) to list a family's templates.",
+    'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
+    'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list components/biotech gaps. ' +
+    '`offset`/`limit` page results. Editor UUIDs read the same outline, exact filing scope and source checks. ' +
+    '`market`+`prepare` adds a regional route and at most 3 focused questions. ' +
+    '`discussed_topics` only prevents re-asking. ' +
+    "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +
+    `Record-derived: ${recordDerivedOutlines}. ` +
+    `Blueprint scaffolds: ${blueprintOutlines}. ` +
+    `Kept by hand: ${handKeptOutlines}.`,
   input_schema: {
     type: 'object',
     properties: {
-      template_id: { type: 'string', description: "A specific template id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'." },
+      template_id: { type: 'string', description: "An exact editor template UUID or component id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'. Follow all UUID reference pages, including preparation JSON parts when requested." },
+      registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, EU_MAA, CA_NDS or JP_MKT_APPROVAL. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
+      market: { type: 'string', enum: ['US', 'EU', 'CA', 'JP'], description: 'Confirmed target jurisdiction for preparation; do not infer from the conversation language.' },
+      prepare: { type: 'boolean', description: 'Include a regional route and up to 3 prioritized client questions. This creates an inquiry brief, not a readiness or evidence-sufficiency verdict.' },
+      discussed_topics: {
+        type: 'array',
+        description: 'Topics already discussed in this conversation, to avoid asking them again. These are conversational markers only; they never establish that source data are supplied, verified or sufficient.',
+        items: { type: 'string', enum: ['scope', 'source_versions', 'data_cutoff', 'statistical_results', 'estimands', 'safety', 'quality', 'local_requirements', 'japan_evidence', 'agency_commitments', 'review_owners'] },
+      },
+      coverage: { type: 'boolean', description: 'Without template_id or registry_id: list existing biotech registry outline coverage, including missing or withheld outlines. Scaffold availability is not qualified builder or filing capability.' },
+      offset: { type: 'integer', minimum: 0, default: 0, description: 'Zero-based catalog/section offset. Continue with nextOffset when one is returned.' },
+      limit: { type: 'integer', minimum: 1, maximum: 30, default: 12, description: 'Maximum catalog entries or template sections to return in this page.' },
       family: {
         type: 'string',
         enum: ['ectd', 'estar', 'eu_mdr', 'eu_ivdr', 'ctis'],
@@ -654,16 +708,26 @@ export const CLASSIFY_POST_SUBMISSION_CHANGE: AnaTool = {
   },
 };
 
+/**
+ * The jurisdictions `assess_device_evidence_structure` accepts for an RMF. Keyed by
+ * `RmfJurisdiction` so a jurisdiction added to or removed from
+ * risk-management-structure.ts fails the typecheck here; the advertised enum and
+ * the handler's check (AnaToolExecutor.ts) both read this list.
+ */
+const RMF_JURISDICTION_KEYS: Record<RmfJurisdiction, true> = { EU_MDR: true, EU_IVDR: true, FDA: true, OTHER: true };
+export const RMF_JURISDICTIONS = Object.keys(RMF_JURISDICTION_KEYS) as RmfJurisdiction[];
+
 export const ASSESS_DEVICE_EVIDENCE_STRUCTURE: AnaTool = {
   name: 'assess_device_evidence_structure',
   description:
-    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered; for `document: 'rmf'` it checks the ISO 14971 risk management file. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER/RMF before Notified-Body review.",
+    "Assess a device/IVD evidence document against its regulated structure. For `document: 'cer'` it checks the CER against MEDDEV 2.7/1 Rev 4 / MDR Annex XIV (set `equivalence_claimed` if equivalence is used); for `document: 'per'` it checks the IVDR Annex XIII Performance Evaluation Report and reports which of the three pillars (scientific validity, analytical, clinical) are covered; for `document: 'rmf'` it checks the ISO 14971 risk management file, and with `jurisdiction` (EU_MDR, EU_IVDR, FDA, OTHER) it also returns that jurisdiction's risk-acceptability policy (`acceptabilityPolicy`: principle, statement, whether cost may justify stopping risk reduction, and its basis with confidence), e.g. AFAP with no economic justification for an EU MDR/IVDR file. Without `jurisdiction` no policy is returned; ask which market the file is for. Pass `present_section_ids` (the sections you have). Without `present_section_ids` it returns the full structure (stages/pillars/sections + reviewer questions). Deterministic, read-only. Use it to gap-check a CER/PER/RMF before Notified-Body review.",
   input_schema: {
     type: 'object',
     properties: {
       document: { type: 'string', enum: ['cer', 'per', 'rmf'], description: "'cer' (MDR clinical evaluation), 'per' (IVDR performance evaluation), or 'rmf' (ISO 14971 risk management file)." },
       present_section_ids: { type: 'array', items: { type: 'string' }, description: 'Section ids present in the document (for assessment).' },
       equivalence_claimed: { type: 'boolean', description: 'CER only — set true if equivalence to another device is claimed.' },
+      jurisdiction: { type: 'string', enum: RMF_JURISDICTIONS, description: "RMF only — the market the risk management file is for: 'EU_MDR', 'EU_IVDR', 'FDA', or 'OTHER' (not modelled). Returns the risk-acceptability policy beside the structure or assessment." },
     },
     required: ['document'],
   },
@@ -671,13 +735,21 @@ export const ASSESS_DEVICE_EVIDENCE_STRUCTURE: AnaTool = {
 
 export const CLASSIFY_DEVICE: AnaTool = {
   name: 'classify_device',
+  // The engine fails closed (2026-10-05): a class a missing fact decides comes back
+  // null with missingFacts, and bad facts are refused. The fact vocabulary is the
+  // engine's own key list, so the two cannot drift. 2026-10-15: the FDA engine answers
+  // pathway 'undetermined' when the deciding facts are unstated; this said only that it
+  // "recommends a pathway", and its undetermined clause spoke of a null class.
   description:
-    "Determine a device/IVD risk classification or FDA pathway from structured facts. `framework: 'mdr'` applies the EU MDR Annex VIII principal rules (facts like invasive, surgicallyInvasive, implantable, active, softwareDecisionSupport, contactsCnsOrCentralCirculation, incorporatesMedicinalSubstance, duration) → Class I/IIa/IIb/III with the rule that drove it. `framework: 'ivdr'` applies IVDR Annex VIII (facts like bloodDonationScreening, companionDiagnostic, infectiousOrCancerOrGenetic, selfTesting) → Class A/B/C/D. `framework: 'fda'` recommends a pathway (facts: fdaClass, predicateAvailable, exempt, novelLowModerateRisk) → exempt/510k/de_novo/pma. Each result carries a caveat to confirm against the full Annex / FDA classification database. Deterministic.",
+    "Determine an EU MDR or IVDR risk class, or an FDA pathway, from structured facts. `framework: 'mdr'` applies Regulation (EU) 2017/745 Annex VIII Rules 1–22 → Class I/IIa/IIb/III with the rule(s) that gave it. `framework: 'ivdr'` applies Regulation (EU) 2017/746 Annex VIII Rules 1–7 → Class A/B/C/D. `framework: 'fda'` recommends a pathway (exempt/510k/de_novo/pma); when the facts that decide it are unstated, pathway is 'undetermined' with missingFacts naming them: say so, ask for them, and never state a pathway. Unknown fact keys, unreadable values and facts that contradict each other are refused with an error naming them. For mdr/ivdr, when a fact that decides the class was not supplied, class is null and missingFacts names it: say the class is not determined, ask the user for those facts, and never state a class. The rule wording is a recall paraphrase; each result carries a caveat to confirm against the Annex text or the FDA classification database. Deterministic.",
   input_schema: {
     type: 'object',
     properties: {
       framework: { type: 'string', enum: ['mdr', 'ivdr', 'fda'], description: 'The classification framework.' },
-      facts: { type: 'object', description: 'Structured device facts (see description for the keys per framework).' },
+      facts: {
+        type: 'object',
+        description: `Structured device facts; a bare key is true/false, otherwise its values are shown. MDR: ${MDR_FACT_VOCABULARY}. IVDR: ${IVDR_FACT_VOCABULARY}. FDA: fdaClass (I|II|III), predicateAvailable, exempt, novelLowModerateRisk.`,
+      },
     },
     required: ['framework', 'facts'],
   },

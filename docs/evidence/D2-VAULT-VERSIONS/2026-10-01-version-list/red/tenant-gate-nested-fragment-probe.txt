@@ -1,0 +1,5 @@
+## Probe: a two-level fragment WITHOUT a tenant predicate must still be flagged (gate after the change)
+  server/zz-gate-probe.ts  (1)
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 8:
+  server/zz-gate-probe.ts#90cd9e79e319:documents
+rc=0

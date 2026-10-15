@@ -1,0 +1,280 @@
+{
+  "branch": "concept2cure-v2",
+  "observedHead": "0ff04f90f64982e353ac84c9ba83535e04064d35",
+  "node": "v22.22.0",
+  "sources": [
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "bytes": 23197,
+      "digestAlgorithm": "SHA-256",
+      "digest": "47463ab4d7ced8a0623064b01a9d17509fb68d680b660465dc5bba5ab32c60fa"
+    },
+    {
+      "path": "server/routes/protocol-development.ts",
+      "bytes": 31317,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3ced310b3394a23bd49177939284fb89490d80341c192cd9ca7ddd58ac2b49b0"
+    },
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 13132,
+      "digestAlgorithm": "SHA-256",
+      "digest": "67f674b631e1411043303cc2d912af5a3f99288c3979d47e116fbfac59044e4e"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-development-service.ts",
+      "bytes": 29725,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f949d70cd92c6878af3ee63de5aff88741c972598e82e9cdfe0712d20bf82313"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-signature.ts",
+      "bytes": 1648,
+      "digestAlgorithm": "SHA-256",
+      "digest": "703a4b65871e4158a9eb236e50a90c55ddfc552d0122ccd4dbbfa45e7c869392"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts",
+      "bytes": 28763,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d971eaab91de6556d05163e9005167fcf5a26e1623d6c1b862f246dbe74f867d"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+      "bytes": 18536,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ee9dc457c34990faadbcb5025e608cbede83450b21c4f0bb94997d33f9712df3"
+    },
+    {
+      "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+      "bytes": 5456,
+      "digestAlgorithm": "SHA-256",
+      "digest": "976dc78f83daa3930ed930251025fb3fa55d7fecf6f2234f2ac767396a0d9250"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "red/original-route-fixture.txt",
+      "bytes": 13085,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ccd50d556d2398b924ce38236c0a118867744a0e0879dc592a8fe96ea00cbdc9",
+      "raw": {
+        "path": "/tmp/project-vault-protocol-prepare-route-fixture-red.txt",
+        "bytes": 13086,
+        "digestAlgorithm": "SHA-256",
+        "digest": "324c7054b1216eb01922457dc0999c6721422a22bc48da46803aba6d6c94be70"
+      }
+    },
+    {
+      "path": "green/protocol-neighbours.txt",
+      "bytes": 21327,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5f94a1178e1d8ddce7f3855255bcafc45b7222af503e2710c2b9a013f8302c12",
+      "raw": {
+        "path": "/tmp/project-vault-protocol-prepare-regressions.txt",
+        "bytes": 21328,
+        "digestAlgorithm": "SHA-256",
+        "digest": "769fa7f393eb8d760a778dcc5fb7e55267aad1d12ea387ea70edc13dd00fc134"
+      }
+    },
+    {
+      "path": "green/route-fixture-eslint.txt",
+      "bytes": 240,
+      "digestAlgorithm": "SHA-256",
+      "digest": "87dc9e938b342a8249209bd375a7fbb4c725bb8c8fe6562866cce3d5eeb883b1",
+      "raw": {
+        "path": "/tmp/project-vault-protocol-prepare-fixture-lint.txt",
+        "bytes": 241,
+        "digestAlgorithm": "SHA-256",
+        "digest": "f1dfb5342009b4a266dd07ccf300578542da26424dbbc837b3afec748d278a45"
+      }
+    },
+    {
+      "path": "green/protocol-neighbours-final-helper.txt",
+      "bytes": 21341,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3bc15746569e68c5208458e3027e47653a6de91059d899a4a55c8be1fec01c38",
+      "raw": {
+        "path": "/tmp/project-vault-protocol-prepare-final-helper.txt",
+        "bytes": 21342,
+        "digestAlgorithm": "SHA-256",
+        "digest": "71c261f1743f024560444b51ff98964cb55929da45fce454ce3ca00d9b9346c0"
+      }
+    },
+    {
+      "path": "green/ceremony-final-eslint.txt",
+      "bytes": 0,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw": {
+        "path": "/tmp/protocol-sod-ceremony-final-lint.txt",
+        "bytes": 0,
+        "digestAlgorithm": "SHA-256",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "config": "vitest.config.ts",
+      "files": [
+        "server/routes/__tests__/protocol-signatures.routes.test.ts",
+        "server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts",
+        "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "server/services/protocol-export/__tests__/protocol-export-signature.test.ts"
+      ],
+      "exitCode": 0,
+      "passed": 85,
+      "skipped": 0,
+      "durationSeconds": 28.62,
+      "log": "green/protocol-neighbours-final-helper.txt",
+      "executedBy": "lead agent"
+    },
+    {
+      "command": "npx eslint",
+      "files": [
+        "server/services/part11/governed-signature-ceremony.ts"
+      ],
+      "exitCode": 0,
+      "log": "green/ceremony-final-eslint.txt",
+      "executedBy": "lead agent"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "qualification": [
+    "The route test executes actual HTTP handlers and shared ceremony with ordered mocks at reservation, reauthentication, authorship, domain-write, ledger and signature boundaries.",
+    "The dynamic reservation seam changes the SoD decision after preparation; it proves call ordering and refusal, not independent-connection concurrency.",
+    "Existing PGlite signing helpers omit prepare; their passing finalization, historical manifestation, digest and export cases are neighbour regression evidence only.",
+    "The separate native workstream owns real role, transaction and concurrency evidence. No native count or regulatory/scientific qualification is asserted here.",
+    "Only new published logs normalize trailing whitespace and extra EOF blank lines; the exact raw execution files remain unchanged in /tmp with separate pins.",
+    "The lead agent reran the same85 cases after factoring preparation and SoD into the final ceremony helper. Current source records correspond to that run; priorVerification retains the first85-run/source snapshot and raw records."
+  ],
+  "priorVerification": {
+    "sources": [
+      {
+        "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+        "bytes": 23197,
+        "digestAlgorithm": "SHA-256",
+        "digest": "47463ab4d7ced8a0623064b01a9d17509fb68d680b660465dc5bba5ab32c60fa"
+      },
+      {
+        "path": "server/routes/protocol-development.ts",
+        "bytes": 31317,
+        "digestAlgorithm": "SHA-256",
+        "digest": "3ced310b3394a23bd49177939284fb89490d80341c192cd9ca7ddd58ac2b49b0"
+      },
+      {
+        "path": "server/services/part11/governed-signature-ceremony.ts",
+        "bytes": 12918,
+        "digestAlgorithm": "SHA-256",
+        "digest": "a27aefe8eedc6da6e66f7024ea36c7270c83b87686bc8b3d2426cce0a5b32e44"
+      },
+      {
+        "path": "server/services/protocol-development/protocol-development-service.ts",
+        "bytes": 29725,
+        "digestAlgorithm": "SHA-256",
+        "digest": "f949d70cd92c6878af3ee63de5aff88741c972598e82e9cdfe0712d20bf82313"
+      },
+      {
+        "path": "server/services/protocol-development/protocol-signature.ts",
+        "bytes": 1648,
+        "digestAlgorithm": "SHA-256",
+        "digest": "703a4b65871e4158a9eb236e50a90c55ddfc552d0122ccd4dbbfa45e7c869392"
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts",
+        "bytes": 28763,
+        "digestAlgorithm": "SHA-256",
+        "digest": "d971eaab91de6556d05163e9005167fcf5a26e1623d6c1b862f246dbe74f867d"
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "bytes": 18536,
+        "digestAlgorithm": "SHA-256",
+        "digest": "ee9dc457c34990faadbcb5025e608cbede83450b21c4f0bb94997d33f9712df3"
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "bytes": 5456,
+        "digestAlgorithm": "SHA-256",
+        "digest": "976dc78f83daa3930ed930251025fb3fa55d7fecf6f2234f2ac767396a0d9250"
+      }
+    ],
+    "evidence": [
+      {
+        "path": "red/original-route-fixture.txt",
+        "bytes": 13085,
+        "digestAlgorithm": "SHA-256",
+        "digest": "ccd50d556d2398b924ce38236c0a118867744a0e0879dc592a8fe96ea00cbdc9",
+        "raw": {
+          "path": "/tmp/project-vault-protocol-prepare-route-fixture-red.txt",
+          "bytes": 13086,
+          "digestAlgorithm": "SHA-256",
+          "digest": "324c7054b1216eb01922457dc0999c6721422a22bc48da46803aba6d6c94be70"
+        }
+      },
+      {
+        "path": "green/protocol-neighbours.txt",
+        "bytes": 21327,
+        "digestAlgorithm": "SHA-256",
+        "digest": "5f94a1178e1d8ddce7f3855255bcafc45b7222af503e2710c2b9a013f8302c12",
+        "raw": {
+          "path": "/tmp/project-vault-protocol-prepare-regressions.txt",
+          "bytes": 21328,
+          "digestAlgorithm": "SHA-256",
+          "digest": "769fa7f393eb8d760a778dcc5fb7e55267aad1d12ea387ea70edc13dd00fc134"
+        }
+      },
+      {
+        "path": "green/route-fixture-eslint.txt",
+        "bytes": 240,
+        "digestAlgorithm": "SHA-256",
+        "digest": "87dc9e938b342a8249209bd375a7fbb4c725bb8c8fe6562866cce3d5eeb883b1",
+        "raw": {
+          "path": "/tmp/project-vault-protocol-prepare-fixture-lint.txt",
+          "bytes": 241,
+          "digestAlgorithm": "SHA-256",
+          "digest": "f1dfb5342009b4a266dd07ccf300578542da26424dbbc837b3afec748d278a45"
+        }
+      }
+    ],
+    "runs": [
+      {
+        "config": "vitest.config.ts",
+        "files": [
+          "server/routes/__tests__/protocol-signatures.routes.test.ts",
+          "server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts",
+          "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+          "server/services/protocol-export/__tests__/protocol-export-signature.test.ts"
+        ],
+        "exitCode": 0,
+        "passed": 85,
+        "skipped": 0,
+        "durationSeconds": 11.28,
+        "log": "green/protocol-neighbours.txt"
+      },
+      {
+        "command": "npx eslint",
+        "files": [
+          "server/routes/__tests__/protocol-signatures.routes.test.ts"
+        ],
+        "exitCode": 0,
+        "log": "green/route-fixture-eslint.txt"
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0
+      }
+    ],
+    "qualification": [
+      "The route test executes actual HTTP handlers and shared ceremony with ordered mocks at reservation, reauthentication, authorship, domain-write, ledger and signature boundaries.",
+      "The dynamic reservation seam changes the SoD decision after preparation; it proves call ordering and refusal, not independent-connection concurrency.",
+      "Existing PGlite signing helpers omit prepare; their passing finalization, historical manifestation, digest and export cases are neighbour regression evidence only.",
+      "The separate native workstream owns real role, transaction and concurrency evidence. No native count or regulatory/scientific qualification is asserted here.",
+      "Only new published logs normalize trailing whitespace and extra EOF blank lines; the exact raw execution files remain unchanged in /tmp with separate pins."
+    ]
+  }
+}

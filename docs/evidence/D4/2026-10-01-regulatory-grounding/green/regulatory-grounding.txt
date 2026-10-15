@@ -1,0 +1,190 @@
+# green at 8bf2a1fa + the grounding change
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes 70ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists 34ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record 26ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed 25ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact 18ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline 28ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed 29ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves 19ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it 19ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing 7ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written 10ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over 19ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain 31ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person 50ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run without an explicit yes 10ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded 7ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > the Part 11 tiers still demand what they demanded 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > a read is still not something this route runs 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held run runs the command from the ROW and releases the run 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held command runs it with the model call that proposed it, from the ROW (D6) 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a command posted without its run names no model call: null, never the body's claim (D6) 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline records the decision, runs nothing, and releases the run at once 9ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline whose audit row was lost still releases the run, and says so 10ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline needs a run to apply to 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs on a yes, with the run's own context and the confirmation stamped 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run without an explicit yes 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run from a body alone — there is no held run to take its context from 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > can be declined like any proposal 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > any write the register classes confirm runs on a yes — not only the original five 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > never runs a person's own act, whatever the held row says and whatever was clicked 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > a tool the register does not know is still a tool, confirmed like any write (it failed closed) 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > is not run on a bare yes: the person states the reason 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > runs with the person's reason in place of the model's, and records both 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a person who adopts AnA's wording is recorded as having done so 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a tool whose reason input is reason_for_change gets the person's reason there 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > a signer who declares Authorship is recorded as Authorship, not Approval — on the sign-off and the audit row 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > REVIEWER is recorded as review 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > APPROVER is recorded as approval 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an e-signature with no declared meaning, and runs and records nothing 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("approval"), and runs and records nothing 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("OWNER"), and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("author"), and runs and records nothing 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (""), and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (7), and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the FDA ESG transmit is handed the declared meaning — the value its signature row records 7ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > on a held run the meaning is the signer's, from the posted body — never one the model wrote into the row 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the reason-only tier is unchanged: no meaning is asked for 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature sign-off carries the verified factors > the sign-off carries the factors re-verification actually checked (MFA as MFA) 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > the sign-off names the run, the tool call, the model call and a hash of the params authorised 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row follows, with the outcome, the duration and the same trace 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command its own gate refused is recorded refused, not ok 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution is recorded failed, with what failed 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution whose row did not persist says that too 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row that did not persist is said, to the person and to the waiting run 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command posted without its run still gets both rows, with no run and no model call 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > writes the decision against the SAME org the lookup used 32ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > ignores an organization named in the body, for the lookup and the write 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > follows the caller — a caller of another org binds to that org 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > refuses a run the caller org does not hold, and writes nothing 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 3731ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and a null runPolicy 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 1ms
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > returns the caller's own organization's decisions 41ms
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > does NOT hand another organization the decision trail for a project it does not own 11ms
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > a caller with no resolvable tenant gets nothing, not everything 8ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered 1093ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop 4ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it 2ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > returns immediately when the first turn has no tool calls 2ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > chains multiple rounds until the model stops calling tools 2ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > caps at maxRounds and forces a final answer (tools withdrawn on the last round) 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > detects thrashing (same call repeated) and withdraws tools to break the loop 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > continues when a tool result encodes an error (executor does not throw) 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > rejects a maxRounds below 1 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > returns short content unchanged 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > truncates oversized content but keeps the head, tail, and a marker 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > clamps an unreasonably small limit so it never produces a negative tail 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > grounds an answer against the capped view, not the omitted middle 3ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > preserves input order even when workers resolve out of order 31ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > never exceeds the concurrency limit 22ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > processes every item and handles the empty case 0ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > rejects a concurrency below 1 1ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > produces friendly labels for known tools, incorporating key args 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > truncates long argument values in the label 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > falls back to a humanized name for unknown tools 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > handles a missing query gracefully 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames 91ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a driving turn that starts a demonstration announces the promotion as promoted 46ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a turn that began as a demonstration is not promoted, and its one drive_state is unmarked 8ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > frames the report as an observation and announces only the steer as the person steering 9ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > a report alone announces nothing 6ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > navigations: the two AnA could not make are chips, ahead of the six she made 20ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > actions: the one past the budget is the first chip 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs 19ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a move she made and re-asked for past the budget is offered once, not twice 8ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > past chip room she is told the move is not offered either — never promised a chip that is dropped 9ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a turn that does not drive reaches the same chip derivation, unchanged 8ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > names each move, so the screen can report it back 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > holds her next round until the move lands — and a landing puts nothing in front of her 4ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move that did not land reaches the round she writes next 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move still unsettled at the ceiling is told to her as not confirmed, never as done 4ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a client that does not report its moves is not waited on 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > is accepted with the move it settles 10ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > needs a move id, and refuses one that is not a move id 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > a screen report can name the move it is about 2ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > is accepted as its own action, not as a steer 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > needs something to report 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > an empty steer is still refused, and an unknown action still is 4ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history saved in the thread: the answer at the far edge is dropped, not opened on 4ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history sent by the client (no saved thread yet): the answer at the far edge is dropped, not opened on 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > a thread whose pairs are intact is passed through unchanged 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > narration — each round starts its own paragraph > a stop narrated after the last one is not run on from it 4ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > is a no-op when there is no evidence to check against 2ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an NCT id that appears in the evidence 2ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated NCT id not present in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a quote that appears in the evidence, tolerant of punctuation 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated quote not found in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > ignores short or label-like quotes to avoid false positives 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > deduplicates repeated claims 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > truncates long unsupported quotes in the report 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an ISRCTN id present in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated ISRCTN id not in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a EudraCT number present in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated EudraCT number not in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > counts NCT, ISRCTN and EudraCT ids together across registries 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a PMID that appears in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated PMID, reporting the labeled form but matching by number 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a DOI present in the evidence, trimming trailing punctuation 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags a fabricated DOI not in the evidence 1ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not extract an FDA submission number from inside a grounded DOI suffix 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not misclassify a fabricated DOI suffix as an FDA number 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not extract a EudraCT-shaped number from inside a DOI suffix 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > still grounds a standalone EudraCT number after the precision guard 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds a 510(k) predicate number present in the evidence 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags fabricated 510(k), PMA and De Novo numbers together 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not let NCT or ISRCTN ids mis-trigger the FDA number patterns 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > grounds an NDA number present in the evidence, regardless of spacing 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > flags fabricated NDA, BLA and ANDA numbers and reports the labeled form 0ms
+ ✓ tests/services/answer-grounding.test.ts > verifyAnswerGrounding > does not let an ANDA citation double-count as an NDA 0ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > says so when the draft could not be saved 18ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > keeps the database error out of the customer sentence 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > gives the operator the cause it withholds from the customer 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a failed save never stops the turn from closing 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > survives a client that has already disconnected 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > announces the version when the save really happened 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > an unchanged draft is not a failure, and is not reported as one 0ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a missing project no longer skips silently — the client is told the save did not happen 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a program UUID resolves through the projects anchor and the draft IS saved 5ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a UUID with leading digits NEVER files to the integer project those digits spell 1ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > counts the first call AND each round 2ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > the turn totals reach the telemetry, beside the first-call figure 1ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > the accumulator exists and reads both token fields 1ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > sums reads and writes across the calls 1ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > A HEALTHY FIRST CALL DOES NOT HIDE A MISSING ROUND — the point 1ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > counts a call that reported no stats at all as a miss, not as absent 0ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > a turn that cached nothing says so plainly 0ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags a CFR section the evidence does not hold 4ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > grounds a CFR section the evidence holds, whatever the spelling 1ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags an ICH code the evidence does not hold, and grounds one it does 1ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > reads a revisioned code without the ICH prefix, and leaves a bare letter-number alone 1ms
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > is still a no-op when no tools ran 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > writes NO artifact row for a draft that carries authoringDocId, and emits no caveat 3ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > still versions a draft WITHOUT authoringDocId (report canvases, generate_document) as before 2ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > a mixed turn: the authoring document is skipped and the other draft is versioned 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > does not warn "could not be saved" for an authoring document when no project is linked — it WAS saved 0ms
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > names itself as the app, not the person, if a fallback model folds it into a user turn 2ms
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > opens with the marker the Live Drive prompt names, once 1ms
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > tells her to say what could not be done, not claim it happened 1ms
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > an empty report is no turn at all 0ms
+ Test Files  16 passed (16)
+      Tests  187 passed (187)

@@ -1,0 +1,70 @@
+# Red run (2026-10-05): the step's test against the HEAD versions of cdisc-package-readiness.ts, sdtm-domain-conformance-checker.ts, pipeline.ts and routes/cdisc-validation.routes.ts (working copies swapped for git show HEAD:<file>, run, restored)
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > rolls up a mixed SDTM + ADaM package 11ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > is not ready when a dataset has an SDTM conformance error 2ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > dispatches ADaM by class (ADSL/BDS/OCCDS) 1ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > flags an unrecognized dataset (unknown domain/class) as not ready 0ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > is not ready for an empty package 0ms
+ ✓ server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness > is deterministic 1ms
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > an ADaM package with no TS, DM or ADSL is not ready and names TRC 1734 and 1736 10ms
+   → expected true to be false // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > recognises FDA's simplified ts.xpt as a conformant TS 2ms
+   → expected false to be true // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > recognises the full TS form, and requires STUDYID and TSPARMCD 1ms
+   → expected false to be true // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > [DM, ADSL] without TS is not ready and names TRC_1734_NO_TS 1ms
+   → expected true to be false // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > define.xml is not-stated unless the caller declares it, and never met by default 1ms
+   → Cannot read properties of undefined (reading 'find')
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > the study start date: missing without SSTDTC, not-stated when TS parameters are not supplied 1ms
+   → Cannot read properties of undefined (reading 'find')
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > a complete, declared package passes 1ms
+   → Cannot read properties of undefined (reading 'every')
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > a known SDTM domain with no spec is not-conformance-checked, not unrecognised, and keeps ready false 1ms
+   → expected false to be true // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > every requirement carries the FDA TRC basis 1ms
+   → assessStudyDataRequirements is not a function
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > runCdiscPipeline reads its ADSL finding from the canonical requirement 1ms
+   → assessStudyDataRequirements is not a function
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > passes declared define.xml and TS parameters through to the engine 26ms
+   → expected undefined to deeply equal []
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml not an object 6ms
+   → expected 200 to be 400 // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml with a non-boolean 5ms
+   → expected 200 to be 400 // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml with an unknown key 8ms
+   → expected 200 to be 400 // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when tsParameters not an array 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when tsParameters with a non-string 3ms
+   → expected 200 to be 400 // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > an ADaM package with no TS, DM or ADSL is not ready and names TRC 1734 and 1736
+AssertionError: expected true to be false // Object.is equality
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > recognises FDA's simplified ts.xpt as a conformant TS
+AssertionError: expected false to be true // Object.is equality
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > recognises the full TS form, and requires STUDYID and TSPARMCD
+AssertionError: expected false to be true // Object.is equality
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > [DM, ADSL] without TS is not ready and names TRC_1734_NO_TS
+AssertionError: expected true to be false // Object.is equality
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > define.xml is not-stated unless the caller declares it, and never met by default
+TypeError: Cannot read properties of undefined (reading 'find')
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > the study start date: missing without SSTDTC, not-stated when TS parameters are not supplied
+TypeError: Cannot read properties of undefined (reading 'find')
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > a complete, declared package passes
+TypeError: Cannot read properties of undefined (reading 'every')
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > a known SDTM domain with no spec is not-conformance-checked, not unrecognised, and keeps ready false
+AssertionError: expected false to be true // Object.is equality
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > every requirement carries the FDA TRC basis
+TypeError: assessStudyDataRequirements is not a function
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > assessPackageReadiness — FDA study-data TRC requirements > runCdiscPipeline reads its ADSL finding from the canonical requirement
+TypeError: assessStudyDataRequirements is not a function
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > passes declared define.xml and TS parameters through to the engine
+AssertionError: expected undefined to deeply equal []
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml not an object
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml with a non-boolean
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when defineXml with an unknown key
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when tsParameters not an array
+ FAIL  server/services/cdisc/__tests__/cdisc-package-readiness.test.ts > POST /api/cdisc-validation/package/readiness — defineXml and tsParameters > 400 when tsParameters with a non-string
+AssertionError: expected 200 to be 400 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  16 failed | 6 passed (22)

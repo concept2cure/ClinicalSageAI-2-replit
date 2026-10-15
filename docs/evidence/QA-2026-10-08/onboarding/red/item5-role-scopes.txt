@@ -1,0 +1,6 @@
+ × server/routes/__tests__/mdx-admin-honesty.test.ts > roles say what they may do, from the checks the server enforces > describes each live role and lists its scopes 9ms
+   → admin: expected '' to match /\w/
+ × server/routes/__tests__/mdx-admin-honesty.test.ts > roles say what they may do, from the checks the server enforces > a role the product does not describe says so, and lists only what the checks grant it 5ms
+   → expected '' to match /not one this product assigns/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 14 passed (16)

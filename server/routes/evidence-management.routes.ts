@@ -10,8 +10,11 @@ import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety'
 import path from 'path';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import EvidenceManagementService from '../services/EvidenceManagementService';
+import EvidenceManagementService, {
+  summarizeRequirementCoverage,
+} from '../services/EvidenceManagementService';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { resolveUserId } from '../types/auth-request';
 import { extractWithTika } from '../services/ingestion/tikaClient';
 import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
@@ -96,12 +99,9 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
       GROUP BY fda_requirement, fda_section, regulatory_status
     `);
 
-    // Calculate completion status
+    // Per-requirement breakdown (raw SQL rows are untyped). A section sums its
+    // status groups; it used to keep only the last group's counts and status.
     const requirements: any = {};
-    const totalRequired = 8; // Number of required FDA categories
-    let completedCount = 0;
-
-    // Process files by requirement (raw SQL rows are untyped)
     for (const file of files.rows as any[]) {
       if (!requirements[file.fda_requirement]) {
         requirements[file.fda_requirement] = {
@@ -115,26 +115,27 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
       requirements[file.fda_requirement].approved += parseInt(file.approved_count);
 
       if (file.fda_section) {
-        requirements[file.fda_requirement].sections[file.fda_section] = {
-          count: file.file_count,
-          approved: file.approved_count,
-          status: file.regulatory_status,
-        };
+        const section = (requirements[file.fda_requirement].sections[file.fda_section] ??= {
+          count: 0,
+          approved: 0,
+          statuses: [],
+        });
+        section.count += parseInt(file.file_count);
+        section.approved += parseInt(file.approved_count);
+        section.statuses.push(file.regulatory_status);
       }
     }
 
-    // Check which requirements are complete
-    for (const req of Object.keys(requirements)) {
-      if (requirements[req].approved > 0) {
-        completedCount++;
-      }
-    }
+    // Completion by the gap-analysis rules. Until 2026-10-15 a requirement was
+    // "completed" on one approved file under any key, unknown and optional ones
+    // included, out of a hard-coded 8.
+    const coverage = summarizeRequirementCoverage(files.rows);
 
     res.json({
       requirements,
-      completed: completedCount,
-      total: totalRequired,
-      percentage: Math.round((completedCount / totalRequired) * 100),
+      completed: coverage.required_complete,
+      total: coverage.required_total,
+      percentage: coverage.completeness,
       projectId,
       timestamp: new Date().toISOString(),
     });
@@ -245,7 +246,7 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
 
         // If no requirement was specified, try to auto-map
         if (!fda_requirement) {
-          await evidenceService.mapToFDARequirements(fileId, extractedData);
+          await evidenceService.mapToFDARequirements(fileId, extractedData, organizationId);
         }
 
         // Index in OpenSearch for governed full-text search (non-blocking)
@@ -327,7 +328,11 @@ router.post('/generate-citations', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'File IDs required' });
     }
 
-    const citations = await evidenceService.generateCitations(fileIds, format);
+    const citations = await evidenceService.generateCitations(
+      fileIds,
+      format,
+      req.organizationId as number
+    );
 
     res.json({
       success: true,
@@ -347,8 +352,20 @@ router.post('/generate-citations', async (req: Request, res: Response) => {
 router.post('/link-workflow', async (req: Request, res: Response) => {
   try {
     const { fileId, workflowStage, stageData } = req.body;
+    if (!fileId || workflowStage === undefined || workflowStage === null) {
+      return res.status(400).json({ error: 'fileId and workflowStage are required' });
+    }
 
-    await evidenceService.linkToWorkflowStage(fileId, workflowStage, stageData || {});
+    const linked = await evidenceService.linkToWorkflowStage(
+      fileId,
+      workflowStage,
+      stageData || {},
+      req.organizationId as number
+    );
+    // It used to answer "linked" when no file matched (2026-10-15).
+    if (!linked) {
+      return res.status(404).json({ error: 'Evidence file not found' });
+    }
 
     res.json({
       success: true,
@@ -369,7 +386,11 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
     const projectId = String(req.params.projectId);
     const stage = String(req.params.stage);
 
-    const evidence = await evidenceService.getStageEvidence(projectId, parseInt(stage));
+    const evidence = await evidenceService.getStageEvidence(
+      projectId,
+      parseInt(stage),
+      req.organizationId as number
+    );
 
     res.json({
       success: true,
@@ -392,8 +413,16 @@ router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
   try {
     const formId = String(req.params.formId);
     const { projectId } = req.body;
+    // It used to answer an empty form when projectId was missing (2026-10-15).
+    if (!projectId) {
+      return res.status(400).json({ error: 'projectId is required' });
+    }
 
-    const formData = await evidenceService.autoPopulateForm(formId, projectId);
+    const formData = await evidenceService.autoPopulateForm(
+      formId,
+      projectId,
+      req.organizationId as number
+    );
 
     res.json({
       success: true,
@@ -415,8 +444,19 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
   try {
     const fileId = String(req.params.fileId);
     const { reviewerId } = req.body;
+    // The reviewer being assigned. A missing one was assigned as 'system' until 2026-10-15.
+    if (!reviewerId) {
+      return res.status(400).json({ error: 'reviewerId (the reviewer to assign) is required' });
+    }
 
-    await evidenceService.submitForReview(fileId, reviewerId || 'system');
+    const submitted = await evidenceService.submitForReview(
+      fileId,
+      String(reviewerId),
+      req.organizationId as number
+    );
+    if (!submitted) {
+      return res.status(404).json({ error: 'Evidence file not found' });
+    }
 
     res.json({
       success: true,
@@ -430,23 +470,20 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
 
 /**
  * POST /api/evidence-management/review/approve/:fileId
- * Approve evidence
+ *
+ * Refuses. Until 2026-10-15 it set regulatory_status = 'approved' with no
+ * signature, as the body's reviewerId ('system' when absent), on any
+ * organization's file. Approving regulatory evidence is an electronic signature
+ * (21 CFR 11.50, 11.70) and this router performs none, so it approves nothing.
  */
-router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
-  try {
-    const fileId = String(req.params.fileId);
-    const { reviewerId, comments } = req.body;
-
-    await evidenceService.approveEvidence(fileId, reviewerId || 'system', comments);
-
-    res.json({
-      success: true,
-      message: 'Evidence approved',
-    });
-  } catch (error) {
-    logger.error('Approval error', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: 'Failed to approve evidence' });
-  }
+router.post('/review/approve/:fileId', (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'EVIDENCE_APPROVAL_REQUIRES_SIGNATURE',
+    notImplemented: true,
+    message:
+      'Nothing was approved. Approving regulatory evidence is an electronic signature ' +
+      '(21 CFR 11.50, 11.70) and this endpoint has no signature ceremony. The file is unchanged.',
+  });
 });
 
 /**
@@ -456,13 +493,27 @@ router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
 router.post('/review/request-changes/:fileId', async (req: Request, res: Response) => {
   try {
     const fileId = String(req.params.fileId);
-    const { reviewerId, comments } = req.body;
+    const { comments } = req.body;
 
     if (!comments) {
       return res.status(400).json({ error: 'Comments required for change request' });
     }
+    // The reviewer is the authenticated user. It was the body's reviewerId, or
+    // 'system', until 2026-10-15.
+    const reviewerId = resolveUserId(req);
+    if (reviewerId === null) {
+      return res.status(401).json({ error: 'An authenticated reviewer is required' });
+    }
 
-    await evidenceService.requestChanges(fileId, reviewerId || 'system', comments);
+    const requested = await evidenceService.requestChanges(
+      fileId,
+      String(reviewerId),
+      comments,
+      req.organizationId as number
+    );
+    if (!requested) {
+      return res.status(404).json({ error: 'Evidence file not found' });
+    }
 
     res.json({
       success: true,

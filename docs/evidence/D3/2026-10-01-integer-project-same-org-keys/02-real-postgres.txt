@@ -1,0 +1,66 @@
+# PF-03 integer same-org keys on real PostgreSQL 16.13 (pgvector), deploy-shaped: an existing deployed database upgraded with deploy-migrate TWICE, and a fresh install-fresh + deploy-migrate TWICE (the second deploy is the replay every deploy performs).
+
+upgrade (c2c_dbtest) deploy1=0 deploy2=0
+fresh (c2c_pf03) install=0 deploy1=0 deploy2=0
+
+## The keys on both databases (conrelid, conname, convalidated, confdeltype, confupdtype)
+-- c2c_dbtest
+c2c_submission_packages|c2c_submission_packages_project_same_org_fk|f|c|a
+concept2cure_artifacts|concept2cure_artifacts_project_same_org_fk|f|c|a
+projects_id_org_uq present: true
+-- c2c_pf03
+c2c_submission_packages|c2c_submission_packages_project_same_org_fk|f|c|a
+concept2cure_artifacts|concept2cure_artifacts_project_same_org_fk|f|c|a
+projects_id_org_uq present: true
+
+## The second deploy (replay) applied the file with no error:
+  ✓ applied: migrations/20261001_integer_project_same_org_keys.sql
+  ✓ applied: migrations/20261001_integer_project_same_org_keys.sql
+
+## The pre-flight CLI against the upgraded database
+  ✓ public.projects: 0 record(s) name a foreign or missing project
+  ✓ public.authoring_documents: 0 record(s) name a foreign or missing project
+  ✓ public.cre_evidence_sources: 0 record(s) name a foreign or missing project
+  ✓ public.c2c_documents: 0 record(s) name a foreign or missing project
+  ✓ public.cdisc_prm_studies: 0 record(s) name a foreign or missing project
+  ✓ public.concept2cure_artifacts: 0 record(s) name a foreign or missing project
+  ✓ public.c2c_submission_packages: 0 record(s) name a foreign or missing project
+  ✓ vault.documents: 0 record(s) name a foreign or missing project
+  ✓ public.submission_transmittals: 0 record(s) name a foreign or missing project
+
+✓ every project key names a project of its own organization.
+exit=0
+
+## Legacy data on real PostgreSQL: the baseline database (no integer keys) holds organization 9101's artifact under organization 9102's project; then 20261001 is applied to it
+-- pre-flight BEFORE the keys:
+  ✗ public.concept2cure_artifacts: 1 record(s) name a foreign or missing project
+      {"id":1,"org":9101,"project_id":9102,"project_org":9102,"project_missing":false}
+  ✓ public.c2c_submission_packages: 0 record(s) name a foreign or missing project
+✗ 2 record(s) to clear before any tenant purge or VALIDATE CONSTRAINT (set the key to NULL).
+-- apply 20261001 (NOT VALID: the legacy row must not fail it), twice:
+psql exit=0
+psql replay exit=0
+-- pre-flight AFTER the keys (the legacy row is still listed):
+  ✗ public.concept2cure_artifacts: 1 record(s) name a foreign or missing project
+      {"id":1,"org":9101,"project_id":9102,"project_org":9102,"project_missing":false}
+-- the legacy row still takes a title change:
+UPDATE 1
+-- a NEW cross-organization row is refused:
+ERROR:  insert or update on table "concept2cure_artifacts" violates foreign key constraint "concept2cure_artifacts_project_same_org_fk"
+DETAIL:  Key (project_id, organization_id)=(9102, 9101) is not present in table "projects".
+-- a new same-organization row is written:
+INSERT 0 1
+
+## npm run test:db (unmocked pg, RLS_ENFORCE=on) on the upgraded database
+ × tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist
+ Test Files  1 failed | 87 passed (88)
+      Tests  1 failed | 878 passed (879)
+exit=1
+
+## The one failure above is the runtime role's grant recipe (provision-app-role.mjs, added 2026-09-30), which deploy-migrate runs only with APP_SERVICE_DB_PASSWORD set; the local deploys above did not set it. 20261001 creates no function and grants nothing. The same deploy as CI runs it, then test:db again:
+deploy with recipe exit=0
+ Test Files  88 passed (88)
+      Tests  879 passed (879)
+exit=0

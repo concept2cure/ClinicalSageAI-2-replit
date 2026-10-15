@@ -98,32 +98,23 @@ export function useApprovalsPending() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MUTATIONS — governed approve / reject decisions
+// MUTATIONS — governed reject decisions
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface WorkflowDecisionArgs {
-  /** The approvalId from the pending row (numeric id at :id/approve|reject). */
+  /** The approvalId from the pending row (numeric id at :id/reject). */
   approvalId: number | string;
   /** Reason-for-change captured at signing, stored verbatim as the comment. */
   comment: string;
 }
 
-/**
- * Approve a pending step (POST /api/approval-workflows/:id/approve). On success
- * the pending queue is invalidated so the resolved item leaves the list. Mirrors
- * the read hooks' service idiom; the e-signature gate is applied by the caller
- * through the shared EsignModal before this runs.
+/*
+ * useApproveWorkflow (POST /api/approval-workflows/:id/approve) was removed on
+ * 2026-10-08 with the route: it approved a step with a client-side password
+ * check and no server-side ceremony, and had no caller after the Communication
+ * Center's Approvals surface was deleted (2895218b8). An approval is a signed
+ * act (services/part11/reverify-signer.ts).
  */
-export function useApproveWorkflow() {
-  const queryClient = useQueryClient();
-  return useMutation<WorkflowDecisionResult, Error, WorkflowDecisionArgs>({
-    mutationFn: ({ approvalId, comment }) =>
-      programTabsService.approveWorkflow(approvalId, comment),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: programTabsQueryKeys.approvals() });
-    },
-  });
-}
 
 /**
  * Reject a pending step (POST /api/approval-workflows/:id/reject). The server

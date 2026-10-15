@@ -1,0 +1,6 @@
+ id | section_code | lifecycle_op |   document_table   | document_id | deleted_at 
+----+--------------+--------------+--------------------+-------------+------------
+ 58 | 2.5.1        | new          | coauthor_documents |          52 | 
+ 59 | 2.5.1        | new          | coauthor_documents |          52 | 
+(2 rows)
+

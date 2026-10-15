@@ -1,0 +1,1348 @@
+[
+ {
+  "t0": 1790620417306,
+  "body": {
+   "message": "Survey every source you can for BX-512 stability evidence.",
+   "language": "en",
+   "context": {
+    "screen": "conversation-thread",
+    "screenName": "conversation-thread"
+   },
+   "conversation_history": [],
+   "effort_level": "balanced",
+   "run_policy": "auto",
+   "live_drive": true,
+   "drive_acks": true
+  },
+  "frames": [
+   {
+    "ms": 0,
+    "type": "run_started",
+    "runId": "run_75ee2f2c-1d29-4275-b43f-52dbead60ef7"
+   },
+   {
+    "ms": 0,
+    "type": "status",
+    "phase": "orchestrating",
+    "message": "Planning response…"
+   },
+   {
+    "ms": 49,
+    "type": "status",
+    "phase": "loading_context",
+    "message": "Loading project memory…"
+   },
+   {
+    "ms": 93,
+    "type": "drive_state",
+    "enabled": true,
+    "mode": "assist"
+   },
+   {
+    "ms": 130,
+    "type": "context_used",
+    "uploads": [],
+    "unresolvedUploads": 0,
+    "memory": [],
+    "memoryStatus": "unavailable"
+   },
+   {
+    "ms": 130,
+    "type": "status",
+    "phase": "generating",
+    "message": "Generating response…"
+   },
+   {
+    "ms": 130,
+    "type": "thread_id",
+    "thread_id": "ana-ri_1790620417400_ilyrlw49e"
+   },
+   {
+    "ms": 130,
+    "type": "orchestration",
+    "orchestration": {
+     "detectedIntent": {
+      "lens": "auto",
+      "confidence": 0,
+      "signals": []
+     },
+     "detectedSubmissionType": null,
+     "detectedDocumentTemplate": null,
+     "appliedRole": "general",
+     "activeWorkstream": {
+      "stream": "evidence_development",
+      "phase": "triage",
+      "objective": "Survey every source you can for BX-512 stability evidence.",
+      "currentFocus": "Evidence chain and support gaps",
+      "blockers": [],
+      "nextStep": "Build an evidence inventory, mark critical gaps, and decide what can be defended now versus what needs new support.",
+      "collaborationMode": "advise"
+     },
+     "workstreamHandoff": null,
+     "suggestedActions": [
+      "Create Evidence Memo",
+      "Create Risk Memo",
+      "Rewrite Section",
+      "Create Strategy Note"
+     ]
+    }
+   },
+   {
+    "ms": 308,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Running 1 step…"
+   },
+   {
+    "ms": 308,
+    "type": "step",
+    "round": 1,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 308,
+    "type": "tool_use",
+    "round": 1,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_1",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 1"
+    }
+   },
+   {
+    "ms": 332,
+    "type": "tool_result",
+    "round": 1,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_1",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 4,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 1\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 332,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 446,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 2 — running 1 more step…"
+   },
+   {
+    "ms": 446,
+    "type": "step",
+    "round": 2,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 446,
+    "type": "tool_use",
+    "round": 2,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_2",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 2"
+    }
+   },
+   {
+    "ms": 473,
+    "type": "tool_result",
+    "round": 2,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_2",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 4,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 2\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 473,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 593,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 3 — running 1 more step…"
+   },
+   {
+    "ms": 593,
+    "type": "step",
+    "round": 3,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 593,
+    "type": "tool_use",
+    "round": 3,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_3",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 3"
+    }
+   },
+   {
+    "ms": 631,
+    "type": "tool_result",
+    "round": 3,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_3",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 3\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 631,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 737,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 4 — running 1 more step…"
+   },
+   {
+    "ms": 737,
+    "type": "step",
+    "round": 4,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 737,
+    "type": "tool_use",
+    "round": 4,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_4",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 4"
+    }
+   },
+   {
+    "ms": 737,
+    "type": "tool_result",
+    "round": 4,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_4",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 4\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 737,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 856,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 5 — running 1 more step…"
+   },
+   {
+    "ms": 856,
+    "type": "step",
+    "round": 5,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 856,
+    "type": "tool_use",
+    "round": 5,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_5",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 5"
+    }
+   },
+   {
+    "ms": 870,
+    "type": "tool_result",
+    "round": 5,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_5",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 5\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 870,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1012,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 6 — running 1 more step…"
+   },
+   {
+    "ms": 1012,
+    "type": "step",
+    "round": 6,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1012,
+    "type": "tool_use",
+    "round": 6,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_6",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 6"
+    }
+   },
+   {
+    "ms": 1012,
+    "type": "tool_result",
+    "round": 6,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_6",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 6\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1012,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1144,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 7 — running 1 more step…"
+   },
+   {
+    "ms": 1144,
+    "type": "step",
+    "round": 7,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1144,
+    "type": "tool_use",
+    "round": 7,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_7",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 7"
+    }
+   },
+   {
+    "ms": 1144,
+    "type": "tool_result",
+    "round": 7,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_7",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 7\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1144,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1275,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 8 — running 1 more step…"
+   },
+   {
+    "ms": 1275,
+    "type": "step",
+    "round": 8,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1275,
+    "type": "tool_use",
+    "round": 8,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_8",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 8"
+    }
+   },
+   {
+    "ms": 1275,
+    "type": "tool_result",
+    "round": 8,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_8",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 8\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1275,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1413,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 9 — running 1 more step…"
+   },
+   {
+    "ms": 1413,
+    "type": "step",
+    "round": 9,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1413,
+    "type": "tool_use",
+    "round": 9,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_9",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 9"
+    }
+   },
+   {
+    "ms": 1413,
+    "type": "tool_result",
+    "round": 9,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_9",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 3,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 9\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1413,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1558,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 10 — running 1 more step…"
+   },
+   {
+    "ms": 1558,
+    "type": "step",
+    "round": 10,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1558,
+    "type": "tool_use",
+    "round": 10,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_10",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 10"
+    }
+   },
+   {
+    "ms": 1558,
+    "type": "tool_result",
+    "round": 10,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_10",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 10\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1558,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1668,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 11 — running 1 more step…"
+   },
+   {
+    "ms": 1668,
+    "type": "step",
+    "round": 11,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1668,
+    "type": "tool_use",
+    "round": 11,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_11",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 11"
+    }
+   },
+   {
+    "ms": 1682,
+    "type": "tool_result",
+    "round": 11,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_11",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 11\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1682,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1798,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 12 — running 1 more step…"
+   },
+   {
+    "ms": 1798,
+    "type": "step",
+    "round": 12,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1798,
+    "type": "tool_use",
+    "round": 12,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_12",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 12"
+    }
+   },
+   {
+    "ms": 1817,
+    "type": "tool_result",
+    "round": 12,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_12",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 12\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1817,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 1932,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 13 — running 1 more step…"
+   },
+   {
+    "ms": 1932,
+    "type": "step",
+    "round": 13,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 1932,
+    "type": "tool_use",
+    "round": 13,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_13",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 13"
+    }
+   },
+   {
+    "ms": 1941,
+    "type": "tool_result",
+    "round": 13,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_13",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 13\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 1941,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 2079,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 14 — running 1 more step…"
+   },
+   {
+    "ms": 2079,
+    "type": "step",
+    "round": 14,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 2079,
+    "type": "tool_use",
+    "round": 14,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_14",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 14"
+    }
+   },
+   {
+    "ms": 2079,
+    "type": "tool_result",
+    "round": 14,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_14",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 14\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 2079,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 2222,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 15 — running 1 more step…"
+   },
+   {
+    "ms": 2222,
+    "type": "step",
+    "round": 15,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 2222,
+    "type": "tool_use",
+    "round": 15,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_15",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 15"
+    }
+   },
+   {
+    "ms": 2222,
+    "type": "tool_result",
+    "round": 15,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_15",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 15\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 2222,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 2354,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 16 — running 1 more step…"
+   },
+   {
+    "ms": 2354,
+    "type": "step",
+    "round": 16,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 2354,
+    "type": "tool_use",
+    "round": 16,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_16",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 16"
+    }
+   },
+   {
+    "ms": 2354,
+    "type": "tool_result",
+    "round": 16,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_16",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 4,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 16\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 2354,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 2474,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 17 — running 1 more step…"
+   },
+   {
+    "ms": 2474,
+    "type": "step",
+    "round": 17,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 2474,
+    "type": "tool_use",
+    "round": 17,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_17",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 17"
+    }
+   },
+   {
+    "ms": 2488,
+    "type": "tool_result",
+    "round": 17,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_17",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 17\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 2488,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 2605,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 18 — running 1 more step…"
+   },
+   {
+    "ms": 2605,
+    "type": "step",
+    "round": 18,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 2605,
+    "type": "tool_use",
+    "round": 18,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_18",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 18"
+    }
+   },
+   {
+    "ms": 2626,
+    "type": "tool_result",
+    "round": 18,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_18",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 3,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 18\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 2626,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 2747,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 19 — running 1 more step…"
+   },
+   {
+    "ms": 2747,
+    "type": "step",
+    "round": 19,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 2747,
+    "type": "tool_use",
+    "round": 19,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_19",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 19"
+    }
+   },
+   {
+    "ms": 2758,
+    "type": "tool_result",
+    "round": 19,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_19",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 19\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 2758,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 2880,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Round 20 — running 1 more step…"
+   },
+   {
+    "ms": 2880,
+    "type": "step",
+    "round": 20,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 2880,
+    "type": "tool_use",
+    "round": 20,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_20",
+    "label": "Global search",
+    "input": {
+     "q": "stability evidence source 20"
+    }
+   },
+   {
+    "ms": 2892,
+    "type": "tool_result",
+    "round": 20,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_20",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 2,
+    "result": "{\"ok\":true,\"query\":\"stability evidence source 20\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 2892,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 3118,
+    "type": "done",
+    "model": "claude-sonnet-5",
+    "provider": "anthropic",
+    "modelTier": "standard",
+    "effortUsed": "balanced",
+    "usage": {
+     "inputTokens": 100,
+     "outputTokens": 20,
+     "totalTokens": 120,
+     "estimatedCostUsd": 0.0004
+    },
+    "latencyMs": 157,
+    "response": "Checking source 1.Checking source 2.Checking source 3.Checking source 4.Checking source 5.Checking source 6.Checking source 7.Checking source 8.Checking source 9.Checking source 10.Checking source 11.Checking source 12.Checking source 13.Checking source 14.Checking source 15.Checking source 16.Checking source 17.Checking source 18.Checking source 19.Checking source 20.Stand-in answer: I looked at 20 sources and had more to check when the turn was closed.",
+    "telemetry": {
+     "phases": {
+      "orchestrationMs": 30,
+      "contextMs": 77,
+      "gatewayMs": 169,
+      "firstTokenMs": 295
+     },
+     "memory": {
+      "layerOutcomes": {
+       "workingMemory": "empty",
+       "clientMemory": "error",
+       "projectMemory": "skipped"
+      },
+      "workingMemoryMode": "none",
+      "semanticSearchMs": 46
+     }
+    },
+    "stoppedReason": "max_rounds",
+    "rounds": 20,
+    "runPolicy": "auto"
+   },
+   {
+    "ms": 3118,
+    "type": "grounding_strip",
+    "evidence": {
+     "attempted": true,
+     "validated": true,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri",
+     "reviewer_risk_summary": "No substantive regulatory claims detected."
+    },
+    "trust_summary": "Verified · 0 grounded · 0 inferred/weak · 0 missing · 0 sources. No substantive regulatory claims detected."
+   },
+   {
+    "ms": 3118,
+    "type": "post_done",
+    "cleanedResponse": "Checking source 1.Checking source 2.Checking source 3.Checking source 4.Checking source 5.Checking source 6.Checking source 7.Checking source 8.Checking source 9.Checking source 10.Checking source 11.Checking source 12.Checking source 13.Checking source 14.Checking source 15.Checking source 16.Checking source 17.Checking source 18.Checking source 19.Checking source 20.Stand-in answer: I looked at 20 sources and had more to check when the turn was closed.",
+    "enrichmentMeta": {
+     "sourcesAttempted": 0,
+     "sourcesSucceeded": [],
+     "sourcesFailed": [],
+     "triggerType": "none",
+     "hasProjectContext": false
+    },
+    "evidence": {
+     "attempted": true,
+     "validated": true,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri",
+     "reviewer_risk_summary": "No substantive regulatory claims detected."
+    },
+    "evidenceDiscipline": {
+     "compliant": true,
+     "labels": 0,
+     "hasOverclaims": false
+    },
+    "structure": {
+     "valid": false,
+     "score": 0,
+     "maxScore": 6
+    },
+    "queueMeta": {
+     "thread_id": "ana-ri_1790620417400_ilyrlw49e",
+     "handoff_ready": true,
+     "turn_status": "completed",
+     "can_process_next": true,
+     "blocked_reason": null
+    },
+    "turnRecord": {
+     "status": "recorded",
+     "id": "316e8d4c-d9d4-45da-b5a7-8b9671cb27a9",
+     "sha256": "72b9eb102805c92510685abac705536bfefb4fe97d01a41af25f61a2739559a2"
+    }
+   }
+  ],
+  "deltas": 26,
+  "ended": 3118
+ },
+ {
+  "t0": 1790620423510,
+  "body": {
+   "message": "Continue from where you stopped.",
+   "thread_id": "ana-ri_1790620417400_ilyrlw49e",
+   "language": "en",
+   "context": {
+    "screen": "conversation-thread",
+    "screenName": "conversation-thread"
+   },
+   "conversation_history": [
+    {
+     "role": "user",
+     "content": "Survey every source you can for BX-512 stability evidence."
+    },
+    {
+     "role": "assistant",
+     "content": "Checking source 1.Checking source 2.Checking source 3.Checking source 4.Checking source 5.Checking source 6.Checking source 7.Checking source 8.Checking source 9.Checking source 10.Checking source 11.Checking source 12.Checking source 13.Checking source 14.Checking source 15.Checking source 16.Checking source 17.Checking source 18.Checking source 19.Checking source 20.Stand-in answer: I looked at 20 sources and had more to check when the turn was closed."
+    }
+   ],
+   "effort_level": "balanced",
+   "run_policy": "auto",
+   "live_drive": true,
+   "drive_acks": true
+  },
+  "frames": [
+   {
+    "ms": 3,
+    "type": "run_started",
+    "runId": "run_7580ab9b-47f4-4a02-89b6-89f060da2efc"
+   },
+   {
+    "ms": 3,
+    "type": "status",
+    "phase": "orchestrating",
+    "message": "Planning response…"
+   },
+   {
+    "ms": 34,
+    "type": "status",
+    "phase": "loading_context",
+    "message": "Loading project memory…"
+   },
+   {
+    "ms": 34,
+    "type": "drive_state",
+    "enabled": true,
+    "mode": "assist"
+   },
+   {
+    "ms": 34,
+    "type": "context_used",
+    "uploads": [],
+    "unresolvedUploads": 0,
+    "memory": [],
+    "memoryStatus": "unavailable"
+   },
+   {
+    "ms": 34,
+    "type": "status",
+    "phase": "generating",
+    "message": "Generating response…"
+   },
+   {
+    "ms": 34,
+    "type": "thread_id",
+    "thread_id": "ana-ri_1790620417400_ilyrlw49e"
+   },
+   {
+    "ms": 34,
+    "type": "orchestration",
+    "orchestration": {
+     "detectedIntent": {
+      "lens": "auto",
+      "confidence": 0,
+      "signals": []
+     },
+     "detectedSubmissionType": null,
+     "detectedDocumentTemplate": null,
+     "appliedRole": "general",
+     "activeWorkstream": {
+      "stream": "evidence_development",
+      "phase": "analysis",
+      "objective": "Continue from where you stopped.",
+      "currentFocus": "Evidence chain and support gaps",
+      "blockers": [],
+      "nextStep": "Build an evidence inventory, mark critical gaps, and decide what can be defended now versus what needs new support.",
+      "collaborationMode": "advise"
+     },
+     "workstreamHandoff": null,
+     "suggestedActions": [
+      "Create Evidence Memo",
+      "Create Risk Memo",
+      "Rewrite Section",
+      "Create Strategy Note"
+     ]
+    }
+   },
+   {
+    "ms": 212,
+    "type": "done",
+    "model": "claude-sonnet-5",
+    "provider": "anthropic",
+    "modelTier": "standard",
+    "effortUsed": "balanced",
+    "usage": {
+     "inputTokens": 100,
+     "outputTokens": 20,
+     "totalTokens": 120,
+     "estimatedCostUsd": 0.0004
+    },
+    "latencyMs": 156,
+    "response": "Stand-in answer: picking up from where the previous turn stopped.",
+    "telemetry": {
+     "phases": {
+      "orchestrationMs": 17,
+      "contextMs": 27,
+      "gatewayMs": 164,
+      "firstTokenMs": 176
+     },
+     "memory": {
+      "layerOutcomes": {
+       "workingMemory": "empty",
+       "clientMemory": "error",
+       "projectMemory": "skipped"
+      },
+      "workingMemoryMode": "none",
+      "semanticSearchMs": 10
+     }
+    },
+    "stoppedReason": "no_more_tools",
+    "rounds": 0,
+    "runPolicy": "auto"
+   },
+   {
+    "ms": 245,
+    "type": "grounding_strip",
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "trust_summary": "Evidence check not run for this response — verify any regulatory claims before relying on them."
+   },
+   {
+    "ms": 245,
+    "type": "post_done",
+    "cleanedResponse": "Stand-in answer: picking up from where the previous turn stopped.",
+    "enrichmentMeta": {
+     "sourcesAttempted": 0,
+     "sourcesSucceeded": [],
+     "sourcesFailed": [],
+     "triggerType": "none",
+     "hasProjectContext": false
+    },
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "evidenceDiscipline": {
+     "compliant": true,
+     "labels": 0,
+     "hasOverclaims": false
+    },
+    "structure": {
+     "valid": false,
+     "score": 0,
+     "maxScore": 6
+    },
+    "queueMeta": {
+     "thread_id": "ana-ri_1790620417400_ilyrlw49e",
+     "handoff_ready": true,
+     "turn_status": "completed",
+     "can_process_next": true,
+     "blocked_reason": null
+    },
+    "turnRecord": {
+     "status": "recorded",
+     "id": "28cfa513-3275-40ba-bd6c-6f62675d0937",
+     "sha256": "a8a1f1c76b4d4602bf6af75c9ee56248676300eafce72eebd62b2bb037e71ea1"
+    }
+   }
+  ],
+  "deltas": 4,
+  "ended": 245
+ }
+]

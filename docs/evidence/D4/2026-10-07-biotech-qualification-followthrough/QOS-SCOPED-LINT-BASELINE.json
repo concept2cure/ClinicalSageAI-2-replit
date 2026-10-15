@@ -1,0 +1,20 @@
+[
+  {
+    "file": "server/services/m2-summary-builders.ts",
+    "originalErrors": 0,
+    "originalWarnings": 8,
+    "currentErrors": 0,
+    "currentWarnings": 8,
+    "originalLintExit": 0,
+    "warningsIncreased": false
+  },
+  {
+    "file": "server/services/__tests__/m2-summary-builders.test.ts",
+    "originalErrors": 0,
+    "originalWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "originalLintExit": 0,
+    "warningsIncreased": false
+  }
+]

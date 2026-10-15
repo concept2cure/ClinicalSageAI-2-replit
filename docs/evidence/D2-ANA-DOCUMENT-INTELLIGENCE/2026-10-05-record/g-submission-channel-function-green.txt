@@ -1,0 +1,116 @@
+# g-submission-channel-function — GREEN (fix round 2, 2026-10-05)
+# Command: npx vitest run tests/services/regulatory/submission-resolver.test.ts
+#   server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+#   tests/regulatory/region-identity.test.ts tests/services/biologics/ana-tools.test.ts
+#   server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts
+#   tests/regulatory/submittabilityCoverage.test.ts
+#   tests/regulatory/zz-g-channel-patched-copy.test.ts   (temporary copy of
+#     submittabilityCoverage.test.ts with the prepared patch applied; deleted after the run)
+#
+# Result: 50 passed / 3 failed across 7 files.
+#   submission-resolver 9/9, submittability-portal-channels 10/10 (the step's files, 19/19);
+#   region-identity 8/8, ana-tools 4/4, coverage-report-verdict 3/3;
+#   patched copy of submittabilityCoverage.test.ts 10/10.
+#   The 3 failures are all in the UNPATCHED tests/regulatory/submittabilityCoverage.test.ts,
+#   which pins the old answer (EU_MAA submittable via CESP, empty gap list, EU_RMP
+#   submittable). It is outside this step's file list; the patch
+#   <scratchpad>/patch-g-channel/submittabilityCoverage.test.patch (git apply -p0,
+#   --check passes) makes it 10/10 and must land in the same commit.
+#
+# Fix round 2 (review: blocking). Round 1 sent every EU + EMA + eCTD entry to the
+# eSubmission Gateway with "Centralised procedure — ... mandatory", which reached
+# an orphan-designation, PIP, PRIME or scientific-advice client through AnA's
+# resolve_submission_plan. Now:
+#   - eSubmission Gateway only for eCTD entries of the families fact row 1 covers:
+#     marketing_authorization, variation, renewal, safety_report, master_file.
+#   - EU_ORPHAN, EU_SCIENTIFIC_ADVICE, EU_PIP, EU_PRIME: unconnected, EMA IRIS
+#     (regulator text, facts rows 4-5), keyed by id.
+#   - Every other EMA-agency entry: unconnected, "EMA — channel not modelled", no
+#     regulator claim, never the CESP region default (was: submittable via ema:cesp
+#     for EU_EUDRAVIGILANCE_ICSR, EU_PSMF, EU_ACCEL_ASSESS, EU_REF_LAB, EU_PERF_STUDY,
+#     EU_PMPF, EU_IVD_REEVAL, EU_IVDR_ART48_CONSULT).
+#   - The applicant step is part of the channel (applicantStep), so the resolver no
+#     longer says "builds and validates the eCTD sequence" for an IRIS request.
+#
+# Resolver output for AnA-reachable EU families (tsx, resolveSubmissionPlan({applicationFamily, regions:['EU']})):
+orphan -> EU_ORPHAN submit=false notes=["Not connected: EMA IRIS (Regulatory & Scientific Information Management Platform). Orphan designation applications are submitted to EMA through IRIS (EMA, since 2018). The platform prepares the application content; the applicant submits it through IRIS, for which the platform has no connector."]
+pediatric -> EU_PIP submit=false notes=["Not connected: EMA IRIS (Regulatory & Scientific Information Management Platform). Paediatric investigation plan applications are submitted to EMA through IRIS (EMA). The platform prepares the application content; the applicant submits it through IRIS, for which the platform has no connector."]
+designation -> EU_PRIME submit=false notes=["Not connected: EMA IRIS (Regulatory & Scientific Information Management Platform). PRIME eligibility requests are submitted to EMA through IRIS (EMA). The platform prepares the application content; the applicant submits it through IRIS, for which the platform has no connector."]
+pre_submission -> EU_SCIENTIFIC_ADVICE submit=false notes=["Not connected: EMA IRIS (Regulatory & Scientific Information Management Platform). Scientific advice requests are submitted to EMA through IRIS (EMA, since 2020-10-19). The platform prepares the application content; the applicant submits it through IRIS, for which the platform has no connector."]
+marketing_authorization -> EU_CMA submit=false notes=["Not connected: EMA eSubmission Gateway / Web Client. Centralised procedure — the eSubmission Gateway/Web Client is mandatory (EMA, since 2014-03-01); CESP is not an accepted channel, and the platform has no eSubmission Gateway connector. The platform builds and validates the eCTD sequence; the applicant transmits it through that channel."]
+variation -> EU_VARIATION_IA submit=false notes=["Not connected: EMA eSubmission Gateway / Web Client. Centralised procedure — the eSubmission Gateway/Web Client is mandatory (EMA, since 2014-03-01); CESP is not an accepted channel, and the platform has no eSubmission Gateway connector. The platform builds and validates the eCTD sequence; the applicant transmits it through that channel."]
+safety_report -> EU_RMP submit=false notes=["Not connected: EMA eSubmission Gateway / Web Client. Centralised procedure — the eSubmission Gateway/Web Client is mandatory (EMA, since 2014-03-01); CESP is not an accepted channel, and the platform has no eSubmission Gateway connector. The platform builds and validates the eCTD sequence; the applicant transmits it through that channel."]
+#
+# Narrowness of the patched gap-gate allowance, shown failing: a temporary copy of
+# the patched submittabilityCoverage.test.ts that appends one synthetic EMA-agency
+# entry (EU_DEMO_NEW_EMA_FILING, cloned from EU_ACCEL_ASSESS) to GLOBAL_REGISTRY.
+# Its channel is "not modelled", but its id is not on the explicit list, so the gate
+# fails on it (deleted after the run):
+#  × ... > NO filing type is selectable but unsubmittable — except the known unconnected EMA channels
+#    → these filing types can be chosen at project initiation but cannot reach a gateway:
+#     EU_DEMO_NEW_EMA_FILING (EU) — no_gateway
+#    Tests  1 failed | 9 passed (10)
+# The round-1 safety-hunk demonstration still holds: US_IND_SR evaluated with no
+# registered gateway pairs is no_gateway, agency FDA, so it takes the "must be
+# submittable" branch and fails; only EMA no_gateway entries with a known channel pass.
+#
+# ---- vitest results (test lines and summary) ----
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > every startable filing type is finishable > NO filing type is selectable but unsubmittable — except the known unconnected EMA channels 3ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > every startable filing type is finishable > every region carrying filings resolves to a registered gateway pair 1ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > every startable filing type is finishable > every region carrying filings declares an M1 backbone 1ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > the classification is not hiding real filings > classifies the ICH document set as components, not filings 1ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > the classification is not hiding real filings > does NOT classify the marketing-authorisation spine as components 3ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > the classification is not hiding real filings > reports each spine filing through the channel it actually uses 0ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > the classification is not hiding real filings > keeps the component set a small minority of the registry 0ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > the classification is not hiding real filings > treats a safety report as a component only when it is region-agnostic 0ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > the report is usable by an operator > accounts for every registry entry exactly once 1ms
+ ✓ tests/regulatory/zz-g-channel-patched-copy.test.ts > the report is usable by an operator > rolls up by region, which is where a gap is actually fixed 0ms
+ × tests/regulatory/submittabilityCoverage.test.ts > every startable filing type is finishable > NO filing type is selectable but unsubmittable 14ms
+   → these filing types can be chosen at project initiation but cannot reach a gateway:
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > every startable filing type is finishable > every region carrying filings resolves to a registered gateway pair 2ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > every startable filing type is finishable > every region carrying filings declares an M1 backbone 0ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > classifies the ICH document set as components, not filings 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > does NOT classify the marketing-authorisation spine as components 1ms
+ × tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > reports each spine filing through the channel it actually uses 2ms
+   → EU_MAA lost its gateway: expected 'no_gateway' to be 'submittable' // Object.is equality
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > keeps the component set a small minority of the registry 1ms
+ × tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > treats a safety report as a component only when it is region-agnostic 1ms
+   → EU_RMP is a regional filing, not a component: expected 'no_gateway' to be 'submittable' // Object.is equality
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the report is usable by an operator > accounts for every registry entry exactly once 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the report is usable by an operator > rolls up by region, which is where a gap is actually fixed 0ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > resolves a biologic marketing filing: US and JP by gateway, EU build-only 15ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > routes by product class — BLA and NDA pick different US filings 6ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > honours an explicit region subset 0ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > never tells a client their MAA can be sent through CESP 0ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > does not tell an orphan, PIP or PRIME applicant the centralised procedure applies (fix round 2) 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > sends an EU clinical trial application to CTIS, not to a dossier gateway 0ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — coverage matrix > US and JP cells support build + submit; EU cells are build-supported, not submit-supported 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — registry lookups > picks a regional entry by family + product class 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > does not claim the centralised procedure or the eSubmission Gateway for an EMA IRIS filing 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > fails closed for an EMA filing whose channel is not modelled — never the CESP region default 3ms
+ ✓ server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts > regulatory coverage report — the closing verdict > the tier counts it PRINTS account for every filing 3ms
+ ✓ server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts > regulatory coverage report — the closing verdict > names each portal-only filing AND the portal it belongs to 1ms
+ ✓ server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts > regulatory coverage report — the closing verdict > never claims everything is finishable while a filing has no channel off the platform 0ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — canonical reconciliation > has 12 regions, each with code matching its key 2ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — canonical reconciliation > maps to the gateway slug vocabulary 0ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — canonical reconciliation > maps to the rule-region vocabulary (subset; undefined elsewhere) 0ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — canonical reconciliation > reverse lookups round-trip 0ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — verified against existing sources of truth > agency + language profile agrees with region-profiles for every region 1ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — verified against existing sources of truth > every region default gateway exists in the live gateway registry 0ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — verified against existing sources of truth > every region market key (when present) exists in the Module 1 requirements registry 0ms
+ ✓ tests/regulatory/region-identity.test.ts > region-identity — preserves the legacy submission-resolver values > reproduces the old AGENCY_GATEWAY + AGENCY_MODULE1 literals for US/EU/JP 0ms
+ ✓ tests/services/biologics/ana-tools.test.ts > biologics AnA tool definitions > are present in ALL_ANA_TOOLS 3ms
+ ✓ tests/services/biologics/ana-tools.test.ts > biologics AnA tool definitions > declare a JSON-schema object with a required[] array 1ms
+ ✓ tests/services/biologics/ana-tools.test.ts > biologics AnA tool definitions > the three data-driven tools require their core input 0ms
+ ✓ tests/services/biologics/ana-tools.test.ts > biologics AnA tool definitions > similarity/comparability take attributes[], immunogenicity takes arms[] 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 6 passed (7)
+      Tests  3 failed | 50 passed (53)

@@ -1,0 +1,72 @@
+Concept2Cure.RI
+›
+Conversation
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+Project
+Check two readiness sources for BX-256.
+Conversation
+AnA
+New conversation
+Progress
+· AnA's progress
+Check two readiness sources for BX-256.
+✻
+Manual needs run control, which was not available for this turn, so AnA stopped where she would have asked you. Next step: Global search. To let her go on, switch to Auto, then Continue.
+1 step completed · reasoning · in 0s
+
+Manual needs run control, which was not available for this turn, so AnA stopped where she would have asked you. Next step: Global search. To let her go on, switch to Auto, then Continue.
+Continue
+
+Source 1 of 2.Source 2 of 2.
+
+AnA drives: on
+Demos
+Between steps
+Manual
+AnA takes one step, then waits for you to run the next, change it or stop. If nobody answers within 10 minutes, or the page is closed, she stops there. A demonstration you start runs through without stopping.
+Auto
+AnA keeps going, step after step, until she judges the task done — for up to 20 rounds whichever engine you chose, 15 minutes of work or 40 minutes in all. Anything that changes a record waits for you; if nobody answers within 10 minutes, it does not happen and she stops.
+She waits for you before each further step.
+Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.
+Progress
+Stopped: Manual was unavailable · 0s
+Planning response…
+— done
+0 ms
+Loading project memory…
+— done
+41 ms
+Generating response…
+— done
+143 ms
+Reasoning through the question…
+— done
+0 ms
+Composing the answer…
+— done
+57 ms
+Running 1 step…
+— done
+1 ms
+Reading the results…
+— done
+93 ms
+Composing the answer…
+— done
+37 ms
+Checking evidence and recording the turn…
+— done
+44 ms
+Used in this session
+Memory
+Could not be read
+Tools
+Global search
+Context
+balanced effort

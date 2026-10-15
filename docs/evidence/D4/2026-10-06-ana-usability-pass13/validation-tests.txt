@@ -1,0 +1,197 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' calls sessionBootstrapBlockFor 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' calls sessionBootstrapBlockFor 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' injects the block it gets back 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the gate 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' assembles its tools through governedToolsetFor 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' assembles its tools through governedToolsetFor 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' does not assemble the raw tool surface itself 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' does not assemble the raw tool surface itself 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > every composer of the AnA tool surface goes through the helper 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the realtime turn runs in the tenant scope its socket was authenticated for 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper applies the deny-list and says why it does not apply the allowlist 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' gives IND/NDA/BLA chats the one submission context block 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' gives IND/NDA/BLA chats the one submission context block 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the submission context 3ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper still owns the gate, the kill-switch and the failure path 0ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts tenant-scoped client and project searches before recency resolves 6ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 5ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 0ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 0ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'semantic' when the flag is on and similarity recall serves the summary 7ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency_fallback' when the flag is ON but semantic clears nothing — the state a pilot must see 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency' when the flag is off and the default path answers 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'none' when nothing is recalled at all 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > recordAnaTurn counts modes and the rendered family carries them 2ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > the stream route hands the mode from diagnostics to recordAnaTurn (source contract) 1ms
+stdout | server/services/__tests__/ana-recall-overlap.test.ts
+{
+  "timestamp": "2026-10-06T04:30:34.327Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T04:30:34.328Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-recall-overlap.test.ts
+{
+  "timestamp": "2026-10-06T04:30:34.329Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/chat-thread-program-key.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/chat-thread-program-key.test.ts
+{
+  "timestamp": "2026-10-06T04:30:34.406Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > binds the program, lower-cased, to program_id once it is the organization's 3ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > a program of another organization, or a deleted one, is never bound: the thread is minted unbound 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > without an organization nothing is bound, and nothing is asked 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > a check that could not complete mints nothing: it is not read as "not ours" 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > binds nothing, and asks nothing, when no project is open or the id is not a program key 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > does not re-home an existing thread — continuing a conversation never rewrites its program 0ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > programIdForThread accepts only a UUID 0ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > the stream route hands the mint its program key > passes the request's project id through programIdForThread 1ms
+stdout | server/services/__tests__/ana-recall-overlap.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/ana-recall-overlap.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-recall-overlap.test.ts
+{
+  "timestamp": "2026-10-06T04:30:34.542Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > independent intelligence recall overlaps route prefetch > starts scoped intelligence recall before optional prefetch settles and retains its result 5ms
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > independent intelligence recall overlaps route prefetch > handles an early recall rejection while prefetch is pending 1ms
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > uses the verified ID for memory and history, with one access check 2ms
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > excludes unverified private summary when access is unavailable: null 1ms
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > excludes unverified private summary when access is unavailable: Error: access lookup failed 1ms
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > waits for access before reading private memory 53ms
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T04:30:36.540Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T04:30:36.541Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T04:30:36.541Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+{
+  "timestamp": "2026-10-06T04:30:36.582Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T04:30:36.583Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+{
+  "timestamp": "2026-10-06T04:30:36.583Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true
+[AnA RI] Intelligence prefix failed: recall unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 33ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a demonstration keeps its follow-up rounds as narration: no reasoning display there 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a Fast turn reasons on no call 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > a turn that is not high-stakes keeps the effort chosen 4ms
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[AnA RI Stream] Thread persistence failed: database unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[AnA RI Stream] Refused caller-supplied thread id: undefined
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 37ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 3ms
+
+ Test Files  7 passed (7)
+      Tests  71 passed (71)
+   Start at  00:30:32
+   Duration  6.64s (transform 10.21s, setup 686ms, import 18.34s, tests 284ms, environment 1ms)
+

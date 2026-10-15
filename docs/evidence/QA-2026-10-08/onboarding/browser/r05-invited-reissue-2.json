@@ -1,0 +1,96 @@
+{
+  "email": "qa-onboard-2@concept2cure.pro",
+  "kpiBefore": {
+    "value": "12",
+    "meta": "10 active · 2 invited"
+  },
+  "invitedRowsBefore": [
+    "PP | Pat Pending | pat.pending@concept2cure.pro",
+    "QS | QA Second Admin | qa.second.admin@concept2cure.pro"
+  ],
+  "inviteToast": [
+    "QA Onboard 2 invited as member. This server sends no email, so their password setup link is on your clipboard — it expires in 21 days."
+  ],
+  "kpiAfterInvite": {
+    "value": "13",
+    "meta": "10 active · 3 invited"
+  },
+  "drawerState": "ROLE | Member | STATE | Invited | SSO | Local | SECOND FACTOR | Emailed code | LAST SEEN | — | GROUPS | —",
+  "drawerButtons": [
+    "GRANT ACCESS",
+    "AUDIT ACTIVITY",
+    "CHANGE ROLE",
+    "REMOVE FROM ORGANIZATION",
+    "ISSUE A NEW SETUP LINK"
+  ],
+  "reissueDialog": "MEMBERS · SETUP LINK | Issue a new setup link for QA Onboard 2? | QA Onboard 2 has not set a password yet. A new link replaces the one they were sent: the previous link stops working. Issuing it is recorded in the audit trail against you. | Cancel | Issue new link",
+  "reissueToast": [
+    "A new setup link for QA Onboard 2 was issued; the previous one no longer works. This server sends no email, so their password setup link is on your clipboard — it expires in 21 days."
+  ],
+  "reinviteToast": [
+    "QA Onboard 2 was invited before and has not set a password, so a new setup link was issued and the previous one no longer works. Their role is unchanged (Member). This server sends no email, so their password setup link is on your clipboard — it expires in 21 days."
+  ],
+  "links": 3,
+  "firstLink": {
+    "calls": [
+      {
+        "status": 400,
+        "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_006\",\"message\":\"Invalid or expired reset token\"}}"
+      }
+    ],
+    "shown": [
+      "Invalid or expired reset token",
+      "Back to sign in"
+    ]
+  },
+  "secondLink": {
+    "calls": [
+      {
+        "status": 400,
+        "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_006\",\"message\":\"Invalid or expired reset token\"}}"
+      }
+    ],
+    "shown": [
+      "Invalid or expired reset token",
+      "Back to sign in"
+    ]
+  },
+  "thirdLink": {
+    "calls": [
+      {
+        "status": 200,
+        "body": "{\"success\":true,\"message\":\"Password reset successfully\"}"
+      }
+    ],
+    "shown": [
+      "Sign in",
+      "Sign in"
+    ]
+  },
+  "kpiAfterActivation": {
+    "value": "13",
+    "meta": "11 active · 2 invited"
+  },
+  "drawerStateAfter": "ROLE | Member | STATE | Active | SSO | Local | SECOND FACTOR | Emailed code | LAST SEEN | — | GROUPS | —",
+  "writes": [
+    {
+      "method": "POST",
+      "status": 201,
+      "req": "{\"name\":\"QA Onboard 2\",\"email\":\"qa-onboard-2@concept2cure.pro\",\"role\":\"member\"}",
+      "body": "{\"id\":33,\"email\":\"qa-onboard-2@concept2cure.pro\",\"name\":\"QA Onboard 2\",\"role\":\"member\",\"createdNewUser\":true,\"quotaInfo\":{\"used\":13,\"maximum\":25,\"remaining\":12},\"invitation\":{\"expiresAt\":\"2026-10-29T05:48:57.593Z\",\"emailSent\":false,\"delivery\":\"link\",\"setupUrl\":\"[redacted]\"}}"
+    },
+    {
+      "method": "POST",
+      "status": 200,
+      "req": "{\"name\":\"QA Onboard 2\",\"email\":\"qa-onboard-2@concept2cure.pro\",\"role\":\"member\"}",
+      "body": "{\"reissued\":true,\"id\":33,\"email\":\"qa-onboard-2@concept2cure.pro\",\"name\":\"QA Onboard 2\",\"role\":\"member\",\"invitation\":{\"expiresAt\":\"2026-10-29T05:49:02.430Z\",\"emailSent\":false,\"delivery\":\"link\",\"setupUrl\":\"[redacted]\"}}"
+    },
+    {
+      "method": "POST",
+      "status": 200,
+      "req": "{\"name\":\"QA Onboard 2\",\"email\":\"qa-onboard-2@concept2cure.pro\",\"role\":\"admin\"}",
+      "body": "{\"reissued\":true,\"id\":33,\"email\":\"qa-onboard-2@concept2cure.pro\",\"name\":\"QA Onboard 2\",\"role\":\"member\",\"invitation\":{\"expiresAt\":\"2026-10-29T05:49:06.170Z\",\"emailSent\":false,\"delivery\":\"link\",\"setupUrl\":\"[redacted]\"}}"
+    }
+  ],
+  "httpErrors": []
+}

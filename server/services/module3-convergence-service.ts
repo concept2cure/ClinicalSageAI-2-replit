@@ -30,7 +30,7 @@ import {
   REGIONAL_SECTION_LABELS,
   regionalRequiredFields,
 } from './module3-extensions';
-import { resolveProjectRegionCode } from './cmc/module3-compile';
+import { resolveProjectRegional } from './cmc/module3-compile';
 import { createScopedLogger } from '../utils/logger';
 import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
 import { governedActor } from './part11/governed-actor';
@@ -292,9 +292,11 @@ export async function getModule3BuildStatus(
      A failure here is SAID and skipped, as the compile's own regional pass is:
      a board that cannot resolve a region still reports every other section. */
   let regionalComposed: ComposedSection[] = [];
+  let regionalApplication: string | null = null;
   try {
-    const region = await resolveProjectRegionCode(pool, orgId, projectId);
-    if (region) regionalComposed = composeRegional(canonicalSources, region);
+    const { region, applicationType } = await resolveProjectRegional(pool, orgId, projectId);
+    regionalApplication = applicationType;
+    if (region) regionalComposed = composeRegional(canonicalSources, region, { applicationType });
   } catch (regionalErr) {
     logger.warn('[module3-convergence] regional (3.2.R) enumeration skipped', {
       orgId,
@@ -319,7 +321,7 @@ export async function getModule3BuildStatus(
      rules answer from a static list. An empty list is honest: it means no
      recorded source supplies anything this regional section reads. */
   const regionalRules = regionalComposed.map((c) => {
-    const fields = regionalRequiredFields(c.sectionKey);
+    const fields = regionalRequiredFields(c.sectionKey, regionalApplication);
     const types = new Set<string>();
     for (const row of sourceRes.rows) {
       const payload = (row.sourcePayload ?? {}) as Record<string, unknown>;
@@ -438,6 +440,23 @@ export async function getModule3BuildStatus(
 }
 
 /**
+ * The created_by a convergence write records, as governedActor attributes it:
+ * the acting user's id, or the named machine actor when the caller states there
+ * is no user (null). 2026-10-15: the provenance rows below wrote the literal
+ * 'system' for mappings and bridges a person ran. A caller that does not state
+ * the actor at all (undefined) is refused before anything is written.
+ */
+function convergenceActor(userId: number | null | undefined, write: string): string {
+  if (userId === undefined) {
+    throw new Error(
+      `${write}: the actor (the acting user's id, or null for a system-initiated write) must be stated; nothing was written`,
+    );
+  }
+  const actor = governedActor(userId, 'module3-convergence');
+  return actor.userId > 0 ? String(actor.userId) : String(actor.userEmail);
+}
+
+/**
  * Takes an existing governed artifact and creates/updates a corresponding
  * CMC source object from its content. Records provenance lineage.
  */
@@ -446,10 +465,13 @@ export async function classifyAndMapArtifactToSource(
   projectId: string,
   artifactId: string,
   classification: DossierUploadClassification,
+  /** Who is mapping it; see convergenceActor. Optional only in type, while a caller still omits it. */
+  opts: { actorUserId?: number | null } = {},
 ): Promise<{ sourceObjectId: number; sectionKey: string | null }> {
   if (!classification.useAsModule3Source || !classification.sourceType) {
     throw new Error('Classification does not designate this artifact as a Module 3 source');
   }
+  const createdBy = convergenceActor(opts.actorUserId, 'Mapping an artifact to a Module 3 source');
 
   // The artifact lives on the integer spine; the CMC source object keeps the
   // caller's TEXT project id so it joins the rest of the Module 3 OS layer.
@@ -512,7 +534,7 @@ export async function classifyAndMapArtifactToSource(
     await client.query(
       `INSERT INTO cmc_provenance_events
          (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1, $2, 'source_object', $3, 'mapped_from_artifact', $4::jsonb, 'system')`,
+       VALUES ($1, $2, 'source_object', $3, 'mapped_from_artifact', $4::jsonb, $5)`,
       [
         orgId,
         projectId,
@@ -525,6 +547,7 @@ export async function classifyAndMapArtifactToSource(
           submissionTrack: classification.submissionTrack,
           tags: classification.tags,
         }),
+        createdBy,
       ],
     );
 
@@ -584,10 +607,12 @@ export async function bridgeCompileToArtifact(
      * (invalid input syntax for type integer), so every bridge on a fresh
      * database failed and the caller's catch logged it away. NULL is the
      * honest value for a system-initiated bridge with no identified actor.
+     * Must be stated: an omitted actor is refused (see convergenceActor).
      */
-    createdById?: number | null;
-  } = {},
+    createdById: number | null;
+  },
 ): Promise<BridgeToArtifactResult> {
+  const createdBy = convergenceActor(opts?.createdById, 'Bridging a compiled section to a governed artifact');
   const spine = await resolveCmcArtifactProject(orgId, projectId);
   if (spine.state !== 'linked') {
     return { bridged: false, reason: spine.state, detail: spine.detail };
@@ -692,20 +717,19 @@ export async function bridgeCompileToArtifact(
        placeholder. The per-source `cmc_section_lineage` rows above say which
        records the section was built from; these spans say who stands behind
        the sentences. */
-    const actor = governedActor(opts.createdById ?? null, 'module3-convergence');
     await enforceAuthorLineage(
       client,
       orgId,
       { documentTable: 'concept2cure_artifacts', documentId: String(artifactPk) },
       fullContent,
-      actor.userId > 0 ? String(actor.userId) : String(actor.userEmail),
+      createdBy,
     );
 
-    // Record provenance event
+    // Record provenance event — the same actor as the lineage above (it was the literal 'system').
     await client.query(
       `INSERT INTO cmc_provenance_events
          (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1, $2, 'governed_artifact', $3, 'bridged_from_compile', $4::jsonb, 'system')`,
+       VALUES ($1, $2, 'governed_artifact', $3, 'bridged_from_compile', $4::jsonb, $5)`,
       [
         orgId,
         projectId,
@@ -717,6 +741,7 @@ export async function bridgeCompileToArtifact(
           isNew,
           contentHash,
         }),
+        createdBy,
       ],
     );
 

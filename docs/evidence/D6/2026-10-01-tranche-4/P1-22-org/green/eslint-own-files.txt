@@ -1,0 +1,26 @@
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+   297:8   warning  Function 'Setup' has too many lines (534). Maximum allowed is 100                                                                                                                      max-lines-per-function
+   297:8   warning  Function 'Setup' has a complexity of 49. Maximum allowed is 15                                                                                                                         complexity
+   715:1   warning  File has too many lines (2835). Maximum allowed is 500                                                                                                                                 max-lines
+  1025:8   warning  Function 'AuditTrail' has too many lines (509). Maximum allowed is 100                                                                                                                 max-lines-per-function
+  1025:8   warning  Function 'AuditTrail' has a complexity of 24. Maximum allowed is 15                                                                                                                    complexity
+  1025:30  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  1851:8   warning  Function 'Apps' has too many lines (362). Maximum allowed is 100                                                                                                                       max-lines-per-function
+  1851:8   warning  Function 'Apps' has a complexity of 31. Maximum allowed is 15                                                                                                                          complexity
+  1851:24  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  1893:9   warning  The 'pj' logical expression could make the dependencies of useMemo Hook (at line 2041) change on every render. To fix this, wrap the initialization of 'pj' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  1894:9   warning  The 'us' logical expression could make the dependencies of useMemo Hook (at line 2041) change on every render. To fix this, wrap the initialization of 'us' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  2171:29  warning  Arrow function has a complexity of 21. Maximum allowed is 15                                                                                                                           complexity
+  2350:8   warning  Function 'ArtifactsCenter' has too many lines (253). Maximum allowed is 100                                                                                                            max-lines-per-function
+  2350:35  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+  2782:8   warning  Function 'AdminConsole' has too many lines (732). Maximum allowed is 100                                                                                                               max-lines-per-function
+  2782:8   warning  Function 'AdminConsole' has a complexity of 45. Maximum allowed is 15                                                                                                                  complexity
+  2782:32  warning  'onAsk' is defined but never used. Allowed unused args must match /^_/u                                                                                                                @typescript-eslint/no-unused-vars
+
+/home/user/ClinicalSageAI-2-replit/server/services/vault/vault-ingest.service.ts
+  183:1  warning  Async function 'admitVaultDocument' has too many lines (400). Maximum allowed is 100  max-lines-per-function
+  183:1  warning  Async function 'admitVaultDocument' has a complexity of 83. Maximum allowed is 15     complexity
+
+✖ 19 problems (0 errors, 19 warnings)
+

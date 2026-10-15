@@ -1,0 +1,13 @@
+Mutant F11-per-character: a string where a list belongs is read one letter per fact
+
+--- server/services/ana/memory-fact-check.ts
+- const items: unknown[] = Array.isArray(r[field]) ? (r[field] as unknown[]) : [];
++ const items: unknown[] = r[field] ? [...(r[field] as string)] : [];
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts server/services/__tests__/working-memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 14ms
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 11ms
+      Tests  2 failed | 16 passed (18)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

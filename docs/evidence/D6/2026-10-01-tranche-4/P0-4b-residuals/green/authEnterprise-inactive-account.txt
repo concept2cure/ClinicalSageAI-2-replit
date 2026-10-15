@@ -1,0 +1,63 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 45ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 10ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 12ms
+stdout | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-01T19:37:52.878Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T19:37:52.879Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-01T19:37:52.880Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-01T19:37:52.913Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > control: sessions ended before the challenge was issued do not stop it
+{
+  "timestamp": "2026-10-01T19:37:52.928Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 195ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > is refused at the second factor (401 SIGN_IN_ENDED), no code is spent, and the refusal is audited 7ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > control: sessions ended before the challenge was issued do not stop it 6ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  19:37:50
+   Duration  2.56s (transform 1.08s, setup 106ms, import 1.88s, tests 280ms, environment 0ms)
+
+exit 0

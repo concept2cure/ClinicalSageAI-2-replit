@@ -1,0 +1,13 @@
+Mutant C01-no-request-id: a call no longer names the gateway request that joins it to the ledger
+
+--- server/services/ana/turn-record.ts
+- requestId: served.requestId ?? null,
++ requestId: null,
+
+Tests run: server/services/ana/__tests__/turn-record-sent.test.ts server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 12ms
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 67ms
+      Tests  2 failed | 4 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,265 @@
+{
+  "qaOrganization": {
+    "id": 71,
+    "slug": "qms-current-a2f97d68",
+    "status": "inactive"
+  },
+  "capturedAt": "2026-10-14T09:01:14.532Z",
+  "captureLimit": "First row inventory was captured after initial native green; it is not a retroactive pre-green snapshot.",
+  "counts": {
+    "qms_documents": 7,
+    "qms_change_controls": 1,
+    "qms_training_records": 3,
+    "electronic_signatures": 9,
+    "c2c_ana_actions": 9,
+    "audit_logs": 12
+  },
+  "records": [
+    {
+      "tableName": "qms_documents",
+      "recordId": "1",
+      "tupleVersion": "29973",
+      "rowSha256": "9a10413d2660b2cffe1e187b958950bdfb58f9920ee3bc3beebe8165e7f69743"
+    },
+    {
+      "tableName": "qms_documents",
+      "recordId": "2",
+      "tupleVersion": "29977",
+      "rowSha256": "a554077a966da7877a475a243492c71bf07f1184db828a9bd0768c334f997eee"
+    },
+    {
+      "tableName": "qms_documents",
+      "recordId": "3",
+      "tupleVersion": "29988",
+      "rowSha256": "055d013b7f411516addd985cc4480c5570866b9214e3d7ce28f602e007524b8b"
+    },
+    {
+      "tableName": "qms_documents",
+      "recordId": "4",
+      "tupleVersion": "29995",
+      "rowSha256": "a1a5012559b14a31e74a27f23874e22967b4faf770e2ff655f37881865d07105"
+    },
+    {
+      "tableName": "qms_documents",
+      "recordId": "5",
+      "tupleVersion": "30009",
+      "rowSha256": "720aef5561098d6b9854cb934d439a5399401e877da69769114502011e910061"
+    },
+    {
+      "tableName": "qms_documents",
+      "recordId": "6",
+      "tupleVersion": "30012",
+      "rowSha256": "6054fc6d31eee45d8338dafd574bc78b065401a0d50b05da75aec6fbd3d7c49d"
+    },
+    {
+      "tableName": "qms_documents",
+      "recordId": "7",
+      "tupleVersion": "30019",
+      "rowSha256": "38be6b13d5c134eac351bd85e271be3d7dca1e7c6909ef5698712b65825df38a"
+    },
+    {
+      "tableName": "qms_change_controls",
+      "recordId": "1",
+      "tupleVersion": "30002",
+      "rowSha256": "c69fc16f43930522b072f5cf32c118ca8bf35147975abcc43d93785067a3fba4"
+    },
+    {
+      "tableName": "qms_training_records",
+      "recordId": "1",
+      "tupleVersion": "29975",
+      "rowSha256": "2e575f809e9d17dc6eb6748cfc9572c7235ea7f5086455b1e9a4896a6244202f"
+    },
+    {
+      "tableName": "qms_training_records",
+      "recordId": "2",
+      "tupleVersion": "29978",
+      "rowSha256": "3ea32d5d161fcbc1e955d8c3d72983bc8275f4008a8d53ba38f0da998335aafc"
+    },
+    {
+      "tableName": "qms_training_records",
+      "recordId": "3",
+      "tupleVersion": "29981",
+      "rowSha256": "19731abc3f764a527f1752ccc81f26df574eda488bc4884d249b75cee02a768c"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "288",
+      "tupleVersion": "29973",
+      "rowSha256": "be49d891c7ba167b7854fff1e42ffa85f5623938447444ab2dcc3ab685caf022"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "289",
+      "tupleVersion": "29979",
+      "rowSha256": "8964fff75ea819f31832b86072f9dd0b86345866fe468f59d8bed6d4bd71e3ab"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "290",
+      "tupleVersion": "29979",
+      "rowSha256": "6b99bbcbdae05a224486a7a133059c34fbefa569a98097f15759ae67978d88fa"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "291",
+      "tupleVersion": "29988",
+      "rowSha256": "d320fcef9ff10cde86c1457cdbfb4f6995c7ec080888d4d88f3a41a5ee8d7f01"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "292",
+      "tupleVersion": "29995",
+      "rowSha256": "a5a07e1566d0710c5e4f618d21eca635b9dd740cdf7f9e8a8071e8d13c27da82"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "293",
+      "tupleVersion": "30002",
+      "rowSha256": "b588325d2e948d334f42e9e8411323360112b16e680c03ce6b8c500ed86f753b"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "294",
+      "tupleVersion": "30009",
+      "rowSha256": "b4f1f29873b947df96d3aba5cf997c910cb8b1f20dde4059c0437077c96d6c37"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "295",
+      "tupleVersion": "30012",
+      "rowSha256": "d599a8d2affac2f1bde1bb592b140bbf1ee8778e79881ccceb7d380c622e4799"
+    },
+    {
+      "tableName": "electronic_signatures",
+      "recordId": "296",
+      "tupleVersion": "30019",
+      "rowSha256": "c50844936fde7e4babf118e9d680d97a10ff9be238c15603774cb503238e4d7d"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_1f2f1f027b47445d81e96b5ff023d989",
+      "tupleVersion": "30012",
+      "rowSha256": "01acae013dac996dafa380637b97d50e13533d07d5617a163edbfc2616cc2791"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_254c3801fbf642339cb182549f2e03cf",
+      "tupleVersion": "30019",
+      "rowSha256": "414ad6da19c7223a8894597bbda7202c8122add05619e2139903442db0c3f931"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_2645759ba18740a3a1f32bf7b7892b45",
+      "tupleVersion": "30002",
+      "rowSha256": "8fa2511379eeb210fdf63a8246d190429020ab02a4220b0b7c2aa028a3e0414c"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_2dbf034d73924de8bd947bf34cbae554",
+      "tupleVersion": "29988",
+      "rowSha256": "1b4cc2aef67beb718baadcb7d9f91fc0ddd45323c61b04f72fa05dbfd846122e"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_2ffb20b3651545bf9c3e74f3ecd9c9ef",
+      "tupleVersion": "29979",
+      "rowSha256": "bc6371e9cf017b617db4d887fab10067f7607068b663889efbef02316c3fe1e0"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_3541652d03a14a87a5e227e7797e09ba",
+      "tupleVersion": "29973",
+      "rowSha256": "ce4a2c0220587ca155623c50c29322657cca2d25e488c5faf125f8a99b45fee0"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_3b369c9ba84f42aea266dc9fe39840dc",
+      "tupleVersion": "30009",
+      "rowSha256": "c3bae5a80b9a17a56d60216324381b528983a66c5853f67c14784c162778cde9"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_6d672739df8b42eca960841b5e825eae",
+      "tupleVersion": "29977",
+      "rowSha256": "ba9845806f72a93e2e656f8643cce6475f26ec3dbb5d4d88d8c9a879edb03e2c"
+    },
+    {
+      "tableName": "c2c_ana_actions",
+      "recordId": "act_b50f452892c14d0fb9f168a01c6a41ee",
+      "tupleVersion": "29995",
+      "rowSha256": "300f759be08f0c7c83c0bd16a6472c53db1c5d4dbf5335f2e6fc8fcf968280d0"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "00660065-ea23-48f8-afe9-a0d426e6002e",
+      "tupleVersion": "29978",
+      "rowSha256": "4752a9e4579f8d1692127ee802e8fcc52fb1b0b73f6b17e675c2e32da4869e3e"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "644a3aaa-0dc2-4b45-9cb3-642747c3f100",
+      "tupleVersion": "29973",
+      "rowSha256": "f40ddaa42e86c3852784b16e579ef8e35aee1ccc309868fb1c5d5695cd940306"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "7470c64b-a1ba-4129-9c64-fb7579216710",
+      "tupleVersion": "30019",
+      "rowSha256": "99e4a8eb593128dd1b673242a3f61d3e9c0290c9d79f77b8ccb4da934410c299"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "74f5cf10-71d4-42e8-9f76-b1ab86670924",
+      "tupleVersion": "29979",
+      "rowSha256": "37b60e19586f3891c7d2915f38c80dd5e315a990fee1645e38aef9440a8a52a2"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "7ab5248e-80ba-42cd-b6dc-460cb461696e",
+      "tupleVersion": "30009",
+      "rowSha256": "59b070fdf37118b4ff774f8f047d03057f05f13fb87655f2d3dd8585d2d4aa04"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "84f4dd89-333f-4279-8ce7-dc2fe2aa23ed",
+      "tupleVersion": "29995",
+      "rowSha256": "45a15babcc812206872d24ab95df774a0c439b59277e11d378139a2e215269a1"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "b5096760-414a-4fb6-a512-b9af8df85ade",
+      "tupleVersion": "29975",
+      "rowSha256": "86070e581087f0bd6dc14e8e075029a75f7998a6387e4e5758945a53c0150adf"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "bd672361-ab86-46f9-bd4e-627d7ed408f8",
+      "tupleVersion": "30012",
+      "rowSha256": "f760bf13d06ffec07ec1d74c8af7bb4f309a22e3217d64737717a3dd64b6f175"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "cdefb7ce-ca04-47b5-a008-801238479fa9",
+      "tupleVersion": "30002",
+      "rowSha256": "da0af5e976832dc732b2575c04d40097a750a162d9216f00d4d06f1ca04a3908"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "d19ffb1f-4b97-48be-81b3-8551cf2b68b4",
+      "tupleVersion": "29981",
+      "rowSha256": "d4d037f7b715d7aff40d56c4cd2a9fc95287b590972748068389a4c44fc7bcec"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "d5f651f4-14ff-4ebd-860e-4de110524c9b",
+      "tupleVersion": "29977",
+      "rowSha256": "5a7a4e2489c2284502c175eec9d81931b4e01b11ba1b44b8aef33b4b34b7303b"
+    },
+    {
+      "tableName": "audit_logs",
+      "recordId": "dbe019c2-f75c-4e70-b46c-73177f11b96f",
+      "tupleVersion": "29988",
+      "rowSha256": "07e64b7d0f0c88bab072718b7b523dff82ee4a599d200ec5b1160e513ca4ad85"
+    }
+  ]
+}

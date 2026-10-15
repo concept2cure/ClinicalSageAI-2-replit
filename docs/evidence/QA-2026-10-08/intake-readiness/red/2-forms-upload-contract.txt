@@ -1,0 +1,11 @@
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > the product’s own unedited 1572: attached, not complete — the investigator, facility and IRB are missing 2207ms
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > the product’s own unedited 1571, phase stated: not complete — the IND type and phase boxes are blank on that file 250ms
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > a signed 1571 whose phase nobody stated: not complete — Build & check’s missing field 45ms
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > a signed 1571 with every required field recorded or stated: complete, and the checklist says so 48ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the checklist counts the unedited 1572 as complete: expected true to be false // Object.is equality
+AssertionError: the checklist counts the unedited 1571 as complete: expected true to be false // Object.is equality
+AssertionError: the checklist counts a 1571 with no phase as complete: expected true to be false // Object.is equality
+AssertionError: expected undefined to deeply equal []
+ Test Files  1 failed (1)
+      Tests  4 failed | 60 skipped (64)

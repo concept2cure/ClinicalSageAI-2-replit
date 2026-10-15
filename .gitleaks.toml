@@ -67,3 +67,15 @@ id = "generic-api-key"
   description = "identifiers read as keys"
   regexTarget = "secret"
   regexes = ['''^[a-z0-9]+(?:[-_.][a-z0-9]+)+$''']
+
+  # An evidence manifest maps each file it covers to that file's SHA-256:
+  # `"server/routes/x.test.ts": "<64 hex>"`. generic-api-key reads the path
+  # (it contains "access", "key", "auth" …) as a key name and the digest as its
+  # value — 690 findings on 2026-10-14 alone. The whole line must be one JSON
+  # pair keyed by a file path with a source or document extension, valued by
+  # exactly 64 lowercase hex digits; `"api_key": "<hex>"` or
+  # `"token": "<hex>"` is still a finding.
+  [[rules.allowlists]]
+  description = "file digests in evidence manifests"
+  regexTarget = "line"
+  regexes = ['''^\s*"[^"\s]*\.(?:ts|tsx|js|jsx|mjs|cjs|json|md|sql|txt|html|css|yml|yaml|toml|sh|py|csv|xml|pdf|docx|log)"\s*:\s*"[0-9a-f]{64}",?\s*$''']

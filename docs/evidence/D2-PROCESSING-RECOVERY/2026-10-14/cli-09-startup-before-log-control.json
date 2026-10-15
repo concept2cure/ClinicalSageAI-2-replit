@@ -1,0 +1,6 @@
+{
+  "fixture": "missing configured database; empty temporary cwd; all five runtime database URL variables removed",
+  "exit_code": 1,
+  "stdout": "{\"level\":40,\"time\":\"2026-10-14T04:12:50.683Z\",\"pid\":16542,\"hostname\":\"6420e02dc63d\",\"context\":{},\"msg\":\"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable\"}\n",
+  "stderr": "{\"code\":\"RECOVERY_UNAVAILABLE\"}\n"
+}

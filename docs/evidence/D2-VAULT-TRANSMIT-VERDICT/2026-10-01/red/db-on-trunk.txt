@@ -1,0 +1,17 @@
+ × tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words 40ms
+   → expected undefined to be 'superseded by a later version' // Object.is equality
+ × tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status 24ms
+   → expected [ [ 102, undefined ] ] to deeply equal [ [ 102, 'sent' ] ]
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 17ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 13ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 23ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 2ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store 24ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words
+AssertionError: expected undefined to be 'superseded by a later version' // Object.is equality
+ FAIL  tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status
+AssertionError: expected [ [ 102, undefined ] ] to deeply equal [ [ 102, 'sent' ] ]
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)

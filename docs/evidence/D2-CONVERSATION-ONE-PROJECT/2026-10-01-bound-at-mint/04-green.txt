@@ -1,0 +1,698 @@
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/notifications returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/notifications/unread-count returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > POST /api/mdx/notifications returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/clinical-studies returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > POST /api/mdx/clinical-studies returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/ana/memory returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/ana/threads returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > list returns canonical envelope
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > rejects invalid severity filter
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > POST rejects invalid category
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > POST 201 with id
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > unread-count returns { unread }
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST rejects missing title
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST 201 on valid
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST deviation 404s when study not in tenant
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST AE with unanticipated flag
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > summary returns enrollment + safety aggregates
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > PATCH endpoint with p_value > 1 rejected
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory list survives missing table (42P01)
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory verify rejects when not found
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory supersede requires supersededById
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list returns canonical envelope
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list by program reads program_id, the key bound at mint (PF-10 S2)
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list refuses a program id that is not a UUID
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list says the store is missing rather than answering an empty list
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot persist a message — the INSERT the code issues fails
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot read context — the SELECT the code issues fails
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > another tenant's thread id is never resolved — the caller gets a fresh thread
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > the caller's own thread id resolves to itself
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a thread with no recorded owner is scoped by organization alone
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unknown id mints a fresh thread, as it always did
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > with no organization to scope by, a supplied id is never honoured
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unidentified caller does not get an owned thread
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > resolveAccessibleThread — the history gate the context builder uses > returns null for a foreign tenant and throws for a colleague
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > ensureThread cannot adopt someone else’s stable id > refuses a colleague's id and a foreign tenant's id, creates its own
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the organization's own program is bound, lower-cased
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > another organization's program is never bound: the thread is minted unbound
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > a deleted program of the organization is not bound either
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the program list shows the thread under its own program, never under another organization's
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot read token counts either
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > the 20260601 metadata patch alone does NOT fix it
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > round-trips a message through the real INSERT and SELECTs
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > supports the wider thread shape the routes write
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > tokens_used defaults to 0, not NULL
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > registry: which models may serve high-risk regulatory work > approves exactly the five Opus entries — changing this set is a governance act, not a refactor
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > registry: which models may serve high-risk regulatory work > every entry says, in words, why it is or is not approved
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > registry: which models may serve high-risk regulatory work > a PQ recorded as passed must point at the run that passed it
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > registry: which models may serve high-risk regulatory work > an id the registry does not know is not approved — it fails closed
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > registry: which models may serve high-risk regulatory work > every PQ claim in the registry is backed by the record it cites (server/eval/pq/pq-verdict.ts)
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > registry: which models may serve high-risk regulatory work > drafting and review are the high-risk task types
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > cost_optimized drafting is served by an approved model, not by the cheapest capable one
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > cascades messages when a thread is deleted
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > when every approved Opus model fails, drafting refuses — it does not fall to Sonnet
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > adds the missing columns to tables the app already created
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Compliance Routes > should define audit trail routes
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Cognitive Ecosystem Routes > should define cognitive ecosystem routes
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > FHIR Routes > should define FHIR routes
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Compatibility Facade Routes > should define compatibility facade contracts
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > preserves existing rows while widening the table
+ ✓ server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > protects /api/cortex/chat with requireAuth
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > protects /api/ana-cortex/regulatory-analysis with requireAuth
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > keeps /api/knowledge-base generation endpoints behind authenticateToken
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > mounts core workflow routes in server index
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > when the approved models fail, regulatory review does not cross to GPT-4o
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > round_robin never lands on an unapproved model, across many requests
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > with only unapproved providers configured, review refuses with a typed error — never null, never demo content
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > an explicit request for Sonnet on a drafting task is refused, not rerouted and not honoured
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > the refusal is audited, naming the models withheld
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > reaches the author as a specific message, not "blocked by AI gateway policy"
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > controls — what must NOT change > a task that is not high-risk may still be served by Sonnet on request
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > controls — what must NOT change > cost_optimized chat still picks the cheapest model — the rule is scoped to high-risk work
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > the gateway enforces it at every selection point > controls — what must NOT change > the default path for drafting is unchanged: the flagship slot (Opus 5.5) serves it
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > an ordinary Balanced turn is served — the regression, pinned shut
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > an ordinary Fast turn is served on the economy tier
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > a high-risk turn on Fast escalates to an approved model instead of being refused
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > a high-risk turn with Sonnet named explicitly is still refused — the relaxation is for medium risk only
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > regulatory_review with NO declared risk stays high-risk — direct service calls are not relaxed
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > document_drafting cannot be relaxed by declaring a low risk tier
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > every kernel-routed gateway call hands over the kernel's riskTier (source pin)
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > the refusal audit records the risk the caller declared
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > composes with 20260601 in either order
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > two calls, paired by id
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > three calls, paired by id — the first and last were the ones that swapped
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > keeps the id on the row, so a later correlation can use it
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids (an older server), still pairs correctly — the fallback is first-in, not last-in
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids, a call an earlier step left running does not take a later step's result
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > a result whose id matches no call does not steal a sibling that has its own id
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > every call settles — none is left running
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_use announcement carries toolUseId
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the server-run steps (web search / fetch) carry their own id on both events
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_result carries toolUseId
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > enforces auth on POST /api/ana-cortex/regulatory-analysis
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > is idempotent
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > enforces auth on GET /api/knowledge-base/search-connectors (DMS cross-repo search mount)
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > mounts beta-critical route families via bootstrap registrars
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > wires the ui-v2 backend gap closures (DMS search, rollup, registrations, validation-kit, HAQ, eTMF)
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps concept2cure router tenant-scoped and envelope-based
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps ana-ri core endpoints reachable via mount* functions
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps CERV2, document data center, and eCTD/IND entry routes visible
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > 20261001c on the applier > runs after the files that create its tables and the program key, and before the tenant sweep
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > 20261001c on the applier > a replay adds nothing: one NOT VALID key that nulls only the program, one NOT VALID CHECK, one index
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-own → 11111111-1111-4111-8111-111111111111
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-own-upper → 33333333-3333-4333-8333-333333333333
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-foreign → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-missing → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-malformed → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-no-org → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-none → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread naming its own organization's program is written
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread naming another organization's program, or a missing one, is refused
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread with no organization cannot name a program, and still exists without one
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > deleting a program unbinds its threads and keeps their organization
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > the preflight reads the store, and finds no thread naming a foreign program
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > "Draft with AnA" opens the pane and shows the request in it
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > an empty section shows BOTH draft controls, and the toolbar one still asks for the section
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > the pane composer sends into the same conversation
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows real work, evidence, and follow-up actions from AnA
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > writes the embedding, so semantic recall (embedding IS NOT NULL) can see the memory
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows an honest empty pane rather than pretending a conversation exists
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and a null runPolicy
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > servedModelOf carries the gateway request id
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > agentAuditDetails records the gateway request id and the serving model
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > a command a person typed has no model call, and says so
+ ✓ server/__tests__/security/tenant-isolation-post-market.contract.test.ts > Tenant isolation — GSPR mappings > POST /programs/:org-A/mappings succeeds
+ ✓ server/__tests__/security/tenant-isolation-post-market.contract.test.ts > Tenant isolation — GSPR mappings > POST /programs/:org-B/mappings as org-A is refused
+ ✓ server/__tests__/security/tenant-isolation-post-market.contract.test.ts > Tenant isolation — post-market documents > GET /programs/:org-B/documents as org-A is refused
+ ✓ server/__tests__/security/tenant-isolation-post-market.contract.test.ts > Tenant isolation — post-market documents > GET /documents/:org-B-id as org-A returns 404
+ ✓ server/__tests__/security/tenant-isolation-post-market.contract.test.ts > Tenant isolation — post-market documents > returns 403 when no organization context
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > execute_platform_command hands the serving model to the command context
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > the streamed answer’s command blocks carry the model call that wrote them
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > a command block is attributed to the round that wrote it, and to no one when rounds disagree
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > a held action records the model call that proposed it, which governed-action runs it with
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > both AnA dispatches carry the run id to the ledger
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > a run is closed with the reason its loop stopped > the stream keeps the loop result and passes its stop reason to endRun
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > a run is closed with the reason its loop stopped > a turn that ends before the loop is closed failed when it failed, not finished for want of tools
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > a council execution row names the model that served it > records provider/model as reported, not a constant
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > a council execution row names the model that served it > every agent passes the served model to its execution row
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > the registry says which surfaces claim the rail column > the four fixed surfaces no longer hide the rail they were writing to
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > "Invite member" opens the invite form rather than asking the rail
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > a member-level grant is a governed ask, not a local mutation
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > csr-workflow — its section rows reach the rail > opens a section through the shell conversation
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > renders the rail on a surface that keeps it
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > does not render the rail on a surface that owns its conversation
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > protocol-dev — "Ask AnA" reaches the rail > hands the completeness question to the shell conversation
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > insights — no button hands a question to a rail it hides > renders the canvas with no "Ask AnA about this report" affordance
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > opens the rail and streams there
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘\ toggles only a rail that exists > persists anaOpen on a surface that draws the rail
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘\ toggles only a rail that exists > is inert on a surface that owns its conversation
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > offers nothing while no run is in flight
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > offers only Stop while a run is streaming but not yet controllable
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > pauses the run
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > offers Resume, not Pause, once paused
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > stops the run
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > sends a steer into the running turn
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > does not double-send while the first steer is still in flight
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > refuses to send an empty steer
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > pause never promises an instant stop
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > stop does not borrow pause's promise — it cuts the step in flight
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > never claims stopped before the server has said so
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the rail > the steer field is separate from the composer draft
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer AnA took is visible afterwards > shows the accepted steer under the answer it shaped
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer AnA took is visible afterwards > adds no steer furniture to a turn that was never steered
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > clears the box when the server accepts
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > KEEPS the text and says it was not sent when the server refuses
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > treats a thrown handler as a refusal, not a send
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > treats a handler that reports nothing as accepted (unchanged contract)
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > clears the refusal once the person edits the text again
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws no prompt for an ordinary answer
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > in flight: the phase line and the tool row are in the thread, on one turn, with no dots
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > settled: the record survives the answer, collapsed to its summary
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > keeps every phase in order, times the steps, and closes on post_done
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > records a stopped turn as stopped in the phase it was cut short
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > drops a steer the run never reached when the run ends
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > maps the persisted tool trace and steers back onto the turn
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > hydrates nothing from a turn that has no trace
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+ ✓ tests/routes/chat-upload-wiring.test.ts > the parser enforces its limits > rejects a file type outside the allowlist with 415, not 500
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > declared when the turn asks to drive and its events reach the shell
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > not declared by a chat whose drive events reach no one, or a turn that does not drive
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > a mode changed after mount is the mode sent (no stale closure)
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > per-call overrides win over the hook options for that turn
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > without Live Drive neither field is sent, whatever the mode
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > sends locked_screens when the shell has published some
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > omits the field entirely when nothing is locked
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > is NOT aborted when the hosting panel unmounts mid-drive
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > an ordinary turn IS aborted on unmount (no orphaned generation)
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > a turn the server declined to drive (drive_state disabled) is still aborted on unmount
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > emits drive_turn_end, with the run controls, once the driving stream ends
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn that never drove never emits drive_turn_end
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn the server declined to drive never emits drive_turn_end
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > IS aborted when the panel unmounts, and still releases the shell’s drive
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > an operation performed on screen exempts it, not only a navigation
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > the move is marked before the shell applies it — the unmount it causes finds the turn driving
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > moveLanded settles a move by its id, and a report can name the move it is about
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > reportScreen sends a screen_report to this turn’s run, and queues no steer
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer typed into the drive strip is the person’s, queued as pending like the composer’s
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a report about an earlier turn never reaches a newer run
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > keeps a live line while the tools are running
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > with no run to address — before run_started, or once the turn ended — it resolves false, sending nothing
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer accepted as the run ends is not left pending into the next turn
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > the tool rows are still captured — the phase does not replace them
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > without a round status, the previous phase would stand over work it does not describe
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > once she is answering, the answer is the status
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > executeTools announces the round before the step event
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > the announced counts are read off the real round, never hardcoded
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > the round says so when it finishes, rather than leaving "Running…" standing
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > Stop tells the shell before the cancel is answered, with this turn’s controls
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > a new conversation replacing it halts the drive too
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > a turn the server did not let drive has no drive to halt
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > a rate limit reads as one, not as an unreachable network
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > the weekly usage cap reads as the organization’s limit
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > no provider configured still says so, and anything else is unreachable
+ ✓ tests/routes/chat-governed-upload.test.ts > chat upload governance > returns GOVERNED_CONTRACT_INVALID when governed context fails
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a driving turn that starts a demonstration announces the promotion as promoted
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a turn that began as a demonstration is not promoted, and its one drive_state is unmarked
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > frames the report as an observation and announces only the steer as the person steering
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > a report alone announces nothing
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > navigations: the two AnA could not make are chips, ahead of the six she made
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > actions: the one past the budget is the first chip
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a move she made and re-asked for past the budget is offered once, not twice
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > past chip room she is told the move is not offered either — never promised a chip that is dropped
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a turn that does not drive reaches the same chip derivation, unchanged
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > names each move, so the screen can report it back
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > holds her next round until the move lands — and a landing puts nothing in front of her
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move that did not land reaches the round she writes next
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move still unsettled at the ceiling is told to her as not confirmed, never as done
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a client that does not report its moves is not waited on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > is accepted with the move it settles
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > needs a move id, and refuses one that is not a move id
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > a screen report can name the move it is about
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > is accepted as its own action, not as a steer
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > needs something to report
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > an empty steer is still refused, and an unknown action still is
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history saved in the thread: the answer at the far edge is dropped, not opened on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history sent by the client (no saved thread yet): the answer at the far edge is dropped, not opened on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > a thread whose pairs are intact is passed through unchanged
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > narration — each round starts its own paragraph > a stop narrated after the last one is not run on from it
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > refuses a numeric project of another organization the same way — 404, nothing written (PF-03)
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > with no project open, the file stays a conversation file: no Data Room source (PF-07)
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > resolves identity within the project, never across the organization (PF-07 / VR-10)
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > returns immediately when the first turn has no tool calls
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > chains multiple rounds until the model stops calling tools
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > caps at maxRounds and forces a final answer (tools withdrawn on the last round)
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > detects thrashing (same call repeated) and withdraws tools to break the loop
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > continues when a tool result encodes an error (executor does not throw)
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > rejects a maxRounds below 1
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > returns short content unchanged
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > truncates oversized content but keeps the head, tail, and a marker
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > clamps an unreasonably small limit so it never produces a negative tail
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > grounds an answer against the capped view, not the omitted middle
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > preserves input order even when workers resolve out of order
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > never exceeds the concurrency limit
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > processes every item and handles the empty case
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > rejects a concurrency below 1
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > produces friendly labels for known tools, incorporating key args
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > truncates long argument values in the label
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > falls back to a humanized name for unknown tools
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > handles a missing query gracefully
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows the program lead
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > DENIES an org member who is neither the lead nor a manager
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows an org manager who does not lead the program
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > denies when the program has no lead — unowned is not everyone-owned
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > 404s a program outside the caller org — never 403, which would confirm it exists
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > warn mode ALLOWS the denied request, so the rule can soak before it rejects
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > an unrecognized mode falls back to enforce rather than opening up
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > DENIES a non-lead, non-manager org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > allows the lead
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > program metadata is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > team roster is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > pinned evidence is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > activity is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > workstreams is readable by a non-lead org member
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > drafts is readable by a non-lead org member
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > sends the server file id of an attached upload
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > sends every attached file id, in order
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > omits file_ids entirely when nothing is attached
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > drops attachments that have no server file id yet
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > omits file_ids when no attachment finished uploading
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > sends the pinned source ids
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > omits source_ids when nothing is pinned
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > shell handoff via window.C2C_SOURCE_PINS > sends sources the Data Room pinned on the window
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > shell handoff via window.C2C_SOURCE_PINS > consumes the pin so a later, unrelated turn is not silently grounded on it
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > shell handoff via window.C2C_SOURCE_PINS > lets an explicit prop win over the window handoff
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > carries pinned sources alongside a fresh attachment
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > returns the org rows on a healthy read
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 503s when the thread store is not provisioned — never a 200 empty list
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s on any other read failure — never a 200 empty list
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s when the PROJECT-scoped ai_threads read fails (previously swallowed)
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 500s when the transcript read fails — an unreadable thread is not an empty one
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 404s only when the thread genuinely resolves to no store
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 503s when the message store is not provisioned
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should create a gateway instance
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should default to deterministic mode in test config
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should list enabled providers
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > singleton > getGateway returns same instance
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > singleton > resetGateway clears singleton
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should return deterministic response for chat
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > delivers the content through onStream when the caller is streaming
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > does not invoke onStream for a non-streaming caller
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > still returns a response when the caller's stream sink throws
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should return different responses for different task types
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should toggle deterministic mode at runtime
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > structured output in deterministic mode returns JSON
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > complete() wraps a single prompt
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > chat() wraps system + user messages
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > structuredOutput() returns parsed JSON
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > every registry entry declares the wire surface it accepts
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > no adaptive-thinking model also claims to accept sampling params
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > omits temperature for a model that rejects sampling (would 400)
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records NO temperature for a reasoning-only model — it was never sent
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records the real temperature for a model that does accept sampling
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records NO temperature for a model the registry does not know
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > uses adaptive thinking (no budget_tokens) on an adaptive model
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > keeps the legacy temperature + budget_tokens surface on a budget model
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > clamps the legacy budget_tokens below max_tokens (would 400 otherwise)
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > provider health > should return health status for enabled providers
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > request context > should accept organization and user context
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > token budget > should allow requests within token budget
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > token budget > should block requests exceeding token budget
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > blocked patterns > should block content matching blocked patterns
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > blocked patterns > should allow clean content
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > rate limiting > should allow requests within rate limit
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > rate limiting > should block requests exceeding rate limit
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > configuration > should return current config
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > configuration > should update config dynamically
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should log entries to buffer
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+ ✓ tests/post-market-authoring-routes.test.ts > post-market authoring — auth gate > POST /api/post-market/programs/p1/documents/pmcf-plan/generate returns 403 without org context
+ ✓ tests/post-market-authoring-routes.test.ts > post-market authoring — auth gate > POST /api/post-market/programs/p1/documents/pms_plan/generate returns 403 without org context
+ ✓ tests/post-market-authoring-routes.test.ts > post-market authoring — program access scoping > returns 403 when the program is not owned by the tenant
+ ✓ tests/post-market-authoring-routes.test.ts > post-market authoring — input validation (program access granted) > rejects an unknown documentType with 422
+ ✓ tests/post-market-authoring-routes.test.ts > post-market authoring — input validation (program access granted) > rejects when neither deviceName nor relatedCerReportId is provided
+ ✓ tests/post-market-authoring-routes.test.ts > post-market authoring — input validation (program access granted) > rejects an invalid regulation with 422
+ ✓ tests/post-market-authoring-routes.test.ts > post-market authoring — input validation (program access granted) > rejects a non-integer relatedCerReportId with 422
+ ✓ tests/post-market-authoring-routes.test.ts > post-market authoring — input validation (program access granted) > accepts hyphenated document types (pmcf-evaluation → pmcf_evaluation)
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > converts Anthropic-shaped tools to OpenAI functions and sends them
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > does not offer an Anthropic server tool, which nothing here can execute
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > maps toolChoice "none" to tool_choice "none"
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > maps toolChoice "any" to tool_choice "required"
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > maps toolChoice {"type":"tool","name":"navigate_to"} to tool_choice {"type":"function","function":{"name":"navigate_to"}}
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > sends no tools — and no tool_choice — when the request has none to offer
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > trims a description past the 1024-character limit instead of sending a request the API refuses
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > does not offer a tool whose name the API would reject, keeping the rest of the request valid
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > sends at most 128 tools, keeping the first 128
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > offers tools on the streaming path too
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > offers tools on the Moonshot non-streaming path too
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > OpenAI-compatible paths — tools are offered > never sends an empty message — a tools-only round leaves a blank assistant turn
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > reassembles a call whose arguments are split mid-token across chunks
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > keeps each call with its own arguments when two stream in parallel, interleaved by index
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > keeps several calls delivered in one chunk apart
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > streams narration as text and returns the calls beside it
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > reports arguments that do not parse instead of dispatching them as {}
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > reports arguments that parse to something other than an object
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > treats an empty arguments string on a closed choice as a call with no arguments
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > reports a call as lost when the stream drops before finish_reason
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > fills id and name from a later fragment without appending repeats
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > executeOpenAICompatibleStream — tool calls come back > returns no toolUses for a plain text answer
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > non-streaming OpenAI-compatible paths — message.tool_calls come back > returns tool_calls as toolUses, parsing each call on its own
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > non-streaming OpenAI-compatible paths — message.tool_calls come back > gives a call the server sent without an id a unique one
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > non-streaming OpenAI-compatible paths — message.tool_calls come back > returns tool_calls on the Moonshot non-streaming path
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > non-streaming OpenAI-compatible paths — message.tool_calls come back > returns no toolUses when the message has none
+ ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts > route() — a turn that falls back to OpenAI keeps its tools > returns the fallback model's tool calls after every Anthropic rung refuses
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > names the tools a round ran when the model wrote no text before calling them
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > treats whitespace-only narration as no narration
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > names a tool once however many times the round called it
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > is still non-empty when there is neither text nor a result to name
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > passes real narration through unchanged — it is what the model said
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > continues past maxRounds once the floor rises mid-turn
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > never lowers maxRounds — a floor below it changes nothing
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > without a floor the ceiling holds exactly as before
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > the surface is over the cap, so filtering is really engaged
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > names exactly the six tools that move and operate a screen
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "go to biostatistics"
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "open settings"
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "show me around the product"
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "search the vault for stability"
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "switch to the billing tab"
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "run the sales demo"
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > pinned, they survive when the turn carries project context (IND)
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > none of them is always-on — voice and deep investigations cannot drive
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins nothing is not handed them for a turn with no screen in it
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > both routes that can surface a move pin them
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > navigate_to refuses a locked target with no directive to apply
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > list_app_screens does not offer a locked screen
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > act_on_screen refuses an action whose screen is locked
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > the demonstration tools drop scripts that would walk onto a locked screen
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > with no program open and none named, asks which — listing this org's programs
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > opens the named program — by code — on the directive
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > refuses to guess between several matches
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > says so when nothing matches, with the programs that do exist
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > never resolves another organisation's program
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > a global screen needs no program
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > turnState — "open BX-301, then take me to its Vault" > act_on_screen projects.open-program sets the turn's program, and navigate_to follows it
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — screenActions on arrival > lists the destination's registry actions so the next move needs no discovery round
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' calls sessionBootstrapBlockFor
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' calls sessionBootstrapBlockFor
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' injects the block it gets back
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' injects the block it gets back
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the gate
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' assembles its tools through governedToolsetFor
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' assembles its tools through governedToolsetFor
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' does not assemble the raw tool surface itself
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' does not assemble the raw tool surface itself
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > every composer of the AnA tool surface goes through the helper
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the realtime turn runs in the tenant scope its socket was authenticated for
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper applies the deny-list and says why it does not apply the allowlist
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper still owns the gate, the kill-switch and the failure path
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > KNOWN_UNLISTED entries satisfy the reason the list states > parses every entry the list actually contains
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > KNOWN_UNLISTED entries satisfy the reason the list states > leaves no entry exempted for a reason that does not hold
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > the reasoned exceptions have their premises checked, not assumed > every reasoned exception is still in the list it excuses
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > the reasoned exceptions have their premises checked, not assumed > authoring_reviews really is on a path deploy-migrate runs
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > the reasoned exceptions have their premises checked, not assumed > does not silently rely on the applier list for these
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts > the effort a user chose reaches the request > sends thorough when Deep research is selected
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts > the effort a user chose reaches the request > sends fast when Quick ask is selected
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts > the effort a user chose reaches the request > omits the field entirely when no mode resolves, rather than guessing
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts > the composer wires its mode into that request > passes the mode-derived effort into useAnaChat
+ ✓ tests/ana-single-brain.test.ts > Evidence Validation > validates a well-grounded response
+ ✓ tests/ana-single-brain.test.ts > Evidence Validation > flags a poorly grounded response
+ ✓ tests/ana-single-brain.test.ts > Evidence Validation > reports a short response as unassessed rather than verified
+ ✓ tests/ana-single-brain.test.ts > Evidence Validation > detects multiple source types
+ ✓ tests/ana-single-brain.test.ts > Evidence Validation > quick check detects need for attention
+ ✓ tests/ana-single-brain.test.ts > Evidence Validation > quick check passes labeled content
+ ✓ tests/ana-single-brain.test.ts > Memory Acceptance > accepts high-confidence memory
+ ✓ tests/ana-single-brain.test.ts > Memory Acceptance > rejects too-short content
+ ✓ tests/ana-single-brain.test.ts > Memory Acceptance > rejects too-long content
+ ✓ tests/ana-single-brain.test.ts > Memory Acceptance > rejects duplicates
+ ✓ tests/ana-single-brain.test.ts > Memory Acceptance > flags contradictions for human review
+ ✓ tests/ana-single-brain.test.ts > Memory Acceptance > lowers confidence for unvalidated evidence
+ ✓ tests/ana-single-brain.test.ts > Contradiction Detection > detects sufficient/insufficient contradiction
+ ✓ tests/ana-single-brain.test.ts > Contradiction Detection > detects compliant/non-compliant contradiction
+ ✓ tests/ana-single-brain.test.ts > Contradiction Detection > does not flag non-contradictory memories
+ ✓ tests/ana-single-brain.test.ts > Response Contract > builds queue metadata for successful turn
+ ✓ tests/ana-single-brain.test.ts > Response Contract > builds queue metadata for blocked turn
+ ✓ tests/ana-single-brain.test.ts > Response Contract > builds queue metadata with error reason
+ ✓ tests/ana-single-brain.test.ts > Response Contract > builds fallback marker
+ ✓ tests/ana-single-brain.test.ts > Response Contract > builds empty evidence verdict
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > detects overclaims when no KNOWN labels exist
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > allows strong language when KNOWN labels are present
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > reports known ratio
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > passes a compliant response
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > detects superlative claims without KNOWN labels
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > detects false equivalence claims without KNOWN labels
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > detects confabulation patterns without KNOWN labels
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > allows superlatives when KNOWN labels back claims
+ ✓ tests/ana-single-brain.test.ts > Evidence Discipline (Upgraded) > handles mixed overclaim patterns (multiple hits)
+ ✓ tests/ana-single-brain.test.ts > Artifact Quality Gate > rejects very short content
+ ✓ tests/ana-single-brain.test.ts > Artifact Quality Gate > rejects content with excessive filler
+ ✓ tests/ana-single-brain.test.ts > Artifact Quality Gate > passes well-structured analytical content
+ ✓ tests/ana-single-brain.test.ts > Artifact Quality Gate > flags content missing semantic depth for analytical types
+ ✓ tests/routes/ana-ri-resilience.test.ts > AnA RI resilience > returns degraded mode response when gateway is unavailable
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the propose-only partition > is every state-changing command (no write runs from model output unaided)
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the propose-only partition > holds only writes
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > an ordinary write is the confirm tier
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > the Part 11 sets keep their tiers
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > every write has a tier and a confirm-tier command is in neither Part 11 set
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the approve class keeps a reason > section and post-market approvals are the reason tier, not a click
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > what the agent is told > a confirm-tier proposal asks for a confirmation, not a reason or a signature
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > what the agent is told > a reason-tier proposal still asks for the reason, an e-sign one for the signature too
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > a tool that records a reason for change is proposed at the reason tier (D5) > the proposal carries the tier the gate decided, not the command tier of the tool's name
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > a tool that records a reason for change is proposed at the reason tier (D5) > the stream holds a tool with the verdict's tier (source check: there is no other seam)
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the tool gate > asks for approval on an ordinary write, at the confirm tier
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the tool gate > still leaves reads alone
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every tool with a free-text input is classified — a new one cannot ship unclassified
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > no tool is in both maps
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every classified name is a real tool — no stale entries
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every entry says why
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > the scan still finds the tools the defect was found through
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > author_docx_native: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > commit_document_revision: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > draft_authoring_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > generate_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > insert_document_content: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > save_document_to_vault: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_biosketch_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_consent_element: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_dms_plan_element: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_protocol_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_vault_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_kit_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_q_sub_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused when the serving model is unknown — absent means refused
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused for GPT-4o, which the registry caps below high-risk
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > an approved model is not refused by the gate
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool that only analyses free text is not gated
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native)
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Sonnet is refused and nothing is stored
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Opus clears the model gate — and, being a write, is put to a person, not run (P1-34)
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > and on a person's yes, the Opus-written content reaches the handler
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > the caller cannot vouch for the model: a servingModel in the toolContext is overwritten by the one in the response
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a confirm-tier tool is proposed on this door, even from an approved model — nothing is stored
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > hands every tool call the model that produced it
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > sets the served model from the first response and updates it after every round
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Draft the clinical overview for this project as an authoring document
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: please write section 2.5.4 for me
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Prepare a response to the FDA information request
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: compose the cover letter for the submission
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: take me to CMC
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: what does section 2.5 require?
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: summarise this thread
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: is the submission ready?
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > a drafting request on Balanced is scored high-risk and routed to the flagship tier
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > both routes compute the hint from the message (source pin)
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up
+ ✓ tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > benign input → low risk, not blocked, text unchanged, no audit
+ ✓ tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > injection payload → high risk, audited + warned, NOT thrown when enforce unset
+ ✓ tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > with PROMPT_INJECTION_ENFORCE=true → throws PromptInjectionError on the payload
+ ✓ tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > enforce=true does NOT throw on benign input
+ ✓ tests/ai-safety/ana-input-guard.test.ts > AI safety: AnA input guard (prompt-injection coverage) > with PROMPT_INJECTION_ENCAPSULATE=true → wraps benign content via the encapsulate function
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'semantic' when the flag is on and similarity recall serves the summary
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency_fallback' when the flag is ON but semantic clears nothing — the state a pilot must see
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency' when the flag is off and the default path answers
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'none' when nothing is recalled at all
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > recordAnaTurn counts modes and the rendered family carries them
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > the stream route hands the mode from diagnostics to recordAnaTurn (source contract)
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > open findings render into contradictionWatchBlock, org-scoped
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no open findings → empty block (quiet orgs pay no tokens)
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no org context → the query is never made
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the orchestrator injects _contradictionWatchBlock into the system prompt
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the live route hands the prefetched block to the orchestrator
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the chat-context-builder orchestrator input carries it too
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > programIdForThread > accepts a UUID (normalised to lower case) and nothing else
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > refuses a program id that is not a UUID rather than querying with it
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > returns nothing without an organization — never a cross-tenant list
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts > executeAnthropicStream — tool inputs > accumulates input_json_delta into the tool_use input
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts > executeAnthropicStream — tool inputs > keeps each tool_use input with its own block when several stream at once
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts > executeAnthropicStream — tool inputs > a tool_use whose input JSON never parses is reported, not passed off as {}
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts > executeAnthropicStream — tool inputs > a tool_use that legitimately takes no arguments is not an error
+ ✓ server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts > executeAnthropicStream — tool inputs > a stream that ends before content_block_stop still reports what it lost
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > binds the program, lower-cased, to program_id once it is the organization's
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > a program of another organization, or a deleted one, is never bound: the thread is minted unbound
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > without an organization nothing is bound, and nothing is asked
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > a check that could not complete mints nothing: it is not read as "not ours"
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > binds nothing, and asks nothing, when no project is open or the id is not a program key
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > does not re-home an existing thread — continuing a conversation never rewrites its program
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > programIdForThread accepts only a UUID
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > the stream route hands the mint its program key > passes the request's project id through programIdForThread
+ ✓ server/services/ana/__tests__/run-status.test.ts > canTransitionRunStatus > lets a running turn pause, gate, stop or finish
+ ✓ server/services/ana/__tests__/run-status.test.ts > canTransitionRunStatus > lets a paused turn resume or be stopped
+ ✓ server/services/ana/__tests__/run-status.test.ts > canTransitionRunStatus > does not let a paused turn jump to an approval gate
+ ✓ server/services/ana/__tests__/run-status.test.ts > canTransitionRunStatus > CANCEL IS TERMINAL — nothing leaves it
+ ✓ server/services/ana/__tests__/run-status.test.ts > canTransitionRunStatus > finished and failed are terminal too
+ ✓ server/services/ana/__tests__/run-status.test.ts > canTransitionRunStatus > never allows a self-transition
+ ✓ server/services/ana/__tests__/run-status.test.ts > canTransitionRunStatus > is total — every pair answers true or false, never undefined
+ ✓ server/services/ana/__tests__/run-status.test.ts > isLiveRunStatus > counts exactly the three controllable states
+ ✓ server/services/ana/__tests__/run-status.test.ts > isLiveRunStatus > agrees with the transition table about what has settled
+ ✓ server/services/ana/__tests__/run-status.test.ts > statusAfterControl > maps each control to the state it produces
+ ✓ server/services/ana/__tests__/run-status.test.ts > statusAfterControl > a steer changes no state — it is a redirect, not a transition
+ ✓ server/services/ana/__tests__/run-status.test.ts > statusAfterControl > a denial continues the run without the tool, rather than ending it
+ ✓ server/services/ana/__tests__/run-status.test.ts > the pause ceiling and the staleness ceiling have to be read together > a run may be paused for LONGER than it may go without a heartbeat
+ ✓ server/services/ana/__tests__/run-status.test.ts > the pause ceiling and the staleness ceiling have to be read together > leaves room for several keepalives inside one staleness window
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves an AnA thread its own transcript from chat_messages
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves a submission-chat thread from ai_messages, not from the other store
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > resolves the store org-scoped, so another tenant's thread is not found
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > needs an organization
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > updates the store the thread lives in
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > refuses a program UUID at the integer project column rather than failing with a 500
+ ✓ server/services/ana-ri/__tests__/document-action-labels.test.ts > next actions go out as labels > every action type has a readable label
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ai-assistance/generate-section → ai
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ai-gateway/complete → ai
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ana/chat → ai
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ana-ri/command → ai
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/claude/models → ai
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/cortex/query → ai
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ai/claims → ai
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > the other buckets are unchanged
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > an AnA request that reaches no model is ordinary API traffic, not AI
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > what can reach a model under /api/ana-ri stays AI, and the other prefixes are unchanged
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > a segment that merely contains the letters is not the bucket (no substring matches)
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a follow-up in the same conversation carries the turns before it
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a new conversation started and asked in one tick carries none of the last one
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a conversation loaded and asked in one tick carries its own turns, not the one it replaced
+ ✓ server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > a call made inside a run scope is recorded under that run
+ ✓ server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > a request that names its own run keeps it
+ ✓ server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > outside any run, nothing is invented
+ ✓ server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > the stream opens the run scope around every tool handler it runs
+ Test Files  58 passed (58)
+      Tests  696 passed (696)

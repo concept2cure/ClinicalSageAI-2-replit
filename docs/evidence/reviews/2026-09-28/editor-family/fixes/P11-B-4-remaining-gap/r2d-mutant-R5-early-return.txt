@@ -1,0 +1,34 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P1: an Undo after the decision does not turn the cut off: Undo later reverses exactly what came after it 324ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P2: a decision taken with nothing to undo still lets Redo re-apply the reviewer's later typing 27ms
+   → Redo of typing after the decision was refused: expected 'The impurity is below the qualificati…' to contain 'Confirmed by MS/NMR. More.'
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P3 (guard): with a cut between two decisions, Undo stops at the second 201ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P4 (guard): with tracking off through three cuts, Undo reverses exactly the typing after the decision 305ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P2: a decision taken with nothing to undo still lets Redo re-apply the reviewer's later typing
+AssertionError: Redo of typing after the decision was refused: expected 'The impurity is below the qualificati…' to contain 'Confirmed by MS/NMR. More.'
+
+Expected: "Confirmed by MS/NMR. More."
+Received: "The impurity is below the qualification threshold. Confirmed by MS/NMR."
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx:126:91
+    124|     expect(editor.state.doc.textContent).not.toContain('More.');
+    125|     editor.commands.redo();
+    126|     expect(editor.state.doc.textContent, 'Redo of typing after the dec…
+       |                                                                                           ^
+    127|     expect(collectSuggestions(editor.state.doc).map((r) => [r.kind, r.…
+    128|     editor.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  17:48:41
+   Duration  1.88s (transform 133ms, setup 159ms, import 122ms, tests 861ms, environment 558ms)
+

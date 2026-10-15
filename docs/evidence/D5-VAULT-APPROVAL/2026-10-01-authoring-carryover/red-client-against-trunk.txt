@@ -1,0 +1,6 @@
+ × vaultLifecycle.test.tsx > a sign-off carried from Authoring (FD5 (c)) > says it was signed in Authoring, by the printed name the Authoring signature holds 21ms
+ × workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the Authoring approval carried, naming who reviewed and approved, as the server reported it (FD5 (c)) 5397ms
+ × workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the approval did not carry, with the server’s reason and what to do next 5267ms
+ × workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > claims no approval when the server reported none 5282ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 14 passed (18)

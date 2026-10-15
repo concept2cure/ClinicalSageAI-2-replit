@@ -1,0 +1,37 @@
+# 4. Every AnA draft opens as a document — GREEN
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > keeps the numbers the headings carry, drops the title heading, and files the opening text under the title 64ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > numbers sections in order, keeping each heading as the title, when the headings carry no numbers 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > numbers in order when two headings carry the same number 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > is one section when the draft has no headings, and splits HTML the same way as markdown 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > splits at the top heading level present and keeps deeper headings inside their section 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > isProgramId > accepts a program UUID only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates through from-draft, recording the conversation and the turn, when no earlier copy exists 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > opens the document made from the same conversation and turn, and creates nothing 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates a new document when the same title came from another turn 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates nothing when the earlier-copy check cannot run 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > says what the server refused, and reports no document 3ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > conversationArtifacts — the panel reads real drafts, and invents nothing > lists a turn's generatedDraft with its durable id and version 2ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > conversationArtifacts — the panel reads real drafts, and invents nothing > marks a draft the server did not persist as out of the record 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > conversationArtifacts — the panel reads real drafts, and invents nothing > ignores turns that produced no draft 0ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 156ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > a turn without a document gets no canvas 46ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > finds the document in a rehydrated turn’s tool trace, and never in prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > .docx POSTs the draft to the export route and hands the file to downloadBlob 140ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > Route to review PUTs the governed transition and adopts the new status 58ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > leaves the status alone when the server refuses the transition, and says so 86ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > cannot route a draft the server never persisted, and gives the reason 45ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > cannot route when no program is open — the workflow is scoped to one 38ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place 192ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 253ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends 57ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > offers no insert while no document is open 194ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record 850ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target 1025ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates the document from the draft, split at its headings, and opens it beside the conversation 251ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > opens the document already made from that turn instead of creating a second copy 238ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates nothing when it cannot check for an earlier copy, and says so 128ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed 17ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM 14ms
+ Test Files  3 passed (3)
+      Tests  34 passed (34)

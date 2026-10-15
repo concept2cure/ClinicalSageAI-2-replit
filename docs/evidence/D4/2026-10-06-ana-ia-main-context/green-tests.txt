@@ -1,0 +1,1639 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts
+{
+  "timestamp": "2026-10-06T16:15:28.565Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:28.567Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts
+{
+  "timestamp": "2026-10-06T16:15:28.567Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+{
+  "timestamp": "2026-10-06T16:15:28.579Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:28.581Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+{
+  "timestamp": "2026-10-06T16:15:28.581Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T16:15:28.579Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:28.581Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T16:15:28.581Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts
+{
+  "timestamp": "2026-10-06T16:15:28.576Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:28.577Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts
+{
+  "timestamp": "2026-10-06T16:15:28.578Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+[database] Database connection successful
+
+stdout | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[database] Database connection successful
+
+stdout | server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts
+[database] Database connection successful
+
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts
+[database] Database connection successful
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T16:15:28.943Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+{
+  "timestamp": "2026-10-06T16:15:29.624Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+[chat-thread-helpers] Table ensure warning: cannot insert multiple commands into a prepared statement
+
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read 974ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > another tenant's thread id is never resolved — the caller gets a fresh thread 8ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > the caller's own thread id resolves to itself 1ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a thread with no recorded owner is scoped by organization alone 13ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unknown id mints a fresh thread, as it always did 2ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > with no organization to scope by, a supplied id is never honoured 1ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unidentified caller does not get an owned thread 1ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > resolveAccessibleThread — the history gate the context builder uses > returns null for a foreign tenant and throws for a colleague 2ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > ensureThread cannot adopt someone else’s stable id > refuses a colleague's id and a foreign tenant's id, creates its own 9ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the organization's own program is bound, lower-cased 5ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > another organization's program is never bound: the thread is minted unbound 3ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > a deleted program of the organization is not bound either 2ms
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the program list shows the thread under its own program, never under another organization's 38ms
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet"
+{
+  "timestamp": "2026-10-06T16:15:29.973Z",
+  "level": "error",
+  "message": "[ana-features] [AnA authoring-plan generate] store not provisioned",
+  "context": {
+    "err": "authoring_plans table not migrated yet"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet"
+{
+  "timestamp": "2026-10-06T16:15:29.988Z",
+  "level": "error",
+  "message": "[ana-features] [AnA authoring-plan generate] store not provisioned",
+  "context": {
+    "err": "therapeutic_area column not migrated yet"
+  }
+}
+
+stderr | tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text
+{
+  "timestamp": "2026-10-06T16:15:30.001Z",
+  "level": "error",
+  "message": "[ana-features] [AnA submission-chat] AI provider unavailable",
+  "context": {
+    "err": "AI provider unavailable: upstream gateway 10.0.4.xxx:8443 refused"
+  }
+}
+
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet" 3457ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet" 9ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > the 400 for INVALID_REQUEST from the generator still carries the domain message (4xx is out of scope) 8ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text 4ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > the 404 for ARTIFACT_NOT_FOUND still carries the domain message (4xx is out of scope) 3ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps THREAD_FORBIDDEN without exposing internal context 2ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps AUTH_REQUIRED without exposing internal context 4ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > submission-chat private context errors > maps HISTORY_UNAVAILABLE without exposing internal context 2ms
+stdout | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-06T16:15:30.533Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:30.534Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-06T16:15:30.534Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+{
+  "timestamp": "2026-10-06T16:15:30.824Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:30.826Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+{
+  "timestamp": "2026-10-06T16:15:30.826Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts
+{
+  "timestamp": "2026-10-06T16:15:30.873Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:30.875Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts
+{
+  "timestamp": "2026-10-06T16:15:30.875Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-06T16:15:30.922Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts
+[database] Database connection successful
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+{
+  "timestamp": "2026-10-06T16:15:31.208Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes 50ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists 25ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record 22ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+[audited-export] tenant chain walk failed: no admin scope
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+[audited-export] export not recorded: simulated failure
+
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed 18ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact 15ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline 22ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed 20ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves 17ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it 19ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing 5ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written 8ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over 16ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain 33ms
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts
+{
+  "timestamp": "2026-10-06T16:15:34.523Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > writes the decision against the SAME org the lookup used
+{
+  "timestamp": "2026-10-06T16:15:34.711Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ana.governed_action.executed",
+    "resourceType": "ana_command",
+    "resourceId": "update_milestone"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded
+{
+  "timestamp": "2026-10-06T16:15:34.723Z",
+  "level": "error",
+  "message": "[ana-ri/utility] Governed action aborted: sign-off audit row was not persisted",
+  "context": {
+    "command": "create_task",
+    "organizationId": 1,
+    "userId": 42,
+    "eSignRequired": false,
+    "reason": "store down"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > ignores an organization named in the body, for the lookup and the write
+{
+  "timestamp": "2026-10-06T16:15:34.724Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ana.governed_action.executed",
+    "resourceType": "ana_command",
+    "resourceId": "update_milestone"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > follows the caller — a caller of another org binds to that org
+{
+  "timestamp": "2026-10-06T16:15:34.730Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ana.governed_action.executed",
+    "resourceType": "ana_command",
+    "resourceId": "update_milestone"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > writes the decision against the SAME org the lookup used 34ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > ignores an organization named in the body, for the lookup and the write 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > follows the caller — a caller of another org binds to that org 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > refuses a run the caller org does not hold, and writes nothing 3ms
+stderr | server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline whose audit row was lost still releases the run, and says so
+{
+  "timestamp": "2026-10-06T16:15:34.749Z",
+  "level": "error",
+  "message": "[ana-ri/utility] Decline recorded against the run but its audit row was not persisted",
+  "context": {
+    "command": "update_artifact",
+    "runId": "run-1",
+    "reason": "store down"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > moving an artifact to review stays the reason tier > runs on a reason, with no password asked for 34ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved on a reason alone: refused, nothing run 8ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked on a reason alone: refused, nothing run 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as RELEASE: refused before the password is checked, nothing run 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as AUTHOR: refused before the password is checked, nothing run 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as APPROVER: refused before the password is checked, nothing run 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as REVIEWER: refused before the password is checked, nothing run 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as APPROVER and re-authenticated: runs with a verified signature meaning approval 7ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as RELEASE and re-authenticated: runs with a verified signature meaning release 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > Release is the meaning of a lock, not of any e-signature > declared on an action that fixes no meaning: refused before the password is checked 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person 28ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run without an explicit yes 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > the Part 11 tiers still demand what they demanded 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > a read is still not something this route runs 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held run runs the command from the ROW and releases the run 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held command runs it with the model call that proposed it, from the ROW (D6) 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a command posted without its run names no model call: null, never the body's claim (D6) 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline records the decision, runs nothing, and releases the run at once 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline whose audit row was lost still releases the run, and says so 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline needs a run to apply to 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs on a yes, with the run's own context and the confirmation stamped 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs as the conversation and turn that proposed it, under the model that served it (PF-10 S5) 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run without an explicit yes 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run from a body alone — there is no held run to take its context from 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > can be declined like any proposal 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > any write the register classes confirm runs on a yes — not only the original five 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > never runs a person's own act, whatever the held row says and whatever was clicked 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > a tool the register does not know is still a tool, confirmed like any write (it failed closed) 7ms
+stderr | server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution whose row did not persist says that too
+{
+  "timestamp": "2026-10-06T16:15:34.845Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ana.governed_action.executed",
+    "resourceType": "ana_command",
+    "resourceId": "update_artifact",
+    "reason": "store down"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row that did not persist is said, to the person and to the waiting run
+{
+  "timestamp": "2026-10-06T16:15:34.847Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ana.governed_action.executed",
+    "resourceType": "ana_command",
+    "resourceId": "update_artifact",
+    "reason": "store down"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > is not run on a bare yes: the person states the reason 8ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > runs with the person's reason in place of the model's, and records both 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a person who adopts AnA's wording is recorded as having done so 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a tool whose reason input is reason_for_change gets the person's reason there 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > a signer who declares Authorship is recorded as Authorship, not Approval — on the sign-off and the audit row 11ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > REVIEWER is recorded as review 1ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > APPROVER is recorded as approval 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an e-signature with no declared meaning, and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("approval"), and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("OWNER"), and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("author"), and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (""), and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (7), and runs and records nothing 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the FDA ESG transmit is handed the declared meaning — the value its signature row records 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > on a held run the meaning is the signer's, from the posted body — never one the model wrote into the row 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the reason-only tier is unchanged: no meaning is asked for 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature sign-off carries the verified factors > the sign-off carries the factors re-verification actually checked (MFA as MFA) 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > the sign-off names the run, the tool call, the model call and a hash of the params authorised 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row follows, with the outcome, the duration and the same trace 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command its own gate refused is recorded refused, not ok 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution is recorded failed, with what failed 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution whose row did not persist says that too 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row that did not persist is said, to the person and to the waiting run 2ms
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command posted without its run still gets both rows, with no run and no model call 2ms
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4)
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 5871ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4) 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 3ms
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be opened, no model call or governed approval proceeds
+[AnA RI Stream] Conversation preparation failed: thread store down
+
+stderr | server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be opened, no model call or governed approval proceeds
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model 53ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a held governed call records the same: the only path a confirm-class draft takes in production 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be opened, no model call or governed approval proceeds 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs 8ms
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > returns the caller's own organization's decisions
+{
+  "timestamp": "2026-10-06T16:15:35.633Z",
+  "level": "info",
+  "message": "[decision-lifecycle] Preflight decision recorded",
+  "context": {
+    "id": "dec_1791303335633_1_5p5ydd",
+    "kind": "section-preflight-judgment",
+    "overall": "blocked",
+    "signals": 0
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > returns the caller's own organization's decisions
+{
+  "timestamp": "2026-10-06T16:15:35.646Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/decision-record-service.ts:205:32",
+    "queryPreview": "INSERT INTO decision_records ( organization_id, project_id, decision_code, title, domain_track, recommendation_type, recommendation_summary, recommendation_r...",
+    "enforcement": "off"
+  }
+}
+
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > returns the caller's own organization's decisions
+{
+  "timestamp": "2026-10-06T16:15:35.640Z",
+  "level": "info",
+  "message": "[decision-record] Creating decision record",
+  "context": {
+    "code": "section-preflight-judgment:dec_1791303335633_1_5p5ydd",
+    "project": 9101
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > returns the caller's own organization's decisions
+{
+  "timestamp": "2026-10-06T16:15:35.646Z",
+  "level": "warn",
+  "message": "[decision-lifecycle] Decision persistence failed (non-blocking)",
+  "context": {
+    "decisionId": "dec_1791303335633_1_5p5ydd",
+    "error": "Cannot read properties of undefined (reading 'id')"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > returns the caller's own organization's decisions
+{
+  "timestamp": "2026-10-06T16:15:35.647Z",
+  "level": "warn",
+  "message": "[decision-lifecycle] Preflight decision persisted to memory only",
+  "context": {
+    "id": "dec_1791303335633_1_5p5ydd"
+  }
+}
+
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > does NOT hand another organization the decision trail for a project it does not own
+{
+  "timestamp": "2026-10-06T16:15:35.674Z",
+  "level": "info",
+  "message": "[decision-lifecycle] Preflight decision recorded",
+  "context": {
+    "id": "dec_1791303335674_2_lipdyc",
+    "kind": "section-preflight-judgment",
+    "overall": "blocked",
+    "signals": 0
+  }
+}
+
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > does NOT hand another organization the decision trail for a project it does not own
+{
+  "timestamp": "2026-10-06T16:15:35.676Z",
+  "level": "info",
+  "message": "[decision-record] Creating decision record",
+  "context": {
+    "code": "section-preflight-judgment:dec_1791303335674_2_lipdyc",
+    "project": 9101
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > does NOT hand another organization the decision trail for a project it does not own
+{
+  "timestamp": "2026-10-06T16:15:35.677Z",
+  "level": "warn",
+  "message": "[decision-lifecycle] Decision persistence failed (non-blocking)",
+  "context": {
+    "decisionId": "dec_1791303335674_2_lipdyc",
+    "error": "Cannot read properties of undefined (reading 'id')"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > does NOT hand another organization the decision trail for a project it does not own
+{
+  "timestamp": "2026-10-06T16:15:35.677Z",
+  "level": "warn",
+  "message": "[decision-lifecycle] Preflight decision persisted to memory only",
+  "context": {
+    "id": "dec_1791303335674_2_lipdyc"
+  }
+}
+
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > a caller with no resolvable tenant gets nothing, not everything
+{
+  "timestamp": "2026-10-06T16:15:35.684Z",
+  "level": "info",
+  "message": "[decision-lifecycle] Preflight decision recorded",
+  "context": {
+    "id": "dec_1791303335684_3_z72e4g",
+    "kind": "section-preflight-judgment",
+    "overall": "blocked",
+    "signals": 0
+  }
+}
+
+stdout | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > a caller with no resolvable tenant gets nothing, not everything
+{
+  "timestamp": "2026-10-06T16:15:35.685Z",
+  "level": "info",
+  "message": "[decision-record] Creating decision record",
+  "context": {
+    "code": "section-preflight-judgment:dec_1791303335684_3_z72e4g",
+    "project": 9101
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > a caller with no resolvable tenant gets nothing, not everything
+{
+  "timestamp": "2026-10-06T16:15:35.686Z",
+  "level": "warn",
+  "message": "[decision-lifecycle] Decision persistence failed (non-blocking)",
+  "context": {
+    "decisionId": "dec_1791303335684_3_z72e4g",
+    "error": "Cannot read properties of undefined (reading 'id')"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > a caller with no resolvable tenant gets nothing, not everything
+{
+  "timestamp": "2026-10-06T16:15:35.686Z",
+  "level": "warn",
+  "message": "[decision-lifecycle] Preflight decision persisted to memory only",
+  "context": {
+    "id": "dec_1791303335684_3_z72e4g"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > returns the caller's own organization's decisions 41ms
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > does NOT hand another organization the decision trail for a project it does not own 10ms
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > a caller with no resolvable tenant gets nothing, not everything 6ms
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+{
+  "timestamp": "2026-10-06T16:15:35.962Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stdout | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+{
+  "timestamp": "2026-10-06T16:15:36.133Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:36.134Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+{
+  "timestamp": "2026-10-06T16:15:36.134Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+{
+  "timestamp": "2026-10-06T16:15:37.278Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts
+{
+  "timestamp": "2026-10-06T16:15:37.329Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer
+[AnA RI Stream] Assistant persist failed: db down
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it
+[AnA RI Stream] Post-processing failed: socket hiccup
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it
+[AnA RI Stream] Post-processing failed: Cannot read properties of null (reading 'filter')
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered 1383ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop 9ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer 3ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it 2ms
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-06T16:15:37.396Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:37.398Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-06T16:15:37.398Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-06T16:15:37.461Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels
+{
+  "timestamp": "2026-10-06T16:15:37.442Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:37.442Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels
+{
+  "timestamp": "2026-10-06T16:15:37.443Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+{
+  "timestamp": "2026-10-06T16:15:37.477Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:37.477Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+{
+  "timestamp": "2026-10-06T16:15:37.478Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+{
+  "timestamp": "2026-10-06T16:15:37.673Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:37.674Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+{
+  "timestamp": "2026-10-06T16:15:37.674Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T16:15:38.158Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:38.159Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T16:15:38.159Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+{
+  "timestamp": "2026-10-06T16:15:38.307Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:38.309Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+{
+  "timestamp": "2026-10-06T16:15:38.309Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stderr | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains a refused command with its actual permission reason
+[AnA Command] Blocked create_task: RBAC_DENIED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains a refused command with its actual permission reason
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > reports success only when the read command actually succeeded
+[AnA Command] Executed list_projects: OK — Found 0 project(s).
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > reports success only when the read command actually succeeded
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command cleanup preserves ordinary answer prose > keeps the prose around a command and still carries its pending signoff
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command cleanup preserves ordinary answer prose > keeps the prose around a command and still carries its pending signoff
+[AnA RI Stream] Dispatched 1 command(s)
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write 1269ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains a refused command with its actual permission reason 4ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > reports success only when the read command actually succeeded 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command cleanup preserves ordinary answer prose > keeps the prose around a command and still carries its pending signoff 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command cleanup preserves ordinary answer prose > keeps a plain answer with no commands unchanged 2ms
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+{
+  "timestamp": "2026-10-06T16:15:38.656Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "ana-ri.post-processing",
+    "err": "db.select is not a function"
+  }
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it 1376ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals 10ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved 6ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why 5ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > an empty reply with only a navigation chip: nothing was changed 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 1420ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 15ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > with no tool run, a turn still says what was checked: claims unchecked, not grounded 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 9ms
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "auto" → runPolicy "auto" 49ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "manual" → runPolicy "manual" 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "AUTO" → runPolicy null 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "" → runPolicy null 15ms
+stdout | server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy undefined → runPolicy null 17ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold before a step that already goes to a person 21ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold while a demonstration drives 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > a person pausing a Manual turn is a person, not the policy 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > Auto and no policy never hold on their own 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > under Auto the same steer does not replace anything: it applies after the step 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 9ms
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > a person's own pause in a Manual turn ends it the same way 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > the same pause under Auto is resumed as abandoned, as today 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > an approval nobody answers ends the turn with a closing answer 18ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, the same unanswered approval is a denial and the turn goes on 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > past 15 minutes of work the next call is the closing answer 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > time held for a person is not work 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, a long step is not a stop 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Auto keeps going past the effort ceiling while each round is new, to 20 rounds 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy the same turn keeps its effort ceiling (balanced: 6 + 2) 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Manual keeps the effort ceiling too 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads null (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written though the row reads running, twice: fails closed, never runs unasked 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written (holdForPerson threw): fails closed 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "failed" — no person answered: fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "finished" — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as null — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold: Next is shown, and Resume answers it 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > Stop at a hold: not run, named on done, and the hold filed as stopped 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her step 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2c) a demonstration the model starts does not switch Manual off > Manual with Live Drive on (not a demo), round 1 starts a demo: a hold is still due before round 2 3ms
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true
+[AnA RI] Intelligence prefix failed: recall unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 45ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 7ms
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[AnA RI Stream] Conversation preparation failed: database unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[AnA RI Stream] Refused caller-supplied thread id: undefined
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 26ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 18ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a driving turn that starts a demonstration announces the promotion as promoted 62ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a turn that began as a demonstration is not promoted, and its one drive_state is unmarked 8ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > frames the report as an observation and announces only the steer as the person steering 15ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > a report alone announces nothing 6ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > navigations: the two AnA could not make are chips, ahead of the six she made 13ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > actions: the one past the budget is the first chip 9ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a move she made and re-asked for past the budget is offered once, not twice 6ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > past chip room she is told the move is not offered either — never promised a chip that is dropped 7ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a turn that does not drive reaches the same chip derivation, unchanged 9ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > names each move, so the screen can report it back 6ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > holds her next round until the move lands — and a landing puts nothing in front of her 7ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move that did not land reaches the round she writes next 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move still unsettled at the ceiling is told to her as not confirmed, never as done 11ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a client that does not report its moves is not waited on 6ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > is accepted with the move it settles 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > needs a move id, and refuses one that is not a move id 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > a screen report can name the move it is about 2ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > is accepted as its own action, not as a steer 2ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > needs something to report 2ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > an empty steer is still refused, and an unknown action still is 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history saved in the thread: the answer at the far edge is dropped, not opened on 6ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history sent by the client (no saved thread yet): the answer at the far edge is dropped, not opened on 2ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > a thread whose pairs are intact is passed through unchanged 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > narration — each round starts its own paragraph > a stop narrated after the last one is not run on from it 19ms
+stdout | server/routes/ana-ri/__tests__/stream-proposal-check.test.ts
+{
+  "timestamp": "2026-10-06T16:15:40.211Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:40.212Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-proposal-check.test.ts
+{
+  "timestamp": "2026-10-06T16:15:40.212Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-proposal-check.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.115Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:41.116Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.117Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.170Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:41.171Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.171Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.246Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:41.247Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.248Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 97ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a draft written before anything was consulted is not checked — never found 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a proposal that stores no prose carries no check 4ms
+stdout | server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.808Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:41.809Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.809Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.951Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:41.952Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts
+{
+  "timestamp": "2026-10-06T16:15:41.953Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+{
+  "timestamp": "2026-10-06T16:15:42.134Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:42.135Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+{
+  "timestamp": "2026-10-06T16:15:42.135Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 40ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a demonstration keeps its follow-up rounds as narration: no reasoning display there 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a Fast turn reasons on no call 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > a turn that is not high-stakes keeps the effort chosen 6ms
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[AnA RI Stream] Conversation preparation failed: private database host unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[AnA RI Stream] Conversation preparation failed: private connection write failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is not sent back to the model as a failure to work around 68ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is shown to the person as their decision, not as AnA failing 17ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > nobody answering in time is not a failure to work around either 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > control: an approved action that then fails is still a failure > stays in the adaptation note, so a real error is not hidden 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined 59ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."} 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question 27ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > retains the last real assistant answer instead of dropping whichever row is last 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > another turn arriving during the save cannot displace a prior clarification or duplicate the current question 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > filters stored system/tool roles before sending the transcript 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > new conversations still accept bounded user/assistant browser turns 2ms
+stdout | server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap
+[AnA submission-chat] advanced RAG retrieval failed, returning empty: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap
+[AnA submission-chat-stream] advanced retrieval failed: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > buffered does not answer from a silently missing conversation after history failure
+[AnA submission-chat] Conversation history unavailable: fixture history storage unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > streaming does not answer from a silently missing conversation after history failure
+[AnA submission-chat] Conversation history unavailable: fixture history storage unavailable
+
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: Which intended use should this cover? 7ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: I cannot verify efficacy without the study results. 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > preserves an explicit proposal and its scope 3ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps streamed questions in the answer channel without a proposal 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > keeps the same correction in the gateway conversation turns 3ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > preserves an explicitly emitted rewrite and persists its body in history 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > retains a long user correction in streaming model input 4ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > a bare text fallback is an answer, never an inferred proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap 6ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered retains the question and supplied answer before creating an explicit proposal 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming retains the question and supplied answer before creating an explicit proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered keeps contradictory retrieved sources distinct from a missing passage 19ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming keeps contradictory retrieved sources distinct from a missing passage 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered refuses a colleague thread before history, memory, or a model call 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming refuses a colleague thread before history, memory, or a model call 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered uses only the caller-resolved ID for context and writes 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming uses only the caller-resolved ID for context and writes 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered fails closed when the caller identity is missing 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming fails closed when the caller identity is missing 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > buffered does not answer from a silently missing conversation after history failure 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streaming does not answer from a silently missing conversation after history failure 1ms
+stdout | server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a search that found nothing is named in the note the next call reads
+[AnA RI Stream] Context enriched with: claim-grounding
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a round where every step returned something carries no note
+[AnA RI Stream] Context enriched with: claim-grounding
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a search that found nothing is named in the note the next call reads 52ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a round where every step returned something carries no note 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > a plain question in the Summary of Clinical Safety is served as high-stakes on every call 48ms
+ ✓ server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > Fast stays fast there: no thinking and low effort, though the gateway is told the turn is high-stakes 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > the same question in a Module 3 manufacturing section is served as it was 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 62ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > and how the turn was routed, and why 5ms
+stderr | server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program UUID beginning with digits: every step gets its anchor row, never the integer its digits spell
+[AnA RI Stream] Command executor failed: cmdResult.executedCommands is not iterable
+
+stderr | server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program with no anchor row: no step acts on any project
+[AnA RI Stream] Command executor failed: cmdResult.executedCommands is not iterable
+
+stderr | server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a legacy integer project is itself, without the anchor
+[AnA RI Stream] Command executor failed: cmdResult.executedCommands is not iterable
+
+stderr | server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a malformed project is no project
+[AnA RI Stream] Command executor failed: cmdResult.executedCommands is not iterable
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program UUID beginning with digits: every step gets its anchor row, never the integer its digits spell 27ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program with no anchor row: no step acts on any project 12ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a legacy integer project is itself, without the anchor 3ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a malformed project is no project 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled 0ms
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+{
+  "timestamp": "2026-10-06T16:15:44.450Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:44.451Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+{
+  "timestamp": "2026-10-06T16:15:44.451Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > counts the first call AND each round 2ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > the turn totals reach the telemetry, beside the first-call figure 1ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > the accumulator exists and reads both token fields 0ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > sums reads and writes across the calls 1ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > A HEALTHY FIRST CALL DOES NOT HIDE A MISSING ROUND — the point 1ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > counts a call that reported no stats at all as a miss, not as absent 0ms
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > a turn that cached nothing says so plainly 0ms
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:15:44.605Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:44.607Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:15:44.607Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+[database] Database connection successful
+
+stderr | server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts
+{
+  "timestamp": "2026-10-06T16:15:44.752Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:15:44.766Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > carries the check of the draft: its counts, what was not found, and the verdicts it states 2ms
+ ✓ server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > a proposal held with no check carries none, and claims none 0ms
+ ✓ server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > keeps the row bounded: at most twenty texts of each list, each at most 200 characters 1ms
+stderr | server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts > the write-back is handed the turn's answer check > the same check the message is stored with: what it found and what it did not
+[AnA RI Stream] Command executor failed: cmdResult.executedCommands is not iterable
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts > the write-back is handed the turn's answer check > the same check the message is stored with: what it found and what it did not 33ms
+stderr | server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts
+{
+  "timestamp": "2026-10-06T16:15:44.921Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold
+[AnA RI Stream] Dispatched 3 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not put to a person carries no check
+[AnA RI Stream] Dispatched 3 command(s)
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold 40ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not put to a person carries no check 8ms
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts
+{
+  "timestamp": "2026-10-06T16:15:45.524Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step
+[AnA RI Stream] Context enriched with: claim-grounding
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not
+[AnA RI Stream] Context enriched with: claim-grounding
+
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 55ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not 9ms
+stdout | server/routes/ana-ri/__tests__/screen-report-turn.test.ts
+{
+  "timestamp": "2026-10-06T16:15:45.947Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:15:45.948Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/screen-report-turn.test.ts
+{
+  "timestamp": "2026-10-06T16:15:45.948Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/screen-report-turn.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/screen-report-turn.test.ts
+{
+  "timestamp": "2026-10-06T16:15:45.998Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > says so when the draft could not be saved 3ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > keeps the database error out of the customer sentence 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > gives the operator the cause it withholds from the customer 0ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a failed save never stops the turn from closing 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > survives a client that has already disconnected 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > announces the version when the save really happened 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > an unchanged draft is not a failure, and is not reported as one 0ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a missing project no longer skips silently — the client is told the save did not happen 0ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a program UUID resolves through the projects anchor and the draft IS saved 3ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a UUID with leading digits NEVER files to the integer project those digits spell 1ms
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > writes NO artifact row for a draft that carries authoringDocId, and emits no caveat 2ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > still versions a draft WITHOUT authoringDocId (report canvases, generate_document) as before 7ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > a mixed turn: the authoring document is skipped and the other draft is versioned 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > does not warn "could not be saved" for an authoring document when no project is linked — it WAS saved 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > RI receives the shared awareness policy exactly once 2ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > stream orchestration receives the shared awareness policy exactly once 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > compact cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > unified cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > submission buffered receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > submission streaming receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > full preserves the practical boundaries 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > brief preserves the practical boundaries 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > does not let the chat register force a verdict before a blocking question 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > does not let strategy or drafting shortcuts override IA 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > RI carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > stream orchestration carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > cortex carries scientific and market-specific critical thinking 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > compact cortex carries scientific and market-specific critical thinking 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > unified cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > submission buffered carries scientific and market-specific critical thinking 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > submission streaming carries scientific and market-specific critical thinking 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "What does CTD stand for?" 5ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Draft the supplied clinical overview using these confirmed results." 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Which market should we target? I have not chosen an intended use yet." 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > allows explicit reconsideration without silently rewriting recorded decisions 3ms
+stdout | server/routes/ana-ri/__tests__/screen-report-turn.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > names itself as the app, not the person, if a fallback model folds it into a user turn 2ms
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > opens with the marker the Live Drive prompt names, once 1ms
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > tells her to say what could not be done, not claim it happened 1ms
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > an empty report is no turn at all 0ms
+
+ Test Files  35 passed (35)
+      Tests  332 passed (332)
+   Start at  12:15:25
+   Duration  24.12s (transform 31.15s, setup 1.29s, import 82.12s, tests 52.58s, environment 4ms)
+

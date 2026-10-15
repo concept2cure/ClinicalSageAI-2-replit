@@ -1,0 +1,3 @@
+# 2026-10-01T06:47:51Z, guard applied; scripts/seed/ga-demo.d/123-qms-quality.mjs in a transaction that is always rolled back (SET CONSTRAINTS ALL IMMEDIATE before ROLLBACK)
+   ✓ QMS quality: 9 controlled docs, 0 training acks, 6 changes, 9 links seeded
+RESULT: refused — QMS_SIGNATURE_REQUIRED: qms_documents 312 (organization 93182) may become 'effective' only in the transaction that writes its 'qms-document-approval' electronic signature (21 CFR Part 11 §11.50/§11.70) — refused.

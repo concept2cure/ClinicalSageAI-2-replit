@@ -1,0 +1,12 @@
+Mutant C07-closing-choice-lost: a closing call told to call no tool is recorded as free to
+
+--- server/routes/ana-ri/stream.ts
+- toolChoice: includeTools ? null : 'none' });
++ toolChoice: null });
+
+Tests run: server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 15ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

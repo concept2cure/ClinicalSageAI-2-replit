@@ -21,6 +21,15 @@
  * @module server/services/ind/ctd/types
  */
 
+import type { RegulatoryBasis, RegulatoryConfidence } from '../../../../shared/regulatory/regulatory-basis';
+import type {
+  Applicability,
+  ConditionId,
+  ModeledJurisdiction,
+  Necessity,
+} from '../../../../shared/regulatory/regional-module1';
+import type { DeviceFlagId } from '../../../../shared/constants/domain/device-classification';
+
 /** The FDA marketing/investigational applications that share the CTD spine. */
 export type SubmissionFamily = 'IND' | 'NDA' | 'BLA';
 
@@ -172,3 +181,162 @@ export const CTD_SECTION_KEYS: (keyof CtdSection)[] = [
   'dependencies',
   'generationPrompt',
 ];
+
+// ── ICH E3 clinical study report ─────────────────────────────────────────────
+
+/**
+ * Provenance for the E3 overlay and every other regulatory fact in this
+ * directory. The one declaration lives in
+ * shared/regulatory/regulatory-basis.ts (with `REGULATOR_HOSTS`,
+ * `basisProblems` and `basisLabel`); it is re-exported here so imports from
+ * `ind/ctd` keep working.
+ *
+ * - `regulator-text`: wording confirmed on a regulator-hosted copy (or a
+ *   vendored regulator artifact) on the date in `checked`;
+ * - `recall`: known to the author, not checked against the regulator's text;
+ * - `platform-convention`: how this platform recommends doing it. Not a
+ *   regulatory requirement.
+ */
+export type { RegulatoryBasis, RegulatoryConfidence } from '../../../../shared/regulatory/regulatory-basis';
+
+/** Alias of `RegulatoryConfidence` (was a separate declaration until 2026-10-05). */
+export type E3Confidence = RegulatoryConfidence;
+
+/** Alias of `RegulatoryBasis` (was a separate declaration until 2026-10-05). */
+export type E3Basis = RegulatoryBasis;
+
+/**
+ * The one record's vocabulary, re-exported so imports from `ind/ctd` reach it
+ * (docs/design/ANA_REGULATORY_RECORD.md §5). Declared in
+ * shared/regulatory/regional-module1.ts; nothing here redeclares it.
+ */
+export type {
+  ModeledJurisdiction,
+  ApplicationKind,
+  Necessity,
+  ConditionId,
+  Applicability,
+  DocumentRole,
+  RegionalHeading,
+} from '../../../../shared/regulatory/regional-module1';
+
+/**
+ * Whether an E3 section is expected in every CSR, only when the study produced
+ * its subject (a second batch, interim analyses, drug concentrations), or as
+ * the reviewing authority requires. `Necessity` without 'conditional': E3 has
+ * no condition-gated heading, so no E3 consumer sees the wider union.
+ */
+export type E3Applicability = Exclude<Necessity, 'conditional'>;
+
+// ── Document outlines (R13) ──────────────────────────────────────────────────
+
+/**
+ * One heading of a document outline (a CSR, a protocol, a DSUR/PBRER/PADER, a
+ * JP CTN, the EU CTA Annex I), with what belongs under it. Every outline the
+ * platform briefs from is data of this shape, rendered by the one renderer,
+ * `renderOutlineBrief` (section-brief.ts). Hierarchy is the dotted `number`.
+ *
+ * Reference structure: it says what a complete section contains and where each
+ * part goes, never what a study found.
+ */
+export interface OutlineNode<A extends Necessity = Necessity> {
+  /** The document's own number ("12.2.4", "16.1.9"); absent for an unnumbered heading. */
+  number?: string;
+  /** Heading as the governing text words it. */
+  title: string;
+  /** Heading in the jurisdiction's language (添付文書(案)). */
+  titleLocal?: string;
+  applies: A;
+  /** For 'conditional': the deciding fact. Unknown ⇒ undetermined (a gap), never "not required". */
+  condition?: ConditionId;
+  /** What the section establishes and how a reviewer reads it. */
+  purpose?: string;
+  /** The content a complete section carries. */
+  contains?: string[];
+  /** Where that content usually comes from (platform convention unless a basis says otherwise). */
+  sources?: string[];
+  /** Display conventions: tables, listings, figures, placement. */
+  presentation?: string[];
+  /** Deficiencies a reviewer finds here. */
+  pitfalls?: string[];
+  /** Other headings, or CTD codes, this section is read with. */
+  see?: string[];
+  /** Bases beyond the outline's governing basis. Absent ⇒ the governing basis alone. */
+  basis?: RegulatoryBasis[];
+  /** Content not encoded: the renderer says so and adds nothing from memory. */
+  headingOnly?: true;
+}
+
+/**
+ * One heading of an ICH E3 clinical study report: an `OutlineNode` with E3's
+ * narrower applicability. E3 numbers every heading, so `number` stays required
+ * for the E3 tree's consumers.
+ */
+export type E3Section = OutlineNode<E3Applicability> & { number: string };
+
+/** The registered document outlines. Each is added as data, in the commit that deletes its copies. */
+export type OutlineId =
+  | 'csr-e3'
+  | 'protocol-m11'
+  | 'dsur-e2f'
+  | 'pbrer-e2c-r2'
+  | 'pader-314-80'
+  | 'jp-ctn'
+  | 'eu-ctr-annex-i';
+
+/** A whole document outline: its nodes, the basis that governs all of them, and its one owning file. */
+export interface DocumentOutline {
+  id: OutlineId;
+  title: string;
+  jurisdictions: ModeledJurisdiction[] | 'ich';
+  /** The basis every node rests on. Non-empty: the renderer refuses an outline without one. */
+  governing: RegulatoryBasis[];
+  /** Words a caller may use for it ('csr', 'e3', 'pbrer', 'psur', 'protocol', 'ctn', '治験計画届'). */
+  aliases: string[];
+  /** The ONLY file allowed to hold this outline's number/title pairs (inventory gate). */
+  owner: string;
+  /** Every heading, in document order. */
+  nodes: readonly OutlineNode[];
+}
+
+// ── Device dossier table of contents (F57), in eSTAR vocabulary ──────────────
+
+/** The eSTAR template family a token belongs to: non-IVD or IVD. */
+export type EstarFamily = 'nivd' | 'ivd';
+
+/** One heading of a device dossier ToC. A token is ambiguous without its family. */
+export interface DeviceTocNode {
+  family: EstarFamily;
+  /** eSTAR token ("CH3.05.06"). */
+  token: string;
+  heading: string;
+  /** Parent token in the same family. */
+  parent?: string;
+  applies: Applicability<DeviceFlagId>;
+  /** Where the same heading lives in the platform's other device records. */
+  crosswalk: {
+    estarSlotIds: string[];
+    rulePackKeys?: { k510?: string; denovo?: string };
+    pmaModule?: string;
+    documentTemplateId?: string;
+  };
+  basis: RegulatoryBasis[];
+  contains?: string[];
+  pitfalls?: string[];
+  /** Content not encoded: the renderer says so and adds nothing from memory. */
+  headingOnly?: true;
+}
+
+// ── Application coverage ─────────────────────────────────────────────────────
+
+/**
+ * Which applications the record answers for. Region, agency, product class and
+ * dossier standard are read from the GLOBAL_REGISTRY entry, never restated here.
+ */
+export interface ApplicationCoverage {
+  /** GLOBAL_REGISTRY id. */
+  registryId: string;
+  status: 'modeled' | 'partial' | 'not-indexed';
+  /** What must be read before the status can rise. */
+  sourcesOwed?: RegulatoryBasis[];
+}

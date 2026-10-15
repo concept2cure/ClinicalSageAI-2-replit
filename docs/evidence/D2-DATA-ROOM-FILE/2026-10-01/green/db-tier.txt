@@ -1,0 +1,16 @@
+# npm run test:db, this change, RLS_ENFORCE=on, app_service runtime role, 2026-10-01T08:47:18Z
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+stderr | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+stderr | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source 2188ms
+stdout | tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > an antivirus refusal on one source leaves the other filed, and the batch is not complete
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > an antivirus refusal on one source leaves the other filed, and the batch is not complete 54ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses bytes that no longer match the checksum recorded at capture, storing nothing 21ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a viewer is refused before anything is filed 14ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a superseded capture, another project’s capture and a source with no file are each refused with a reason 29ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses an empty or oversized selection 12ms
+ Test Files  101 passed (101)
+      Tests  994 passed (994)

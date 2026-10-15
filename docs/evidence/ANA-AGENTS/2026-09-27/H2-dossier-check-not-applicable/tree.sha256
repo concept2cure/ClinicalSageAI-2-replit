@@ -1,0 +1,19 @@
+# sha256 of the track H files in the tree the red, green and mutation runs were recorded against (HEAD c82c056be + the track H working tree, uncommitted when filed).
+# source (new)
+43e0a93e0cf977dc47bdcff6ff46ae34b5fecade7848e7fb4eed97456b2fe9d6  server/services/intelligence/consistency-verdict.ts
+b5c29341fb24849efdcad7a93a095e4cfee6fcaa808b9ca1bf7cd6094672741d  shared/ana/dossier-consistency.ts
+f0b579745f809f98382da403d1e92f071267fbab610cd719577ccc8dfb3ffc97  shared/utils/plural.ts
+# source (changed)
+d165b0016678bc08a8ac3dd70c63524f11ee63527fb62efd1909a00c6f0b1fa4  server/services/intelligence/cross-artifact-consistency.ts
+b72d2d24403ec9f50fd9a36a1959df4ada674f5303fcc157fcaecdd804b8f6ba  server/services/ana/AnaToolExecutor.ts
+1421a88c0a9b18a4aeffc17c7900f3e841186aa4b65d29fb491a730c3a5ea784  server/services/ana/document-intake-tool-defs.ts
+d3ed23ae74737622dc47013796762b745e05c4731c587f7a78819f2dc4750758  server/services/lumen-context/base-system-prompt.ts
+74ad101cc426dfc6862af48594d7d2703cb080f8ac13e8398e9594ce774ba730  server/routes/regulatory-workspace-routes.ts
+# tests
+cbd0cdf515f22e1a0655f589326393e0f145d328193d8bfbcba0b1f3b0c0730f  server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts
+decec418050812c0650456aaf67347fffe4e0d34f3836c441d05970ec696b0ef  server/services/intelligence/__tests__/cross-artifact-consistency-unreadable.test.ts
+# the pre-review track H build (red.txt part B), for reference only; commented so that `sha256sum -c tree.sha256` checks the final tree
+#   c97d2c3904db900fd28d784061fe855cf28420a74db34d2ee996ab92871657b5  server/services/intelligence/consistency-verdict.ts
+#   624411efb1aee4082379f40615fa13697d032ae63a803fe8175ff256fe178590  server/services/intelligence/cross-artifact-consistency.ts
+#   0680e7d16c6fa8f503e6070b6bcde332ef662525c12ea2c30c44351c130d6536  server/services/ana/AnaToolExecutor.ts
+#   bf5a051bbd9bdb016f49920e171b2be34b2d9fb29e10f81df4c4362cdd3f08ab  server/services/ana/document-intake-tool-defs.ts

@@ -1,0 +1,90 @@
+-- D5 (Part 11 evidence). A resolution-bundle SUPERSEDE could replace a locked
+-- record, and could report a supersession that never happened.
+-- server/services/resolution/bundle-executor.ts :: executeSupersede
+
+-- ── The defects, as they stood at a115311fe ────────────────────────────────
+
+-- 1. The lock guard failed OPEN.
+--    getObjectState answers 'unknown' when its read FAILS (catch -> warn ->
+--    'unknown'), when the object is not in this tenant, and for a type it does
+--    not model. executeSupersede denied only 'locked' and 'superseded', so all
+--    three proceeded to supersede. A lock timeout on that one SELECT -- which
+--    the deploy's unconditional ALTER TABLE replay (CLAUDE.md RULE 1) can
+--    produce -- let the executor supersede the locked record the guard exists
+--    to refuse.
+
+-- 2. Record, confirm and archive were three separate commits, and the archive
+--    swallowed its own failure.
+--      await recordSupersession(...)          -- commit 1: 'proposed' row
+--      await confirmSupersession(...)         -- commit 2: 'confirmed'
+--      await markObjectSuperseded(...)        -- Promise<void>, catch -> warn
+--      return { outcome: 'executed', newState: 'superseded' }
+--    A failed or zero-row UPDATE was invisible. The result was a CONFIRMED
+--    supersession record beside an artifact that was never archived and still
+--    counted toward submission readiness, and a bundle that said 'executed'.
+
+-- 3. "Already superseded" could never fire for an artifact.
+--    For an artifact, superseded IS archived: markObjectSuperseded writes
+--    status = 'archived', and getObjectState reads the status column back. An
+--    already-superseded artifact therefore read 'archived', never 'superseded'.
+
+-- ── The fix ────────────────────────────────────────────────────────────────
+
+-- 1. priorState === 'unknown' is blocked: "A lock that cannot be read is
+--    treated as a lock." The reason names the object.
+-- 2. Record, confirm and archive run in ONE db.transaction. recordSupersession,
+--    confirmSupersession and getSupersessionChain take the transaction as an
+--    executor (default db, so the routes are unchanged).
+--    markObjectSuperseded returns boolean from UPDATE ... RETURNING id and no
+--    longer catches. A zero-row archive throws inside the transaction, so the
+--    record and its confirmation roll back with it. The item is reported
+--    'blocked' with the reason.
+-- 3. An artifact whose state reads 'archived' is refused as already superseded.
+
+-- ── Why the existing suite did not see it ──────────────────────────────────
+-- The resolution suite's db mocks answer any statement. The new test runs
+-- the real DDL on PGlite: the supersession_state enum, supersession_records,
+-- and concept2cure_artifacts with a BEFORE UPDATE trigger that the rollback
+-- case uses to refuse the archive.
+--   server/services/resolution/__tests__/supersede-fails-closed.pglite.test.ts
+
+-- ── Red to green ───────────────────────────────────────────────────────────
+-- Revert A: guard back to 'locked'-only, archived no longer counted as
+-- superseded, zero-row archive not thrown on:
+--
+--   ✓ refuses a locked artifact (the control)
+--   x refuses when the state cannot be read, rather than proceeding
+--       expected 'Supersession failed: Failed query: …' to match /could not be established/
+--   x refuses an object that is not in this organization
+--   x refuses an artifact that is already superseded — which reads as archived
+--   ✓ supersedes a draft: one confirmed record, and the artifact archived
+--   ✓ rolls the confirmed record back when the archive fails
+--   ✓ markObjectSuperseded: false for an absent artifact / true once archived /
+--     false across organizations
+--   Tests  3 failed | 6 passed (9)
+--
+-- Revert B: markObjectSuperseded's warn-and-continue catch restored:
+--
+--   x rolls the confirmed record back when the archive fails
+--   Tests  1 failed | 8 passed (9)
+--
+-- Restored: 9 passed (9).
+-- server/services/resolution/ + artifact-approval-follows-status.pglite:
+--   3 files, 24 tests green. tsc clean. ESLint warning ratchet: no file changed
+--   its count. ci:drizzle-tenant-scope, ci:column-reachability,
+--   ci:discarded-audit-write, ci:server-error-leaks, ci:runtime-ddl: ok.
+
+-- ── One deadlock the atomicity test found ──────────────────────────────────
+-- The first run hung. recordSupersession called getSupersessionChain on the
+-- module-level db, so inside the transaction it asked the pool for a second
+-- connection. PGlite has exactly one connection, so it waited forever. On
+-- Postgres the read would have run outside the transaction and not seen the
+-- transaction's own rows. The chain read now takes the executor too. This is
+-- the same class as resolveSubmissionSpine inside the Module 3 compile
+-- (docs/evidence/CMC/2026-09-28/).
+
+-- ── Owed ───────────────────────────────────────────────────────────────────
+-- A document's status column is not written on supersede. Its superseded state
+-- is the confirmed supersession_records row, and recordSupersession's
+-- duplicate-pair check refuses a second one. Readiness does not consult that
+-- row for documents. That is a readiness question and is not changed here.

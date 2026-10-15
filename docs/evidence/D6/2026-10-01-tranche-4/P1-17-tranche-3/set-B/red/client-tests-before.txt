@@ -1,0 +1,50 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/routes/protocol-dev-client-5xx-message.test.ts > a 500 from the protocol routes is shown as a failure in a sentence, never the code > submitProtocolRegister (POST /api/protocol-risks/…) says the server sentence and that nothing was persisted 8ms
+   → the INTERNAL_ERROR code was shown as prose: expected 'Couldn’t record the risk — INTERNAL_E…' not to contain 'INTERNAL_ERROR'
+ × tests/routes/protocol-dev-client-5xx-message.test.ts > a 500 from the protocol routes is shown as a failure in a sentence, never the code > addScheduleVisit (POST /api/protocol-development/…) says the server sentence and that nothing was written 2ms
+   → the INTERNAL_ERROR code was shown as prose: expected 'Couldn\'t add the visit — INTERNAL_ER…' not to contain 'INTERNAL_ERROR'
+ ✓ tests/routes/protocol-dev-client-5xx-message.test.ts > a 500 from the protocol routes is shown as a failure in a sentence, never the code > a coded 4xx refusal still reads as it did (code-only body shows the code; a sentence shows the sentence) 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/protocol-dev-client-5xx-message.test.ts > a 500 from the protocol routes is shown as a failure in a sentence, never the code > submitProtocolRegister (POST /api/protocol-risks/…) says the server sentence and that nothing was persisted
+AssertionError: the INTERNAL_ERROR code was shown as prose: expected 'Couldn’t record the risk — INTERNAL_E…' not to contain 'INTERNAL_ERROR'
+
+Expected: "INTERNAL_ERROR"
+Received: "Couldn’t record the risk — INTERNAL_ERROR. Nothing was persisted."
+
+ ❯ tests/routes/protocol-dev-client-5xx-message.test.ts:65:71
+     63|     expect(err).toBeInstanceOf(Error);
+     64|     const message = (err as Error).message;
+     65|     expect(message, 'the INTERNAL_ERROR code was shown as prose').not.…
+       |                                                                       ^
+     66|     expect(message).toContain('Something went wrong while handling the…
+     67|     expect(message).toMatch(/Nothing was persisted/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/routes/protocol-dev-client-5xx-message.test.ts > a 500 from the protocol routes is shown as a failure in a sentence, never the code > addScheduleVisit (POST /api/protocol-development/…) says the server sentence and that nothing was written
+AssertionError: the INTERNAL_ERROR code was shown as prose: expected 'Couldn\'t add the visit — INTERNAL_ER…' not to contain 'INTERNAL_ERROR'
+
+Expected: "INTERNAL_ERROR"
+Received: "Couldn't add the visit — INTERNAL_ERROR Nothing was written."
+
+ ❯ tests/routes/protocol-dev-client-5xx-message.test.ts:76:71
+     74|     expect(err).toBeInstanceOf(Error);
+     75|     const message = (err as Error).message;
+     76|     expect(message, 'the INTERNAL_ERROR code was shown as prose').not.…
+       |                                                                       ^
+     77|     expect(message).toContain('Something went wrong while handling the…
+     78|     expect(message).toMatch(/Nothing was written/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  08:15:03
+   Duration  1.62s (transform 320ms, setup 177ms, import 465ms, tests 17ms, environment 605ms)
+

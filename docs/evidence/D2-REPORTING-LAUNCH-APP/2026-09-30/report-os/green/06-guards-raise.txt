@@ -1,0 +1,34 @@
+# Both refusals in the file, exercised against the provisioned test database inside transactions that are rolled back.
+
+## 1. The table is missing -> the guard raises, nothing is inserted
+# piped to psql "$TEST_DATABASE_URL":
+  BEGIN;
+  ALTER TABLE report_type_registry RENAME TO report_type_registry_hidden;
+  \i migrations/20260930_report_type_registry_seed.sql
+  ROLLBACK;
+BEGIN
+ALTER TABLE
+psql:migrations/20260930_report_type_registry_seed.sql:45: ERROR:  report_type_registry does not exist. drizzle-kit push creates it from shared/schema/report-os.ts when the database is provisioned (scripts/db/install-fresh.mjs); this database was not provisioned completely, and this migration does not create the table.
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at RAISE
+psql:migrations/20260930_report_type_registry_seed.sql:124: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:migrations/20260930_report_type_registry_seed.sql:199: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+
+## 2. A seeded type is absent after the upsert -> the row-count assertion raises
+# (assert-only.sql = the final DO block of the file, extracted with awk; piped to psql "$TEST_DATABASE_URL" after one seeded type_id is renamed away inside the transaction)
+  BEGIN;
+  UPDATE report_type_registry SET type_id = type_id || '_hidden' WHERE type_id = 'prediction.trial_pos';
+  \i <scratch>/assert-only.sql
+  ROLLBACK;
+BEGIN
+UPDATE 1
+psql:<scratch>/assert-only.sql:74: ERROR:  report_type_registry holds 60 of the 61 seeded report types after the seed; the file is incomplete or a row was refused.
+CONTEXT:  PL/pgSQL function inline_code_block line 72 at RAISE
+ROLLBACK
+
+## 3. After both rollbacks
+ seeded_rows 
+-------------
+          61
+(1 row)
+

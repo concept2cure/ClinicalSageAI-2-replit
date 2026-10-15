@@ -52,6 +52,9 @@ interface Leaf {
   preview?: string | null;
 }
 
+/** The turn record the stubbed /api/claude/batch reports for its drafts. */
+const TURN_RECORD_ID = '3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b';
+
 /** Requests the surface actually made, in order — the subject of most asserts. */
 let sent: Array<{ url: string; method: string; body: any }>;
 /** What POST …/accept answers with; overridden per test. */
@@ -106,6 +109,7 @@ beforeEach(() => {
               content: '<p>Draft body ' + (i + 1) + '</p>',
               model: 'claude-test',
               latencyMs: 100,
+              turnRecord: { status: 'recorded', id: TURN_RECORD_ID, sha256: 'a'.repeat(64) },
             })),
           },
         });
@@ -308,6 +312,26 @@ describe('"accepted" means the write came back, not that it was attempted', () =
     const draftReq = sent.find(r => r.url.includes('/api/claude/batch'));
     expect(draftReq?.body.requests[0].framework).toBe('ich_clinical');
     expect(acceptCalls()[0].body.framework).toBe('ich_clinical');
+  });
+});
+
+/* NEW (high), periodic review 2026-09-28, editor family: the accept told the
+   server which model wrote the draft, and the server recorded it. The model is
+   the server's to know, from the turn record the batch wrote; what the card
+   sends is that record's id. */
+describe('the accept names the turn record the draft came from, not a model', () => {
+  it('sends the turn record id the batch returned, and no model', async () => {
+    spineBody = spine({ framework: 'ich_clinical', tree: leaves([{ id: '7', num: '2.7.1', title: 'Summary of Clinical Efficacy' }]) });
+    const { container } = renderSurface();
+    await draftAll(container);
+
+    fireEvent.click(container.querySelector('.bd-card-acts .bd-primary') as HTMLButtonElement);
+    await waitFor(() => expect(acceptCalls().length).toBe(1));
+
+    const body = acceptCalls()[0].body;
+    expect(body.turnRecordId).toBe(TURN_RECORD_ID);
+    expect('model' in body, 'the accept still tells the server which model wrote the draft').toBe(false);
+    expect(body.acceptedMachineText).toEqual([{ authorId: 'ana', text: '<p>Draft body 1</p>' }]);
   });
 });
 

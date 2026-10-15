@@ -1,0 +1,12 @@
+Mutant T06-outage-note-unread: an outage envelope ('PubMed API unavailable') reads as a success
+
+--- server/services/ana/tool-outcome.ts
+- if (detail && OUTAGE_RE.test(detail)) return { kind: 'unavailable', detail };
++ 
+
+Tests run: tests/services/tool-outcome.test.ts
+Result: KILLED
+
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a service that could not be reached 6ms
+      Tests  1 failed | 10 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

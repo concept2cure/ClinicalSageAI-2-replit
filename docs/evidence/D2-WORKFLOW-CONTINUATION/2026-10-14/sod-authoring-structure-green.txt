@@ -1,0 +1,176 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts
+{
+  "timestamp": "2026-10-14T20:05:55.282Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:05:55.284Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts
+{
+  "timestamp": "2026-10-14T20:05:55.284Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > models the target and deduplicates creator plus the complete historical ledger 22ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > refuses the original creator reviewing their document 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > refuses an earlier content contributor after a different person saved the latest revision 9ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > admits an independent reviewer only after authorship has been resolved 8ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > retains a historical contributor who has left the organization and has no current grant 14ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > granting another OWNER/AUTHOR and revoking creator grants cannot replace recorded authorship 16ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring authorship uses the original creator and all historical controlled-text writers > machine contributor metadata cannot invent a human author or erase the actual saver 10ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > does not disclose foreign document authors or admit a missing local record 5ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > ignores another same-tenant document and all foreign-tenant history 14ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > canonical composite foreign keys refuse cross-tenant section and revision parentage 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > also ignores a legacy section whose tenant disagrees with its document parent 10ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring parent and tenant scope > ignores a legacy revision whose tenant disagrees with its section parent 11ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "7x" even when one historical author is known 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "author@example.test" even when one historical author is known 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "10000000-0000-4000-8000-000000000001" even when one historical author is known 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "0" even when one historical author is known 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "-7" even when one historical author is known 5ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "7.5" even when one historical author is known 4ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "2147483648" even when one historical author is known 5ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "07" even when one historical author is known 3ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity " 7 " even when one historical author is known 4ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed creator identity "" even when one historical author is known 4ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver null even with a known original creator 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "7x" even with a known original creator 8ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "writer@example.test" even with a known original creator 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "20000000-0000-4000-8000-000000000001" even with a known original creator 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "0" even with a known original creator 9ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "-7" even with a known original creator 9ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "7.5" even with a known original creator 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "2147483648" even with a known original creator 13ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "07" even with a known original creator 28ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver " 7 " even with a known original creator 17ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > refuses malformed historical saver "" even with a known original creator 26ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a malformed target authoring-document: returns unresolved rather than a cast failure or admission 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a malformed target authoring-document:not-a-uuid returns unresolved rather than a cast failure or admission 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a malformed target authoring-document:42 returns unresolved rather than a cast failure or admission 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a malformed target authoring-document returns unresolved rather than a cast failure or admission 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > a syntactically valid missing document stays unresolved 4ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Unresolved or unreadable Authoring attribution never establishes independence > an actual database query failure is unverified, never an independence result 9ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > The actual historical authorship rows are immutable > engine UPDATE, DELETE and TRUNCATE guards retain contributor identity 17ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > an empty section creator is an author even when no prose revision was written 28ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > retains a title-only contributor from the native from/to metadata shape 19ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > retains a code-only contributor from the native from/to metadata shape 29ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a recorded null-to-heading change is distinct and contributes authorship 20ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > a saved section-order contributor is an author without a section-scoped audit row 38ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > the retained CREATE actor survives removal of the source section 40ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > the retained RENAME actor survives removal of the source section 22ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history > deduplicates original, prose, heading and order authors across the protected sources 45ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > document creation with no section cannot fabricate a second author 42ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > GRANT_PERMISSION activity does not make its actor a controlled-content author 25ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > COMMENT activity does not make its actor a controlled-content author 19ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > document_reviewed activity does not make its actor a controlled-content author 20ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > review_requested activity does not make its actor a controlled-content author 17ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > E_SIGN activity does not make its actor a controlled-content author 19ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > SIGN activity does not make its actor a controlled-content author 17ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > TRACK_CHANGES activity does not make its actor a controlled-content author 21ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a RENAME with wrong source does not fabricate a heading contributor 19ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a RENAME with wrong source with malformed changes does not fabricate a heading contributor 20ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a RENAME with missing source does not fabricate a heading contributor 20ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a RENAME with an empty change list does not fabricate a heading contributor 12ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a RENAME with unchanged heading does not fabricate a heading contributor 17ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a RENAME with unchanged null code does not fabricate a heading contributor 18ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a RENAME with track-only changes does not fabricate a heading contributor 16ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a RENAME with another metadata field does not fabricate a heading contributor 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > ignores other-document and other-tenant audit identities before resolving actors 19ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor null leaves independence unresolved 8ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "7x" leaves independence unresolved 8ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "writer@example.test" leaves independence unresolved 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "20000000-0000-4000-8000-000000000001" leaves independence unresolved 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "0" leaves independence unresolved 8ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "-7" leaves independence unresolved 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "7.5" leaves independence unresolved 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "2147483648" leaves independence unresolved 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "07" leaves independence unresolved 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor " 7 " leaves independence unresolved 8ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > a countable audit act with malformed actor "" leaves independence unresolved 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: missing changes cannot prove reviewer independence 9ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: null changes cannot prove reviewer independence 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: object changes cannot prove reviewer independence 7ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: string changes cannot prove reviewer independence 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: null element cannot prove reviewer independence 6ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: string element cannot prove reviewer independence 8ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: numeric element cannot prove reviewer independence 11ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: array element cannot prove reviewer independence 12ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: missing field cannot prove reviewer independence 17ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: non-string field cannot prove reviewer independence 20ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: missing title from cannot prove reviewer independence 13ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: missing title to cannot prove reviewer independence 22ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: object title from cannot prove reviewer independence 13ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: array code to cannot prove reviewer independence 23ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: boolean title from cannot prove reviewer independence 20ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history exclusions and verification > malformed native heading evidence: numeric code to cannot prove reviewer independence 15ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history database protection > an actual failed audit query remains unverified even when creator and prose facts are known 20ms
+ ✓ server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts > Authoring heading and structure audit history database protection > actual audit UPDATE, DELETE and TRUNCATE guards preserve heading-author evidence 20ms
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a statement timeout
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: canceling statement due to statement timeout
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a dropped connection
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: Connection terminated unexpectedly
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an RLS / permission refusal
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: permission denied
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an undefined column
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: column does not exist
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > names the target and says nothing was signed
+[governance/SoD] authorship lookup failed for "document:doc-1"; refusing to sign: timeout
+
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > an authorship signature is not a separation-of-duties case 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning review requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning approval requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning responsibility requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning release requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning undefined requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning  requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > lock always requires independence 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > the author signing AS AUTHOR is allowed, without even querying 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a section author is caught even when the document owner is someone else (the scaffolder) 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > whoever accepted a drafted section is an author of record 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > template scaffolds are excluded from the version-ledger query 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > every source is org-scoped 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a non-author passes, and the result says which sources were checked 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > eCTD sequence authorship is its creator, org-scoped 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > blocker authorship uses the real org column (org_id, not organization_id) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > a modelled record with no recorded author → AuthorUnresolved (was: log and allow) 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of submission:sub-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of specification:spec-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of batch:b-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of haq:x (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > but an authorship signature on such a record is allowed 2ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a statement timeout 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a dropped connection 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an RLS / permission refusal 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an undefined column 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > names the target and says nothing was signed 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > the sequence creator: author 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a colleague: independent 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > no recorded creator: unresolved — nobody can be shown independent 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a record type with no authorship modelled: unresolved 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a failed lookup: unverified — never independent 0ms
+
+ Test Files  2 passed (2)
+      Tests  126 passed (126)
+   Start at  20:05:53
+   Duration  7.80s (transform 993ms, setup 101ms, import 1.90s, tests 5.35s, environment 0ms)

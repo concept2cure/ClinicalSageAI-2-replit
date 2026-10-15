@@ -1,0 +1,19 @@
+Reads after one annotation post, in the Vault (annotation-success, Option X).
+
+                                   before fix    after fix
+Annotation list reads after post        3             1
+Vault re-reads after post               1             1
+
+Before:
+- Annotation reads: red.txt, test "one post makes one annotation read and one Vault re-read after it":
+  "expected 3 to be 1". The three reads are the post's own load(), the remounted panel's mount read,
+  and the read after the Vault's loading placeholder cleared (pre-change-timeline-annotation-post.txt).
+- Vault re-reads: pre-change-timeline-annotation-post.txt, vaultGET 1 -> 2.
+
+After:
+- green.txt: the same test passes (annotation reads after the post = 1, Vault re-reads after the post = 1).
+- Mechanism: the panel is keyed by the document alone and re-reads on refreshKey (the Vault's epoch),
+  and changed() no longer calls load(). The body no longer unmounts on a re-read, so no read is dropped.
+
+Not counted here: VaultVersions and DocumentHistory are still keyed by vaultEpoch, so they remount and
+re-read on each change, as before. VaultRelationships is keyed by the document only and does not re-read.

@@ -1,0 +1,16 @@
+Mutant R05-echoed-figure-found: a figure that is only AnA's input, echoed back, is found
+
+--- server/services/ana/answer-grounding.ts
+- results: indexNumbers(numbers.filter((o) => !o.echo)),
++ results: indexNumbers(numbers),
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a tool only echoed from what the model passed in 8ms
+ × tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure the model chose as an input and a tool echoes is AnA's input, not a result (HS-5) 17ms
+ × tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a tool that searches text the model supplied returns only the model's words 2ms
+ × tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a proportion she passed, restated as a percentage, is her input 1ms
+ × tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a percentage she passed, restated as a proportion, is her input 1ms
+      Tests  5 failed | 84 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯

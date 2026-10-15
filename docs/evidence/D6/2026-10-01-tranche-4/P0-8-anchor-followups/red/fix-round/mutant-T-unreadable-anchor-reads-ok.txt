@@ -1,0 +1,160 @@
+# Mutant T-unreadable-anchor-reads-ok: server/services/audit/tenant-chain-verdict.ts
+# replaced: "head.status === 'unavailable' ? null : true"
+# with:     "head.status === 'unavailable' ? true : true"
+# restored byte for byte: True
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /api/c2c/actions/verify-chain answers 409 and names the missing head (a member of organisation 7) 26ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity reports the integrity not ok, with the anchor break 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the licensing history reports the record store broken, not verified 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > npm run ops:verify-audit-chain reports public.audit_logs broken and exits 1 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain 1ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a member of organisation 7) 10ms
+   → expected 200 to be greater than or equal to 500
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a platform administrator, estate-wide) 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > npm run ops:verify-audit-chain reports public.audit_logs unverifiable (exit 2), not ok 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > an administrator of organisation 8 gets organisation 8's verdict, and nothing of organisation 7 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a break the walk finds in another organisation's row is said to be there, not named 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a platform administrator still gets the estate-wide verdict, every organisation's break included 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the ledger (meta.chain) 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > a document's history (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the export walk (turn-record and authoring exports) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the signed audit export's manifest 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the integrity attestation's chain row 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the ledger (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the export walk 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the signed audit export's manifest 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the integrity attestation's chain row 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > organisation 8's readers name nothing of organisation 7 1ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the tenant verdict is the walk, with the head unavailable and ok null (not ok, not broken) 2ms
+   → expected true to be null
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the ledger still returns its entries, and its verdict is unverified 2ms
+   → expected true to be null
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a document's history still returns its entries, unverified 1ms
+   → expected true to be null
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the export walk, the signed manifest and the attestation say not verified, with the reason 5ms
+   → expected { ok: true, rowsChecked: 4, …(1) } to match object { ok: null, …(1) }
+(1 matching property omitted from actual)
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a walk that fails still fails: only the head step is caught 2ms
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 26 passed (31)
+   Start at  15:51:39
+   Duration  3.29s (transform 1.55s, setup 103ms, import 2.67s, tests 118ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+{
+  "timestamp": "2026-10-01T15:51:42.372Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a member of organisation 7)
+AssertionError: expected 200 to be greater than or equal to 500
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:281:24
+    279|     h.objects.set('anchors/audit-chain/2026/10/02/x.json', Buffer.from…
+    280|     const res = await request(actionsApp()).get('/api/c2c/actions/veri…
+    281|     expect(res.status).toBeGreaterThanOrEqual(500);
+       |                        ^
+    282|     expect(res.body.ok).toBeUndefined();
+    283|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the tenant verdict is the walk, with the head unavailable and ok null (not ok, not broken)
+AssertionError: expected true to be null
+
+- Expected:
+null
+
++ Received:
+true
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:478:18
+    476|   it('the tenant verdict is the walk, with the head unavailable and ok…
+    477|     const v = await verifyTenantChainOnAdminScope(7);
+    478|     expect(v.ok).toBeNull();
+       |                  ^
+    479|     expect(v.rowsChecked).toBe(4);
+    480|     expect(v.head).toMatchObject({ verified: false, status: 'unavailab…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the ledger still returns its entries, and its verdict is unverified
+AssertionError: expected true to be null
+
+- Expected:
+null
+
++ Received:
+true
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:487:31
+    485|     const out = await readAuditLedger(ledgerClient(), 7, 10);
+    486|     expect(out.data.map((e) => e.id)).toEqual(['AUD-aud-7']);
+    487|     expect(out.meta.chain.ok).toBeNull();
+       |                               ^
+    488|     expect(out.meta.chain.head).toMatchObject({ status: 'unavailable' …
+    489|     expect(out.meta.chain.head?.reason).toMatch(UNREADABLE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a document's history still returns its entries, unverified
+AssertionError: expected true to be null
+
+- Expected:
+null
+
++ Received:
+true
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:495:31
+    493|     const out = await readRecordAuditHistory(ledgerClient(), 7, { tabl…
+    494|     expect(out.data).toHaveLength(1);
+    495|     expect(out.meta.chain.ok).toBeNull();
+       |                               ^
+    496|   });
+    497|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the export walk, the signed manifest and the attestation say not verified, with the reason
+AssertionError: expected { ok: true, rowsChecked: 4, …(1) } to match object { ok: null, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "head": {
+      "status": "unavailable",
+    },
+-   "ok": null,
++   "ok": true,
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:500:15
+    498|   it('the export walk, the signed manifest and the attestation say not…
+    499|     const v = await walkTenantChain(7);
+    500|     expect(v).toMatchObject({ ok: null, head: { status: 'unavailable' …
+       |               ^
+    501|     expect(v.reason).toMatch(UNREADABLE);
+    502|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+

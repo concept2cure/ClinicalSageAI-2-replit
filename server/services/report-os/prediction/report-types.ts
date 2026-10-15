@@ -15,6 +15,26 @@
 
 import type { ReportTypeDefinition } from '../taxonomy';
 
+/**
+ * A prediction is not a report run (reporting review 2026-10-01, provenance and
+ * honest-state lenses). The generic engine (computeInitialRun → renderReport)
+ * computes readiness, blockers and gaps; run under a prediction type it printed
+ * that readiness under "Predictive Regulatory Forecast" or "CRL / RTF
+ * Pre-Mortem", behind a Professional lock, with no model behind it. Both
+ * generic doors (POST /api/report-os/runs and the canvas render AnA uses)
+ * refuse the prediction family with this sentence. No validated prediction
+ * model is part of this release; the forecast's engine is the readiness twin,
+ * which RULE 2 keeps out of it.
+ */
+export const PREDICTION_FAMILY = 'prediction';
+export const PREDICTION_NOT_A_RUN =
+  'A prediction is not computed by the report run: the run computes readiness, blockers and gaps, not a forecast or a CRL/RTF risk, and no validated prediction model is part of this release. Nothing was run.';
+
+/** Whether a report type's family is the prediction family. */
+export function isPredictionFamily(family: string | null | undefined): boolean {
+  return family === PREDICTION_FAMILY;
+}
+
 export const PREDICTION_REPORT_TYPES: ReportTypeDefinition[] = [
   {
     typeId: 'prediction.deficiency_risk',

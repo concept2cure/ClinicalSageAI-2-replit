@@ -14,7 +14,8 @@
  * @module server/services/intelligence/readiness-scoring-engine
  */
 
-import { db } from '../../db.js';
+import { db, getPool } from '../../db.js';
+import { programInOrganization } from '../c2c/program-access.js';
 import { eq, and, sql } from 'drizzle-orm';
 import {
   projectIntelligenceProfiles,
@@ -31,21 +32,60 @@ export interface ReadinessScore {
   readonly gaps: readonly ReadinessGap[];
   readonly trend: TrendInfo;
   readonly predictions: ReadinessPredictions;
+  /** Which dimensions overallScore was computed from. See ReadinessScoreBasis. */
+  readonly scoreBasis: ReadinessScoreBasis;
   readonly scoredAt: string;
 }
 
+export type ReadinessDimensionName = 'completeness' | 'quality' | 'consistency' | 'compliance';
+
+/**
+ * ── 2026-10-08 (ana-15): quality, consistency and compliance can be null ─────
+ * Without a twin assessment the engine used to fill them in: consistency was
+ * the constant 70, quality was 65 ± profile counts, compliance was 80 − 5 per
+ * risk. None of the three was measured. Until ana-15 the engine threw on every
+ * call (42703 on the milestone read), so those figures never reached anyone.
+ * Fixing the read made them live, and context-enrichment renders the
+ * dimensions to AnA as a score table. So, as with ReadinessPredictions: null
+ * means "not measured" and must be rendered as such, never defaulted at the
+ * point of use. Completeness is always measured (the documents table; an
+ * empty project is 0).
+ */
 export interface ReadinessDimensions {
   readonly completeness: number; // 0-100
-  readonly quality: number;
-  readonly consistency: number;
-  readonly compliance: number;
+  readonly quality: number | null;
+  readonly consistency: number | null;
+  readonly compliance: number | null;
+}
+
+/**
+ * overallScore is the weighted average of the MEASURED dimensions only, with
+ * the weights re-normalised over them. With a twin assessment that backs all
+ * four it is the original formula. Without one it is document completeness
+ * alone, and `source` says so — a caller presenting overallScore as overall
+ * readiness must say which dimensions it covers.
+ */
+export interface ReadinessScoreBasis {
+  /**
+   * 'twin_unreadable': an assessment may be on record, but reading it (or
+   * checking the program is this organization's) failed. Until 2026-10-15
+   * that read as 'no_assessment_on_record', a statement about a record nobody
+   * had read.
+   */
+  readonly source: 'twin_assessment' | 'no_assessment_on_record' | 'twin_unreadable';
+  readonly measured: readonly ReadinessDimensionName[];
+  readonly notMeasured: readonly ReadinessDimensionName[];
 }
 
 export interface ModuleScore {
   readonly modulePath: string;
   readonly moduleName: string;
   readonly score: number;
-  readonly gapCount: number;
+  /**
+   * Null: the assessment records a score per module, not a gap list. Until
+   * 2026-10-15 this was invented from the score (3 below 50, 1 below 75).
+   */
+  readonly gapCount: number | null;
   readonly status: 'complete' | 'in_progress' | 'not_started' | 'at_risk';
 }
 
@@ -58,9 +98,13 @@ export interface ReadinessGap {
   readonly estimatedEffortHours: number | null;
 }
 
+/**
+ * 'unknown' with a null delta when fewer than two recorded scores exist.
+ * It used to read 'stable', delta 0, from no data at all (ana-15).
+ */
 export interface TrendInfo {
-  readonly direction: 'improving' | 'stable' | 'declining';
-  readonly delta: number;
+  readonly direction: 'improving' | 'stable' | 'declining' | 'unknown';
+  readonly delta: number | null;
   readonly dataPoints: number;
 }
 
@@ -87,7 +131,7 @@ export interface ReadinessPredictions {
   /** Criteria a twin assessment scored unmet. Null when no assessment exists. */
   readonly estimatedDeficiencies: number | null;
   /** Why the fields are null, for a caller that has to explain itself. */
-  readonly basis: 'twin_assessment' | 'no_assessment_on_record';
+  readonly basis: ReadinessScoreBasis['source'];
 }
 
 export interface ReadinessContext {
@@ -106,10 +150,13 @@ export interface ReadinessContext {
  * Compute a unified readiness score for a project.
  *
  * Strategy:
- * 1. Query the intelligence profile for risk factors and open questions
+ * 1. Query the intelligence profile for risk factors (gaps only)
  * 2. Query document status for completeness metrics
- * 3. If a twin assessment exists (via raw SQL to innovation schema), incorporate it
- * 4. Compute composite score deterministically
+ * 3. Query the linked program's milestones (gaps only)
+ * 4. If a twin assessment exists (via raw SQL to innovation schema), it
+ *    supplies quality, consistency, compliance and the trend; otherwise they
+ *    are null / unknown
+ * 5. Compute the composite over the measured dimensions deterministically
  */
 export async function computeReadinessScore(
   ctx: ReadinessContext,
@@ -132,7 +179,8 @@ export async function computeReadinessScore(
   // ReadinessScore from a partial set would return a falsely-short gap list and
   // a score presented as authoritative — a manufactured "here are your gaps"
   // that dropped some because a read failed. gatherTwinAssessment stays
-  // best-effort (it already degrades to a neutral score).
+  // best-effort: a failed read leaves its dimensions null and is reported as
+  // scoreBasis 'twin_unreadable'.
   for (const [name, settled] of [
     ['profile', profileSignal],
     ['documents', documentSignal],
@@ -149,28 +197,31 @@ export async function computeReadinessScore(
   const docs = documentSignal.status === 'fulfilled' ? documentSignal.value : null;
   const milestones = milestoneSignal.status === 'fulfilled' ? milestoneSignal.value : null;
   const twin = twinSignal.status === 'fulfilled' ? twinSignal.value : null;
+  const basis: ReadinessScoreBasis['source'] = twin
+    ? 'twin_assessment'
+    : twinSignal.status === 'rejected' ? 'twin_unreadable' : 'no_assessment_on_record';
 
   // ── Compute dimensions ──────────────────────────────────────────────────
 
-  // Completeness: based on document status distribution
+  // Completeness: measured from the document status distribution.
   const completeness = computeCompleteness(docs);
 
-  // Quality: from twin assessment if available, else estimate from profile
-  const quality = twin?.qualityScore ?? estimateQuality(profile);
+  // Quality, consistency, compliance: only a recorded twin assessment measures
+  // them. Without one they are null — see ReadinessDimensions. They used to be
+  // 65 ± profile counts, the constant 70, and 80 − 5 per risk.
+  const quality = twin?.qualityScore ?? null;
+  const consistency = twin?.consistencyScore ?? null;
+  const compliance = twin?.complianceScore ?? null;
 
-  // Consistency: from twin if available, else neutral
-  const consistency = twin?.consistencyScore ?? 70;
-
-  // Compliance: from twin if available, else estimate from risk count
-  const compliance = twin?.complianceScore ?? estimateCompliance(profile);
-
-  // ── Overall score (weighted average) ────────────────────────────────────
-  const overallScore = Math.round(
-    completeness * 0.35 +
-    quality * 0.25 +
-    consistency * 0.20 +
-    compliance * 0.20,
-  );
+  // ── Overall score: weighted average of the measured dimensions ──────────
+  const { overallScore, measured, notMeasured } = weightMeasured({
+    completeness, quality, consistency, compliance,
+  });
+  const scoreBasis: ReadinessScoreBasis = {
+    source: basis,
+    measured,
+    notMeasured,
+  };
 
   // ── Build module breakdown ──────────────────────────────────────────────
   const moduleBreakdown: ModuleScore[] = twin?.moduleScores
@@ -178,7 +229,7 @@ export async function computeReadinessScore(
         modulePath: path,
         moduleName: path.replace(/^module_/, 'Module ').replace(/_/g, '.'),
         score: Math.round(score),
-        gapCount: score < 50 ? 3 : score < 75 ? 1 : 0,
+        gapCount: null,
         status: score >= 90 ? 'complete' as const
           : score >= 50 ? 'in_progress' as const
           : score > 0 ? 'at_risk' as const
@@ -232,9 +283,10 @@ export async function computeReadinessScore(
   }
 
   // ── Trend ───────────────────────────────────────────────────────────────
+  // No recorded scores: unknown, not 'stable' with a delta of 0.
   const trend: TrendInfo = twin?.trend ?? {
-    direction: 'stable' as const,
-    delta: 0,
+    direction: 'unknown' as const,
+    delta: null,
     dataPoints: 0,
   };
 
@@ -245,7 +297,7 @@ export async function computeReadinessScore(
     approvalProbability: twin?.approvalProbability ?? null,
     estimatedReviewDays: twin?.reviewTimeDays ?? null,
     estimatedDeficiencies: twin?.deficiencyCount ?? null,
-    basis: twin ? 'twin_assessment' : 'no_assessment_on_record',
+    basis,
   };
 
   return {
@@ -255,8 +307,61 @@ export async function computeReadinessScore(
     gaps,
     trend,
     predictions,
+    scoreBasis,
     scoredAt: now,
   };
+}
+
+/**
+ * ── 2026-10-15: a readiness figure only where an assessment measured one ────
+ * Without a recorded assessment, overallScore is document completeness alone,
+ * and consumers presented it as readiness ("Ready — readiness score 75",
+ * "Readiness: 75/100"). A caller showing a readiness figure takes it from
+ * here: null unless a dimension beyond completeness was measured. overallScore
+ * stays a number for callers that label it with scoreBasis themselves.
+ */
+export function readinessFigure(score: ReadinessScore): number | null {
+  return score.scoreBasis.measured.some(d => d !== 'completeness') ? score.overallScore : null;
+}
+
+/** One line saying what the figure is and which dimensions were not assessed. */
+export function describeReadiness(score: ReadinessScore): string {
+  const names = score.scoreBasis.notMeasured;
+  const notAssessed =
+    names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names.join('');
+  const unreadable = score.scoreBasis.source === 'twin_unreadable'
+    ? "; the program's readiness assessment could not be read"
+    : '';
+  const tail = (notAssessed ? `; ${notAssessed} not assessed` : '') + unreadable;
+  const figure = readinessFigure(score);
+  return figure === null
+    ? `Readiness not assessed — document completeness ${score.dimensions.completeness}% (document status only)${tail}`
+    : `Readiness ${figure}/100 from the recorded assessment${tail}`;
+}
+
+const DIMENSION_WEIGHTS: Readonly<Record<ReadinessDimensionName, number>> = {
+  completeness: 0.35,
+  quality: 0.25,
+  consistency: 0.20,
+  compliance: 0.20,
+};
+
+/**
+ * The weighted average over the dimensions that were measured, weights
+ * re-normalised. All four measured: exactly the original formula.
+ * Completeness alone: completeness. Exported for its test.
+ */
+export function weightMeasured(dims: ReadinessDimensions): {
+  overallScore: number;
+  measured: ReadinessDimensionName[];
+  notMeasured: ReadinessDimensionName[];
+} {
+  const names = Object.keys(DIMENSION_WEIGHTS) as ReadinessDimensionName[];
+  const measured = names.filter(n => dims[n] !== null);
+  const notMeasured = names.filter(n => dims[n] === null);
+  const totalWeight = measured.reduce((s, n) => s + DIMENSION_WEIGHTS[n], 0);
+  const weighted = measured.reduce((s, n) => s + (dims[n] as number) * DIMENSION_WEIGHTS[n], 0);
+  return { overallScore: Math.round(weighted / totalWeight), measured, notMeasured };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -265,8 +370,6 @@ export async function computeReadinessScore(
 
 interface ProfileSignal {
   risks: Array<{ risk: string; impact: string; mitigation?: string }>;
-  openQuestionCount: number;
-  decisionCount: number;
 }
 
 async function gatherProfileSignal(ctx: ReadinessContext): Promise<ProfileSignal> {
@@ -280,18 +383,12 @@ async function gatherProfileSignal(ctx: ReadinessContext): Promise<ProfileSignal
     .limit(1);
 
   if (!profile) {
-    return { risks: [], openQuestionCount: 0, decisionCount: 0 };
+    return { risks: [] };
   }
 
+  // Risks feed the gap list. They no longer feed a dimension (ana-15).
   const risks = Array.isArray(profile.riskFactors) ? profile.riskFactors as ProfileSignal['risks'] : [];
-  const questions = Array.isArray(profile.openQuestions) ? profile.openQuestions as unknown[] : [];
-  const decisions = Array.isArray(profile.keyDecisions) ? profile.keyDecisions as unknown[] : [];
-
-  return {
-    risks,
-    openQuestionCount: questions.length,
-    decisionCount: decisions.length,
-  };
+  return { risks };
 }
 
 interface DocumentSignal {
@@ -350,19 +447,32 @@ async function gatherDocumentSignal(ctx: ReadinessContext): Promise<DocumentSign
 interface MilestoneSignal {
   total: number;
   completed: number;
-  overdue: Array<{ id: number; name: string }>;
-  upcoming: Array<{ id: number; name: string; daysUntil: number }>;
+  // program_milestones.id is a uuid.
+  overdue: Array<{ id: string; name: string }>;
+  upcoming: Array<{ id: string; name: string; daysUntil: number }>;
 }
 
 async function gatherMilestoneSignal(ctx: ReadinessContext): Promise<MilestoneSignal> {
   try {
+    // A project's milestones are those of its linked program:
+    // projects.regulatory_program_id (uuid) -> regulatory_programs.id ->
+    // program_milestones.program_id. regulatory_programs has no project_id
+    // column; the earlier subquery on one raised 42703 on every estate, and
+    // the fail-closed read below made every readiness score unavailable
+    // (ana-15). A project with no linked program has no milestones: the
+    // subquery is empty, which is an honest empty, not an error.
+    // recommendation-engine.ts Generator 3 reads the same link.
     const result = await db.execute(sql`
       SELECT id, name, target_date, status
       FROM program_milestones
       WHERE program_id IN (
-        SELECT id FROM regulatory_programs
-        WHERE project_id = ${ctx.projectId}
-          AND organization_id = ${ctx.organizationId}
+        SELECT rp.id
+        FROM projects p
+        JOIN regulatory_programs rp ON rp.id = p.regulatory_program_id
+        WHERE p.id = ${ctx.projectId}
+          AND p.organization_id = ${ctx.organizationId}
+          AND rp.organization_id = ${ctx.organizationId}
+          AND rp.deleted_at IS NULL
       )
     `);
 
@@ -372,7 +482,7 @@ async function gatherMilestoneSignal(ctx: ReadinessContext): Promise<MilestoneSi
     const completed = rows.filter(r => r.status === 'completed').length;
     const overdue = rows
       .filter(r => r.target_date && new Date(r.target_date as string) < now && r.status !== 'completed' && r.status !== 'cancelled')
-      .map(r => ({ id: Number(r.id), name: String(r.name) }));
+      .map(r => ({ id: String(r.id), name: String(r.name) }));
 
     const upcoming = rows
       .filter(r => {
@@ -382,7 +492,7 @@ async function gatherMilestoneSignal(ctx: ReadinessContext): Promise<MilestoneSi
         return daysUntil > 0 && daysUntil <= 30;
       })
       .map(r => ({
-        id: Number(r.id),
+        id: String(r.id),
         name: String(r.name),
         daysUntil: Math.ceil((new Date(r.target_date as string).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
       }));
@@ -397,20 +507,35 @@ async function gatherMilestoneSignal(ctx: ReadinessContext): Promise<MilestoneSi
   }
 }
 
+// A column the assessment row leaves null is null here, not a default: the
+// row used to read as quality/consistency/compliance 70, approval 0 and a
+// 180-day review when those columns were empty (ana-15).
 interface TwinSignal {
-  overallScore: number;
-  qualityScore: number;
-  consistencyScore: number;
-  complianceScore: number;
+  overallScore: number | null;
+  qualityScore: number | null;
+  consistencyScore: number | null;
+  complianceScore: number | null;
   moduleScores: Record<string, number>;
-  approvalProbability: number;
-  reviewTimeDays: number;
-  deficiencyCount: number;
+  approvalProbability: number | null;
+  reviewTimeDays: number | null;
+  deficiencyCount: number | null;
   trend: TrendInfo;
 }
 
+const numOrNull = (v: unknown): number | null => {
+  if (v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
 async function gatherTwinAssessment(ctx: ReadinessContext): Promise<TwinSignal | null> {
   if (!ctx.programId) return null;
+  // The twin tables carry no organization column, and programId can come from
+  // a query string (GET /api/intelligence/projects/:id/readiness). Read an
+  // assessment only for this organization's live program; any other id has
+  // none on record here (ana-15). A check that cannot run throws, and the
+  // caller reports the twin unreadable (it used to treat it as absent).
+  if (!(await programInOrganization(getPool, ctx.programId, ctx.organizationId))) return null;
 
   try {
     const result = await db.execute(sql`
@@ -433,36 +558,45 @@ async function gatherTwinAssessment(ctx: ReadinessContext): Promise<TwinSignal |
     `);
 
     const trendRows = trendResult.rows as Array<Record<string, unknown>>;
-    let direction: 'improving' | 'stable' | 'declining' = 'stable';
-    let delta = 0;
+    // Fewer than two recorded scores: no trend to report.
+    let direction: TrendInfo['direction'] = 'unknown';
+    let delta: number | null = null;
 
     if (trendRows.length >= 2) {
       const latest = Number(trendRows[0].overall_score);
       const previous = Number(trendRows[1].overall_score);
       delta = latest - previous;
-      if (delta > 2) direction = 'improving';
-      else if (delta < -2) direction = 'declining';
+      direction = delta > 2 ? 'improving' : delta < -2 ? 'declining' : 'stable';
     }
 
     return {
-      overallScore: Number(row.overall_readiness_score ?? 0),
-      qualityScore: Number(row.quality_score ?? 70),
-      consistencyScore: Number(row.consistency_score ?? 70),
-      complianceScore: Number(row.compliance_score ?? 70),
+      overallScore: numOrNull(row.overall_readiness_score),
+      qualityScore: numOrNull(row.quality_score),
+      consistencyScore: numOrNull(row.consistency_score),
+      complianceScore: numOrNull(row.compliance_score),
       moduleScores: (row.module_scores as Record<string, number>) ?? {},
-      approvalProbability: Number(row.predicted_approval_probability ?? 0),
-      reviewTimeDays: Number(row.predicted_review_time_days ?? 180),
-      deficiencyCount: Number(row.predicted_deficiency_count ?? 0),
+      approvalProbability: numOrNull(row.predicted_approval_probability),
+      reviewTimeDays: numOrNull(row.predicted_review_time_days),
+      deficiencyCount: numOrNull(row.predicted_deficiency_count),
       trend: { direction, delta, dataPoints: trendRows.length },
     };
-  } catch {
+  } catch (e) {
+    // A twin table that does not exist holds no assessment. Any other failure
+    // propagates: the caller reports 'twin_unreadable'. It returned null, which
+    // read as "no assessment on record" (2026-10-15).
+    if ((e as { code?: string })?.code !== '42P01') throw e;
     return null;
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DIMENSION ESTIMATORS (when twin data unavailable)
+// MEASURED DIMENSION
 // ═══════════════════════════════════════════════════════════════════════════════
+// estimateQuality (65 + 5 per decision − 3 per open question) and
+// estimateCompliance (80 − 5 per risk − 10 per critical risk) were removed on
+// 2026-10-08 (ana-15). Neither measured quality or compliance; their output
+// was presented to AnA as a measured score. Without a twin assessment those
+// dimensions are null. The risks still reach the gap list.
 
 function computeCompleteness(docs: DocumentSignal | null): number {
   if (!docs || docs.total === 0) return 0;
@@ -470,20 +604,4 @@ function computeCompleteness(docs: DocumentSignal | null): number {
   const inReview = docs.inReview * 0.7;
   const draft = docs.draft * 0.3;
   return Math.round(((approved + inReview + draft) / docs.total) * 100);
-}
-
-function estimateQuality(profile: ProfileSignal | null): number {
-  if (!profile) return 50;
-  // More decisions made → higher quality signal; more open questions → lower
-  const decisionBoost = Math.min(profile.decisionCount * 5, 20);
-  const questionPenalty = Math.min(profile.openQuestionCount * 3, 15);
-  return Math.max(40, Math.min(90, 65 + decisionBoost - questionPenalty));
-}
-
-function estimateCompliance(profile: ProfileSignal | null): number {
-  if (!profile) return 50;
-  // Each risk factor reduces compliance estimate
-  const riskPenalty = Math.min(profile.risks.length * 5, 25);
-  const criticalRisks = profile.risks.filter(r => r.impact === 'critical').length;
-  return Math.max(30, Math.min(90, 80 - riskPenalty - criticalRisks * 10));
 }

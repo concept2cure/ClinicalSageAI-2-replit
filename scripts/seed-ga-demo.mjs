@@ -21,16 +21,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { orderDomainParts } from './seed/ga-demo-order.mjs';
+import { assertLocalDatabase } from './seed/local-only.mjs';
 
 const { Pool } = pg;
 
 // ── Safety + modes ──────────────────────────────────────────────────
-// Refuse to mutate a production database; support a non-mutating verify pass.
+// Support a non-mutating verify pass. Where it may run is decided once the
+// database URL is known (assertLocalDatabase, below).
 const VERIFY_ONLY = process.argv.includes('--verify');
-if (process.env.NODE_ENV === 'production') {
-  console.error('Refusing to run seed-ga-demo in production (NODE_ENV=production).');
-  process.exit(1);
-}
 
 // ── Database Connection ─────────────────────────────────────────────
 function getDbUrl() {
@@ -48,6 +46,9 @@ function getDbUrl() {
 }
 
 const dbUrl = getDbUrl();
+// Invented programs, people, tasks and approvals: a database on this machine
+// only. NODE_ENV alone let a UAT or customer database through (2026-10-15).
+assertLocalDatabase(dbUrl, 'seed-ga-demo');
 const isNeon = dbUrl.includes('neon.tech') || dbUrl.includes('sslmode=require');
 const pool = new Pool({
   connectionString: dbUrl,
@@ -399,33 +400,10 @@ async function seed() {
       console.log('   ⚠ documents table not found — skipping');
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // 6. AUDIT TRAIL ENTRIES
-    // ════════════════════════════════════════════════════════════════
-    console.log('[6/6] Creating audit trail entries...');
-
-    const auditTableExists = await client.query(`
-      SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'auth_audit_log')
-    `);
-
-    if (auditTableExists.rows[0].exists) {
-      const auditEntries = [
-        { event: 'login_success', email: 'jm.smith@concept2cure.pro', success: true },
-        { event: 'user_created', email: 'sarah.chen@concept2cure.pro', success: true },
-        { event: 'user_created', email: 'raj.patel@concept2cure.pro', success: true },
-        { event: 'password_changed', email: 'jm.smith@concept2cure.pro', success: true },
-      ];
-
-      for (const entry of auditEntries) {
-        await client.query(`
-          INSERT INTO auth_audit_log (event_type, email, success, ip_address, user_agent, organization_id, created_at)
-          VALUES ($1, $2, $3, '10.0.0.1', 'Concept2Cure.RI/GA-Seed', $4, NOW() - interval '1 day' * (random() * 30)::int)
-        `, [entry.event, entry.email, entry.success, org.id]);
-      }
-      console.log('   ✓ Audit trail seeded');
-    } else {
-      console.log('   ⚠ auth_audit_log table not found — skipping');
-    }
+    /* 6. Removed 2026-10-15: four auth_audit_log rows — a login, two user
+       creations and a password change, for these accounts, from 10.0.0.1,
+       at random times in the last 30 days — that nobody performed. An audit
+       trail is never demonstration data. */
 
     // ════════════════════════════════════════════════════════════════
     // 7. SUBMISSION CORE + EVIDENCE GRAPH (Phase 1)
@@ -946,6 +924,29 @@ async function seed() {
           }
         }
         console.log(`   Domain modules: ${domainOk} seeded, ${domainSkipped} skipped (unbuilt surfaces).`);
+      }
+    }
+
+    // ── Every program this seed wrote has its project record (P-19) ─────────
+    // The domain modules insert regulatory_programs directly, not through
+    // intake, which writes the program's projects row in the same transaction.
+    // Provisioning runs the migration set BEFORE this seed, so the set's
+    // backfill ran while these programs did not exist: BX-256 and Vorelinib
+    // reached QA with no record, and their schedule answered "no record"
+    // (2026-10-08). The set's own file runs here, in this transaction: one
+    // statement, not a second copy of its rules. It skips with a NOTICE where a
+    // table or column is absent, so a throw here is a real fault and fails the
+    // seed rather than leaving programs without their record.
+    {
+      const anchorFile = path.join(
+        path.dirname(fileURLToPath(import.meta.url)), '..', 'migrations', '20261008_program_project_anchor_backfill.sql',
+      );
+      const onNotice = (n) => { if (String(n.message).startsWith('P-19')) console.log(`   ${n.message}`); };
+      client.on('notice', onNotice);
+      try {
+        await client.query(fs.readFileSync(anchorFile, 'utf8'));
+      } finally {
+        client.off('notice', onNotice);
       }
     }
 

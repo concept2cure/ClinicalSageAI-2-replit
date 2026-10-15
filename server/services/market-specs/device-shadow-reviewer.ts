@@ -24,6 +24,13 @@
 
 import { CER_SECTIONS } from './cer-structure';
 import { PER_SECTIONS } from './per-structure';
+import {
+  FDA_CYBER_DEVICE_QUESTION,
+  FDA_DOCUMENTATION_LEVEL_QUESTION,
+  fdaCybersecurityDocumentation,
+  fdaDocumentationLevel,
+} from './software-lifecycle';
+import { basisLabel } from '../../../shared/regulatory/regulatory-basis';
 
 export type DeviceSubmissionType = '510k' | 'de_novo' | 'pma' | 'cer' | 'per';
 
@@ -48,7 +55,8 @@ export const K510_REVIEWER_QUESTIONS: ReviewerQuestion[] = [
   { sectionId: 'performance_data', question: 'Is performance (bench/clinical) tested per FDA-recognized consensus standards, with pre-specified, worst-case acceptance criteria that are met?', basis: '21 CFR 807.87; recognized consensus standards', severity: 'major' },
   { sectionId: 'biocompatibility', question: 'Is biocompatibility evaluated per ISO 10993 for the correct contact type and duration?', basis: 'ISO 10993-1; FDA biocompatibility guidance', severity: 'major' },
   { sectionId: 'sterilization', question: 'For a sterile device, is the sterilization method validated (SAL 10⁻⁶) with residuals/shelf-life addressed?', basis: 'ISO 11135/11137; FDA guidance', severity: 'major' },
-  { sectionId: 'software', question: 'For software, is the documentation provided per the device’s level of concern (IEC 62304), with cybersecurity (threat model, SBOM)?', basis: 'IEC 62304; FDA software & cybersecurity guidance', severity: 'major' },
+  { sectionId: 'software', question: `For software: ${FDA_DOCUMENTATION_LEVEL_QUESTION} Is the documentation provided for that level?`, basis: fdaDocumentationLevel({}).basis.map(basisLabel).join('; '), severity: 'major' },
+  { sectionId: 'software', question: FDA_CYBER_DEVICE_QUESTION, basis: fdaCybersecurityDocumentation({}).basis.map(basisLabel).join('; '), severity: 'major' },
   { sectionId: 'labeling', question: 'Is the labeling/IFU compliant and internally consistent with the Indications for Use (warnings, contraindications)?', basis: '21 CFR 801', severity: 'major' },
 ];
 

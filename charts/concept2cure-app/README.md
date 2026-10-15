@@ -40,7 +40,9 @@ commit real values). Required: `DATABASE_URL`, `JWT_SECRET`. Recommended:
 
 Private installs ship with no demo admin (`SEED_DEMO_USER=false`). After the
 pod is ready, create the first admin once via `POST /api/setup/initialize`
-(see `NOTES.txt`). The endpoint self-closes after the first user exists.
+with the `SETUP_TOKEN` you put in the Secret in the `X-Setup-Token` header (see
+`NOTES.txt`); in production the endpoint is closed without one. It self-closes
+after the first user exists.
 
 ## Migrations
 

@@ -394,6 +394,9 @@ export interface ListState<T> {
   rows: T[];
   loading: boolean;
   error?: string;
+  /** The HTTP status the read returned. See {@link DataState.status}: a list
+   *  surface cannot tell a refusal (403) from an outage without it. */
+  status?: number;
   /** The route's envelope `meta`. See {@link DataState.meta} — `empty` alone
    *  cannot distinguish an empty store from an absent one. */
   meta?: Record<string, unknown>;
@@ -444,6 +447,7 @@ export function useLiveRows<T>(
     rows,
     loading: st.loading,
     error: st.error,
+    status: st.status,
     meta: st.meta,
     empty: !st.loading && !st.error && rows.length === 0,
   };

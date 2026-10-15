@@ -1,0 +1,214 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome 110ms
+   → expected 'IND · FDA (US)Activeoriginal stageONC…' to contain 'External validation failed'
+ × client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome 54ms
+   → expected 'IND · FDA (US)Activeoriginal stageONC…' to contain 'External validation report invalid'
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row 202ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet" 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > "Add a market" opens the Submission Center on New submission; "Open Submission Center" on the list 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and offers Add a market 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market" 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read) 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review" 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared" 21ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > says "Not assessed" and why when no validator ran, never "Satisfied" 61ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call the validator clean in the cleared verdict when it never ran 15ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > still says "Satisfied" when the validator ran and its report was clean 15ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory failed validation without converting clearance into a pass 19ms
+   → expected 'The agency-grade validator’s report f…' to contain 'External validation failed.'
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory invalid validation without converting clearance into a pass 15ms
+   → expected 'The agency-grade validator’s report f…' to contain 'External validation report invalid.'
+ × server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > retains a clean subset execution without treating it as configured external validation 9ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > clears the composed verdict for a configured matching clean external report 4ms
+   → expected { configured: true, ran: true, …(3) } to match object { configured: true, ran: true, …(4) }
+(3 matching properties omitted from actual)
+ × server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > uses configuration discovery, rather than an adapter name, to enforce readiness 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory failed report as its actual outcome, preserving policy clearance 3ms
+   → expected { key: 'external', …(3) } to match object { cleared: true, …(1) }
+(11 matching properties omitted from actual)
+ × server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory invalid report as its actual outcome, preserving policy clearance 1ms
+   → expected { key: 'external', …(3) } to match object { cleared: true, …(1) }
+(11 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > retains a clean subset execution without treating it as configured external validation
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts:62:45
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > clears the composed verdict for a configured matching clean external report
+AssertionError: expected { configured: true, ran: true, …(3) } to match object { configured: true, ran: true, …(4) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "assessmentStatus": "passed",
+    "configured": true,
+-   "qualifyingRun": true,
+    "ran": true,
+-   "reportedValidatorName": "LORENZ",
+-   "selectedValidatorName": "LORENZ",
+  }
+
+ ❯ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts:72:34
+     70|     fixture.adapter.name = 'LORENZ'; fixture.adapter.kind = 'external_…
+     71|     const a = await assessSequenceDispatchReadiness({ sequenceId: 12, …
+     72|     expect(a.externalValidation).toMatchObject({ configured: true, ran…
+       |                                  ^
+     73|     expect([a.gate.cleared, a.freezeGate.cleared, a.dispatchGateOnSign…
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > uses configuration discovery, rather than an adapter name, to enforce readiness
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts:80:45
+     78|     fixture.adapter.isConfigured.mockResolvedValue(false);
+     79|     const a = await assessSequenceDispatchReadiness({ sequenceId: 12, …
+     80|     expect(a.externalValidation.configured).toBe(false);
+       |                                             ^
+     81|     expect(a.gate.cleared).toBe(false);
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory failed report as its actual outcome, preserving policy clearance
+AssertionError: expected { key: 'external', …(3) } to match object { cleared: true, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "assessmentStatus": "failed",
+    "cleared": true,
+  }
+
+ ❯ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts:92:22
+     90|     expect(a.gate.cleared).toBe(true);
+     91|     const external = a.gates.find((g) => g.key === 'external');
+     92|     expect(external).toMatchObject({ cleared: true, assessmentStatus: …
+       |                      ^
+     93|     expect(external?.notAssessed).toBeUndefined();
+     94|     expect(external?.assessmentNote).toMatch(status === 'failed' ? /1 …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory invalid report as its actual outcome, preserving policy clearance
+AssertionError: expected { key: 'external', …(3) } to match object { cleared: true, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "assessmentStatus": "invalid",
+    "cleared": true,
+  }
+
+ ❯ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts:92:22
+     90|     expect(a.gate.cleared).toBe(true);
+     91|     const external = a.gates.find((g) => g.key === 'external');
+     92|     expect(external).toMatchObject({ cleared: true, assessmentStatus: …
+       |                      ^
+     93|     expect(external?.notAssessed).toBeUndefined();
+     94|     expect(external?.assessmentNote).toMatch(status === 'failed' ? /1 …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory failed validation without converting clearance into a pass
+AssertionError: expected 'The agency-grade validator’s report f…' to contain 'External validation failed.'
+
+Expected: "External validation failed."
+Received: "The agency-grade validator’s report for this package carries no errorsSatisfied.EXTERNAL_VALIDATION_CLEAN · e"
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx:98:30
+     96|     await screen.findByText('At least one Shadow Review has completed'…
+     97|     const card = document.querySelector('[data-gate="external"]')!;
+     98|     expect(card.textContent).toContain(label);
+       |                              ^
+     99|     expect(card.textContent).toContain(assessmentNote);
+    100|     expect(card.textContent).not.toMatch(/Satisfied|Not assessed/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory invalid validation without converting clearance into a pass
+AssertionError: expected 'The agency-grade validator’s report f…' to contain 'External validation report invalid.'
+
+Expected: "External validation report invalid."
+Received: "The agency-grade validator’s report for this package carries no errorsSatisfied.EXTERNAL_VALIDATION_CLEAN · e"
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx:98:30
+     96|     await screen.findByText('At least one Shadow Review has completed'…
+     97|     const card = document.querySelector('[data-gate="external"]')!;
+     98|     expect(card.textContent).toContain(label);
+       |                              ^
+     99|     expect(card.textContent).toContain(assessmentNote);
+    100|     expect(card.textContent).not.toMatch(/Satisfied|Not assessed/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome
+AssertionError: expected 'IND · FDA (US)Activeoriginal stageONC…' to contain 'External validation failed'
+
+Expected: "External validation failed"
+Received: "IND · FDA (US)Activeoriginal stageONC-221 IND · VorelinibSequence 0000 · Assembling · 14 leavesIND · FDA (US): Cleared to dispatchStructural validation: 2 errors · 5 warnings · 1 infoFDA eCTD v4.0 is built and validated here.Open "
+
+ ❯ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx:155:29
+    153|     const row = await marketRow('IND · FDA');
+    154|     await waitFor(() => expect(row.textContent).toContain('Cleared to …
+    155|     expect(row.textContent).toContain(assessmentStatus === 'failed' ? …
+       |                             ^
+    156|     expect(row.textContent).toContain(assessmentNote);
+    157|     expect(row.textContent).not.toMatch(/not assessed|validator not ru…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome
+AssertionError: expected 'IND · FDA (US)Activeoriginal stageONC…' to contain 'External validation report invalid'
+
+Expected: "External validation report invalid"
+Received: "IND · FDA (US)Activeoriginal stageONC-221 IND · VorelinibSequence 0000 · Assembling · 14 leavesIND · FDA (US): Cleared to dispatch External validator not run: the package has not been checked against it.Structural validation: 2 errors · 5 warnings · 1 infoFDA eCTD v4.0 is built and validated here.Open "
+
+ ❯ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx:155:29
+    153|     const row = await marketRow('IND · FDA');
+    154|     await waitFor(() => expect(row.textContent).toContain('Cleared to …
+    155|     expect(row.textContent).toContain(assessmentStatus === 'failed' ? …
+       |                             ^
+    156|     expect(row.textContent).toContain(assessmentNote);
+    157|     expect(row.textContent).not.toMatch(/not assessed|validator not ru…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  9 failed | 14 passed (23)
+   Start at  03:31:22
+   Duration  4.53s (transform 1.42s, setup 191ms, import 2.28s, tests 955ms, environment 749ms)
+

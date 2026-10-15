@@ -1,0 +1,236 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > drafted governed content is not ready, whatever substantive/flags/templates the model types 10ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > approved governed content is ready with no model leaves, flags or templates at all 2ms
+   → expected 'needs_parameters' to be 'computed' // Object.is equality
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > the device answers are the program's, not the model's 1ms
+   → expected 0 to be greater than 0
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a template whose bytes are not the pinned ones does not count, whatever file names the model lists 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a program with no authored governed sections answers from the legacy store and says so ('legacy_org_wide') 1ms
+   → expected undefined to be 'legacy_org_wide' // Object.is equality
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a failed read is reported as a failed read — never as missing sections 1ms
+   → expected 'computed' to be 'read_failed' // Object.is equality
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a failed project lookup is a failed read too 2ms
+   → expected 'computed' to be 'read_failed' // Object.is equality
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > with no project open and no hypothetical mode, it asks for a project 3ms
+   → expected 'computed' to be 'needs_project' // Object.is equality
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > mode 'hypothetical' ignores substantive and template claims and is labelled as not the project's content 1ms
+   → expected undefined to be 'hypothetical' // Object.is equality
+ × server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > the AnA tool and the /assemble route compute through one function: same artifactKind and blockers 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > drafted governed content is not ready, whatever substantive/flags/templates the model types
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:147:48
+    145|     const out = await call(MODEL_CLAIMS, OPEN);
+    146|     expect(out.status).toBe('computed');
+    147|     expect(out.result.canProduceOfficialEstar).toBe(false);
+       |                                                ^
+    148|     expect(out.result.artifactKind).not.toBe('official-estar');
+    149|     expect(out.deviceContentSource).toBe('governed_program');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > approved governed content is ready with no model leaves, flags or templates at all
+AssertionError: expected 'needs_parameters' to be 'computed' // Object.is equality
+
+Expected: "computed"
+Received: "needs_parameters"
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:160:24
+    158|     h.governed = governedRows('approved');
+    159|     const out = await call({ pathway: '510k', variant: 'device' }, OPE…
+    160|     expect(out.status).toBe('computed');
+       |                        ^
+    161|     expect(out.deviceContentSource).toBe('governed_program');
+    162|     expect(out.result.estar.summary.missingRequired).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > the device answers are the program's, not the model's
+AssertionError: expected 0 to be greater than 0
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:173:58
+    171|     h.flags.mockImplementation(async () => undefined); // intake never…
+    172|     const out = await call(MODEL_CLAIMS, OPEN);
+    173|     expect(out.result.estar.summary.undetermined.length).toBeGreaterTh…
+       |                                                          ^
+    174|     expect(out.result.canProduceOfficialEstar).toBe(false);
+    175|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a template whose bytes are not the pinned ones does not count, whatever file names the model lists
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:181:43
+    179|     h.vendored.mockImplementation(async () => [{ fileName: OFFICIAL, b…
+    180|     const out = await call(MODEL_CLAIMS, OPEN);
+    181|     expect(out.result.template.available).toBe(false);
+       |                                           ^
+    182|     expect(out.result.canProduceOfficialEstar).toBe(false);
+    183|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a program with no authored governed sections answers from the legacy store and says so ('legacy_org_wide')
+AssertionError: expected undefined to be 'legacy_org_wide' // Object.is equality
+
+- Expected:
+"legacy_org_wide"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:190:37
+    188|     const out = await call(MODEL_CLAIMS, OPEN);
+    189|     expect(out.status).toBe('computed');
+    190|     expect(out.deviceContentSource).toBe('legacy_org_wide');
+       |                                     ^
+    191|     expect(out.result.canProduceOfficialEstar).toBe(false);
+    192|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a failed read is reported as a failed read — never as missing sections
+AssertionError: expected 'computed' to be 'read_failed' // Object.is equality
+
+Expected: "read_failed"
+Received: "computed"
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:198:24
+    196|     const raw = await getToolHandler('assemble_device_submission')!(MO…
+    197|     const out = JSON.parse(raw);
+    198|     expect(out.status).toBe('read_failed');
+       |                        ^
+    199|     expect(typeof out.standing_error).toBe('string');
+    200|     expect(out.result).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > a failed project lookup is a failed read too
+AssertionError: expected 'computed' to be 'read_failed' // Object.is equality
+
+Expected: "read_failed"
+Received: "computed"
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:209:24
+    207|     h.open.mockImplementation(async () => { throw new Error('connectio…
+    208|     const out = await call(MODEL_CLAIMS, OPEN);
+    209|     expect(out.status).toBe('read_failed');
+       |                        ^
+    210|     expect(out.result).toBeUndefined();
+    211|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > with no project open and no hypothetical mode, it asks for a project
+AssertionError: expected 'computed' to be 'needs_project' // Object.is equality
+
+Expected: "needs_project"
+Received: "computed"
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:216:24
+    214|     h.open.mockImplementation(async () => null);
+    215|     const out = await call(MODEL_CLAIMS, NONE);
+    216|     expect(out.status).toBe('needs_project');
+       |                        ^
+    217|     expect(out.result).toBeUndefined();
+    218|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > mode 'hypothetical' ignores substantive and template claims and is labelled as not the project's content
+AssertionError: expected undefined to be 'hypothetical' // Object.is equality
+
+- Expected:
+"hypothetical"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:223:22
+    221|     const out = await call({ ...MODEL_CLAIMS, mode: 'hypothetical' }, …
+    222|     expect(out.status).toBe('computed');
+    223|     expect(out.mode).toBe('hypothetical');
+       |                      ^
+    224|     expect(String(out.basis)).toMatch(/hypothetical/i);
+    225|     expect(String(out.basis)).toMatch(/not this project/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts > assemble_device_submission — project scope > the AnA tool and the /assemble route compute through one function: same artifactKind and blockers
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts:237:27
+    235|       | ((orgId: number, o: Record<string, unknown>) => Promise<{ devi…
+    236|       | undefined;
+    237|     expect(typeof shared).toBe('function');
+       |                           ^
+    238|     const direct = await shared!(42, { programId: PROGRAM, pathway: '5…
+    239|     const out = await call(MODEL_CLAIMS, OPEN);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  03:56:14
+   Duration  9.60s (transform 6.32s, setup 76ms, import 9.24s, tests 28ms, environment 0ms)
+
+
+=== Fix round 1 (2026-10-05): advise_device_readiness parallel path + leaves-read failure — red before the change ===
+$ npx vitest run server/services/ana/__tests__/assemble-device-submission.project-scope.test.ts --reporter=verbose
+ ✓ assemble_device_submission — project scope > drafted governed content is not ready, whatever substantive/flags/templates the model types 62ms
+ ✓ assemble_device_submission — project scope > approved governed content is ready with no model leaves, flags or templates at all 2ms
+ ✓ assemble_device_submission — project scope > the device answers are the program's, not the model's 1ms
+ ✓ assemble_device_submission — project scope > a template whose bytes are not the pinned ones does not count, whatever file names the model lists 1ms
+ ✓ assemble_device_submission — project scope > a program with no authored governed sections answers from the legacy store and says so ('legacy_org_wide') 1ms
+ ✓ assemble_device_submission — project scope > a failed read is reported as a failed read — never as missing sections 2ms
+ ✓ assemble_device_submission — project scope > a failed CONTENT read after the scope resolved is a failed read — never missing sections 1ms
+ ✓ assemble_device_submission — project scope > a failed project lookup is a failed read too 1ms
+ ✓ assemble_device_submission — project scope > with no project open and no hypothetical mode, it asks for a project 1ms
+ ✓ assemble_device_submission — project scope > mode 'hypothetical' ignores substantive and template claims and is labelled as not the project's content 1ms
+ ✓ assemble_device_submission — project scope > the AnA tool's project verdict equals assembleProgramDeviceSubmission's (the function POST /assemble runs) 1ms
+ × advise_device_readiness — project scope > with a project open, drafted governed content is not ready, whatever the model types 6ms
+ × advise_device_readiness — project scope > with a project open, approved governed content is ready with no model input but the question 40ms
+ × advise_device_readiness — project scope > the advice and assemble_device_submission give the open project the same verdict 3ms
+ × advise_device_readiness — project scope > with no project open, model leaves marked substantive plus the template name never yield an official eSTAR 20ms
+ × advise_device_readiness — project scope > with no project open and no outline, it asks for a project 1ms
+ × advise_device_readiness — project scope > a failed content read is read_failed, never a verdict 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  advise_device_readiness — project scope > with a project open, drafted governed content is not ready, whatever the model types
+AssertionError: expected true to be false // Object.is equality
+ FAIL  advise_device_readiness — project scope > with a project open, approved governed content is ready with no model input but the question
+TypeError: Cannot read properties of undefined (reading 'length')
+ FAIL  advise_device_readiness — project scope > the advice and assemble_device_submission give the open project the same verdict
+AssertionError: expected 'official-estar' to be 'content-package-draft' // Object.is equality
+ FAIL  advise_device_readiness — project scope > with no project open, model leaves marked substantive plus the template name never yield an official eSTAR
+AssertionError: expected true to be false // Object.is equality
+ FAIL  advise_device_readiness — project scope > with no project open and no outline, it asks for a project
+TypeError: Cannot read properties of undefined (reading 'length')
+ FAIL  advise_device_readiness — project scope > a failed content read is read_failed, never a verdict
+AssertionError: expected undefined to be 'read_failed' // Object.is equality
+      Tests  6 failed | 11 passed (17)
+(The new leaves-read-throws case passes on the round-0 code: it is a mutation-killing case, recorded in green.txt against the catch-return-[] mutation of loadDeviceContentLeaves.)

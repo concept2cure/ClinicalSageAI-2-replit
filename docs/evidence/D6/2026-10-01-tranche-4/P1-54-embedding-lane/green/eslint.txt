@@ -1,0 +1,4 @@
+# ESLint, changed TypeScript files, now vs HEAD (HEAD linted from git show via --stdin at the same path)
+ana-readiness.test.ts now errors 0 warnings 0 | HEAD errors 0 warnings 0
+ana-readiness-state.ts now errors 0 warnings 0 | HEAD errors 0 warnings 0
+probe files (docs/.../probe/*.ts): 0 errors, 0 warnings after console.log -> console.info

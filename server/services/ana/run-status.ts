@@ -10,6 +10,9 @@
  * @module server/services/ana/run-status
  */
 
+import { AUTO_ACTIVE_MS, AUTO_WALL_MS, RUN_AGENT_TOOL, type AnaRunPolicy } from '@shared/ana/run-control-limits';
+import { isAnaRunPolicy, type PolicyHoldOutcome } from '@shared/ana/run-policy';
+
 /**
  * Where a run is.
  *
@@ -42,12 +45,18 @@ export const LIVE_RUN_STATUSES: readonly RunStatus[] = [
  * socket is not a human decision, and recording one as the other would put a
  * choice nobody made into the decision lineage the dossier reads.
  *
- * RESERVED, produced by nothing yet: `budget_exhausted`, `approval_timeout`,
- * `hold_expired` and `hold_unavailable` are named now so the run-policy work
- * that will produce them does not reshape this type (row 74, slice S1 of the
- * run-policy design). Until a writer exists for one, no surface has words for
- * it and the client ignores it. (Slice S3 added the writer for `hold_expired`,
- * run-control.ts endHeldRun; nothing calls it until the Manual policy lands.)
+ * The run policy's reasons (row 74; named in slice S1, produced since S4):
+ *
+ *   budget_exhausted  Auto reached its time ceiling (AUTO_ACTIVE_MS of work,
+ *                     AUTO_WALL_MS in all); the last call was the closing answer
+ *   approval_timeout  a turn with a policy had an approval go unanswered for
+ *                     MAX_PAUSE_MS — denied, as it always is — and ended there
+ *   hold_expired      a Manual hold (or a person's pause in a Manual turn) went
+ *                     unanswered for MAX_PAUSE_MS; the turn ENDED, never resumed
+ *                     (run-control.ts endHeldRun)
+ *   hold_unavailable  Manual was asked for but the turn could not hold (no run
+ *                     row, or no owner to resume it), so it stopped where it
+ *                     would have asked
  */
 export type RunStoppedReason =
   | 'cancelled'
@@ -69,13 +78,147 @@ export type RunStoppedReason =
 /**
  * Why a TURN's work stopped — the subset of {@link RunStoppedReason} that the
  * turn's own loop decides, as the `done` frame and the assistant message's
- * metadata carry it. The rest (a dropped socket, a restart, a refused gate, an
- * error) end the RUN and are recorded on the run row, not on the answer.
+ * metadata carry it. The rest (a restart, a refused gate, an error) end the
+ * RUN and are recorded on the run row, not on the answer.
+ *
+ * `client_disconnected` is both since ANA-SUMMARY S4: the page lost its
+ * connection (a phone locked, a tab closed), the run was stopped for it, and
+ * the answer says so — "Stopped: this page lost its connection." with
+ * Continue — rather than reading as a person's Stop (TurnPolicy.noteDisconnected).
  */
-export type TurnStoppedReason = Exclude<
-  RunStoppedReason,
-  'client_disconnected' | 'orphaned' | 'approval_denied' | 'error'
->;
+export type TurnStoppedReason = Exclude<RunStoppedReason, 'orphaned' | 'approval_denied' | 'error'>;
+
+/**
+ * Why a turn ended, as its saved answer and its record say it: the person's
+ * Stop is `cancelled` whatever the loop reported, unless the loop named a stop
+ * of its own (a hold that ran out, the round limit, a lost connection) — that
+ * one says more. The one copy: post-processing saves it, the Summary's end
+ * event reads it.
+ */
+export function stoppedTurnReason(stopped: boolean | undefined, reason: TurnStoppedReason | undefined): TurnStoppedReason | undefined {
+  return stopped && (!reason || reason === 'no_more_tools') ? 'cancelled' : reason;
+}
+
+/** The same, as the Summary's end event says it: null for a turn she finished (turn-timeline-emitter.ts). */
+export function endStoppedReason(stopped: boolean, reason: TurnStoppedReason | undefined): TurnStoppedReason | null {
+  const r = stoppedTurnReason(stopped, reason);
+  return r && r !== 'no_more_tools' ? r : null;
+}
+
+/**
+ * One of AnA's OWN holds under Manual, as the assistant message keeps it.
+ *
+ * Kept apart from {@link HumanControlEvent} on purpose: the policy made this
+ * pause, not a person, so it is never recorded as a control (run-control.ts
+ * holdForPerson writes no event). It is what explains the resume that follows
+ * it — "Run this step" is the person's control; the stop before it was hers.
+ *
+ * The outcomes are shared with the dossier (shared/ana/run-policy.ts
+ * POLICY_HOLD_OUTCOMES): continued, redirected, expired, stopped and
+ * disconnected settle a hold she made; `superseded` is NOT a hold — a steer
+ * sent while she worked replaced the step before it was ever shown — and is
+ * kept here only so the record says what happened to that step.
+ */
+export interface PolicyHold {
+  /** The round she held before. */
+  round: number;
+  reason: 'manual';
+  /** The steps she was about to run, by label. */
+  next: string[];
+  outcome: PolicyHoldOutcome;
+  /** ISO-8601, when the hold was settled. */
+  at: string;
+}
+
+export type { AnaRunPolicy };
+
+/**
+ * The run policy a request asked for: exactly 'manual' or 'auto', else none.
+ * Anything else — 'AUTO', '', a number — is no policy (today's effort-bounded
+ * turn), never a 400 and never a guess.
+ */
+export function parseRunPolicy(raw: unknown): AnaRunPolicy | null {
+  return isAnaRunPolicy(raw) ? raw : null;
+}
+
+/**
+ * Can this turn hold for a person? It needs a run row to hold on, AND an owner:
+ * a run with no user can be resumed by nobody (applyControl refuses NOT_YOURS),
+ * so a hold on it would wait out its ceiling for an answer no one may give.
+ */
+export function isHoldable(run: { runId: string | null | undefined; runUserId: number | null | undefined }): boolean {
+  return Boolean(run.runId) && run.runUserId !== null && run.runUserId !== undefined;
+}
+
+/**
+ * Does Manual stop before this round? Pure; the caller supplies the gate's
+ * verdict as `isUngoverned`, so this never classifies anything itself.
+ *
+ *   - Only under Manual, and never while a demonstration drives (the tour is
+ *     a script the person started; stopping it between screens breaks it).
+ *   - Only when some pending call would run WITHOUT a person. A step that
+ *     already goes to one (an approval) or will not run (refused, unreadable)
+ *     is not held for twice.
+ *   - Not before round 1 — the step the message asked for runs — unless that
+ *     step starts an agent, which is asked about first.
+ */
+export function manualHoldDue(input: {
+  policy: AnaRunPolicy | null;
+  upcomingRound: number;
+  pending: readonly { name: string }[];
+  demo: boolean;
+  isUngoverned: (call: { name: string }) => boolean;
+}): boolean {
+  const { policy, upcomingRound, pending, demo, isUngoverned } = input;
+  if (policy !== 'manual' || demo) return false;
+  if (!pending.some(c => isUngoverned(c))) return false;
+  return upcomingRound >= 2 || pending.some(c => c.name === RUN_AGENT_TOOL);
+}
+
+/**
+ * Why the TURN stopped, from why its loop stopped and what its hold saw. A
+ * hold that could not be made, then a hold that expired, outrank the loop's
+ * own reason: the loop saw only an abort ('cancelled'), which would read as a
+ * person's Stop.
+ */
+export function turnStoppedReason(
+  loopReason: TurnStoppedReason,
+  hold: { holdExpired: boolean; holdUnavailable: boolean; disconnected?: boolean },
+): TurnStoppedReason {
+  if (hold.holdUnavailable) return 'hold_unavailable';
+  if (hold.holdExpired) return 'hold_expired';
+  // The loop saw only the abort; the socket that dropped is why (S4).
+  if (hold.disconnected && loopReason === 'cancelled') return 'client_disconnected';
+  return loopReason;
+}
+
+/**
+ * What the stream tells the loop after each round (agentic-loop.ts
+ * LoopStopDirective), in this order:
+ *
+ *   halt              the turn's hold expired: no further model call
+ *   approval_timeout  a turn WITH a policy had an approval go unanswered
+ *   budget_exhausted  Auto past its work or wall-clock ceiling
+ *   null              carry on — always, for a turn with no policy, whose
+ *                     ceilings are today's rounds and nothing else
+ *
+ * `activeMs` is the turn's clock less time held for a person and time waiting
+ * on approvals; both waits are measured by the caller, outside the gate.
+ */
+export function policyStopDirective(input: {
+  runPolicy: AnaRunPolicy | null;
+  holdExpired: boolean;
+  approvalTimedOut: boolean;
+  activeMs: number;
+  wallMs: number;
+}): 'halt' | 'approval_timeout' | 'budget_exhausted' | null {
+  if (input.holdExpired) return 'halt';
+  if (input.runPolicy !== null && input.approvalTimedOut) return 'approval_timeout';
+  if (input.runPolicy === 'auto' && (input.activeMs > AUTO_ACTIVE_MS || input.wallMs > AUTO_WALL_MS)) {
+    return 'budget_exhausted';
+  }
+  return null;
+}
 
 const ALLOWED_TRANSITIONS: Record<RunStatus, readonly RunStatus[]> = {
   running: ['paused', 'awaiting_approval', 'cancelled', 'finished', 'failed'],

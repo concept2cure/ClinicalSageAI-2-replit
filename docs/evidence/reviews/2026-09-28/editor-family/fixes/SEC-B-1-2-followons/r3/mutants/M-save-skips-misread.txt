@@ -1,0 +1,15 @@
+mutant M-save-skips-misread: server/services/authoring/authoring-html-sanitizer.ts
+-   const differsAt = await imageReadingsDiffer(html);
++   const differsAt = null as number | null;
+
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a duplicated src: shown as the first, filed as the second 9ms
+   → expected [] to deeply equal [ { position: 1, …(2) } ]
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a template 5ms
+   → expected [] to deeply equal [ { position: 1, …(2) } ]
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a bogus comment 3ms
+   → expected [] to deeply equal [ { position: 1, …(2) } ]
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a text box 3ms
+   → expected [] to deeply equal [ { position: 1, …(2) } ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 33 passed (37)

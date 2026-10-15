@@ -1,0 +1,73 @@
+{
+  "workstream": "W1",
+  "launch_row": "D2",
+  "branch": "concept2cure-v2",
+  "base_head": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "original_helper_sha256": "5589334258db59d3989e0d342aacb77671fee3b2bf99cc50301f5bc123c5913c",
+  "strict_gate_command": "node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression",
+  "strict_gate_before": {
+    "exit_code": 1,
+    "new_shared_pool_routes": [
+      "server/routes/c2c/project-route-access.ts"
+    ],
+    "current_backlog": 228,
+    "baseline_backlog": 228
+  },
+  "strict_gate_after": {
+    "exit_code": 0,
+    "new_shared_pool_routes": [],
+    "request_scoped_routes": 52,
+    "current_backlog": 227,
+    "baseline_backlog": 228
+  },
+  "red": {
+    "exit_code": 1,
+    "selected_failed": 1,
+    "unselected_skipped": 10,
+    "failure": "actual helper ignores available request-pinned client and uses the controlled refusing shared pool"
+  },
+  "green": {
+    "exit_code": 0,
+    "suites": 4,
+    "passed": 80,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 9.69
+  },
+  "lint": {
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 0,
+    "owned_files": 3
+  },
+  "test_command": "PATH=/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run --config vitest.config.ts server/routes/c2c/__tests__/project-route-access-requestdb.test.ts server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts server/db/__tests__/requestDb.test.ts server/services/c2c/__tests__/program-access.test.ts",
+  "lint_command": "PATH=/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH ./node_modules/.bin/eslint --no-ignore server/routes/c2c/project-route-access.ts server/routes/c2c/__tests__/project-route-access-requestdb.test.ts server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts",
+  "logs": {
+    "strict-gate-before.txt": {
+      "raw_path": "/tmp/requestdb-current-tree-diagnostic.txt",
+      "raw_sha256": "81391bc8695923f7b565af50b08e8526303a8ba64f1c1fd38b0108a88ece39b8",
+      "published_sha256": "81391bc8695923f7b565af50b08e8526303a8ba64f1c1fd38b0108a88ece39b8"
+    },
+    "strict-gate-after.txt": {
+      "raw_path": "/tmp/requestdb-current-tree-corrected.txt",
+      "raw_sha256": "8fac46236ddc7a1c7e3e83dbc5b554efb28ca311219eab1ac3305c0361c937e8",
+      "published_sha256": "8fac46236ddc7a1c7e3e83dbc5b554efb28ca311219eab1ac3305c0361c937e8"
+    },
+    "actual-helper-red.txt": {
+      "raw_path": "/tmp/project-route-requestdb-helper-red.txt",
+      "raw_sha256": "a79c1e8c9321a6fcbeb759b8f970e845427cbe5d21e70c47cfcd132c196f7f7c",
+      "published_sha256": "a79c1e8c9321a6fcbeb759b8f970e845427cbe5d21e70c47cfcd132c196f7f7c"
+    },
+    "focused-green.txt": {
+      "raw_path": "/tmp/project-route-requestdb-focused-tests.txt",
+      "raw_sha256": "ac1250d18b1fe74f326476f4ca0c1797c0cd2fea213d6a2fb8c4e6dd34a82bad",
+      "published_sha256": "ac1250d18b1fe74f326476f4ca0c1797c0cd2fea213d6a2fb8c4e6dd34a82bad"
+    },
+    "focused-lint.txt": {
+      "raw_path": "/tmp/project-route-requestdb-focused-lint.txt",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "qualification": "Actual helper/current parent policy/audit writer with controlled SQL responses plus real fixture PGlite SQL. Not native PostgreSQL/RLS, deployed or regulatory qualification. No compiler/build/index/commit/push/native execution by this workstream."
+}

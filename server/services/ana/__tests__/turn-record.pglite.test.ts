@@ -220,9 +220,10 @@ describe('what the record will not claim', () => {
     r.addServed(1, { provider: 'anthropic', model: null });
     const body = r.seal('answered').body;
     expect(body.model.calls).toEqual([
-      { call: 1, round: 1, provider: 'anthropic', model: 'm' },
+      // /3: a call names its gateway request and what it was sent, null when unknown.
+      { call: 1, round: 1, provider: 'anthropic', model: 'm', requestId: null, sent: null },
       // A call whose model the gateway did not report is still a call.
-      { call: 2, round: 1, provider: 'anthropic', model: null },
+      { call: 2, round: 1, provider: 'anthropic', model: null, requestId: null, sent: null },
     ]);
     expect(body.roundInputs.map((x) => x.call)).toEqual([2]);
   });

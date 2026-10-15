@@ -1,0 +1,9 @@
+mutant M-leaf-pre-reads-text: server/services/ectd/leaf-pdf-renderer.ts
+- return '\n' + PRE_SENTINEL + preText(node, ctx) + PRE_SENTINEL + '\n';
++ return '\n' + PRE_SENTINEL + node.text + PRE_SENTINEL + '\n';
+
+ × server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a <pre> is read as markup, verbatim > names a figure inside it, and prints no payload 9ms
+   → expected 'Chromatogram.' to contain '[Figure: Figure 1]'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 51 passed (52)

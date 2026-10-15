@@ -1,0 +1,14 @@
+ × server/services/__tests__/model-call-chokepoints.test.ts > AIProviderRouter.route > refuses inside the scope before the LiteLLM branch and before the gateway 13ms
+   → promise resolved "{ content: 'litellm', …(6) }" instead of rejecting
+ ✓ server/services/__tests__/model-call-chokepoints.test.ts > AIProviderRouter.route > outside the scope, the LiteLLM branch runs as before 1ms
+ × server/services/__tests__/model-call-chokepoints.test.ts > CrossEncoderReranker.score > refuses inside the scope with no fetch 34ms
+   → promise resolved "{ scores: [ 0.9 ], tokensUsed: +0 }" instead of rejecting
+ ✓ server/services/__tests__/model-call-chokepoints.test.ts > CrossEncoderReranker.score > outside the scope, it calls the provider as before 1ms
+ × server/services/__tests__/model-call-chokepoints.test.ts > AdvancedRAGPipeline.routeCached > refuses a cache HIT inside the scope: cached model output is model output 3ms
+   → promise resolved "{ content: 'model output', …(2) }" instead of rejecting
+ ✓ server/services/__tests__/model-call-chokepoints.test.ts > AdvancedRAGPipeline.routeCached > outside the scope, the hit is served as before 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: promise resolved "{ content: 'litellm', …(6) }" instead of rejecting
+AssertionError: promise resolved "{ scores: [ 0.9 ], tokensUsed: +0 }" instead of rejecting
+AssertionError: promise resolved "{ content: 'model output', …(2) }" instead of rejecting
+      Tests  3 failed | 3 passed (6)

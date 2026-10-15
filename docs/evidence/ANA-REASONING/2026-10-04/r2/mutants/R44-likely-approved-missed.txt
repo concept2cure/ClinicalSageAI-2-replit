@@ -1,0 +1,13 @@
+Mutant R44-likely-approved-missed: "will likely be approved" is not named (F9)
+
+--- server/services/clinical-regulatory-evidence/governance.ts
+- { pattern: /\b(?:will|would|should)\s+(?:likely|probably|certainly|surely|almost\s+certainly)\s+be\s+approved\b/gi,
+    reason: 'Predicts an approval decision.' },
++ 
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > names the verdicts stated 14ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

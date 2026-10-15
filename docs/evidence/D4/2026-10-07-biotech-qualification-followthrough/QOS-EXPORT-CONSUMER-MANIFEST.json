@@ -1,0 +1,141 @@
+{
+  "head": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+  "source_blobs": {
+    "server/services/m2-summary-builders.ts": "110c4067916dc2bfc3bda7670c7e3f201384b5a7",
+    "server/services/__tests__/m2-summary-builders.test.ts": "42da6314637ee4ab1be055d9c8159c57745ad391",
+    "server/services/authoring/m2-summary-renderer.ts": "2617317ebbe2b4cd84d6b4d711dacdf36f2e0f76",
+    "server/services/ectd/leaf-pdf-renderer.ts": "63e598bfd7d12393905130bc09e4b98a1fd55f9e",
+    "server/routes/authoring-pdf.routes.ts": "efbdbc65953169a4030eda194874445f84b84adb",
+    "server/services/submission-package-orchestrator.ts": "683ebd31cce9df8b14127f19a813aa26d10628f4",
+    "server/services/ectd/orchestrator-real-package.ts": "97b08f2ee135ec69d7eb2ab2155190273bcee224"
+  },
+  "reviewed_paths_unchanged_since_publication": true,
+  "actual_execution": {
+    "cases": 8,
+    "passed": 8,
+    "failed": 0,
+    "exit": 0,
+    "elapsed_seconds": 4.115,
+    "rendered_pdf_pages": 16
+  },
+  "visual_review": {
+    "reviewed_page_images": [
+      "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/ds-monthly-1.png",
+      "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/ds-monthly-2.png",
+      "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/dp-monthly-1.png",
+      "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/dp-monthly-2.png"
+    ],
+    "pages_reviewed": 4,
+    "observation": "Both monthly-schedule PDFs show the complete NOT-established hold and source 41 / row 38 refusal within page margins; selected four pages show no missing or clipped stability guard text. This is a targeted content/visibility check, not full layout qualification.",
+    "poppler_exit": 0,
+    "fontconfig_warning": "One rasterization reported a nonfatal unwritable fontconfig cache directory; both returned exit 0."
+  },
+  "limits": [
+    "This eight-control execution is separate from the integrated 1511-case regression.",
+    "The existing orchestrator package is explicitly Module 3 only; it reports M2 outputs but does not include them in that package.",
+    "No provider, database, deployed HTTP route, signature or transport qualification.",
+    "No repository edits."
+  ],
+  "reproducer": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-repro.ts",
+  "receipt": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/M2-EXPORT-CONSUMER-CHECK.txt",
+  "artifact_manifest": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/manifest.json",
+  "reproducer_sha256": "811f47cf91b7b733e34b7a2e65863f3faf0525280d5eca7eef1f6cf351fef1c8",
+  "receipt_sha256": "28f0701f286d123d3787790c11789a1ffac39c99b1a7589d1bbcf1c80c912b29",
+  "artifacts": [
+    {
+      "key": "drug_substance_monthly_unnamed",
+      "status": "passed",
+      "pages": 2,
+      "pdfBytes": 7431,
+      "fullQosNarrativeCharacters": 3183,
+      "reasons": 1,
+      "pdfPath": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/drug_substance_monthly_unnamed.pdf",
+      "pdf_sha256": "ec64b509ef37180d138761fd59989f75680a2a6a83680027b1745c44e48c6f62",
+      "extracted_text_sha256": "590bff025eaf5c5c4a69b239a8c5469b34b37555bf2fcc1a3f4487fe409a922f"
+    },
+    {
+      "key": "drug_substance_conflicting_criteria",
+      "status": "passed",
+      "pages": 2,
+      "pdfBytes": 7102,
+      "fullQosNarrativeCharacters": 3129,
+      "reasons": 1,
+      "pdfPath": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/drug_substance_conflicting_criteria.pdf",
+      "pdf_sha256": "96ec9cc94d401ed1be955b710ba4510653304c4b810a987cd97d365f0b9b403a",
+      "extracted_text_sha256": "7a50037622dc9906058c2bd68dac668ac9134f34ca686feb08391b6bd62f205a"
+    },
+    {
+      "key": "drug_substance_short_water_trend",
+      "status": "passed",
+      "pages": 2,
+      "pdfBytes": 7032,
+      "fullQosNarrativeCharacters": 2878,
+      "reasons": 1,
+      "pdfPath": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/drug_substance_short_water_trend.pdf",
+      "pdf_sha256": "9f023f65e90e2c1b04149f35b039641148dd9d4c5b20626fd9f43c9044460988",
+      "extracted_text_sha256": "1690f570244a76cf6cbb339080e67651fd546e2a85c42a244062e79d51b45ab6"
+    },
+    {
+      "key": "drug_substance_later_study_unnamed",
+      "status": "passed",
+      "pages": 2,
+      "pdfBytes": 7414,
+      "fullQosNarrativeCharacters": 3181,
+      "reasons": 1,
+      "pdfPath": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/drug_substance_later_study_unnamed.pdf",
+      "pdf_sha256": "4c369fc4d28aa8d299f1622416bac575538e2b2c1226216e08340be1ecb0c67a",
+      "extracted_text_sha256": "aff7dbf1490da295de98887286aa60708e92f00cb716cb7494788d7c2069f272"
+    },
+    {
+      "key": "drug_product_monthly_unnamed",
+      "status": "passed",
+      "pages": 2,
+      "pdfBytes": 7544,
+      "fullQosNarrativeCharacters": 3424,
+      "reasons": 1,
+      "pdfPath": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/drug_product_monthly_unnamed.pdf",
+      "pdf_sha256": "7991335fc4585dd01667a00bcbc571c69197b5c067f4327fc683db426b0b1872",
+      "extracted_text_sha256": "81210807c18ac211435cc41c229f865d561e92e256fe1f521ba25b48925b2505"
+    },
+    {
+      "key": "drug_product_conflicting_criteria",
+      "status": "passed",
+      "pages": 2,
+      "pdfBytes": 7325,
+      "fullQosNarrativeCharacters": 3370,
+      "reasons": 1,
+      "pdfPath": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/drug_product_conflicting_criteria.pdf",
+      "pdf_sha256": "7ade3989193248ba355dd1a29ece6d730706d25d3548b793fbcd09f1069f0752",
+      "extracted_text_sha256": "67b708cd8ecaa715c4e0265a9216c28cc9d3ba71ede41b60ce7a7abbe66021c7"
+    },
+    {
+      "key": "drug_product_short_water_trend",
+      "status": "passed",
+      "pages": 2,
+      "pdfBytes": 7245,
+      "fullQosNarrativeCharacters": 3117,
+      "reasons": 1,
+      "pdfPath": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/drug_product_short_water_trend.pdf",
+      "pdf_sha256": "0d2ec0f5d22db7d365363210dc70c25cef081ed5c85835772b12b409b887d7a7",
+      "extracted_text_sha256": "600105d2048d5db73ea436bbdb732d047560c58cc605b744098bd46371f864ae"
+    },
+    {
+      "key": "drug_product_later_study_unnamed",
+      "status": "passed",
+      "pages": 2,
+      "pdfBytes": 7526,
+      "fullQosNarrativeCharacters": 3422,
+      "reasons": 1,
+      "pdfPath": "/workspace/scratch/c2099bdce0e4/cmc-readiness-audit/m2-export-consumer-check/drug_product_later_study_unnamed.pdf",
+      "pdf_sha256": "771a44f24e1a7881ce7460821ebbc17eacaad499d10119ee28981a9ecd5c01e5",
+      "extracted_text_sha256": "6440c44eb719ee71b450b5e6c93115456fb8ce7209d7f5593ebf2ba572b87d70"
+    }
+  ],
+  "root_source_checks": {
+    "reviewed_blobs": 7,
+    "matches_published_code_fdd507a91": true,
+    "current_source_bytes_identical": true,
+    "separate_from_integrated_1511_cases": true
+  },
+  "artifact_storage": "Generated PDFs/text/images are scratch verification intermediates; the exact source-pinned reproducer and execution receipt are preserved here."
+}

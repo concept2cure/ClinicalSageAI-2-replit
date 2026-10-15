@@ -94,7 +94,8 @@ function app(userId = SIGNER) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: userId };
+    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: userId, role: 'member' };
+    Object.assign(req, { dbClient: { query: (...args: unknown[]) => H.txQuery(...args) } });
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);
@@ -128,9 +129,12 @@ beforeEach(() => {
   scriptTransaction(UNDER_ASSESSMENT);
 });
 
+/* A lifecycle move states its reason (2026-10-08); these pin what the route refuses past that. */
+const MOVE_REASON = 'Moving the change to approval';
+
 describe('the unsigned door is closed', () => {
   it('transition {to:"approved"} is refused 428 and writes nothing', async () => {
-    const res = await request(app()).post('/api/mdx/qms/changes/1/transition').send({ to: 'approved' });
+    const res = await request(app()).post('/api/mdx/qms/changes/1/transition').send({ to: 'approved', reason: MOVE_REASON });
     expect(res.status).toBe(428);
     expect(res.body.details?.code).toBe('CHANGE_APPROVAL_REQUIRES_SIGNATURE');
     expect(wroteApproval()).toBe(false);
@@ -139,7 +143,7 @@ describe('the unsigned door is closed', () => {
 
   it('an illegal move is still named as one (closed → approved is 409)', async () => {
     H.query.mockResolvedValue({ rows: [{ ...UNDER_ASSESSMENT, status: 'closed' }] });
-    const res = await request(app()).post('/api/mdx/qms/changes/1/transition').send({ to: 'approved' });
+    const res = await request(app()).post('/api/mdx/qms/changes/1/transition').send({ to: 'approved', reason: MOVE_REASON });
     expect(res.status).toBe(409);
   });
 });

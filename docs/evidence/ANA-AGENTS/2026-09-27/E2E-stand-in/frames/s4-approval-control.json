@@ -1,0 +1,282 @@
+[
+ {
+  "t0": 1790620731431,
+  "body": {
+   "message": "Create a review task for the BX-512 stability protocol (control run: I will confirm it).",
+   "language": "en",
+   "context": {
+    "screen": "conversation-thread",
+    "screenName": "conversation-thread"
+   },
+   "conversation_history": [],
+   "effort_level": "balanced",
+   "run_policy": "auto",
+   "live_drive": true,
+   "drive_acks": true
+  },
+  "frames": [
+   {
+    "ms": 9,
+    "type": "run_started",
+    "runId": "run_1a0a1adb-a5a1-4c70-a3bd-3a7f36d43c66"
+   },
+   {
+    "ms": 9,
+    "type": "status",
+    "phase": "orchestrating",
+    "message": "Planning response…"
+   },
+   {
+    "ms": 9,
+    "type": "status",
+    "phase": "loading_context",
+    "message": "Loading project memory…"
+   },
+   {
+    "ms": 34,
+    "type": "drive_state",
+    "enabled": true,
+    "mode": "assist"
+   },
+   {
+    "ms": 68,
+    "type": "context_used",
+    "uploads": [],
+    "unresolvedUploads": 0,
+    "memory": [],
+    "memoryStatus": "unavailable"
+   },
+   {
+    "ms": 68,
+    "type": "status",
+    "phase": "generating",
+    "message": "Generating response…"
+   },
+   {
+    "ms": 68,
+    "type": "thread_id",
+    "thread_id": "ana-ri_1790620731449_a0di82nxu"
+   },
+   {
+    "ms": 68,
+    "type": "orchestration",
+    "orchestration": {
+     "detectedIntent": {
+      "lens": "audit",
+      "confidence": 0.2,
+      "signals": [
+       "review"
+      ]
+     },
+     "detectedSubmissionType": null,
+     "detectedDocumentTemplate": null,
+     "appliedRole": "general",
+     "activeWorkstream": {
+      "stream": "evidence_development",
+      "phase": "execution",
+      "objective": "Create a review task for the BX-512 stability protocol (control run: I will confirm it).",
+      "currentFocus": "Evidence chain and support gaps",
+      "blockers": [],
+      "nextStep": "Build an evidence inventory, mark critical gaps, and decide what can be defended now versus what needs new support.",
+      "collaborationMode": "drive"
+     },
+     "workstreamHandoff": null,
+     "suggestedActions": [
+      "Create Evidence Memo",
+      "Create Deficiency Preemption Memo",
+      "Create Risk Memo",
+      "Create Reviewer Question Brief"
+     ]
+    }
+   },
+   {
+    "ms": 213,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Running 1 step…"
+   },
+   {
+    "ms": 213,
+    "type": "step",
+    "round": 1,
+    "tools": [
+     "execute_platform_command"
+    ],
+    "plan": [
+     {
+      "tool": "execute_platform_command",
+      "label": "Executing platform command: create_task"
+     }
+    ]
+   },
+   {
+    "ms": 213,
+    "type": "tool_use",
+    "round": 1,
+    "name": "execute_platform_command",
+    "toolUseId": "toolu_fake_51",
+    "label": "Executing platform command: create_task",
+    "input": {
+     "command": "create_task",
+     "params": {
+      "projectId": 1,
+      "title": "E2E stand-in: review the stability protocol",
+      "description": "Proposed by the scripted stand-in model.",
+      "priority": "medium"
+     }
+    }
+   },
+   {
+    "ms": 213,
+    "type": "approval_required",
+    "round": 1,
+    "runId": "run_1a0a1adb-a5a1-4c70-a3bd-3a7f36d43c66",
+    "toolUseId": "toolu_fake_51",
+    "action": "create_task",
+    "openModal": "esign",
+    "data": {
+     "tier": "confirm",
+     "reasonRequired": false,
+     "signatureRequired": false,
+     "proposedByAgent": true,
+     "retry": {
+      "command": "create_task",
+      "params": {
+       "projectId": 1,
+       "title": "E2E stand-in: review the stability protocol",
+       "description": "Proposed by the scripted stand-in model.",
+       "priority": "medium"
+      }
+     }
+    },
+    "message": "This action changes the record, so it is taken by a person rather than on your behalf. Review it and confirm to continue. AnA is waiting on this before she goes on."
+   },
+   {
+    "ms": 2245,
+    "type": "approval_decided",
+    "round": 1,
+    "toolUseId": "toolu_fake_51",
+    "decided": "approved"
+   },
+   {
+    "ms": 2245,
+    "type": "tool_result",
+    "round": 1,
+    "name": "execute_platform_command",
+    "toolUseId": "toolu_fake_51",
+    "label": "Executing platform command: create_task",
+    "status": "success",
+    "latencyMs": 0,
+    "result": "{\"data\":{\"name\":\"E2E stand-in: review the stability protocol\",\"status\":\"todo\",\"taskId\":1,\"priority\":\"medium\",\"onTaskBoard\":true},\"action\":\"create_task\",\"message\":\"Created task \\\"E2E stand-in: review the stability protocol\\\" — ID: 1.\",\"success\":true}"
+   },
+   {
+    "ms": 2245,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 2442,
+    "type": "done",
+    "model": "claude-opus-5-5",
+    "provider": "anthropic",
+    "modelTier": "flagship",
+    "effortUsed": "balanced",
+    "usage": {
+     "inputTokens": 100,
+     "outputTokens": 20,
+     "totalTokens": 120,
+     "estimatedCostUsd": 0.0008
+    },
+    "latencyMs": 149,
+    "response": "I will propose the task; it needs your approval.Stand-in answer: the task outcome was success — Created task \"E2E stand-in: review the stability protocol\" — ID: 1.",
+    "telemetry": {
+     "phases": {
+      "orchestrationMs": 16,
+      "contextMs": 21,
+      "gatewayMs": 161,
+      "firstTokenMs": 190
+     },
+     "memory": {
+      "layerOutcomes": {
+       "workingMemory": "empty",
+       "clientMemory": "error",
+       "projectMemory": "skipped"
+      },
+      "workingMemoryMode": "none",
+      "semanticSearchMs": 20
+     }
+    },
+    "stoppedReason": "no_more_tools",
+    "rounds": 1,
+    "runPolicy": "auto"
+   },
+   {
+    "ms": 2463,
+    "type": "grounding_strip",
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "trust_summary": "Evidence check not run for this response — verify any regulatory claims before relying on them."
+   },
+   {
+    "ms": 2463,
+    "type": "post_done",
+    "cleanedResponse": "I will propose the task; it needs your approval.Stand-in answer: the task outcome was success — Created task \"E2E stand-in: review the stability protocol\" — ID: 1.",
+    "enrichmentMeta": {
+     "sourcesAttempted": 0,
+     "sourcesSucceeded": [],
+     "sourcesFailed": [],
+     "triggerType": "none",
+     "hasProjectContext": false
+    },
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "evidenceDiscipline": {
+     "compliant": true,
+     "labels": 0,
+     "hasOverclaims": false
+    },
+    "structure": {
+     "valid": false,
+     "score": 0,
+     "maxScore": 6
+    },
+    "grounding": {
+     "checked": 1,
+     "grounded": 1,
+     "unsupported": []
+    },
+    "queueMeta": {
+     "thread_id": "ana-ri_1790620731449_a0di82nxu",
+     "handoff_ready": true,
+     "turn_status": "completed",
+     "can_process_next": true,
+     "blocked_reason": null
+    },
+    "turnRecord": {
+     "status": "recorded",
+     "id": "05509f73-d328-4377-8832-364e67f18908",
+     "sha256": "810b580a35eb72f637681f95de958e5612275be6e34fd1e2fdc160f87feddc01"
+    }
+   }
+  ],
+  "deltas": 11,
+  "ended": 2463
+ }
+]

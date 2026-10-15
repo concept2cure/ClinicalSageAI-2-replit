@@ -1,0 +1,14 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P1: an Undo after the decision does not turn the cut off: Undo later reverses exactly what came after it 293ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P2: a decision taken with nothing to undo still lets Redo re-apply the reviewer's later typing 21ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P3 (guard): with a cut between two decisions, Undo stops at the second 229ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P4 (guard): with tracking off through three cuts, Undo reverses exactly the typing after the decision 309ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:48:29
+   Duration  1.84s (transform 142ms, setup 150ms, import 136ms, tests 856ms, environment 514ms)
+

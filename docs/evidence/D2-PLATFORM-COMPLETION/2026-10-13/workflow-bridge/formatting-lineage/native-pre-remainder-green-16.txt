@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T23:41:18.585Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T23:41:18.586Z","pid":70643,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T23:41:18.586Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/workflow-import-formatting-lineage.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/workflow-import-formatting-lineage.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/workflow-import-formatting-lineage.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > canonical import under the restricted native runtime > uses real NOSUPERUSER NOBYPASSRLS and forced tenant RLS 40ms
+{"level":30,"time":"2026-10-13T23:41:28.984Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc fb5c99ad-89ea-430a-a9a1-3766d606405a by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > canonical import under the restricted native runtime > starts with actual workflow_import machine-draft prose and immutable source receipts 583ms
+{"level":30,"time":"2026-10-13T23:41:29.287Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 232e8d90-2234-4219-82e9-fe0a70004721 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:29.372Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 232e8d90-2234-4219-82e9-fe0a70004721 by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'strong wrappers around unchanged narr…' 339ms
+{"level":30,"time":"2026-10-13T23:41:29.498Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc de7aec08-80fc-41f5-9ed4-26587dab1907 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:29.613Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc de7aec08-80fc-41f5-9ed4-26587dab1907 by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'paragraph alignment and printing attr…' 242ms
+{"level":30,"time":"2026-10-13T23:41:29.737Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 81606230-783a-4979-bdd8-80a2d6b8297b by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:30.334Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 81606230-783a-4979-bdd8-80a2d6b8297b by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'a figure placed before unchanged narr…' 724ms
+{"level":30,"time":"2026-10-13T23:41:30.444Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc c1313b52-4e38-474a-9f5e-f78ec40ea1a0 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:30.512Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc c1313b52-4e38-474a-9f5e-f78ec40ea1a0 by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'a figure inserted inside unchanged na…' 182ms
+{"level":30,"time":"2026-10-13T23:41:30.738Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 63497a77-617e-487b-beb2-9b0af9f4fb5e by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:30.881Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 63497a77-617e-487b-beb2-9b0af9f4fb5e by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'TipTap table paragraph/strong wrapper…' 383ms
+{"level":30,"time":"2026-10-13T23:41:31.128Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 836835ce-6962-444e-b6b4-595406e7f96c by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:31.192Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 836835ce-6962-444e-b6b4-595406e7f96c by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'table colgroup and printing width nor…' 300ms
+{"level":30,"time":"2026-10-13T23:41:31.334Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc c03dd186-966d-4170-9395-3fcf29651354 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:31.375Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc c03dd186-966d-4170-9395-3fcf29651354 by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'exact scientific characters represent…' 271ms
+{"level":30,"time":"2026-10-13T23:41:31.670Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 188e1298-309b-4ae4-acc8-bd664e6e83c5 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:31.735Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 188e1298-309b-4ae4-acc8-bd664e6e83c5 by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > attributes the changed clinical clause to its actual editor while retaining unchanged table prose 267ms
+{"level":30,"time":"2026-10-13T23:41:31.928Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b3c0b84a-e282-4b04-9e06-a39b7ac7f485 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:32.012Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc b3c0b84a-e282-4b04-9e06-a39b7ac7f485 by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > cannot credit more repeated occurrences than the prior machine draft actually held 286ms
+{"level":30,"time":"2026-10-13T23:41:32.261Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc ab655490-eda1-4601-8937-a7552782b684 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:32.378Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc ab655490-eda1-4601-8937-a7552782b684 by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > does not let a forged acceptance turn receipt accept already imported prose 430ms
+{"level":30,"time":"2026-10-13T23:41:32.672Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc bf4d5b1f-d3db-4e98-aefc-58c8326fd70a by f***@example.invalid"}
+{"level":50,"time":"2026-10-13T23:41:32.778Z","pid":70643,"hostname":"843541c42987","context":{"sectionId":"2a774968-3e7f-47c0-a500-c7d525ce86f3","tenantId":12,"err":"Previous content does not verify the recorded lineage span."},"msg":"[authoring-router] Section save refused — content and lineage rolled back together"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > refuses a corrupt prior live machine hash atomically instead of minting human authority 374ms
+{"level":30,"time":"2026-10-13T23:41:33.107Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b4a4629b-2090-4e9c-9ded-0d18f91d9150 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:41:33.182Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc b4a4629b-2090-4e9c-9ded-0d18f91d9150 by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > does not carry table provenance when identical words acquire different header associations 344ms
+{"level":30,"time":"2026-10-13T23:41:33.286Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 8e549245-b1cc-40f6-af14-264e52d8284e by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > unsupported retained-prose markup cannot silently manufacture authority > refuses 'a title containing an additional stat…' atomically 168ms
+{"level":30,"time":"2026-10-13T23:41:33.533Z","pid":70643,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6a857627-5811-4699-8d07-f07e9ea64cca by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > unsupported retained-prose markup cannot silently manufacture authority > refuses 'an unsupported data attribute' atomically 430ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  23:41:16
+   Duration  17.55s (transform 7.66s, setup 105ms, import 252ms, tests 16.74s, environment 0ms)

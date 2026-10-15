@@ -17,6 +17,11 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { organizationUsers } from '../../../shared/schema';
 
+/** The signing transaction's actual executor, never a request/body role. */
+export interface SignerRoleExec {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
+}
+
 /**
  * Resolve the signer's organization role (lowercased) from the membership
  * record, or null when the user is not a member of the organization. Pass the
@@ -25,9 +30,25 @@ import { organizationUsers } from '../../../shared/schema';
 export async function resolveSignerOrgRole(
   userId: number,
   organizationId: number,
+  executor?: SignerRoleExec,
 ): Promise<string | null> {
   if (!Number.isFinite(userId) || userId <= 0 || !Number.isFinite(organizationId) || organizationId <= 0) {
     return null;
+  }
+  if (executor) {
+    // The caller owns BEGIN/tenant context and reserves its domain parent first.
+    // FOR SHARE holds membership role and active user/org rows until that
+    // transaction commits or rolls back. No independent sharing policy is claimed.
+    const { rows } = await executor.query(
+      `SELECT ou.role FROM organization_users ou
+         JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id
+        WHERE ou.user_id=$1 AND ou.organization_id=$2 AND u.status=$3 AND o.status=$3
+        FOR SHARE OF ou,u,o`,
+      [userId, organizationId, 'active'],
+    );
+    if (rows.length !== 1 || typeof rows[0].role !== 'string') return null;
+    const role = rows[0].role.trim().toLowerCase();
+    return role || null;
   }
   const rows = await db
     .select({ role: organizationUsers.role })

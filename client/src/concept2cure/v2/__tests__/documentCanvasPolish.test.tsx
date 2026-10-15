@@ -254,7 +254,7 @@ describe('DocumentCanvas — keyboard', () => {
 describe('DocumentCanvas — the dialogs it opens are real dialogs', () => {
   for (const [label, opener, title] of [
     ['File to vault', 'dc-file-to-vault', 'File to vault'],
-    ['Assign review', 'dc-assign-review', 'Assign review'],
+    ['Send for review', 'dc-assign-review', 'Send for review'],
   ] as const) {
     it(`${label}: labelled, modal, focus trapped while open, focus restored on close`, async () => {
       render(<Host />);
@@ -331,7 +331,7 @@ describe('the canvas stylesheet — motion', () => {
   /** A cubic-bezier eases out when it never leaves [0,1] (no overshoot, no
       wind-up), comes to rest (flat exit tangent), and is front-loaded — more
       than half the distance is covered in the first half of the time. The
-      canonical --ease, cubic-bezier(0.4, 0, 0.2, 1), is; ease-in, a symmetric
+      canonical --ease, cubic-bezier(0, 0, 0.2, 1) since 2026-10-15, is; ease-in, a symmetric
       ease-in-out and every spring or bounce are not. */
   function bezierEasesOut([x1, y1, x2, y2]: number[]): boolean {
     if ([x1, y1, x2, y2].some(n => !Number.isFinite(n))) return false;
@@ -456,10 +456,10 @@ describe('DocumentCanvas — acts the server will refuse', () => {
     });
   }
 
-  it('disables File to vault and Assign review with the reason as described text', async () => {
+  it('disables File to vault and Send for review with the reason as described text', async () => {
     withAccess({
       fileToVault: { allowed: false, reason: 'Filing to the vault needs an Owner or Author grant on this document. Your grants on it: Reviewer.' },
-      assignReview: { allowed: false, reason: 'Assigning a review needs an editing role in this organization. Your role: viewer.' },
+      assignReview: { allowed: false, reason: 'Sending for review needs an editing role in this organization. Your role: viewer.' },
       freeze: null,
       esign: null,
     });

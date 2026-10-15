@@ -1,0 +1,10 @@
+# 2026-10-01T14:58:24Z. ci:compose-boot-contract, the checker byte for byte, in a scratch tree holding the repo's compose files and HEAD's deploy-aws.yml: the state before this item. It was already red on trunk, for MCP_* (42842480, 13:25 UTC).
+$ node scripts/ci/check-compose-boot-contract.mjs   # in the scratch tree
+docker-compose.beta.yml: service "app": MCP_CLIENT_REDIRECT_ALLOWLIST is not passed to the app
+docker-compose.beta.yml: service "app": MCP_ENABLED is not passed to the app
+docker-compose.beta.yml: service "app": MCP_PUBLIC_URL is not passed to the app
+docker-compose.yml: service "app": MCP_CLIENT_REDIRECT_ALLOWLIST is not passed to the app
+docker-compose.yml: service "app": MCP_ENABLED is not passed to the app
+docker-compose.yml: service "app": MCP_PUBLIC_URL is not passed to the app
+[ci:compose-boot-contract] 6 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (26 names) plus ALLOWED_ORIGINS.
+exit=1

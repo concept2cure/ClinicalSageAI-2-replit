@@ -1,0 +1,132 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+{
+  "timestamp": "2026-10-05T05:20:17.333Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT
+[CMC Batch] Release testing for batch 9: released
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Batch] Error processing release: Error: signer identity unresolvable
+    at /home/user/ClinicalSageAI-2-replit/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:185:17
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Specs] Error approving specification: Error: signer identity unresolvable
+    at /home/user/ClinicalSageAI-2-replit/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:185:17
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-10-05T05:20:17.558Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to qualify container closure system",
+    "error": "signer identity unresolvable"
+  }
+}
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: rejected
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 31ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 10ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 5ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 5ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 5ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a user with no membership row in the organization 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a user with no membership row in the organization 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a user with no membership row in the organization 5ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row 3ms
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a full release needs every result reviewed; a conditional release over an unreviewed one is signed responsibility
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an open deviation blocks a full release (21 CFR 211.192) but not a conditional one
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > the release record carries the RECORDED results, never the ones the request supplies
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition
+[CMC Batch] Release testing for batch 9: released
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an 'approved' disposition over a recorded result that fails is refused before re-authentication, and writes nothing 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a release with no result recorded against the batch is refused — zero tests is not "all passed" 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a full release needs every result reviewed; a conditional release over an unreviewed one is signed responsibility 4ms
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an open deviation blocks a full release (21 CFR 211.192) but not a conditional one 8ms
+   → {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7,"batch_number":"B-9","release_status":null},"releaseEvaluation":{"decision":"approved","releasedBy":"user 42","comments":null,"testResults":[{"qcId":1,"sampleId":"S-B9-1","testMethod":"AM-001","result":{"value":"99.2"},"criterion":{"acceptanceCriteria":"98.0-102.0%"},"passFail":"pass","reviewed":true,"passed":true}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-10-05T05:20:17.600Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch released successfully","timestamp":"2026-10-05T05:20:17.600Z","module3Linked":true}: expected 200 to be 409 // Object.is equality
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > the release record carries the RECORDED results, never the ones the request supplies 5ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > results that change while the signer re-authenticates refuse the signature, and nothing is signed 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared meaning outside the closed vocabulary, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an open deviation blocks a full release (21 CFR 211.192) but not a conditional one
+AssertionError: {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7,"batch_number":"B-9","release_status":null},"releaseEvaluation":{"decision":"approved","releasedBy":"user 42","comments":null,"testResults":[{"qcId":1,"sampleId":"S-B9-1","testMethod":"AM-001","result":{"value":"99.2"},"criterion":{"acceptanceCriteria":"98.0-102.0%"},"passFail":"pass","reviewed":true,"passed":true}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-10-05T05:20:17.600Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch released successfully","timestamp":"2026-10-05T05:20:17.600Z","module3Linked":true}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:289:52
+    287|     h.batchDeviations = { open: 1 };
+    288|     const full = await release({ decision: 'approved' });
+    289|     expect(full.status, JSON.stringify(full.body)).toBe(409);
+       |                                                    ^
+    290|     expect(full.body.error).toMatch(/1 open deviation/);
+    291|     h.qcReads = 0;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed (27)
+   Start at  05:20:15
+   Duration  2.55s (transform 1.29s, setup 84ms, import 2.07s, tests 131ms, environment 0ms)
+

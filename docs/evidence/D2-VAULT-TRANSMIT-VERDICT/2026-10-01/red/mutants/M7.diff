@@ -1,0 +1,13 @@
+diff --git a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+index c97221e55..d44756240 100644
+--- a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx
++++ b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+@@ -144,7 +144,7 @@ function useVersionStage(projectId: string | null | undefined, documentUuid: str
+   if (!path) return { kind: 'unread' };
+   if (st.loading) return { kind: 'loading' };
+   const v = st.error ? undefined : st.data?.versions.find((x) => x.id === documentUuid);
+-  if (!v || v.transmitRefusal === undefined) return { kind: 'unknown' };
++  if (!v || v.transmitRefusal === undefined) return { kind: 'read', stage: v?.lifecycle?.stage, refusal: null };
+   return { kind: 'read', stage: v.lifecycle?.stage, refusal: v.transmitRefusal };
+ }
+ 

@@ -22,7 +22,8 @@
  * @module server/services/clinical-regulatory-evidence/lineage-gate
  */
 
-import { detectSpans } from '../sentenceTraceabilityService';
+import { createHash } from 'node:crypto';
+import { detectSpans, type SentenceSpan } from '../sentenceTraceabilityService';
 import {
   replaceAuthorSpans,
   replaceSourceSpans,
@@ -31,8 +32,12 @@ import {
   assertLineageCoversContent,
   type Queryable,
   retireStaleSourceSpans,
+  hashSpanText,
+  type LiveMachineSpan,
 } from './span-lineage.service';
-import { attributeMachineSpans, type AcceptedMachineText } from './machine-attribution';
+import { replaceVaultFigureSpans, retireStaleFigureSpans } from './span-lineage-vault';
+import { attributeMachineSpans, formattingCarryForwardSafety, subtractAttributedRanges, tagsMaskedForSplit,
+  type AcceptedMachineText, type MachineAttributedSpan } from './machine-attribution';
 import {
   attributeQuotedSpans,
   attributeAssertedParaphraseSpans,
@@ -46,7 +51,20 @@ export interface AuthorLineageRef {
   documentId: string;
 }
 
+export class UnverifiedMachineFormattingError extends Error {
+  readonly status = 422;
+  readonly code = 'MACHINE_LINEAGE_FORMATTING_UNVERIFIED';
+  constructor(readonly reason: string) {
+    super('The section was not saved because unsupported markup prevents verification of its retained content attribution. '
+      + 'Use supported formatting or create a supported working copy. Nothing was changed.');
+    this.name = 'UnverifiedMachineFormattingError';
+  }
+}
+
 export interface AuthorLineageOptions {
+  /** Server-read prior body held by the same write transaction. Never a client
+   * claim: carry-forward verifies the retained raw span hashes against it. */
+  previousContent?: string;
   /**
    * Text the reviewer accepted from a machine author in the editing session
    * this save closes (validated at the request boundary by
@@ -71,6 +89,71 @@ export interface AuthorLineageOptions {
    * the machine wrote it.
    */
   machineDraft?: { authorId: string } | null;
+  /**
+   * How many times the turn records `acceptedMachineText` was verified
+   * against hold a clause's comparison form (machine-attribution.ts). When
+   * given, no more clauses with that form are credited than the records hold.
+   * Only a caller that verified the claims against records has it.
+   */
+  recordOccurrences?: (needle: string) => number;
+}
+
+export interface AuthorLineageResult {
+  /**
+   * Clauses of the saved content inside text this save accepted from a
+   * machine author: credited by it now, or credited by an earlier save and
+   * accepted again. Zero when the save accepted nothing, when no accepted text
+   * holds a whole clause of the content (a claim of one word), or when every
+   * such clause is one the lineage does not compare (machine-attribution.ts,
+   * "What is compared"). A caller that says a save accepted a machine's text
+   * says it only when this is above zero; clauses carried forward from an
+   * earlier acceptance and not accepted again do not count.
+   */
+  clausesInAcceptedText: number;
+}
+
+/**
+ * The clause split of enforceAuthorLineage: detectSpans over the content with
+ * the inside of every tag masked (tagsMaskedForSplit), each clause's text then
+ * sliced from the content itself. The splitter cut inside a tag at a style's
+ * ": ", and neither half of an honest draft matched (periodic review
+ * 2026-09-28, editor family, the batch-draft accept, round 4: C2). Offsets are
+ * the content's; only where the cuts fall changes, and only inside tags.
+ *
+ * enforceSourceAndAuthorLineage keeps detectSpans: its quote pass splits the
+ * content itself (source-attribution.ts), and its remainder must be those
+ * same clauses.
+ */
+export function clauseSpans(content: string): SentenceSpan[] {
+  const masked = tagsMaskedForSplit(content);
+  if (masked === content) return detectSpans(content, 'clause');
+  return detectSpans(masked, 'clause').map((s) => {
+    const text = content.slice(s.charStart, s.charEnd);
+    return { ...s, text, contentHash: createHash('sha256').update(text).digest('hex').slice(0, 16) };
+  });
+}
+
+/** What the machine pass reads besides the clauses: see AuthorLineageOptions. */
+interface MachinePassInput {
+  accepted: AcceptedMachineText[];
+  machineDraft: { authorId: string } | null;
+  content: string;
+  previousContent?: string;
+  recordOccurrences?: (needle: string) => number;
+}
+
+/** Exact raw carry needs no formatting inference. Consume each retained
+ * occurrence once and require the original attribution, including unknowns. */
+function allPreviousMachineSpansCarriedExactly(live: LiveMachineSpan[], current: MachineAttributedSpan[]): boolean {
+  const remaining = [...current];
+  return live.every(previous => {
+    const index = remaining.findIndex(span => hashSpanText(span.spanText) === previous.spanTextSha256
+      && span.machineAuthorId === previous.machineAuthorId && (span.assertedBy ?? null) === previous.assertedBy
+      && (span.createdBy ?? null) === previous.createdBy && (span.signatureId ?? null) === previous.signatureId);
+    if (index === -1) return false;
+    remaining.splice(index,1);
+    return true;
+  });
 }
 
 /**
@@ -88,21 +171,29 @@ async function attributeMachineThenAuthor(
   ref: AuthorLineageRef,
   candidates: Array<{ charStart: number; charEnd: number; text: string }>,
   actor: string,
-  accepted: AcceptedMachineText[],
-  machineDraft: { authorId: string } | null,
-): Promise<{ machineSpans: number; machineDraftSpans: number; authorSpans: number }> {
+  input: MachinePassInput,
+): Promise<{ machineSpans: number; machineDraftSpans: number; authorSpans: number; clausesInAcceptedText: number }> {
   const live = await listLiveMachineSpans(orgId, ref, exec);
   const machine = attributeMachineSpans(candidates as Parameters<typeof attributeMachineSpans>[0], {
-    accepted,
+    accepted: input.accepted,
     live,
     actor,
-    machineDraft,
+    machineDraft: input.machineDraft,
+    content: input.content,
+    previousContent: input.previousContent,
+    recordOccurrences: input.recordOccurrences,
   });
+  if (input.previousContent !== undefined && live.length > 0) {
+    const safety = formattingCarryForwardSafety(input.previousContent,input.content);
+    if (!safety.safe && !allPreviousMachineSpansCarriedExactly(live,machine)) {
+      throw new UnverifiedMachineFormattingError(safety.reason);
+    }
+  }
   await replaceMachineSpans(orgId, ref, machine, { createdBy: actor }, exec);
 
-  const machineRanges = new Set(machine.map((m) => `${m.charStart}:${m.charEnd}`));
-  const authorSpans = candidates
-    .filter((c) => !machineRanges.has(`${c.charStart}:${c.charEnd}`))
+  // Formatting and figures can reshape a clause around unchanged machine
+  // prose. Credit only its interval, then assert the actual human remainder.
+  const authorSpans = subtractAttributedRanges(candidates, machine, input.content)
     .map((c) => ({ charStart: c.charStart, charEnd: c.charEnd, spanText: c.text }));
   await replaceAuthorSpans(orgId, ref, authorSpans, { assertedBy: actor, createdBy: actor }, exec);
 
@@ -110,6 +201,7 @@ async function attributeMachineThenAuthor(
     machineSpans: machine.filter((m) => m.assertedBy).length,
     machineDraftSpans: machine.filter((m) => !m.assertedBy).length,
     authorSpans: authorSpans.length,
+    clausesInAcceptedText: machine.filter((m) => m.inAcceptedText).length,
   };
 }
 
@@ -123,6 +215,8 @@ async function attributeMachineThenAuthor(
  * @param content the content being written (empty/null ⇒ no-op)
  * @param actor   the author id recorded as `assertedBy`/`createdBy`
  * @param opts    what this save accepted from a machine author, if anything
+ * @returns how many clauses of the content are inside text this save
+ *          accepted from a machine author (see AuthorLineageResult)
  * @throws when the recorded spans do not cover the content (SpanLineageError)
  */
 export async function enforceAuthorLineage(
@@ -132,11 +226,11 @@ export async function enforceAuthorLineage(
   content: string | null | undefined,
   actor: string,
   opts: AuthorLineageOptions = {},
-): Promise<void> {
+): Promise<AuthorLineageResult> {
   if (content == null || typeof content !== 'string' || content.length === 0) {
     // Nothing authored → nothing to attribute. Matches the empty-scaffold seed
     // path and assertLineageCoversContent's own length<=0 early return.
-    return;
+    return { clausesInAcceptedText: 0 };
   }
 
   // Source spans recorded by an earlier accept are claims about characters at
@@ -145,22 +239,27 @@ export async function enforceAuthorLineage(
   // otherwise — the "a citation can never go stale" guarantee holds across a
   // human edit, not just across an accept.
   const { kept } = await retireStaleSourceSpans(orgId, ref, content, exec);
+  // The same for a figure's Vault support (S5c): kept only where its figure still is.
+  await retireStaleFigureSpans(orgId, ref, content, exec);
   const keptRanges = new Set(kept.map((k) => `${k.charStart}:${k.charEnd}`));
-  const candidates = detectSpans(content, 'clause').filter(
+  const candidates = clauseSpans(content).filter(
     (s) => !keptRanges.has(`${s.charStart}:${s.charEnd}`),
   );
 
   // The machine's clauses first — accepted in this save, or carried forward
   // from an earlier one by their text — then everything else as the actor's.
-  await attributeMachineThenAuthor(
-    exec, orgId, ref, candidates, actor,
-    opts.acceptedMachineText ?? [],
-    opts.machineDraft ?? null,
-  );
+  const { clausesInAcceptedText } = await attributeMachineThenAuthor(exec, orgId, ref, candidates, actor, {
+    accepted: opts.acceptedMachineText ?? [],
+    machineDraft: opts.machineDraft ?? null,
+    content,
+    previousContent: opts.previousContent,
+    recordOccurrences: opts.recordOccurrences,
+  });
 
   // Ask the database what it is about to commit, rather than trusting that the
   // writer not throwing means the rows say what they should.
   await assertLineageCoversContent(orgId, ref, content, exec);
+  return { clausesInAcceptedText };
 }
 
 export interface SourceAndAuthorLineageResult {
@@ -249,6 +348,7 @@ export async function enforceSourceAndAuthorLineage(
     await replaceSourceSpans(orgId, ref, [], { createdBy: actor }, exec);
     await replaceMachineSpans(orgId, ref, [], { createdBy: actor }, exec);
     await replaceAuthorSpans(orgId, ref, [], { assertedBy: actor, createdBy: actor }, exec);
+    await replaceVaultFigureSpans(orgId, ref, [], { createdBy: actor }, exec);
     return {
       sourceSpans: 0,
       quotedSpans: 0,
@@ -260,6 +360,8 @@ export async function enforceSourceAndAuthorLineage(
       coverage: 0,
     };
   }
+  // A figure's Vault support stands only while the figure is where it was supported (S5c).
+  await retireStaleFigureSpans(orgId, ref, content, exec);
 
   // 1. Verified-quote spans — pure, deterministic, zero model trust. Clause
   //    granularity matches author lineage so the passes partition the same clauses.
@@ -309,11 +411,11 @@ export async function enforceSourceAndAuthorLineage(
   const remainder = detectSpans(content, 'clause').filter(
     (s) => !attributedRanges.has(`${s.charStart}:${s.charEnd}`),
   );
-  const { machineSpans, machineDraftSpans, authorSpans } = await attributeMachineThenAuthor(
-    exec, orgId, ref, remainder, actor,
-    opts.acceptedMachineText ?? [],
-    opts.machineDraft ?? null,
-  );
+  const { machineSpans, machineDraftSpans, authorSpans } = await attributeMachineThenAuthor(exec, orgId, ref, remainder, actor, {
+    accepted: opts.acceptedMachineText ?? [],
+    machineDraft: opts.machineDraft ?? null,
+    content,
+  });
 
   // 5. Ask the database what it is about to commit. A gap throws and rolls the
   //    content write back with it.

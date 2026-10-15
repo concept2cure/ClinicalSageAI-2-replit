@@ -1,0 +1,1587 @@
+# working tree (final); neighbouring suites that import, mock or pin the changed modules
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/security/check-security-patterns.test.ts > check-security-patterns: multi-line destructuring > flags organizationId destructured from req.body across multiple lines 1117ms
+stdout | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+{
+  "timestamp": "2026-10-01T06:29:29.523Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:29.525Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+{
+  "timestamp": "2026-10-01T06:29:29.525Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/check-security-patterns.test.ts > check-security-patterns: multi-line destructuring > flags tenantId destructured from req.query across multiple lines 1070ms
+ ✓ server/__tests__/security/check-security-patterns.test.ts > check-security-patterns: multi-line destructuring > passes a handler that sources the org from the JWT helper 1796ms
+ ✓ server/__tests__/security/check-security-patterns.test.ts > check-security-patterns: multi-line destructuring > honors a security-allow marker on the line preceding a multi-line destructure 871ms
+stderr | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+{
+  "timestamp": "2026-10-01T06:29:31.823Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names every authoring trigger file the registry names, literally 4464ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied 260ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1) 193ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger 145ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not 201ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again 106ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers 109ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table 137ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > returns the organization UUID the auth boundary verified, without a query 9ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > reads the session's own organization row when the scope carries no UUID 2ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > does not pass a scope value that is not a UUID to a uuid column; it asks the org row 2ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > answers null when the session names an organization with no row 3ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only > fails closed with no scope, and under the system and pre-auth scopes 2ms
+ ✓ server/__tests__/security/check-security-patterns-socket-broadcast.test.ts > check-security-patterns: socket-global-broadcast > flags a namespace-global broadcast off a socket 1094ms
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/check-security-patterns-socket-broadcast.test.ts > check-security-patterns: socket-global-broadcast > flags a publish straight off the Socket.IO server handle 830ms
+stdout | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+Loaded 0 academic documents
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header 1226ms
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one 238ms
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT 223ms
+ ✓ server/__tests__/security/check-security-patterns-socket-broadcast.test.ts > check-security-patterns: socket-global-broadcast > does NOT flag ordinary EventEmitter publishes or already-scoped sends 928ms
+ ✓ server/__tests__/security/check-security-patterns-socket-broadcast.test.ts > check-security-patterns: socket-global-broadcast > honors an audited security-allow escape hatch 980ms
+ ✓ server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing in production > REFUSES TO BOOT — the gate is at config load, not at first audit write 97ms
+ ✓ server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing in production > refuses a present-but-weak secret too — a short key is a misconfiguration 2ms
+ ✓ server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing in production > accepts a secret of adequate length 2ms
+ ✓ server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing in production > still refuses to DEMOTE the lazy construction, if anything reaches it 51ms
+ ✓ server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing in production > is a distinct error type, so only THIS failure is allowed through 2ms
+stdout | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+{
+  "timestamp": "2026-10-01T06:29:36.784Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:36.790Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+{
+  "timestamp": "2026-10-01T06:29:36.791Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing outside production > does not refuse — the constructor warns and uses a development fallback
+{
+  "timestamp": "2026-10-01T06:29:36.889Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] test.action test_resource",
+  "context": {
+    "userId": 7,
+    "tenantId": 3,
+    "resourceId": "R1"
+  }
+}
+
+stderr | server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing outside production > does not refuse — the constructor warns and uses a development fallback
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+{
+  "timestamp": "2026-10-01T06:29:36.892Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing outside production > does not refuse — the constructor warns and uses a development fallback
+{
+  "timestamp": "2026-10-01T06:29:36.893Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing outside production > does not refuse — the constructor warns and uses a development fallback
+{
+  "timestamp": "2026-10-01T06:29:36.893Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing outside production > does not refuse — the constructor warns and uses a development fallback
+{
+  "timestamp": "2026-10-01T06:29:36.894Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/audit-secret-refusal.test.ts > AUDIT_HMAC_SECRET missing outside production > does not refuse — the constructor warns and uses a development fallback 992ms
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > auditService.verifyChain says it did not run, rather than "invalid"
+{
+  "timestamp": "2026-10-01T06:29:36.901Z",
+  "level": "error",
+  "message": "[audit-service] Audit chain verification could not run",
+  "context": {
+    "code": "42P01"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > GET /verify-chain answers 503 and asserts no verdict
+{
+  "timestamp": "2026-10-01T06:29:36.922Z",
+  "level": "error",
+  "message": "[audit-service] Audit chain verification could not run",
+  "context": {
+    "code": "42P01"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > GET /verify-chain answers 503 and asserts no verdict
+{
+  "timestamp": "2026-10-01T06:29:36.922Z",
+  "level": "error",
+  "message": "[decision-lineage-api] chain verification could not run",
+  "context": {
+    "reason": "42P01: relation \"audit.tamper_proof_log\" does not exist"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > GET /compliance-report withholds the attestation and every chain-dependent verdict
+{
+  "timestamp": "2026-10-01T06:29:36.945Z",
+  "level": "error",
+  "message": "[audit-service] Audit chain verification could not run",
+  "context": {
+    "code": "42P01"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > GET /compliance-report withholds the attestation and every chain-dependent verdict
+{
+  "timestamp": "2026-10-01T06:29:36.945Z",
+  "level": "error",
+  "message": "[decision-lineage-api] compliance report: chain verification could not run",
+  "context": {
+    "reason": "42P01: relation \"audit.tamper_proof_log\" does not exist"
+  }
+}
+
+ ✓ tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > auditService.verifyChain says it did not run, rather than "invalid" 3ms
+ ✓ tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > GET /verify-chain answers 503 and asserts no verdict 32ms
+ ✓ tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > GET /compliance-report withholds the attestation and every chain-dependent verdict 15ms
+stderr | server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > converts a gateway failure into a recoverable CouncilError and audits it
+{
+  "timestamp": "2026-10-01T06:29:37.351Z",
+  "level": "error",
+  "message": "[multi-agent-council] [Council:corr-1] SYNTHESIZER: LLM call failed via gateway: all providers down",
+  "context": {}
+}
+
+stderr | server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a governance refusal is final and not audited as an outage
+{
+  "timestamp": "2026-10-01T06:29:37.357Z",
+  "level": "error",
+  "message": "[multi-agent-council] [Council:corr-1] CRITIC: LLM call failed via gateway: MODEL_NOT_APPROVED_FOR_HIGH_RISK: regulatory_review",
+  "context": {}
+}
+
+stderr | server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a tenant placement refusal is final, named for what it is, and not audited as an outage (D6)
+{
+  "timestamp": "2026-10-01T06:29:37.359Z",
+  "level": "error",
+  "message": "[multi-agent-council] [Council:corr-1] DRAFTER: LLM call failed via gateway: DENY_TENANT_POLICY: this request was not sent to any AI service, because your organization's data-placement policy does not permit it (no self-hosted lane).",
+  "context": {}
+}
+
+stderr | server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > withRetry does not retry an error marked unrecoverable, and does retry a recoverable one
+{
+  "timestamp": "2026-10-01T06:29:37.361Z",
+  "level": "warn",
+  "message": "[multi-agent-council] [Council] CRITIC attempt 1 failed, retrying in 0ms: down",
+  "context": {}
+}
+
+stderr | server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > withRetry does not retry an error marked unrecoverable, and does retry a recoverable one
+{
+  "timestamp": "2026-10-01T06:29:37.365Z",
+  "level": "warn",
+  "message": "[multi-agent-council] [Council] CRITIC attempt 2 failed, retrying in 0ms: down",
+  "context": {}
+}
+
+stderr | server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a binding that returns nothing is UNVERIFIABLE, not a DISCREPANCY corrected to an empty string
+{
+  "timestamp": "2026-10-01T06:29:37.385Z",
+  "level": "warn",
+  "message": "[multi-agent-council] [Council] API data binding CTMS not yet implemented",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > delegates to the gateway and maps the response to CouncilLLMResult 3ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > routes prose agents as document_drafting (jsonMode off) 5ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > threads correlationId + operation into the gateway audit metadata 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > throws SERVICE_DEGRADED (without calling the gateway) when the feature is gated off 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > converts a gateway failure into a recoverable CouncilError and audits it 3ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > prepends the intelligence prefix to the system turn when org/project context is present 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > does not fetch an intelligence prefix when no org/project context is given 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > routes the reviewing agents as regulatory_review, with jsonMode on (not structured_output) 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > DRAFTER is routed as document_drafting whatever its output format 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > STATISTICIAN is routed as regulatory_review whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > CRITIC is routed as regulatory_review whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > SYNTHESIZER is routed as document_drafting whatever its output format 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a governance refusal is final and not audited as an outage 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a tenant placement refusal is final, named for what it is, and not audited as an outage (D6) 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > withRetry does not retry an error marked unrecoverable, and does retry a recoverable one 16ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a claim that matches the data is VERIFIED; one that differs is a DISCREPANCY corrected to the data 4ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own VERIFIED is not a verdict: no matching binding means UNVERIFIABLE 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own correction is not a figure: it is dropped when no data answered 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a binding that returns nothing is UNVERIFIABLE, not a DISCREPANCY corrected to an empty string 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a count of 0 read from the data is a value, and verifies a claim of 0 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (prose) fails, and is not recorded as zero claims 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (JSON without a verifications list) fails, and is not recorded as zero claims 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (an empty reply) fails, and is not recorded as zero claims 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an empty verifications list is a real answer — a draft with no numerical claims 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > unreadable → fails and records nothing 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > a readable review keeps its issues and its assessment; an unknown assessment is the cautious REVISE 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > a session is created for an organization, and records it 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > a session with no organization is refused, and nothing is written 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > every agent's model call names the session's organization 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > all four agents pass it, not only the one exercised above 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > an execution row and a verification row take their tenant from the session's row 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > names the immutability triggers of every audit store the sweep verifies 5ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > is created by a migration on a deploy applier, under exactly that name (drift guard) 10ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports ok when every expected trigger is present and enabled 11ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > issues one read-only catalog probe over pg_trigger, pg_class and pg_namespace, parameterised 2ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > names a trigger the catalog does not have (trg_audit_logs_no_delete dropped) 10ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > treats a disabled trigger (ALTER TABLE … DISABLE TRIGGER) as not protecting the table 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports a table that does not exist yet as missing every trigger on it 5ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > fails closed when the probe returns no row for an expected trigger 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > propagates a probe failure rather than reporting ok (caller decides the posture) 7ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > describeAuditImmutabilityGap > names every missing and disabled trigger, the absent tables and the migration to run 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > security-health panel exposure > runs as a critical check that fails when a trigger is missing 114ms
+stderr | tests/services/auditService.test.ts > AuditService > logAction — persistence > should insert a chained+sealed audit row with object-form entry
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/services/auditService.test.ts > AuditService > logAction — persistence > should insert a chained+sealed audit row with object-form entry 8ms
+ ✓ tests/services/auditService.test.ts > AuditService > logAction — persistence > should accept positional-form arguments for backward compatibility 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > logAction — persistence > should resolve tenantId from organizationId alias 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > logAction — persistence > reports a failed chained write instead of throwing, and keeps the row 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > getAuditLog — filtering > should return rows from Drizzle query 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > getAuditLog — filtering > should apply userId filter 2ms
+ ✓ tests/services/auditService.test.ts > AuditService > getAuditLog — filtering > should apply date range filters 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > getAuditLog — filtering > should respect custom limit 0ms
+ ✓ tests/services/auditService.test.ts > AuditService > getAuditLog — filtering > should default to 100 rows when no limit specified 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > getAuditLog — filtering > should return empty array when both Drizzle and tamper-proof log fail 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > verifyChain — tamper-proof hash chain > says it did not run when the verifier throws, rather than reporting a verdict 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > verifyChain — tamper-proof hash chain > reports a verdict only when the verifier actually ran 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > constants > should expose ACTIONS map with known action types 1ms
+ ✓ tests/services/auditService.test.ts > AuditService > constants > should expose RESOURCE_TYPES map 0ms
+stdout | server/startup/__tests__/audit-chain-wiring.test.ts
+{
+  "timestamp": "2026-10-01T06:29:38.966Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:38.968Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts
+{
+  "timestamp": "2026-10-01T06:29:38.968Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+{
+  "timestamp": "2026-10-01T06:29:39.011Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+{
+  "timestamp": "2026-10-01T06:29:39.011Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/startup/__tests__/audit-chain-wiring.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+{
+  "timestamp": "2026-10-01T06:29:39.036Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/tenant-isolation-cortex-advisory.contract.test.ts > Tenant isolation — Cortex advisory > scopes the project lookup to the authed org 103ms
+ ✓ server/__tests__/security/tenant-isolation-cortex-advisory.contract.test.ts > Tenant isolation — Cortex advisory > 403s without org context and never reads a project 14ms
+stdout | server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex
+{
+  "timestamp": "2026-10-01T06:29:39.179Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks put mutations to append-only audit events
+[IMMUTABILITY] Blocked PUT /api/audit/events/123 — audit records are append-only
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks patch mutations to append-only audit events
+[IMMUTABILITY] Blocked PATCH /api/audit/events/123 — audit records are append-only
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks delete mutations to append-only audit events
+[IMMUTABILITY] Blocked DELETE /api/audit/events/123 — audit records are append-only
+
+stderr | server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks explicit bulk deletion
+[IMMUTABILITY] Blocked POST /api/audit/bulk-delete — audit records are append-only
+
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > audit-chain self-verification wiring > starts the chain monitor in initializeParallelServices 2ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > audit-chain self-verification wiring > gates the chain monitor by the same AUDIT_TRAIL_ENABLED flag as the audit middleware 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > audit-chain self-verification wiring > stops the chain monitor before closing the DB pool on shutdown 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > audit-chain self-verification wiring > uses a 5-minute monitor interval (matches §11.10(e) continuous-monitoring guidance) 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware composition order > mounts telemetry, health, core, debug, and audit middleware in order 1ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware composition order > never reads request body values in debug logging 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > detects Concept2Cure API routes from originalUrl/path/url 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > records body metadata only for methods that can carry payloads 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > blocks only destructive audit mutations and precise bulk-delete paths 1ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > matches immutable audit routes on path boundaries only 1ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > allowlists header metadata and excludes credentials 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > startup middleware guard helpers > logs query shape without query values 0ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyDebugRequestLogging integration > omits request body values for /api/concept2cure routes 43ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyDebugRequestLogging integration > never logs non-concept2cure POST bodies and skips GET body metadata 15ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks put mutations to append-only audit events 5ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks patch mutations to append-only audit events 4ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks delete mutations to append-only audit events 3ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > allows appending a new audit event 3ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > does not block similarly named non-audit routes 2ms
+ ✓ server/startup/__tests__/audit-chain-wiring.test.ts > applyImmutabilityPolicy integration > blocks explicit bulk deletion 5ms
+ ✓ server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex > POST /api/cortex/atoms is gone (404), not broken (500) 43ms
+ ✓ server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex > GET /api/cortex/atoms/:id is gone (404) 5ms
+ ✓ server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex > DELETE /api/cortex/atoms/:id is gone (404) 4ms
+ ✓ server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex > GET /api/cortex/main/health — the cortex.health_check() surface that always reported error — is gone (404) 3ms
+ ✓ server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex > GET /api/cortex/main/stats is gone (404) 3ms
+ ✓ server/__tests__/routes/cortex-prime-unmounted.test.ts > Cortex Prime is unmounted from /api/cortex > the static /api/cortex/health handler that never touched cortex.* still answers 4ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > isAuditTrailActive > is true only when AUDIT_TRAIL_ENABLED === "true" 2ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > is a no-op (no warn, no throw) outside production 2ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > is silent in production when the audit trail is active 0ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > warns (but does not throw) in production when the audit trail is off 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > fails closed (throws) when AUDIT_REQUIRE_ENFORCE=true and audit is off in production 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > does NOT fail closed when AUDIT_REQUIRE_ENFORCE=true but audit IS active 0ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > returns the report and refuses nothing when every trigger is present 3ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > REFUSES TO BOOT in production when a trigger is missing, naming it 3ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production even without AUDIT_REQUIRE_ENFORCE (a missing trigger is not a rollout state) 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when a trigger exists but is disabled 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > warns (structured, no throw) outside production when a trigger is missing 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when the check cannot run and AUDIT_REQUIRE_ENFORCE=true (fail closed) 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > warns loudly, and never reports a pass, when the check cannot run in production without the enforce flag 0ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when AUDIT_REQUIRE_ENFORCE=true and the daily sweep is switched off 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > is a no-op outside production and without the enforce flag 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > throws in production when AUDIT_REQUIRE_ENFORCE=true and the sweep is disabled 0ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > does not throw in production with AUDIT_REQUIRE_ENFORCE=true when the sweep is on (the production default) 0ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > ENABLE_AUDIT_CHAIN_CHECK=false never schedules 0ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > ENABLE_AUDIT_CHAIN_CHECK=true always schedules 0ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > unset: on in production, on elsewhere only with the audit trail active 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > names the controlling variable 0ms
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled
+{
+  "timestamp": "2026-10-01T06:29:39.551Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on
+{
+  "timestamp": "2026-10-01T06:29:39.553Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep disabled",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset
+{
+  "timestamp": "2026-10-01T06:29:39.554Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set
+{
+  "timestamp": "2026-10-01T06:29:39.555Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep disabled",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "opt-in outside production (set ENABLE_AUDIT_CHAIN_CHECK=true or AUDIT_TRAIL_ENABLED=true)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured
+{
+  "timestamp": "2026-10-01T06:29:39.558Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset
+{
+  "timestamp": "2026-10-01T06:29:39.559Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false)
+{
+  "timestamp": "2026-10-01T06:29:39.559Z",
+  "level": "warn",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep DISABLED in production — Part 11 tamper-evidence monitoring is off",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too
+{
+  "timestamp": "2026-10-01T06:29:39.560Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies
+{
+  "timestamp": "2026-10-01T06:29:39.566Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Every audit store verified (audit_logs 12 rows, audit_events 2 rows, tamper_proof_log 2 rows, 8 immutability triggers)",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content
+{
+  "timestamp": "2026-10-01T06:29:39.573Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.seals — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.seals"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "7",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ]
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number
+{
+  "timestamp": "2026-10-01T06:29:39.577Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit.tamper_proof_log — investigate immediately",
+  "context": {
+    "failures": [
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "broken",
+        "rowsChecked": 2,
+        "firstFailure": "2",
+        "reason": "Content tampered: content_hash mismatch at sequence 2"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ]
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id
+{
+  "timestamp": "2026-10-01T06:29:39.581Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_events.linkage — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_events.linkage"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "broken",
+        "rowsChecked": 2,
+        "firstFailure": "2",
+        "reason": "1 broken link(s)"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ]
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger
+{
+  "timestamp": "2026-10-01T06:29:39.585Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in immutability_triggers — investigate immediately",
+  "context": {
+    "failures": [
+      "immutability_triggers"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "missing",
+        "rowsChecked": 7,
+        "firstFailure": "public.audit_logs.trg_audit_logs_no_delete",
+        "reason": "missing: public.audit_logs.trg_audit_logs_no_delete"
+      }
+    ]
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before
+{
+  "timestamp": "2026-10-01T06:29:39.587Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.chain — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.chain"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "broken",
+        "rowsChecked": 12,
+        "firstFailure": "row-9",
+        "reason": "sha256_chain mismatch"
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ]
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others
+{
+  "timestamp": "2026-10-01T06:29:39.590Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.seals, audit.tamper_proof_log — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.seals",
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "0",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "error",
+        "reason": "boom"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ]
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified
+{
+  "timestamp": "2026-10-01T06:29:39.591Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit.tamper_proof_log — investigate immediately",
+  "context": {
+    "failures": [
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "unverifiable",
+        "rowsChecked": 0,
+        "reason": "no entries: there is no chain to verify"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "missing",
+        "reason": "table absent — db/migrations/20260813_audit_tamper_proof_log.sql has not been applied"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ]
+  }
+}
+
+ ✓ server/__tests__/routes/cortex-threads-failclosed.smoke.test.ts > cortex threads fail-closed route contract > requires authenticated user for GET /threads 2ms
+ ✓ server/__tests__/routes/cortex-threads-failclosed.smoke.test.ts > cortex threads fail-closed route contract > fails closed on storage/query errors for GET /threads 2ms
+ ✓ server/__tests__/routes/cortex-threads-failclosed.smoke.test.ts > cortex threads fail-closed route contract > clamps offset to non-negative values 1ms
+ ✓ server/__tests__/routes/cortex-threads-failclosed.smoke.test.ts > cortex threads fail-closed route contract > requires authentication for GET /threads/:threadId 1ms
+ ✓ server/__tests__/routes/cortex-threads-failclosed.smoke.test.ts > cortex threads fail-closed route contract > enforces thread ownership and denies cross-user access 1ms
+ ✓ server/__tests__/routes/cortex-threads-failclosed.smoke.test.ts > cortex threads fail-closed route contract > returns explicit fail-closed code for GET /threads/:threadId errors 0ms
+ ✓ server/__tests__/routes/cortex-threads-failclosed.smoke.test.ts > cortex threads fail-closed route contract > requires auth for create/update/delete thread mutations 1ms
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert
+{
+  "timestamp": "2026-10-01T06:29:39.593Z",
+  "level": "warn",
+  "message": "[audit-chain-integrity] Audit integrity sweep NOT fully verified: audit_logs.seals, audit_events.seals could not be checked",
+  "context": {
+    "unverifiable": [
+      "audit_logs.seals",
+      "audit_events.seals"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "unverifiable",
+        "reason": "AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified — integrity unverifiable."
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "unverifiable",
+        "reason": "AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ]
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified
+{
+  "timestamp": "2026-10-01T06:29:39.595Z",
+  "level": "warn",
+  "message": "[audit-chain-integrity] Audit integrity sweep NOT fully verified: audit_events.linkage could not be checked",
+  "context": {
+    "unverifiable": [
+      "audit_events.linkage"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "unverifiable",
+        "rowsChecked": 2,
+        "reason": "no row carries a record_hash: the chain has never been hashed, so no link could be checked"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ]
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable
+{
+  "timestamp": "2026-10-01T06:29:39.598Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] Audit integrity sweep could not run: pool down",
+  "context": {}
+}
+
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset 0ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false) 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies 9ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content 5ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable 3ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > verifies an untampered entry written WITH ip_address and user_agent 5ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > detects tampering with ip_address (now covered by the content hash) 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > still verifies an entry written WITHOUT optional client context 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > verifies an entry whose details keys are reordered by jsonb storage 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > detects tampering with details even though key order is normalized 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > verifies nested objects regardless of the order jsonb returns them in 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > an intact chain verifies, with every signature counted 5ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > an empty table is valid with zero entries 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > names a content edit 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > names a broken link (previous_hash) 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > names a recomputed-but-unsigned forgery (chain_hash consistent, signature under the wrong secret) 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > a deleted row breaks the row after it 0ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > accepts the pre-canonicalization legacy content hash 0ms
+stdout | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-01T06:29:40.592Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:40.593Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-01T06:29:40.594Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-01T06:29:40.674Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > marks the two frameworks no check evaluates NOT_ASSESSED, in every chain state 2ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > follows the chain verifier for the three the chain actually supports 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > agrees with the compliance report on that router, framework for framework 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > CSV never prints the five names as an unqualified compliance claim 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > XML attaches a status to every framework element and to the chain line 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > JSON carries objects a machine reader cannot mistake for a conformance list 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > a verified chain still does not promote the two nothing evaluates 0ms
+
+ Test Files  18 passed (18)
+      Tests  184 passed (184)
+   Start at  06:29:25
+   Duration  15.19s (transform 10.74s, setup 867ms, import 5.71s, tests 31.94s, environment 54ms)
+
+exit=0
+
+# cortex-threads.runtime.test.ts on its own: its first case cold-imports cortex-unified under vitest's 10 s default timeout; in a parallel batch it has timed out at 10.009 s
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 401 when JWT is missing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:45.116Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:46.150Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:46.151Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:46.151Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 401 when JWT is missing
+Loaded 0 academic documents
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads/:threadId returns 403 when caller does not own thread
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads/:threadId returns 403 when caller does not own thread
+{
+  "timestamp": "2026-10-01T06:29:50.480Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads/:threadId returns 403 when caller does not own thread
+{
+  "timestamp": "2026-10-01T06:29:50.497Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:50.497Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads/:threadId returns 403 when caller does not own thread
+{
+  "timestamp": "2026-10-01T06:29:50.497Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads/:threadId returns 403 when caller does not own thread
+Loaded 0 academic documents
+
+ ✓ server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 401 when JWT is missing 7963ms
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 500 fail-closed when storage throws
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 500 fail-closed when storage throws
+{
+  "timestamp": "2026-10-01T06:29:50.924Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 500 fail-closed when storage throws
+{
+  "timestamp": "2026-10-01T06:29:50.953Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:50.953Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 500 fail-closed when storage throws
+{
+  "timestamp": "2026-10-01T06:29:50.953Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 500 fail-closed when storage throws
+Loaded 0 academic documents
+
+ ✓ server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads/:threadId returns 403 when caller does not own thread 403ms
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 500 fail-closed when storage throws
+{
+  "timestamp": "2026-10-01T06:29:51.088Z",
+  "level": "error",
+  "message": "[cortex-unified] GET /threads error:",
+  "context": "Cannot read properties of undefined (reading 'rows')"
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > POST /threads returns 401 when JWT is missing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > POST /threads returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:51.280Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > POST /threads returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:51.302Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:51.302Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > POST /threads returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:51.302Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > POST /threads returns 401 when JWT is missing
+Loaded 0 academic documents
+
+ ✓ server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 500 fail-closed when storage throws 436ms
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 401 when JWT is missing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:51.661Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:51.678Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:51.679Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:51.679Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 401 when JWT is missing
+Loaded 0 academic documents
+
+ ✓ server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > POST /threads returns 401 when JWT is missing 386ms
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 401 when JWT is missing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:52.020Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:52.064Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:52.064Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 401 when JWT is missing
+{
+  "timestamp": "2026-10-01T06:29:52.064Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 401 when JWT is missing
+Loaded 0 academic documents
+
+ ✓ server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 401 when JWT is missing 333ms
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 403 when user does not own thread
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 403 when user does not own thread
+{
+  "timestamp": "2026-10-01T06:29:52.322Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 403 when user does not own thread
+{
+  "timestamp": "2026-10-01T06:29:52.336Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:52.336Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 403 when user does not own thread
+{
+  "timestamp": "2026-10-01T06:29:52.336Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 403 when user does not own thread
+Loaded 0 academic documents
+
+ ✓ server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 401 when JWT is missing 357ms
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 403 when user does not own thread
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 403 when user does not own thread
+{
+  "timestamp": "2026-10-01T06:29:52.923Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 403 when user does not own thread
+{
+  "timestamp": "2026-10-01T06:29:52.951Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:52.951Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 403 when user does not own thread
+{
+  "timestamp": "2026-10-01T06:29:52.951Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 403 when user does not own thread
+Loaded 0 academic documents
+
+ ✓ server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > PATCH /threads/:threadId returns 403 when user does not own thread 291ms
+ ✓ server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > DELETE /threads/:threadId returns 403 when user does not own thread 670ms
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-01T06:29:53.156Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.164Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.165Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.166Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.166Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.167Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.168Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.169Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stderr | Object.warn (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:171:13)
+{
+  "timestamp": "2026-10-01T06:29:53.163Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.165Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.165Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.166Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.167Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.168Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.169Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.169Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  06:29:41
+   Duration  11.48s (transform 5.79s, setup 86ms, import 177ms, tests 10.85s, environment 0ms)
+
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-01T06:29:53.198Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.203Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.204Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.204Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.205Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.205Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.205Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:53.205Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+exit=0

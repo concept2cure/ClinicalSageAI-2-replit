@@ -1,0 +1,2 @@
+[ci:duplicate-table-ddl] scanned 622 non-archived .sql files; 1380 distinct tables; 13 defined more than once; 15 baselined
+[ci:duplicate-table-ddl] ✅ no new duplicate table definitions.

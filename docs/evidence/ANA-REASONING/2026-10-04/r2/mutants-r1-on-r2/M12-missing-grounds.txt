@@ -1,0 +1,13 @@
+Mutant M12-missing-grounds: [MISSING] counts as grounding again
+
+--- server/services/ana-ri/evidence-validation.ts
+- grounded: nearestLabel !== null && nearestLabel.type !== 'MISSING',
++ grounded: nearestLabel !== null,
+
+Tests run: server/services/ana-ri/__tests__/evidence-validation.test.ts
+Result: KILLED
+
+ × server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — a declared gap is not grounding > a claim whose only label is [MISSING] is not grounded, and is counted as missing support 9ms
+ × server/services/ana-ri/__tests__/evidence-validation.test.ts > validateEvidence — a declared gap is not grounding > a [KNOWN] claim beside it is still grounded 1ms
+      Tests  2 failed | 12 passed (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

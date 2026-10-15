@@ -1,0 +1,27 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts
+   163:53  warning  Arrow function has a complexity of 23. Maximum allowed is 15                             complexity
+   686:3   warning  Async arrow function has too many parameters (10). Maximum allowed is 5                  max-params
+   871:3   warning  Arrow function has too many parameters (7). Maximum allowed is 5                         max-params
+   965:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1008:1   warning  File has too many lines (5439). Maximum allowed is 500                                   max-lines
+  1912:74  warning  Async arrow function has too many lines (272). Maximum allowed is 100                    max-lines-per-function
+  1912:74  warning  Async arrow function has a complexity of 67. Maximum allowed is 15                       complexity
+  3795:82  warning  Async arrow function has too many lines (250). Maximum allowed is 100                    max-lines-per-function
+  3795:82  warning  Async arrow function has a complexity of 46. Maximum allowed is 15                       complexity
+  4152:89  warning  Async arrow function has too many lines (142). Maximum allowed is 100                    max-lines-per-function
+  4152:89  warning  Async arrow function has a complexity of 26. Maximum allowed is 15                       complexity
+  4548:92  warning  Async arrow function has too many lines (171). Maximum allowed is 100                    max-lines-per-function
+  5075:72  warning  Async arrow function has too many lines (126). Maximum allowed is 100                    max-lines-per-function
+  5075:72  warning  Async arrow function has a complexity of 25. Maximum allowed is 15                       complexity
+  5330:72  warning  Async arrow function has a complexity of 22. Maximum allowed is 15                       complexity
+  6102:80  warning  Async arrow function has too many lines (105). Maximum allowed is 100                    max-lines-per-function
+  6102:80  warning  Async arrow function has a complexity of 26. Maximum allowed is 15                       complexity
+  6203:9   warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  6933:72  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                       complexity
+  7382:70  warning  Async arrow function has too many lines (110). Maximum allowed is 100                    max-lines-per-function
+  7382:70  warning  Async arrow function has a complexity of 24. Maximum allowed is 15                       complexity
+  8153:97  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  8278:82  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                       complexity
+
+✖ 23 problems (0 errors, 23 warnings)

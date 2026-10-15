@@ -60,7 +60,7 @@ undocumented is most dangerous:
    and the four `GET /api/cerv2/export/sample/:docType*` routes were removed.
    Documenting a prod-unsafe toggle is second best; not having one is better.)
 2. The audit-integrity & attestation crypto (`AUDIT_HMAC_SECRET`,
-   `AUDIT_EXPORT_SIGNING_KEY`, `AUDIT_ATTESTATION_KEY` + `_ID`/`_PREV`/`_PREV_ID`
+   `AUDIT_EXPORT_SIGNING_KEY` + `_ID`/`_PREV`/`_PREV_ID`, `AUDIT_ATTESTATION_KEY` + `_ID`/`_PREV`/`_PREV_ID`
    — all fail-closed in production per 21 CFR Part 11), the internal
    service/admin tokens (`ADMIN_TOKEN`, `ANA_OPS_TOKEN`, `ANA_SERVICE_TOKEN`),
    and the CORS/URL config (`ALLOWED_ORIGINS`, `APP_URL`, `APP_BASE_URL`).

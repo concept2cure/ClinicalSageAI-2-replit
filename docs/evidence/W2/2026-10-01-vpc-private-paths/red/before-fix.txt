@@ -1,0 +1,48 @@
+$ git rev-parse --short HEAD  # module unchanged; test added
+6cb78f44b
+$ terraform version
+Terraform v1.9.8
+$ terraform test -no-color
+tests/private_paths.tftest.hcl... in progress
+  run "s3_traffic_from_the_private_subnets_stays_inside_aws"... fail
+
+Error: Test assertion failed
+
+  on tests/private_paths.tftest.hcl line 24, in run "s3_traffic_from_the_private_subnets_stays_inside_aws":
+  24:     condition     = contains(coalesce(aws_vpc_endpoint.s3.route_table_ids, []), aws_route_table.private.id)
+    ├────────────────
+    │ aws_route_table.private.id is "x9xjsa9u"
+    │ aws_vpc_endpoint.s3.route_table_ids is empty set of string
+
+The S3 gateway endpoint must be on the private route table, or Vault and
+evidence bytes leave through the NAT gateway.
+  run "kms_calls_from_the_private_subnets_reach_the_endpoint"... fail
+
+Error: Test assertion failed
+
+  on tests/private_paths.tftest.hcl line 33, in run "kms_calls_from_the_private_subnets_reach_the_endpoint":
+  33:     condition     = aws_vpc_endpoint.kms.private_dns_enabled == true
+    ├────────────────
+    │ aws_vpc_endpoint.kms.private_dns_enabled is false
+
+Without private DNS, kms.<region>.amazonaws.com resolves to the public
+endpoint and signing traffic goes through the NAT.
+
+Error: Test assertion failed
+
+  on tests/private_paths.tftest.hcl line 38, in run "kms_calls_from_the_private_subnets_reach_the_endpoint":
+  38:     condition = anytrue([
+  39:       for r in aws_security_group.endpoint.ingress :
+  40:       r.protocol == "tcp" && r.from_port <= 443 && r.to_port >= 443 && contains(coalesce(r.cidr_blocks, []), var.vpc_cidr)
+  41:     ])
+    ├────────────────
+    │ aws_security_group.endpoint.ingress is empty set of object
+    │ var.vpc_cidr is "10.9.0.0/16"
+
+The endpoint's security group must admit HTTPS from the VPC, or nothing can
+reach the KMS endpoint.
+tests/private_paths.tftest.hcl... tearing down
+tests/private_paths.tftest.hcl... fail
+
+Failure! 0 passed, 2 failed.
+exit=1

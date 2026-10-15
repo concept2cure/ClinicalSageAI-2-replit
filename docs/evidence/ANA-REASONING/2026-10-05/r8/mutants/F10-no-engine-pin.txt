@@ -1,0 +1,14 @@
+Mutant F10-no-engine-pin: another engine's check is read as this one's
+
+--- server/services/ana/memory-fact-check.ts
+- const check = readStoredVerification(metadata)?.check;
+  return check && check.engine === ANSWER_CHECK_VERSION ? check : null;
++ const check = readStoredVerification(metadata)?.check;
+  return check ?? null;
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is nothing when it is another engine's, malformed or absent 8ms
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

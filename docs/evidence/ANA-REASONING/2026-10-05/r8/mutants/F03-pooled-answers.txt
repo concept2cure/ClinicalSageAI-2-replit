@@ -1,0 +1,12 @@
+Mutant F03-pooled-answers: two answers' findings are pooled into a pairing neither made
+
+--- server/services/ana/memory-fact-check.ts
+- return basis.answers.some((entries) => checkAnswer(item, entries).found === own.claims);
++ return checkAnswer(item, basis.answers.flat()).found === own.claims;
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > never recombines two answers' findings into a claim neither made 7ms
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

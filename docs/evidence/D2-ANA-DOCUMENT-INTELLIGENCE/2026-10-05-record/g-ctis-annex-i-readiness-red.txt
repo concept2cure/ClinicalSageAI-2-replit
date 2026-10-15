@@ -1,0 +1,299 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — an NDA-shaped sequence is not CTIS-ready > is not ready 8ms
+   → expected true to be false // Object.is equality
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — an NDA-shaped sequence is not CTIS-ready > reports the Part I Annex I documents a US NDA does not contain 3ms
+   → expected [] to include 'protocol'
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — an NDA-shaped sequence is not CTIS-ready > reports every Part II Annex I heading per member state, including K, O, Q and R 1ms
+   → Cannot read properties of undefined (reading 'DE')
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — an NDA-shaped sequence is not CTIS-ready > the dispatcher lists undetermined slots with the missing ones, as eSTAR does 1ms
+   → expected true to be false // Object.is equality
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > a "pipeline" title does not satisfy the PIP slot, nor "Open-label" the labelling slot 1ms
+   → expected true to be false // Object.is equality
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > marks every required Part I slot present for a complete Part I placed at its slugs 2ms
+   → expected [ 'impd-quality', …(2) ] to deeply equal []
+ ✓ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > accepts a listed documentType wherever the leaf is filed 0ms
+ ✓ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > a protocol annex is not the protocol, and slugs are matched case-insensitively 0ms
+ ✓ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > reports missing required Part I slots as gaps, never invents them 1ms
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > does not block on conditional Part I rows (AxMP, scientific advice, PIP); it asks a human to confirm them 5ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part II is per member state > a DE informed-consent form does not clear FR 1ms
+   → expected false to be true // Object.is equality
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part II is per member state > a Part II document with no member state is undetermined for every state, never present 1ms
+   → Cannot read properties of undefined (reading 'DE')
+ ✓ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part II is per member state > a state code in the slug must match a concerned state 1ms
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — readiness > is ready only when Part I and every concerned state Part II are complete 1ms
+   → expected false to be true // Object.is equality
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — readiness > "if applicable" rows (K, O, Q) are undetermined until filed or recorded not-applicable 1ms
+   → expected [ 'subject-information-consent', …(1) ] to deeply equal []
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — readiness > a required row (R, data protection) cannot be marked not-applicable 1ms
+   → expected [ 'subject-information-consent', …(1) ] to include 'data-protection'
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — readiness > GMP (Annex I F) can be recorded not-applicable for an authorised, unmodified IMP 1ms
+   → expected undefined to deeply equal [ 'gmp-manufacturing' ]
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > CTR_ANNEX_I — the one record the engine reads > has one row per Annex I heading B–R plus Article 7(1)(h), each with an EUR-Lex basis 11ms
+   → Cannot find module '/server/services/pathway-engines/ctis/ctr-annex-i' imported from /home/user/ClinicalSageAI-2-replit/server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts
+ × server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > buildPathwayManifest — CTIS statuses > projects undetermined and not-applicable as themselves, not as optional-absent 2ms
+   → expected 'missing' to be 'undetermined' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — an NDA-shaped sequence is not CTIS-ready > is not ready
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:67:29
+     65|
+     66|   it('is not ready', () => {
+     67|     expect(d.summary.ready).toBe(false);
+       |                             ^
+     68|   });
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — an NDA-shaped sequence is not CTIS-ready > reports the Part I Annex I documents a US NDA does not contain
+AssertionError: expected [] to include 'protocol'
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:72:46
+     70|   it('reports the Part I Annex I documents a US NDA does not contain',…
+     71|     for (const id of ['protocol', 'impd-quality', 'impd-safety-efficac…
+     72|       expect(d.summary.partIMissingRequired).toContain(id);
+       |                                              ^
+     73|     }
+     74|     // GMP (Annex I F) does not apply to an authorised, unmodified IMP…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — an NDA-shaped sequence is not CTIS-ready > reports every Part II Annex I heading per member state, including K, O, Q and R
+TypeError: Cannot read properties of undefined (reading 'DE')
+ ❯ gapsFor server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:44:16
+     42| const gapsFor = (d: CtisDossier, ms: string): string[] => [
+     43|   ...d.summary.partIIMissingByState[ms],
+     44|   ...d.summary.partIIUndeterminedByState[ms],
+       |                ^
+     45| ];
+     46|
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:81:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — an NDA-shaped sequence is not CTIS-ready > the dispatcher lists undetermined slots with the missing ones, as eSTAR does
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:90:21
+     88|   it('the dispatcher lists undetermined slots with the missing ones, a…
+     89|     const r = assessPathwayReadiness({ pathway: 'ctis', leaves: ndaSha…
+     90|     expect(r.ready).toBe(false);
+       |                     ^
+     91|     expect(r.missingRequired).toContain('I:protocol');
+     92|     expect(r.missingRequired).toContain('II:DE:data-protection');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > a "pipeline" title does not satisfy the PIP slot, nor "Open-label" the labelling slot
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:106:84
+    104|       memberStates: [],
+    105|     });
+    106|     expect(d.partI.find((s) => s.id === 'paediatric-investigation-plan…
+       |                                                                                    ^
+    107|     expect(d.partI.find((s) => s.id === 'labelling')!.present).toBe(fa…
+    108|     expect(d.partI.find((s) => s.id === 'impd-safety-efficacy')!.prese…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > marks every required Part I slot present for a complete Part I placed at its slugs
+AssertionError: expected [ 'impd-quality', …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "impd-quality",
++   "impd-safety-efficacy",
++   "gmp-manufacturing",
++ ]
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:113:44
+    111|   it('marks every required Part I slot present for a complete Part I p…
+    112|     const d = mapToCtis({ leaves: partIComplete, memberStates: [] });
+    113|     expect(d.summary.partIMissingRequired).toEqual([]);
+       |                                            ^
+    114|     expect(d.summary.partIUndetermined).toEqual([]);
+    115|     const protocol = d.partI.find((s) => s.id === 'protocol')!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part I matching is by slug or document type, never by title or CTD prefix > does not block on conditional Part I rows (AxMP, scientific advice, PIP); it asks a human to confirm them
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:146:47
+    144|     for (const id of ['auxiliary-medicinal-products', 'scientific-advi…
+    145|       expect(d.summary.partIMissingRequired).not.toContain(id);
+    146|       expect(d.summary.partIUndetermined).not.toContain(id);
+       |                                               ^
+    147|       expect(d.summary.checkApplicability).toContain(`I:${id}`);
+    148|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part II is per member state > a DE informed-consent form does not clear FR
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:159:92
+    157|     });
+    158|     expect(d.partII.map((s) => s.memberState)).toEqual(['DE', 'FR']);
+    159|     expect(d.partII[0].slots.find((s) => s.id === 'subject-information…
+       |                                                                                            ^
+    160|     expect(d.summary.partIIMissingByState['DE']).not.toContain('subjec…
+    161|     expect(d.summary.partIIMissingByState['FR']).toContain('subject-in…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — Part II is per member state > a Part II document with no member state is undetermined for every state, never present
+TypeError: Cannot read properties of undefined (reading 'DE')
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:174:24
+    172|     });
+    173|     for (const ms of ['DE', 'FR']) {
+    174|       expect(d.summary.partIIUndeterminedByState[ms]).toContain('subje…
+       |                        ^
+    175|       expect(d.summary.partIIUndeterminedByState[ms]).toContain('inves…
+    176|       expect(d.summary.partIIMissingByState[ms]).not.toContain('subjec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — readiness > is ready only when Part I and every concerned state Part II are complete
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:193:77
+    191|   it('is ready only when Part I and every concerned state Part II are …
+    192|     const full = [...partIComplete, ...partIIFor('de')];
+    193|     expect(mapToCtis({ leaves: full, memberStates: ['DE'] }).summary.r…
+       |                                                                             ^
+    194|     // A second state with nothing filed → not ready.
+    195|     expect(mapToCtis({ leaves: full, memberStates: ['DE', 'FR'] }).sum…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — readiness > "if applicable" rows (K, O, Q) are undetermined until filed or recorded not-applicable
+AssertionError: expected [ 'subject-information-consent', …(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "subject-information-consent",
++   "investigator-suitability",
++ ]
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:206:53
+    204|     const open = mapToCtis({ leaves: withoutKOQ, memberStates: ['DE'] …
+    205|     expect(open.summary.ready).toBe(false);
+    206|     expect(open.summary.partIIMissingByState['DE']).toEqual([]);
+       |                                                     ^
+    207|     expect(open.summary.partIIUndeterminedByState['DE'].sort()).toEqua…
+    208|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — readiness > a required row (R, data protection) cannot be marked not-applicable
+AssertionError: expected [ 'subject-information-consent', …(1) ] to include 'data-protection'
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:221:50
+    219|     const noR = [...partIComplete, ...partIIFor('de')].filter((l) => !…
+    220|     const d = mapToCtis({ leaves: noR, memberStates: ['DE'], notApplic…
+    221|     expect(d.summary.partIIMissingByState['DE']).toContain('data-prote…
+       |                                                  ^
+    222|     expect(d.summary.ready).toBe(false);
+    223|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > mapToCtis — readiness > GMP (Annex I F) can be recorded not-applicable for an authorised, unmodified IMP
+AssertionError: expected undefined to deeply equal [ 'gmp-manufacturing' ]
+
+- Expected:
+[
+  "gmp-manufacturing",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:227:90
+    225|   it('GMP (Annex I F) can be recorded not-applicable for an authorised…
+    226|     const noGmp = [...partIComplete, ...partIIFor('de')].filter((l) =>…
+    227|     expect(mapToCtis({ leaves: noGmp, memberStates: ['DE'] }).summary.…
+       |                                                                                          ^
+    228|     expect(mapToCtis({ leaves: noGmp, memberStates: ['DE'], notApplica…
+    229|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > CTR_ANNEX_I — the one record the engine reads > has one row per Annex I heading B–R plus Article 7(1)(h), each with an EUR-Lex basis
+Error: Cannot find module '/server/services/pathway-engines/ctis/ctr-annex-i' imported from /home/user/ClinicalSageAI-2-replit/server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:234:29
+    232| describe('CTR_ANNEX_I — the one record the engine reads', () => {
+    233|   it('has one row per Annex I heading B–R plus Article 7(1)(h), each w…
+    234|     const { CTR_ANNEX_I } = await import('../ctr-annex-i');
+       |                             ^
+    235|     const letters = [...new Set(CTR_ANNEX_I.map((r) => r.letter))];
+    236|     expect(letters).toEqual(['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts > buildPathwayManifest — CTIS statuses > projects undetermined and not-applicable as themselves, not as optional-absent
+AssertionError: expected 'missing' to be 'undetermined' // Object.is equality
+
+Expected: "undetermined"
+Received: "missing"
+
+ ❯ server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts:265:54
+    263|     const m = buildPathwayManifest('ctis', r.detail);
+    264|     const de = (id: string) => m.entries.find((e) => e.group === 'Part…
+    265|     expect(de('subject-information-consent').status).toBe('undetermine…
+       |                                                      ^
+    266|     expect(de('fee-payment').status).toBe('not-applicable');
+    267|     expect(de('data-protection').status).toBe('missing');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 4 passed (19)
+   Start at  02:08:43
+   Duration  705ms (transform 257ms, setup 118ms, import 177ms, tests 46ms, environment 0ms)
+

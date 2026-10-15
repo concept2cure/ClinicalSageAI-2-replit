@@ -25,8 +25,11 @@ import {
 } from '../services/controlled-substances/cs-service';
 import { registrationExpiryStatus, evaluateRecordkeeping } from '../services/controlled-substances/cs-logic';
 import { recordCsRegistration, recordCsSubstance, recordCsTransaction } from '../services/cs-metrics';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('controlled-substances');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -47,7 +50,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the controlled-substances request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 const SCHEDULE = z.enum(['I', 'II', 'III', 'IV', 'V']);

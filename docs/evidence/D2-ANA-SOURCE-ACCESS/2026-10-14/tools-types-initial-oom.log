@@ -1,0 +1,20 @@
+
+<--- Last few GCs --->
+
+[5138:0x1c029000]    77100 ms: Mark-Compact 4044.7 (4135.1) -> 4030.2 (4136.4) MB, pooled: 0 MB, 1774.53 / 0.00 ms  (average mu = 0.076, current mu = 0.020) allocation failure; scavenge might not succeed
+[5138:0x1c029000]    79752 ms: Mark-Compact 4046.1 (4136.4) -> 4032.2 (4138.4) MB, pooled: 0 MB, 2603.11 / 0.00 ms  (average mu = 0.043, current mu = 0.018) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0xe46bbe node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node]
+ 2: 0x1245390 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node]
+ 3: 0x1245667 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node]
+ 4: 0x1474575  [/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node]
+ 5: 0x14745a3  [/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node]
+ 6: 0x148d67a  [/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node]
+ 7: 0x1490848  [/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node]
+ 8: 0x1cf93d1  [/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node]

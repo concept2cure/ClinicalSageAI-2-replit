@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-18T20:45:44.972Z",
   "liveRelationCount": 1282,
   "referencedCount": 752,
-  "count": 40,
+  "count": 39,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -94,14 +94,9 @@
       "server/services/documentExportService.ts"
     ],
     "reg_m3_sections": [
-      "server/api/cmc/portfolio.ts",
       "server/src/services/reg/rpi.ts"
     ],
-    "reg_rpi_snapshots": [
-      "server/api/cmc/portfolio.ts"
-    ],
     "reg_submissions": [
-      "server/api/cmc/portfolio.ts",
       "server/routes/cmc-module3-board.routes.ts",
       "server/src/services/integrations/gmail.ts",
       "server/src/services/reg/rpi.ts"

@@ -1,0 +1,5 @@
+# Probe 2026-10-01: how a naive created_at in the repeated hour of a DST fall-back is read (America/Los_Angeles, 2026-11-01)
+$ psql c2c_testdb: SET TIME ZONE 'America/Los_Angeles'; SELECT ('2026-11-01 01:30:00'::timestamp AT TIME ZONE current_setting('TimeZone')) AT TIME ZONE 'UTC';
+SET
+2026-11-01 09:30:00
+# 09:30 UTC is 01:30 PST, the later of the two instants: a membership written at 01:30 PDT (08:30 UTC) reads one hour late.

@@ -12,6 +12,7 @@
 
 import type { Request, Response } from 'express';
 import { getPool, pool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb.js';
 import { currentTenantOrgUuid } from '../../db/currentTenant.js';
 import {
   getOrCreateThread,
@@ -21,7 +22,8 @@ import {
 } from '../../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../../services/enhancedEmbeddingService.js';
 import { getIntelligencePrefix } from '../../services/lumen-context-builder.js';
-import { processResponseActions } from '../../services/ana-guidance-executor.js';
+import { pendingSignoffFromToolResult, settleActionBlocks } from '../../services/ana-guidance-executor.js';
+import type { CommandResult } from '../../services/ana-ri/command-executor.js';
 import { logKernelDecision } from '../../services/kernel-decision-record.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
 import {
@@ -74,6 +76,9 @@ import {
 import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
 import { verifyClaim, type VerifierFlag } from './verifier.js';
+import { evidencePromptBlock, type RetrievalStatus } from './retrieval-evidence-block';
+import { admitAnaProjectScope, AnaProjectScopeError } from '../../services/ana/project-scope-admission';
+import { assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 
 // ── Retrieval + generation tuning (externalized for runtime changes) ────────
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
@@ -94,7 +99,7 @@ const INCONTEXT_INJECTION_ENABLED =
 export const sendMessageHandler = async (req: Request, res: Response) => {
   normalizeBody(req);
   try {
-    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider, selected_tools, tool_context } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id: rawProjectId, preferred_provider, selected_tools, tool_context } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -108,7 +113,15 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const rawUserId = (req as any).userId || (req as any).user?.id;
     const userId: number | string = rawUserId ?? 'anonymous';
     const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
-    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
+    const numericUserId = typeof userId === 'string' ? Number(userId) : userId;
+    const project_id = rawProjectId ?? req.body.context?.projectId ?? req.body.project_context?.projectId;
+    // Check the explicit scope and attachment before any thread, source or
+    // model work. An unreadable access decision never becomes org-wide chat.
+    const admittedProject = await admitAnaProjectScope(getPool(), { organizationId: numericOrgId,
+      userId: numericUserId, projectRef: project_id });
+    await assertAnaUploadAccess(getPool(), { organizationId: numericOrgId, userId: numericUserId,
+      fileIds: file_id == null || file_id === '' ? [] : [file_id] });
+
     // The org's UUID tenant key, from the same session scope. Both uses below —
     // Data Room retrieval and AnA's document tools — used to fall back to the
     // client's x-org-uuid header, and with neither ran the search across every
@@ -288,9 +301,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const normalizedProjectId = project_id
       ? String(project_id).replace(/^proj_/, '')
       : undefined;
+    // The integer project this turn's project names, resolved ONCE (PF-10
+    // S10b): an integer as itself, a program UUID through its anchor row,
+    // anything else as none. Each step below used to parseInt on its own, and
+    // parseInt('7abb1c22-…') is 7, a valid, wrong project of the same
+    // organization (services/c2c/project-ref.ts).
+    const turnProjectId = admittedProject.projectId;
 
     // ── STEP 4: RETRIEVE (org-scoped + project-scoped when available) ───
     let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
+    // 'unavailable' when the search could not run (P1-54): told to the model and
+    // returned in retrievalMeta, never rendered as "no sources found".
+    let retrievalStatus: RetrievalStatus = 'searched';
     let confidence: number | null = null;
     let retrievalRunId: string | null = null;
     let snapshotHashSha256: string | null = null;
@@ -394,7 +416,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       }
     } catch (srcErr: any) {
-      // Non-fatal — chat still works, just without grounded evidence
+      // Non-fatal — chat still works, without grounded evidence, and says so.
+      retrievalStatus = 'unavailable';
       console.warn('[AnA] Source retrieval failed:', srcErr.message);
     }
 
@@ -405,18 +428,14 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     let memoryAtomCount = 0;
     let memoryBlockChars = 0;
     let memoryDiagnostics: MemoryAssemblyDiagnostics | null = null;
-    if (sources.length > 0) {
-      evidenceBlock =
-        '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
-        sources.map((s, i) => `[SRC-${i + 1}] "${s.title}"\n${s.content}`).join('\n\n') +
-        '\n--- END EVIDENCE ---\n\n' +
-        'When your answer relies on information from the evidence above, cite it inline using [SRC-n]. ' +
-        'If the evidence does not contain relevant information, answer from your training knowledge and state that no knowledge-base sources were found.';
-    }
+    evidenceBlock = evidencePromptBlock(sources, retrievalStatus);
 
     let assistantMessage: string;
     let model: string;
     let provider = '';
+    // The model call whose reply carries the turn's ana-action blocks: its
+    // proposals are sealed with it (D5, MC-RL-4; ana-ri/proposal-seal.ts).
+    let servingModel: { provider: string; model: string; requestId: string | null } | null = null;
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
     let latencyMs: number | null = null;
     // Hoisted so the response serializer (after the try/catch) can read it.
@@ -433,6 +452,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // offer-chips here too (this route never applies anything live).
     const collectedSurfaceActions: SurfaceActionDirective[] = [];
     const collectedDemoStarts: DemoStartDirective[] = [];
+    // The platform-command proposals the loop's execute_platform_command came
+    // back with. This route cannot hold the turn and ask, as the stream does;
+    // until P0-12's residual (2026-10-01) the proposal reached only the model,
+    // and the person had nothing to confirm. Returned as executedCommands.
+    const loopProposals: CommandResult[] = [];
     // The turn's retained record (services/ana/turn-record-loop.ts): the tool
     // calls as the loop reports them, filed when the turn answers or fails.
     const loopCalls = loopToolCollector();
@@ -581,64 +605,56 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         const { sessionBootstrapBlockFor } = await import(
           '../../services/ana-session-bootstrap.js'
         );
-        const pid =
-          typeof project_id === 'string'
-            ? parseInt(project_id.replace(/^proj_/, ''), 10)
-            : project_id;
         const block = await sessionBootstrapBlockFor({
+          db: requestPgClient(req),
           priorMessageCount: previousMessages.length,
           organizationId: numericOrgId ?? null,
-          projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
+          userId: numericUserId,
+          projectId: turnProjectId ?? undefined,
+          projectRef: admittedProject.projectRef,
           threadId,
           atomLimit: 6,
         });
         if (block) sessionBootstrapBlock = `\n\n${block}\n`;
       }
 
-      // ── IND Context Injection ──────────────────────────────────────────────────
-      // When the project is an IND submission, inject the complete CTD structure
-      // so AnA knows every section needed and can guide the user through it.
-      let indContextBlock = '';
+      // ── Submission context (IND / NDA / BLA) ────────────────────────────────────
+      // One block for both chat doors, built from the canonical lifecycle brief;
+      // the helper owns the type mapping and fails closed for anything else.
+      const { submissionContextBlockFor } = await import(
+        '../../services/ana/submission-context-block.js'
+      );
+      const submissionContextBlock = submissionContextBlockFor({
+        submissionType: typeof req.body.submission_type === 'string' ? req.body.submission_type : null,
+        projectContext: clientCtx,
+      });
+      // Read by the device block below.
       const detectedType = (orchestratorResult.detectedSubmissionType || '').toUpperCase();
       const contextType = (req.body.context?.productType || '').toUpperCase();
-      if (detectedType === 'IND' || contextType === 'IND' || contextType === 'NDA' || contextType === 'BLA') {
-        try {
-          const { IND_SECTIONS, getModuleStatus } = await import('../../services/ind/ind-section-registry.js');
-          const sectionList = IND_SECTIONS.map(s =>
-            `- ${s.code} ${s.title} (Module ${s.module}, ${s.required ? 'required' : 'optional'}) — ${s.guidance}`
-          ).join('\n');
-          // Include project context for generation prompts
-          const projectContext = req.body.context || {};
-          const projectCtx = [
-            projectContext.activeProject ? `Project: ${projectContext.activeProject}` : '',
-            projectContext.productType ? `Submission type: ${projectContext.productType}` : '',
-            projectContext.projectId ? `Project ID: ${projectContext.projectId}` : '',
-          ].filter(Boolean).join('\n');
-
-          indContextBlock = `\n\n## IND Submission Context\nThis is an IND (Investigational New Drug) project. You have AnA tools to generate any CTD section.\n${projectCtx}\n\nComplete IND structure (19 sections across 5 modules):\n${sectionList}\n\nWhen the user asks to draft or generate a section:\n1. Use ind_generate_section tool with the section code and project context\n2. The tool will generate regulatory-quality content and save it as a governed artifact\n3. Show the user a summary of what was generated\n\nUse ind_get_status to check which sections are done and which need work.\nGuide the user through the submission systematically — Module 1 first, then 2-5.\n`;
-        } catch {
-          // IND registry not available — skip
-        }
-      }
 
       // ── Device Context Injection ────────────────────────────────────────────────
+      // The registry renders the block. CER and IVDR are projections of the
+      // canonical outlines (market-specs/cer-structure.ts CER_SECTIONS and
+      // per-structure.ts PER_SECTIONS); the client's productType wins over the
+      // type detected from the message.
       let deviceContextBlock = '';
-      const deviceTypes = ['510K', 'PMA', 'DE_NOVO', 'CER', 'IVDR'];
-      if (deviceTypes.includes(detectedType) || deviceTypes.includes(contextType)) {
-        try {
-          const { getDeviceSections } = await import('../../services/device/device-section-registry.js');
-          const deviceType = (deviceTypes.includes(contextType) ? contextType : detectedType) as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
-          const sections = getDeviceSections(deviceType);
-          if (sections.length > 0) {
-            const sectionList = sections.map(s =>
-              `- ${s.code} ${s.title} (${s.required ? 'required' : 'optional'}) — ${s.guidance}`
-            ).join('\n');
-            const projectContext = req.body.context || {};
-            deviceContextBlock = `\n\n## ${deviceType} Submission Context\nThis is a ${deviceType} medical device submission project.\n${projectContext.activeProject ? `Project: ${projectContext.activeProject}` : ''}\n\nRequired sections (${sections.filter(s => s.required).length} required, ${sections.length} total):\n${sectionList}\n\nUse the generate_document tool to draft any section. Guide the user through the submission systematically.\n`;
-          }
-        } catch {
-          // Device registry not available
+      try {
+        const { isDeviceSubmissionType, renderDeviceContextBlock } = await import(
+          '../../services/device/device-section-registry.js'
+        );
+        const deviceType = isDeviceSubmissionType(contextType)
+          ? contextType
+          : isDeviceSubmissionType(detectedType)
+            ? detectedType
+            : null;
+        if (deviceType) {
+          const projectContext = req.body.context || {};
+          deviceContextBlock = renderDeviceContextBlock(deviceType, {
+            activeProject: typeof projectContext.activeProject === 'string' ? projectContext.activeProject : undefined,
+          });
         }
+      } catch {
+        // Device registry not available
       }
 
       // Project instructions injection (spec A1.1) — read the project's
@@ -655,12 +671,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       // corpus. Off by default → zero extra work and no behaviour change. The
       // mode itself is surfaced separately by GET /projects/:id/knowledge.
       let projectKnowledgeCorpusBlock = '';
-      if (INCONTEXT_INJECTION_ENABLED && project_id && numericOrgId) {
-        const pidNum =
-          typeof project_id === 'string'
-            ? parseInt(project_id.replace(/^proj_/, ''), 10)
-            : project_id;
-        if (Number.isFinite(pidNum) && pidNum > 0) {
+      if (INCONTEXT_INJECTION_ENABLED && turnProjectId !== null && numericOrgId) {
+        const pidNum = turnProjectId;
+        {
           try {
             const modeState = await getProjectRetrievalMode(pidNum, numericOrgId);
             if (modeState.mode === 'in_context') {
@@ -699,7 +712,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
             : 'NONE'
         }\n` +
         `- Memory: working=${workingMemoryPresent ? 'yes' : 'no'}, semantic atoms=${semanticMemoryCount}\n` +
-        `- Retrieved sources: ${sources.length}\n` +
+        `- Retrieved sources: ${retrievalStatus === 'unavailable' ? 'UNAVAILABLE (the knowledge-base search could not run)' : sources.length}\n` +
         `- User role: ${snapshotUserRole}\n\n`;
 
       const systemPrompt =
@@ -707,7 +720,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         intelligencePrefix +
         projectInstructionsBlock +
         basePrompt +
-        indContextBlock +
+        submissionContextBlock +
         deviceContextBlock +
         projectKnowledgeCorpusBlock +
         sessionBootstrapBlock +
@@ -831,10 +844,13 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
         maxRounds: resolveMaxRounds('balanced'),
         toolContext: {
+          sqlClient: requestPgClient(req),
           organizationId: numericOrgId,
           userId: numericUserId || null,
-          projectId:
-            typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+          projectId: turnProjectId,
+          // The project as the client sent it: a v2 program's UUID, which the
+          // tools that resolve the open project read (PF-10 S7, as the stream).
+          projectRef: project_id ? String(project_id).replace(/^proj_/, '') : null,
           // Tenant UUID so the project_knowledge_search tool can scope retrieval.
           organizationUuid: orgUuid,
           // Situational context (surface/project/document type) — same signal the
@@ -857,6 +873,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // A demonstration fetched without Live Drive becomes a start chip.
           const demoStart = demoStartFromToolResult(toolName, result);
           if (demoStart) collectedDemoStarts.push(demoStart);
+          // A write the partition turned into a proposal: put it to the person.
+          const proposal = pendingSignoffFromToolResult(toolName, result);
+          if (proposal) loopProposals.push(proposal);
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -864,7 +883,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // AnaToolExecutor.executeAgenticLoop's catch branch.
           void logToolRun({
             threadId,
-            projectId: typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+            projectId: turnProjectId,
             userId: numericUserId || null,
             organizationId: numericOrgId,
             toolName,
@@ -881,6 +900,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         'I apologize, but I was unable to generate a response. Please try again.';
       model = `${gwResponse.provider}/${gwResponse.model}`;
       provider = gwResponse.provider;
+      servingModel = { provider: gwResponse.provider, model: gwResponse.model, requestId: gwResponse.requestId ?? null };
       usage = {
         prompt_tokens: gwResponse.usage.inputTokens,
         completion_tokens: gwResponse.usage.outputTokens,
@@ -897,7 +917,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         route: '/api/chat',
         organizationId: numericOrgId ?? null,
         userId: numericUserId,
-        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        projectId: turnProjectId,
         plannerVersion: routingPlan.plannerVersion,
         orchestratorName: routingPlan.orchestratorName,
         intentLens: orchestratorResult.detectedIntent.lens,
@@ -927,7 +947,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         route: '/api/chat',
         organizationId: numericOrgId ?? null,
         userId: numericUserId,
-        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        projectId: turnProjectId,
         orchestratorName: 'kernel-router-v1',
         selectedTaskType: 'chat',
         routingStrategy: 'quality_optimized',
@@ -944,50 +964,42 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       });
     }
 
-    // ── STEP 6b: GUIDANCE-TO-ACTION EXECUTION ──────────────────────────
-    // Process AnA's response for action signals and execute governed actions.
-    // Only runs when project context is available (org + project scoped).
-    let executedActions: Array<
-      | {
-          actionType: string;
-          executed: boolean;
-          confidence: string;
-          artifactId: string | null;
-          threadId: string | null;
-          error: string | null;
-        }
-      | NavigationAction
-      | SurfaceActionChip
-      | DemoStartChip
-    > = [];
+    // ── STEP 6b: AnA's ana-action blocks, as proposals ────────────────
+    // Each block AnA is confident in becomes a create_artifact PROPOSAL through
+    // the command partition — never a write (P0-12 residual, 2026-10-01; until
+    // then this created the artifact, and a review thread in the person's name,
+    // unasked). The proposals are returned as `executedCommands`, the envelope
+    // the sign-off prompt reads (extractPendingSignoffs); a person's yes goes to
+    // POST /api/ana-ri/governed-action, which runs the command.
+    let executedActions: Array<NavigationAction | SurfaceActionChip | DemoStartChip> = [];
+    let actionBlockProposals: CommandResult[] = [];
 
-    if (numericOrgId && project_id) {
+    if (numericOrgId && numericUserId) {
       try {
-        const actionResult = await processResponseActions(assistantMessage, {
-          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
-          organizationId: numericOrgId,
-          userId: numericUserId,
-          userName: (req as any).user?.name || (req as any).user?.email || 'System',
-          threadId,
-        });
-
-        // Replace message with cleaned text (action blocks stripped)
-        if (actionResult.actions.length > 0) {
-          assistantMessage = actionResult.cleanedText;
-          executedActions = actionResult.actions.map(a => ({
-            actionType: a.actionType,
-            executed: a.executed,
-            confidence: a.confidence,
-            artifactId: a.artifactId,
-            threadId: a.threadId,
-            error: a.error,
-          }));
-        }
+        // The blocks are the platform's, not the answer: taken out when there
+        // were any, and the answer says what became of each (settleActionBlocks).
+        const settled = await settleActionBlocks(
+          assistantMessage,
+          {
+            // The project resolved once for the turn (PF-10 S10b).
+            projectId: turnProjectId,
+            organizationId: numericOrgId,
+            userId: numericUserId,
+            userName: (req as any).user?.name || (req as any).user?.email || undefined,
+            threadId,
+            servingModel,
+          },
+          loopProposals,
+        );
+        actionBlockProposals = settled.proposals;
+        assistantMessage = settled.answer;
       } catch (actionErr: any) {
-        // Non-fatal — chat still works, actions just don't execute
-        console.warn('[AnA RI] Guidance action processing failed:', actionErr?.message);
+        // Non-fatal — the answer returns as AnA wrote it, blocks included;
+        // nothing was written.
+        console.warn('[AnA RI] Action-block proposals failed:', actionErr?.message);
       }
     }
+    const turnProposals: CommandResult[] = [...loopProposals, ...actionBlockProposals];
 
     // Navigation chips AFTER guidance actions — same ordering rationale as the
     // SSE path's post-processing: an artifact the turn actually created still
@@ -1225,7 +1237,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId) {
       interceptChatResponse({
         organizationId: numericOrgId,
-        projectId: parseInt(String(normalizedProjectId || '0'), 10),
+        projectId: turnProjectId ?? 0,
         userId: (req as any).user?.id,
         sectionCode: (req as any).body?.section_code,
         assistantMessage,
@@ -1238,9 +1250,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
 
     // ── Cached reliability lookup (5-min TTL, surfaced in response) ─────
     let reliability: SignalReliability | null = null;
-    if (numericOrgId && normalizedProjectId) {
-      const projectIdNum = parseInt(String(normalizedProjectId), 10);
-      if (Number.isFinite(projectIdNum) && projectIdNum > 0) {
+    if (numericOrgId && turnProjectId !== null) {
+      const projectIdNum = turnProjectId;
+      {
         try {
           reliability = await getCachedSignalReliability(projectIdNum, numericOrgId);
         } catch {
@@ -1266,9 +1278,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         threadId,
         organizationId: numericOrgId,
         messages: writebackMessages,
-        projectId: normalizedProjectId
-          ? parseInt(String(normalizedProjectId), 10) || null
-          : null,
+        projectId: turnProjectId,
       });
     }
 
@@ -1276,10 +1286,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId && generationRunId && sources.length > 0) {
       try {
         const { recordLineageBatch } = await import('../../services/data-lineage-service');
-        const projectIdNum = parseInt(String(normalizedProjectId || '0'), 10);
         const entries = sources.filter((_s, i) => citedRefs.has(i)).map((s, _i) => ({
           organizationId: numericOrgId,
-          projectId: projectIdNum || undefined,
+          projectId: turnProjectId ?? undefined,
           sourceObjectType: 'retrieval_chunk' as const,
           sourceObjectId: s.id || `src-${_i}`,
           sourceTitle: s.title,
@@ -1315,6 +1324,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       citations,
       confidence,
       retrievalMeta: {
+        status: retrievalStatus,
         retrievedCount: sources.length,
         citedCount: citedRefs.size,
         orgScoped: !!orgUuid,
@@ -1339,11 +1349,15 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         suggestedActions: orchestratorResult!.suggestedActions,
         meta: orchestratorResult!.orchestrationMeta,
       },
-      // AnA 1.0 RI — Executed guidance actions
+      // Offer-chips (navigation, surface actions, demonstrations).
       executedActions: executedActions.length > 0 ? executedActions : undefined,
+      // AnA's proposals awaiting a person's confirmation — the loop's and the
+      // action blocks' — in the stream's post_done.executedCommands envelope.
+      executedCommands: turnProposals.length > 0 ? turnProposals : undefined,
       turnRecord,
     });
   } catch (error: any) {
+    if (error instanceof AnaProjectScopeError) return res.status(error.status).json({ error: error.message, code: error.code });
     console.error('[AnA] Chat error:', error);
 
     // Rule 6: no raw error.message leak

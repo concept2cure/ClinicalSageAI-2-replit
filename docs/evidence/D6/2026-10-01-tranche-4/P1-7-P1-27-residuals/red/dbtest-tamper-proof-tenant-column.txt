@@ -1,0 +1,163 @@
+# db/migrations/20260813_audit_tamper_proof_log.sql at HEAD 2fd87d3a (amendment withheld for this run); PostgreSQL 16, runtime role app_service
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/db/tamper-proof-log-tenant-column.dbtest.ts > the column > exists after the migration: INTEGER, nullable, its cut-over recorded 19ms
+   → expected [] to have a length of 1 but got +0
+stderr | tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > a row written in tenant A’s session carries A
+[AuditLog] Failed to write audit entry: error: column "organization_id" of relation "tamper_proof_log" does not exist
+    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at TamperProofAuditLog.log (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:520:7)
+    at /home/user/ClinicalSageAI-2-replit/tests/db/tamper-proof-log-tenant-column.dbtest.ts:126:5
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  length: 145,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '280',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1066',
+  routine: 'checkInsertTargets'
+}
+
+stderr | tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > a tenant’s read returns its own rows only; platform tooling reads all
+[AuditLog] Failed to write audit entry: error: column "organization_id" of relation "tamper_proof_log" does not exist
+    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at TamperProofAuditLog.log (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:520:7)
+    at /home/user/ClinicalSageAI-2-replit/tests/db/tamper-proof-log-tenant-column.dbtest.ts:140:5
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  length: 145,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '280',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1066',
+  routine: 'checkInsertTargets'
+}
+
+ × tests/db/tamper-proof-log-tenant-column.dbtest.ts > the column > re-applying the migration changes nothing (the set re-runs it every deploy) 23ms
+   → Cannot read properties of undefined (reading 'note')
+ × tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > a row written in tenant A’s session carries A 55ms
+   → column "organization_id" of relation "tamper_proof_log" does not exist
+ ✓ tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > refuses a row attributed to B from inside A’s session, and writes nothing 6ms
+ × tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > a tenant’s read returns its own rows only; platform tooling reads all 4ms
+   → column "organization_id" of relation "tamper_proof_log" does not exist
+ × tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > the stored rows verify as one chain, and moving a row to another tenant breaks its hash 6ms
+   → expected [] to deeply equal [ 990281, 990282, null ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/tamper-proof-log-tenant-column.dbtest.ts > the column > exists after the migration: INTEGER, nullable, its cut-over recorded
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/tamper-proof-log-tenant-column.dbtest.ts:105:18
+    103|           AND column_name = 'organization_id'`,
+    104|     );
+    105|     expect(rows).toHaveLength(1);
+       |                  ^
+    106|     expect(rows[0]).toMatchObject({ data_type: 'integer', is_nullable:…
+    107|     expect(rows[0].note).toMatch(/Cut-over after sequence \d+/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/tamper-proof-log-tenant-column.dbtest.ts > the column > re-applying the migration changes nothing (the set re-runs it every deploy)
+TypeError: Cannot read properties of undefined (reading 'note')
+ ❯ tests/db/tamper-proof-log-tenant-column.dbtest.ts:120:26
+    118|          FROM pg_attribute WHERE attrelid = 'audit.tamper_proof_log'::…
+    119|     );
+    120|     expect(after.rows[0].note).toBe(before.rows[0].note);
+       |                          ^
+    121|   });
+    122| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > a row written in tenant A’s session carries A
+error: column "organization_id" of relation "tamper_proof_log" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ TamperProofAuditLog.log server/lib/tamper-proof-audit.ts:520:7
+    518|
+    519|       // Insert the entry
+    520|       await client.query(
+       |       ^
+    521|         `INSERT INTO audit.tamper_proof_log (
+    522|           id, event_type, event_timestamp, user_id, user_name, session…
+ ❯ tests/db/tamper-proof-log-tenant-column.dbtest.ts:126:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 145, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '280', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_target.c', routine: 'checkInsertTargets' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > a tenant’s read returns its own rows only; platform tooling reads all
+error: column "organization_id" of relation "tamper_proof_log" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ TamperProofAuditLog.log server/lib/tamper-proof-audit.ts:520:7
+    518|
+    519|       // Insert the entry
+    520|       await client.query(
+       |       ^
+    521|         `INSERT INTO audit.tamper_proof_log (
+    522|           id, event_type, event_timestamp, user_id, user_name, session…
+ ❯ tests/db/tamper-proof-log-tenant-column.dbtest.ts:140:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 145, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '280', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_target.c', routine: 'checkInsertTargets' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > the stored rows verify as one chain, and moving a row to another tenant breaks its hash
+AssertionError: expected [] to deeply equal [ 990281, 990282, null ]
+
+- Expected
++ Received
+
+- [
+-   990281,
+-   990282,
+-   null,
+- ]
++ []
+
+ ❯ tests/db/tamper-proof-log-tenant-column.dbtest.ts:157:46
+    155|   it('the stored rows verify as one chain, and moving a row to another…
+    156|     const rows = await probeRows();
+    157|     expect(rows.map(r => r.organization_id)).toEqual([ORG_A, ORG_B, nu…
+       |                                              ^
+    158|     const walk = (rs: TamperProofLogRow[]) =>
+    159|       verifyTamperProofLogRows(rs, { hmacSecret: SECRET, expectedPrevi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  06:18:17
+   Duration  1.12s (transform 238ms, setup 129ms, import 222ms, tests 187ms, environment 0ms)
+
+exit=1

@@ -1,0 +1,7 @@
+# The same contract with the change, same database
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > the catalog really is off for these organisations 5ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question in plain English finds the current version by its text 4251ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > another organisation's document is never a hit, from either side 18ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > lists and reads the document, with no refusal naming a setting 62ms
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question no document answers is nothing found, not unavailable 8ms
+      Tests  5 passed (5)

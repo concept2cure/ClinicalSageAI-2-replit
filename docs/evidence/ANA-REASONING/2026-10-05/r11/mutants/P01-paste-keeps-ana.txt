@@ -1,0 +1,12 @@
+Mutant P01-paste-keeps-ana: a pasted AnA suggestion keeps her name and turn, as before round 11
+
+--- client/src/concept2cure/v2/editor/suggestions.ts
+- return reattributePasted(slice, storage.author, options.admitsAnaSource);
++ return slice;
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes off: one the host does not admit becomes the pasting person’s, with no turn 131ms
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,57 @@
+# working tree; a golden journey whose harness provisions audit.tamper_proof_log from db/migrations/20260813 (tests/golden-journeys/harness.ts)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/golden-journeys/submission-release-signature.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate
+[part11] account status check failed during sign: column "sessions_ended_at" does not exist
+
+ × tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate 315ms
+   → Journey step "locked-account-cannot-sign" expected a block; got success
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/golden-journeys/submission-release-signature.journey.test.ts [ tests/golden-journeys/submission-release-signature.journey.test.ts ]
+Error: This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+
+  [42703] column "sessions_ended_at" does not exist
+      SELECT (SELECT status FROM users WHERE id = $1 LIMIT 1) AS status, (SELECT floor(date_part('epoch', password_changed_at))::bigint FROM users WHERE id = $1 LIMIT
+
+Add the missing table(s) to this journey's extractTableDdl list, or the missing column(s) via the ALTER the real migration performs. A journey whose database is smaller than the code under test proves less than it says it does.
+ ❯ Module.assertNoSchemaGaps tests/golden-journeys/harness.ts:213:9
+    211|     })
+    212|     .map((g) => `  [${g.code}] ${g.message}\n      ${g.sql}`);
+    213|   throw new Error(
+       |         ^
+    214|     `This journey ran against a database missing ${seen.size} relation…
+    215|       `subject asked for, and still reached its assertions:\n\n${lines…
+ ❯ tests/golden-journeys/submission-release-signature.journey.test.ts:259:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate
+Error: Journey step "locked-account-cannot-sign" expected a block; got success
+ ❯ JourneyRecorder.expectBlocked tests/golden-journeys/harness.ts:428:15
+    426|           evidence: { ...evidence, error: 'expected to be blocked but …
+    427|         });
+    428|         throw new Error(`Journey step "${name}" expected a block; got …
+       |               ^
+    429|       }
+    430|       this.steps.push({ seq: this.seq, name, kind: 'known-bad', status…
+ ❯ tests/golden-journeys/submission-release-signature.journey.test.ts:316:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  06:24:22
+   Duration  21.95s (transform 7.76s, setup 250ms, import 1.37s, tests 18.89s, environment 0ms)
+
+exit=1

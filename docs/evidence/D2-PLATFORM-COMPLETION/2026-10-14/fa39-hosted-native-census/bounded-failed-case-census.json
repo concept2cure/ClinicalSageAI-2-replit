@@ -1,0 +1,3155 @@
+{
+  "qualification": "Complete uploaded native step result only. Integration step12 still in progress when observed. No local rerun/source edits/SQL; 31 distinct failed file entries vs70 nested failed suites. Pending cases are not passed. Group labels are source-review triage, not blanket fixture-only or production-defect diagnoses. Full failure messages/stacks remain in the private complete census/raw artifact; this filed projection retains every failed case name and first diagnostic line. URLs were removed from message projections; original archive is intact.",
+  "runId": 38625681016,
+  "jobId": 116073085566,
+  "artifactId": 11924713848,
+  "publishedHead": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+  "counts": {
+    "numFailedTests": 107,
+    "numPassedTests": 1609,
+    "numPendingTests": 110,
+    "numTotalTests": 1826,
+    "numFailedTestSuites": 70,
+    "numPassedTestSuites": 597,
+    "numPendingTestSuites": 0,
+    "numTotalTestSuites": 667
+  },
+  "fileEntryCount": 171,
+  "distinctFailedFiles": 31,
+  "allFileStatuses": [
+    {
+      "path": "tests/db/account-standing-time-zone.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 3
+      },
+      "startTime": 1792008372749,
+      "endTime": 1792008373349.5305
+    },
+    {
+      "path": "tests/db/account-standing.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 13
+      },
+      "startTime": 1792008227659,
+      "endTime": 1792008227930.3499
+    },
+    {
+      "path": "tests/db/actor-displays.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "passed": 13,
+        "failed": 1
+      },
+      "startTime": 1792008261732,
+      "endTime": 1792008262066.152
+    },
+    {
+      "path": "tests/db/actor-names.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008495446,
+      "endTime": 1792008495456.0193
+    },
+    {
+      "path": "tests/db/actor-vanishing.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008300199,
+      "endTime": 1792008300371.3376
+    },
+    {
+      "path": "tests/db/admin-change-audit.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 9
+      },
+      "startTime": 1792008294267,
+      "endTime": 1792008294476.475
+    },
+    {
+      "path": "tests/db/ai-action-leases-across-tasks.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008496086,
+      "endTime": 1792008498210.7437
+    },
+    {
+      "path": "tests/db/ai-gateway-audit-log.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008292108,
+      "endTime": 1792008292152.102
+    },
+    {
+      "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 5
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/app-role-provisioning-rds-shape.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008333104,
+      "endTime": 1792008333134.7786
+    },
+    {
+      "path": "tests/db/append-only-store-grants.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 14
+      },
+      "startTime": 1792008239089,
+      "endTime": 1792008239352.5505
+    },
+    {
+      "path": "tests/db/atom-search-tenant-key.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008346438,
+      "endTime": 1792008367616.2695
+    },
+    {
+      "path": "tests/db/atom-search.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008436537,
+      "endTime": 1792008481808.4263
+    },
+    {
+      "path": "tests/db/authoring-governed-delete-signed-freeze.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 12
+      },
+      "startTime": 1792008222476,
+      "endTime": 1792008223249.691
+    },
+    {
+      "path": "tests/db/authoring-section-concurrency.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008293438,
+      "endTime": 1792008293570.329
+    },
+    {
+      "path": "tests/db/authoring-stability-table.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 3
+      },
+      "startTime": 1792008270638,
+      "endTime": 1792008270848.3748
+    },
+    {
+      "path": "tests/db/c2c-project-persistence.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 12
+      },
+      "startTime": 1792008232049,
+      "endTime": 1792008232112.3884
+    },
+    {
+      "path": "tests/db/canonical-documents-append-only.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 2
+      },
+      "startTime": 1792008374979,
+      "endTime": 1792008375925.3682
+    },
+    {
+      "path": "tests/db/capa-code-uniqueness.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008333309,
+      "endTime": 1792008333334.7793
+    },
+    {
+      "path": "tests/db/chat-upload.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 1
+      },
+      "startTime": 1792008502676,
+      "endTime": 1792008502713.7766
+    },
+    {
+      "path": "tests/db/child-table-parent-scoped-rls.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 15
+      },
+      "startTime": 1792008317217,
+      "endTime": 1792008317311.1914
+    },
+    {
+      "path": "tests/db/cmc-module3-history-append-only.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 16
+      },
+      "startTime": 1792008300656,
+      "endTime": 1792008301111.0886
+    },
+    {
+      "path": "tests/db/cmc-source-evidence.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 12
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/collab-presence.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 11
+      },
+      "startTime": 1792008286176,
+      "endTime": 1792008287995.4617
+    },
+    {
+      "path": "tests/db/compliance-reports.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 19
+      },
+      "startTime": 1792008181830,
+      "endTime": 1792008182144.5964
+    },
+    {
+      "path": "tests/db/compliance-review-fix-round.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 26
+      },
+      "startTime": 1792008224493,
+      "endTime": 1792008225095.5964
+    },
+    {
+      "path": "tests/db/compliance-review-records.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 17
+      },
+      "startTime": 1792008295478,
+      "endTime": 1792008295794.8489
+    },
+    {
+      "path": "tests/db/compliance-review-reports.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008341714,
+      "endTime": 1792008341900.848
+    },
+    {
+      "path": "tests/db/continuity-baseline.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 11
+      },
+      "startTime": 1792008276808,
+      "endTime": 1792008278496.4287
+    },
+    {
+      "path": "tests/db/control-plane-access.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008372388,
+      "endTime": 1792008372496.6812
+    },
+    {
+      "path": "tests/db/correspondence-work-items.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008279499,
+      "endTime": 1792008279676.4668
+    },
+    {
+      "path": "tests/db/cortex-query-tenant-header.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008329680,
+      "endTime": 1792008329839.8699
+    },
+    {
+      "path": "tests/db/cre-capture-immutability.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008342605,
+      "endTime": 1792008343131.426
+    },
+    {
+      "path": "tests/db/cross-object-resolver.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 9
+      },
+      "startTime": 1792008254612,
+      "endTime": 1792008254772.775
+    },
+    {
+      "path": "tests/db/data-room-capture-provenance.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008316497,
+      "endTime": 1792008316793.6562
+    },
+    {
+      "path": "tests/db/data-room-catalog-facts.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 5,
+        "passed": 1
+      },
+      "startTime": 1792008311165,
+      "endTime": 1792008311219.8303
+    },
+    {
+      "path": "tests/db/data-room-processing.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 5,
+        "passed": 2
+      },
+      "startTime": 1792008284255,
+      "endTime": 1792008284615.7463
+    },
+    {
+      "path": "tests/db/document-catalog-governed.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 5,
+        "skipped": 12
+      },
+      "startTime": 1792008263161,
+      "endTime": 1792008264574.3296
+    },
+    {
+      "path": "tests/db/document-catalog-recall.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "passed": 4,
+        "failed": 4
+      },
+      "startTime": 1792008159928,
+      "endTime": 1792008176818.7058
+    },
+    {
+      "path": "tests/db/document-catalog-role.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "passed": 1,
+        "failed": 1
+      },
+      "startTime": 1792008482768,
+      "endTime": 1792008484195.7268
+    },
+    {
+      "path": "tests/db/document-catalog-toggles.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008321439,
+      "endTime": 1792008321967.1753
+    },
+    {
+      "path": "tests/db/document-catalog.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 13,
+        "skipped": 2,
+        "passed": 2
+      },
+      "startTime": 1792008179611,
+      "endTime": 1792008180865.4355
+    },
+    {
+      "path": "tests/db/domain-history-append-only.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 31
+      },
+      "startTime": 1792008262371,
+      "endTime": 1792008262857.483
+    },
+    {
+      "path": "tests/db/domain-sign-ceremony.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 53
+      },
+      "startTime": 1792008178107,
+      "endTime": 1792008178850.5564
+    },
+    {
+      "path": "tests/db/drafting-tasks-tenant-scope.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008331797,
+      "endTime": 1792008331899.3545
+    },
+    {
+      "path": "tests/db/enterprise-onboarding-intake.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 13
+      },
+      "startTime": 1792008269172,
+      "endTime": 1792008269209.1682
+    },
+    {
+      "path": "tests/db/entitlement-grants-resolution.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 57
+      },
+      "startTime": 1792008090340,
+      "endTime": 1792008090576.5637
+    },
+    {
+      "path": "tests/db/entitlement-schema-posture.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 33
+      },
+      "startTime": 1792008093604,
+      "endTime": 1792008094081.8958
+    },
+    {
+      "path": "tests/db/feature-toggle-workspace-header.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008489357,
+      "endTime": 1792008489464.3086
+    },
+    {
+      "path": "tests/db/gateway-accounts.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008327650,
+      "endTime": 1792008327851.5083
+    },
+    {
+      "path": "tests/db/gdpr-service-runtime-role.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008489826,
+      "endTime": 1792008489839.1082
+    },
+    {
+      "path": "tests/db/governed-edit-boundary.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008318172,
+      "endTime": 1792008318302.4268
+    },
+    {
+      "path": "tests/db/insights-regional-filing.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008230213,
+      "endTime": 1792008230741.6067
+    },
+    {
+      "path": "tests/db/invitation-acceptance.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008345556,
+      "endTime": 1792008345740.5374
+    },
+    {
+      "path": "tests/db/isolation-switch-does-not-outlive-request.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008330238,
+      "endTime": 1792008330256.566
+    },
+    {
+      "path": "tests/db/knowledge-graph-tenant-isolation.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008223548,
+      "endTime": 1792008223586.5837
+    },
+    {
+      "path": "tests/db/licensing-history.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 18
+      },
+      "startTime": 1792008120478,
+      "endTime": 1792008120826.315
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 23
+      },
+      "startTime": 1792008118986,
+      "endTime": 1792008119293.6052
+    },
+    {
+      "path": "tests/db/lifecycle-signature-binding.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008376132,
+      "endTime": 1792008376605.779
+    },
+    {
+      "path": "tests/db/master-enterprise-requests.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008319234,
+      "endTime": 1792008319316.6396
+    },
+    {
+      "path": "tests/db/master-licensing-console.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 41
+      },
+      "startTime": 1792008088916,
+      "endTime": 1792008089284.2356
+    },
+    {
+      "path": "tests/db/memberships.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008271706,
+      "endTime": 1792008272312.1562
+    },
+    {
+      "path": "tests/db/migration-lock-timeout.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008335492,
+      "endTime": 1792008340884.8901
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 36
+      },
+      "startTime": 1792008092081,
+      "endTime": 1792008092660.4749
+    },
+    {
+      "path": "tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008344874,
+      "endTime": 1792008344882.8389
+    },
+    {
+      "path": "tests/db/one-time-credentials.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 20
+      },
+      "startTime": 1792008184977,
+      "endTime": 1792008187232.4382
+    },
+    {
+      "path": "tests/db/org-retention-period.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "passed": 9,
+        "failed": 4
+      },
+      "startTime": 1792008244874,
+      "endTime": 1792008245142.3154
+    },
+    {
+      "path": "tests/db/organizations-writes.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 9
+      },
+      "startTime": 1792008307044,
+      "endTime": 1792008307281.197
+    },
+    {
+      "path": "tests/db/part11-audit-store.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008312201,
+      "endTime": 1792008312234.8413
+    },
+    {
+      "path": "tests/db/pdfa-requirement.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008502850,
+      "endTime": 1792008502859.5488
+    },
+    {
+      "path": "tests/db/pg-mock-scoping.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008493305,
+      "endTime": 1792008493325.1428
+    },
+    {
+      "path": "tests/db/phase5-intelligent-docs.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 17
+      },
+      "startTime": 1792008268257,
+      "endTime": 1792008268286.9548
+    },
+    {
+      "path": "tests/db/platform-role-grant-record.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008492866,
+      "endTime": 1792008492954.1511
+    },
+    {
+      "path": "tests/db/platform-role-grants.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008344511,
+      "endTime": 1792008344631.6802
+    },
+    {
+      "path": "tests/db/pre-auth-narrowing.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008482490,
+      "endTime": 1792008482541.1282
+    },
+    {
+      "path": "tests/db/pre-auth-user-lookup.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008499751,
+      "endTime": 1792008499813.5464
+    },
+    {
+      "path": "tests/db/program-ownership.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008332699,
+      "endTime": 1792008332719.7192
+    },
+    {
+      "path": "tests/db/project-delete-held-by-store.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 2
+      },
+      "startTime": 1792008485121,
+      "endTime": 1792008485178.0186
+    },
+    {
+      "path": "tests/db/project-scope-boundary.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 14
+      },
+      "startTime": 1792008246262,
+      "endTime": 1792008246431.8467
+    },
+    {
+      "path": "tests/db/project-vault-parent-access.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 43
+      },
+      "startTime": 1792008123238,
+      "endTime": 1792008124733.6975
+    },
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 18
+      },
+      "startTime": 1792008202582,
+      "endTime": 1792008203065.1787
+    },
+    {
+      "path": "tests/db/protocol-approval-independence.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 3
+      },
+      "startTime": 1792008158686,
+      "endTime": 1792008159197.433
+    },
+    {
+      "path": "tests/db/protocol-authority-after-parent.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 1
+      },
+      "startTime": 1792008220897,
+      "endTime": 1792008221122.832
+    },
+    {
+      "path": "tests/db/protocol-finalization-concurrency.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 25
+      },
+      "startTime": 1792008097021,
+      "endTime": 1792008118222.0608
+    },
+    {
+      "path": "tests/db/protocol-reviewer-signing-authority.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008321175,
+      "endTime": 1792008321304.8896
+    },
+    {
+      "path": "tests/db/provisioned-tenant-tables-rls.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 16
+      },
+      "startTime": 1792008204643,
+      "endTime": 1792008204860.418
+    },
+    {
+      "path": "tests/db/qms-current-signing-and-training-admission.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 9
+      },
+      "startTime": 1792008265331,
+      "endTime": 1792008265790.626
+    },
+    {
+      "path": "tests/db/qms-document-signature-required.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 13
+      },
+      "startTime": 1792008232960,
+      "endTime": 1792008233248.0845
+    },
+    {
+      "path": "tests/db/rag-pipeline-tenant-scope.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008334065,
+      "endTime": 1792008334129.784
+    },
+    {
+      "path": "tests/db/report-os-delivery-recording.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008302106,
+      "endTime": 1792008302290.8896
+    },
+    {
+      "path": "tests/db/report-os-registry-seed.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 20
+      },
+      "startTime": 1792008142761,
+      "endTime": 1792008143814.1414
+    },
+    {
+      "path": "tests/db/report-os-tenant-from-session.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 13
+      },
+      "startTime": 1792008267805,
+      "endTime": 1792008268038.552
+    },
+    {
+      "path": "tests/db/report-pack-export.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008189698,
+      "endTime": 1792008201090.9392
+    },
+    {
+      "path": "tests/db/report-program-group-tenancy.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 14
+      },
+      "startTime": 1792008266537,
+      "endTime": 1792008266820.4604
+    },
+    {
+      "path": "tests/db/report-tenant-index.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 3
+      },
+      "startTime": 1792008493471,
+      "endTime": 1792008493491.7236
+    },
+    {
+      "path": "tests/db/request-parent-boundary.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008309724,
+      "endTime": 1792008309829.4536
+    },
+    {
+      "path": "tests/db/research-admin-sign-ceremony.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 38
+      },
+      "startTime": 1792008210729,
+      "endTime": 1792008211373.247
+    },
+    {
+      "path": "tests/db/retrieval-floor.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008377283,
+      "endTime": 1792008435166.243
+    },
+    {
+      "path": "tests/db/review-comments-record.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008289251,
+      "endTime": 1792008289654.3066
+    },
+    {
+      "path": "tests/db/review-record-export.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008304602,
+      "endTime": 1792008304825.921
+    },
+    {
+      "path": "tests/db/rls-bypass-does-not-outlive-release.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008494197,
+      "endTime": 1792008494211.6206
+    },
+    {
+      "path": "tests/db/rls-policy-inputs.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008484326,
+      "endTime": 1792008484513.4197
+    },
+    {
+      "path": "tests/db/rls-tenant-isolation.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008312367,
+      "endTime": 1792008312650.8127
+    },
+    {
+      "path": "tests/db/role-config-change-audit.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 20
+      },
+      "startTime": 1792008203792,
+      "endTime": 1792008204128.7937
+    },
+    {
+      "path": "tests/db/scheduled-once-lease.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008488187,
+      "endTime": 1792008488657.6252
+    },
+    {
+      "path": "tests/db/scheduled-once-window.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008485868,
+      "endTime": 1792008486131.9312
+    },
+    {
+      "path": "tests/db/scheduler-jobs-under-rls.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 11
+      },
+      "startTime": 1792008214260,
+      "endTime": 1792008218826.4546
+    },
+    {
+      "path": "tests/db/second-factor-binding.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 9
+      },
+      "startTime": 1792008257299,
+      "endTime": 1792008257511.824
+    },
+    {
+      "path": "tests/db/security-definer-functions.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008487495,
+      "endTime": 1792008487516.5317
+    },
+    {
+      "path": "tests/db/session-activity-across-tasks.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008491151,
+      "endTime": 1792008492142.382
+    },
+    {
+      "path": "tests/db/session-termination.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 16
+      },
+      "startTime": 1792008131294,
+      "endTime": 1792008139219.443
+    },
+    {
+      "path": "tests/db/sign-in-audit-trail.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 20
+      },
+      "startTime": 1792008183307,
+      "endTime": 1792008183693.67
+    },
+    {
+      "path": "tests/db/sign-in-posture.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008258782,
+      "endTime": 1792008259041.2576
+    },
+    {
+      "path": "tests/db/signed-act-meaning-and-lock.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008308249,
+      "endTime": 1792008308414.6064
+    },
+    {
+      "path": "tests/db/signer-authenticator-required.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008303256,
+      "endTime": 1792008303383.3635
+    },
+    {
+      "path": "tests/db/signing-lockout.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 11
+      },
+      "startTime": 1792008253284,
+      "endTime": 1792008253576.281
+    },
+    {
+      "path": "tests/db/signup-launch-catalog.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 16
+      },
+      "startTime": 1792008140696,
+      "endTime": 1792008141303.1133
+    },
+    {
+      "path": "tests/db/stats-computation-run.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008311787,
+      "endTime": 1792008312071.4133
+    },
+    {
+      "path": "tests/db/tamper-proof-log-tenant-column.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008367867,
+      "endTime": 1792008367893.399
+    },
+    {
+      "path": "tests/db/task-board-every-store.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008291628,
+      "endTime": 1792008291730.403
+    },
+    {
+      "path": "tests/db/task-link-completion-lock-order.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 1
+      },
+      "startTime": 1792008435842,
+      "endTime": 1792008435941.2417
+    },
+    {
+      "path": "tests/db/tenant-export-withheld-columns.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008495798,
+      "endTime": 1792008495805.2317
+    },
+    {
+      "path": "tests/db/tenant-purge-artifact-records.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 3
+      },
+      "startTime": 1792008305621,
+      "endTime": 1792008305756.832
+    },
+    {
+      "path": "tests/db/tenant-purge-audit.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 3
+      },
+      "startTime": 1792008324653,
+      "endTime": 1792008324738.8752
+    },
+    {
+      "path": "tests/db/tenant-purge.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 12
+      },
+      "startTime": 1792008297225,
+      "endTime": 1792008297423.6147
+    },
+    {
+      "path": "tests/db/traceability-update-boundary.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 2
+      },
+      "startTime": 1792008500549,
+      "endTime": 1792008500623.7825
+    },
+    {
+      "path": "tests/db/turn-record-purge-door.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 7
+      },
+      "startTime": 1792008298135,
+      "endTime": 1792008298556.4966
+    },
+    {
+      "path": "tests/db/two-tenant-application-rls.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 30
+      },
+      "startTime": 1792008247268,
+      "endTime": 1792008252221.1084
+    },
+    {
+      "path": "tests/db/upload-integrity-check.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008490820,
+      "endTime": 1792008490858.25
+    },
+    {
+      "path": "tests/db/user-presence-rls.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008498875,
+      "endTime": 1792008498885.164
+    },
+    {
+      "path": "tests/db/users-rls.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 12
+      },
+      "startTime": 1792008285341,
+      "endTime": 1792008285630.533
+    },
+    {
+      "path": "tests/db/vault-catalog-tenant-isolation.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008306190,
+      "endTime": 1792008306238.3643
+    },
+    {
+      "path": "tests/db/vault-chunk-backfill.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008493614,
+      "endTime": 1792008494066.4072
+    },
+    {
+      "path": "tests/db/vault-chunking-off.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 4
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-coverage.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 1
+      },
+      "startTime": 1792008494341,
+      "endTime": 1792008494770.6335
+    },
+    {
+      "path": "tests/db/vault-data-room-file.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 5,
+        "passed": 1
+      },
+      "startTime": 1792008281288,
+      "endTime": 1792008282351.8745
+    },
+    {
+      "path": "tests/db/vault-document-archives.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008342037,
+      "endTime": 1792008342464.7275
+    },
+    {
+      "path": "tests/db/vault-document-relationships.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 9
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-filing-vocabulary.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "passed": 5,
+        "failed": 1
+      },
+      "startTime": 1792008373596,
+      "endTime": 1792008374100.9514
+    },
+    {
+      "path": "tests/db/vault-fixity.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 4
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-ingest.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 13,
+        "passed": 1
+      },
+      "startTime": 1792008207782,
+      "endTime": 1792008207846.6104
+    },
+    {
+      "path": "tests/db/vault-library-search.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 4
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-lifecycle.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 6
+      },
+      "startTime": 1792008255184,
+      "endTime": 1792008256316.477
+    },
+    {
+      "path": "tests/db/vault-metadata-edit.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008343268,
+      "endTime": 1792008343787.0857
+    },
+    {
+      "path": "tests/db/vault-passage-search-keyless.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 6
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-passage-search.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 10
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-placement-batch.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 4,
+        "passed": 1
+      },
+      "startTime": 1792008323090,
+      "endTime": 1792008324052.2983
+    },
+    {
+      "path": "tests/db/vault-placement.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 14,
+        "passed": 4
+      },
+      "startTime": 1792008208013,
+      "endTime": 1792008209589.1875
+    },
+    {
+      "path": "tests/db/vault-program-ownership.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 9
+      },
+      "startTime": 1792008259889,
+      "endTime": 1792008259943.5867
+    },
+    {
+      "path": "tests/db/vault-record-immutability.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 12
+      },
+      "startTime": 1792008282532,
+      "endTime": 1792008282997.215
+    },
+    {
+      "path": "tests/db/vault-reupload.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 3
+      },
+      "startTime": 1792008326722,
+      "endTime": 1792008326747.4587
+    },
+    {
+      "path": "tests/db/vault-version-annotations-record.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 9
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-version-annotations.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 11
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-version-checkin.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "failed": 10,
+        "passed": 1
+      },
+      "startTime": 1792008272606,
+      "endTime": 1792008273167.4446
+    },
+    {
+      "path": "tests/db/vault-version-compare.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 4
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-versions.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 10
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/vault-where-used.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "skipped": 8
+      },
+      "startTime": 1792008087468,
+      "endTime": 1792008087468
+    },
+    {
+      "path": "tests/db/workflow-approval-tables.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008493187,
+      "endTime": 1792008493197.8716
+    },
+    {
+      "path": "tests/db/workflow-import-formatting-lineage.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 16
+      },
+      "startTime": 1792008237481,
+      "endTime": 1792008238808.0886
+    },
+    {
+      "path": "tests/db/workflow-import-governance.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 19
+      },
+      "startTime": 1792008126998,
+      "endTime": 1792008129877.7976
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-account-standing.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 16
+      },
+      "startTime": 1792008146965,
+      "endTime": 1792008156433.9211
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-connector-enablement.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 27
+      },
+      "startTime": 1792008144925,
+      "endTime": 1792008145743.0312
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "status": "failed",
+      "caseCounts": {
+        "passed": 10,
+        "failed": 1
+      },
+      "startTime": 1792008234072,
+      "endTime": 1792008235843.1409
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-consent-delegated.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008241402,
+      "endTime": 1792008241797.3328
+    },
+    {
+      "path": "server/middleware/__tests__/delegated-credential-scope.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 35
+      },
+      "startTime": 1792008212192,
+      "endTime": 1792008213199.2666
+    },
+    {
+      "path": "server/services/__tests__/embedding-corpus-policy.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008369145,
+      "endTime": 1792008371741.8135
+    },
+    {
+      "path": "server/services/audit/__tests__/chain-anchor.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 16
+      },
+      "startTime": 1792008205349,
+      "endTime": 1792008205598.147
+    },
+    {
+      "path": "server/services/audit/__tests__/chain-concurrency.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008313122,
+      "endTime": 1792008313254.7488
+    },
+    {
+      "path": "server/services/ana/__tests__/run-control-cross-instance.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008273459,
+      "endTime": 1792008276347.8657
+    },
+    {
+      "path": "server/services/ana/__tests__/run-events-rls.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008322515,
+      "endTime": 1792008322891.1013
+    },
+    {
+      "path": "server/services/c2c/__tests__/project-retention-locks.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 5
+      },
+      "startTime": 1792008486365,
+      "endTime": 1792008487317.5015
+    }
+  ],
+  "failedFiles": [
+    {
+      "path": "tests/db/actor-displays.dbtest.ts",
+      "failedAssertions": 1,
+      "caseCounts": {
+        "passed": 13,
+        "failed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected undefined to be 'WO03 displays-leaver' // Object.is equality",
+      "failureCodes": [],
+      "triageGroup": "canonical-anchor-or-parent",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 16389,
+        "digestAlgorithm": "sha256",
+        "digest": "01a2085ccb4dba4520d05dff7be94ee969665bd21fc0744434ffd8aaf01cf38f"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "01a2085ccb4dba4520d05dff7be94ee969665bd21fc0744434ffd8aaf01cf38f",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "activity feeds and the MDx audit list name people who left (D3) the c2c program portfolio names the lead who left",
+          "firstFailure": "AssertionError: expected undefined to be 'WO03 displays-leaver' // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 5
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 8562,
+        "digestAlgorithm": "sha256",
+        "digest": "878cbda45fe33f7748e55855a2d56b0bbed9416f20d8ceb1d772f55e7d6f2e72"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "878cbda45fe33f7748e55855a2d56b0bbed9416f20d8ceb1d772f55e7d6f2e72",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "AnA reaches the Vault with no key and the catalog off (D2) the catalog really is off for these organisations",
+        "AnA reaches the Vault with no key and the catalog off (D2) a question in plain English finds the current version by its text",
+        "AnA reaches the Vault with no key and the catalog off (D2) another organisation's document is never a hit, from either side",
+        "AnA reaches the Vault with no key and the catalog off (D2) lists and reads the document, with no refusal naming a setting",
+        "AnA reaches the Vault with no key and the catalog off (D2) a question no document answers is nothing found, not unavailable"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/c2c-project-persistence.dbtest.ts",
+      "failedAssertions": 12,
+      "caseCounts": {
+        "failed": 12
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACCESS_UNAVAILABLE"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 20012,
+        "digestAlgorithm": "sha256",
+        "digest": "62542e39ba72f0bca36c71da527bac24bb892a0c19445f6e4bae7c964398ec65"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "1f52b9579832533c8f6ec964da17b5df752a006020f6c4ecf7484407ce453daa",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL creates a 510(k) device program and returns 201 with the portfolio shape",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL gives the program its project record in the same creation, and it resolves strict (P-19)",
+          "firstFailure": "error: invalid input syntax for type uuid: \"\"",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL refuses a program whose project record has no workspace to go in, and writes nothing (P-19)",
+          "firstFailure": "AssertionError: expected 403 to be 409 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL persists the device program as a device, never as a biologic",
+          "firstFailure": "AssertionError: expected [] to have a length of 1 but got +0",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL makes the created program retrievable through the list projection",
+          "firstFailure": "AssertionError: expected 403 to be 200 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL writes a hash-chained audit row for the creation",
+          "firstFailure": "AssertionError: expected [] to have a length of 1 but got +0",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL creates an EU MDR technical file as a device, in the MDX workstream",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL creates an EU IVDR technical file as an IVD",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL refuses to record a device filing as a medicinal product",
+          "firstFailure": "AssertionError: expected 403 to be 400 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL accepts the new device-family classes",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/c2c/projects — persistence against real PostgreSQL creates an IVD 510(k) as an IVD",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the fail-closed 503 discloses no schema object returns a human message and a correlation id, and names no relation",
+          "firstFailure": "AssertionError: expected 'PROJECT_ACCESS_UNAVAILABLE' to be 'PENDING_STORE' // Object.is equality",
+          "intentionalFaultControlCandidate": true
+        }
+      ]
+    },
+    {
+      "path": "tests/db/cmc-source-evidence.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 12
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 20560,
+        "digestAlgorithm": "sha256",
+        "digest": "529adf9c4ddca00135cda1aeff726f576cc33e5516805c0a13f82c5d16093a79"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "529adf9c4ddca00135cda1aeff726f576cc33e5516805c0a13f82c5d16093a79",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "a CMC record cites the Vault document it was taken from links a record to a current version, and the section lists it with who and why",
+        "a CMC record cites the Vault document it was taken from refuses no reason, an unknown record, another program’s or organisation’s document, and a duplicate",
+        "a CMC record cites the Vault document it was taken from refuses a viewer, and another organisation’s project before anything is read",
+        "a CMC record cites the Vault document it was taken from holds nothing while the linked version is current",
+        "a reissued document holds the sections that read the record names the record’s version as superseded once a later version is filed",
+        "a reissued document holds the sections that read the record the export gate refuses the approved section and says which record and document",
+        "a reissued document holds the sections that read the record refuses a link to the superseded version",
+        "a reissued document holds the sections that read the record linking the current version moves the link with the same reason, and the hold lifts",
+        "a reissued document holds the sections that read the record names a withdrawn version as withdrawn",
+        "removing a link, and the record it leaves requires a reason, keeps the row, and cannot be done twice",
+        "removing a link, and the record it leaves each link and unlink is a chained row on the document’s own history",
+        "removing a link, and the record it leaves the table refuses every other change, for every role, and another organisation reads none of it"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/data-room-catalog-facts.dbtest.ts",
+      "failedAssertions": 5,
+      "caseCounts": {
+        "failed": 5,
+        "passed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 10638,
+        "digestAlgorithm": "sha256",
+        "digest": "bf8a11d57b39cb11cf695c433864e2a76495c693c98b8274bfd3b9b612581c6a"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "bf8a11d57b39cb11cf695c433864e2a76495c693c98b8274bfd3b9b612581c6a",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "an adopted CSR is described by rule and by its project inherits the project facts, finds the labelled facts, and names its study",
+          "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "an adopted CSR is described by rule and by its project the Data Room read carries what the catalog found",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'find')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a study is named only when it is the one study of this project two studies of the project with the same protocol id: neither is chosen, both are named",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'study_ref')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a study is named only when it is the one study of this project deleting the study design detaches its sources and keeps the capture",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'study_ref')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a tabular capture is profiled, structure only an SDTM AE CSV reads as SDTM AE with its columns and rows, and no subject value is kept",
+          "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/data-room-processing.dbtest.ts",
+      "failedAssertions": 5,
+      "caseCounts": {
+        "failed": 5,
+        "passed": 2
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 14172,
+        "digestAlgorithm": "sha256",
+        "digest": "d35c40ee3db81f7803b7b496a537e802048ff4e0d4314de6afd7768032f1ec71"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "d35c40ee3db81f7803b7b496a537e802048ff4e0d4314de6afd7768032f1ec71",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "an adopted conversation file is read, classified and stored adopt answers 201, and the source is extracted with its text, measure and declared version",
+          "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "an adopted conversation file is read, classified and stored a word only in its body finds it, with a snippet of where",
+          "firstFailure": "AssertionError: expected 404 to be 200 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the room pages past 200, and stays in its project reports the real total and pages through it",
+          "firstFailure": "AssertionError: expected 404 to be 200 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the room pages past 200, and stays in its project a search never returns another project's source, nor another organization's",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'map')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the room pages past 200, and stays in its project filters by how far a source was read, and refuses a filter it cannot read rather than widening",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'every')",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/document-catalog-governed.dbtest.ts",
+      "failedAssertions": 5,
+      "caseCounts": {
+        "failed": 5,
+        "skipped": 12
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected false to be true // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ANCHOR_UNRESOLVED",
+        "REQUEST_DB_CONTEXT_REQUIRED"
+      ],
+      "triageGroup": "catalogue-current-q-api-and-anchor",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 16174,
+        "digestAlgorithm": "sha256",
+        "digest": "9e96f13bd15c6e88b64a7e1b2f21374aafdbd3957e254ae2beccdc7f884962e2"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "28961dcf060223b7526f0d7e9471785c451c605f67a5063c3bad6289324f2c2b",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "a person confirms a viewer cannot, and the record is untouched",
+        "a person confirms a confirmation of a record that changed after it was shown is refused",
+        "a person confirms a decision that names no revision is refused",
+        "a person confirms a member confirms it as written, audited with the proposer",
+        "a person confirms only once",
+        "a person confirms AnA cannot replace a record a person confirmed",
+        "a person confirms recall says a person confirmed it",
+        "a person corrects, with a reason without a reason, nothing changes",
+        "a person corrects, with a reason a kind outside the vocabulary is refused",
+        "a person corrects, with a reason with a reason, the correction is recorded and audited with it",
+        "a person corrects, with a reason the database refuses a 'corrected' record without a reason",
+        "a person corrects, with a reason new bytes clear the description and its decision"
+      ],
+      "failedCases": [
+        {
+          "name": "AnA's catalog write is a suggestion that names who wrote it is stored as suggested, with the agent, model, thread and turn",
+          "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "AnA's catalog write is a suggestion that names who wrote it has a chained audit row naming the agent, model and turn",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'action')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "AnA's catalog write is a suggestion that names who wrote it the Vault read shows it as a suggestion by AnA and its model",
+          "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}: expected 409 to be 200 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "AnA's catalog write is a suggestion that names who wrote it session recall labels it as her unconfirmed suggestion",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'limit')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the kind is the Vault vocabulary refuses a kind outside it and writes nothing",
+          "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected undefined to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/document-catalog-recall.dbtest.ts",
+      "failedAssertions": 4,
+      "caseCounts": {
+        "passed": 4,
+        "failed": 4
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "TypeError: Cannot read properties of undefined (reading 'complete')",
+      "failureCodes": [],
+      "triageGroup": "catalogue-current-q-api-and-anchor",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 28879,
+        "digestAlgorithm": "sha256",
+        "digest": "9a26e45e008427c7735d7e85e2719eca5bd1596e45f0af3b922681d74033a9fd"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "caf5b36ab3ae66a45203b1bb83d2d512328d22d893eb71ca00fa5b990b94ab86",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "semantic search over the catalog a cataloged document is embedded and findable; uncataloged ones are counted, not hidden",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'complete')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "semantic search over the catalog D2: an embedding-provider failure narrows the search to text and says so — never an empty result passed off",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "chat-upload discovery lists the current upload with its reopenable file_id and excludes the superseded one",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "filing a chat upload into the vault performs the same governed admission the Vault surface does, and the file becomes catalogable",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/document-catalog-role.dbtest.ts",
+      "failedAssertions": 1,
+      "caseCounts": {
+        "passed": 1,
+        "failed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected false to be true // Object.is equality",
+      "failureCodes": [
+        "REQUEST_DB_CONTEXT_REQUIRED"
+      ],
+      "triageGroup": "catalogue-current-q-api-and-anchor",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 6354,
+        "digestAlgorithm": "sha256",
+        "digest": "0e579032e2a508716709a3e70257302b6f266b3ca8b8facce7be9c1eedbbf00e"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "8be1b085f2f64733195f814d0c4c1e2fdb9720b9c56f14f7cfa5a12899a1a4b5",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "catalog_project_document — the comprehension record is a write accepts a member — the positive control: nothing else stood in the way",
+          "firstFailure": "AssertionError: {\"ok\":false,\"code\":\"REQUEST_DB_CONTEXT_REQUIRED\",\"error\":\"Request-scoped project access could not be verified. No project data was supplied.\"}: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/document-catalog.dbtest.ts",
+      "failedAssertions": 13,
+      "caseCounts": {
+        "failed": 13,
+        "skipped": 2,
+        "passed": 2
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected 409 to be 201 // Object.is equality",
+      "failureCodes": [],
+      "triageGroup": "catalogue-current-q-api-and-anchor",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 28705,
+        "digestAlgorithm": "sha256",
+        "digest": "ee517798491db424a22a1d7e51adc2bbc4229337d7626cc69eaaaaf4a927e5ce"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "0c846ba6bcf45b49e64d726e47a99137c9337aa869d0361fa14467ebd8dd9241",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "key_data is verified against the text it claims to transcribe REFUSES invented values, a verdict and a nested leaf — names each, stores nothing",
+        "key_data is verified against the text it claims to transcribe ACCEPTS the document’s own values, in its typography or plain ASCII"
+      ],
+      "failedCases": [
+        {
+          "name": "ingest with the catalog on — the extraction tier is recorded a readable upload lands with catalog_status=extracted and real counts",
+          "firstFailure": "AssertionError: expected 409 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "ingest with the catalog on — the extraction tier is recorded a real PDF records its actual page count, not null",
+          "firstFailure": "AssertionError: expected 409 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "ingest with the catalog on — the extraction tier is recorded an upload extraction cannot read is recorded as a FAILURE with a reason",
+          "firstFailure": "AssertionError: expected 409 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "ingest with the catalog on — the extraction tier is recorded read_project_document refuses to pretend the opaque document has content",
+          "firstFailure": "AssertionError: expected undefined to be false // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "ingest with the catalog on — the extraction tier is recorded list_project_documents shows both files with honest catalog states",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a listing reports the scope, not the page it happened to return reports the scope total while the page stays at the limit",
+          "firstFailure": "AssertionError: expected 0 to be greater than 1",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a listing reports the scope, not the page it happened to return counts what needs attention across the scope, not across the page",
+          "firstFailure": "AssertionError: expected undefined to be +0 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a listing reports the scope, not the page it happened to return claims completeness only when the page really is the whole scope",
+          "firstFailure": "AssertionError: expected undefined to be +0 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a listing reports the scope, not the page it happened to return the session-start digest carries the scope it sampled from",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'limit')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the read-coverage gate, end to end through the tool handlers catalog_project_document REFUSES a partial read and names what is unread",
+          "firstFailure": "AssertionError: expected undefined to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the read-coverage gate, end to end through the tool handlers after reading ALL of it, the catalog write succeeds and is durable",
+          "firstFailure": "AssertionError: expected undefined to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the read-coverage gate, end to end through the tool handlers hands the comprehension record BACK on the next read, instead of starting from zero",
+          "firstFailure": "AssertionError: expected undefined to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the read-coverage gate, end to end through the tool handlers another tenant cannot list or read the document",
+          "firstFailure": "AssertionError: expected undefined to be false // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/org-retention-period.dbtest.ts",
+      "failedAssertions": 4,
+      "caseCounts": {
+        "passed": 9,
+        "failed": 4
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 17568,
+        "digestAlgorithm": "sha256",
+        "digest": "7e9b5f19e84ec6b08a687aeb8a16e316efc7213998008340117a73b447df81e1"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "7e9b5f19e84ec6b08a687aeb8a16e316efc7213998008340117a73b447df81e1",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "admission dates a record from the organisation period (ADR-0014 §6) with no setting, a document is kept 25 years from admission — never undated",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "admission dates a record from the organisation period (ADR-0014 §6) the next admission is dated from the organisation's 30 years",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "admission dates a record from the organisation period (ADR-0014 §6) another organisation's setting does not apply, cannot be read, and is invisible under RLS",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "shortening is a governed act with a reason naming the governing rule it is recorded; a named policy that is longer still wins",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-chunking-off.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 4
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "expected 403 to be 201 // Object.is equality",
+      "failureCodes": [],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 9989,
+        "digestAlgorithm": "sha256",
+        "digest": "038542d40ae0f6f170f485b57296da4791b1cf742d2bb70047c9db320afbf393"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "038542d40ae0f6f170f485b57296da4791b1cf742d2bb70047c9db320afbf393",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "the catalog half works on its own records the extraction tier even with the passage index off",
+        "the catalog half works on its own still lists and reads the document through the tools",
+        "with passage embedding off, the passages are indexed for text and nothing is embedded wrote the chunks with no vector, and the ledger says chunked",
+        "with passage embedding off, the passages are indexed for text and nothing is embedded search_document_passages finds the passage by text, and says it ranked by text"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-data-room-file.dbtest.ts",
+      "failedAssertions": 5,
+      "caseCounts": {
+        "failed": 5,
+        "passed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 14474,
+        "digestAlgorithm": "sha256",
+        "digest": "6da4bcb6856c221f8848d131f3e62deb0d59bf160ac7a44ca71d2266e0cd3e96"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "6da4bcb6856c221f8848d131f3e62deb0d59bf160ac7a44ca71d2266e0cd3e96",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "File into Vault from the data room (VR-11) files new bytes, reports bytes already in the Vault, and refuses another organization’s source",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "File into Vault from the data room (VR-11) an antivirus refusal on one source leaves the other filed, and the batch is not complete",
+          "firstFailure": "AssertionError: expected 403 to be 200 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "File into Vault from the data room (VR-11) refuses bytes that no longer match the checksum recorded at capture, storing nothing",
+          "firstFailure": "AssertionError: expected undefined to deeply equal [ ObjectContaining{…} ]",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "File into Vault from the data room (VR-11) a superseded capture, another project’s capture and a source with no file are each refused with a reason",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'map')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "File into Vault from the data room (VR-11) refuses an empty or oversized selection",
+          "firstFailure": "AssertionError: expected { success: false, …(2) } to match object { error: 'INVALID_SOURCES' }",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-document-relationships.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 9
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 17919,
+        "digestAlgorithm": "sha256",
+        "digest": "e12245cc819fc01b2f8407451c022230b2ebca9422584b5debd824091abd76fb"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "e12245cc819fc01b2f8407451c022230b2ebca9422584b5debd824091abd76fb",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "relating documents (critique 15) relates two versions, and both ends list it in their own words",
+        "relating documents (critique 15) relates to a version in another project of the organisation, and names that project",
+        "relating documents (critique 15) says when the related version has since been superseded",
+        "relating documents (critique 15) refuses a self relationship, two versions of one document, a duplicate and an unknown kind",
+        "relating documents (critique 15) refuses another organisation's document, a viewer, and another organisation's project",
+        "removing a relationship, and the record it leaves (critique 15) removing one requires a reason, keeps the row, and cannot be done twice",
+        "removing a relationship, and the record it leaves (critique 15) each relate and unrelate is a chained row on both documents' histories",
+        "removing a relationship, and the record it leaves (critique 15) the table refuses every other change, for every role, and another organisation reads none of it",
+        "removing a relationship, and the record it leaves (critique 15) the tenant purge takes an organisation's relationships with its documents, and no one else's"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-filing-vocabulary.dbtest.ts",
+      "failedAssertions": 1,
+      "caseCounts": {
+        "passed": 5,
+        "failed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"ok\":false,\"status\":403,\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected false to be true // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 7289,
+        "digestAlgorithm": "sha256",
+        "digest": "3e397eee6955373b45e1a0eb7c62ab24f0ff0b6836eacd679863548042e5a04f"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "3e397eee6955373b45e1a0eb7c62ab24f0ff0b6836eacd679863548042e5a04f",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "the placement service holds a filing to the vocabulary (POST /:id/file, AnA) files a decision inside the vocabulary, as before",
+          "firstFailure": "AssertionError: {\"ok\":false,\"status\":403,\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-fixity.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 4
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 8935,
+        "digestAlgorithm": "sha256",
+        "digest": "fbfd802f3ffeddf1b8a3b5653976cc0fc6cd419e34997f7394220c0b3d67baf0"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "fbfd802f3ffeddf1b8a3b5653976cc0fc6cd419e34997f7394220c0b3d67baf0",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "fixity: every stored version re-proven (critique 15) reports each version verified, altered or missing, and lists the failures",
+        "fixity: every stored version re-proven (critique 15) writes one chained verdict per version, naming the person",
+        "fixity: every stored version re-proven (critique 15) the document's history shows the check",
+        "fixity: every stored version re-proven (critique 15) a viewer is refused, and another organisation's program is not found"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-ingest.dbtest.ts",
+      "failedAssertions": 13,
+      "caseCounts": {
+        "failed": 13,
+        "passed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 23650,
+        "digestAlgorithm": "sha256",
+        "digest": "5242a2458f82da13c7c9e29d64937767b4f1fac2bec8e08faa2e3fca480622a0"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "69898a11f2ea34f6a9b1308de4c99cfd4fc962ea29496fe2bf529de4f26bff22",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "POST /api/vault/ingest — the document actually lands accepts the upload and records the SHA-256 of the bytes that were sent",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — the document actually lands persisted a row carrying the canonical columns the route writes",
+          "firstFailure": "AssertionError: expected [] to have a length of 1 but got +0",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — the document actually lands the bytes are retrievable at the address the row records",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'storage_version_id')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — the Part 11 record of who put it there wrote a hash-chained audit row naming the actor and the content hash",
+          "firstFailure": "AssertionError: expected [] to have a length of 1 but got +0",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — the Part 11 record of who put it there a document and its audit row cannot exist without each other",
+          "firstFailure": "AssertionError: expected 0 to be greater than 0",
+          "intentionalFaultControlCandidate": true
+        },
+        {
+          "name": "POST /api/vault/ingest — a refused upload leaves no bytes behind different bytes at an occupied code and version: 409, and no new object in storage",
+          "firstFailure": "AssertionError: expected 403 to be 409 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — a refused upload leaves no bytes behind the same bytes under a second code: 409, no new object, and the original still reads back",
+          "firstFailure": "AssertionError: expected 403 to be 409 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — a refused upload leaves no bytes behind a folder outside the program taxonomy: 400, and no new object in storage",
+          "firstFailure": "AssertionError: expected 403 to be 400 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — a refused upload leaves no bytes behind the reference check the discard relies on sees an admitted record, as the runtime role",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'storage_version_id')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — a refused upload leaves no bytes behind an admitted upload still stores exactly one object — the one its record names",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — only a role that may write adds to the Vault (D3) refuses a viewer before anything is stored or recorded",
+          "firstFailure": "AssertionError: expected { ok: false, status: 403, …(2) } to match object { ok: false, status: 403, …(1) }",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — only a role that may write adds to the Vault (D3) refuses a scope that carries no role at all",
+          "firstFailure": "AssertionError: expected { ok: false, status: 403, …(2) } to match object { ok: false, status: 403, …(1) }",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "POST /api/vault/ingest — only a role that may write adds to the Vault (D3) admits a member — the role SSO provisioning assigns",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-library-search.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 4
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 7662,
+        "digestAlgorithm": "sha256",
+        "digest": "ea9d057c1285bd1d8a063011db394fe2d23d52ca0f9a2ff1a04bcd1ff1d84fce"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "ea9d057c1285bd1d8a063011db394fe2d23d52ca0f9a2ff1a04bcd1ff1d84fce",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "library search across every project (critique 15) finds matches in every project the organisation holds, each named with its project, and never another organisation's",
+        "library search across every project (critique 15) lists an earlier version only when asked",
+        "library search across every project (critique 15) an empty query answers no results and says why",
+        "library search across every project (critique 15) the project search still searches its project only"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-lifecycle.dbtest.ts",
+      "failedAssertions": 6,
+      "caseCounts": {
+        "failed": 6
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED",
+        "PROJECT_ANCHOR_UNRESOLVED"
+      ],
+      "triageGroup": "canonical-anchor-or-parent",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 16662,
+        "digestAlgorithm": "sha256",
+        "digest": "6187d57c426a891abc5b07ad95a30eab85f5c87e06d16da8414e44afde870952"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "6187d57c426a891abc5b07ad95a30eab85f5c87e06d16da8414e44afde870952",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "starting a Vault version's lifecycle (VR-13) makes one record at authoring with the version's hash, whatever the body says",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "starting a Vault version's lifecycle (VR-13) does not find another organization's version",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "review and approval of a Vault version (VR-13) the uploader may not review, a viewer may not act, and approval needs a review",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "review and approval of a Vault version (VR-13) the reviewer and the uploader may not approve; a third person approves exactly those bytes",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "review and approval of a Vault version (VR-13) only the current version is started or approved",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "review and approval of a Vault version (VR-13) a failure while superseding leaves both versions as they were",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": true
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-passage-search-keyless.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 6
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "expected 403 to be 201 // Object.is equality",
+      "failureCodes": [],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 12937,
+        "digestAlgorithm": "sha256",
+        "digest": "6999bfc170f56352b1ea02f7f1649ef0b7375fff8defbe768a367cd56d43914b"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "6999bfc170f56352b1ea02f7f1649ef0b7375fff8defbe768a367cd56d43914b",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "the passage index is written with no key and no flag both uploads are chunked, with no vector on any chunk, and the ledger says chunked",
+        "the passage index is written with no key and no flag with passage embedding on but no provider, a new upload is still chunked, all or none embedded",
+        "search_document_passages answers by text, and says so returns the passage that answers the question, from the right document",
+        "search_document_passages answers by text, and says so answers a tox question from the tox document",
+        "search_document_passages answers by text, and says so never returns another organization's document, even for identical text",
+        "search_document_passages answers by text, and says so a word in no document matches nothing, honestly"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-passage-search.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 10
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "expected 403 to be 201 // Object.is equality",
+      "failureCodes": [],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 23673,
+        "digestAlgorithm": "sha256",
+        "digest": "74c5817e6a73bbab596408d13b6d8de5d8a06f7393895192a098bef6f4f41fbc"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "74c5817e6a73bbab596408d13b6d8de5d8a06f7393895192a098bef6f4f41fbc",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "the chunk corpus is written by ingest chunked and embedded both uploads, and the catalog ledger says so",
+        "search_document_passages reaches it returns the passage that answers the question, from the right document",
+        "search_document_passages reaches it answers a tox question from the tox document",
+        "search_document_passages reaches it never returns another organization's document, even for identical text",
+        "search_document_passages reaches it states the coverage it searched, read from the chunking ledger",
+        "search_document_passages reaches it REFUSES without an organization identity rather than reporting no matches",
+        "a retrieved passage can be cited carries a real page number, derived from the PDF and not from arithmetic",
+        "with a project open, only that project's passages (PF-10 S7) with no project open, the organization: both projects' studies are found",
+        "with a project open, only that project's passages (PF-10 S7) the open project's study, never the other project's",
+        "with a project open, only that project's passages (PF-10 S7) and the other way round, with the coverage of the open project alone"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-placement-batch.dbtest.ts",
+      "failedAssertions": 4,
+      "caseCounts": {
+        "failed": 4,
+        "passed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected 403 to be 422 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 9503,
+        "digestAlgorithm": "sha256",
+        "digest": "d30a9f425db1a634dd0dc4390b961a71eaa62921f599960c38f41bf6840c8c43"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "d30a9f425db1a634dd0dc4390b961a71eaa62921f599960c38f41bf6840c8c43",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "Confirm N suggested (VR-11b) refuses without a reason, and changes nothing",
+          "firstFailure": "AssertionError: expected 403 to be 422 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "Confirm N suggested (VR-11b) confirms each with one chained row carrying the reason, and names the person",
+          "firstFailure": "AssertionError: {\"success\":false,\"error\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}: expected 403 to be 200 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "Confirm N suggested (VR-11b) a document moved or confirmed since the list was loaded is refused CONFLICT; the others commit",
+          "firstFailure": "AssertionError: expected 403 to be 200 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "Confirm N suggested (VR-11b) the Vault counts the suggestions awaiting confirmation over the program",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'awaitingConfirmationCount')",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-placement.dbtest.ts",
+      "failedAssertions": 14,
+      "caseCounts": {
+        "failed": 14,
+        "passed": 4
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 23622,
+        "digestAlgorithm": "sha256",
+        "digest": "01ee99c31bd4dc1d083aa96e161240381e1e0dc253b8b83255b1be0ae1e9cf51"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "01ee99c31bd4dc1d083aa96e161240381e1e0dc253b8b83255b1be0ae1e9cf51",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "filing a document where its own taxonomy allows files it, records who placed it, and reports the folder label",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "filing a document where its own taxonomy allows left an audit row naming the location it came from and the one it went to",
+          "firstFailure": "AssertionError: expected [] to have a length of 1 but got +0",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "filing a document where its own taxonomy allows the filing row records the evidence kind before and after (VR-05)",
+          "firstFailure": "AssertionError: expected undefined to be 'report' // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "filing a document where its own taxonomy allows honours an explicit unfile — the Unfiled queue is a real answer",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "what it refuses, writing nothing refuses a folder from another modality's taxonomy",
+          "firstFailure": "AssertionError: expected 'PROJECT_ACTOR_ACCESS_DENIED' to be 'INVALID_FOLDER' // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "what it refuses, writing nothing refuses to confirm a suggestion that does not exist",
+          "firstFailure": "AssertionError: expected 'PROJECT_ACTOR_ACCESS_DENIED' to be 'NOTHING_TO_CONFIRM' // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "what it refuses, writing nothing refuses a call that names no destination at all",
+          "firstFailure": "AssertionError: expected 'PROJECT_ACTOR_ACCESS_DENIED' to be 'NO_TARGET' // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "what it refuses, writing nothing confirms an existing suggestion in place, keeping the CTD section",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a placement AnA makes is a suggestion, attributed to her (D5) records AnA's folder as a suggestion a person must confirm, not as a person's filing",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a placement AnA makes is a suggestion, attributed to her (D5) unfiles with the same attribution — the Unfiled queue is where a person decides",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a placement AnA makes is a suggestion, attributed to her (D5) leaves a person's filing through the Vault a confirmed decision with no agent marker",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "only a role that may write files into the Vault (D3) refuses a viewer, and writes nothing",
+          "firstFailure": "AssertionError: expected { ok: false, status: 409, …(2) } to match object { ok: false, status: 403, …(1) }",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "only a role that may write files into the Vault (D3) refuses a scope that carries no role at all",
+          "firstFailure": "AssertionError: expected { ok: false, status: 409, …(2) } to match object { ok: false, status: 403, …(1) }",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "only a role that may write files into the Vault (D3) lets a member file — the role SSO provisioning assigns",
+          "firstFailure": "AssertionError: expected false to be true // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-reupload.dbtest.ts",
+      "failedAssertions": 3,
+      "caseCounts": {
+        "failed": 3
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 8863,
+        "digestAlgorithm": "sha256",
+        "digest": "f3711f4bb381a429ff08ac5459cad91cdcc81db21c9ab399b0b8570c86705c6c"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "f3711f4bb381a429ff08ac5459cad91cdcc81db21c9ab399b0b8570c86705c6c",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "a same-bytes re-upload to the Vault (VR-05, D5) admits the document with a classification and a retention policy",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a same-bytes re-upload to the Vault (VR-05, D5) a retry that omits them changes nothing, writes no audit row, and leaves no second copy",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'id')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "a same-bytes re-upload to the Vault (VR-05, D5) a retry asking for another title or type changes nothing, and says what differs",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'id')",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-version-annotations-record.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 9
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ANCHOR_UNRESOLVED"
+      ],
+      "triageGroup": "canonical-anchor-or-parent",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 14717,
+        "digestAlgorithm": "sha256",
+        "digest": "ebb17947f40eb919afc63da01cb27877d9a8750f694d640161a3b08f6c7d94d1"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "e34721424cd4ded1e85cf87835de78fc1c483c3149034e4613226cec9fc688b6",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "the record refuses a post its writer would refuse (critique 15) admits a well-formed direct post, as the control",
+        "the record refuses a post its writer would refuse (critique 15) refuses another organisation, program or byte content, and a body hash that is not its own",
+        "the record refuses a post its writer would refuse (critique 15) refuses a passage not where it says, a stale text hash, a page beyond the count, and a page on a version without one",
+        "the record refuses a post its writer would refuse (critique 15) refuses a reply under a closed or foreign annotation, a closed post, and a deleted version",
+        "the record never changes and is never deleted while its version exists (critique 15) refuses changes to its words, anchor and author, and a second or foreign outcome",
+        "the record never changes and is never deleted while its version exists (critique 15) refuses DELETE, a DELETE from a trigger the runtime role made itself, and TRUNCATE",
+        "the record never changes and is never deleted while its version exists (critique 15) refuses a runtime-role DELETE of the program, which would cascade as the owner, for annotations and relationships",
+        "the record never changes and is never deleted while its version exists (critique 15) the tenant purge removes an organisation's annotations with its versions, and no one else's; the owners match",
+        "a document's history says when older entries are not shown (critique 15) cuts at 200 entries and says so; a short history says nothing is cut"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-version-annotations.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 11
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ANCHOR_UNRESOLVED\",\"message\":\"This program needs one verified project relationship before its records can be supplied.\"}}: expected 409 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ANCHOR_UNRESOLVED"
+      ],
+      "triageGroup": "canonical-anchor-or-parent",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 17960,
+        "digestAlgorithm": "sha256",
+        "digest": "884effb4773cdd2143510b0b87b5951d0b967439d84291b1474d2ee9f5b7bb29"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "675adfd58c8c3e02696a452944dc5aa32b1d14dfbe98cb362e4cd53dfb7e6994",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "posting an annotation (critique 15) anchors to the whole version, a page, or a passage, and lists each with the open counts",
+        "posting an annotation (critique 15) each post is a chained row on the version's history, with the words and their SHA-256",
+        "posting an annotation (critique 15) counts a passage in characters, not UTF-16 units",
+        "posting an annotation (critique 15) refuses a page out of range, a page without a page count, missing text, and text that changed",
+        "posting an annotation (critique 15) reads the text in character windows, and records each read",
+        "the thread: replies, resolution and retraction (critique 15) a reply goes under its annotation; a reply to a reply is refused",
+        "the thread: replies, resolution and retraction (critique 15) resolving needs a note, can name the version that addressed it, and happens once",
+        "the thread: replies, resolution and retraction (critique 15) only the author retracts, with a reason; the words stay; a retracted one is not resolved, a resolved one not retracted",
+        "who may annotate (critique 15) a viewer is refused at the route and at the service",
+        "who may annotate (critique 15) another organisation neither reads nor changes this organisation's annotations",
+        "a stale anchor says so (critique 15) when the text or the page count changes, the anchor reads not current and the quote stays"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-version-checkin.dbtest.ts",
+      "failedAssertions": 10,
+      "caseCounts": {
+        "failed": 10,
+        "passed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 15269,
+        "digestAlgorithm": "sha256",
+        "digest": "66a3f93e83ef47fef65a73ba3213d0f63f186326a810d1babec307ca552be1ff"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "66a3f93e83ef47fef65a73ba3213d0f63f186326a810d1babec307ca552be1ff",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "checking in the next version of a Vault document (VR-08) records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was",
+          "firstFailure": "AssertionError: {\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "checking in the next version of a Vault document (VR-08) refuses a check-in against a version that already has a successor, naming the current one",
+          "firstFailure": "Error: .field(name, val) val can not be empty",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "checking in the next version of a Vault document (VR-08) refuses bytes that are already a version of the document, naming it",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'id')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "checking in the next version of a Vault document (VR-08) assigns the version: a client-sent version with a check-in is a 400",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'id')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "checking in the next version of a Vault document (VR-08) invents no version for a head whose version is not a number",
+          "firstFailure": "AssertionError: expected 403 to be 409 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "checking in the next version of a Vault document (VR-08) 404s another tenant's document, and neither records nor stores anything",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "checking in the next version of a Vault document (VR-08) a viewer is refused before any byte is stored",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'id')",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "checking in the next version of a Vault document (VR-08) two concurrent check-ins against one version: exactly one succeeds, the other names the new head",
+          "firstFailure": "AssertionError: expected 403 to be 201 // Object.is equality",
+          "intentionalFaultControlCandidate": false
+        },
+        {
+          "name": "the database refuses lineage outside the family (VR-08) refuses a raw INSERT that names another program's document as its predecessor",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'id')",
+          "intentionalFaultControlCandidate": true
+        },
+        {
+          "name": "the database refuses lineage outside the family (VR-08) refuses a second live successor",
+          "firstFailure": "TypeError: Cannot read properties of undefined (reading 'id')",
+          "intentionalFaultControlCandidate": true
+        }
+      ]
+    },
+    {
+      "path": "tests/db/vault-version-compare.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 4
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 8305,
+        "digestAlgorithm": "sha256",
+        "digest": "fcca545a63e6a598aeeb87d83b43299c55f1a2062ab7f399e3fa91381185f0f4"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "fcca545a63e6a598aeeb87d83b43299c55f1a2062ab7f399e3fa91381185f0f4",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "compare two versions of a Vault document names both sides and returns the changed lines and details, unchanged runs collapsed",
+        "compare two versions of a Vault document the earlier version is always the one compared from",
+        "compare two versions of a Vault document refuses a version of another document, and another organisation's document reads as not found",
+        "compare two versions of a Vault document a version with no extracted text gets no text comparison, and the answer says which"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-versions.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 10
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 13746,
+        "digestAlgorithm": "sha256",
+        "digest": "fa9c4cd96217be575339d858d8e710e838fa77c7e628e64ee15da5d753e20810"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "fa9c4cd96217be575339d858d8e710e838fa77c7e628e64ee15da5d753e20810",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "the Vault lists a document once, at its current version (VR-09) one leaf for the family, the current version, with its version count",
+        "the Vault lists a document once, at its current version (VR-09) counts documents, not versions",
+        "GET …/documents/:documentId/versions (VR-09) lists the family newest first from any member, with hash, size and uploader",
+        "GET …/documents/:documentId/versions (VR-09) shows a link the lineage rules refuse as unverified, never as lineage",
+        "GET …/documents/:documentId/versions (VR-09) 404s another organization's document, from either side",
+        "search and history across versions (VR-09) search hides a superseded version unless asked, and counts the same set",
+        "search and history across versions (VR-09) a document's history spans every version",
+        "search and history across versions (VR-09) downloads an earlier version, hash-verified (control)",
+        "a check-in agrees with the tree about the current version (VR-09) refuses a version a legacy row names, says why, and names nothing about that row",
+        "the data room names the version its file became (VR-16) a captured file holding v1.0's bytes reads 'filed as 1.0, superseded by 2.0'"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "tests/db/vault-where-used.dbtest.ts",
+      "failedAssertions": 0,
+      "caseCounts": {
+        "skipped": 8
+      },
+      "hookOrSetupFailureWithoutAssertion": true,
+      "firstFailure": "{\"error\":{\"code\":\"PROJECT_ACTOR_ACCESS_DENIED\",\"message\":\"The actor is not a current active member of this organization.\"}}: expected 403 to be 201 // Object.is equality",
+      "failureCodes": [
+        "PROJECT_ACTOR_ACCESS_DENIED"
+      ],
+      "triageGroup": "current-actor-admission-and-dependent-cascades",
+      "failureStage": "setup/hook failure; no failed assertion row, pending cases were not executed",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 18060,
+        "digestAlgorithm": "sha256",
+        "digest": "f46c9bc91136a1074c26d210ff4a717f60c72157b09d4ada07129365f7f5d496"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "f46c9bc91136a1074c26d210ff4a717f60c72157b09d4ada07129365f7f5d496",
+        "matchesPublishedBytes": true,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [
+        "the server's transmit verdict and the dispatch status (VR-14) each version says why it would not be transmitted, in the refusal's own words",
+        "the server's transmit verdict and the dispatch status (VR-14) each placement carries its sequence's dispatch status",
+        "where a Vault version is placed (VR-14a) each version lists the live leaves that name it",
+        "where a Vault version is placed (VR-14a) a removed leaf is not a placement",
+        "where a Vault version is placed (VR-14a) another organisation's leaf naming this version is not listed, and another organisation reads nothing",
+        "where a Vault version is placed (VR-14a) the read's own organisation filter holds without row security",
+        "official eSTAR exports that attached a version (VR-14c) lists each export whose record names the version, from either store",
+        "official eSTAR exports that attached a version (VR-14c) a record that names no source is not inferred, and another organisation's is not listed"
+      ],
+      "failedCases": []
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "failedAssertions": 1,
+      "caseCounts": {
+        "passed": 10,
+        "failed": 1
+      },
+      "hookOrSetupFailureWithoutAssertion": false,
+      "firstFailure": "AssertionError: expected [] to include '8eeb2f43-e377-4100-b88f-4f2c9852f318'",
+      "failureCodes": [],
+      "triageGroup": "catalogue-current-q-api-and-anchor",
+      "failureStage": "executed assertion failures; later nil/empty/storage errors may cascade from failed positive admission",
+      "publishedSource": {
+        "head": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+        "bytes": 19625,
+        "digestAlgorithm": "sha256",
+        "digest": "a8c525e07d3036683a22b7fa348fa9ce721d16c39f511ea70584e1b59047edb5"
+      },
+      "currentSourceGuard": {
+        "observationHead": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+        "exists": true,
+        "digest": "c8ad759daddc40fe72e637eb7d839f613a9ea22d294b07d49d8f6612e6c82c76",
+        "matchesPublishedBytes": false,
+        "qualification": "Current working-tree observation only; hosted artifact executed fa39, not pending fixture changes. Shared harness/dependency changes must be checked separately."
+      },
+      "pendingOrSkippedCaseNames": [],
+      "failedCases": [
+        {
+          "name": "tool calls are scoped to the token’s organisation c2c_list_vault_documents: each organisation sees only its own document",
+          "firstFailure": "AssertionError: expected [] to include '8eeb2f43-e377-4100-b88f-4f2c9852f318'",
+          "intentionalFaultControlCandidate": false
+        }
+      ]
+    }
+  ]
+}

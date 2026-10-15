@@ -13,11 +13,14 @@
  * @module server/routes/irb
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import {
   createSubmissionTx,
   setSubmissionStatusTx,
@@ -38,6 +41,10 @@ import { evaluateIrbCompleteness, recommendReviewType } from '../services/irb/ir
 import { recordIrbSubmissionCreated, recordIrbApproval, recordIrbReportableEvent } from '../services/irb-metrics';
 
 const router = Router();
+// A viewer reads these records and writes none of them: one gate for every
+// write, as the ProtocolDev routers (P11-C-1). The signed review routes also
+// check signing authority (P0-10b).
+router.use(requireEditorAccessForWrites);
 
 /** The one place a clock enters this module. The engines take dates as inputs. */
 function todayIso(): string {
@@ -102,6 +109,8 @@ const submissionSchema = z.object({
   riskLevel: z.enum(['minimal', 'greater_than_minimal']),
   studyId: z.number().int().positive().optional(),
   submissionId: z.number().int().positive().optional(),
+  // Tri-state like the four facts below: omitted is stored NULL (not recorded),
+  // not false (2026-10-15).
   involvesVulnerablePopulations: z.boolean().optional(),
   vulnerablePopulationProtections: z.string().max(4000).optional(),
   isSingleIrb: z.boolean().optional(),
@@ -151,11 +160,25 @@ const statusSchema = z.object({
   reason,
 });
 
+/*
+ * A status a committee determination sets is set only by the determination,
+ * POST /api/irb/submissions/:id/reviews, where an approval is an electronic signature
+ * (signGovernedAct) and every outcome leaves a review record. This route used
+ * to accept 'approved' too and wrote it under a 'transition' ledger row and
+ * nothing else: an approval with no signature, no review and no reviewer, from
+ * a session alone (P0-10b fix round, DP-02). The statuses no determination
+ * sets still move here.
+ */
+const SET_BY_DETERMINATION: ReadonlySet<string> = new Set(['approved', 'modifications_required']);
+
 router.patch('/submissions/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = statusSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (SET_BY_DETERMINATION.has(parsed.data.status)) {
+    return res.status(409).json({ error: { code: 'STATUS_SET_BY_DETERMINATION', message: `'${parsed.data.status}' is a committee determination. Record it at POST /api/irb/submissions/:id/reviews; an approval there is an electronic signature. Nothing was changed.` } });
+  }
   await governed(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
     await setSubmissionStatusTx(client, orgId, id, parsed.data.status);
     return { target: `irb-submission:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
@@ -205,20 +228,38 @@ const reviewSchema = z.object({
   reviewType: z.enum(['exempt', 'expedited', 'full_board']),
   outcome: z.enum(['approved', 'modifications_required', 'deferred', 'disapproved']),
   conditions: z.string().max(4000).optional(),
-  determinationDate: z.string().optional(),
+  determinationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'determinationDate must be YYYY-MM-DD'),
+  // The expiration the BOARD set on an approval. Absent, none is stored and the
+  // lifecycle computes one, labelled 'computed' (2026-10-15).
+  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expirationDate must be YYYY-MM-DD').optional(),
   reason,
 });
 
-router.post('/submissions/:id/reviews', async (req, res) => {
+/*
+ * An approval is an electronic signature (21 CFR 11.50, 11.200): it runs the
+ * platform's one signing ceremony (governed-signed-act.ts): password, enrolled
+ * second factor, declared meaning and reason, then the act, the ledger `sign`
+ * and the electronic_signatures row on one transaction. A request without them
+ * writes nothing. Any other outcome is a determination recorded under
+ * 'resolve' and asks for no password. It used to write a 'sign' ledger row
+ * with neither (P0-10b, DP-02).
+ */
+/** The signing-attempt limit, for the requests that sign. */
+const whenApproving: RequestHandler = (req, res, next) =>
+  req.body?.outcome === 'approved' ? signedActAttempts(req, res, next) : next();
+
+router.post('/submissions/:id/reviews', whenApproving, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = reviewSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, parsed.data.outcome === 'approved' ? 'sign' : 'resolve', parsed.data.reason, async (client, orgId, userId) => {
+  const record = async (client: any, orgId: number, userId: number) => {
     const result = await recordReviewTx(client, orgId, userId, id, parsed.data);
     if (parsed.data.outcome === 'approved') recordIrbApproval(parsed.data.reviewType);
     return { target: `irb-submission:${id}`, payload: { outcome: parsed.data.outcome, expirationDate: result.expirationDate, provenanceLinkId: result.provenanceLinkId }, body: { id, ...result } };
-  });
+  };
+  if (parsed.data.outcome !== 'approved') return governed(req, res, 'resolve', parsed.data.reason, record);
+  await signGovernedAct(req, res, { domain: 'irb', target: `irb-submission:${id}`, meanings: DECISION_ACT_MEANINGS, codeStatus: CODE_STATUS, run: record });
 });
 
 const siteSchema = z.object({ siteName: z.string().min(1).max(300), principalInvestigator: z.string().max(300).optional(), localContext: z.string().max(4000).optional(), reason });
@@ -233,7 +274,7 @@ router.post('/submissions/:id/sites', async (req, res) => {
   });
 });
 
-const consentSchema = z.object({ documentName: z.string().min(1).max(300), version: z.string().max(30).optional(), reason });
+const consentSchema = z.object({ documentName: z.string().min(1).max(300), version: z.string().trim().min(1).max(30), reason });
 router.post('/submissions/:id/consent-documents', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
@@ -260,7 +301,9 @@ router.post('/submissions/:id/amendments', async (req, res) => {
 const eventSchema = z.object({
   eventType: z.enum(['unanticipated_problem', 'serious_adverse_event', 'protocol_deviation', 'noncompliance', 'other']),
   description: z.string().min(1).max(4000),
-  reportedDate: z.string().optional(),
+  // Required: it was optional and unchecked, and the service stamped a missing
+  // one as today (2026-10-15).
+  reportedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'reportedDate must be YYYY-MM-DD: the date the event was reported to the board'),
   reason,
 });
 router.post('/submissions/:id/reportable-events', async (req, res) => {

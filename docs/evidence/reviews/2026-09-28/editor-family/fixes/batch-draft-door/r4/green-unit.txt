@@ -1,0 +1,219 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is true for "<figure></figure>" 2ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is true for "<p>a</p><SVG viewBox=\"0 0 1 1\"></svg>" 1ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is true for "<video\nsrc=\"x\">" 0ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is true for "<embed/>" 1ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is true for "<object data=\"x\">" 0ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is false for "<p>Plain paragraph.</p>" 0ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is false for "<figcaption>x</figcaption>" 0ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is false for "<figures>" 0ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is false for "< figure>" 1ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is false for "&lt;figure&gt;" 0ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is false for "a figure in prose" 0ms
+ ✓ shared/authoring/__tests__/source-mode.test.ts > opensInSourceMode > is the editor's own test: RichSectionEditor imports it and keeps no copy 2ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > keeps an entry whose author is a known machine author and whose text is non-empty 3ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops an author id the server does not name, rather than letting a caller attribute text to anyone 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops empty, whitespace-only and non-string text 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > returns nothing for anything that is not an array 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "constructor", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "__proto__", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "toString", a name every object inherits 3ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "hasOwnProperty", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "valueOf", a name every object inherits 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "isPrototypeOf", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > the vocabulary inherits nothing, so no reader of it can be handed a name it does not hold 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > caps the list and drops an entry whose text exceeds the cap rather than truncating it 1ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-04T20:55:27.163Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:55:27.164Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-04T20:55:27.165Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+{
+  "timestamp": "2026-10-04T20:55:27.159Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:55:27.161Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+{
+  "timestamp": "2026-10-04T20:55:27.161Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[database] Database connection successful
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+[database] Database connection successful
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+{
+  "timestamp": "2026-10-04T20:55:27.373Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-10-04T20:55:27.374Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > attributes BOTH to the machine, not just the one in the first accepted text 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > still leaves a genuinely human clause alone 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > bounds by occurrence WITHIN each accepted text, so one repeated clause is not over-claimed 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > claims two when the author genuinely accepted it twice 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside < … > added is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside an <xmp>, which shows its inside as text added is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside a <textarea>, which shows its inside as text added is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words after a <plaintext>, which shows the rest as text added is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > the machine's words inside the markup the editor writes are still the machine's 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > removes a tag every reader hides, and keeps every other `<` as written 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > reads markdown only when asked, as the turn record's side is: `\|` is `|` and `*` is dropped 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > scans a run of `<a` with no `>` once, not once for every `<` 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds <xmp> 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds upper case 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds an attribute 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds an attribute after a space 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a self-closing slash 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a line break after the name 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds a CDATA section 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in another tag 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a longer name 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a space before the name 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in a closing tag alone 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > notComparedFrom: where, in HTML content, a browser may first read `<…>` as text > finds nothing in escaped text 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp, paragraph breaks: the clause holding the shown words is not the machine's 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext, a paragraph break: the clause holding the shown words is not the machine's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea, a comma clause break: the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > CDATA in SVG, paragraph breaks: the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext with an attribute (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp with a class, and a space in its end tag (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea with rows, and a space in its end tag (N1): the clause holding the shown words is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext with an attribute, inside the one clause: not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp with a class, inside the one clause: not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea with rows, inside the one clause: not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > a clause before the first opener is still compared (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > with no known tag in the content, a clause holding a tag-shaped token is not the machine's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > with a known tag elsewhere, its attribute words are not the machine's either: source mode shows them (round 4, D4) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > an asterisk added to the machine's clause makes it not the machine's: content is never read as markdown (N5) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > an accepted clause a later save put inside one is not carried: its words were matched with tags removed 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > an unaccepted machine draft is carried: it was never compared, every character is the machine's (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region in HTML content > outside any region, an accepted clause is carried as before (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > inAcceptedText: what this save accepted, not what the content carries > a clause carried forward and accepted again is in it, under its original acceptor 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > inAcceptedText: what this save accepted, not what the content carries > a clause carried forward and not accepted again is not; a one-word claim accepts no clause 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a double quote after the tag name: the leaf and the export print it, so the clause is not AnA's 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a slash after the tag name: the leaf and the export print it, so the clause is not AnA's 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a comma after the tag name: the leaf and the export print it, so the clause is not AnA's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > a parenthesis after the tag name: the leaf and the export print it, so the clause is not AnA's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > an equals sign after the tag name: the leaf and the export print it, so the clause is not AnA's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > any ASCII punctuation right after the tag name: not AnA's 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > outside the region it does not compare, node-html-parser and a browser show the same text, and the comparison drops only what neither shows 444ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > template: not AnA's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > head: not AnA's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > a template opened in an earlier clause: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > a comment opened in an earlier clause hides a later one from every reader: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <template> in HTML content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <head> in HTML content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a comment in HTML content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <svg> in HTML content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <math> in HTML content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a raw-text element in HTML content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` a browser may read as markup and node-html-parser as text in HTML content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` the leaf reads as a mark and a browser as text in HTML content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds nothing in plain text, where every reader shows every character 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a figure later in the content): not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (no figure (the fidelity gate may still call it lossy)): not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a data attribute): not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a class): not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > the attributes the canonical producers write are removed: TipTap's table cells and comment anchors 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > content that opens in source mode is read as plain text: a clause holding a tag the comparison removes is not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > in content that opens in source mode, a clause holding no tag is still AnA's (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > an inline figure with an alt: not AnA's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > an uploaded figure with no alt: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > not even when AnA's record holds the same image, with an alt 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > not even when AnA's record holds the same image, with no alt: the leaf prints a label for its kind 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a footnote: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a citation locator: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a cross-reference: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a title: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a suggestion's author: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a list's start number: not AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a cross-reference whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a footnote whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a citation whose words run into a later clause: the export prints something else over them, so no clause of it is AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D6: what the export or the editor prints from an attribute, over the words its element holds > a clause after the element has closed is compared again (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > "At Week 2<b>4</b> patients" is not AnA's "At Week 2 4 patients" 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > the comparison form 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > markup AnA's record also has is AnA's (guard) 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D8: the turn record read as markdown drops only what markdown hides > a lone asterisk stays: "5*10" is not "510" 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D8: the turn record read as markdown drops only what markdown hides > paired emphasis, list markers, a thematic break and escapes read as markdown shows them 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a "<style guide>" before AnA's clause leaves it AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a markdown draft with an XML example is AnA's, every clause of it 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > "<LLOQ" and a later ">3×ULN" (the weaker case) are AnA's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > a clause accepted earlier is carried forward past a "<style guide>" 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > DUP: a clause is credited no more times than the record holds it > the same claim three times credits one of three repeated clauses 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D2: a token the leaf prints: that clause is the member's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D3: words the leaf drops: that clause is the member's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D4: attribute words source mode shows: that clause is the member's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D5: an alt the leaf prints: that clause is the member's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D6: a footnote the export prints: that clause is the member's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D7: two tokens joined: that clause is the member's 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > a draft accepted as generated is AnA's, every clause (guard) 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > a `<`, then a long run of white space 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > a tag with many attributes and no `>` 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > an attribute, then a long run of white space 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > many `< ` pairs 34ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > a chain of quoted values 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > the markdown reading: emphasis pairs 49ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > the markdown reading: an opener with no closer 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > linear time: the accept takes content up to 400,000 characters > the markdown reading: list items 60ms
+
+ Test Files  4 passed (4)
+      Tests  133 passed (133)
+   Start at  20:55:24
+   Duration  4.72s (transform 3.12s, setup 265ms, import 6.46s, tests 739ms, environment 0ms)
+

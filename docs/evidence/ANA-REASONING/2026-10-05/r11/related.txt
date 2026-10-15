@@ -1,0 +1,6 @@
+Every client suite under v2/ and components/ana/, every route suite under ana-ri, every turn-record suite, and the decision-source suites, on the round-11 tree (merged with trunk 7bfcf4dc8).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/ client/src/concept2cure/components/ana/ server/routes/ana-ri/__tests__/ server/services/ana/__tests__/turn-record server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+
+ Test Files  473 passed (473)
+      Tests  5024 passed (5024)
+related exit=0

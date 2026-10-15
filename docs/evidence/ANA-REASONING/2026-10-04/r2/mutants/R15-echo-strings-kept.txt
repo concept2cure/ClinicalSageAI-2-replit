@@ -1,0 +1,18 @@
+Mutant R15-echo-strings-kept: a string the model sent is read as the record's own (F6)
+
+--- server/services/ana/answer-check-sources.ts
+- if (isEchoOf(ctx.input, value)) {
+    if (isSingleToken(value)) acc.confirmed.push(line);
+    return;
+  }
++ 
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a verified citation confirms the identifier it matched, not what the model packed beside it 9ms
+ × tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a tool that searches text the model supplied returns only the model's words 2ms
+ × tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > what the model packed beside it is still not found 1ms
+ × tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record holding only the model's own identifier and a position confirms nothing 1ms
+      Tests  4 failed | 85 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯

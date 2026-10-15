@@ -36,9 +36,10 @@ export interface LicenseInfo {
   tier: string;
   industryMode: string;
   enabledModules: string[];
-  maxUsers: number;
-  maxProjects: number;
-  maxStorageGB: number;
+  /** The organization row's limits as recorded: null when not recorded, 0 when zero. */
+  maxUsers: number | null;
+  maxProjects: number | null;
+  maxStorageGB: number | null;
 }
 
 /**
@@ -169,49 +170,70 @@ const TIER_LEVELS: Record<string, number> = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Load license info for an organization.
- * This is cached in-process per request (via req.licenseInfo).
+ * Load license info for an organization. null only when the organization has
+ * no row; a read that fails THROWS. Use this for anything that reports.
+ *
+ * 2026-10-15: the limits were `max_users || 5`, `max_projects || 10` and
+ * `max_storage || 5`, which reported an unrecorded (NULL) limit and a zero one
+ * alike as the default. They are now what the row records.
+ */
+export async function readLicenseInfo(organizationId: number): Promise<LicenseInfo | null> {
+  const [orgResult, modulesResult] = await Promise.all([
+    pool.query(
+      `SELECT id, tier, industry_mode, max_users, max_projects, max_storage
+       FROM organizations WHERE id = $1`,
+      [organizationId]
+    ),
+    pool.query(
+      // expires_at comes back and is filtered in JS by isGrantExpired rather
+      // than by a SQL predicate, so this list and getModuleCatalog below
+      // decide "expired" against the same clock. See isGrantExpired.
+      `SELECT module_id, expires_at FROM module_subscriptions
+       WHERE organization_id = $1 AND enabled = true`,
+      [organizationId]
+    ),
+  ]);
+
+  if (orgResult.rows.length === 0) return null;
+
+  const org = orgResult.rows[0];
+  return {
+    organizationId: org.id,
+    tier: org.tier || 'standard',
+    industryMode: org.industry_mode || 'biotech',
+    // An expired grant is not an enabled module. It is not a DENIED one
+    // either — dropping it here lets tier + industry answer, which is the
+    // whole point of an expiry bounding the override rather than the
+    // entitlement.
+    enabledModules: modulesResult.rows
+      .filter((r: any) => !isGrantExpired(r.expires_at))
+      .map((r: any) => r.module_id),
+    maxUsers: recordedLimit(org.max_users),
+    maxProjects: recordedLimit(org.max_projects),
+    maxStorageGB: recordedLimit(org.max_storage),
+  };
+}
+
+/**
+ * readLicenseInfo with a failed read reported as null, which is
+ * indistinguishable from "no such organization". Kept for its existing callers
+ * (module-subscriptions routes, navigation-entitlements, industry-context,
+ * workspace-config enrichment, the deep-research board, loadLicense — whose
+ * result is cached per request as req.licenseInfo), all of which read null as
+ * "no license". New code calls readLicenseInfo.
  */
 export async function getLicenseInfo(organizationId: number): Promise<LicenseInfo | null> {
   try {
-    const [orgResult, modulesResult] = await Promise.all([
-      pool.query(
-        `SELECT id, tier, industry_mode, max_users, max_projects, max_storage
-         FROM organizations WHERE id = $1`,
-        [organizationId]
-      ),
-      pool.query(
-        // expires_at comes back and is filtered in JS by isGrantExpired rather
-        // than by a SQL predicate, so this list and getModuleCatalog below
-        // decide "expired" against the same clock. See isGrantExpired.
-        `SELECT module_id, expires_at FROM module_subscriptions
-         WHERE organization_id = $1 AND enabled = true`,
-        [organizationId]
-      ),
-    ]);
-
-    if (orgResult.rows.length === 0) return null;
-
-    const org = orgResult.rows[0];
-    return {
-      organizationId: org.id,
-      tier: org.tier || 'standard',
-      industryMode: org.industry_mode || 'biotech',
-      // An expired grant is not an enabled module. It is not a DENIED one
-      // either — dropping it here lets tier + industry answer, which is the
-      // whole point of an expiry bounding the override rather than the
-      // entitlement.
-      enabledModules: modulesResult.rows
-        .filter((r: any) => !isGrantExpired(r.expires_at))
-        .map((r: any) => r.module_id),
-      maxUsers: org.max_users || 5,
-      maxProjects: org.max_projects || 10,
-      maxStorageGB: org.max_storage || 5,
-    };
+    return await readLicenseInfo(organizationId);
   } catch (error) {
     console.warn('[LicenseManager] Failed to load license:', error);
     return null;
   }
+}
+
+/** A limit as the organization row records it: null when not recorded, 0 when zero. */
+function recordedLimit(raw: unknown): number | null {
+  return raw == null ? null : Number(raw);
 }
 
 /**
@@ -227,10 +249,15 @@ export async function getLicenseInfo(organizationId: number): Promise<LicenseInf
  * deleting them would destroy each organization's entitlement history. The rows
  * therefore stay (FK satisfied, history intact) and are filtered out here so the
  * catalog only ever advertises modules a user can actually open.
+ *
+ * A read that fails throws. 2026-10-15: it used to return [] from a catch (and
+ * via getLicenseInfo's null), so an unreadable catalog read as an empty one.
+ * The callers already handle a rejection: /catalog answers 500, and
+ * navigation-entitlements reports no verdict, as it does for [].
  */
 export async function getModuleCatalog(organizationId: number): Promise<ModuleCatalogEntry[]> {
   try {
-    const license = await getLicenseInfo(organizationId);
+    const license = await readLicenseInfo(organizationId);
     if (!license) return [];
 
     const orgTierLevel = TIER_LEVELS[license.tier] ?? 1;
@@ -312,8 +339,34 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
     });
   } catch (error) {
     console.warn('[LicenseManager] Failed to load catalog:', error);
-    return [];
+    throw error;
   }
+}
+
+/**
+ * The license an access decision rests on, or the denial when there is none.
+ * An unreadable license DENIES and resolves rather than rejects:
+ * moduleEntitlementGate serves a request whose resolution throws.
+ * 2026-10-15: the failure arrived as getLicenseInfo's null and the denial said
+ * 'Organization not found', which was not what happened.
+ */
+async function licenseForAccess(
+  organizationId: number,
+  moduleId: string,
+): Promise<{ license: LicenseInfo } | { denied: { allowed: false; reason: string } }> {
+  let license: LicenseInfo | null;
+  try {
+    license = await readLicenseInfo(organizationId);
+  } catch (error) {
+    logger.warn('License read failed — denying module access', {
+      organizationId,
+      moduleId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { denied: { allowed: false, reason: 'The license for this organization could not be read' } };
+  }
+  if (!license) return { denied: { allowed: false, reason: 'Organization not found' } };
+  return { license };
 }
 
 /**
@@ -349,10 +402,9 @@ export async function canAccessModule(
     ignoreRevocation?: boolean;
   } = {},
 ): Promise<{ allowed: boolean; reason?: string }> {
-  const license = await getLicenseInfo(organizationId);
-  if (!license) {
-    return { allowed: false, reason: 'Organization not found' };
-  }
+  const access = await licenseForAccess(organizationId, moduleId);
+  if ('denied' in access) return access.denied;
+  const { license } = access;
 
   // Check if explicitly enabled. An expired grant is not in this list — see
   // getLicenseInfo.
@@ -516,12 +568,21 @@ export const FEATURE_TIER_MAP: Record<string, string> = {
   ana_autonomous_actions: 'enterprise',    // Full autonomous agentic control
 };
 
+/** The tier a feature is packaged at, or null for a key FEATURE_TIER_MAP does not package. */
+function packagedTier(feature: string): string | null {
+  return Object.prototype.hasOwnProperty.call(FEATURE_TIER_MAP, feature)
+    ? FEATURE_TIER_MAP[feature]
+    : null;
+}
+
 /**
- * Check if a feature is available for a given tier.
+ * Check if a feature is available for a given tier. A key nobody packaged is
+ * not available. 2026-10-15: it answered true ("unknown features default to
+ * available"), so a typo'd or unpackaged key opened at every tier.
  */
 export function isFeatureAvailable(feature: string, orgTier: string): boolean {
-  const requiredTier = FEATURE_TIER_MAP[feature];
-  if (!requiredTier) return true; // Unknown features default to available
+  const requiredTier = packagedTier(feature);
+  if (requiredTier == null) return false;
   const requiredLevel = TIER_LEVELS[requiredTier] ?? 99;
   const currentLevel = TIER_LEVELS[orgTier] ?? 0;
   return currentLevel >= requiredLevel;
@@ -550,7 +611,8 @@ export function requireFeature(feature: string) {
     const tier = license?.tier || 'free';
 
     if (!isFeatureAvailable(feature, tier)) {
-      const requiredTier = FEATURE_TIER_MAP[feature] || 'professional';
+      // null for an unpackaged feature: no tier unlocks it (was 'professional').
+      const requiredTier = packagedTier(feature);
       return res.status(403).json({
         error: 'Feature not available on your current plan',
         code: 'FEATURE_TIER_REQUIRED',
@@ -684,36 +746,36 @@ export function requireTier(minimumTier: string) {
  * NOTE ON SCOPE: this counts the legacy integer-keyed `projects` table. The
  * shipped UI does not create rows there — the v2 wizard and the program
  * workbench create `regulatory_programs` — so for any org on the current UI
- * this returns currentCount 0 and never trips. It is kept unchanged because
+ * this returns currentCount 0 and never trips. It is kept because
  * entitlements-service.ts and the module-subscriptions route surface its
  * numbers in usage panels and their expectations are built on this shape.
  * For enforcement on a create path, call checkProgramQuota below, which counts
  * the live entity and fails closed.
+ *
+ * 2026-10-15: a failed read now throws (it answered "within quota, 0 of 10"
+ * from a catch), and maxAllowed is what the row records — null when not
+ * recorded, with withinQuota null — where `|| 10` turned NULL and 0 into 10.
  */
 export async function checkProjectQuota(organizationId: number): Promise<{
-  withinQuota: boolean;
+  withinQuota: boolean | null;
   currentCount: number;
-  maxAllowed: number;
+  maxAllowed: number | null;
 }> {
-  try {
-    const [licenseResult, countResult] = await Promise.all([
-      pool.query(`SELECT max_projects FROM organizations WHERE id = $1`, [organizationId]),
-      pool.query(`SELECT COUNT(*) as cnt FROM projects WHERE organization_id = $1`, [
-        organizationId,
-      ]),
-    ]);
+  const [licenseResult, countResult] = await Promise.all([
+    pool.query(`SELECT max_projects FROM organizations WHERE id = $1`, [organizationId]),
+    pool.query(`SELECT COUNT(*) as cnt FROM projects WHERE organization_id = $1`, [
+      organizationId,
+    ]),
+  ]);
 
-    const maxAllowed = licenseResult.rows[0]?.max_projects || 10;
-    const currentCount = parseInt(countResult.rows[0]?.cnt, 10) || 0;
+  const maxAllowed = recordedLimit(licenseResult.rows[0]?.max_projects);
+  const currentCount = parseInt(countResult.rows[0]?.cnt, 10) || 0;
 
-    return {
-      withinQuota: currentCount < maxAllowed,
-      currentCount,
-      maxAllowed,
-    };
-  } catch {
-    return { withinQuota: true, currentCount: 0, maxAllowed: 10 }; // Fail-open on quota check
-  }
+  return {
+    withinQuota: maxAllowed == null ? null : currentCount < maxAllowed,
+    currentCount,
+    maxAllowed,
+  };
 }
 
 /** Default seats when an organization has no explicit entitlement recorded. */
@@ -734,10 +796,11 @@ export interface ProgramQuota {
  * regulatory_programs, the entity the shipped UI actually creates, excluding
  * soft-deleted and archived rows so a closed-out program stops holding a seat.
  *
- * A quota check that fails open is not a control. checkProjectQuota returns
- * { withinQuota: true, ... } from its catch, so a dropped connection or an RLS
- * denial silently grants unlimited programs — the one moment the check matters
- * most is the moment it stops working. Here an unreadable count denies.
+ * A quota check that fails open is not a control. checkProjectQuota returned
+ * { withinQuota: true, ... } from its catch until 2026-10-15, so a dropped
+ * connection or an RLS denial silently granted unlimited programs — the one
+ * moment the check matters most is the moment it stops working. Here an
+ * unreadable count denies.
  *
  * Three cases this has to get right, because each one is a way to be badly
  * wrong in production rather than merely imprecise:
@@ -806,30 +869,28 @@ export async function checkProgramQuota(organizationId: number): Promise<Program
 }
 
 /**
- * Check user quota (max users in org).
+ * Check user quota (max users in org), for the usage panels. Same contract as
+ * checkProjectQuota (2026-10-15: it answered "within quota, 0 of 5" from a
+ * catch and turned a NULL or 0 max_users into 5).
  */
 export async function checkUserQuota(organizationId: number): Promise<{
-  withinQuota: boolean;
+  withinQuota: boolean | null;
   currentCount: number;
-  maxAllowed: number;
+  maxAllowed: number | null;
 }> {
-  try {
-    const [licenseResult, countResult] = await Promise.all([
-      pool.query(`SELECT max_users FROM organizations WHERE id = $1`, [organizationId]),
-      pool.query(`SELECT COUNT(*) as cnt FROM organization_users WHERE organization_id = $1`, [
-        organizationId,
-      ]),
-    ]);
+  const [licenseResult, countResult] = await Promise.all([
+    pool.query(`SELECT max_users FROM organizations WHERE id = $1`, [organizationId]),
+    pool.query(`SELECT COUNT(*) as cnt FROM organization_users WHERE organization_id = $1`, [
+      organizationId,
+    ]),
+  ]);
 
-    const maxAllowed = licenseResult.rows[0]?.max_users || 5;
-    const currentCount = parseInt(countResult.rows[0]?.cnt, 10) || 0;
+  const maxAllowed = recordedLimit(licenseResult.rows[0]?.max_users);
+  const currentCount = parseInt(countResult.rows[0]?.cnt, 10) || 0;
 
-    return {
-      withinQuota: currentCount < maxAllowed,
-      currentCount,
-      maxAllowed,
-    };
-  } catch {
-    return { withinQuota: true, currentCount: 0, maxAllowed: 5 };
-  }
+  return {
+    withinQuota: maxAllowed == null ? null : currentCount < maxAllowed,
+    currentCount,
+    maxAllowed,
+  };
 }

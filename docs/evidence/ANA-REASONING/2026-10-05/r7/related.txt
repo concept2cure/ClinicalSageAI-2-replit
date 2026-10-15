@@ -1,0 +1,21 @@
+Every suite of the modules rounds 1-7 touch, on the round-7 tree (merged with trunk 5debe9af9).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <round 6's related set, plus server/services/__tests__/kernel-router.test.ts and kernel-router-open-section.test.ts>
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 455 passed | 1 skipped (459)
+      Tests  16 failed | 6362 passed | 3 skipped (6381)
+
+Three failing files, none of them this round's; the same three as round 6 (../r6/related.txt):
+1. server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts (15): environmental (no CONNECTOR_ENCRYPTION_KEY).
+2. server/services/ana/__tests__/governed-reason-not-invented.test.ts (1): draft_quality_overall_summary_m2_3, trunk 881945fe5. Board item 24.
+3. server/services/ana/__tests__/deepening-tools.test.ts (fails at load): trunk 8d919b1f8. Board item 25.
+→ handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+AssertionError: registered tools the scan never read: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
+ FAIL  server/services/ana/__tests__/deepening-tools.test.ts [ server/services/ana/__tests__/deepening-tools.test.ts ]
+TypeError: mockPool.connect.mockResolvedValue is not a function

@@ -1,0 +1,13 @@
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > denies export when the current persisted version has no approval 31ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > fails closed by default in production 5ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > exports only after a persisted approval and labels the bytes and headers as draft 6ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > reports a current-version signature as recorded human review 4ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > does not allow an approval of an older artifact version to authorize export 5ms
+ × server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 10ms
+ × server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: delivers nothing when the record does not persist 7ms
+ × server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 7ms
+ × server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: delivers nothing when the record does not persist 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be truthy
+AssertionError: expected 200 to be 503 // Object.is equality
+      Tests  4 failed | 5 passed (9)

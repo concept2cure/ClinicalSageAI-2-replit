@@ -1,0 +1,200 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.903Z",
+  "level": "info",
+  "message": "start called",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:03:42.903Z",
+  "level": "info",
+  "message": "start() called",
+  "context": {}
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.904Z",
+  "level": "info",
+  "message": "document created",
+  "context": {
+    "docId": "7e5523c1-da75-44ba-a8af-0e073bc363c6"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.914Z",
+  "level": "info",
+  "message": "edit called",
+  "context": {
+    "docId": "7e5523c1-da75-44ba-a8af-0e073bc363c6"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:03:42.914Z",
+  "level": "info",
+  "message": "humanEdit() called",
+  "context": {
+    "docId": "7e5523c1-da75-44ba-a8af-0e073bc363c6"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.918Z",
+  "level": "info",
+  "message": "polish called",
+  "context": {
+    "docId": "7e5523c1-da75-44ba-a8af-0e073bc363c6"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:03:42.918Z",
+  "level": "info",
+  "message": "polish() called",
+  "context": {
+    "docId": "7e5523c1-da75-44ba-a8af-0e073bc363c6"
+  }
+}
+
+stderr | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.920Z",
+  "level": "error",
+  "message": "AI polish failed, falling back to append",
+  "context": {
+    "docId": "7e5523c1-da75-44ba-a8af-0e073bc363c6",
+    "err": "gateway disabled for fallback test"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.920Z",
+  "level": "info",
+  "message": "audit log recorded",
+  "context": {
+    "auditId": "7e8f3304-6321-4d68-8070-cf8d64ae3963",
+    "docId": "7e5523c1-da75-44ba-a8af-0e073bc363c6",
+    "provider": "fallback"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.924Z",
+  "level": "info",
+  "message": "start called",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:03:42.924Z",
+  "level": "info",
+  "message": "start() called",
+  "context": {}
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.924Z",
+  "level": "info",
+  "message": "document created",
+  "context": {
+    "docId": "de6cc72e-7891-4553-8e5a-3a5cac297eec"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.928Z",
+  "level": "info",
+  "message": "polish called",
+  "context": {
+    "docId": "de6cc72e-7891-4553-8e5a-3a5cac297eec"
+  }
+}
+{
+  "timestamp": "2026-10-05T05:03:42.928Z",
+  "level": "info",
+  "message": "polish() called",
+  "context": {
+    "docId": "de6cc72e-7891-4553-8e5a-3a5cac297eec"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.929Z",
+  "level": "info",
+  "message": "AI polish succeeded",
+  "context": {
+    "docId": "de6cc72e-7891-4553-8e5a-3a5cac297eec"
+  }
+}
+
+stdout | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.930Z",
+  "level": "info",
+  "message": "audit log recorded",
+  "context": {
+    "auditId": "19e4507f-df27-410e-aac5-b318f702b497",
+    "docId": "de6cc72e-7891-4553-8e5a-3a5cac297eec",
+    "provider": "fallback"
+  }
+}
+
+stderr | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end
+{
+  "timestamp": "2026-10-05T05:03:42.933Z",
+  "level": "warn",
+  "message": "Attempt to access test routes in production blocked",
+  "context": {}
+}
+
+stderr | server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > is disabled in production by default
+{
+  "timestamp": "2026-10-05T05:03:42.948Z",
+  "level": "warn",
+  "message": "Attempt to access test routes in production blocked",
+  "context": {}
+}
+
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > works end-to-end 63ms
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > validates input 10ms
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > is disabled in production by default 4ms
+ × server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set 8ms
+   → expected 200 "OK", got 403 "Forbidden"
+ ✓ server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > exports a docx file for a docId 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/test/__tests__/test-assembly.routes.test.ts > test-assembly routes > enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set
+Error: expected 200 "OK", got 403 "Forbidden"
+ ❯ server/test/__tests__/test-assembly.routes.test.ts:165:8
+    163|       .set('x-tenant-id', 'tenant-1')
+    164|       .send({ request: 'ok' })
+    165|       .expect(200);
+       |        ^
+    166|
+    167|     process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = old;
+ ❯ Test._assertStatus node_modules/supertest/lib/test.js:309:14
+ ❯ node_modules/supertest/lib/test.js:365:13
+ ❯ Test._assertFunction node_modules/supertest/lib/test.js:342:13
+ ❯ Test.assert node_modules/supertest/lib/test.js:195:23
+ ❯ localAssert node_modules/supertest/lib/test.js:138:14
+ ❯ Server.<anonymous> node_modules/supertest/lib/test.js:152:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  05:03:42
+   Duration  960ms (transform 272ms, setup 115ms, import 381ms, tests 137ms, environment 0ms)
+

@@ -1,0 +1,94 @@
+# RED for the probe's bound (written after the width/probe change; this case alone, before the bound exists), 2026-10-01T16:04:18Z: npx vitest run server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts -t 'never answers'
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+{
+  "timestamp": "2026-10-01T16:04:22.781Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T16:04:22.783Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+{
+  "timestamp": "2026-10-01T16:04:22.783Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > defaults to the OpenAI embedding provider (shared frontier)
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > selects the self-hosted provider when EMBEDDING_PROVIDER=local and a base URL is set
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > local with no base URL is a configuration error naming EMBEDDING_LOCAL_BASE_URL, never a fallback to OpenAI
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > plain text with no policy embeds through OpenAI; the client is constructed once, lazily
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the estate-wide system scope ('0') is not an organisation and is not offered as one
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > one content-free served row, with the placement decision, the model and the tokens
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > an embedding the provider failed leaves a failure row, and the error still reaches the caller
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > asks the server for 1024 (bge-m3) and pads each vector to the 1536 the corpus holds
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > pads to 3072 for document_vectors, from the same 1024
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > padding leaves the cosine between two vectors exactly as the model gave it
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > the native width is configurable (EMBEDDING_LOCAL_NATIVE_DIMENSIONS)
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses, before anything is sent, when the model is wider than the corpus: no silent truncation
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses a vector wider than the model it asked for (another model behind the address), and records the failure
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses a vector narrower than the model (it is not padded into the corpus either)
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > a native width that is not a positive whole number is a configuration error naming the variable
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > the OpenAI lane is unchanged: the corpus width is asked for and the vector returned as given
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > the self-hosted lane passes when it serves bge-m3 at 1024, padded to 1536 and 3072
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > passes in production with no organization bound: the probe text is the platform's, and not sensitive
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails, naming the widths, when the server answers in a width that is not the model's
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server says it serves another model: one column must hold one model
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server is unreachable, and the reason carries no address or upstream text
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server refuses, naming the HTTP status only
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the lane hands back a zero vector, which is no embedding
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > a server that never answers fails the probe within its bound, so boot is not held for the SDK's ten minutes 10015ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ↓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > on the OpenAI lane, asks each corpus model for its own width
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > a server that never answers fails the probe within its bound, so boot is not held for the SDK's ten minutes
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts:542:3
+    540|   });
+    541|
+    542|   it('a server that never answers fails the probe within its bound, so…
+       |   ^
+    543|     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    544|     try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 skipped (29)
+   Start at  16:04:19
+   Duration  13.38s (transform 1.71s, setup 129ms, import 2.64s, tests 10.02s, environment 0ms)
+

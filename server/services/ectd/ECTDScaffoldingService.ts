@@ -61,7 +61,7 @@ export interface ScaffoldResult {
  * Manages eCTD module structure and project folder hierarchies
  */
 export class ECTDScaffoldingService {
-  private auditLogger: any;
+  private auditLogger: AuditLogger;
   private pool: any;
   private moduleCache: Map<string, ECTDModule[]>;
   private cacheExpiry: Map<string, number>;
@@ -194,14 +194,24 @@ export class ECTDScaffoldingService {
 
   /**
    * Seed eCTD folder hierarchy for a project
+   *
+   * 2026-10-15: the project name went to ectd.seed_project_hierarchy as its
+   * agency code ($2), so `agency` was never applied though the result reported
+   * it; agency defaulted to FDA; and the audit row was written only when both
+   * optional ids were passed. All three are required now, and an audit row that
+   * was not persisted is not reported as success.
    */
   async seedProjectHierarchy(
     projectId: string,
     projectName: string,
-    agency: Agency = 'FDA',
-    userId?: string,
-    organizationId?: string
+    agency: Agency,
+    userId: string,
+    organizationId: string
   ): Promise<ScaffoldResult> {
+    if (!userId || !organizationId) {
+      throw new Error('Seeding an eCTD folder hierarchy is audited, so it needs the acting user and organization; nothing was seeded.');
+    }
+    let scaffoldResult: ScaffoldResult;
     try {
       logger.info(`Seeding eCTD hierarchy for project ${projectId} (${agency})`);
 
@@ -209,44 +219,44 @@ export class ECTDScaffoldingService {
         `
         SELECT * FROM ectd.seed_project_hierarchy($1::uuid, $2, $3::uuid)
       `,
-        [projectId, projectName, userId || null]
+        [projectId, agency, userId]
       );
 
       const { folders_created, execution_ms } = result.rows[0];
 
-      const scaffoldResult: ScaffoldResult = {
+      scaffoldResult = {
         success: true,
         folders_created,
         execution_ms,
         project_id: projectId,
         agency,
       };
-
-      // Audit log
-      if (organizationId && userId) {
-        await this.auditLogger.log({
-          action: 'ectd_hierarchy_seeded',
-          userId,
-          organizationId,
-          resourceType: 'ectd_project',
-          resourceId: projectId,
-          details: {
-            projectName,
-            agency,
-            foldersCreated: folders_created,
-            executionMs: execution_ms,
-          },
-          timestamp: new Date(),
-        });
-      }
-
-      logger.info(`Seeded ${folders_created} folders in ${execution_ms}ms for project ${projectId}`);
-      return scaffoldResult;
-
     } catch (error: any) {
       logger.error('Error seeding project hierarchy:', error);
       throw new Error(`Failed to seed project hierarchy: ${error.message}`);
     }
+
+    const audit = await this.auditLogger.log({
+      action: 'ectd_hierarchy_seeded',
+      userId,
+      organizationId,
+      resourceType: 'ectd_project',
+      resourceId: projectId,
+      details: {
+        projectName,
+        agency,
+        foldersCreated: scaffoldResult.folders_created,
+        executionMs: scaffoldResult.execution_ms,
+      },
+      timestamp: new Date(),
+    });
+    if (!audit.persisted) {
+      logger.error('ectd_hierarchy_seeded audit row NOT persisted', { projectId, reason: audit.error });
+      throw new Error(`The eCTD hierarchy for project ${projectId} was seeded, but its audit row was not persisted.`);
+    }
+
+    logger.info(`Seeded ${scaffoldResult.folders_created} folders in ${scaffoldResult.execution_ms}ms for project ${projectId}`);
+    return scaffoldResult;
   }
 
   /**
@@ -281,71 +291,29 @@ export class ECTDScaffoldingService {
   }
 
   /**
-   * Update folder status
+   * Update folder status: refused.
+   *
+   * 2026-10-15: this ran `UPDATE ectd.project_folders SET status = …` by folder
+   * id alone (no organization predicate) and audited only when the optional user
+   * and organization were passed. ectd.project_folders has no status column (its
+   * only creator, db/migrations/038_gcc_ectd_seeder_service.sql, defines none),
+   * so no folder status can be recorded, and the call changes nothing.
    */
-  async updateFolderStatus(
-    folderId: string,
-    status: ECTDFolder['status'],
-    userId?: string,
-    organizationId?: string
-  ): Promise<void> {
-    try {
-      await this.pool.query(
-        `
-        UPDATE ectd.project_folders
-        SET status = $1, updated_at = NOW()
-        WHERE id = $2
-      `,
-        [status, folderId]
-      );
-
-      // Audit log
-      if (organizationId && userId) {
-        await this.auditLogger.log({
-          action: 'ectd_folder_status_updated',
-          userId,
-          organizationId,
-          resourceType: 'ectd_folder',
-          resourceId: folderId,
-          details: { status },
-          timestamp: new Date(),
-        });
-      }
-
-      logger.debug(`Updated folder ${folderId} status to ${status}`);
-    } catch (error: any) {
-      logger.error('Error updating folder status:', error);
-      throw new Error(`Failed to update folder status: ${error.message}`);
-    }
+  async updateFolderStatus(folderId: string, status: ECTDFolder['status']): Promise<never> {
+    throw new Error(
+      `Folder ${folderId} was not set to '${status}': ectd.project_folders has no status column ` +
+        '(db/migrations/038_gcc_ectd_seeder_service.sql), so nothing was changed.',
+    );
   }
 
-  /**
-   * Batch update multiple folder statuses
-   */
+  /** Batch update multiple folder statuses: refused, as updateFolderStatus is. */
   async batchUpdateFolderStatus(
-    updates: Array<{ folderId: string; status: ECTDFolder['status'] }>,
-    userId?: string,
-    organizationId?: string
-  ): Promise<{ updated: number }> {
-    try {
-      let updated = 0;
-
-      for (const update of updates) {
-        await this.updateFolderStatus(
-          update.folderId,
-          update.status,
-          userId,
-          organizationId
-        );
-        updated++;
-      }
-
-      logger.info(`Batch updated ${updated} folder statuses`);
-      return { updated };
-    } catch (error: any) {
-      logger.error('Error batch updating folder statuses:', error);
-      throw new Error(`Failed to batch update folder statuses: ${error.message}`);
-    }
+    updates: Array<{ folderId: string; status: ECTDFolder['status'] }>
+  ): Promise<never> {
+    throw new Error(
+      `None of ${updates.length} folder status update(s) was applied: ectd.project_folders has no status column ` +
+        '(db/migrations/038_gcc_ectd_seeder_service.sql), so nothing was changed.',
+    );
   }
 
   /**
@@ -362,16 +330,12 @@ export class ECTDScaffoldingService {
   }
 
   /**
-   * Validate eCTD module code
+   * Validate eCTD module code. A failed read of the module structure is an
+   * error, never "not a valid code" (2026-10-15: it answered false).
    */
   async validateModuleCode(moduleCode: string, agency: Agency = 'FDA'): Promise<boolean> {
-    try {
-      const module = await this.getModuleByCode(moduleCode, agency);
-      return module !== null;
-    } catch (error: any) {
-      logger.error('Error validating module code:', error);
-      return false;
-    }
+    const module = await this.getModuleByCode(moduleCode, agency);
+    return module !== null;
   }
 
   /**

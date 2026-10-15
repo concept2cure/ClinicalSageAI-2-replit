@@ -54,6 +54,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = process.cwd();
 
@@ -539,10 +540,13 @@ function* sourceFiles(dir) {
     }
   }
 }
-/** Comments are not writes: a note about an old statement must not count as one. */
-function stripComments(src) {
-  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
-}
+/*
+ * Comments are not writes: a note about an old statement must not count as
+ * one. Stripped with the shared, quote-aware stripComments: the block-comment
+ * regex this used before opened at a `/*` inside a string ('/api/advisory/*')
+ * and deleted every line up to the next real comment close, so a content
+ * write in between was never seen by discovery.
+ */
 const known = new Set([...GUARDED.map((g) => g.file), ...NOT_PROSE.map((n) => n.file)]);
 const knownGaps = new Map(KNOWN_UNGUARDED.map((k) => [k.file, k]));
 const unknownWriters = [];

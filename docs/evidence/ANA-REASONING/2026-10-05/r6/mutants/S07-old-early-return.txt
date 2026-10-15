@@ -1,0 +1,14 @@
+Mutant S07-old-early-return: a follow-up with no words of its own ("and for the EU?") drops what it carried
+
+--- server/services/ana/tool-selection.ts
+- if (terms.length === 0 && carried.length === 0) return always;
++ if (terms.length === 0) return always;
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the EU?" is still offered get_cmc_requirements 12ms
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "go on" is still offered explain_cmc_topic 4ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 54ms
+      Tests  3 failed | 43 passed (46)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

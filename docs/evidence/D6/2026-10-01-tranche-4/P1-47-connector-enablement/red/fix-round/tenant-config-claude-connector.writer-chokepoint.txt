@@ -1,0 +1,132 @@
+# Fix round, IAM-24 red: the writer chokepoint cases on the UNFIXED writer (tenant-settings-writer.ts without the refusal). 2026-10-01T15:22:48Z
+# npx vitest run server/routes/__tests__/tenant-config-claude-connector.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the owner is told they can change it 1870ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a admin sees the state and that they cannot change it 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled 19ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > an administrator is refused with 403, and nothing is written or recorded 17ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a manager is refused with 403, and nothing is written or recorded 8ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a member is refused with 403, and nothing is written or recorded 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > another organization's owner is refused with 403, and nothing is written or recorded 4ms
+stderr | server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved
+{
+  "timestamp": "2026-10-01T15:22:51.860Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error changing the connector setting for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner enables it: one transaction, the setting and its chained audit row with the value before and after 13ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner disables it, and the row records true → false 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {} is refused with 400 and nothing is written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of null is refused with 400 and nothing is written 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings naming claudeConnector → 403, nothing written 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > control: PATCH /settings without it still writes 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings/claudeConnector is not a section the section door writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > a reset keeps the stored connector setting: it is not a default to restore 4ms
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it on is refused: rolled back before the UPDATE, nothing recorded 14ms
+   → {"written":true,"stored":{"security":{"mfaRequired":true},"anaToolPolicy":{"deny":["x"]},"claudeConnector":{"enabled":true}}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it off is refused too: only its own door changes it, either way 4ms
+   → {"written":true,"stored":{"claudeConnector":{"enabled":false}}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > nulling it is refused (a null reads as off, so it would turn it off) 3ms
+   → {"written":true,"stored":{"claudeConnector":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > erasing it is refused (a door that replaces the settings whole and leaves the key out) 5ms
+   → {"written":true,"stored":{"notifications":{"emailEnabled":true}}}: expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: a general write that leaves it as stored is written, and keeps it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: the connector's own door changes it 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it on is refused: rolled back before the UPDATE, nothing recorded
+AssertionError: {"written":true,"stored":{"security":{"mfaRequired":true},"anaToolPolicy":{"deny":["x"]},"claudeConnector":{"enabled":true}}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:283:50
+    281|   it('turning it on is refused: rolled back before the UPDATE, nothing…
+    282|     const res = await probe('general', { claudeConnector: { enabled: t…
+    283|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    284|     expect(res.body.refused).toMatch(/connector for Claude is not chan…
+    285|     expect(writes()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'ROLLBACK'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it off is refused too: only its own door changes it, either way
+AssertionError: {"written":true,"stored":{"claudeConnector":{"enabled":false}}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:293:50
+    291|     h.tenant!.settings = { claudeConnector: { enabled: true } };
+    292|     const res = await probe('general', { claudeConnector: { enabled: f…
+    293|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    294|     expect(h.tenant!.settings).toEqual({ claudeConnector: { enabled: t…
+    295|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > nulling it is refused (a null reads as off, so it would turn it off)
+AssertionError: {"written":true,"stored":{"claudeConnector":null}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:300:50
+    298|     h.tenant!.settings = { claudeConnector: { enabled: true } };
+    299|     const res = await probe('general', { claudeConnector: null });
+    300|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    301|     expect(h.tenant!.settings).toEqual({ claudeConnector: { enabled: t…
+    302|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > erasing it is refused (a door that replaces the settings whole and leaves the key out)
+AssertionError: {"written":true,"stored":{"notifications":{"emailEnabled":true}}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/tenant-config-claude-connector.test.ts:307:50
+    305|     h.tenant!.settings = { claudeConnector: { enabled: true }, notific…
+    306|     const res = await probe('replace', { notifications: { emailEnabled…
+    307|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    308|     expect(h.tenant!.settings).toEqual({ claudeConnector: { enabled: t…
+    309|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 25 passed (29)
+   Start at  15:22:49
+   Duration  2.79s (transform 1.10s, setup 122ms, import 229ms, tests 2.04s, environment 0ms)
+

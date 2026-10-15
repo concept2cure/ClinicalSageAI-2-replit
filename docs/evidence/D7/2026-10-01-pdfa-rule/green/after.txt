@@ -1,0 +1,108 @@
+# With the change: the rule at the guard, the pre-transmit check, the posture record, the bundle guard, and the Setup control.
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > nobody chose PDF/A: a production transmit with a plain-PDF leaf goes out 10ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the organisation chose it: refused before the wire, naming the organisation's own setting 2ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the deployment chose it: refused, naming the deployment, whatever the organisation set 1ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the organisation row cannot be seen: refused before the wire, never taken as not required 0ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the setting cannot be read: refused before the wire, never sent as plain PDF 0ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > a test (staging) transmit is never refused for PDF/A 2ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > who requires PDF/A > only the literal boolean true turns the organisation setting on 1ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > who requires PDF/A > the deployment wins when both chose it, without reading the organisation 0ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > shows the organization’s real name, not an invented default 161ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > seeds the translation policy from the persisted section 64ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > addresses the org from the token claim, never the stale localStorage id 76ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > writes nothing to the browser-local settings blob it replaced 91ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > sends nothing until something has changed 58ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > refuses to write without a reason, because the route audits one 102ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > leaves a refused section dirty, and re-sends only that section 99ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > never carries a stale record’s “guardrail off” claim back to the server 93ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > PATCHes both governed routes with the reason and the token’s org id 92ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > reports an unreachable server as unreachable, not as a refusal 78ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > has no switch for anything enforced elsewhere or per user 43ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers the agency gateway account choice (D7, founder decision 2026-10-01) 60ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers Require PDF/A, the organisation's own choice (D7, the PDF/A rule, 2026-10-01) 40ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > states the approval guardrails as always enforced 50ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > discloses that the editable translation preferences are not yet read 37ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > does not offer edits it cannot persist when the record fails to load 49ms
+ ✓ client/src/concept2cure/v2/__tests__/pdfaRequirementSetting.test.tsx > Require PDF/A in Setup > is off unless the stored value is literally true 41ms
+ ✓ client/src/concept2cure/v2/__tests__/pdfaRequirementSetting.test.tsx > Require PDF/A in Setup > a read that fails says so and never shows "Not required" 9ms
+ ✓ client/src/concept2cure/v2/__tests__/pdfaRequirementSetting.test.tsx > Require PDF/A in Setup > turning it on takes a reason, sends it with the setting, and reads it again 208ms
+ ✓ client/src/concept2cure/v2/__tests__/pdfaRequirementSetting.test.tsx > Require PDF/A in Setup > a refused change says it was not changed 73ms
+ ✓ server/services/ectd/__tests__/submission-gate-posture.test.ts > submission gate posture — recorded, not accidental > every gate flag named in the gate modules OR at the enforcement site has a recorded posture 58ms
+ ✓ server/services/ectd/__tests__/submission-gate-posture.test.ts > submission gate posture — recorded, not accidental > the completeness scan catches the read forms that evade `env.<NAME>` — proven on synthetic sources 2ms
+ ✓ server/services/ectd/__tests__/submission-gate-posture.test.ts > submission gate posture — recorded, not accidental > each entry states what it gates and what would have to be true to switch it on 1ms
+ ✓ server/services/ectd/__tests__/submission-gate-posture.test.ts > submission gate posture — recorded, not accidental > the DEFAULT in code is the recorded default — report-only for every gate, deliberately 1ms
+ ✓ server/services/ectd/__tests__/submission-gate-posture.test.ts > submission gate posture — recorded, not accidental > every gate HAS a switch — report-only is a posture, not a missing feature 1ms
+ ✓ server/services/ectd/__tests__/submission-gate-posture.test.ts > submission gate posture — recorded, not accidental > the asset-gated preconditions are still unmet — switching these on today would block production 27ms
+ ✓ server/services/ectd/__tests__/submission-gate-posture.test.ts > submission gate posture — recorded, not accidental > no licensed artifact is sitting in a SUBDIRECTORY of a drop-point where the gate cannot see it 2ms
+ ✓ server/services/ectd/__tests__/submission-gate-posture.test.ts > submission gate posture — recorded, not accidental > eSTAR is PARTIALLY unblocked: the 510(k) templates are vendored, the PreSTAR ones are not 26ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > always blocks a package over the gateway size limit 7ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > clears a small package with no flags set 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks a non-self-contained DTD package only when ECTD_REQUIRE_DTD is set in production 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > names the absent STYLESHEETS when the self-containment gap is stylesheet-only 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > never renders a non-self-contained package as a blocker that names nothing 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-boolean selfContained as UNPROVEN, never as cleared 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-array missing list as un-itemised, not as "nothing missing" 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > warns (does not block) when a required flag is set but the bundle has no evidence 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a bundle built for the target region passes the region-identity checks 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > folds the external gate when enforceExternal is on (route layer) 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > refuses to transmit an over-limit package (before hitting the gateway) 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > still refuses without authorization (auth gate precedes the package gate) 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > summarizeSubmissionGrade > counts PDF leaves and flags the unconverted ones 2ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > summarizeSubmissionGrade > reports allPdfA when every PDF converted (non-PDFs ignored) 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > evaluateSubmissionGrade > blocks a production package with an unconverted PDF when PDF/A is required 2ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > evaluateSubmissionGrade > does NOT block when PDF/A is not required (graceful-degradation default) 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > evaluateSubmissionGrade > does NOT block staging even when PDF/A is required 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > evaluateSubmissionGrade > clears a production package when every PDF is PDF/A 0ms
+ ✓ server/services/ectd/__tests__/pdfa-readiness.test.ts > pdfaRequiredFromEnv > is true only for the literal "true" 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker 111ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > POSITIVE CONTROL: a complete drop-point clears the same gate 72ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor pointing at an arbitrary server-readable file 31ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor using ../ traversal 6ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor even when a legitimate packageId is also supplied 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > fails closed when NODE_ENV is unset (no environment declared => enforce) 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose path escapes the bundle namespace 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor with NO validation metadata (UNKNOWN is blocking, not zero errors) 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose validation block has no numeric errorCount 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > still hard-blocks a stored descriptor reporting structural errors 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose durable-storage key escapes the bundle prefix 6ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > rejects a traversal path on a stored descriptor in ANY environment (guard is unconditional) 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — cross-tenant packages (C2C-SUB-003) > cannot transmit another tenant's package by id 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — cross-tenant packages (C2C-SUB-003) > cannot side-step tenant scoping by naming another tenant's bundle file directly 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — legitimate validated package (C2C-SUB-003) > transmits a tenant-owned, in-namespace, validated package under production 8ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > records the sequence it just filed, so the NEXT sequence has a baseline to diff against 6ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > a send to the agency TEST environment (staging) puts nothing on file: no history write, and the sign record does not say it filed 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > a bundle that files no sequence records no history, and says so rather than reporting a failure 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable" 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one active send per sequence, per environment (sweep F15) > refuses a re-assembled bundle of a sequence whose send is still pending in the same environment, before the gateway 8ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one active send per sequence, per environment (sweep F15) > refuses a re-assembled bundle of a sequence whose send is still in_transit in the same environment, before the gateway 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one active send per sequence, per environment (sweep F15) > refuses a re-assembled bundle of a sequence whose send is still received in the same environment, before the gateway 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one active send per sequence, per environment (sweep F15) > a staging send of the sequence does not hold it in production 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one active send per sequence, per environment (sweep F15) > a production send of the sequence does not hold it in staging 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one active send per sequence, per environment (sweep F15) > the row is written under the sequence and environment the lock reads, taken from the stored descriptor 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — agency metadata comes from the assembled descriptor (sweep F18) > refuses a body naming another sequence, before the gateway 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — agency metadata comes from the assembled descriptor (sweep F18) > refuses a body naming another application number, before the gateway 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — agency metadata comes from the assembled descriptor (sweep F18) > refuses a body naming an application number that is not an identifier, before the gateway 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — agency metadata comes from the assembled descriptor (sweep F18) > refuses an application number the package does not record 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — agency metadata comes from the assembled descriptor (sweep F18) > accepts a body that agrees with the descriptor, and sends the descriptor values 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — agency metadata comes from the assembled descriptor (sweep F18) > a bundle that files no sequence is sent with the caller metadata unchanged 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor whose package CONTENT changed since assembly (an artifact edited after the zip was built), before the gateway is reached 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match) 8ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > warnings alone do not block a validated package 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards submissionGrade / dtdStatus / regionalBackbone from the stored descriptor to gw.transmit 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards the region the bundle was BUILT for (descriptor.region) as a gateway region, so device bundles are region-checked too 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance) 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > and the gate REFUSES that exact forwarded shape when the operator opts in (production + ECTD_REQUIRE_DTD / _PDFA) 2ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one bundle per filed sequence (sweep F19) > refuses a bundle of a sequence the history holds on file as ANOTHER bundle, before the gateway, from the row it already reads 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one bundle per filed sequence (sweep F19) > the same bundle already on file is not refused (a re-send after a rollback), and the history is left as it is 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one bundle per filed sequence (sweep F19) > a send to the agency TEST environment files nothing, so the history does not hold it back 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one bundle per filed sequence (sweep F19) > a 0001 the agency REJECTED does not hold the number: the new bundle is sent and recorded beside it 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — one bundle per filed sequence (sweep F19) > a different bundle of the sequence recorded WHILE this one was sending: not recorded, said, and on the sign record 4ms
+ Test Files  7 passed (7)
+      Tests  105 passed (105)

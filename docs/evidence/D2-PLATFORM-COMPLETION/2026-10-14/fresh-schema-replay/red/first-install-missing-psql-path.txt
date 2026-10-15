@@ -1,0 +1,58 @@
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+
+▶ 1/8 Prerequisites — schemas + extensions
+  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)
+  ✓ pgvector (extension "vector") present
+
+▶ 2/8 Tables — drizzle-kit push
+  • schema source: drizzle-kit push from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (drizzle.config.ts)
+  • 6 declared table(s) live in a named schema, which push does not create; the overlay does. Asserted in 8/8, not here: vault.document_archives, vault.document_chunks, vault.documents, vault.evidence_citations, vault.legal_holds, vault.retention_policies
+  ✓ schema pushed from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (482 of 488 declared tables verified present here: 482 in public, 6 in vault)
+
+▶ 3/8 Complete schema — raw migration overlay
+  ✓ pre-overlay creator: db/migrations/20260401_cmc_convergence_os.sql
+  ✓ pre-overlay creator: db/migrations/20260224_ai_trace_chain.sql
+  ✓ pre-overlay creator: db/migrations/20260730_cmc_projects_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_manufacturing_processes_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_fk_delete_policies_port.sql
+  ✓ pre-overlay creator: db/migrations/20260917_ana_runs.sql
+  pass 1: applied=307 already-present=2 deferred=12 hard=0
+  pass 2: applied=11 already-present=0 deferred=1 hard=0
+  pass 3: applied=0 already-present=0 deferred=1 hard=0
+  ◦ 1 file(s) skipped-classified (expected on a fresh install; each names its tracked resolution — NOT counted as incomplete):
+      0008_critical_fk_delete_policies.sql — superseded by db/migrations/20260730_fk_delete_policies_port.sql (guarded port applied pre-overlay); the original aborts on retired user_sessions
+        last error: relation "user_sessions" does not exist
+  ✓ overlay: 318 applied, 2 already-present from push
+
+▶ 4/8 Authoring subsystem (Part-11 unit)
+  ✓ authoring subsystem provisioned as a unit (9 files, 23 tables, tenant-isolated)
+
+▶ 5/8 Row-Level Security policies (raw migrations)
+  ✓ coerced residual text tenant columns to integer (fresh-DB safe)
+  ✓ applied 0005_csr_knowledge_database.sql
+  ✓ applied 0019_tenant_column_audit.sql
+  ✓ applied 0020_coerce_text_tenant_columns.sql
+  ✓ applied 0021_enable_rls_everywhere.sql
+  ✓ applied 20260608_ai_placement_policies.sql
+  ✓ applied 20260612_rls_research_admin.sql
+
+▶ 6/8 Governed content — Part 11 audit tree (*_gcc_*.sql)
+  ⚠ psql not available — cannot apply 42 governed-content file(s).
+    The app will boot, but 21 CFR Part 11 tamper-proof audit will be absent.
+    Install the postgresql client and re-run, or apply by hand:
+      for f in $(ls db/migrations/*_gcc_*.sql | sort); do \
+        psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done
+
+▶ 7/8 Runtime role — non-superuser grants
+  • runtime role app_service identified from RUNTIME_DB_ROLE (owner is postgres)
+  • refreshing grants for existing runtime role app_service (not minted here; no password needed)
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 23/32 append-only store(s) present: public.audit_logs, public.audit_events, public.electronic_signatures, public.ana_turn_records, public.ana_record_blobs, public.authoring_audit_trail, public.doc_revisions, public.concept2cure_signatures, public.concept2cure_submission_snapshots, public.proof_audit_logs, public.coauthor_validation_history, public.credit_ledger, public.document_audit_trail, public.ivdr_validation_parameter_history, public.ivdr_evidence_result_history, public.ivdr_cdx_status_history, public.workflow_history, public.document_audit_logs, public.regulatory_audit_logs, public.c2c_ana_actions, public.authoring_signatures, public.cmc_module3_section_versions, public.cmc_provenance_events; INSERT too where a store's ceiling is SELECT
+  ✓ EXECUTE revoked on 0 unreviewed SECURITY DEFINER function(s)
+  ✓ grants applied on: audit(SELECT, INSERT); extensions(SELECT); lumen(SELECT, INSERT, UPDATE, DELETE); precedent(SELECT, INSERT, UPDATE, DELETE); public(SELECT, INSERT, UPDATE, DELETE); vault(SELECT, INSERT, UPDATE, DELETE)
+  ✓ default privileges set — future owner-created tables auto-grant to app_service
+
+▶ 8/8 Verify
+  tables (public): 798
+  RLS policies:    681
+
+❌ Install failed: 4 of 6 declared table(s) outside public do not exist after the overlay: vault.document_chunks, vault.documents, vault.evidence_citations, vault.legal_holds. push does not create these; a file in migrations/ must, and every creator must be on an applier.

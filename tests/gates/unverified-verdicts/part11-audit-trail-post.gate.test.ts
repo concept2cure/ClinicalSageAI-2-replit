@@ -33,7 +33,8 @@ function appWith(dbClient: { query: (...a: unknown[]) => Promise<unknown> } | nu
   return a;
 }
 
-const body = { entityType: 'document', entityId: '123', action: 'create', userName: 'Probe' };
+// A vocabulary event with its reason (DP-18, second door, 2026-10-01).
+const body = { entityType: 'document', entityId: '123', action: 'artifact.updated', changeReason: 'Probe of the store outcome', userName: 'Probe' };
 
 describe('POST /api/part11/audit-trail: the audit row either lands or the answer says it did not', () => {
   it('refuses with 503 and no success when the INSERT fails (23502 — the pre-fix production failure)', async () => {

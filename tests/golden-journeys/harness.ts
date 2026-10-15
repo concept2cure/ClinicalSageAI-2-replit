@@ -118,9 +118,9 @@ export interface JourneyDb {
    *  PGlite (release() is a no-op). Declared here so services type-checked
    *  outside tests/** (e.g. server/**) see the real runtime shape. */
   pool: {
-    query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+    query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }>;
     connect: () => Promise<{
-      query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+      query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }>;
       release: () => void;
     }>;
   };

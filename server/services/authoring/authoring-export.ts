@@ -16,6 +16,13 @@
 import crypto from 'crypto';
 import type { Queryable } from './authoring-evidence';
 import { describeSignatureMethod } from '../../../shared/part11/signature-method';
+import { verifySavedDraftSourceReferences } from './draft-source-references';
+import type { AuthoringActor } from './authoring-documents';
+import { assertWorkflowImportRelease, verifyWorkflowImportWorkingCopy } from './workflow-import-governance';
+import { sectionsDigest } from './authoring-content-digests';
+// Preserve this service's public API while keeping workflow release checks
+// independent of the renderer's async initialization (production boot).
+export { computeAuthoringSignatureDigest, sectionsDigest } from './authoring-content-digests';
 
 export type ExportFormat = 'docx' | 'pdf' | 'xml';
 export const EXPORT_FORMATS: readonly ExportFormat[] = ['docx', 'pdf', 'xml'];
@@ -26,6 +33,9 @@ export interface ExportDocRow {
   module?: string | null;
   status?: string | null;
   created_at?: unknown;
+  provenance?: unknown;
+  client_program_id?: string | null;
+  created_by?: unknown;
 }
 
 export interface ExportSectionRow {
@@ -41,7 +51,17 @@ export interface RenderedExport {
   contentType: string;
   /** §11.10(b): a hash of the DELIVERED ARTIFACT BYTES. */
   artifactSha256: string;
+  /**
+   * How the file was rendered. 'plain-text-fallback' is a PDF made without
+   * the document styling (no PDF engine in this deployment; the file's first
+   * page says so). QA 2026-10-08 (j4): the export reported success and the
+   * export record said nothing, so the person filing it was not told.
+   */
+  rendering: ExportRendering;
 }
+
+/** 'formatted' for every DOCX and XML, and for a PDF the PDF engine rendered. */
+export type ExportRendering = 'formatted' | 'plain-text-fallback';
 
 export interface RenderExportArgs {
   executor: Queryable;
@@ -49,6 +69,7 @@ export interface RenderExportArgs {
   doc: ExportDocRow;
   sections: ExportSectionRow[];
   format: ExportFormat;
+  actor?: AuthoringActor;
   /**
    * A statement rendered before the content — e.g. that this is a working
    * draft and not a sealed record. Absent on the export route.
@@ -60,7 +81,20 @@ export interface RenderExportArgs {
    * decision on ONE read. Read here when absent.
    */
   signatures?: SignatureRow[];
+  /**
+   * Render an uncontrolled working copy (docs/design/ONE_ANA_ONE_CANVAS.md
+   * §4.5, slice 7): `banner` is printed in the header and footer of EVERY page,
+   * and the §11.50(b) signature manifestation is NOT rendered, so a copy of a
+   * draft can never print a signature as covering its content. DOCX and PDF
+   * only. Absent on the controlled export and the vault filing.
+   */
+  workingCopy?: { banner: string };
 }
+
+/** Where a working copy's manifestation would be: said, not omitted silently. */
+export const WORKING_COPY_SIGNATURE_STATEMENT =
+  'Uncontrolled working copy. No electronic signature applies to this copy: signatures are ' +
+  'carried only by a controlled export of a frozen or approved document.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // §11.50(b) manifestation
@@ -214,7 +248,8 @@ async function prepareShared(args: RenderExportArgs) {
 
   const { resolveAuthoringImages } = await import('../../export/authoring-images.js');
   const exportImages = binary
-    ? await resolveAuthoringImages(sections.map((s) => s.content), tenantId)
+    ? await resolveAuthoringImages(sections.map((s) => s.content), tenantId,
+      args.actor ? { userId: Number(args.actor.id) } : undefined)
     : new Map();
 
   const { crossReferenceLookupFor, crossReferenceAnchorId } = await import('@shared/authoring/cross-references');
@@ -231,16 +266,18 @@ async function prepareShared(args: RenderExportArgs) {
   const captionTargets = parsedSections.flatMap((p) => collectCaptionTargets(p.blocks, captionDirectory));
   const crossRefs = crossReferenceLookupFor([...sectionTargets, ...captionTargets]);
 
-  const citedSourceIds = parsedSections.flatMap((p) => collectCitedSourceIds(p.blocks));
-  const citationSources = citedSourceIds.length
-    ? await (async () => {
-        const { listCitationSources } = await import(
-          '../../services/clinical-regulatory-evidence/source-usage.service.js'
-        );
-        return listCitationSources(tenantId, citedSourceIds);
-      })()
-    : [];
+  const { listCitationSources } = await import('../../services/clinical-regulatory-evidence/source-usage.service.js');
+  const citationSourcesBySection = new Map<string, Awaited<ReturnType<typeof listCitationSources>>>();
+  for (const { section, blocks } of parsedSections) {
+    citationSourcesBySection.set(String(section.id), await listCitationSources(tenantId, collectCitedSourceIds(blocks),
+      { documentId: String(doc.id), sectionId: String(section.id), userId: args.actor ? Number(args.actor.id) : undefined }, executor));
+  }
+  const citationSources = [...citationSourcesBySection.values()].flat();
   const citations = makeCitationRegistry(citationLookupFor(citationSources));
+  const citationsForSection = (sectionId: string): typeof citations => {
+    const allowed = new Set((citationSourcesBySection.get(sectionId) ?? []).map(source => source.id));
+    return { cite: id => id && allowed.has(id) ? citations.cite(id) : { found: false }, entries: citations.entries };
+  };
 
   let pendingIns = 0;
   let pendingDel = 0;
@@ -256,6 +293,7 @@ async function prepareShared(args: RenderExportArgs) {
     crossRefs,
     crossReferenceAnchorId,
     citations,
+    citationsForSection,
     makeCaptionNumbering,
     pendingIns,
     pendingDel,
@@ -268,7 +306,44 @@ const safeFileStem = (title: string) => title.replace(/[^a-zA-Z0-9]/g, '_');
 // XML
 // ─────────────────────────────────────────────────────────────────────────────
 
-function renderXml(args: RenderExportArgs, shared: SharedRender): { content: Buffer; fileName: string; contentType: string } {
+/**
+ * A section's content as the XML carries it: the stored HTML, with every image
+ * the DOCX and PDF would not file replaced by the same "[Figure not exported:
+ * …]" placeholder they print (unfiledFigureLabel), so the three formats of one
+ * document agree. A figure (a governed reference, or an inline PNG, JPEG or
+ * GIF) is kept as written. A section whose images a browser and the export
+ * read differently files none of them, as in the other formats.
+ *
+ * Until 2026-10-05 the XML wrote the stored HTML verbatim, so an older
+ * section's external image URL or WebP payload appeared in the exported file
+ * though DOCX and PDF refused it (refute-review of the figure rule, round 3:
+ * O3; work-orders item 18).
+ */
+async function xmlSectionContent(content: string | null | undefined): Promise<string> {
+  const html = String(content ?? '');
+  if (!/<img/i.test(html)) return html;
+  const [{ parseSectionHtml }, { unfiledFigureLabel }, { imageReadingsDiffer }, { isFigureSrc }] = await Promise.all([
+    import('../../export/section-html-parse.js'),
+    import('../../export/authoring-images.js'),
+    import('./authoring-html-sanitizer.js'),
+    import('@shared/authoring/figure-refs'),
+  ]);
+  const disagree = (await imageReadingsDiffer(html)) !== null;
+  const root = parseSectionHtml(html);
+  for (const img of root.querySelectorAll('img')) {
+    const src = img.getAttribute('src');
+    if (!disagree && isFigureSrc(src)) continue;
+    const label = unfiledFigureLabel({ src: src ?? undefined, alt: img.getAttribute('alt') ?? undefined });
+    img.replaceWith(`[Figure not exported: ${label}]`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+  }
+  return root.toString();
+}
+
+function renderXml(
+  args: RenderExportArgs,
+  shared: SharedRender,
+  contents: readonly string[],
+): { content: Buffer; fileName: string; contentType: string } {
   const { doc, sections } = args;
   /* Nothing here was escaped once; signer names carry apostrophes and reasons
      carry ampersands, so every value is escaped and CDATA is split on `]]>`. */
@@ -292,9 +367,9 @@ function renderXml(args: RenderExportArgs, shared: SharedRender): { content: Buf
   <sections>
 ${sections
   .map(
-    (s) => `    <section code="${xe(s.code)}">
+    (s, i) => `    <section code="${xe(s.code)}">
       <title>${xe(s.title)}</title>
-      <content><![CDATA[${cdata(s.content)}]]></content>
+      <content><![CDATA[${cdata(contents[i])}]]></content>
     </section>`,
   )
   .join('\n')}
@@ -377,7 +452,7 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
         revisionDate: exportedAt,
         footnoteSink,
         crossRefs: shared.crossRefs,
-        citations: shared.citations,
+        citations: shared.citationsForSection(String(section.id)),
         captions,
       }),
     );
@@ -385,9 +460,11 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
   /* The reference list: nothing is emitted when nothing was cited. */
   children.push(...referenceListParagraphs(docxNs, shared.citations));
 
-  /* §11.50(b) manifestation, after the content. */
+  /* §11.50(b) manifestation, after the content. A working copy carries none. */
   children.push(new Paragraph({ text: 'Electronic signatures', heading: HeadingLevel.HEADING_1 }));
-  if (shared.manifest.length === 0) {
+  if (args.workingCopy) {
+    children.push(new Paragraph({ text: WORKING_COPY_SIGNATURE_STATEMENT }));
+  } else if (shared.manifest.length === 0) {
     children.push(new Paragraph({ text: 'No electronic signatures are recorded against this document.' }));
   } else {
     for (const lines of shared.manifest) {
@@ -407,11 +484,21 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
           ),
         }
       : {}),
-    sections: [{ children }],
+    sections: [
+      args.workingCopy
+        ? {
+            /* On every page, top and bottom: a copy that leaves the system
+               says what it is wherever it is read. */
+            headers: { default: new docxNs.Header({ children: [new Paragraph({ children: [new TextRun({ text: args.workingCopy.banner, bold: true })] })] }) },
+            footers: { default: new docxNs.Footer({ children: [new Paragraph({ children: [new TextRun({ text: args.workingCopy.banner, bold: true })] })] }) },
+            children,
+          }
+        : { children },
+    ],
   });
   return {
     content: await Packer.toBuffer(docxDoc),
-    fileName: `${safeFileStem(doc.title)}.docx`,
+    fileName: `${safeFileStem(doc.title)}${args.workingCopy ? '_working_copy' : ''}.docx`,
     contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   };
 }
@@ -420,11 +507,15 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
 // PDF
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function renderPdf(args: RenderExportArgs, shared: SharedRender): Promise<{ content: Buffer; fileName: string; contentType: string }> {
+async function renderPdf(
+  args: RenderExportArgs,
+  shared: SharedRender,
+): Promise<{ content: Buffer; fileName: string; contentType: string; rendering: ExportRendering }> {
   const { doc } = args;
   // Real PDF via the platform's HTML→PDF renderer (the same engine the
-  // template render path uses).
-  const { renderHtmlToPdf } = await import('../../export/renderers');
+  // template render path uses). Tracked, so a plain-text fallback is reported
+  // on the export record and to the person exporting, not only on page one.
+  const { renderHtmlToPdfTracked } = await import('../../export/renderers');
   const { blocksToHtml, renderReferenceListHtml, escapeHtml: esc, PRINT_STYLES } =
     await import('../../export/authoring-blocks-to-html.js');
   /* Section content parsed to typed runs and re-emitted as a WHITELISTED
@@ -434,7 +525,7 @@ async function renderPdf(args: RenderExportArgs, shared: SharedRender): Promise<
   const pdfSections = shared.parsedSections.map(({ section: s, blocks }) => {
     const body = blocksToHtml(blocks, shared.exportImages, {
       crossRefs: shared.crossRefs,
-      citations: shared.citations,
+      citations: shared.citationsForSection(String(s.id)),
       captions: pdfCaptions,
     });
     // The heading is the anchor a resolved cross-reference links to.
@@ -459,25 +550,52 @@ async function renderPdf(args: RenderExportArgs, shared: SharedRender): Promise<
         ${pdfSections.join('\n')}
         ${referenceListHtml}
         <h2>Electronic signatures</h2>
-        ${shared.manifest.length === 0
+        ${args.workingCopy
+          ? `<p>${esc(WORKING_COPY_SIGNATURE_STATEMENT)}</p>`
+          : shared.manifest.length === 0
           ? '<p>No electronic signatures are recorded against this document.</p>'
           : shared.manifest
               .map((lines) => `<p>${lines.map(esc).join('<br/>')}</p>`)
               .join('\n')}
         </body></html>`;
+  /* The working-copy banner is stamped by the PDF engine on every page
+     (header and footer), not by CSS: the plain-text fallback that renders
+     where Puppeteer is absent applies no stylesheet. */
+  const { buffer, usedFallback } = await renderHtmlToPdfTracked(
+    html,
+    args.workingCopy ? { pageBanner: args.workingCopy.banner } : {},
+  );
   return {
-    content: await renderHtmlToPdf(html),
-    fileName: `${safeFileStem(doc.title)}.pdf`,
+    content: buffer,
+    fileName: `${safeFileStem(doc.title)}${args.workingCopy ? '_working_copy' : ''}.pdf`,
     contentType: 'application/pdf',
+    rendering: usedFallback ? 'plain-text-fallback' : 'formatted',
   };
 }
 
 /** Render one authoring document in one format. Throws on a renderer failure. */
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
+  if (args.workingCopy && args.format === 'xml') throw new Error('A working copy is rendered as DOCX or PDF only');
+  await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId, args.actor);
+  if (!args.workingCopy) await assertWorkflowImportRelease(args.executor, {
+    organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,
+  });
+  else {
+    const workflow = await verifyWorkflowImportWorkingCopy(args.executor, {
+      organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,
+    });
+    if (workflow) args = { ...args,
+      workingCopy: { banner: `${args.workingCopy.banner} · workflow qualification not established` },
+      notice: `Workflow review copy — NOT FINAL. Original authorship remains as recorded. ` +
+        `Model qualification and scientific source support are not established by this import. ` +
+        `${workflow.knownMachineRemains ? 'Stored machine content remains on release hold. ' : 'Human review and explicit adoption are required before release. '}` +
+        `Retained source ${workflow.origin.kind} ${workflow.origin.id}, fingerprint ${workflow.origin.fingerprint}.`,
+    };
+  }
   const shared = await prepareShared(args);
-  const out =
+  const out: { content: Buffer; fileName: string; contentType: string; rendering?: ExportRendering } =
     args.format === 'xml'
-      ? renderXml(args, shared)
+      ? renderXml(args, shared, await Promise.all(args.sections.map((s) => xmlSectionContent(s.content))))
       : args.format === 'docx'
         ? await renderDocx(args, shared)
         : await renderPdf(args, shared);
@@ -486,6 +604,7 @@ export async function renderAuthoringExport(args: RenderExportArgs): Promise<Ren
     fileName: out.fileName,
     contentType: out.contentType,
     artifactSha256: crypto.createHash('sha256').update(out.content).digest('hex'),
+    rendering: out.rendering ?? 'formatted',
   };
 }
 
@@ -505,18 +624,6 @@ export async function computeDocHash(
     [docId, tenantId],
   );
   return sectionsDigest(sections.rows);
-}
-
-/**
- * The digest itself, over rows already in hand and already in `order_index`
- * order. computeDocHash is this plus a read; the export manifest calls it on
- * the rows it is rendering so its verdict describes those exact bytes. ONE
- * implementation — the signing routes store its output as `content_hash`, so a
- * second copy that drifted would turn every verdict into a false mismatch.
- */
-export function sectionsDigest(rows: ReadonlyArray<{ code: string; content: string | null }>): string {
-  const content = rows.map((s) => `${s.code}:${s.content}`).join('|||');
-  return crypto.createHash('sha256').update(content).digest('hex');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

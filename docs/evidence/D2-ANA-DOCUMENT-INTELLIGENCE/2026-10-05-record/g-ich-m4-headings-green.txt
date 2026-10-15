@@ -1,0 +1,29 @@
+# g-ich-m4-headings — GREEN (2026-10-05)
+
+## 1. npx vitest run tests/regulatory/ich-m4-headings.test.ts tests/regulatory/ich-backbone-parity.test.ts server/services/ind/ctd/__tests__/ tests/schema-contract/one-normalize-ctd-code.contract.test.ts server/services/submission-gateways/ectd-packager
+ Test Files  7 passed (7)
+      Tests  86 passed (86)
+
+## 2. Shown failing (mutation A, reverted): rows '4.3' (a guidance key) and '4.3.1' added to ich-m4-headings.ts
+ × tests/regulatory/ich-backbone-parity.test.ts > ICH_BACKBONE ⊆ ICH M4 heading record > a planted heading the record does not define is caught 6ms
+   → expected [] to deeply equal [ '4.3.1' ]
+ × tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > 4.3.1 is not an ICH heading (M4S 4.3 Literature References has no subdivisions; single-dose toxicity is 4.2.3.1) 10ms
+   → expected true to be false // Object.is equality
+ × tests/regulatory/ich-m4-headings.test.ts > isIchHeading — invented and regional codes are refused > m4.3.1 is not an ICH heading (the m-prefixed spelling of the same invented heading) 2ms
+   → expected true to be false // Object.is equality
+ × tests/regulatory/ich-m4-headings.test.ts > isIchHeading — real headings are accepted, from either half of the record > ichHeadingTitle reads whichever half holds the code, and null for a non-heading 2ms
+   → expected 'Single Dose Toxicity' to be null
+ × tests/regulatory/ich-m4-headings.test.ts > ICH_M4_HEADINGS — one record with the guidance, never a copy of it > is disjoint from the CTD_AUTHORING_GUIDANCE keys 2ms
+   → expected [ '4.3' ] to deeply equal []
+
+## 3. Shown failing (mutation B, reverted): row '5.3.5' removed — the real ICH_BACKBONE names a section the record no longer holds
+ × tests/regulatory/ich-backbone-parity.test.ts > ICH_BACKBONE ⊆ ICH M4 heading record > every backbone section is an ICH M4 heading 7ms
+   → expected [ '5.3.5' ] to deeply equal []
+ × tests/regulatory/ich-backbone-parity.test.ts > ICH_BACKBONE ⊆ ICH M4 heading record > a planted heading the record does not define is caught 1ms
+   → expected [ '4.3.1', '5.3.5' ] to deeply equal [ '4.3.1' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)
+
+## 4. Typecheck and lint
+- flock tsc.lock npx tsc --noEmit -p . | grep -E "ich-m4-headings|ich-backbone-parity": no lines (grep exit 1), so no errors in these files.
+- npx eslint on the three new files: no output (0 errors, 0 warnings). They are new files, so there is no HEAD baseline.

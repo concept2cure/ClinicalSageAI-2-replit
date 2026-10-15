@@ -1,0 +1,3174 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order 166ms
+   → expected [ 'Plan', 'Evidence', 'Author', …(4) ] to deeply equal [ Array(5) ]
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > no tab renders "Not in this release" 121ms
+   → the Plan tab says "Not in this release": expected <div class="c2c-empty-t"></div> to be null
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > AnA's set-stage {stage:'plan'} opens Submit 5075ms
+   → expected 'Plan' to contain 'Submit'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            BX-204
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              BX-204
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Application number
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not assigned
+                  </span>
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          aria-label="Project lifecycle"
+          class="pj-lc"
+          role="tablist"
+        >
+          <button
+            aria-selected="true"
+            class="pj-lc-stage"
+            data-status="active"
+            title="Strategy, precedent, agency meetings & timeline"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-calendar"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 2v4"
+                  />
+                  <path
+                    d="M16 2v4"
+                  />
+                  <rect
+                    height="18"
+                    rx="2"
+                    width="18"
+                    x="3"
+                    y="4"
+                  />
+                  <path
+                    d="M3 10h18"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Plan
+            </span>...
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > AnA's set-stage {stage:'lifecycle'} opens Submit 5068ms
+   → expected 'Lifecycle' to contain 'Submit'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            BX-204
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              BX-204
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Application number
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not assigned
+                  </span>
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          aria-label="Project lifecycle"
+          class="pj-lc"
+          role="tablist"
+        >
+          <button
+            class="pj-lc-stage"
+            title="Strategy, precedent, agency meetings & timeline"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-calendar"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 2v4"
+                  />
+                  <path
+                    d="M16 2v4"
+                  />
+                  <rect
+                    height="18"
+                    rx="2"
+                    width="18"
+                    x="3"
+                    y="4"
+                  />
+                  <path
+                    d="M3 10h18"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Plan
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Vault, RAG search & claim↔evidence linking"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-search"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="8"
+                  />
+                  <path
+                    d="m21 21-4.3-4.3"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Evidence
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Draft eCTD sections with AnA, track changes"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 20h9"
+                  />
+                  <path
+                    d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Author
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Review, approve & e-sign"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-circle-check-big"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21.801 10A10 10 0 1 1 17 3.335"
+                  />
+                  <path
+                    d="m9 11 3 3L22 4"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Review
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Assemble eCTD, validate & transmit"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-rocket"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+                  />
+                  <path
+                    d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+                  />
+                  <path
+                    d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+                  />
+                  <path
+                    d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Submit
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Health-authority questions & responses"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-message-circle"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Respond
+            </span>
+          </button>
+          <button
+            aria-selected="true"
+            class="pj-lc-stage"
+            data-status="active"
+            title="Registrations, variations, market access & PV"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-globe"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <path
+                    d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"
+                  />
+                  <path
+                    d="M2 12h20"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Lifecycle
+            </span>
+          </button>
+        </div>
+        <div
+          class="pj-stageband"
+        >
+          <div
+            class="pj-stageband-l"
+          >
+            <span
+              class="pj-stageband-stage"
+            >
+              Lifecycle
+            </span>
+            <span
+              class="pj-stageband-blurb"
+            >
+              Registrations, variations, market access & PV
+            </span>
+          </div>
+        </div>
+        <section
+          class="pj-sec"
+        >
+          <div
+            class="pj-sec-h"
+          >
+            <h2>
+              Lifecycle
+            </h2>
+            <span
+              class="sec-sub"
+            >
+              Registrations, variations, market access & PV
+            </span>
+          </div>
+          <div
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-clock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <polyline
+                  points="12 6 12 12 16 14"
+                />
+              </svg>
+            </span>
+            <div
+              class="c2c-empty-t"
+            >
+              Not in this release
+            </div>
+            <div
+              class="c2c-empty-h"
+            >
+              The tools for this stage come in a later release. AnA can still help with it in the conversation.
+            </div>
+          </div>
+          <div
+            class="pj-tools"
+          />
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > Submit names what Plan and Lifecycle promised as coming later, with nothing to click 5075ms
+   → Unable to find an element by: [data-testid="pj-submit-later"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-204
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-204
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Application number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linking"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-204
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-204
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Application number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linking"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+           ...
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the Schedule panel is gone: no schedule read and no Schedule heading on any tab 207ms
+   → expected <h2></h2> to be null
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > a message typed in the start box survives switching tabs 88ms
+   → the start box is gone on Evidence: expected null not to be null
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the project's Conversations are listed above the tabs, on every tab 5063ms
+   → Unable to find role="heading" and name "Conversations"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-204
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-204
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Application number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linking"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-204
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-204
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Application number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linking"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+           ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order
+AssertionError: expected [ 'Plan', 'Evidence', 'Author', …(4) ] to deeply equal [ Array(5) ]
+
+- Expected
++ Received
+
+  [
++   "Plan",
+    "Evidence",
+    "Author",
+    "Review",
+    "Submit",
+    "Respond",
++   "Lifecycle",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:95:54
+     93|     render(<ProjectHome {...props()} />);
+     94|     await waitFor(() => expect(tabs().length).toBeGreaterThan(0));
+     95|     expect(tabs().map((b) => b.textContent?.trim())).toEqual(['Evidenc…
+       |                                                      ^
+     96|   });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > no tab renders "Not in this release"
+AssertionError: the Plan tab says "Not in this release": expected <div class="c2c-empty-t"></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="c2c-empty-t"
+>
+  Not in this release
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:104:104
+    102|       fireEvent.click(tab(label));
+    103|       await waitFor(() => expect(openTab()).toContain(label));
+    104|       expect(screen.queryByText('Not in this release'), `the ${label} …
+       |                                                                                                        ^
+    105|     }
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > AnA's set-stage {stage:'plan'} opens Submit
+AssertionError: expected 'Plan' to contain 'Submit'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            BX-204
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              BX-204
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Application number
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not assigned
+                  </span>
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          aria-label="Project lifecycle"
+          class="pj-lc"
+          role="tablist"
+        >
+          <button
+            aria-selected="true"
+            class="pj-lc-stage"
+            data-status="active"
+            title="Strategy, precedent, agency meetings & timeline"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-calendar"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 2v4"
+                  />
+                  <path
+                    d="M16 2v4"
+                  />
+                  <rect
+                    height="18"
+                    rx="2"
+                    width="18"
+                    x="3"
+                    y="4"
+                  />
+                  <path
+                    d="M3 10h18"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Plan
+            </span>...
+
+Expected: "Submit"
+Received: "Plan"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:113:43
+    111|     const out = setStage(stage);
+    112|     expect(out.status, out.reason).toBe('applied');
+    113|     await waitFor(() => expect(openTab()).toContain('Submit'));
+       |                                           ^
+    114|   });
+    115|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > AnA's set-stage {stage:'lifecycle'} opens Submit
+AssertionError: expected 'Lifecycle' to contain 'Submit'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-crumb"
+        >
+          <span
+            class="pj-crumb-i"
+            data-cur="true"
+          >
+            <span
+              class="pj-crumb-k"
+            >
+              Project
+            </span>
+            BX-204
+          </span>
+        </div>
+        <div
+          class="pj-top"
+        >
+          <div
+            class="pj-top-l"
+          >
+            <h1
+              class="pj-title"
+            >
+              BX-204
+            </h1>
+            <div
+              class="pj-tags"
+            >
+              <span
+                class="rd-chip tone-ok"
+              >
+                active
+              </span>
+            </div>
+            <section
+              aria-label="Program identity"
+              class="pj-facts"
+            >
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Sponsor
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Product
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Indication
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not recorded
+                  </span>
+                </dd>
+              </dl>
+              <dl
+                class="pj-fact"
+              >
+                <dt>
+                  Application number
+                </dt>
+                <dd>
+                  <span
+                    class="pj-fact-none"
+                  >
+                    not assigned
+                  </span>
+                </dd>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <div
+          aria-label="Project lifecycle"
+          class="pj-lc"
+          role="tablist"
+        >
+          <button
+            class="pj-lc-stage"
+            title="Strategy, precedent, agency meetings & timeline"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-calendar"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 2v4"
+                  />
+                  <path
+                    d="M16 2v4"
+                  />
+                  <rect
+                    height="18"
+                    rx="2"
+                    width="18"
+                    x="3"
+                    y="4"
+                  />
+                  <path
+                    d="M3 10h18"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Plan
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Vault, RAG search & claim↔evidence linking"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-search"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="8"
+                  />
+                  <path
+                    d="m21 21-4.3-4.3"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Evidence
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Draft eCTD sections with AnA, track changes"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-pen-line"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 20h9"
+                  />
+                  <path
+                    d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Author
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Review, approve & e-sign"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-circle-check-big"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21.801 10A10 10 0 1 1 17 3.335"
+                  />
+                  <path
+                    d="m9 11 3 3L22 4"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Review
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Assemble eCTD, validate & transmit"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-rocket"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+                  />
+                  <path
+                    d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+                  />
+                  <path
+                    d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+                  />
+                  <path
+                    d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Submit
+            </span>
+          </button>
+          <button
+            class="pj-lc-stage"
+            title="Health-authority questions & responses"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-message-circle"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Respond
+            </span>
+          </button>
+          <button
+            aria-selected="true"
+            class="pj-lc-stage"
+            data-status="active"
+            title="Registrations, variations, market access & PV"
+          >
+            <span
+              class="pj-lc-node"
+            >
+              <span
+                class="pj-lc-ic"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-globe"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <path
+                    d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"
+                  />
+                  <path
+                    d="M2 12h20"
+                  />
+                </svg>
+              </span>
+            </span>
+            <span
+              class="pj-lc-l"
+            >
+              Lifecycle
+            </span>
+          </button>
+        </div>
+        <div
+          class="pj-stageband"
+        >
+          <div
+            class="pj-stageband-l"
+          >
+            <span
+              class="pj-stageband-stage"
+            >
+              Lifecycle
+            </span>
+            <span
+              class="pj-stageband-blurb"
+            >
+              Registrations, variations, market access & PV
+            </span>
+          </div>
+        </div>
+        <section
+          class="pj-sec"
+        >
+          <div
+            class="pj-sec-h"
+          >
+            <h2>
+              Lifecycle
+            </h2>
+            <span
+              class="sec-sub"
+            >
+              Registrations, variations, market access & PV
+            </span>
+          </div>
+          <div
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-clock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <polyline
+                  points="12 6 12 12 16 14"
+                />
+              </svg>
+            </span>
+            <div
+              class="c2c-empty-t"
+            >
+              Not in this release
+            </div>
+            <div
+              class="c2c-empty-h"
+            >
+              The tools for this stage come in a later release. AnA can still help with it in the conversation.
+            </div>
+          </div>
+          <div
+            class="pj-tools"
+          />
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
+
+Expected: "Submit"
+Received: "Lifecycle"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:113:43
+    111|     const out = setStage(stage);
+    112|     expect(out.status, out.reason).toBe('applied');
+    113|     await waitFor(() => expect(openTab()).toContain('Submit'));
+       |                                           ^
+    114|   });
+    115|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > Submit names what Plan and Lifecycle promised as coming later, with nothing to click
+TestingLibraryElementError: Unable to find an element by: [data-testid="pj-submit-later"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-204
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-204
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Application number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linking"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-204
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-204
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Application number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linking"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:121:31
+    119|     await waitFor(() => expect(tabs().length).toBeGreaterThan(0));
+    120|     fireEvent.click(tab('Submit'));
+    121|     const line = await screen.findByTestId('pj-submit-later');
+       |                               ^
+    122|     expect(line.textContent).toMatch(/Coming later/);
+    123|     for (const promised of ['agency meetings', 'precedent', 'registrat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the Schedule panel is gone: no schedule read and no Schedule heading on any tab
+AssertionError: expected <h2></h2> to be null
+
+- Expected:
+null
+
++ Received:
+<h2>
+  Schedule
+</h2>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:135:67
+    133|       fireEvent.click(tab(label));
+    134|       await waitFor(() => expect(openTab()).toContain(label));
+    135|       expect(screen.queryByRole('heading', { name: 'Schedule' })).toBe…
+       |                                                                   ^
+    136|     }
+    137|     expect(apiRequest.mock.calls.filter(([, url]) => String(url).inclu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > a message typed in the start box survives switching tabs
+AssertionError: the start box is gone on Evidence: expected null not to be null
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:149:62
+    147|       await waitFor(() => expect(openTab()).toContain(label));
+    148|       const still = screen.queryByPlaceholderText('Ask AnA to draft, r…
+    149|       expect(still, `the start box is gone on ${label}`).not.toBeNull(…
+       |                                                              ^
+    150|       expect(still!.value).toBe('Reconcile 3.2.P.5 with the latest bat…
+    151|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home: five tabs follow the filing (F2) > the project's Conversations are listed above the tabs, on every tab
+TestingLibraryElementError: Unable to find role="heading" and name "Conversations"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-204
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-204
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Application number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linking"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+           ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-crumb"
+      >
+        <span
+          class="pj-crumb-i"
+          data-cur="true"
+        >
+          <span
+            class="pj-crumb-k"
+          >
+            Project
+          </span>
+          BX-204
+        </span>
+      </div>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            BX-204
+          </h1>
+          <div
+            class="pj-tags"
+          >
+            <span
+              class="rd-chip tone-ok"
+            >
+              active
+            </span>
+          </div>
+          <section
+            aria-label="Program identity"
+            class="pj-facts"
+          >
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Sponsor
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Product
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Indication
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not recorded
+                </span>
+              </dd>
+            </dl>
+            <dl
+              class="pj-fact"
+            >
+              <dt>
+                Application number
+              </dt>
+              <dd>
+                <span
+                  class="pj-fact-none"
+                >
+                  not assigned
+                </span>
+              </dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-label="Project lifecycle"
+        class="pj-lc"
+        role="tablist"
+      >
+        <button
+          class="pj-lc-stage"
+          title="Strategy, precedent, agency meetings & timeline"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-calendar"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2v4"
+                />
+                <path
+                  d="M16 2v4"
+                />
+                <rect
+                  height="18"
+                  rx="2"
+                  width="18"
+                  x="3"
+                  y="4"
+                />
+                <path
+                  d="M3 10h18"
+                />
+              </svg>
+            </span>
+          </span>
+          <span
+            class="pj-lc-l"
+          >
+            Plan
+          </span>
+        </button>
+        <button
+          class="pj-lc-stage"
+          title="Vault, RAG search & claim↔evidence linking"
+        >
+          <span
+            class="pj-lc-node"
+          >
+            <span
+              class="pj-lc-ic"
+            >
+              <svg
+                aria-hidden="true"
+           ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:159:34
+    157|     fireEvent.click(tab('Submit'));
+    158|     await waitFor(() => expect(openTab()).toContain('Submit'));
+    159|     const heading = await screen.findByRole('heading', { name: 'Conver…
+       |                                  ^
+    160|     const tablist = document.querySelector('[role="tablist"][aria-labe…
+    161|     expect(heading.compareDocumentPosition(tablist) & Node.DOCUMENT_PO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  07:45:18
+   Duration  22.74s (transform 785ms, setup 159ms, import 1.04s, tests 20.87s, environment 517ms)
+

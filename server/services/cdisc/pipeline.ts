@@ -28,6 +28,7 @@ import {
   type DefineXmlInput,
   type DefineXmlVersion,
 } from './define-xml-generator.js';
+import { assessStudyDataRequirements } from './cdisc-package-readiness.js';
 
 export interface CdiscReadiness {
   submissionReady: boolean;
@@ -115,9 +116,15 @@ function deepChecks(spec: DefineSpec): ConformanceFinding[] {
   // Referenced-but-undefined codelists are already covered by the base codelist.ref rule.
   void definedCodelists;
 
-  // ADaM expects an ADSL (subject-level) dataset.
-  if (spec.standard === 'ADaM' && !spec.datasets.some((d) => d.name.toUpperCase() === 'ADSL')) {
-    findings.push({ severity: 'warning', dataset: '(study)', rule: 'adam.adsl', message: 'ADaM submission has no ADSL (subject-level) dataset.' });
+  // ADaM needs an ADSL (FDA TRC 1736). The requirement is decided once, in
+  // cdisc-package-readiness; this pipeline reports it under its own rule id.
+  // A spec here is one standard, so only the ADSL requirement applies to it
+  // (TS, DM and define.xml are package-level, assessed by assessPackageReadiness).
+  const adsl = assessStudyDataRequirements({
+    datasets: spec.datasets.map((d) => ({ name: d.name, standard: spec.standard })),
+  }).requirements.find((r) => r.id === 'TRC_1736_NO_ADSL');
+  if (adsl?.state === 'missing') {
+    findings.push({ severity: 'warning', dataset: '(study)', rule: 'adam.adsl', message: adsl.message });
   }
 
   return findings;

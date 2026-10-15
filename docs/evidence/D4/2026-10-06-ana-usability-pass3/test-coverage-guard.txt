@@ -1,0 +1,3 @@
+Warning: modified files without companion tests (non-blocking):
+ - client/src/concept2cure/v2/V2App.tsx
+Test presence verified for added/renamed source files.

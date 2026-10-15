@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/run-control-tenant-scope.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-heartbeat-backpressure/heartbeat/final-red.json"
+  ],
+  "base_sha": "7db091948aa043889e8a5211880641eb4a4e177b",
+  "process_exit": 1,
+  "tests": 15,
+  "passed": 8,
+  "failed": 7,
+  "elapsed_seconds": 0.969,
+  "candidate_restored": true,
+  "test_blob": "830b5ce61ad1ecbae1ad92e9c9223f50a0d35408"
+}

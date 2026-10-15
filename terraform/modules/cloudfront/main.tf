@@ -179,6 +179,11 @@ resource "aws_cloudfront_distribution" "this" {
         https_port             = 443
         origin_protocol_policy = "https-only"
         origin_ssl_protocols   = ["TLSv1.2"]
+        # The ALB's idle timeout, and the most CloudFront allows without a
+        # quota increase. At the 30 s default, a request the server answers in
+        # 30-60 s (assembling a submission package, an eCTD export) reached the
+        # browser as a 504 while the server finished and recorded it (U6).
+        origin_read_timeout = 60
       }
       # The ALB forwards only requests that carry this (modules/alb).
       custom_header {

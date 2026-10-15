@@ -72,7 +72,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eTMF inspection-readiness (CRO deliverable). Completeness is assessed against the DIA TMF Reference Model — 11 zones, ICH E6(R2) §8 essential documents — and gaps are filed from the same screen. AnA generates the inspection-readiness package itself rather than showing a dashboard about it. The package ZIP is not built yet: Download produces the in-browser readiness report instead, and says so.',
+    notes: 'eTMF inspection-readiness (CRO deliverable). Completeness is assessed against the DIA TMF Reference Model — 11 zones, ICH E6(R3) Appendix C essential records — and gaps are filed from the same screen. AnA generates the inspection-readiness package itself rather than showing a dashboard about it. The package ZIP is not built yet: Download produces the in-browser readiness report instead, and says so.',
     engineering: 'assessTmfCompleteness via GET /api/etmf/trials/:trialId/completeness; file gaps via POST .../artifacts. The inspection-package ZIP and artifacts/bulk endpoints are unbuilt; Download degrades live-first.',
   },
   {
@@ -328,13 +328,16 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'submission',
     icon: 'messageSquare',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/haq-manager', '/api/regulatory-correspondence', '/api/precedent-engine'],
+    // P-32 (2026-10-15): only what HaqManager.tsx calls; correspondence and precedent stay with their own surfaces.
+    // Outside the launch catalog until approval is a signed act (launch-scope.ts, Submission Center entry).
+    apiPrefixes: ['/api/haq-manager'],
     anaToolFamilies: ['draft_haq_response', 'search_precedent_responses'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package.',
+    // P-32: "governed e-sign into the response package" removed; approve records a status, no signature.
+    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL questions logged by round, routed to review and approval, and assembled into a response package from the approved answers.',
     engineering: 'Contract ref (not yet a @shared file): @shared/types/haq.',
   },
   {
@@ -841,14 +844,87 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'evidence',
     icon: 'barChart',
     uiKit: null,
-    apiPrefixes: ['/api/report-os', '/api/insights'],
-    anaToolFamilies: ['list_report_types', 'generate_report', 'portfolio_readiness', 'compare_regions', 'get_prediction', 'explain_blockers'],
+    // Launch-scope API (2026-09-30, ci:launch-scope-api): the canvas reads its
+    // bootstrap from /api/insights-canvas, which a path-boundary match on
+    // /api/insights does not cover; unclaimed, production refused it.
+    // 2026-10-01 (reporting review, IAM-21 / DP-64): the surface claimed all of
+    // /api/report-os and /api/insights, so joining the launch catalog made 21
+    // routes no launch screen calls reachable in production: program groups,
+    // bundles, deliveries, subscriptions and the live prediction run among them.
+    // It now claims what the canvas calls (POST /runs, GET /runs/:id/rendered,
+    // POST /runs/:id/finalize, GET /runs/:id/export.pdf) and its bootstrap;
+    // /api/report-os/portfolio is AnA Command's. The rest stay unmapped, which
+    // production refuses, until a screen needs one.
+    //
+    // DO NOT CLAIM /api/report-os/portfolio HERE TO GET THE RICHER ROLLUP.
+    // (2026-10-12, coverage review C-11, verified: `ana-command` — the only
+    // surface that claims that prefix, line 37 — and `orchestration` are both
+    // ABSENT from shared/constants/launch-scope.ts, so in production the route
+    // is refused AND its two callers sit on hidden surfaces. That is a
+    // consistent state, not a defect: the route is out of scope because its
+    // surfaces are. This reporting surface therefore reaches the portfolio only
+    // through the reduced /api/insights-canvas/overview projection, which caps
+    // at ORG_ROLLUP_CAP = 100 (report-os/portfolio/fetch.ts:37) and carries no
+    // attention ranking. Both limits are rendered rather than hidden — the cap
+    // as `ro-port-truncated`, and the note says the selection is UNORDERED
+    // because fetchOrgPrograms has no ORDER BY (C-16), so the board cannot read
+    // as "nothing worse than this exists". Widening this row to the richer
+    // route would re-open exactly the breadth the 2026-10-01 review removed,
+    // and would import C-16's unordered `attentionRanked` with it.)
+    //
+    // 2026-10-11: two of them now have a screen. The reporting library
+    // (surfaces/InsightsLibrary.tsx) adds a Run history, Schedules and Bundles
+    // tab to the artifact pane, so the surface claims the two prefixes those
+    // tabs call and nothing more:
+    //   - /api/report-os/bundles      GET list, POST create, GET :id/export.pdf
+    //   - /api/insights/subscriptions GET list, POST create, PATCH :id enable
+    // The claim stays per-prefix rather than '/api/insights', which is the
+    // breadth the review removed: /api/insights/quality and
+    // /api/insights/predictions still have no screen and stay unmapped, as do
+    // program groups, deliveries and /health. The Report catalog tab needs no
+    // new claim — it renders the `reportTypes` the bootstrap already returns.
+    apiPrefixes: [
+      '/api/report-os/runs',
+      '/api/report-os/bundles',
+      '/api/insights-canvas',
+      '/api/insights/subscriptions',
+    ],
+    anaToolFamilies: ['list_report_types', 'generate_report', 'portfolio_readiness', 'compare_regions', 'explain_blockers'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'AnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs.',
     engineering: 'Contract ref (not yet a @shared file): server/services/report-os/taxonomy.ts.',
+  },
+  {
+    id: 'compliance-reports',
+    label: 'Audit & compliance reports',
+    navTier: 'project',
+    layoutMode: 'audit',
+    group: 'evidence',
+    icon: 'fileCheck',
+    uiKit: null,
+    // Launch-scope API (2026-09-30): the catalog and every run are under /api/audit,
+    // which is never gated (the audit trail is never switchable); the run is
+    // role-gated to organisation owners, admins and managers.
+    //
+    // 2026-10-11: the audit-trail attestation joins them. GET /api/tenant-export/
+    // attestation walks this tenant's audit hash chain, recomputes every entry
+    // and HMAC-signs the verdict (§11.10(e)); it is admin-gated and records its
+    // own audit row per pull. It had no caller in the client, so the one report
+    // that attests the RECORD is intact — rather than reporting what the record
+    // says — was unreachable. Only that one path is claimed: the rest of
+    // /api/tenant-export (the full tenant export and the purge preconditions)
+    // has no screen here and stays unmapped.
+    apiPrefixes: ['/api/audit', '/api/tenant-export/attestation'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Reports an auditor or inspector asks an organisation for: user access review, sign-in and session events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, and the controlled document register. Each run is drawn from the organisation\'s own records, sealed, and recorded on the audit trail; what the platform does not record is listed with the report.',
+    engineering: 'server/services/audit/compliance-reports/ (catalog, queries, sealed generation); server/routes/audit-compliance-reports.ts; client/src/concept2cure/v2/surfaces/ComplianceReports.tsx.',
   },
   {
     id: 'pediatric',
@@ -1135,7 +1211,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'safety-pv',
     icon: 'shieldAlert',
     uiKit: 'biopharma',
-    apiPrefixes: ['/api/pharmacovigilance', '/api/safety-narratives'],
+    // P-32 (2026-10-15): the IND safety-reporting routes (312.32 report, E2B(R3) ICSR, tracked reports, ICSR
+    // transmit/ack) are claimed HERE, outside the launch catalog, on purpose, so production refuses them 403
+    // LAUNCH_SCOPE even where unattributed paths are only reported. Remove only by a launch decision on IND safety.
+    apiPrefixes: ['/api/pharmacovigilance', '/api/safety-narratives',
+      '/api/ind-lifecycle/safety-report', '/api/ind-lifecycle/safety-reports', '/api/ind-lifecycle/icsr-transmissions'],
     anaToolFamilies: ['assess_pv_causality'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -1291,7 +1371,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminAccess invites members.
     // '/api/mdx/admin' (2026-09-26): AdminAccess.tsx.
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin'],
+    // '/api/tenant-config' (2026-10-01, INF-35, P1-47): the organisation settings API is the
+    // admin console's. Admin → Settings reads and changes the connector for Claude there
+    // (ClaudeConnectorSetting.tsx). Its writes are admin-gated and audited through the one
+    // settings writer (server/services/tenant/tenant-settings-writer.ts).
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

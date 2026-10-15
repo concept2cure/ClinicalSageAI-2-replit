@@ -1,0 +1,3 @@
+# 2026-10-01T16:30:30Z: npm run ci:check-embedding-runtime
+[ci:embedding-runtime-canonicality] OK — no new direct embedding callers
+exit 0

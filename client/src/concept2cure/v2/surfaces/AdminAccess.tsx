@@ -4,10 +4,16 @@ import { useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { ceremonyOpen } from '../ceremony';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
+import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
+import { AdminApiKeyCreate } from './AdminApiKeyCreate';
+import { AdminApiKeyUsage } from './AdminApiKeyUsage';
+import { AdminPlatformGrants } from './AdminPlatformGrants';
+import { OnboardingInvitations, invitationOutcome, type OnboardingInvitationOutcome } from './OnboardingInvitations';
 import '../styles/admin-access.css';
 
 /**
@@ -36,8 +42,9 @@ import '../styles/admin-access.css';
  * the rail, while all seven of the hand-offs below still called `onAsk`. That
  * combination is worse here than anywhere else in the product: a
  * governed command comes back from ANA as a `pendingSignoff`, and the §11.50
- * e-signature prompt is drawn BY the rail (V2App `adaptChatMessage` → AnaRail →
- * GovernedActionSignoff). Hiding the rail did not defer the signature gate, it
+ * e-signature prompt was drawn BY the rail (V2App `adaptChatMessage` → AnaRail →
+ * GovernedActionSignoff; since ana-2a the rail is deleted and the prompt is
+ * drawn in the conversation, ConversationThread). Hiding the rail did not defer the signature gate, it
  * hid it — "Invite member", "Grant access", "Rotate API key" and "Change
  * setting" all appeared to do nothing, and the prompt to sign for them
  * reappeared later on whatever surface the admin opened next, because `ask()`
@@ -52,7 +59,8 @@ import '../styles/admin-access.css';
  */
 
 interface Kpi { label: string; metric: string; unit?: string; meta: string; tone?: string }
-interface Member { id: string; initials: string; name: string; email: string; role: string; groups: string[]; sso: string; mfa: boolean; lastSeen: string; state: string; programs?: string[] }
+/** `userId` and `self` are what the membership routes need (AdminMemberActions). */
+interface Member { id: string; userId?: number; self?: boolean; initials: string; name: string; email: string; role: string; groups: string[]; sso: string; mfa: boolean; lastSeen: string; state: string; programs?: string[] }
 interface Role { id: string; label: string; members: number; desc: string; scopes: string[] }
 interface Grant { user: string; program: string; scope: string; granted: string; expires?: string }
 interface Conn { kind: string; provider: string; status?: string; domain: string; users: number; lastSync?: string }
@@ -67,6 +75,8 @@ interface Setting { id: string; label: string; value: string; kind?: string; des
 /** Shape of the GET /api/mdx/admin payload (server/routes/mdx-admin.ts). `sso`
  *  is nullable because the route degrades it to null if the stores are missing. */
 interface AdminData {
+  /** The organization the payload describes — what /api/tenant-users/:organizationId takes. */
+  organizationId?: number;
   kpis: Kpi[]; members: Member[]; roles: Role[]; grants: Grant[];
   sso: Sso | null; apiKeys: ApiKey[]; audit: Audit[]; settings: Setting[];
 }
@@ -125,6 +135,12 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
      stored them. */
   const [toast, fireToast] = useToast();
   const [inviting, setInviting] = useState(false);
+  const [invitationResults, setInvitationResults] = useState<OnboardingInvitationOutcome[]>([]);
+  const rememberInvitation = (result: OnboardingInvitationOutcome) => setInvitationResults(previous => [
+    ...previous.filter(item => item.email.toLowerCase() !== result.email.toLowerCase()), result,
+  ]);
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [keyUsage, setKeyUsage] = useState<{ keyId: number; name: string } | null>(null);
 
   /** The key a Revoke click is confirming. Null when no confirmation is open. */
   const [revoking, setRevoking] = useState<{ id: string; keyId?: number; name: string } | null>(null);
@@ -174,7 +190,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       { key: 'email', label: 'Email', type: 'text', required: true, half: true },
       {
         key: 'role', label: 'Role', type: 'select',
-        options: ['member', 'manager', 'admin', 'viewer'],
+        // The assignable roles, labelled as the table names them (P-18 added Approver and Reviewer).
+        options: ROLE_OPTIONS,
         required: true, half: true,
       },
       { key: 'title', label: 'Job title', type: 'text', half: true },
@@ -184,10 +201,11 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
   const invite = async (v: Record<string, string>) => {
     setInviting(false);
+    const email = (v.email || '').trim();
     try {
       const res = await apiRequest('POST', '/api/tenant-users', {
         name: (v.name || '').trim(),
-        email: (v.email || '').trim(),
+        email,
         role: v.role,
         title: (v.title || '').trim() || undefined,
         department: (v.department || '').trim() || undefined,
@@ -196,45 +214,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         // AuthProvider just to name it. Reading it from useAuth here broke
         // every AdminAccess test, which render the surface standalone.
       });
-      if (!res.ok) {
-        const b = await res.json().catch(() => null);
-        fireToast(
-          'Member not invited — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
-          'error',
-        );
-        return;
-      }
-      // The server says how the invitee gets their setup link. When this
-      // deployment has no email delivery, the link comes back once, here, and
-      // the admin hands it over — so put it on the clipboard and say so.
-      const body = await res.json().catch(() => null);
-      const inv = body && typeof body === 'object' ? (body as { invitation?: { delivery?: string; setupUrl?: string } }).invitation : undefined;
-      const who = (v.name || '').trim();
-      if (inv && inv.delivery === 'failed') {
-        fireToast(
-          `${who} was added as ${v.role}, but no activation link could be issued — they cannot sign in yet. Ask them to use "Forgot password", or retry the invitation.`,
-          'error',
-        );
-      } else if (inv && inv.delivery === 'link' && inv.setupUrl) {
-        let copied = false;
-        try {
-          await navigator.clipboard?.writeText(inv.setupUrl);
-          copied = true;
-        } catch {
-          copied = false;
-        }
-        fireToast(
-          `${who} invited as ${v.role}. This server sends no email, so ${copied ? 'their password setup link is on your clipboard' : `share this setup link with them: ${inv.setupUrl}`} — it expires in 21 days.`,
-        );
-      } else {
-        fireToast(`${who} invited as ${v.role}. An invitation email with their password setup link was sent.`);
-      }
-      setAdminEpoch((n) => n + 1);
+      const result = invitationOutcome(email, res.status, await res.json().catch(() => null));
+      rememberInvitation(result);
+      fireToast(result.recorded ? 'Invitation recorded. Review its delivery and any setup link below.' : result.note,
+        result.recorded ? undefined : 'error');
+      if (result.recorded) reload();
     } catch (e) {
-      fireToast(
-        'Member not invited — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was created.',
-        'error',
-      );
+      const result = e instanceof ApiRequestError
+        ? invitationOutcome(email, e.status, e.payload)
+        : invitationOutcome(email, 0, null);
+      rememberInvitation(result);
+      fireToast(result.note, 'error');
     }
   };
 
@@ -267,13 +257,16 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
   /* KPI counts derived from the REAL rows only (never hardcoded, never a
      fixture) — '--' until the live payload lands. */
   const activeMembers = allMembers.filter((m) => m.state === 'active').length;
+  /* An invitee who has not set a password cannot sign in, and the server says
+     so (state 'invited', mdx-admin.ts memberStateOf) — QA 2026-10-08, j9. */
+  const invitedMembers = allMembers.filter((m) => m.state === 'invited').length;
   const mfaMembers = allMembers.filter((m) => m.mfa).length;
   /* "MFA enabled 0 of 1" beside a Settings row saying MFA is required read as
      two opposite answers. What this counts is an enrolled authenticator app
      (users.mfa_enabled, services/mfa-enrolment.ts); a member without one is
      asked for an emailed code at sign-in, so the label says which it is. */
   const kpis = [
-    { label: 'Members', value: allMembers.length, meta: `${activeMembers} active` },
+    { label: 'Members', value: allMembers.length, meta: `${activeMembers} active${invitedMembers ? ` · ${invitedMembers} invited` : ''}` },
     { label: 'Roles', value: roles.length, meta: 'Distinct org roles' },
     { label: 'Authenticator app', value: mfaMembers, meta: `of ${allMembers.length} members enrolled` },
     facetDown('apiKeys')
@@ -335,15 +328,16 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         aMemberIsSelected: member != null,
       },
       availableActions: [
-        'Inviting a member, granting program access, editing role scopes, revoking an API key and changing org settings each capture a reason and emit a Part 11 audit entry — administrator acts, proposed only in conversation',
+        'Create an API key from the API keys tab: choose read-only scopes, optional expiration, request limit and a reason. The full secret is shown once to the administrator and is never shared in conversation',
+        'Inspect API-key usage, or manage platform personnel from Roles + scopes when the server verifies platform standing. These changes require the person’s explicit form action',
+        'Invite members, change membership roles, revoke API keys, or propose program access and organization settings changes',
         'Switch between the Members, Roles + scopes, SSO + provisioning, API keys and Settings tabs, or filter members by state (all / active / invited / disabled)',
       ],
     };
   }, [loading, error, forbidden, unavailable, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
-  /* View state only. Every mutation this screen offers — invite, grant,
-     scope edit, key revoke, setting change — is a governed administrator act
-     that routes through the rail's §11.50 sign-off, and none is reachable
-     from here. Switching under an open invite/revoke form would discard it. */
+  /* View state only. Administrative mutations require the person's explicit
+     action; AnA cannot create a credential. Switching under an open invite,
+     revoke or key-creation drawer would discard it or its one-time secret. */
   useSurfaceActionHandlers('admin-console', {
     'admin-console.open-tab': (params) => {
       const target = String(params.tab ?? '');
@@ -520,6 +514,10 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                   <div className="drawer-actions">
                     <button className="btn primary small" onClick={() => ask(`Grant ${member.name} access to a program. Confirm program, scope, and expiry, then emit the Part 11 audit entry.`)}>{I.plus} Grant access</button>
                     <button className="btn ghost small" onClick={() => ask(`Show ${member.name}'s last 90 days of activity — every signing and artifact touched. Export as Part 11 PDF.`)}>{I.eye} Audit activity</button>
+                    {/* Role change and removal call the membership routes directly
+                        (QA 2026-10-08, j9 finding 1): a reason, a confirmation, and
+                        the server's own answer. */}
+                    <AdminMemberActions key={member.id} member={member} organizationId={a?.organizationId} onChanged={reload} toast={fireToast} onInvitationOutcome={rememberInvitation} />
                   </div>
                 </aside>
               )}
@@ -541,6 +539,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
               </div>
             </section>
           )}
+
+          {tab === 'roles' && <AdminPlatformGrants />}
 
           {tab === 'sso' && !sso && (
             <div className="adm-facet-error">
@@ -581,7 +581,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
           {tab === 'apikeys' && (
             <section className="section">
-              <div className="section-head"><h2>API keys</h2><span className="section-sub">{facetDown('apiKeys') ? 'scopes are immutable per key' : `${apiKeys.length} key${apiKeys.length === 1 ? '' : 's'} · scopes are immutable per key`}</span></div>
+              <div className="section-head"><h2>API keys</h2><span className="section-sub">{facetDown('apiKeys') ? 'scopes are immutable per key' : `${apiKeys.length} key${apiKeys.length === 1 ? '' : 's'} · scopes are immutable per key`}</span><button className="btn primary small adm-key-create" onClick={() => setCreatingKey(true)} disabled={!ready}>{I.plus} Create API key</button></div>
               {facetDown('apiKeys') ? (
                 <div className="adm-facet-error">
                   <EmptyState
@@ -629,7 +629,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                         <div className="adm-muted">{k.created}</div>
                         <div className={overdue ? 'adm-overdue' : ''}>{k.rotateIn || '—'}</div>
                         <div className="adm-muted">{formatWhen(k.lastUsed)}</div>
-                        <div>
+                        <div className="adm-key-actions">
+                          {k.keyId && <button className="btn ghost small" onClick={() => setKeyUsage({ keyId: k.keyId!, name: k.name })} aria-label={`Usage for ${k.name}`}>{I.eye} Usage</button>}
                           <button
                             className="btn ghost small"
                             onClick={() => setRevoking(k)}
@@ -680,6 +681,9 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                   )}
                 </div>
               )}
+              {/* Its own read and its own door, for the owner or an administrator (P1-47), so it is
+                  shown whether or not the settings above could be read. */}
+              <ClaudeConnectorSetting />
             </section>
           )}
 
@@ -716,6 +720,11 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         </>
       )}
 
+      {/* Handover remains mounted while the real roster reloads. A link is never copied automatically. */}
+      {invitationResults.length > 0 && <section className="section" aria-label="Member invitation handover">
+        <OnboardingInvitations invitations={invitationResults} />
+        <button type="button" className="btn ghost small" onClick={() => setInvitationResults([])}>Dismiss invitation handover</button>
+      </section>}
       {inviting && (
         <C2CForm
           config={INVITE_FORM}
@@ -730,6 +739,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
           onSubmit={() => void revokeKey()}
         />
       )}
+      {creatingKey && <AdminApiKeyCreate onClose={() => setCreatingKey(false)} onCreated={reload} />}
+      {keyUsage && <AdminApiKeyUsage {...keyUsage} onClose={() => setKeyUsage(null)} />}
       <C2CToast msg={toast} />
     </div>
   );

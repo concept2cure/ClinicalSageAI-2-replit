@@ -69,6 +69,20 @@ function correlationIdFor(req: Request): string | undefined {
 }
 
 
+/**
+ * The request's tenant as the auth boundary resolved it
+ * (middleware/establishRequestTenantScope.ts publishes req.tenantContext), or
+ * null — an explicit platform row — when the request had none. Read off the
+ * request, not the async scope: 'finish' is not guaranteed to fire inside it.
+ * Never from a header (DP-28, plan P1-27).
+ */
+function verifiedOrganizationOf(req: Request): number | null {
+  const raw = (req as Request & { tenantContext?: { organizationId?: unknown } }).tenantContext
+    ?.organizationId;
+  const id = typeof raw === 'number' ? raw : typeof raw === 'string' && raw ? Number(raw) : NaN;
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
 function shouldSkip(path: string): boolean {
   return SKIP_PATH_PATTERNS.some(pattern => pattern.test(path));
 }
@@ -132,6 +146,7 @@ export function applyAuditTrailMiddleware(
               typeof req.headers['user-agent'] === 'string'
                 ? req.headers['user-agent']
                 : undefined,
+            organizationId: verifiedOrganizationOf(req),
           }
         )
         .catch(err => {

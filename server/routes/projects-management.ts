@@ -6,6 +6,9 @@ import { and, eq } from 'drizzle-orm';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const log = createScopedLogger('projects-management');
 
@@ -333,7 +336,9 @@ router.post('/', async (req, res) => {
  * DELETE /api/projects/:projectId
  * Delete a specific project
  */
-router.delete('/:projectId', async (req, res) => {
+/* A writing role deletes (PF-08). The route answered any member of the
+   organization, viewer included. */
+router.delete('/:projectId', requireEditorAccess, async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const tenantContext = getTenantContext(req);
@@ -357,8 +362,22 @@ router.delete('/:projectId', async (req, res) => {
       return res.status(403).json({ error: 'Access denied to this project' });
     }
 
-    // Delete the project
-    await db.delete(projects).where(eq(projects.id, projectId));
+    /* A program's anchor row, and a project holding documents past draft, is
+       never hard-deleted here (PF-08; PF-13 founder decision 2026-09-26): the
+       delete cascades them away. The check reads, and locks, what this delete
+       would destroy, in the same transaction as the delete. */
+    const refusal = await db.transaction(async (tx) => {
+      const refused = projectDeletionRefusal(
+        await projectDeletionHolds(queryableFromDrizzle(tx), { projectIds: [projectId] }),
+        'project',
+      );
+      if (refused) return refused;
+      await tx.delete(projects).where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)));
+      return null;
+    });
+    if (refusal) {
+      return res.status(refusal.status).json(refusal.body);
+    }
 
     try {
       const now = new Date();
@@ -396,6 +415,12 @@ router.delete('/:projectId', async (req, res) => {
     log.debug(`Deleted project ${projectId} (${existingProject.name})`);
     res.json({ message: 'Project deleted successfully', projectId });
   } catch (error) {
+    // Another store keeps a record under the project; the delete rolled back (PF-13).
+    const blocked = projectDeleteBlockedRefusal(error, 'project');
+    if (blocked) {
+      log.warn('Project delete refused by the database: a store keeps records under it', blocked.heldBy);
+      return res.status(blocked.status).json(blocked.body);
+    }
     log.error('Error deleting project:', error);
     res.status(500).json({ error: 'Failed to delete project' });
   }

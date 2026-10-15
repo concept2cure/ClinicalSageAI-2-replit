@@ -1,0 +1,329 @@
+# g-fda-jnda-rule-pack-m1-v2-2 — RED (before the migration and set entry; tests written first)
+# 2026-10-05 · npx vitest run tests/regulatory/fda-module1-numbering.test.ts tests/regulatory/jnda-rule-pack-module1.test.ts
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > the migration is on the deploy path, above the tenant sweep 8ms
+   → migrations/20261005_fda_jnda_m1_outline_v2_2.sql does not exist: expected false to be true // Object.is equality
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-05T03:01:28.189Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:01:28.190Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-05T03:01:28.190Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA context-of-use list carries the Module 1 headings this contract is derived from 2ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the deep IND eCTD map (project bootstrap / readiness / checklist) files Module 1 where FDA does 2ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the IND section registry (AnA plans, coverage, chat) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the CTD authoring guidance (AnA drafting prompts) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does 15ms
+ × tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live nda:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does 30ms
+   → nda:fda ich-m4-v2.1: expected [ …(6) ] to deeply equal []
+ × tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live bla:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does 16ms
+   → bla:fda ich-m4-v2.1: expected [ …(6) ] to deeply equal []
+ × tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live anda:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does 16ms
+   → anda:fda fda-anda-21cfr314-94-v1.0: expected [ …(5) ] to deeply equal []
+ × tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of a nda is the FDA Module 1 an application files 27ms
+   → nda:fda ich-m4-v2.1 does not require 1.12.14: expected [ Array(11) ] to include '1.12.14'
+ × tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of a bla is the FDA Module 1 an application files 26ms
+   → bla:fda ich-m4-v2.1 does not require 1.12.14: expected [ Array(11) ] to include '1.12.14'
+ × tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of an ANDA is patent and exclusivity at 1.3.5.x, never under Promotional material (1.15) 15ms
+   → anda:fda fda-anda-21cfr314-94-v1.0: expected [ Array(11) ] to deeply equal ArrayContaining{…}
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the placement and identity rules catch the misfilings they exist for, and stay ancestor-permissive 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack carries the Module 1 content an initial IND must file 27ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the submission workflows AnA is guided by file Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the global-RI FDA Module 1 requirements file where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the reference FDA backbone template files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the required-artifact matrix (IND / NDA / BLA project bootstrap) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the Module 1 authoring-surface structure (M1/M2 build state) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template (dispatch-readiness required sections) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template requires of an IND only what an IND files, and of an NDA only what an NDA files 4ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the compile gate baseline (unknown program type) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the compile gate requires of an IND (the live rule pack) is what the seeded IND tree creates 18ms
+ × tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > after a deploy the live jnda:pmda outline has 1.11, in order, and the gates require it 2663ms
+   → expected [ 'ich-m4-v2.1' ] to deeply equal [ 'ich-m4-v2.2' ]
+ × tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > every new row is live, every old row is superseded by it, and each records its basis 1754ms
+   → nda:fda: expected [ 'ich-m4-v2.1' ] to deeply equal [ 'ich-m4-v2.2' ]
+ ✓ tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > re-runs on every deploy without changing anything (Rule 1) 1913ms
+ × tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > refuses a truncated row already holding a new key — ON CONFLICT DO NOTHING would otherwise keep it 2583ms
+   → promise resolved "undefined" instead of rejecting
+ × tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > a later version superseding a 2026-10-05 row does not break the replay 2082ms
+   → expected [ 'ich-m4-v2.1' ] to deeply equal [ 'ich-m4-v2.3' ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live nda:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does
+AssertionError: nda:fda ich-m4-v2.1: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1.4 \"References — letters of authorization / right of reference\" — right of reference files under 1.4.2",
++   "1.14.4 \"Label and container labeling\" — carton and container labels files under 1.14.1 or 1.14.2",
++   "1.14.5 \"Structured product labeling (SPL)\" — structured product labeling (SPL) files under 1.14.1 or 1.14.2",
++   "1.14.5 \"Structured product labeling (SPL)\" — FDA 1.14.5 is Foreign labeling",
++   "1.19 \"Environmental analysis\" — environmental assessment / categorical exclusion files under 1.12.14",
++   "1.19 \"Environmental analysis\" — FDA 1.19 is Pre-EUA and EUA",
++ ]
+
+ ❯ tests/regulatory/fda-module1-numbering.test.ts:299:70
+    297|       const pack = liveFdaPack(docType);
+    298|       const nodes = pack.sections.filter((s) => s.code !== 'M1');
+    299|       expect(violationsFor(nodes), `${docType}:fda ${pack.version}`).t…
+       |                                                                      ^
+    300|     },
+    301|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live bla:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does
+AssertionError: bla:fda ich-m4-v2.1: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1.4 \"References — letters of authorization / right of reference\" — right of reference files under 1.4.2",
++   "1.14.4 \"Label and container labeling\" — carton and container labels files under 1.14.1 or 1.14.2",
++   "1.14.5 \"Structured product labeling (SPL)\" — structured product labeling (SPL) files under 1.14.1 or 1.14.2",
++   "1.14.5 \"Structured product labeling (SPL)\" — FDA 1.14.5 is Foreign labeling",
++   "1.19 \"Environmental analysis\" — environmental assessment / categorical exclusion files under 1.12.14",
++   "1.19 \"Environmental analysis\" — FDA 1.19 is Pre-EUA and EUA",
++ ]
+
+ ❯ tests/regulatory/fda-module1-numbering.test.ts:299:70
+    297|       const pack = liveFdaPack(docType);
+    298|       const nodes = pack.sections.filter((s) => s.code !== 'M1');
+    299|       expect(violationsFor(nodes), `${docType}:fda ${pack.version}`).t…
+       |                                                                      ^
+    300|     },
+    301|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live anda:fda rule pack (the editor outline and the gates' required set) files Module 1 where FDA does
+AssertionError: anda:fda fda-anda-21cfr314-94-v1.0: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1.3.5 \"Field copy certification\" — field copy certification files under 1.3.2",
++   "1.15 \"Patent and exclusivity\" — patent information / certification files under 1.3.5",
++   "1.15.1 \"Patent information\" — patent information / certification files under 1.3.5",
++   "1.15.2 \"Patent certification (Paragraph I / II / III / IV)\" — patent information / certification files under 1.3.5",
++   "1.15.3 \"Exclusivity statement\" is not an FDA Module 1 heading (nor an ancestor/descendant of one)",
++ ]
+
+ ❯ tests/regulatory/fda-module1-numbering.test.ts:299:70
+    297|       const pack = liveFdaPack(docType);
+    298|       const nodes = pack.sections.filter((s) => s.code !== 'M1');
+    299|       expect(violationsFor(nodes), `${docType}:fda ${pack.version}`).t…
+       |                                                                      ^
+    300|     },
+    301|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of a nda is the FDA Module 1 an application files
+AssertionError: nda:fda ich-m4-v2.1 does not require 1.12.14: expected [ Array(11) ] to include '1.12.14'
+ ❯ tests/regulatory/fda-module1-numbering.test.ts:312:77
+    310|     const m1 = requiredM1(pack);
+    311|     for (const code of ['1.1', '1.2', '1.3.3', '1.3.4', '1.12.14', '1.…
+    312|       expect(m1, `${docType}:fda ${pack.version} does not require ${co…
+       |                                                                             ^
+    313|     }
+    314|     for (const code of ['1.19', '1.14.4', '1.14.5', '1.3.1']) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of a bla is the FDA Module 1 an application files
+AssertionError: bla:fda ich-m4-v2.1 does not require 1.12.14: expected [ Array(11) ] to include '1.12.14'
+ ❯ tests/regulatory/fda-module1-numbering.test.ts:312:77
+    310|     const m1 = requiredM1(pack);
+    311|     for (const code of ['1.1', '1.2', '1.3.3', '1.3.4', '1.12.14', '1.…
+    312|       expect(m1, `${docType}:fda ${pack.version} does not require ${co…
+       |                                                                             ^
+    313|     }
+    314|     for (const code of ['1.19', '1.14.4', '1.14.5', '1.3.1']) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the gates require of an ANDA is patent and exclusivity at 1.3.5.x, never under Promotional material (1.15)
+AssertionError: anda:fda fda-anda-21cfr314-94-v1.0: expected [ Array(11) ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "1.3.5.1",
+-   "1.3.5.2",
+-   "1.3.5.3",
++ [
++   "1.1",
++   "1.2",
++   "1.3",
++   "1.12.11",
++   "1.12.12",
+    "1.12.14",
++   "1.14.1",
++   "1.14.3",
++   "1.15.1",
++   "1.15.2",
++   "1.15.3",
+  ]
+
+ ❯ tests/regulatory/fda-module1-numbering.test.ts:323:44
+    321|     const pack = liveFdaPack('anda');
+    322|     const m1 = requiredM1(pack);
+    323|     expect(m1, `anda:fda ${pack.version}`).toEqual(expect.arrayContain…
+       |                                            ^
+    324|     expect(m1.filter((c) => c === '1.15' || c.startsWith('1.15.')), `a…
+    325|     expect(violationsFor(m1.map((code) => ({ code, title: code })))).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > the migration is on the deploy path, above the tenant sweep
+AssertionError: migrations/20261005_fda_jnda_m1_outline_v2_2.sql does not exist: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/jnda-rule-pack-module1.test.ts:112:86
+    110| describe('jnda:pmda files the draft RMP at Module 1 section 1.11', () …
+    111|   it('the migration is on the deploy path, above the tenant sweep', ()…
+    112|     expect(fs.existsSync(path.join(ROOT, MIGRATION)), `${MIGRATION} do…
+       |                                                                                      ^
+    113|     const at = C2C_MIGRATION_FILES.indexOf(MIGRATION);
+    114|     expect(at, `${MIGRATION} is not in C2C_MIGRATION_FILES`).toBeGreat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > after a deploy the live jnda:pmda outline has 1.11, in order, and the gates require it
+AssertionError: expected [ 'ich-m4-v2.1' ] to deeply equal [ 'ich-m4-v2.2' ]
+
+- Expected
++ Received
+
+  [
+-   "ich-m4-v2.2",
++   "ich-m4-v2.1",
+  ]
+
+ ❯ tests/regulatory/jnda-rule-pack-module1.test.ts:124:40
+    122|     await deploy(pg);
+    123|     const rows = await live(pg, 'jnda', 'pmda');
+    124|     expect(rows.map((r) => r.version)).toEqual(['ich-m4-v2.2']);
+       |                                        ^
+    125|     const secs = rows[0].required_sections;
+    126|     const m1 = secs.filter((s) => s.parent_key === 'M1').sort((a, b) =…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > every new row is live, every old row is superseded by it, and each records its basis
+AssertionError: nda:fda: expected [ 'ich-m4-v2.1' ] to deeply equal [ 'ich-m4-v2.2' ]
+
+- Expected
++ Received
+
+  [
+-   "ich-m4-v2.2",
++   "ich-m4-v2.1",
+  ]
+
+ ❯ tests/regulatory/jnda-rule-pack-module1.test.ts:145:103
+    143|     await deploy(pg);
+    144|     for (const m of MINTED) {
+    145|       expect((await live(pg, m.docType, m.agency)).map((r) => r.versio…
+       |                                                                                                       ^
+    146|       expect((await row(pg, m.docType, m.agency, m.from)).superseded_b…
+    147|       const fresh = await row(pg, m.docType, m.agency, m.to);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > refuses a truncated row already holding a new key — ON CONFLICT DO NOTHING would otherwise keep it
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ tests/regulatory/jnda-rule-pack-module1.test.ts:178:28
+    176|     await pg.exec(`INSERT INTO c2c_rule_packs (doc_type, agency, versi…
+    177|                    VALUES ('jnda', 'pmda', 'ich-m4-v2.2', 'truncated',…
+    178|     await expect(deploy(pg)).rejects.toThrow(/jnda:pmda ich-m4-v2\.2/);
+       |                            ^
+    179|     await pg.close();
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  tests/regulatory/jnda-rule-pack-module1.test.ts > jnda:pmda files the draft RMP at Module 1 section 1.11 > a later version superseding a 2026-10-05 row does not break the replay
+AssertionError: expected [ 'ich-m4-v2.1' ] to deeply equal [ 'ich-m4-v2.3' ]
+
+- Expected
++ Received
+
+  [
+-   "ich-m4-v2.3",
++   "ich-m4-v2.1",
+  ]
+
+ ❯ tests/regulatory/jnda-rule-pack-module1.test.ts:191:66
+    189|                     WHERE doc_type = 'nda' AND agency = 'fda' AND vers…
+    190|     await expect(deploy(pg)).resolves.toBeUndefined();
+    191|     expect((await live(pg, 'nda', 'fda')).map((r) => r.version)).toEqu…
+       |                                                                  ^
+    192|     expect((await row(pg, 'nda', 'fda', 'ich-m4-v2.1')).superseded_by)…
+    193|     await pg.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  11 failed | 17 passed (28)
+   Start at  03:01:25
+   Duration  11.96s (transform 2.16s, setup 181ms, import 3.10s, tests 11.22s, environment 0ms)
+

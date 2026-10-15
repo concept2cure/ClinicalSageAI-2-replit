@@ -16,6 +16,7 @@
 
 import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('orchestration');
 
@@ -32,6 +33,7 @@ import {
   getLatestSnapshot,
 } from '../services/orchestration';
 import { deriveVerdict } from '../services/orchestration/pre-submission-gate-verdict';
+import type { IchComplianceReport } from '../services/cmc/ich-compliance-checker';
 import type {
   OrchestrationStartRequest,
   ReadinessRequest,
@@ -129,6 +131,9 @@ router.post('/execute', async (req: Request, res: Response) => {
     const projectId = projectIdOf(body.projectId);
     if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
+    // The requester's address, for each dispatched action's audit row; the
+    // orchestrator wrote '127.0.0.1' there until 2026-10-15. clientIpKey, as in
+    // recordGateAudit below: the column is NOT NULL, so none reads 'unknown'.
     const execution = await executeWorkflow({
       templateId: body.templateId,
       projectId,
@@ -144,13 +149,11 @@ router.post('/execute', async (req: Request, res: Response) => {
         organizationId: orgId,
       },
       sourceSurface: 'api',
-    });
+    }, { ipAddress: clientIpKey(req) });
 
     res.json(execution);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Workflow execution failed';
-    logger.error('Execute error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'running the workflow', err);
   }
 });
 
@@ -185,8 +188,7 @@ router.get('/executions/:id', (req: Request, res: Response) => {
     }
     res.json(execution);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch execution';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading the workflow run', err);
   }
 });
 
@@ -204,8 +206,7 @@ router.get('/project/:id', (req: Request, res: Response) => {
     const workflows = getProjectWorkflows(orgId, projectId);
     res.json({ workflows });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch workflows';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'listing workflows', err);
   }
 });
 
@@ -238,8 +239,7 @@ router.post('/cancel/:id', (req: Request, res: Response) => {
     }
     res.json({ success: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Cancel failed';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'cancelling the workflow run', err);
   }
 });
 
@@ -264,9 +264,7 @@ router.get('/projects/:projectId/readiness', async (req: Request, res: Response)
     const assessment = computeReadinessAssessment(payload);
     res.json(assessment);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Readiness assessment failed';
-    logger.error('GET readiness error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'assessing readiness', err);
   }
 });
 
@@ -291,9 +289,7 @@ router.post('/readiness', async (req: Request, res: Response) => {
     const assessment = computeReadinessAssessment(payload);
     res.json(assessment);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Readiness assessment failed';
-    logger.error('Readiness error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'assessing readiness', err);
   }
 });
 
@@ -318,9 +314,7 @@ router.post('/recommendations', async (req: Request, res: Response) => {
     const recSet = generateRecommendations(payload, body);
     res.json(recSet);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Recommendation generation failed';
-    logger.error('Recommendations error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'generating recommendations', err);
   }
 });
 
@@ -339,9 +333,7 @@ router.post('/continuity', async (req: Request, res: Response) => {
     const snapshot = await generateContinuitySnapshot(orgId, projectId);
     res.json(snapshot);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Continuity snapshot failed';
-    logger.error('Continuity error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'building the continuity snapshot', err);
   }
 });
 
@@ -349,21 +341,21 @@ router.post('/continuity', async (req: Request, res: Response) => {
 // GET /api/orchestration/continuity/:projectId
 // ---------------------------------------------------------------------------
 
-router.get('/continuity/:projectId', (req: Request, res: Response) => {
+router.get('/continuity/:projectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
     const projectId = projectIdOf(req.params.projectId);
     if (projectId === null) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
-    const snapshot = getLatestSnapshot(orgId, projectId);
+    // Read from project_continuity_snapshots, shared by every API task (U14).
+    const snapshot = await getLatestSnapshot(orgId, projectId);
     if (!snapshot) {
       return res.status(404).json({ error: 'No continuity snapshot available. POST to /api/orchestration/continuity to generate one.' });
     }
     res.json(snapshot);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch continuity data';
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading continuity data', err);
   }
 });
 
@@ -394,9 +386,7 @@ router.get('/readiness/freshness/:projectId', async (req: Request, res: Response
       assembledAt: payload.assembledAt,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Freshness query failed';
-    logger.error('Readiness freshness error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading readiness freshness', err);
   }
 });
 
@@ -492,11 +482,27 @@ router.get('/pre-submission-gate/history/:projectId', async (req: Request, res: 
       history,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Gate history query failed';
-    logger.error('Gate history error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'reading gate history', err);
   }
 });
+
+/**
+ * The gate has no CRL or RTF risk model to consult, and says so (2026-10-15).
+ * It read them from regulatory-precedent-intelligence, whose CRL/RTF families
+ * ADR 0013 keeps unwired from the product: on an empty library both answered
+ * "low", risk 0 — read into the verdict as "CRL/RTF risk acceptable" — and on
+ * a tenant POST /api/tenants seeded, they scored uncited rates.
+ */
+function crlRtfNotAssessed(kind: 'CRL' | 'RTF') {
+  return {
+    overallRisk: 'not_assessed' as const,
+    riskScore: null,
+    reason: `${kind} risk is not assessed by this gate: the platform has no ${kind} risk model. `
+      + `The precedent engine's ${kind} checklist is guidance, not a score (ADR 0013).`,
+  };
+}
+
+type IchOutcome = { ran: true; report: IchComplianceReport } | { ran: false } | null;
 
 router.post('/pre-submission-gate', async (req: Request, res: Response) => {
   try {
@@ -506,47 +512,41 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
     const projectId = projectIdOf(body.projectId);
     if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
-    const orgIdStr = String(orgId);
-    const submissionType = body.submissionType ?? 'NDA';
+    // Not given is not an NDA: it was assessed and audited as one.
+    const submissionType = body.submissionType ?? null;
     const cmcProjectId = typeof body.cmcProjectId === 'string' && body.cmcProjectId.length > 0
       ? body.cmcProjectId
       : null;
 
-    const { crlTriggerService, rtfTriggerService } = await import(
-      '../services/regulatory-precedent-intelligence'
-    );
     const { runIchComplianceCheck } = await import(
       '../services/cmc/ich-compliance-checker'
     );
 
-    const ichPromise = cmcProjectId
-      ? runIchComplianceCheck(orgId, cmcProjectId).catch(err => {
-          logger.warn('ICH check failed within pre-submission gate', {
-            err: err instanceof Error ? err.message : String(err),
-          });
-          return null;
-        })
+    // null: no CMC project linked, so not run. ran: false — asked for and
+    // failed, which read as "no CMC project linked" until 2026-10-15.
+    const ichPromise: Promise<IchOutcome> = cmcProjectId
+      ? runIchComplianceCheck(orgId, cmcProjectId).then(
+          (report) => ({ ran: true as const, report }),
+          (err) => {
+            logger.warn('ICH check failed within pre-submission gate', {
+              err: err instanceof Error ? err.message : String(err),
+            });
+            return { ran: false as const };
+          },
+        )
       : Promise.resolve(null);
 
-    const [payload, crlAssessment, rtfReport, ichReport] = await Promise.all([
+    const [payload, ich] = await Promise.all([
       assembleCrossObjectPayload({
         organizationId: orgId,
         projectId,
         module: body.module,
       }),
-      crlTriggerService.assessCRLRisk({
-        organizationId: orgIdStr,
-        submissionType,
-        therapeuticArea: body.therapeuticArea,
-        indication: body.indication,
-      }),
-      rtfTriggerService.generatePreventionReport({
-        organizationId: orgIdStr,
-        submissionType,
-        center: body.center,
-      }),
       ichPromise,
     ]);
+    const ichReport = ich?.ran ? ich.report : null;
+    const crlAssessment = crlRtfNotAssessed('CRL');
+    const rtfReport = crlRtfNotAssessed('RTF');
 
     const readiness = computeReadinessAssessment(payload);
 
@@ -557,7 +557,7 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
       crlRisk: crlAssessment.overallRisk,
       rtfRisk: rtfReport.overallRisk,
       cmcOpenCritical: payload.cmcSignals.contradictionCounts.critical,
-      ichStatus: ichReport?.overallStatus,
+      ichStatus: ich === null ? undefined : ich.ran ? ich.report.overallStatus : 'incomplete',
       ichFailCount: ichReport?.counts.fail ?? 0,
     });
 
@@ -587,35 +587,21 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
         contradictionCounts: payload.cmcSignals.contradictionCounts,
         topContradictions: payload.cmcSignals.contradictions.slice(0, 10),
       },
-      ich: ichReport ? {
+      ich: ich === null ? null : ich.ran ? {
         cmcProjectId,
-        overallStatus: ichReport.overallStatus,
-        guidelineStatus: ichReport.guidelineStatus,
-        counts: ichReport.counts,
-        failingFindings: ichReport.findings.filter(f => f.status === 'fail').slice(0, 10),
-        warnings: ichReport.findings.filter(f => f.status === 'warning').slice(0, 10),
-      } : null,
-      crl: {
-        overallRisk: crlAssessment.overallRisk,
-        riskScore: crlAssessment.riskScore,
-        matchedPatternCount: crlAssessment.matchedPatterns.length,
-        topPatterns: crlAssessment.matchedPatterns.slice(0, 5).map(p => ({
-          patternCode: p.patternCode,
-          patternName: p.patternName,
-          category: p.category,
-          frequencyRate: p.frequencyRate,
-          resolutionDifficulty: p.resolutionDifficulty,
-        })),
-        trajectoryPrediction: crlAssessment.trajectoryPrediction,
-        mitigationStrategies: crlAssessment.mitigationStrategies.slice(0, 8),
+        overallStatus: ich.report.overallStatus,
+        guidelineStatus: ich.report.guidelineStatus,
+        counts: ich.report.counts,
+        failingFindings: ich.report.findings.filter(f => f.status === 'fail').slice(0, 10),
+        warnings: ich.report.findings.filter(f => f.status === 'warning').slice(0, 10),
+      } : {
+        cmcProjectId,
+        overallStatus: 'incomplete' as const,
+        reason: 'The ICH compliance check could not run.',
+        counts: null,
       },
-      rtf: {
-        overallRisk: rtfReport.overallRisk,
-        riskScore: rtfReport.riskScore,
-        matchedPatternCount: rtfReport.matchedPatterns.length,
-        preventionChecklist: rtfReport.preventionChecklist.slice(0, 15),
-        estimatedRecoveryDays: rtfReport.estimatedRecoveryDays,
-      },
+      crl: crlAssessment,
+      rtf: rtfReport,
       lastSignalAt: payload.lastSignalAt,
       assessedAt: new Date().toISOString(),
     };
@@ -630,9 +616,7 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
 
     res.json(response);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Pre-submission gate failed';
-    logger.error('Pre-submission gate error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: message });
+    return serverError(res, logger, 'running the pre-submission gate', err);
   }
 });
 
@@ -644,14 +628,14 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
 async function recordGateAudit(req: Request, response: {
   projectId: number;
   organizationId: number;
-  submissionType: string;
   verdict: string;
   verdictRationale: string[];
   readiness: { overallScore: number; status: string };
   cmc: { contradictionCounts: Record<string, number> };
-  crl: { overallRisk: string; riskScore: number };
-  rtf: { overallRisk: string; riskScore: number };
-  ich: { overallStatus: string; counts: Record<string, number> } | null;
+  submissionType: string | null;
+  crl: { overallRisk: string; riskScore: number | null };
+  rtf: { overallRisk: string; riskScore: number | null };
+  ich: { overallStatus: string; counts: Record<string, number> | null } | null;
   assessedAt: string;
 }): Promise<void> {
   let userId: number;

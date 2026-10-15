@@ -1,0 +1,145 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 5ms
+   → expected 'Look up the canonical SECTION STRUCTU…' not to match /factual document spines? from publis…/i
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 1ms
+   → quality_overall_summary: expected 'Look up the canonical SECTION STRUCTU…' to match /\bquality_overall_summary\b/
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 1ms
+   → Cannot convert undefined or null to object
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 1ms
+   → expected '' not to be '' // Object.is equality
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 1ms
+   → expected '' to match /interim copy of the ICH E2C\(R2\)/
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 1ms
+   → expected 'Look up the canonical SECTION STRUCTU…' to match /Present a hand-kept outline as the pl…/
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance
+AssertionError: expected 'Look up the canonical SECTION STRUCTU…' not to match /factual document spines? from publis…/i
+
+- Expected:
+/factual document spines? from published guidance/i
+
++ Received:
+"Look up the canonical SECTION STRUCTURE (heading skeleton) of a key submission document — the ordered sections (number + heading + purpose + required) with the regulatory basis. Covers the CTD Module 2 summaries (Quality Overall Summary 2.3, Nonclinical Overview 2.4, Clinical Overview 2.5, Clinical Summary 2.7), the cover letter, the FDA 510(k) Summary (21 CFR 807.92), the EU SmPC, the MDR/IVDR GSPR checklist, the IVDR Performance Evaluation Report, and the CTA IMPD. These are factual document spines from published guidance, not drafted prose — use them to scaffold authoring or to check a document's completeness. Static reference data, read-only. Pass `template_id` for one (e.g. 'clinical_overview', 'k510_summary', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) to list a family's templates."
+
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:65:29
+     63| describe('get_document_template description — says which outlines are …
+     64|   it('does not call every outline a factual spine from published guida…
+     65|     expect(description).not.toMatch(/factual document spines? from pub…
+       |                             ^
+     66|     expect(description).not.toMatch(/\bfactual\b/i);
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id
+AssertionError: quality_overall_summary: expected 'Look up the canonical SECTION STRUCTU…' to match /\bquality_overall_summary\b/
+
+- Expected:
+/\bquality_overall_summary\b/
+
++ Received:
+"Look up the canonical SECTION STRUCTURE (heading skeleton) of a key submission document — the ordered sections (number + heading + purpose + required) with the regulatory basis. Covers the CTD Module 2 summaries (Quality Overall Summary 2.3, Nonclinical Overview 2.4, Clinical Overview 2.5, Clinical Summary 2.7), the cover letter, the FDA 510(k) Summary (21 CFR 807.92), the EU SmPC, the MDR/IVDR GSPR checklist, the IVDR Performance Evaluation Report, and the CTA IMPD. These are factual document spines from published guidance, not drafted prose — use them to scaffold authoring or to check a document's completeness. Static reference data, read-only. Pass `template_id` for one (e.g. 'clinical_overview', 'k510_summary', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) to list a family's templates."
+
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:70:67
+     68|
+     69|   it('names every outline the tool serves, by template id', () => {
+     70|     for (const t of DOCUMENT_TEMPLATES) expect(description, t.id).toMa…
+       |                                                                   ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record
+TypeError: Cannot convert undefined or null to object
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:74:19
+     72|
+     73|   it('calls an outline record-derived only when the library reads it f…
+     74|     expect(Object.keys(TEMPLATE_OUTLINES_FROM_RECORD).sort()).toEqual(…
+       |                   ^
+     75|     for (const [id, record] of Object.entries(TEMPLATE_OUTLINES_FROM_R…
+     76|       RECORD_PROOFS[id]();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them
+AssertionError: expected '' not to be '' // Object.is equality
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:83:28
+     81|
+     82|   it('names every other outline as kept by hand — PBRER, IB, RMP and t…
+     83|     expect(handClause).not.toBe('');
+       |                            ^
+     84|     for (const t of DOCUMENT_TEMPLATES) {
+     85|       if (t.id in TEMPLATE_OUTLINES_FROM_RECORD) continue;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text
+AssertionError: expected '' to match /interim copy of the ICH E2C\(R2\)/
+
+- Expected:
+/interim copy of the ICH E2C\(R2\)/
+
++ Received:
+""
+
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:95:43
+     93|
+     94|   it('says the PBRER list is an interim E2C(R2) copy and the cover-let…
+     95|     expect(entryFor(handClause, 'pbrer')).toMatch(/interim copy of the…
+       |                                           ^
+     96|     expect(entryFor(handClause, 'cover_letter')).toMatch(/not a regula…
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text
+AssertionError: expected 'Look up the canonical SECTION STRUCTU…' to match /Present a hand-kept outline as the pl…/
+
+- Expected:
+/Present a hand-kept outline as the platform's outline, not as the guidance's own text/
+
++ Received:
+"Look up the canonical SECTION STRUCTURE (heading skeleton) of a key submission document — the ordered sections (number + heading + purpose + required) with the regulatory basis. Covers the CTD Module 2 summaries (Quality Overall Summary 2.3, Nonclinical Overview 2.4, Clinical Overview 2.5, Clinical Summary 2.7), the cover letter, the FDA 510(k) Summary (21 CFR 807.92), the EU SmPC, the MDR/IVDR GSPR checklist, the IVDR Performance Evaluation Report, and the CTA IMPD. These are factual document spines from published guidance, not drafted prose — use them to scaffold authoring or to check a document's completeness. Static reference data, read-only. Pass `template_id` for one (e.g. 'clinical_overview', 'k510_summary', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) to list a family's templates."
+
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:100:25
+     98|
+     99|   it("tells AnA to present a hand-kept outline as the platform's, not …
+    100|     expect(description).toMatch(/Present a hand-kept outline as the pl…
+       |                         ^
+    101|   });
+    102|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  04:20:03
+   Duration  1.21s (transform 758ms, setup 99ms, import 748ms, tests 14ms, environment 0ms)
+
+
+=================== FIX ROUND 1 — RED (2026-10-05) ===================
+Review: the round-0 description was 1712 characters. The gateway trims OpenAI-compatible tool descriptions to 1023 + ellipsis
+(server/services/ai-gateway/gateway.ts:919, OPENAI_MAX_TOOL_DESCRIPTION_CHARS = 1024), cutting at 'investigators_broch' and losing
+the presentation rule and the template_id/family usage. New test 'keeps the rule, the input usage and the record list ahead of
+the OpenAI trim, with the hand-kept list last', run against the round-0 description:
+round-0 description length: 1712
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last
+AssertionError: fits under the 1024-character trim: expected 1712 to be less than or equal to 1024
+      Tests  1 failed | 7 passed (8)

@@ -26,6 +26,21 @@ export class ProtocolSoaError extends Error {
 
 const CATEGORIES = ['lab', 'imaging', 'exam', 'vital_signs', 'pk', 'questionnaire', 'procedure', 'eligibility', 'other'];
 
+/** Read immutable parent identity without a child lock, then reserve parent
+ * and recheck the live assessment after any wait. All protected writers take
+ * locks in this parent-before-child order. */
+async function reserveAssessmentForWriteTx(client: Queryable, orgId: number, assessmentId: number): Promise<number> {
+  const parent = await client.query(`SELECT protocol_document_id FROM protocol_soa_assessments
+    WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL LIMIT 1`, [assessmentId, orgId]);
+  if (parent.rows.length === 0) throw new ProtocolSoaError('NOT_FOUND', 'Assessment not found for this organization.');
+  const docId = Number(parent.rows[0].protocol_document_id);
+  await requireProtocolForWriteTx(client, orgId, docId, { signedContent: true });
+  const current = await client.query(`SELECT id FROM protocol_soa_assessments
+    WHERE id=$1 AND organization_id=$2 AND protocol_document_id=$3 AND deleted_at IS NULL LIMIT 1 FOR UPDATE`, [assessmentId, orgId, docId]);
+  if (current.rows.length === 0) throw new ProtocolSoaError('NOT_FOUND', 'Assessment not found for this organization.');
+  return docId;
+}
+
 export async function addAssessmentTx(client: Queryable, orgId: number, userId: number, protocolDocumentId: number, input: { name: string; category?: string; orderIndex?: number }): Promise<{ id: number }> {
   if (input.category && !CATEGORIES.includes(input.category)) throw new ProtocolSoaError('BAD_INPUT', `Invalid category "${input.category}".`);
   await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: true });
@@ -39,11 +54,8 @@ export async function addAssessmentTx(client: Queryable, orgId: number, userId: 
 
 /** Mark an assessment performed at a visit (upsert). Validates both belong to the same document/org. */
 export async function setCellTx(client: Queryable, orgId: number, userId: number, input: { assessmentId: number; visitId: number; required?: boolean; notes?: string | null }): Promise<{ id: number }> {
-  const a = await client.query(`SELECT protocol_document_id FROM protocol_soa_assessments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [input.assessmentId, orgId]);
-  if (a.rows.length === 0) throw new ProtocolSoaError('NOT_FOUND', 'Assessment not found for this organization.');
-  const docId = a.rows[0].protocol_document_id;
-  await requireProtocolForWriteTx(client, orgId, Number(docId), { signedContent: true });
-  const v = await client.query(`SELECT id FROM protocol_schedule_visits WHERE id = $1 AND protocol_document_id = $2 AND organization_id = $3 AND deleted_at IS NULL LIMIT 1`, [input.visitId, docId, orgId]);
+  const docId = await reserveAssessmentForWriteTx(client, orgId, input.assessmentId);
+  const v = await client.query(`SELECT id FROM protocol_schedule_visits WHERE id = $1 AND protocol_document_id = $2 AND organization_id = $3 AND deleted_at IS NULL LIMIT 1 FOR UPDATE`, [input.visitId, docId, orgId]);
   if (v.rows.length === 0) throw new ProtocolSoaError('NOT_FOUND', 'Visit not found for this protocol document.');
   const { rows } = await client.query(
     `INSERT INTO protocol_soa_cells (organization_id, protocol_document_id, assessment_id, visit_id, required, notes, created_by)
@@ -57,11 +69,10 @@ export async function setCellTx(client: Queryable, orgId: number, userId: number
 
 /** Clear an assessment×visit cell. */
 export async function clearCellTx(client: Queryable, orgId: number, assessmentId: number, visitId: number): Promise<void> {
-  const a = await client.query(`SELECT protocol_document_id FROM protocol_soa_assessments WHERE id = $1 AND organization_id = $2 LIMIT 1`, [assessmentId, orgId]);
-  if (a.rows.length === 0) throw new ProtocolSoaError('NOT_FOUND', 'Cell not found.');
-  await requireProtocolForWriteTx(client, orgId, Number(a.rows[0].protocol_document_id), { signedContent: true });
-  const r = await client.query(`DELETE FROM protocol_soa_cells WHERE assessment_id = $1 AND visit_id = $2 AND organization_id = $3`, [assessmentId, visitId, orgId]);
-  if ((r as any).rowCount === 0) throw new ProtocolSoaError('NOT_FOUND', 'Cell not found.');
+  const docId = await reserveAssessmentForWriteTx(client, orgId, assessmentId);
+  const r = await client.query(`DELETE FROM protocol_soa_cells
+    WHERE assessment_id=$1 AND visit_id=$2 AND organization_id=$3 AND protocol_document_id=$4 RETURNING id`, [assessmentId, visitId, orgId, docId]);
+  if (r.rows.length === 0) throw new ProtocolSoaError('NOT_FOUND', 'Cell not found.');
 }
 
 export async function getSoaMatrix(orgId: number, protocolDocumentId: number): Promise<{ matrix: SoaMatrix; validation: SoaValidation }> {

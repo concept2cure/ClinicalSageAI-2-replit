@@ -1,0 +1,467 @@
+# 2026-10-08T06:31:55Z npx vitest run --config vitest.config.ts server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts
+# sources: before review: the implementer's stream.ts and context-enrichment.ts, program-project-anchor.ts at HEAD (chat-context-builder.ts and relational-profile-service.ts are the same in both)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a database without the anchor column is no linked project, not a failure
+{
+  "timestamp": "2026-10-08T06:32:03.730Z",
+  "level": "warn",
+  "message": "[program-project-anchor] projects.regulatory_program_id absent — program exports stay registry-unplaced (apply migrations/20260814_projects_regulatory_program_anchor.sql)",
+  "context": {
+    "context": "ana-ri.enrichment"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /safety marks the project records unavailable and asserts no absence
+{
+  "timestamp": "2026-10-08T06:32:03.759Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "ana-ri.enrichment",
+    "err": "terminating connection due to administrator command"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > reads the profile and workflow of the linked project, org-scoped, and reports nothing unavailable 40ms
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a program with no linked project is an honest empty: nothing read, nothing unavailable, and the model is told why 29ms
+   → expected '' to contain '## Project records'
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a database without the anchor column is no linked project, not a failure 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > eCTD project memory is read by the integer project id, never the UUID 2ms
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /safety reads no memory and says nothing about what is recorded; it is not a failure 3ms
+   → expected '\n\n## Safety Intelligence\nNo safety…' not to match /No…/-]+ data found for this project yet
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cmc reads no memory and says nothing about what is recorded; it is not a failure 2ms
+   → expected '\n\n## CMC Intelligence\nNo CMC data …' not to match /No…/-]+ data found for this project yet
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /csr reads no memory and says nothing about what is recorded; it is not a failure 2ms
+   → expected '\n\n## Clinical Study Report Intellig…' not to match /No…/-]+ data found for this project yet
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /device reads no memory and says nothing about what is recorded; it is not a failure 2ms
+   → expected '\n\n## Medical Device Intelligence\nN…' not to match /No…/-]+ data found for this project yet
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cms reads no memory and says nothing about what is recorded; it is not a failure 3ms
+   → expected '\n\n## CMS & Reimbursement Intelligen…' not to match /No…/-]+ data found for this project yet
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /diagnostics reads no memory and says nothing about what is recorded; it is not a failure 1ms
+   → expected '\n\n## Diagnostics & IVD Intelligence…' not to match /No…/-]+ data found for this project yet
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /ectd reads no memory and says nothing about what is recorded; it is not a failure 1ms
+   → expected '\n\n## eCTD Structure Intelligence\nN…' not to match /No…/-]+ data found for this project yet
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, Draft the Module 2.5 clinical overview for Vorelinib BX-512. reads no memory and says nothing about what is recorded; it is not a failure 2ms
+   → expected '\n\n## eCTD Structure Intelligence\nN…' not to match /No…/-]+ data found for this project yet
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > the CMC build state keeps the program UUID; CMC memory takes the integer 1ms
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a project the caller already resolved is used as given, with no second lookup 4ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > an integer project id is still itself, with no lookup 1ms
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /cmc marks the project records unavailable and asserts no absence
+{
+  "timestamp": "2026-10-08T06:32:03.762Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "ana-ri.enrichment",
+    "err": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /csr marks the project records unavailable and asserts no absence
+{
+  "timestamp": "2026-10-08T06:32:03.765Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "ana-ri.enrichment",
+    "err": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on Draft the Module 2.5 clinical overview for Vorelinib BX-512. marks the project records unavailable and asserts no absence
+{
+  "timestamp": "2026-10-08T06:32:03.767Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "ana-ri.enrichment",
+    "err": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD
+{
+  "timestamp": "2026-10-08T06:32:03.781Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a failed domain-memory read marks the source unavailable instead of passing as empty
+{
+  "timestamp": "2026-10-08T06:32:03.792Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection"
+  }
+}
+
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /safety marks the project records unavailable and asserts no absence 4ms
+   → expected [] to deeply equal [ 'project-record' ]
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /cmc marks the project records unavailable and asserts no absence 3ms
+   → expected [] to deeply equal [ 'project-record' ]
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /csr marks the project records unavailable and asserts no absence 2ms
+   → expected [] to deeply equal [ 'project-record' ]
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on Draft the Module 2.5 clinical overview for Vorelinib BX-512. marks the project records unavailable and asserts no absence 2ms
+   → expected [] to deeply equal [ 'project-record' ]
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > an unresolved project from the caller is reported with its reason, and nothing is looked up again 1ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a program with no organization to scope its lookup is could-not-tell, not "no linked project" 1ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD 10ms
+   → expected '\n## Enrichment context availability\…' to contain 'Overall Score: 61/100'
+ × server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /cmc keeps the Module 3 build state when the CMC memory read fails, and names only the CMC records 1ms
+   → expected [] to deeply equal [ 'cmc' ]
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a failed domain-memory read marks the source unavailable instead of passing as empty 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > records a timeout as a timeout and a failure as a failure 4ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a project lookup that cannot finish marks the project record unavailable and reads nothing 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a program with no linked project is an honest empty: nothing read, nothing unavailable, and the model is told why
+AssertionError: expected '' to contain '## Project records'
+
+- Expected
++ Received
+
+- ## Project records
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:113:26
+    111|     expect(result.enrichmentMeta?.hasProjectContext).toBe(true);
+    112|     // Nothing was read, so the model is told that, and told not to in…
+    113|     expect(result.block).toContain('## Project records');
+       |                          ^
+    114|     expect(result.block).toContain('no linked project record');
+    115|     expect(result.block).toContain('submission workflow progress');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /safety reads no memory and says nothing about what is recorded; it is not a failure
+AssertionError: expected '\n\n## Safety Intelligence\nNo safety…' not to match /No…/-]+ data found for this project yet
+
+- Expected:
+/No [\w /-]+ data found for this project yet/
+
++ Received:
+"
+
+## Safety Intelligence
+No safety data found for this project yet. Ask the user what safety work they need and gather parameters conversationally."
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:149:32
+    147|       expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    148|       // Nobody looked, so no "No {domain} data found for this project…
+    149|       expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+       |                                ^
+    150|       expect(result.block).toContain('no linked project record');
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cmc reads no memory and says nothing about what is recorded; it is not a failure
+AssertionError: expected '\n\n## CMC Intelligence\nNo CMC data …' not to match /No…/-]+ data found for this project yet
+
+- Expected:
+/No [\w /-]+ data found for this project yet/
+
++ Received:
+"
+
+## CMC Intelligence
+No CMC data found for this project yet. Ask the user what CMC work they need and gather parameters conversationally."
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:149:32
+    147|       expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    148|       // Nobody looked, so no "No {domain} data found for this project…
+    149|       expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+       |                                ^
+    150|       expect(result.block).toContain('no linked project record');
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /csr reads no memory and says nothing about what is recorded; it is not a failure
+AssertionError: expected '\n\n## Clinical Study Report Intellig…' not to match /No…/-]+ data found for this project yet
+
+- Expected:
+/No [\w /-]+ data found for this project yet/
+
++ Received:
+"
+
+## Clinical Study Report Intelligence
+No CSR data found for this project yet. Ask the user what CSR work they need and gather parameters conversationally."
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:149:32
+    147|       expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    148|       // Nobody looked, so no "No {domain} data found for this project…
+    149|       expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+       |                                ^
+    150|       expect(result.block).toContain('no linked project record');
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /device reads no memory and says nothing about what is recorded; it is not a failure
+AssertionError: expected '\n\n## Medical Device Intelligence\nN…' not to match /No…/-]+ data found for this project yet
+
+- Expected:
+/No [\w /-]+ data found for this project yet/
+
++ Received:
+"
+
+## Medical Device Intelligence
+No medical device data found for this project yet. Ask the user what medical device work they need and gather parameters conversationally."
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:149:32
+    147|       expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    148|       // Nobody looked, so no "No {domain} data found for this project…
+    149|       expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+       |                                ^
+    150|       expect(result.block).toContain('no linked project record');
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cms reads no memory and says nothing about what is recorded; it is not a failure
+AssertionError: expected '\n\n## CMS & Reimbursement Intelligen…' not to match /No…/-]+ data found for this project yet
+
+- Expected:
+/No [\w /-]+ data found for this project yet/
+
++ Received:
+"
+
+## CMS & Reimbursement Intelligence
+No CMS coverage and reimbursement data found for this project yet. Ask the user what CMS coverage and reimbursement work they need and gather parameters conversationally."
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:149:32
+    147|       expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    148|       // Nobody looked, so no "No {domain} data found for this project…
+    149|       expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+       |                                ^
+    150|       expect(result.block).toContain('no linked project record');
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /diagnostics reads no memory and says nothing about what is recorded; it is not a failure
+AssertionError: expected '\n\n## Diagnostics & IVD Intelligence…' not to match /No…/-]+ data found for this project yet
+
+- Expected:
+/No [\w /-]+ data found for this project yet/
+
++ Received:
+"
+
+## Diagnostics & IVD Intelligence
+No diagnostics and IVD data found for this project yet. Ask the user what diagnostics and IVD work they need and gather parameters conversationally."
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:149:32
+    147|       expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    148|       // Nobody looked, so no "No {domain} data found for this project…
+    149|       expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+       |                                ^
+    150|       expect(result.block).toContain('no linked project record');
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /ectd reads no memory and says nothing about what is recorded; it is not a failure
+AssertionError: expected '\n\n## eCTD Structure Intelligence\nN…' not to match /No…/-]+ data found for this project yet
+
+- Expected:
+/No [\w /-]+ data found for this project yet/
+
++ Received:
+"
+
+## eCTD Structure Intelligence
+No eCTD data found for this project yet. Ask the user what eCTD work they need and gather parameters conversationally."
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:149:32
+    147|       expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    148|       // Nobody looked, so no "No {domain} data found for this project…
+    149|       expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+       |                                ^
+    150|       expect(result.block).toContain('no linked project record');
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, Draft the Module 2.5 clinical overview for Vorelinib BX-512. reads no memory and says nothing about what is recorded; it is not a failure
+AssertionError: expected '\n\n## eCTD Structure Intelligence\nN…' not to match /No…/-]+ data found for this project yet
+
+- Expected:
+/No [\w /-]+ data found for this project yet/
+
++ Received:
+"
+
+## eCTD Structure Intelligence
+No eCTD data found for this project yet. Ask the user what eCTD work they need and gather parameters conversationally.
+
+
+## Document Generation Request Detected
+**Type:** Clinical Overview
+**Category:** ctd_section
+**CTD Section:** 2.5
+**Module:** M2
+**Description:** Integrated benefit-risk assessment across all clinical studies
+
+Generate this document NOW. Write complete, submission-ready content — not an outline, not a summary, not placeholders. Use proper regulatory prose with ICH/FDA/EMA compliance. When done, include an ```ana-action block so the platform can propose saving it as a governed artifact; the person confirms before it is saved."
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:149:32
+    147|       expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+    148|       // Nobody looked, so no "No {domain} data found for this project…
+    149|       expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+       |                                ^
+    150|       expect(result.block).toContain('no linked project record');
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a project the caller already resolved is used as given, with no second lookup
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:167:27
+    165|     const result = await enrichContextForChat({ message: SEARCH, proje…
+    166|
+    167|     expect(anchorReads()).toHaveLength(0);
+       |                           ^
+    168|     expect(h.summary).toHaveBeenCalledWith(42, 7);
+    169|     expect(result.enrichmentMeta?.unavailableSources).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /safety marks the project records unavailable and asserts no absence
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /cmc marks the project records unavailable and asserts no absence
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /csr marks the project records unavailable and asserts no absence
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on Draft the Module 2.5 clinical overview for Vorelinib BX-512. marks the project records unavailable and asserts no absence
+AssertionError: expected [] to deeply equal [ 'project-record' ]
+
+- Expected
++ Received
+
+- [
+-   "project-record",
+- ]
++ []
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:187:55
+    185|     const result = await enrichContextForChat({ message, projectId: PR…
+    186|
+    187|     expect(result.enrichmentMeta?.unavailableSources).toEqual(['projec…
+       |                                                       ^
+    188|     expect(result.enrichmentMeta?.unavailableReasons).toEqual({ 'proje…
+    189|     expect(result.block).toContain('Enrichment context unavailable: pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > an unresolved project from the caller is reported with its reason, and nothing is looked up again
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:202:27
+    200|     });
+    201|
+    202|     expect(anchorReads()).toHaveLength(0);
+       |                           ^
+    203|     expect(result.enrichmentMeta?.unavailableReasons).toEqual({ 'proje…
+    204|     expect(result.block).toContain('project-record (took too long to r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a program with no organization to scope its lookup is could-not-tell, not "no linked project"
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:211:27
+    209|     const result = await enrichContextForChat({ message: '/safety', pr…
+    210|
+    211|     expect(anchorReads()).toHaveLength(0);
+       |                           ^
+    212|     expect(result.enrichmentMeta?.unavailableReasons).toEqual({ 'proje…
+    213|     expect(result.block).not.toMatch(AFFIRMATIVE_ABSENCE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD
+AssertionError: expected '\n## Enrichment context availability\…' to contain 'Overall Score: 61/100'
+
+- Expected
++ Received
+
+- Overall Score: 61/100
++
++ ## Enrichment context availability
++ Enrichment context unavailable: submit (read failed). Do not infer that missing context or unresolved findings do not exist. Check the relevant records before relying on their absence.
++
++
++ ## Project Intelligence Profile
++ **Strategy:** Retain stability arm
++
++ **Documents:** 2 ingested | 3 memory atoms
++
++ Use this context to personalize your responses. Reference known risks, open questions, and decisions.
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:223:26
+    221|     const result = await enrichContextForChat({ message: '/submit', pr…
+    222|
+    223|     expect(result.block).toContain('Overall Score: 61/100');
+       |                          ^
+    224|     expect(result.enrichmentMeta?.unavailableSources).toEqual(['ectd']…
+    225|     expect(result.enrichmentMeta?.unavailableReasons).toEqual({ ectd: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /cmc keeps the Module 3 build state when the CMC memory read fails, and names only the CMC records
+AssertionError: expected [] to deeply equal [ 'cmc' ]
+
+- Expected
++ Received
+
+- [
+-   "cmc",
+- ]
++ []
+
+ ❯ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts:240:55
+    238|     expect(result.block).toContain('## Module 3 Build State');
+    239|     expect(result.block).toContain('batch_record (2)');
+    240|     expect(result.enrichmentMeta?.unavailableSources).toEqual(['cmc']);
+       |                                                       ^
+    241|     expect(result.block).not.toContain('No CMC data found');
+    242|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed | 8 passed (26)
+   Start at  06:31:55
+   Duration  7.83s (transform 5.52s, setup 123ms, import 7.12s, tests 142ms, environment 1ms)
+

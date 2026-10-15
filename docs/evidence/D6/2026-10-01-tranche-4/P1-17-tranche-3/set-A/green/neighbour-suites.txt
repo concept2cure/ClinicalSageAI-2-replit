@@ -1,0 +1,564 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > an unreachable FAERS is never reported as "no signals" > POST /faers answers 503 when openFDA is unreachable, not zero reports 42ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > an unreachable FAERS is never reported as "no signals" > a non-OK openFDA status is an outage, not an empty result set 7ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > an unreachable FAERS is never reported as "no signals" > POST /signal-detection answers 503 and emits NO signals array at all 6ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > an unreachable FAERS is never reported as "no signals" > openFDA 404/NOT_FOUND is a genuine zero, not an outage 4ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > signal detection reports real disproportionality, not rescaled frequency > builds a 2x2 table from openFDA counts and returns cited measures 8ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > signal detection reports real disproportionality, not rescaled frequency > surfaces method disagreement instead of collapsing it to one boolean 4ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > signal detection reports real disproportionality, not rescaled frequency > reports the page size separately from the FAERS-wide total 6ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > signal detection reports real disproportionality, not rescaled frequency > computes the demographics it returns instead of shipping empty objects 4ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > GET /health does not assert capabilities it does not have > names the three unimplemented analytics as not_implemented 5ms
+ ✓ server/routes/__tests__/rwe-faers-honesty.contract.test.ts > GET /health does not assert capabilities it does not have > makes no HIPAA compliance claim and no FDA-alignment claim 3ms
+stderr | tests/routes/ectd-compile-spine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-spine.test.ts
+{
+  "timestamp": "2026-10-01T08:06:19.459Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > q_sub.create on POST /api/q-sub 2025ms
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > q_sub.commitment.rolled_in on PATCH /api/q-sub/commitments/:id/rolled-in 55ms
+stderr | tests/routes/ectd-compile-ident.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-ident.test.ts
+{
+  "timestamp": "2026-10-01T08:06:19.761Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > falls back to the program code when no number is recorded
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 20 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it
+[eCTD Compile] Project 7: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > keeps the numeric legacy path: sections load by project id, org-scoped 6ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program UUID org-scoped and reports the unlinked section store honestly 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program CODE ident (non-UUID, non-numeric) 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 404s an ident outside the caller org without leaking data 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 401s without an org context before any resolution 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/validate — program idents get the unlinked-store finding > prepends SECTION_STORE_UNLINKED as a blocking error 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers 3ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/history — program idents filter by the program label > reads history org-scoped with the resolved label 3ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > falls back to the program code when no number is recorded 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it 4ms
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > POST /api/esignature/sign fails closed and logs no esignature.sign when the signature cannot be persisted 932ms
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > evidence_sufficiency.assess on POST /assess 73ms
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > gspr.mapping.upsert on POST /programs/:p/mappings 417ms
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+{
+  "timestamp": "2026-10-01T08:06:21.414Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > post_market.document.validate logs on POST /documents/:id/validate 266ms
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > falls back to the program code when no agency number is recorded — never invents one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > says "unassigned" when the program has neither a number nor a code
+[eCTD Compile] Program 2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > an empty or whitespace application_number is not a recorded number
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > post_market.document.approve logs on POST /documents/:id/approve 148ms
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] could not record spine compilation for Program BX-204: column "leaf_manifest" of relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > post_market.document.supersede logs on POST /documents/:id/supersede 143ms
+ ✓ server/__tests__/security/audit-trail-contract.test.ts > Audit-trail contract — every governed mutation logs one row > asserts no audit row is leaked on a failed validation (422 path) 29ms
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count 1664ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed) 7ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > falls back to the program code when no agency number is recorded — never invents one 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > says "unassigned" when the program has neither a number nor a code 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > an empty or whitespace application_number is not a recorded number 7ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index 11ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them 9ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure 7ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so 8ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type 11ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for 1ms
+stderr | tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history
+[eCTD History] query failed for Program BX-204: relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled 14ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region 11ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly 1ms
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it 545ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit 6ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf 8ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out 7ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so 5ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal 13ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > a rehearsal of an original sequence is refused before anything is assembled 1ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only 10ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — cross-tenant isolation > does not serve one organization a cached response produced for another 106ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — cross-tenant isolation > does not serve one user a cached response produced for a colleague 10ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — cross-tenant isolation > still caches a genuine repeat from the same organization and user 9ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — key covers the whole request > treats a different image count as a different request 14ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — key covers the whole request > treats a different conversation history as a different /chat request 15ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — key covers the whole request > never lets /chat and /generate share a cache entry 9ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — key covers the whole request > ignores property order — a reordered body is the same request 18ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — fail closed without a verified identity > does not read from or write to the cache when no organization resolves 12ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts > Nano Banana cache — fail closed without a verified identity > never lets an identity-less request pick up an authenticated tenant entry 9ms
+stderr | tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written
+[eCTD Validate] eValidator import not recorded: audit_logs unavailable
+
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > keeps the report with its compilation, and its import record commits with it 13ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report it cannot read, in the parser's words, and stores nothing 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report that is not JSON 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a compilation that is not a package of this program's submission 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > a replaced report stays listed on the one that replaces it, and the import record names it 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a request that names no compilation or carries no report 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > GET /:projectIdent/history — an imported report is shown with its compilation > reads the stored report back with each compilation 1ms
+stdout | server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > runRWEStudy > executes a real comparative study from FHIR counts
+{
+  "timestamp": "2026-10-01T08:06:22.857Z",
+  "level": "info",
+  "message": "[rwe-study] RWE study executed",
+  "context": {
+    "dataSource": "fhir",
+    "exposedN": 100,
+    "comparatorN": 100,
+    "status": "completed"
+  }
+}
+
+stdout | server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > runRWEStudy > returns insufficient_data with null statistics when a cohort is too small
+{
+  "timestamp": "2026-10-01T08:06:22.861Z",
+  "level": "info",
+  "message": "[rwe-study] RWE study executed",
+  "context": {
+    "dataSource": "fhir",
+    "exposedN": 0,
+    "comparatorN": 50,
+    "status": "insufficient_data"
+  }
+}
+
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > comparativeStatistics > computes risk ratio, difference, CI, and p-value from real counts 3ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > comparativeStatistics > returns null risk ratio when the comparator risk is zero (no fabrication) 0ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > comparativeStatistics > returns null measures when a cohort is empty 0ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > logisticRegression > recovers the sign of a separating covariate 1ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > incidenceRateRatio > computes IRR and CI from events and person-time 0ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > incidenceRateRatio > returns null IRR when person-time is zero 0ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > propensityAdjustedEffect > returns an IPTW-adjusted effect with risks in [0,1] 3ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > propensityAdjustedEffect > returns null with too few usable records 0ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > runRWEStudy > throws for a licensed vendor source that is not configured 2ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > runRWEStudy > throws when no FHIR source is connected 1ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > runRWEStudy > executes a real comparative study from FHIR counts 4ms
+ ✓ server/services/__tests__/rwe-study-service.test.ts > rwe-study-service > runRWEStudy > returns insufficient_data with null statistics when a cohort is too small 1ms
+stderr | tests/routes/ectd-backbone-leaf-honesty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-backbone-leaf-honesty.test.ts
+{
+  "timestamp": "2026-10-01T08:06:23.082Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > emits no leaf-file checksum at all
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > declares no leaf path, because no leaf file is rendered
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > marks the envelope as a draft backbone, not a sequence
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > counts sections with content, never files on disk
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > is the sha256 of the exact stored content
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > changes when the content changes
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > changes when the content changes
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > publishes nothing rather than a hash of nothing
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 19 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > is false while no leaf files exist, even with clean content
+[eCTD Compile] Project 42: completed | 5/5 modules complete | 0 errors, 0 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > says why, rather than leaving the user to infer it
+[eCTD Compile] Project 42: completed | 5/5 modules complete | 0 errors, 0 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > still reports the backbone compile as completed
+[eCTD Compile] Project 42: completed | 5/5 modules complete | 0 errors, 0 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > lists content errors alongside the packaging blocker
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 2 warnings
+
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > emits no leaf-file checksum at all 11ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > declares no leaf path, because no leaf file is rendered 4ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > marks the envelope as a draft backbone, not a sequence 3ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > counts sections with content, never files on disk 2ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > is the sha256 of the exact stored content 2ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > changes when the content changes 4ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > publishes nothing rather than a hash of nothing 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > is false while no leaf files exist, even with clean content 3ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > says why, rather than leaving the user to infer it 3ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > still reports the backbone compile as completed 2ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > lists content errors alongside the packaging blocker 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > applies the same rule to the readiness endpoint 2ms
+stdout | server/routes/__tests__/knowledge-base-upload-guards.test.ts
+{
+  "timestamp": "2026-10-01T08:06:23.994Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T08:06:23.996Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts
+{
+  "timestamp": "2026-10-01T08:06:23.996Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+{
+  "timestamp": "2026-10-01T08:06:24.032Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/knowledge-base-upload-guards.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-evidence-sufficiency.contract.test.ts > Tenant isolation — evidence-sufficiency > POST /programs/:org-A/assess succeeds 591ms
+ ✓ server/__tests__/security/tenant-isolation-evidence-sufficiency.contract.test.ts > Tenant isolation — evidence-sufficiency > POST /programs/:org-B/assess as org-A is refused 16ms
+ ✓ server/__tests__/security/tenant-isolation-evidence-sufficiency.contract.test.ts > Tenant isolation — evidence-sufficiency > GET /programs/:org-B/assessments as org-A is refused 14ms
+ ✓ server/__tests__/security/tenant-isolation-evidence-sufficiency.contract.test.ts > Tenant isolation — evidence-sufficiency > GET /assessments/:org-B-id as org-A returns 404 16ms
+ ✓ server/__tests__/security/tenant-isolation-evidence-sufficiency.contract.test.ts > Tenant isolation — evidence-sufficiency > returns 403 across the family when no organization context 12ms
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized" 630ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not 17ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers 3ms
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check)
+{
+  "timestamp": "2026-10-01T08:06:25.797Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "report.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "not a PDF (no %PDF prefix)"
+  }
+}
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > checks every file of a multi-file body, not only the first
+{
+  "timestamp": "2026-10-01T08:06:25.808Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "ok.csv",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > checks every file of a multi-file body, not only the first
+{
+  "timestamp": "2026-10-01T08:06:25.810Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "bad.csv",
+    "declaredMime": "text/csv",
+    "reason": "text/csv content not text-shaped (binary detected)"
+  }
+}
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > control: a real text file passes the guard and reaches the ingestion proxy
+{
+  "timestamp": "2026-10-01T08:06:25.823Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "notes.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ocr: an image is read, but only when the bytes are that image
+{
+  "timestamp": "2026-10-01T08:06:25.830Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "scan.png",
+    "declaredMime": "image/png",
+    "reason": "not a PNG"
+  }
+}
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ocr: an image is read, but only when the bytes are that image
+{
+  "timestamp": "2026-10-01T08:06:25.840Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "scan.png",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /extract-pdf: a binary declared as PDF is refused before any extractor sees it
+{
+  "timestamp": "2026-10-01T08:06:25.844Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "doc.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "not a PDF (no %PDF prefix)"
+  }
+}
+
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it 790ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses an executable named file whatever type it declares (415) 10ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a declared type the byte check cannot verify (415) 7ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 11ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > checks every file of a multi-file body, not only the first 10ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > leaves a request with no file to the handler (its own 422, unchanged) 6ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > control: a real text file passes the guard and reaches the ingestion proxy 8ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ocr: an image is read, but only when the bytes are that image 15ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /extract-pdf: a binary declared as PDF is refused before any extractor sees it 4ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ind-autodraft/upload: an executable is refused whatever type it declares 3ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:documentId — scoped to the caller’s organization > filters on organization_id, bound to the org on the request 32ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:documentId — scoped to the caller’s organization > refuses when the request carries no organization, rather than reading unscoped 12ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:documentId — scoped to the caller’s organization > cannot be steered to another tenant by the path parameter 6ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:signatureId/manifest — the scope is mandatory now > refuses without an organization instead of reading by id alone 5ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:signatureId/manifest — the scope is mandatory now > does not serve unattributed rows to every tenant 6ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /audit-trail/chain-integrity — already scoped, now connected > binds the chain read to the caller’s org 11ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /audit-trail/chain-integrity — already scoped, now connected > refuses without a tenant 10ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /audit-trail/seal-integrity — org admin is not a platform admin > refuses an org-scoped admin, which self-service signup mints for free 5ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /audit-trail/seal-integrity — org admin is not a platform admin > still admits a genuine platform role 9ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 with no organization context 91ms
+stderr | server/routes/__tests__/part11-compliance-honesty.test.ts > Part 11 reads fail closed on query error (no false-empty 200) > GET /signatures/:documentId returns 500 on a generic query failure
+[Part11] Signature list read failed: boom
+
+stderr | server/routes/__tests__/part11-compliance-honesty.test.ts > Part 11 reads fail closed on query error (no false-empty 200) > GET /signatures/:documentId returns 503 when the store is unprovisioned
+[Part11] electronic_signatures table not provisioned; failing closed
+
+stderr | server/routes/__tests__/part11-compliance-honesty.test.ts > Part 11 reads fail closed on query error (no false-empty 200) > GET /audit-trail/:entityId still refuses rather than serving an empty trail
+[Part11] Audit trail read failed: Cannot read properties of undefined (reading 'query')
+
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 for non-admin users 12ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > accepts admin role via roles array too 7ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 404 when org missing 6ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > emits tenant.export audit on success 9ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > passes the caller orgId through to the service (no override) 7ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > returns 503 when attestation key not configured 5ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > emits tenant.attestation.generate audit on success 5ms
+ ✓ server/routes/__tests__/part11-compliance-honesty.test.ts > Part 11 reads fail closed on query error (no false-empty 200) > GET /signatures/:documentId returns 500 on a generic query failure 24ms
+ ✓ server/routes/__tests__/part11-compliance-honesty.test.ts > Part 11 reads fail closed on query error (no false-empty 200) > GET /signatures/:documentId returns 503 when the store is unprovisioned 5ms
+ ✓ server/routes/__tests__/part11-compliance-honesty.test.ts > Part 11 reads fail closed on query error (no false-empty 200) > GET /audit-trail/:entityId still refuses rather than serving an empty trail 4ms
+ ✓ server/routes/__tests__/part11-chain-unhashed-honesty.test.ts > chain-integrity — unhashed rows are never reported as an intact chain > an all-NULL-hash chain is UNVERIFIABLE, not intact 37ms
+ ✓ server/routes/__tests__/part11-chain-unhashed-honesty.test.ts > chain-integrity — unhashed rows are never reported as an intact chain > does not claim a full re-computation it never performed 5ms
+ ✓ server/routes/__tests__/part11-chain-unhashed-honesty.test.ts > chain-integrity — unhashed rows are never reported as an intact chain > does not present a genesis hash that appears in no row as the chain lastHash 4ms
+ ✓ server/routes/__tests__/part11-chain-unhashed-honesty.test.ts > chain-integrity — unhashed rows are never reported as an intact chain > one unhashed row taints an otherwise-verifying chain 8ms
+ ✓ server/routes/__tests__/part11-chain-unhashed-honesty.test.ts > chain-integrity — unhashed rows are never reported as an intact chain > a genuinely verifying chain is still reported intact (fix does not over-refuse) 6ms
+ ✓ server/routes/__tests__/part11-chain-unhashed-honesty.test.ts > chain-integrity — unhashed rows are never reported as an intact chain > a real tampered row still reads BROKEN, which outranks unverifiable 3ms
+stderr | server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > fails closed on an unprovisioned store instead of returning an empty set
+[Part11] electronic_signatures table not provisioned; failing closed
+
+stderr | server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > does not hand the caller the exception text on a failed read
+[Part11] Signature target read failed: column "signed_target" does not exist
+
+ ✓ server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > finds the signature the governed-action path anchored to a target 25ms
+ ✓ server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > scopes to the caller organization, and filters on the target 6ms
+ ✓ server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > is not swallowed by the by-document route 12ms
+ ✓ server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > 403s without tenant context — never an unscoped read of signatures 4ms
+ ✓ server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > 400s when no target is given, rather than listing everything 4ms
+ ✓ server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > fails closed on an unprovisioned store instead of returning an empty set 4ms
+ ✓ server/routes/__tests__/part11-signatures-by-target.test.ts > GET /signatures/by-target > does not hand the caller the exception text on a failed read 6ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures — removed (single e-signature write path) > is not routed: the signing entry point no longer exists 28ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures — removed (single e-signature write path) > the Part 11 router never INSERTs into electronic_signatures (no phantom columns) 1ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures — removed (single e-signature write path) > keeps the read/verification surface that serves BOTH write paths 1ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures/:signatureId/revoke — removed (single revocation path) > is not routed 4ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures/:signatureId/revoke — removed (single revocation path) > no revoke route survives on the Part 11 router 1ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures/:signatureId/revoke — removed (single revocation path) > the router never claims a revocation it did not perform 0ms
+ ✓ server/routes/__tests__/part11-audit-actor-identity.test.ts > POST /api/part11/audit-trail: the actor is the authenticated principal, never the request body > writes the printed name from the authenticated identity, not from userName in the body 43ms
+ ✓ server/routes/__tests__/part11-audit-actor-identity.test.ts > POST /api/part11/audit-trail: the actor is the authenticated principal, never the request body > answers with the name it actually persisted, so the caller cannot read back its own claim 8ms
+ ✓ server/routes/__tests__/part11-audit-actor-identity.test.ts > POST /api/part11/audit-trail: the actor is the authenticated principal, never the request body > falls back through the same chain as audit-trail-routes when there is no email 29ms
+ ✓ server/routes/__tests__/part11-audit-actor-identity.test.ts > POST /api/part11/audit-trail: the actor is the authenticated principal, never the request body > records "system" rather than a caller-supplied name when the principal carries neither 6ms
+stderr | tests/gates/unverified-verdicts/part11-audit-trail-post.gate.test.ts > POST /api/part11/audit-trail: the audit row either lands or the answer says it did not > refuses with 503 and no success when the INSERT fails (23502 — the pre-fix production failure)
+[Part11] audit entry was NOT recorded: 23502: null value in column "organization_id" violates not-null constraint
+
+stderr | tests/gates/unverified-verdicts/part11-audit-trail-post.gate.test.ts > POST /api/part11/audit-trail: the audit row either lands or the answer says it did not > refuses with 503 when the store is unprovisioned (42P01)
+[Part11] audit_events not provisioned; the entry was NOT recorded
+
+ ✓ tests/gates/unverified-verdicts/part11-audit-trail-post.gate.test.ts > POST /api/part11/audit-trail: the audit row either lands or the answer says it did not > refuses with 503 and no success when the INSERT fails (23502 — the pre-fix production failure) 31ms
+ ✓ tests/gates/unverified-verdicts/part11-audit-trail-post.gate.test.ts > POST /api/part11/audit-trail: the audit row either lands or the answer says it did not > refuses with 503 when the store is unprovisioned (42P01) 7ms
+ ✓ tests/gates/unverified-verdicts/part11-audit-trail-post.gate.test.ts > POST /api/part11/audit-trail: the audit row either lands or the answer says it did not > rejects an entity id the integer NOT NULL column cannot hold, before touching the store 4ms
+ ✓ tests/gates/unverified-verdicts/part11-audit-trail-post.gate.test.ts > POST /api/part11/audit-trail: the audit row either lands or the answer says it did not > refuses without an organisation — the column is NOT NULL and the row must be attributable 3ms
+ ✓ tests/gates/unverified-verdicts/part11-audit-trail-post.gate.test.ts > POST /api/part11/audit-trail: the audit row either lands or the answer says it did not > answers 201 only from the persisted row, and reports the hash chain as the database has it 4ms
+ ✓ server/routes/__tests__/part11-manifest-governed.test.ts > GET /signatures/:signatureId/manifest — governed signatures (§11.50) > manifests a governed-sign row: printed name, date/time, meaning, target, basis 35ms
+ ✓ server/routes/__tests__/part11-manifest-governed.test.ts > GET /signatures/:signatureId/manifest — governed signatures (§11.50) > tenant-scopes the lookup when the request carries an organization 6ms
+ ✓ server/routes/__tests__/part11-manifest-governed.test.ts > GET /signatures/:signatureId/manifest — governed signatures (§11.50) > 400s on a non-numeric signature id before touching the database 4ms
+ ✓ server/routes/__tests__/part11-manifest-governed.test.ts > GET /signatures/:signatureId/manifest — governed signatures (§11.50) > 404s when the signature does not exist (or belongs to another org) 3ms
+ ✓ server/routes/__tests__/part11-manifest-governed.test.ts > GET /signatures/:signatureId/manifest — governed signatures (§11.50) > 503s (fail closed) when the store or its D6 columns are unprovisioned 4ms
+ ✓ tests/routes/project-modules-tenant.test.ts > project-modules tenant/workspace enforcement > passes tenant org/workspace to unlinkModule 5ms
+ ✓ tests/routes/project-modules-tenant.test.ts > project-modules tenant/workspace enforcement > passes tenant org to updateModuleLink 4ms
+ ✓ tests/routes/project-modules-tenant.test.ts > project-modules tenant/workspace enforcement > rejects invalid moduleType on /find query 1ms
+stderr | server/routes/__tests__/part11ChainIntegrityRoute.test.ts > chain-integrity answers the shape Part11Console guards on > never reports success:true when the verification could not run
+[Part11] Chain integrity check: audit_events table not provisioned; failing closed
+
+ ✓ server/routes/__tests__/part11ChainIntegrityRoute.test.ts > part11 audit-trail routing > reaches the chain-integrity handler (not the :entityId route) 25ms
+ ✓ server/routes/__tests__/part11ChainIntegrityRoute.test.ts > part11 audit-trail routing > still resolves an ordinary entity id through the :entityId route 5ms
+ ✓ server/routes/__tests__/part11ChainIntegrityRoute.test.ts > chain-integrity answers the shape Part11Console guards on > carries them on the empty chain 4ms
+ ✓ server/routes/__tests__/part11ChainIntegrityRoute.test.ts > chain-integrity answers the shape Part11Console guards on > carries them on a populated, intact chain 3ms
+ ✓ server/routes/__tests__/part11ChainIntegrityRoute.test.ts > chain-integrity answers the shape Part11Console guards on > never reports success:true when the verification could not run 5ms
+ ✓ server/routes/__tests__/part11-chain-empty-honesty.test.ts > chain-integrity — zero audit events is not a verified chain > reports the empty chain without an integrity verdict 26ms
+ ✓ server/routes/__tests__/part11-chain-empty-honesty.test.ts > chain-integrity — zero audit events is not a verified chain > claims no verdict anywhere in the empty-chain body 5ms
+ ✓ server/routes/__tests__/part11-chain-empty-honesty.test.ts > chain-integrity — zero audit events is not a verified chain > does not describe cryptographic linkage between entries that do not exist 4ms
+ ✓ server/routes/__tests__/part11-signature-manifest.test.ts > buildSignatureManifest (§11.50) > includes all three required §11.50 elements 2ms
+ ✓ server/routes/__tests__/part11-signature-manifest.test.ts > buildSignatureManifest (§11.50) > uses the custom meaning text when meaning is "custom" 0ms
+ ✓ server/routes/__tests__/part11-signature-manifest.test.ts > buildSignatureManifest (§11.50) > omits optional title/organization lines when absent 1ms
+ ✓ server/routes/__tests__/part11-signature-manifest.test.ts > buildSignatureManifest (§11.50) > normalizes a Date instance to an ISO timestamp 0ms
+ ✓ server/routes/__tests__/part11-signature-manifest.test.ts > buildSignatureManifest (§11.50) > falls back to the raw meaning string for an unknown meaning 0ms
+
+ Test Files  25 passed (25)
+      Tests  191 passed (191)
+   Start at  08:06:16
+   Duration  14.46s (transform 6.55s, setup 1.09s, import 25.89s, tests 9.91s, environment 3ms)
+

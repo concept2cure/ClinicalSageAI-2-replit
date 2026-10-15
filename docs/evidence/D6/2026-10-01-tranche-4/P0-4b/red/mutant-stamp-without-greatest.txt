@@ -1,0 +1,89 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:05:41.795Z","pid":29364,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:05:41.800Z","pid":29364,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:05:41.800Z","pid":29364,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:05:42.717Z', poolSize: 1 }
+
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/session-termination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/session-termination.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/session-termination.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 549
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 550
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 551
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 552
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 553
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 554
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 555
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 556
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 557
+
+ ↓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it
+ ↓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door
+ ↓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing
+ ↓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate and every successor token carry
+ × tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards 29ms
+   → a sign-out everywhere moved the stamp backwards: expected +0 to be 1790921145146 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards
+AssertionError: a sign-out everywhere moved the stamp backwards: expected +0 to be 1790921145146 // Object.is equality
+
+- Expected
++ Received
+
+- 1790921145146
++ 0
+
+ ❯ tests/db/session-termination.dbtest.ts:472:95
+    470|     const { runWithPreAuthScope } = await import('../../server/db/tena…
+    471|     expect(await runWithPreAuthScope('dbste:stamp', () => endEverySess…
+    472|     expect((await stampOf(id))!.getTime(), 'a sign-out everywhere move…
+       |                                                                                               ^
+    473|   });
+    474| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  06:05:37
+   Duration  8.54s (transform 3.79s, setup 98ms, import 446ms, tests 7.32s, environment 0ms)
+

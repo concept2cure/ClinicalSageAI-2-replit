@@ -1,0 +1,11 @@
+Red first: the sign-off row's trace, before governedActionTrace named the check (2 of 3 failing; the third pins that a proposal held with no check claims none).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts
+
+ × server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > carries the check of the draft: its counts, what was not found, and the verdicts it states 10ms
+   → expected undefined to deeply equal { engine: 'answer-check/2', …(8) }
+ ✓ server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > a proposal held with no check carries none, and claims none 1ms
+ × server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > keeps the row bounded: at most twenty texts of each list, each at most 200 characters 3ms
+   → Target cannot be null or undefined.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)

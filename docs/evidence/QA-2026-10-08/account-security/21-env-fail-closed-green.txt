@@ -1,0 +1,11 @@
+# (6) GREEN — signerNeedsAuthenticator: enforced unless NODE_ENV is explicitly development or test
+$ npx vitest run server/services/part11/__tests__/reverify-signer.test.ts
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > refuses a signer with none, in those words, after the password and before anything else 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a code sent anyway does not stand in for an enrolment 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a wrong password is refused as a wrong password: the enrolment is not disclosed before the password is proven 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a signer with an authenticator goes on to the code check 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > an enrolment that cannot be read is still refused as unknown, not as missing 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > only a declared development or test environment relaxes it: the password alone signs there 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > fails closed: staging, a blank or unrecognised NODE_ENV, and an unset one all enforce it (as the bundle guard does) 1ms
+ Test Files  1 passed (1)
+      Tests  33 passed (33)

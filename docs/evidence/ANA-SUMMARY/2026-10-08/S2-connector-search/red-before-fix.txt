@@ -1,0 +1,335 @@
+# Red: every S2 test (final versions) against the HEAD 6c58f587b source of the five changed source files
+# (the five files were set to their HEAD content for this run and restored after; md5 of the restored files checked)
+# 2026-10-08T09:32:31Z  RLS_ENFORCE=off npx vitest run --config vitest.config.ts <4 files>
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the Drive id > a search with ['google-drive'] reaches Drive 115ms
+   → expected [ { connector: 'google-drive', …(1) } ] to deeply equal []
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress true) 95ms
+   → expected [ 'api.fda.gov', …(8) ] to deeply equal [ 'oauth2.googleapis.com', …(1) ]
+  "message": "[connector:box] Box connector authenticated",
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress false) 21ms
+   → expected [ 'api.fda.gov', …(8) ] to deeply equal [ 'oauth2.googleapis.com', …(1) ]
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > an organisation with no repository connected sends nothing anywhere 3ms
+   → expected [ …(7) ] to deeply equal []
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > a public source asked for by name is refused and never called 2ms
+   → expected [ …(3) ] to deeply equal []
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told "Google Drive is not connected for your organisation." 3ms
+   → expected 'No connected repositories are availab…' to contain 'Google Drive is not connected for you…'
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told the same when Drive is asked for beside a repository that is connected 3ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the schema > is byte-identical for two tenants with different connectors configured, and lists the five repositories 41ms
+   → expected undefined to deeply equal [ 'google_drive', 'box', …(3) ]
+ × server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the schema > tells the model where public sources are searched instead 7ms
+   → expected '{"name":"search_connected_repositorie…' to match /search_literature/
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ × server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > escapes a backslash before a quote: O'Brien \ x → fullText contains 'O\'Brien \\ x' 112ms
+   → expected 'fullText contains \'O\\'Brien \ x\' a…' to be 'fullText contains \'O\\'Brien \\ x\' …' // Object.is equality
+ × server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > a trailing backslash cannot swallow the closing quote 29ms
+   → expected 'fullText contains \'protocol\\' and t…' to be 'fullText contains \'protocol\\\' and …' // Object.is equality
+ × server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > searches shared drives: supportsAllDrives, includeItemsFromAllDrives and corpora=allDrives 68ms
+   → expected null to be 'true' // Object.is equality
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > still returns the files Drive found 36ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result 5ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 2ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is skipped by the repository search as not connected, and never listed as searched 1ms
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 5ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+Received:
+  1st vi.fn() call:
+    Array [
+      7,
+      Array [
+        "pmda_reviews",
+      ],
+      Object {
+        "keywords": Array [
+          "pembrolizumab",
+        ],
+        "limit": 8,
+      },
+    ]
+Number of calls: 1
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is skipped by the repository search as not connected, and never listed as searched 0ms
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 1ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+Received:
+  1st vi.fn() call:
+    Array [
+      7,
+      Array [
+        "nmpa_cde",
+      ],
+      Object {
+        "keywords": Array [
+          "pembrolizumab",
+        ],
+        "limit": 8,
+      },
+    ]
+Number of calls: 1
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > public APIs are always live; env-gated integrations reflect the env 3ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports env-gated integrations as live when their env is set, for the organisation they belong to 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > resolves org connectors when an organizationId is given (live names listed) 2ms
+ × server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > counts only document repositories: a credential-free public source is not a connected repository (S2) 7ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports connectors as unknown without org context, and on catalog failure 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > summarizeStatuses counts live / notConfigured / unknown 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the Drive id > a search with ['google-drive'] reaches Drive
+AssertionError: expected [ { connector: 'google-drive', …(1) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "connector": "google-drive",
++     "reason": "unknown connector",
++   },
++ ]
+ ❯ server/services/ana/__tests__/search-connected-repositories-tool.test.ts:110:25
+    108|     const out = await run(DRIVE_ORG, { query: 'stability protocol', co…
+    109|
+    110|     expect(out.skipped).toEqual([]);
+       |                         ^
+    111|     expect(out.searched).toEqual(['google_drive']);
+    112|     expect(driveSearches()).toHaveLength(1);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress true)
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress false)
+AssertionError: expected [ 'api.fda.gov', …(8) ] to deeply equal [ 'oauth2.googleapis.com', …(1) ]
+- Expected
++ Received
+  [
++   "api.fda.gov",
++   "api.grants.gov",
++   "clinicaltrials.gov",
++   "ec.europa.eu",
++   "euclinicaltrials.eu",
++   "eutils.ncbi.nlm.nih.gov",
++   "medicines.health.europa.eu",
+    "oauth2.googleapis.com",
+    "www.googleapis.com",
+  ]
+ ❯ server/services/ana/__tests__/search-connected-repositories-tool.test.ts:129:21
+    127|     const out = await run(DRIVE_ORG, { query: 'pembrolizumab NSCLC pro…
+    128|
+    129|     expect(hosts()).toEqual(['oauth2.googleapis.com', 'www.googleapis.…
+       |                     ^
+    130|     expect(h.requests.some((u) => u.hostname.endsWith('ncbi.nlm.nih.go…
+    131|     expect(h.requests.some((u) => u.hostname === 'api.fda.gov')).toBe(…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > an organisation with no repository connected sends nothing anywhere
+AssertionError: expected [ …(7) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "https://clinicaltrials.gov/api/v2/studies?query.term=pembrolizumab&pageSize=8&fields=NCTId%2CBriefTitle%2CCondition%2CInterventionName%2CPhase%2COverallStatus%2CEnrollmentCount%2CStartDate%2CCompletionDate%2CLeadSponsorName",
++   "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=pembrolizumab&retmax=8&retmode=json&sort=relevance",
++   "https://api.fda.gov/drug/drugsfda.json?search=%22pembrolizumab%22&limit=8",
++   "https://medicines.health.europa.eu/api/human-medicines?searchTerm=pembrolizumab&pageSize=8&page=1",
++   "https://ec.europa.eu/tools/eudamed/api/devices/search?keyword=pembrolizumab&size=8&page=0&languageIso2Code=en",
++   "https://euclinicaltrials.eu/ctis-public-api/search",
++   "https://api.grants.gov/v1/api/search2",
++ ]
+ ❯ server/services/ana/__tests__/search-connected-repositories-tool.test.ts:141:24
+    139|   it('an organisation with no repository connected sends nothing anywh…
+    140|     const out = await run(NOTHING_ORG, { query: 'pembrolizumab' });
+    141|     expect(h.requests).toEqual([]);
+       |                        ^
+    142|     expect(out.searched).toEqual([]);
+    143|     expect(out.documents).toEqual([]);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > a public source asked for by name is refused and never called
+AssertionError: expected [ …(3) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=pembrolizumab&retmax=8&retmode=json&sort=relevance",
++   "https://api.fda.gov/drug/drugsfda.json?search=%22pembrolizumab%22&limit=8",
++   "https://clinicaltrials.gov/api/v2/studies?query.term=pembrolizumab&pageSize=8&fields=NCTId%2CBriefTitle%2CCondition%2CInterventionName%2CPhase%2COverallStatus%2CEnrollmentCount%2CStartDate%2CCompletionDate%2CLeadSponsorName",
++ ]
+ ❯ server/services/ana/__tests__/search-connected-repositories-tool.test.ts:148:24
+    146|   it('a public source asked for by name is refused and never called', …
+    147|     const out = await run(NOTHING_ORG, { query: 'pembrolizumab', conne…
+    148|     expect(h.requests).toEqual([]);
+       |                        ^
+    149|     expect(out.searched).toEqual([]);
+    150|     expect(out.skipped).toHaveLength(3);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told "Google Drive is not connected for your organisation."
+AssertionError: expected 'No connected repositories are availab…' to contain 'Google Drive is not connected for you…'
+Expected: "Google Drive is not connected for your organisation."
+Received: "No connected repositories are available. Ask the user to connect a data source (e.g. Google Drive) in Settings → Connectors."
+ ❯ server/services/ana/__tests__/search-connected-repositories-tool.test.ts:159:22
+    157|   it('is told "Google Drive is not connected for your organisation."',…
+    158|     const out = await run(NOTHING_ORG, { query: '2025 stability protoc…
+    159|     expect(out.note).toContain('Google Drive is not connected for your…
+       |                      ^
+    160|     expect(out.searched).toEqual([]);
+    161|     expect(out.documents).toEqual([]);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told the same when Drive is asked for beside a repository that is connected
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/ana/__tests__/search-connected-repositories-tool.test.ts:168:22
+    166|     await storeCredentials(BOX_ORG, 'box', { clientId: 'box-id', clien…
+    167|     const out = await run(BOX_ORG, { query: 'protocol', connectors: ['…
+    168|     expect(out.note).toContain('Google Drive is not connected for your…
+       |                      ^
+    169|     expect(out.skipped).toContainEqual({ connector: 'google_drive', re…
+    170|     expect(h.requests.some((u) => u.hostname.endsWith('googleapis.com'…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the schema > is byte-identical for two tenants with different connectors configured, and lists the five repositories
+AssertionError: expected undefined to deeply equal [ 'google_drive', 'box', …(3) ]
+- Expected:
+[
+  "google_drive",
+  "box",
+  "onedrive",
+  "sharepoint",
+  "veeva_vault",
+]
++ Received:
+undefined
+ ❯ server/services/ana/__tests__/search-connected-repositories-tool.test.ts:191:73
+    189|     expect(box.tool).toBe(drive.tool);
+    190|     expect(box.all).toBe(drive.all);
+    191|     expect(drive.parsed.input_schema.properties.connectors.items?.enum…
+       |                                                                         ^
+    192|   });
+    193|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+ FAIL  server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the schema > tells the model where public sources are searched instead
+AssertionError: expected '{"name":"search_connected_repositorie…' to match /search_literature/
+- Expected:
+/search_literature/
++ Received:
+"{\"name\":\"search_connected_repositories\",\"description\":\"Search the organization's connected external document repositories (Google Drive, Box, OneDrive, SharePoint, Veeva Vault, …) for source material relevant to a query. Use when the user references documents that live in their own connected systems rather than this project's uploaded corpus (use project_knowledge_search for the latter). Returns matching documents with their source system, summary, and a link. Reports which systems are not yet connected.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"What to look for across connected repositories (keywords or a topic).\"},\"connectors\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Optional connector ids to restrict the search (e.g. ['google-drive']). Omit to search all connected systems.\"},\"max_results\":{\"type\":\"number\",\"description\":\"Maximum documents to return (default: 8, max: 25).\"}},\"required\":[\"query\"]}}"
+ ❯ server/services/ana/__tests__/search-connected-repositories-tool.test.ts:196:18
+    194|   it('tells the model where public sources are searched instead', asyn…
+    195|     const { tool } = await schemaFor(DRIVE_ORG);
+    196|     expect(tool).toMatch(/search_literature/);
+       |                  ^
+    197|     expect(tool).not.toMatch(/google-drive/);
+    198|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+ FAIL  server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > escapes a backslash before a quote: O'Brien \ x → fullText contains 'O\'Brien \\ x'
+AssertionError: expected 'fullText contains \'O\\'Brien \ x\' a…' to be 'fullText contains \'O\\'Brien \\ x\' …' // Object.is equality
+Expected: "fullText contains 'O\'Brien \\ x' and trashed = false"
+Received: "fullText contains 'O\'Brien \ x' and trashed = false"
+ ❯ server/services/connectors/__tests__/google-drive-search.test.ts:59:39
+     57|   it("escapes a backslash before a quote: O'Brien \\ x → fullText cont…
+     58|     const url = await searchRequest("O'Brien \\ x");
+     59|     expect(url.searchParams.get('q')).toBe("fullText contains 'O\\'Bri…
+       |                                       ^
+     60|   });
+     61|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+ FAIL  server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > a trailing backslash cannot swallow the closing quote
+AssertionError: expected 'fullText contains \'protocol\\' and t…' to be 'fullText contains \'protocol\\\' and …' // Object.is equality
+Expected: "fullText contains 'protocol\\' and trashed = false"
+Received: "fullText contains 'protocol\' and trashed = false"
+ ❯ server/services/connectors/__tests__/google-drive-search.test.ts:64:39
+     62|   it('a trailing backslash cannot swallow the closing quote', async ()…
+     63|     const url = await searchRequest('protocol\\');
+     64|     expect(url.searchParams.get('q')).toBe("fullText contains 'protoco…
+       |                                       ^
+     65|   });
+     66|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+ FAIL  server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > searches shared drives: supportsAllDrives, includeItemsFromAllDrives and corpora=allDrives
+AssertionError: expected null to be 'true' // Object.is equality
+- Expected:
+"true"
++ Received:
+null
+ ❯ server/services/connectors/__tests__/google-drive-search.test.ts:69:55
+     67|   it('searches shared drives: supportsAllDrives, includeItemsFromAllDr…
+     68|     const url = await searchRequest('stability protocol');
+     69|     expect(url.searchParams.get('supportsAllDrives')).toBe('true');
+       |                                                       ^
+     70|     expect(url.searchParams.get('includeItemsFromAllDrives')).toBe('tr…
+     71|     expect(url.searchParams.get('corpora')).toBe('allDrives');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+Received:
+  1st vi.fn() call:
+    Array [
+      7,
+      Array [
+        "pmda_reviews",
+      ],
+      Object {
+        "keywords": Array [
+          "pembrolizumab",
+        ],
+        "limit": 8,
+      },
+    ]
+Number of calls: 1
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:88:34
+     86|     );
+     87|     expect(out.documents).toEqual([]);
+     88|     expect(searchConnectors).not.toHaveBeenCalled();
+       |                                  ^
+     89|     expect(out.skipped).toEqual([{ connector: id, reason: expect.strin…
+     90|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+Received:
+  1st vi.fn() call:
+    Array [
+      7,
+      Array [
+        "nmpa_cde",
+      ],
+      Object {
+        "keywords": Array [
+          "pembrolizumab",
+        ],
+        "limit": 8,
+      },
+    ]
+Number of calls: 1
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:88:34
+     86|     );
+     87|     expect(out.documents).toEqual([]);
+     88|     expect(searchConnectors).not.toHaveBeenCalled();
+       |                                  ^
+     89|     expect(out.skipped).toEqual([{ connector: id, reason: expect.strin…
+     90|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+ FAIL  server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > counts only document repositories: a credential-free public source is not a connected repository (S2)
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ server/services/integrations/__tests__/integration-status.test.ts:85:29
+     83|     );
+     84|     const conn = byId(statuses, 'document_connectors');
+     85|     expect(conn.configured).toBe(false);
+       |                             ^
+     86|     expect(conn.label).toContain('none connected');
+     87|     expect(conn.label).not.toMatch(/pubmed|fda_drugs/);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+ Test Files  4 failed (4)
+      Tests  15 failed | 18 passed (33)
+   Start at  09:32:32
+   Duration  10.46s (transform 6.06s, setup 165ms, import 8.92s, tests 590ms, environment 0ms)

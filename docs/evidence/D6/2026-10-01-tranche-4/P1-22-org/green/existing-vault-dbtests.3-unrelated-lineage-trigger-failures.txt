@@ -1,0 +1,870 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:28:24.729Z","pid":13834,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:28:24.730Z","pid":13834,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:28:24.730Z","pid":13834,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-ingest.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:28:24.827Z', poolSize: 1 }
+
+stdout | tests/db/vault-ingest.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-ingest.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T06:28:25.346Z","pid":13834,"hostname":"vm","context":{"filename":"dhf-extract.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+Warning: Indexing all PDF objects
+
+(node:13834) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-01T06:28:25.685Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:25.779Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+{
+  "timestamp": "2026-10-01T06:28:25.889Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "56e858ae-c10d-4bb8-9451-b7ef098c1f55",
+    "code": "DBTEST-W06-DOC",
+    "type": "OTHER",
+    "size": 69,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent 587ms
+stderr | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind
+{
+  "timestamp": "2026-10-01T06:28:25.928Z",
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "f51e3d88-1ac2-4016-84c3-145e04e453d7",
+    "orgId": 12
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:25.939Z","pid":13834,"hostname":"vm","context":{"filename":"dhf-extract.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:25.942Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:25.942Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage
+{
+  "timestamp": "2026-10-01T06:28:25.957Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "7d526b79-2122-4b0e-8d4b-01ddd5c09518",
+    "orgId": 12
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:25.966Z","pid":13834,"hostname":"vm","context":{"filename":"dhf-extract-copy.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:25.969Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:25.970Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+{
+  "timestamp": "2026-10-01T06:28:25.984Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {
+    "constraint": "idx_vault_documents_program_hash_unique"
+  }
+}
+
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+{
+  "timestamp": "2026-10-01T06:28:25.987Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "08694097-4952-45c6-bc12-6114e10301c3",
+    "orgId": 12
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:25.999Z","pid":13834,"hostname":"vm","context":{"filename":"misfiled.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes 5ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other 7ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind 12ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage 28ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back 30ms
+{"level":40,"time":"2026-10-01T06:28:26.002Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:26.002Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage
+{
+  "timestamp": "2026-10-01T06:28:26.010Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "98ed88c1-f855-4aac-8856-bb5e421e0f0c",
+    "orgId": 12
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:26.024Z","pid":13834,"hostname":"vm","context":{"filename":"second.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:26.026Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:26.026Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names
+{
+  "timestamp": "2026-10-01T06:28:26.037Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "abe387ea-8e45-4df5-8e7c-8e4ca1b41766",
+    "code": "DBTEST-W06-DOC-NEW",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:26.051Z","pid":13834,"hostname":"vm","context":{"filename":"member.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:26.053Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:26.054Z","pid":13834,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns
+{
+  "timestamp": "2026-10-01T06:28:26.077Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8555d181-94ae-403b-ba44-f7f304b6386f",
+    "code": "DBTEST-W06-DOC-MEMBER",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage 22ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role 6ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names 28ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a scope that carries no role at all 0ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns 28ms
+{"level":30,"time":"2026-10-01T06:28:27.443Z","pid":13966,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:28:27.448Z","pid":13966,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:28:27.448Z","pid":13966,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[database] Database connection successful { timestamp: '2026-10-01T06:28:27.493Z', poolSize: 1 }
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[database] Database connection successful
+
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T06:28:29.016Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+Warning: Indexing all PDF objects
+
+(node:13966) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-01T06:28:29.282Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:29.376Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says
+{
+  "timestamp": "2026-10-01T06:28:29.415Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fe38a4c1-3870-411f-b4eb-7b4ec721e0e3",
+    "code": "DBTEST-VR13-START",
+    "type": "OTHER",
+    "size": 77,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 2883ms
+stdout | tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version
+{
+  "timestamp": "2026-10-01T06:28:29.499Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4834fc75-b5c8-4d6f-954d-01cd49570e31",
+    "code": "DBTEST-VR13-THEIRS",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:29.483Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:29.486Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:29.487Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+{"level":40,"time":"2026-10-01T06:28:29.525Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:29.527Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:29.529Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review
+{
+  "timestamp": "2026-10-01T06:28:29.551Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d50a3d0d-3006-474a-aaeb-50f70a8aab43",
+    "code": "DBTEST-VR13-POLICY",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 39ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 177ms
+{"level":40,"time":"2026-10-01T06:28:29.707Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:29.709Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:29.710Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-01T06:28:29.727Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "36e00929-452a-4a0c-bbe8-e4290a22f1f6",
+    "code": "DBTEST-VR13-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:29.932Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:29.940Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:29.941Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+{
+  "timestamp": "2026-10-01T06:28:29.953Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f0bb06b9-3d5d-45f0-b7bd-8ec6fdce8b60",
+    "code": "DBTEST-VR13-FAMILY",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes
+[database] Database connection successful { timestamp: '2026-10-01T06:28:30.139Z', poolSize: 2 }
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 467ms
+{"level":40,"time":"2026-10-01T06:28:30.179Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:30.183Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:30.184Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-01T06:28:30.203Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "71b6fe85-0e73-404f-8cbe-572c6b2407fb",
+    "code": "DBTEST-VR13-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:30.281Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:30.289Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:30.290Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved
+{
+  "timestamp": "2026-10-01T06:28:30.303Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "37f0106f-b77a-4aa0-b6f3-43f13a35eb7a",
+    "code": "DBTEST-VR13-STALE",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 168ms
+{"level":40,"time":"2026-10-01T06:28:30.340Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:30.342Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:30.342Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-01T06:28:30.353Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "87b1588a-597c-4221-88f9-c279271ff733",
+    "code": "DBTEST-VR13-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:30.463Z","pid":13966,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:30.480Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:30.481Z","pid":13966,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were
+{
+  "timestamp": "2026-10-01T06:28:30.504Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "473efc86-f2cd-4e4d-a229-830bf09ad992",
+    "code": "DBTEST-VR13-ATOMIC",
+    "type": "OTHER",
+    "size": 81,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 269ms
+{"level":30,"time":"2026-10-01T06:28:32.070Z","pid":14165,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:28:32.079Z","pid":14165,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:28:32.079Z","pid":14165,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was
+[database] Database connection successful { timestamp: '2026-10-01T06:28:32.144Z', poolSize: 1 }
+
+stderr | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was
+[database] Database connection successful
+
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was
+[database] Database connection successful { timestamp: '2026-10-01T06:28:32.155Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T06:28:32.341Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was
+Warning: Indexing all PDF objects
+
+(node:14165) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-01T06:28:32.617Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:32.708Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was
+{
+  "timestamp": "2026-10-01T06:28:32.773Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "dd8cc0da-ac7c-4a3e-8ff9-c5aebb6b7c96",
+    "code": "DBTEST-VR08-DOC",
+    "type": "OTHER",
+    "size": 74,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:32.789Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:32.805Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:32.806Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was
+{
+  "timestamp": "2026-10-01T06:28:32.828Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3f0d6d42-bd01-409e-8531-f9e02e48e7e9",
+    "code": "DBTEST-VR08-DOC",
+    "type": "OTHER",
+    "size": 74,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was 1695ms
+{"level":40,"time":"2026-10-01T06:28:32.846Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:32.861Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:32.884Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:32.896Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:32.898Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:32.900Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything
+{
+  "timestamp": "2026-10-01T06:28:32.912Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ad33986a-f554-44c4-9eb1-8fe93214ccf3",
+    "code": "DBTEST-VR08-THEIRS",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:32.929Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses a check-in against a version that already has a successor, naming the current one 14ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses bytes that are already a version of the document, naming it 15ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > assigns the version: a client-sent version with a check-in is a 400 7ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > invents no version for a head whose version is not a number 14ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything 43ms
+{"level":40,"time":"2026-10-01T06:28:32.948Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:32.950Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:32.951Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head
+{
+  "timestamp": "2026-10-01T06:28:32.967Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "eb85eefb-00ba-4cd0-b38e-0eff14577a8c",
+    "code": "DBTEST-VR08-RACE",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:32.986Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:33.001Z","pid":14165,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:33.006Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:33.007Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+{"level":40,"time":"2026-10-01T06:28:33.020Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:33.021Z","pid":14165,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head
+{
+  "timestamp": "2026-10-01T06:28:33.035Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8c413f0e-3306-4b94-ad88-e7647421a2ab",
+    "code": "DBTEST-VR08-RACE",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head
+{
+  "timestamp": "2026-10-01T06:28:33.043Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "b479d3c5-41af-4260-941e-3aab3126bff2",
+    "orgId": 94
+  }
+}
+
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > a viewer is refused before any byte is stored 8ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head 105ms
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a raw INSERT that names another program's document as its predecessor 17ms
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor 11ms
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third 4ms
+   → trigger "vault_documents_lineage_guard" for table "documents" does not exist
+{"level":30,"time":"2026-10-01T06:28:34.910Z","pid":14225,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:28:34.912Z","pid":14225,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:28:34.912Z","pid":14225,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-versions.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:28:34.963Z', poolSize: 1 }
+
+stdout | tests/db/vault-versions.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-versions.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T06:28:35.297Z","pid":14225,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-versions.dbtest.ts
+Warning: Indexing all PDF objects
+
+(node:14225) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-01T06:28:35.526Z","pid":14225,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:35.571Z","pid":14225,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-versions.dbtest.ts
+{
+  "timestamp": "2026-10-01T06:28:35.632Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "6e17e019-9d98-4106-8f82-319f3da9e2c8",
+    "code": "DBTEST-VR09-DOC",
+    "type": "OTHER",
+    "size": 74,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:35.659Z","pid":14225,"hostname":"vm","context":{"filename":"overview.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:35.682Z","pid":14225,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:35.685Z","pid":14225,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-versions.dbtest.ts
+{
+  "timestamp": "2026-10-01T06:28:35.710Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "20174f32-39b2-450c-aeb8-eceaffe8350c",
+    "code": "DBTEST-VR09-DOC",
+    "type": "OTHER",
+    "size": 74,
+    "hasText": false
+  }
+}
+
+ ↓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > one leaf for the family, the current version, with its version count
+ ↓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > counts documents, not versions
+ ↓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > lists the family newest first from any member, with hash, size and uploader
+ ↓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > shows a link the lineage rules refuse as unverified, never as lineage
+ ↓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > 404s another organization's document, from either side
+ ↓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > search hides a superseded version unless asked, and counts the same set
+ ↓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > a document's history spans every version
+ ↓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > downloads an earlier version, hash-verified (control)
+ ↓ tests/db/vault-versions.dbtest.ts > a check-in agrees with the tree about the current version (VR-09) > refuses a version a legacy row names, says why, and names nothing about that row
+{"level":30,"time":"2026-10-01T06:28:37.271Z","pid":14337,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:28:37.274Z","pid":14337,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:28:37.274Z","pid":14337,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-reupload.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:28:37.321Z', poolSize: 1 }
+
+stdout | tests/db/vault-reupload.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-reupload.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T06:28:37.543Z","pid":14337,"hostname":"vm","context":{"filename":"protocol.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy
+Warning: Indexing all PDF objects
+
+(node:14337) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-01T06:28:37.805Z","pid":14337,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:37.866Z","pid":14337,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy
+{
+  "timestamp": "2026-10-01T06:28:37.912Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3f6459d7-f6db-4f28-a3a2-2a61ab00f0a2",
+    "code": "DBTEST-VR05-DOC",
+    "type": "OTHER",
+    "size": 83,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy 406ms
+{"level":40,"time":"2026-10-01T06:28:37.929Z","pid":14337,"hostname":"vm","context":{"filename":"protocol.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:37.935Z","pid":14337,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:37.936Z","pid":14337,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy
+{
+  "timestamp": "2026-10-01T06:28:37.946Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3f6459d7-f6db-4f28-a3a2-2a61ab00f0a2",
+    "code": "DBTEST-VR05-DOC",
+    "type": "OTHER",
+    "size": 83,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy
+{
+  "timestamp": "2026-10-01T06:28:37.949Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ef30a959-9401-4ec8-9f34-6678100639d2",
+    "orgId": 28
+  }
+}
+
+{"level":40,"time":"2026-10-01T06:28:37.964Z","pid":14337,"hostname":"vm","context":{"filename":"protocol.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-01T06:28:37.966Z","pid":14337,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-01T06:28:37.969Z","pid":14337,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking for another title or type changes nothing, and says what differs
+{
+  "timestamp": "2026-10-01T06:28:37.980Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3f6459d7-f6db-4f28-a3a2-2a61ab00f0a2",
+    "code": "DBTEST-VR05-DOC",
+    "type": "OTHER",
+    "size": 83,
+    "hasText": false
+  }
+}
+
+stdout | tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking for another title or type changes nothing, and says what differs
+{
+  "timestamp": "2026-10-01T06:28:37.983Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "8d8faf91-e32f-4ee1-9d38-a6de4b3afd32",
+    "orgId": 28
+  }
+}
+
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy 37ms
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking for another title or type changes nothing, and says what differs 31ms
+ ✓ server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > an artifact of a project being judged cannot be approved underneath the delete 328ms
+ ✓ server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > control: with no read held, the same approval goes through 32ms
+ ✓ server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > no project can join a workspace being judged 325ms
+ ✓ server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > control: with no read held, a project joins the workspace 31ms
+ ✓ server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > a workspace being judged also holds its existing artifacts 337ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-versions.dbtest.ts [ tests/db/vault-versions.dbtest.ts ]
+error: trigger "vault_documents_lineage_guard" for table "documents" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ tests/db/vault-versions.dbtest.ts:159:5
+    157|   try {
+    158|     await client.query('BEGIN');
+    159|     await client.query('ALTER TABLE vault.documents DISABLE TRIGGER va…
+       |     ^
+    160|     legacy = (await client.query(
+    161|       `INSERT INTO vault.documents (program_id, organization_id, docum…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 143, severity: 'ERROR', code: '42704', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'trigger.c', routine: 'EnableDisableTrigger' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a raw INSERT that names another program's document as its predecessor
+AssertionError: promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ Result {
++   "RowCtor": null,
++   "_parsers": undefined,
++   "_prebuiltEmptyResultObject": null,
++   "_types": TypeOverrides {
++     "_types": {
++       "arrayParser": {
++         "create": [Function create],
++       },
++       "builtins": {
++         "ABSTIME": 702,
++         "ACLITEM": 1033,
++         "BIT": 1560,
++         "BOOL": 16,
++         "BPCHAR": 1042,
++         "BYTEA": 17,
++         "CHAR": 18,
++         "CID": 29,
++         "CIDR": 650,
++         "CIRCLE": 718,
++         "DATE": 1082,
++         "FLOAT4": 700,
++         "FLOAT8": 701,
++         "GTSVECTOR": 3642,
++         "INET": 869,
++         "INT2": 21,
++         "INT4": 23,
++         "INT8": 20,
++         "INTERVAL": 1186,
++         "JSON": 114,
++         "JSONB": 3802,
++         "MACADDR": 829,
++         "MACADDR8": 774,
++         "MONEY": 790,
++         "NUMERIC": 1700,
++         "OID": 26,
++         "PATH": 602,
++         "PG_DEPENDENCIES": 3402,
++         "PG_LSN": 3220,
++         "PG_NDISTINCT": 3361,
++         "PG_NODE_TREE": 194,
++         "POLYGON": 604,
++         "REFCURSOR": 1790,
++         "REGCLASS": 2205,
++         "REGCONFIG": 3734,
++         "REGDICTIONARY": 3769,
++         "REGNAMESPACE": 4089,
++         "REGOPER": 2203,
++         "REGOPERATOR": 2204,
++         "REGPROC": 24,
++         "REGPROCEDURE": 2202,
++         "REGROLE": 4096,
++         "REGTYPE": 2206,
++         "RELTIME": 703,
++         "SMGR": 210,
++         "TEXT": 25,
++         "TID": 27,
++         "TIME": 1083,
++         "TIMESTAMP": 1114,
++         "TIMESTAMPTZ": 1184,
++         "TIMETZ": 1266,
++         "TINTERVAL": 704,
++         "TSQUERY": 3615,
++         "TSVECTOR": 3614,
++         "TXID_SNAPSHOT": 2970,
++         "UUID": 2950,
++         "VARBIT": 1562,
++         "VARCHAR": 1043,
++         "XID": 28,
++         "XML": 142,
++       },
++       "getTypeParser": [Function getTypeParser],
++       "setTypeParser": [Function setTypeParser],
++     },
++     "binary": {},
++     "text": {},
++   },
++   "command": "INSERT",
++   "fields": [],
++   "oid": 0,
++   "rowAsArray": false,
++   "rowCount": 1,
++   "rows": [],
+  }
+
+ ❯ tests/db/vault-version-checkin.dbtest.ts:251:5
+    249|         [otherProgramId, mine.orgId, `${CODE}-DOC`, sha(pdf('forged'))…
+    250|       ),
+    251|     ).rejects.toThrow(/VAULT_LINEAGE_INVALID/);
+       |     ^
+    252|   });
+    253|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor
+AssertionError: promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ Result {
++   "RowCtor": null,
++   "_parsers": undefined,
++   "_prebuiltEmptyResultObject": null,
++   "_types": TypeOverrides {
++     "_types": {
++       "arrayParser": {
++         "create": [Function create],
++       },
++       "builtins": {
++         "ABSTIME": 702,
++         "ACLITEM": 1033,
++         "BIT": 1560,
++         "BOOL": 16,
++         "BPCHAR": 1042,
++         "BYTEA": 17,
++         "CHAR": 18,
++         "CID": 29,
++         "CIDR": 650,
++         "CIRCLE": 718,
++         "DATE": 1082,
++         "FLOAT4": 700,
++         "FLOAT8": 701,
++         "GTSVECTOR": 3642,
++         "INET": 869,
++         "INT2": 21,
++         "INT4": 23,
++         "INT8": 20,
++         "INTERVAL": 1186,
++         "JSON": 114,
++         "JSONB": 3802,
++         "MACADDR": 829,
++         "MACADDR8": 774,
++         "MONEY": 790,
++         "NUMERIC": 1700,
++         "OID": 26,
++         "PATH": 602,
++         "PG_DEPENDENCIES": 3402,
++         "PG_LSN": 3220,
++         "PG_NDISTINCT": 3361,
++         "PG_NODE_TREE": 194,
++         "POLYGON": 604,
++         "REFCURSOR": 1790,
++         "REGCLASS": 2205,
++         "REGCONFIG": 3734,
++         "REGDICTIONARY": 3769,
++         "REGNAMESPACE": 4089,
++         "REGOPER": 2203,
++         "REGOPERATOR": 2204,
++         "REGPROC": 24,
++         "REGPROCEDURE": 2202,
++         "REGROLE": 4096,
++         "REGTYPE": 2206,
++         "RELTIME": 703,
++         "SMGR": 210,
++         "TEXT": 25,
++         "TID": 27,
++         "TIME": 1083,
++         "TIMESTAMP": 1114,
++         "TIMESTAMPTZ": 1184,
++         "TIMETZ": 1266,
++         "TINTERVAL": 704,
++         "TSQUERY": 3615,
++         "TSVECTOR": 3614,
++         "TXID_SNAPSHOT": 2970,
++         "UUID": 2950,
++         "VARBIT": 1562,
++         "VARCHAR": 1043,
++         "XID": 28,
++         "XML": 142,
++       },
++       "getTypeParser": [Function getTypeParser],
++       "setTypeParser": [Function setTypeParser],
++     },
++     "binary": {},
++     "text": {},
++   },
++   "command": "INSERT",
++   "fields": [],
++   "oid": 0,
++   "rowAsArray": false,
++   "rowCount": 1,
++   "rows": [],
+  }
+
+ ❯ tests/db/vault-version-checkin.dbtest.ts:263:5
+    261|         [mine.programId, mine.orgId, `${CODE}-DOC`, sha(pdf('fork')), …
+    262|       ),
+    263|     ).rejects.toThrow(/VAULT_LINEAGE_INVALID/);
+       |     ^
+    264|   });
+    265|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third
+error: trigger "vault_documents_lineage_guard" for table "documents" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ tests/db/vault-version-checkin.dbtest.ts:280:7
+    278|       await client.query('BEGIN');
+    279|       await client.query('DROP INDEX IF EXISTS vault.vault_documents_o…
+    280|       await client.query('ALTER TABLE vault.documents DISABLE TRIGGER …
+       |       ^
+    281|       for (const v of ['2.0', '2.1']) {
+    282|         await client.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 143, severity: 'ERROR', code: '42704', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'trigger.c', routine: 'EnableDisableTrigger' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 4 passed (6)
+      Tests  3 failed | 36 passed | 9 skipped (48)
+   Start at  06:28:22
+   Duration  17.25s (transform 2.84s, setup 260ms, import 1.02s, tests 14.55s, environment 1ms)
+

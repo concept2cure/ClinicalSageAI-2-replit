@@ -1,0 +1,633 @@
+# red: these files at HEAD (613e24e70), new modules present:
+#   server/services/ana/tool-trace.ts
+#   server/services/ana/tool-outcome.ts
+#   server/services/ana/step-presentation.ts
+#   server/services/ana/run-status.ts
+#   server/services/ana/turn-run-policy.ts
+#   server/services/ana/turn-record.ts
+#   server/services/ana/turn-record-verify.ts
+#   server/services/chat-thread-helpers.ts
+#   server/routes/chat/threads.ts
+#   server/routes/ana-ri/stream.ts
+#   server/routes/ana-ri/turn-records.ts
+#   server/routes/ana-ri/post-processing.ts
+#   server/services/ai-gateway/progress-updates.ts
+#   server/services/ai-gateway/types.ts
+#   server/services/ai-gateway/gateway.ts
+#   shared/ana/step-verbs.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts
+{
+  "timestamp": "2026-10-08T13:02:20.395Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 3. the Summary payload leaks nothing the Summary never contains > carries the notes, steps, tasks, controls and models, and none of the sentinels 11ms
+   → this.sink.recorder(...)?.addEvent is not a function
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 3. the Summary payload leaks nothing the Summary never contains > the check fails on a route that spreads the record's metadata (the full record read) 9ms
+   → this.sink.recorder(...)?.addEvent is not a function
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > the asker, an admin and a colleague read it; another organisation cannot tell it exists 1ms
+   → this.sink.recorder(...)?.addEvent is not a function
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > the full record stays with the asker and admins: a colleague gets 403 on ?texts=1 and on /export, told who may 5ms
+   → this.sink.recorder(...)?.addEvent is not a function
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > a turn with no conversation has no transcript to read: a colleague gets 403 on its Summary 1ms
+   → this.sink.recorder(...)?.addEvent is not a function
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 4. (server half) records join their messages by id > the thread's list names each record's assistant message, for anyone who may read the thread 1ms
+   → this.sink.recorder(...)?.addEvent is not a function
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 6. (server half) the verdict is recomputed on the Summary read > reads ok for an intact record, and not ok, with a reason, once its chain row no longer carries its hash 1ms
+   → this.sink.recorder(...)?.addEvent is not a function
+stdout | server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts
+{
+  "timestamp": "2026-10-08T13:02:29.592Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:02:29.593Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts
+{
+  "timestamp": "2026-10-08T13:02:29.593Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > the timeline frames equal the record's sealed timeline, notes resolved 57ms
+   → expected 'ana-turn-record/3' to be 'ana-turn-record/4' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > a step's events say only what a row says: a handle, never the tool's name or its id 13ms
+   → expected [] to deeply equal [ [ 'announced', 's1', …(2) ], …(1) ]
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a round with prose and tool calls yields exactly one note, before its steps; a round with none yields none 9ms
+   → expected [] to deeply equal [ Array(1) ]
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > no note is staging text: a round with no prose is staged as "(Ran: …)" for the model, never noted 9ms
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a summarized thinking block is reasoning, never a note 18ms
+   → expected [] to deeply equal [ 'Looking now.' ]
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a progress-update note ProgressNotes accepts is a note; its placeholder for interrupted work is not 7ms
+   → expected [] to deeply equal [ Array(1) ]
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > decision 3 (A): a thinking turn's tool rounds ask for notes as her words, the closing round does not 6ms
+   → expected undefined to be true // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > declined 19ms
+   → expected undefined to match object { …(2) }
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > no answer 11ms
+   → expected undefined to match object { …(2) }
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > authorised, then failed 5ms
+   → expected undefined to match object { …(2) }
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 8. stopped after cancel > a turn cancelled mid-round seals its cancelled step events 6ms
+   → sealed is not iterable
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-08T13:02:37.302Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:02:37.303Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-08T13:02:37.303Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 4. tense: the live step reads "Searching the Vault", the finished one "Searched the Vault", with "shelf life" beneath 46ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a read is announced by the title of its document, scoped to the open project 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a document id outside the open project yields no title 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a project with no program (the read would be refused) yields no title at all 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 3. a tool with no register entry never reaches a frame by its name 11ms
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. a step whose handler made a model generation carries usedModel: true and the Model fact 17ms
+   → expected [ …(2) ] to deep equally contain { name: 'Model', …(1) }
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. control: the same engine step with no generation carries usedModel: false and no Model fact 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 1. (server half) no id reaches what a row is built from 9ms
+stdout | server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts
+{
+  "timestamp": "2026-10-08T13:02:40.742Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:02:40.743Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts
+{
+  "timestamp": "2026-10-08T13:02:40.743Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts > { ok: false, reason } through the stream route > is a failed step, with that sentence on its record, in the model's note and in the telemetry 53ms
+   → expected 'success' to be 'error' // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts > { ok: false, reason } through the stream route > control: a check whose ok is its verdict stays a step that succeeded 10ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > a tool with no entry reads "Running a step" live and "Ran a step" finished 3ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > the unknown-step words are the shared table's, both halves 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a live step reads in the doing form, a finished one in the done form 19ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a step that did not succeed keeps the doing form: a failed validation never reads "Validated" 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > every verb has both forms, and they differ 7ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > previews the query beneath "Searched the Vault" 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > drops a value that looks like a uuid or a long hex string, keeps numbers 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > caps a preview at 80 characters and never lets a double quote split the label 3ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} carries no uuid 2ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > counts are read from allow-listed numeric fields and nothing else 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a listing states the scope's total, not the page it returned; the Vault search counts its hits 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a read states the Vault title and the characters it delivered 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > document titles (S3 test 5, presentation half) > names the document when the stream resolved its title, and reads generically when it did not 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > one system searched reads as that system; the reasons are said in words, never as tool names 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > several systems read as "connected" 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > true when the capture noted a generation, false when none, null when the handler ran elsewhere 0ms
+ × server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims 8ms
+   → expected [ { name: 'Model', …(1) } ] to deep equally contain { name: 'Model', …(1) }
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_found (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > cancelled (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: declined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: no decision within the approval window) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_run (held back: false, why: manual hold) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > success (held back: false, why: undefined) 0ms
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `reason` as the sentence (document-placement-tools: confirm a filing) 7ms
+   → expected null to be 'You cannot confirm a filing.' // Object.is equality
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `message` when there is no reason (refuseSignatureInChat) 1ms
+   → expected null to be 'AnA cannot sign.' // Object.is equality
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > prefers the reason over an instruction to the model (extraction failed) 1ms
+   → expected null to be 'No extracted text is stored.' // Object.is equality
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > a refusal that gave no sentence still is one, in a plain sentence of the server 1ms
+   → expected null to be undefined // Object.is equality
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > `error` still wins, as before 0ms
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > a check whose ok is its verdict is not a refusal: it did the check 0ms
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > is null for what never refused 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts > { ok: false, reason } through the stream route > is a failed step, with that sentence on its record, in the model's note and in the telemetry
+AssertionError: expected 'success' to be 'error' // Object.is equality
+
+Expected: "error"
+Received: "success"
+
+ ❯ server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts:74:23
+     72|
+     73|     const r = resultOf(events, 'tu_l');
+     74|     expect(r?.status).toBe('error');
+       |                       ^
+     75|     // The sentence the person reads is stepMessage's, word for word; …
+     76|     // form, because nothing was listed.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. a step whose handler made a model generation carries usedModel: true and the Model fact
+AssertionError: expected [ …(2) ] to deep equally contain { name: 'Model', …(1) }
+
+- Expected:
+{
+  "name": "Model",
+  "value": "a model was used in this step",
+}
+
++ Received:
+[
+  {
+    "name": "Took",
+    "value": "0 ms",
+  },
+  {
+    "name": "Model",
+    "value": "a model wrote part of this result",
+  },
+]
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:187:22
+    185|     expect(r?.source).toBe('engine');
+    186|     expect(r?.usedModel).toBe(true);
+    187|     expect(r?.facts).toContainEqual({ name: 'Model', value: 'a model w…
+       |                      ^
+    188|   });
+    189|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > the timeline frames equal the record's sealed timeline, notes resolved
+AssertionError: expected 'ana-turn-record/3' to be 'ana-turn-record/4' // Object.is equality
+
+Expected: "ana-turn-record/4"
+Received: "ana-turn-record/3"
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:113:32
+    111|     const live = timelineOf(await turn());
+    112|     const record = sealed();
+    113|     expect(record.body.schema).toBe('ana-turn-record/4');
+       |                                ^
+    114|     expect(resolveTimeline(record.body.timeline, record.blobs)).toEqua…
+    115|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > a step's events say only what a row says: a handle, never the tool's name or its id
+AssertionError: expected [] to deeply equal [ [ 'announced', 's1', …(2) ], …(1) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "announced",
+-     "s1",
+-     "Searching the Vault",
+-     "shelf life",
+-   ],
+-   [
+-     "finished",
+-     "s1",
+-     "Searched the Vault",
+-     "shelf life",
+-   ],
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:142:94
+    140|     const live = timelineOf(await turn());
+    141|     const steps = live.filter(e => e.kind === 'step');
+    142|     expect(steps.map(e => (e.kind === 'step' ? [e.phase, e.step, e.lab…
+       |                                                                                              ^
+    143|       ['announced', 's1', 'Searching the Vault', 'shelf life'],
+    144|       ['finished', 's1', 'Searched the Vault', 'shelf life'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a round with prose and tool calls yields exactly one note, before its steps; a round with none yields none
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "Searching the Vault for the reports.",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:154:42
+    152|     h.state.script = [{ say: 'Searching the Vault for the reports.', t…
+    153|     const live = timelineOf(await turn());
+    154|     expect(notes(live).map(n => n.text)).toEqual(['Searching the Vault…
+       |                                          ^
+    155|     const firstStep = live.findIndex(e => e.kind === 'step');
+    156|     const note = live.findIndex(e => e.kind === 'note');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a summarized thinking block is reasoning, never a note
+AssertionError: expected [] to deeply equal [ 'Looking now.' ]
+
+- Expected
++ Received
+
+- [
+-   "Looking now.",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:173:42
+    171|     h.state.script = [{ think: 'THINK_SENTINEL_9 weighing the reports'…
+    172|     const live = timelineOf(await turn());
+    173|     expect(notes(live).map(n => n.text)).toEqual(['Looking now.']);
+       |                                          ^
+    174|     expect(JSON.stringify(live)).not.toContain('THINK_SENTINEL_9');
+    175|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a progress-update note ProgressNotes accepts is a note; its placeholder for interrupted work is not
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "Here is the Vault, where every source is tracked.",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:184:42
+    182|     ];
+    183|     const live = timelineOf(await turn());
+    184|     expect(notes(live).map(n => n.text)).toEqual(['Here is the Vault, …
+       |                                          ^
+    185|   });
+    186|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > decision 3 (A): a thinking turn's tool rounds ask for notes as her words, the closing round does not
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:197:37
+    195|     const [first, ...rest] = h.state.requests;
+    196|     expect(first.thinking?.enabled).toBe(true);
+    197|     expect(first.notesBetweenTools).toBe(true);
+       |                                     ^
+    198|     for (const r of rest) expect(r.notesBetweenTools).toBe(r.toolChoic…
+    199|     expect(notes(live).map(n => n.text)).toEqual(['First the Vault.', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > declined
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > no answer
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > authorised, then failed
+AssertionError: expected undefined to match object { …(2) }
+
+- Expected:
+{
+  "label": "Saving a document to the Vault",
+  "source": "vault",
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:222:22
+    220|     const live = timelineOf(await turn());
+    221|     const awaiting = live.find(e => e.kind === 'step' && e.phase === '…
+    222|     expect(awaiting).toMatchObject({ label: 'Saving a document to the …
+       |                      ^
+    223|     const done = finishedOf(live, /a document to the Vault/);
+    224|     expect(done).toMatchObject({ status: 'error', heldBack, message: s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 8. stopped after cancel > a turn cancelled mid-round seals its cancelled step events
+TypeError: sealed is not iterable
+ ❯ Module.resolveTimeline shared/ana/turn-timeline.ts:100:19
+     98| export function resolveTimeline(sealed: readonly SealedTimelineEvent[]…
+     99|   const out: TimelineEvent[] = [];
+    100|   for (const e of sealed) {
+       |                   ^
+    101|     if (e.kind !== 'note') {
+    102|       out.push(e);
+ ❯ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts:246:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 3. the Summary payload leaks nothing the Summary never contains > carries the notes, steps, tasks, controls and models, and none of the sentinels
+TypeError: this.sink.recorder(...)?.addEvent is not a function
+ ❯ TurnTimeline.emitTimeline server/services/ana/turn-timeline-emitter.ts:94:27
+     92|     // Date.now, not new Date(): one clock for `at`, `startedAt` and `…
+     93|     const event = { seq: this.seq, at: iso(Date.now()), ...input } as …
+     94|     this.sink.recorder()?.addEvent(event);
+       |                           ^
+     95|     this.sink.write(`data: ${JSON.stringify({ type: 'timeline', event …
+     96|     return event;
+ ❯ TurnTimeline.step server/services/ana/turn-timeline-emitter.ts:128:12
+ ❯ TurnTimeline.announced server/services/ana/turn-timeline-emitter.ts:138:10
+ ❯ recordTurn server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:123:5
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:170:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 3. the Summary payload leaks nothing the Summary never contains > the check fails on a route that spreads the record's metadata (the full record read)
+TypeError: this.sink.recorder(...)?.addEvent is not a function
+ ❯ TurnTimeline.emitTimeline server/services/ana/turn-timeline-emitter.ts:94:27
+     92|     // Date.now, not new Date(): one clock for `at`, `startedAt` and `…
+     93|     const event = { seq: this.seq, at: iso(Date.now()), ...input } as …
+     94|     this.sink.recorder()?.addEvent(event);
+       |                           ^
+     95|     this.sink.write(`data: ${JSON.stringify({ type: 'timeline', event …
+     96|     return event;
+ ❯ TurnTimeline.step server/services/ana/turn-timeline-emitter.ts:128:12
+ ❯ TurnTimeline.announced server/services/ana/turn-timeline-emitter.ts:138:10
+ ❯ recordTurn server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:123:5
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:187:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > the asker, an admin and a colleague read it; another organisation cannot tell it exists
+TypeError: this.sink.recorder(...)?.addEvent is not a function
+ ❯ TurnTimeline.emitTimeline server/services/ana/turn-timeline-emitter.ts:94:27
+     92|     // Date.now, not new Date(): one clock for `at`, `startedAt` and `…
+     93|     const event = { seq: this.seq, at: iso(Date.now()), ...input } as …
+     94|     this.sink.recorder()?.addEvent(event);
+       |                           ^
+     95|     this.sink.write(`data: ${JSON.stringify({ type: 'timeline', event …
+     96|     return event;
+ ❯ TurnTimeline.step server/services/ana/turn-timeline-emitter.ts:128:12
+ ❯ TurnTimeline.announced server/services/ana/turn-timeline-emitter.ts:138:10
+ ❯ recordTurn server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:123:5
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:197:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > the full record stays with the asker and admins: a colleague gets 403 on ?texts=1 and on /export, told who may
+TypeError: this.sink.recorder(...)?.addEvent is not a function
+ ❯ TurnTimeline.emitTimeline server/services/ana/turn-timeline-emitter.ts:94:27
+     92|     // Date.now, not new Date(): one clock for `at`, `startedAt` and `…
+     93|     const event = { seq: this.seq, at: iso(Date.now()), ...input } as …
+     94|     this.sink.recorder()?.addEvent(event);
+       |                           ^
+     95|     this.sink.write(`data: ${JSON.stringify({ type: 'timeline', event …
+     96|     return event;
+ ❯ TurnTimeline.step server/services/ana/turn-timeline-emitter.ts:128:12
+ ❯ TurnTimeline.announced server/services/ana/turn-timeline-emitter.ts:138:10
+ ❯ recordTurn server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:123:5
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:207:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 5. who may read the Summary (decision 6, as taken) > a turn with no conversation has no transcript to read: a colleague gets 403 on its Summary
+TypeError: this.sink.recorder(...)?.addEvent is not a function
+ ❯ TurnTimeline.emitTimeline server/services/ana/turn-timeline-emitter.ts:94:27
+     92|     // Date.now, not new Date(): one clock for `at`, `startedAt` and `…
+     93|     const event = { seq: this.seq, at: iso(Date.now()), ...input } as …
+     94|     this.sink.recorder()?.addEvent(event);
+       |                           ^
+     95|     this.sink.write(`data: ${JSON.stringify({ type: 'timeline', event …
+     96|     return event;
+ ❯ TurnTimeline.step server/services/ana/turn-timeline-emitter.ts:128:12
+ ❯ TurnTimeline.announced server/services/ana/turn-timeline-emitter.ts:138:10
+ ❯ recordTurn server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:123:5
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:218:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 4. (server half) records join their messages by id > the thread's list names each record's assistant message, for anyone who may read the thread
+TypeError: this.sink.recorder(...)?.addEvent is not a function
+ ❯ TurnTimeline.emitTimeline server/services/ana/turn-timeline-emitter.ts:94:27
+     92|     // Date.now, not new Date(): one clock for `at`, `startedAt` and `…
+     93|     const event = { seq: this.seq, at: iso(Date.now()), ...input } as …
+     94|     this.sink.recorder()?.addEvent(event);
+       |                           ^
+     95|     this.sink.write(`data: ${JSON.stringify({ type: 'timeline', event …
+     96|     return event;
+ ❯ TurnTimeline.step server/services/ana/turn-timeline-emitter.ts:128:12
+ ❯ TurnTimeline.announced server/services/ana/turn-timeline-emitter.ts:138:10
+ ❯ recordTurn server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:123:5
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:226:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/24]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > 6. (server half) the verdict is recomputed on the Summary read > reads ok for an intact record, and not ok, with a reason, once its chain row no longer carries its hash
+TypeError: this.sink.recorder(...)?.addEvent is not a function
+ ❯ TurnTimeline.emitTimeline server/services/ana/turn-timeline-emitter.ts:94:27
+     92|     // Date.now, not new Date(): one clock for `at`, `startedAt` and `…
+     93|     const event = { seq: this.seq, at: iso(Date.now()), ...input } as …
+     94|     this.sink.recorder()?.addEvent(event);
+       |                           ^
+     95|     this.sink.write(`data: ${JSON.stringify({ type: 'timeline', event …
+     96|     return event;
+ ❯ TurnTimeline.step server/services/ana/turn-timeline-emitter.ts:128:12
+ ❯ TurnTimeline.announced server/services/ana/turn-timeline-emitter.ts:138:10
+ ❯ recordTurn server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:123:5
+ ❯ server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts:240:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/24]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims
+AssertionError: expected [ { name: 'Model', …(1) } ] to deep equally contain { name: 'Model', …(1) }
+
+- Expected:
+{
+  "name": "Model",
+  "value": "a model was used in this step",
+}
+
++ Received:
+[
+  {
+    "name": "Model",
+    "value": "a model wrote part of this result",
+  },
+]
+
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:199:21
+    197|     const p = presentStep('compute_sample_size', {}, null, { status: '…
+    198|     expect(p.source).toBe('engine');
+    199|     expect(p.facts).toContainEqual({ name: 'Model', value: 'a model wa…
+       |                     ^
+    200|   });
+    201| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/24]⎯
+
+ FAIL  server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `reason` as the sentence (document-placement-tools: confirm a filing)
+AssertionError: expected null to be 'You cannot confirm a filing.' // Object.is equality
+
+- Expected:
+"You cannot confirm a filing."
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/tool-refusal-ok-false.test.ts:25:113
+     23| describe('refusalOf: ok:false is a refusal, in its own words', () => {
+     24|   it('reads `reason` as the sentence (document-placement-tools: confir…
+     25|     expect(refusalOf(j({ ok: false, refused: true, documentId: 'd', re…
+       |                                                                                                                 ^
+     26|       'You cannot confirm a filing.',
+     27|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/24]⎯
+
+ FAIL  server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `message` when there is no reason (refuseSignatureInChat)
+AssertionError: expected null to be 'AnA cannot sign.' // Object.is equality
+
+- Expected:
+"AnA cannot sign."
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/tool-refusal-ok-false.test.ts:33:7
+     31|     expect(
+     32|       refusalOf(j({ ok: false, signatureRequired: true, tool: 'approve…
+     33|     ).toBe('AnA cannot sign.');
+       |       ^
+     34|   });
+     35|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/24]⎯
+
+ FAIL  server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > prefers the reason over an instruction to the model (extraction failed)
+AssertionError: expected null to be 'No extracted text is stored.' // Object.is equality
+
+- Expected:
+"No extracted text is stored."
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/tool-refusal-ok-false.test.ts:39:7
+     37|     expect(
+     38|       refusalOf(j({ ok: false, extractionFailed: true, reason: 'No ext…
+     39|     ).toBe('No extracted text is stored.');
+       |       ^
+     40|   });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/24]⎯
+
+ FAIL  server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > a refusal that gave no sentence still is one, in a plain sentence of the server
+AssertionError: expected null to be undefined // Object.is equality
+
+- Expected:
+undefined
+
++ Received:
+null
+
+ ❯ server/services/ana/__tests__/tool-refusal-ok-false.test.ts:43:41
+     41|
+     42|   it('a refusal that gave no sentence still is one, in a plain sentenc…
+     43|     expect(refusalOf(j({ ok: false }))).toBe(NO_REFUSAL_SENTENCE);
+       |                                         ^
+     44|     expect(refusalOf(j({ refused: 'human_authorization_required' }))).…
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/24]⎯
+
+
+ Test Files  6 failed (6)
+      Tests  24 failed | 35 passed (59)
+   Start at  13:02:17
+   Duration  24.78s (transform 8.70s, setup 268ms, import 19.68s, tests 3.48s, environment 1ms)
+

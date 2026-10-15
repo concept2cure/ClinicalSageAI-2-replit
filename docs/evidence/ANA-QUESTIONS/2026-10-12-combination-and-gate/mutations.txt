@@ -1,0 +1,12 @@
+# 3 mutations, all red
+# driver: scratchpad/mutate24.py + mutate25.py (apply, run the named test, restore)
+
+RED       a combination product is offered the EU medicines routes unmarked
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > a drug-device combination product > is told the lead centre decides, in the frame’s own words 6ms | × shared/regulatory/__tests__/pathway-availability.test.ts > what every rule must satisfy > can fire: every RULE fires on some fact a flow can state 7ms
+RED       the gate skips a question whose positions come from a catalogue
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > a question whose positions come from a catalogue > is scanned, with the values a person is actually offered 26ms
+RED       the reason is written here instead of read from the frame
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > a drug-device combination product > is told the lead centre decides, in the frame’s own words 15ms

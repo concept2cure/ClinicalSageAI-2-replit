@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > gives every module section and pyramid deliverable an editor-loadable template identity 24ms
+   → section:m1.1: expected { id: 'section:m1.1', …(11) } to have property "template.id" with value StringMatching /^[0-9a-f-]{36}$/
+ × server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > offers tabulated summaries and recorded certificates only as preparation 14ms
+   → expected { phaseId: 'phase6', …(11) } to match object { aiDraftable: false }
+(12 matching properties omitted from actual)
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > includes every phase and every task deliverable, including pre-IND work 8ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > includes every canonical IND section and preserves form/manual drafting limits 10ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > keeps official forms, signatures, datasets and agency receipts out of narrative-draft offers 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > gives every module section and pyramid deliverable an editor-loadable template identity
+AssertionError: section:m1.1: expected { id: 'section:m1.1', …(11) } to have property "template.id" with value StringMatching /^[0-9a-f-]{36}$/
+
+- Expected:
+StringMatching /^[0-9a-f-]{36}$/
+
++ Received:
+undefined
+
+ ❯ server/services/authoring/__tests__/ind-document-catalog.test.ts:10:58
+      8|     const catalogue = buildIndDocumentCatalog();
+      9|     const entries = [...catalogue.sections, ...catalogue.deliverables];
+     10|     for (const entry of entries) expect(entry, entry.id).toHavePropert…
+       |                                                          ^
+     11|     expect(new Set(entries.map(entry => (entry as typeof entry & { tem…
+     12|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > offers tabulated summaries and recorded certificates only as preparation
+AssertionError: expected { phaseId: 'phase6', …(11) } to match object { aiDraftable: false }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "aiDraftable": false,
++   "aiDraftable": true,
+  }
+
+ ❯ server/services/authoring/__tests__/ind-document-catalog.test.ts:16:91
+     14|   it('offers tabulated summaries and recorded certificates only as pre…
+     15|     const catalogue = buildIndDocumentCatalog();
+     16|     expect(catalogue.deliverables.find(d => d.title === 'Nonclinical T…
+       |                                                                                           ^
+     17|     expect(catalogue.deliverables.find(d => d.title === 'Batch analysi…
+     18|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  03:33:21
+   Duration  637ms (transform 271ms, setup 85ms, import 234ms, tests 68ms, environment 0ms)

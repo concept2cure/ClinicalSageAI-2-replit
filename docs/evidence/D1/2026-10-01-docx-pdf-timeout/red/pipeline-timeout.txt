@@ -1,0 +1,80 @@
+# red at e000003b with only the test cases added
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > surfaces compressionSkipped when Ghostscript was unavailable 2ms
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > returns compression details when the pass ran 1ms
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > rejects when the pipeline exits non-zero 2ms
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > passes --compress and --quality through to the script 1ms
+ × server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > stops a conversion that runs past its time limit, the whole process group, and says so 7ms
+   → expected 'docx_pdf_pipeline exited with code nu…' to match /stopped after 1s/
+ × server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > rejects when the converter cannot be started at all 10003ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > stops a conversion that runs past its time limit, the whole process group, and says so
+AssertionError: expected 'docx_pdf_pipeline exited with code nu…' to match /stopped after 1s/
+
+- Expected:
+/stopped after 1s/
+
++ Received:
+"docx_pdf_pipeline exited with code null"
+
+ ❯ server/services/__tests__/docx-pdf-pipeline.test.ts:135:29
+    133|       proc.emit('close', null);
+    134|
+    135|       expect(await settled).toMatch(/stopped after 1s/);
+       |                             ^
+    136|       expect(killSpy).toHaveBeenCalledWith(-4242, 'SIGKILL');
+    137|       expect(vi.mocked(spawn).mock.calls[0][2]).toMatchObject({ detach…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > rejects when the converter cannot be started at all
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/services/__tests__/docx-pdf-pipeline.test.ts:144:3
+    142|   });
+    143|
+    144|   it('rejects when the converter cannot be started at all', async () =…
+       |   ^
+    145|     const proc = new EventEmitter() as any;
+    146|     proc.stdout = new EventEmitter();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: spawn python3 ENOENT
+ ❯ Immediate.<anonymous> server/services/__tests__/docx-pdf-pipeline.test.ts:149:57
+    147|     proc.stderr = new EventEmitter();
+    148|     vi.mocked(spawn).mockReturnValue(proc);
+    149|     setImmediate(() => proc.emit('error', Object.assign(new Error('spa…
+       |                                                         ^
+    150|     await expect(runDocxPdfPipeline({ inputDocxPath: 'in.docx' })).rej…
+    151|   });
+ ❯ processImmediate node:internal/timers:484:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ENOENT' }
+This error originated in "server/services/__tests__/docx-pdf-pipeline.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "rejects when the converter cannot be started at all". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+     Errors  1 error
+   Start at  01:53:39
+   Duration  10.44s (transform 96ms, setup 89ms, import 34ms, tests 10.02s, environment 0ms)
+

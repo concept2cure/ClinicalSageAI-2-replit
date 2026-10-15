@@ -1,0 +1,13 @@
+Mutant R02-list-dropped: the client never keeps which models wrote the turn
+
+--- client/src/concept2cure/components/ana/anaProgress.ts
+- const servedBy = readServedBy(r.servedBy);
++ const servedBy = undefined as AnaServedModel[] | undefined;
+
+Tests run: client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > keeps a well-formed list, in order, and the status as before 11ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > carries the list from post_done onto the turn 57ms
+      Tests  2 failed | 8 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,11 @@
+# Mutation: one entry added to the baseline (16 > ceiling 15). Restored after.
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+   → baseline entry capture/dummy-over-ceiling names a check this hop did not run
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+   → capture/dummy-over-ceiling: no such check ran
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+# ci:canvas-path:
+❌ ci:canvas-path — the AnA-draft → canvas → editor → vault path is cut:
+   [founder-walk] tests/lineage/founder-path-lineage.baseline.json holds 16 entries over its ceiling of 15; the baseline only shrinks
+   docs/design/ANA_DOCUMENT_CANVAS.md is the binding design; CLAUDE.md "Deleting a user-facing capability" applies.

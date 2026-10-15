@@ -13,6 +13,7 @@
  * fail-closed unsupported constraints.
  */
 
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -46,6 +47,7 @@ const scopeB = { organizationId: ORG_B } as { organizationId: number };
 // an implicit 10s budget measures load, not correctness.
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
   const here = path.dirname(fileURLToPath(import.meta.url));
   await pglite.exec(
     fs.readFileSync(
@@ -53,6 +55,8 @@ beforeAll(async () => {
       'utf8',
     ),
   );
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20260726_cre_source_program_scope.sql'), 'utf8'));
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20261006_document_data_dispositions.sql'), 'utf8'));
   // Minimal real protocol-objectives store — only the columns getDesignEvidence's
   // endpoint resolver reads (it resolves a protocol_documents id → primary endpoint).
   await pglite.exec(

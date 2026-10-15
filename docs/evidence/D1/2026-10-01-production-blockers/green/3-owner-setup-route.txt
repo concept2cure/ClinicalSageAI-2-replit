@@ -1,0 +1,420 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot
+{
+  "timestamp": "2026-10-01T13:03:49.364Z",
+  "level": "warn",
+  "message": "[launch-scope] [launch-scope] LAUNCH_SCOPE_API_UNATTRIBUTED=report in production: API paths no surface claims are served and recorded, not refused",
+  "context": {}
+}
+
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: execute, templates, the package model, tasks, dispatch readiness 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 11ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call 9ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 9ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 8ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > no route mints session claims without registering them 3ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > each sign-in door opens its session through openSession 2ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > finds the mints (the scan is not empty and every payload is a literal it can read) 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a file that mints an access token gets its session from the service, never from newSessionClaims 2ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > names the workspace after the organisation, verbatim 2ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > prefers the organisation slug so the two agree wherever a human reads both 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > falls back to the name when the organisation carries no usable slug 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > always yields a non-empty slug, because the column is NOT NULL 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > writes the organisation its own workspace when it has none 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > is idempotent: a second call links to the first row and writes nothing 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > NEVER adds a second workspace to an organisation that has exactly one 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > leaves a CRO's several client workspaces exactly as they are 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > scopes to the organisation: another tenant having one is not this one having one 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > reports a lost insert race as not-created rather than as a write 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > records the platform, not a person, when no user created the organisation 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the mark on the row is what keeps a CRO anchoring > marks every workspace it writes as the organisation’s own 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the mark on the row is what keeps a CRO anchoring > spells the marker key exactly as the anchor reader queries it 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'self-serve signup' calls ensureOrganizationDefaultWorkspace 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'first-run setup' calls ensureOrganizationDefaultWorkspace 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'boot seed' calls ensureOrganizationDefaultWorkspace 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > is called by the organisation creators and no one else (it enters whatever tenant it is given) 64ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > knows of no organisation creator that does not 107ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > enters the organisation's tenant BEFORE counting and BEFORE writing 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > enters it even when the organisation already has a workspace (the count is what it protects) 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > fails closed: a refused scope reads nothing and writes nothing 2ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId 0 before touching the store 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId -1 before touching the store 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId NaN before touching the store 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId 1.5 before touching the store 0ms
+stderr | server/routes/__tests__/setup.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/setup.test.ts
+{
+  "timestamp": "2026-10-01T13:03:50.820Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports not-initialized on an empty install 22ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports initialized once a user exists 5ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a missing organization name 13ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a weak password 4ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install
+{
+  "timestamp": "2026-10-01T13:03:51.412Z",
+  "level": "error",
+  "message": "[launch-scope] launch catalog NOT provisioned for organisation 1: 20 of 20 launch modules were not granted",
+  "context": {
+    "organizationId": 1,
+    "attempted": 20,
+    "granted": 0,
+    "failed": 20,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp",
+      "insights"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+}
+
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install
+{
+  "timestamp": "2026-10-01T13:03:51.413Z",
+  "level": "info",
+  "message": "[setup] First-run setup completed",
+  "context": {
+    "orgId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install 387ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38)
+{
+  "timestamp": "2026-10-01T13:03:51.744Z",
+  "level": "error",
+  "message": "[launch-scope] launch catalog NOT provisioned for organisation 1: 20 of 20 launch modules were not granted",
+  "context": {
+    "organizationId": 1,
+    "attempted": 20,
+    "granted": 0,
+    "failed": 20,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp",
+      "insights"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+}
+
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38)
+{
+  "timestamp": "2026-10-01T13:03:51.744Z",
+  "level": "info",
+  "message": "[setup] First-run setup completed",
+  "context": {
+    "orgId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38) 328ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction
+{
+  "timestamp": "2026-10-01T13:03:52.083Z",
+  "level": "error",
+  "message": "[launch-scope] launch catalog NOT provisioned for organisation 1: 20 of 20 launch modules were not granted",
+  "context": {
+    "organizationId": 1,
+    "attempted": 20,
+    "granted": 0,
+    "failed": 20,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp",
+      "insights"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+}
+
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction
+{
+  "timestamp": "2026-10-01T13:03:52.083Z",
+  "level": "info",
+  "message": "[setup] First-run setup completed",
+  "context": {
+    "orgId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction 339ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize fails closed when the workspace write is refused — no 201, no token
+{
+  "timestamp": "2026-10-01T13:03:52.441Z",
+  "level": "error",
+  "message": "[setup] Setup initialize error",
+  "context": {
+    "err": "new row violates row-level security policy for table \"client_workspaces\""
+  }
+}
+
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > is closed in production when no setup token is configured — 403, nothing written
+{
+  "timestamp": "2026-10-01T13:03:52.457Z",
+  "level": "warn",
+  "message": "[setup] First-run setup refused",
+  "context": {
+    "code": "SETUP_CLOSED"
+  }
+}
+
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > is closed in production when the configured token is too short to be a secret
+{
+  "timestamp": "2026-10-01T13:03:52.462Z",
+  "level": "warn",
+  "message": "[setup] First-run setup refused",
+  "context": {
+    "code": "SETUP_CLOSED"
+  }
+}
+
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > refuses a missing or wrong token — 403, nothing written
+{
+  "timestamp": "2026-10-01T13:03:52.466Z",
+  "level": "warn",
+  "message": "[setup] First-run setup refused",
+  "context": {
+    "code": "SETUP_TOKEN_INVALID"
+  }
+}
+
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > refuses a missing or wrong token — 403, nothing written
+{
+  "timestamp": "2026-10-01T13:03:52.468Z",
+  "level": "warn",
+  "message": "[setup] First-run setup refused",
+  "context": {
+    "code": "SETUP_TOKEN_INVALID"
+  }
+}
+
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > refuses a missing or wrong token — 403, nothing written
+{
+  "timestamp": "2026-10-01T13:03:52.472Z",
+  "level": "warn",
+  "message": "[setup] First-run setup refused",
+  "context": {
+    "code": "SETUP_TOKEN_INVALID"
+  }
+}
+
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > admits the configured token, in any environment that configures one
+{
+  "timestamp": "2026-10-01T13:03:52.477Z",
+  "level": "warn",
+  "message": "[setup] First-run setup refused",
+  "context": {
+    "code": "SETUP_TOKEN_INVALID"
+  }
+}
+
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize fails closed when the workspace write is refused — no 201, no token 357ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize is self-closing once a user exists 9ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > is closed in production when no setup token is configured — 403, nothing written 6ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > is closed in production when the configured token is too short to be a secret 4ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > refuses a missing or wrong token — 403, nothing written 11ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > admits the configured token, in any environment that configures one
+{
+  "timestamp": "2026-10-01T13:03:52.817Z",
+  "level": "error",
+  "message": "[launch-scope] launch catalog NOT provisioned for organisation 1: 20 of 20 launch modules were not granted",
+  "context": {
+    "organizationId": 1,
+    "attempted": 20,
+    "granted": 0,
+    "failed": 20,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp",
+      "insights"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+}
+
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > admits the configured token, in any environment that configures one
+{
+  "timestamp": "2026-10-01T13:03:52.818Z",
+  "level": "info",
+  "message": "[setup] First-run setup completed",
+  "context": {
+    "orgId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — needs the deployment's setup token in production > admits the configured token, in any environment that configures one 347ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — two first calls at once create one administrator > admits one and refuses the other as already initialised
+{
+  "timestamp": "2026-10-01T13:03:53.187Z",
+  "level": "error",
+  "message": "[launch-scope] launch catalog NOT provisioned for organisation 1: 20 of 20 launch modules were not granted",
+  "context": {
+    "organizationId": 1,
+    "attempted": 20,
+    "granted": 0,
+    "failed": 20,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp",
+      "insights"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+}
+
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — two first calls at once create one administrator > admits one and refuses the other as already initialised
+{
+  "timestamp": "2026-10-01T13:03:53.187Z",
+  "level": "info",
+  "message": "[setup] First-run setup completed",
+  "context": {
+    "orgId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — two first calls at once create one administrator > admits one and refuses the other as already initialised 369ms
+
+ Test Files  4 passed (4)
+      Tests  71 passed (71)
+   Start at  13:03:48
+   Duration  4.58s (transform 1.79s, setup 253ms, import 4.24s, tests 2.50s, environment 0ms)
+

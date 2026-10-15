@@ -23,7 +23,10 @@ import type { ToolContext } from '../AnaToolExecutor.js';
 
 const loadDocumentForOrg = vi.hoisted(() => vi.fn(async () => null));
 const completeCatalog = vi.hoisted(() => vi.fn(async () => ({ ok: false, refusal: 'unused' })));
-const resolveProgramForProject = vi.hoisted(() => vi.fn(async () => null as string | null));
+// The open project's program (PF-10 S7): a v2 project names it by UUID.
+const resolveOpenProgram = vi.hoisted(() =>
+  vi.fn(async (_db: unknown, ctx: { projectRef?: string | null }) => ctx?.projectRef ?? null),
+);
 const loadUploadedFile = vi.hoisted(() =>
   vi.fn(async () => ({
     fileId: 'file_1712345678_ab12cd',
@@ -43,13 +46,38 @@ vi.mock('../../../db/tenantStore.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../db/tenantStore.js')>()),
   getTenantScope: () => ({ tenantId: '7', role: 'member', source: 'request' }),
 }));
+// This fixture supplies the current member and request executor. The cases
+// isolate tool presentation/provenance; native access suites prove sharing/RLS.
+const requestExecutor = vi.hoisted(() => ({ query: vi.fn(async () => ({ rows: [] })) }));
+vi.mock('../../c2c/current-program-access.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../c2c/current-program-access.js')>(),
+  getCurrentAccessibleProgramScope: async (_q: unknown, input: { userId: number; programId?: string | null }) => ({
+    scope: 'verified-accessible-programs', actor: { userId: input.userId, role: 'member' },
+    programIds: input.programId ? [input.programId] : [], reconciliationRequired: false,
+  }),
+  requireCurrentProgramAccess: async (_q: unknown, input: { userId: number }) => ({ actor: { userId: input.userId, role: 'member' } }),
+  requireProgramScopeStillCurrent: async () => undefined,
+}));
+// Source preview/callback admission is exercised by upload/native suites;
+// these isolated affordance tests supply an unchanged eligible uploaded file.
+vi.mock('../../vault/vault-upload-source-admission.js', () => ({ assertVaultUploadSource: async () => undefined }));
 vi.mock('../../vault/vault-ingest.service.js', () => ({ ingestVaultDocument }));
+vi.mock('../../c2c/program-access.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../c2c/program-access.js')>()),
+  resolveOpenProgram,
+  programInOrganization: async () => true,
+}));
+vi.mock('../../../db.js', () => ({ pool: {}, getPool: () => ({}), db: {} }));
 
-vi.mock('../../vault/document-catalog.service.js', () => ({
+vi.mock('../../vault/document-catalog.service.js', async () => {
+  const { syntheticReadWrapper, syntheticActorDocument } = await import('./support/source-read-tool-fixture.js');
+  return ({
+  withAnaSourceReadScope: syntheticReadWrapper,
+  revalidateActorSourceScope: async () => {},
   isDocumentCatalogEnabled: vi.fn(async () => true),
+  loadDocumentForActor: (input: any, opts: any) => syntheticActorDocument(input, opts, loadDocumentForOrg),
   loadDocumentForOrg,
   completeCatalog,
-  resolveProgramForProject,
   listProjectDocuments: vi.fn(async () => ({
     documents: [],
     total: 0,
@@ -65,7 +93,7 @@ vi.mock('../../vault/document-catalog.service.js', () => ({
     status: 'extraction_failed', method: 'none', confidence: null,
     error: 'none', charCount: 0, wordCount: null,
   })),
-}));
+}); });
 
 import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
 
@@ -73,14 +101,14 @@ type Handler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<st
 const handlers = new Map<string, Handler>();
 registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
 
-const CTX: ToolContext = { organizationId: 42, userId: 7 };
+const CTX: ToolContext = { organizationId: 42, userId: 7, sqlClient: requestExecutor };
 const CHAT_ID = 'file_1712345678_ab12cd';
 const VAULT_ID = '00000000-0000-4000-8000-000000000001';
 
-async function call(tool: string, input: Record<string, unknown>) {
+async function call(tool: string, input: Record<string, unknown>, ctx: ToolContext = CTX) {
   const h = handlers.get(tool);
   if (!h) throw new Error(`${tool} is not registered`);
-  return JSON.parse(await h(input, CTX));
+  return JSON.parse(await h(input, ctx));
 }
 
 beforeEach(() => {
@@ -88,8 +116,7 @@ beforeEach(() => {
   completeCatalog.mockClear();
   loadUploadedFile.mockClear();
   ingestVaultDocument.mockReset();
-  resolveProgramForProject.mockReset();
-  resolveProgramForProject.mockResolvedValue(null);
+  resolveOpenProgram.mockClear();
   ingestVaultDocument.mockResolvedValue({
     ok: true,
     document: { id: VAULT_ID, documentCode: 'tox-study-TOX-77-A', fileName: 'tox study TOX-77-A.pdf' },
@@ -106,14 +133,15 @@ describe('read_project_document — a chat upload id', () => {
     expect(r.error).toMatch(/read_uploaded_document/);
     // The one thing it must never say.
     expect(r.error).not.toMatch(/not found/i);
-    expect(r.error).toMatch(/The file exists/);
+    expect(r.error).toMatch(/has not verified.*availability/);
+    expect(r.error).not.toMatch(/The file exists/);
   });
 
   it('a genuinely unknown vault id still says plainly that the vault does not hold it', async () => {
     const r = await call('read_project_document', { document_id: VAULT_ID });
     expect(r.ok).toBe(false);
     expect(r.idSpace).toBe('unknown');
-    expect(r.error).toMatch(/No vault document with id/);
+    expect(r.error).toMatch(/No accessible vault document with id/);
     expect(r.error).toMatch(/list_project_documents/);
   });
 });
@@ -139,6 +167,8 @@ describe('catalog_project_document — a chat upload id', () => {
 
 describe('file_chat_upload_to_vault — the affordance the refusal names', () => {
   const PROGRAM = '11111111-1111-4111-8111-111111111111';
+  // A conversation held in the project the file goes to (PF-10 S7).
+  const OPEN: ToolContext = { ...CTX, projectRef: PROGRAM };
 
   it('files the upload through the SAME governed ingest the Vault surface uses', async () => {
     const r = await call('file_chat_upload_to_vault', {
@@ -146,10 +176,10 @@ describe('file_chat_upload_to_vault — the affordance the refusal names', () =>
       document_title: '28-Day Rat Tox Study TOX-77-A',
       document_type: 'REPORT',
       program_id: PROGRAM,
-    });
+    }, OPEN);
     expect(r.ok).toBe(true);
     expect(r.documentId).toBe(VAULT_ID);
-    expect(loadUploadedFile).toHaveBeenCalledWith(CHAT_ID, 42);
+    expect(loadUploadedFile).toHaveBeenCalledWith(CHAT_ID, 42, expect.objectContaining({ userId: 7 }));
     expect(ingestVaultDocument).toHaveBeenCalledTimes(1);
     const passed = ingestVaultDocument.mock.calls[0][0];
     expect(passed).toMatchObject({
@@ -159,9 +189,10 @@ describe('file_chat_upload_to_vault — the affordance the refusal names', () =>
       documentType: 'REPORT',
       fileName: 'tox study TOX-77-A.pdf',
     });
-    // A code is derived so a second filing of the same file upserts one row
-    // rather than growing duplicates.
-    expect(passed.documentCode).toBe('tox-study-TOX-77-A');
+    // The code is the file name as uploaded, the same code the Vault upload and
+    // the data room give this file, so a second filing upserts one row
+    // (QA-2026-10-08: the chat route used to derive a different, extension-less one).
+    expect(passed.documentCode).toBe('tox study TOX-77-A.pdf');
     // The user is told where it landed, not merely that it worked.
     expect(r.message).toMatch(/Module 4/);
   });
@@ -177,14 +208,15 @@ describe('file_chat_upload_to_vault — the affordance the refusal names', () =>
     expect(ingestVaultDocument).not.toHaveBeenCalled();
   });
 
-  it('asks which program rather than guessing one', async () => {
+  it('with no project open it guesses none: the file is not filed, and the audited adopt is named', async () => {
     const r = await call('file_chat_upload_to_vault', {
       file_id: CHAT_ID,
       document_title: 'CoA batch 23-104',
       document_type: 'REPORT',
     });
     expect(r.ok).toBe(false);
-    expect(r.error).toMatch(/Ask which program/);
+    expect(r.code).toBe('NO_PROJECT');
+    expect(r.error).toMatch(/Add to this project/);
     expect(ingestVaultDocument).not.toHaveBeenCalled();
   });
 
@@ -195,7 +227,7 @@ describe('file_chat_upload_to_vault — the affordance the refusal names', () =>
     });
     const r = await call('file_chat_upload_to_vault', {
       file_id: CHAT_ID, document_title: 'x', document_type: 'OTHER', program_id: PROGRAM,
-    });
+    }, OPEN);
     expect(r.ok).toBe(false);
     expect(r.refused).toBe(true);
     expect(r.code).toBe('PROGRAM_FORBIDDEN');

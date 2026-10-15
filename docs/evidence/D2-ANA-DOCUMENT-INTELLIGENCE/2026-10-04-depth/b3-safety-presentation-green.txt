@@ -1,0 +1,60 @@
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > transmission is written from technical_validation 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > every step rests on a basis, and every checked source names its URL and date 8ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > a step the platform cannot see is never treated as missing or as done 3ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > a classifier’s proposal is not a filing 1ms
+ ✓ tests/regulatory/submission-chain.test.ts > the NDA workflow AnA is given follows the chain > every chain edge between two workflow steps is an edge of the workflow 6ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > regulatoryBasis names the ST&F and the OCMQs as reviewer practice, voluntary for sponsors 2ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > ISS-AE groups terms by OCMQ and anticipates the ST&F layout 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > ISS-LAB anticipates the kidney- and muscle-injury Targeted Analysis Guides 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the E3 overlay cites the ST&F IG and OCMQs at 12.2.2 / 12.2.3 > 12.2.2 carries the ST&F IG and OCMQ bases as regulator-text and frames the layout as anticipation 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the E3 overlay cites the ST&F IG and OCMQs at 12.2.2 / 12.2.3 > 12.2.3 names the grouped-term pitfall and has a basis 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > CTD 2.7.4 anticipates grouped-term (OCMQ) review > expectedData or commonPitfalls mention OCMQ 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > the surfaces mention OCMQ at all (so the guards below are not vacuous) 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > no "required" / "must" within a clause of an OCMQ or ST&F mention 2ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > the OCMQ count and MedDRA version are not fixed in the record 1ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND initial · Introductory Statement: country-withdrawal disclosure cites 312.23(a)(3)(iii), not (a)(3)(iv) 1ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · safety summary: cites 312.33(b)(1)-(4), not (b)(1)-(2) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · IND changes: cites (b)(6) preclinical, (b)(7) manufacturing, (e) Phase 1 mods — not (b)(3)-(5) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · admin section: no Part 56 obligation asserted; cites 312.33(f) and (g) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · regulatoryBasis: no phantom Part 56 element 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > Pre-NDA meeting · 312.47(b)(2) is glossed as "Other meetings", not end-of-Phase-2 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.2 · is the cover letter, and no Module 1 guidance claims a table-of-contents heading (the eCTD backbone is the index) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.20 · general investigational plan cites 312.23(a)(3) and files at FDA heading 1.20 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.14.4.1 · IB: 312.23(a)(5) enumerates content; 312.55 is the separate furnishing duty 0ms
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+Loaded 0 academic documents
+
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy 2ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.2 is Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a code nothing registers gets no line rather than a guessed one 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code 12ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > keeps the module playbooks the overlay does not model 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3 5ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3 3ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4 summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD primary code is named for that code 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 does not claim to be the ISE 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.4 does not claim to be the ISS 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 states FDA’s own description of the summary 0ms
+
+ Test Files  15 passed (15)
+      Tests  339 passed (339)
+   Start at  00:54:55
+   Duration  8.14s (transform 6.78s, setup 528ms, import 14.74s, tests 1.30s, environment 4ms)
+

@@ -1,0 +1,7 @@
+── 12b. QA resolves each open finding with a recorded note
+   ✓ resolved 2 finding(s) with notes in the provenance chain
+
+── 12c. Re-running the sweep keeps QA's resolutions — the same finding over the same data stays resolved
+   ✓ re-swept: 2 finding(s) still resolved, none reopened
+
+════ RESULT: 131 passed, 0 failed ════

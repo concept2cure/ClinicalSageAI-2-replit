@@ -30,6 +30,10 @@ import supertest from 'supertest';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
 const SCHEMA = path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.sql');
+const AUTHORING = path.join(REPO_ROOT, 'db/migrations/20260725_authoring_document_loop_tables.sql');
+const COMMENTS = path.join(REPO_ROOT, 'db/migrations/20260730_authoring_comments_router_columns.sql');
+const REVISION_LEDGER = path.join(REPO_ROOT, 'db/migrations/20260817_doc_revisions_immutable_ledger.sql');
+const BINDING = path.join(REPO_ROOT, 'migrations/20260728_authoring_document_governed_binding.sql');
 const BACKLINK = path.join(
   REPO_ROOT,
   'migrations/20260814f_section_version_ana_action_backlink.sql',
@@ -85,6 +89,12 @@ beforeEach(async () => {
   `);
   await pg.exec(fs.readFileSync(PREREQ, 'utf8'));
   await pg.exec(fs.readFileSync(SCHEMA, 'utf8'));
+  // The real route checks bound authoring seals in the write transaction.
+  // Provision those canonical migration prerequisites rather than bypass it.
+  await pg.exec(fs.readFileSync(AUTHORING, 'utf8'));
+  await pg.exec(fs.readFileSync(COMMENTS, 'utf8'));
+  await pg.exec(fs.readFileSync(REVISION_LEDGER, 'utf8'));
+  await pg.exec(fs.readFileSync(BINDING, 'utf8'));
   await pg.exec(fs.readFileSync(BACKLINK, 'utf8'));
 
   await pg.query(`INSERT INTO regulatory_programs (id) VALUES ($1)`, [PROJECT]);

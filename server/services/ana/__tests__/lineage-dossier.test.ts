@@ -138,12 +138,15 @@ function minimalLedger(): ArtifactLedger {
     project: { projectId: 5, name: 'IND-123' },
     citations: null,
     authoringPlan: null,
+    authoringPlanUnavailable: null,
     auditLog: [],
     auditLogUnavailable: null,
     signatures: [],
     signaturesUnavailable: null,
     proposals: [],
+    proposalsUnavailable: null,
     runs: { totalRuns: 0, latestRunId: null, latestRunAt: null, modelsUsed: [] },
+    runsUnavailable: null,
   };
 }
 
@@ -221,6 +224,7 @@ function fixtureDossier(): DocumentLineageDossier {
         linkageType: 'cited_by',
         transformationType: 'ai_generation',
         confidenceScore: 88,
+        confidenceBasis: 'retrieval_relevance',
         aiModelUsed: 'anthropic/claude',
         createdAt: '2026-07-01T00:00:00.000Z',
       },

@@ -142,28 +142,29 @@ describe('regional backbone DOCTYPE resolves to the bundled util/dtd/ folder', (
  * backbone's own location, and bundling is exercised with stand-in *.xsl files
  * through the same drop-point the DTDs use ($ECTD_DTD_DIR).
  */
+async function packageOne(work: string, region: 'fda' | 'ema') {
+  const bytes = pdf('general');
+  const src = path.join(work, 'general.pdf');
+  await fs.writeFile(src, bytes);
+  const bundle = await packageEctdSubmission({
+    region,
+    applicationId: '123456',
+    sequence: '0000',
+    submissionType: 'original',
+    fda: { applicationType: 'nda' },
+    sponsorId: 'D',
+    sponsorName: 'S',
+    productName: 'P',
+    outputDir: path.join(work, 'out'),
+    environment: 'staging',
+    leaves: [
+      { operation: 'new', ctdSection: '3.2.S.1', fileName: 'general.pdf', md5: md5(bytes), title: 'General', sourcePath: src },
+    ],
+  });
+  return JSZip.loadAsync(await fs.readFile(bundle.path));
+}
+
 describe('stylesheet references resolve to the bundled util/style/ folder', () => {
-  async function packageOne(work: string, region: 'fda' | 'ema') {
-    const bytes = pdf('general');
-    const src = path.join(work, 'general.pdf');
-    await fs.writeFile(src, bytes);
-    const bundle = await packageEctdSubmission({
-      region,
-      applicationId: '123456',
-      sequence: '0000',
-      submissionType: 'original',
-      fda: { applicationType: 'nda' },
-      sponsorId: 'D',
-      sponsorName: 'S',
-      productName: 'P',
-      outputDir: path.join(work, 'out'),
-      environment: 'staging',
-      leaves: [
-        { operation: 'new', ctdSection: '3.2.S.1', fileName: 'general.pdf', md5: md5(bytes), title: 'General', sourcePath: src },
-      ],
-    });
-    return JSZip.loadAsync(await fs.readFile(bundle.path));
-  }
   const piHref = (xml: string) => /<\?xml-stylesheet[^>]*href="([^"]+)"/.exec(xml)?.[1];
 
   it('fda: m1/us/us-regional.xml points its stylesheet at util/style/us-regional.xsl', async () => {
@@ -218,4 +219,45 @@ describe('stylesheet references resolve to the bundled util/style/ folder', () =
       await fs.rm(work, { recursive: true, force: true });
     }
   });
+});
+
+/**
+ * ── The root's xmlns:xlink is the value the DTDs fix ─────────────────────────
+ * 2026-10-01 (W5/D7, sweep F01): both backbones declared
+ * xmlns:xlink="http://www.w3.org/1999/xlink". The ICH eCTD 3.2 DTD (on
+ * ectd:ectd) and FDA's us-regional 3.3 DTD (on fda-regional:fda-regional)
+ * declare that attribute #FIXED "http://www.w3c.org/1999/xlink", the non-W3C
+ * spelling FDA's own example uses (docs/ectd/SPEC_DIGEST.md). A #FIXED
+ * attribute given any other value is a DTD validity error, so every index.xml
+ * and us-regional.xml failed DTD validation, and no check in the repo noticed
+ * because none of the DTDs is vendored yet.
+ *
+ * The value is written out here rather than imported: this test exists to fail
+ * when the shared constant is "corrected" to the W3C spelling.
+ */
+describe('the backbone roots declare xmlns:xlink with the value the DTDs fix', () => {
+  const FIXED_XLINK = 'http://www.w3c.org/1999/xlink';
+  const xlinkDeclarations = (xml: string) =>
+    [...xml.matchAll(/\bxmlns:xlink\s*=\s*"([^"]*)"/g)].map((m) => m[1]);
+
+  for (const { file, root } of [
+    { file: 'index.xml', root: 'ectd:ectd' },
+    { file: 'm1/us/us-regional.xml', root: 'fda-regional:fda-regional' },
+  ]) {
+    it(`${file}: <${root}> declares xmlns:xlink="${FIXED_XLINK}"`, async () => {
+      const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-xlink-ns-'));
+      try {
+        const zip = await packageOne(work, 'fda');
+        const xml = await zip.file(file)?.async('string');
+        expect(xml, `${file} missing from the package`).toBeTruthy();
+        const rootTag = new RegExp(`<${root}\\b[^>]*>`).exec(xml!)?.[0];
+        expect(rootTag, `${file} has no <${root}> root element`).toBeTruthy();
+        expect(xlinkDeclarations(rootTag!)).toEqual([FIXED_XLINK]);
+        // Nothing below the root rebinds the prefix to another namespace.
+        expect(xlinkDeclarations(xml!).filter((v) => v !== FIXED_XLINK)).toEqual([]);
+      } finally {
+        await fs.rm(work, { recursive: true, force: true });
+      }
+    });
+  }
 });

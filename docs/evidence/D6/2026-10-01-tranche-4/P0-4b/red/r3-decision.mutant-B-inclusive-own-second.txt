@@ -1,0 +1,71 @@
+# R3 decision, MUTANT B: stamp = the event's own instant, comparison inclusive (start <= stamp second), no wait. Run 2026-10-01T14:07:41Z
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1887
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1888
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1889
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1890
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1891
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1892
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1893
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1894
+{"level":30,"time":"2026-10-01T13:08:05.000Z","pid":20923,"hostname":"vm","context":{"userId":1892,"tenantId":93330,"resourceId":"1892"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ↓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it
+ ↓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door
+ ↓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed and re-added holds nothing from before: the session is over at every door, and they sign in again (R1)
+ ↓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry
+{"level":30,"time":"2026-10-01T13:08:05.000Z","pid":20923,"hostname":"vm","context":{"userId":1892,"tenantId":"93330","resourceId":"1892"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:08:35.100Z","pid":20923,"hostname":"vm","context":{"userId":1892,"tenantId":93330,"resourceId":"1892"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:08:35.100Z","pid":20923,"hostname":"vm","context":{"userId":1892,"tenantId":"93330","resourceId":"1892"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:08:35.600Z","pid":20923,"hostname":"vm","context":{"userId":1892,"tenantId":93330,"resourceId":"1892"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+stdout | tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door
+[database] Database connection successful { timestamp: '2026-10-01T13:08:40.000Z', poolSize: 2 }
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door 790ms
+{"level":30,"time":"2026-10-01T13:09:05.000Z","pid":20923,"hostname":"vm","context":{"userId":1893,"tenantId":93330,"resourceId":"1893"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:09:05.000Z","pid":20923,"hostname":"vm","context":{"userId":1893,"tenantId":"93330","resourceId":"1893"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:09:35.000Z","pid":20923,"hostname":"vm","context":{"userId":1893,"tenantId":93330,"resourceId":"1893"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T13:09:35.378Z","pid":20923,"hostname":"vm","context":{"userId":1893,"tenantId":93330,"resourceId":"1893"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:09:35.378Z","pid":20923,"hostname":"vm","context":{"userId":1893,"tenantId":"93330","resourceId":"1893"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:10:05.000Z","pid":20923,"hostname":"vm","context":{"userId":1894,"tenantId":93330,"resourceId":"1894"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:10:05.000Z","pid":20923,"hostname":"vm","context":{"userId":1894,"tenantId":"93330","resourceId":"1894"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:10:35.100Z","pid":20923,"hostname":"vm","context":{"userId":1894,"tenantId":93330,"resourceId":"1894"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:10:35.600Z","pid":20923,"hostname":"vm","context":{"userId":1894,"tenantId":93330,"resourceId":"1894"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T13:11:05.000Z","pid":20923,"hostname":"vm","context":{"userId":1894,"tenantId":"93330","resourceId":"1894"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that second has begun 838ms
+   → {"success":false,"error":{"code":"MFA_002","message":"This sign-in has ended. Sign in again."}}: expected 401 to be 200 // Object.is equality
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing 472ms
+ ↓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that second has begun
+AssertionError: {"success":false,"error":{"code":"MFA_002","message":"This sign-in has ended. Sign in again."}}: expected 401 to be 200 // Object.is equality
+- Expected
++ Received
+- 200
++ 401
+ ❯ signInAt tests/db/session-termination.dbtest.ts:130:45
+    128|     .post('/api/auth/mfa/verify')
+    129|     .send({ challengeId: login.body.challengeId, code: totp(m.secret, …
+    130|   expect(verify.status, shown(verify.body)).toBe(200);
+       |                                             ^
+    131|   return {
+    132|     bearer: { Authorization: `Bearer ${verify.body.accessToken}` },
+ ❯ tests/db/session-termination.dbtest.ts:573:19
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 13 skipped (16)
+   Start at  14:07:42
+   Duration  8.40s (transform 2.30s, setup 99ms, import 269ms, tests 7.23s, environment 0ms)

@@ -47,6 +47,7 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response.js';
 import { resolveDocumentPath } from '../utils/document-file-roots.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 
@@ -615,8 +616,7 @@ router.post('/analyze', async (req: Request, res: Response) => {
       res.json({ success: true, data: result });
     }
   } catch (err) {
-    logger.error('Analysis failed', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ success: false, error: String(err) });
+    serverError(res, logger, 'analysing the document', err);
   }
 });
 

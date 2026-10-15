@@ -1,0 +1,16 @@
+Mutant E06-stream-floor-unused: the stream sends the effort chosen, as before MC-RL-5
+
+--- server/routes/ana-ri/stream.ts
+- const apiEffort = resolveTurnApiEffort({
+        effort: effortUsed,
+        riskTier: routingPlan.riskTier,
+        policyPinned: Boolean(policyHint?.preferredStrategy),
+      });
++ const apiEffort = policyHint?.preferredStrategy ? undefined : ({ fast: 'low', balanced: 'medium', thorough: 'high' } as const)[effortUsed];
+
+Tests run: server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 12ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

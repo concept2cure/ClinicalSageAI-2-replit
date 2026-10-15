@@ -13,20 +13,36 @@ import request from 'supertest';
 
 const query = vi.fn();
 vi.mock('../../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
 
 import projectsRouter from '../projects';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
+
+const USER = 41;
+const P = 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05';
 
 function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { organizationId: number }).organizationId = org;
+    const r = req as unknown as { organizationId?: number; userId: number; dbClient: unknown };
+    if (org !== null) r.organizationId = org;
+    r.userId = USER;
+    r.dbClient = { query: (...a: unknown[]) => query(...a) };
     next();
   });
   app.use('/api/c2c/projects', projectsRouter);
   return app;
 }
 
-beforeEach(() => query.mockReset());
+beforeEach(() => {
+  query.mockReset();
+  clearSeats();
+  seatMember(7, USER, 'member');
+  seatProgram(7, P);
+});
 
 const KEYS = ['id', 'title', 'ws', 'code', 'stage', 'readiness', 'status', 'lead', 'blocker', 'due', 'activity'];
 
@@ -47,8 +63,16 @@ describe('GET /api/c2c/projects', () => {
     expect(sql).toContain('regulatory_programs');
     expect(sql).toContain('progress_percent');
     // Paged: org, then the default page size + 1 (the extra row is how hasMore
-    // is decided without a second COUNT(*)), then the offset.
-    expect(params).toEqual([7, 51, 0, false]);
+    // is decided without a second COUNT(*)), then the offset, the archived
+    // flag, and (since 14362ef00) the programs the caller can currently access.
+    expect(params).toEqual([7, 51, 0, false, [P]]);
+  });
+
+  it('carries the target filing date as a date, so days to filing can be counted', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    await request(appWith(7)).get('/api/c2c/projects');
+    const [sql] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/to_char\(p\.target_submission_date, 'YYYY-MM-DD'\)\s+AS due_date/);
   });
 
   it('clamps ?limit to its maximum and never issues an unbounded read', async () => {
@@ -56,7 +80,7 @@ describe('GET /api/c2c/projects', () => {
     await request(appWith(7)).get('/api/c2c/projects?limit=100000&offset=5');
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
     expect(sql).toContain('LIMIT $2 OFFSET $3');
-    expect(params).toEqual([7, 201, 5, false]);
+    expect(params).toEqual([7, 201, 5, false, [P]]);
   });
 
   it('reports hasMore and trims the extra probe row off the page', async () => {
@@ -86,7 +110,7 @@ describe('GET /api/c2c/projects/:id', () => {
 
   it('selects only columns that exist on regulatory_programs', async () => {
     query.mockResolvedValueOnce({ rows: [{ id: 'u', name: 'p' }] });
-    const res = await request(appWith(7)).get('/api/c2c/projects/b6d3e141-7abb-4f1d-9b8b-f0f334604a05');
+    const res = await request(appWith(7)).get(`/api/c2c/projects/${P}`);
     expect(res.status).toBe(200);
     const [sql] = query.mock.calls[0] as [string];
     // regression: these are NOT regulatory_programs columns and referencing them

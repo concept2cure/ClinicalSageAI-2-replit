@@ -1,0 +1,12 @@
+Mutant R64-labelled-id-not-confirmed: a PMID the citation tool verified is not found when the model labelled it (probe p5 G1)
+
+--- server/services/ana/answer-check-sources.ts
+- const isSingleToken = (v: string) => /^(?:[A-Za-z]{2,8}[:#]?[ \t]{0,2})?\S{2,40}$/.test(v.trim());
++ const isSingleToken = (v: string) => /^\S{2,40}$/.test(v.trim());
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > a labelled PMID the tool verified is found 8ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

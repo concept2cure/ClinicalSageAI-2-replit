@@ -19,9 +19,17 @@ import { db, pool } from '../../db';
 import { tmfArtifactFilings, type TmfArtifactFiling } from '../../../shared/schema/tmf-artifacts';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
-import { getTmfReferenceModel, assessTmfCompleteness, type TmfCompletenessResult } from './tmf-completeness';
+import {
+  getTmfReferenceModel,
+  assessTmfCompleteness,
+  type TmfCompletenessResult,
+  type TmfDocumentEvidence,
+} from './tmf-completeness';
 
 const logger = createScopedLogger('tmf-artifact-persistence');
+
+/** A vault document reference: `vault://<document id>`. */
+const VAULT_REF = /^vault:\/\/(.+)$/;
 
 export type TmfCtx = { organizationId: number; userId: number };
 
@@ -54,7 +62,7 @@ export class TmfArtifactError extends Error {
  * and cannot produce one.
  */
 async function assertDocumentRefResolves(documentRef: string, organizationId: number): Promise<void> {
-  const m = /^vault:\/\/(.+)$/.exec(documentRef.trim());
+  const m = VAULT_REF.exec(documentRef.trim());
   if (!m) {
     // A non-vault scheme (an external URL, a paper-archive locator) is not
     // something this service can verify, and refusing it would break filings
@@ -76,6 +84,7 @@ async function assertDocumentRefResolves(documentRef: string, organizationId: nu
     const { rows } = await pool.query(
       `SELECT 1 FROM vault.documents d
         WHERE d.id::text = $1
+          AND d.deleted_at IS NULL
           AND EXISTS (
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id
@@ -188,8 +197,50 @@ export async function removeTmfArtifactFiling(id: string, ctx: TmfCtx): Promise<
 }
 
 /**
+ * What each filing's document reference is NOW. A vault reference is looked up
+ * again (org-scoped, soft-deleted documents excluded) — it was verified once, at
+ * filing, and a document can be deleted after. A failed lookup throws: it says
+ * nothing about the documents, so it must not become a readiness verdict.
+ */
+async function documentEvidenceFor(
+  rows: TmfArtifactFiling[],
+  organizationId: number,
+): Promise<Record<string, TmfDocumentEvidence>> {
+  const evidence: Record<string, TmfDocumentEvidence> = {};
+  const vaultIdByCode = new Map<string, string>();
+  for (const r of rows) {
+    const ref = typeof r.documentRef === 'string' ? r.documentRef.trim() : '';
+    const m = VAULT_REF.exec(ref);
+    if (!ref) evidence[r.artifactCode] = 'no_document';
+    else if (!m) evidence[r.artifactCode] = 'unverifiable';
+    else vaultIdByCode.set(r.artifactCode, m[1].trim());
+  }
+  if (vaultIdByCode.size === 0) return evidence;
+  const { rows: found } = await pool.query(
+    `SELECT d.id::text AS id FROM vault.documents d
+      WHERE d.id::text = ANY($1::text[])
+        AND d.deleted_at IS NULL
+        AND EXISTS (
+          SELECT 1 FROM regulatory_programs rp
+           WHERE rp.id = d.program_id
+             AND rp.organization_id = $2
+             AND rp.deleted_at IS NULL
+        )`,
+    [[...new Set(vaultIdByCode.values())], organizationId],
+  );
+  const resolving = new Set(found.map((f: { id: unknown }) => String(f.id)));
+  for (const [code, id] of vaultIdByCode) evidence[code] = resolving.has(id) ? 'verified' : 'unresolved';
+  return evidence;
+}
+
+/**
  * Compute inspection-readiness for a trial from its stored artifacts.
  * Org-scoped. `scope` ('essential' default | 'all') mirrors the checker.
+ *
+ * 2026-10-15: this passed every filing ROW as a filed document, so a trial whose
+ * essential artifacts were recorded with no document — or against vault
+ * documents since deleted — read ready. An artifact now counts only when its
+ * reference resolves to a document at the time of asking.
  */
 export async function getTrialTmfCompleteness(
   trialId: string,
@@ -197,5 +248,6 @@ export async function getTrialTmfCompleteness(
   scope: 'essential' | 'all' = 'essential',
 ): Promise<TmfCompletenessResult> {
   const rows = await listTmfArtifacts(trialId, ctx);
-  return assessTmfCompleteness({ providedArtifacts: rows.map((r) => r.artifactCode), scope });
+  const documentEvidence = await documentEvidenceFor(rows, ctx.organizationId);
+  return assessTmfCompleteness({ providedArtifacts: rows.map((r) => r.artifactCode), scope, documentEvidence });
 }

@@ -77,6 +77,15 @@ interface NotificationRow {
   title: string;
   body: string | null;
   created_at?: string;
+  resource_type?: string | null;
+  resource_id?: string | number | null;
+}
+
+/** Only a canonical saved-run resource creates a report navigation target. */
+function reportRunTarget(notification: NotificationRow): string | null {
+  const id = String(notification.resource_id ?? '');
+  return notification.resource_type === 'report_run' && /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id))
+    ? `insights?reportRunId=${id}` : null;
 }
 
 function dueLabel(iso: string | null): string {
@@ -347,6 +356,7 @@ function TrayPanel({
                 <span className="tt-item-body">
                   <span className="tt-item-title">{n.title}</span>
                   {n.body && <span className="tt-item-sub">{n.body}</span>}
+                  {reportRunTarget(n) && <button type="button" className="btn ghost" onClick={() => go(reportRunTarget(n)!)}>Open saved report</button>}
                 </span>
                 <button className="tt-read" onClick={() => markRead(n.id)} aria-label={`Mark "${n.title}" read`} title="Mark read">{I.check}</button>
               </div>

@@ -1,0 +1,44 @@
+# RED (module not found): the two new suites run before authoring-read.ts / authoring-read-tools.ts exist — HEAD d10de752c9, 2026-10-01T18:32:52Z. The meaningful red is the mutation run in 1-mutation-scope-predicates-red.txt.
+
+$ npx vitest run server/services/authoring/__tests__/authoring-read.test.ts server/services/ana/__tests__/authoring-read-tools.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts [ server/services/authoring/__tests__/authoring-read.test.ts ]
+Error: Cannot find module '../authoring-read' imported from /home/user/ClinicalSageAI-2-replit/server/services/authoring/__tests__/authoring-read.test.ts
+ ❯ server/services/authoring/__tests__/authoring-read.test.ts:15:1
+     13| import { afterAll, beforeAll, beforeEach, describe, expect, it } from …
+     14| import { PGlite } from '@electric-sql/pglite';
+     15| import {
+       | ^
+     16|   outlineForProgram,
+     17|   readSection,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana/__tests__/authoring-read-tools.test.ts [ server/services/ana/__tests__/authoring-read-tools.test.ts ]
+Error: Cannot find module '../authoring-read-tools' imported from /home/user/ClinicalSageAI-2-replit/server/services/ana/__tests__/authoring-read-tools.test.ts
+ ❯ server/services/ana/__tests__/authoring-read-tools.test.ts:26:1
+     24| import type { ToolContext } from '../AnaToolExecutor';
+     25| import { FREE_TEXT_FIELD, freeTextFields } from '../governed-write-too…
+     26| import {
+       | ^
+     27|   AUTHORING_READ_NO_PROJECT,
+     28|   AUTHORING_READ_TOOLS,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  18:32:53
+   Duration  455ms (transform 253ms, setup 192ms, import 0ms, tests 0ms, environment 0ms)
+

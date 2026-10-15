@@ -1,0 +1,240 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > reports sterile = no against a substantive sterilization validation, and is not ready 9ms
+   → expected undefined to deeply equal [ { section: 'sterilization', …(2) } ]
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > is empty, and ready, for the same content without the contradicting section 2ms
+   → expected undefined to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not count a draft: a non-substantive sterilization leaf contradicts nothing 13ms
+   → expected undefined to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not report a contradiction when the answer is yes, or when nobody answered 1ms
+   → expected undefined to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > reports software = no against an authored software section 1ms
+   → expected undefined to deeply equal [ { section: 'software', …(2) } ]
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not read a shelf-life or packaging section as a claim that the device is sterile 1ms
+   → expected undefined to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not read a reprocessing section that covers user sterilization as a contradiction 5ms
+   → expected undefined to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not treat cybersecurity documentation on a non-cyber device as a contradiction 4ms
+   → expected undefined to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > assembleDeviceSubmission surfaces the contradiction as a blocker > holds back an official eSTAR whose answers contradict its own content, and says why 4ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > assembleDeviceSubmission surfaces the contradiction as a blocker > still produces the official eSTAR for the same program without the contradicting section 1ms
+ × server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > vocabulary: 510(k) and De Novo are screened, not refused > no 510(k) or De Novo slot authority calls a gap an RTA ground 1ms
+   → 510k/cybersecurity: expected 'FD&C Act §524B. A cyber device withou…' not to match /\bRTA\b/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > reports sterile = no against a substantive sterilization validation, and is not ready
+AssertionError: expected undefined to deeply equal [ { section: 'sterilization', …(2) } ]
+
+- Expected:
+[
+  {
+    "flag": "sterile",
+    "section": "sterilization",
+    "sources": [
+      "D4",
+    ],
+  },
+]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:55:38
+     53|   it('reports sterile = no against a substantive sterilization validat…
+     54|     const r = mapToEstar({ type: '510k', leaves: [...complete510k, ste…
+     55|     expect(r.summary.contradictions).toEqual([
+       |                                      ^
+     56|       { section: 'sterilization', flag: 'sterile', sources: ['D4'] },
+     57|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > is empty, and ready, for the same content without the contradicting section
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:66:38
+     64|   it('is empty, and ready, for the same content without the contradict…
+     65|     const r = mapToEstar({ type: '510k', leaves: complete510k, flags: …
+     66|     expect(r.summary.contradictions).toEqual([]);
+       |                                      ^
+     67|     expect(r.summary.ready).toBe(true);
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not count a draft: a non-substantive sterilization leaf contradicts nothing
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:76:38
+     74|       flags: PLAIN_DEVICE,
+     75|     });
+     76|     expect(r.summary.contradictions).toEqual([]);
+       |                                      ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not report a contradiction when the answer is yes, or when nobody answered
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:81:40
+     79|   it('does not report a contradiction when the answer is yes, or when …
+     80|     const yes = mapToEstar({ type: '510k', leaves: [sterilizationValid…
+     81|     expect(yes.summary.contradictions).toEqual([]);
+       |                                        ^
+     82|     // Unanswered is undetermined, never "no". An unanswered question …
+     83|     const unanswered = mapToEstar({ type: '510k', leaves: [sterilizati…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > reports software = no against an authored software section
+AssertionError: expected undefined to deeply equal [ { section: 'software', …(2) } ]
+
+- Expected:
+[
+  {
+    "flag": "softwareAiMl",
+    "section": "software",
+    "sources": [
+      "D4",
+    ],
+  },
+]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:93:38
+     91|       flags: PLAIN_DEVICE,
+     92|     });
+     93|     expect(r.summary.contradictions).toEqual([
+       |                                      ^
+     94|       { section: 'software', flag: 'softwareAiMl', sources: ['D4'] },
+     95|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not read a shelf-life or packaging section as a claim that the device is sterile
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:107:38
+    105|       flags: PLAIN_DEVICE,
+    106|     });
+    107|     expect(r.summary.contradictions).toEqual([]);
+       |                                      ^
+    108|   });
+    109|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not read a reprocessing section that covers user sterilization as a contradiction
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:118:38
+    116|       flags: PLAIN_DEVICE,
+    117|     });
+    118|     expect(r.summary.contradictions).toEqual([]);
+       |                                      ^
+    119|   });
+    120|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > mapToEstar summary.contradictions (eSTAR technical screening: responses must describe the device) > does not treat cybersecurity documentation on a non-cyber device as a contradiction
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:131:38
+    129|       flags: { ...PLAIN_DEVICE, softwareAiMl: true },
+    130|     });
+    131|     expect(r.summary.contradictions).toEqual([]);
+       |                                      ^
+    132|   });
+    133| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > assembleDeviceSubmission surfaces the contradiction as a blocker > holds back an official eSTAR whose answers contradict its own content, and says why
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:147:39
+    145|   it('holds back an official eSTAR whose answers contradict its own co…
+    146|     const r = assembleDeviceSubmission({ ...base, leaves: [...complete…
+    147|     expect(r.canProduceOfficialEstar).toBe(false);
+       |                                       ^
+    148|     expect(r.artifactKind).toBe('content-package-draft');
+    149|     const text = r.blockers.join('\n');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts > vocabulary: 510(k) and De Novo are screened, not refused > no 510(k) or De Novo slot authority calls a gap an RTA ground
+AssertionError: 510k/cybersecurity: expected 'FD&C Act §524B. A cyber device withou…' not to match /\bRTA\b/
+
+- Expected:
+/\bRTA\b/
+
++ Received:
+"FD&C Act §524B. A cyber device without it is an RTA ground."
+
+ ❯ server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts:168:78
+    166|     for (const type of ['510k', 'de_novo'] as const) {
+    167|       const r = mapToEstar({ type, leaves: [], flags: PLAIN_DEVICE });
+    168|       for (const s of r.sections) expect(s.authority, `${type}/${s.id}…
+       |                                                                              ^
+    169|     }
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 1 passed (11)
+   Start at  12:10:39
+   Duration  1.00s (transform 372ms, setup 166ms, import 263ms, tests 48ms, environment 0ms)
+

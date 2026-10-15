@@ -1,0 +1,20 @@
+Mutant AUTH-definition: MACHINE_AUTHOR_IDS is an ordinary object again (its check stays Object.hasOwn).
+Result: KILLED (vitest exit 1, 1 failing tests)
+Tests run: server/services/authoring/__tests__/accepted-machine-text.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/authoring/revision-ledger.ts
++++ b/server/services/authoring/revision-ledger.ts
+@@ -178,3 +178,3 @@
+ export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze(
+-  Object.assign(Object.create(null) as Record<string, string>, {
++  Object.assign({} as Record<string, string>, {
+     [ANA_MACHINE_AUTHOR_ID]: 'AnA (AI draft)',
+
+--- failing tests ---
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > the vocabulary inherits nothing, so no reader of it can be handed a name it does not hold 5ms
+
+--- summary ---
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 49 passed (50)

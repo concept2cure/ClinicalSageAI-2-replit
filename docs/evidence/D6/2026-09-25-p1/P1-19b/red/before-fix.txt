@@ -1,0 +1,42 @@
+$ # signedAuditExport.ts unchanged at 6eeee017; auditExportKeyPosture.ts does not exist; the two test files added
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/audit/__tests__/signed-audit-export-key-id.test.ts server/services/audit/__tests__/auditExportKeyPosture.test.ts
+ × server/services/audit/__tests__/signed-audit-export-key-id.test.ts > a new export names its signing key > carries signingKeyId — AUDIT_EXPORT_SIGNING_KEY_ID, 'k1' when unset 8ms
+   → expected undefined to be 'k1' // Object.is equality
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > a new export names its signing key > puts the key id under the signature: changing it invalidates the manifest 1ms
+ × server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > an export signed before the rotation verifies through the _PREV slot, and the verdict names that key 3ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > a wrong key fails 1ms
+ × server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > a manifest naming a key that is no longer configured is refused, and the refusal names the id 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a v2 manifest with no signingKeyId verifies under AUDIT_EXPORT_SIGNING_KEY, as before 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a v1 manifest signed under the JWT secret alone verifies, as before 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a legacy manifest signed under the JWT secret does not verify once a dedicated key is set — the chain is unchanged 0ms
+ × server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the JWT_SECRET fallback > is visible in the manifest outside production, and verifies by that name 1ms
+   → expected undefined to be 'jwt-secret-fallback' // Object.is equality
+ × server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the JWT_SECRET fallback > is refused in production before the export is recorded 5ms
+   → promise resolved "{ data: '[]', …(4) }" instead of rejecting
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the comparison > refuses a signature of the wrong length or shape without throwing 1ms
+ FAIL  server/services/audit/__tests__/auditExportKeyPosture.test.ts [ server/services/audit/__tests__/auditExportKeyPosture.test.ts ]
+Error: Cannot find module '../auditExportKeyPosture' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/auditExportKeyPosture.test.ts
+ ❯ server/services/audit/__tests__/auditExportKeyPosture.test.ts:15:1
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/audit/__tests__/signed-audit-export-key-id.test.ts > a new export names its signing key > carries signingKeyId — AUDIT_EXPORT_SIGNING_KEY_ID, 'k1' when unset
+AssertionError: expected undefined to be 'k1' // Object.is equality
+ ❯ server/services/audit/__tests__/signed-audit-export-key-id.test.ts:103:45
+ FAIL  server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > an export signed before the rotation verifies through the _PREV slot, and the verdict names that key
+AssertionError: expected false to be true // Object.is equality
+ ❯ server/services/audit/__tests__/signed-audit-export-key-id.test.ts:135:23
+ FAIL  server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > a manifest naming a key that is no longer configured is refused, and the refusal names the id
+AssertionError: expected true to be false // Object.is equality
+ ❯ server/services/audit/__tests__/signed-audit-export-key-id.test.ts:160:27
+ FAIL  server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the JWT_SECRET fallback > is visible in the manifest outside production, and verifies by that name
+AssertionError: expected undefined to be 'jwt-secret-fallback' // Object.is equality
+ ❯ server/services/audit/__tests__/signed-audit-export-key-id.test.ts:193:39
+ FAIL  server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the JWT_SECRET fallback > is refused in production before the export is recorded
+AssertionError: promise resolved "{ data: '[]', …(4) }" instead of rejecting
+- Error {
+ ❯ server/services/audit/__tests__/signed-audit-export-key-id.test.ts:202:64
+ Test Files  2 failed (2)
+      Tests  5 failed | 6 passed (11)
+exit=1

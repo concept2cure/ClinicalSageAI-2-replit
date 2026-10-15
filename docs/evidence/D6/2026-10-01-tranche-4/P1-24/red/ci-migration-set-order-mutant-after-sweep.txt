@@ -1,0 +1,26 @@
+[ci:migration-set-order] ❌ 2 ordering invariant(s) broken:
+
+  • the tenant-isolation sweep is not the last entry
+      1 file(s) are ordered after it and will never be swept:
+        migrations/20261001_domain_history_append_only.sql
+      Move them ABOVE the two isolation steps at the end of the list.
+
+  • the isolation tail is not uuid step, child scope, sweep
+      Expected the last three entries to be, in order:
+        db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql
+        db/migrations/20260813_child_table_parent_scoped_rls.sql
+        db/migrations/20260801_tenant_isolation_sweep.sql
+      found:
+        db/migrations/20260813_child_table_parent_scoped_rls.sql
+        db/migrations/20260801_tenant_isolation_sweep.sql
+        migrations/20261001_domain_history_append_only.sql
+
+  The sweep attaches tenant_isolation_policy to every integer tenant-keyed
+  table that exists WHEN IT RUNS. Anything ordered after it is never swept,
+  so a tenant table ships with no policy — silently, because the policy
+  count goes UP when unprotected tables are added.
+
+  Same invariants are pinned by tests/schema-contract (which also APPLIES
+  the set); this is the fast pre-flight.
+
+exit=1

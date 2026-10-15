@@ -1,0 +1,9 @@
+   266 client/src/concept2cure/v2/surfaces/ComplianceReports.tsx
+   278 client/src/concept2cure/v2/surfaces/ComplianceReportResult.tsx
+   156 client/src/concept2cure/v2/surfaces/ComplianceReportsVerify.tsx
+   289 client/src/concept2cure/v2/surfaces/complianceReportsModel.ts
+   340 client/src/concept2cure/v2/surfaces/complianceReportData.ts
+   411 client/src/concept2cure/v2/__tests__/complianceReports.test.tsx
+   421 client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx
+   197 client/src/concept2cure/v2/__tests__/_compliance-reports-fixtures.tsx
+  2358 total

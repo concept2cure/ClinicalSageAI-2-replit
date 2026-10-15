@@ -59,6 +59,8 @@ export interface ProjectionInput {
   sources: Partial<Record<DocumentSourceSystem, { nativeId: string | number; role: DocumentSourceRef['role'] }>>;
   hasContent: boolean;
   contentHash: string;
+  /** Who created the record (VR-12); null on records created before it was kept. */
+  createdBy?: number | null;
   reviewSignature?: ApprovalSignature;
   approvalSignature?: ApprovalSignature;
   placement?: DossierPlacement;
@@ -123,6 +125,7 @@ export function projectCanonicalDocument(input: ProjectionInput): ProjectedDocum
     stage: input.stage,
     version: input.version,
     hasContent: input.hasContent,
+    contentHash: input.contentHash,
     reviewSignature: input.reviewSignature,
     approvalSignature: input.approvalSignature,
     placement: input.placement,
@@ -171,7 +174,7 @@ export interface LifecycleBindings {
    * seal for a package that does not exist. Absent → `packaged` is REFUSED.
    */
   assemble?(doc: CanonicalDocument, ctx: AdvanceContext): Promise<{ packageSha256?: string; packageMd5?: string }>;
-  /** Append ONE event to the single audit authority (auditService.logAction). */
+  /** Append ONE event to the single audit authority (writeChainedAuditRow, on the transition's transaction). */
   audit(event: DocumentAuditEvent): Promise<void>;
 }
 
@@ -286,10 +289,10 @@ export async function advanceDocument(
  */
 export const LIVE_BINDING_TARGETS = {
   registerGovernedDocument: 'server/services/ModuleIntegrationService.ts → registerDocument()',
-  applySignature: 'server/services/part11/* + server/routes/esignature.ts → /sign (electronic_signatures)',
+  applySignature: 'server/services/regulatory/lifecycle-signature.ts → signLifecycleRecord() (electronic_signatures + governed-action ledger)',
   upsertLeaf: 'server/services/submission-service/submission-service.ts → upsertLeaf()',
   assemble: 'server/services/ectd/assemble-from-core.ts → assembleSequence()',
-  audit: 'server/services/auditService.ts → logAction() (audit_logs; sha256-chained + HMAC)',
+  audit: 'server/services/auditService.ts → writeChainedAuditRow() on the transition\'s transaction (audit_logs; sha256-chained + HMAC)',
 } as const;
 
 /** Guard: a document must carry a UUID canonical id before it can enter the pipeline. */

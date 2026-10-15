@@ -1,0 +1,36 @@
+# Fix round, 2026-10-01T15:30:02Z: node scripts/ci/check-untracked-imports.mjs --all
+
+[ci:untracked-imports] FAIL — 12 import(s) resolve to a file that is on disk but NOT in git:
+  client/src/concept2cure/v2/surfaces/AdminAccess.tsx:11  →  ./ClaudeConnectorSetting
+  client/src/concept2cure/v2/surfaces/ComplianceReports.tsx:38  →  ./ComplianceReviewRecords
+  server/__tests__/security/auth-invalid-expired-jwt.test.ts:22  →  ../../middleware/
+  server/mcp/auth/platform-token.ts:53  →  ./connector-enablement
+  server/routes/audit-compliance-reports.ts:65  →  ./audit-compliance-reviews.js
+  server/routes/organizations-routes.ts:13  →  ../mcp/auth/connector-enablement
+  server/routes/tenant-config.ts:22  →  ../services/tenant/tenant-settings-writer
+  server/routes/tenant-config.ts:30  →  ../mcp/auth/connector-enablement
+  server/services/ana-platform-controller.ts:40  →  ./tenant/tenant-settings-writer
+  server/services/ana-platform-controller.ts:41  →  ../mcp/auth/connector-enablement
+  server/services/audit/compliance-reports/queries/access-review.ts:31  →  ./review-record
+  server/services/audit/compliance-reports/queries/audit-trail-integrity.ts:33  →  ./review-record
+
+  This builds for you and for nobody else. The usual cause is a .gitignore
+  pattern matching a source directory — check `git check-ignore -v <path>`,
+  and anchor the pattern with a leading slash if it names a root directory.
+
+  Also 14 import(s) resolve to nothing at all:
+  db/migrations/_consolidated/0001_tenant_isolation.ts:6  →  ../server/db/tenantRls
+  db/migrations/_consolidated/0001_tenant_isolation.ts:72  →  ../server/db
+  db/migrations/_consolidated/0002_add_org_id_column.ts:158  →  ../server/db
+  db/migrations/_consolidated/0002_add_organization_id.ts:113  →  ../server/db
+  db/migrations/_consolidated/0003_setup_user_roles.ts:144  →  ../server/db
+  db/migrations/_consolidated/0004_add_tenant_indexes.ts:148  →  ../server/db
+  scripts/backfill-document-aliases.mjs:31  →  ../server/db/index.ts
+  scripts/create_cer_approvals_table.js:7  →  ../server/db/index.js
+  scripts/optimized-start.js:5  →  ./optimize-performance.js
+  scripts/run_migrations.js:6  →  ../server/migrations/runMigrations
+  scripts/setup-protection.js:17  →  ./ai-agent-protection.js
+  scripts/setup-protection.js:100  →  ./development-best-practices-audit.js
+  server/scripts/verify-api-routes.js:29  →  ../routes/advisor.js
+  tests/unit/validate-ich-structure.js:4  →  ../server/utils/validateZip.js
+exit=1

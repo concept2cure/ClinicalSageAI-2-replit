@@ -1,0 +1,12 @@
+Mutant D06-person-as-source: the person’s words are credited as a source
+
+--- server/services/ana/turn-record-draft.ts
+- if (d.personWords) sources.push({ source: 'person', content: d.personWords });
++ if (d.personWords) sources.push({ source: 'Data Room', content: d.personWords });
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > names the claims no source holds and the verdict it states; the person’s words are theirs, not a source 37ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

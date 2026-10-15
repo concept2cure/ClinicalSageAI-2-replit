@@ -1,0 +1,30 @@
+# HEAD 0812a990, 2026-10-01T14:39:16Z. terraform/modules/compliance-evidence: the final test file against the unfixed main.tf.
+$ terraform test
+tests/evidence.tftest.hcl... in progress
+  run "the_key_admits_cloudtrail_and_logs_for_this_trail_and_log_group_only"... pass
+  run "the_bucket_admits_cloudtrail_and_refuses_plaintext"... pass
+  run "the_trail_does_not_log_its_own_deliveries"... pass
+  run "names_come_from_the_prefix_not_ros_staging"... pass
+  run "a_put_under_anchors_without_if_none_match_is_refused_for_everyone"... fail
+
+Error: Test assertion failed
+
+  on tests/evidence.tftest.hcl line 135, in run "a_put_under_anchors_without_if_none_match_is_refused_for_everyone":
+ 135:     condition = anytrue([
+ 136:       for st in jsondecode(output.bucket_policy).Statement :
+ 137:       st.Effect == "Deny" && try(st.Principal, "") == "*" &&
+ 138:       contains(flatten([st.Action]), "s3:PutObject") &&
+ 139:       flatten([st.Resource]) == ["arn:aws:s3:::c2c-prod-part11-evidence/anchors/*"] &&
+ 140:       try(st.Condition.Null["s3:if-none-match"], "") == "true"
+ 141:     ])
+    ├────────────────
+    │ output.bucket_policy is "{\"Statement\":[{\"Action\":\"s3:GetBucketAcl\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:111122223333:trail/c2c-prod-part11-evidence\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence\",\"Sid\":\"CloudTrailAclCheck\"},{\"Action\":\"s3:PutObject\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:111122223333:trail/c2c-prod-part11-evidence\",\"s3:x-amz-acl\":\"bucket-owner-full-control\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence/AWSLogs/111122223333/*\",\"Sid\":\"CloudTrailWritesItsOwnPrefix\"},{\"Action\":\"s3:*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}},\"Effect\":\"Deny\",\"Principal\":\"*\",\"Resource\":[\"arn:aws:s3:::c2c-prod-part11-evidence\",\"arn:aws:s3:::c2c-prod-part11-evidence/*\"],\"Sid\":\"DenyInsecureTransport\"},{\"Action\":\"s3:ListBucket\",\"Condition\":{\"StringLike\":{\"s3:prefix\":\"anchors/*\"}},\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::111122223333:role/c2c-prod-task\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence\",\"Sid\":\"AnchorWriterListsTheAnchors\"},{\"Action\":[\"s3:PutObject\",\"s3:GetObject\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::111122223333:role/c2c-prod-task\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence/anchors/*\",\"Sid\":\"AnchorWriterPutsAndGetsAnchors\"},{\"Action\":[\"s3:DeleteObject\",\"s3:DeleteObjectVersion\",\"s3:PutObjectRetention\",\"s3:PutObjectLegalHold\",\"s3:BypassGovernanceRetention\",\"s3:PutBucketObjectLockConfiguration\",\"s3:PutBucketPolicy\",\"s3:DeleteBucketPolicy\",\"s3:PutLifecycleConfiguration\"],\"Effect\":\"Deny\",\"Principal\":{\"AWS\":\"arn:aws:iam::111122223333:role/c2c-prod-task\"},\"Resource\":[\"arn:aws:s3:::c2c-prod-part11-evidence\",\"arn:aws:s3:::c2c-prod-part11-evidence/*\"],\"Sid\":\"AnchorWriterNeverRemovesOrUnlocksEvidence\"}],\"Version\":\"2012-10-17\"}"
+
+The bucket policy must deny every principal a PutObject under anchors/ that
+does not carry If-None-Match (s3:if-none-match), so no put can replace an
+anchor.
+tests/evidence.tftest.hcl... tearing down
+tests/evidence.tftest.hcl... fail
+
+Failure! 4 passed, 1 failed.
+exit=1

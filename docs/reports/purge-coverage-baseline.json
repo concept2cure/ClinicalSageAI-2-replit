@@ -29,7 +29,7 @@
     "cmc_ai_tool_executions",
     "cmc_workflows"
   ],
-  "count": 611,
+  "count": 612,
   "tables": [
     "account_canon_items",
     "account_canon_resolution_log",
@@ -166,6 +166,7 @@
     "communication_channels",
     "communication_messages",
     "compliance_calendar",
+    "compliance_review_records",
     "compliance_tracking",
     "component_cross_references",
     "component_sequence_references",
@@ -642,5 +643,8 @@
     "workflow_progress",
     "workflow_runs",
     "workflow_templates"
-  ]
+  ],
+  "retained": {
+    "compliance_review_records": "Retained at tenant offboarding, not erased (P1-25/P1-43 fix round DP-70, 2026-10-01). A periodic review record (audit-trail review, access review) is a signed quality-system record bound to an electronic signature, and the purge keeps electronic_signatures too: it evidences a regulated action (21 CFR 11.10(c)/(e); EU GMP Annex 11 §17), so it falls under the audit-trail retention in DPA §3.5 and GDPR Art. 17(3)(b). A signed row also refuses DELETE (migrations/20261001_compliance_review_records.sql), so listing it in PURGE_CHILD_TABLES would fail the purge for any organisation with a signed review. The tenant export returns it before the purge (tests/db/compliance-review-fix-round.dbtest.ts, DP-70 case)."
+  }
 }

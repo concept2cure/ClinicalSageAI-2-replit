@@ -1,0 +1,20 @@
+Red first: round 8's tests against trunk 0c2943f1b's working-memory.ts and post-processing.ts, with the new memory-fact-check.ts set aside.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ana/__tests__/memory-fact-check.test.ts server/services/__tests__/working-memory-fact-check.test.ts server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts
+The threshold guard passes here: a negative control, whose red is mutant W01.
+
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 150ms
+   → expected [ …(2) ] to deeply equal [ Array(1) ]
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 10ms
+   → expected [ …(2) ] to deeply equal [ 'NCT07654321 enrolled 96 patients' ]
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 3ms
+   → expected [ '212 patients were enrolled', …(1) ] to deeply equal [ Array(1) ]
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 2ms
+   → Cannot read properties of undefined (reading 'lockedFacts')
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread 2ms
+ × server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts > the write-back is handed the turn's answer check > the same check the message is stored with: what it found and what it did not 38ms
+   → expected undefined to match object { engine: 'answer-check/2', …(3) }
+ FAIL  server/services/ana/__tests__/memory-fact-check.test.ts [ server/services/ana/__tests__/memory-fact-check.test.ts ]
+Error: Cannot find module '../memory-fact-check' imported from <repo>/server/services/ana/__tests__/memory-fact-check.test.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  5 failed | 1 passed (6)

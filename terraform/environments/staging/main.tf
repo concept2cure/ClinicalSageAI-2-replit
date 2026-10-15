@@ -54,7 +54,8 @@ module "stack" {
   # Single-AZ, 7-day backups, deletion allowed, evidence under GOVERNANCE lock
   # for 30 days so the environment can be torn down. Same engine as production,
   # so staging proves what production will run.
-  rds_engine_version        = "15.4"
+  rds_engine_version        = "15" # major only; RDS patches the minor (B10)
+  db_credentials_rotation   = var.db_credentials_rotation
   rds_allocated_storage     = 20
   rds_max_allocated_storage = 100
   rds_multi_az              = false
@@ -80,19 +81,26 @@ module "stack" {
   # set false if it shares production's account, which already created the provider.
   create_github_oidc_provider = true
 
-  jwt_secret                      = var.jwt_secret
-  refresh_token_secret            = var.refresh_token_secret
-  mfa_encryption_key              = var.mfa_encryption_key
-  audit_hmac_key                  = var.audit_hmac_key
-  audit_hmac_secret               = var.audit_hmac_secret
-  connector_encryption_key        = var.connector_encryption_key
-  openai_api_key                  = var.openai_api_key
+  jwt_secret               = var.jwt_secret
+  refresh_token_secret     = var.refresh_token_secret
+  mfa_encryption_key       = var.mfa_encryption_key
+  audit_hmac_key           = var.audit_hmac_key
+  audit_hmac_secret        = var.audit_hmac_secret
+  audit_export_signing_key = var.audit_export_signing_key
+  audit_attestation_key    = var.audit_attestation_key
+  sentry_dsn               = var.sentry_dsn
+  connector_encryption_key = var.connector_encryption_key
+  openai_enabled           = var.openai_enabled
+  openai_api_key           = var.openai_api_key
+  anthropic_api_key        = var.anthropic_api_key
 
   # Login OTP delivery; without it no one can sign in.
   smtp_host = var.smtp_host
   smtp_user = var.smtp_user
   smtp_pass = var.smtp_pass
   smtp_from = var.smtp_from
+
+  platform_owner_emails = var.platform_owner_emails
 
   ai_provider_placement_approvals = var.ai_provider_placement_approvals
 }

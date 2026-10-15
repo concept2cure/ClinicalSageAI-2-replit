@@ -4,7 +4,9 @@
  *
  * ── The defect ────────────────────────────────────────────────────────────────
  * A Class III program was scaffolded from pma:fda (fda-pma-21cfr814-20-v1.0,
- * the 67-node 21 CFR 814.20 tree) into c2c_document_sections and authored
+ * the 67-node 21 CFR 814.20 tree; since 2026-10-05 the live pack is v1.1, the
+ * same tree with C.4 naming FDA's software Documentation Level — see
+ * pma-outline-v1-1-replay.contract.test.ts) into c2c_document_sections and authored
  * through the governed editor. Readiness read it. Assembly did not: the
  * device-assembly contract admitted only '510k' | 'de_novo', the scope
  * resolver did not say which class of governed document answered, and the PMA
@@ -36,6 +38,11 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
 const SCHEMA = path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.sql');
 const PMA_OUTLINE = path.join(REPO_ROOT, 'migrations/20260810_pma_fda_814_20_outline.sql');
+// The live pma:fda pack on a deployed database: v1.1 supersedes v1.0 (C.4 only).
+const PMA_OUTLINE_V1_1 = path.join(
+  REPO_ROOT,
+  'migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql',
+);
 
 const ORG = 7;
 const USER = 1;
@@ -89,6 +96,7 @@ beforeEach(async () => {
   await pg.exec(fs.readFileSync(PREREQ, 'utf8'));
   await pg.exec(fs.readFileSync(SCHEMA, 'utf8'));
   await pg.exec(fs.readFileSync(PMA_OUTLINE, 'utf8'));
+  await pg.exec(fs.readFileSync(PMA_OUTLINE_V1_1, 'utf8'));
 
   // The real scaffolder, against the live pma:fda pack.
   const scaffolded = await scaffoldProjectDocuments({
@@ -114,6 +122,19 @@ beforeEach(async () => {
 afterEach(async () => { await pg?.close(); });
 
 describe('a governed PMA reaches the PMA assembly verdict', () => {
+  it('a new PMA is scaffolded from v1.1, whose C.4 asks for the FDA software documentation level', async () => {
+    const r = await pg.query<{ rule_pack_version: string; label: string }>(
+      `SELECT d.rule_pack_version, s.label
+         FROM c2c_documents d JOIN c2c_document_sections s ON s.document_id = d.id
+        WHERE d.project_id = $1 AND s.section_key = 'C.4'`,
+      [PROGRAM],
+    );
+    expect(r.rows).toEqual([{
+      rule_pack_version: 'fda-pma-21cfr814-20-v1.1',
+      label: 'Software description and FDA documentation level (Basic/Enhanced)',
+    }]);
+  }, 60_000);
+
   it('resolves the program to its governed PMA document and scores it as a PMA', async () => {
     const resolved = await resolveDeviceContentScope(ORG, { programId: PROGRAM, client: client() });
     expect(resolved.source).toBe('governed_program');

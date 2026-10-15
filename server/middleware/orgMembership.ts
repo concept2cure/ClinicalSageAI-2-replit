@@ -33,6 +33,12 @@
 import type { Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { runWithTenantScope } from '../db/tenantStore';
+import { GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION, REPORT_FINALIZE_ROLES,
+  AUDIT_ATTEST_PERMISSION,
+  AUDIT_ATTEST_ROLES,
+} from '../../shared/constants/permissions';
+import { withExtendingRoles } from '../../shared/constants/org-roles';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 
 const logger = createScopedLogger('auth-middleware');
 
@@ -500,15 +506,57 @@ export async function checkOrgMembership(
  * could lock out a platform administrator if any path ever does surface a
  * platform role here. `editor` is dropped: it is reachable from nowhere.
  */
-export const GOVERNED_WRITE_ROLES: ReadonlySet<string> = new Set([
-  'admin',
-  'manager',
-  'member',
-  // Platform roles — unreachable through organization_users.role, kept so that
-  // narrowing this set can never be what locks a platform admin out.
-  'owner',
-  'super_admin',
-]);
+export const GOVERNED_WRITE_ROLES: ReadonlySet<string> = new Set(
+  // P-18: approver and reviewer write wherever manager and member do.
+  withExtendingRoles([
+    'admin',
+    'manager',
+    'member',
+    // Platform roles — unreachable through organization_users.role, kept so that
+    // narrowing this set can never be what locks a platform admin out.
+    'owner',
+    'super_admin',
+  ]),
+);
+
+/**
+ * The permissions a session carries, derived from its organisation role by the
+ * same test `requireEditorAccess` applies. Every auth response that returns a
+ * user (session, login, MFA verify, /me, dev-login) uses this, so the client can
+ * withhold a control the server would refuse without restating a role list
+ * (shared/constants/permissions.ts).
+ */
+export function sessionPermissions(role: string | null | undefined): string[] {
+  const permissions = GOVERNED_WRITE_ROLES.has(String(role ?? '').toLowerCase()) ? [GOVERNED_WRITE_PERMISSION] : [];
+  // requireRole compares exactly, so this does too. Finalize is a signature
+  // (P1-44b): offered only to a role the signing policy also authorises, so the
+  // canvas never offers what the server refuses with ESIGNATURE_NO_AUTHORITY.
+  if (REPORT_FINALIZE_ROLES.includes(String(role ?? '')) && isSigningAuthorized(role)) {
+    permissions.push(REPORT_FINALIZE_PERMISSION);
+  }
+  /* Attesting to the audit trail is not the same act as reading it, and the
+     route has always admitted only admin and owner. The Compliance Reports
+     surface offered the control on the READ role set, so a manager clicked it
+     and got a 403 (coverage review C-24). */
+  if (AUDIT_ATTEST_ROLES.includes(String(role ?? ''))) {
+    permissions.push(AUDIT_ATTEST_PERMISSION);
+  }
+  return permissions;
+}
+
+/**
+ * The `roles` a signed-in user carries, from the organisation role. Sign-in
+ * (POST /login, the MFA verify) issues `[role, 'user']`; the session and /me
+ * reads must answer the same, or a reload overwrites the sign-in roles with a
+ * bare `['user']` and the client withholds controls the server admits (a member
+ * or manager could not send a Vault version for review after a refresh).
+ * One definition, so the reads cannot drift from sign-in again.
+ */
+export function sessionRolesOf(role: string | null | undefined): string[] {
+  const base = role || 'user';
+  if (base === 'admin') return ['admin', 'user'];
+  return [...new Set([base, 'user'])];
+}
 
 /**
  * Guard for a route that writes governed regulatory data: the caller must hold

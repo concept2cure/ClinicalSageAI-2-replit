@@ -14,7 +14,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { and, eq } from 'drizzle-orm';
 
-import { db } from '../db';
+import { db, pool } from '../db';
 import { evidenceClaims } from '../../shared/schema';
 import { authenticateToken } from '../middleware/auth';
 import {
@@ -34,10 +34,10 @@ import {
   type StalenessReasonCode,
 } from '../services/regulatory-graph/defense-packet-staleness.service';
 import { defensePackets } from '../../shared/schema/defense-packets';
-import { regulatoryPrograms } from '../../shared/schema/programs';
 import {
   getSimulationRun,
   listProgramSimulations,
+  ReviewerSimulationInputError,
   runReviewerSimulation,
 } from '../services/intelligence-engine/reviewer-simulator.service';
 import {
@@ -68,6 +68,7 @@ import {
 } from '../services/living-record/reconciliation-engine';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 
@@ -389,12 +390,7 @@ async function requireUuidProgramAccess(
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, orgId)))
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, programId, orgId))) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }
@@ -421,15 +417,27 @@ router.post(
       typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
 
     const body = req.body ?? {};
-    if (!body.program || !body.intel) {
-      return res
-        .status(422)
-        .json({ error: 'program and intel facts are required in request body' });
+    // 2026-10-15: `intel` was required and used as given. Packet and intel facts
+    // are now read from the program's records; a body's packet, intel and reports
+    // are set aside and the result says so (inputsSource.setAside).
+    if (!body.program) {
+      return res.status(422).json({ error: 'program facts are required in request body' });
     }
 
     const personas = Array.isArray(body.personas)
       ? (body.personas as ReviewerPersonaCode[])
       : undefined;
+
+    // The ctd_programs id whose nonclinical studies the preclinical personas read.
+    // 2026-10-15: never passed, so over HTTP they could only report "not loaded".
+    const rawCtdProgramId: unknown = body.ctdProgramId;
+    const ctdProgramId =
+      typeof rawCtdProgramId === 'number' || (typeof rawCtdProgramId === 'string' && /^\d+$/.test(rawCtdProgramId))
+        ? Number(rawCtdProgramId)
+        : undefined;
+    if (rawCtdProgramId != null && !(ctdProgramId !== undefined && Number.isInteger(ctdProgramId) && ctdProgramId > 0)) {
+      return res.status(422).json({ error: 'ctdProgramId must be a positive integer (the ctd_programs id)' });
+    }
 
     try {
       const result = await runReviewerSimulation({
@@ -441,6 +449,7 @@ router.post(
         reports: body.reports,
         personas,
         defensePacketId: body.defensePacketId,
+        ctdProgramId,
         trigger: typeof body.trigger === 'string' ? body.trigger : 'manual',
         triggeredBy,
         dryRun: body.dryRun === true,
@@ -475,6 +484,10 @@ router.post(
 
       res.json(auditTrail ? { ...result, auditTrail } : result);
     } catch (err: any) {
+      // A defensePacketId the program has no packet for is the request's fault.
+      if (err instanceof ReviewerSimulationInputError) {
+        return res.status(422).json({ error: err.message, code: err.code });
+      }
       return serverError(res, logger, 'saving reviewer simulation', err);
     }
   }

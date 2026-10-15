@@ -1,0 +1,165 @@
+# g-tokenize-section-codes fix round 1 — RED on the working copy before the Module 3 fix
+# command: npx vitest run server/services/ana/__tests__/tool-selection-tokenize.test.ts
+# date: 2026-10-05
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+{
+  "timestamp": "2026-10-05T03:25:45.812Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:25:45.813Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+{
+  "timestamp": "2026-10-05T03:25:45.813Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps dotted section codes and annex keys (it used to return only ["see"]) 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps eSTAR CH tokens whole, without a stray "05.06" fragment 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a code at the end of a sentence or in brackets without the punctuation 0ms
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a CTD Module 3 code with a letter segment whole, never a "3.2" fragment 8ms
+   → draft 3.2.P.5.1: expected [ 'draft', '3.2' ] to include '3.2.p.5.1'
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > emits no fragment from a code followed by a dot and a word 1ms
+   → expected [ 'see', 'details', '3.2' ] to not include '3.2'
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > never emits the region acronyms eu, us or jp 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > is additive: the word tokens it produced before are unchanged 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > "2.5" reaches a tool describing 2.5, and never one describing only 12.5 or 2.5.1 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the description (+2) outranks one matching word (+1) 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the name (+3) outranks a code in the description (+2) 0ms
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a CTD Module 3 code does not reach a tool described only by "21 CFR 3.2(e)" 2ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > an annex key does not match inside a longer one ("ii.6.1" is not "iii.6.1") 0ms
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "draft 3.2.P.5.1" offers none of the 21 CFR 3.2(e) tools 3ms
+   → determine_primary_mode_of_action offered for "draft 3.2.P.5.1": expected true to be false // Object.is equality
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "what goes in 3.2.S.4.1 specification for the drug substance" offers none of the 21 CFR 3.2(e) tools 15ms
+   → determine_primary_mode_of_action offered for "what goes in 3.2.S.4.1 specification for the drug substance": expected true to be false // Object.is equality
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > every expected tool is in the launch-scoped pool (so the cases cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a CTD Module 3 code with a letter segment whole, never a "3.2" fragment
+AssertionError: draft 3.2.P.5.1: expected [ 'draft', '3.2' ] to include '3.2.p.5.1'
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:51:28
+     49|     ] as const) {
+     50|       const terms = tokenize(query);
+     51|       expect(terms, query).toContain(code);
+       |                            ^
+     52|       expect(terms, query).not.toContain('3.2');
+     53|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > emits no fragment from a code followed by a dot and a word
+AssertionError: expected [ 'see', 'details', '3.2' ] to not include '3.2'
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:58:23
+     56|   it('emits no fragment from a code followed by a dot and a word', () …
+     57|     const terms = tokenize('see 3.2.Sx for details');
+     58|     expect(terms).not.toContain('3.2');
+       |                       ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a CTD Module 3 code does not reach a tool described only by "21 CFR 3.2(e)"
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:119:73
+    117|       { name: 'drug_product_spec_tool', description: 'drafts the speci…
+    118|     ];
+    119|     expect(pick(pool, '3.2.S.4.1', 10).has('combination_product_tool')…
+       |                                                                         ^
+    120|     const chosen = pick(pool, 'draft 3.2.P.5.1', 10);
+    121|     expect(chosen.has('combination_product_tool')).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "draft 3.2.P.5.1" offers none of the 21 CFR 3.2(e) tools
+AssertionError: determine_primary_mode_of_action offered for "draft 3.2.P.5.1": expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:138:96
+    136|   ])('"%s" offers none of the 21 CFR 3.2(e) tools', (prompt) => {
+    137|     const names = new Set(selectToolsForTurn(ALL_ANA_TOOLS, prompt, { …
+    138|     for (const tool of COMBINATION) expect(names.has(tool), `${tool} o…
+       |                                                                                                ^
+    139|   });
+    140| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "what goes in 3.2.S.4.1 specification for the drug substance" offers none of the 21 CFR 3.2(e) tools
+AssertionError: determine_primary_mode_of_action offered for "what goes in 3.2.S.4.1 specification for the drug substance": expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:138:96
+    136|   ])('"%s" offers none of the 21 CFR 3.2(e) tools', (prompt) => {
+    137|     const names = new Set(selectToolsForTurn(ALL_ANA_TOOLS, prompt, { …
+    138|     for (const tool of COMBINATION) expect(names.has(tool), `${tool} o…
+       |                                                                                                ^
+    139|   });
+    140| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 22 passed (27)
+   Start at  03:25:40
+   Duration  5.82s (transform 3.89s, setup 108ms, import 5.21s, tests 77ms, environment 0ms)
+

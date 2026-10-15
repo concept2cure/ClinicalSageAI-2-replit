@@ -1,0 +1,166 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:21:30.020Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:21:30.021Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:21:30.021Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[AnA RI Stream] Conversation preparation failed: private database host unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[AnA RI Stream] Conversation preparation failed: private connection write failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined 30ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."} 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > retains the last real assistant answer instead of dropping whichever row is last 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > another turn arriving during the save cannot displace a prior clarification or duplicate the current question 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > filters stored system/tool roles before sending the transcript 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > new conversations still accept bounded user/assistant browser turns 2ms
+ × server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > names older omitted turns without presenting the window as the whole conversation 10ms
+   → expected 'You are AnA.\n\n\n## Screen moves are…' to contain 'Conversation context is incomplete'
+ × server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > preserves a late market correction in a long browser turn instead of discarding the whole turn 4ms
+   → expected 'Now compare the evidence.' to contain 'Prepare a US device plan.'
+ × server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > bounds long stored drafts, preserving the question at their end and warning about missing text 2ms
+   → expected 60056 to be less than 51000
+ × server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > an assistant-only window does not turn an existing conversation into a fresh session 3ms
+   → expected 'You are AnA.\n\n\n## Screen moves are…' to contain '21 earlier turns omitted'
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > does not announce missing history when every valid turn is included 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > names older omitted turns without presenting the window as the whole conversation
+AssertionError: expected 'You are AnA.\n\n\n## Screen moves are…' to contain 'Conversation context is incomplete'
+
+- Expected
++ Received
+
+- Conversation context is incomplete
++ You are AnA.
++
++
++ ## Screen moves are offered this turn
++
++ You can take the person to any screen (navigate_to), operate screens (act_on_screen) and run product demonstrations (start_product_demo), but Live Drive is off for this turn, so each move is OFFERED as a one-click chip under your answer rather than performed. Use the tools when they ask to go somewhere or do something on screen, and say what the chip will do — never that you did it.
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts:182:22
+    180|     await ask();
+    181|     expect(transcript()).toHaveLength(21);
+    182|     expect(system()).toContain('Conversation context is incomplete');
+       |                      ^
+    183|     expect(system()).toContain('8 earlier turns omitted');
+    184|     expect(system()).toContain('ask only for the missing facts that ma…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > preserves a late market correction in a long browser turn instead of discarding the whole turn
+AssertionError: expected 'Now compare the evidence.' to contain 'Prepare a US device plan.'
+
+Expected: "Prepare a US device plan."
+Received: "Now compare the evidence."
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts:190:18
+    188|     await ask({ thread_id: undefined, conversation_history: [{ role: '…
+    189|     const sent = transcript().map(String).join('\n');
+    190|     expect(sent).toContain('Prepare a US device plan.');
+       |                  ^
+    191|     expect(sent).toContain('Correction: IVD for Japan; no US clearance…
+    192|     expect(sent).toContain('[Middle of this turn omitted:');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > bounds long stored drafts, preserving the question at their end and warning about missing text
+AssertionError: expected 60056 to be less than 51000
+ ❯ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts:200:26
+    198|     await ask();
+    199|     const draft = transcript()[1] as string;
+    200|     expect(draft.length).toBeLessThan(51000);
+       |                          ^
+    201|     expect(draft).toContain('Which study population was intended?');
+    202|     expect(draft).toContain('[Middle of this turn omitted:');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > an assistant-only window does not turn an existing conversation into a fresh session
+AssertionError: expected 'You are AnA.\n\n\n## Screen moves are…' to contain '21 earlier turns omitted'
+
+- Expected
++ Received
+
+- 21 earlier turns omitted
++ You are AnA.
++
++
++ ## Screen moves are offered this turn
++
++ You can take the person to any screen (navigate_to), operate screens (act_on_screen) and run product demonstrations (start_product_demo), but Live Drive is off for this turn, so each move is OFFERED as a one-click chip under your answer rather than performed. Use the tools when they ask to go somewhere or do something on screen, and say what the chip will do — never that you did it.
+
+ ❯ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts:209:22
+    207|     await ask();
+    208|     expect(transcript()).toEqual(['Now compare the evidence.']);
+    209|     expect(system()).toContain('21 earlier turns omitted');
+       |                      ^
+    210|     expect(io.prefetchInputs[0].sessionStart).toBe(false);
+    211|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 passed (16)
+   Start at  12:21:26
+   Duration  6.79s (transform 3.81s, setup 72ms, import 6.40s, tests 90ms, environment 0ms)
+

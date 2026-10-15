@@ -47,6 +47,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-template-sta
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { getBuiltinAuthoringTemplates } from '../../services/authoring/builtin-authoring-templates';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -103,6 +104,27 @@ function calls(fragment: string): Array<{ sql: string; params: unknown[] }> {
   return mockQuery.mock.calls
     .filter((c) => String(c[0]).includes(fragment))
     .map((c) => ({ sql: String(c[0]), params: (c[1] ?? []) as unknown[] }));
+}
+
+/** These cases isolate database-store behavior while preserving builtin offers. */
+interface PickerTemplate {
+  id: string;
+  name: string;
+  category?: string;
+  filingContext?: unknown;
+}
+function databaseTemplateNames(templates: PickerTemplate[]): string[] {
+  return templates.filter(template => template.category !== 'IND pyramid' && template.filingContext === undefined)
+    .map(template => template.name);
+}
+async function expectBuiltinTemplates(templates: PickerTemplate[]): Promise<number> {
+  const ind = templates.filter(template => template.category === 'IND pyramid');
+  const regional = templates.filter(template => template.filingContext !== undefined);
+  const expectedRegional = (await getBuiltinAuthoringTemplates()).filter(template => template.filingContext);
+  expect(ind).toHaveLength(200);
+  expect(expectedRegional.length).toBeGreaterThan(0);
+  expect(regional.map(template => template.id)).toEqual(expectedRegional.map(template => template.id));
+  return ind.length + regional.length;
 }
 
 beforeEach(() => {
@@ -244,11 +266,12 @@ describe('GET /templates — the picker lists what create consumes', () => {
     expect(res.status).toBe(200);
     // The shared catalog read succeeded and the response says so.
     expect(res.body.globalCatalog).toBe('ok');
-    const names = res.body.templates.map((t: { name: string }) => t.name);
+    const names = databaseTemplateNames(res.body.templates);
     // Org row first, real global next; the zero-section global cannot seed
     // anything and must not be offered.
     expect(names).toEqual(['House template', '3.2.S Drug Substance']);
-    expect(res.body.count).toBe(2);
+    const builtinCount = await expectBuiltinTemplates(res.body.templates);
+    expect(res.body.count).toBe(builtinCount + 2);
   });
 
   it('drops sectionless ORG rows too — the picker must not offer what POST /docs refuses', async () => {
@@ -276,8 +299,9 @@ describe('GET /templates — the picker lists what create consumes', () => {
       .set('Authorization', await bearer());
 
     expect(res.status).toBe(200);
-    expect(res.body.templates.map((t: { name: string }) => t.name)).toEqual(['House template']);
-    expect(res.body.count).toBe(1);
+    expect(databaseTemplateNames(res.body.templates)).toEqual(['House template']);
+    const builtinCount = await expectBuiltinTemplates(res.body.templates);
+    expect(res.body.count).toBe(builtinCount + 1);
   });
 
   it('fail-soft: an unreachable global store still lists the org templates', async () => {
@@ -296,7 +320,9 @@ describe('GET /templates — the picker lists what create consumes', () => {
       .set('Authorization', await bearer());
 
     expect(res.status).toBe(200);
-    expect(res.body.templates.map((t: { name: string }) => t.name)).toEqual(['House template']);
+    expect(databaseTemplateNames(res.body.templates)).toEqual(['House template']);
+    const builtinCount = await expectBuiltinTemplates(res.body.templates);
+    expect(res.body.count).toBe(builtinCount + 1);
     // The response SAYS the shared catalog failed — a short list and a failed
     // half are different facts, and the picker renders the difference.
     expect(res.body.globalCatalog).toBe('unavailable');

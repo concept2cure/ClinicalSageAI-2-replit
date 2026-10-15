@@ -131,6 +131,24 @@ describe('the canonical chat paths stay in parity', () => {
     expect(helper).toMatch(/allow`? is scoped to governed mutations/);
   });
 
+  it.each(CHAT_ENTRY_POINTS)('$endpoint gives IND/NDA/BLA chats the one submission context block', ({ file }) => {
+    // Third instance of the shape: the IND/NDA/BLA context lived on
+    // send-message only, hand-written, and headed every NDA and BLA "an IND".
+    const src = read(file);
+    expect(src).toMatch(/submissionContextBlockFor\(\{[\s\S]{0,300}?projectContext/);
+  });
+
+  it('neither path carries its own copy of the submission context', () => {
+    // The helper owns the type mapping and the text. A route that builds a
+    // submission block itself is the drift this replaced.
+    for (const { file } of CHAT_ENTRY_POINTS) {
+      const src = read(file);
+      expect(src, `${file} should not hand-write the IND block`).not.toContain('IND Submission Context');
+      expect(src, `${file} should not read the IND section registry`).not.toContain('ind-section-registry');
+      expect(src, `${file} should not name the retired IND tools`).not.toMatch(/ind_generate_section|ind_get_status/);
+    }
+  });
+
   it('the helper still owns the gate, the kill-switch and the failure path', () => {
     const helper = read('server/services/ana-session-bootstrap.ts');
     expect(helper).toContain('shouldAutoBootstrap');

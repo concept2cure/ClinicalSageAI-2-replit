@@ -30,6 +30,11 @@ resource "aws_lb" "this" {
 
   enable_deletion_protection = var.deletion_protection
 
+  # Paired with CloudFront's origin_read_timeout (modules/cloudfront, 60) and
+  # below the server's keepAliveTimeout (server/index.ts, 65 s), so neither the
+  # edge nor the server closes a connection the ALB still uses.
+  idle_timeout = 60
+
   # A header whose name is not a valid HTTP token never reaches the API.
   drop_invalid_header_fields = true
 

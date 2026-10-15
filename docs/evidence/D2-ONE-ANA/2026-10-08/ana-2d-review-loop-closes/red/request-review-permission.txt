@@ -1,0 +1,256 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member of the organization with no role on the document: 403, the standard body 7ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is REVIEWER 2ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is APPROVER 1ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is VIEWER 1ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s OWNER, classified as an edit of this document 4ms
+   → expected undefined to match object { action: 'edit', …(3) }
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s AUTHOR, classified as an edit of this document 1ms
+   → expected undefined to match object { action: 'edit', …(3) }
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits a global admin without a grant, as on every other authoring object 1ms
+   → expected undefined to match object { action: 'edit', …(1) }
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > answers 404 for a document this tenant does not have, before any grant is read 1ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a sealed document with 409: a request would reopen verdicts on a signed record 1ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > leaves the verdict route alone: a reviewer has no grant, and still reaches POST /documents/:id/review 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > matches the request path exactly, not a longer path that only begins with it 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member of the organization with no role on the document: 403, the standard body
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts:89:22
+     87|     const { res, next } = await run(request(member('user-colleague')));
+     88|
+     89|     expect(next).not.toHaveBeenCalled();
+       |                      ^
+     90|     expect(res.status).toHaveBeenCalledWith(403);
+     91|     expect(res.body).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is REVIEWER
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is APPROVER
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is VIEWER
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts:103:22
+    101|     const { res, next } = await run(request(member('user-granted')));
+    102|
+    103|     expect(next).not.toHaveBeenCalled();
+       |                      ^
+    104|     expect(res.status).toHaveBeenCalledWith(403);
+    105|     expect((res.body as any).error.code).toBe('AUTHORING_OBJECT_FORBID…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s OWNER, classified as an edit of this document
+AssertionError: expected undefined to match object { action: 'edit', …(3) }
+
+- Expected:
+{
+  "action": "edit",
+  "docId": "10000000-0000-4000-8000-000000000001",
+  "matchedRoles": [
+    "OWNER",
+  ],
+  "reason": "allowed-object-role",
+}
+
++ Received:
+undefined
+
+ ❯ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts:114:56
+    112|     expect(next).toHaveBeenCalledOnce();
+    113|     expect(res.status).not.toHaveBeenCalled();
+    114|     expect((res.locals as any).authoringAuthorization).toMatchObject({
+       |                                                        ^
+    115|       action: 'edit',
+    116|       docId: DOC_ID,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s AUTHOR, classified as an edit of this document
+AssertionError: expected undefined to match object { action: 'edit', …(3) }
+
+- Expected:
+{
+  "action": "edit",
+  "docId": "10000000-0000-4000-8000-000000000001",
+  "matchedRoles": [
+    "AUTHOR",
+  ],
+  "reason": "allowed-object-role",
+}
+
++ Received:
+undefined
+
+ ❯ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts:114:56
+    112|     expect(next).toHaveBeenCalledOnce();
+    113|     expect(res.status).not.toHaveBeenCalled();
+    114|     expect((res.locals as any).authoringAuthorization).toMatchObject({
+       |                                                        ^
+    115|       action: 'edit',
+    116|       docId: DOC_ID,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits a global admin without a grant, as on every other authoring object
+AssertionError: expected undefined to match object { action: 'edit', …(1) }
+
+- Expected:
+{
+  "action": "edit",
+  "reason": "allowed-global-admin",
+}
+
++ Received:
+undefined
+
+ ❯ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts:128:56
+    126|     expect(next).toHaveBeenCalledOnce();
+    127|     expect(res.status).not.toHaveBeenCalled();
+    128|     expect((res.locals as any).authoringAuthorization).toMatchObject({…
+       |                                                        ^
+    129|     expect(h.query.mock.calls.some(([sql]) => /doc_permissions/i.test(…
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > answers 404 for a document this tenant does not have, before any grant is read
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts:136:22
+    134|     const { res, next } = await run(request(member('user-owner')));
+    135|
+    136|     expect(next).not.toHaveBeenCalled();
+       |                      ^
+    137|     expect(res.status).toHaveBeenCalledWith(404);
+    138|     expect((res.body as any).error.code).toBe('AUTHORING_OBJECT_NOT_FO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a sealed document with 409: a request would reopen verdicts on a signed record
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts:145:22
+    143|     const { res, next } = await run(request(member('user-owner')));
+    144|
+    145|     expect(next).not.toHaveBeenCalled();
+       |                      ^
+    146|     expect(res.status).toHaveBeenCalledWith(409);
+    147|     expect((res.body as any).error.code).toBe('AUTHORING_DOCUMENT_IMMU…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 2 passed (11)
+   Start at  06:19:58
+   Duration  668ms (transform 203ms, setup 138ms, import 110ms, tests 25ms, environment 0ms)
+

@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > does not clear a replacement login after the original revocation response arrives
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > revokes the original pair if another login replaces it while its refresh is being settled
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > still revokes the settled rotated pair when the original session remains current
+ × client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > revokes the rotated pair returned by a refresh that began before logout 157ms
+   → expected 'Bearer access-1' to be 'Bearer settled-access' // Object.is equality
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > does not finish an earlier pending adoption while logout awaits its server answer
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > revokes the rotated pair returned by a refresh that began before logout
+AssertionError: expected 'Bearer access-1' to be 'Bearer settled-access' // Object.is equality
+
+Expected: "Bearer settled-access"
+Received: "Bearer access-1"
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:211:82
+    209|     finish(okJson({ accessToken: 'settled-access', refreshToken: 'sett…
+    210|     await Promise.all([refreshing, signingOut]);
+    211|     expect((logoutCall()!.init.headers as Record<string, string>).Auth…
+       |                                                                                  ^
+    212|     expect(bodyOf(logoutCall())).toEqual({ terminateAllSessions: false…
+    213|     expect(svc.isAuthenticated()).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  05:14:44
+   Duration  2.12s (transform 404ms, setup 504ms, import 113ms, tests 178ms, environment 1.03s)
+

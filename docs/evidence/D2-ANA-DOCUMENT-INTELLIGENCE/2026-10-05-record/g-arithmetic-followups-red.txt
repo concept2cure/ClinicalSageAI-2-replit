@@ -1,0 +1,480 @@
+# g-arithmetic-followups — red at HEAD da82c80a, before the change
+# Base commit: dossierReconciliation.ts, writing-precision-gate.ts and terminology-consistency.ts are identical at da82c80a, 73908e34, f5ff8398 and 74d97da8 (git diff --stat between each and 74d97da8 is empty), so the red and green runs share one base.
+# npx vitest run server/services/ana/__tests__/arithmetic-followups.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/arithmetic-followups.test.ts
+{
+  "timestamp": "2026-10-05T02:19:06.497Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:19:06.498Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+{
+  "timestamp": "2026-10-05T02:19:06.498Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/arithmetic-followups.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Subjects enrolled under protocol amendment 3/4 (10%) were re-consented. 9ms
+   → expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Sites still on protocol version 2/3 (25%) were retrained. 2ms
+   → expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Sites on v2/3 (25%) were retrained. 1ms
+   → expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Deviations under Amendment No. 3/4 (10%) were reviewed. 1ms
+   → expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > still recomputes the same figures when no version word precedes them 1ms
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads "4,9 %" as 4.9%, which 15/305 (4.92%) supports 1ms
+   → expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads "4,6 %" as 4.6%, not 6%, when it is wrong 2ms
+   → expected [ { kind: 'percent_of', …(3) } ] to match object [ { kind: 'percent_of', …(2) } ]
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads the n/N (x,y %) order 1ms
+   → expected { findings: [], …(2) } to match object { Object (percentPairsChecked, findings) }
+(1 matching property omitted from actual)
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > keeps an English list separated by commas intact 1ms
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 612 subjects were randomized but only those who took study drug are shown (300 to Drug X and 298 to placebo). 2ms
+   → expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: A total of 612 subjects were randomized of whom those with a baseline scan are summarised (300 in Drug X and 298 in placebo). 1ms
+   → expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 612 patients were enrolled and the subset with genotype data is tabulated below (300 to Drug X and 298 to placebo). 1ms
+   → expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: A total of 612 subjects were randomized (306 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized in the study (306 to Drug X and 305 to placebo). 0ms
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized equally to the two treatment groups (306 to Drug X and 305 to placebo). 1ms
+   → expected +0 to be 1 // Object.is equality
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized and included in the full analysis set (306 to Drug X and 305 to placebo). 0ms
+   → expected +0 to be 1 // Object.is equality
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: The study randomized a total of 612 subjects (Drug X (n=306) and placebo (n=305)). 1ms
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > critiqueDraft — an arithmetic finding says what is wrong > states the percentage and what its own n/N gives 15ms
+   → expected 'Use one term consistently for "percen…' not to match /Use one term consistently/
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > critiqueDraft — an arithmetic finding says what is wrong > states the arm sum against the stated total 7ms
+   → expected 'Use one term consistently for "arm_su…' not to match /Use one term consistently/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Subjects enrolled under protocol amendment 3/4 (10%) were re-consented.
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Deviations under Amendment No. 3/4 (10%) were reviewed.
+AssertionError: expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "3/4 (10%)",
++     "kind": "percent_of",
++     "recomputed": 75,
++     "stated": 10,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:21:24
+     19|   ])('%s', text => {
+     20|     const r = checkFigureArithmetic(text);
+     21|     expect(r.findings).toEqual([]);
+       |                        ^
+     22|     expect(r.percentPairsChecked).toBe(0);
+     23|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Sites still on protocol version 2/3 (25%) were retrained.
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Sites on v2/3 (25%) were retrained.
+AssertionError: expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "2/3 (25%)",
++     "kind": "percent_of",
++     "recomputed": 66.7,
++     "stated": 25,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:21:24
+     19|   ])('%s', text => {
+     20|     const r = checkFigureArithmetic(text);
+     21|     expect(r.findings).toEqual([]);
+       |                        ^
+     22|     expect(r.percentPairsChecked).toBe(0);
+     23|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads "4,9 %" as 4.9%, which 15/305 (4.92%) supports
+AssertionError: expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "9 % (15/305)",
++     "kind": "percent_of",
++     "recomputed": 4.9,
++     "stated": 9,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:36:24
+     34|     const r = checkFigureArithmetic('Schwerwiegende UE: 4,9 % (15/305)…
+     35|     expect(r.percentPairsChecked).toBe(1);
+     36|     expect(r.findings).toEqual([]);
+       |                        ^
+     37|   });
+     38|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads "4,6 %" as 4.6%, not 6%, when it is wrong
+AssertionError: expected [ { kind: 'percent_of', …(3) } ] to match object [ { kind: 'percent_of', …(2) } ]
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  [
+    {
+      "kind": "percent_of",
+-     "recomputed": 4.92,
+-     "stated": 4.6,
++     "recomputed": 4.9,
++     "stated": 6,
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:42:24
+     40|     const r = checkFigureArithmetic('Schwerwiegende UE: 4,6 % (15/305)…
+     41|     expect(r.percentPairsChecked).toBe(1);
+     42|     expect(r.findings).toMatchObject([{ kind: 'percent_of', stated: 4.…
+       |                        ^
+     43|   });
+     44|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads the n/N (x,y %) order
+AssertionError: expected { findings: [], …(2) } to match object { Object (percentPairsChecked, findings) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "findings": [],
+-   "percentPairsChecked": 1,
++   "percentPairsChecked": 0,
+  }
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:46:66
+     44|
+     45|   it('reads the n/N (x,y %) order', () => {
+     46|     expect(checkFigureArithmetic('Kopfschmerz 15/305 (4,9 %).')).toMat…
+       |                                                                  ^
+     47|     expect(checkFigureArithmetic('Kopfschmerz 15/305 (6,6 %).').findin…
+     48|       { kind: 'percent_of', stated: 6.6, recomputed: 4.92 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 612 subjects were randomized but only those who took study drug are shown (300 to Drug X and 298 to placebo).
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "612 subjects were randomized but only those who took study drug are shown (300 to Drug X and 298 to placebo)",
++     "kind": "arm_sum",
++     "recomputed": 598,
++     "stated": 612,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:66:24
+     64|   ])('does not sum a list after a bridge to another population: %s', t…
+     65|     const r = checkFigureArithmetic(text);
+     66|     expect(r.findings).toEqual([]);
+       |                        ^
+     67|     expect(r.armSumsChecked).toBe(0);
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: A total of 612 subjects were randomized of whom those with a baseline scan are summarised (300 in Drug X and 298 in placebo).
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "612 subjects were randomized of whom those with a baseline scan are summarised (300 in Drug X and 298 in placebo)",
++     "kind": "arm_sum",
++     "recomputed": 598,
++     "stated": 612,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:66:24
+     64|   ])('does not sum a list after a bridge to another population: %s', t…
+     65|     const r = checkFigureArithmetic(text);
+     66|     expect(r.findings).toEqual([]);
+       |                        ^
+     67|     expect(r.armSumsChecked).toBe(0);
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 612 patients were enrolled and the subset with genotype data is tabulated below (300 to Drug X and 298 to placebo).
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "612 patients were enrolled and the subset with genotype data is tabulated below (300 to Drug X and 298 to placebo)",
++     "kind": "arm_sum",
++     "recomputed": 598,
++     "stated": 612,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:66:24
+     64|   ])('does not sum a list after a bridge to another population: %s', t…
+     65|     const r = checkFigureArithmetic(text);
+     66|     expect(r.findings).toEqual([]);
+       |                        ^
+     67|     expect(r.armSumsChecked).toBe(0);
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized equally to the two treatment groups (306 to Drug X and 305 to placebo).
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized and included in the full analysis set (306 to Drug X and 305 to placebo).
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:78:30
+     76|   ] as const)('still sums a list whose bridge keeps the same populatio…
+     77|     const r = checkFigureArithmetic(text);
+     78|     expect(r.armSumsChecked).toBe(1);
+       |                              ^
+     79|     expect(r.findings).toMatchObject([{ kind: 'arm_sum', stated, recom…
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > critiqueDraft — an arithmetic finding says what is wrong > states the percentage and what its own n/N gives
+AssertionError: expected 'Use one term consistently for "percen…' not to match /Use one term consistently/
+
+- Expected:
+/Use one term consistently/
+
++ Received:
+"Use one term consistently for \"percent_of\" — the document mixes \"4.6%\" and \"4.92%\"."
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:89:28
+     87|     expect(f).toBeTruthy();
+     88|     expect(f!.severity).toBe('high');
+     89|     expect(f!.message).not.toMatch(/Use one term consistently/);
+       |                            ^
+     90|     expect(f!.message).toContain('4.6%');
+     91|     expect(f!.message).toContain('4.92%');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > critiqueDraft — an arithmetic finding says what is wrong > states the arm sum against the stated total
+AssertionError: expected 'Use one term consistently for "arm_su…' not to match /Use one term consistently/
+
+- Expected:
+/Use one term consistently/
+
++ Received:
+"Use one term consistently for \"arm_sum\" — the document mixes \"612\" and \"611\"."
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:100:28
+     98|     const f = report.findings.find(x => x.category === 'consistency');
+     99|     expect(f).toBeTruthy();
+    100|     expect(f!.message).not.toMatch(/Use one term consistently/);
+       |                            ^
+    101|     expect(f!.message).toMatch(/sum to 611/);
+    102|     expect(f!.message).toMatch(/total of 612/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 5 passed (19)
+   Start at  02:19:04
+   Duration  2.09s (transform 1.10s, setup 91ms, import 1.68s, tests 49ms, environment 0ms)
+
+
+# ---- fix round 1: red, before the change, on the unchanged step code (working tree on 74d97da8) ----
+# 3 new probes: 'randomized to each arm' and 'randomized in each group' were summed (false arm_sum 150 vs 300);
+# 'Drug X 10/20 (50%) v 3/4 (75%)' checked 1 pair, not 2 ('v' read as version); 'extended release 10/20 (40%)' not checked ('release' read as version).
+# npx vitest run server/services/ana/__tests__/arithmetic-followups.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Subjects enrolled under protocol amendment 3/4 (10%) were re-consented. 4ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Sites still on protocol version 2/3 (25%) were retrained. 1ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Sites on v2/3 (25%) were retrained. 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Deviations under Amendment No. 3/4 (10%) were reviewed. 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > still recomputes the same figures when no version word precedes them 1ms
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > still checks a pair after "v" meaning versus, and after "release" naming a formulation 7ms
+   → expected 1 to be 2 // Object.is equality
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads "4,9 %" as 4.9%, which 15/305 (4.92%) supports 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads "4,6 %" as 4.6%, not 6%, when it is wrong 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads the n/N (x,y %) order 1ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > keeps an English list separated by commas intact 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 612 subjects were randomized but only those who took study drug are shown (300 to Drug X and 298 to placebo). 1ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: A total of 612 subjects were randomized of whom those with a baseline scan are summarised (300 in Drug X and 298 in placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 612 patients were enrolled and the subset with genotype data is tabulated below (300 to Drug X and 298 to placebo). 0ms
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 150 subjects were randomized to each arm (Drug X (n=150) and placebo (n=150)). 12ms
+   → expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+ × server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 150 subjects were randomized in each group (150 to Drug X and 150 to placebo). 1ms
+   → expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: A total of 612 subjects were randomized (306 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized in the study (306 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized equally to the two treatment groups (306 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized and included in the full analysis set (306 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: The study randomized a total of 612 subjects (Drug X (n=306) and placebo (n=305)). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > critiqueDraft — an arithmetic finding says what is wrong > states the percentage and what its own n/N gives 18ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > critiqueDraft — an arithmetic finding says what is wrong > states the arm sum against the stated total 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > still checks a pair after "v" meaning versus, and after "release" naming a formulation
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:33:40
+     31|   it('still checks a pair after "v" meaning versus, and after "release…
+     32|     const versus = checkFigureArithmetic('Responders: Drug X 10/20 (50…
+     33|     expect(versus.percentPairsChecked).toBe(2);
+       |                                        ^
+     34|     expect(versus.findings).toEqual([]);
+     35|     const formulation = checkFigureArithmetic('Nausea with the extende…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 150 subjects were randomized to each arm (Drug X (n=150) and placebo (n=150)).
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "150 subjects were randomized to each arm (Drug X (n=150) and placebo (n=150))",
++     "kind": "arm_sum",
++     "recomputed": 300,
++     "stated": 150,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:81:24
+     79|   ])('does not sum a list after a bridge to another population: %s', t…
+     80|     const r = checkFigureArithmetic(text);
+     81|     expect(r.findings).toEqual([]);
+       |                        ^
+     82|     expect(r.armSumsChecked).toBe(0);
+     83|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 150 subjects were randomized in each group (150 to Drug X and 150 to placebo).
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "150 subjects were randomized in each group (150 to Drug X and 150 to placebo)",
++     "kind": "arm_sum",
++     "recomputed": 300,
++     "stated": 150,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/arithmetic-followups.test.ts:81:24
+     79|   ])('does not sum a list after a bridge to another population: %s', t…
+     80|     const r = checkFigureArithmetic(text);
+     81|     expect(r.findings).toEqual([]);
+       |                        ^
+     82|     expect(r.armSumsChecked).toBe(0);
+     83|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 19 passed (22)
+   Start at  03:01:00
+   Duration  2.89s (transform 1.58s, setup 108ms, import 2.42s, tests 60ms, environment 0ms)
+

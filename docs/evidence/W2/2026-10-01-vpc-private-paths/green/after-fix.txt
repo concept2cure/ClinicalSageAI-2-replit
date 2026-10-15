@@ -1,0 +1,12 @@
+$ terraform validate -no-color
+Success! The configuration is valid.
+
+$ terraform test -no-color
+tests/private_paths.tftest.hcl... in progress
+  run "s3_traffic_from_the_private_subnets_stays_inside_aws"... pass
+  run "kms_calls_from_the_private_subnets_reach_the_endpoint"... pass
+tests/private_paths.tftest.hcl... tearing down
+tests/private_paths.tftest.hcl... pass
+
+Success! 2 passed, 0 failed.
+exit=0

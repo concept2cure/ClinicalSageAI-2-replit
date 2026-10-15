@@ -1,8 +1,9 @@
 # Every real-database suite (tests/db, 54 files), run against the from-blank install AFTER the
 # amendment: the full log filtered to each test's result line, the failures' errors and the summary
-# (the unfiltered log is 371 KB of driver output). The one failing file, atom-search, fails on
-# search_atoms_hybrid's signature on a from-blank install, which predates this change and is
-# recorded in the D3 launch note; row security cannot make a function not exist.
+# (the unfiltered log is 371 KB of driver output). The one failing file is atom-search.
+# CORRECTED 2026-10-01: atom-search did not fail on a defect. This database was built from blank
+# at e0e42ec4, and 881680d73 then amended search_atoms_hybrid in place; nothing re-applied it
+# here, so the old signature remained (the error below). See the README's "Corrections".
 
  ✓ tests/db/master-licensing-console.dbtest.ts > posture > the console runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope 22ms
  ✓ tests/db/master-licensing-console.dbtest.ts > posture > the same router on a non-system path gets the caller-org scope instead 7ms

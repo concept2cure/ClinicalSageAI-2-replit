@@ -1,0 +1,52 @@
+=== mutant 1: the commit-time signature check dropped (both constraint triggers)
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare UPDATE to signed is refused at COMMIT 125ms
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare INSERT of a signed row is refused at COMMIT 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 15 skipped (17)
+=== mutant 2: the immutability guard's function made a pass-through
+ × tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its outcome is refused 21ms
+ × tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its decisions is refused 8ms
+ × tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its signature is refused 6ms
+ × tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: back to draft is refused 12ms
+ × tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: a delete is refused 8ms
+ × tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the table owner: an update, a delete and a truncate are refused 6ms
+ × tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > a second signature on the same record is refused 40ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 10 skipped (17)
+=== re-armed: the migration replayed through applyMigrationFiles
+✓ applied: migrations/20261001_compliance_review_records.sql
+    [NOTICE] [rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+✓ applied: db/migrations/20260801_tenant_isolation_sweep.sql
+{"applied":["migrations/20261001_compliance_review_records.sql","db/migrations/20260801_tenant_isolation_sweep.sql"],"failures":[]}
+trg_compliance_review_records_guard O
+trg_compliance_review_records_no_truncate O
+trg_compliance_review_records_signed_ins O
+trg_compliance_review_records_signed_upd O
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > no password, no meaning: 400, the record stays a draft, nothing is signed 159ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a meaning other than review is refused before the password is checked 50ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a wrong password is refused, and nothing is written 63ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > only the reviewer who drafted it signs it 51ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > an access review that leaves a privileged account without a decision is refused 18ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a member who is not an audit reader cannot draft one 10ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare UPDATE to signed is refused at COMMIT 29ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare INSERT of a signed row is refused at COMMIT 8ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its outcome is refused 7ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its decisions is refused 6ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its signature is refused 14ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: back to draft is refused 8ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: a delete is refused 7ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the table owner: an update, a delete and a truncate are refused 38ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > a second signature on the same record is refused 31ms
+      Tests  15 passed | 2 skipped (17)
+=== mutant 3: the overdue interval widened from 3 to 6 months (review-record.ts REVIEW_INTERVAL), this run only
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded" 2536ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the audit trail integrity attestation: "No audit trail review recorded" 41ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the review list says none for each kind 18ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the user access review as of today names the review signed today, current 24ms
+ × tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > as of yesterday the latest is the one signed four months ago, and it is overdue 29ms
+   → expected { review_status: 'Current', …(11) } to match object { review_status: 'Overdue', …(2) }
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the audit trail integrity attestation names the audit-trail review, not the access review 33ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > organisation B's reports and list see none of A's reviews 39ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the review list names A's records and the status of each kind 34ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)

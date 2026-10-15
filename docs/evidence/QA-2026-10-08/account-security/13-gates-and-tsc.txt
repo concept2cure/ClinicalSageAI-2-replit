@@ -1,0 +1,39 @@
+# Gates and types, on the working tree after the change
+
+## npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+exit=0
+
+## npm run ci:sign-ceremony:selftest
+  ✓ the same authoring approval stamp with no signature write fails
+  ✓ clearing an approval (a revision) is not a stamp
+[ci:sign-ceremony:selftest] 19 passed — the gate fails on what it exists to catch.
+exit=0
+
+## npm run ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+exit=0
+Note: the gate compares COMMITTED changes with origin/concept2cure-v2; nothing is committed, so it checks nothing here.
+
+## ci:untracked-imports --all, with and without this change's two new files in a temporary index
+(GIT_INDEX_FILE=<scratch>/idx: git read-tree HEAD; git add the two new files; the real index is not touched)
+before: 15 finding(s); after: 15 finding(s); diff: identical
+The one 'on disk but NOT in git' finding is server/__tests__/security/auth-invalid-expired-jwt.test.ts:22, a file this change does not touch; the 14 'resolve to nothing' are pre-existing scripts and migrations.
+
+## scoped tsc: npx tsc -p <temp tsconfig extending tsconfig.json: the 25 changed files (list: 13-tsc-files.txt) + shared/server/client ambient .d.ts + vite/vitest globals + tests/db/signing-lockout.dbtest.ts for comparison>
+exit=2, every diagnostic outside the changed files or shared with an unchanged sibling:
+client/src/concept2cure/v2/shellProject.ts:80: error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts:82: error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts:82: error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+server/middleware/establishRequestTenantScope.ts:163: error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts:165: error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts:228: error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+tests/db/signer-authenticator-required.dbtest.ts:36: error TS7016: Could not find a declaration file for module '../validation/lib/totp.mjs'. 'tests/validation/lib/totp.mjs' implicitly has an 'any' type.
+tests/db/signing-lockout.dbtest.ts:40: error TS7016: Could not find a declaration file for module '../validation/lib/totp.mjs'. 'tests/validation/lib/totp.mjs' implicitly has an 'any' type.
+- shellProject.ts / establishRequestTenantScope.ts: Window and Request augmentations declared in files outside this scoped program (not changed here).
+- totp.mjs TS7016: the same diagnostic the existing tests/db/signing-lockout.dbtest.ts gets; tests/ is not in tsconfig.json's include.
+Zero diagnostics in the changed source files.
+
+## planted: AUTHENTICATOR_REQUIRED removed from REAUTH_ERROR in server/routes/c2c/actions.ts
+server/routes/c2c/actions.ts(273,7): error TS2741: Property 'AUTHENTICATOR_REQUIRED' is missing in type '{ PASSWORD_REQUIRED: string; PASSWORD_VERIFICATION_FAILED: string; MFA_TOKEN_REQUIRED: string; 
+restored byte-identical (cmp)

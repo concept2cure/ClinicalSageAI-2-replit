@@ -1,0 +1,517 @@
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > parses a plausible number of ids out of surfaceViews.ts 6ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > every SURFACE_VIEWS id is registered or explicitly allowlisted 1ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > every allowlisted id is genuinely alias-only, not just unregistered 1ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > no registry id is shadowed by a deep-link alias 11ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > the registry is non-trivial (guards the enumeration itself) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > the audit measures what it claims > detects every seeded failure and flags none of the correct forms 104ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > the registry is non-trivial (guards the enumeration itself) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > access-requests 351ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > every registry surface resolves to a real component (no scaffold fallback) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "authoring" is fully installed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "biopharma" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "cmc" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "core" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "ectd_coauthor" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "home" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "intelligence" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "labeling" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "mdx" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "pdev" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "risk" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "submission" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "tasking" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders access-requests 32ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders admin-console 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders agency-meetings 10ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ana-command 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ana-memory 12ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders apps 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders artifacts-center 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders audit-trail 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders authoring-engine 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders batch-draft 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders billing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders biostat-workbench 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders biostatistics 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders change-assessment 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders client-portal 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders clinical-ops 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders cmc 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders communication-center 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders compliance-reports 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders conversation-thread 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders coverage 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders crl-library 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders cro-portfolio 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders csr-workflow 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders decision-lineage 11ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders deep-research 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders design-controls 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-510k 13ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-analytics 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-cer 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-clinical-studies 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-diagnostics 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-engineering 12ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-pma 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-postmarket 2ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > admin-console 317ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-presub 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-software 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-submission 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-tasks 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-udi 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-validation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-vault 10ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-workstream 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dispatch-readiness 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders doc-journey 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders document-authoring 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dossier 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dossier-map 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-coauthor 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-compile 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-publishing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders etmf 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders evidence-search 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders filing-strategy 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders filings-catalog 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders gateway-transmittals 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders global-ri 10ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders haq-manager 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders human-factors 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders identity-console 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders inconsistency 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ind-checklist 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ind-lifecycle 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders insights 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders intelligence-catalog 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders investigator-brochure 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ivd-completeness 9ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling 22ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling-pi 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling-smpc 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders licensing 9ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders lifecycle-mgmt 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders maa-cockpit 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders market-access 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders master-licensing 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders mission-control 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders nda-cockpit 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders nonclinical 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders onboarding 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders onboarding-ingest 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders orchestration 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders orphan 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders part11-console 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-clinical 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-cmc 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-contradictions 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-fda-interactions 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-ind-assembly 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-nonclinical 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-regulatory 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pediatric 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pharmacovigilance 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders precedent-intelligence 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders program-journey 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders project-home 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders projects 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders protocol-dev 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pv-cockpit 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pyramid 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders qmp 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders quality 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders rbm 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders reg-change 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders registrations 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders regulatory-workspace 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders report-engine 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders report-governance 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders research-admin 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders review 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders risk 21ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders safety-narrative 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders setup 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders shadow-review 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders source-tracer 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders submission-center 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders submission-twin 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders task-board 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders tasks 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders template-library 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders training 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders usage 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders vault 10ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders the home hub 40ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > access-requests renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > admin-console renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > agency-meetings renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ana-command renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ana-memory renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > apps renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > artifacts-center renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > audit-trail renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > authoring-engine renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > batch-draft renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > billing renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > biostat-workbench renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > biostatistics renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > change-assessment renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > client-portal renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > clinical-ops renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > cmc renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > communication-center renders without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > compliance-reports renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > conversation-thread renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > coverage renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > crl-library renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > cro-portfolio renders without a crash-class error 14ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > csr-workflow renders without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > decision-lineage renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > deep-research renders without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > design-controls renders without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-510k renders without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-analytics renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-cer renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-coauthor renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-clinical-studies renders without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-compile renders without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-diagnostics renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-publishing renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-engineering renders without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > etmf renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-pma renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > evidence-search renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-postmarket renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > filing-strategy renders without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-presub renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > filings-catalog renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-software renders without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > gateway-transmittals renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-submission renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > global-ri renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-tasks renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > haq-manager renders without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-udi renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > human-factors renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-validation renders without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > identity-console renders without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-vault renders without a crash-class error 11ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > inconsistency renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-workstream renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ind-checklist renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dispatch-readiness renders without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ind-lifecycle renders without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > doc-journey renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > insights renders without a crash-class error 20ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > document-authoring renders without a crash-class error 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > intelligence-catalog renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dossier renders without a crash-class error 10ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > investigator-brochure renders without a crash-class error 10ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dossier-map renders without a crash-class error 19ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ivd-completeness renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling renders without a crash-class error 12ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling-pi renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling-smpc renders without a crash-class error 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > licensing renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > lifecycle-mgmt renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > maa-cockpit renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > market-access renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > master-licensing renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > mission-control renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > nda-cockpit renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > nonclinical renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > onboarding renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > onboarding-ingest renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > orchestration renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > orphan renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > part11-console renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-clinical renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-cmc renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-contradictions renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-fda-interactions renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-ind-assembly renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-nonclinical renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-regulatory renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pediatric renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pharmacovigilance renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > precedent-intelligence renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > program-journey renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > project-home renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > projects renders without a crash-class error 9ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > protocol-dev renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pv-cockpit renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pyramid renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > qmp renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > quality renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > rbm renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > reg-change renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > registrations renders without a crash-class error 11ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > regulatory-workspace renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > report-engine renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > report-governance renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > research-admin renders without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > review renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > risk renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > safety-narrative renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > setup renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > shadow-review renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > source-tracer renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > submission-center renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > submission-twin renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > task-board renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > tasks renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > template-library renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > training renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > usage renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > vault renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > access-requests 3002ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > agency-meetings 2835ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ana-command 516ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ana-memory 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > apps 312ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > artifacts-center 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > audit-trail 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > authoring-engine 315ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > admin-console 2859ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > batch-draft 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > billing 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > biostat-workbench 310ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > biostatistics 319ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > change-assessment 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > client-portal 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > clinical-ops 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > cmc 322ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > communication-center 313ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > compliance-reports 314ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > conversation-thread 1347ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > coverage 502ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > crl-library 316ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > cro-portfolio 306ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > agency-meetings 2814ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ana-command 2777ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > csr-workflow 305ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > decision-lineage 311ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > deep-research 312ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > design-controls 309ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-510k 6ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-analytics 5ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-cer 5ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-clinical-studies 7ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-diagnostics 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-engineering 3ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-pma 3ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-postmarket 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-presub 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-software 12ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-submission 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-tasks 8ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-udi 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-validation 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-vault 3ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > device-workstream 17ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > dispatch-readiness 315ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > doc-journey 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > document-authoring 313ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > dossier 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > dossier-map 313ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ectd-coauthor 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ectd-compile 317ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ectd-publishing 313ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > etmf 316ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > evidence-search 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > filing-strategy 310ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > filings-catalog 337ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > gateway-transmittals 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > global-ri 9ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > haq-manager 312ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > human-factors 309ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > identity-console 314ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > inconsistency 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ind-checklist 304ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ind-lifecycle 9ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > insights 304ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > intelligence-catalog 343ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > investigator-brochure 313ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > ivd-completeness 305ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ana-memory 8074ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > labeling 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > labeling-pi 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > labeling-smpc 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > licensing 314ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > lifecycle-mgmt 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > maa-cockpit 309ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > market-access 305ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > master-licensing 310ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > mission-control 305ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > nda-cockpit 314ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > nonclinical 318ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > onboarding 310ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > onboarding-ingest 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > orchestration 309ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > orphan 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > part11-console 311ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev 5ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-clinical 6ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-cmc 5ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-contradictions 7ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-fda-interactions 6ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-ind-assembly 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-nonclinical 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pdev-regulatory 4ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pediatric 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pharmacovigilance 312ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > apps 3033ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > artifacts-center 2771ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > precedent-intelligence 310ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > program-journey 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > project-home 409ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > projects 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > protocol-dev 447ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pv-cockpit 311ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > pyramid 309ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > qmp 309ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > quality 313ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > rbm 309ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > reg-change 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > registrations 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > regulatory-workspace 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > report-engine 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > report-governance 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > research-admin 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > review 309ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > risk 306ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > audit-trail 2807ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > authoring-engine 2870ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > safety-narrative 305ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > setup 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > shadow-review 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > source-tracer 304ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > submission-center 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > submission-twin 307ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > task-board 305ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > tasks 8ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > template-library 306ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > training 308ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > usage 13ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > batch-draft 2759ms
+ ✓ client/src/concept2cure/v2/__tests__/a11ySemantics.test.tsx > every surface names its controls and fields > vault 312ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > billing 2797ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > biostat-workbench 2852ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > biostatistics 3256ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > change-assessment 2804ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > client-portal 2738ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > clinical-ops 2903ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > cmc 2918ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > communication-center 2810ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > compliance-reports 2774ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > conversation-thread 2885ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > coverage 5040ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > crl-library 2816ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > cro-portfolio 2785ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > csr-workflow 2752ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > decision-lineage 2767ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > deep-research 2820ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > design-controls 2766ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-510k 3075ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-analytics 2776ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-cer 2786ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-clinical-studies 2816ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-diagnostics 3071ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-engineering 2747ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-pma 3003ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-postmarket 2790ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-presub 2768ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-software 2734ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-submission 2767ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-tasks 2750ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-udi 2765ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-validation 2741ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-vault 2881ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-workstream 2795ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dispatch-readiness 2743ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > doc-journey 2748ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > document-authoring 3055ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dossier 2771ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dossier-map 2760ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-coauthor 2859ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-compile 2861ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-publishing 2797ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > etmf 2774ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > evidence-search 2774ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > filing-strategy 2821ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > filings-catalog 3022ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > gateway-transmittals 2804ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > global-ri 2682ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > haq-manager 2753ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > human-factors 7967ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > identity-console 2843ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > inconsistency 2761ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ind-checklist 2802ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ind-lifecycle 2739ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > insights 16492ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > intelligence-catalog 3174ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > investigator-brochure 2771ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ivd-completeness 2734ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling 2769ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling-pi 2814ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling-smpc 2752ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > licensing 2904ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > lifecycle-mgmt 2849ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > maa-cockpit 2785ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > market-access 2788ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > master-licensing 2853ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > mission-control 2767ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > nda-cockpit 2817ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > nonclinical 2877ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > onboarding 2809ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > onboarding-ingest 2733ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > orchestration 2808ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > orphan 2839ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > part11-console 2801ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev 2739ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-clinical 2686ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-cmc 2700ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-contradictions 2693ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-fda-interactions 2686ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-ind-assembly 2681ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-nonclinical 2687ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-regulatory 2689ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pediatric 2868ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pharmacovigilance 2846ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > precedent-intelligence 2805ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > program-journey 14818ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > project-home 3912ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > projects 2789ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > protocol-dev 2739ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pv-cockpit 2858ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pyramid 2746ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > qmp 2772ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > quality 2918ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > rbm 2957ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > reg-change 2767ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > registrations 2823ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > regulatory-workspace 16466ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > report-engine 2813ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > report-governance 2744ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > research-admin 2794ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > review 2769ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > risk 2776ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > safety-narrative 2752ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > setup 2834ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > shadow-review 2791ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > source-tracer 4486ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > submission-center 2829ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > submission-twin 2771ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > task-board 2777ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > tasks 2723ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > template-library 2776ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > training 2761ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > usage 2769ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > vault 2845ms
+ Test Files  4 passed (4)
+      Tests  514 passed (514)
+EXIT=0

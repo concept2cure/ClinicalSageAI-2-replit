@@ -1,131 +1,85 @@
-/**
- * @fileoverview Register the report-subscription sweep on a Bull schedule.
- * @module server/services/report-os/scheduling/worker-register
- *
- * Mirrors the proven pattern in server/services/automation/scheduled-jobs.ts:
- * a repeatable Bull job on a cron, with graceful degradation when Redis is
- * absent (log + no-op, never crash boot). The job body is the tested
- * `sweepDueSubscriptions` core; the concrete `generateAndDeliver` computes the
- * run (real work via the orchestrator), applies the delivery gate, and records
- * the outcome. Full immutable-run persistence and external email transport are
- * deliberately left to the existing /runs + /deliveries paths — this worker
- * closes the "nothing fires subscriptions" gap without duplicating that logic.
- */
-
-import Queue from 'bull';
+/** Redis-free report sweep. A session advisory lock elects one active sweep
+ * across processes; atomic generation commits output, notifications and cursor. */
+import { getPool } from '../../../db';
+import type { PoolClient } from 'pg';
+import { runWithSystemTenantScope } from '../../../db/tenantStore';
 import { createScopedLogger } from '../../../utils/logger';
 import { resolveCapabilities } from '../../entitlements/resolver';
 import type { Tier } from '../../entitlements/types';
-import { computeInitialRun } from '../orchestrator';
-import { decideDelivery } from './delivery';
+import { generateAndDeliver } from './generate-deliver';
 import { sweepDueSubscriptions } from './worker';
-import {
-  recordBackgroundJobRun,
-  registerBackgroundJob,
-  BACKGROUND_JOB,
-} from '../../background-jobs-metrics';
-import type { DeliveryChannel } from './types';
-import type { ReportSubscriptionRow } from '@shared/schema/report-os';
-import type { ReportScope } from '@shared/schema/report-os';
+import { recordBackgroundJobRun, registerBackgroundJob, BACKGROUND_JOB } from '../../background-jobs-metrics';
+
+// Preserve the public engine entry point for existing callers and regressions.
+export { generateAndDeliver } from './generate-deliver';
 
 const log = createScopedLogger('report-subscription-sweep');
+const LOCK_NAMESPACE = 0x523053; // Report-OS, shared by every process.
+const configuredInterval = Number(process.env.REPORT_SWEEP_INTERVAL_MS ?? 600_000);
+const SWEEP_INTERVAL_MS = Number.isFinite(configuredInterval) && configuredInterval >= 10_000 ? configuredInterval : 600_000;
+let timer: ReturnType<typeof setInterval> | null = null;
+let running = false;
 
-/** How often the sweep scans for due subscriptions. Env-overridable. */
-const SWEEP_CRON = process.env.REPORT_SWEEP_CRON || '*/10 * * * *'; // every 10 min
-
-let queue: Queue.Queue | null = null;
-let initialized = false;
-
-/** Resolve an org's current tier; fail-closed to 'standard' on error. */
+// 2026-10-15: an unread plan (or a resolver failure) used to come back as
+// 'standard', so the sweep recorded "Org tier 'standard' is not entitled" about
+// a plan nobody read. It now fails that subscription's run and says so.
 async function resolveTier(organizationId: number): Promise<Tier> {
-  try {
-    return (await resolveCapabilities(organizationId)).tier;
-  } catch {
-    return 'standard';
+  const caps = await resolveCapabilities(organizationId);
+  if (caps.tier === null || caps.tierResolved === false) {
+    throw new Error('The organization plan could not be read, so scheduled-report entitlement was not checked.');
   }
+  return caps.tier;
 }
 
-/**
- * Compute the subscription's report and apply the delivery gate. Real compute;
- * the delivery decision (e-signature / watermark) is honored and recorded.
- * Throws on compute failure so the sweep marks the item failed and does NOT
- * advance the cursor.
- */
-async function generateAndDeliver(sub: ReportSubscriptionRow): Promise<void> {
-  const computed = await computeInitialRun(
-    sub.organizationId,
-    sub.scopeType as ReportScope,
-    sub.scopeId,
-    { explicitRegistryId: sub.reportTypeId },
-  );
-  // A freshly computed scheduled run is inherently non-final — sealing/final
-  // is a separate governed action (POST /runs/:id/finalize), never automatic.
-  // It is 'partial' when the compute succeeded with no critical blockers,
-  // else 'draft'. The delivery gate only distinguishes final vs non-final, so
-  // this is sufficient and honest (external sends are watermarked as draft).
-  const status = computed.criticalBlockers.length === 0 ? 'partial' : 'draft';
-  const decision = decideDelivery({ status }, sub.channel as DeliveryChannel);
-  if (!decision.allowed) {
-    throw new Error(`Delivery not permitted for subscription ${sub.id} on ${sub.channel}`);
-  }
-  log.info('scheduled report fired', {
-    subscriptionId: sub.id,
-    organizationId: sub.organizationId,
-    reportTypeId: sub.reportTypeId,
-    status,
-    channel: sub.channel,
-    requiresESignature: decision.requiresESignature,
-    watermark: decision.watermark,
-  });
+export async function runSubscriptionSweepTick(): Promise<void> {
+  if (running) return;
+  running = true;
+  try { await runWithSystemTenantScope('report-sweep:coordination', runLockedSweep); }
+  finally { running = false; }
 }
 
-/**
- * Initialize the subscription sweep. Call once at server startup. No-op (with
- * a log) when Redis is not configured.
- */
-export async function initSubscriptionSweep(redisUrl?: string): Promise<void> {
-  if (initialized) return;
-  const redis = redisUrl || process.env.REDIS_URL;
-  if (!redis) {
-    log.warn('REDIS_URL not configured — report subscription sweep disabled (graceful degradation)');
-    initialized = true;
-    return;
-  }
+async function runLockedSweep(): Promise<void> {
+  let client: PoolClient | undefined;
+  let locked = false;
   try {
-    queue = new Queue('c2c-report-subscription-sweep', redis, {
-      defaultJobOptions: { removeOnComplete: 100, removeOnFail: 50, attempts: 2 },
-    });
-    registerBackgroundJob(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP);
-    queue.process(async () => {
-      try {
-        const summary = await sweepDueSubscriptions(new Date(), generateAndDeliver, resolveTier);
-        log.info('subscription sweep complete', {
-          scanned: summary.scanned,
-          ran: summary.ran,
-          skippedEntitlement: summary.skippedEntitlement,
-          failed: summary.failed,
-        });
-        // Heartbeat: the sweep ran. `processed` is the number of subscriptions
-        // actually fired this tick. A per-subscription failure is isolated
-        // inside planSweep and does not fail the tick — only a scan-level
-        // throw (e.g. the estate-wide read failing closed) does, and that is
-        // recorded as a failure below.
-        recordBackgroundJobRun(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP, {
-          ok: true,
-          processed: summary.ran,
-        });
-        return summary;
-      } catch (err) {
-        recordBackgroundJobRun(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP, { ok: false, error: err });
-        throw err;
+    client = await getPool().connect();
+    const lock = await client.query<{ acquired: boolean }>('SELECT pg_try_advisory_lock($1, $2) AS acquired', [LOCK_NAMESPACE, 1]);
+    locked = lock.rows[0]?.acquired === true;
+    if (!locked) {
+      recordBackgroundJobRun(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP, { ok: true, processed: 0 });
+      return; // a healthy follower; no subscription delivery is claimed
+    }
+    const now = new Date();
+    const summary = await sweepDueSubscriptions(now, sub => generateAndDeliver(sub, now), resolveTier, { cursorCommittedByGenerator: true });
+    log.info('subscription sweep complete', { scanned: summary.scanned, ran: summary.ran, skippedEntitlement: summary.skippedEntitlement, failed: summary.failed });
+    recordBackgroundJobRun(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP, { ok: summary.failed === 0, processed: summary.ran, ...(summary.failed ? { error: `${summary.failed} subscription deliveries failed` } : {}) });
+  } catch (error) {
+    recordBackgroundJobRun(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP, { ok: false, error });
+    log.error('subscription sweep failed', { reason: error instanceof Error ? error.message : String(error) });
+  } finally {
+    let releaseError: Error | undefined;
+    if (locked && client) {
+      try { await client.query('SELECT pg_advisory_unlock($1, $2)', [LOCK_NAMESPACE, 1]); }
+      catch (error) {
+        releaseError = error instanceof Error ? error : new Error(String(error));
+        log.error('subscription lock release failed', { reason: releaseError.message });
       }
-    });
-    queue.on('error', (err) => log.error(`sweep queue error: ${err.message}`));
-    await queue.add({}, { repeat: { cron: SWEEP_CRON } });
-    initialized = true;
-    log.info(`report subscription sweep scheduled (${SWEEP_CRON})`);
-  } catch (err) {
-    log.warn(`Failed to init subscription sweep: ${err instanceof Error ? err.message : String(err)} — disabled`);
-    initialized = true;
+    }
+    client?.release(releaseError); // destroy a connection carrying an unproven lock
   }
+}
+
+/** Kept signature-compatible with startup; Redis is intentionally unnecessary. */
+export async function initSubscriptionSweep(_redisUrl?: string): Promise<void> {
+  if (timer) return;
+  registerBackgroundJob(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP);
+  timer = setInterval(() => { void runSubscriptionSweepTick(); }, SWEEP_INTERVAL_MS);
+  timer.unref();
+  void runSubscriptionSweepTick();
+  log.info('report subscription sweep registered with PostgreSQL coordination', { intervalMs: SWEEP_INTERVAL_MS });
+}
+
+export function stopSubscriptionSweep(): void {
+  if (timer) clearInterval(timer);
+  timer = null;
 }

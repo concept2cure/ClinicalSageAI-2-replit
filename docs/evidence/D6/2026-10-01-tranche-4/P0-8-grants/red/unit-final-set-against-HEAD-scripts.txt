@@ -1,0 +1,335 @@
+# 2026-10-01T06:21:24Z RED reconstruction for the FINAL unit-test set: scripts/db/provision-app-role.mjs and readiness-contract.mjs at HEAD 0e58e794 (git show HEAD:… put in place for this run only), tests as filed
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > names every append-only audit store, and the one governed UPDATE (revocation) by its columns 31ms
+   → expected [ 'audit.tamper_proof_log' ] to deeply equal [ 'audit.tamper_proof_log', …(10) ]
+ × server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > covers every store whose immutability trigger the production boot requires, or says why not 8ms
+   → expected [ 'public.audit_logs', …(8) ] to deeply equal []
+ × server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > after the blanket grants, from PUBLIC and the role, giving the revocation its columns back 2ms
+   → expected -1 to be greater than 16
+ × server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > asks for every store with its carve-out, and withholds nothing on a store this edition lacks 8ms
+   → expected undefined to be truthy
+ × server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > UPDATE, DELETE and TRUNCATE on a public store are EXCESS, not required 7ms
+   → expected [] to deeply equal [ { …(2) }, { …(2) } ]
+ × server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > TRUNCATE on an audit-schema relation is EXCESS too 1ms
+   → expected [] to deeply equal [ { …(2) } ]
+ × server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > a public store the runtime role OWNS is a failure (ownership confers every privilege) 10ms
+   → expected [] to deeply equal [ 'public.audit_logs' ]
+ × server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > electronic_signatures: the supersession columns are required, any other updatable column is EXCESS 1ms
+   → expected [ [], [ { …(2) } ] ] to deeply equal [ [], [] ]
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveAppServiceRole > defaults to app_service 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveAppServiceRole > honors a valid APP_SERVICE_DB_ROLE override 9ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveAppServiceRole > rejects an identifier that could carry quoting metacharacters 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > privilege model > defaults to full DML for application schemas 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > privilege model > overrides audit to APPEND-ONLY (no UPDATE/DELETE) for Part 11 tamper-evidence 9ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > privilege model > overrides extensions to READ-ONLY (SELECT) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > is a no-op when APP_SERVICE_DB_PASSWORD is unset (single-role compat) 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > rejects a too-short password rather than minting a weak role 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > CREATEs the role NOSUPERUSER + NOBYPASSRLS and grants least privilege 22ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > never sends the plaintext password: DDL carries its SCRAM verifier 16ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > ALTERs (not re-CREATEs) an existing role, rotating the password in place 3ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > grants EVERY discovered application schema (no hardcoded allowlist gap) 10ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole as a non-superuser (the RDS master) > ALTERs as a non-superuser (the RDS master) without naming superuser-only attributes 7ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole as a non-superuser (the RDS master) > REFUSES an existing role a non-superuser cannot make safe, rather than reporting it minted 3ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > roleFromUrl > reads the login role out of a connection string, with or without the psql wrapper 5ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > roleFromUrl > falls back to a scheme scan when the WHATWG parser rejects the password 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > roleFromUrl > returns null when the string names no role 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > returns null for the single-role posture (runtime is the owner) 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > identifies the DATABASE_URL login when DATABASE_OWNER_URL made another role the owner (the IQ-DEV-001 shape) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > prefers RUNTIME_DB_ROLE, then the mint switch, then APP_DATABASE_URL 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > refuses a RUNTIME_DB_ROLE that conflicts with the role the password would mint 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > rejects a role name that could carry quoting metacharacters 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > refreshRuntimeRoleGrants / ensureRuntimeRole > grants an EXISTING role the same recipe without a password (no CREATE/ALTER ROLE) 6ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > refreshRuntimeRoleGrants / ensureRuntimeRole > fails closed when the identified role does not exist 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > refreshRuntimeRoleGrants / ensureRuntimeRole > ensureRuntimeRole: refreshes an identified role, mints when the password is set, no-ops single-role 22ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > names the Part 11 store among the append-only stores (the full list: provision-app-role-append-only.test.ts) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > passes a recipe-shaped estate 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > reports a revoked privilege and a schema without USAGE as denied (the IQ-DEV-001 shape) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > reports UPDATE/DELETE on a non-owned audit relation as EXCESS, and ownership of the store as a failure 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > reports a role that does not exist without touching the catalog further 0ms
+stdout | server/db/__tests__/readiness-contract.test.ts
+{
+  "timestamp": "2026-10-01T06:21:30.589Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:21:30.590Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/db/__tests__/readiness-contract.test.ts
+{
+  "timestamp": "2026-10-01T06:21:30.591Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/db/__tests__/readiness-contract.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/db/__tests__/readiness-contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/db/__tests__/readiness-contract.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > CRITICAL_TABLES agree with ensureCoreTables.ts 3ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > REQUIRED_SCHEMAS agree with ensureCoreTables.ts 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > SECURITY_CRITICAL_TABLES agree with startup/services.ts 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > demands the vector extension and the Part 11 audit store 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > base sentinels are a superset of the critical tables 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > passes on a complete contract 2ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing security-critical table (the licenses case) 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing Part 11 audit store 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names a missing schema and a missing extension 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > as the runtime role: refuses a superuser and an unreadable table 3ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > as the owner: does not check SELECT reach 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > passes when the named role reaches everything with the recipe privileges 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails on an application table outside the contract that the role cannot reach (the 183-table case) 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when the audit store is widened beyond append-only (UPDATE via a PUBLIC or hand grant) 1ms
+ × server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when a public append-only store is widened (DELETE on audit_logs, TRUNCATE on audit_events) 9ms
+   → expected 'security-critical tables missing: pub…' to match /holds privileges beyond the append-on…/
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when the runtime role owns the audit store 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when the named role does not exist 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > refuses a named superuser 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > names every append-only audit store, and the one governed UPDATE (revocation) by its columns
+AssertionError: expected [ 'audit.tamper_proof_log' ] to deeply equal [ 'audit.tamper_proof_log', …(10) ]
+
+- Expected
++ Received
+
+  [
+    "audit.tamper_proof_log",
+-   "public.audit_logs",
+-   "public.audit_log_archives",
+-   "public.audit_events",
+-   "public.electronic_signatures",
+-   "public.ana_turn_records",
+-   "public.ana_record_blobs",
+-   "public.authoring_audit_trail",
+-   "public.doc_revisions",
+-   "public.concept2cure_signatures",
+-   "public.concept2cure_submission_snapshots",
+  ]
+
+ ❯ server/db/__tests__/provision-app-role-append-only.test.ts:83:39
+     81| describe('APPEND_ONLY_TABLES', () => {
+     82|   it('names every append-only audit store, and the one governed UPDATE…
+     83|     expect(names(APPEND_ONLY_TABLES)).toEqual([
+       |                                       ^
+     84|       'audit.tamper_proof_log',
+     85|       'public.audit_logs',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > covers every store whose immutability trigger the production boot requires, or says why not
+AssertionError: expected [ 'public.audit_logs', …(8) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.audit_logs",
++   "public.audit_events",
++   "public.electronic_signatures",
++   "public.ana_turn_records",
++   "public.ana_record_blobs",
++   "public.authoring_audit_trail",
++   "public.doc_revisions",
++   "public.concept2cure_signatures",
++   "public.concept2cure_submission_snapshots",
++ ]
+
+ ❯ server/db/__tests__/provision-app-role-append-only.test.ts:118:79
+    116|     const guarded = new Set(EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS.map((…
+    117|     const stores = new Set(names(APPEND_ONLY_TABLES));
+    118|     expect([...guarded].filter((t) => !stores.has(t) && !NOT_APPEND_ON…
+       |                                                                               ^
+    119|     expect([...stores].filter((t) => !guarded.has(t) && !NOT_BOOT_REQU…
+    120|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > after the blanket grants, from PUBLIC and the role, giving the revocation its columns back
+AssertionError: expected -1 to be greater than 16
+ ❯ server/db/__tests__/provision-app-role-append-only.test.ts:135:25
+    133|     const columnGrant = statements.indexOf('GRANT UPDATE (superseded_b…
+    134|     expect(lastBlanket).toBeGreaterThan(-1);
+    135|     expect(revokeAudit).toBeGreaterThan(lastBlanket);
+       |                         ^
+    136|     expect(revokeEsig).toBeGreaterThan(lastBlanket);
+    137|     expect(columnGrant).toBeGreaterThan(revokeEsig);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > asks for every store with its carve-out, and withholds nothing on a store this edition lacks
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/db/__tests__/provision-app-role-append-only.test.ts:147:20
+    145|     expect(statements.some((s) => /^REVOKE .* ON TABLE /.test(s))).toB…
+    146|     const lookup = statements.find((s) => s.includes('WITH ORDINALITY …
+    147|     expect(lookup).toBeTruthy();
+       |                    ^
+    148|   });
+    149| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > UPDATE, DELETE and TRUNCATE on a public store are EXCESS, not required
+AssertionError: expected [] to deeply equal [ { …(2) }, { …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "held": [
+-       "UPDATE",
+-       "DELETE",
+-     ],
+-     "relation": "public.audit_logs",
+-   },
+-   {
+-     "held": [
+-       "TRUNCATE",
+-     ],
+-     "relation": "public.audit_events",
+-   },
+- ]
++ []
+
+ ❯ server/db/__tests__/provision-app-role-append-only.test.ts:162:22
+    160|       'app_service',
+    161|     );
+    162|     expect(a.excess).toEqual([
+       |                      ^
+    163|       { relation: 'public.audit_logs', held: ['UPDATE', 'DELETE'] },
+    164|       { relation: 'public.audit_events', held: ['TRUNCATE'] },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > TRUNCATE on an audit-schema relation is EXCESS too
+AssertionError: expected [] to deeply equal [ { …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "held": [
+-       "TRUNCATE",
+-     ],
+-     "relation": "audit.tamper_proof_log",
+-   },
+- ]
++ []
+
+ ❯ server/db/__tests__/provision-app-role-append-only.test.ts:174:22
+    172|       'app_service',
+    173|     );
+    174|     expect(a.excess).toEqual([{ relation: 'audit.tamper_proof_log', he…
+       |                      ^
+    175|   });
+    176|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > a public store the runtime role OWNS is a failure (ownership confers every privilege)
+AssertionError: expected [] to deeply equal [ 'public.audit_logs' ]
+
+- Expected
++ Received
+
+- [
+-   "public.audit_logs",
+- ]
++ []
+
+ ❯ server/db/__tests__/provision-app-role-append-only.test.ts:179:31
+    177|   it('a public store the runtime role OWNS is a failure (ownership con…
+    178|     const a = await auditRuntimeRoleGrants(auditDb([{ schema: 'public'…
+    179|     expect(a.ownedAppendOnly).toEqual(['public.audit_logs']);
+       |                               ^
+    180|     expect(a.excess).toEqual([]);
+    181|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > electronic_signatures: the supersession columns are required, any other updatable column is EXCESS
+AssertionError: expected [ [], [ { …(2) } ] ] to deeply equal [ [], [] ]
+
+- Expected
++ Received
+
+  [
+    [],
+-   [],
++   [
++     {
++       "missing": [
++         "UPDATE",
++         "DELETE",
++       ],
++       "relation": "public.electronic_signatures",
++     },
++   ],
+  ]
+
+ ❯ server/db/__tests__/provision-app-role-append-only.test.ts:192:42
+    190|
+    191|     const clean = await esig(['SELECT', 'INSERT'], { ...supersession, …
+    192|     expect([clean.excess, clean.denied]).toEqual([[], []]);
+       |                                          ^
+    193|
+    194|     const widened = await esig(['SELECT', 'INSERT'], { ...supersession…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when a public append-only store is widened (DELETE on audit_logs, TRUNCATE on audit_events)
+AssertionError: expected 'security-critical tables missing: pub…' to match /holds privileges beyond the append-on…/
+
+- Expected:
+/holds privileges beyond the append-only ceiling on: public\.audit_logs \(DELETE\), public\.audit_events \(TRUNCATE\)/
+
++ Received:
+"security-critical tables missing: public.audit_logs
+runtime role app_service lacks privileges on 2 relation(s): public.audit_logs (UPDATE), public.audit_events (UPDATE/DELETE) — re-run deploy-migrate as the owner (step 4 refreshes grants for an identified runtime role); node scripts/db/audit-runtime-grants.mjs lists them all"
+
+ ❯ server/db/__tests__/readiness-contract.test.ts:269:35
+    267|       { runtimeRole: 'app_service' },
+    268|     );
+    269|     expect(r.failures.join('\n')).toMatch(
+       |                                   ^
+    270|       /holds privileges beyond the append-only ceiling on: public\.aud…
+    271|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  9 failed | 47 passed (56)
+   Start at  06:21:25
+   Duration  5.03s (transform 2.69s, setup 559ms, import 4.36s, tests 244ms, environment 0ms)
+

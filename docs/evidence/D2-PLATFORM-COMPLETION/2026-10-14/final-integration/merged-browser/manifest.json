@@ -1,0 +1,696 @@
+{
+  "filedAtUtc": "2026-10-14T03:30:38.099415+00:00",
+  "serverLauncherPid": 120498,
+  "branch": "concept2cure-v2",
+  "gitHeadAtSourceReadCaptureStart": "c1f3df86dc97f81e7380af94a0afb03c7f5bdd05",
+  "gitHeadAtFinalCapture": "c1f3df86dc97f81e7380af94a0afb03c7f5bdd05",
+  "sourcePinQualification": "Working-tree files are the executed revisions. Git HEAD is informational; root owns final publication mapping. The Sources-rail capture precedes the Vault-only CSS repair, which does not select authoring classes. Four-surface final capture follows that CSS repair. No saved-document critique or provider call was invoked.",
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "bytes": 103270,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ef68309603de780c5317db3e05ce6d5bc14d51703b7a4760238118b9fe250976"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "bytes": 104883,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0c0f39d1f1f215c8691f3158c70f92327763aca5a442d55b9cca96e37cd99efa"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx",
+      "bytes": 4568,
+      "digestAlgorithm": "SHA-256",
+      "digest": "79ff852a348a7f324a831e24cd0d0d1a635cba2d011331eec71052afa24ba93e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultRelationships.tsx",
+      "bytes": 13908,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e137ce1a5a7c65ddebbd228cbccd3d54c32c2579ff6da557e9e60a4abad0a0d2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultVersions.tsx",
+      "bytes": 20557,
+      "digestAlgorithm": "SHA-256",
+      "digest": "95bd1c24dd2ee68c755ae84e52694aedc93568dd1cfc7d9656ba0362618742d9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SourceTracer.tsx",
+      "bytes": 19917,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3c23b9efb29253dd0c02c67eef4cc90e0dcf69692d3d5c52b492da315e0da1c1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "bytes": 298268,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a88cbfdfeec48cc8fc6c99a59e1cf9c8142985c718461e0cdcff2b009da25d90"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "bytes": 401235,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ae83d1c6115c4fc3fea35068d8fd1b9fd81a45d1097a114f4126c8e195d820d3"
+    },
+    {
+      "path": "server/routes/source-tracer-routes.ts",
+      "bytes": 7317,
+      "digestAlgorithm": "SHA-256",
+      "digest": "dc24877093607bdf422b6d1098bd556a08c0964576ae2d97b445fa26010180db"
+    },
+    {
+      "path": "server/routes/c2c/project-vault.ts",
+      "bytes": 113523,
+      "digestAlgorithm": "SHA-256",
+      "digest": "dc3a62523c03d842bc58758266dee13985ebbf39cc0a1e56c241d703d7f4418f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+      "bytes": 35695,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5448ae167f14e0ec65c175d42f78db6a976d68fe8382d303c0e7b6ed8f6af069"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "bytes": 8527,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e1b08a37a45704c68564d5f84b91a36af787a7773f6718ba4c43c91fcd039a68"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "bytes": 8717,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "bytes": 64367,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16"
+    }
+  ],
+  "fourSurfaces": {
+    "variants": [
+      "light1440",
+      "dark1440",
+      "mobile390"
+    ],
+    "passed": true,
+    "pageErrors": 0,
+    "consoleErrors": 0,
+    "apiFailures": 0,
+    "blockedApiMutations": 0,
+    "providerTurns": 0
+  },
+  "authoringSources": {
+    "variants": [
+      "light1440",
+      "dark1440",
+      "mobile390"
+    ],
+    "passed": true,
+    "apiFailures": 0,
+    "pageErrors": 0,
+    "completedApiMutations": 0,
+    "blockedAutomaticCollaborationAttemptsPerVariant": 7,
+    "expectedNetErrFailedConsoleMessagesPerVariant": 7,
+    "providerTurns": 0
+  },
+  "responsiveRepair": {
+    "beforeMobileVaultWidth": 1147,
+    "beforeSelectedVaultLeft": -757,
+    "afterMobileVaultWidth": 334,
+    "afterMobileVaultLeft": 56,
+    "afterMobileVaultRight": 390,
+    "desktopGridTemplateColumns": "290px 774px 320px",
+    "desktopResponsiveDescendantCheck": "Not asserted; mobile-specific strict geometry check. Desktop preserves the existing three-column layout and body bounds."
+  },
+  "privateSessionCopied": false,
+  "retainedTmpRuns": [
+    {
+      "name": "/tmp/source-access-ui-merged-browser-light-auth-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "987d786ad2eec9d3edfa9965c1788360e2c45d22bfa80bf7ba0a1a0f8053850a"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-dark-auth-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "e7c1ff8124eb351b82193f867f1b2f7da3323d725e8351d3c24298031e93bdb4"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-mobile-auth-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "ce63a875ebdf31c1e39a0a8248d29d279130ac1aaea234098a338b4481bf5e02"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-light-locator-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "69169e78e15ad8b4fd3ad26eb4bf1df10cdbe0fd5066b4e85a3180ca433b48f3"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-dark-locator-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "a3eca3011deca24afcb2f47fd9c62d0808ecafd873e901766c95bfe428e6dc7c"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-mobile-locator-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "d8a45c8b9ebd2a3a52d1344ee1440c8c9588b61f484871425c13e9c6a486b560"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-light-authoring-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "3cc2ff1cd90d434dc7d00e2a3476e4e5144958505dd734cda6dd9ea834c15867"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-dark-authoring-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "3fb44a581f65462e4493af031743c8b841df9d017d4e3abc4d4ae19c2ce1035c"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-mobile-authoring-red",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "d7fc3e1975f10f53493275c57cd6a62fdb1aa66d1db249b0cafb17d55de59f47"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-light-pre-read-tx-green",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "5b0b2a89756b8305e81f6d3e28f9c48f4df2e3df0845d92e370a633bc0663a8d"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-dark-pre-read-tx-green",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "20594fe47b5e15adb95b0881efcdda1d149daff745c3a7901e6ad535783e1bdc"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-mobile-pre-read-tx-green",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "2b903028bbe827f644f9924d5bf2892eb54eb7080e27716b632946f97c3cbc1b"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-light-pre-responsive-green",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "5b0b2a89756b8305e81f6d3e28f9c48f4df2e3df0845d92e370a633bc0663a8d"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-dark-pre-responsive-green",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "732bf8096cf508b1063f8766cf7ac55886b3b05e761098f2642f1fdb19f13027"
+    },
+    {
+      "name": "/tmp/source-access-ui-merged-browser-mobile-pre-responsive-green",
+      "summaryDigestAlgorithm": "SHA-256",
+      "summaryDigest": "2b903028bbe827f644f9924d5bf2892eb54eb7080e27716b632946f97c3cbc1b"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "README.md",
+      "bytes": 4763,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e8d8a3cf1b522903224da122346cba69c580289e8c74222f5f642719004b1834"
+    },
+    {
+      "path": "auth-renewal-observation.json",
+      "bytes": 393,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c150bd13a44b27cae4e0569d0a45087b1e64dd83672cd603e35fa6feb7ac07ab"
+    },
+    {
+      "path": "authoring-sources/dark/authoring-current-source-rail.png",
+      "bytes": 207795,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3fd227580648de88f5e06f32eed603d84670e88633319ad905ccaebeb5d217e1"
+    },
+    {
+      "path": "authoring-sources/dark/authoring-source-rail-detail.png",
+      "bytes": 18896,
+      "digestAlgorithm": "SHA-256",
+      "digest": "49cbcdbf613f11ffb8867c41d19650589a7e53bf54c2308e90d0367f0a62d21b"
+    },
+    {
+      "path": "authoring-sources/dark/browser.log",
+      "bytes": 707,
+      "digestAlgorithm": "SHA-256",
+      "digest": "aa5fcbce31bad3bbc2190abbbc1e6c8f5db06d419205b6d65947040dd72a77e1"
+    },
+    {
+      "path": "authoring-sources/dark/project-home-document-row.png",
+      "bytes": 8564,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7aec9730890a327398b233aeaf44897a2b2dba501f107b749e352a197527f52b"
+    },
+    {
+      "path": "authoring-sources/dark/summary.json",
+      "bytes": 4619,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e7c1f7737b7c115c62fcc0d6fcb668d6210abce09cac707165788aa860db8b3e"
+    },
+    {
+      "path": "authoring-sources/light/authoring-current-source-rail.png",
+      "bytes": 209905,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7c70e8864ffdeb8c3ac640af57e45f365faaa754b5ef2bebab49c5332c3b7d99"
+    },
+    {
+      "path": "authoring-sources/light/authoring-source-rail-detail.png",
+      "bytes": 18961,
+      "digestAlgorithm": "SHA-256",
+      "digest": "804e6394c54e4c785ee5c6921249b1bb9a934f21cbe05a35035a37b54ba4d1a3"
+    },
+    {
+      "path": "authoring-sources/light/browser.log",
+      "bytes": 708,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3042ba0330090c8624c8b47d5bc01bd93d78809cb81fa244b7ab9ac653efbbd8"
+    },
+    {
+      "path": "authoring-sources/light/project-home-document-row.png",
+      "bytes": 8384,
+      "digestAlgorithm": "SHA-256",
+      "digest": "42484e5c79b99539f614007a00d3a01e7d3f36618a0df2512785e41a1dd67084"
+    },
+    {
+      "path": "authoring-sources/light/summary.json",
+      "bytes": 4620,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9f747ceb4eabe8edf0f37e0394f6b31bb44c2df355d0c6f638e04609573e3f63"
+    },
+    {
+      "path": "authoring-sources/mobile/authoring-current-source-rail.png",
+      "bytes": 29303,
+      "digestAlgorithm": "SHA-256",
+      "digest": "36e3e0237fa2eece57420bdc0987d57b5be2898de977d1afa70e823bb0d2bf26"
+    },
+    {
+      "path": "authoring-sources/mobile/authoring-source-rail-detail.png",
+      "bytes": 20081,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e0c736e84791cafb541db8c073841de00d2f5ef84ce87b9e616526a166c0109a"
+    },
+    {
+      "path": "authoring-sources/mobile/browser.log",
+      "bytes": 709,
+      "digestAlgorithm": "SHA-256",
+      "digest": "2728ebc8ad75c12dd075f12340f035b131f44f96af7dddb6c2c49480eeea019a"
+    },
+    {
+      "path": "authoring-sources/mobile/project-home-document-row.png",
+      "bytes": 8354,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1d522da7c71a79ec4ed5beec694e4cfdf0b4abe780ab2e633c5499a70e97ae76"
+    },
+    {
+      "path": "authoring-sources/mobile/summary.json",
+      "bytes": 4619,
+      "digestAlgorithm": "SHA-256",
+      "digest": "205719321ffffe302467c595e77a158a2f84dba2da2570ff1913ce63e4d88eb6"
+    },
+    {
+      "path": "authoring-sources-proof.py",
+      "bytes": 9583,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1d3edecd9e58af7a57303303366a36193dfb23d4a02c2d0a915d45e184864831"
+    },
+    {
+      "path": "four-surfaces/dark/browser.log",
+      "bytes": 237,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0668fe9e191208a193ef39ce51e3a565dad416b7fa479f0b3d1d6183df6db2ed"
+    },
+    {
+      "path": "four-surfaces/dark/project-home-alpha-citation-usage.png",
+      "bytes": 14645,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5df10e3490f20d9611b2e40db0bdeb94ef75f4e688779885e1bed22a88730a8f"
+    },
+    {
+      "path": "four-surfaces/dark/project-home-beta-citation-usage.png",
+      "bytes": 13288,
+      "digestAlgorithm": "SHA-256",
+      "digest": "56ad0150942b6d7ce2d6d5547735197630d058ee75c8a4e64821f8e251ba9ff5"
+    },
+    {
+      "path": "four-surfaces/dark/project-home-document-row.png",
+      "bytes": 8564,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7aec9730890a327398b233aeaf44897a2b2dba501f107b749e352a197527f52b"
+    },
+    {
+      "path": "four-surfaces/dark/project-home-sources.png",
+      "bytes": 121270,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3bd785681fd10dfbe612daeca321dd89be6397ec9db25acbab76414551406047"
+    },
+    {
+      "path": "four-surfaces/dark/source-tracer-accessible-counts.png",
+      "bytes": 142539,
+      "digestAlgorithm": "SHA-256",
+      "digest": "87960b7c5342c7130f55f49006cc5ea0d88720e5571cbe354d58da0c6fc77294"
+    },
+    {
+      "path": "four-surfaces/dark/source-tracer-recorded-citation.png",
+      "bytes": 142532,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d94bb0c755bfc38dc34f8e5748124eab9560693389472516d32f3e52e7c9c8aa"
+    },
+    {
+      "path": "four-surfaces/dark/summary.json",
+      "bytes": 3954,
+      "digestAlgorithm": "SHA-256",
+      "digest": "732bf8096cf508b1063f8766cf7ac55886b3b05e761098f2642f1fdb19f13027"
+    },
+    {
+      "path": "four-surfaces/dark/vault-accessible-library.png",
+      "bytes": 157311,
+      "digestAlgorithm": "SHA-256",
+      "digest": "da215c9e67941b131850e6f6e057a666ddffa273d8208c5d88e1089a0404592f"
+    },
+    {
+      "path": "four-surfaces/dark/vault-accessible-relationships.png",
+      "bytes": 15596,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0d93066e70ad14a30a22ad61447478a2ac51b66cca211a04bbf60d47adb80336"
+    },
+    {
+      "path": "four-surfaces/dark/vault-accessible-version-usage.png",
+      "bytes": 25003,
+      "digestAlgorithm": "SHA-256",
+      "digest": "88d946dc9d432f6eb390b17a3af719c560304d071b6cb18b936d8125c7ff6282"
+    },
+    {
+      "path": "four-surfaces/dark/vault-record-context.png",
+      "bytes": 190429,
+      "digestAlgorithm": "SHA-256",
+      "digest": "fb0cb0721d252e8e54c6ba1dbc8722f644666dd21288879da327a9517a5adeb9"
+    },
+    {
+      "path": "four-surfaces/dark/vault-search-and-results.png",
+      "bytes": 26025,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1cd19b423f0d4d78154af72731eceab284197884c2a49c0846bc955fa6654edc"
+    },
+    {
+      "path": "four-surfaces/dark/vault-visible-history.png",
+      "bytes": 10467,
+      "digestAlgorithm": "SHA-256",
+      "digest": "2b4a41250313a73fc8d8beb6aa4965f800359dc4f4b38370ff337b426c3f632b"
+    },
+    {
+      "path": "four-surfaces/light/browser.log",
+      "bytes": 238,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d7e3e705b5237a212f2d6b7231fbaae35bdd4efb48b74c3f5851c7acd5494e9e"
+    },
+    {
+      "path": "four-surfaces/light/project-home-alpha-citation-usage.png",
+      "bytes": 14658,
+      "digestAlgorithm": "SHA-256",
+      "digest": "22caff0ca041bea90984c6d4e19daafa4a743e4201983d4020a4204ec687de3a"
+    },
+    {
+      "path": "four-surfaces/light/project-home-beta-citation-usage.png",
+      "bytes": 13132,
+      "digestAlgorithm": "SHA-256",
+      "digest": "07a4306c16f64f10b63c4eb71189c4340378d0e796e62a4b9cdb3adbdd965f0a"
+    },
+    {
+      "path": "four-surfaces/light/project-home-document-row.png",
+      "bytes": 8677,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d2354f6986205104af38c7b234d2d60406488007b7ec2055351301c65e538b47"
+    },
+    {
+      "path": "four-surfaces/light/project-home-sources.png",
+      "bytes": 109057,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7b1e2c17a9afcc5bcd3a8750053b5fff55bb9e2d12d17f5382d26b644088c208"
+    },
+    {
+      "path": "four-surfaces/light/source-tracer-accessible-counts.png",
+      "bytes": 143420,
+      "digestAlgorithm": "SHA-256",
+      "digest": "df493c045588496a3eb262cf2b9157c0ca3e4943d5ccaf522d55277b6b6ba720"
+    },
+    {
+      "path": "four-surfaces/light/source-tracer-recorded-citation.png",
+      "bytes": 143395,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0e0fde1f2a2000c7cbc40529e09622ae6765ab7095d019d8703ffdb1c21745b5"
+    },
+    {
+      "path": "four-surfaces/light/summary.json",
+      "bytes": 3955,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5b0b2a89756b8305e81f6d3e28f9c48f4df2e3df0845d92e370a633bc0663a8d"
+    },
+    {
+      "path": "four-surfaces/light/vault-accessible-library.png",
+      "bytes": 158450,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e140155a1849c02cf770b980a4a4c2c24cdcc02478c13f5f011b44f24ec23feb"
+    },
+    {
+      "path": "four-surfaces/light/vault-accessible-relationships.png",
+      "bytes": 15634,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3bc951cd3b32deb8058f69a2e6ba36b19c85f882734d63dddf9c43ec4bddd4e4"
+    },
+    {
+      "path": "four-surfaces/light/vault-accessible-version-usage.png",
+      "bytes": 25437,
+      "digestAlgorithm": "SHA-256",
+      "digest": "85098aa08f8d82960815aabc59e38ccb693faf7df3671da5c88c271436f5bc90"
+    },
+    {
+      "path": "four-surfaces/light/vault-record-context.png",
+      "bytes": 191197,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0321b7bd78d1f796b6964fc0acee1598ed9cd84d03923c1e8abcbd3c17133ad8"
+    },
+    {
+      "path": "four-surfaces/light/vault-search-and-results.png",
+      "bytes": 25927,
+      "digestAlgorithm": "SHA-256",
+      "digest": "58931c08af7d137ddb3b308a9fd614ad39b0aa2d7485442f1e78eb495169888c"
+    },
+    {
+      "path": "four-surfaces/light/vault-visible-history.png",
+      "bytes": 10580,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0778795a040c18b5f6b09fa39c138cc745faee012193482c05cccc5fe57dff57"
+    },
+    {
+      "path": "four-surfaces/mobile/browser.log",
+      "bytes": 239,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a270747f182fda0719974d549f77693ebefa10a6fc234d1398dcfed23e7e4e78"
+    },
+    {
+      "path": "four-surfaces/mobile/project-home-alpha-citation-usage.png",
+      "bytes": 12012,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5696675f01f5477b853ac8f4d7aadb25547a0c67d2529feeaa79fa9906f847c2"
+    },
+    {
+      "path": "four-surfaces/mobile/project-home-beta-citation-usage.png",
+      "bytes": 10406,
+      "digestAlgorithm": "SHA-256",
+      "digest": "788f018e8ac9026bb3030f0c6a49e5e77384191dc5a2a2b068dc64dc197eb96f"
+    },
+    {
+      "path": "four-surfaces/mobile/project-home-document-row.png",
+      "bytes": 8354,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1d522da7c71a79ec4ed5beec694e4cfdf0b4abe780ab2e633c5499a70e97ae76"
+    },
+    {
+      "path": "four-surfaces/mobile/project-home-sources.png",
+      "bytes": 61369,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3803bd886b7c1e33308effe6d7dca7f687fe1017d0fe4f186fe4e7997c0e5588"
+    },
+    {
+      "path": "four-surfaces/mobile/source-tracer-accessible-counts.png",
+      "bytes": 92813,
+      "digestAlgorithm": "SHA-256",
+      "digest": "37a64849fe1d510e536af2d2cdc4d43c014e1681aa9e0a880ebc4c35d48db523"
+    },
+    {
+      "path": "four-surfaces/mobile/source-tracer-recorded-citation.png",
+      "bytes": 45388,
+      "digestAlgorithm": "SHA-256",
+      "digest": "cb18d23e100aadc6928303e94a46243c44e5843d7f5a63bf28228065b9d71f73"
+    },
+    {
+      "path": "four-surfaces/mobile/summary.json",
+      "bytes": 4917,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f6e7c51f02ba4b5f19f43f963ff9d86e9de9dd06812fd6d6c92c309d8fd13f19"
+    },
+    {
+      "path": "four-surfaces/mobile/vault-accessible-library.png",
+      "bytes": 84834,
+      "digestAlgorithm": "SHA-256",
+      "digest": "99381be79052c35e7bf4ba19d113af4992cd2440f32f99a9ade2279e0be6fd8e"
+    },
+    {
+      "path": "four-surfaces/mobile/vault-accessible-relationships.png",
+      "bytes": 15554,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a8d8e393f5b5f06447380918d3e6dab0dbef8bc3cfa7519c68b039f70aec7462"
+    },
+    {
+      "path": "four-surfaces/mobile/vault-accessible-version-usage.png",
+      "bytes": 25647,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d2f1800e32de50b4c9dd1c79936a61b8af2a2bd270ab8c343070c4ddae02e6d5"
+    },
+    {
+      "path": "four-surfaces/mobile/vault-record-context.png",
+      "bytes": 73833,
+      "digestAlgorithm": "SHA-256",
+      "digest": "966890e35eb9c7acc1b6c1ae07a263ee1d5c510a98cc0db66b5e37bd6146f1e8"
+    },
+    {
+      "path": "four-surfaces/mobile/vault-search-and-results.png",
+      "bytes": 19097,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3fc3720536fc4af48afaedb4a979de9a418d56bd047380ba1c10bed99e4973a4"
+    },
+    {
+      "path": "four-surfaces/mobile/vault-visible-history.png",
+      "bytes": 10588,
+      "digestAlgorithm": "SHA-256",
+      "digest": "93dd90171930804642161d4a08762bddebe65ee406e5f8402321ad4d7962dfa1"
+    },
+    {
+      "path": "four-surfaces-proof.py",
+      "bytes": 13275,
+      "digestAlgorithm": "SHA-256",
+      "digest": "70b364cef712669ffd6ad9c0c219445927d6a554ca09b5b643a947c985ef0c07"
+    },
+    {
+      "path": "retained-failures/mobile-rate-limit-browser.log",
+      "bytes": 16540,
+      "digestAlgorithm": "SHA-256",
+      "digest": "183146da86e2e48b4101dc10688d8a2004d4b74cc1dc0fbe3ba66119824b6f27"
+    },
+    {
+      "path": "retained-failures/mobile-rate-limit-summary.json",
+      "bytes": 16516,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0d70fb8cc002c36da1e7183095fb49f8adb75a6dc6e9b9120da8bf13483a30a0"
+    },
+    {
+      "path": "vault-responsive/after/dark/browser.log",
+      "bytes": 175,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c4c1cbd1ae4068dc103b37d00e29e069f301eae44a8d7730e2ea377dfba22f8c"
+    },
+    {
+      "path": "vault-responsive/after/dark/summary.json",
+      "bytes": 6038,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d96611cd6e1474a3f8e39b497ba0a7ab2bf4961c96f7bb4515eb0473a7fb0f51"
+    },
+    {
+      "path": "vault-responsive/after/dark/vault-initial-layout.png",
+      "bytes": 238525,
+      "digestAlgorithm": "SHA-256",
+      "digest": "86d38470281d73ccf472a1f73a83cdb99f59cf60a6149432c6d0258a17d62348"
+    },
+    {
+      "path": "vault-responsive/after/dark/vault-selected-layout.png",
+      "bytes": 190429,
+      "digestAlgorithm": "SHA-256",
+      "digest": "fb0cb0721d252e8e54c6ba1dbc8722f644666dd21288879da327a9517a5adeb9"
+    },
+    {
+      "path": "vault-responsive/after/light/browser.log",
+      "bytes": 176,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b3b5f8156b9df8925e944f35e1dedd287af086c971ce451abd1ef3a3178689b4"
+    },
+    {
+      "path": "vault-responsive/after/light/summary.json",
+      "bytes": 6039,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c7800aceed9372aefa16456619f8e0fc2eb1379aebe76ac8d98fbebe70560b50"
+    },
+    {
+      "path": "vault-responsive/after/light/vault-initial-layout.png",
+      "bytes": 241132,
+      "digestAlgorithm": "SHA-256",
+      "digest": "8c2fc1056aad28b6adf7a06a618861bd3cc5e8bef7967c5200462ea1f0680174"
+    },
+    {
+      "path": "vault-responsive/after/light/vault-selected-layout.png",
+      "bytes": 191344,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a9f312b214ea8ec59fcac813d0e04aa6a615a52040fe7783075538830aed2a88"
+    },
+    {
+      "path": "vault-responsive/after/mobile/browser.log",
+      "bytes": 177,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7bd73ec7eb590322a29138ff6ca26a407c9dfc3b26410557795bf5da188ace5b"
+    },
+    {
+      "path": "vault-responsive/after/mobile/summary.json",
+      "bytes": 5993,
+      "digestAlgorithm": "SHA-256",
+      "digest": "65ffa5101ec99028c61ac96601fac49d74a170bb9ae5184e3c1c4c492ed65822"
+    },
+    {
+      "path": "vault-responsive/after/mobile/vault-initial-layout.png",
+      "bytes": 71821,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a82b6d5368659b3c05e521408646242d68a87b75367ccefeb61de6e49239600e"
+    },
+    {
+      "path": "vault-responsive/after/mobile/vault-selected-layout.png",
+      "bytes": 73833,
+      "digestAlgorithm": "SHA-256",
+      "digest": "966890e35eb9c7acc1b6c1ae07a263ee1d5c510a98cc0db66b5e37bd6146f1e8"
+    },
+    {
+      "path": "vault-responsive/before/mobile/browser.log",
+      "bytes": 177,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7bd73ec7eb590322a29138ff6ca26a407c9dfc3b26410557795bf5da188ace5b"
+    },
+    {
+      "path": "vault-responsive/before/mobile/summary.json",
+      "bytes": 6044,
+      "digestAlgorithm": "SHA-256",
+      "digest": "bea8faf6dcb70374541d43d395ee440f5b23265e559eddc3f906515341c171ce"
+    },
+    {
+      "path": "vault-responsive/before/mobile/vault-initial-layout.png",
+      "bytes": 91227,
+      "digestAlgorithm": "SHA-256",
+      "digest": "8268348c99e5f279477e3133f1bbc3e4ec5d2504b2cdbc611d4e232ef8748453"
+    },
+    {
+      "path": "vault-responsive/before/mobile/vault-selected-layout.png",
+      "bytes": 68943,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6a32306fe0ea408a0a2d0de36ee85b9f07839744e6dcfd690907f7b8572387f2"
+    },
+    {
+      "path": "vault-responsive-after-proof.py",
+      "bytes": 7627,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a077fa82fbfa91c223d2718baa0cf34009f39435354bcfee37c23579ba11b87e"
+    },
+    {
+      "path": "vault-responsive-before-proof.py",
+      "bytes": 7542,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9645149d0590f11daefda1177b5b5f6890f3e09370a164ed950dc62451e20e4b"
+    }
+  ]
+}

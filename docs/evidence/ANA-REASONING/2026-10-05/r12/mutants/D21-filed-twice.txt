@@ -1,0 +1,12 @@
+Mutant D21-filed-twice: a fault after the draft was filed files a second, contradicting record
+
+--- server/services/ana/turn-record-draft.ts
+- if (this.filed) return { status: 'not_recorded', reason: 'This turn was already filed.' };
++ 
+
+Tests run: server/services/ana/__tests__/turn-record-draft.pglite.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-draft.pglite.test.ts > the draft door’s turn > is filed once: a fault after the draft was filed files no second record 93ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

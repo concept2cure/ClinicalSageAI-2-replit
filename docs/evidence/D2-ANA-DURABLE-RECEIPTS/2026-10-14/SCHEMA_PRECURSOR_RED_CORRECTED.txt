@@ -1,0 +1,883 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > replays around populated history without changing the row, acceptance time or indexes 10ms
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct UPDATE, retaining accepted history 7ms
+   → promise resolved "[ { rows: [], fields: [], …(1) } ]" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct DELETE, retaining accepted history 2ms
+   → promise resolved "[ { rows: [], fields: [], …(1) } ]" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct TRUNCATE, retaining accepted history 4ms
+   → promise resolved "[ { rows: [], fields: [], …(1) } ]" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"organization_id":0} 1ms
+   → promise resolved "'130943b5-5bea-4668-ba39-d287b94a3221'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"actor_user_id":0} 1ms
+   → promise resolved "'1ae6c4cc-d43e-4bd4-a71c-adc36bffcc72'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"receipt_version":1} 1ms
+   → promise resolved "'ed1e02af-92bc-46ff-b89e-cda14a598af2'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"checkpoint":"provider_served"} 1ms
+   → promise resolved "'7d73b232-7f97-4c2c-acf7-bbf365993ed5'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"original_sha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"} 1ms
+   → promise resolved "'4f47e821-bc05-4072-90b6-11363ba282a3'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"extraction_sha256":"broken"} 1ms
+   → promise resolved "'0d998026-2e18-45c6-9843-a4ff3ff0f64e'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"payload_sha256":"b"} 1ms
+   → promise resolved "'19fa0948-8ea3-45fd-a6bc-cc79f074e333'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"total_chars":0} 1ms
+   → promise resolved "'816736fc-adf7-4aaf-a96d-a5c101244ab0'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":" Viewer "} 1ms
+   → promise resolved "'91eb8866-57aa-4c2e-81bb-ea98c4c9927f'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":"\u0001viewer"} 1ms
+   → promise resolved "'755969c0-a1db-4828-b830-2afa982bcaa2'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"tool_use_id":""} 1ms
+   → promise resolved "'e8e9d3a6-fcf2-480c-bf70-7dd2d5f5d4e4'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"  "} 1ms
+   → promise resolved "'e6ea0dc1-6002-4973-b7a0-b18211112372'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"\u0001private"} 1ms
+   → promise resolved "'9ee8b8c7-20bd-4170-b650-43cfb84e4b40'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":"viewer"} 1ms
+   → promise resolved "'603fb690-3134-43c0-83f9-018417a49d96'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"tool_use_id":"tool"} 1ms
+   → promise resolved "'f9ed8d5d-80b4-4a27-a2ea-6dadaf2899a8'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"private"} 1ms
+   → promise resolved "'60fa008b-1fd0-49fb-b571-6df9fdee43a8'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [] 1ms
+   → promise resolved "'a3912c30-7e61-42bd-aa56-88f011ff695f'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 1, …(1) }, …(8) ] 1ms
+   → promise resolved "'aa727cb6-b099-4dd4-b038-3695a05ba242'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: +0, …(1) } ] 1ms
+   → promise resolved "'8630ed12-f4f4-4dbe-862d-1f75aeb27bec'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: -1, end: 1, …(1) } ] 1ms
+   → promise resolved "'ea8474ac-bb30-4156-bcc5-d69241a77929'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: 0.5, end: 1, …(1) } ] 1ms
+   → promise resolved "'4656e109-add7-4a18-a977-daea0f85bfa4'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 21, …(1) } ] 1ms
+   → promise resolved "'22844b7b-6bb9-439f-a410-bbe7b5bf1a89'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: '0', end: 1, …(1) } ] 2ms
+   → promise resolved "'906dd7d6-b8db-4fc6-8399-76c662e82c2c'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 1, …(1) } ] 5ms
+   → promise resolved "'80d8c251-3317-4e5c-b2ee-6947e431f9ef'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 1, …(2) } ] 1ms
+   → promise resolved "'bd9958ef-a49e-4024-b4d2-e8ad1d5d5acd'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: 5, end: 10, …(1) }, …(1) ] 1ms
+   → promise resolved "'f8e0d1be-32cc-47af-90c8-adebecf44fd4'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 10, …(1) }, …(1) ] 1ms
+   → promise resolved "'20866153-cd1e-454a-8b99-cffcfda9f0e0'" instead of rejecting
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > accepts exact bounded adjacent/disjoint ranges and Unicode code-point context limits 3ms
+   → promise resolved "'c2e26dff-d94b-4a7f-aa0d-326f70c489d5'" instead of rejecting
+ ✓ tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > has no historical source/user/program foreign-key or automatic erasure cascade 1ms
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > installs explicit FORCE tenant RLS without a private-project claim 3ms
+   → expected [ { relrowsecurity: false, …(1) } ] to deeply equal [ { relrowsecurity: true, …(1) } ]
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > permits a viewer-scope observation INSERT while refusing a foreign tenant row 4ms
+   → promise rejected "error: permission denied for table ana_so… { …(18) }" instead of resolving
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > does not expose another tenant history through runtime SELECT 2ms
+   → permission denied for table ana_source_read_receipts
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses runtime mutation even when the synthetic fixture grants those DML privileges 4ms
+   → expected [Function] to throw error matching /IMMUTABILITY_VIOLATION/ but got 'permission denied for table ana_sourc…'
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > keeps the erasure door non-public and the runtime outside its NOLOGIN owner role 1ms
+   → function "public.purge_tenant_source_read_receipts(integer)" does not exist
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses non-platform, invalid target and active-state erasure without deleting history 4ms
+   → expected [Function] to throw error matching /SOURCE_READ_RECEIPT_PURGE_REFUSED/ but got 'function public.purge_tenant_source_r…'
+ × tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses active or unavailable legal holds, then returns the exact authorized erasure count 3ms
+   → expected [Function] to throw error matching /active legal hold/ but got 'function public.purge_tenant_source_r…'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 38 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct UPDATE, retaining accepted history
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct DELETE, retaining accepted history
+AssertionError: promise resolved "[ { rows: [], fields: [], …(1) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "affectedRows": 1,
+    "fields": [],
+    "rows": [],
+  },
+]
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:60:30
+     58|       : op === 'DELETE' ? `DELETE FROM public.ana_source_read_receipts…
+     59|       : 'TRUNCATE public.ana_source_read_receipts';
+     60|     await expect(pg.exec(sql)).rejects.toThrow(/IMMUTABILITY_VIOLATION…
+       |                              ^
+     61|     expect((await pg.query('SELECT id FROM public.ana_source_read_rece…
+     62|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > refuses direct TRUNCATE, retaining accepted history
+AssertionError: promise resolved "[ { rows: [], fields: [], …(1) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "affectedRows": 0,
+    "fields": [],
+    "rows": [],
+  },
+]
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:60:30
+     58|       : op === 'DELETE' ? `DELETE FROM public.ana_source_read_receipts…
+     59|       : 'TRUNCATE public.ana_source_read_receipts';
+     60|     await expect(pg.exec(sql)).rejects.toThrow(/IMMUTABILITY_VIOLATION…
+       |                              ^
+     61|     expect((await pg.query('SELECT id FROM public.ana_source_read_rece…
+     62|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"organization_id":0}
+AssertionError: promise resolved "'130943b5-5bea-4668-ba39-d287b94a3221'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"130943b5-5bea-4668-ba39-d287b94a3221"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"actor_user_id":0}
+AssertionError: promise resolved "'1ae6c4cc-d43e-4bd4-a71c-adc36bffcc72'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"1ae6c4cc-d43e-4bd4-a71c-adc36bffcc72"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"receipt_version":1}
+AssertionError: promise resolved "'ed1e02af-92bc-46ff-b89e-cda14a598af2'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"ed1e02af-92bc-46ff-b89e-cda14a598af2"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"checkpoint":"provider_served"}
+AssertionError: promise resolved "'7d73b232-7f97-4c2c-acf7-bbf365993ed5'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"7d73b232-7f97-4c2c-acf7-bbf365993ed5"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"original_sha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}
+AssertionError: promise resolved "'4f47e821-bc05-4072-90b6-11363ba282a3'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"4f47e821-bc05-4072-90b6-11363ba282a3"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"extraction_sha256":"broken"}
+AssertionError: promise resolved "'0d998026-2e18-45c6-9843-a4ff3ff0f64e'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"0d998026-2e18-45c6-9843-a4ff3ff0f64e"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"payload_sha256":"b"}
+AssertionError: promise resolved "'19fa0948-8ea3-45fd-a6bc-cc79f074e333'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"19fa0948-8ea3-45fd-a6bc-cc79f074e333"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"total_chars":0}
+AssertionError: promise resolved "'816736fc-adf7-4aaf-a96d-a5c101244ab0'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"816736fc-adf7-4aaf-a96d-a5c101244ab0"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":" Viewer "}
+AssertionError: promise resolved "'91eb8866-57aa-4c2e-81bb-ea98c4c9927f'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"91eb8866-57aa-4c2e-81bb-ea98c4c9927f"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":"\u0001viewer"}
+AssertionError: promise resolved "'755969c0-a1db-4828-b830-2afa982bcaa2'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"755969c0-a1db-4828-b830-2afa982bcaa2"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"tool_use_id":""}
+AssertionError: promise resolved "'e8e9d3a6-fcf2-480c-bf70-7dd2d5f5d4e4'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"e8e9d3a6-fcf2-480c-bf70-7dd2d5f5d4e4"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"  "}
+AssertionError: promise resolved "'e6ea0dc1-6002-4973-b7a0-b18211112372'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"e6ea0dc1-6002-4973-b7a0-b18211112372"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"\u0001private"}
+AssertionError: promise resolved "'9ee8b8c7-20bd-4170-b650-43cfb84e4b40'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"9ee8b8c7-20bd-4170-b650-43cfb84e4b40"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"admitted_role":"viewer"}
+AssertionError: promise resolved "'603fb690-3134-43c0-83f9-018417a49d96'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"603fb690-3134-43c0-83f9-018417a49d96"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"tool_use_id":"tool"}
+AssertionError: promise resolved "'f9ed8d5d-80b4-4a27-a2ea-6dadaf2899a8'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"f9ed8d5d-80b4-4a27-a2ea-6dadaf2899a8"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects invalid identity/checkpoint/text shape {"thread_id":"private"}
+AssertionError: promise resolved "'60fa008b-1fd0-49fb-b571-6df9fdee43a8'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"60fa008b-1fd0-49fb-b571-6df9fdee43a8"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:70:32
+     68|     { admitted_role: 'viewer\u0085' }, { tool_use_id: 'tool\u009f' }, …
+     69|   ])('rejects invalid identity/checkpoint/text shape %j', async fields…
+     70|     await expect(insert(fields)).rejects.toThrow();
+       |                                ^
+     71|   });
+     72|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list []
+AssertionError: promise resolved "'a3912c30-7e61-42bd-aa56-88f011ff695f'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"a3912c30-7e61-42bd-aa56-88f011ff695f"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 1, …(1) }, …(8) ]
+AssertionError: promise resolved "'aa727cb6-b099-4dd4-b038-3695a05ba242'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"aa727cb6-b099-4dd4-b038-3695a05ba242"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: +0, …(1) } ]
+AssertionError: promise resolved "'8630ed12-f4f4-4dbe-862d-1f75aeb27bec'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"8630ed12-f4f4-4dbe-862d-1f75aeb27bec"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: -1, end: 1, …(1) } ]
+AssertionError: promise resolved "'ea8474ac-bb30-4156-bcc5-d69241a77929'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"ea8474ac-bb30-4156-bcc5-d69241a77929"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: 0.5, end: 1, …(1) } ]
+AssertionError: promise resolved "'4656e109-add7-4a18-a977-daea0f85bfa4'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"4656e109-add7-4a18-a977-daea0f85bfa4"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 21, …(1) } ]
+AssertionError: promise resolved "'22844b7b-6bb9-439f-a410-bbe7b5bf1a89'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"22844b7b-6bb9-439f-a410-bbe7b5bf1a89"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: '0', end: 1, …(1) } ]
+AssertionError: promise resolved "'906dd7d6-b8db-4fc6-8399-76c662e82c2c'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"906dd7d6-b8db-4fc6-8399-76c662e82c2c"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 1, …(1) } ]
+AssertionError: promise resolved "'80d8c251-3317-4e5c-b2ee-6947e431f9ef'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"80d8c251-3317-4e5c-b2ee-6947e431f9ef"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 1, …(2) } ]
+AssertionError: promise resolved "'bd9958ef-a49e-4024-b4d2-e8ad1d5d5acd'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"bd9958ef-a49e-4024-b4d2-e8ad1d5d5acd"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: 5, end: 10, …(1) }, …(1) ]
+AssertionError: promise resolved "'f8e0d1be-32cc-47af-90c8-adebecf44fd4'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"f8e0d1be-32cc-47af-90c8-adebecf44fd4"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > rejects malformed/overlapping immutable range list [ { start: +0, end: 10, …(1) }, …(1) ]
+AssertionError: promise resolved "'20866153-cd1e-454a-8b99-cffcfda9f0e0'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"20866153-cd1e-454a-8b99-cffcfda9f0e0"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:81:60
+     79|     [{ start: 0, end: 10, sha256: hash }, { start: 9, end: 12, sha256:…
+     80|   ].map(ranges => ({ ranges })))('rejects malformed/overlapping immuta…
+     81|     await expect(insert({ ranges: JSON.stringify(ranges) })).rejects.t…
+       |                                                            ^
+     82|   });
+     83|   it('accepts exact bounded adjacent/disjoint ranges and Unicode code-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > accepts exact bounded adjacent/disjoint ranges and Unicode code-point context limits
+AssertionError: promise resolved "'c2e26dff-d94b-4a7f-aa0d-326f70c489d5'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"c2e26dff-d94b-4a7f-aa0d-326f70c489d5"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:88:58
+     86|       thread_id: '😀'.repeat(2000), tool_use_id: null });
+     87|     expect((await pg.query('SELECT id FROM public.ana_source_read_rece…
+     88|     await expect(insert({ thread_id: '😀'.repeat(2001) })).rejects.toT…
+       |                                                          ^
+     89|   });
+     90|   it('has no historical source/user/program foreign-key or automatic e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > durable source receipt schema protects exact immutable metadata > installs explicit FORCE tenant RLS without a private-project claim
+AssertionError: expected [ { relrowsecurity: false, …(1) } ] to deeply equal [ { relrowsecurity: true, …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "relforcerowsecurity": true,
+-     "relrowsecurity": true,
++     "relforcerowsecurity": false,
++     "relrowsecurity": false,
+    },
+  ]
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:96:18
+     94|   it('installs explicit FORCE tenant RLS without a private-project cla…
+     95|     const rows = (await pg.query(`SELECT relrowsecurity,relforcerowsec…
+     96|     expect(rows).toEqual([{ relrowsecurity: true, relforcerowsecurity:…
+       |                  ^
+     97|   });
+     98| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > permits a viewer-scope observation INSERT while refusing a foreign tenant row
+AssertionError: promise rejected "error: permission denied for table ana_so… { …(18) }" instead of resolving
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:103:28
+    101|   it('permits a viewer-scope observation INSERT while refusing a forei…
+    102|     await asRuntime('viewer', async () => {
+    103|       await expect(insert()).resolves.toBeTypeOf('string');
+       |                            ^
+    104|       await expect(insert({ organization_id: 8 })).rejects.toThrow(/ro…
+    105|     });
+ ❯ asRuntime tests/schema-contract/ana-source-read-receipts.contract.test.ts:42:18
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:102:5
+
+Caused by: error: permission denied for table ana_source_read_receipts
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42501', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'aclchk.c', routine: 'aclcheck_error', query: 'INSERT INTO public.ana_source_read_receipts\n    (id,organization_id,receipt_version,checkpoint,actor_user_id,admitted_role,program_id,document_id,\n     original_sha256,extraction_sha256,total_chars,ranges,payload_sha256,tool_use_id,thread_id,receipt_sha256)\n    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16)', params: [ '56f36ede-6d32-4f10-8cb3-24db550022c8', 7, 2, 'host_budget_admitted', 11, 'viewer', '10000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 20, '[{"start":0,"end":10,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'tool-1', 'thread-1', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > does not expose another tenant history through runtime SELECT
+error: permission denied for table ana_source_read_receipts
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 112, severity: 'ERROR', code: '42501', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'aclchk.c', routine: 'aclcheck_error', query: 'SELECT id FROM public.ana_source_read_receipts WHERE id=$1', params: [ '885d30cf-7c2e-4959-9850-396fa765e559' ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses runtime mutation even when the synthetic fixture grants those DML privileges
+AssertionError: expected [Function] to throw error matching /IMMUTABILITY_VIOLATION/ but got 'permission denied for table ana_sourc…'
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"permission denied for table ana_source_read_receipts"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:118:109
+    116|     try {
+    117|       await asRuntime('viewer', async () => {
+    118|         await expect(pg.query('UPDATE public.ana_source_read_receipts …
+       |                                                                                                             ^
+    119|         await expect(pg.query('DELETE FROM public.ana_source_read_rece…
+    120|         await expect(pg.exec('TRUNCATE public.ana_source_read_receipts…
+ ❯ asRuntime tests/schema-contract/ana-source-read-receipts.contract.test.ts:42:18
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:117:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > keeps the erasure door non-public and the runtime outside its NOLOGIN owner role
+error: function "public.purge_tenant_source_read_receipts(integer)" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 135, severity: 'ERROR', code: '42883', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'regproc.c', routine: 'regprocedurein', query: 'SELECT has_function_privilege(\'public\',\'public.purge_tenant_source_read_receipts(integer)\',\'EXECUTE\') AS public_exec,\n      has_function_privilege(\'app_service\',\'public.purge_tenant_source_read_receipts(integer)\',\'EXECUTE\') AS runtime_exec,\n      pg_has_role(\'app_service\',\'ana_record_purger\',\'MEMBER\') AS runtime_member', params: [], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses non-platform, invalid target and active-state erasure without deleting history
+AssertionError: expected [Function] to throw error matching /SOURCE_READ_RECEIPT_PURGE_REFUSED/ but got 'function public.purge_tenant_source_r…'
+
+- Expected:
+/SOURCE_READ_RECEIPT_PURGE_REFUSED/
+
++ Received:
+"function public.purge_tenant_source_read_receipts(integer) does not exist"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:135:89
+    133|     const id = await insert();
+    134|     await asRuntime('viewer', async () => {
+    135|       await expect(pg.query('SELECT * FROM public.purge_tenant_source_…
+       |                                                                                         ^
+    136|     });
+    137|     await asRuntime('app_super_admin', async () => {
+ ❯ asRuntime tests/schema-contract/ana-source-read-receipts.contract.test.ts:42:18
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:134:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/38]⎯
+
+ FAIL  tests/schema-contract/ana-source-read-receipts.contract.test.ts > forced tenant/runtime and narrow source receipt erasure controls > refuses active or unavailable legal holds, then returns the exact authorized erasure count
+AssertionError: expected [Function] to throw error matching /active legal hold/ but got 'function public.purge_tenant_source_r…'
+
+- Expected:
+/active legal hold/
+
++ Received:
+"function public.purge_tenant_source_read_receipts(integer) does not exist"
+
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:147:89
+    145|     await pg.exec('INSERT INTO vault.legal_holds VALUES (1,8,NULL)');
+    146|     await asRuntime('app_super_admin', async () => {
+    147|       await expect(pg.query('SELECT * FROM public.purge_tenant_source_…
+       |                                                                                         ^
+    148|     });
+    149|     await pg.exec('UPDATE vault.legal_holds SET lifted_at=now() WHERE …
+ ❯ asRuntime tests/schema-contract/ana-source-read-receipts.contract.test.ts:42:18
+ ❯ tests/schema-contract/ana-source-read-receipts.contract.test.ts:146:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/38]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  38 failed | 2 passed (40)
+   Start at  20:47:17
+   Duration  3.86s (transform 109ms, setup 110ms, import 71ms, tests 3.11s, environment 0ms)
+

@@ -1,0 +1,12 @@
+Mutant D19-call-fault-unfiled: a fault of ours in the model call leaves the opened record unfiled
+
+--- server/routes/authoring.router.ts
+- await fileFailedDraftTurn(draftTurn, 'The model call failed on the server.');
++ 
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence 18ms
+      Tests  1 failed | 10 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

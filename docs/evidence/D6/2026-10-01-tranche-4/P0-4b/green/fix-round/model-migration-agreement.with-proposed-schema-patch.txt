@@ -1,0 +1,21 @@
+# Fix round 2: npm run ci:model-migration-agreement (node scripts/ci/check-model-migration-agreement.mjs) in a scratch copy of scripts/ci, shared, migrations and db/migrations. 2026-10-01T15:42:45Z
+## before proposed/shared-schema-sessions-ended-at.patch (exit 0)
+[ci:model-migration] Drizzle models vs migration lineage
+  models parsed              : 702
+  tables CREATEd by both     : 394
+  divergent tables           : 12
+  baselined (known, unfixed) : 28
+
+✅ no new divergence. 28 baselined and awaiting burn-down.
+
+## after the patch (exit 0)
+[ci:model-migration] Drizzle models vs migration lineage
+  models parsed              : 702
+  tables CREATEd by both     : 394
+  divergent tables           : 12
+  baselined (known, unfixed) : 28
+
+✅ no new divergence. 28 baselined and awaiting burn-down.
+
+## diff of the two outputs
+(identical)

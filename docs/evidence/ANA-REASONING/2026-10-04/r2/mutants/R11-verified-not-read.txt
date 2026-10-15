@@ -1,0 +1,14 @@
+Mutant R11-verified-not-read: a result that verified what it returns (generate_citation) confirms nothing
+
+--- server/services/ana/answer-check-sources.ts
+- if (!top || declaresVerified(v)) {
++ if (!top) {
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation the tool verified against a source is found 8ms
+ × tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a verified citation confirms the identifier it matched, not what the model packed beside it 9ms
+ × tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > a labelled PMID the tool verified is found 2ms
+      Tests  3 failed | 86 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

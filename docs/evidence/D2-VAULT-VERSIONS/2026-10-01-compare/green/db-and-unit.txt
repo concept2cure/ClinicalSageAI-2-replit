@@ -1,0 +1,12 @@
+# this change: tests/db/vault-version-compare.dbtest.ts + server/services/vault/__tests__/vault-version-compare.test.ts
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > names both sides and returns the changed lines and details, unchanged runs collapsed 41ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > the earlier version is always the one compared from 13ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > refuses a version of another document, and another organisation's document reads as not found 16ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > a version with no extracted text gets no text comparison, and the answer says which 18ms
+      Tests  4 passed (4)
+ ✓ server/services/vault/__tests__/vault-version-compare.test.ts > compareText > keeps a few unchanged lines either side of a change and counts the rest 3ms
+ ✓ server/services/vault/__tests__/vault-version-compare.test.ts > compareText > identical text is identical, with nothing but a collapsed run 1ms
+ ✓ server/services/vault/__tests__/vault-version-compare.test.ts > compareText > says which version has no text, rather than comparing an empty one 1ms
+ ✓ server/services/vault/__tests__/vault-version-compare.test.ts > compareText > two texts too different to align are reported as such, not as a diff 298ms
+ ✓ server/services/vault/__tests__/vault-version-compare.test.ts > compareText > a capped read or a capped output is marked truncated 78ms
+      Tests  5 passed (5)

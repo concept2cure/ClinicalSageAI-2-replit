@@ -12,12 +12,11 @@
  * unit-testable with a fake clock and fake generators — no Redis, no DB. The
  * `sweepDueSubscriptions` orchestrator wires the real subscription service +
  * an injected `generateAndDeliver`, and `registerSubscriptionSweep` mounts it
- * on the existing Bull scheduler (graceful Redis-absent no-op, exactly like
- * automation/scheduled-jobs.ts).
+ * on a PostgreSQL-coordinated timer, including Redis-free deployments.
  */
 
 import { createScopedLogger } from '../../../utils/logger';
-import { isEntitled } from '../../entitlements/mdx-entitlements';
+import { scheduledReportsVerdict } from './entitlement';
 import type { Tier } from '../../entitlements/types';
 import { listDueSubscriptions, markRun } from './subscription-service';
 import { runWithSystemTenantScope, runWithTenantScope } from '../../../db/tenantStore';
@@ -73,7 +72,7 @@ export async function planSweep(deps: SweepDeps): Promise<SweepSummary> {
     };
     try {
       const tier = await deps.resolveTier(sub.organizationId);
-      if (!isEntitled('scheduled_reports', tier)) {
+      if (!scheduledReportsVerdict(tier).entitled) {
         const reason = `Org tier '${tier}' is not entitled to scheduled reports.`;
         if (deps.onSkip) await deps.onSkip(sub, reason).catch(() => undefined);
         items.push({ ...base, disposition: 'skipped_entitlement', reason });
@@ -115,6 +114,7 @@ export async function sweepDueSubscriptions(
   now: Date,
   generateAndDeliver: (sub: ReportSubscriptionRow) => Promise<void>,
   resolveTier: (organizationId: number) => Promise<Tier>,
+  options: { cursorCommittedByGenerator?: boolean } = {},
 ): Promise<SweepSummary> {
   const due = await runWithSystemTenantScope('report-sweep:scan', () =>
     listDueSubscriptions(now),
@@ -137,6 +137,7 @@ export async function sweepDueSubscriptions(
     generateAndDeliver: (sub) =>
       inOrgScope(sub.organizationId, 'report-sweep:generate-deliver', () => generateAndDeliver(sub)),
     onRan: async (sub) => {
+      if (options.cursorCommittedByGenerator) return;
       await inOrgScope(sub.organizationId, 'report-sweep:mark-run', () =>
         markRun(sub.id, sub.organizationId, now),
       );

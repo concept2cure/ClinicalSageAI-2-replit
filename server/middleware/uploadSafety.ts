@@ -57,7 +57,7 @@
  */
 
 import { promises as fs } from 'node:fs';
-import { verifyDeclaredTypeForName, verifyFileSignature } from '../utils/fileSignature';
+import { verifyDeclaredTypeForName, verifyFileSignature, signatureTypeFor } from '../utils/fileSignature';
 import { scanBuffer } from '../utils/virusScan';
 import { createScopedLogger } from '../utils/logger';
 
@@ -68,6 +68,7 @@ export type UploadSafetyCode =
   | 'FILE_SIGNATURE_MISMATCH'
   | 'FILE_TYPE_MISMATCH'
   | 'FILE_SCAN_REJECTED'
+  | 'FILE_SCAN_INCOMPLETE'
   | 'FILE_SCAN_UNAVAILABLE';
 
 /**
@@ -145,7 +146,8 @@ export async function assertUploadSafe(
   }
 
   // 1) Magic-byte signature check.
-  const sig = verifyFileSignature(buffer, declaredMime);
+  // Against the type the name binds, when the declared type is one it admits.
+  const sig = verifyFileSignature(buffer, signatureTypeFor(filename, declaredMime));
   if (!sig.ok) {
     logger.warn('Upload rejected by signature check', {
       filename,
@@ -186,6 +188,22 @@ export async function assertUploadSafe(
     return;
   }
   const scan = await scanBuffer(buffer);
+
+  if (scan.incomplete) {
+    // Over the scanner's size or nesting limits (virusScan.ts): it read part of
+    // the file or none. Refused as that. Neither a virus nor an outage, so it
+    // is told as neither; the remedy is a smaller or flatter file.
+    logger.warn('Upload rejected: the scanner could not read the whole file', {
+      filename,
+      declaredMime,
+      limit: scan.signature,
+    });
+    throw new UploadSafetyError(
+      422,
+      'FILE_SCAN_INCOMPLETE',
+      'This file could not be scanned completely: it is too large, or it nests too many files inside it. Nothing was uploaded. Split it into smaller files and upload those.'
+    );
+  }
 
   if (!scan.clean) {
     // Real hit. Do NOT echo the signature name to the client.

@@ -31,9 +31,19 @@
  * before anything is written, and the status, the signature and the ledger pair
  * on one transaction. authoring-actions approve-artifact / lock-artifact do not
  * sign yet (handed on in docs/work-orders/README.md).
+ * 2026-10-01 (D5): authoring-actions approve-artifact / lock-artifact were
+ * removed (unsigned, no caller); the two governed acts are the status route
+ * and AnA's update_artifact_status, signed.
+ * 2026-10-01 (D5): the status route's role table, its transitions and the
+ * checks before a signed act (a lock covers the approval, no blocking
+ * contradiction, the review quorum) are here again, unchanged, because they
+ * have two users once more: the status route, and AnA's update_artifact_status
+ * approving or locking, which is now the same electronic signature committed
+ * through the same act (server/services/artifact-signed-act.ts).
  */
 
 import type { GovernedSignMeaning } from './part11/signature-meanings';
+import { artifactApproval } from './ectd/package-content-fingerprint';
 
 /**
  * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
@@ -53,9 +63,11 @@ export type ReviewQuorumVerdict = { met: true } | { met: false; message: string 
 
 /**
  * P12 review quorum: when reviewers are assigned, every active reviewer of the
- * latest round must have completed and every decision in that round must be
- * 'approve'. Withdrawn assignments are excluded; a round whose assignments were
- * all withdrawn, or no assignments at all, has no quorum to enforce.
+ * latest round must have completed and have exactly one decision attributed
+ * to that assignment's reviewer, approving the current version. Withdrawn
+ * assignments and their decisions are excluded; a round whose assignments were
+ * all withdrawn, or no assignments at all, has no quorum to enforce. This
+ * policy is not scientific source qualification or evidence of source review.
  *
  * `artifactPk` is concept2cure_artifacts.id (the serial key the review tables
  * reference), not artifact_id. A read error propagates: the caller must not
@@ -75,17 +87,26 @@ export async function reviewQuorumVerdict(
   organizationId: number,
   currentVersion: number
 ): Promise<ReviewQuorumVerdict> {
+  // Invalid scope/version must not become an empty query and a clearance.
+  const validId = (value: number) => Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+  if (![artifactPk, organizationId, currentVersion].every(validId)) {
+    return { met: false, message: 'Cannot approve: a valid artifact, organization and current version are required.' };
+  }
+
   const assignments = (
     await q.query(
-      `SELECT review_round, status FROM concept2cure_review_assignments
+      `SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments
        WHERE artifact_id = $1 AND organization_id = $2
        ORDER BY review_round DESC`,
       [artifactPk, organizationId]
     )
-  ).rows as Array<{ review_round: number; status: string }>;
+  ).rows as Array<{ id: number; reviewer_id: number; review_round: number; status: string }>;
   if (assignments.length === 0) return { met: true };
 
   const latestRound = Number(assignments[0].review_round);
+  if (!validId(latestRound)) {
+    return { met: false, message: 'Cannot approve: the latest review round is invalid. Route this document for review again.' };
+  }
   const active = assignments.filter(
     a => Number(a.review_round) === latestRound && a.status !== 'withdrawn'
   );
@@ -99,13 +120,20 @@ export async function reviewQuorumVerdict(
     };
   }
 
-  const decisions = (
+  const recordedDecisions = (
     await q.query(
-      `SELECT decision, version_reviewed FROM concept2cure_review_decisions
+      `SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions
        WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3`,
       [artifactPk, latestRound, organizationId]
     )
-  ).rows as Array<{ decision: string; version_reviewed: number | string | null }>;
+  ).rows as Array<{ assignment_id: number; reviewer_id: number; decision: string; version_reviewed: number | string | null }>;
+  // A withdrawn reviewer cannot veto the remaining reviewers, and their old
+  // approval cannot fill a missing active decision. Unknown assignments remain
+  // in the set below so corrupt/orphaned approvals fail rather than disappear.
+  const withdrawn = new Set(assignments
+    .filter(a => Number(a.review_round) === latestRound && a.status === 'withdrawn')
+    .map(a => Number(a.id)));
+  const decisions = recordedDecisions.filter(d => !withdrawn.has(Number(d.assignment_id)));
   const nonApprovals = decisions.filter(d => d.decision !== 'approve');
   if (nonApprovals.length > 0) {
     return {
@@ -115,6 +143,28 @@ export async function reviewQuorumVerdict(
         .join(', ')})`,
     };
   }
+  const incomplete: ReviewQuorumVerdict = {
+    met: false,
+    message: 'Cannot approve: each active reviewer must have exactly one recorded decision. Route this document for review again.',
+  };
+  const mismatched: ReviewQuorumVerdict = {
+    met: false,
+    message: 'Cannot approve: review decisions do not match their assigned reviewers. Route this document for review again.',
+  };
+  const byAssignment = new Map(active.map(a => [Number(a.id), a]));
+  if (byAssignment.size !== active.length || active.some(a => !validId(Number(a.id)) || !validId(Number(a.reviewer_id)))) {
+    return mismatched;
+  }
+  const decidedAssignments = new Set<number>();
+  for (const decision of decisions) {
+    const assignmentId = Number(decision.assignment_id);
+    const assignment = byAssignment.get(assignmentId);
+    if (!assignment || Number(decision.reviewer_id) !== Number(assignment.reviewer_id)) return mismatched;
+    if (decidedAssignments.has(assignmentId)) return incomplete;
+    decidedAssignments.add(assignmentId);
+  }
+  if (decidedAssignments.size !== active.length) return incomplete;
+
   const stale = decisions.filter(d => Number(d.version_reviewed) !== Number(currentVersion));
   if (stale.length > 0) {
     const seen = [...new Set(stale.map(d => String(d.version_reviewed)))].join(', ');
@@ -128,12 +178,12 @@ export async function reviewQuorumVerdict(
 
 /** The governed approval act — the only writer of approved_version_id. */
 export const GOVERNED_APPROVE_ACTION =
-  "the review workflow's Approve action (the status route's review → approved, an electronic signature with the " +
-  "meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact)";
+  "the review workflow's Approve action (review → approved, an electronic signature with the meaning 'approval' " +
+  "that re-authenticates the signer and applies the review quorum: the status route, or AnA's update_artifact_status, signed)";
 /** The governed lock act — the only writer of published_version_id on a lock. */
 export const GOVERNED_LOCK_ACTION =
-  "the review workflow's Lock action (the status route's approved → locked, an electronic signature with the " +
-  "meaning 'release', or authoring-actions lock-artifact)";
+  "the review workflow's Lock action (approved → locked, an electronic signature with the meaning 'release': " +
+  "the status route, or AnA's update_artifact_status, signed)";
 
 /**
  * The remedy an approved-but-not-filable artifact needs, told by a surface
@@ -149,16 +199,189 @@ export function approvalRecordedOnlyByGovernedAct(surface: 'command' | 'action')
   );
 }
 
+// ── The status route's rules for a status change, shared with AnA's signed acts ──
+
 /**
- * The remedy for an artifact a surface that records no locked version has
- * locked. The governed lock act needs status 'approved', and the only way out
- * of 'locked' is locked → draft, which clears both versions. 2026-09-23
- * (W5/D7, final pass, repair).
+ * Who may make which status change (the status route's role table, by the
+ * organisation membership role). A role not listed is a `user`.
+ *   author / user : draft → review only
+ *   reviewer      : review → approved, review → draft, approved → review
+ *   approver / admin : every change, including approved → locked
  */
-export function lockRecordedOnlyByGovernedAct(surface: 'command' | 'action'): string {
-  return (
-    `A locked version is recorded only by ${GOVERNED_LOCK_ACTION}; this ${surface} records none, ` +
-    'so repeating it will not make the artifact filable. To file it, unlock it (locked → draft), return it to ' +
-    `review, approve it through ${GOVERNED_APPROVE_ACTION}, and lock it through that Lock action.`
-  );
+export const ARTIFACT_STATUS_ROLE_PERMISSIONS: Readonly<Record<string, readonly string[]>> = {
+  admin: ['draft→review', 'review→approved', 'review→draft', 'approved→locked', 'approved→review', 'locked→draft'],
+  approver: ['draft→review', 'review→approved', 'review→draft', 'approved→locked', 'approved→review', 'locked→draft'],
+  reviewer: ['draft→review', 'review→approved', 'review→draft', 'approved→review'],
+  author: ['draft→review'],
+  user: ['draft→review'],
+  viewer: [],
+};
+
+/** The status changes there are at all, whoever makes them. */
+export const ARTIFACT_STATUS_TRANSITIONS: Readonly<Record<string, readonly string[]>> = {
+  draft: ['review'],
+  review: ['approved', 'draft'],
+  approved: ['locked', 'review'],
+  locked: ['draft'],
+};
+
+/** A refusal, in the status route's own words and HTTP status. */
+export interface ArtifactActRefusal {
+  httpStatus: number;
+  message: string;
+  code?: string;
+  details?: Record<string, unknown>;
 }
+
+/** The transitions a role may make (unknown roles are a `user`). */
+export function allowedArtifactTransitions(userRole: string): readonly string[] {
+  return ARTIFACT_STATUS_ROLE_PERMISSIONS[userRole] || ARTIFACT_STATUS_ROLE_PERMISSIONS['user'];
+}
+
+/** The role, then the transition: the status route's first two refusals. */
+export function refuseArtifactTransition(
+  previousStatus: string,
+  status: string,
+  userRole: string,
+): ArtifactActRefusal | null {
+  const transitionKey = `${previousStatus}→${status}`;
+  const allowedTransitions = allowedArtifactTransitions(userRole);
+  if (!allowedTransitions.includes(transitionKey)) {
+    return {
+      httpStatus: 403,
+      message:
+        `Role "${userRole}" is not permitted to perform transition: ${transitionKey}. ` +
+        `Allowed transitions for your role: ${allowedTransitions.join(', ') || 'none'}`,
+    };
+  }
+  const allowed = ARTIFACT_STATUS_TRANSITIONS[previousStatus] || [];
+  if (!allowed.includes(status)) {
+    return { httpStatus: 400, message: `Invalid transition: ${previousStatus} → ${status}. Allowed: ${allowed.join(', ')}` };
+  }
+  return null;
+}
+
+/** The artifact as these checks read it. */
+export interface ArtifactActSubject {
+  id: number;
+  version: number;
+  approvedVersionId: number | null;
+  publishedVersionId: number | null;
+}
+
+/**
+ * What a signed act needs before anyone is asked to sign it, in the status
+ * route's order: a lock covers the approval (the filing rule's verdict,
+ * imported); no unresolved contradiction blocks promotion; an approval meets
+ * the review quorum. A quorum that cannot be read throws: an unread quorum is
+ * not met, and the caller answers it as its own failure.
+ */
+export async function refuseSignedArtifactAct(input: {
+  q: ApprovalActQueryable;
+  organizationId: number;
+  projectId: number;
+  artifact: ArtifactActSubject;
+  previousStatus: string;
+  status: 'approved' | 'locked';
+}): Promise<ArtifactActRefusal | null> {
+  const { artifact, previousStatus, status, organizationId, projectId } = input;
+  if (previousStatus === 'approved' && status === 'locked') {
+    const approval = artifactApproval({
+      status: previousStatus,
+      version: artifact.version,
+      approvedVersionId: artifact.approvedVersionId,
+      publishedVersionId: artifact.publishedVersionId,
+    });
+    if (!approval.filable) {
+      return {
+        httpStatus: 409,
+        message: `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
+        details: { reason: approval.reason },
+        code: 'LOCK_NOT_COVERED_BY_APPROVAL',
+      };
+    }
+  }
+
+  const contradictions = await blockingContradictions(organizationId, projectId, artifact.id);
+  if (contradictions) return contradictions;
+
+  if (previousStatus === 'review' && status === 'approved') {
+    const quorum = await reviewQuorumVerdict(input.q, artifact.id, organizationId, artifact.version);
+    if (!quorum.met) return { httpStatus: 400, message: quorum.message };
+  }
+  return null;
+}
+
+/** Promotion is blocked by an unresolved contradiction finding with that authority. */
+async function blockingContradictions(
+  organizationId: number,
+  projectId: number,
+  artifactId: number,
+): Promise<ArtifactActRefusal | null> {
+  try {
+    const { contradictionEngineService } = await import('./contradiction-engine-service');
+    const { blocked, blockingFindings, warningFindings } = await contradictionEngineService.checkPromotionBlocked(
+      organizationId,
+      projectId,
+      artifactId,
+    );
+    // An absent, malformed or self-contradictory check is not a clearance.
+    if (typeof blocked !== 'boolean' || !Array.isArray(blockingFindings) || !Array.isArray(warningFindings) ||
+        blocked !== (blockingFindings.length > 0)) {
+      throw new Error('Contradiction check returned an invalid verdict.');
+    }
+    if (!blocked) return null;
+    return {
+      httpStatus: 409,
+      message: `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`,
+      details: {
+        blockingFindings: blockingFindings.map(f => ({
+          id: f.id,
+          title: f.title,
+          severity: f.severity,
+          contradictionType: f.contradictionType,
+          authorityState: f.authorityState,
+        })),
+        warningFindings: warningFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity })),
+      },
+    };
+  } catch (contradictionError) {
+    // Approval and release require a completed check. Missing infrastructure
+    // is unavailable, never permission to sign without assessing conflicts.
+    console.warn(
+      'Contradiction check unavailable:',
+      contradictionError instanceof Error ? contradictionError.message : contradictionError,
+    );
+    return {
+      httpStatus: 503,
+      code: 'CONTRADICTION_CHECK_UNAVAILABLE',
+      message: 'This document cannot be approved or locked because its conflicts could not be checked. Try again after the check is available.',
+    };
+  }
+}
+
+/** The artifact columns a status change writes (the route's, for every change). */
+export function artifactStatusUpdate(
+  artifact: { version: number },
+  previousStatus: string,
+  status: string,
+  userId: number,
+): Record<string, unknown> {
+  const updateData: Record<string, unknown> = { status, updatedAt: new Date() };
+  // Leaving approved/locked clears approvedVersionId and publishedVersionId in
+  // the same write: the concept2cure_artifacts trigger does it for every writer
+  // (migrations/20260923b_artifact_approval_follows_status.sql).
+  if (status === 'approved') updateData.approvedVersionId = artifact.version;
+  if (status === 'locked') {
+    updateData.lockedAt = new Date();
+    updateData.lockedById = userId;
+    updateData.publishedVersionId = artifact.version;
+    updateData.publishedAt = new Date();
+  }
+  if (previousStatus === 'locked' && status === 'draft') {
+    updateData.lockedAt = null;
+    updateData.lockedById = null;
+  }
+  return updateData;
+}
+

@@ -16,8 +16,11 @@ import { addBudgetItemTx, setBudgetParamsTx, getBudgetSummary } from '../service
 import { recordBudgetItemAdded, recordBudgetParamsSet, recordBudgetSummaryView } from '../services/protocol-budget-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('protocol-budget');
 // A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
 // 2026-09-28: gated by P11-C-1; the coverage-gap sweep's GP-P-1 is the same
 // finding and is closed here. The mount (register-inline-routes.ts) carries
@@ -40,7 +43,7 @@ const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, BAD_INPUT: 400 };
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) { res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } }); return; }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the protocol budget request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 const CATEGORY = z.enum(['personnel', 'procedure', 'lab', 'imaging', 'overhead', 'equipment', 'patient_stipend', 'other']);

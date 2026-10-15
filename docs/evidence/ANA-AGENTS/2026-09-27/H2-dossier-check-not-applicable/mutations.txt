@@ -1,0 +1,92 @@
+# MUTATIONS, track H (row 74), the final tree (sha256 in tree.sha256). Script: scratchpad h2/mutate.py.
+# Apply one mutation, run the two track H test files, restore the file byte-for-byte, and check its sha256 (the script refuses to
+# restore over a change another writer made during the run). M1-M9: the track H build's own behaviours, re-aimed at the final code.
+# R1-R15: the review follow-through. Overcorrections (a gate that refuses or sets aside too much): M8, R3, R7, R12.
+# The first failing tests (up to four) are listed under each mutation. ANSI stripped.
+
+Track H mutation pass on the final tree. Each mutation: apply, run the two consistency test files
+(cross-artifact-consistency-not-assessed, cross-artifact-consistency-unreadable), restore, check sha256.
+KILLED = the run failed (red). Overcorrections are mutations that refuse or set aside too much.
+
+M1 no_shared_figures branch removed: KILLED  Tests  2 failed | 41 passed (43)  restored sha256 43e0a93e0cf9 ok
+    checkDossierConsistency: a read that leaves nothing to compare > figures that no other document states under the same label are not_assessed (no_shared_figures) 9ms
+    the check_dossier_consistency tool > figures no other document shares: verdict not_assessed with the reason, and copy that says nothing was compared 3ms
+M2 no-other-documents branch removed: KILLED  Tests  6 failed | 37 passed (43)  restored sha256 43e0a93e0cf9 ok
+    checkDossierConsistency when the project artifacts cannot be read > a read that succeeds and finds nothing is still an ordinary report, not unavailable 10ms
+    checkDossierConsistency: a read that leaves nothing to compare > a project with no other documents is not_assessed (no_related_artifacts), never clean 20ms
+    the check_dossier_consistency tool > a project with no other documents: verdict not_assessed with the reason, and copy that says nothing was compared 1ms
+    review [1]: a saved copy of the draft is the draft, not another document > a project whose only document is the draft itself is not_assessed (only_draft_copies), never cl
+M3 early returns disabled: KILLED  Tests  6 failed | 37 passed (43)  restored sha256 d165b0016678 ok
+    checkDossierConsistency: an early return compares nothing and says so > a project id of 0 is not_assessed ({ projectId: +0 }), never clean, and reads nothing 18ms
+    checkDossierConsistency: an early return compares nothing and says so > a project id that is not a number is not_assessed ({ projectId: NaN }), never clean, and reads not
+    checkDossierConsistency: an early return compares nothing and says so > a project id that is not an integer is not_assessed ({ projectId: 1.5 }), never clean, and reads n
+    checkDossierConsistency: an early return compares nothing and says so > a draft under 100 characters is not_assessed ({ draftContent: 'N = 240 subjects.' }), never clean,
+M4 nothingCompared says clean: KILLED  Tests  9 failed | 34 passed (43)  restored sha256 d165b0016678 ok
+    checkDossierConsistency: an early return compares nothing and says so > a project id of 0 is not_assessed ({ projectId: +0 }), never clean, and reads nothing 9ms
+    checkDossierConsistency: an early return compares nothing and says so > a project id that is not a number is not_assessed ({ projectId: NaN }), never clean, and reads not
+    checkDossierConsistency: an early return compares nothing and says so > a project id that is not an integer is not_assessed ({ projectId: 1.5 }), never clean, and reads n
+    checkDossierConsistency: an early return compares nothing and says so > a draft under 100 characters is not_assessed ({ draftContent: 'N = 240 subjects.' }), never clean,
+M5 compared counts only disagreements: KILLED  Tests  7 failed | 36 passed (43)  restored sha256 d165b0016678 ok
+    checkDossierConsistency: a real comparison keeps its verdict > figures compared with the same labels, none differing, is still clean 11ms
+    the check_dossier_consistency tool > a real comparison with no difference is clean, and its copy counts what was compared 2ms
+    review [1]: a saved copy of the draft is the draft, not another document > beside a document that agrees, only that document is counted and compared 1ms
+    review [1]: a saved copy of the draft is the draft, not another document > a document that holds the draft and more is another document, and is compared 1ms
+M6 not_assessed copy is the old clean line: KILLED  Tests  8 failed | 35 passed (43)  restored sha256 43e0a93e0cf9 ok
+    the check_dossier_consistency tool > a draft under 100 characters: verdict not_assessed with the reason, and copy that says nothing was compared 4603ms
+    the check_dossier_consistency tool > a draft with no labelled figures: verdict not_assessed with the reason, and copy that says nothing was compared 1ms
+    the check_dossier_consistency tool > a project with no other documents: verdict not_assessed with the reason, and copy that says nothing was compared 1ms
+    the check_dossier_consistency tool > figures no other document shares: verdict not_assessed with the reason, and copy that says nothing was compared 1ms
+M7 cross-references never counted: KILLED  Tests  3 failed | 40 passed (43)  restored sha256 d165b0016678 ok
+    checkDossierConsistency: a real comparison keeps its verdict > a missing cross-reference is still flagged when no figure was compared 8ms
+    review [3]/[7]: cross-references that resolved are reported, not denied > no figures, one reference resolved: not_assessed (no_figures_in_draft), with the reference count
+    review [3]/[7]: cross-references that resolved are reported, not denied > the tool copy states the resolved reference and limits "not assessed" to the figures 1ms
+M8 (overcorrection) not_assessed decided before divergences: KILLED  Tests  9 failed | 34 passed (43)  restored sha256 43e0a93e0cf9 ok
+    checkDossierConsistency when the project artifacts cannot be read > a read that succeeds and finds nothing is still an ordinary report, not unavailable 9ms
+    checkDossierConsistency: a read that leaves nothing to compare > a project with no other documents is not_assessed (no_related_artifacts), never clean 13ms
+    checkDossierConsistency: a read that leaves nothing to compare > a draft with a CTD section but no labelled figures is not_assessed (no_figures_in_draft) 2ms
+    checkDossierConsistency: a real comparison keeps its verdict > a missing cross-reference is still flagged when no figure was compared 1ms
+M9 no_figures_in_draft early return removed: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 d165b0016678 ok
+    checkDossierConsistency: an early return compares nothing and says so > a draft with no labelled figures and no CTD section is not_assessed ({ draftContent: 'The applican
+R1 [1] saved copies of the draft not set aside: KILLED  Tests  6 failed | 37 passed (43)  restored sha256 d165b0016678 ok
+    review [1]: a saved copy of the draft is the draft, not another document > a project whose only document is the draft itself is not_assessed (only_draft_copies), never cl
+    review [1]: a saved copy of the draft is the draft, not another document > a copy that differs only in whitespace and line endings is the draft too 3ms
+    review [1]: a saved copy of the draft is the draft, not another document > beside a document that agrees, only that document is counted and compared 2ms
+    review [1]: a saved copy of the draft is the draft, not another document > a reference that only the draft's own copy covers is neither flagged nor counted as checked 1ms
+R2 [1] copy detection without whitespace normalisation: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 d165b0016678 ok
+    review [1]: a saved copy of the draft is the draft, not another document > a copy that differs only in whitespace and line endings is the draft too 9ms
+R3 [1] (overcorrection) any document containing the draft is a copy: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 d165b0016678 ok
+    review [1]: a saved copy of the draft is the draft, not another document > a document that holds the draft and more is another document, and is compared 13ms
+R4 [1] only_draft_copies folded into no_related_artifacts: KILLED  Tests  3 failed | 40 passed (43)  restored sha256 43e0a93e0cf9 ok
+    review [1]: a saved copy of the draft is the draft, not another document > a project whose only document is the draft itself is not_assessed (only_draft_copies), never cl
+    review [1]: a saved copy of the draft is the draft, not another document > a copy that differs only in whitespace and line endings is the draft too 2ms
+    review [1]: a saved copy of the draft is the draft, not another document > the tool: the draft alone is not_assessed, and the copy names the draft, not "other" documents 
+R5 [1] set-aside copies still counted in artifactsCompared: KILLED  Tests  3 failed | 40 passed (43)  restored sha256 d165b0016678 ok
+    review [1]: a saved copy of the draft is the draft, not another document > a project whose only document is the draft itself is not_assessed (only_draft_copies), never cl
+    review [1]: a saved copy of the draft is the draft, not another document > beside a document that agrees, only that document is counted and compared 1ms
+    review [1]: a saved copy of the draft is the draft, not another document > the tool: clean beside the copy counts one other document and says the copy was set aside 1ms
+R6 [1] a reference only the copy covers is flagged missing: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 d165b0016678 ok
+    review [1]: a saved copy of the draft is the draft, not another document > a reference that only the draft's own copy covers is neither flagged nor counted as checked 12m
+R7 [1] (overcorrection) the copy covers references as another document: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 d165b0016678 ok
+    review [1]: a saved copy of the draft is the draft, not another document > a reference that only the draft's own copy covers is neither flagged nor counted as checked 10m
+R8 [1] clean copy omits the set-aside sentence: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 43e0a93e0cf9 ok
+    review [1]: a saved copy of the draft is the draft, not another document > the tool: clean beside the copy counts one other document and says the copy was set aside 15ms
+R9 [3][7] not_assessed copy denies a resolved reference: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 43e0a93e0cf9 ok
+    review [3]/[7]: cross-references that resolved are reported, not denied > the tool copy states the resolved reference and limits "not assessed" to the figures 11ms
+R10 [3][7] resolved references left out of the not_assessed copy: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 43e0a93e0cf9 ok
+    review [3]/[7]: cross-references that resolved are reported, not denied > the tool copy states the resolved reference and limits "not assessed" to the figures 19ms
+R11 [4] handler accepts any finite project_id: KILLED  Tests  5 failed | 38 passed (43)  restored sha256 b72d2d24403e ok
+    review [4]: the tool asks for a valid project instead of answering > project_id 0 is an input error, with no verdict, and nothing is read 7ms
+    review [4]: the tool asks for a valid project instead of answering > project_id -3 is an input error, with no verdict, and nothing is read 1ms
+    review [4]: the tool asks for a valid project instead of answering > project_id 1.5 is an input error, with no verdict, and nothing is read 1ms
+    review [4]: the tool asks for a valid project instead of answering > project_id null is an input error, with no verdict, and nothing is read 1ms
+R12 [4] (overcorrection) handler refuses a numeric-string project_id: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 b72d2d24403e ok
+    review [4]: the tool asks for a valid project instead of answering > a positive integer project id sent as a string still runs the check 11ms
+R13 [4] engine accepts a non-integer project id: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 d165b0016678 ok
+    checkDossierConsistency: an early return compares nothing and says so > a project id that is not an integer is not_assessed ({ projectId: 1.5 }), never clean, and reads n
+R14 [6] shared verdict list drops not_assessed: KILLED  Tests  2 failed | 41 passed (43)  restored sha256 b5c29341fb24 ok
+    review [6]: one result vocabulary, in shared/, for the server and any client reader > lists every verdict, and every not-assessed reason has its own copy 11ms
+    review [6]: one result vocabulary, in shared/, for the server and any client reader > every verdict the engine returns in this file is in the shared list 3ms
+R15 [6] a reason shares another reason's copy: KILLED  Tests  1 failed | 42 passed (43)  restored sha256 43e0a93e0cf9 ok
+    review [6]: one result vocabulary, in shared/, for the server and any client reader > lists every verdict, and every not-assessed reason has its own copy 10ms
+
+24 killed of 24 run.

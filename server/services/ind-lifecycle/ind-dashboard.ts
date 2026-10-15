@@ -28,6 +28,13 @@ export interface IndDashboardHeadline {
   blockerCount: number;
   /** Number of critical next-actions (clinical hold, overdue safety reports). */
   criticalActions: number;
+  /**
+   * Tracked IND safety reports past their deadline — tracked reports only
+   * (drafted reports in the register); an adverse event whose 7/15-day clock
+   * has lapsed with no drafted report is not counted. Null when no count was
+   * supplied, which is not zero.
+   */
+  overdueTrackedSafetyReports: number | null;
   /** The next not-yet-past regulatory milestone, when a timeline was supplied. */
   nextMilestone: TimelineMilestone | null;
 }
@@ -49,7 +56,7 @@ export interface IndDashboardParts {
   clock?: ClockState | null;
   timeline?: IndTimeline | null;
   sequenceValidation?: SequenceValidationReport | null;
-  /** Count of expedited IND safety reports past deadline (feeds the action list). */
+  /** Count of TRACKED expedited IND safety reports past deadline (the register's drafts; feeds the action list). */
   overdueSafetyReports?: number;
 }
 
@@ -86,6 +93,9 @@ export function buildIndDashboard(parts: IndDashboardParts): IndDashboard {
     openValidationFailures,
     blockerCount,
     criticalActions: actionItems.criticalCount,
+    // Named for what it counts (2026-10-15: it was passed on unlabelled, so a
+    // 0 read as "no overdue IND safety report" for untracked lapsed clocks).
+    overdueTrackedSafetyReports: typeof parts.overdueSafetyReports === 'number' ? parts.overdueSafetyReports : null,
     nextMilestone: timeline ? timeline.next : null,
   };
 

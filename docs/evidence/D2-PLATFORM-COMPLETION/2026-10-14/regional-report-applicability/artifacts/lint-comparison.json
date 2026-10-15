@@ -1,0 +1,10 @@
+{
+  "beforeErrors": 0,
+  "afterErrors": 0,
+  "beforeWarnings": 7,
+  "afterWarnings": 7,
+  "warningFileRuleSeverityCountsPreserved": true,
+  "warningsOutsideLegacyInsights": 0,
+  "baselineFilesOrSuppressionsChanged": false,
+  "limits": "Existing oversized Insights file/function warnings remain; added typed metadata fields change measured line totals, not warning/rule counts or complexity."
+}

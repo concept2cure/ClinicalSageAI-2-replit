@@ -84,10 +84,17 @@ function makeApp() {
   return app;
 }
 
+/** The regulatory contact FDA's us-regional backbone names. */
+const CONTACT = { name: 'Jane Q. Regulatory', phone: '+1 301 555 0100', email: 'regulatory@acme.example' };
+/** No contact recorded, as the ledger states it. */
+const NO_CONTACT = { name: null, phone: null, email: null };
+/** The package is an IND (pkgWith), so these are in FDA's form: the six digits
+ *  FDA assigned, the nine-digit D-U-N-S number, and a regulatory contact. */
 const GOOD = {
-  applicationNumber: 'IND123456',
-  applicantId: 'DUNS-123456789',
+  applicationNumber: '123456',
+  applicantId: '123456789',
   applicantName: 'Acme Biologics, Inc.',
+  contact: CONTACT,
   reason: 'Recording the IND number assigned by CDER',
 };
 const put = (body: Record<string, unknown>, packageId = 'pkg_locked') =>
@@ -167,19 +174,20 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
       packageId: 'pkg_locked', changed: true, staleBundleCleared: true, ledgerWriteFailed: false,
     });
     expect(res.body.data.regulatory).toMatchObject({
-      applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.', recordedBy: 777,
+      applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics, Inc.', contact: CONTACT, recordedBy: 777,
     });
     // Persisted: identifiers recorded, unrelated keys kept, stale bundle GONE.
     expect(dbState.updateSet.metadata.foo).toBe('bar');
-    expect(dbState.updateSet.metadata.regulatory.applicationNumber).toBe('IND123456');
+    expect(dbState.updateSet.metadata.regulatory.applicationNumber).toBe('123456');
+    expect(dbState.updateSet.metadata.regulatory.contact).toEqual(CONTACT);
     expect(dbState.updateSet.metadata.bundle).toBeUndefined();
     // Governed action carries the change and the caller's reason.
     expect(recordGovernedActionFn).toHaveBeenCalledTimes(1);
     const ledger = recordGovernedActionFn.mock.calls[0][1];
     expect(ledger).toMatchObject({ orgId: 99, userId: 777, target: 'submission:5', reason: GOOD.reason });
-    expect(ledger.payload).toMatchObject({ change: 'regulatory-identifiers', applicationNumber: 'IND123456', staleBundleCleared: true });
+    expect(ledger.payload).toMatchObject({ change: 'regulatory-identifiers', applicationNumber: '123456', contact: CONTACT, staleBundleCleared: true });
     // from → to: the audit row can answer what the identifiers were changed FROM.
-    expect(ledger.payload.previous).toEqual({ applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name' });
+    expect(ledger.payload.previous).toEqual({ applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name', contact: NO_CONTACT });
     expect(clientQuery).toHaveBeenCalledWith('BEGIN');
     expect(clientQuery).toHaveBeenCalledWith('COMMIT');
     // The write was decided under the row lock, against the CURRENT row.
@@ -195,7 +203,7 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     // …but by the time the row is locked another PUT has recorded the SAME
     // values this one carries, cleared that bundle, and added a note.
     dbState.lockedMetadata = {
-      regulatory: { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.', recordedBy: 42 },
+      regulatory: { applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics, Inc.', contact: CONTACT, recordedBy: 42 },
       noteAddedMeanwhile: 'kept',
     };
     const res = await put(GOOD);
@@ -206,7 +214,7 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     // The audit row says what the identifiers were changed FROM on the real row.
     const ledger = recordGovernedActionFn.mock.calls[0][1];
     expect(ledger.payload.previous).toEqual({
-      applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.',
+      applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics, Inc.', contact: CONTACT,
     });
   });
 
@@ -214,7 +222,7 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     const bundle = { path: '/bundles/current.zip', sha256: 'a'.repeat(64), sizeBytes: 10, format: 'ectd' };
     const preflight = { bundleSha256: 'a'.repeat(64), errorCount: 0, blocking: false };
     dbState.pkg = pkgWith({
-      regulatory: { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.' },
+      regulatory: { applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics, Inc.', contact: CONTACT },
       bundle,
       preflight,
     });
@@ -247,9 +255,9 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
 
   it('trims surrounding whitespace but never rewrites a value', async () => {
     dbState.pkg = pkgWith({});
-    const res = await put({ ...GOOD, applicationNumber: '  IND123456  ' });
+    const res = await put({ ...GOOD, applicationNumber: '  123456  ' });
     expect(res.status).toBe(200);
-    expect(dbState.updateSet.metadata.regulatory.applicationNumber).toBe('IND123456');
+    expect(dbState.updateSet.metadata.regulatory.applicationNumber).toBe('123456');
   });
 
   it('reports a ledger outage instead of pretending the change was audited', async () => {
@@ -260,6 +268,79 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     expect(res.body.data.ledgerWriteFailed).toBe(true);
     expect(clientQuery).toHaveBeenCalledWith('ROLLBACK');
     // The identifiers themselves were still recorded (the write must not be lost).
-    expect(dbState.updateSet.metadata.regulatory.applicationNumber).toBe('IND123456');
+    expect(dbState.updateSet.metadata.regulatory.applicationNumber).toBe('123456');
+  });
+});
+
+/* ─── FDA's own forms (package-spine sweep F05, F07b, 2026-10-01) ──────────
+ * FDA application numbers (IND, NDA, ANDA, BLA, DMF) are the six digits FDA
+ * assigned, leading zeros kept, no prefix: the backbone's application-type
+ * carries the pathway. This form's own example was 'IND123456'. The applicant
+ * id is the nine-digit D-U-N-S number, and the us-regional backbone names a
+ * regulatory contact that nothing recorded. Each is REFUSED, never rewritten,
+ * and only for a family filed on that backbone. */
+describe('PUT …/regulatory-identifiers on an FDA eCTD package: FDA’s forms and a regulatory contact', () => {
+  const OLD = { applicationNumber: '000001', applicantId: '000000001', applicantName: 'Old Name', contact: CONTACT };
+  const BUNDLE = { path: '/bundles/old.zip', sha256: 'f'.repeat(64), sizeBytes: 10, format: 'ectd' };
+  const withoutContact = { applicationNumber: GOOD.applicationNumber, applicantId: GOOD.applicantId, applicantName: GOOD.applicantName, reason: GOOD.reason };
+  /** Refused with these fields, before any row lock: nothing written or rewritten. */
+  const expectRefused = (res: { status: number; body: any }, fields: string[]) => {
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(res.body.code).toBe('REGULATORY_IDENTIFIER_INVALID');
+    expect(res.body.fields).toEqual(fields);
+    expect(connectFn).not.toHaveBeenCalled();
+    expect(dbState.updateSet).toBeNull();
+    expect(recordGovernedActionFn).not.toHaveBeenCalled();
+  };
+
+  it('REFUSES IND123456 on an IND package, naming FDA’s six-digit form; the stored identifiers and bundle stand', async () => {
+    dbState.pkg = pkgWith({ regulatory: OLD, bundle: BUNDLE });
+    const res = await put({ ...GOOD, applicationNumber: 'IND123456' });
+    expectRefused(res, ['applicationNumber']);
+    expect(res.body.error).toMatch(/six digits FDA assigned, with leading zeros and no IND\/NDA\/BLA prefix \(application-type carries the pathway\): record 123456, not IND123456/);
+  });
+
+  it('REFUSES a D-U-N-S number written with a prefix', async () => {
+    dbState.pkg = pkgWith({});
+    const res = await put({ ...GOOD, applicantId: 'DUNS-123456789' });
+    expectRefused(res, ['applicantId']);
+    expect(res.body.error).toMatch(/nine digits/);
+  });
+
+  it('REFUSES an IND package with no regulatory contact, and names what a partial one lacks', async () => {
+    dbState.pkg = pkgWith({});
+    expectRefused(await put(withoutContact), ['contact']);
+    const partial = await put({ ...GOOD, contact: { name: CONTACT.name, phone: '  ', email: '' } });
+    expectRefused(partial, ['contact.phone', 'contact.email']);
+    expect(partial.body.error).toMatch(/telephone or e-mail/);
+  });
+
+  it('REFUSES a contact value the backbone cannot carry, field by field', async () => {
+    dbState.pkg = pkgWith({});
+    expectRefused(await put({ ...GOOD, contact: { ...CONTACT, email: 'regulatory at acme' } }), ['contact.email']);
+  });
+
+  it('leaves other pathways alone: a 510(k) keeps its K-number, an EU technical file its own number, neither needs a contact', async () => {
+    for (const [packageFamily, applicationNumber] of [['510k', 'K123456'], ['ivdr_td', 'EMEA-H-C-001234']]) {
+      dbState.pkg = { ...pkgWith({}), packageFamily };
+      const res = await put({ ...withoutContact, applicationNumber, applicantId: 'DUNS-123456789' });
+      expect(res.status, `${packageFamily}: ${JSON.stringify(res.body)}`).toBe(200);
+      expect(dbState.updateSet.metadata.regulatory).toMatchObject({ applicationNumber, applicantId: 'DUNS-123456789' });
+    }
+  });
+
+  it('a CONTACT change alone clears the bundle assembled under the old contact, and the ledger says what it was', async () => {
+    const recorded = { applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics, Inc.', contact: CONTACT };
+    dbState.pkg = pkgWith({ regulatory: recorded, bundle: BUNDLE, preflight: { bundleSha256: 'f'.repeat(64) } });
+    const next = { ...CONTACT, phone: '+1 301 555 0199' };
+    const res = await put({ ...GOOD, contact: next });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ changed: true, staleBundleCleared: true });
+    expect(dbState.updateSet.metadata.bundle).toBeUndefined();
+    expect(dbState.updateSet.metadata.preflight).toBeUndefined();
+    expect(dbState.updateSet.metadata.regulatory.contact).toEqual(next);
+    const ledger = recordGovernedActionFn.mock.calls[0][1];
+    expect(ledger.payload.previous.contact).toEqual(CONTACT);
+    expect(ledger.payload.contact).toEqual(next);
   });
 });

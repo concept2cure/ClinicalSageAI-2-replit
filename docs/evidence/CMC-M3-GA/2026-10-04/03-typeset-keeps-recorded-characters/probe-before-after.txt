@@ -1,0 +1,2 @@
+BEFORE (HEAD, markdown lexer): m3.2.P.5.1 Specifications 3.2.P.5.1 Specifications Charge 23 kg, then wash 45 L. 1. Dissolve 2. Filter Microbial limits Test Acceptance criterion TAMC NMT 1*10^3 CFU/g TYMC NMT 1*10^2 CFU/g
+AFTER  (composer-format reader): m3.2.P.5.1 Specifications 3.2.P.5.1 Specifications Charge 2*3 kg, then wash 4*5 L. 1. Dissolve 3. Filter Microbial limits Test Acceptance criterion TAMC NMT 1*10^3 CFU/g TYMC NMT 1*10^2 CFU/g

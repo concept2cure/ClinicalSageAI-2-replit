@@ -11,8 +11,8 @@
  * @module server/services/protocols/protocol-portfolio-logic
  */
 
-import { reviewStatus } from '../iacuc/iacuc-logic';
-import { continuingReviewStatus } from '../irb/irb-logic';
+import { approvalReviewStatus } from '../iacuc/iacuc-logic';
+import { lifecycleStatus } from '../irb/lifecycle';
 import type { IrbReviewType } from '../../../shared/schema/irb';
 
 /** ISO date (YYYY-MM-DD) → epoch days, or null. Pure, timezone-free. */
@@ -60,13 +60,16 @@ export interface PortfolioProtocolRow {
 }
 
 export interface ContinuingReviewState {
-  /** Derived expiration date (de novo for IACUC, annual for IRB full-board); falls back to the stored date. */
+  /** The expiration on record; else the computed one (IACUC approval + 3 years, IRB full-board approval + 1 year); else null. */
   expirationDate: string | null;
-  expired: boolean;
-  /** IACUC annual continuing review is due within the 3-year de novo window. */
-  annualReviewDue: boolean;
-  /** Whether continuing review applies (always for IACUC; IRB full-board only). */
-  continuingReviewRequired: boolean;
+  /** Where `expirationDate` came from, so a reader knows what it is trusting. */
+  expirationSource: 'recorded' | 'computed' | 'none';
+  /** Whether that date has passed; null when there is no date. */
+  expired: boolean | null;
+  /** IACUC annual continuing review is due within the approval period; null without an approval date. Always false for IRB, whose continuing review falls at the expiration. */
+  annualReviewDue: boolean | null;
+  /** Whether continuing review applies: always for IACUC; IRB full board only, null when no review type is recorded. */
+  continuingReviewRequired: boolean | null;
   citation: string;
 }
 
@@ -75,30 +78,42 @@ const IRB_CITATION = '45 CFR 46.109 — full-board continuing review at interval
 
 /**
  * Continuing-review / expiration state for one protocol. Delegates to the
- * canonical per-domain helpers: `reviewStatus` for IACUC (3-year de novo +
- * annual, PHS Policy IV.C.5) and `continuingReviewStatus` for IRB (full-board
- * annual, 45 CFR 46.109). The derived expiration is preferred; the stored
- * expiration_date is used as a fallback when no approval date is on file. Pure.
+ * canonical per-domain helpers: `approvalReviewStatus` for IACUC (3-year de
+ * novo + annual, PHS Policy IV.C.5) and `lifecycleStatus` for IRB (full-board
+ * annual, 45 CFR 46.109). Both prefer the expiration on record and label a
+ * computed one 'computed'. Pure.
+ *
+ * 2026-10-15: the computed date was preferred over the recorded one, so an
+ * approval the committee set to lapse early read as current until the computed
+ * date; and the deprecated two-boolean helpers reported an undated IACUC
+ * approval as "no annual review due" and an IRB submission with no review type
+ * as "continuing review not required".
  */
 export function continuingReviewState(committee: Committee, row: PortfolioProtocolRow, today: string): ContinuingReviewState {
   if (committee === 'iacuc') {
-    const s = reviewStatus(row.approval_date, today);
-    const expirationDate = s.expirationDate ?? row.expiration_date ?? null;
+    const s = approvalReviewStatus(row.approval_date, today, row.expiration_date);
     return {
-      expirationDate,
-      expired: s.expirationDate ? s.expired : expirationBucket(expirationDate, today) === 'expired',
+      expirationDate: s.expirationDate,
+      expirationSource: s.expirationSource,
+      expired: s.expired,
       annualReviewDue: s.annualReviewDue,
       continuingReviewRequired: true,
       citation: IACUC_CITATION,
     };
   }
-  const s = continuingReviewStatus((row.review_type ?? null) as IrbReviewType | null, row.approval_date, today);
-  const expirationDate = s.expirationDate ?? row.expiration_date ?? null;
+  const s = lifecycleStatus({
+    status: row.status,
+    reviewType: (row.review_type ?? null) as IrbReviewType | null,
+    approvalDate: row.approval_date,
+    expirationDate: row.expiration_date,
+    today,
+  });
   return {
-    expirationDate,
-    expired: s.expirationDate ? s.expired : s.continuingReviewRequired && expirationBucket(expirationDate, today) === 'expired',
+    expirationDate: s.expirationDate,
+    expirationSource: s.expirationSource,
+    expired: s.expirationDate ? expirationBucket(s.expirationDate, today) === 'expired' : null,
     annualReviewDue: false,
-    continuingReviewRequired: s.continuingReviewRequired,
+    continuingReviewRequired: s.continuingReview === 'unknown' ? null : s.continuingReview === 'required',
     citation: IRB_CITATION,
   };
 }
@@ -120,9 +135,11 @@ export interface ProtocolAttentionItem {
   status: string;
   bucket: ExpirationBucket;
   expirationDate: string | null;
+  /** 'recorded' (the date on record), 'computed' (derived from the approval date) or 'none'. */
+  expirationSource: ContinuingReviewState['expirationSource'];
   /** Days until expiration (negative when already expired); null when undated. */
   daysRemaining: number | null;
-  annualReviewDue: boolean;
+  annualReviewDue: boolean | null;
   citation: string;
 }
 
@@ -155,6 +172,7 @@ function buildItem(committee: Committee, row: PortfolioProtocolRow, today: strin
     status: row.status,
     bucket,
     expirationDate: crState.expirationDate,
+    expirationSource: crState.expirationSource,
     daysRemaining,
     annualReviewDue: crState.annualReviewDue,
     citation: crState.citation,

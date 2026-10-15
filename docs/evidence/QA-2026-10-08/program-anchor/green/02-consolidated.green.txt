@@ -1,0 +1,833 @@
+# GREEN — every test touching intake, the anchor, its readers (PROGRAM_UNANCHORED, resolveProgramProjectAnchor, project-intake) and the migration set, plus the wizard client tests
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > is in C2C_MIGRATION_FILES, and is the LAST entry 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the batch-2 files are wired ahead of it 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the once-excluded files are now wired, having been RESOLVED not skipped 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > still refuses the _consolidated tree, which was never merely unwired 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > DOES wire enhanced_cortex, whose identity conflict C-36 resolved 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the canonical lumen_data_atoms.id is an integer, not a uuid 17ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > every atom-referencing column is an integer, so the FKs are implementable 11ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the two previously-impossible foreign keys now exist 4ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the services' real JOIN typechecks (it could not before) 4ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced 32ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > policies electronic_signatures — the Part 11 record that had no tenant key 6ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > actually blocks a cross-tenant read on a table it sweeps 107ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > a TEXT tenant key is SKIPPED, not raised — a deploy must not halt on pre-existing drift 5ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > never clobbers a policy a subsystem installed for itself 11ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > FORCES a table that had the policy but no FORCE (owner-bypass close, C-43) 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a policy-LESS RLS table un-forced (no owner default-deny surprise) 27ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44) 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a clean allowlisted table unpoliced (the first loop honors the allowlist) 8ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > skips the allowlist, tables with no tenant column, and views 3ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'document_span_lineage kinds (20260803…' > a fresh database converges on the newest definition 3610ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'document_span_lineage kinds (20260803…' > the next deploy succeeds over a row only the newest definition admits 2748ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > a fresh database converges on the newest definition 2502ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'c2c_documents doc types (20260528 → 2…' > the next deploy succeeds over a row only the newest definition admits 2800ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'submission_orchestrator_runs status (…' > a fresh database converges on the newest definition 2348ms
+ ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts > replaying the set over 'submission_orchestrator_runs status (…' > the next deploy succeeds over a row only the newest definition admits 2348ms
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 2649ms
+ ✓ tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 1032ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 20260926b on the applier > runs after every file that creates what it keys, and before the tenant sweep 4ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 20260926b on the applier > the creators’ replayed comments name the key, not "no FK" (amended in place, Rule 1) 7ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay 5ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none 8ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated 7ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover 64ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay 2ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none 6ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated 6ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover 38ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay 1ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none 3ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated 3ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover 35ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay 1ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none 4ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated 4ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover 38ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay 1ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none 3ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated 3ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover 35ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > a GLOBAL_PUBLIC source (no organization) carries no project 2ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > a program its organization’s records name cannot be moved to another organization 1ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > adds the study-design key column where no applier ever did, once 1872ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > a purge-shaped delete of an organization’s programs > is refused while c2c_documents still names them — both its keys are NO ACTION, whichever fires first 6ms
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > a purge-shaped delete of an organization’s programs > in the operator’s order — clear what the pre-flight lists, delete c2c_documents, then the programs — each own record keeps its organization and loses only its key 18ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values 98ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > with several workspaces, the organisation's own (marked) workspace holds the record 34ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind 17ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > an organisation with no workspace: refused, nothing left behind 13ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a failure writing the project record rolls the program back with it 16ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > every program the route created is anchored in its own organisation 2ms
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > is on the applier, after both tables it joins 2ms
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > backfills the one-to-one, same-tenant link from the creation audit row 2ms
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > leaves a submission two projects both claim unanchored — never resolved by guessing 1ms
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > does not anchor to another organization’s project, and reads only creation rows 2ms
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > refuses, at the database, a submission anchored to another organization’s project 4ms
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > replays cleanly, as every deploy does, and changes nothing it already decided 5ms
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > lets a program be deleted: the submission stays, its organization intact, un-anchored 4ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the council provisioning migration no longer defines lumen.data_atoms 2ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the canonical definition is the one in db/migrations 1ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — lumen.data_atoms has exactly one definition (C-12) > the apply script installs the canonical prerequisite BEFORE the file that reads it 1ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > produces the canonical 12-column shape, not the minimal one 13ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > accepts a write carrying the provenance columns the minimal shape lacked 3ms
+ ✓ tests/schema-contract/c2c-apply-path.contract.test.ts > c2c apply path — the resulting schema accepts the writes the code makes > the council seed still lands (the file is self-sufficient without its own atoms table) 2ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > copies the root migrations tree into the production stage 2ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > copies the db/migrations tree into the production stage 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > copies the provisioning scripts into the production stage 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > ships every vendored-artifact drop-point the server reads from disk 236ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > the vendored eSTAR templates and their checksums survive .dockerignore 2ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > exposes the migration entrypoint as an npm script 1ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the runtime image carries a migration payload > needs only production dependencies to run the migration 2ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the deploy workflow runs it, and gates on it > defines a migrate job that runs the migration entrypoint 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the deploy workflow runs it, and gates on it > gates every job that rolls the built image on the migration 1ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the deploy workflow runs it, and gates on it > runs the migration itself against the image that was just built 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the deploy workflow runs it, and gates on it > pins the migration task to the same image digest being deployed 1ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260506_kit_section_draft_provenance.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260524_program_workbench_schema.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260527_mutation_primitives.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260528_phase9_document_schema.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260529_phase9_backfill.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260604_shadow_review.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260609_audit_hmac_seal.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260921_audit_logs_chain_seq.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260604_submission_core_canonical.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260603_ai_capability_governance.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260603_pv_operational.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260603_commitments.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/044b_gcc_lumen_schema_prerequisite.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260724_lumen_council_provisioning.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260724_ana_deep_investigations.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260724_clinical_regulatory_evidence_spine.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260726_file_uploads_tenancy.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260726_cre_source_program_scope.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260727_authoring_document_program_scope.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260726_authoring_citation_source_usage.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260727_industry_context_profiles.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260727_unified_tasks_mdx_metadata.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260629_rbm_surfaces.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260630_rbm_kri_values.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260701_rbm_patient_profiles.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260726_rbm_metric_ingestion.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260726_rbm_not_evaluated_backfill.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260727_collab_document_state.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260728_artifacts_table.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260728_c2c_document_sections_timestamps.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260401_cmc_convergence_os.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260402_cmc_runtime_ddl_to_migration.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260728_cmc_module3_org_scoped_uniqueness.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260728_c2c_section_version_author_kind.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260728_authoring_comments_threading.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260728_authoring_document_governed_binding.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260921_authoring_document_provenance.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_fix_atom_embedding_dimension.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260725_submission_orchestrator_store_port.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260629_orchestrator_region_check_alignment.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260725_esig_gate_columns_port.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260725_users_signing_lockout_columns.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_project_milestones_reconciliation.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260220_ind_section_tracking.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260323_assumption_decision_contradiction.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260725_governance_boundary_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260725_resolution_orchestration_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260725_bundle_execution_receipts.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260725_project_sections_content_columns.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260725_ectd_compilations_project_level.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_ectd_compilations_sequence_columns.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_ectd_compilations_leaf_manifest.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260923_ectd_compilations_external_validation.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_esign_audit_db_level_immutability.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_orchestrator_run_ledger_hardening.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_release_signature_uniqueness.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260224_ai_trace_chain.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260224_ai_claims_verifier_flags.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_cmc_projects_reconstruction.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_manufacturing_processes_reconstruction.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_fk_delete_policies_port.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_c2c_ana_actions_command_vocab.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260730_estar_registration.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260730_estar_submission.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260730_estar_submission_project_link.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260903_regulatory_programs_estar_device_fields.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260903_estar_registration_correspondent.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260904_estar_registration_declaration_company_name.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260730_work_item_source_ref.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260810_c2c_work_items_source_uniqueness.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/082_ectd_submission_agent.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_cmc_evidence_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_submission_center_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_graphrag_knowledge_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_licensing_ip_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/022_stability_v2.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/024_stability_step3.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/030_stability_results.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260129_phase5_intelligent_document_system.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260206_phase5_contradiction_scanner.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260206_phase5_evidence_fabric.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260207_phase6_6_predicate_intelligence.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260223_ivdr_binder_packs.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260224_binder_evidence_source_types.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260306_chat_tool_runs.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260317_global_regulatory_compliance.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260322_regulatory_precedent_intelligence.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260323_reactive_dependency_layer.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260324_ai_goal_plan_runs.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260324_ai_kernel_agent_protocol_events.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260324_ai_kernel_decision_records.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260324_ai_kernel_policy_outcomes.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260325_ai_goal_plan_step_events.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260325_decision_receipts.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260326_conversation_os_durability.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260508_ana_submission_chat_proposals.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260520_ana_failure_learning.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260520_document_templates.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260520_regulatory_intelligence_layer.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260716_nonclinical_display.sql exists in the repo 1ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_agency_meetings_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_design_controls_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_evidence_asks_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_evidence_objects_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_human_factors_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_labeling_pi_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_maa_module1_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_nda_m1_docs_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_nda_rtf_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260717_program_journey_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260718_pediatric_orphan_cards.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260718_smpc_sections_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260724_qms_change_control_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260730_cmc_change_control_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_hf_files_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_market_access_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_reg_change_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_labeling_pi_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_program_journey_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/026_stability_step4.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260728_stability_tenant_isolation.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260728_stability_backing_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/081_grdhe_regulatory_mapping_layer.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260209_phase6_6a_fda_ingest_runs.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260211_phase6_6d_defense_packets.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260211_phase6_6e_proof_pack_exports.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260211_phase7_0a_render_jobs.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260220_user_intelligence_platform.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260322_quality_checkpoints.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260326_artifact_compute_plane.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260331_communication_center_scaffold.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260331_regulatory_correspondence_os.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260401_submission_center_items.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260508_artifact_citations.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260520_growth_mindset_extensions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260621_weekly_usage_limits.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_atom_identity_existing_db_reconciliation.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260125_enhanced_cortex_schema.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260207_phase6_6a_fda_clearance_universe.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260306_precedent_engine.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260617_precedent_org_isolation.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260208_phase6_6a_risk_rollups.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260125_ai_provider_audit_log.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260324_ana_kernel_decision_log.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260326_conversation_os_durability_phase2.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_consolidated_tree_reconciliation.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260803_document_span_lineage.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260809_source_attribution_draft_candidates.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260804_phase9_rule_pack_outlines.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260806_cta_ema_ctr536_outline.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260806b_anda_ide_filing_types.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260810_pma_fda_814_20_outline.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260810b_eu_mdr_ivdr_outlines.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260810c_rule_pack_provenance.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260810d_rule_pack_review_attribution.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260901_ind_fda_m1_v2_3_outline.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260901b_estar_510k_denovo_outlines.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260902_ind_icsr_transmissions_transport_receipt.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260903_rendered_leaf_files.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260331_performance_indexes.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260821_regulatory_twin_simulations.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260729_unified_documents_provision.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260729b_unified_workflow_companion_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260730_workflow_doc_versions_org_id.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260731_workflow_doc_versions_org_not_null.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260807_unified_tasks_soft_delete.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260807_collab_section_locks.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260807_task_graph_org_columns.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260813_audit_tamper_proof_log.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260813_knowledge_graph_tenant_keys.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260813_tenant_offboarding_lifecycle.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260813_ai_gateway_audit_log.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260813b_tenant_export_receipts.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260813c_ivdr_schema_reconciliation.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260508_ivd_diagnostic_surfaces.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260501_q_sub.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260507_mdx_beta_surfaces.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/001_create_ivdr_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260813c2_electronic_signatures_tenant_key.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260813d_esignature_governed_unification.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814_projects_regulatory_program_anchor.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814b_literature_screening_decisions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260429_gspr_postmarket.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814c_pmcf_enrollment_records.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814d_document_alias_map.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260817_reconcile_declared_updated_at_columns.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814e_submission_leaf_source_pin.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814f_section_version_ana_action_backlink.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814g_section_version_reason_required.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260822_section_version_author_kind_unspecified.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260829_cre_source_versioning.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_cre_evidence_sources_capture_immutability.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814h_review_task_type_domain_repair.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814i_draft_candidate_generator.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260906c_draft_candidate_assertions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260907_span_lineage_accepted_machine_draft.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260908_span_lineage_machine_draft.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814j_catalog_missing_product_surfaces.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814k_catalog_mission_control.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814l_catalog_filing_strategy.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814m_regulatory_intel_platform_tier.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814n_seed_regulatory_intel_platform_knowledge.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814m_catalog_honest_module_descriptions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260815_workflow_approval_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260814o_catalog_retire_duplicate_ind_lifecycle.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260222_audit_events_hash_chain.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260222_audit_events_immutability.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260617_audit_logs_immutability.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260911_charter_audit_immutability.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260911_contradiction_consequence_log_convergence.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260617_audit_events_hmac_seal.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260820_working_memory_project_id.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260602_working_memory_embeddings.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260612_ana_relational_external_intel.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260820b_rim_learned_patterns.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/0013_ana_intelligence_system.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260810_reconcile_module_catalog.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260823_module_catalog_commercial_packaging.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260823_module_catalog_customer_copy.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260823_module_catalog_mdx_registers.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260824_cmc_professional_tier.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260820c_catalog_maa_module1_regional.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260907_module_catalog_submission_orchestrator.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260821_vault_documents_canonical_shape.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260823_vault_document_placement.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260905_document_catalog.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260905b_vault_document_chunks.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260905_gdpr_dsar_execution_evidence.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260824_module_grant_expiry.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260824_module_access_requests.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260824_enforcement_mode_setting.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260821_uuid_org_guc_cast_heal.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260828_program_org_resolution_canonical.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260828_drop_orphaned_org_guc_policies.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260828_fail_closed_org_coalesce_policies.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260828_artifact_versions_updated_at.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260828_align_written_columns_with_migrations.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260828_file_uploads_checksum.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260828_ectd_compilations_submission_id.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260830_reg_questions_response_doc.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260828_fail_closed_insert_withcheck_policies.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260823_cmc_register_store_parity.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260907_quality_specifications_tenant_required.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260823_drop_dead_c2c_cmc_changes.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260902_cmc_impurity_dissolution_registers.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260902_clinical_ops_schema.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260902_manufacturing_responses.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260903_cmc_material_formulation_registers.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260903_cmc_manufacturing_characterization_registers.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260903_cmc_impurity_route_of_administration.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260906_cmc_interview_sessions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260906_cmc_impurity_m7_inputs.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260906_cmc_formulation_development.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260907_qc_testing_batch_attribution.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260901_drop_dead_audit_tables.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260905_vault_documents_organization_id.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260906_vault_documents_fulltext.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260906_artifact_section_map_unique.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260906b_vault_legal_holds.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260906c_vault_documents_content_hash_idx.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260917_vault_documents_storage_version.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260917b_submission_leaf_document_uuid.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260911_vault_evidence_citations.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260608_vault_retention.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260926_vault_documents_record_immutability.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260930_vault_documents_version_lineage.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260716_template_doc_types.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260917_project_charters_declared_columns.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260701_protocol_soa.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260702_protocol_budget.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260703_dmsp.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260704_biosketch.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260704_other_support.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260705_export_control.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260705_invention_disclosure.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260705_research_agreements.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260728_chat_thread_store.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260731c_canonical_documents.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260925_canonical_documents_append_only.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_canonical_documents_vault_version.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260906_ivdr_history_tenant_isolation.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260907_cmc_comparability_register_reachable.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260908_drug_substance_biologic_origin.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260907_regulatory_programs_application_number.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260908_compliance_tracking_organization_backfill.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260908b_estar_submissions_filed_artifact.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260910_contradiction_links_port.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260917_ana_runs.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260918_rbm_author_attribution.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260919_cmc_playbook_schema.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260919_capa_code_uniqueness_per_program.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260920_mcp_oauth.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260921_protocol_documents_sponsor_pi.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260922_protocol_document_study_design.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260922b_protocol_discontinuation_section.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260922c_amendment_design_snapshot.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260610_irb_submissions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260922d_irb_submission_context.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260922e_amendment_declarations_nullable.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260923_organization_default_client_workspace.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260923_users_mfa_totp_last_step.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260923b_artifact_approval_follows_status.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260922f_protocol_deviation_assessment.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260919_c48_stage1_identity_org_bridge.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260924_license_requests.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260924_org_relationships_sponsor_rls.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260925_organizations_tenant_key_immutable.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260926_organizations_own_writes.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260926_organization_users_own_writes.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260928_users_membership_rls.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260928_platform_role_grants_platform_writes.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260928_invitations_for_member.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260929_actor_names.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261004_user_presence_rls.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260925b_submissions_program_anchor.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260608_ai_placement_policies.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260926_ana_turn_records.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/0011_governed_decision_transitions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260327_data_lineage_tracking.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260929_concept2cure_signatures_append_only.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260926b_program_same_org_keys.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_integer_project_same_org_keys.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001b_projects_one_anchor_per_program.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001c_chat_threads_program_key.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260930_rbm_qtl_direction.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260930_rbm_plan_versioning.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260930_rbm_ingest_idempotency.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260930_report_type_registry_seed.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_organization_retention_settings.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_domain_history_append_only.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_users_sessions_ended_at.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_qms_document_signature_required.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260615_ind_amendments.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260615_ind_annual_reports.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260615_ind_icsr_transmissions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260615_regulatory_assessments.sql exists in the repo 2ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20260615_tmf_artifact_filings.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_project_continuity_snapshots.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20261001_collab_presence.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001d_scheduled_job_claims.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001e_session_activity.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001f_coordination_leases.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_review_comments_record.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_compliance_review_records.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_vault_document_relationships.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001_vault_version_annotations.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261001g_organization_gateway_accounts.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261005_cmc_core_registers_project.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261005b_cmc_source_evidence.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261005c_cmc_module3_history_append_only.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261005_fda_jnda_m1_outline_v2_2.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261006_document_data_dispositions.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > migrations/20261008_program_project_anchor_backfill.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260813_child_table_parent_scoped_rls.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > db/migrations/20260801_tenant_isolation_sweep.sql exists in the repo 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > the migration set is real > is the single source both appliers consume 1ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > it refuses to bootstrap a blank database > preflights for a base schema and exits with a distinct code 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > it refuses to bootstrap a blank database > stops at the first failed file rather than applying further DDL 0ms
+ ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts > deploy migration mechanism > it refuses to bootstrap a blank database > verifies the readiness contract before reporting success 0ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 1: no options → ZIP-level validation only (backward compat) 25ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 2: options.region=FDA + non-regional leaves → MISSING_REGIONAL_FDA finding 8ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 3: priorSequenceNumbers=["0000","0002"] + sequenceNumber="0003" → SEQUENCE_GAP for 0001 7ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 4: valid leaf array → leaf-only ValidationResult 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 5: authenticated principal WITHOUT organizationId → 403 (route uses requireTenant) 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 6: invalid region string ("XX") → 400 from zod enum guard 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > GET /api/ectd/export/by-run/:runId/signed > returns the §11.50 manifestation of the release signature (review P11-4) 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > returns the package bytes as a zip when it validates 7ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > refuses a package that fails structural validation, and returns no zip 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > refuses an incomplete package when requireComplete is set 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a download whose rows were lost says so in its headers, and still returns the package 3ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a download whose rows were written says so, with no code 3ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a refused (invalid) package carries the outcome in its JSON body 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > records it against the project that anchors the submission's program — not a project that shares the submission's id 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > a program with no project anchor is delivered audited-unplaced, and says so 3ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > a submission with no program is delivered audited-unplaced — nothing is attributed by an id that happens to match 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > an unplaced export whose audit row did not persist is refused, and no package is returned 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 403 without org context 47ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 when name is missing 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches SQL) 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract 8ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505) 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > surfaces a scaffold skip in the 201 body instead of failing or hiding it 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success 8ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01) 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota 8ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda) 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails 11ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01) 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object 8ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed 13ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure 4ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > runs after the program keys and before the tenant sweep 2ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > a replay adds nothing: one NOT VALID key per table, each with its existing key's delete action 3ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > 20260820's own key on working memory is SET NULL too, and only one of it 2ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written 2ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database 3ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written 2ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database 1ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written 1ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database 1ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > conversation_working_memory: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written 2ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > conversation_working_memory: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database 1ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > the legacy cross-organization rows did not fail the deploy, and are listed by the preflight 129ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > working memory with no project is written, as for a conversation held in none 1ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a legacy row still takes a change that is neither its project nor its organization 9ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project with records of its organization under it cannot be moved to another organization 4ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project delete still cascades its own artifacts, packages and conversations, as before 19ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > and detaches the working memory of its conversations: kept, with its organization, under no project 1ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > a database that deployed the NO ACTION working-memory keys (PF-13 follow-up) > both keys are SET NULL, under their own names, one of each 2ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > a database that deployed the NO ACTION working-memory keys (PF-13 follow-up) > the project its conversation was summarized in can now be deleted, and the summary stays 9ms
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record"
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident 12 org-scoped 30ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident proj_12 org-scoped 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > never truncates a regulatory_programs UUID to its leading digits 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 400s any digit-prefixed junk ident before a single query is issued 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 404s a project outside the caller org without revealing it exists 9ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the schedule of the project the program is anchored to 5ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the unified work of the anchored project 6ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > answers an unanchored program with a named 404 and reads nothing 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > never generates a schedule for an unanchored program 18ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > a lookup that could not complete is a 500, never "no project record" 5ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (a) anchored program: hands the ZIP bytes to the governed export consequence 7ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (b) unanchored program: audited-unplaced delivery with the sha256, bytes still returned 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (c) no authored content: 422 NO_AUTHORED_CONTENT, no consequence, no export audit 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (d) program from another organization: 404 and the assembler is never invoked 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (e) size cap: the consequence refusing the bytes is an honest 413, never a 200 with empty data 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /sequences/:seqId/technical-file/assemble > (f) reads the bundle bytes before cleanup and delivers them through the export path 11ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > 20261008 on the applier > runs after every file it depends on and before the tenant sweeps 3ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > an unanchored program gets the row intake writes > BX-256 (seeded, no project row) is anchored and resolves strict to it 12ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > an unanchored program gets the row intake writes > a program intake created without its row gets its recorded creator; the default priority when none 2ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > an unanchored program gets the row intake writes > a recorded creator who is not a user is not written 2ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > an unanchored program gets the row intake writes > the organisation's own workspace when it has several; the one 20260923 gave an unprovisioned one 3ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > what it leaves alone > an anchored program, a soft-deleted one, and one 20260814 links by code get no new row 2ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > what it leaves alone > several workspaces, none marked: no guess, and the deploy log names the organisation 5ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > what it leaves alone > a program another organisation's row names is not given a second row, and is named 2ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > tenant-correct > every row it wrote is in its program's organisation and in a workspace of that organisation 5ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > Rule 1: replayed on every deploy > a second deploy inserts nothing and changes nothing 56ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > leads with the open program’s anchored project, not the flagship 25ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a program with no project record has no lead — and is not given the flagship 4ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > an anchored project outside the computed portfolio is named as such, with no lead 4ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > a programId that is not a program UUID is refused, not guessed 8ms
+ ✓ server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > with no program open no program leads — the flagship does not stand in 3ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: the uuid RLS migration is wired and deploy-positioned > is in the C2C deploy set 2ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: the uuid RLS migration is wired and deploy-positioned > sits alongside the public integer sweep (both isolation steps at the end) 1ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: policies the tenant-owned tables, exempts the cross-tenant ones > policies core.programs on org_id 3ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: policies the tenant-owned tables, exempts the cross-tenant ones > policies regulatory_harmonization.canonical_products on tenant_id (not organization_id) 23ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: policies the tenant-owned tables, exempts the cross-tenant ones > policies federated_ml.safety_signals (per-tenant, NULL-org shared signals kept visible) 22ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: policies the tenant-owned tables, exempts the cross-tenant ones > leaves federated_ml.federation_participants EXEMPT (coordinator reads all orgs) 2ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: policies the tenant-owned tables, exempts the cross-tenant ones > leaves audit.event_log EXEMPT (Part 11 trigger-written, cross-org compliance readers) 2ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: the non-public tenant policy is non-breaking yet isolating > with enforcement OFF the policy is a no-op — the service on the raw pool is not broken 16ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: the non-public tenant policy is non-breaking yet isolating > with enforcement ON a SCOPED read sees only its own org plus shared NULL-org rows 4ms
+ ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts > C-46: the non-public tenant policy is non-breaking yet isolating > with enforcement ON an UNSCOPED session sees no tenant rows at all (fail closed) 2ms
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > two anchor rows: reads the lowest id of the organization and names both 17ms
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > raw SQL uses the same ordered reader and can require an unambiguous anchor 3ms
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > another organization's anchor is never read: project 5 is the lowest id but organization 8's 3ms
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > one anchor row: read, nothing logged 2ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a superseded vault version is not a document of the project: one document, its current version 78ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a source a re-upload retired is not a source of the project: one source, the current one 39ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a project with one document, one superseded version, one current and one retired source reports 1 and 1 12ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a version whose only successor was deleted is still the current version 21ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a soft-deleted source is not a source of the project, as the Data room does not list it 16ms
+ ✓ server/routes/c2c/__tests__/projects-records-current.pglite.test.ts > GET /:id/records counts the current records a project has > a source that is not a client document is not in the project Data room, so not counted 51ms
+ ✓ tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > 20261001b on the applier > runs after the anchor column it indexes and before the tenant sweep 2ms
+ ✓ tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > a program has at most one anchor row > with two anchors for one program, every replay skips the index and names both rows 24ms
+ ✓ tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > a program has at most one anchor row > once the duplicate is resolved, the next replay creates a partial unique index 39ms
+ ✓ tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > a program has at most one anchor row > a second anchor for the program is refused, from any organization; unanchored rows and other programs are not 10ms
+ ✓ tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > a program has at most one anchor row > the 20260814 backfill, replayed after the index, still runs and links no second row 29ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > is a labelled region, not a modal dialog 237ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > closes on Escape and hands focus into the view on open 8ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > offers a named way back to the portfolio 362ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > states the current step in text, not only in colour 18ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the human sentence and never the enum token 465ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > offers a retry that re-runs the create 476ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the correlation id as the support handle 354ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > renders nothing internal even if an internal string reaches it 547ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > does not render a browser-native fetch message 373ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — created but not scaffolded > is a polite status with no retry, because the project exists 455ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > renders the real milestones with due date, regulatory basis and owner role 412ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > shows no fabricated date for a milestone whose due date is not set 271ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > reports a slipped milestone with its real slip, not a progress bar 270ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > summarizes completed milestones instead of listing them as upcoming 181ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > renders the honest empty state with only real affordances, and wires the AnA prompt 687ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > generates via the REAL POST endpoint and reloads the schedule 235ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > distinguishes a failed read from "no schedule generated" 228ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (UUID program) > reads the schedule by the program UUID and renders its milestones 186ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (UUID program) > a program with no project record says so, offers no generate, and is not an error 167ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > names the workspace after the organisation, verbatim 2ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > prefers the organisation slug so the two agree wherever a human reads both 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > falls back to the name when the organisation carries no usable slug 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > always yields a non-empty slug, because the column is NOT NULL 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > writes the organisation its own workspace when it has none 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > is idempotent: a second call links to the first row and writes nothing 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > NEVER adds a second workspace to an organisation that has exactly one 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > leaves a CRO's several client workspaces exactly as they are 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > scopes to the organisation: another tenant having one is not this one having one 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > reports a lost insert race as not-created rather than as a write 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > records the platform, not a person, when no user created the organisation 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the mark on the row is what keeps a CRO anchoring > marks every workspace it writes as the organisation’s own 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the mark on the row is what keeps a CRO anchoring > spells the marker key exactly as the anchor reader queries it 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'self-serve signup' calls ensureOrganizationDefaultWorkspace 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'first-run setup' calls ensureOrganizationDefaultWorkspace 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'boot seed' calls ensureOrganizationDefaultWorkspace 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > is called by the organisation creators and no one else (it enters whatever tenant it is given) 136ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > knows of no organisation creator that does not 144ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > enters the organisation's tenant BEFORE counting and BEFORE writing 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > enters it even when the organisation already has a workspace (the count is what it protects) 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > fails closed: a refused scope reads nothing and writes nothing 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId 0 before touching the store 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId -1 before touching the store 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId NaN before touching the store 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId 1.5 before touching the store 0ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows the program lead 24ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > DENIES an org member who is neither the lead nor a manager 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > allows an org manager who does not lead the program 7ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > denies when the program has no lead — unowned is not everyone-owned 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > 404s a program outside the caller org — never 403, which would confirm it exists 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > warn mode ALLOWS the denied request, so the rule can soak before it rejects 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > POST /:id/evidence — authorization > an unrecognized mode falls back to enforce rather than opening up 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > DENIES a non-lead, non-manager org member 4ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > DELETE /:id/evidence/:evId — authorization > allows the lead 8ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > program metadata is readable by a non-lead org member 7ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > team roster is readable by a non-lead org member 5ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > pinned evidence is readable by a non-lead org member 3ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > activity is readable by a non-lead org member 6ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > workstreams is readable by a non-lead org member 9ms
+ ✓ server/routes/c2c/__tests__/projects-authorization.test.ts > read routes stay ungated > drafts is readable by a non-lead org member 10ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 403 without org context 17ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 400 when projectId is missing — a project-readiness read requires it, no org-wide fallback 4ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 400 when projectId is not a positive integer 3ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > returns the real-store module map for the acting org + project, source = project_sections 5ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > honest empty list when the project tracks no CTD sections — no fallback data 3ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > resolves a program UUID through the anchor lookup — never parseInt — and reads the anchored project (F-7) 4ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > a program in the org with no PM-spine anchor answers an honest empty map that SAYS it is unanchored (F-7) 3ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > a program UUID that is not in the acting org answers 404, and nothing is read for it (F-7) 3ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > an id that parseInt would truncate ("12abc") is 400, never project 12 (F-7) 5ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > fails closed to an honest empty list when the store is not provisioned (42P01) 4ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > narrows threads and tasks to the program’s anchored project 56ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a program with no project record has an empty inbox here, and nothing is read for it 6ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a lookup that could not complete is a 500, never an empty inbox 11ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a programId that is not a program UUID is refused 4ms
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > with no programId the whole inbox is read, as before 5ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > selects the stored device columns and returns them for a 510(k) IVD program 26ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > a drug program is unchanged: existing keys present, device fields honestly null 6ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > serializeProgramDetail never invents: a metadata string that is not JSON, or a null, yields nulls 1ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > POST /api/c2c/projects — the create answers with the same serializer > 201 carries `program` from serializeProgramDetail, so the read returns what the write stored 26ms
+ ✓ tests/routes/ectd-export-governance.test.ts > eCTD export governance gate > blocks export in strict mode without human approval 9ms
+ ✓ tests/routes/ectd-export-governance.test.ts > eCTD export governance gate > allows export when strict mode disabled and sets governance headers 19ms
+ ✓ tests/routes/ectd-export-governance.test.ts > eCTD export governance gate > allows strict mode with approved governance evidence 6ms
+ ✓ tests/routes/ectd-export-governance.test.ts > eCTD export — a rehearsal says it is one > asks for the rehearsal state, and the download, headers and record name it 7ms
+ ✓ tests/routes/ectd-export-governance.test.ts > eCTD export — a rehearsal says it is one > without the flag, an export binds against filed sequences and says so 6ms
+ ✓ tests/routes/ectd-export-governance.test.ts > eCTD export — a rehearsal says it is one > a rehearsal of an original sequence is refused as a request error, not a server failure 3ms
+ ✓ tests/routes/export-governance-fail-closed.test.ts > export routes fail closed on governance registration > ectd-export refuses the package with EXPORT_GOVERNANCE_REQUIRED when governance registration fails 69ms
+ ✓ tests/routes/export-governance-fail-closed.test.ts > export routes fail closed on governance registration > ectd-export delivers the package once governance registration succeeds (positive control) 22ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > says so when the draft could not be saved 14ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > keeps the database error out of the customer sentence 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > gives the operator the cause it withholds from the customer 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a failed save never stops the turn from closing 3ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > survives a client that has already disconnected 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > announces the version when the save really happened 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > an unchanged draft is not a failure, and is not reported as one 1ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a missing project no longer skips silently — the client is told the save did not happen 0ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a program UUID resolves through the projects anchor and the draft IS saved 3ms
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a UUID with leading digits NEVER files to the integer project those digits spell 1ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11A — Migration file exists > migration SQL file is present 1ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11A — Migration file exists > migration file is non-trivial (> 500 bytes) 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11B — Migration: Phase 9 column additions > ALTERs concept2cure_artifacts to add approved_version_id 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11B — Migration: Phase 9 column additions > ALTERs concept2cure_artifacts to add published_version_id 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11B — Migration: Phase 9 column additions > ALTERs concept2cure_artifacts to add published_at 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11B — Migration: Phase 9 column additions > uses ADD COLUMN IF NOT EXISTS for idempotency 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > creates concept2cure_submission_snapshots table 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > has snapshot_id column 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > has artifact_id with REFERENCES 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > has version tracking columns 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > has integrity hash columns 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > has action_type column 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > has actor attribution columns 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > has attestation columns 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > uses IF NOT EXISTS for table creation 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11C — Migration: submission_snapshots table > creates proper indexes 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11D — Migration: review_comments table > creates concept2cure_review_comments table 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11D — Migration: review_comments table > has comment_id and comment columns 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11D — Migration: review_comments table > references concept2cure_artifacts and users 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11E — Migration idempotency > uses IF NOT EXISTS for all CREATE TABLE statements 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11E — Migration idempotency > uses IF NOT EXISTS for all CREATE INDEX statements 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11F — E2E spec file exists > governed-lifecycle.e2e.spec.ts exists 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11F — E2E spec file exists > imports from @playwright/test 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11F — E2E spec file exists > spec is non-trivial (> 2000 bytes) 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11G — E2E: full lifecycle coverage > tests artifact creation via API 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11G — E2E: full lifecycle coverage > tests artifact editing (version 2) 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11G — E2E: full lifecycle coverage > tests draft → review transition 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11G — E2E: full lifecycle coverage > tests review → approved transition 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11G — E2E: full lifecycle coverage > tests approved → locked transition 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11H — E2E: attestation in transitions > sends attestation object with approve 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11H — E2E: attestation in transitions > sends attestation with lock 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11H — E2E: attestation in transitions > verifies signature creation 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11I — E2E: snapshot verification > fetches /snapshots endpoint 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11I — E2E: snapshot verification > verifies snapshot has snapshotId 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11I — E2E: snapshot verification > verifies snapshot has contentHash 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11I — E2E: snapshot verification > verifies snapshot has attestation text 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11J — E2E: provenance verification > fetches /provenance endpoint 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11J — E2E: provenance verification > verifies event types 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11J — E2E: provenance verification > checks for generation event 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11K — E2E: reload persistence > re-fetches artifact after lifecycle to prove persistence 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11K — E2E: reload persistence > verifies status survives reload 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11K — E2E: reload persistence > verifies version survives reload 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11L — E2E: locked-document enforcement > tests that locked document blocks status transitions 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11L — E2E: locked-document enforcement > tests rollback on locked document is blocked 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11L — E2E: locked-document enforcement > expects 400/403/409 error on blocked operations 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11M — E2E: auth enforcement > tests role-based access for signatures 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11M — E2E: auth enforcement > checks for auth headers 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11N — E2E: browser UI verification > tests workspace shell visibility 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11N — E2E: browser UI verification > tests governed panel tab rendering 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11N — E2E: browser UI verification > includes login flow 0ms
+ ✓ tests/phase11-e2e-migration-hardening.test.ts > 11N — E2E: browser UI verification > checks for no React crashes 0ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when client stalls 7ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when project stalls 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when wisdom stalls 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > starts client recall before a stalled program resolution and never starts late project reads 3ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > shares one deadline across program resolution and dependent recall 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > keeps healthy wisdom when another source fails 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not allow a late timed-out result to fill the cache 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not cache degraded recall, allowing the next turn to recover 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > caches healthy empty recall and honors TTL and invalidation 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not query without an organization or share healthy recall between organizations 2ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 627ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 246ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 129ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 292ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 261ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 230ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage while the read is still in flight 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > does render the real figures once the read succeeds 19ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on title and hides the rest 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on the program code 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > does NOT match the lead field, which can hold an email address 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > names the query in the empty state instead of blaming the filters 36ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > resolves a numeric projects.id only when it belongs to the caller org 2ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > refuses a numeric projects.id that belongs to another org (cross-tenant IDOR) 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > resolves a program uuid through the canonical anchor reader 2ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > reports an unanchored program as a state, not an error or an empty answer 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor 0ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail names no internal column and says what the person can do 0ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > refuses ids that address neither spine 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > a numeric lookup that could not complete throws in strict mode — "could not tell" is not "not yours" 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > without strict, the same failure is still reported as unaddressable (degraded readers are unchanged) 2ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > strict reaches the anchor reader for a program uuid 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > an EU CTA is a CTA, not an NDA 4ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the eu_cta registry row actually carries a pathwayKey 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the eu_cta row no longer claims to be an eCTD five-module dossier 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > a 505(b)(2) is an NDA, a 351(k) is a BLA, a DMF is a master file — none of them is an IND 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the controls still map correctly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ctn_au is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cta_hc is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ctn_jp is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cta_nmpa is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_i routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iia routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iib routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iii routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_sig_change routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_clin_inv routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_a routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_b routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_cd routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cdx_ivdr_d routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivdr_perf_study routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivdr_pmpf routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivd_pms_plan routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > uk_ukca is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_shonin is a device filing with no defined pack and fails closed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > nmpa_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > tga_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > hc_mdl is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > br_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > nmpa_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > tga_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > hc_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivd_vigilance is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > no device or IVD filing resolves to a drug marketing application 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program UUID beginning with digits: every step gets its anchor row, never the integer its digits spell 25ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program with no anchor row: no step acts on any project 10ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a legacy integer project is itself, without the anchor 7ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a malformed project is no project 5ms
+   ✓ ind program BX-512: already carries 000512
+   ✓ ind program BX-512: submission 3 (anchored to its program), sequence 0000 already present
+ ✓ tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > anchors the submission it created before submissions.program_id, instead of creating a second one 4000ms
+   ✓ ind program BX-512: already carries 000512
+   ✓ ind program BX-512: submission 1 (created), sequence 0000 created (1)
+   ✓ ind program BX-512: already carries 000512
+   ✓ ind program BX-512: submission 1, sequence 0000 already present
+ ✓ tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > is idempotent: a second run changes nothing 2132ms
+   ✓ ind program BX-512: already carries 000512
+   ✓ ind program BX-512: submission 3 (created), sequence 0000 created (1)
+ ✓ tests/seed/ind-program-spine-anchor.test.ts > 111-ind-program seed — one submission per program across the anchor migration > never anchors a submission it cannot tell apart — two unanchored look-alikes are left alone 2095ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > asks for the open program by its UUID, verbatim, and renders the anchored map 48ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > an unanchored program is shown as "no section store", not as an empty dossier 13ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > a program whose anchored project tracks no sections keeps the genuine empty state 9ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > with no program open, nothing is fetched and the surface says so 8ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program UUID beginning with digits loads its anchor row's intelligence, never the integer its digits spell 8ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program with no anchor row loads no project intelligence 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a legacy integer project loads its own intelligence 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a malformed project id loads none 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > a program and the integer its digits spell are different cache entries 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > invalidating a program by its UUID clears its entry 0ms
+ ✓ server/services/c2c/__tests__/program-project-anchor-strict.test.ts > resolveProgramProjectAnchor — strict > a lookup that could not complete throws in strict mode 3ms
+ ✓ server/services/c2c/__tests__/program-project-anchor-strict.test.ts > resolveProgramProjectAnchor — strict > without strict, the same failure is still null (degraded readers are unchanged) 2ms
+ ✓ server/services/c2c/__tests__/program-project-anchor-strict.test.ts > resolveProgramProjectAnchor — strict > an absent anchor column is null in both modes — a schema fact, not a failure 2ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > takes the code written in the project name when the product has none (the QA case) 2ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > never derives a one-letter code from a single-word product name 1ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > prefers a code inside the product name over the project name 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > keeps a product name that is itself a code, exactly as before 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > keeps a multi-part code whole (QA DB, 2026-10-08: product "QA-SS-101" was saved as code "Q") 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > keeps initials for a several-word name with no code in it 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > does not read a target or a word as a code 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-code.test.ts > baseCodeFrom — the program code intake derives > falls back to PRJ only when there is nothing to derive from 0ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts > the write-back is handed the turn's answer check > the same check the message is stored with: what it found and what it did not 23ms
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > an integer is itself, with no read 3ms
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > a program UUID is its anchor row, read org-scoped, lower-cased; never the integer its digits spell 2ms
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > a program with no anchor row is no project 1ms
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > anything else is no project, with no read 1ms
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > loads the db only when an anchor read is needed 1ms
+ Test Files  44 passed (44)
+      Tests  817 passed (817)
+## node --test tests/ops/apply-c2c-migrations-manifest.test.mjs
+# tests 9
+# pass 9
+# fail 0

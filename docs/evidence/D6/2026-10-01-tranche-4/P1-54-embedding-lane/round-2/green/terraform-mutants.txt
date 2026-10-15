@@ -1,0 +1,148 @@
+# Mutation pass, 2026-10-01T16:12:08Z: each mutant applied to a scratch copy of the changed tree; the run written for it, alone, must FAIL. terraform 1.9.8, aws 5.70.0
+
+## mutant: the lane follows an OpenAI election
+## change: python3 -c "p='terraform/stack/main.tf';s=open(p).read();a='embedding_provider = \"local\"';assert a in s;open(p,'w').write(s.replace(a,'embedding_provider = var.openai_enabled ? \"openai\" : \"local\"'))"
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... in progress
+  run "an_openai_election_does_not_move_the_embedding_lane"... fail
+
+Error: Test assertion failed
+
+  on tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl line 144, in run "an_openai_election_does_not_move_the_embedding_lane":
+ 144:     condition = alltrue([
+ 145:       for defs in [module.ecs.api_container, module.ecs.worker_container] :
+ 146:       one([for e in defs.environment : e.value if e.name == "EMBEDDING_PROVIDER"]) == "local" &&
+ 147:       one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"]) == module.embeddings.base_url
+ 148:     ])
+    ├────────────────
+    │ module.ecs.api_container is object with 9 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+    │ module.embeddings.base_url is "http://embeddings.c2c-production.internal:8080/v1"
+
+An OpenAI election must leave both containers on the self-hosted embedding
+lane (ADR-0014 §1.5, amended 2026-10-01).
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... tearing down
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+
+## mutant: no precondition on the local approval
+## change: python3 -c "p='terraform/stack/main.tf';s=open(p).read();a='contains(try(jsondecode(var.ai_provider_placement_approvals)[\"local\"].approvedIntendedUses, []), \"embedding\")';assert a in s;open(p,'w').write(s.replace(a,'true'))"
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... in progress
+  run "refuses_placement_approvals_without_the_embedding_lane"... fail
+
+Error: Missing expected failure
+
+  on tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl line 142, in run "refuses_placement_approvals_without_the_embedding_lane":
+ 142:   expect_failures = [terraform_data.boot_contract]
+
+The checkable object, terraform_data.boot_contract, was expected to report an
+error but did not.
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... tearing down
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... in progress
+  run "refuses_a_local_approval_that_does_not_name_embedding"... fail
+
+Error: Missing expected failure
+
+  on tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl line 142, in run "refuses_a_local_approval_that_does_not_name_embedding":
+ 142:   expect_failures = [terraform_data.boot_contract]
+
+The checkable object, terraform_data.boot_contract, was expected to report an
+error but did not.
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... tearing down
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+
+## mutant: the precondition checks only that local is named
+## change: python3 -c "p='terraform/stack/main.tf';s=open(p).read();a='contains(try(jsondecode(var.ai_provider_placement_approvals)[\"local\"].approvedIntendedUses, []), \"embedding\")';assert a in s;open(p,'w').write(s.replace(a,'contains(try(keys(jsondecode(var.ai_provider_placement_approvals)), []), \"local\")'))"
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... in progress
+  run "refuses_a_local_approval_that_does_not_name_embedding"... fail
+
+Error: Missing expected failure
+
+  on tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl line 142, in run "refuses_a_local_approval_that_does_not_name_embedding":
+ 142:   expect_failures = [terraform_data.boot_contract]
+
+The checkable object, terraform_data.boot_contract, was expected to report an
+error but did not.
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... tearing down
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+
+## mutant: the containers are not told the model
+## change: python3 -c "p='terraform/stack/main.tf';s=open(p).read();a='    { name = \"EMBEDDING_LOCAL_MODEL\", value = module.embeddings.model_id },\n';assert a in s;open(p,'w').write(s.replace(a,''))"
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... in progress
+  run "the_api_and_worker_embed_through_the_self_hosted_lane"... fail
+
+Error: Test assertion failed
+
+  on tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 161, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 161:     condition = alltrue([
+ 162:       for defs in [module.ecs.api_container, module.ecs.worker_container] :
+ 163:       one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_MODEL"]) == one([for e in module.embeddings.container.environment : e.value if e.name == "MODEL_ID"])
+ 164:     ]) && module.embeddings.model_id == one(regex("SELF_HOSTED_EMBEDDING_MODEL[^=]*= \\{ model: '([^']+)'", file("../../server/services/embedding-corpus-policy.ts")))
+    ├────────────────
+    │ module.ecs.api_container is object with 9 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+    │ module.embeddings.container.environment is tuple with 6 elements
+    │ module.embeddings.model_id is "BAAI/bge-m3"
+
+EMBEDDING_LOCAL_MODEL must be the model the embedding server loads
+(MODEL_ID), and that must be the model the corpus policy names for the
+self-hosted lane.
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... tearing down
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+
+## mutant: the server loads another model than the corpus policy names
+## change: python3 -c "p='terraform/modules/embedding-service/variables.tf';s=open(p).read();a='default = \"BAAI/bge-m3\"';assert a in s;open(p,'w').write(s.replace(a,'default = \"BAAI/bge-large-en-v1.5\"'))"
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... in progress
+  run "the_api_and_worker_embed_through_the_self_hosted_lane"... fail
+
+Error: Test assertion failed
+
+  on tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 161, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 161:     condition = alltrue([
+ 162:       for defs in [module.ecs.api_container, module.ecs.worker_container] :
+ 163:       one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_MODEL"]) == one([for e in module.embeddings.container.environment : e.value if e.name == "MODEL_ID"])
+ 164:     ]) && module.embeddings.model_id == one(regex("SELF_HOSTED_EMBEDDING_MODEL[^=]*= \\{ model: '([^']+)'", file("../../server/services/embedding-corpus-policy.ts")))
+    ├────────────────
+    │ module.ecs.api_container is object with 9 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+    │ module.embeddings.container.environment is tuple with 6 elements
+    │ module.embeddings.model_id is "BAAI/bge-large-en-v1.5"
+
+EMBEDDING_LOCAL_MODEL must be the model the embedding server loads
+(MODEL_ID), and that must be the model the corpus policy names for the
+self-hosted lane.
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... tearing down
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+
+## mutant: an example drops the decided approval
+## change: python3 -c "p='terraform/environments/staging/terraform.tfvars.example';s=open(p).read();a='\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}';assert a in s;open(p,'w').write(s.replace(a,'\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"embedding\"]}'))"
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... in progress
+  run "the_environment_examples_show_the_decided_embedding_approval"... fail
+
+Error: Test assertion failed
+
+  on tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl line 139, in run "the_environment_examples_show_the_decided_embedding_approval":
+ 139:     condition = alltrue([
+ 140:       for env in ["production", "staging"] :
+ 141:       strcontains(file("../environments/${env}/terraform.tfvars.example"), "\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}")
+ 142:     ]) && jsondecode(var.ai_provider_placement_approvals)["local"] == jsondecode("{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}")
+    ├────────────────
+    │ var.ai_provider_placement_approvals is "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+
+Both terraform.tfvars.example files, and this suite's approvals, must carry
+the local embedding approval exactly as ADR-0014 §1.5 records it.
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... tearing down
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.

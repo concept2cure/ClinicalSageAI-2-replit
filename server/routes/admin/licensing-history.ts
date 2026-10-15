@@ -60,6 +60,13 @@
  *    another's. The store-wide walk answers "is anything broken"; when it is,
  *    each tenant on the page is walked on its own to place its rows.
  *
+ *    The walk cannot see the newest rows removed (security plan P0-8), so the
+ *    store-wide verdict also checks every chain head against the latest anchor
+ *    (services/audit/chain-anchor → verifyChainHead). A missing or changed
+ *    anchored head is `broken` / `chain-head-broken`. `head` says which: the
+ *    head was verified, found broken, or not verified (no anchor bucket, no
+ *    anchor yet), in which case the chain verdict is the walk only.
+ *
  *    2026-09-22 (tests/db/licensing-history.dbtest.ts): three ways this
  *    endpoint gave a verdict the walk had not earned were reproduced against a
  *    real database and closed — (a) a row AFTER a break in its tenant's chain
@@ -80,6 +87,7 @@ import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { verifyAuditIntegrity } from '../../services/audit/audit-integrity-service';
 import { verifyAuditChain } from '../../services/audit/chain';
+import { verifyChainHead } from '../../services/audit/chain-anchor';
 
 const logger = createScopedLogger('admin-licensing-history');
 const router = Router();
@@ -296,9 +304,17 @@ export interface IntegrityReport {
     | 'chain-and-seals-verified'
     | 'chain-verified-seals-not-configured'
     | 'chain-broken'
+    | 'chain-head-broken'
     | 'seal-broken'
     | 'store-too-large'
     | 'check-failed';
+  /**
+   * The chain heads against the latest anchor outside the database: verified,
+   * broken (an anchored head is missing or changed), or not-verified (no anchor
+   * to check against: the chain verdict is the walk only). null when nothing
+   * was checked.
+   */
+  head: 'verified' | 'broken' | 'not-verified' | null;
   /** Rows the walk re-derived. 0 when nothing was checked. */
   rowsChecked: number;
   /** When the walk ran. A page load may reuse a recent one; this says which. */
@@ -370,27 +386,31 @@ async function verifyStore(): Promise<IntegrityReport> {
         checkedAt,
         chainOk: null,
         sealsValid: null,
+        head: null,
       };
     } else {
       const result = await verifyAuditIntegrity(auditClient);
+      // The walk passes a chain whose newest rows were removed; the anchor does not.
+      const anchored = await verifyChainHead(auditClient);
+      const head: IntegrityReport['head'] =
+        anchored.status === 'broken' ? 'broken' : anchored.verified ? 'verified' : 'not-verified';
 
       // The seal half is fail-closed in exactly the way the service is: seals
       // that were not checked are NOT a pass, and are reported as their own
       // state rather than folded into "verified".
       const sealsValid = result.seals.checked ? result.seals.valid : null;
 
-      const status: IntegrityReport['status'] = !result.chain.ok
-        ? 'broken'
-        : sealsValid === false
-          ? 'broken'
-          : 'verified';
+      const status: IntegrityReport['status'] =
+        !result.chain.ok || head === 'broken' || sealsValid === false ? 'broken' : 'verified';
       const reason: IntegrityReport['reason'] = !result.chain.ok
         ? 'chain-broken'
-        : sealsValid === false
-          ? 'seal-broken'
-          : sealsValid === true
-            ? 'chain-and-seals-verified'
-            : 'chain-verified-seals-not-configured';
+        : head === 'broken'
+          ? 'chain-head-broken'
+          : sealsValid === false
+            ? 'seal-broken'
+            : sealsValid === true
+              ? 'chain-and-seals-verified'
+              : 'chain-verified-seals-not-configured';
 
       report = {
         status,
@@ -399,6 +419,7 @@ async function verifyStore(): Promise<IntegrityReport> {
         checkedAt,
         chainOk: result.chain.ok,
         sealsValid,
+        head,
       };
     }
   } catch (err) {
@@ -412,6 +433,7 @@ async function verifyStore(): Promise<IntegrityReport> {
       checkedAt,
       chainOk: null,
       sealsValid: null,
+      head: null,
     };
   }
 
@@ -657,6 +679,7 @@ router.get('/licensing/history', async (req: Request, res: Response) => {
         reason: integrity.reason,
         rowsChecked: integrity.rowsChecked,
         checkedAt: integrity.checkedAt,
+        head: integrity.head,
       },
     });
   } catch (err) {

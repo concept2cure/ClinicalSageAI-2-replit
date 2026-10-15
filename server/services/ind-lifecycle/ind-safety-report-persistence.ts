@@ -32,7 +32,7 @@ const logger = createScopedLogger('ind-safety-report-persistence');
 export type SafetyReportCtx = { organizationId: number; userId: number };
 
 export class SafetyReportError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'NOT_REPORTABLE', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'NOT_REPORTABLE' | 'NOT_DETERMINED', message: string) {
     super(message);
     this.name = 'SafetyReportError';
   }
@@ -61,6 +61,13 @@ export async function createSafetyReportDraft(
   });
   if (classification.obligation === 'NOT_REPORTABLE') {
     throw new SafetyReportError('NOT_REPORTABLE', 'Event is not an expedited IND Safety Report; nothing to persist.');
+  }
+  // P-20: an unassessed expectedness gives no verdict, so there is no report.
+  if (classification.obligation === 'NOT_DETERMINED') {
+    throw new SafetyReportError(
+      'NOT_DETERMINED',
+      'The expedited-reporting verdict is not determined: expectedness not assessed. Record expectedness against the IB / Reference Safety Information first; nothing was saved.',
+    );
   }
 
   const [row] = await db
@@ -140,7 +147,11 @@ export async function markSafetyReportFiled(
 /**
  * List a submission's safety reports that are not yet filed and whose deadline
  * has passed (the overdue-report compliance feed). Org-scoped; pure filtering
- * over the stored rows.
+ * over the stored rows. TRACKED REPORTS ONLY: an adverse event whose 7/15-day
+ * clock has lapsed with no drafted report is not here (and a NOT_DETERMINED
+ * event cannot be drafted), so its count is labelled as such wherever it is
+ * used (readiness warnings, the action item, the dashboard's
+ * overdueTrackedSafetyReports).
  */
 export async function listOverdueSafetyReports(
   submissionId: number,

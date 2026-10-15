@@ -15,8 +15,11 @@ import {
   getTenantProviderResolver,
   isClientSelectableProvider,
 } from '../services/ai-gateway/providers/provider-preference';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('platform-capabilities');
 const limiter = createRateLimiter();
 const AUTHOR = 'regulatory-author';
 
@@ -35,7 +38,7 @@ router.get('/ai-providers', limiter, requireRole(AUTHOR), async (req: Request, r
     const tenantDefault = await getTenantProviderResolver().resolve(orgId);
     res.json(getProviderCatalog(tenantDefault));
   } catch (err) {
-    res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Failed to load providers.' } });
+    return serverError(res, log, 'loading the AI provider catalog', err);
   }
 });
 
@@ -60,7 +63,7 @@ router.put('/ai-providers/preference', limiter, requireRole(AUTHOR), async (req:
     await resolver.setPreference(orgId, provider);
     res.json({ organizationId: orgId, provider });
   } catch (err) {
-    res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Failed to set preference.' } });
+    return serverError(res, log, 'setting the tenant AI provider', err);
   }
 });
 

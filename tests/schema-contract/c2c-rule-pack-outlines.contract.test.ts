@@ -40,6 +40,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scaffoldProjectDocuments } from '../../server/services/c2c/scaffold-project-documents';
+import { e3TopLevel } from '../../server/services/ind/ctd/csr-e3-guidance';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
@@ -855,5 +856,105 @@ describe('k510:fda and denovo:fda are eSTAR-era outlines', () => {
     const pack = await livePack('k510', 'fda');
     expect(pack.version).toBe('fda-510k-2024');
     expect(pack.labels.some((l) => /3514/.test(l))).toBe(true);
+  });
+});
+
+// ── Provenance: a CSR, an IB and a protocol are not ICH M4 documents ─────────
+//
+// 20260810c stamped every `version LIKE 'ich-m4-%'` pack 'ICH M4 …' /
+// harmonised_standard / high. The csr, ib and protocol packs carry that version
+// string only because 20260528 seeded them with it, so GET /api/c2c/rule-packs
+// served a high-confidence ICH M4 basis for three documents ICH M4 does not
+// structure. The csr pack is 8 of E3's 16 top-level headings. The amendment
+// narrows the M4 attestation and corrects the rows earlier deploys wrote.
+describe('the csr, ib and protocol packs do not claim ICH M4 provenance', () => {
+  const PROVENANCE = path.join(REPO_ROOT, 'migrations/20260810c_rule_pack_provenance.sql');
+  const REVIEW_ATTRIBUTION = path.join(REPO_ROOT, 'migrations/20260810d_rule_pack_review_attribution.sql');
+  const NOT_M4 = ['csr', 'ib', 'protocol'] as const;
+
+  async function provenanceOf(docType: string, agency = 'ich') {
+    const r = await pg.query<{
+      version: string; source_basis: string; confidence: string; review_status: string;
+      governing_rule: string | null; uncertainties: string | null;
+      required_sections: Array<{ key: string; parent_key: string | null }>;
+    }>(
+      `SELECT version, source_basis, confidence, review_status, governing_rule, uncertainties, required_sections
+         FROM c2c_rule_packs WHERE doc_type = $1 AND agency = $2 AND superseded_by IS NULL`,
+      [docType, agency],
+    );
+    expect(r.rows.length, `expected exactly one live ${docType}:${agency} pack`).toBe(1);
+    return r.rows[0];
+  }
+
+  beforeEach(async () => {
+    await boot();
+    await pg.exec(fs.readFileSync(PROVENANCE, 'utf8'));
+    await pg.exec(fs.readFileSync(REVIEW_ATTRIBUTION, 'utf8'));
+  });
+
+  it('none of the three is attested ICH M4, harmonised_standard or high', async () => {
+    for (const dt of NOT_M4) {
+      const p = await provenanceOf(dt);
+      expect(p.governing_rule ?? '', `${dt}:ich governing_rule`).not.toMatch(/ICH M4/);
+      expect(p.source_basis, `${dt}:ich source_basis`).not.toBe('harmonised_standard');
+      expect(p.confidence, `${dt}:ich confidence`).toBe('low');
+      expect(p.source_basis, `${dt}:ich source_basis`).toBe('reasoned_construction');
+      // Not a sign-off, and the 20260810d attribution constraint stays satisfied.
+      expect(p.review_status, `${dt}:ich review_status`).toBe('unreviewed');
+    }
+  });
+
+  it('the csr pack names E3 and states its coverage against the E3 tree, from the data', async () => {
+    const p = await provenanceOf('csr');
+    const e3 = e3TopLevel().map((s) => s.number);
+    const roots = p.required_sections.filter((s) => s.parent_key === null).map((s) => s.key);
+    // Every root is a real E3 top-level number; the pack is a subset, not a different tree.
+    expect(roots.every((k) => e3.includes(k))).toBe(true);
+    expect(roots.length).toBeLessThan(e3.length);
+    expect(p.governing_rule).toMatch(/ICH E3/);
+    // The coverage figure in the attestation is the one the rows and the tree give.
+    expect(p.governing_rule).toContain(`${roots.length} of ${e3.length} top-level sections`);
+    expect(p.governing_rule).toContain('server/services/ind/ctd/csr-e3-guidance.ts');
+  });
+
+  it('the ib and protocol packs name their real basis as partial', async () => {
+    expect((await provenanceOf('ib')).governing_rule).toMatch(/ICH E6\(R3\) Appendix A.*partial/);
+    expect((await provenanceOf('protocol')).governing_rule).toMatch(/ICH M11.*E6\(R3\) Appendix B.*partial/);
+  });
+
+  it('a database an earlier deploy already stamped ICH M4 is corrected on the next run', async () => {
+    // What the pre-amendment file left behind. Step 1 only COALESCEs NULLs, so
+    // narrowing step 2 alone would leave these values in place forever.
+    await pg.exec(`
+      UPDATE c2c_rule_packs SET
+        source_basis = 'harmonised_standard', confidence = 'high',
+        governing_rule = 'ICH M4 — Organisation of the Common Technical Document for the Registration of Pharmaceuticals for Human Use'
+       WHERE doc_type IN ('csr','ib','protocol') AND agency = 'ich';
+    `);
+    await pg.exec(fs.readFileSync(PROVENANCE, 'utf8'));
+    await pg.exec(fs.readFileSync(REVIEW_ATTRIBUTION, 'utf8'));
+    for (const dt of NOT_M4) {
+      const p = await provenanceOf(dt);
+      expect(p.governing_rule ?? '', `${dt}:ich after replay`).not.toMatch(/ICH M4/);
+      expect(p.confidence, `${dt}:ich after replay`).toBe('low');
+    }
+  });
+
+  it('re-running the file is a no-op on the corrected rows', async () => {
+    const before = await Promise.all(NOT_M4.map((dt) => provenanceOf(dt)));
+    await pg.exec(fs.readFileSync(PROVENANCE, 'utf8'));
+    const after = await Promise.all(NOT_M4.map((dt) => provenanceOf(dt)));
+    expect(after).toEqual(before);
+  });
+
+  it('the real CTD packs keep their ICH M4 attestation (the narrowing is not a blanket removal)', async () => {
+    for (const dt of ['mod2', 'mod3']) {
+      const p = await provenanceOf(dt);
+      expect(p.governing_rule, `${dt}:ich`).toMatch(/^ICH M4 /);
+      expect(p.source_basis, `${dt}:ich`).toBe('harmonised_standard');
+      expect(p.confidence, `${dt}:ich`).toBe('high');
+    }
+    const ind = await provenanceOf('ind', 'mhra');
+    expect(ind.governing_rule).toMatch(/^ICH M4 /);
   });
 });

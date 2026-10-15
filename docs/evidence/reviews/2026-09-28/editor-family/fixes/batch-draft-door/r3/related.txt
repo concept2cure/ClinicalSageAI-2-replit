@@ -1,0 +1,6 @@
+stderr | server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > PATCH /:sectionId — section edit > FAIL-CLOSED: a failed version write rolls the content write back
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > PATCH /:sectionId — section edit > FAIL-CLOSED: a failed version write rolls the content write back 27ms
+ ✓ server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts > sealVerifiedVersion attributes the text it seals > FAILS CLOSED — a broken lineage write rolls the seal back, signature included 20ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a CANCELLED tool is not reported as a FAILED tool 1ms
+ Test Files  225 passed | 1 skipped (226)
+      Tests  3337 passed | 3 skipped (3340)

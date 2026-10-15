@@ -1,0 +1,322 @@
+Round 6's suites, green, on the round-6 tree (merged with trunk d11ee2368): round 6's three suites, every tool-selection, tool-trace, self-drive and turn-plan suite, chat-path parity, and every stream-route suite.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ana/__tests__/tool-selection{,-carry-over,-context,-routing}.test.ts server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts server/services/ana/__tests__/{self-drive-regressions,turn-plan-and-context,tool-trace-run-policy,tool-trace-stopped-turn}.test.ts tests/services/tool-trace.test.ts server/routes/__tests__/chat-path-parity.test.ts server/routes/ana-ri/__tests__/stream-*.test.ts
+
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the EU?" is still offered get_cmc_requirements 8ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and as a victim?" is still offered assess_ddi_risk 12ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "what about with itraconazole?" is still offered assess_ddi_risk 7ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and with 80% power?" is still offered estimate_sample_size 6ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the drug product?" is still offered design_stability_study 9ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "now the toxicology part" is still offered draft_nonclinical_overview_m2_4 8ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "go on" is still offered explain_cmc_topic 5ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > a bare continuation is offered the carried tool first, right after the always-on core and the pins 3ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carries at most 4, in the order carried, inside the cap 4ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carried tools never cost a question its own tools near the end of its slots 14ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > offers a carried tool once, though the current request also selects it 5ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > never offers a carried name outside the governed set, nor carries an unhealthy one ahead 1ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > with nothing carried the selection is what it was 20ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > reads the eval 0ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'prepare_fda_form' after any other topic 102ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'amend_fda_form' after any other topic 103ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_forms' after any other topic 105ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'search_grants_gov' after any other topic 124ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'screen_restricted_party' after any other topic 118ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'triage_compliance_attention' after any other topic 124ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 106ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 101ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 100ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 100ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 111ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 119ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 110ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 115ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 93ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 101ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'explain_cmc_topic' after any other topic 120ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 90ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 90ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 79ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 99ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 4951ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4) 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 1ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 102ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 87ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 91ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 98ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 90ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "auto" → runPolicy "auto" 58ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "manual" → runPolicy "manual" 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "AUTO" → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "" → runPolicy null 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy undefined → runPolicy null 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold before a step that already goes to a person 38ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold while a demonstration drives 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > a person pausing a Manual turn is a person, not the policy 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > Auto and no policy never hold on their own 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > under Auto the same steer does not replace anything: it applies after the step 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > a person's own pause in a Manual turn ends it the same way 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > the same pause under Auto is resumed as abandoned, as today 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > an approval nobody answers ends the turn with a closing answer 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, the same unanswered approval is a denial and the turn goes on 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > past 15 minutes of work the next call is the closing answer 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > time held for a person is not work 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, a long step is not a stop 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Auto keeps going past the effort ceiling while each round is new, to 20 rounds 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy the same turn keeps its effort ceiling (balanced: 6 + 2) 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Manual keeps the effort ceiling too 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads null (not a person's pause): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written though the row reads running, twice: fails closed, never runs unasked 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written (holdForPerson threw): fails closed 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "failed" — no person answered: fails closed 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "finished" — no person answered: fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as null — no person answered: fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold: Next is shown, and Resume answers it 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > Stop at a hold: not run, named on done, and the hold filed as stopped 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her step 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2c) a demonstration the model starts does not switch Manual off > Manual with Live Drive on (not a demo), round 1 starts a demo: a hold is still due before round 2 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the always-on bridge + core are always offered 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the surface is genuinely over the cap (filtering actually engages) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_fda_form'" for: "'prepare FDA form 1571 as an editable …'" 14ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'amend_fda_form'" for: "'amend this FDA form with a reason for…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_forms'" for: "'list all FDA forms available in the c…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_effort_certification'" for: "'open a time and effort certification …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_coi_disclosure'" for: "'file a foreign appointment conflict o…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'search_grants_gov'" for: "'search grants.gov for posted cancer f…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'screen_restricted_party'" for: "'screen this vendor against the SAM.go…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'research_compliance_briefing'" for: "'what needs my attention across resear…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'open_grant_closeout'" for: "'open the grant closeout and track the…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'request_no_cost_extension'" for: "'request a no cost extension to extend…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_grant_budget'" for: "'reconcile the budget versus actual ex…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_expenditure'" for: "'record an actual expenditure booked a…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_subaward'" for: "'record a subaward to a subrecipient u…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'register_controlled_substance'" for: "'register a schedule II controlled sub…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'fulfill_regulatory_commitment'" for: "'mark this PMR regulatory commitment f…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_ha_interaction'" for: "'is this FDA formal meeting interactio…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_cost_share_contribution'" for: "'record an institutional cost share co…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_training_gate'" for: "'review the training gate, is the PI c…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_opportunity'" for: "'record this grants.gov funding opport…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'assess_study_onboarding'" for: "'what approvals and training do we nee…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_award_closeout'" for: "'can we close out this grant award yet…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_meeting_package'" for: "'are we ready for the FDA meeting, do …'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'triage_compliance_attention'" for: "'triage the critical compliance attent…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what has to go in section 12.2 advers…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what should the summary of clinical e…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'we just locked the database, what hap…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'what is blocking the clinical overvie…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'will our dossier pass FDA technical v…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'why would the FDA gateway reject our …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > each record tool is in the launch-scoped pool (so the cases below cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the ISS'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should I write the clinical overv…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what does FDA want in 2.7.4'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how do I structure a CSR'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'help me write the quality overall sum…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should the investigator brochure …'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'review my clinical overview'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'list_fda_technical_rules'" for: "'will my submission be rejected'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'plan_submission_from_database_lock'" for: "'what do I do after database lock'" 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 77ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a draft written before anything was consulted is not checked — never found 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a proposal that stores no prose carries no check 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model 38ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a held governed call records the same: the only path a confirm-class draft takes in production 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be persisted, the held call names no conversation — never the client's thread id 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs 7ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > names the tools a round ran when the model wrote no text before calling them 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > treats whitespace-only narration as no narration 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > names a tool once however many times the round called it 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > is still non-empty when there is neither text nor a result to name 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > passes real narration through unchanged — it is what the model said 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > continues past maxRounds once the floor rises mid-turn 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > never lowers maxRounds — a floor below it changes nothing 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > without a floor the ceiling holds exactly as before 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > the surface is over the cap, so filtering is really engaged 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > names exactly the six tools that move and operate a screen 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "go to biostatistics" 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "open settings" 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "show me around the product" 6ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "search the vault for stability" 11ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "switch to the billing tab" 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "run the sales demo" 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > pinned, they survive when the turn carries project context (IND) 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > none of them is always-on — voice and deep investigations cannot drive 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins nothing is not handed them for a turn with no screen in it 9ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > both routes that can surface a move pin them 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > navigate_to refuses a locked target with no directive to apply 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > list_app_screens does not offer a locked screen 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > act_on_screen refuses an action whose screen is locked 39ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > the demonstration tools drop scripts that would walk onto a locked screen 25ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > with no program open and none named, asks which — listing this org's programs 8ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > opens the named program — by code — on the directive 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > refuses to guess between several matches 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > says so when nothing matches, with the programs that do exist 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > never resolves another organisation's program 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > a global screen needs no program 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > turnState — "open BX-301, then take me to its Vault" > act_on_screen projects.open-program sets the turn's program, and navigate_to follows it 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — screenActions on arrival > lists the destination's registry actions so the next move needs no discovery round 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is not sent back to the model as a failure to work around 58ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is shown to the person as their decision, not as AnA failing 21ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > nobody answering in time is not a failure to work around either 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > control: an approved action that then fails is still a failure > stays in the adaptation note, so a real error is not hidden 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 37ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a demonstration keeps its follow-up rounds as narration: no reasoning display there 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a Fast turn reasons on no call 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > a turn that is not high-stakes keeps the effort chosen 5ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the platform command bridge (the command registry; a typed tool it drops is not reachable through it) 8ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the core search/guidance/authoring tools 8ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > surfaces the nonclinical tools for a nonclinical turn 7ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > surfaces clin-pharm tools for a DDI / QTc turn, and respects the cap 7ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > returns the full surface unchanged below the cap 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > returns only the always-on set when the query carries no intent signal 1ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > passes everything through when disabled via env 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the user-pinned tools from the picker 10ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > selects by context (document type) even when the message is terse 4ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > getToolCatalog > groups the surface into categories for the picker 5ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > getToolCatalog > routes representative tools to sensible categories 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > keeps a healthy relevant tool over an unhealthy one when over the cap 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > without deprioritization, ranks purely by relevance (stable order) 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > never drops an always-on tool even if marked unhealthy (capability guarantee) 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > generate_document — no from-scratch regulatory artefacts > no longer offers ectd_backbone or icsr as document types 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 40ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a search that found nothing is named in the note the next call reads 38ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a round where every step returned something carries no note 7ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' calls sessionBootstrapBlockFor 3ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' calls sessionBootstrapBlockFor 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the gate 4ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' assembles its tools through governedToolsetFor 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' assembles its tools through governedToolsetFor 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' does not assemble the raw tool surface itself 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' does not assemble the raw tool surface itself 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > every composer of the AnA tool surface goes through the helper 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the realtime turn runs in the tenant scope its socket was authenticated for 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper applies the deny-list and says why it does not apply the allowlist 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' gives IND/NDA/BLA chats the one submission context block 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' gives IND/NDA/BLA chats the one submission context block 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the submission context 5ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper still owns the gate, the kill-switch and the failure path 1ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > an object never adds the word "object" 31ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > hints that are not a list do not throw, and a list keeps only its strings 15ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > the tools that succeeded, most recent first, each once 1ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > never a step a person declined (recorded as an error), and nothing from no steps 1ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > stores all three with the reason and rounds 2ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > a finished Manual turn keeps its policy and holds, and no reason 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > a turn with no policy stores exactly what it stored before 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > keeps only well-formed labels and holds 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > an unknown policy is not stored 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > a Manual hold nobody answered 1ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > Manual that could not hold 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > Auto's time limit and an unanswered approval 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > names the policy on the older reasons too, and only when there is one 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > no reserved-reason fallback remains for the policy reasons 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the turn record says why in words, with the policy, the round and the steps > each of her own holds is written down: what she held before, and what the person did 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > names the steps a hold left unrun and says nothing from them was used 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > budget_exhausted is an unfinished turn 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > approval_timeout is an unfinished turn 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > hold_expired is an unfinished turn 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > hold_unavailable is an unfinished turn 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the next turn is told what did not run > ignores a malformed step list 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a person's pause that expired is the person's pause, not AnA waiting before her step 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a steer that replaced a step before it was shown is not written as a stop she made 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a hold ended by Stop, or by the page closing, says the step was not run 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a Stop at a hold names the step it left unrun 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > the new outcomes are kept with the message; an unknown one is not 0ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the record states durations from the shared ceilings, never as literals > tool-trace.ts has no hard-coded minute count 1ms
+ ✓ server/services/ana/__tests__/tool-trace-run-policy.test.ts > the record states durations from the shared ceilings, never as literals > turn-run-policy.ts has no hard-coded minute count 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > normalises titles and keeps the declared order and statuses 2ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses no steps 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an empty list 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses a step with no title 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an unknown status 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses duplicate titles 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses more than the cap 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > clips an over-long title rather than overflowing the panel 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > the handler reports the plan as recorded, with no completion it was not given 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits for a successful update_plan call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for another tool 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a failed call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a cancelled call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a result that is not ok 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for an unparseable result 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > survives relevance trimming 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > names drafting and project search by what they act on 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > labels the step by its size, not as a raw tool name 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > counts unresolved uploads and keeps the content/name distinction 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > a failed memory read is unavailable, never "none" 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > lists the memory items the assembler rendered, and drops what the budget cut 2ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores the last validated plan on the assistant metadata 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores nothing for a turn that declared no plan 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > reads the refusal a handler returned instead of throwing 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > is null for a result that did not refuse 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a round-limit stop and the rounds it ran 6ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a repeated-step stop, and a stop the person made 1ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > omits the reason when she finished herself, and keeps the rounds 1ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores nothing new for a turn that ran no tools and ended normally 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps a stop even when nothing else about the turn was worth storing 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps no round count that is not a positive whole number 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a round-limit stop, with its rounds, and says not to reuse the work as complete 1ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names the limit without a number when the rounds were not kept 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a repeated-step stop 1ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a turn she finished, or one the person stopped 1ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a stored reason that names an Object.prototype member 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > reads only the LAST assistant turn — an earlier stop was already followed by a later answer 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says the answer was written from the work so far, for the round limit and the repeat guard 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says a stop between rounds as one, and a stop before the first round without claiming a round 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says nothing for a turn she finished 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > a loop that ended for want of tools, on an answer that was cut off, did not finish 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > an answer that ended on its own, or whose ending is unknown, leaves the reason as it was 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > a stop the loop already reports stands — it already says the turn stopped short 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > the next turn is told, and the record says, that the answer was cut off 0ms
+ ✓ tests/services/tool-trace.test.ts > summarizeToolResult > summarizes known result shapes 2ms
+ ✓ tests/services/tool-trace.test.ts > summarizeToolResult > falls back to truncated text for non-JSON or opaque results 1ms
+ ✓ tests/services/tool-trace.test.ts > buildTraceEntry > captures the tool, label, status and a result summary 1ms
+ ✓ tests/services/tool-trace.test.ts > collectTracesFromHistory > extracts traces from assistant message metadata, most recent last 1ms
+ ✓ tests/services/tool-trace.test.ts > collectTracesFromHistory > ignores messages without a trace and caps the number of entries 1ms
+ ✓ tests/services/tool-trace.test.ts > collectTracesFromHistory > returns nothing when no message carries a trace 0ms
+ ✓ tests/services/tool-trace.test.ts > formatTraceForContext > formats a continuity note and marks non-success entries 0ms
+ ✓ tests/services/tool-trace.test.ts > formatTraceForContext > separates successful tools from failed attempts with distinct guidance 0ms
+ ✓ tests/services/tool-trace.test.ts > formatTraceForContext > omits the reuse section entirely when every attempt failed 1ms
+ ✓ tests/services/tool-trace.test.ts > formatTraceForContext > returns an empty string when there is nothing to carry forward 0ms
+ ✓ tests/services/tool-trace.test.ts > buildAssistantMetadata > returns undefined when there is nothing worth storing 0ms
+ ✓ tests/services/tool-trace.test.ts > buildAssistantMetadata > stores the tool trace alone when no claims were checked 0ms
+ ✓ tests/services/tool-trace.test.ts > buildAssistantMetadata > stores the grounding verdict alongside the trace when claims were checked 0ms
+ ✓ tests/services/tool-trace.test.ts > buildAssistantMetadata > stores grounding even when the trace is empty 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 38ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not 6ms
+ Test Files  20 passed (20)
+      Tests  317 passed (317)

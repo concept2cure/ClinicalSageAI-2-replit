@@ -1,0 +1,369 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 1311ms
+   → handler refused: Refused: No creator is recorded for this package, so nobody can be shown to be independent of it and it cannot be transmitted. Nothing was transmitted.: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 3ms
+   → Cannot read properties of undefined (reading 'body')
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 5ms
+   → expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'TRANSMIT_FAILED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle 5ms
+   → expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'TRANSMIT_FAILED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 2ms
+   → expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 2ms
+   → expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 3ms
+   → expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'TRANSPORT_NOT_VERIFIED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 2ms
+   → expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 7ms
+   → handler refused: Refused: No creator is recorded for this package, so nobody can be shown to be independent of it and it cannot be transmitted. Nothing was transmitted.: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > a signer who declared Authorship is recorded as Authorship on the ledger, the signature row and the transmittal 2ms
+   → handler refused: Refused: A transmission to the agency is a release, not an authorship attestation; it cannot be signed with the meaning 'authorship'. Sign it as release, approval or responsibility. Nothing was transmitted.: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > the dialog's raw token is not a meaning the signature writer accepts — the route's mapping is what makes it one 2ms
+   → expected [] to have a length of 1 but got +0
+ ✓ tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > imports nothing, so client and server can both use it 3ms
+ × tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > lists exactly the regulator hosts the record accepts 17ms
+   → expected [ 'canada.ca', …(12) ] to deeply equal [ 'database.ich.org', …(11) ]
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts regulator-text with a regulator URL (subdomains included) and a checked date 2ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts regulator-text read from a vendored regulator artifact with a checked date 2ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text without a checked date 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text with neither a URL nor a vendored artifact 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text whose URL is not on a regulator host, including look-alikes 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a URL that does not parse or is not http(s) 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a checked value that is not a real ISO calendar date 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a vendored path that is absolute or leaves the repository 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses an empty ref and an unknown confidence 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts recall and platform convention with no URL or date, and with a secondary-source URL 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > says a recalled fact was not checked against the regulator text 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > says a platform convention is not a regulatory requirement 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > gives the checked date for well-formed regulator text 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > never presents a malformed regulator-text claim as checked 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > ind/ctd/types.ts declares no provenance type of its own 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > the types are identical 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > every basis constant the CSR record ships is well formed under the shared rules 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > the IVD Citation carries provenance from the same type > confidence and checked are typed from shared/regulatory/regulatory-basis 0ms
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — cold start > returns rule-based + cold_start predictions when no model and no priors exist
+{
+  "timestamp": "2026-10-07T17:07:15.101Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 9 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — network prior available, model untrained > uses the network prior as the predicted probability
+{
+  "timestamp": "2026-10-07T17:07:15.111Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 9 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — trained model + prior > blends the local model with the network prior weighted by sample size
+{
+  "timestamp": "2026-10-07T17:07:15.113Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 9 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — persistence > writes a risk_predictions row on every score call
+{
+  "timestamp": "2026-10-07T17:07:15.115Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: PMA, 0 sections",
+  "context": {}
+}
+
+stdout | server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — band derivation > escalates the band as risk probability rises
+{
+  "timestamp": "2026-10-07T17:07:15.122Z",
+  "level": "info",
+  "message": "[validate-completeness] VALIDATE-COMPLETENESS: NDA, 0 sections",
+  "context": {}
+}
+
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — cold start > returns rule-based + cold_start predictions when no model and no priors exist 11ms
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — network prior available, model untrained > uses the network prior as the predicted probability 2ms
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — trained model + prior > blends the local model with the network prior weighted by sample size 2ms
+ × server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — persistence > writes a risk_predictions row on every score call 7ms
+   → Predictive RTF/CRL scoring refused: PMA (Premarket Approval Application) is a device pathway; its completeness is assessed by assessEstarFilingReadiness (server/services/pathway-engines/estar/estar-filing-readiness.ts), not by a CTD section checklist.
+ ✓ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — band derivation > escalates the band as risk probability rises 1ms
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names every authoring trigger file the registry names, literally 3812ms
+   → [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied 158ms
+   → [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1) 171ms
+   → [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger 166ms
+   → [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not 137ms
+   → [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again 129ms
+   → [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers 208ms
+   → [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table 143ms
+   → [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 21 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > lists exactly the regulator hosts the record accepts
+AssertionError: expected [ 'canada.ca', …(12) ] to deeply equal [ 'database.ich.org', …(11) ]
+
+- Expected
++ Received
+
+@@ -1,6 +1,7 @@
+  [
++   "canada.ca",
+    "database.ich.org",
+    "ecfr.gov",
+    "ema.europa.eu",
+    "esubmission.ema.europa.eu",
+    "eur-lex.europa.eu",
+
+ ❯ tests/regulatory/regulatory-basis.test.ts:48:41
+     46|
+     47|   it('lists exactly the regulator hosts the record accepts', () => {
+     48|     expect([...REGULATOR_HOSTS].sort()).toEqual(
+       |                                         ^
+     49|       [
+     50|         'fda.gov',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope
+AssertionError: handler refused: Refused: No creator is recorded for this package, so nobody can be shown to be independent of it and it cannot be transmitted. Nothing was transmitted.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:296:56
+    294|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    295|
+    296|     expect(r.success, `handler refused: ${r.message}`).toBe(true);
+       |                                                        ^
+    297|
+    298|     // 1. The bytes actually reached the transport.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder
+TypeError: Cannot read properties of undefined (reading 'body')
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:349:36
+    347|     // exact bytes that went out.
+    348|     const signer = createSign('RSA-SHA256');
+    349|     signer.update(httpsRequests[0].body);
+       |                                    ^
+    350|     expect(signer.sign(privateKeyPem, 'base64').length).toBeGreaterTha…
+    351|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error
+AssertionError: expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'TRANSMIT_FAILED' // Object.is equality
+
+Expected: "TRANSMIT_FAILED"
+Received: "SIGNER_INDEPENDENCE_UNRESOLVED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:363:21
+    361|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    362|     expect(r.success).toBe(false);
+    363|     expect(r.error).toBe('TRANSMIT_FAILED');
+       |                     ^
+    364|     expect(r.data).toBeUndefined();
+    365|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle
+AssertionError: expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'TRANSMIT_FAILED' // Object.is equality
+
+Expected: "TRANSMIT_FAILED"
+Received: "SIGNER_INDEPENDENCE_UNRESOLVED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:386:21
+    384|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    385|     expect(r.success).toBe(false);
+    386|     expect(r.error).toBe('TRANSMIT_FAILED');
+       |                     ^
+    387|     expect(r.message).toMatch(/may hold it/);
+    388|     expect(r.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing
+AssertionError: expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+
+Expected: "GATEWAY_NOT_CONFIGURED"
+Received: "SIGNER_INDEPENDENCE_UNRESOLVED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:410:21
+    408|
+    409|     expect(r.success).toBe(false);
+    410|     expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
+       |                     ^
+    411|     for (const v of [
+    412|       'FDA_ESG_URL',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates
+AssertionError: expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+
+Expected: "GATEWAY_NOT_CONFIGURED"
+Received: "SIGNER_INDEPENDENCE_UNRESOLVED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:445:21
+    443|     const r = await esgTransmit(SIGNED_CTX as any, { ...TRANSMIT_PARAM…
+    444|     expect(r.success).toBe(false);
+    445|     expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
+       |                     ^
+    446|     expect(r.message).toContain('FDA_ESG_STAGING_URL');
+    447|     expect(httpsRequests).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier
+AssertionError: expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'TRANSPORT_NOT_VERIFIED' // Object.is equality
+
+Expected: "TRANSPORT_NOT_VERIFIED"
+Received: "SIGNER_INDEPENDENCE_UNRESOLVED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:462:21
+    460|
+    461|     expect(r.success).toBe(false);
+    462|     expect(r.error).toBe('TRANSPORT_NOT_VERIFIED');
+       |                     ^
+    463|     expect(r.message).toMatch(/Nothing was transmitted/);
+    464|     expect(r.message).toMatch(/has not been verified/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables
+AssertionError: expected 'SIGNER_INDEPENDENCE_UNRESOLVED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+
+Expected: "GATEWAY_NOT_CONFIGURED"
+Received: "SIGNER_INDEPENDENCE_UNRESOLVED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:474:21
+    472|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    473|     expect(r.success).toBe(false);
+    474|     expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
+       |                     ^
+    475|     expect(r.message).toContain('FDA_ESG_REST_URL');
+    476|     expect(r.message).not.toContain('FDA_ESG_AS2_FROM');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data
+AssertionError: handler refused: Refused: No creator is recorded for this package, so nobody can be shown to be independent of it and it cannot be transmitted. Nothing was transmitted.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:548:58
+    546|
+    547|       const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    548|       expect(r.success, `handler refused: ${r.message}`).toBe(true);
+       |                                                          ^
+    549|       expect(httpsRequests).toHaveLength(1);
+    550|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > a signer who declared Authorship is recorded as Authorship on the ledger, the signature row and the transmittal
+AssertionError: handler refused: Refused: A transmission to the agency is a release, not an authorship attestation; it cannot be signed with the meaning 'authorship'. Sign it as release, approval or responsibility. Nothing was transmitted.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:598:56
+    596|
+    597|     const r = await esgTransmit(ctxDeclaring('authorship') as any, TRA…
+    598|     expect(r.success, `handler refused: ${r.message}`).toBe(true);
+       |                                                        ^
+    599|
+    600|     const ledger = recordGovernedAction.mock.calls[0]![1] as any;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > the dialog's raw token is not a meaning the signature writer accepts — the route's mapping is what makes it one
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:625:27
+    623|     // Refused before any signature INSERT, and the sign transaction r…
+    624|     // back — after the bytes had already reached the agency.
+    625|     expect(httpsRequests).toHaveLength(1);
+       |                           ^
+    626|     expect(poolQueries.some((q) => q.sql.includes('INSERT INTO electro…
+    627|     expect(poolQueries.some((q) => q.sql.trim() === 'ROLLBACK')).toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/21]⎯
+
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names every authoring trigger file the registry names, literally
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1)
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table
+error: [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 239, severity: 'ERROR', code: 'P0001', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'PL/pgSQL function inline_code_block line 4 at RAISE', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'pl_exec.c', routine: 'exec_stmt_raise', query: '-- ============================================================================\n-- 20261005c_cmc_module3_history_append_only.sql\n--\n-- 21 CFR Part 11 §11.10(e) / §11.70; EU Annex 11 §9: the Module 3 signed\n-- section snapshots and the Module 3 provenance trail are append-only in the\n-- database, not by convention.\n--\n-- WHY (GA security review 2026-10-05, DP-84; rows D2, D5, D6; evidence\n-- docs/evidence/CMC-M3-GA/2026-10-05/19-module3-history-append-only/):\n--   cmc_module3_section_versions holds the snapshot a section approval signs\n--   (its content digest is what the electronic_signatures row binds), and\n--   cmc_provenance_events holds who compiled, approved, placed, linked and\n--   resolved what. Neither carried a trigger, and the runtime role holds\n--   UPDATE and DELETE on every public table. Reproduced on PostgreSQL 16 as\n--   app_service (NOSUPERUSER NOBYPASSRLS), under RLS, in its own tenant:\n--   UPDATE 1 and DELETE 1 on a signed snapshot and on a provenance event.\n--\n--   table                         created by\n--   cmc_module3_section_versions  db/migrations/20260401_cmc_convergence_os.sql\n--   cmc_provenance_events         db/migrations/20260401_cmc_convergence_os.sql\n--\n-- POLICY: strictly append-only. UPDATE and DELETE refused per row, TRUNCATE\n-- per statement, for every role. A correction is a new row: a recompile writes\n-- a new section version, a resolution writes a new provenance event.\n--\n-- NO DOOR, BECAUSE NO PATH NEEDS ONE. Census of 2026-10-05 (server/, shared/,\n-- scripts/, both appliers\' files): every writer INSERTs and nothing else —\n--   cmc_module3_section_versions  api/cmc/module3OperatingSystemRoutes.ts (section approval)\n--   cmc_provenance_events         api/cmc/module3OperatingSystemRoutes.ts (approval),\n--                                 services/cmc/module3-compile.ts (compile),\n--                                 services/cmc-write-through.ts (register write-through),\n--                                 services/cmc/contradiction-lifecycle.ts (resolution),\n--                                 services/cmc/place-module3-into-submission.ts (placement),\n--                                 services/module3-convergence-service.ts (two)\n-- No UPDATE, DELETE, TRUNCATE, upsert or FOR UPDATE of either; no migration on\n-- either applier mutates their rows; the tenant purge (PURGE_CHILD_TABLES,\n-- server/services/tenant/tenant-offboarding.ts) lists neither. Only test\n-- fixtures delete them. A purge that must remove them gets a door then, as the\n-- turn records\' did (06152498), not a hole now.\n--\n-- CASCADE. cmc_module3_section_versions.section_id → cmc_module3_sections\n-- ON DELETE CASCADE. Nothing deletes a section. With this trigger, deleting a\n-- section that HAS signed versions is refused with them: the snapshot outlives\n-- the section row, as 20260929 applies to an artifact\'s signatures.\n--\n-- Reuses public.domain_history_append_only() from\n-- migrations/20261001_domain_history_append_only.sql (earlier in this set): one\n-- refusal for every append-only domain store, with the table\'s name in it.\n--\n-- Idempotent and replay-safe (CLAUDE.md Rule 1): per table DROP TRIGGER IF\n-- EXISTS of this file\'s own names, then CREATE TRIGGER, so each deploy also\n-- re-arms a trigger someone disabled. Each table guarded with to_regclass.\n-- Creates no table and drops nothing another file creates.\n-- The runtime role\'s ceiling (SELECT, INSERT) is APPEND_ONLY_TABLES in\n-- scripts/db/provision-app-role.mjs.\n-- Pinned by tests/db/cmc-module3-history-append-only.dbtest.ts.\n-- ============================================================================\n\nDO $$\nBEGIN\n  IF to_regprocedure(\'public.domain_history_append_only()\') IS NULL THEN\n    RAISE EXCEPTION \'[cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.\';\n  END IF;\nEND;\n$$;\n\n-- ── cmc_module3_section_versions ────────────────────────────────────────────\nDO $$\nBEGIN\n  IF to_regclass(\'public.cmc_module3_section_versions\') IS NULL THEN\n    RAISE NOTICE \'[cmc-m3-append-only] public.cmc_module3_section_versions not present — nothing to protect.\';\n    RETURN;\n  END IF;\n  DROP TRIGGER IF EXISTS trg_cmc_module3_section_versions_append_only ON public.cmc_module3_section_versions;\n  CREATE TRIGGER trg_cmc_module3_section_versions_append_only\n    BEFORE UPDATE OR DELETE ON public.cmc_module3_section_versions\n    FOR EACH ROW EXECUTE FUNCTION public.domain_history_append_only();\n  DROP TRIGGER IF EXISTS trg_cmc_module3_section_versions_no_truncate ON public.cmc_module3_section_versions;\n  CREATE TRIGGER trg_cmc_module3_section_versions_no_truncate\n    BEFORE TRUNCATE ON public.cmc_module3_section_versions\n    FOR EACH STATEMENT EXECUTE FUNCTION public.domain_history_append_only();\nEND;\n$$;\n\n-- ── cmc_provenance_events ───────────────────────────────────────────────────\nDO $$\nBEGIN\n  IF to_regclass(\'public.cmc_provenance_events\') IS NULL THEN\n    RAISE NOTICE \'[cmc-m3-append-only] public.cmc_provenance_events not present — nothing to protect.\';\n    RETURN;\n  END IF;\n  DROP TRIGGER IF EXISTS trg_cmc_provenance_events_append_only ON public.cmc_provenance_events;\n  CREATE TRIGGER trg_cmc_provenance_events_append_only\n    BEFORE UPDATE OR DELETE ON public.cmc_provenance_events\n    FOR EACH ROW EXECUTE FUNCTION public.domain_history_append_only();\n  DROP TRIGGER IF EXISTS trg_cmc_provenance_events_no_truncate ON public.cmc_provenance_events;\n  CREATE TRIGGER trg_cmc_provenance_events_no_truncate\n    BEFORE TRUNCATE ON public.cmc_provenance_events\n    FOR EACH STATEMENT EXECUTE FUNCTION public.domain_history_append_only();\nEND;\n$$;\n', params: undefined, queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/21]⎯
+
+ FAIL  server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts > scoreSubmissionDraft — persistence > writes a risk_predictions row on every score call
+CompletenessNotAssessedError: Predictive RTF/CRL scoring refused: PMA (Premarket Approval Application) is a device pathway; its completeness is assessed by assessEstarFilingReadiness (server/services/pathway-engines/estar/estar-filing-readiness.ts), not by a CTD section checklist.
+ ❯ scoreSubmissionDraft server/services/intelligence/regulatory-intelligence.ts:248:46
+    246|   const result = await validateCompletenessEngine.validate(validateInp…
+    247|   // Fail closed: no profile, no checklist, no prediction (DECISIONS.m…
+    248|   if (!isCompletenessAssessed(result)) throw new CompletenessNotAssess…
+       |                                              ^
+    249|   const completeness = result;
+    250|   // The agency the completeness was judged for — the profile's home a…
+ ❯ server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts:188:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { completeness: { submissionType: 'PMA', targetAgency: 'FDA', assessment: { status: 'not_assessed', reason: 'PMA (Premarket Approval Application) is a device pathway; its completeness is assessed by assessEstarFilingReadiness (server/services/pathway-engines/estar/estar-filing-readiness.ts), not by a CTD section checklist.', assessWith: { engine: 'assessEstarFilingReadiness', module: 'server/services/pathway-engines/estar/estar-filing-readiness.ts', route: 'POST /api/510k/estar/filing-readiness' } }, checklist: [], rtfRisk: null, goNoGo: { decision: 'not_assessed', readinessScore: null, rationale: 'Not assessed. PMA (Premarket Approval Application) is a device pathway; its completeness is assessed by assessEstarFilingReadiness (server/services/pathway-engines/estar/estar-filing-readiness.ts), not by a CTD section checklist.', conditions: [ 'Assess with assessEstarFilingReadiness: POST /api/510k/estar/filing-readiness' ], blockers: [], risks: [] }, summary: null }, code: 'COMPLETENESS_NOT_ASSESSED', statusCode: 422, status: 422 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/21]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  21 failed | 27 passed (48)
+   Start at  13:07:06
+   Duration  14.30s (transform 3.85s, setup 179ms, import 6.22s, tests 6.43s, environment 1ms)

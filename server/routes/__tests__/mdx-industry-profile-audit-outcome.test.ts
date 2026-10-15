@@ -40,7 +40,9 @@ beforeAll(async () => {
   app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).user = { id: 3, organizationId: 7 };
+    // An administrator: both industry-profile PATCH routes are role-gated
+    // (mdx-industry-profile-role-gate.test.ts); this file is about the audit row.
+    (req as any).user = { id: 3, organizationId: 7, role: 'admin' };
     next();
   });
   app.use('/api/mdx', router);

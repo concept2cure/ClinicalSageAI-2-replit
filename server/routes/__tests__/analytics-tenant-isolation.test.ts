@@ -71,16 +71,24 @@ describe('analytics tenant isolation — csr_reports is org-scoped', () => {
     expect(whereCalls.length).toBeGreaterThan(0);
   });
 
-  it('GET /export refuses (403) without org context', async () => {
-    const res = await request(appWith(null)).get('/api/analytics/export?type=summary&format=json');
-    expect(res.status).toBe(403);
-    expect(res.body.code).toBe('ORG_REQUIRED');
-    expect(whereCalls.length).toBe(0);
-  });
-
-  it('GET /export with org context proceeds to the scoped reads', async () => {
-    const res = await request(appWith(7)).get('/api/analytics/export?type=summary&format=json');
-    expect(res.status).not.toBe(403);
-    expect(whereCalls.length).toBeGreaterThan(0);
+  /* GET /export was retired on 2026-10-01. No screen called it and nothing
+     recorded what it sent, and its type=predictive branch answered every tenant,
+     as JSON, CSV or PDF, with hard-coded figures presented as computed: an
+     overall-survival effect size of 0.42 (CI 0.35-0.49, "reliability High") and
+     "a minimum sample size of 150 participants per arm". The summary aggregates
+     are /dashboard's (above); a governed, recorded export is Reporting's
+     (routes/report-os.ts). */
+  it.each([
+    ['predictive', 'json'],
+    ['predictive', 'csv'],
+    ['predictive', 'pdf'],
+    ['summary', 'json'],
+    ['summary', 'csv'],
+    ['summary', 'pdf'],
+  ])('GET /export?type=%s&format=%s is not served, and serves no figure', async (type, format) => {
+    const res = await request(appWith(7)).get(`/api/analytics/export?type=${type}&format=${format}`);
+    expect(res.status).toBe(404);
+    expect(res.text).not.toMatch(/predictedEffectSize|Overall Survival|150 participants/);
+    expect(res.headers['content-type'] ?? '').not.toMatch(/application\/pdf|text\/csv/);
   });
 });

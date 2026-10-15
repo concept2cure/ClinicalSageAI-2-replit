@@ -24,6 +24,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  */
 
 const mockQuery = vi.fn();
+/* The project guard (PF-15) admits this suite's fixture project; its refusals
+   are in module3ProjectScope.test.ts. */
+vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));
 vi.mock('../../../db', () => ({
   getPool: () => ({ query: mockQuery, connect: async () => ({ query: mockQuery, release: vi.fn() }) }),
 }));

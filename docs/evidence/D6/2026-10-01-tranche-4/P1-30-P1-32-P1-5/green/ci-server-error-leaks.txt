@@ -1,0 +1,3 @@
+[ci:server-error-leaks] OK — 48 baselined site(s) across 46 file(s); no file gained one.
+[ci:server-error-leaks] 48 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0

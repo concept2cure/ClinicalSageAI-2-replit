@@ -1,0 +1,157 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > matches a literal canonical descriptor without acceptance time or source content 3ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > makes key order and null prototypes canonical-equivalent to the literal reference 7ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > binds each immutable source, actor, range, payload and serving identity including receipt ID 24ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > returns deeply frozen private copies while leaving the caller mutable 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > takes the private canonical UTF-8 snapshot before the digest awaits 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > preserves one to eight disjoint and adjacent ranges including a late window 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > refuses empty, excess, sparse, accessor, subclass and extra-property arrays without getter execution 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > refuses invalid, overlapping, unsorted and out-of-bounds UTF-16 coordinates 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > refuses root extensions, missing fields, non-data properties and inherited shapes 6ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > refuses non-exact range records without evaluating their getters 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > bounds organization, actor and text length to positive int32 without coercion 2ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > requires exact UUID and SHA256 shapes on all identity fields 4ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > accepts only numeric version 2 and the host-budget checkpoint 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > canonicalizes bounded Unicode role metadata without granting authority 2ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > preserves bounded context code points and refuses controls or isolated surrogates 3ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > distinguishes UTF-16 shape validation from actual source-slice hashing 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-dto.test.mts > independent exact-source admission descriptor controls > sanitizes reflection exceptions and diagnostics without leaking caller data 1ms
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > unrelated permission and integrity errors refuse acknowledgement and commit
+{
+  "timestamp": "2026-10-14T21:34:45.901Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "permission denied for function private_source_check"
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > unrelated permission and integrity errors refuse acknowledgement and commit
+{
+  "timestamp": "2026-10-14T21:34:45.909Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "synthetic check constraint failure"
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > zero, null, ambiguous and mismatched actual store RETURNING refuse
+{
+  "timestamp": "2026-10-14T21:34:45.912Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "This source admission identity cannot be reused for the supplied metadata. No new receipt was acknowledged."
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > zero, null, ambiguous and mismatched actual store RETURNING refuse
+{
+  "timestamp": "2026-10-14T21:34:45.915Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "Source admission receipt persistence could not be confirmed. No new receipt was acknowledged."
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > zero, null, ambiguous and mismatched actual store RETURNING refuse
+{
+  "timestamp": "2026-10-14T21:34:45.917Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "Source admission receipt persistence could not be confirmed. No new receipt was acknowledged."
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > zero, null, ambiguous and mismatched actual store RETURNING refuse
+{
+  "timestamp": "2026-10-14T21:34:45.919Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "Source admission receipt persistence could not be confirmed. No new receipt was acknowledged."
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > same-length extraction replacement refuses before either INSERT
+{
+  "timestamp": "2026-10-14T21:34:45.922Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > cancel after V2 append refuses COMMIT and new count
+{
+  "timestamp": "2026-10-14T21:34:45.924Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > uncertain COMMIT has no acknowledged durable notification
+{
+  "timestamp": "2026-10-14T21:34:45.931Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "synthetic commit acknowledgement unavailable"
+  }
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > revocation after actual deferral blocks persistence
+{
+  "timestamp": "2026-10-14T21:34:45.934Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "82828282-1111-4111-8111-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > actual default selected settlement stores a late exact viewer slice and commits before notification 30ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > flag off and truthy near-matches stay legacy-only 3ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > caller receipt identity cannot mint server origin for the V2 writer 2ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > genuine deferral replaces body identity and preserves it during private snapshot retry 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > two actual deferrals get different admission identities 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > fresh custom role supersedes body and stale request role claims 6ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > actual store retry distinguishes existing same-ID history from a new row 4ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > ordinary legacy INSERT policy denial is isolated and reported without legacy persistence 4ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > unrelated permission and integrity errors refuse acknowledgement and commit 16ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > zero, null, ambiguous and mismatched actual store RETURNING refuse 9ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > same-length extraction replacement refuses before either INSERT 3ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > cancel after V2 append refuses COMMIT and new count 2ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > uncertain COMMIT has no acknowledged durable notification 8ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > revocation after actual deferral blocks persistence 2ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-integration.test.mts > held-out durable writer boundary > positive read-only handoff verification commits and releases without rollback 1ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-ancestry.test.mts > independent merged recorded-parent and actor controls > an exact artifact/file relationship resolves legacy numeric scope and fails after its private share is removed 105ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-ancestry.test.mts > independent merged recorded-parent and actor controls > coincident numeric project IDs cannot replace the exact artifact and upload identity 35ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-ancestry.test.mts > independent merged recorded-parent and actor controls > a creator-owned unbound capture retains a same-byte private ancestor even when deleted=false 38ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-ancestry.test.mts > independent merged recorded-parent and actor controls > a creator-owned unbound capture retains a same-byte private ancestor even when deleted=true 36ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-ancestry.test.mts > independent merged recorded-parent and actor controls > a custom persisted role can read its explicit share while inactive current actor refuses unchanged source metadata 28ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-ancestry.test.mts > independent merged recorded-parent and actor controls > disposition reserves impacts before holding actor rows and refuses a persisted downgrade after that checkpoint 94ms
+
+ Test Files  3 passed (3)
+      Tests  38 passed (38)
+   Start at  21:34:40
+   Duration  12.11s (transform 3.33s, setup 0ms, import 7.27s, tests 3.84s, environment 0ms)
+

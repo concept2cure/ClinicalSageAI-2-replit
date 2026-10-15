@@ -1,0 +1,24 @@
+# GREEN — real PostgreSQL 16.13: the anchor writer and verifier, and the existing chain dbtest beside it
+# 2026-10-01T07:00:06Z
+$ npx vitest run --config vitest.db.config.ts server/services/audit/__tests__/chain-anchor.dbtest.ts server/services/audit/__tests__/chain-concurrency.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 44ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 285ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 40ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 25ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 41ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 37ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 55ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 19ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 1. eight concurrent writers of one tenant never fork the chain 99ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 2. chain order is commit order, not occurred_at order 39ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 3. tenant-scoped (RLS) and unscoped connections write one verifiable chain per tenant 98ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 4. a connection whose search_path puts another schema first still takes the head in chain order 55ms
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  07:00:07
+   Duration  2.96s (transform 389ms, setup 153ms, import 845ms, tests 1.26s, environment 0ms)
+

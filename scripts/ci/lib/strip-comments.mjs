@@ -3,7 +3,7 @@
  * every string literal as written.
  *
  * Gates that scan code for a pattern strip comments first, so that prose
- * naming the pattern is not a violation. The regex most of them use,
+ * naming the pattern is not a violation. The regex most of them used,
  * /\/\*[\s\S]*?\*\//g, does not know about strings: a literal such as
  * 'https://*.neon.tech' or '/api/advisory/*' opens a "comment" that runs to
  * the next real `*` `/`, and the code in between is never scanned. On
@@ -11,20 +11,39 @@
  * ci:client-ip-single-source, the security middleware among them. A
  * forwarding-header read added there would have passed the gate.
  *
- * This walks the text instead: quote-, template- and escape-aware.
+ * This walks the text instead: quote-, template-, escape- and regex-aware.
  *
- * Approximation: regex literals are not tokenized. A quote inside /…/ can
- * open a string that is not one. The failure is in the safe direction: a
- * comment inside the mis-paired span is scanned as code, so the result can
- * be a false positive, never a hidden violation. Characters after a
- * backslash are skipped everywhere, so `\/\/` inside a regex does not read
- * as a line comment.
+ * Regex literals (2026-10-05). A `/` starts a regex literal when the token
+ * before it cannot end an expression: start of input, an operator or opening
+ * punctuation, or a keyword such as `return` (the rule every JS tokenizer
+ * without a parser uses). The literal runs to the next unescaped `/` outside a
+ * character class, on the same line; if the line ends first, the `/` was
+ * division after all and is read as one character. Before this, a quote inside
+ * a regex — /['"`]/ — opened a "string" that mis-paired every quote after it,
+ * so a later real string holding a `/*` read as a comment and the code behind
+ * it was blanked. Measured against the TypeScript parser over every tracked
+ * JS/TS file (8,186), that hid code on 10 lines in 3 files; with regex
+ * literals recognised it hides none.
+ *
+ * Remaining approximation: `)`, `]` and an identifier are always read as
+ * ending an expression, so a regex directly after `if (…)` is read as
+ * division; `}` is read as ending a block. When that misreads, quotes inside
+ * the regex can still mis-pair.
+ *
+ * Options:
+ *   lineComments: 'blank' (default) replaces a // comment with spaces, so
+ *     columns stay true. 'drop' deletes it to the end of its line, so a gate
+ *     that measures a character window does not spend the window on a note.
+ *     Line numbers are kept either way.
  */
-export function stripComments(src) {
+export function stripComments(src, { lineComments = 'blank' } = {}) {
   const out = src.split('');
   const n = src.length;
   const blank = (from, to) => {
     for (let k = from; k < to; k++) if (out[k] !== '\n') out[k] = ' ';
+  };
+  const drop = (from, to) => {
+    for (let k = from; k < to; k++) out[k] = '';
   };
   let i = 0;
   while (i < n) {
@@ -36,7 +55,7 @@ export function stripComments(src) {
     if (c === '/' && src[i + 1] === '/') {
       const nl = src.indexOf('\n', i);
       const end = nl === -1 ? n : nl;
-      blank(i, end);
+      (lineComments === 'drop' ? drop : blank)(i, end);
       i = end;
       continue;
     }
@@ -47,6 +66,13 @@ export function stripComments(src) {
       i = end;
       continue;
     }
+    if (c === '/' && regexMayStart(src, i)) {
+      const end = skipRegex(src, i);
+      if (end !== -1) {
+        i = end;
+        continue;
+      }
+    }
     if (c === "'" || c === '"' || c === '`') {
       i = skipString(src, i, c);
       continue;
@@ -54,6 +80,58 @@ export function stripComments(src) {
     i++;
   }
   return out.join('');
+}
+
+/** Keywords after which a `/` begins a regex literal, not a division. */
+const REGEX_AFTER_WORD = new Set([
+  'return', 'typeof', 'instanceof', 'in', 'of', 'new', 'delete', 'void',
+  'throw', 'case', 'do', 'else', 'yield', 'await',
+]);
+/** Punctuation after which a `/` begins a regex literal. */
+const REGEX_AFTER_PUNCT = new Set('(,=:[!&|?{};+-*%~^<>'.split(''));
+
+/** Whether the `/` at `at` can open a regex literal, judged by the token before it. */
+function regexMayStart(src, at) {
+  let k = at - 1;
+  while (k >= 0 && /\s/.test(src[k])) k--;
+  if (k < 0) return true;
+  const prev = src[k];
+  // JSX closing tags (`</div>`) put `<` right before the slash: not a regex.
+  if (prev === '<' && k === at - 1) return false;
+  if (REGEX_AFTER_PUNCT.has(prev)) return true;
+  if (/[A-Za-z_$]/.test(prev)) {
+    let s = k;
+    while (s > 0 && /[A-Za-z0-9_$]/.test(src[s - 1])) s--;
+    return REGEX_AFTER_WORD.has(src.slice(s, k + 1));
+  }
+  return false;
+}
+
+/** Index just past the regex literal (and its flags) opening at `start`, or -1 if none closes on this line. */
+function skipRegex(src, start) {
+  const n = src.length;
+  let i = start + 1;
+  let inClass = false;
+  if (src[i] === '/' || src[i] === '*') return -1;
+  while (i < n) {
+    const ch = src[i];
+    if (ch === '\n' || ch === '\r') return -1;
+    if (ch === '\\') {
+      i += 2;
+      continue;
+    }
+    if (inClass) {
+      if (ch === ']') inClass = false;
+    } else if (ch === '[') {
+      inClass = true;
+    } else if (ch === '/') {
+      i++;
+      while (i < n && /[a-z]/i.test(src[i])) i++;
+      return i;
+    }
+    i++;
+  }
+  return -1;
 }
 
 /** Index just past the string literal that opens at `start`. */

@@ -1,0 +1,1088 @@
+﻿2026-10-09T21:59:00.6822142Z Current runner version: '2.337.0'
+2026-10-09T21:59:00.6859759Z ##[group]Runner Image Provisioner
+2026-10-09T21:59:00.6861333Z Hosted Compute Agent
+2026-10-09T21:59:00.6862463Z Version: 20261002.596
+2026-10-09T21:59:00.6864152Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+2026-10-09T21:59:00.6865568Z Build Date: 2026-10-02T22:28:27Z
+2026-10-09T21:59:00.6866872Z Worker ID: {d61cbf4f-217f-4bdb-9d18-d26a1c624244}
+2026-10-09T21:59:00.6868603Z Region: canadaeast
+2026-10-09T21:59:00.6869808Z Cloud: Azure
+2026-10-09T21:59:00.6870782Z ##[endgroup]
+2026-10-09T21:59:00.6873438Z ##[group]Operating System
+2026-10-09T21:59:00.6874645Z Ubuntu
+2026-10-09T21:59:00.6875817Z 24.04.5
+2026-10-09T21:59:00.6876808Z LTS
+2026-10-09T21:59:00.6878053Z ##[endgroup]
+2026-10-09T21:59:00.6879210Z ##[group]Runner Image
+2026-10-09T21:59:00.6880329Z Image: ubuntu-24.04
+2026-10-09T21:59:00.6881482Z Version: 20261004.327.1
+2026-10-09T21:59:00.6883821Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-09T21:59:00.6886752Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+2026-10-09T21:59:00.6888875Z ##[endgroup]
+2026-10-09T21:59:00.6891477Z ##[group]GITHUB_TOKEN Permissions
+2026-10-09T21:59:00.6894525Z Actions: read
+2026-10-09T21:59:00.6895738Z Contents: read
+2026-10-09T21:59:00.6896756Z Metadata: read
+2026-10-09T21:59:00.6898026Z SecurityEvents: write
+2026-10-09T21:59:00.6899349Z ##[endgroup]
+2026-10-09T21:59:00.6902315Z Secret source: Actions
+2026-10-09T21:59:00.6904055Z Cache mode: write
+2026-10-09T21:59:00.6905356Z Prepare workflow directory
+2026-10-09T21:59:00.7476319Z Prepare all required actions
+2026-10-09T21:59:00.7546908Z Getting action download info
+2026-10-09T21:59:01.0085577Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-09T21:59:01.1060963Z Download action repository 'actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b' (SHA:f28e40c7f34bde8b3046d885e986cb6290c5673b)
+2026-10-09T21:59:01.4224768Z Download action repository 'github/codeql-action@c4dd10e44af883a891fe31ced449bcb4a6728b9b' (SHA:c4dd10e44af883a891fe31ced449bcb4a6728b9b)
+2026-10-09T21:59:01.9577839Z Download action repository 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-09T21:59:02.1954873Z Complete job name: Analyze (Semgrep)
+2026-10-09T21:59:02.2536509Z ##[group]Checking docker version
+2026-10-09T21:59:02.2550386Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2026-10-09T21:59:02.3649052Z '1.48'
+2026-10-09T21:59:02.3661399Z Docker daemon API version: '1.48'
+2026-10-09T21:59:02.3662954Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2026-10-09T21:59:02.3833006Z '1.48'
+2026-10-09T21:59:02.3848384Z Docker client API version: '1.48'
+2026-10-09T21:59:02.3854895Z ##[endgroup]
+2026-10-09T21:59:02.3858778Z ##[group]Clean up resources from previous jobs
+2026-10-09T21:59:02.3864967Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=882229"
+2026-10-09T21:59:02.4010958Z ##[command]/usr/bin/docker network prune --force --filter "label=882229"
+2026-10-09T21:59:02.4145282Z ##[endgroup]
+2026-10-09T21:59:02.4146292Z ##[group]Create local container network
+2026-10-09T21:59:02.4158330Z ##[command]/usr/bin/docker network create --label 882229 github_network_0652bd772f3a4a4e8b5a6ad9462e3258
+2026-10-09T21:59:02.4699759Z d94077e7fbd09d695ab30e28240dbbebf5ff0dfa98b5e4bf2851b861888578d8
+2026-10-09T21:59:02.4721108Z ##[endgroup]
+2026-10-09T21:59:02.4747817Z ##[group]Starting job container
+2026-10-09T21:59:02.4771847Z ##[command]/usr/bin/docker pull semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+2026-10-09T21:59:02.8113664Z docker.io/semgrep/semgrep@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198: Pulling from semgrep/semgrep
+2026-10-09T21:59:02.9436573Z e6f31ffc071e: Pulling fs layer
+2026-10-09T21:59:02.9438688Z c99587e2f1a4: Pulling fs layer
+2026-10-09T21:59:02.9440151Z bd9ddc54bea9: Pulling fs layer
+2026-10-09T21:59:02.9441629Z 084b49e0f217: Pulling fs layer
+2026-10-09T21:59:02.9443087Z 017f2f3badb9: Pulling fs layer
+2026-10-09T21:59:02.9444507Z 49d304e88a85: Pulling fs layer
+2026-10-09T21:59:02.9445939Z 4d8e903c73eb: Pulling fs layer
+2026-10-09T21:59:02.9447769Z ca088dc29a89: Pulling fs layer
+2026-10-09T21:59:02.9449032Z 101a07067531: Pulling fs layer
+2026-10-09T21:59:02.9450087Z 2161ff2ba716: Pulling fs layer
+2026-10-09T21:59:02.9451169Z b343805976d3: Pulling fs layer
+2026-10-09T21:59:02.9452104Z 86de964fd639: Pulling fs layer
+2026-10-09T21:59:02.9453050Z e3cf999f99d9: Pulling fs layer
+2026-10-09T21:59:02.9454020Z 084b49e0f217: Waiting
+2026-10-09T21:59:02.9454955Z 017f2f3badb9: Waiting
+2026-10-09T21:59:02.9455870Z 49d304e88a85: Waiting
+2026-10-09T21:59:02.9456655Z 4d8e903c73eb: Waiting
+2026-10-09T21:59:02.9457723Z ca088dc29a89: Waiting
+2026-10-09T21:59:02.9458685Z 101a07067531: Waiting
+2026-10-09T21:59:02.9459637Z 2161ff2ba716: Waiting
+2026-10-09T21:59:02.9460559Z b343805976d3: Waiting
+2026-10-09T21:59:02.9461358Z 86de964fd639: Waiting
+2026-10-09T21:59:02.9462282Z e3cf999f99d9: Waiting
+2026-10-09T21:59:03.1409732Z bd9ddc54bea9: Verifying Checksum
+2026-10-09T21:59:03.1412589Z bd9ddc54bea9: Download complete
+2026-10-09T21:59:03.1801419Z e6f31ffc071e: Verifying Checksum
+2026-10-09T21:59:03.1802258Z e6f31ffc071e: Download complete
+2026-10-09T21:59:03.2663240Z 084b49e0f217: Verifying Checksum
+2026-10-09T21:59:03.2664921Z 084b49e0f217: Download complete
+2026-10-09T21:59:03.3068258Z c99587e2f1a4: Verifying Checksum
+2026-10-09T21:59:03.3513532Z c99587e2f1a4: Download complete
+2026-10-09T21:59:03.3514349Z e6f31ffc071e: Pull complete
+2026-10-09T21:59:03.4440364Z 4d8e903c73eb: Verifying Checksum
+2026-10-09T21:59:03.4442141Z 4d8e903c73eb: Download complete
+2026-10-09T21:59:03.5384018Z ca088dc29a89: Verifying Checksum
+2026-10-09T21:59:03.5384728Z ca088dc29a89: Download complete
+2026-10-09T21:59:03.6281922Z 101a07067531: Verifying Checksum
+2026-10-09T21:59:03.7238858Z 101a07067531: Download complete
+2026-10-09T21:59:03.7239670Z 2161ff2ba716: Verifying Checksum
+2026-10-09T21:59:03.7240258Z 2161ff2ba716: Download complete
+2026-10-09T21:59:03.8199007Z b343805976d3: Verifying Checksum
+2026-10-09T21:59:03.8200607Z b343805976d3: Download complete
+2026-10-09T21:59:03.9108364Z 86de964fd639: Verifying Checksum
+2026-10-09T21:59:03.9110419Z 86de964fd639: Download complete
+2026-10-09T21:59:04.0082722Z e3cf999f99d9: Verifying Checksum
+2026-10-09T21:59:04.0085077Z e3cf999f99d9: Download complete
+2026-10-09T21:59:04.0259218Z 017f2f3badb9: Verifying Checksum
+2026-10-09T21:59:04.0274033Z 017f2f3badb9: Download complete
+2026-10-09T21:59:04.2610861Z 49d304e88a85: Verifying Checksum
+2026-10-09T21:59:04.2612109Z 49d304e88a85: Download complete
+2026-10-09T21:59:08.5829270Z c99587e2f1a4: Pull complete
+2026-10-09T21:59:08.5950670Z bd9ddc54bea9: Pull complete
+2026-10-09T21:59:08.6244786Z 084b49e0f217: Pull complete
+2026-10-09T21:59:09.3848125Z 017f2f3badb9: Pull complete
+2026-10-09T21:59:15.2794543Z 49d304e88a85: Pull complete
+2026-10-09T21:59:15.3427875Z 4d8e903c73eb: Pull complete
+2026-10-09T21:59:15.3604194Z ca088dc29a89: Pull complete
+2026-10-09T21:59:15.3710798Z 101a07067531: Pull complete
+2026-10-09T21:59:15.3789093Z 2161ff2ba716: Pull complete
+2026-10-09T21:59:15.3908006Z b343805976d3: Pull complete
+2026-10-09T21:59:15.3986392Z 86de964fd639: Pull complete
+2026-10-09T21:59:15.4069654Z e3cf999f99d9: Pull complete
+2026-10-09T21:59:15.4108654Z Digest: sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+2026-10-09T21:59:15.4114080Z Status: Downloaded newer image for semgrep/semgrep@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+2026-10-09T21:59:15.4124057Z docker.io/semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+2026-10-09T21:59:15.4206409Z ##[command]/usr/bin/docker create --name ec85d092dc7646269d3c02c9b96472bb_semgrepsemgrep11770sha256acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198_559685 --label 882229 --workdir /__w/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit --network github_network_0652bd772f3a4a4e8b5a6ad9462e3258  -e "HOME=/github/home" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work":"/__w" -v "/home/runner/actions-runner/cached/2.337.0/externals":"/__e":ro -v "/home/runner/work/_temp":"/__w/_temp" -v "/home/runner/work/_actions":"/__w/_actions" -v "/opt/hostedtoolcache":"/__t" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" --entrypoint "tail" semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198 "-f" "/dev/null"
+2026-10-09T21:59:15.4462962Z 9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc
+2026-10-09T21:59:15.4486026Z ##[command]/usr/bin/docker start 9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc
+2026-10-09T21:59:15.6536379Z 9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc
+2026-10-09T21:59:15.6574997Z ##[command]/usr/bin/docker ps --all --filter id=9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2026-10-09T21:59:15.6706763Z 9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc Up Less than a second
+2026-10-09T21:59:15.6716008Z ##[command]/usr/bin/docker inspect --format "{{range .Config.Env}}{{println .}}{{end}}" 9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc
+2026-10-09T21:59:15.6910404Z HOME=/github/home
+2026-10-09T21:59:15.6910845Z GITHUB_ACTIONS=true
+2026-10-09T21:59:15.6911344Z CI=true
+2026-10-09T21:59:15.6911838Z PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+2026-10-09T21:59:15.6912436Z SEMGREP_IN_DOCKER=1
+2026-10-09T21:59:15.6912734Z SEMGREP_USER_AGENT_APPEND=Docker
+2026-10-09T21:59:15.6913077Z PYTHONIOENCODING=utf8
+2026-10-09T21:59:15.6913315Z PYTHONUNBUFFERED=1
+2026-10-09T21:59:15.6914217Z DOCKER_OTEL_RESOURCE_ATTRIBUTES=vcs.ref.head.name=release-1.177.0,vcs.ref.head.revision=5df3f053b3f86d90166a02f2b48b8925a1149e9c,vcs.repository.url.full=github.com/semgrep/semgrep-proprietary,docker.base_image=alpine:3.23
+2026-10-09T21:59:15.6915147Z DD_SERVICE=semgrep-core
+2026-10-09T21:59:15.6915415Z TSAN_OPTIONS=exitcode=0 report_signal_unsafe=0
+2026-10-09T21:59:15.6933094Z ##[endgroup]
+2026-10-09T21:59:15.6942701Z ##[group]Waiting for all services to be ready
+2026-10-09T21:59:15.6944317Z ##[endgroup]
+2026-10-09T21:59:15.7253393Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-10-09T21:59:15.7254482Z with:
+2026-10-09T21:59:15.7254818Z   fetch-depth: 0
+2026-10-09T21:59:15.7255254Z   repository: concept2cure/ClinicalSageAI-2-replit
+2026-10-09T21:59:15.7258578Z   token: ***
+2026-10-09T21:59:15.7258802Z   ssh-strict: true
+2026-10-09T21:59:15.7259018Z   ssh-user: git
+2026-10-09T21:59:15.7259230Z   persist-credentials: true
+2026-10-09T21:59:15.7259490Z   clean: true
+2026-10-09T21:59:15.7259704Z   sparse-checkout-cone-mode: true
+2026-10-09T21:59:15.7259969Z   fetch-tags: false
+2026-10-09T21:59:15.7260182Z   show-progress: true
+2026-10-09T21:59:15.7260399Z   lfs: false
+2026-10-09T21:59:15.7260587Z   submodules: false
+2026-10-09T21:59:15.7260799Z   set-safe-directory: true
+2026-10-09T21:59:15.7261041Z   allow-unsafe-pr-checkout: false
+2026-10-09T21:59:15.7261631Z env:
+2026-10-09T21:59:15.7261897Z   SEMGREP_CONFIGS: --config=p/default --config=p/ci
+2026-10-09T21:59:15.7262252Z ##[endgroup]
+2026-10-09T21:59:15.7326260Z ##[command]/usr/bin/docker exec  9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc sh -c "cat /etc/*release | grep ^ID"
+2026-10-09T21:59:15.9528039Z Syncing repository: concept2cure/ClinicalSageAI-2-replit
+2026-10-09T21:59:15.9530325Z ##[group]Getting Git version info
+2026-10-09T21:59:15.9531156Z Working directory is '/__w/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit'
+2026-10-09T21:59:15.9532299Z [command]/usr/bin/git version
+2026-10-09T21:59:15.9536316Z git version 2.52.0
+2026-10-09T21:59:15.9604516Z ##[endgroup]
+2026-10-09T21:59:15.9624168Z Temporarily overriding HOME='/__w/_temp/5b172c41-e608-4981-83df-3c9d850ddafd' before making global git config changes
+2026-10-09T21:59:15.9625284Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-09T21:59:15.9632345Z [command]/usr/bin/git config --global --add safe.directory /__w/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit
+2026-10-09T21:59:15.9664298Z Deleting the contents of '/__w/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit'
+2026-10-09T21:59:15.9668105Z ##[group]Initializing the repository
+2026-10-09T21:59:15.9673339Z [command]/usr/bin/git init /__w/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit
+2026-10-09T21:59:15.9726118Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-09T21:59:15.9727817Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-09T21:59:15.9728899Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-09T21:59:15.9729614Z hint: call:
+2026-10-09T21:59:15.9729969Z hint:
+2026-10-09T21:59:15.9730476Z hint: 	git config --global init.defaultBranch <name>
+2026-10-09T21:59:15.9731395Z hint:
+2026-10-09T21:59:15.9732010Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-09T21:59:15.9733095Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-09T21:59:15.9733788Z hint:
+2026-10-09T21:59:15.9734182Z hint: 	git branch -m <name>
+2026-10-09T21:59:15.9734645Z hint:
+2026-10-09T21:59:15.9735272Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-09T21:59:15.9736399Z Initialized empty Git repository in /__w/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/.git/
+2026-10-09T21:59:15.9739915Z [command]/usr/bin/git remote add origin https://github.com/concept2cure/ClinicalSageAI-2-replit
+2026-10-09T21:59:15.9775403Z ##[endgroup]
+2026-10-09T21:59:15.9775834Z ##[group]Disabling automatic garbage collection
+2026-10-09T21:59:15.9780708Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-09T21:59:15.9810920Z ##[endgroup]
+2026-10-09T21:59:15.9811616Z ##[group]Setting up auth
+2026-10-09T21:59:15.9819021Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-09T21:59:15.9853567Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-09T21:59:16.0054398Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-09T21:59:16.0084325Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-09T21:59:16.0280809Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T21:59:16.0311980Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-09T21:59:16.0508326Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-09T21:59:16.0543973Z ##[endgroup]
+2026-10-09T21:59:16.0544485Z ##[group]Fetching the repository
+2026-10-09T21:59:16.0558967Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-10-09T21:59:36.0599443Z From https://github.com/concept2cure/ClinicalSageAI-2-replit
+2026-10-09T21:59:36.0600145Z  * [new branch]          concept2cure-v2 -> origin/concept2cure-v2
+2026-10-09T21:59:36.0600836Z  * [new tag]             v1.0.0          -> v1.0.0
+2026-10-09T21:59:36.0638842Z [command]/usr/bin/git branch --list --remote origin/concept2cure-v2
+2026-10-09T21:59:36.0662770Z   origin/concept2cure-v2
+2026-10-09T21:59:36.0673858Z [command]/usr/bin/git rev-parse refs/remotes/origin/concept2cure-v2
+2026-10-09T21:59:36.0695790Z b4badf56fbe9038490bae860dc41f812bd966c27
+2026-10-09T21:59:36.0700285Z ##[endgroup]
+2026-10-09T21:59:36.0700662Z ##[group]Determining the checkout info
+2026-10-09T21:59:36.0702509Z ##[endgroup]
+2026-10-09T21:59:36.0708540Z [command]/usr/bin/git sparse-checkout disable
+2026-10-09T21:59:36.0754442Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-09T21:59:36.0781663Z ##[group]Checking out the ref
+2026-10-09T21:59:36.0786969Z [command]/usr/bin/git checkout --progress --force -B concept2cure-v2 refs/remotes/origin/concept2cure-v2
+2026-10-09T21:59:37.1330729Z Updating files:  26% (6149/23098)
+2026-10-09T21:59:37.1593389Z Updating files:  27% (6237/23098)
+2026-10-09T21:59:37.1931725Z Updating files:  28% (6468/23098)
+2026-10-09T21:59:37.2165285Z Updating files:  29% (6699/23098)
+2026-10-09T21:59:37.2367755Z Updating files:  30% (6930/23098)
+2026-10-09T21:59:37.2811917Z Updating files:  31% (7161/23098)
+2026-10-09T21:59:37.2998831Z Updating files:  32% (7392/23098)
+2026-10-09T21:59:37.3198456Z Updating files:  33% (7623/23098)
+2026-10-09T21:59:37.3415042Z Updating files:  34% (7854/23098)
+2026-10-09T21:59:37.3588002Z Updating files:  35% (8085/23098)
+2026-10-09T21:59:37.3772231Z Updating files:  36% (8316/23098)
+2026-10-09T21:59:37.4085014Z Updating files:  37% (8547/23098)
+2026-10-09T21:59:37.4346314Z Updating files:  38% (8778/23098)
+2026-10-09T21:59:37.4556582Z Updating files:  39% (9009/23098)
+2026-10-09T21:59:37.4839274Z Updating files:  40% (9240/23098)
+2026-10-09T21:59:37.5312111Z Updating files:  41% (9471/23098)
+2026-10-09T21:59:37.5703331Z Updating files:  42% (9702/23098)
+2026-10-09T21:59:37.6081548Z Updating files:  43% (9933/23098)
+2026-10-09T21:59:37.6693682Z Updating files:  44% (10164/23098)
+2026-10-09T21:59:37.7191077Z Updating files:  45% (10395/23098)
+2026-10-09T21:59:37.7659619Z Updating files:  46% (10626/23098)
+2026-10-09T21:59:37.7892404Z Updating files:  47% (10857/23098)
+2026-10-09T21:59:37.8163142Z Updating files:  48% (11088/23098)
+2026-10-09T21:59:37.8449454Z Updating files:  49% (11319/23098)
+2026-10-09T21:59:37.8708034Z Updating files:  50% (11549/23098)
+2026-10-09T21:59:37.8946755Z Updating files:  51% (11780/23098)
+2026-10-09T21:59:37.9159041Z Updating files:  52% (12011/23098)
+2026-10-09T21:59:37.9404955Z Updating files:  53% (12242/23098)
+2026-10-09T21:59:37.9631804Z Updating files:  54% (12473/23098)
+2026-10-09T21:59:37.9857845Z Updating files:  55% (12704/23098)
+2026-10-09T21:59:38.0075279Z Updating files:  56% (12935/23098)
+2026-10-09T21:59:38.0344679Z Updating files:  57% (13166/23098)
+2026-10-09T21:59:38.0611150Z Updating files:  58% (13397/23098)
+2026-10-09T21:59:38.0970225Z Updating files:  59% (13628/23098)
+2026-10-09T21:59:38.1238206Z Updating files:  60% (13859/23098)
+2026-10-09T21:59:38.1315127Z Updating files:  60% (13984/23098)
+2026-10-09T21:59:38.1558298Z Updating files:  61% (14090/23098)
+2026-10-09T21:59:38.1977799Z Updating files:  62% (14321/23098)
+2026-10-09T21:59:38.2497877Z Updating files:  63% (14552/23098)
+2026-10-09T21:59:38.2647091Z Updating files:  64% (14783/23098)
+2026-10-09T21:59:38.2963964Z Updating files:  65% (15014/23098)
+2026-10-09T21:59:38.3212010Z Updating files:  66% (15245/23098)
+2026-10-09T21:59:38.3421182Z Updating files:  67% (15476/23098)
+2026-10-09T21:59:38.3700738Z Updating files:  68% (15707/23098)
+2026-10-09T21:59:38.3922259Z Updating files:  69% (15938/23098)
+2026-10-09T21:59:38.4200138Z Updating files:  70% (16169/23098)
+2026-10-09T21:59:38.4441097Z Updating files:  71% (16400/23098)
+2026-10-09T21:59:38.4664903Z Updating files:  72% (16631/23098)
+2026-10-09T21:59:38.4992392Z Updating files:  73% (16862/23098)
+2026-10-09T21:59:38.5264472Z Updating files:  74% (17093/23098)
+2026-10-09T21:59:38.6992707Z Updating files:  75% (17324/23098)
+2026-10-09T21:59:38.7256097Z Updating files:  76% (17555/23098)
+2026-10-09T21:59:38.7545298Z Updating files:  77% (17786/23098)
+2026-10-09T21:59:38.7843791Z Updating files:  78% (18017/23098)
+2026-10-09T21:59:38.8121223Z Updating files:  79% (18248/23098)
+2026-10-09T21:59:38.8374094Z Updating files:  80% (18479/23098)
+2026-10-09T21:59:38.8609778Z Updating files:  81% (18710/23098)
+2026-10-09T21:59:38.8890457Z Updating files:  82% (18941/23098)
+2026-10-09T21:59:38.9105815Z Updating files:  83% (19172/23098)
+2026-10-09T21:59:38.9315565Z Updating files:  84% (19403/23098)
+2026-10-09T21:59:38.9562986Z Updating files:  85% (19634/23098)
+2026-10-09T21:59:38.9786456Z Updating files:  86% (19865/23098)
+2026-10-09T21:59:39.0028245Z Updating files:  87% (20096/23098)
+2026-10-09T21:59:39.0281993Z Updating files:  88% (20327/23098)
+2026-10-09T21:59:39.0474382Z Updating files:  89% (20558/23098)
+2026-10-09T21:59:39.0678810Z Updating files:  90% (20789/23098)
+2026-10-09T21:59:39.0933218Z Updating files:  91% (21020/23098)
+2026-10-09T21:59:39.1156235Z Updating files:  92% (21251/23098)
+2026-10-09T21:59:39.1236162Z Updating files:  93% (21482/23098)
+2026-10-09T21:59:39.1352653Z Updating files:  93% (21569/23098)
+2026-10-09T21:59:39.1577722Z Updating files:  94% (21713/23098)
+2026-10-09T21:59:39.2088801Z Updating files:  95% (21944/23098)
+2026-10-09T21:59:39.2337118Z Updating files:  96% (22175/23098)
+2026-10-09T21:59:39.2525238Z Updating files:  97% (22406/23098)
+2026-10-09T21:59:39.2725983Z Updating files:  98% (22637/23098)
+2026-10-09T21:59:39.2970787Z Updating files:  99% (22868/23098)
+2026-10-09T21:59:39.2971192Z Updating files: 100% (23098/23098)
+2026-10-09T21:59:39.2971529Z Updating files: 100% (23098/23098), done.
+2026-10-09T21:59:39.3364655Z branch 'concept2cure-v2' set up to track 'origin/concept2cure-v2'.
+2026-10-09T21:59:39.3370984Z Switched to a new branch 'concept2cure-v2'
+2026-10-09T21:59:39.3538256Z ##[endgroup]
+2026-10-09T21:59:39.3567304Z [command]/usr/bin/git log -1 --format=%H
+2026-10-09T21:59:39.3589987Z b4badf56fbe9038490bae860dc41f812bd966c27
+2026-10-09T21:59:39.3873813Z ##[group]Run actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+2026-10-09T21:59:39.3874241Z with:
+2026-10-09T21:59:39.3880434Z   script: const TRUNK = 'concept2cure-v2';
+if (context.eventName === 'pull_request') {
+  const base = context.payload.pull_request && context.payload.pull_request.base && context.payload.pull_request.base.sha;
+  if (!base) return core.setFailed('This pull request event names no base commit, so there is nothing to compare against; that is not a pass.');
+  core.info(`Baseline: the pull request base, ${base}.`);
+  return core.setOutput('sha', base);
+}
+const { owner, repo } = context.repo;
+// Completed runs, newest first by their own date. Listed with
+// status=success, GitHub returned a 2026-09-19 run ahead of that
+// day's green one (2026-10-05), so the order is not the API's.
+let runs;
+try {
+  const res = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'semgrep.yml', branch: TRUNK, status: 'completed', per_page: 100 });
+  runs = res.data.workflow_runs || [];
+} catch (err) {
+  return core.setFailed(`Could not read Semgrep's run history (${err.status || err.message}). A scan with no baseline is not a pass.`);
+}
+const own = `${owner}/${repo}`;
+const green = runs
+  .filter((r) => r.conclusion === 'success' && r.event !== 'pull_request' && r.head_branch === TRUNK
+    && r.head_repository && r.head_repository.full_name === own && /^[0-9a-f]{40}$/.test(r.head_sha))
+  .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || (b.id - a.id));
+if (!green.length) return core.setFailed(`No passing Semgrep run on ${TRUNK} to compare against. A scan with no baseline is not a pass.`);
+core.info(`Baseline: ${green[0].head_sha}, the newest ${TRUNK} commit whose Semgrep run passed (run ${green[0].id}).`);
+core.setOutput('sha', green[0].head_sha);
+// Every green commit, newest first: the scan takes the first one in its own history.
+core.setOutput('candidates', [...new Set(green.map((r) => r.head_sha))].slice(0, 20).join('\n'));
+
+2026-10-09T21:59:39.3889034Z   github-token: ***
+2026-10-09T21:59:39.3889269Z   debug: false
+2026-10-09T21:59:39.3889821Z   user-agent: actions/github-script
+2026-10-09T21:59:39.3890090Z   result-encoding: json
+2026-10-09T21:59:39.3890423Z   retries: 0
+2026-10-09T21:59:39.3890720Z   retry-exempt-status-codes: 400,401,403,404,422
+2026-10-09T21:59:39.3891036Z env:
+2026-10-09T21:59:39.3891287Z   SEMGREP_CONFIGS: --config=p/default --config=p/ci
+2026-10-09T21:59:39.3891603Z ##[endgroup]
+2026-10-09T21:59:39.3904031Z ##[command]/usr/bin/docker exec  9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc sh -c "cat /etc/*release | grep ^ID"
+2026-10-09T21:59:42.7003179Z Baseline: 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19, the newest concept2cure-v2 commit whose Semgrep run passed (run 37735466781).
+2026-10-09T21:59:42.7202215Z ##[group]Run # The checkout belongs to the runner user and this container runs as
+2026-10-09T21:59:42.7202873Z [36;1m# The checkout belongs to the runner user and this container runs as[0m
+2026-10-09T21:59:42.7203392Z [36;1m# root; without this, git (and so --baseline-commit) refuses the tree.[0m
+2026-10-09T21:59:42.7203885Z [36;1mgit config --global --add safe.directory "$GITHUB_WORKSPACE"[0m
+2026-10-09T21:59:42.7204352Z [36;1m# The newest green commit that is in this commit's history. One that[0m
+2026-10-09T21:59:42.7204821Z [36;1m# is not (an old run on a rewritten trunk) compares against unrelated[0m
+2026-10-09T21:59:42.7205242Z [36;1m# code: on 2026-10-05 that put 10,698 files in the diff.[0m
+2026-10-09T21:59:42.7205585Z [36;1mif [ -n "$CANDIDATES" ]; then[0m
+2026-10-09T21:59:42.7206056Z [36;1m  BASELINE=""[0m
+2026-10-09T21:59:42.7228540Z [36;1m  for c in $CANDIDATES; do[0m
+2026-10-09T21:59:42.7229024Z [36;1m    if git merge-base --is-ancestor "$c" HEAD; then BASELINE="$c"; break; fi[0m
+2026-10-09T21:59:42.7229573Z [36;1m    echo "Skipped $c: a green commit that is not in this commit's history."[0m
+2026-10-09T21:59:42.7229959Z [36;1m  done[0m
+2026-10-09T21:59:42.7230148Z [36;1mfi[0m
+2026-10-09T21:59:42.7230348Z [36;1mif [ -z "$BASELINE" ]; then[0m
+2026-10-09T21:59:42.7230836Z [36;1m  echo "::error::No baseline commit was resolved. A scan with nothing to compare against is not a pass."[0m
+2026-10-09T21:59:42.7231317Z [36;1m  exit 1[0m
+2026-10-09T21:59:42.7231512Z [36;1mfi[0m
+2026-10-09T21:59:42.7231759Z [36;1mecho "Findings this commit adds over $BASELINE:"[0m
+2026-10-09T21:59:42.7232072Z [36;1mstatus=0[0m
+2026-10-09T21:59:42.7232411Z [36;1m# SEMGREP_CONFIGS is a list of --config flags and is split on purpose.[0m
+2026-10-09T21:59:42.7232807Z [36;1m# shellcheck disable=SC2086[0m
+2026-10-09T21:59:42.7233140Z [36;1msemgrep scan $SEMGREP_CONFIGS --metrics=off --error \[0m
+2026-10-09T21:59:42.7233504Z [36;1m  --baseline-commit "$BASELINE" \[0m
+2026-10-09T21:59:42.7233882Z [36;1m  --sarif-output="$RUNNER_TEMP/semgrep-new.sarif" || status=$?[0m
+2026-10-09T21:59:42.7234252Z [36;1mcase "$status" in[0m
+2026-10-09T21:59:42.7234588Z [36;1m  0) echo "No Semgrep finding that $BASELINE did not already have." ;;[0m
+2026-10-09T21:59:42.7234958Z [36;1m  1)[0m
+2026-10-09T21:59:42.7235574Z [36;1m    echo "::error::Semgrep found what $BASELINE did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason."[0m
+2026-10-09T21:59:42.7236245Z [36;1m    exit 1 ;;[0m
+2026-10-09T21:59:42.7236450Z [36;1m  *)[0m
+2026-10-09T21:59:42.7237186Z [36;1m    echo "::error::Semgrep did not finish (exit $status). An unfinished scan is not a pass. Exit 2 also means the baseline commit is not in this checkout's history."[0m
+2026-10-09T21:59:42.7237859Z [36;1m    exit "$status" ;;[0m
+2026-10-09T21:59:42.7238081Z [36;1mesac[0m
+2026-10-09T21:59:42.7242083Z shell: sh -e {0}
+2026-10-09T21:59:42.7242307Z env:
+2026-10-09T21:59:42.7242563Z   SEMGREP_CONFIGS: --config=p/default --config=p/ci
+2026-10-09T21:59:42.7242922Z   BASELINE: 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19
+2026-10-09T21:59:42.7244437Z   CANDIDATES: 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19
+c7a0405d9a1a6da9a7eecb54cbee8870e1dfb333
+519c6acd5854b185e5dd5cbc4d3c077caed52b53
+117313b90e933b8e96d162e3f855ca08899ec9fc
+ca051e95053a2ef160183d6456e3ca82b8ebafa3
+488f1195643aa3b91af9ee1e2255680e45780923
+b733c5db3dbe2099ee3bbe23c7c846431749e319
+a0b3de231cc7ead5809c4dc53539a8b986e93c94
+f5efe8a5a72d11b70bb82be143c9505172af1a60
+2026-10-09T21:59:42.7246140Z ##[endgroup]
+2026-10-09T21:59:42.7840709Z Findings this commit adds over 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19:
+2026-10-09T21:59:52.0084597Z                
+2026-10-09T21:59:52.0085004Z                
+2026-10-09T21:59:52.0085446Z ┌─────────────┐
+2026-10-09T21:59:52.0085686Z │ Scan Status │
+2026-10-09T21:59:52.0085952Z └─────────────┘
+2026-10-09T21:59:52.0096448Z   Scanning 2954 files tracked by git with 1075 Code rules:
+2026-10-09T21:59:52.5363917Z                                                                                                                         
+2026-10-09T21:59:52.5364754Z   Language      Rules   Files          Origin      Rules                                                                
+2026-10-09T21:59:52.5366361Z  ─────────────────────────────        ───────────────────                                                               
+2026-10-09T21:59:52.5367509Z   <multilang>      47    2954          Community    1075                                                                
+2026-10-09T21:59:52.5368189Z   ts              163     904                                                                                           
+2026-10-09T21:59:52.5368782Z   json              4     538                                                                                           
+2026-10-09T21:59:52.5369388Z   js              153      56                                                                                           
+2026-10-09T21:59:52.5369969Z   bash              4       5                                                                                           
+2026-10-09T21:59:52.5370576Z   python          243       4                                                                                           
+2026-10-09T21:59:52.5371324Z   yaml             35       3                                                                                           
+2026-10-09T21:59:52.5372015Z                                                                                                                         
+2026-10-09T22:02:46.9623567Z Warning: 3 timeout error(s) in shared/schema.ts when running the following rules:
+2026-10-09T22:02:46.9624869Z [javascript.express.security.audit.express-ssrf.express-ssrf, javascript.lang.security.audit.path-traversal.path-join-
+2026-10-09T22:02:46.9626046Z resolve-traversal.path-join-resolve-traversal, typescript.react.security.audit.react-unsanitized-method.react-
+2026-10-09T22:02:46.9626825Z unsanitized-method]
+2026-10-09T22:02:46.9627691Z Semgrep stopped running rules on shared/schema.ts after 3 timeout error(s). See `--timeout-threshold` for more info.
+2026-10-09T22:02:48.0514416Z   Current version has 67 findings.
+2026-10-09T22:02:48.0514805Z 
+2026-10-09T22:02:48.0581726Z Creating git worktree from '661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19' to scan baseline.
+2026-10-09T22:02:48.0679941Z   Will report findings introduced by these commits (may be incomplete for shallow checkouts):
+2026-10-09T22:02:48.0773689Z     * b4badf56f feat(ana): deepen IND CMC drafting and repair dependency verification
+2026-10-09T22:02:48.0774927Z     * b879e9a9e docs(db): close fresh-install repair with executed Tier 5 evidence
+2026-10-09T22:02:48.0775849Z     * a17157f33 fix(db): provision AnA run parent before fresh-install event overlays
+2026-10-09T22:02:48.0776769Z     * c91dba526 fix(governance): land seal review and commit-time signature hardening
+2026-10-09T22:02:48.0778027Z     * b11199c26 fix(ana): authenticate bounded recorded fidelity before seal refusal
+2026-10-09T22:02:48.0778939Z     * 21d5ff347 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0779784Z     * 7fa964baf fix(ana): bind DOCX fidelity to owned current artifact versions
+2026-10-09T22:02:48.0781139Z     * 7111deff0 fix(ana): bind seals to owned version bytes and preserve current source lineage
+2026-10-09T22:02:48.0782147Z     * b9a87ab17 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0783010Z     * 4eda1a3dd fix(ana): bind section preparation to the requesting tenant
+2026-10-09T22:02:48.0783849Z     * f1759e4be chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0784691Z     * dc90f337d fix(ana): keep IND transcription plans explicitly non-sealable
+2026-10-09T22:02:48.0785521Z     * 7f3b84ca5 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0786628Z     * 008223dca Ground AnA batch drafts in the open project filing context
+2026-10-09T22:02:48.0787794Z     * d2f0b7371 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0788689Z     * 6071cce18 Restore active project memory for AnA CMS and diagnostics commands
+2026-10-09T22:02:48.0789585Z     * bf80e2fa9 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0790413Z     * dc1927938 Restore active structured memory recall in AnA context
+2026-10-09T22:02:48.0791220Z     * 2ad484223 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0792043Z     * 512369c95 Reuse deficiency context within each AnA enrichment turn
+2026-10-09T22:02:48.0792775Z     * 2f5c51293 Overlap tenant-scoped AnA workflow status reads
+2026-10-09T22:02:48.0793518Z     * 21ed7516f Overlap independent tenant-scoped AnA client-journey reads
+2026-10-09T22:02:48.0794045Z     * 561a11a7c chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0794540Z     * 1473342ab Reuse workflow context read within each AnA enrichment call
+2026-10-09T22:02:48.0795023Z     * bebd42536 Avoid unused AnA direct-answer policy and Live Drive prefetch
+2026-10-09T22:02:48.0795518Z     * c55fa8d4b chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0795987Z     * c245df58f test(ana): type the saved fetch mock in anaFollowView (TS2349)
+2026-10-09T22:02:48.0796521Z     * e35dffe81 fix(ana): isContinuable's comment sits above the switch (no-fallthrough error)
+2026-10-09T22:02:48.0797799Z     *   2d8f7b029 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0798508Z     |\  
+2026-10-09T22:02:48.0799071Z     | *   5cfa0a26a Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0799719Z     | |\  
+2026-10-09T22:02:48.0800194Z     | | * 4edbc3f5b chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0801156Z     | * | 600d6ee73 Filing-spine review items 9 and 10: readiness says when, PMDA's line says from when (D2)
+2026-10-09T22:02:48.0801908Z     | |/  
+2026-10-09T22:02:48.0802438Z     | * c63cda8b6 Board and FILING_SPINE: name the filing-spine commits by id (D2)
+2026-10-09T22:02:48.0803530Z     | * 9430b6179 F14 after merge: the compile suite records identity; the test package note prints no placeholder (D2)
+2026-10-09T22:02:48.0804723Z     | *   ae1b6c347 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0805464Z     | |\  
+2026-10-09T22:02:48.0805866Z     | * | 305fd6bfe F14: compile carries the sequence (D2)
+2026-10-09T22:02:48.0806871Z     * | | 202e11814 feat(ana): DT2 — follow a live AnA turn from another device
+2026-10-09T22:02:48.0807837Z     | |/  
+2026-10-09T22:02:48.0808162Z     |/|   
+2026-10-09T22:02:48.0808824Z     * |   db835afed Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0809580Z     |\ \  
+2026-10-09T22:02:48.0810143Z     | * | c1e21dace chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0810810Z     | |/  
+2026-10-09T22:02:48.0811321Z     * | af99ba1f7 chore(lint): the pushed files gain no ESLint warnings (net -3)
+2026-10-09T22:02:48.0812252Z     * | 078bcd461 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0813269Z     |\| 
+2026-10-09T22:02:48.0813918Z     | * 5c4eef263 Work orders: claim spine F14 (compile carries the sequence) now that F10 has landed
+2026-10-09T22:02:48.0814935Z     * | 585edef99 Merge origin/concept2cure-v2 (6 commits) into concept2cure-v2
+2026-10-09T22:02:48.0815598Z     |\| 
+2026-10-09T22:02:48.0816220Z     | *   5938bfea8 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0816975Z     | |\  
+2026-10-09T22:02:48.0817828Z     | | *   1e217bfbe Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0818584Z     | | |\  
+2026-10-09T22:02:48.0819516Z     | | * | b8d015750 S5b (D2): a computed sample size names the stored, reproducible run behind it
+2026-10-09T22:02:48.0820618Z     | * | | 44da841c1 Work orders: record a trunk-red export test seen at the merge (another lane's)
+2026-10-09T22:02:48.0821689Z     | * | |   d222547c2 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0822451Z     | |\ \ \  
+2026-10-09T22:02:48.0822770Z     | | | |/  
+2026-10-09T22:02:48.0823178Z     | | |/|   
+2026-10-09T22:02:48.0824133Z     | * | | 2c17bcf27 The editor says before the dialog that a placement needs an authoring role; two honest-state fixes (D2)
+2026-10-09T22:02:48.0825634Z     * | | | 4d104536e fix(ana): DT1 SQL binds every value — ci:sql-interpolation green without a baseline raise
+2026-10-09T22:02:48.0826658Z     * | | |   5119f95ae Merge origin/concept2cure-v2 (12 commits) into concept2cure-v2
+2026-10-09T22:02:48.0828026Z     |\ \ \ \  
+2026-10-09T22:02:48.0828353Z     | | |/ /  
+2026-10-09T22:02:48.0828678Z     | |/| |   
+2026-10-09T22:02:48.0829226Z     | * | | 206ddad79 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0829887Z     | | |/  
+2026-10-09T22:02:48.0830196Z     | |/|   
+2026-10-09T22:02:48.0830814Z     | * |   5d45de89a Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0831563Z     | |\ \  
+2026-10-09T22:02:48.0832126Z     | | * | 36b32a17f Board: F1, F4, F7, F9, F10 and F19b landed; F5 waits on ONE_ANA slice 15 (D2)
+2026-10-09T22:02:48.0833117Z     | | * | 99fd7b87b Place into filing: the filing-copy helpers move to their own module (D2, F10)
+2026-10-09T22:02:48.0834163Z     | | * |   ea1404851 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0834900Z     | | |\ \  
+2026-10-09T22:02:48.0835627Z     | | * | | ef022ef95 Submit shows one row per market, each with its own server verdict; the header states them (D2, F9)
+2026-10-09T22:02:48.0836867Z     | | * | | d48e25c70 DocumentCanvas takes the filing binding through AuthDoc, within its line limit (D2, F4)
+2026-10-09T22:02:48.0838230Z     | | * | |   ec43f5f2b Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0838990Z     | | |\ \ \  
+2026-10-09T22:02:48.0839675Z     | | * | | | 8bbb31014 Submission Center opens on the sequence; Dispatch assembles a test package (D2, F10)
+2026-10-09T22:02:48.0840775Z     | | * | | | 53809bada The Review tab shows this filing's reviews and opens each document (D2, F7)
+2026-10-09T22:02:48.0841808Z     | | * | | | ceb3d7dfc An unstarted outline section can be started, in the filing's copy (D2, F4)
+2026-10-09T22:02:48.0842809Z     | * | | | | 3fe12ad71 S5a (D2): each figure in an AnA draft is checked against the sources it cites
+2026-10-09T22:02:48.0843764Z     * | | | | |   2cc1d76b9 Merge origin/concept2cure-v2 (35 commits) into concept2cure-v2
+2026-10-09T22:02:48.0844439Z     |\ \ \ \ \ \  
+2026-10-09T22:02:48.0844767Z     | | |_|_|/ /  
+2026-10-09T22:02:48.0845097Z     | |/| | | |   
+2026-10-09T22:02:48.0845651Z     | * | | | | 6a89036c9 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0846315Z     | |/ / / /  
+2026-10-09T22:02:48.0846957Z     | * | | |   457e993d5 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0848168Z     | |\ \ \ \  
+2026-10-09T22:02:48.0848488Z     | | | |_|/  
+2026-10-09T22:02:48.0848861Z     | | |/| |   
+2026-10-09T22:02:48.0849626Z     | | * | | 62821670f Validation explain narrates the validator's findings; a filing copy takes a role and a reason (D2)
+2026-10-09T22:02:48.0850765Z     | * | | | 5ec8cde8c S4: the catalog review and correction form under the complexity limit
+2026-10-09T22:02:48.0851722Z     | * | | | ee7e2f247 S4: the catalog state is derived from the row, not interpolated into SQL
+2026-10-09T22:02:48.0852730Z     | * | | | 3ae816cd7 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0853650Z     | |\| | | 
+2026-10-09T22:02:48.0854292Z     | | * | |   2cd75e742 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0855032Z     | | |\ \ \  
+2026-10-09T22:02:48.0855687Z     | | * \ \ \   f29330177 Merge origin/concept2cure-v2: the design review's market lines meet F19b's offer
+2026-10-09T22:02:48.0856460Z     | | |\ \ \ \  
+2026-10-09T22:02:48.0856776Z     | | | | |_|/  
+2026-10-09T22:02:48.0857325Z     | | | |/| |   
+2026-10-09T22:02:48.0857944Z     | | * | | | bd0bc1962 Filing spine design review: seven lenses, 26 fixes, each red first (D2)
+2026-10-09T22:02:48.0858958Z     | * | | | |   4ce1f6041 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0859695Z     | |\ \ \ \ \  
+2026-10-09T22:02:48.0860015Z     | | | |_|/ /  
+2026-10-09T22:02:48.0860330Z     | | |/| | |   
+2026-10-09T22:02:48.0860957Z     | | * | | |   3cbaf1fb8 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0861700Z     | | |\ \ \ \  
+2026-10-09T22:02:48.0862255Z     | | | * | | | 9474437e5 Bound AnA heartbeat writes and preserve the latest pending round
+2026-10-09T22:02:48.0862918Z     | | | | |/ /  
+2026-10-09T22:02:48.0863231Z     | | | |/| |   
+2026-10-09T22:02:48.0863864Z     | | * | | | db5bc204e Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0864612Z     | | |\| | | 
+2026-10-09T22:02:48.0865330Z     | | | * | | b16ba9c75 Remove the CRE demo seed: it wrote fictional [DEMO] evidence into a tenant's governed tables
+2026-10-09T22:02:48.0867042Z     | | | * | | af3c67c08 Ledger and evidence: the residue critic's five fixes — three sweep findings recorded (L223), L204 parses again, no unmeasured figure
+2026-10-09T22:02:48.0869006Z     | | | * | | 2d9ca03ff A post-market document is created as a draft by the session user; the body cannot create it approved, locked or signed (D5, L222)
+2026-10-09T22:02:48.0870366Z     | | | * | |   2ecb31ca3 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0871122Z     | | | |\ \ \  
+2026-10-09T22:02:48.0871995Z     | | | | * | | 13413d656 Work orders: claim D5 — a post-market document is created as a draft by the session user
+2026-10-09T22:02:48.0873439Z     | | | | * | | 4b50f33f1 Ledger and D3 note: report-group memberships are policied through their group since 2ddbfb6a6c; L42 points at the surface decisions
+2026-10-09T22:02:48.0875047Z     | | | | * | | e667e0a7f Corrections: the L195 follow-up's "regression" does not reproduce in production; L201 and L203 corrected at last
+2026-10-09T22:02:48.0876741Z     | | | * | | | e6cde1c9e D3/D6: the SQL injection sweep — 1,313 interpolations classified, no reachable injection, three in dead code handed on
+2026-10-09T22:02:48.0877946Z     | | | |/ / /  
+2026-10-09T22:02:48.0878688Z     | | | * | | 17e675e21 D3/D6: ci:sql-interpolation — no new value interpolated into SQL text
+2026-10-09T22:02:48.0879709Z     | | | * | |   c3dd0b73e Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0880453Z     | | | |\ \ \  
+2026-10-09T22:02:48.0881009Z     | | | | * | | f55213b52 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0881984Z     | | | * | | | ebd5f61ee work-orders: claim D3/D6 — SQL injection sweep and gate
+2026-10-09T22:02:48.0882801Z     | | | |/ / /  
+2026-10-09T22:02:48.0884220Z     | | | * | | a10c4b724 D3: the isolation proof and the pen-test scope state the threat model as measured — RLS defends against application code, and any SQL injection is cross-tenant critical
+2026-10-09T22:02:48.0885792Z     | | | * | |   2593c6a1f Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0886534Z     | | | |\ \ \  
+2026-10-09T22:02:48.0886852Z     | | | | | |/  
+2026-10-09T22:02:48.0887361Z     | | | | |/|   
+2026-10-09T22:02:48.0887993Z     | | | * | |   7c9d1d487 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0888924Z     | | | |\ \ \  
+2026-10-09T22:02:48.0889593Z     | | | * \ \ \   d44c13f64 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0890363Z     | | | |\ \ \ \  
+2026-10-09T22:02:48.0891011Z     | | | * \ \ \ \   df2905b57 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0891772Z     | | | |\ \ \ \ \  
+2026-10-09T22:02:48.0892404Z     | | | * | | | | | ac688076e D3: an isolation switch set during one request no longer reaches the next
+2026-10-09T22:02:48.0893346Z     | | * | | | | | | cea462531 D2: the E6(R3) sweep's fact-check findings, fixed; evidence and the lane released
+2026-10-09T22:02:48.0893945Z     | | * | | | | | | 2ba1c2581 D2: AnA and the platform cite ICH E6(R3), by a section that exists
+2026-10-09T22:02:48.0894509Z     | * | | | | | | | 88ab56f67 S4 (D5): AnA's catalog record is a suggestion a person confirms or corrects
+2026-10-09T22:02:48.0895170Z     | * | | | | | | | f42ade2d8 Schema contract: the regulatory_programs fixture carries sponsor_address and ind_type
+2026-10-09T22:02:48.0895965Z     * | | | | | | | | 5673804d6 fix: the founder path reaches the Vault approval again; tsc and untracked-imports green (HEAD reds the merge surfaced)
+2026-10-09T22:02:48.0896662Z     * | | | | | | | |   8a7017907 Merge origin/concept2cure-v2 (73 commits) into concept2cure-v2
+2026-10-09T22:02:48.0897311Z     |\ \ \ \ \ \ \ \ \  
+2026-10-09T22:02:48.0897629Z     | | |_|_|_|_|_|/ /  
+2026-10-09T22:02:48.0897829Z     | |/| | | | | | |   
+2026-10-09T22:02:48.0898222Z     | * | | | | | | |   2c1c4dc1a Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0898650Z     | |\ \ \ \ \ \ \ \  
+2026-10-09T22:02:48.0898852Z     | | | |_|_|_|_|/ /  
+2026-10-09T22:02:48.0899043Z     | | |/| | | | | |   
+2026-10-09T22:02:48.0899680Z     | | * | | | | | | 9cb6f82a5 Ledger: this session's seven open rows re-checked at trunk — two were closed by other sessions, one is half closed
+2026-10-09T22:02:48.0900223Z     | | | |_|_|_|/ /  
+2026-10-09T22:02:48.0900418Z     | | |/| | | | |   
+2026-10-09T22:02:48.0900792Z     | * | | | | | | 1bcad1ac7 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0901217Z     | |\| | | | | | 
+2026-10-09T22:02:48.0901751Z     | | * | | | | | 48caa0927 A closer is recorded once, on the transition, and the blocker route reads the session id as production sets it (D5, L195 follow-up)
+2026-10-09T22:02:48.0902341Z     | | | |/ / / /  
+2026-10-09T22:02:48.0902525Z     | | |/| | | |   
+2026-10-09T22:02:48.0903040Z     | | * | | | | 1bf49d68f Work orders: claim D2 — AnA and the platform cite ICH E6(R3), by section, wherever they teach GCP
+2026-10-09T22:02:48.0903527Z     | | | |_|/ /  
+2026-10-09T22:02:48.0903712Z     | | |/| | |   
+2026-10-09T22:02:48.0904084Z     | * | | | | 4e5bac77b Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0904506Z     | |\| | | | 
+2026-10-09T22:02:48.0904828Z     | | * | | | 6bd6b3680 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0905499Z     | | * | | | b292609cf Work orders: this lane's released D3 row points at the evidence that landed (98ec62749), not the copy that was lost
+2026-10-09T22:02:48.0906263Z     | | * | | | 3a8961ca1 Who resolved a blocker or finding, or decided a GSPR mapping, is the session's user (D5, L195)
+2026-10-09T22:02:48.0906897Z     | | |/ / /  
+2026-10-09T22:02:48.0907604Z     | | * | | 2a0510f72 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0908160Z     | | * | |   1400e745c Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0908573Z     | | |\ \ \  
+2026-10-09T22:02:48.0909120Z     | | | * | | d00acd0a6 Work orders: claim D5 — L195(a)'s remainder: a blocker's resolver and a GSPR decider come from the session
+2026-10-09T22:02:48.0909881Z     | | | * | | d69b6ea47 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0910256Z     | | | |/ /  
+2026-10-09T22:02:48.0910613Z     | | * | | 6fc01e35d Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0911025Z     | | |\| | 
+2026-10-09T22:02:48.0911374Z     | | | * | 4ad5c2a0c Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0911788Z     | | | |\| 
+2026-10-09T22:02:48.0912138Z     | | | | *   c12b9a3ce Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0912550Z     | | | | |\  
+2026-10-09T22:02:48.0913009Z     | | | | * | afca35467 The Cross-region model verdict is retired: no workspace, route, AI task, prompt or AnA tool (D2, F21 in part)
+2026-10-09T22:02:48.0913839Z     | | | * | | d39449f69 work-orders: claim D3 — tenant isolation cannot be switched off by the runtime login
+2026-10-09T22:02:48.0914277Z     | | | | |/  
+2026-10-09T22:02:48.0914454Z     | | | |/|   
+2026-10-09T22:02:48.0915027Z     | | * | | 56c62956a Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0915742Z     | | |\| | 
+2026-10-09T22:02:48.0916196Z     | | | * | 7db091948 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0916787Z     | | * | | 13efb8fca S3 (D2): the Data Room catalog describes the evidence, by rule and from the project's record
+2026-10-09T22:02:48.0917589Z     | | |/ /  
+2026-10-09T22:02:48.0917952Z     | | * | bcc296f80 S2: the Data Room query parser in small validators, under the complexity limit
+2026-10-09T22:02:48.0918533Z     | | * |   f9b72fec2 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0918946Z     | | |\ \  
+2026-10-09T22:02:48.0919364Z     | | * | | e3087d7e8 S2 (D2): every Data Room capture is read, stored, searchable and paged; the lane counts are exact
+2026-10-09T22:02:48.0920187Z     | * | | | 2ca6f29d4 Project creation, the New project picker and FDA sequences follow the market verdict; Health Canada stops posting (D2, F19b)
+2026-10-09T22:02:48.0921088Z     | * | | | f35798bf4 Section status follows the governed work; approval needs the signature and covers only the signed text (D2, D5, spine F1)
+2026-10-09T22:02:48.0921655Z     | | |/ /  
+2026-10-09T22:02:48.0921829Z     | |/| |   
+2026-10-09T22:02:48.0922147Z     | * | | afd17b9b0 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0922521Z     | | |/  
+2026-10-09T22:02:48.0922695Z     | |/|   
+2026-10-09T22:02:48.0923044Z     | * |   97ab887d4 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0923454Z     | |\ \  
+2026-10-09T22:02:48.0923749Z     | | * | a77b42066 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0924114Z     | | |/  
+2026-10-09T22:02:48.0924537Z     | | * 27926af0f Trunk red: threads-program-list expects the page offset e04b568f added to the program thread list
+2026-10-09T22:02:48.0925197Z     | | *   e54114600 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0925610Z     | | |\  
+2026-10-09T22:02:48.0925950Z     | | | *   99f97bd94 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0926358Z     | | | |\  
+2026-10-09T22:02:48.0927558Z     | | | | * 3b854997a Sweep record: the owed lenses ran — fifteen findings (HS-1–8, VP-1–7) and F20, each verified (W5/D7)
+2026-10-09T22:02:48.0928724Z     | | | * | 08729ad6d SEC-1008-1: the route-ordering case moves to the transmit-route suite (the routes suite was over its line limit); red re-run against trunk's route
+2026-10-09T22:02:48.0929559Z     | | | * | d4079dda1 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0929986Z     | | | |\| 
+2026-10-09T22:02:48.0930305Z     | | | * | e7fdd5c39 SEC-1008-1 (D5/D7): only a role that may sign transmits to an agency
+2026-10-09T22:02:48.0930974Z     | | * | |   44769dff6 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0931395Z     | | |\ \ \  
+2026-10-09T22:02:48.0931575Z     | | | | |/  
+2026-10-09T22:02:48.0931751Z     | | | |/|   
+2026-10-09T22:02:48.0932098Z     | | | * |   821eedb77 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0932520Z     | | | |\ \  
+2026-10-09T22:02:48.0932832Z     | | | | * | 6b77d0716 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.0933474Z     | | | * | | 30d80e73f Work orders: plan the next slice of AnA's document expertise (the open document's type reaches her turn)
+2026-10-09T22:02:48.0933974Z     | | | |/ /  
+2026-10-09T22:02:48.0934322Z     | | | * | 407a60a9f Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0934730Z     | | | |\| 
+2026-10-09T22:02:48.0935100Z     | | | * | 50f459864 D2: AnA's informed-consent QC checks what 21 CFR 50.25 requires, and cites ICH E6(R3)
+2026-10-09T22:02:48.0935679Z     | | * | | 1d5de6ca6 S1 (D2): AnA searches the Vault's passages with no AI key and no flag
+2026-10-09T22:02:48.0936344Z     | * | | | b638247e1 New submission takes the open project's filing, and each region option says what the platform can carry (D2, F20)
+2026-10-09T22:02:48.0936872Z     | | |_|/  
+2026-10-09T22:02:48.0937332Z     | |/| |   
+2026-10-09T22:02:48.0937713Z     | * | |   110d156d4 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0938132Z     | |\ \ \  
+2026-10-09T22:02:48.0938304Z     | | | |/  
+2026-10-09T22:02:48.0938471Z     | | |/|   
+2026-10-09T22:02:48.0938807Z     | | * |   092a3596e Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0939211Z     | | |\ \  
+2026-10-09T22:02:48.0939553Z     | | | * \   3fddfeeed Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0939968Z     | | | |\ \  
+2026-10-09T22:02:48.0957538Z     | | | * | | 816fd023b Decision: what we build, for whom, and why — the next governed sequence on a US commercial IND (D2)
+2026-10-09T22:02:48.0958722Z     | | * | | |   b2f5ac0c7 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0959464Z     | | |\ \ \ \  
+2026-10-09T22:02:48.0959783Z     | | | | |/ /  
+2026-10-09T22:02:48.0960101Z     | | | |/| |   
+2026-10-09T22:02:48.0960726Z     | | | * | |   d5b598dab Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0961449Z     | | | |\ \ \  
+2026-10-09T22:02:48.0961999Z     | | | | * | | 40b1f05fd Coalesce pending AnA orphan sweeps by pool and effective cutoff
+2026-10-09T22:02:48.0962659Z     | | | | | |/  
+2026-10-09T22:02:48.0962963Z     | | | | |/|   
+2026-10-09T22:02:48.0964191Z     | | | * / | 3b0104898 D3 evidence: the bypass_rls hand-on re-measured — it is one case of the session-settable rls_enforce switch, a model change for the isolation lane
+2026-10-09T22:02:48.0965286Z     | | | |/ /  
+2026-10-09T22:02:48.0966053Z     | | | * |   71126f27b Merge remote-tracking branch 'origin/concept2cure-v2' into claude/vault-data-room-review-mjp4zj
+2026-10-09T22:02:48.0966909Z     | | | |\ \  
+2026-10-09T22:02:48.0967743Z     | | | | * \   e72ca6e0d Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0968675Z     | | | | |\ \  
+2026-10-09T22:02:48.0969335Z     | | | | * | | 85a7513d5 Weekly launch-catalog review, 2026-10-08: four lenses, every serious finding verified
+2026-10-09T22:02:48.0970532Z     | | | * | | | 044aa2de1 Study and plan (D2, D5): the Data Room catalog, governed AI organization and traceable clinical numbers
+2026-10-09T22:02:48.0971380Z     | | | | |/ /  
+2026-10-09T22:02:48.0971685Z     | | | |/| |   
+2026-10-09T22:02:48.0972542Z     | | * / | | 8b866b242 D2: AnA's SOP expertise — the regulation in force, by clause, for the product the SOP governs
+2026-10-09T22:02:48.0973334Z     | | |/ / /  
+2026-10-09T22:02:48.0974156Z     | | * | | 0b8a8c3df Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0974875Z     | | |\| | 
+2026-10-09T22:02:48.0975402Z     | | | * | 373c9af51 work-orders: claim the weekly launch-catalog review, 2026-10-08
+2026-10-09T22:02:48.0976333Z     | | * | | 152f18a80 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.0997277Z     | | |\| | 
+2026-10-09T22:02:48.0997879Z     | | | * | 65db8ef0c Coalesce AnA notification refresh reads without losing newer control
+2026-10-09T22:02:48.0998972Z     | | * | | c747a721d Claim D2: AnA's SOP expertise cites the regulation in force, by clause, for the product it governs
+2026-10-09T22:02:48.0999792Z     | | |/ /  
+2026-10-09T22:02:48.1000310Z     | | * | 7de37444e chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1001548Z     | * | | a3dd2889b Each market says what the platform can carry, from one server function; the resolver stops calling EMA and PMDA buildable (D2, F19)
+2026-10-09T22:02:48.1002570Z     | |/ /  
+2026-10-09T22:02:48.1003049Z     | * | c0669d888 board: this session claims FILING_SPINE F20, F21, F22 (D2)
+2026-10-09T22:02:48.1004052Z     | * | f5edde76a board: this session's FILING_SPINE row — F16 and F17 landed, F19 next (D2)
+2026-10-09T22:02:48.1005032Z     | * |   9b3e34d2f Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.1005755Z     | |\ \  
+2026-10-09T22:02:48.1006237Z     | | * | e6183e52e Bound AnA fallback polling and isolate listener lifetimes
+2026-10-09T22:02:48.1007233Z     | | * | 9d8eda896 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1008331Z     | * | | e796ae9ca Place into filing says what the filing copy is, and re-places a copy that has since been approved (D2, F17)
+2026-10-09T22:02:48.1009195Z     | |/ /  
+2026-10-09T22:02:48.1009932Z     | * | 77d95ef2a No dead ends on the filing path: locked doors are not offered, and every empty end has one way on (D2, F16)
+2026-10-09T22:02:48.1011414Z     | * | f10e35a1e F0 gate follows a handler passed as a prop; F3's Author rows read green and leave the baseline; board: this session claims F16, F17, F19 (D2)
+2026-10-09T22:02:48.1012661Z     | * | 4920b8866 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1013791Z     * | | 0f961354c fix(part11,ectd): one signing-authority policy; AnA packaging and dry runs carry only recorded identity (P-27)
+2026-10-09T22:02:48.1014985Z     * | | 9496def2a fix(review): DecisionModal keeps the contract-pinned refusal check inline
+2026-10-09T22:02:48.1016198Z     * | | c3b9524c4 feat(ana): DT1 — every AnA step is mirrored to ana_run_events and readable without the socket
+2026-10-09T22:02:48.1037822Z     * | | 2b6bca73f fix(walk2): sign actions only for signers; Vault reviews reach the board; AnA card and toolbar fit; idle sign-out survives a reload
+2026-10-09T22:02:48.1039286Z     * | | 5f877fa19 fix(ci): Escape on a just-opened signature dialog is never lost; six Semgrep false positives annotated
+2026-10-09T22:02:48.1040595Z     * | | bfde655a6 docs(launch): P-27 — signing authority everywhere, recorded package identity only
+2026-10-09T22:02:48.1042180Z     * | | b86baf55e fix(submission,authoring): signing authority on every signing route, recorded package identity, anchor type, picker paging; re-placement never overwrites a filed copy
+2026-10-09T22:02:48.1043872Z     * | | 17246f8dc docs(ana): detach design — P-A landed (8a3c1a4f5)
+2026-10-09T22:02:48.1044620Z     * | | 8a3c1a4f5 fix(ana): only the asker approves or declines a held step (P-A)
+2026-10-09T22:02:48.1045752Z     * | | 8fac1fc26 docs(ana): detach design third draft — two independent reviews addressed, D-1..D-7 decided
+2026-10-09T22:02:48.1046959Z     * | | c33211ee2 docs(ana): detach design — turns that outlive the page (DT1–DT5, D-1..D-7 open)
+2026-10-09T22:02:48.1049287Z     * | | 4f53d90f3 Intake and readiness: the wizard records only what the person stated; an attached form is complete only when nothing required is missing; the digest can evaluate readiness; review tasks name their project (QA 2026-10-08, second walk)
+2026-10-09T22:02:48.1051361Z     * | | 24ad99898 AnA Summary S5: each step names the task it served; a task completed with no successful step says so (P-24)
+2026-10-09T22:02:48.1053062Z     * | | 1f2557255 AnA Summary S4: the client-visible Summary of every step, live and sealed (/4), reloadable by message id, as a panel or a phone sheet; a tool's {ok:false} is a refusal (P-24)
+2026-10-09T22:02:48.1055013Z     * | | 87f86507b CI: the Insights anchor read uses the request's RLS client; tests follow today's deliberate contract changes; a schema fixture gains the sponsor columns
+2026-10-09T22:02:48.1057235Z     * | | 613e24e70 Follow-ups: every NDA/BLA/ANDA submission carries its 356h; a protocol reviewer must be able to sign; report finalize keeps one authority check; pack copy names what each pack computes
+2026-10-09T22:02:48.1058566Z     |/ /  
+2026-10-09T22:02:48.1059117Z     * | e79cca4d9 Evidence: S3 browser harnesses import the committed lib and lint clean
+2026-10-09T22:02:48.1061164Z     * | 505f71263 Signing security (P-25 follow-ups): an authenticator to sign wherever NODE_ENV is not development or test; the dialog says so before the password; protocol signing checks authority; no invented organisation; one MFA enrolment; ceremony-less approval routes removed
+2026-10-09T22:02:48.1063806Z     * | d6e0be49b AnA Summary S3: one step-presentation table for all 608 tools — both tenses, the source, the preview, and details with no JSON or ids (P-24)
+2026-10-09T22:02:48.1065230Z     * | e849abe89 Decisions from the second Submission Center and IND/reporting passes; board: F13 landed
+2026-10-09T22:02:48.1077386Z     * | aac603a1b IND and reporting follow-ups (P-20, P-26): safety verdicts from stated facts; every IND sequence carries a 1571; sponsor facts stored on the program; packs list only computed reports; the trace's confidence is measured provenance
+2026-10-09T22:02:48.1080001Z     * | d5176f241 Submission Center: a refused act voids its signature (P-23); transmit checks the application number; an existing submission can be anchored to its project (P-14); the Dispatch tab lists transmissions (F13)
+2026-10-09T22:02:48.1081872Z     * | ca49916f8 Tenant entry points: mdx-admin.ts re-read after ddc8c0db5; the justification holds, digest refreshed
+2026-10-09T22:02:48.1083402Z     * | 546a989e7 AnA Summary S2: connector search accepts Drive's own id, searches only the client's repositories, escapes queries and reaches shared drives (P-24)
+2026-10-09T22:02:48.1085337Z     * | 6c58f587b board: QA-2026-10-08 lane — what landed, and the FILING_SPINE slices this session claims (F12 landed, F13, F18, F23) plus the ANA-SUMMARY lane
+2026-10-09T22:02:48.1086595Z     * | 99e2ba822 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1087804Z     * | 56043a85f Lint: the account-panel harness and the NDA journey back to their warning counts
+2026-10-09T22:02:48.1088840Z     * |   11d3b3e50 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.1089551Z     |\ \  
+2026-10-09T22:02:48.1090060Z     | * | c0d3e151f chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1090690Z     | |/  
+2026-10-09T22:02:48.1091463Z     | * 149d2d1ac board: D2 lane — what landed since noon, and the FILING_SPINE slices this session claims
+2026-10-09T22:02:48.1092702Z     | *   c4da48c9a Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.1093405Z     | |\  
+2026-10-09T22:02:48.1093902Z     | | * 3341ff45b chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1094887Z     | * | 64c4bcadc Merge origin/concept2cure-v2: two builds of spine F2 meet; keep the one that carries F3
+2026-10-09T22:02:48.1095656Z     | |\| 
+2026-10-09T22:02:48.1096307Z     | | * 113056e49 The project page has five tabs that follow the filing; the start box sits above them (D2, F2)
+2026-10-09T22:02:48.1097743Z     | * | cbc0da007 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.1098458Z     | |\| 
+2026-10-09T22:02:48.1098960Z     | | * 5fa946369 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1099756Z     | | * ebc3076e4 Fix AnA settled tool waits and mid-tool Stop completion
+2026-10-09T22:02:48.1100626Z     | * | 25d79c99c Top bar names the open project; client type only in the account menu (F8, D2)
+2026-10-09T22:02:48.1101516Z     | * | a90c14db6 Reporting: "Find a report", not a chat look-alike (F6, D2)
+2026-10-09T22:02:48.1102399Z     | * | cd6680966 TaskSignOffDialog's header says the Task board mounts it too (D2, ana-2d)
+2026-10-09T22:02:48.1103522Z     | * | 58876cf3a Project home: five tabs following the work, and Author holds the project's documents (D2, spine F2+F3)
+2026-10-09T22:02:48.1104818Z     | * | d49857721 The review loop closes: only the author sends, a verdict completes the task, re-asking reopens (D2, ana-2d)
+2026-10-09T22:02:48.1106179Z     | * | 8df763225 Readiness reads milestones through the linked program and reports unmeasured dimensions as null (D2, ana-15)
+2026-10-09T22:02:48.1117616Z     * | |   27528b7a5 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.1118360Z     |\ \ \  
+2026-10-09T22:02:48.1118668Z     | | |/  
+2026-10-09T22:02:48.1118954Z     | |/|   
+2026-10-09T22:02:48.1119575Z     | * | 4536fe4c2 The filing path is checked hop by hop; six hops are red and can only go green (D2, F0)
+2026-10-09T22:02:48.1120537Z     | * | 386582bbc chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1121164Z     | |/  
+2026-10-09T22:02:48.1121978Z     | * b0b1694aa Design: the filing spine — every app is a feature inside the work of building a filing (D2)
+2026-10-09T22:02:48.1123006Z     | * da24c6ea5 The conversation's steers and pre-mortem render in their own component
+2026-10-09T22:02:48.1123965Z     | * b82ba5741 Ledger rows L43, L87, L106 cite the conversation tests that replaced the rail's
+2026-10-09T22:02:48.1125010Z     | *   748b9bace Merge origin/concept2cure-v2: keep trunk's early recall, give it the resolved project
+2026-10-09T22:02:48.1125766Z     | |\  
+2026-10-09T22:02:48.1126267Z     | | * e7801fe42 chore(repo-health): auto-refresh baseline after merge [skip ci]
+2026-10-09T22:02:48.1127393Z     | * 427775e54 AnA reads the project it is in: program UUID resolves to its project row (D2, ana-14)
+2026-10-09T22:02:48.1128596Z     | * b1d7d85ec The project page holds its readiness and submissions; Submission Center reads the open project (D2, ana-24)
+2026-10-09T22:02:48.1129673Z     | * 9a94754c6 The rail's code goes and the nav lists the places (D2, ana-2a)
+2026-10-09T22:02:48.1130570Z     | * 71492adc0 The canvas card sends the document for review, as the workbench does (D2, ana-2c)
+2026-10-09T22:02:48.1131608Z     | * 9018545a1 Authoring sends a document for review; the reviewer opens that document (D2, ana-2c)
+2026-10-09T22:02:48.1132806Z     | * e76ae571c The canvas lists what AnA built, a draft can be pulled down, a conversation stays in its project (D2, ana-2b)
+2026-10-09T22:02:48.1133963Z     | * 7a6edef06 The project's page holds its files: Evidence shows the project vault (D2, ana-13)
+2026-10-09T22:02:48.1134961Z     | * d210bbe36 Project home starts a conversation in the project; it is not one (D2, ana-12)
+2026-10-09T22:02:48.1136718Z     * 5e4744bba P-25 follow-up decisions: name read-only, no fabricated organisation, authenticator enforced for production signatures, per-account MFA limits, dead updateProfile removed
+2026-10-09T22:02:48.1158761Z     * e6fbacf33 Account panel (P-25): each person sees their profile, changes their password, and enrols or removes an authenticator app
+2026-10-09T22:02:48.1160334Z     * f07308059 Founder-path lineage test: follow today's committed behaviour; the transmit control is now reachable, so its baseline entry is removed
+2026-10-09T22:02:48.1161848Z     * 6df767850 AnA Summary S1: a document read records only what reached the model (P-24)
+2026-10-09T22:02:48.1163283Z     * 245f1a9d1 P-20 follow-up decisions: expectedness decides only where it matters; every IND sequence carries a 1571; unplaced is 409; never by name; sponsor fields stored
+2026-10-09T22:02:48.1165493Z     * d155ef099 IND and Submission Readiness: approval gates the release, required Module 1 is an error, Validated is shown only when validated; safety reports and regulated choices infer nothing (P-20, P-21, P-22) (QA 2026-10-08)
+2026-10-09T22:02:48.1167529Z     * 15a59403b Product decision P-26: reports show only engine-computed content for the program asked about
+2026-10-09T22:02:48.1169112Z     * 4ac15bdd1 Reporting & analytics: each report type is computed by its own engine or refused; scope follows the program; no readiness figure that measures nothing (QA 2026-10-08)
+2026-10-09T22:02:48.1170978Z     * a78c2e8b9 Product decision P-25: an account panel for each person; removal is the org-level deactivation; re-invite re-issues the link; scopes are derived
+2026-10-09T22:02:48.1173214Z     * ddc8c0db5 Admin and sign-in: members can be re-roled and removed with a reason; a wrong password says so; sign-up opens the workspace; invitees read as invited and can be re-issued a link; approver and reviewer are assignable (P-18) (QA 2026-10-08)
+2026-10-09T22:02:48.1175687Z     * d012dbc16 P-19: every program has its project record — intake refuses rather than skip the anchor, and a replayable backfill anchors the rest (QA 2026-10-08)
+2026-10-09T22:02:48.1187277Z     * e54deebee Lint: evidence harnesses and chat-context-builder back to HEAD's warning counts
+2026-10-09T22:02:48.1188688Z     * c6bfd10c7 Sign-ceremony gate sees authoring's signature row; the e-sign approval stamp sits beside it; evidence harnesses import the committed lib
+2026-10-09T22:02:48.1189980Z     * ce6190770 Styles: define pj-card-note and indf-target instead of inline styles
+2026-10-09T22:02:48.1190929Z     * c6a205188 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.1191905Z     * 9551cd277 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+2026-10-09T22:02:48.1192808Z     * d6c8cf79b MCP dbtest: anchor the fixture submission to its program (P-14)
+2026-10-09T22:02:48.1193933Z     * 847f3f84e AnA Summary design: Claude-style work and a client-visible Summary of every step, with the decisions taken (P-24)
+2026-10-09T22:02:48.1195093Z     * 28bb1b7e3 Tests: type the two QA 2026-10-08 assertions the full typecheck rejected
+2026-10-09T22:02:48.1196611Z     * a056eb9ea Authoring: a reviewer can be assigned and can sign the review; the approval binds to its snapshot; sections land where created; exports and saves say what happened (QA 2026-10-08)
+2026-10-09T22:02:48.1208720Z     * 5407e3be9 Review & approval: with a program open the board shows that program's items, and the inbox filters by program (QA 2026-10-08)
+2026-10-09T22:02:48.1210726Z     * 5d04dfec2 Product decisions P-18 to P-23: signing authority assignable, every program anchored, safety reports infer nothing, regulated choices start unstated, approval gates the release, a signature serves one act
+2026-10-09T22:02:48.1212882Z     * 0e50993c5 Submission Center: a dispatched sequence can be packaged and transmitted; nothing is signed before the gate; Validated means validated (QA 2026-10-08)
+2026-10-09T22:02:48.1214909Z     * ee05edc1e Project home and shell: the open program is in the URL and every panel reads that program; a conversation survives a reload and has a way back (QA 2026-10-08)
+2026-10-09T22:02:48.1216784Z     * cf950eeb9 QMS: the action sign route checks signing authority; a draft goes for review before approval; change register shows its links and true overdue (QA 2026-10-08)
+2026-10-09T22:02:48.1218695Z     * 24048bd9a IND: a safety report states only what the person stated; completed 1571/1572 file into the sequence the person picks (QA 2026-10-08)
+2026-10-09T22:02:48.1220500Z     * e04b568fe AnA: a stopped turn says it was stopped and is kept; conversations page past eight; the upload chip claims only what was extracted (QA 2026-10-08)
+2026-10-09T22:02:48.1222196Z     * 8d3029987 New project: a name is required, the program code is a real code, and the Projects list says what its readiness and BLOCKED mean (QA 2026-10-08)
+2026-10-09T22:02:48.1223480Z     * 264cad71e Product decisions P-13 to P-17, delegated by the founder on 2026-10-08
+2026-10-09T22:02:48.1224040Z 
+2026-10-09T22:02:49.1268600Z                
+2026-10-09T22:02:49.1269043Z                
+2026-10-09T22:02:49.1269638Z ┌─────────────┐
+2026-10-09T22:02:49.1270038Z │ Scan Status │
+2026-10-09T22:02:49.1270439Z └─────────────┘
+2026-10-09T22:02:49.1272975Z   Scanning 31 files tracked by git with 12 Code rules:
+2026-10-09T22:02:49.1338959Z                                                                                                                         
+2026-10-09T22:02:49.1340167Z   Language      Rules   Files          Origin      Rules                                                                
+2026-10-09T22:02:49.1341669Z  ─────────────────────────────        ───────────────────                                                               
+2026-10-09T22:02:49.1342808Z   <multilang>       1      31          Community      12                                                                
+2026-10-09T22:02:49.1343692Z   ts                9      28                                                                                           
+2026-10-09T22:02:49.1344255Z   js                9       2                                                                                           
+2026-10-09T22:02:49.1344799Z   yaml              1       1                                                                                           
+2026-10-09T22:02:49.1345319Z                                                                                                                         
+2026-10-09T22:02:55.1479422Z                    
+2026-10-09T22:02:55.1479978Z                    
+2026-10-09T22:02:55.1480672Z ┌─────────────────┐
+2026-10-09T22:02:55.1480954Z │ 8 Code Findings │
+2026-10-09T22:02:55.1481225Z └─────────────────┘
+2026-10-09T22:02:55.1481483Z                                                          
+2026-10-09T22:02:55.1481888Z     docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs
+2026-10-09T22:02:55.1482620Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-09T22:02:55.1483236Z           ❰❰ Blocking ❱❱
+2026-10-09T22:02:55.1483776Z           RegExp() called with a `name` function argument, this might allow an attacker to cause a Regular    
+2026-10-09T22:02:55.1484659Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-09T22:02:55.1485515Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-09T22:02:55.1486358Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-09T22:02:55.1487515Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-09T22:02:55.1488235Z           ReDoS.                                                                                              
+2026-10-09T22:02:55.1489135Z           Details: https://sg.run/gr65                                                                        
+2026-10-09T22:02:55.1489685Z                                                                                                               
+2026-10-09T22:02:55.1490424Z            97┆ await page.locator('button', { hasText: new RegExp('^' + name + '$') }).first().click();
+2026-10-09T22:02:55.1490998Z                                                                                
+2026-10-09T22:02:55.1491537Z     server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+2026-10-09T22:02:55.1492390Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-09T22:02:55.1492907Z           ❰❰ Blocking ❱❱
+2026-10-09T22:02:55.1493340Z           RegExp() called with a `c` function argument, this might allow an attacker to cause a Regular       
+2026-10-09T22:02:55.1494022Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-09T22:02:55.1494735Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-09T22:02:55.1495413Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-09T22:02:55.1496097Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-09T22:02:55.1496637Z           ReDoS.                                                                                              
+2026-10-09T22:02:55.1497273Z           Details: https://sg.run/gr65                                                                        
+2026-10-09T22:02:55.1497726Z                                                                                                               
+2026-10-09T22:02:55.1498299Z           112┆ if (c.message && !result.met) expect(result.message).toMatch(new RegExp(c.message));
+2026-10-09T22:02:55.1498831Z                                                                          
+2026-10-09T22:02:55.1499304Z     server/services/__tests__/fixtures/artifact-signed-target-harness.cjs
+2026-10-09T22:02:55.1499957Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-09T22:02:55.1500458Z           ❰❰ Blocking ❱❱
+2026-10-09T22:02:55.1500874Z           RegExp() called with a `c` function argument, this might allow an attacker to cause a Regular       
+2026-10-09T22:02:55.1501587Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-09T22:02:55.1502285Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-09T22:02:55.1502954Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-09T22:02:55.1503637Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-09T22:02:55.1504199Z           ReDoS.                                                                                              
+2026-10-09T22:02:55.1504665Z           Details: https://sg.run/gr65                                                                        
+2026-10-09T22:02:55.1505113Z                                                                                                               
+2026-10-09T22:02:55.1505711Z           101┆ assert(error,'unsafe act was accepted');if(c.expectedError)assert.match(error.message,new
+2026-10-09T22:02:55.1506381Z                RegExp(c.expectedError));else assert.equal(error.code,'ARTIFACT_CHANGED');               
+2026-10-09T22:02:55.1506842Z                                                                
+2026-10-09T22:02:55.1507729Z     server/services/ana/__tests__/ind-cmc-leaf-drafting.test.ts
+2026-10-09T22:02:55.1508399Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-09T22:02:55.1509204Z           ❰❰ Blocking ❱❱
+2026-10-09T22:02:55.1509637Z           RegExp() called with a `code` function argument, this might allow an attacker to cause a Regular    
+2026-10-09T22:02:55.1510321Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-09T22:02:55.1510990Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-09T22:02:55.1511650Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-09T22:02:55.1512449Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-09T22:02:55.1513011Z           ReDoS.                                                                                              
+2026-10-09T22:02:55.1513484Z           Details: https://sg.run/gr65                                                                        
+2026-10-09T22:02:55.1513940Z                                                                                                               
+2026-10-09T22:02:55.1514509Z            71┆ expect(sent.metadata.requirementsSource).toMatch(new RegExp(`record:ctd-
+2026-10-09T22:02:55.1515163Z                section:${code.replaceAll('.', '\\.')}:exact$`));                       
+2026-10-09T22:02:55.1515665Z                                                                                    
+2026-10-09T22:02:55.1516352Z     server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+2026-10-09T22:02:55.1517621Z     ❯❱ javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+2026-10-09T22:02:55.1518363Z           ❰❰ Blocking ❱❱
+2026-10-09T22:02:55.1518995Z           Detected possible user input going into a `path.join` or `path.resolve` function. This could   
+2026-10-09T22:02:55.1519748Z           possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files
+2026-10-09T22:02:55.1520584Z           stored in the file system. Instead, be sure to sanitize or validate user input first.          
+2026-10-09T22:02:55.1521263Z           Details: https://sg.run/OPqk                                                                   
+2026-10-09T22:02:55.1521826Z                                                                                                          
+2026-10-09T22:02:55.1522492Z            67┆ product_name: 'P', output_dir: path.join(work, 'p27-out'), leaves,
+2026-10-09T22:02:55.1522985Z                                                                    
+2026-10-09T22:02:55.1523499Z     server/services/clinical-regulatory-evidence/dataset-profile.ts
+2026-10-09T22:02:55.1524289Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-09T22:02:55.1524904Z           ❰❰ Blocking ❱❱
+2026-10-09T22:02:55.1525495Z           RegExp() called with a `tag` function argument, this might allow an attacker to cause a Regular     
+2026-10-09T22:02:55.1526273Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-09T22:02:55.1540629Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-09T22:02:55.1541652Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-09T22:02:55.1542793Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-09T22:02:55.1543752Z           ReDoS.                                                                                              
+2026-10-09T22:02:55.1544538Z           Details: https://sg.run/gr65                                                                        
+2026-10-09T22:02:55.1545000Z                                                                                                               
+2026-10-09T22:02:55.1545777Z           140┆ const re = new RegExp(`<${tag}\\b([^>]*?)(/>|>([\\s\\S]*?)</${tag}>)`, 'g');
+2026-10-09T22:02:55.1546215Z                                                                          
+2026-10-09T22:02:55.1546651Z     server/services/part11/__tests__/one-signing-authority-policy.test.ts
+2026-10-09T22:02:55.1547657Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-09T22:02:55.1548183Z           ❰❰ Blocking ❱❱
+2026-10-09T22:02:55.1548621Z           RegExp() called with a `name` function argument, this might allow an attacker to cause a Regular    
+2026-10-09T22:02:55.1549461Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-09T22:02:55.1550143Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-09T22:02:55.1550805Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-09T22:02:55.1551501Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-09T22:02:55.1552045Z           ReDoS.                                                                                              
+2026-10-09T22:02:55.1552517Z           Details: https://sg.run/gr65                                                                        
+2026-10-09T22:02:55.1552964Z                                                                                                               
+2026-10-09T22:02:55.1553524Z            96┆ RETIRED_WRAPPERS.filter((name) => new                                                    
+2026-10-09T22:02:55.1554137Z                RegExp(`\\bfunction\\s+${name}\\s*\\(|\\b(?:const|let)\\s+${name}\\s*=`).test(code)).map(
+2026-10-09T22:02:55.1554589Z                                                                  
+2026-10-09T22:02:55.1554979Z     server/services/tasking/__tests__/task-project.pglite.test.ts
+2026-10-09T22:02:55.1555712Z     ❯❱ javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+2026-10-09T22:02:55.1556305Z           ❰❰ Blocking ❱❱
+2026-10-09T22:02:55.1556719Z           Detected possible user input going into a `path.join` or `path.resolve` function. This could   
+2026-10-09T22:02:55.1557658Z           possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files
+2026-10-09T22:02:55.1558298Z           stored in the file system. Instead, be sure to sanitize or validate user input first.          
+2026-10-09T22:02:55.1558884Z           Details: https://sg.run/OPqk                                                                   
+2026-10-09T22:02:55.1559325Z                                                                                                          
+2026-10-09T22:02:55.1559831Z            38┆ const read = (rel: string) => readFileSync(join(ROOT, rel), 'utf8');
+2026-10-09T22:02:55.1560129Z 
+2026-10-09T22:02:55.4340516Z                 
+2026-10-09T22:02:55.4340866Z                 
+2026-10-09T22:02:55.4341344Z ┌──────────────┐
+2026-10-09T22:02:55.4341627Z │ Scan Summary │
+2026-10-09T22:02:55.4341902Z └──────────────┘
+2026-10-09T22:02:55.4342215Z ✅ Scan completed successfully.
+2026-10-09T22:02:55.4342590Z  • Findings: 8 (8 blocking)
+2026-10-09T22:02:55.4342909Z  • Rules run: 492
+2026-10-09T22:02:55.4343197Z  • Targets scanned: 2954
+2026-10-09T22:02:55.4343512Z  • Parsed lines: ~100.0%
+2026-10-09T22:02:55.4343813Z  • Scan skipped: 
+2026-10-09T22:02:55.4344135Z    ◦ Files larger than  files 1.0 MB: 7
+2026-10-09T22:02:55.4344608Z    ◦ Files matching .semgrepignore patterns: 99
+2026-10-09T22:02:55.4345139Z  • Scan was limited to files changed since baseline commit.
+2026-10-09T22:02:55.4345897Z  • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+2026-10-09T22:02:55.4346410Z Ran 492 rules on 2954 files: 8 findings.
+2026-10-09T22:02:55.8785227Z ##[error]Semgrep found what 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19 did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason.
+2026-10-09T22:02:55.8801867Z ##[error]Process completed with exit code 1.
+2026-10-09T22:02:55.8850920Z ##[group]Run status=0
+2026-10-09T22:02:55.8851203Z [36;1mstatus=0[0m
+2026-10-09T22:02:55.8851424Z [36;1m# shellcheck disable=SC2086[0m
+2026-10-09T22:02:55.8851882Z [36;1msemgrep scan $SEMGREP_CONFIGS --metrics=off --sarif --output=semgrep.sarif || status=$?[0m
+2026-10-09T22:02:55.8852348Z [36;1mif [ "$status" -ne 0 ]; then[0m
+2026-10-09T22:02:55.8852713Z [36;1m  echo "::error::The full Semgrep scan did not finish (exit $status)."[0m
+2026-10-09T22:02:55.8853086Z [36;1m  exit "$status"[0m
+2026-10-09T22:02:55.8853301Z [36;1mfi[0m
+2026-10-09T22:02:55.8853603Z shell: sh -e {0}
+2026-10-09T22:02:55.8853791Z env:
+2026-10-09T22:02:55.8854019Z   SEMGREP_CONFIGS: --config=p/default --config=p/ci
+2026-10-09T22:02:55.8854332Z ##[endgroup]
+2026-10-09T22:03:35.6377624Z                
+2026-10-09T22:03:35.6378187Z                
+2026-10-09T22:03:35.6378881Z ┌─────────────┐
+2026-10-09T22:03:35.6379328Z │ Scan Status │
+2026-10-09T22:03:35.6379779Z └─────────────┘
+2026-10-09T22:03:35.6430989Z   Scanning 21132 files tracked by git with 1075 Code rules:
+2026-10-09T22:03:39.4587944Z                                                                                                                         
+2026-10-09T22:03:39.4588913Z   Language      Rules   Files          Origin      Rules                                                                
+2026-10-09T22:03:39.4590213Z  ─────────────────────────────        ───────────────────                                                               
+2026-10-09T22:03:39.4591137Z   <multilang>      62   21132          Community    1075                                                                
+2026-10-09T22:03:39.4592003Z   ts              163    7286                                                                                           
+2026-10-09T22:03:39.4592804Z   json              4    2832                                                                                           
+2026-10-09T22:03:39.4593592Z   js              153     758                                                                                           
+2026-10-09T22:03:39.4594348Z   bash              4      92                                                                                           
+2026-10-09T22:03:39.4595099Z   yaml             36      77                                                                                           
+2026-10-09T22:03:39.4595879Z   terraform       101      45                                                                                           
+2026-10-09T22:03:39.4596659Z   html              1      45                                                                                           
+2026-10-09T22:03:39.4597635Z   python          243      40                                                                                           
+2026-10-09T22:03:39.4598420Z   php              38       2                                                                                           
+2026-10-09T22:03:39.4599152Z                                                                                                                         
+2026-10-09T22:14:33.4033471Z                 
+2026-10-09T22:14:33.4033984Z                 
+2026-10-09T22:14:33.4034705Z ┌──────────────┐
+2026-10-09T22:14:33.4035163Z │ Scan Summary │
+2026-10-09T22:14:33.4035607Z └──────────────┘
+2026-10-09T22:14:33.4036128Z ✅ Scan completed successfully.
+2026-10-09T22:14:33.4036708Z  • Findings: 688 (688 blocking)
+2026-10-09T22:14:33.4037478Z  • Rules run: 647
+2026-10-09T22:14:33.4037868Z  • Targets scanned: 21132
+2026-10-09T22:14:33.4038237Z  • Parsed lines: ~99.9%
+2026-10-09T22:14:33.4038485Z  • Scan skipped: 
+2026-10-09T22:14:33.4038759Z    ◦ Files larger than  files 1.0 MB: 81
+2026-10-09T22:14:33.4039443Z    ◦ Files matching .semgrepignore patterns: 977
+2026-10-09T22:14:33.4039816Z  • Scan was limited to files tracked by git
+2026-10-09T22:14:33.4040325Z  • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+2026-10-09T22:14:33.4040986Z Ran 647 rules on 21132 files: 688 findings.
+2026-10-09T22:14:33.5156150Z 
+2026-10-09T22:14:33.5156742Z A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
+2026-10-09T22:14:33.5162138Z 
+2026-10-09T22:14:33.5162984Z 📢 Too many findings? Try Semgrep Pro for more powerful queries and less noise.
+2026-10-09T22:14:33.5163582Z    See https://sg.run/false-positives.
+2026-10-09T22:14:34.5330518Z ##[group]Run github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b
+2026-10-09T22:14:34.5330985Z with:
+2026-10-09T22:14:34.5331184Z   sarif_file: semgrep.sarif
+2026-10-09T22:14:34.5331596Z   checkout_path: /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit
+2026-10-09T22:14:34.5334289Z   token: ***
+2026-10-09T22:14:34.5334485Z   matrix: null
+2026-10-09T22:14:34.5334692Z   wait-for-processing: true
+2026-10-09T22:14:34.5334973Z env:
+2026-10-09T22:14:34.5335199Z   SEMGREP_CONFIGS: --config=p/default --config=p/ci
+2026-10-09T22:14:34.5335498Z ##[endgroup]
+2026-10-09T22:14:34.5341664Z ##[command]/usr/bin/docker exec  9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc sh -c "cat /etc/*release | grep ^ID"
+2026-10-09T22:14:34.9375125Z Job run UUID is d8654d44-c5de-4f6c-8a3f-7efa7e754cb9.
+2026-10-09T22:14:34.9451171Z ##[warning]CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
+2026-10-09T22:14:35.6822170Z Post-processing sarif files: ["semgrep.sarif"]
+2026-10-09T22:14:35.6995942Z Validating semgrep.sarif
+2026-10-09T22:14:36.5159892Z Adding fingerprints to SARIF file. See https://docs.github.com/en/code-security/reference/code-scanning/sarif-support-for-code-scanning#data-for-preventing-duplicated-alerts for more information.
+2026-10-09T22:14:37.5665560Z ##[group]Uploading code scanning results
+2026-10-09T22:14:37.6283953Z Uploading results
+2026-10-09T22:14:38.0806493Z Successfully uploaded results
+2026-10-09T22:14:38.0807542Z ##[endgroup]
+2026-10-09T22:14:38.0810888Z ##[group]Waiting for processing to finish
+2026-10-09T22:14:43.3589785Z Analysis upload status is complete.
+2026-10-09T22:14:43.3591210Z ##[endgroup]
+2026-10-09T22:14:43.7834441Z ##[group]Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+2026-10-09T22:14:43.7834858Z with:
+2026-10-09T22:14:43.7835049Z   name: semgrep-sarif
+2026-10-09T22:14:43.7835264Z   path: semgrep.sarif
+2026-10-09T22:14:43.7835486Z   if-no-files-found: warn
+2026-10-09T22:14:43.7835714Z   compression-level: 6
+2026-10-09T22:14:43.7835925Z   overwrite: false
+2026-10-09T22:14:43.7836138Z   include-hidden-files: false
+2026-10-09T22:14:43.7836367Z env:
+2026-10-09T22:14:43.7836612Z   SEMGREP_CONFIGS: --config=p/default --config=p/ci
+2026-10-09T22:14:43.7837004Z   CODEQL_ACTION_JOB_RUN_UUID: d8654d44-c5de-4f6c-8a3f-7efa7e754cb9
+2026-10-09T22:14:43.7837669Z   CODEQL_ACTION_FEATURE_MULTI_LANGUAGE: false
+2026-10-09T22:14:43.7837962Z   CODEQL_ACTION_FEATURE_SANDWICH: false
+2026-10-09T22:14:43.7838238Z   CODEQL_ACTION_FEATURE_SARIF_COMBINE: true
+2026-10-09T22:14:43.7838522Z   CODEQL_ACTION_FEATURE_WILL_UPLOAD: true
+2026-10-09T22:14:43.7838793Z   CODEQL_ACTION_VERSION: 3.37.6
+2026-10-09T22:14:43.7839113Z   CODEQL_ACTION_DID_LOG_VERSION_DEPRECATION: true
+2026-10-09T22:14:43.7839488Z   CODEQL_ACTION_ANALYSIS_KEY: .github/workflows/semgrep.yml:semgrep
+2026-10-09T22:14:43.7839875Z   CODEQL_WORKFLOW_STARTED_AT: 2026-10-09T22:14:34.935Z
+2026-10-09T22:14:43.7840507Z   CODEQL_UPLOAD_SARIF__GITHUB_WORKFLOWS_SEMGREP_YML_SEMGREP__SEMGREP_OSS: CODEQL_UPLOAD_SARIF__GITHUB_WORKFLOWS_SEMGREP_YML_SEMGREP__SEMGREP_OSS
+2026-10-09T22:14:43.7841094Z ##[endgroup]
+2026-10-09T22:14:43.7844645Z ##[command]/usr/bin/docker exec  9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc sh -c "cat /etc/*release | grep ^ID"
+2026-10-09T22:14:44.0741345Z (node:398) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-09T22:14:44.0742087Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-09T22:14:44.0810694Z With the provided path, there will be 1 file uploaded
+2026-10-09T22:14:44.0824733Z Artifact name is valid!
+2026-10-09T22:14:44.0828062Z Root directory input is valid!
+2026-10-09T22:14:44.3687635Z Beginning upload of artifact content to blob storage
+2026-10-09T22:14:44.4326324Z (node:398) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-09T22:14:44.6527540Z Uploaded bytes 251021
+2026-10-09T22:14:44.6949516Z Finished uploading artifact content to blob storage!
+2026-10-09T22:14:44.6952043Z SHA256 digest of uploaded artifact zip is 7ec2ae5882c0e1670f45e4e8383eac5da148a75dfb479ca4cacec42d268261b2
+2026-10-09T22:14:44.6956453Z Finalizing artifact upload
+2026-10-09T22:14:44.9598167Z Artifact semgrep-sarif.zip successfully finalized. Artifact ID 11647469856
+2026-10-09T22:14:44.9599464Z Artifact semgrep-sarif has been successfully uploaded! Final size is 251021 bytes. Artifact ID is 11647469856
+2026-10-09T22:14:44.9610870Z Artifact download URL: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37996641125/artifacts/11647469856
+2026-10-09T22:14:44.9820031Z Post job cleanup.
+2026-10-09T22:14:44.9826282Z ##[command]/usr/bin/docker exec  9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc sh -c "cat /etc/*release | grep ^ID"
+2026-10-09T22:14:45.3846680Z ##[group]Uploading combined SARIF debug artifact
+2026-10-09T22:14:45.3852412Z ##[endgroup]
+2026-10-09T22:14:45.4045349Z Post job cleanup.
+2026-10-09T22:14:45.4053081Z ##[command]/usr/bin/docker exec  9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc sh -c "cat /etc/*release | grep ^ID"
+2026-10-09T22:14:45.6010522Z [command]/usr/bin/git version
+2026-10-09T22:14:45.6057910Z git version 2.52.0
+2026-10-09T22:14:45.6139827Z Copying '/github/home/.gitconfig' to '/__w/_temp/9376ba3c-2a20-401f-bad4-339980f69446/.gitconfig'
+2026-10-09T22:14:45.6151876Z Temporarily overriding HOME='/__w/_temp/9376ba3c-2a20-401f-bad4-339980f69446' before making global git config changes
+2026-10-09T22:14:45.6153297Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-09T22:14:45.6161288Z [command]/usr/bin/git config --global --add safe.directory /__w/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit
+2026-10-09T22:14:45.6198271Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-09T22:14:45.6239176Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-09T22:14:45.6493628Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-09T22:14:45.6519578Z http.https://github.com/.extraheader
+2026-10-09T22:14:45.6532935Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-09T22:14:45.6566602Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-09T22:14:45.6798900Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T22:14:45.6828826Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-09T22:14:45.7214673Z Stop and remove container: ec85d092dc7646269d3c02c9b96472bb_semgrepsemgrep11770sha256acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198_559685
+2026-10-09T22:14:45.7220195Z ##[command]/usr/bin/docker rm --force 9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc
+2026-10-09T22:14:45.8161194Z 9f8270639fc3186a183a5d094d7f5d1cceb946019331fa25a212eb54b533addc
+2026-10-09T22:14:45.8189080Z Remove container network: github_network_0652bd772f3a4a4e8b5a6ad9462e3258
+2026-10-09T22:14:45.8193838Z ##[command]/usr/bin/docker network rm github_network_0652bd772f3a4a4e8b5a6ad9462e3258
+2026-10-09T22:14:45.9170569Z github_network_0652bd772f3a4a4e8b5a6ad9462e3258
+2026-10-09T22:14:45.9241323Z Cleaning up orphan processes
+2026-10-09T22:14:45.9572707Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b, actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02, github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

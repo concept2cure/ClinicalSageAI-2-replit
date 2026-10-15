@@ -1,0 +1,4 @@
+# IAM-25/INF-35, 2026-10-01T16:23:03Z: npm run -s ci:launch-scope
+[ci:launch-scope] 7 apps · 41 surfaces · 20 modules · 36 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit=0

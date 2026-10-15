@@ -1,0 +1,21 @@
+# ESLint on every file P1-45 changed (working tree), 2026-10-01T06:30Z. Zero errors. Warnings on gateway.ts and the three amended tests are identical in count and rule to HEAD (checked by piping git show HEAD:<file> through eslint --stdin); the four new test files and the five other source files have none.
+server/config/environment.ts  errors=0 warnings=0 {}
+server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts  errors=0 warnings=1 {"max-lines-per-function":1}
+server/services/ai-gateway/__tests__/production-provider-election.test.ts  errors=0 warnings=0 {}
+server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts  errors=0 warnings=1 {"max-lines-per-function":1}
+server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts  errors=0 warnings=0 {}
+server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts  errors=0 warnings=0 {}
+server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts  errors=0 warnings=1 {"max-lines-per-function":1}
+server/services/ai-gateway/embeddings/embedding-provider.ts  errors=0 warnings=0 {}
+server/services/ai-gateway/gateway.ts  errors=0 warnings=26 {"@typescript-eslint/no-unused-vars":3,"complexity":12,"max-lines":1,"max-lines-per-function":5,"max-depth":3,"max-params":2}
+server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts  errors=0 warnings=0 {}
+server/services/ai-gateway/providers/org-placement-writer.ts  errors=0 warnings=0 {}
+server/services/ai-gateway/providers/org-placement.ts  errors=0 warnings=0 {}
+server/startup/__tests__/ai-provider-election-posture.test.ts  errors=0 warnings=0 {}
+server/startup/ai-governance-posture.ts  errors=0 warnings=0 {}
+
+# HEAD, same rules:
+server/services/ai-gateway/gateway.ts  errors=0 warnings=26 {"@typescript-eslint/no-unused-vars":3,"complexity":12,"max-lines":1,"max-lines-per-function":5,"max-depth":3,"max-params":2}
+server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts  errors=0 warnings=1 {"max-lines-per-function":1}
+server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts  errors=0 warnings=1 {"max-lines-per-function":1}
+server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts  errors=0 warnings=1 {"max-lines-per-function":1}

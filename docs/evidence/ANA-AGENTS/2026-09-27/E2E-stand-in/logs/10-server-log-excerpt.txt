@@ -1,0 +1,39 @@
+# Excerpts from the capture's server log (<scratch>/final/server.log, 35869 lines, sha256 e66a533547f5ae4b06f743bc577ebf40d99edf584fccc1e8d6684120e5b4ff9b; the full log is ~1.5 MB and is not filed).
+# Line numbers are the log's own. Plain console lines carry no timestamp.
+# Review correction 2026-09-28: this file first held only the scenario-3 line; the memory and RIM lines the README cites are added here.
+
+## Scenario 3: the induced fault (the stream's existing 'run control unavailable' branch)
+12382:[AnA RI Stream] run control unavailable: new row for relation "ana_runs" violates check constraint "e2e_refuse_new_runs"
+
+## Semantic memory, every turn (10 turns: S1, its Continue, Manual, Manual-unavailable, Auto, three approval runs, the control, Deep research)
+# The retrieval fails at once with an egress 403 (no OpenAI key is set either: lines 2, 47).
+# The 'timed out after 3000ms' line follows ~3 s later on each turn, but the turn did not wait: every done frame reports memory.semanticSearchMs 10-46 ms and clientMemory 'error' (not 'timeout').
+# The snapshot's withTimeout (server/services/memory-context-assembler.ts:25-40) never clears its timer, so the warning fires after a race that had already settled. A misleading log line, not a 3 s wait.
+2:⚠️ OpenAI API key not configured
+47:⚠️ OpenAI API key not configured
+5184:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+5206:[memory-context] Semantic search timed out after 3000ms, using fallback
+5251:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+5269:[memory-context] Semantic search timed out after 3000ms, using fallback
+8792:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+8828:[memory-context] Semantic search timed out after 3000ms, using fallback
+12384:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+12415:[memory-context] Semantic search timed out after 3000ms, using fallback
+15936:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+15978:[memory-context] Semantic search timed out after 3000ms, using fallback
+19499:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+19515:[memory-context] Semantic search timed out after 3000ms, using fallback
+23093:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+23961:[memory-context] Semantic search timed out after 3000ms, using fallback
+28619:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+28635:[memory-context] Semantic search timed out after 3000ms, using fallback
+32217:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+32233:[memory-context] Semantic search timed out after 3000ms, using fallback
+35818:[MemoryContextAssembler] Client semantic retrieval failed: 403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access.
+35856:[memory-context] Semantic search timed out after 3000ms, using fallback
+
+## project_memory_entries: one read at startup (the RIM pattern registry), not per turn
+458-461: [RIM] Pattern registry load failed: Failed query: select "content" from "project_memory_entries" where ("project_memory_entries"."organization_id" = $1 and "project_memory_entries"."category" = $2) order by "project_memory_entries"."created_at" desc limit $3
+458-461: params: 1,rim_pattern_registry,1
+458-461: ⚠️ RIM pattern registry load FAILED (Failed query: select "content" from "project_memory_entries" where ("project_memory_entries"."organization_id" = $1 and "project_memory_entries"."category" = $2) order by "project_memory_entries"."created_at" desc limit $3
+458-461: params: 1,rim_pattern_registry,1) — falling back to 11 seed patterns; persisted learning is NOT loaded

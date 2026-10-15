@@ -1,0 +1,40 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > every hop can be located in the source 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > the baseline names only known hops, each with its slice and reason 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > the baseline only falls 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > no hop outside the baseline is red 0ms
+ × tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > no baselined hop is green 8ms
+   → remove these from filing-path-reachability.baseline.json and lower BASELINE_CEILING: expected [ Array(1) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > no baselined hop is green
+AssertionError: remove these from filing-path-reachability.baseline.json and lower BASELINE_CEILING: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Author document row → that document [author-row-to-document] is green via client/src/concept2cure/v2/surfaces/ProjectHome.tsx (stage === 'author') → openDocument (client/src/concept2cure/v2/surfaces/ProjectHome.tsx)",
++ ]
+
+ ❯ tests/ui/filing-path-reachability.test.ts:394:106
+    392|       .filter((v) => v.green && baseline.red[v.hop.id])
+    393|       .map((v) => `${v.hop.label} [${v.hop.id}] is green via ${v.chain…
+    394|     expect(green, 'remove these from filing-path-reachability.baseline…
+       |                                                                                                          ^
+    395|   });
+    396| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  07:36:36
+   Duration  7.07s (transform 507ms, setup 187ms, import 6.18s, tests 18ms, environment 0ms)
+
+exit 1

@@ -1,7 +1,10 @@
 import { Request, Response, Express } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
+const log = createScopedLogger('reports-subscriptions');
 const REPORTS_ROOT_DIR = 'lumen_reports_backend/static/example_reports';
 
 /**
@@ -49,12 +52,8 @@ export function registerSubscriptionsRoutes(app: Express) {
       // Stream the file to the response
       const fileStream = fs.createReadStream(filePath);
       fileStream.pipe(res);
-    } catch (error: any) {
-      console.error(`Error downloading report file:`, error);
-      res.status(500).json({
-        success: false,
-        message: `Error downloading report file: ${error.message}`,
-      });
+    } catch (error) {
+      return serverError(res, log, 'downloading the report file', error);
     }
   });
 
@@ -98,12 +97,8 @@ export function registerSubscriptionsRoutes(app: Express) {
       // Stream the image to the response
       const imageStream = fs.createReadStream(imagePath);
       imageStream.pipe(res);
-    } catch (error: any) {
-      console.error(`Error serving preview image:`, error);
-      res.status(500).json({
-        success: false,
-        message: `Error serving preview image: ${error.message}`,
-      });
+    } catch (error) {
+      return serverError(res, log, 'serving the preview image', error);
     }
   });
 
@@ -124,12 +119,8 @@ export function registerSubscriptionsRoutes(app: Express) {
         reportId: `custom_${personaId}_${Date.now()}`,
         estimatedTime: '3-5 minutes',
       });
-    } catch (error: any) {
-      console.error(`Error generating custom report:`, error);
-      res.status(500).json({
-        success: false,
-        message: `Error generating custom report: ${error.message}`,
-      });
+    } catch (error) {
+      return serverError(res, log, 'queueing the custom report', error);
     }
   });
 
@@ -157,12 +148,8 @@ export function registerSubscriptionsRoutes(app: Express) {
         subscriptionId: `sub_${personaId}_${Date.now()}`,
         activationTime: 'immediate',
       });
-    } catch (error: any) {
-      console.error(`Error subscribing to report bundle:`, error);
-      res.status(500).json({
-        success: false,
-        message: `Error subscribing to report bundle: ${error.message}`,
-      });
+    } catch (error) {
+      return serverError(res, log, 'subscribing to the report bundle', error);
     }
   });
 

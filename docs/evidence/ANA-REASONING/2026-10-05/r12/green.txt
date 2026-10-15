@@ -1,0 +1,52 @@
+Round 12's suites, green, on the round-12 tree (trunk e78869eec plus round 12).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts server/services/ana/__tests__/turn-record-draft.pglite.test.ts server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > round-trips content + sources and is single-use 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > is tenant- and section-scoped 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > drops entries with no usable source id, and defaults content/title 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > will not accept an expired candidate 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > carries the generator from park to accept 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > reports no generator rather than guessing one 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > does not half-populate a generator it cannot read 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > round-trips paraphrase assertions from park to accept 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > defaults assertions to [] when none are parked, and drops malformed claims 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store — the turn and the request a draft came from (round 12, RT-6) > carries the gateway request id and the turn record id from park to accept 2ms
+ ✓ server/services/ana/__tests__/turn-record-draft.pglite.test.ts > the draft door’s turn > is filed once: a fault after the draft was filed files no second record 86ms
+ ✓ server/services/ana/__tests__/turn-record-draft.pglite.test.ts > the draft door’s turn > a check that could not run is recorded as not run, never as an empty check 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > a retrieval OUTAGE is not reported as an empty corpus 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > names the gap when retrieved evidence cannot all carry citations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeGrounding > reports a fully attributable draft plainly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a claimed (410) draft is discarded — a retry of it can only fail 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > a LINEAGE_REQUIRED rollback KEEPS the draft — the candidate survived it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > names an unauthenticated session rather than blaming the draft 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > describeAcceptFailure > falls back to the server’s sentence, never to a bare code 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > generating does not save anything — the section is untouched until accept 120ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > shows the wait as AnA's live record — what is running and a clock — then removes it 40ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays 24ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a transport failure yields no draft body and says nothing changed 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a model draft with no parked candidate says citations are impossible for it 27ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > accepts through the lineage endpoint, sending the draftId and the text actually saved 42ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > names the consequence on the regenerate control once edits exist 27ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > passes a MISSING lineage summary up as absent, never as a summary of zero 24ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > warns while it is still a choice that an edited draft is no longer the model’s words 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > a consumed (410) draft is cleared, not left behind a button that can only fail 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > reports the fail-closed lineage rollback as a rollback, and adopts nothing 25ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft > says unsaved editor edits are not part of the draft being accepted 27ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > DocumentAuthoring — the drafting panel is reachable > opens the panel from the editor toolbar, and drafts nothing until asked 276ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > shows the engine’s check of the draft before the accept: what was not found, and the verdict 25ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft the server did not check says so, and never reads as a pass 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > a draft whose record was not filed says so, with the server’s reason 29ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > once the author edits the draft, the check says the edits are not checked 24ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > files one record holding the prompt sent, the draft returned, the model and the gateway request 147ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > opens the record before the model is asked, so the turn starts when it did 42ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn 33ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent 27ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence 74ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > names the claims no source holds and the verdict it states; the person’s words are theirs, not a source 32ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > the evidence the model was shown is the block without its instructions to the model 1ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a citation the section’s own heading gave the model is found there, never “not found” 27ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a figure past the 600-character cut is not found: the model was never shown it 29ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence 34ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from 100ms
+ Test Files  4 passed (4)
+      Tests  47 passed (47)

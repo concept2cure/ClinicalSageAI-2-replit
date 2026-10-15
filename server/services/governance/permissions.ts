@@ -60,6 +60,24 @@ export interface PermissionQuery {
   classification?: string | null;
 }
 
+/** A caller-owned signing transaction may resolve the same canonical grants. */
+export interface GrantExecutor {
+  query(sql: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
+}
+
+export interface GrantResolutionOptions {
+  executor?: GrantExecutor;
+  /** Refuse an unreadable/unverified store instead of using code defaults. */
+  strict?: boolean;
+}
+
+export class GovernanceGrantStoreUnavailableError extends Error {
+  constructor(readonly cause: unknown) {
+    super('Current governance grants could not be verified.');
+    this.name = 'GovernanceGrantStoreUnavailableError';
+  }
+}
+
 const ALL: GovAction[] = [
   'view', 'author', 'review', 'approve', 'sign', 'lock', 'submit', 'assign', 'manage_permissions',
 ];
@@ -74,11 +92,17 @@ const allow = (role: string, actions: (GovAction | '*')[]): Grant[] =>
  * the target regulated taxonomy (so it is ready as those roles become
  * assignable). Admin extends/overrides per-org via `c2c_governance_grants`.
  */
+const MANAGER_ACTIONS: GovAction[] = ['view', 'author', 'review', 'approve', 'sign', 'assign'];
+const MEMBER_ACTIONS: GovAction[] = ['view', 'author', 'review'];
+
 export const DEFAULT_POLICY: Grant[] = [
   // — currently-assignable org roles (functional today) —
   ...allow('admin', ['*']),
-  ...allow('manager', ['view', 'author', 'review', 'approve', 'sign', 'assign']),
-  ...allow('member', ['view', 'author', 'review']),
+  ...allow('manager', MANAGER_ACTIONS),
+  ...allow('member', MEMBER_ACTIONS),
+  // P-18 (2026-10-08): assignable, each carrying the role it extends, and signing.
+  ...allow('approver', [...MANAGER_ACTIONS, 'sign']),
+  ...allow('reviewer', [...MEMBER_ACTIONS, 'sign']),
   ...allow('viewer', ['view']),
   // — target regulated taxonomy —
   ...allow('viewer', ['view']),
@@ -135,25 +159,38 @@ export function evaluate(grants: Grant[], role: string, q: PermissionQuery): boo
   return allowed;
 }
 
-/** Effective grants for a role: code defaults ∪ per-org DB overrides. */
-export async function resolveGrants(orgId: number, role: string): Promise<Grant[]> {
+function validStrictGrant(row: Record<string, unknown>, role: string): boolean {
+  if (row.role !== role || typeof row.action !== 'string' || row.action.trim().length === 0) return false;
+  if (row.effect !== 'allow' && row.effect !== 'deny') return false;
+  return [row.resource_type, row.ctd_module, row.classification]
+    .every(value => value === null || typeof value === 'string');
+}
+
+/** Effective grants for a role: code defaults ∪ per-org DB overrides.
+ * Ordinary callers retain the legacy defaults-only fallback. Strict callers
+ * must verify the actual store through their supplied transaction executor. */
+export async function resolveGrants(orgId: number, role: string, options: GrantResolutionOptions = {}): Promise<Grant[]> {
   const defaults = DEFAULT_POLICY.filter(g => g.role === role);
   let dbGrants: Grant[] = [];
   try {
-    const r = await pool.query(
+    const r = await (options.executor ?? pool).query(
       `SELECT role, action, resource_type, ctd_module, classification, effect
          FROM c2c_governance_grants WHERE org_id = $1 AND role = $2`,
       [orgId, role],
     );
-    dbGrants = r.rows.map((row: any) => ({
-      role: row.role,
-      action: row.action,
-      resourceType: row.resource_type ?? null,
-      ctdModule: row.ctd_module ?? null,
-      classification: row.classification ?? null,
-      effect: row.effect === 'deny' ? 'deny' : 'allow',
-    }));
+    dbGrants = r.rows.map((row: any) => {
+      if (options.strict && !validStrictGrant(row, role)) throw new Error('Invalid governance grant row.');
+      return {
+        role: row.role,
+        action: row.action,
+        resourceType: row.resource_type ?? null,
+        ctdModule: row.ctd_module ?? null,
+        classification: row.classification ?? null,
+        effect: row.effect === 'deny' ? 'deny' : 'allow',
+      };
+    });
   } catch (err: any) {
+    if (options.strict) throw new GovernanceGrantStoreUnavailableError(err);
     // Atom store not migrated yet → defaults only (additive, non-breaking).
     if (err?.code !== '42P01') {
       console.warn('[governance/permissions] grant load failed (defaults only):', err?.message);
@@ -163,36 +200,33 @@ export async function resolveGrants(orgId: number, role: string): Promise<Grant[
 }
 
 /** Can this role perform the action? Evaluated over (defaults ∪ DB), deny-by-default. */
-export async function can(orgId: number, role: string, q: PermissionQuery): Promise<boolean> {
-  return evaluate(await resolveGrants(orgId, role), role, q);
+export async function can(orgId: number, role: string, q: PermissionQuery, options?: GrantResolutionOptions): Promise<boolean> {
+  return evaluate(await resolveGrants(orgId, role, options), role, q);
 }
 
 /**
  * The projection: the org user ids who hold a role that grants the action. This
  * is the answer to "who can sign/approve/be-assigned this" — derived from RBAC,
- * never stored on the task. Returns [] on any failure (fail-closed).
+ * never stored on the task. A failed read throws: it returned [] (2026-10-15),
+ * which the eligible-users route rendered as "no one is eligible" — a failure
+ * shown as an answer. Nobody is granted anything either way.
  */
 export async function whoCan(orgId: number, q: PermissionQuery): Promise<number[]> {
-  try {
-    const members = await pool.query(
-      `SELECT user_id, role FROM organization_users
-        WHERE organization_id = $1 AND (status IS NULL OR status = 'active')`,
-      [orgId],
-    );
-    const eligible: number[] = [];
-    // Resolve grants per distinct role once.
-    const roleGrants = new Map<string, Grant[]>();
-    for (const row of members.rows as any[]) {
-      const role = String(row.role ?? '');
-      if (!roleGrants.has(role)) roleGrants.set(role, await resolveGrants(orgId, role));
-      if (evaluate(roleGrants.get(role)!, role, q)) {
-        const uid = typeof row.user_id === 'string' ? parseInt(row.user_id, 10) : Number(row.user_id);
-        if (Number.isFinite(uid)) eligible.push(uid);
-      }
+  const members = await pool.query(
+    `SELECT user_id, role FROM organization_users
+      WHERE organization_id = $1 AND (status IS NULL OR status = 'active')`,
+    [orgId],
+  );
+  const eligible: number[] = [];
+  // Resolve grants per distinct role once.
+  const roleGrants = new Map<string, Grant[]>();
+  for (const row of members.rows as any[]) {
+    const role = String(row.role ?? '');
+    if (!roleGrants.has(role)) roleGrants.set(role, await resolveGrants(orgId, role));
+    if (evaluate(roleGrants.get(role)!, role, q)) {
+      const uid = typeof row.user_id === 'string' ? parseInt(row.user_id, 10) : Number(row.user_id);
+      if (Number.isFinite(uid)) eligible.push(uid);
     }
-    return eligible;
-  } catch (err: any) {
-    console.warn('[governance/permissions] whoCan failed (fail-closed, []):', err?.message);
-    return [];
   }
+  return eligible;
 }

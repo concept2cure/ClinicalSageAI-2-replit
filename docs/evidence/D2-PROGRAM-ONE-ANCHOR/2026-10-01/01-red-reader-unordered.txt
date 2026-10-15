@@ -1,0 +1,9 @@
+# Mutation: '.orderBy(asc(projects.id))' removed from readProgramAnchorRow (restored after)
+ server/services/c2c/program-project-anchor.ts | 1 -
+ 1 file changed, 1 deletion(-)
+ × server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > two anchor rows: reads the lowest id of the organization and names both
+   → expected { id: 40, clientWorkspaceId: 4 } to deeply equal { id: 12, clientWorkspaceId: 2 }
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > another organization's anchor is never read: project 5 is the lowest id but organization 8's
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > one anchor row: read, nothing logged
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

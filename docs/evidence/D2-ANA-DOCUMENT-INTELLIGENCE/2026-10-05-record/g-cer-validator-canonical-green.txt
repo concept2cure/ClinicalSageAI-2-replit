@@ -1,0 +1,139 @@
+# g-cer-validator-canonical GREEN — 2026-10-05T13:01:34Z, working tree on HEAD 4b793d04
+# npx vitest run server/services/cer/__tests__/cer-conformance-canonical.test.ts server/services/cer/__tests__/unified-cer-service.failclosed.test.ts server/services/market-specs/__tests__/stored-cer-assessment.test.ts tests/cer-mdr-routes.test.ts tests/routes/cer-faers-save-report.test.ts tests/routes/source-tracer-recorded.test.ts server/services/ana/__tests__/submission-center-tools.test.ts
+ ✓ tests/cer-mdr-routes.test.ts > CER MDR routes — auth gate > post /api/cer/mdr/generate returns 403 without org context 56ms
+ ✓ tests/cer-mdr-routes.test.ts > CER MDR routes — auth gate > get /api/cer/mdr/CER-123/validate returns 403 without org context 14ms
+ ✓ tests/cer-mdr-routes.test.ts > CER MDR routes — auth gate > post /api/cer/reports/1/evidence returns 403 without org context 26ms
+ ✓ tests/cer-mdr-routes.test.ts > POST /api/cer/mdr/generate > rejects an invalid body with 400 28ms
+ ✓ tests/cer-mdr-routes.test.ts > POST /api/cer/mdr/generate > rejects an unknown regulatory framework with 400 22ms
+ ✓ tests/cer-mdr-routes.test.ts > POST /api/cer/mdr/generate > fails closed (422) for a non-existent device instead of fabricating a report 41ms
+ ✓ tests/cer-mdr-routes.test.ts > GET /api/cer/mdr/:reportId/validate > rejects an unsafe report id with 400 7ms
+ ✓ tests/cer-mdr-routes.test.ts > GET /api/cer/mdr/:reportId/validate > returns 404 (never auto-valid) when the report does not exist 3ms
+ ✓ tests/cer-mdr-routes.test.ts > POST /api/cer/reports/:cerId/evidence > rejects a non-numeric CER id with 400 10ms
+ ✓ tests/cer-mdr-routes.test.ts > POST /api/cer/reports/:cerId/evidence > rejects invalid evidence payload with 400 4ms
+ ✓ tests/cer-mdr-routes.test.ts > POST /api/cer/reports/:cerId/evidence > returns 404 when attaching evidence to a CER not owned by the tenant 4ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a column-complete CER with no scope, appraisal, evaluator qualification, PMCF or references is NOT valid 3ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > the same CER with those sections stored under their headings is valid 17ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > runs no private checklist: framework, device identification and the canonical required sections 1ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a section row whose content is empty does not count as present 1ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > a missing section says it was not found and names the headings that matched nothing 1ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > MDR CER — checked against the canonical CER structure > equivalence: required when claimed; when the claim is not recorded it cannot pass silently 1ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: substrings and equipment qualification are not sections > a CER with no scope heading and no evaluator-qualification heading is NOT valid 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: substrings and equipment qualification are not sections > true-valid counterpart: the same endoscope CER with real scope and evaluator headings is valid 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: substrings and equipment qualification are not sections > a PER whose only "qualification" row is analyser IQ/OQ has no evaluator qualification 1ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: IVD reference terms of art are not a references section > a PER with reference-interval, -range, -material and -method rows but no references section is NOT valid 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > reviewed false-valid case: IVD reference terms of art are not a references section > true-valid counterpart: the same PER with a References heading is valid 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > an IVDR report without the analytical-performance section is NOT valid 15ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > a column-complete IVDR report with no PER sections is NOT valid; no CER column stands in for a pillar 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > CER headings do not satisfy PER sections 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > IVDR — checked as a Performance Evaluation Report, not a CER > a complete PER is valid and is checked against the canonical PER sections 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > every canonical CER and PER section title names its own section, and only it 1ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > numbered and styled headings are recognised 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > body prose, partial phrases and row ids never name a section 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > terms of art of the other framework never name a section 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > a section is named only by a heading > no vocabulary phrase contains a term of art of the other framework, and none names two sections 125ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > the framework must be one the check knows > an unknown or missing framework fails closed 21ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > the framework check cites the declared framework, labelled recall 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > a UK MDR 2002 CER cites the MDD Annex X basis, not EU MDR Annex XIV 1ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > CER basis is the instrument of the declared framework > an EU MDR CER cites MDR Annex XIV Part A, labelled recall 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > a stored column-complete CER with no section rows is not valid 1ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > the stored section rows count toward the canonical structure 25ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > a stored IVDR report is checked as a PER 0ms
+ ✓ server/services/cer/__tests__/cer-conformance-canonical.test.ts > UnifiedCERService.validateReportDetailed — reads the cer_sections rows > an absent report is notFound, never valid 0ms
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > shapes recorded citations for the surface, state passed through untouched 13ms
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > keeps an unresolved citation in the payload with null source fields 31ms
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > refuses without authenticated tenant context 1ms
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > rejects a non-UUID documentId before it reaches Postgres 1ms
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > passes a valid documentId filter through 9ms
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > fails closed with 503 when the citation store is not provisioned 3ms
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > returns 500 with an honest message on any other failure 14ms
+  cause: Error: [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > validateCerConformance — canonical CER structure > a column-complete report with no section rows is NOT valid (the old checklist called it valid) 7ms
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > validateCerConformance — canonical CER structure > a structurally complete MDR report passes all mandatory checks 1ms
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > validateCerConformance — canonical CER structure > a missing mandatory section fails closed (never auto-valid) 1ms
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > validateCerConformance — canonical CER structure > an unrecorded equivalence claim is a recommended failure, not a silent pass 8ms
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > validateCerConformance — canonical CER structure > empty objects and blank strings do not count as content 1ms
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > validateCerConformance — canonical CER structure > is deterministic for the same input (ignoring the checkedAt timestamp) 2ms
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > UnifiedCERService — wired but never fabricates > generateReport fails closed for a non-existent device instead of fabricating success 42ms
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > UnifiedCERService — wired but never fabricates > validateReport never certifies a missing/unvalidatable report as valid 2ms
+ ✓ tests/routes/cer-faers-save-report.test.ts > POST /api/cer/faers/save-report > 403s without an authenticated org — no anonymous tenant-less writes 3ms
+ ✓ tests/routes/cer-faers-save-report.test.ts > POST /api/cer/faers/save-report > maps the drug narrative onto the real cer_reports schema and reports db success 4ms
+ ✓ tests/routes/cer-faers-save-report.test.ts > POST /api/cer/faers/save-report > falls back to the NDC identifier for deviceName when productName is absent 1ms
+ ✓ tests/routes/cer-faers-save-report.test.ts > POST /api/cer/faers/save-report > reports a database failure honestly instead of swallowing it 2ms
+ ✓ tests/routes/cer-faers-save-report.test.ts > POST /api/cer/faers/save-report > 400s an invalid body 2ms
+ ✓ tests/routes/cer-faers-save-report.test.ts > GET /api/cer/reports (list) > 403s without an authenticated org 1ms
+ ✓ tests/routes/cer-faers-save-report.test.ts > GET /api/cer/reports (list) > lists only the caller org directory — legacy flat files are not exposed 1ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — report columns > maps populated JSON columns to canonical sections 8ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — report columns > treats null/empty columns as absent 6ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — section rows > matches free-form section ids/titles by keyword 1ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — section rows > combines columns + rows and feeds the canonical assessment 1ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — section rows > reports the missing required sections for a sparse stored CER 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > never names a prior leaf by its file path: listed with only an href, a replace carries no pointer 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 672ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a leaf has no index.xml leaf ID 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 302ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 23ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 79ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 65ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 27ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 74ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 21ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 63ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 21ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 78ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 31ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 65ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 26ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 28ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 68ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 1ms
+ Test Files  7 passed (7)
+      Tests  134 passed (134)

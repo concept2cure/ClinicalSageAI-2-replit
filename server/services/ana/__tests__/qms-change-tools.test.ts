@@ -117,17 +117,25 @@ describe('qms_change_create', () => {
 
 describe('qms_change_transition', () => {
   it('advances a change through the lifecycle with a reason (Part 11)', async () => {
-    const created = await call('qms_change_create', { change_number: 'CC-2026-051', title: 'y', reason: 'r' });
+    const created = await call('qms_change_create', { change_number: 'CC-2026-051', title: 'y', reason: 'Raised at the weekly change board.' });
     const res = await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'Begin impact assessment.' });
     expect(res.ok).toBe(true);
     expect(res.governed).toBe(true);
     expect(res.status).toBe('under_assessment');
   });
 
+  /* 2026-09-29: the reason is the person's, at least 8 characters (the shared
+     GOVERNED_REASON_MIN), refused by the registration wrapper before the
+     service is called; it used to accept 3. */
   it('refuses a transition without a reason-for-change', async () => {
-    const created = await call('qms_change_create', { change_number: 'CC-2026-052', title: 'y' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'under_assessment' });
-    expect(res.error).toMatch(/reason for change is required/i);
+    const created = await call('qms_change_create', { change_number: 'CC-2026-052', title: 'y', reason: 'Raised at the weekly change board.' });
+    for (const reason of [undefined, 'ok!']) {
+      const res = await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', ...(reason ? { reason } : {}) });
+      expect(res.code).toBe('REASON_REQUIRED');
+      expect(res.error).toMatch(/no reason of at least 8 characters was given/i);
+    }
+    const { rows } = await pglite.query<{ status: string }>(`SELECT status FROM qms_change_controls WHERE id = $1`, [created.id]);
+    expect(rows[0].status).toBe('proposed');
   });
 
   /* AnA cannot approve a change: approval is an electronic signature (DP-31 /
@@ -135,9 +143,9 @@ describe('qms_change_transition', () => {
      transitionChange itself, so it holds for any caller, and it holds for a
      user who is not the proposer (so it is not the segregation-of-duties check). */
   it('cannot approve a change from chat, and the change stays under assessment', async () => {
-    const created = await call('qms_change_create', { change_number: 'CC-2026-053', title: 'y', reason: 'r' }); // proposed_by = 10
-    await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'assess' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, { organizationId: 1, userId: 11, humanConfirmed: true });
+    const created = await call('qms_change_create', { change_number: 'CC-2026-053', title: 'y', reason: 'Raised at the weekly change board.' }); // proposed_by = 10
+    await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'Begin impact assessment.' });
+    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'Approved at the change board.' }, { organizationId: 1, userId: 11, humanConfirmed: true });
     expect(res.error).toMatch(/electronic signature/i);
     // AnA tells the person what to do, so it needs the kind of refusal and a
     // place a person can go: the Approve button, not an API path.
@@ -163,7 +171,7 @@ describe('qms_change_transition', () => {
   });
 
   it('rejects an illegal transition', async () => {
-    const created = await call('qms_change_create', { change_number: 'CC-2026-054', title: 'y', reason: 'r' });
+    const created = await call('qms_change_create', { change_number: 'CC-2026-054', title: 'y', reason: 'Raised at the weekly change board.' });
     // Not 'closed': AnA may not close a change at all (the tool register refuses
     // it before the state machine is asked — tool-authorization.test.ts). This
     // pins the state machine on a target she may otherwise request.
@@ -174,7 +182,7 @@ describe('qms_change_transition', () => {
 
 describe('qms_change_link', () => {
   it('links a change to a deviation', async () => {
-    const created = await call('qms_change_create', { change_number: 'CC-2026-055', title: 'y', reason: 'r' });
+    const created = await call('qms_change_create', { change_number: 'CC-2026-055', title: 'y', reason: 'Raised at the weekly change board.' });
     const res = await call('qms_change_link', { change_id: created.id, link_type: 'deviation', linked_ref: 'DEV-2026-099', relationship: 'triggered_by' });
     expect(res.ok).toBe(true);
     const db = await pglite.query(`SELECT link_type, linked_ref FROM qms_change_links WHERE change_id = $1`, [created.id]);
@@ -199,23 +207,23 @@ describe('the audit row each change-control tool writes', () => {
   }
 
   it('carries a recorded row out as auditTrail', async () => {
-    const res = await call('qms_change_create', { change_number: 'CC-2026-060', title: 'y', reason: 'r' });
+    const res = await call('qms_change_create', { change_number: 'CC-2026-060', title: 'y', reason: 'Raised at the weekly change board.' });
     expect(res.auditTrail).toEqual({ persisted: true, chained: true });
   });
 
   it('create: says the record was not written when it was not', async () => {
     loseNextAuditRow();
-    expectLost(await call('qms_change_create', { change_number: 'CC-2026-061', title: 'y', reason: 'r' }));
+    expectLost(await call('qms_change_create', { change_number: 'CC-2026-061', title: 'y', reason: 'Raised at the weekly change board.' }));
   });
 
   it('transition: says the record was not written when it was not', async () => {
-    const created = await call('qms_change_create', { change_number: 'CC-2026-062', title: 'y', reason: 'r' });
+    const created = await call('qms_change_create', { change_number: 'CC-2026-062', title: 'y', reason: 'Raised at the weekly change board.' });
     loseNextAuditRow();
     expectLost(await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'Begin assessment.' }));
   });
 
   it('link: says the record was not written when it was not', async () => {
-    const created = await call('qms_change_create', { change_number: 'CC-2026-063', title: 'y', reason: 'r' });
+    const created = await call('qms_change_create', { change_number: 'CC-2026-063', title: 'y', reason: 'Raised at the weekly change board.' });
     loseNextAuditRow();
     expectLost(await call('qms_change_link', { change_id: created.id, link_type: 'deviation', linked_ref: 'DEV-2026-100' }));
   });
@@ -243,7 +251,9 @@ describe('revise_qms_document / retire_qms_document (SOP register)', () => {
   it('requires a reason to revise', async () => {
     const id = await effectiveDoc('SOP-901');
     const res = await call('revise_qms_document', { document_id: id });
-    expect(res.error).toMatch(/reason for change is required/i);
+    // 2026-09-29: read with gatedReason, so it is the shared refusal (REASON_REQUIRED).
+    expect(res.code).toBe('REASON_REQUIRED');
+    expect(res.error).toMatch(/Nothing was recorded or changed/);
   });
 
   it('a revision reason under 8 characters is refused and nothing is written', async () => {

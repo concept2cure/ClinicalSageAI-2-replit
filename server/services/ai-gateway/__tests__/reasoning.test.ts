@@ -16,6 +16,7 @@ import {
   SUBSTANTIVE_MESSAGE_CHARS,
 } from '../reasoning';
 import type { ModelConfig } from '../types';
+import { approvedRow, entry } from './support/approved-rows';
 
 describe('isSubstantiveTurn', () => {
   it('treats any tool-using turn as substantive', () => {
@@ -191,48 +192,39 @@ describe('resolveTierModelIds — per-deployment overrides', () => {
 });
 
 describe('resolveTierModel — tier → concrete enabled model', () => {
-  const mk = (over: Partial<ModelConfig>): ModelConfig => ({
-    id: 'x',
-    provider: 'anthropic',
-    model: 'x-wire',
-    contextWindow: 200000,
-    qualityScore: 90,
-    costPer1kInput: 0.001,
-    costPer1kOutput: 0.005,
-    capabilities: ['chat'],
-    enabled: true,
-    thinkingMode: 'adaptive',
-    supportsSamplingParams: false,
-    ...over,
-  });
-  const registry = [
-    mk({ id: 'claude-haiku-4', model: 'claude-haiku-4-5-20251001' }),
-    mk({ id: 'claude-sonnet-4', model: 'claude-sonnet-4-6' }),
-    mk({ id: 'claude-opus-4', model: 'claude-opus-4-8' }),
-    mk({ id: 'local-default', model: 'local-default', provider: 'local' as ModelConfig['provider'] }),
+  // Each row is its approved-models entry (id, provider, pinned version): a
+  // tier serves only such a row (tier-model-approval.test.ts). These rows used
+  // to carry wire versions their entries do not pin, e.g. claude-opus-4 on
+  // claude-opus-4-8, which the tier gate now refuses.
+  const pinned = (id: string): string => entry(id).pinnedVersion;
+  const registry: ModelConfig[] = [
+    approvedRow('claude-haiku-4'),
+    approvedRow('claude-sonnet-4'),
+    approvedRow('claude-opus-4'),
+    approvedRow('local-default'),
   ];
 
   it('resolves each tier to its enabled registry model', () => {
     expect(resolveTierModel('economy', registry)).toMatchObject({
       provider: 'anthropic',
-      model: 'claude-haiku-4-5-20251001',
+      model: pinned('claude-haiku-4'),
       tier: 'economy',
     });
-    expect(resolveTierModel('flagship', registry)?.model).toBe('claude-opus-4-8');
+    expect(resolveTierModel('flagship', registry)?.model).toBe(pinned('claude-opus-4'));
   });
 
   it('honors an env remap — flagship can be repointed off Opus entirely', () => {
     const resolved = resolveTierModel('flagship', registry, {
       ANA_TIER_FLAGSHIP_MODEL: 'claude-sonnet-4',
     });
-    expect(resolved?.model).toBe('claude-sonnet-4-6');
+    expect(resolved?.model).toBe(pinned('claude-sonnet-4'));
   });
 
   it('matches an override by wire model string as well as registry id', () => {
     const resolved = resolveTierModel('economy', registry, {
-      ANA_TIER_ECONOMY_MODEL: 'claude-haiku-4-5-20251001',
+      ANA_TIER_ECONOMY_MODEL: pinned('claude-haiku-4'),
     });
-    expect(resolved?.model).toBe('claude-haiku-4-5-20251001');
+    expect(resolved?.model).toBe(pinned('claude-haiku-4'));
   });
 
   it('resolves a self-hosted tier when the local model is enabled', () => {

@@ -11,8 +11,8 @@
  *    becomes a location change; unknown segments render the honest scaffold.
  *  - The prototype TweaksPanel/edit-mode postMessage tooling is not product
  *    surface and is not ported.
- *  - AnA conversation is LIVE: the shell rail, ⌘K and every surface's onAsk
- *    stream real grounded replies from /api/ana-ri/stream (useAnaChat) — never
+ *  - AnA conversation is LIVE: the conversation screen, ⌘K and every surface's
+ *    onAsk stream real grounded replies from /api/ana-ri/stream (useAnaChat) — never
  *    a fabricated/sample reply. Governed action *execution* still demonstrates
  *    the §11.50 e-sign gate with a clearly-labelled sample result until
  *    /api/ai-actions wires in.
@@ -20,11 +20,9 @@
 import React from 'react';
 import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
-import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
-import { activityPropsFor, hasReportableWork as hasReportableActivity } from './AnaActivity';
+import { CmdK, Rail, TopBar } from './Shell';
 import {
   useAnaChat,
-  type AnaChatMessage,
   type DriveSseEvent,
   type DriveTurnControls,
 } from '../components/ana/useAnaChat';
@@ -39,11 +37,16 @@ import {
 import {
   advertisedScreenActions,
   applySurfaceAction,
+  cancelPendingSurfaceAction,
   readDirectiveProgram,
   validateDriveAction,
 } from './surfaceActions';
+import { waitingForPerson } from './anaWorkModel';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
 import { LiveDriveControlsContext } from './LiveDriveSwitch';
+import { RunPolicyContext } from './RunPolicySwitch';
+import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
+import { isAnaRunPolicy } from '@shared/ana/run-policy';
 import { resolveSurfaceIdForTarget, stashNavParamsForTarget } from './navParams';
 import { createDriveQueue, type DriveMove } from './driveQueue';
 import { publishShellProject } from './shellProject';
@@ -131,15 +134,20 @@ import './styles/device-v2.css';
    GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
    ci:surface-text-ramp. See GA ledger L102. */
 import './styles/surface-text-ramp.css';
-import { restoreShellProject } from './shellProject';
+import { restoreShellProject, useShellProjectInUrl } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
 interface Prefs {
   dark: boolean;
   railCollapsed: boolean;
-  anaOpen: boolean;
   anaMode: string;
+  /**
+   * What AnA does between steps (row 74): Manual stops before each further
+   * step for the person; Auto keeps going within its ceilings. Sent as the
+   * shell chat's `run_policy`. Separate from Ask / Agent (`liveDrive`).
+   */
+  anaRunPolicy: AnaRunPolicy;
   segment: string;
   /** Set once the client dismisses (or outgrows) the first-run AnA welcome. */
   welcomeDismissed: boolean;
@@ -165,8 +173,8 @@ interface Prefs {
 const DEFAULT_PREFS: Prefs = {
   dark: false,
   railCollapsed: true,
-  anaOpen: false,
   anaMode: 'standard',
+  anaRunPolicy: 'auto',
   segment: 'biopharma',
   welcomeDismissed: false,
   liveDrive: true,
@@ -191,64 +199,15 @@ function loadPrefs(): Prefs {
         stored.liveDrive = true;
         stored.liveDriveDefault = 2;
       }
+      /* A policy this build does not know (an older or hand-edited pref) is
+         not sent as-is; it reads as the default. */
+      if (!isAnaRunPolicy(stored.anaRunPolicy)) delete stored.anaRunPolicy;
       return { ...DEFAULT_PREFS, ...stored };
     }
   } catch {
     /* default */
   }
   return DEFAULT_PREFS;
-}
-
-/* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the shell
-   rail's AnaMessage shape. Replies are REAL, never stamped sample; while a
-   reply streams, the status phase stands in until the first token lands. The
-   turn's REAL executedActions (what ANA actually ran) and pendingSignoffs (a
-   governed command blocked on a Part 11 e-signature) are carried through so the
-   rail renders ANA's genuine action results and the real sign-off prompt —
-   never a fabricated result card. */
-/* Exported for its own test. Every field below is CARRIAGE — a thing the turn
-   reported that the rail can only render if this function hands it over — and
-   carriage is exactly what has been missing each time: the tool calls, the
-   rounds and the lens were all captured and dropped here, and so were the
-   answer's warnings. Deleting a line from this function breaks nothing that
-   renders, which is why it needs a test of its own rather than relying on the
-   component suites, all of which pass their props in directly. */
-export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
-  if (m.role === 'user') return { role: 'user', body: m.text };
-  return {
-    role: 'ana',
-    // The body no longer has to carry the waiting state on its own. While a
-    // turn streams, AnaActivity below shows the actual work; the body falls
-    // back to the phase only until the first token lands, and to nothing at
-    // all when the activity record can speak for itself.
-    body: m.text || (m.streaming && !hasReportableWork(m) ? m.statusPhase || 'Thinking…' : ''),
-    sample: false,
-    executedActions: m.executedActions,
-    pendingSignoffs: m.pendingSignoffs,
-    /* Dropped here until now. On a timeout `useAnaChat` keeps the partial text
-       and records 'Response timed out' in `warnings`; with nothing carrying it
-       across, a truncated answer read as a finished one. */
-    warnings: m.warnings,
-    /* Dropped here like the rest: captured by the hook, rendered nowhere. */
-    interjections: m.interjections,
-    /* The evidence verdict. Captured since the grounding pipeline shipped and
-       dropped here like the rest. */
-    evidence: m.evidence,
-    /* Built by E14, panelled by E14, carried by nobody until now. */
-    crlPremortem: m.crlPremortem,
-    /* Everything the turn reported about how it was answered — through the
-       one mapping every host uses (AnaActivity.activityPropsFor). This used to
-       be built here field by field, and again in ConversationThread, and each
-       copy dropped something the other carried. */
-    activity: activityPropsFor(m),
-    /* The draft, for its output card beneath the turn. */
-    output: m.generatedDraft?.title ? { generatedDraft: m.generatedDraft, streaming: m.streaming } : undefined,
-  };
-}
-
-/** True when the activity record has something real to show for this turn. */
-function hasReportableWork(m: AnaChatMessage): boolean {
-  return hasReportableActivity(activityPropsFor(m));
 }
 
 /**
@@ -296,8 +255,16 @@ function readShellProjectId(): string | undefined {
   }
 }
 
+/** The end of AnA's real text, bounded, as the drive strip shows it; the cut is marked. */
+function narrationTail(text: string): string {
+  return text.length > 180 ? `…${text.slice(-180).replace(/^\S*\s/, '')}` : text;
+}
+
 export function V2App() {
   const [location, setLocation] = useLocation();
+  /* The URL names the open program (?program=), so a copied link, a bookmark
+     or a new tab opens the same project — see shellProject.ts. */
+  useShellProjectInUrl(location);
   const [prefs, setPrefs] = React.useState<Prefs>(loadPrefs);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
 
@@ -436,7 +403,9 @@ export function V2App() {
       },
       isShowing: (directive) =>
         resolveSurfaceIdForTarget(directive.targetId) === activeIdRef.current,
-      perform: (directive, onDeferred) => applySurfaceAction(directive, nav, onDeferred),
+      perform: (directive, onDeferred) =>
+        applySurfaceAction(directive, nav, onDeferred, { waitForCommit: true }),
+      cancelPending: cancelPendingSurfaceAction,
       canApply: () => !driveRef.current.takenOver,
       refuse: (move) => {
         const target = move.kind === 'navigate' ? move.directive.targetId : move.directive.surfaceId;
@@ -555,9 +524,9 @@ export function V2App() {
           /* A new turn begins driving. Moves still queued from an earlier turn
              belong to a turn that is over — played now, they would land under
              this turn's budget and narration, on a screen this turn never
-             chose. A move already in flight finishes, reports to its own turn
-             (settleMove), and is not recorded as this turn's (onApplied). The
-             cleared ones are settled as not made (onDropped). */
+             chose. A navigation already in flight finishes and reports to
+             its own turn; an action still waiting for its screen/data is
+             cancelled. Cleared moves are settled as not made (onDropped). */
           driveQueueRef.current?.clear();
           /* Consent is the switch, per turn. A turn sent while it was on can
              begin driving after the person switched it off; engaging then
@@ -646,27 +615,22 @@ export function V2App() {
     },
     [dispatchDrive, haltDrive]
   );
-  /* Which chat is driving. The shell's own chat is the one the rail shows, so
-     when ITS drive carries the person off a screen that draws its own
-     conversation (the thread) onto one that does not, the rail opens — AnA
-     keeps narrating where the person can see it. A dock's chat (the editor's,
-     the eCTD co-author's) is not the rail's, so its drive never opens it. */
+  /* Which chat is driving: the shell's own (the conversation screen's), or a
+     dock's (the editor's, the eCTD co-author's). Both feed one machine. */
   const onShellDriveEvent = React.useCallback(
     (ev: DriveSseEvent, controls?: DriveTurnControls) => {
-      if (ev.type === 'drive_navigation' || ev.type === 'drive_action') {
-        const leaving = SURFACE_VIEWS[activeIdRef.current]?.ownsConversation;
-        if (leaving && !prefsRef.current.anaOpen) set('anaOpen', true);
-      }
+      /* It opened the right rail when a drive left the conversation, so her
+         narration stayed in view; there is no rail now, and the drive strip
+         carries the narration on every screen (slice 9). */
       onDriveEvent(ev, controls);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onDriveEvent]
   );
   const onSurfaceDriveEvent = onDriveEvent;
   /* ── Follow the work (declared before useAnaChat, which takes it) ─────
      The point of Live Drive is WATCHING AnA work — and her biggest work
      product is a persisted draft (`artifact_version_saved` → onArtifactSaved,
-     fired by EVERY chat instance: the rail's and each owned dock's via the
+     fired by EVERY chat instance: the shell's and each owned dock's via the
      bridge). When a driven turn lands one, take the subscriber to the
      Artifacts Center with that artifact focused, so the document appears in
      front of them instead of behind a nav item. */
@@ -687,7 +651,8 @@ export function V2App() {
     [nav, prefs.liveDrive]
   );
   /* The real AnA assistant for the whole shell — one streaming conversation
-     (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
+     (/api/ana-ri/stream) shared by the conversation screen, ⌘K and every
+     surface's onAsk. */
   /* What the active surface is showing, forwarded to AnA as `module_context` on
      every turn. `screenName` alone told her WHICH screen the user was on and
      nothing about what was on it, so a question like "what should I do next?"
@@ -721,7 +686,11 @@ export function V2App() {
        Quick ask cost twice what it promised. Only Standard was right, and only
        by coincidence. */
     effortLevel: effortForMode(prefs.anaMode),
-    /* Live Drive: while the toggle is on every rail/⌘K turn opts in, and the
+    /* Between steps (row 74): Manual or Auto, the person's preference, on
+       every ⌘K / conversation-screen turn. The docks' own chats send
+       none, and say so under Manual (RunPolicyDockNote). */
+    runPolicy: prefs.anaRunPolicy,
+    /* Live Drive: while the toggle is on every shell turn opts in, and the
        turn's drive events feed the shell's apply/take-over machine above. */
     liveDrive: prefs.liveDrive,
     onDriveEvent: onShellDriveEvent,
@@ -784,9 +753,8 @@ export function V2App() {
     'Show me around this workspace. Take me through the screens that matter most for my work — navigate to each one and briefly explain what I can do there as you go.';
   const pendingDriveAskRef = React.useRef<{ ask: string; mode: 'assist' | 'demo' } | null>(null);
   const queueDriveAsk = (ask: string, mode: 'assist' | 'demo') => {
-    /* The person follows the drive in the rail wherever the screen draws one;
-       a screen that owns its conversation shows the same shell chat itself. */
-    if (!ownsConversation && !prefs.anaOpen) set('anaOpen', true);
+    /* The person follows the drive in the drive strip on every screen, and
+       in the conversation screen, which shows the same shell chat. */
     setDriveMode(mode);
     if (!prefs.liveDrive) set('liveDrive', true);
     if (anaChat.isStreaming) {
@@ -848,15 +816,47 @@ export function V2App() {
         lastMsg.statusPhase)
       : undefined;
   /* The narration tail for the drive strip — the REAL streamed text, bounded.
-     Shown only on surfaces that own the conversation (the rail is hidden
-     there, so without this a demo stop on e.g. document-authoring would play
-     out in silence: AnA narrating into a column the screen does not draw). */
+     Without it a demo stop away from the conversation would play out in
+     silence: AnA narrating into a column the screen does not draw. */
   const driveNarration =
     lastMsg?.role === 'assistant' && lastMsg.streaming && lastMsg.text
-      ? lastMsg.text.length > 180
-        ? `…${lastMsg.text.slice(-180).replace(/^\S*\s/, '')}`
-        : lastMsg.text
+      ? narrationTail(lastMsg.text)
       : undefined;
+  /* ── A reply that finished off the conversation screen (QA 2026-10-08, j5) ──
+     With no rail (slice 9), a turn of the shell's chat that ends while another
+     screen is showing — AnA's drive took the person there, or they went there
+     mid-answer — is on no screen at all: "take me to the vault" from the
+     project page left the Vault with neither the question nor the answer, and
+     no way back to them but the navigation. The drive strip says the reply is
+     in the conversation, with its end and the way back, until the person goes
+     back or dismisses it. */
+  const [replyElsewhere, setReplyElsewhere] = React.useState<string | null>(null);
+  const shellStreamingRef = React.useRef(anaChat.isStreaming);
+  React.useEffect(() => {
+    const was = shellStreamingRef.current;
+    shellStreamingRef.current = anaChat.isStreaming;
+    if (anaChat.isStreaming) {
+      if (!was) setReplyElsewhere(null);
+      return;
+    }
+    if (!was || activeIdRef.current === 'conversation-thread') return;
+    const reply = [...anaChat.messages].reverse().find((m) => m.role === 'assistant');
+    if (reply) setReplyElsewhere(narrationTail(reply.text ?? ''));
+    // Keyed on the turn ending only; the messages are read as they are then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anaChat.isStreaming]);
+  React.useEffect(() => {
+    if (activeId === 'conversation-thread') setReplyElsewhere(null);
+  }, [activeId]);
+  const backToConversation = React.useCallback(() => {
+    try {
+      (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'current', seed: null };
+    } catch {
+      /* non-fatal: the conversation opens on the turns it holds */
+    }
+    setReplyElsewhere(null);
+    nav('conversation-thread');
+  }, [nav]);
   /* The bridge for surfaces that run their own conversation (see
      SurfaceViewProps.liveDrive) — same toggle, same reducer, one machine. */
   /* The same controls, for the switch drawn beside each composer. */
@@ -870,17 +870,32 @@ export function V2App() {
     }),
     [prefs.liveDrive, drive.lock, setLiveDriveOn]
   );
+  /* The "Between steps" switch's controls (RunPolicySwitch), for each
+     composer that sends through the shell chat. */
+  const runPolicyControls = React.useMemo(
+    () => ({
+      runPolicy: prefs.anaRunPolicy,
+      setRunPolicy: (policy: AnaRunPolicy) => set('anaRunPolicy', policy),
+      streaming: anaChat.isStreaming,
+    }),
+    // `set` is a fresh closure each render over the stable setPrefs.
+    [prefs.anaRunPolicy, anaChat.isStreaming]
+  );
   const liveDriveBridge = React.useMemo(
     () => ({
       on: prefs.liveDrive,
       onDriveEvent: onSurfaceDriveEvent,
       onWorkSaved: followWork,
       setOn: setLiveDriveOn,
-      onStartDemo: (demoId: string, title: string) => startDemoRef.current(demoId, title),
+      /* No demonstration starter while Live Drive is locked for the
+         workspace: a "Start demonstration" chip in the conversation then
+         stays a record, as the composer's switch offers no demos there. The
+         right rail applied this rule; it moved here with its turns. */
+      onStartDemo: drive.lock ? undefined : (demoId: string, title: string) => startDemoRef.current(demoId, title),
       onStartTour: () => startTourRef.current(),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [prefs.liveDrive, onSurfaceDriveEvent, followWork, setLiveDriveOn]
+    [prefs.liveDrive, onSurfaceDriveEvent, followWork, setLiveDriveOn, drive.lock]
   );
   const { user } = useAuth();
   /* The onboarding welcome must reflect the TENANT's real client type
@@ -897,9 +912,13 @@ export function V2App() {
     [jwtOrgId]
   );
   const tenantClientType = orgLive.data?.organization?.clientType ?? null;
-  const selectSegment = (id: string) => {
+  /* Choosing a client type — from the account menu or the top bar, one
+     handler — lands on that type's default screen, which is always in the
+     launch scope (registryModel SEGMENTS; shellNav.test.tsx). The account
+     menu's choice used to go Home and the top bar's to the default screen. */
+  const chooseSegment = (id: string) => {
     set('segment', id);
-    nav('home');
+    nav(getSegment(id)?.defaultSurface ?? 'home');
   };
 
   const view = SURFACE_VIEWS[activeId];
@@ -916,19 +935,11 @@ export function V2App() {
         e.preventDefault();
         setCmdkOpen((o) => !o);
       }
-      /* ⌘\ toggles the rail — but `set` PERSISTS, and on a surface that owns
-         the conversation there is no rail to toggle. Un-guarded, this wrote
-         anaOpen:true to localStorage from a screen that shows nothing happening
-         and opened the rail on the next surface that draws one. Same leak as
-         `ask()` below, through a different door. */
-      if (mod && e.key === '\\' && !ownsConversation) {
-        e.preventDefault();
-        set('anaOpen', !prefs.anaOpen);
-      }
+      /* ⌘\ toggled the right rail, which is gone (slice 9). */
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [prefs.anaOpen, ownsConversation]);
+  }, []);
 
   /* "Choose or create a program", from anywhere.
 
@@ -1016,6 +1027,29 @@ export function V2App() {
      nothing visible here, and your question waiting for you, opened, on the
      next surface that does draw one. The question goes to the surface that
      shows it instead. */
+  /* ── Every ask lands in the one conversation (ONE_ANA_ONE_CANVAS.md, slice 8) ──
+     An "Ask AnA" on a work screen used to send straight into the right rail, a
+     second place to talk to AnA beside the conversation. It now hands the
+     question to the conversation, in its composer, with the screen it came
+     from (its id, its name, and the context it had published) as a chip and a
+     way back; nothing is sent until the person presses Enter there. It
+     continues the conversation in progress. ⌘K's typed question is the
+     person's own words, already sent once: it is sent on arrival (`now`). */
+  const handOffToConversation = (text: string, now: boolean) => {
+    try {
+      (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = {
+        id: 'current',
+        seed: null,
+        prefill: text,
+        sendOnArrival: now,
+        origin: { surfaceId: activeId, label: ctxSurface.label, moduleContext: anaModuleContext ?? null },
+      };
+    } catch {
+      /* non-fatal: the conversation opens without the question */
+    }
+    setConvoEpoch((n) => n + 1);
+    nav('conversation-thread');
+  };
   const ask = (text: string, files?: SentAttachment[]) => {
     const clean = text.trim();
     if (!clean) return;
@@ -1023,16 +1057,25 @@ export function V2App() {
       startShellConversation(clean, files);
       return;
     }
-    if (!prefs.anaOpen) set('anaOpen', true);
-    void anaChat.send(clean, files);
+    handOffToConversation(clean, false);
+  };
+  const askNow = (text: string) => {
+    const clean = text.trim();
+    if (!clean) return;
+    if (ownsConversation) {
+      startShellConversation(clean);
+      return;
+    }
+    handOffToConversation(clean, true);
   };
 
   /* Governed + ungoverned actions both execute through ANA, the real agentic
      executor. Tapping an action chip sends its intent to /api/ana-ri/stream;
      ANA runs it (execute_platform_command / the AI-action dispatcher) with the
      shell's grounded project context and streams the REAL result. A governed
-     action comes back as a Part 11 sign-off prompt (rendered inline by the rail
-     via the real GovernedActionSignoff), never a fabricated result card. */
+     action comes back as a Part 11 sign-off prompt (rendered in the
+     conversation via the real GovernedActionSignoff), never a fabricated
+     result card. */
   const onAct = (id: string) => {
     const a = getAction(id);
     ask(a?.label ?? id.replace(/_/g, ' '));
@@ -1044,9 +1087,30 @@ export function V2App() {
     (activeId === 'conversation-thread' ? `${activeId}#${convoEpoch}` : activeId) +
     (remountEpoch > 0 ? `~${remountEpoch}` : '');
 
+  /* First-run AnA welcome (task #13 P1, assist-only): a client-type-aware
+     greeting the new client sees before the conversation starts. Shown while
+     the AnA conversation is still empty and the client hasn't dismissed it —
+     it naturally gives way the moment they send their first message. Scripted
+     copy, LIVE responses (the starters call the real /api/ana-ri/stream). */
+  const firstName = (user?.firstName || user?.displayName || '').trim().split(/\s+/)[0] || '';
+  const welcome =
+    anaChat.messages.length === 0 && !prefs.welcomeDismissed
+      ? welcomeFor(tenantClientType ?? prefs.segment, firstName)
+      : null;
+
   let body: React.ReactNode;
   if (activeId === 'home') {
-    body = <Home onNav={nav} onAsk={ask} segment={prefs.segment} mode={prefs.anaMode} setMode={(m) => set('anaMode', m)} />;
+    body = (
+      <Home
+        onNav={nav}
+        onAsk={ask}
+        segment={prefs.segment}
+        mode={prefs.anaMode}
+        setMode={(m) => set('anaMode', m)}
+        welcome={welcome}
+        onDismissWelcome={() => set('welcomeDismissed', true)}
+      />
+    );
   } else if (view?.ownsConversation) {
     /* Narrowed by the union: this component's props do not include `onAsk`, so
        there is no way to hand it a rail that is not being rendered. */
@@ -1059,6 +1123,7 @@ export function V2App() {
         segment={prefs.segment}
         liveDrive={liveDriveBridge}
         shellChat={anaChat}
+        engine={{ mode: prefs.anaMode, setMode: (m) => set('anaMode', m) }}
       />
     );
   } else if (view) {
@@ -1067,21 +1132,6 @@ export function V2App() {
   } else {
     body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
   }
-
-  /* The rail shows the real AnA conversation — including the actions ANA
-     actually executed and any governed action awaiting a Part 11 sign-off. */
-  const railMessages = anaChat.messages.map(adaptChatMessage);
-
-  /* First-run AnA welcome (task #13 P1, assist-only): a client-type-aware
-     greeting the new client sees before the conversation starts. Shown while
-     the AnA conversation is still empty and the client hasn't dismissed it —
-     it naturally gives way the moment they send their first message. Scripted
-     copy, LIVE responses (the starters call the real /api/ana-ri/stream). */
-  const firstName = (user?.firstName || user?.displayName || '').trim().split(/\s+/)[0] || '';
-  const welcome =
-    railMessages.length === 0 && !prefs.welcomeDismissed
-      ? welcomeFor(tenantClientType ?? prefs.segment, firstName)
-      : null;
 
   /* Escape closes the phone-width rail overlay. Gated on the SAME media query
      the overlay css uses, so a desktop Escape never collapses the persistent
@@ -1110,22 +1160,18 @@ export function V2App() {
   }, [prefs.dark]);
 
   React.useEffect(() => {
-    // The two narrow-width overlays — the rail drawer (≤640px) and the AnA
-    // drawer (≤900px) — are the only states Escape should dismiss. The AnA drawer only exists when the
-    // surface does not own the conversation (otherwise there is no rail).
-    const anaDrawer = prefs.anaOpen && !ownsConversation;
-    if (prefs.railCollapsed && !anaDrawer) return undefined;
+    // The narrow-width navigation drawer (≤640px) is the only state Escape
+    // dismisses. The AnA drawer (≤900px) went with the right rail (slice 9).
+    if (prefs.railCollapsed) return undefined;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       const phone = window.matchMedia('(max-width: 640px)').matches;
-      const tablet = window.matchMedia('(max-width: 900px)').matches;
       if (phone && !prefs.railCollapsed) set('railCollapsed', true);
-      else if (tablet && anaDrawer) set('anaOpen', false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefs.railCollapsed, prefs.anaOpen, ownsConversation]);
+  }, [prefs.railCollapsed]);
 
   return (
     /* Licence verdicts are fetched once, above the rail, so the rail and the
@@ -1133,6 +1179,7 @@ export function V2App() {
        provider renders no DOM of its own, so the shell's grid is untouched. */
     <NavEntitlementsProvider>
     <LiveDriveControlsContext.Provider value={liveDriveControls}>
+    <RunPolicyContext.Provider value={runPolicyControls}>
     <AnaLockPublisher />
     <div
       className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
@@ -1150,19 +1197,36 @@ export function V2App() {
          cross-shell class collision — ci:check-shell-css-collisions). */
       data-theme={prefs.dark ? 'dark' : undefined}
       data-collapsed={prefs.railCollapsed}
-      data-ana-open={ownsConversation ? false : prefs.anaOpen}
-      /* The DOM attribute keeps its name: `.shell[data-editor="true"]` is what
-         app-v2.css:846 and authoring-v2.css:13 key the zero-width rail column
-         off, and those stylesheets are outside this change. */
+      /* Always closed: there is no rail (slice 9), and no stylesheet reads
+         this any more — the shell grid is nav | page. It stays only because
+         shellAskGuard.test.tsx pins the value; both go together. */
+      data-ana-open={false}
+      /* authoring-v2.css keys the editor's full-bleed page off this. */
       data-editor={ownsConversation || undefined}
     >
+      {/* WCAG 2.2 SC 2.4.1. The rail and the top bar put 22 tab stops before
+          a surface's first control on every page (measured 2026-10-05,
+          tests/e2e/launch-surface-keyboard.e2e.spec.ts). Landmarks let a
+          screen reader skip them; a keyboard user without one could not. The
+          link is the first stop and moves focus to the surface itself; it is
+          position: fixed, so it takes no cell in the shell's grid. */}
+      <a
+        className="skip-link"
+        href="#c2c-page"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById('c2c-page')?.focus();
+        }}
+      >
+        Skip to content
+      </a>
       <Rail
         activeId={activeId}
         onNav={nav}
         collapsed={prefs.railCollapsed}
         setCollapsed={(v) => set('railCollapsed', v)}
         segment={prefs.segment}
-        setSegment={selectSegment}
+        setSegment={chooseSegment}
       />
       {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
           content (app-v2.css keeps the grid at the collapsed strip), and this
@@ -1173,90 +1237,36 @@ export function V2App() {
       {!prefs.railCollapsed && (
         <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
       )}
-      {/* The AnA drawer's scrim (≤900px only — display is CSS-gated on
-          data-ana-open inside the 900px query, exactly like .rail-scrim). */}
-      {!ownsConversation && prefs.anaOpen && (
-        <div aria-hidden="true" className="ana-scrim" onClick={() => set('anaOpen', false)} />
-      )}
       <main className="main">
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
           onPalette={() => setCmdkOpen(true)}
           segment={prefs.segment}
-          onSegment={(id) => {
-            set('segment', id);
-            const s = getSegment(id);
-            if (s?.defaultSurface) nav(s.defaultSurface);
-          }}
+          onSegment={chooseSegment}
           onNav={nav}
           onAsk={ask}
         />
-        <div className={isFull ? 'page page-full' : 'page'}>
+        <div id="c2c-page" tabIndex={-1} className={isFull ? 'page page-full' : 'page'}>
           <SurfaceBoundary resetKey={bodyKey}>
             {/* A deep link to a surface outside the launch scope renders the
                 honest panel, from the same verdict the rail and catalog read. */}
-            <LaunchScopeGate surfaceId={activeId} surface={ctxSurface}>
+            <LaunchScopeGate surfaceId={activeId} surface={ctxSurface} onNav={nav}>
               {body}
             </LaunchScopeGate>
           </SurfaceBoundary>
         </div>
       </main>
-      {!ownsConversation && (
-        <AnaRail
-          open={prefs.anaOpen}
-          setOpen={(v) => set('anaOpen', v)}
-          surface={ctxSurface}
-          segment={prefs.segment}
-          mode={prefs.anaMode}
-          setMode={(m) => set('anaMode', m)}
-          messages={railMessages}
-          onSend={ask}
-          onAct={onAct}
-          welcome={welcome}
-          onDismissWelcome={() => set('welcomeDismissed', true)}
-          /* "New thread" — was an inert button. Aborts any run, clears the rail
-             transcript and starts a fresh server thread; the prior thread stays
-             in history (conversation-thread surface), so this is non-destructive. */
-          onNewThread={anaChat.reset}
-          onNav={nav}
-          // Scopes composer uploads to the active project, so extracted text
-          // lands in that project's memory — the same id useAnaChat uses.
-          projectId={readShellProjectId()}
-          /* Mid-run control, finally reachable. The hook has exposed these
-             since run control shipped and the rail wired none of them, so a
-             human could watch AnA work a question the wrong way and had no way
-             to say so until she finished. */
-          streaming={anaChat.isStreaming}
-          runStatus={anaChat.runStatus}
-          /* Pause, resume and steer are offered only once a controllable run
-             exists — runStatus stays null until `run_started` arrives, and a
-             turn that opened no run row (no resolvable tenant) never sends one.
-             Rendering them regardless would put buttons on screen that quietly
-             do nothing, which is the failure this strip was added to end.
-             Stop is unconditional: it aborts the client's own request, which
-             works whether or not the server opened a run. */
-          onPause={anaChat.runStatus ? () => void anaChat.pause() : undefined}
-          onResume={anaChat.runStatus ? () => void anaChat.resume() : undefined}
-          onStop={() => void anaChat.stop()}
-          onSteer={anaChat.runStatus ? (m) => anaChat.interject(m) : undefined}
-          /* The live work dock reads the raw turns: progress phases, tool
-             timings, pending steers and outputs that the adapted rail message
-             shape does not carry. */
-          work={{ messages: anaChat.messages, pendingSteers: anaChat.pendingSteers }}
-          liveDrive={{
-            on: prefs.liveDrive,
-            locked: drive.lock,
-            setOn: setLiveDriveOn,
-            onStartTour: startTour,
-            onStartDemo: startDemo,
-          }}
-        />
-      )}
+      {/* No right rail (docs/design/ONE_ANA_ONE_CANVAS.md, slice 9). AnA is
+          talked to in one place, the conversation, and every ask on a work
+          screen lands there (slice 8). The rail drew the same conversation a
+          second time beside every screen, beside the conversation's own
+          composer on Home and Project home; the founder, 2026-10-07: "Why are
+          there multiple places on one screen where AnA could be accessed?" */}
       <CmdK
         open={cmdkOpen}
         onClose={() => setCmdkOpen(false)}
         onNav={nav}
-        onAsk={ask}
+        onAsk={askNow}
         onAct={(id) => {
           onAct(id);
           setCmdkOpen(false);
@@ -1268,8 +1278,23 @@ export function V2App() {
       <LiveDriveOverlay
         state={drive}
         activity={driveActivity}
-        narration={ownsConversation ? driveNarration : undefined}
+        /* On every screen now: with no rail, the strip is where her narration
+           is read while she drives (slice 9). */
+        narration={driveNarration}
         onTakeOver={takeOverDrive}
+        /* Held for a person (a Manual hold, an approval): the strip says she is
+           waiting, not driving (row 74, F2). Known for the shell's own chat;
+           when another chat drives, its state is not visible here, so the
+           strip keeps its wording rather than guess. */
+        waiting={
+          driveControlsRef.current
+            ? null
+            : waitingForPerson(
+                [...anaChat.messages].reverse().find((m) => m.role === 'assistant') ?? null,
+                anaChat.runStatus,
+                anaChat.runHold,
+              )
+        }
         /* Stop and steer reach the chat that is DRIVING, which is not always
            the shell's own (the editor dock's, the co-author's). Stop ends the
            drive first: the stopped run keeps streaming until its cancel is
@@ -1283,9 +1308,29 @@ export function V2App() {
         /* Interactivity without surrender: a question or steer typed into the
            strip lands mid-run (the run-control interject) — AnA answers and
            continues driving; the person never has to take over just to speak. */
-        onSteer={(m) => (driveControlsRef.current ? driveControlsRef.current.interject(m) : anaChat.interject(m))}
+        /* Not on the conversation screen: its composer steers the run in
+           flight there, and a second box beside it was a third place to type
+           to AnA on one screen (docs/design/ONE_ANA_ONE_CANVAS.md, slice 4). */
+        /* Whichever chat drives: the shell's own drive hands the strip its
+           controls too, so "controls present" never meant "another chat"
+           (found in a real browser, 2026-10-08). */
+        onSteer={
+          ownsConversation
+            ? undefined
+            : (m) => (driveControlsRef.current ? driveControlsRef.current.interject(m) : anaChat.interject(m))
+        }
+        /* The way back to the conversation, wherever the shell's chat is
+           answering, or has answered, off it (QA 2026-10-08, j5). */
+        onBackToConversation={
+          activeId !== 'conversation-thread' && (anaChat.isStreaming || replyElsewhere !== null)
+            ? backToConversation
+            : undefined
+        }
+        replyElsewhere={activeId === 'conversation-thread' ? null : replyElsewhere}
+        onDismissReply={() => setReplyElsewhere(null)}
       />
     </div>
+    </RunPolicyContext.Provider>
     </LiveDriveControlsContext.Provider>
     </NavEntitlementsProvider>
   );

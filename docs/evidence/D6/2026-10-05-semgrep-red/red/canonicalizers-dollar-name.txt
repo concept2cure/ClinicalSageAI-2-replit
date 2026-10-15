@@ -1,0 +1,3 @@
+not ok 7 - found: boundToADollarName
+# pass 10
+# fail 1

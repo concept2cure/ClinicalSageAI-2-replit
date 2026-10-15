@@ -1,0 +1,248 @@
+{
+  "family": "c2c-production-api",
+  "containerDefinitions": [
+    {
+      "dependsOn": [
+        {
+          "condition": "HEALTHY",
+          "containerName": "clamav"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "5000"
+        },
+        {
+          "name": "TRUST_PROXY_HOPS",
+          "value": "2"
+        },
+        {
+          "name": "CLAMAV_HOST",
+          "value": "127.0.0.1"
+        },
+        {
+          "name": "CLAMAV_PORT",
+          "value": "3310"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_MODE",
+          "value": "kms"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_KMS_KEY_ID",
+          "value": "alias/fda-signing-key-2026"
+        },
+        {
+          "name": "CONCEPT2CURE_SIGNER_KMS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "RLS_ENFORCE",
+          "value": "on"
+        },
+        {
+          "name": "AUDIT_TRAIL_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "AUDIT_REQUIRE_ENFORCE",
+          "value": "true"
+        },
+        {
+          "name": "AI_SENSITIVE_DATA_POLICY_MODE",
+          "value": "enforce"
+        },
+        {
+          "name": "AI_PROVIDER_PLACEMENT_APPROVALS",
+          "value": "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
+        },
+        {
+          "name": "APP_URL",
+          "value": "https://app.example.com"
+        },
+        {
+          "name": "ALLOWED_ORIGINS",
+          "value": "https://app.example.com"
+        },
+        {
+          "name": "MCP_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "MCP_PUBLIC_URL",
+          "value": "https://app.example.com"
+        },
+        {
+          "name": "MCP_CLIENT_REDIRECT_ALLOWLIST",
+          "value": "https://claude.ai,https://claude.com"
+        },
+        {
+          "name": "STORAGE_PROVIDER",
+          "value": "s3"
+        },
+        {
+          "name": "AWS_S3_BUCKET",
+          "value": "c2c-prod-vault"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "SMTP_HOST",
+          "value": "email-smtp.us-east-1.amazonaws.com"
+        },
+        {
+          "name": "SMTP_PORT",
+          "value": "465"
+        },
+        {
+          "name": "SMTP_FROM",
+          "value": "noreply@example.com"
+        },
+        {
+          "name": "AUDIT_ANCHOR_BUCKET",
+          "value": "c2c-prod-part11-evidence"
+        },
+        {
+          "name": "PLATFORM_ADMIN_EMAILS",
+          "value": "owner@example.com"
+        },
+        {
+          "name": "BUSINESS_CENTER_EMAILS",
+          "value": "owner@example.com"
+        }
+      ],
+      "essential": true,
+      "healthCheck": {
+        "command": [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:5000/healthz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+        ],
+        "interval": 30,
+        "retries": 3,
+        "startPeriod": 60,
+        "timeout": 10
+      },
+      "image": "7vaird76:v1.0.0",
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/c2c-production/api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "api"
+        }
+      },
+      "name": "api",
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "foe8o4ju"
+        },
+        {
+          "name": "APP_DATABASE_URL",
+          "valueFrom": "kpy0mw3n"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "104urujz"
+        },
+        {
+          "name": "REFRESH_TOKEN_SECRET",
+          "valueFrom": "97t0gmhp"
+        },
+        {
+          "name": "MFA_ENCRYPTION_KEY",
+          "valueFrom": "md2rwhuc"
+        },
+        {
+          "name": "AUDIT_HMAC_KEY",
+          "valueFrom": "w150g3vs"
+        },
+        {
+          "name": "AUDIT_HMAC_SECRET",
+          "valueFrom": "qjz3iyly"
+        },
+        {
+          "name": "AUDIT_EXPORT_SIGNING_KEY",
+          "valueFrom": "qsemuxs2"
+        },
+        {
+          "name": "AUDIT_ATTESTATION_KEY",
+          "valueFrom": "u6z6rxqe"
+        },
+        {
+          "name": "CONNECTOR_ENCRYPTION_KEY",
+          "valueFrom": "pyb3b0gi"
+        },
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "valueFrom": "3qqlft86"
+        },
+        {
+          "name": "SMTP_USER",
+          "valueFrom": "6abxt22p"
+        },
+        {
+          "name": "SMTP_PASS",
+          "valueFrom": "rujjhtdv"
+        },
+        {
+          "name": "APP_SERVICE_DB_PASSWORD",
+          "valueFrom": "mklrf9m4"
+        },
+        {
+          "name": "SETUP_TOKEN",
+          "valueFrom": "0jqf76zn"
+        }
+      ]
+    },
+    {
+      "environment": [
+        {
+          "name": "CLAMD_CONF_StreamMaxLength",
+          "value": "100M"
+        },
+        {
+          "name": "CLAMD_CONF_AlertExceedsMax",
+          "value": "yes"
+        }
+      ],
+      "essential": true,
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "clamdcheck.sh"
+        ],
+        "interval": 30,
+        "retries": 3,
+        "startPeriod": 300,
+        "timeout": 10
+      },
+      "image": "clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23",
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/c2c-production/api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "clamav"
+        }
+      },
+      "memory": 4096,
+      "name": "clamav"
+    }
+  ]
+}

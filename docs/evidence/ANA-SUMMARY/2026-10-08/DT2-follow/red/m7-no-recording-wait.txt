@@ -1,0 +1,13 @@
+# m7-no-recording-wait: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx -t record
+# exit 1
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 7. ended without a record: the run’s reason, the saved rows and "Not recorded" 105ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 3. a sealed run hands over to its record: the stored answer takes the turn’s place, under the same id 26ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. with no record: "Recording…" while the owner is still trying, then the run’s reason, its rows and "Not recorded" 12ms
+   → expected 'Not recorded' to be 'Recording…' // Object.is equality
+ Test Files  2 failed (2)
+      Tests  2 failed | 1 passed | 19 skipped (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 7. ended without a record: the run’s reason, the saved rows and "Not recorded"
+TestingLibraryElementError: Unable to find an element with the text: Recording…. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. with no record: "Recording…" while the owner is still trying, then the run’s reason, its rows and "Not recorded"
+AssertionError: expected 'Not recorded' to be 'Recording…' // Object.is equality

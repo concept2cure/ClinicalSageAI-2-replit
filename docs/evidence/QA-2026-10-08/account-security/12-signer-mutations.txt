@@ -1,0 +1,18 @@
+# Item 2 MUTATION A — the rule checked before the password
+# Expect: the wrong-password case fails (the refusal would disclose the enrolment to someone without the password, and the guess would go uncounted)
+ × server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a wrong password is refused as a wrong password: the enrolment is not disclosed before the password is proven 11ms
+ × server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > an enrolment that cannot be read is still refused as unknown, not as missing 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { ok: false, status: 403, …(2) } to match object { ok: false, status: 401, …(1) }
+ Test Files  1 failed (1)
+      Tests  2 failed | 30 passed (32)
+restored byte-identical
+
+# Item 2 MUTATION B — governed-signed-act.ts appends 'Nothing was signed.' unconditionally (as at HEAD)
+# Expect: the DB test's production refusal fails on the doubled sentence
+ × tests/db/signer-authenticator-required.dbtest.ts > ADR-0014 P1-2b: in production a signer needs an authenticator > production, no authenticator: refused in the decided words, and nothing is written or counted 217ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { Object (code, message) } to deeply equal { Object (code, message) }
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+restored byte-identical

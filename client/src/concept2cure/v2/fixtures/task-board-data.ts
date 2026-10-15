@@ -153,6 +153,12 @@ export const TB_SRC: Record<string, TaskSource> = {
   wbs: { l: 'WBS', t: 'project_tasks -- legacy/CRO' },
   template: { l: 'Template', t: 'taskTemplates' },
   module: { l: 'Module', t: 'crossModuleTaskLinks' },
+  // Other stores, read through the cross-store work view (2026-10-01). Their
+  // cards are read-only on the board and open where they live.
+  schedule: { l: 'Schedule', t: 'project_tasks -- the schedule and Communication Center' },
+  correspondence: { l: 'Correspondence', t: 'c2c_project_work_items -- agency correspondence' },
+  review: { l: 'Review', t: 'c2c_project_work_items -- review work' },
+  filing: { l: 'Filing', t: 'estar_submissions -- tracked filings' },
 };
 
 

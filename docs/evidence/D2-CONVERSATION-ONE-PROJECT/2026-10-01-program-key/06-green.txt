@@ -1,0 +1,131 @@
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot persist a message — the INSERT the code issues fails
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 20260926b on the applier > runs after every file that creates what it keys, and before the tenant sweep
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 20260926b on the applier > the creators’ replayed comments name the key, not "no FK" (amended in place, Rule 1)
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > a GLOBAL_PUBLIC source (no organization) carries no project
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > a program its organization’s records name cannot be moved to another organization
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > another tenant's thread id is never resolved — the caller gets a fresh thread
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > the caller's own thread id resolves to itself
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a thread with no recorded owner is scoped by organization alone
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unknown id mints a fresh thread, as it always did
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > with no organization to scope by, a supplied id is never honoured
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unidentified caller does not get an owned thread
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > resolveAccessibleThread — the history gate the context builder uses > returns null for a foreign tenant and throws for a colleague
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > ensureThread cannot adopt someone else’s stable id > refuses a colleague's id and a foreign tenant's id, creates its own
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot read context — the SELECT the code issues fails
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > adds the study-design key column where no applier ever did, once
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > a purge-shaped delete of an organization’s programs > is refused while c2c_documents still names them — both its keys are NO ACTION, whichever fires first
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > a purge-shaped delete of an organization’s programs > in the operator’s order — clear what the pre-flight lists, delete c2c_documents, then the programs — each own record keeps its organization and loses only its key
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot read token counts either
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > the 20260601 metadata patch alone does NOT fix it
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > runs after the program keys and before the tenant sweep
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > a replay adds nothing: one NOT VALID key per table, ON DELETE CASCADE, ON UPDATE NO ACTION
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > the legacy cross-organization rows did not fail the deploy, and are listed by the preflight
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a legacy row still takes a change that is neither its project nor its organization
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project with records of its organization under it cannot be moved to another organization
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project delete still cascades its own artifacts, packages and conversations, as before
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > returns the org rows on a healthy read
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 503s when the thread store is not provisioned — never a 200 empty list
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s on any other read failure — never a 200 empty list
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s when the PROJECT-scoped ai_threads read fails (previously swallowed)
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 500s when the transcript read fails — an unreadable thread is not an empty one
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 404s only when the thread genuinely resolves to no store
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 503s when the message store is not provisioned
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > KNOWN_UNLISTED entries satisfy the reason the list states > parses every entry the list actually contains
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > KNOWN_UNLISTED entries satisfy the reason the list states > leaves no entry exempted for a reason that does not hold
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > the reasoned exceptions have their premises checked, not assumed > every reasoned exception is still in the list it excuses
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > the reasoned exceptions have their premises checked, not assumed > authoring_reviews really is on a path deploy-migrate runs
+ ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts > the reasoned exceptions have their premises checked, not assumed > does not silently rely on the applier list for these
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > round-trips a message through the real INSERT and SELECTs
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > writes the program into metadata, lower-cased, when one is open
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > writes no metadata when no project is open, or when the id is not a program key
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > does not re-home an existing thread — continuing a conversation never rewrites its program
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > programIdForThread accepts only a UUID
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > the stream route hands the mint its program key > passes the request's project id through programIdForThread
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves an AnA thread its own transcript from chat_messages
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves a submission-chat thread from ai_messages, not from the other store
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > resolves the store org-scoped, so another tenant's thread is not found
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > needs an organization
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > updates the store the thread lives in
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > refuses a program UUID at the integer project column rather than failing with a 500
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > 20261001c on the applier > runs after the files that create its tables and the program key, and before the tenant sweep
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > 20261001c on the applier > a replay adds nothing: one NOT VALID key that nulls only the program, one NOT VALID CHECK, one index
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-own → 11111111-1111-4111-8111-111111111111
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-own-upper → 33333333-3333-4333-8333-333333333333
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-foreign → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-missing → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-malformed → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-no-org → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-none → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread naming its own organization's program is written
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread naming another organization's program, or a missing one, is refused
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread with no organization cannot name a program, and still exists without one
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > deleting a program unbinds its threads and keeps their organization
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > the preflight reads the store, and finds no thread naming a foreign program
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > supports the wider thread shape the routes write
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > tokens_used defaults to 0, not NULL
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > cascades messages when a thread is deleted
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > adds the missing columns to tables the app already created
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > preserves existing rows while widening the table
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > composes with 20260601 in either order
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > is idempotent
+ Test Files  10 passed (10)
+      Tests  110 passed (110)
+# real PostgreSQL 16 (vitest.db.config.ts):
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all, deliberately and visibly
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+# full deploy-migrate replay on c2c_dbtest: exit 0
+  ✓ applied: migrations/20261001c_chat_threads_program_key.sql
+✅ Schema migration complete — safe to roll services.

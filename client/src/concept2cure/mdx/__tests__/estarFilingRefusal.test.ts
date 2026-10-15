@@ -21,6 +21,11 @@ describe('describeFilingRefusal — the second factor', () => {
     expect(text).not.toMatch(/password/i);
   });
 
+  it('tells a signer with no authenticator to enrol one, where one is required (ADR-0014 P1-2b)', () => {
+    const text = describeFilingRefusal(401, 'REAUTH_AUTHENTICATOR_REQUIRED');
+    expect(text).toBe('Enrol an authenticator in Account to sign. Nothing was filed and nothing was signed.');
+  });
+
   it('keeps the existing sentences', () => {
     expect(describeFilingRefusal(401, 'REAUTH_TOTP_INVALID')).toMatch(/authenticator code was not accepted/);
     expect(describeFilingRefusal(401, 'REAUTH_PASSWORD_INVALID')).toMatch(/password was not accepted/);

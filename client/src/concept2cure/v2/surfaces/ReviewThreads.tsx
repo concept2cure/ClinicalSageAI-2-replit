@@ -3,7 +3,34 @@ import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiCall, apiErrorText } from '../apiCall';
+import { apiRequest, serverMessage, ApiRequestError } from '@/lib/queryClient';
+import { downloadBlob, safeFileName } from '../download';
 import type { FireToast } from '../toast';
+import { ANA_REVIEW_COMMENT_ROLE } from '@shared/constants/review-comment';
+
+/**
+ * Who a comment's words are from. A comment AnA wrote for a person carries
+ * author_role 'ana' (set when it was posted, fixed after): the thread shows
+ * it as AnA's, on that person's behalf, never as the person's own words.
+ */
+export function CommentByline({ authorName, authorRole }: { authorName: string; authorRole?: string | null }) {
+  if (authorRole === ANA_REVIEW_COMMENT_ROLE) {
+    return (
+      <>
+        <span className="cmt-av" aria-hidden="true">{I.sparkles}</span>
+        <b>AnA</b>
+        <span className="cmt-role">on behalf of {authorName}</span>
+      </>
+    );
+  }
+  return (
+    <>
+      <span className="cmt-av">{initials(authorName)}</span>
+      <b>{authorName}</b>
+      {authorRole && <span className="cmt-role">{authorRole}</span>}
+    </>
+  );
+}
 
 /* ================================================================
    Review threads — the compose side of the Phase-13 collaboration
@@ -27,6 +54,9 @@ import type { FireToast } from '../toast';
 interface QueueThread {
   threadId: string;
   title: string | null;
+  /** The artifact's public id and its project, for the review record export. */
+  artifactId?: string | null;
+  projectId?: number | null;
   priority?: string | null;
   artifactTitle?: string | null;
   anchorLabel?: string | null;
@@ -51,6 +81,8 @@ interface MyQueuePayload {
     canComment: boolean;
     canRequestChanges: boolean;
     canResolve: boolean;
+    /** May take the artifact's review record (the audit readers, DP-18). */
+    canExportRecord?: boolean;
   };
 }
 interface CommentRow {
@@ -84,6 +116,52 @@ function initials(name: string): string {
 
 
 /**
+ * The document's whole review record, for an inspector: every thread and
+ * comment, retractions with who and why, each checked against the audit trail
+ * (GET …/review-record/export). Offered to the audit readers the route serves
+ * (permissions.canExportRecord). Through apiRequest, so the bearer token and
+ * tenant header travel with it. The server records the export before it sends
+ * anything and answers 503 when it cannot; a refusal is reported in the
+ * server's own words, never as a download.
+ */
+export function ExportReviewRecord({ thread, onNotice }: { thread: QueueThread; onNotice: FireToast }) {
+  const [exporting, setExporting] = useState(false);
+  if (!thread.artifactId || thread.projectId == null) return null;
+  const artifactId = thread.artifactId;
+  const path = `/api/concept2cure/projects/${encodeURIComponent(String(thread.projectId))}/artifacts/${encodeURIComponent(artifactId)}/review-record/export`;
+  const failed = (why: string | null) =>
+    onNotice(`The review record was not exported. ${why ?? 'The service could not be reached.'}`, 'error');
+  const run = async () => {
+    setExporting(true);
+    try {
+      const res = await apiRequest('GET', path);
+      // apiRequest RETURNS a 401 rather than throwing it.
+      if (!res.ok) {
+        failed(serverMessage(await res.json().catch(() => null)) ?? 'Your session isn’t authenticated.');
+      } else if (downloadBlob(`review-record-${safeFileName(artifactId, 'document')}.json`, await res.blob())) {
+        onNotice('Review record exported. The export is recorded in the audit trail.');
+      } else {
+        onNotice('The review record was prepared, but this browser did not save the file. Try again.', 'error');
+      }
+    } catch (err) {
+      failed(err instanceof ApiRequestError ? serverMessage(err.payload) ?? err.message : null);
+    } finally {
+      setExporting(false);
+    }
+  };
+  return (
+    <button
+      className="btn ghost"
+      disabled={exporting}
+      onClick={() => void run()}
+      title="Every thread and comment on this document, each checked against the audit trail"
+    >
+      {I.download} {exporting ? 'Exporting…' : 'Export review record'}
+    </button>
+  );
+}
+
+/**
  * The approval-board slice of the parent Review surface's screen state, merged
  * into THIS pane's published context — the pane is the surface's ONE 'review'
  * publisher (two publishers on one id fight for the store), and without the
@@ -102,9 +180,14 @@ export interface ReviewBoardContextSlice {
 export function ReviewThreadsPane({
   onNotice,
   board,
+  program,
 }: {
   onNotice: FireToast;
   board?: ReviewBoardContextSlice | null;
+  /** The open program when the review screen is filtered to it: the inbox is
+   *  then that program's threads and tasks only (the server resolves the
+   *  program UUID to the project id they carry). Null: the whole inbox. */
+  program?: { id: string; title: string } | null;
 }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
@@ -112,7 +195,11 @@ export function ReviewThreadsPane({
   const [requestChanges, setRequestChanges] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const queue = useLiveData<MyQueuePayload>('/api/concept2cure/reviews/my-queue', ['rt-queue', refreshKey]);
+  /* QA 2026-10-08 (j1): with BX-256 open this inbox listed BX-204's threads —
+     it had no program filter. It follows the review screen's program switch. */
+  const queuePath =
+    '/api/concept2cure/reviews/my-queue' + (program ? `?programId=${encodeURIComponent(program.id)}` : '');
+  const queue = useLiveData<MyQueuePayload>(queuePath, ['rt-queue', queuePath, refreshKey]);
   const comments = useLiveData<CommentsPayload>(
     sel ? `/api/concept2cure/review-threads/${encodeURIComponent(sel)}/comments` : null,
     ['rt-comments', sel, refreshKey]
@@ -129,6 +216,7 @@ export function ReviewThreadsPane({
   const canResolve = perms?.canResolve === true;
   const canRequestChanges = perms?.canRequestChanges === true;
   const canComment = perms?.canComment !== false;
+  const canExportRecord = perms?.canExportRecord === true;
   const selected = threads.find(t => t.threadId === sel) ?? null;
   const refresh = () => setRefreshKey(k => k + 1);
 
@@ -253,7 +341,7 @@ export function ReviewThreadsPane({
   return (
     <section aria-label="Review threads assigned to you" style={{ marginTop: 20 }}>
       <div className="dr-seclbl" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>
-        <span>Threads &amp; change requests — assigned to you</span>
+        <span>Threads &amp; change requests — assigned to you{program ? ` · ${program.title}` : ''}</span>
         {queue.data && (
           <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>
             {queue.data.totalThreads} thread{queue.data.totalThreads === 1 ? '' : 's'} · {queue.data.totalTasks} task{queue.data.totalTasks === 1 ? '' : 's'}
@@ -316,9 +404,12 @@ export function ReviewThreadsPane({
                       anchor. Hidden outright when the caller lacks `resolve` —
                       the server 403s, and a disabled button someone can never
                       enable is just clutter. */}
-                  {canResolve && (
-                    <button className="btn primary" onClick={() => resolveThread(selected.threadId)}>{I.check} Resolve thread</button>
-                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {canExportRecord && <ExportReviewRecord thread={selected} onNotice={onNotice} />}
+                    {canResolve && (
+                      <button className="btn primary" onClick={() => resolveThread(selected.threadId)}>{I.check} Resolve thread</button>
+                    )}
+                  </div>
                 </div>
 
                 {comments.loading ? (
@@ -330,9 +421,7 @@ export function ReviewThreadsPane({
                     {(comments.data?.comments ?? []).map(c => (
                       <div key={c.commentId} className="cmt" data-changes={c.kind === 'request_changes' || undefined}>
                         <div className="cmt-meta">
-                          <span className="cmt-av">{initials(c.authorName)}</span>
-                          <b>{c.authorName}</b>
-                          {c.authorRole && <span className="cmt-role">{c.authorRole}</span>}
+                          <CommentByline authorName={c.authorName} authorRole={c.authorRole} />
                           <span className="cmt-when">· {when(c.createdAt)}</span>
                           {c.kind === 'request_changes' && <span className="rd-chip tone-warn">changes requested</span>}
                         </div>

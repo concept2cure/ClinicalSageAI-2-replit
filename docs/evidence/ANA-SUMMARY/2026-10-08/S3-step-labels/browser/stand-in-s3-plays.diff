@@ -1,0 +1,71 @@
+--- docs/evidence/W1/2026-09-28-ana-drive/harness/stand-in-model.mjs	2026-10-01 08:01:00.297488635 +0000
++++ <scratch>/standin/stand-in-model.mjs	2026-10-08 11:09:05.242449641 +0000
+@@ -66,7 +66,7 @@
+     const t = textOf(m.content);
+     if (/\[Tool Result for /.test(t)) continue;
+     if (/^\s*\[(Screen report|User interjection)/i.test(t)) continue;
+-    if (/take me|open program|search the vault|demo|go to|show me|\bact [a-z]/i.test(t)) return t;
++    if (/take me|open program|search the vault|demo|go to|show me|\bact [a-z]|s3 /i.test(t)) return t;
+   }
+   return '';
+ }
+@@ -238,9 +238,58 @@
+   return { text: `Act result: ${outcomeOf(t.last)}. Screen: ${screen}` };
+ }
+ 
++
++// ── ANA-SUMMARY S3 plays (scratch copy; not the W1 harness) ──────────────────
++// "s3 search <words>": search_project_documents. "s3 read <title words>":
++// list_project_documents, then read_project_document on the matching title.
++// "s3 validate": validate_ectd_package over one leaf. "s3 draft": batch_draft_sections,
++// whose drafting engine calls the gateway (so its capture notes a generation).
++function planS3(t) {
++  const m = /\bs3 (search|read|validate|draft)\b ?(.*)$/i.exec(t.rawAsk.trim());
++  if (!m) return null;
++  const verb = m[1].toLowerCase();
++  const rest = m[2].trim();
++  const { last, results } = t;
++  if (verb === 'search') {
++    if (!last) return t.tool('search_project_documents', { query: rest || 'stability' }, '');
++    return { text: `Search result: ${last.json?.totalMatches ?? last.json?.results?.length ?? 'n/a'} match(es).` };
++  }
++  if (verb === 'read') {
++    if (!last) return t.tool('list_project_documents', {}, '');
++    if (last.name === 'list_project_documents') {
++      // A long listing reaches the model cut to fit, so read the rows out of the raw text.
++      const docs = last.json?.documents ?? [...String(last.raw).matchAll(/\\?"id\\?":\\?"([0-9a-f-]{36})\\?"[^{}]*?\\?"documentTitle\\?":\\?"([^"\\]+)/g)].map(m => ({ id: m[1], title: m[2] }));
++      const named = /the vault document (.+?) in full/i.exec(rest);
++      const want = (named ? named[1] : rest).toLowerCase().split(/\s+/).filter(Boolean);
++      const doc = docs.find(d => want.every(w => String(d.title ?? d.documentTitle ?? '').toLowerCase().includes(w))) ?? docs[0];
++      if (!doc) return { text: 'No document to read.' };
++      return t.tool('read_project_document', { document_id: doc.id ?? doc.documentId }, '');
++    }
++    return { text: `Read result: ${last.json?.ok === true ? 'delivered' : outcomeOf(last)}.` };
++  }
++  if (verb === 'validate') {
++    if (!last) {
++      return t.tool('validate_ectd_package', {
++        submission_type: 'IND',
++        leaves: [{ section_code: 'm1.1', title: 'Form FDA 1571', checksum: 'd41d8cd98f00b204e9800998ecf8427e', operation: 'new', file_path: 'm1/us/form-1571.pdf' }],
++      }, '');
++    }
++    return { text: `Validation: ${last.json?.verdict ?? last.json?.status ?? 'done'}.` };
++  }
++  if (!last) {
++    return t.tool('batch_draft_sections', {
++      sections: [
++        { section_type: '2.5', instructions: 'A two-sentence placeholder overview.' },
++        { section_type: '2.7', instructions: 'A two-sentence placeholder summary.' },
++      ],
++    }, '');
++  }
++  return { text: 'Drafts returned.' };
++}
++
+ function plan(body) {
+   const t = turnOf(body);
+-  const planned = planAct(t) ?? planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
++  const planned = planS3(t) ?? planAct(t) ?? planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
+   if (planned) return cutOff(t, planned);
+   if (/title|summar/i.test(t.all.slice(0, 400)) && !body.stream) return { text: 'Live Drive test' };
+   return { text: 'Understood.' };

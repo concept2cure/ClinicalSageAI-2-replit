@@ -1,0 +1,17 @@
+[ci:unbacked-tables] 1479 tables/views created across migrations, drizzle and runtime DDL; 740 referenced in server SQL; 26 unbacked; 27 baselined
+
+🚫 Server SQL references tables that NOTHING in this repo creates:
+
+  last_seen_at
+      server/services/session-inactivity.ts
+
+  An unguarded query against a missing table throws "relation does not exist",
+  which route handlers turn into a 500 — the endpoint never works. A guarded
+  one degrades to a silent no-op, which is worse: it looks durable and is not.
+
+  Fix: add a code-derived migration for the table (see ledger C-11/C-14), or
+  point the query at the table that actually holds the data.
+  If this is pre-existing debt being tracked:
+    npm run ci:unbacked-tables:write-baseline
+
+exit 1

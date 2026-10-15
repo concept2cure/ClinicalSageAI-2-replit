@@ -384,8 +384,8 @@ const rules: AuditRule[] = [
           this.title,
           this.question,
           'No stability-indicating analytical method is described or validated.',
-          '21 CFR 211.166(a)(3) requires that stability testing use reliable, meaningful, and specific test methods. ICH Q2(R1) requires methods to be validated for specificity, including the ability to detect degradation products.',
-          '21 CFR 211.166(a)(3); ICH Q2(R1); ICH Q1A(R2) Section 2.2.4',
+          '21 CFR 211.166(a)(3) requires that stability testing use reliable, meaningful, and specific test methods. ICH Q2(R2) requires methods to be validated for specificity, including the ability to detect degradation products.',
+          '21 CFR 211.166(a)(3); ICH Q2(R2); ICH Q1A(R2) Section 2.2.4',
           'Develop and validate stability-indicating methods that can resolve the active ingredient from degradation products, impurities, and excipient interferences. Include forced degradation studies to demonstrate specificity.',
           ['stability_indicating_method', 'forced_degradation_data'],
         );
@@ -408,7 +408,7 @@ const rules: AuditRule[] = [
           this.question,
           'Forced degradation (stress testing) studies have not been conducted or reported.',
           'ICH Q1A(R2) Section 2.1.6 requires stress testing to elucidate intrinsic degradation pathways and to validate the specificity of stability-indicating methods.',
-          'ICH Q1A(R2) Section 2.1.6; ICH Q2(R1)',
+          'ICH Q1A(R2) Section 2.1.6; ICH Q2(R2)',
           'Conduct stress testing under acid hydrolysis, base hydrolysis, oxidation (H2O2), thermal stress, photolysis (per Q1B), and humidity. Characterize degradation products and demonstrate method specificity.',
           ['forced_degradation_data', 'degradation_pathways', 'stability_indicating_method'],
         );

@@ -1,0 +1,301 @@
+# H1 mutations against the finished tree (the bytes in tree.sha256), 2026-09-28T15:56:57Z. Each: exact-once replace in one source file, run the named test files (vitest --maxWorkers=2), restore the original bytes, verify sha256.
+# behaviour = an H1 behaviour or a review fix. overcorrection = a gate that refuses or says too much must go red as well.
+# 18/18 red. Trimmed to the failing test lines and each run's first three error lines. ANSI stripped.
+## M1 [behaviour] governedMatch serves the first enabled match whether or not it is an entry (the pre-gate rule)
+  file: server/services/ai-governance/approved-models.ts
+  - if (entry) return { served: { row, entry }, withheld };
+  + return { served: { row, entry: entry as ApprovedModel }, withheld };
+  tests: tier-model-approval.test.ts effort.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  2 failed (2)
+  Tests  15 failed | 45 passed (60)
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an enabled model with no approved entry — by id and by wire model 7ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > passes over a matching row that is not its entry to the next one that is, as the tier resolver does 3ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an approved alias whose wire model is not the pinned version 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, still refuses the unapproved model 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work 1ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve an ANA_TIER_* remap to an enabled model with no approved entry — by id or by wire model 8ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve a remap to an approved alias whose row is not on its pinned version 1ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve a default tier model whose own registry row is not its approved entry 1ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve an entry's id and pinned version under another provider 1ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > passes over a matching row that is not its entry exactly as it passes over a disabled one, and logs the row it passed over 6ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs a tier that pins nothing, naming the tier, what was configured, where from, and what was withheld 2ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > does not claim the withheld row goes unserved: strategy selection on normal-risk work can still choose it 1ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs each configuration once per process, and refuses it on every call 2ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs the source the value was actually taken from: a blank env var is the default's, not the env var's 3ms
+    AssertionError: expected { id: 'claude-opus-9-preview', …(2) } to be null
+    AssertionError: expected { id: 'claude-opus-house', …(2) } to deeply equal { id: 'claude-opus-4', …(2) }
+    AssertionError: expected { id: 'claude-opus-4', …(2) } to be null
+  restored: sha256 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772 == pre-mutation 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772
+
+## M2 [overcorrection] governedMatch never serves: every match is withheld
+  file: server/services/ai-governance/approved-models.ts
+  - if (entry) return { served: { row, entry }, withheld };
+  + if (entry && false) return { served: { row, entry }, withheld };
+  tests: tier-model-approval.test.ts reasoning.test.ts effort.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  3 failed (3)
+  Tests  15 failed | 76 passed (91)
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by registry id 8ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by wire model string 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > passes over a matching row that is not its entry to the next one that is, as the tier resolver does 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > resolves an approved entry — by id and by wire model 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, resolves an approvedForHighRisk entry — by id and by wire model 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > offers every enabled model in today's registry — the drift gate keeps each one its own entry 1ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > passes over a matching row that is not its entry exactly as it passes over a disabled one, and logs the row it passed over 8ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > still serves an approved remap — the no-Opus dial and the self-hosted tier — and logs nothing 2ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — today's registry resolves exactly as before > every tier default, as resolved at HEAD before the approval gate 1ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — today's registry resolves exactly as before > every remap to an enabled registry row, by id and by wire model, for every tier, and nothing logged 2ms
+  × server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > resolves each tier to its enabled registry model 9ms
+  × server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > honors an env remap — flagship can be repointed off Opus entirely 2ms
+  × server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > matches an override by wire model string as well as registry id 1ms
+  × server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > resolves a self-hosted tier when the local model is enabled 1ms
+    AssertionError: expected null to deeply equal { id: 'claude-opus-4', …(2) }
+    AssertionError: expected undefined to be 'openai' // Object.is equality
+    AssertionError: expected null to deeply equal { id: 'claude-opus-4', …(2) }
+  restored: sha256 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772 == pre-mutation 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772
+
+## M3 [behaviour] first match only: stop at the first match that is not an entry (the pre-review pin rule, now in the shared helper)
+  file: server/services/ai-governance/approved-models.ts
+  - withheld.push(row);
+  }
+  return { withheld };
+  + return { withheld: [row] };
+  }
+  return { withheld };
+  tests: tier-model-approval.test.ts effort.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  2 failed (2)
+  Tests  3 failed | 57 passed (60)
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > passes over a matching row that is not its entry to the next one that is, as the tier resolver does 8ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > passes over a matching row that is not its entry exactly as it passes over a disabled one, and logs the row it passed over 12m
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs each configuration once per process, and refuses it on every call 2ms
+    AssertionError: expected null to deeply equal { id: 'claude-opus-4', …(2) }
+    AssertionError: expected null to deeply equal { provider: 'anthropic', …(2) }
+    AssertionError: expected "warn" to be called 4 times, but got 3 times
+  restored: sha256 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772 == pre-mutation 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772
+
+## M4 [behaviour] governedMatch ignores the enabled flag
+  file: server/services/ai-governance/approved-models.ts
+  - if (!row.enabled || (row.id !== value && row.model !== value)) continue;
+  + if (row.id !== value && row.model !== value) continue;
+  tests: tier-model-approval.test.ts reasoning.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  2 failed (2)
+  Tests  2 failed | 44 passed (46)
+  × server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > returns null (caller falls back to strategy) when the model is absent or disabled 9ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > passes over a matching row that is not its entry exactly as it passes over a disabled one, and logs the row it passed over 9ms
+    AssertionError: expected { provider: 'anthropic', …(2) } to be null
+    AssertionError: expected "warn" to not be called at all, but actually been called 1 times
+  restored: sha256 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772 == pre-mutation 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772
+
+## M5 [behaviour] governingEntry ignores the provider
+  file: server/services/ai-governance/approved-models.ts
+  - return entries.find((e) => e.provider === m.provider && e.id === m.id && e.pinnedVersion === m.model);
+  + return entries.find((e) => e.id === m.id && e.pinnedVersion === m.model);
+  tests: tier-model-approval.test.ts governing-entry.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  2 failed (2)
+  Tests  2 failed | 18 passed (20)
+  × server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > still holds a row to identity: the entry's id, provider and pinned version 6ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve an entry's id and pinned version under another provider 6ms
+    AssertionError: expected { provider: 'bedrock', …(2) } to be null
+    AssertionError: expected { id: 'claude-sonnet-4', …(9) } to be undefined
+  restored: sha256 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772 == pre-mutation 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772
+
+## M6 [behaviour] governingEntry ignores the pinned version
+  file: server/services/ai-governance/approved-models.ts
+  - return entries.find((e) => e.provider === m.provider && e.id === m.id && e.pinnedVersion === m.model);
+  + return entries.find((e) => e.provider === m.provider && e.id === m.id);
+  tests: tier-model-approval.test.ts effort.test.ts governing-entry.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  3 failed (3)
+  Tests  9 failed | 56 passed (65)
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an approved alias whose wire model is not the pinned version 7ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version 1ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an approved alias drifted off its pinned version 3ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry 1ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve a remap to an approved alias whose row is not on its pinned version 7ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve a default tier model whose own registry row is not its approved entry 2ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs a tier that pins nothing, naming the tier, what was configured, where from, and what was withheld 3ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs the source the value was actually taken from: a blank env var is the default's, not the env var's 5ms
+  × server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > still holds a row to identity: the entry's id, provider and pinned version 6ms
+    AssertionError: expected { id: 'claude-sonnet-4', …(9) } to be undefined
+    AssertionError: expected { id: 'claude-opus-4', …(2) } to be null
+    AssertionError: expected { id: 'claude-opus-4', …(2) } to be null
+  restored: sha256 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772 == pre-mutation 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772
+
+## M7 [behaviour] governingEntry ignores the registry id
+  file: server/services/ai-governance/approved-models.ts
+  - return entries.find((e) => e.provider === m.provider && e.id === m.id && e.pinnedVersion === m.model);
+  + return entries.find((e) => e.provider === m.provider && e.pinnedVersion === m.model);
+  tests: effort.test.ts governing-entry.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  2 failed (2)
+  Tests  4 failed | 46 passed (50)
+  × server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > finds a row's own entry when an earlier entry for its provider pins the same version 8ms
+  × server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > still holds a row to identity: the entry's id, provider and pinned version 2ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work 15ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry 3ms
+    AssertionError: claude-opus-house: expected { id: 'claude-opus-house', …(2) } to be null
+    AssertionError: expected [ { id: 'claude-opus-house', …(8) } ] to deeply equal []
+    AssertionError: expected { id: 'claude-sonnet-4-twin', …(9) } to be { id: 'claude-sonnet-4', …(9) } // Object.is equality
+  restored: sha256 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772 == pre-mutation 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772
+
+## M8 [behaviour] governingEntry order-dependent again: the served-model lookup's first hit, then identity on that hit (the pre-review rule, over the entries parameter)
+  file: server/services/ai-governance/approved-models.ts
+  - return entries.find((e) => e.provider === m.provider && e.id === m.id && e.pinnedVersion === m.model);
+  + const entry = entries.find((e) => e.provider === m.provider && (e.pinnedVersion === m.model || e.id === m.model));
+  return entry && entry.id === m.id && entry.pinnedVersion === m.model ? entry : undefined;
+  tests: governing-entry.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  2 failed | 3 passed (5)
+  × server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > finds a row's own entry when an earlier entry for its provider has an id equal to the row's wire model 7ms
+  × server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > finds a row's own entry when an earlier entry for its provider pins the same version 1ms
+    AssertionError: expected undefined to be { id: 'claude-sonnet-4', …(9) } // Object.is equality
+    AssertionError: expected undefined to be { id: 'claude-sonnet-4', …(9) } // Object.is equality
+  restored: sha256 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772 == pre-mutation 615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772
+
+## M9 [behaviour] no dedupe: the withheld row is logged on every call
+  file: server/services/ai-gateway/reasoning.ts
+  - if (withheldReported.has(key)) return;
+  + 
+  tests: tier-model-approval.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  1 failed | 14 passed (15)
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs each configuration once per process, and refuses it on every call 5ms
+    AssertionError: expected "warn" to be called 1 times, but got 3 times
+  restored: sha256 ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6 == pre-mutation ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6
+
+## M10 [overcorrection] dedupe key too coarse: once per tier, whatever the value or rows
+  file: server/services/ai-gateway/reasoning.ts
+  - const key = JSON.stringify(context);
+  + const key = tier;
+  tests: tier-model-approval.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  2 failed | 13 passed (15)
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs each configuration once per process, and refuses it on every call 6ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs the source the value was actually taken from: a blank env var is the default's, not the env var's 6ms
+    AssertionError: expected "warn" to be called 4 times, but got 2 times
+    AssertionError: expected [ { tier: 'economy', …(4) } ] to match object [ { …(2) }, { …(2) } ]
+  restored: sha256 ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6 == pre-mutation ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6
+
+## M11 [behaviour] log only when nothing is pinned (the pre-review behaviour): a passed-over row goes unsaid
+  file: server/services/ai-gateway/reasoning.ts
+  - if (withheld.length > 0) reportWithheld(tier, configured, withheld, served?.row);
+  + if (withheld.length > 0 && !served) reportWithheld(tier, configured, withheld, served?.row);
+  tests: tier-model-approval.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  1 failed | 14 passed (15)
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > passes over a matching row that is not its entry exactly as it passes over a disabled one, and logs the row it passed over 7ms
+    AssertionError: expected "warn" to be called 1 times, but got 0 times
+  restored: sha256 ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6 == pre-mutation ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6
+
+## M12 [overcorrection] log on every resolve, including a clean pin with nothing withheld
+  file: server/services/ai-gateway/reasoning.ts
+  - if (withheld.length > 0) reportWithheld(tier, configured, withheld, served?.row);
+  + reportWithheld(tier, configured, withheld, served?.row);
+  tests: tier-model-approval.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  3 failed | 12 passed (15)
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > passes over a matching row that is not its entry exactly as it passes over a disabled one, and logs the row it passed over 9ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > still serves an approved remap — the no-Opus dial and the self-hosted tier — and logs nothing 2ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — today's registry resolves exactly as before > every remap to an enabled registry row, by id and by wire model, for every tier, and nothing logged 13ms
+    AssertionError: expected "warn" to not be called at all, but actually been called 1 times
+    AssertionError: expected "warn" to not be called at all, but actually been called 2 times
+    AssertionError: expected "warn" to not be called at all, but actually been called 75 times
+  restored: sha256 ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6 == pre-mutation ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6
+
+## M13a [behaviour] the logged source is not the rule that picked the value (always "default")
+  file: server/services/ai-gateway/reasoning.ts
+  - return override ? { value: override, source: envVar } : { value: TIER_MODEL_ID[tier], source: 'default' };
+  + return override ? { value: override, source: 'default' } : { value: TIER_MODEL_ID[tier], source: 'default' };
+  tests: tier-model-approval.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  2 failed | 13 passed (15)
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs a tier that pins nothing, naming the tier, what was configured, where from, and what was withheld 15ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs the source the value was actually taken from: a blank env var is the default's, not the env var's 5ms
+    AssertionError: expected "warn" to be called with arguments: [ StringMatching{…}, …(1) ]
+    AssertionError: expected [ { tier: 'economy', …(4) }, …(1) ] to match object [ { …(2) }, { …(2) } ]
+  restored: sha256 ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6 == pre-mutation ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6
+
+## M13b [behaviour] the override rule itself changes (blank not trimmed): value and source move together, and the case sees it
+  file: server/services/ai-gateway/reasoning.ts
+  - const override = env[envVar]?.trim();
+  + const override = env[envVar];
+  tests: tier-model-approval.test.ts reasoning.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  2 failed (2)
+  Tests  2 failed | 44 passed (46)
+  × server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModelIds — per-deployment overrides > ignores blank/whitespace overrides 10ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs the source the value was actually taken from: a blank env var is the default's, not the env var's 8ms
+    AssertionError: expected '  ' to be 'claude-opus-4' // Object.is equality
+    AssertionError: expected [] to match object [ { …(2) }, { …(2) } ]
+  restored: sha256 ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6 == pre-mutation ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6
+
+## M14 [behaviour] the refusal log claims the withheld row is not served (the pre-review wording)
+  file: server/services/ai-gateway/reasoning.ts
+  - : 'tier model withheld: no matching row is an approved-models entry, so the tier pins no model. The gateway selects by strategy, which on normal-risk work is not approval-gated and can choose a withheld row',
+  + : 'tier model not served: no approved-models entry; the gateway selects by strategy instead',
+  tests: tier-model-approval.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  1 failed | 14 passed (15)
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > does not claim the withheld row goes unserved: strategy selection on normal-risk work can still choose it 7ms
+    AssertionError: expected '[ai-gateway:tier] tier model not serv…' not to match /not served/
+  restored: sha256 ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6 == pre-mutation ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6
+
+## M15 [overcorrection] a tier with any row withheld pins nothing, even when a later row is its entry
+  file: server/services/ai-gateway/reasoning.ts
+  - return served ? { provider: served.row.provider, model: served.row.model, tier } : null;
+  + return served && withheld.length === 0 ? { provider: served.row.provider, model: served.row.model, tier } : null;
+  tests: tier-model-approval.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  2 failed | 13 passed (15)
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > passes over a matching row that is not its entry exactly as it passes over a disabled one, and logs the row it passed over 13m
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > one selection rule: a caller's pin and a tier remap of the same value select the same row > agrees for every value over registries with rows passed over, rows withheld, and none 2ms
+    AssertionError: expected null to deeply equal { provider: 'anthropic', …(2) }
+    AssertionError: claude-opus-4 over [claude-opus-house,claude-opus-4]: expected null to deeply equal { provider: 'anthropic', …(1) }
+  restored: sha256 ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6 == pre-mutation ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6
+
+## M16 [behaviour] resolveModelOverride back on its own first-match copy (the pre-review body)
+  file: server/services/ai-gateway/effort.ts
+  - const { served } = governedMatch(value, enabledModels);
+  if (!served) return null;
+  + const first = enabledModels.find((m) => m.enabled && (m.id === value || m.model === value));
+  const entry = first && governingEntry(first);
+  const served = first && entry ? { row: first, entry } : undefined;
+  if (!served) return null;
+  tests: tier-model-approval.test.ts effort.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  2 failed (2)
+  Tests  2 failed | 58 passed (60)
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > passes over a matching row that is not its entry to the next one that is, as the tier resolver does 7ms
+  × server/services/ai-gateway/__tests__/tier-model-approval.test.ts > one selection rule: a caller's pin and a tier remap of the same value select the same row > agrees for every value over registries with rows passed over, rows withheld, and none 7ms
+    AssertionError: expected null to deeply equal { id: 'claude-opus-4', …(2) }
+    AssertionError: claude-opus-4 over [claude-opus-house,claude-opus-4]: expected { provider: 'anthropic', …(1) } to deeply equal null
+  restored: sha256 2fac0d717e1ba8d81201270d0b30cf5e57fa80a94c7db82c9e29419eba4f6215 == pre-mutation 2fac0d717e1ba8d81201270d0b30cf5e57fa80a94c7db82c9e29419eba4f6215
+
+## M17 [behaviour] resolveModelOverride drops the high-risk check
+  file: server/services/ai-gateway/effort.ts
+  - if (highRisk && served.entry.approvedForHighRisk !== true) return null;
+  + 
+  tests: effort.test.ts
+  verdict: RED (vitest exit 1)
+  Test Files  1 failed (1)
+  Tests  2 failed | 43 passed (45)
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, refuses an approved model not approved for high risk 7ms
+  × server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case 1ms
+    AssertionError: expected { id: 'claude-sonnet-4', …(2) } to be null
+    AssertionError: expected { id: 'claude-sonnet-4', …(2) } to be null
+  restored: sha256 2fac0d717e1ba8d81201270d0b30cf5e57fa80a94c7db82c9e29419eba4f6215 == pre-mutation 2fac0d717e1ba8d81201270d0b30cf5e57fa80a94c7db82c9e29419eba4f6215
+

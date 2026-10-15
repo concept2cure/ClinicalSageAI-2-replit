@@ -1,19 +1,23 @@
 /**
- * Tests for AnA 1.0 RI Guidance-to-Action Executor v2
+ * Tests for AnA's `ana-action` block parsing.
  *
  * Validates:
  * - Action signal detection (fenced blocks + HTML comment fallback)
  * - Input validation (type enum, confidence enum, required fields)
- * - Confidence gating (strong/moderate execute, provisional/uncertain don't)
+ * - Confidence gating (strong/moderate are proposed, provisional/uncertain are not)
  * - Signal stripping from response text
  * - Malformed input handling
+ *
+ * Since 2026-10-01 (P0-12 residual) a block is never executed: the ones put to
+ * the person become create_artifact proposals through the command partition
+ * (services/ana-ri/__tests__/ana-action-block-proposal.test.ts).
  */
 
 import { describe, it, expect } from 'vitest';
 import {
   detectActionSignals,
   stripActionSignals,
-  shouldAutoExecute,
+  shouldPropose,
 } from '../ana-guidance-executor';
 
 describe('AnA Guidance Executor', () => {
@@ -199,21 +203,21 @@ Done.`;
 
   // ─── Confidence Gating ─────────────────────────────────────────────────
 
-  describe('shouldAutoExecute', () => {
-    it('allows execution for strong confidence', () => {
-      expect(shouldAutoExecute('strong')).toBe(true);
+  describe('shouldPropose', () => {
+    it('puts a strong block to the person', () => {
+      expect(shouldPropose('strong')).toBe(true);
     });
 
-    it('allows execution for moderate confidence', () => {
-      expect(shouldAutoExecute('moderate')).toBe(true);
+    it('puts a moderate block to the person', () => {
+      expect(shouldPropose('moderate')).toBe(true);
     });
 
-    it('blocks execution for provisional confidence', () => {
-      expect(shouldAutoExecute('provisional')).toBe(false);
+    it('proposes nothing for a provisional block', () => {
+      expect(shouldPropose('provisional')).toBe(false);
     });
 
-    it('blocks execution for uncertain confidence', () => {
-      expect(shouldAutoExecute('uncertain')).toBe(false);
+    it('proposes nothing for an uncertain block', () => {
+      expect(shouldPropose('uncertain')).toBe(false);
     });
   });
 });

@@ -228,6 +228,9 @@ describe('AIGateway.authorizeEmbedding', () => {
   describe('sensitive text meets the enforced last-mile gate with intended use "embedding"', () => {
     it('PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free', async () => {
       process.env.NODE_ENV = 'production';
+      // The tenant has elected OpenAI; without it production refuses earlier, as
+      // DENY_TENANT_POLICY (ADR-0014 §1, P1-45). This case is about the decider.
+      setOrgPlacementResolver({ resolve: async () => ({ allowedProviders: ['openai'] }) });
       const gateway = buildGateway();
 
       // A production call is always bound to a tenant (request or job scope). The
@@ -254,6 +257,8 @@ describe('AIGateway.authorizeEmbedding', () => {
     it('an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE', async () => {
       process.env.NODE_ENV = 'production';
       process.env.AI_PROVIDER_PLACEMENT_APPROVALS = APPROVAL_OPENAI_CHAT_ONLY;
+      // Elected, as above (P1-45); this case is about the intended-use approval.
+      setOrgPlacementResolver({ resolve: async () => ({ allowedProviders: ['openai'] }) });
       const gateway = buildGateway();
 
       // A production call is always bound to a tenant (request or job scope). The

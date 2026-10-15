@@ -1,0 +1,57 @@
+# npx vitest run tests/regulatory/plr-format-rules.test.ts server/services/ana/__tests__/labeling-authoring.test.ts --reporter=verbose (per-test list), after the change, 2026-10-04
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > labeling-authoring mode specs > maps US → uspi/PLR and EU → smpc/QRD 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > labeling-authoring mode specs > cites the FDA PLR and EMA QRD bases 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > US PLR carries the mandatory numbered full-text sections 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > EU QRD carries the full fixed section set including driving + MAH 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > the two checklists differ (mode-specific completeness) 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required_strings derivation per mode > derives required_strings identical to the mode section guard 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > reports complete when every US header is present (case/space tolerant) 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a missing US section (e.g. dropped Warnings and Precautions) 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a US draft with every FPI section but no Highlights or Contents (21 CFR 201.57(a), (b)) 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a missing EU QRD section (e.g. dropped 4.8 Undesirable effects) 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > build_from_template replacements > seeds product name, title, basis and a placeholder per section 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > drops the wrong type size, paragraph citations and conditions 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > states the 20-line boxed-warning limit, (d)(6) type size and (d)(8) length 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > Recent Major Changes is conditional, listed for at least 1 year 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > the Highlights boxed warning carries the 20-line limit 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > lists the 201.57 format rules, each sourced to eCFR 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > limits Recent Major Changes to the five sections (a)(5) names 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > puts the omitted-sections asterisk on the Contents heading, not on an omitted heading (b) 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > keeps the unfiltered brief and the labeling area within the result budget 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > US section guard requires Highlights and Contents > requires the Highlights heading, its verbatim statements and Contents 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > US section guard requires Highlights and Contents > fails a PI that has every FPI section but no Highlights or Contents 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records Elsa 4.0 and HALO from FDA’s May 2026 announcement 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records FDA’s use of Elsa for protocol reviews and inspection targets 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > rests the image-only PDF consequence on the specification, not a tool limit 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > still says FDA has published no acceptance criteria for Elsa 0ms
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+
+# Every test file importing a changed module (directly, through server/services/ind/ctd/index, or naming the changed tools), npx vitest run --maxWorkers=2 <files>:
+#   tests/regulatory/plr-format-rules.test.ts
+#   server/services/ana/__tests__/labeling-authoring.test.ts
+#   server/services/ana/__tests__/regulatory-knowledge-tools.test.ts
+#   server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+#   server/services/ana/__tests__/tool-selection-routing.test.ts
+#   tests/regulatory/ana-ctd-section-truth.test.ts
+#   tests/regulatory/citation-accuracy.test.ts
+#   tests/regulatory/csr-e3-overlay.test.ts
+#   tests/regulatory/ctd-authoring-depth.test.ts
+#   tests/regulatory/ctd-guidance-correctness.test.ts
+#   tests/regulatory/submission-chain.test.ts
+#   tests/regulatory/template-library-truth.test.ts
+#   tests/schema-contract/one-normalize-ctd-code.contract.test.ts
+ Test Files  13 passed (13)
+      Tests  191 passed (191)
+
+# Sample of AnaToolExecutor importers (module load of the changed labeling files): tool-registry-consistency, verify-docx-against-source, new-tool-handlers
+ Test Files  3 passed (3)
+      Tests  860 passed (860)
+
+# Result sizes, list_fda_technical_rules (RESULT_BUDGET 5000; brief was 4009 before this change):
+(brief) 4314 5000 
+pdf 2835 5000 
+ectd 1581 5000 
+study-data 1970 5000 
+content 2345 5000 
+labeling 4886 5000 

@@ -19,14 +19,18 @@ import type {
   TaskBlueprint,
   MilestoneDefinition,
 } from './document-taxonomy';
+import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_SECTIONS } from './protocol-m11';
 
 // ─── Section Blueprints ───────────────────────────────────────────────────────
 
 /** CTD Module 1-5 section blueprint (used by IND, NDA, BLA, MAA, etc.) */
 const CTD_SECTIONS: SectionDefinition[] = [
-  { code: '1.1', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
-  { code: '1.2', title: 'Administrative Forms', module: 1, required: true, contentType: 'form' },
-  { code: '1.5', title: 'Table of Contents', module: 1, required: true, contentType: 'list' },
+  /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+  (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+  The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+  of contents — so the row for it is gone rather than renumbered. */
+  { code: '1.1', title: 'Administrative Forms', module: 1, required: true, contentType: 'form' },
+  { code: '1.2', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
   { code: '2.2', title: 'Introduction', module: 2, required: true, contentType: 'narrative', guidance: 'ICH M4' },
   { code: '2.3', title: 'Quality Overall Summary', module: 2, required: true, contentType: 'narrative', guidance: 'ICH M4Q(R1)' },
   { code: '2.4', title: 'Nonclinical Overview', module: 2, required: true, contentType: 'narrative', guidance: 'ICH M4S(R2)' },
@@ -106,36 +110,36 @@ const CSR_SECTIONS: SectionDefinition[] = [
   { code: '16', title: 'Appendices (Protocol, SAP, Sample CRF, Listings)', module: 5, required: true, contentType: 'mixed' },
 ];
 
-/** Clinical trial protocol — ICH E6(R2) §6 structure. */
-const PROTOCOL_SECTIONS: SectionDefinition[] = [
-  { code: '1', title: 'General Information', module: 5, required: true, contentType: 'narrative', guidance: 'ICH E6(R2)' },
-  { code: '2', title: 'Background Information', module: 5, required: true, contentType: 'narrative' },
-  { code: '3', title: 'Trial Objectives and Purpose', module: 5, required: true, contentType: 'narrative' },
-  { code: '4', title: 'Trial Design', module: 5, required: true, contentType: 'mixed' },
-  { code: '5', title: 'Selection and Withdrawal of Subjects', module: 5, required: true, contentType: 'narrative' },
-  { code: '6', title: 'Treatment of Subjects', module: 5, required: true, contentType: 'narrative' },
-  { code: '7', title: 'Assessment of Efficacy', module: 5, required: true, contentType: 'mixed' },
-  { code: '8', title: 'Assessment of Safety', module: 5, required: true, contentType: 'mixed' },
-  { code: '9', title: 'Statistics', module: 5, required: true, contentType: 'mixed', guidance: 'ICH E9' },
-  { code: '10', title: 'Direct Access to Source Data/Documents', module: 5, required: true, contentType: 'narrative' },
-  { code: '11', title: 'Quality Control and Quality Assurance', module: 5, required: true, contentType: 'narrative' },
-  { code: '12', title: 'Ethics', module: 5, required: true, contentType: 'narrative' },
-  { code: '13', title: 'Data Handling and Record Keeping', module: 5, required: true, contentType: 'narrative' },
-  { code: '14', title: 'Financing and Insurance', module: 5, required: false, contentType: 'narrative' },
-  { code: '15', title: 'Publication Policy', module: 5, required: false, contentType: 'narrative' },
-];
+/** M11 interventional protocol headings; retained id supports existing clients. */
+const PROTOCOL_SECTIONS: SectionDefinition[] = ICH_M11_PROTOCOL_SECTIONS.map((s) => ({
+  code: s.code,
+  title: s.title,
+  // Standalone document grouping, not CTD placement or a transmission schema.
+  module: 0,
+  // Retain M11 L1/L2 headings; content applicability still requires review.
+  required: true,
+  contentType: 'mixed',
+  guidance: `${ICH_M11_PROTOCOL_BASIS.ref}. ${s.purpose}`,
+}));
 
-/** Investigator's Brochure — ICH E6(R2) §7 structure. */
+/**
+ * Investigator's Brochure — ICH E6(R3) Appendix A structure. Module 0: a
+ * standalone document, as PROTOCOL_SECTIONS is; a US IND files the IB in
+ * Module 1 (1.14.4.1), never Module 5 (corrected 2026-10-15). The codes 1–9
+ * are persisted on project_sections and are not this outline's numbering
+ * (body 1–6 in market-specs 'investigators_brochure'); remapping them needs a
+ * guarded data migration, handed on.
+ */
 const IB_SECTIONS: SectionDefinition[] = [
-  { code: '1', title: 'Title Page', module: 5, required: true, contentType: 'narrative', guidance: 'ICH E6(R2) §7' },
-  { code: '2', title: 'Confidentiality Statement', module: 5, required: false, contentType: 'narrative' },
-  { code: '3', title: 'Table of Contents', module: 5, required: true, contentType: 'list' },
-  { code: '4', title: 'Summary', module: 5, required: true, contentType: 'narrative' },
-  { code: '5', title: 'Introduction', module: 5, required: true, contentType: 'narrative' },
-  { code: '6', title: 'Physical, Chemical and Pharmaceutical Properties and Formulation', module: 5, required: true, contentType: 'mixed' },
-  { code: '7', title: 'Nonclinical Studies (Pharmacology, PK, Toxicology)', module: 5, required: true, contentType: 'mixed' },
-  { code: '8', title: 'Effects in Humans (PK, Safety, Efficacy, Marketing Experience)', module: 5, required: true, contentType: 'mixed' },
-  { code: '9', title: 'Summary of Data and Guidance for the Investigator', module: 5, required: true, contentType: 'narrative' },
+  { code: '1', title: 'Title Page', module: 0, required: true, contentType: 'narrative', guidance: 'ICH E6(R3) Appendix A' },
+  { code: '2', title: 'Confidentiality Statement', module: 0, required: false, contentType: 'narrative' },
+  { code: '3', title: 'Table of Contents', module: 0, required: true, contentType: 'list' },
+  { code: '4', title: 'Summary', module: 0, required: true, contentType: 'narrative' },
+  { code: '5', title: 'Introduction', module: 0, required: true, contentType: 'narrative' },
+  { code: '6', title: 'Physical, Chemical and Pharmaceutical Properties and Formulation', module: 0, required: true, contentType: 'mixed' },
+  { code: '7', title: 'Nonclinical Studies (Pharmacology, PK, Toxicology)', module: 0, required: true, contentType: 'mixed' },
+  { code: '8', title: 'Effects in Humans (PK, Safety, Efficacy, Marketing Experience)', module: 0, required: true, contentType: 'mixed' },
+  { code: '9', title: 'Summary of Data and Guidance for the Investigator', module: 0, required: true, contentType: 'narrative' },
 ];
 
 /** Statistical Analysis Plan — ICH E9 structure. */
@@ -188,14 +192,15 @@ const M3_DP_SECTIONS: SectionDefinition[] = [
 
 // ─── Safety / Pharmacovigilance Blueprints ────────────────────────────────────
 
-/** IND Safety Report — 21 CFR 312.32 (expedited SUSAR). */
+/** IND safety authoring groups. Numeric keys preserve existing projects; these
+ * are not CTD placement codes. Report subtype and route must be assessed. */
 const IND_SAFETY_REPORT_SECTIONS: SectionDefinition[] = [
-  { code: '1', title: 'Cover Letter / Notification (7-day or 15-day)', module: 5, required: true, contentType: 'narrative', guidance: '21 CFR 312.32' },
-  { code: '2', title: 'Suspected Adverse Reaction Description (ICSR)', module: 5, required: true, contentType: 'mixed' },
-  { code: '3', title: 'Assessment of Causality', module: 5, required: true, contentType: 'narrative' },
-  { code: '4', title: 'Assessment of Expectedness (vs. IB/Protocol)', module: 5, required: true, contentType: 'narrative' },
-  { code: '5', title: 'Analysis of Similar Events / Aggregate Assessment', module: 5, required: false, contentType: 'mixed' },
-  { code: '6', title: 'Follow-up Information', module: 5, required: false, contentType: 'narrative' },
+  { code: '1', title: 'IND Safety Report Identification / Route-Dependent Transmittal', module: 0, required: true, contentType: 'narrative', guidance: 'Platform identification group: confirm report subtype under 21 CFR 312.32, commercial/noncommercial status, reporting decision and applicable route; not a universal cover-letter or Form FDA 1571 requirement.' },
+  { code: '2', title: 'Individual Case Safety Report (Applicable Case Reporting Route)', module: 0, required: false, contentType: 'mixed', guidance: 'Conditional case-based group: applicability depends on the confirmed report subtype and route; not evidence that an ICSR is always required. An unresolved branch is not waived.' },
+  { code: '3', title: 'Causality Assessment (Reasonable Possibility Determination)', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional case-assessment group: use the sponsor-approved reporting determination and applicable report subtype; assess content applicability before omission.' },
+  { code: '4', title: 'Expectedness Assessment Against the Investigator Brochure / Protocol', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional expectedness group: assess applicability to the report subtype using the controlling source records; no waiver inferred from this flag.' },
+  { code: '5', title: 'Aggregate / Similar-Events and Increased-Rate Analysis', module: 0, required: false, contentType: 'mixed', guidance: 'Conditional aggregate-analysis group: confirm reporting subtype and applicable analysis; aggregate content alone does not establish the transmission route.' },
+  { code: '6', title: 'Follow-Up Report', module: 0, required: false, contentType: 'narrative', guidance: 'Conditional follow-up group: confirm initial/follow-up status and relevant new information; use current reporting obligations and controlled prior-report linkage.' },
 ];
 
 /** IND Annual Report — 21 CFR 312.33. */
@@ -628,8 +633,8 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
 
   // Clinical document components (ICH-harmonised)
   ich_csr_sections: { id: 'ich_csr_sections', name: 'Clinical Study Report (ICH E3)', sections: CSR_SECTIONS },
-  ich_protocol_sections: { id: 'ich_protocol_sections', name: 'Clinical Protocol (ICH E6)', sections: PROTOCOL_SECTIONS },
-  ich_ib_sections: { id: 'ich_ib_sections', name: "Investigator's Brochure (ICH E6 §7)", sections: IB_SECTIONS },
+  ich_protocol_sections: { id: 'ich_protocol_sections', name: 'Clinical Protocol (ICH M11 CeSHarP)', sections: PROTOCOL_SECTIONS },
+  ich_ib_sections: { id: 'ich_ib_sections', name: "Investigator's Brochure (ICH E6(R3) Appendix A)", sections: IB_SECTIONS },
   ich_sap_sections: { id: 'ich_sap_sections', name: 'Statistical Analysis Plan (ICH E9)', sections: SAP_SECTIONS },
 
   // CMC / Quality components

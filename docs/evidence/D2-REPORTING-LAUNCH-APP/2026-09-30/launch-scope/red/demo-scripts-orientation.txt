@@ -1,0 +1,7 @@
+# demo-scripts.test.ts with seven launch apps and the orientation script unchanged
+ × shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all six launch apps and ends at the audit trail 6ms
+   → training-orientation never reaches the Reporting & analytics app: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all six launch apps and ends at the audit trail
+AssertionError: training-orientation never reaches the Reporting & analytics app: expected false to be true // Object.is equality
+      Tests  1 failed | 14 passed (15)

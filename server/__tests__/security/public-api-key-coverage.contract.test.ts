@@ -51,9 +51,6 @@ vi.mock('../../services/usage-metering.js', () => ({
 vi.mock('../../services/csr-search-service.js', () => ({
   csrSearchService: { searchCSRs: vi.fn(async () => ({ csrs: [], results_count: 0 })) },
 }));
-vi.mock('../../services/regulatory-pathway-intelligence.js', () => ({
-  getRegulatoryPathwayIntelligence: () => ({ recommendPathway: vi.fn(() => ({})) }),
-}));
 vi.mock('../../services/endpoint-recommender-service.js', () => ({
   getEndpointRecommenderService: () => ({
     getComprehensiveEndpointRecommendations: vi.fn(async () => ({})),

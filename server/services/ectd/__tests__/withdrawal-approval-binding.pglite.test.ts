@@ -85,7 +85,7 @@ async function zipOf(bundlePath: string) {
 }
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
   holder.db = harness.db;
   holder.pglite = harness.pglite;
   await harness.pglite.exec(`
@@ -345,16 +345,6 @@ async function seedUnreadableWithdrawals() {
     CREATE TABLE IF NOT EXISTS vault.documents (
       id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
     );
-    CREATE TABLE IF NOT EXISTS shadow_review_runs (
-      id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
-      model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
-      organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-    CREATE TABLE IF NOT EXISTS shadow_review_findings (
-      id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
-      basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
     INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROGRAM}', ${ORG});
     -- On file in the vault, but its bytes never reached the storage provider.
     INSERT INTO vault.documents (id, program_id, storage_version_id, content_hash, file_name)
@@ -377,7 +367,15 @@ async function seedUnreadableWithdrawals() {
     -- 601 was filed and its content has since been emptied.
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
       (601, ${ORG}, 'Emptied', '', '3.2', 'approved'),
-      (602, ${ORG}, 'Filed Twice', '<p>v1</p>', '3.2', 'approved');
+      (602, ${ORG}, 'Filed Twice', '<p>v1</p>', '3.2', 'approved'),
+      -- Every IND submission carries its Form FDA 1571 (21 CFR 312; P-20
+      -- follow-up), so each amendment below files one at 1.1. Without it the
+      -- readiness this suite compares against reports the missing form.
+      (603, ${ORG}, 'Form FDA 1571', '<p>Form FDA 1571</p>', 'm1.1', 'approved'),
+      -- And, since P-33 (2026-10-15), its cover letter at 1.2: a continuing IND
+      -- sequence is held to the transmittal pair and its type's content by the
+      -- IND sequence validator (the m3.2.p.1 leaf is the amendment's content).
+      (604, ${ORG}, 'Cover Letter', '<p>Cover letter</p>', 'm1.2', 'approved');
     -- 700 was filed; its upload bytes have since been rotated off disk.
     INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path) VALUES
       (700, ${ORG}, 'stab.pdf', 'application/pdf', '/nonexistent/rotated/stab.pdf');
@@ -396,7 +394,17 @@ async function seedUnreadableWithdrawals() {
        (47, 'm3.2.s.4', 'Vault doc', 'delete', 'vault_documents', NULL, $4::uuid, NULL, $1, $2),
        (47, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
        (49, 'm3.2.s.5', 'Filed Twice', 'delete', 'coauthor_documents', 602, NULL, NULL, $1, $2),
-       (49, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2)`,
+       (49, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
+       (41, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (43, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (45, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (47, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (49, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (41, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2),
+       (43, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2),
+       (45, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2),
+       (47, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2),
+       (49, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2)`,
     [ORG, USER, sha('<p>the filed text</p>'), VAULT_UUID],
   );
   // As the packager records a filed leaf: with the backbone ID a later

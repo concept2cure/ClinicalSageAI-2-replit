@@ -1,0 +1,72 @@
+# Re-run 2026-10-04 of tests/regulatory/template-library-truth.test.ts against HEAD's document-template-library.ts (git show HEAD:..., copied beside a path-adjusted copy of the test): every test, then the original tail.
+      Tests  6 failed | 1 passed (7)
+ × tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > every section says what it is for, and §14 is the displays NOT in the text 2ms
+ × tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16 9ms
+ × tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > carries every numbered section in order 2ms
+ × tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > §12–§19 carry the E2C(R2) headings 1ms
+ × tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > carries no single CTD code, and its basis names FDA 1.2 and EU 1.0 1ms
+ × tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > is not served for CTD 1.1 (FDA Forms) 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — unaffected lookups (guard) > Clinical Overview stays at 2.5 and the QOS still resolves by 2.3 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+# Original run (npx vitest run tests/regulatory/template-library-truth.test.ts 2>&1 | tail -60) on the unmodified code:
+      "purpose": "What this sequence contains and why it is being filed.",
+      "required": true,
+    },
+    {
+      "heading": "Regulatory References",
+      "number": "3",
+      "purpose": "Prior meetings, agreements, designations, and related applications.",
+      "required": false,
+    },
+    {
+      "heading": "Contents Overview",
+      "number": "4",
+      "purpose": "High-level list of the documents/modules included.",
+      "required": true,
+    },
+    {
+      "heading": "Contact and Signature",
+      "number": "5",
+      "purpose": "Responsible contact and authorised signatory.",
+      "required": true,
+    },
+  ],
+  "title": "Submission Cover Letter",
+}
+
+ ❯ tests/regulatory/template-library-truth.test.ts:62:42
+     60| describe('template library — cover letter placement is regional', () =…
+     61|   it('is not served for CTD 1.1 (FDA Forms)', () => {
+     62|     expect(templateForCtdSection('1.1')).toBeUndefined();
+       |                                          ^
+     63|   });
+     64|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > carries no single CTD code, and its basis names FDA 1.2 and EU 1.0
+AssertionError: expected '1.1' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"1.1"
+
+ ❯ tests/regulatory/template-library-truth.test.ts:67:27
+     65|   it('carries no single CTD code, and its basis names FDA 1.2 and EU 1…
+     66|     const cl = getDocumentTemplate('cover_letter')!;
+     67|     expect(cl.ctdSection).toBeUndefined();
+       |                           ^
+     68|     expect(cl.regulatoryBasis).toMatch(/FDA[^;]*1\.2/);
+     69|     expect(cl.regulatoryBasis).toMatch(/EU[^;]*1\.0/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  20:27:04
+   Duration  1.23s (transform 638ms, setup 118ms, import 607ms, tests 22ms, environment 0ms)
+

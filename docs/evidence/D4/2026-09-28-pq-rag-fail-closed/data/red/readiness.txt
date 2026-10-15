@@ -1,0 +1,36 @@
+# node docs/evidence/D4/2026-09-28-pq-rag-fail-closed/data/check-gold-manifest.mjs server/eval/rag/gold-dataset.json server/eval/rag/guidance-corpus-manifest.json /tmp/gold-at-base.json --ready
+{
+ "mode": "structure+readiness",
+ "items": 20,
+ "positives": 18,
+ "negatives": 2,
+ "newItems": 0,
+ "manifestEntries": 24,
+ "verifiedEntries": 0,
+ "distinctKeysUsed": 18,
+ "keysProvisional": true,
+ "itemsWithOpenChecks": 5,
+ "structuralErrors": [],
+ "positivesReady": 0,
+ "notReady": [
+  "ich-q1a-stability: no evidence quote; unverified keys: ICH-Q1A-R2@Step4",
+  "ich-e6-gcp-essential-docs: no evidence quote; unverified keys: ICH-E6-R2@Step4",
+  "fda-ind-content: no evidence quote; unverified keys: US-21CFR-312.23@2025-04-01",
+  "ich-m4-ctd-modules: no evidence quote; unverified keys: ICH-M4-R4@Step4; 1 open check(s)",
+  "ich-q3a-impurity-thresholds: no evidence quote; unverified keys: ICH-Q3A-R2@Step4",
+  "ema-paediatric-investigation-plan: no evidence quote; unverified keys: EU-REG-1901-2006@CONS-2019-01-28; 1 open check(s)",
+  "stats-primary-endpoint-multiplicity: no evidence quote; unverified keys: ICH-E9@Step4; 1 open check(s)",
+  "ich-e9-estimands: no evidence quote; unverified keys: ICH-E9-R1@Step4",
+  "fda-bla-vs-nda: no evidence quote; unverified keys: US-USC-42-262@USCODE-2024, US-USC-21-355@USCODE-2024; 1 open check(s)",
+  "ich-q7-gmp-api: no evidence quote; unverified keys: ICH-Q7@Step4",
+  "fda-510k-substantial-equivalence: no evidence quote; unverified keys: FDA-GUID-510K-SUBSTANTIAL-EQUIVALENCE@final-2014-07-28",
+  "eu-mdr-clinical-evaluation: no evidence quote; unverified keys: EU-REG-2017-745@CONS-2026-01-01",
+  "ich-q2-method-validation: no evidence quote; unverified keys: ICH-Q2-R1@Step4",
+  "fda-orphan-drug-designation: no evidence quote; unverified keys: US-21CFR-316@2025-04-01",
+  "ich-e2a-serious-adverse-event: no evidence quote; unverified keys: ICH-E2A@Step4; 1 open check(s)",
+  "ich-e6-informed-consent: no evidence quote; unverified keys: ICH-E6-R2@Step4",
+  "fda-breakthrough-therapy: no evidence quote; unverified keys: FDA-GUID-EXPEDITED-PROGRAMS-SERIOUS-CONDITIONS@final-2014-05",
+  "ich-q8-quality-by-design: no evidence quote; unverified keys: ICH-Q8-R2@Step4"
+ ]
+}
+exit=1

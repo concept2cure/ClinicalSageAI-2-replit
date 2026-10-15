@@ -138,6 +138,9 @@ describe('authoring object permissions — real canonical DDL', () => {
     expect(decision).toMatchObject({ allowed: false, reason: 'permission-denied' });
   });
 
+});
+
+describe('explicit reviewer and approver grants — real canonical DDL', () => {
   it('grants reviewer and approver authority explicitly, without edit escalation', async () => {
     await grantAuthoringPermission({
       pool,
@@ -214,6 +217,9 @@ describe('authoring object permissions — real canonical DDL', () => {
     expect(decision).toMatchObject({ allowed: false, reason: 'permission-denied' });
   });
 
+});
+
+describe('tenant and document-owner safeguards — real canonical DDL', () => {
   it('rejects cross-tenant document and section permission links at the database boundary', async () => {
     await expect(
       jdb.pool.query(
@@ -269,5 +275,30 @@ describe('authoring object permissions — real canonical DDL', () => {
         reason: 'Attempt to remove final owner',
       }),
     ).rejects.toThrow('LAST_OWNER');
+  });
+
+  it('a section owner cannot replace the last document owner, and may be revoked separately', async () => {
+    const sectionOwner = await grantAuthoringPermission({
+      pool, tenantId: 1, docId: DOCUMENT_ID, sectionId: SECTION_ID,
+      principalId: APPROVER_ID, email: 'approver@permission.example', role: 'OWNER',
+      grantedBy: AUTHOR_ID, reason: 'Own only the rationale section',
+    });
+    const owner = await jdb.pool.query(
+      `SELECT id::text FROM doc_permissions
+        WHERE tenant_id = 1 AND doc_id = $1 AND role = 'OWNER'
+          AND section_id IS NULL AND revoked_at IS NULL LIMIT 1`,
+      [DOCUMENT_ID],
+    );
+    const ownerId = String((owner.rows[0] as { id: string }).id);
+    await expect(revokeAuthoringPermission({
+      pool, tenantId: 1, docId: DOCUMENT_ID, permissionId: ownerId,
+      revokedBy: AUTHOR_ID, reason: 'Attempt to rely on a section owner',
+    })).rejects.toThrow('LAST_OWNER');
+    expect(await revokeAuthoringPermission({
+      pool, tenantId: 1, docId: DOCUMENT_ID, permissionId: sectionOwner.id,
+      revokedBy: AUTHOR_ID, reason: 'Section ownership no longer needed',
+    })).toMatchObject({ id: sectionOwner.id, section_id: SECTION_ID });
+    const retained = await jdb.pool.query('SELECT revoked_at FROM doc_permissions WHERE id = $1', [ownerId]);
+    expect(retained.rows[0]).toMatchObject({ revoked_at: null });
   });
 });

@@ -1,0 +1,428 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T21:54:39.012Z","pid":4033,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T21:54:39.013Z","pid":4033,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T21:54:39.013Z","pid":4033,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T21:54:39.111Z', poolSize: 1 }
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-version-annotations.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T21:54:39.843Z","pid":4033,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:4033) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:39.934Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 9,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:40.008Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "1999ba80-5d11-4ee4-8ca3-5572ea195024",
+    "code": "DBTEST-VANNO-TXT",
+    "type": "OTHER",
+    "size": 46,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:40.021Z","pid":4033,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:40.028Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 53,
+    "wordCount": 10,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:40.040Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "28d7cd86-e2b6-4623-bcda-b63ac34f38a6",
+    "code": "DBTEST-VANNO-TXT",
+    "type": "OTHER",
+    "size": 55,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:40.170Z","pid":4033,"hostname":"vm","context":{"filename":"three-pages.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":30,"time":"2026-10-01T21:54:40.891Z","pid":4033,"hostname":"vm","context":{"pages":3,"dpi":200,"region":"full"},"msg":"[pdf-rasterizer] Rasterized PDF"}
+(node:4033) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-10-01T21:54:41.688Z","pid":4033,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":493},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-10-01T21:54:41.982Z","pid":4033,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":293},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-10-01T21:54:42.306Z","pid":4033,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":323},"msg":"[tesseract-ocr] OCR completed"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:42.307Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 15,
+    "pagesMapped": 3
+  }
+}
+
+{"level":30,"time":"2026-10-01T21:54:42.306Z","pid":4033,"hostname":"vm","context":{"pages":3,"confidence":0,"durationMs":1952},"msg":"[ocr-service] PDF text OCR completed"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:42.317Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8b5dcd0c-9e72-48a1-a8da-04f10945d3c4",
+    "code": "DBTEST-VANNO-PDF",
+    "type": "OTHER",
+    "size": 598,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:42.324Z","pid":4033,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:42.325Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 20,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:42.332Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b86b435d-472f-4d28-8f9a-88322225fe5f",
+    "code": "DBTEST-VANNO-NOTEXT",
+    "type": "OTHER",
+    "size": 20,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:42.339Z","pid":4033,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:42.339Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 16,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:42.347Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "49fd546c-d2d5-49b3-92fc-293f2925035a",
+    "code": "DBTEST-VANNO-ELSE",
+    "type": "OTHER",
+    "size": 16,
+    "hasText": true
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > each post is a chained row on the version's history, with the words and their SHA-256
+[database] Database connection successful { timestamp: '2026-10-01T21:54:42.548Z', poolSize: 2 }
+
+ ✓ tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > anchors to the whole version, a page, or a passage, and lists each with the open counts 170ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > each post is a chained row on the version's history, with the words and their SHA-256 60ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > counts a passage in characters, not UTF-16 units 10ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > refuses a page out of range, a page without a page count, missing text, and text that changed 38ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > reads the text in character windows, and records each read 39ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > a reply goes under its annotation; a reply to a reply is refused 41ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > resolving needs a note, can name the version that addressed it, and happens once 102ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > only the author retracts, with a reason; the words stay; a retracted one is not resolved, a resolved one not retracted 87ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > who may annotate (critique 15) > a viewer is refused at the route and at the service 11ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > who may annotate (critique 15) > another organisation neither reads nor changes this organisation's annotations 16ms
+ ✓ tests/db/vault-version-annotations.dbtest.ts > a stale anchor says so (critique 15) > when the text or the page count changes, the anchor reads not current and the quote stays 57ms
+{"level":30,"time":"2026-10-01T21:54:44.136Z","pid":4060,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T21:54:44.137Z","pid":4060,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T21:54:44.138Z","pid":4060,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T21:54:44.178Z', poolSize: 1 }
+
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-version-annotations-record.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T21:54:44.394Z","pid":4060,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:4060) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:44.431Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 26,
+    "wordCount": 7,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:44.480Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b23ffdd3-ca53-42d1-b063-5f5df7beef16",
+    "code": "DBTEST-VANNOREC-TXT",
+    "type": "OTHER",
+    "size": 26,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:44.601Z","pid":4060,"hostname":"vm","context":{"filename":"three-pages.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":30,"time":"2026-10-01T21:54:45.255Z","pid":4060,"hostname":"vm","context":{"pages":3,"dpi":200,"region":"full"},"msg":"[pdf-rasterizer] Rasterized PDF"}
+(node:4060) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-10-01T21:54:46.127Z","pid":4060,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":511},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-10-01T21:54:46.429Z","pid":4060,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":301},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-10-01T21:54:46.759Z","pid":4060,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":330},"msg":"[tesseract-ocr] OCR completed"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.759Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 15,
+    "pagesMapped": 3
+  }
+}
+
+{"level":30,"time":"2026-10-01T21:54:46.759Z","pid":4060,"hostname":"vm","context":{"pages":3,"confidence":0,"durationMs":2004},"msg":"[ocr-service] PDF text OCR completed"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.771Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "566d57ff-8027-4e42-aa42-50fd327ead60",
+    "code": "DBTEST-VANNOREC-PDF",
+    "type": "OTHER",
+    "size": 598,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:46.779Z","pid":4060,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.779Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 17,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.788Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8be8948e-e097-41fa-aa20-68c9d4bac072",
+    "code": "DBTEST-VANNOREC-OTH",
+    "type": "OTHER",
+    "size": 17,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:46.794Z","pid":4060,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.794Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 15,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.802Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5b7cf088-27ed-4e47-9a85-460da70d8b94",
+    "code": "DBTEST-VANNOREC-THEIRS",
+    "type": "OTHER",
+    "size": 15,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:46.809Z","pid":4060,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.810Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 13,
+    "wordCount": 3,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.818Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3810a466-6435-4efa-be73-04dbe9f8271d",
+    "code": "DBTEST-VANNOREC-GONE",
+    "type": "OTHER",
+    "size": 13,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:46.824Z","pid":4060,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.825Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 19,
+    "wordCount": 3,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.832Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7a2c6eed-9b03-4304-a320-5c86e7f47609",
+    "code": "DBTEST-VANNOREC-RA",
+    "type": "OTHER",
+    "size": 19,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:46.839Z","pid":4060,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.839Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 19,
+    "wordCount": 3,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.849Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a2db6458-5639-47e9-b669-581c0f2d6dae",
+    "code": "DBTEST-VANNOREC-RB",
+    "type": "OTHER",
+    "size": 19,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:54:46.855Z","pid":4060,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.855Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 30,
+    "wordCount": 6,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations-record.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:54:46.863Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fdf28abe-6d56-4400-a56d-55a0cf1f5d46",
+    "code": "DBTEST-VANNOREC-BUSY",
+    "type": "OTHER",
+    "size": 30,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record refuses a post its writer would refuse (critique 15) > admits a well-formed direct post, as the control 5ms
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record refuses a post its writer would refuse (critique 15) > refuses another organisation, program or byte content, and a body hash that is not its own 9ms
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record refuses a post its writer would refuse (critique 15) > refuses a passage not where it says, a stale text hash, a page beyond the count, and a page on a version without one 16ms
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record refuses a post its writer would refuse (critique 15) > refuses a reply under a closed or foreign annotation, a closed post, and a deleted version 15ms
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record never changes and is never deleted while its version exists (critique 15) > refuses changes to its words, anchor and author, and a second or foreign outcome 11ms
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record never changes and is never deleted while its version exists (critique 15) > refuses DELETE, a DELETE from a trigger the runtime role made itself, and TRUNCATE 27ms
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record never changes and is never deleted while its version exists (critique 15) > refuses a runtime-role DELETE of the program, which would cascade as the owner, for annotations and relationships 12ms
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record never changes and is never deleted while its version exists (critique 15) > the tenant purge removes an organisation's annotations with its versions, and no one else's; the owners match 16ms
+stdout | tests/db/vault-version-annotations-record.dbtest.ts > a document's history says when older entries are not shown (critique 15) > cuts at 200 entries and says so; a short history says nothing is cut
+[database] Database connection successful { timestamp: '2026-10-01T21:54:47.371Z', poolSize: 2 }
+
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > a document's history says when older entries are not shown (critique 15) > cuts at 200 entries and says so; a short history says nothing is cut 311ms
+
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+   Start at  21:54:36
+   Duration  10.58s (transform 1.63s, setup 106ms, import 343ms, tests 9.68s, environment 0ms)
+

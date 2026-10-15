@@ -1,0 +1,47 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts
+{
+  "timestamp": "2026-10-14T03:40:28.881Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:40:28.882Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts
+{
+  "timestamp": "2026-10-14T03:40:28.882Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts
+[database] Database connection successful
+
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'internal_subset' retains its classification and explicitly has not run 6ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'external_engine' retains its classification and explicitly has not run 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'unavailable' retains its classification and explicitly has not run 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > uses the selected kind rather than inferring authority from the adapter name 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > does not label an unavailable external adapter as configured 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > resolver discovery failure is unknown, never a claim of no engine 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > configuration discovery failure is unknown, never a claim of no engine 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > unexpected discovery values remain unknown: 'vendor_pass' / true 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > unexpected discovery values remain unknown: 'internal_subset' / 'false' 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > preserves the actual structural validation result and read-only access contract 1ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > retains scope denial before discovery or validation executes 1ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  03:40:27
+   Duration  1.72s (transform 799ms, setup 57ms, import 1.44s, tests 19ms, environment 0ms)
+

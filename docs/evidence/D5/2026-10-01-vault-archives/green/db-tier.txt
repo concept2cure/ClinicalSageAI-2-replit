@@ -1,0 +1,8 @@
+# npm run test:db, this change, RLS_ENFORCE=on, app_service runtime role, 2026-10-01T16:07:17Z
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > its creating migration is in the deploy set 24ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the retention job's write still works in the organisation's scope (control) 817ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > an archive cannot be changed, deleted or truncated 18ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > another organisation cannot read it 9ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the tenant purge erases the organisation's archives, and no one else's 17ms
+ Test Files  125 passed (125)
+      Tests  1313 passed (1313)

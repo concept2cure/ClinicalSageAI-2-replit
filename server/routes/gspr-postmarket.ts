@@ -29,21 +29,23 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { and, eq } from 'drizzle-orm';
 
-import { db } from '../db';
-import { regulatoryPrograms } from '../../shared/schema/programs';
+import { pool } from '../db';
 import { authenticateToken } from '../middleware/auth';
+import { authedUserId } from '../utils/authedActor';
+import { pickWritable } from '../utils/authedOrgId';
 import {
   computeCoverage,
   listCatalog,
   listProgramMappings,
+  loadGsprProgramProfile,
   upsertMapping,
-  type GsprProgramProfile,
 } from '../services/gspr-postmarket/gspr.service';
 import {
   approveDocument,
   createDocument,
+  DOCUMENT_EDITABLE,
+  DOCUMENT_GOVERNED,
   getDocument,
   listProgramDocuments,
   supersedeDocument,
@@ -63,8 +65,13 @@ import {
   upsertPmcfEnrollmentRecord,
   STORE_ABSENT,
 } from '../services/gspr-postmarket/pmcf-enrollment.service';
-import type { PostMarketDocumentType } from '../../shared/schema/gspr-postmarket';
+import type {
+  InsertGsprProgramMapping,
+  InsertPostMarketDocument,
+  PostMarketDocumentType,
+} from '../../shared/schema/gspr-postmarket';
 import {
+  POST_MARKET_DOCUMENT_TYPES,
   PMCF_ACTIVITY_KINDS,
   PMCF_ACTIVITY_STATUSES,
   type PmcfActivityKind,
@@ -73,6 +80,7 @@ import {
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 function userIdFromReq(req: Request): string | null {
   const raw = (req as any).user?.id;
@@ -100,14 +108,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(eq(regulatoryPrograms.id, String(req.params.programId)), eq(regulatoryPrograms.organizationId, orgId))
-    )
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, String(req.params.programId), orgId))) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }
@@ -117,6 +118,21 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
 // ─────────────────────────────────────────────────────────────────────────────
 // GSPR
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** What a mapping request may write: the decision, its evidence and its status. */
+const MAPPING_WRITABLE = [
+  'requirementId',
+  'applicability',
+  'rationale',
+  'primaryEvidenceId',
+  'methodOfDemonstration',
+  'conformanceStatus',
+  'gapDescription',
+  'metadata',
+] as const satisfies readonly (keyof InsertGsprProgramMapping & string)[];
+
+/** Who decided or reviewed, and when: the server's to record, never the body's. */
+const MAPPING_ATTRIBUTION = ['decidedBy', 'decidedAt', 'reviewedBy', 'reviewedAt'] as const;
 
 router.get('/catalog', async (req: Request, res: Response) => {
   const reg = req.query.regulation as 'MDR' | 'IVDR' | undefined;
@@ -154,20 +170,34 @@ router.post(
     if (!body.requirementId || !body.applicability) {
       return res.status(422).json({ error: 'requirementId and applicability are required' });
     }
+    // Who decided, and when, are the session's (ledger L195). The whole body
+    // used to be spread into the row, so it chose decidedBy and decidedAt, could
+    // write reviewedBy / reviewedAt (nothing else writes them) and even the row
+    // id, and an absent user was recorded as 'system'. Attribution in the body
+    // is refused, not ignored; everything else is an allow-list of the decision.
+    const forged = MAPPING_ATTRIBUTION.filter((key) => Object.prototype.hasOwnProperty.call(body, key));
+    if (forged.length) {
+      return res.status(422).json({ error: `${forged.join(', ')} cannot be set: the decision is attributed to the signed-in user` });
+    }
+    const userId = authedUserId(req);
+    if (userId === null) {
+      return res.status(401).json({ error: 'Authentication required to record a GSPR decision' });
+    }
+    const decidedBy = String(userId);
     try {
-      const userIdRaw = (req as any).user?.id;
-      const decidedBy =
-        typeof userIdRaw === 'string'
-          ? userIdRaw
-          : userIdRaw != null
-          ? String(userIdRaw)
-          : 'system';
       const row = await upsertMapping({
-        ...body,
+        ...pickWritable<InsertGsprProgramMapping>(body, MAPPING_WRITABLE),
+        requirementId: body.requirementId,
+        applicability: body.applicability,
         organizationId: orgId,
-        programId: req.params.programId,
-        decidedBy: body.decidedBy ?? decidedBy,
-        decidedAt: body.decidedAt ?? new Date(),
+        programId: String(req.params.programId),
+        decidedBy,
+        decidedAt: new Date(),
+        // A new decision has not been reviewed. Before ledger L195 the only
+        // writer of these two columns was a request body, so a review left
+        // standing from then would be attached to a decision it never saw.
+        reviewedBy: null,
+        reviewedAt: null,
       });
 
       // WO-16C #133. The mapping row is committed by upsertMapping above, and
@@ -197,28 +227,42 @@ router.post(
   }
 );
 
+/** Device facts the coverage report reads from the program record, never from the request. */
+const PROFILE_QUERY_FACTS = [
+  'productType',
+  'deviceClass',
+  'isSoftware',
+  'isAiMl',
+  'isIvd',
+  'isSterile',
+  'isImplantable',
+  'hasPatientContact',
+] as const;
+
 router.get(
   '/programs/:programId/coverage',
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
-    const profile = req.query as Record<string, string | undefined>;
-    if (!profile.regulation || (profile.regulation !== 'MDR' && profile.regulation !== 'IVDR')) {
+    const regulation = req.query.regulation;
+    if (regulation !== 'MDR' && regulation !== 'IVDR') {
       return res.status(422).json({ error: 'regulation query param must be MDR or IVDR' });
     }
-    const built: GsprProgramProfile = {
-      regulation: profile.regulation,
-      productType: profile.productType ?? 'device',
-      deviceClass: profile.deviceClass ?? null,
-      isSoftware: profile.isSoftware === 'true',
-      isAiMl: profile.isAiMl === 'true',
-      isIvd: profile.isIvd === 'true',
-      isSterile: profile.isSterile === 'true',
-      isImplantable: profile.isImplantable === 'true',
-      hasPatientContact: profile.hasPatientContact === 'true',
-    };
+    // 2026-10-15: the profile was built from this query string, an absent fact
+    // read as false, and the client sends only `regulation` — so sterile-only,
+    // implantable-only and product-type-scoped clauses left the gate unexamined.
+    // The facts are the program record's; one supplied here is refused, not used.
+    const supplied = PROFILE_QUERY_FACTS.filter((key) => req.query[key] !== undefined);
+    if (supplied.length) {
+      return res.status(422).json({
+        error: `${supplied.join(', ')} cannot be supplied: the device facts are read from the program record`,
+      });
+    }
     try {
-      const report = await computeCoverage(orgId, String(req.params.programId), built);
+      const programId = String(req.params.programId);
+      const profile = await loadGsprProgramProfile(orgId, programId, regulation);
+      if (!profile) return res.status(404).json({ error: 'Program not found' });
+      const report = await computeCoverage(orgId, programId, profile);
       res.json(report);
     } catch (err: any) {
       return serverError(res, logger, 'loading coverage', err);
@@ -230,14 +274,7 @@ router.get(
 // Post-market documents
 // ─────────────────────────────────────────────────────────────────────────────
 
-const VALID_DOC_TYPES = new Set([
-  'pms_plan',
-  'pms_report',
-  'pmcf_plan',
-  'pmcf_evaluation',
-  'psur',
-  'sscp',
-] as const);
+const VALID_DOC_TYPES: ReadonlySet<string> = new Set<string>(POST_MARKET_DOCUMENT_TYPES);
 
 postMarketRouter.get(
   '/programs/:programId/documents',
@@ -245,7 +282,7 @@ postMarketRouter.get(
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     const t = req.query.type as string | undefined;
-    if (t && !VALID_DOC_TYPES.has(t as any)) {
+    if (t && !VALID_DOC_TYPES.has(t)) {
       return res.status(422).json({ error: `type must be one of: ${[...VALID_DOC_TYPES].join(', ')}` });
     }
     try {
@@ -269,18 +306,30 @@ postMarketRouter.post(
     if (!body.code || !body.title) {
       return res.status(422).json({ error: 'code and title are required' });
     }
+    // A new document is a draft created by the session's user. The whole body
+    // used to be spread into the insert, so a caller could create it approved,
+    // locked and signed by anyone, at any version, and a request with no user
+    // was created by 'system'. Governed fields are refused; the rest is the
+    // same allow-list an edit uses.
+    const governed = DOCUMENT_GOVERNED.filter((key) => Object.prototype.hasOwnProperty.call(body, key));
+    if (governed.length) {
+      return res.status(422).json({
+        error: `${governed.join(', ')} cannot be set on create: a document is created as a draft by the signed-in user, and is approved only through its approval`,
+      });
+    }
+    const userId = authedUserId(req);
+    if (userId === null) {
+      return res.status(401).json({ error: 'Authentication required to create a post-market document' });
+    }
+    const createdBy = String(userId);
     try {
-      const userIdRaw = (req as any).user?.id;
-      const createdBy =
-        typeof userIdRaw === 'string'
-          ? userIdRaw
-          : userIdRaw != null
-          ? String(userIdRaw)
-          : 'system';
       const doc = await createDocument({
-        ...body,
+        ...pickWritable<InsertPostMarketDocument>(body, DOCUMENT_EDITABLE),
+        documentType: body.documentType,
+        code: body.code,
+        title: body.title,
         organizationId: orgId,
-        programId: req.params.programId,
+        programId: String(req.params.programId),
         createdBy,
         updatedBy: createdBy,
       });
@@ -376,8 +425,10 @@ postMarketRouter.post(
   }
 );
 
-// Author a DRAFT post-market document of any supported type (pms_plan,
-// pms_report, pmcf_plan, pmcf_evaluation, psur, sscp) from device/CER context.
+// Author a DRAFT post-market document of any type in AUTHORABLE_DOCUMENT_TYPES
+// (post-market-authoring.ts; the same set as POST_MARKET_DOCUMENT_TYPES in
+// shared/schema/gspr-postmarket.ts) from device/CER context. A type that belongs
+// to the other regulation (SSCP/PMCF under IVDR, SSP/PMPF under MDR) is 422.
 // Persists in `draft` via the same lifecycle and returns the document plus its
 // conformance validation. Never approves, locks, or asserts sufficiency.
 postMarketRouter.post(
@@ -455,22 +506,45 @@ postMarketRouter.post(
   }
 );
 
+/**
+ * An optional boolean query fact: 'true' / 'false', absent = not stated (null).
+ * Any other value is refused rather than read as false.
+ */
+function booleanFact(value: unknown): boolean | null | 'invalid' {
+  if (value === undefined) return null;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return 'invalid';
+}
+
 // Honest post-market documentation status for a program: per-type presence,
-// lifecycle status and validation-gate result, with required-vs-optional driven
-// by device class. Not a fabricated readiness score.
+// lifecycle status and validation-gate result, with what the device owes
+// decided by EU_POSTMARKET_OBLIGATIONS from the regulation, the class and the
+// stated implantable / customMade facts. An unstated fact is passed as unknown,
+// never as false. Not a readiness score.
 postMarketRouter.get(
   '/programs/:programId/documentation-status',
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const orgId = getOrgId(req)!;
     const deviceClass = typeof req.query.deviceClass === 'string' ? req.query.deviceClass : null;
-    const regulation = req.query.regulation === 'IVDR' ? 'IVDR' : 'MDR';
+    const rawRegulation = req.query.regulation;
+    if (rawRegulation !== undefined && rawRegulation !== 'MDR' && rawRegulation !== 'IVDR') {
+      return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
+    }
+    const regulation: 'MDR' | 'IVDR' = rawRegulation === 'IVDR' ? 'IVDR' : 'MDR';
+    const implantable = booleanFact(req.query.implantable);
+    const customMade = booleanFact(req.query.customMade);
+    if (implantable === 'invalid' || customMade === 'invalid') {
+      return res.status(422).json({ error: 'implantable and customMade must be true or false when given' });
+    }
     try {
       const report = await getPostMarketDocStatus(
         orgId,
         String(req.params.programId),
         deviceClass,
-        regulation
+        regulation,
+        { implantable, customMade }
       );
       res.json(report);
     } catch (err: any) {

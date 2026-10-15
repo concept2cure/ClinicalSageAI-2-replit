@@ -1,0 +1,6 @@
+[ci:audit-logs-fixture] audit_logs fixtures vs writeChainedAuditRow
+  columns the writer writes : 17
+  fixtures found            : 18
+
+✅ every audit_logs fixture accepts the writer's full column list.
+exit 0

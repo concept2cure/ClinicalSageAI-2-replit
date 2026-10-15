@@ -25,7 +25,7 @@ vi.mock('../../db', () => ({
 }));
 
 import { writeChainedAuditRow } from '../../services/auditService';
-import createAuditTrailLedgerRoutes, { readAuditLedger, type AuditLedgerEntry } from '../audit-trail-ledger.routes';
+import createAuditTrailLedgerRoutes, { readAuditLedger, readRecordAuditHistory, type AuditLedgerEntry } from '../audit-trail-ledger.routes';
 import { verifyAuditChain } from '../../services/audit/chain';
 import type { PoolClient } from 'pg';
 
@@ -389,5 +389,68 @@ describe('GET /api/audit-trail/ledger — a signed act shows as signed, from its
     for (const id of [unsigned, foreign]) {
       expect(data.find((e) => e.id === `AUD-${id}`)).toMatchObject({ sig: false, signatureRef: null, event: 'C2c Work Approve' });
     }
+  });
+});
+
+/**
+ * Reporting review 2026-10-01, SECURITY-8: the ledger and a record's history
+ * returned the verifier's raw break, which can name another organisation's row
+ * by id and tenant number with its hashes (the walk loads other tenants' legacy
+ * rows as context), and told an organisation with no chained rows `ok: true`.
+ * The exports already redacted and said "not verified"; these readers state the
+ * same verdict through the same function (audited-export.ts tenantChainVerdict).
+ */
+describe('the chain verdict the ledger readers state (SECURITY-8)', () => {
+  const none = { query: async () => ({ rows: [] }) } as unknown as Pick<PoolClient, 'query'>;
+  const walk = (over: Record<string, unknown>) => async () => ({ ok: true, rowsChecked: 4, tenants: 2, legacyRows: 4, sequencedRows: 0, ...over }) as never;
+  const readers = [
+    ['the ledger', (v: ReturnType<typeof walk>) => readAuditLedger(none, ORG, 10, v)],
+    ["a record's history", (v: ReturnType<typeof walk>) => readRecordAuditHistory(none, ORG, { tableName: 'vault_document', recordId: 'd1' }, v)],
+  ] as const;
+
+  it.each(readers)("%s names nothing of another organisation's in a break", async (_label, read) => {
+    const brokenAt = { id: 'theirs-row', expected: 'e'.repeat(64), stored: 'f'.repeat(64), tenantId: OTHER_ORG, segment: 'legacy', commitsTo: { id: 'theirs-prev', tenantId: OTHER_ORG } };
+    const { meta } = await read(walk({ ok: false, brokenAt }));
+    expect(meta.chain).toMatchObject({ ok: false, brokenAt: { segment: 'legacy', row: 'another organization', commitsTo: 'another organization' } });
+    expect(JSON.stringify(meta.chain)).not.toMatch(/theirs|eeee|ffff|"tenantId"/);
+  });
+
+  it.each(readers)('%s still names this organisation\'s own broken row', async (_label, read) => {
+    const brokenAt = { id: 'ours-row', expected: 'e'.repeat(64), stored: 'f'.repeat(64), tenantId: ORG, segment: 'sequenced', commitsTo: null };
+    expect((await read(walk({ ok: false, brokenAt }))).meta.chain.brokenAt).toEqual({ segment: 'sequenced', id: 'ours-row', expected: 'e'.repeat(64), stored: 'f'.repeat(64), commitsTo: null });
+  });
+
+  it.each(readers)('%s states a walk over no chained rows as not verified, never ok', async (_label, read) => {
+    const { meta } = await read(walk({ rowsChecked: 0, legacyRows: 0 }));
+    expect(meta.chain).toMatchObject({ store: 'audit_logs', ok: null, rowsChecked: 0, reason: expect.stringMatching(/no chain to verify/) });
+  });
+});
+
+/* Filing-spine design review, open item 3 (2026-10-15). A submission's history
+   is its own rows and every leaf placed in it: two record kinds, read as one
+   history in the one query, so the order and the window are the ledger's. */
+describe("a record's history across record kinds", () => {
+  const walkOk = async () => ({ ok: true, rowsChecked: 3, tenants: 1, legacyRows: 0, sequencedRows: 3 }) as never;
+  async function write(action: string, resourceType: string, resourceId: string) {
+    await pglite.transaction(async (tx) => {
+      await writeChainedAuditRow(tx, { tenantId: ORG, userId: 11, action, resourceType, resourceId, details: {} });
+    });
+  }
+
+  it('reads the submission and its leaves, newest first, and nothing else', async () => {
+    await pglite.exec('DELETE FROM audit_logs');
+    await write('SUBMISSION_CREATED', 'submission', '5');
+    await write('LEAF_CREATED', 'submission_leaf', '70');
+    await write('LEAF_CREATED', 'submission_leaf', '99'); // another sequence's leaf
+    await write('LEAF_CREATED', 'other_record', '70'); // another kind with the same id
+    await write('LEAF_REMOVED', 'submission_leaf', '70');
+    const { data } = await readRecordAuditHistory(pgliteClient(), ORG, {
+      tableName: 'submission', recordId: '5', also: [{ tableName: 'submission_leaf', recordId: ['70'] }],
+    }, walkOk);
+    expect(data.map((e) => [e.event, e.target])).toEqual([
+      ['Leaf Removed', 'submission_leaf:70'],
+      ['Leaf Created', 'submission_leaf:70'],
+      ['Submission Created', 'submission:5'],
+    ]);
   });
 });

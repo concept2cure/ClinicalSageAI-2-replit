@@ -1,0 +1,5 @@
+MUTANT 2 diff:
+622c622
+<   closeHistory(tr);
+---
+>   // MUTANT 2: closeHistory removed

@@ -1,0 +1,14 @@
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition list 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition term 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition detail 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > table caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > still refuses to treat a tag-shaped prose token as markup 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > does not report a glossary as faithfully editable in rich mode 28ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > reads a glossary as the words a reviewer sees, not as its tags 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still passes content the editor genuinely represents 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still catches real text loss 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > one allowlist > the editor and the export read section content by the shared rule, and neither keeps a copy 2ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)

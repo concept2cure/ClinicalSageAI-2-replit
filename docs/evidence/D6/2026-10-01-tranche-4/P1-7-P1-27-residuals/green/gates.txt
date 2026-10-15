@@ -1,0 +1,31 @@
+## npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 341 migrations, 35 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+
+## npm run ci:tenant-isolation:no-regression
+
+  server/services/kernel-observability.ts  (4)
+    L53  tables=[]
+      `SELECT
+    L63  tables=[]
+      `SELECT
+    L72  tables=[]
+      `SELECT
+    … 1 more
+
+Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+exit=0
+
+## npm run check:security-patterns
+check-security-patterns: 0 violations across 2958 file(s).
+exit=0
+
+## npm run ci:column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+exit=0
+
+## npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 117 baselined across 51 file(s).
+  3 baselined file(s) now below their count — run --write-baseline to shrink it.
+exit=0

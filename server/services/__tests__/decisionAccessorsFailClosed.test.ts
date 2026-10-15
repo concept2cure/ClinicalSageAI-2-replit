@@ -9,7 +9,13 @@
  * reads across every organization on the platform and nothing catches it.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+
+// A preflight decision is recorded durably or not at all (2026-10-15); the
+// ledger write is stood in for so the accessors have a record to scope.
+vi.mock('../decision-record-service.js', () => ({
+  decisionRecordService: { create: vi.fn(async () => ({ id: 'row_1' })) },
+}));
 
 const ORG_A = 1;
 const ORG_B = 2;
@@ -19,7 +25,7 @@ let svc: typeof import('../decision-lifecycle-service').decisionLifecycleService
 
 beforeAll(async () => {
   ({ decisionLifecycleService: svc } = await import('../decision-lifecycle-service'));
-  svc.recordPreflightDecision({
+  await svc.recordPreflightDecision({
     projectId: PROJECT,
     organizationId: ORG_A,
     kind: 'section-preflight-judgment',
@@ -28,6 +34,8 @@ beforeAll(async () => {
     overall: 'blocked',
     summary: 'Org A only',
     sourceSignals: [],
+    // A decision names who made it; with no user it is refused (2026-10-15).
+    createdById: 'u1',
   });
 });
 

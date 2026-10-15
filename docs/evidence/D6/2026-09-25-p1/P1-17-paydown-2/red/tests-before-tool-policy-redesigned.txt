@@ -1,0 +1,47 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 when no organization context 135ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 for non-admin 6ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns empty policy when none configured 10ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns existing policy when configured 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects allow as non-array 16ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects deny with non-string entries 4ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects unknown keys (typo defense) 6ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > persists and emits audit on success 8ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > round-trips: PUT then GET returns the same shape 10ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: a failed settings read is fail-soft — 200 and an empty policy, no error text 5ms
+ × server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: when the loader itself throws, the text stays in the log and the client gets the envelope 11ms
+   → expected 'Failed to load policy' to be 'INTERNAL_ERROR' // Object.is equality
+ × server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope 7ms
+   → expected 'Failed to update policy' to be 'INTERNAL_ERROR' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: when the loader itself throws, the text stays in the log and the client gets the envelope
+AssertionError: expected 'Failed to load policy' to be 'INTERNAL_ERROR' // Object.is equality
+Expected: "INTERNAL_ERROR"
+Received: "Failed to load policy"
+ ❯ expectContained server/__tests__/routes/ana-tool-policy.test.ts:161:28
+    159|   function expectContained(res: request.Response) {
+    160|     expect(res.status).toBe(500);
+    161|     expect(res.body.error).toBe('INTERNAL_ERROR');
+       |                            ^
+    162|     expect(res.body.correlationId).toBe('req-p1-17-2');
+    163|     expect(res.body.detail).toBeUndefined();
+ ❯ server/__tests__/routes/ana-tool-policy.test.ts:190:7
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope
+AssertionError: expected 'Failed to update policy' to be 'INTERNAL_ERROR' // Object.is equality
+Expected: "INTERNAL_ERROR"
+Received: "Failed to update policy"
+ ❯ expectContained server/__tests__/routes/ana-tool-policy.test.ts:161:28
+    159|   function expectContained(res: request.Response) {
+    160|     expect(res.status).toBe(500);
+    161|     expect(res.body.error).toBe('INTERNAL_ERROR');
+       |                            ^
+    162|     expect(res.body.correlationId).toBe('req-p1-17-2');
+    163|     expect(res.body.detail).toBeUndefined();
+ ❯ server/__tests__/routes/ana-tool-policy.test.ts:198:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  19:11:36
+   Duration  728ms (transform 164ms, setup 74ms, import 137ms, tests 227ms, environment 0ms)

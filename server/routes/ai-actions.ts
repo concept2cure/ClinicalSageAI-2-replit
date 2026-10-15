@@ -30,6 +30,7 @@ import { handleSSEStream, getSSEConnectionCount } from '../services/ai-actions/s
 import type { AIActionRequest, AIActionResponse, AIActionSourceSurface } from '../../shared/types/ai-actions';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { clientIpKey } from '../utils/client-ip';
 
 const logger = createScopedLogger('ai-actions');
 
@@ -301,7 +302,9 @@ router.post('/execute', async (req: Request, res: Response) => {
     };
 
     const dispatchOptions = {
-      ipAddress: req.ip || req.socket.remoteAddress || '0.0.0.0',
+      // The one reader of the client address; 'unknown' when there is none,
+      // not the address '0.0.0.0' (2026-10-15). The audit column is NOT NULL.
+      ipAddress: clientIpKey(req),
       sessionId: req.sessionId,
       user: actionRequest.requestedBy!,
     };

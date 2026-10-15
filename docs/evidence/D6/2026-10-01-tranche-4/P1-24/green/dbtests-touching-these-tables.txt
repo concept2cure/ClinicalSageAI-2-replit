@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:28:15.335Z","pid":2928,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:28:15.340Z","pid":2928,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:28:15.341Z","pid":2928,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/domain-history-append-only.dbtest.ts > the probe runs as the runtime role, under RLS > is app_service-shaped: not the owner, not a superuser, no BYPASSRLS, RLS enforced 2113ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 33ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses an UPDATE from the runtime role 14ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses a DELETE from the runtime role 23ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > refuses a TRUNCATE, even by the owner 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > workflow_history (P1-24) > is installed under its own names, enabled 1ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 11ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses an UPDATE from the runtime role 14ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses a DELETE from the runtime role 8ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > refuses a TRUNCATE, even by the owner 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > document_audit_logs (P1-24) > is installed under its own names, enabled 1ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 15ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses an UPDATE from the runtime role 20ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses a DELETE from the runtime role 20ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > refuses a TRUNCATE, even by the owner 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > regulatory_audit_logs (P1-24) > is installed under its own names, enabled 1ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 13ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses an UPDATE from the runtime role 13ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses a DELETE from the runtime role 16ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > refuses a TRUNCATE, even by the owner 2ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > c2c_ana_actions (P1-24) > is installed under its own names, enabled 1ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > accepts an INSERT from the runtime role — the one path every writer uses 16ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses an UPDATE from the runtime role 11ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses a DELETE from the runtime role 14ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > refuses a TRUNCATE, even by the owner 6ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > authoring_signatures (P1-24) > is installed under its own names, enabled 1ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting a unified document with an audit row and a workflow history is refused 21ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting a document workflow with history is refused 12ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > deleting an AnA conversation that governed actions name is refused (its SET NULL is an UPDATE) 10ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > a parent cannot take its history with it (the three cascading keys) > a parent with no history is still deleted — the guard is on the history, not the parent 8ms
+ ✓ tests/db/domain-history-append-only.dbtest.ts > replay (CLAUDE.md Rule 1: the file re-runs on every deploy) > re-applies cleanly and re-arms a trigger someone disabled 5ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd 12ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd 8ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's 21ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's 20ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's 24ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's 10ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's 17ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's 14ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's 23ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's 24ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's 28ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all, deliberately and visibly 2ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings 2ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_templates is present 3ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_steps is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > document_workflows is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_approvals is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_history is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > document_workflows carries every column the pending-approvals read projects 9ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > answers the pending-approvals predicate instead of raising 2ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > enforces the foreign keys the workflow chain depends on 8ms
+
+ Test Files  3 passed (3)
+      Tests  52 passed (52)
+   Start at  03:28:12
+   Duration  4.94s (transform 1.28s, setup 143ms, import 172ms, tests 3.81s, environment 0ms)
+

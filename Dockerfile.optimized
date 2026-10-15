@@ -66,6 +66,8 @@ RUN apt-get update && \
       libreoffice-common \
       libreoffice-writer \
       fonts-liberation \
+      fonts-noto-core \
+      fonts-noto-cjk \
       ghostscript \
       ocrmypdf \
       tesseract-ocr \
@@ -73,24 +75,39 @@ RUN apt-get update && \
       ca-certificates \
       default-jre-headless \
       libxml2-utils \
+      python3-venv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# veraPDF, pinned. The veraPDF Consortium publishes the CLI as a self-contained
-# jar on Maven Central (org.verapdf.apps:cli — Main-Class
-# org.verapdf.apps.GreenfieldCliWrapper). The checksum is the value published
-# beside the artifact (cli-<version>.jar.sha256 on Maven Central), verified
-# against the downloaded bytes on 2026-09-20; a build whose download does not
-# match it FAILS rather than shipping an unverified validator. Bump the version
-# and checksum together. /usr/local/bin/verapdf is the launcher pdfa-pipeline.ts
-# (VERAPDF_BINARY, default `verapdf`) and pilot-go-no-go.mjs (VERAPDF_COMMAND)
-# both resolve from PATH.
+# AnA's document runtimes (D1, 2026-10-01). insert_document_content,
+# surgical_docx_xml_edit, validate_docx and the DOCX runtime spawn
+# `workers/artifact-compute/*.py` (server/services/compute/scriptWorker.ts,
+# workerClient.ts), which import python-docx and lxml. This stage installed
+# neither and copied no runtime, while CI installed both separately — every
+# test passed and every production call failed. A virtualenv, so ocrmypdf's
+# apt-installed lxml is left alone; the versions are read from
+# requirements.txt, the same pins CI installs, so the two cannot drift; the
+# import probe means an image that cannot import them is not built.
+# Gate: scripts/ci/check-image-document-runtime.mjs.
+COPY requirements.txt /tmp/requirements.txt
+RUN python3 -m venv /opt/docx-runtime && \
+    /opt/docx-runtime/bin/pip install --no-cache-dir \
+      $(grep -E '^(python-docx|lxml)==' /tmp/requirements.txt | cut -d' ' -f1) && \
+    /opt/docx-runtime/bin/python -c "import docx, lxml.etree; print('document runtime: lxml', lxml.etree.__version__)" && \
+    rm /tmp/requirements.txt
+ENV ANA_DOCX_PYTHON=/opt/docx-runtime/bin/python
+
+# veraPDF, pinned to the Consortium's released Maven Central CLI bytes.
+# The version and SHA256 stay paired; an upstream HTTP success never admits a
+# different payload. Published CI exhausted all nine repo1 attempts with 404s,
+# so use canonical Central first and its official repo1 endpoint as a bounded
+# fallback. Both remain HTTPS-only. Unavailability and integrity failures stop
+# the image, and the real strict PDF/A checks below remain mandatory.
 ARG VERAPDF_VERSION=1.30.2
 ARG VERAPDF_SHA256=287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+COPY scripts/ops/fetch-verapdf.sh /tmp/fetch-verapdf.sh
 RUN set -eu; \
-    mkdir -p /opt/verapdf; \
-    curl -fsSL -o /opt/verapdf/verapdf-cli.jar \
-      "https://repo1.maven.org/maven2/org/verapdf/apps/cli/${VERAPDF_VERSION}/cli-${VERAPDF_VERSION}.jar"; \
-    echo "${VERAPDF_SHA256}  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -; \
+    sh /tmp/fetch-verapdf.sh "${VERAPDF_VERSION}" "${VERAPDF_SHA256}" /opt/verapdf/verapdf-cli.jar; \
+    rm /tmp/fetch-verapdf.sh; \
     printf '#!/bin/sh\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar "$@"\n' \
       > /usr/local/bin/verapdf; \
     chmod 0755 /usr/local/bin/verapdf
@@ -116,6 +133,8 @@ COPY --from=builder /app/dist ./dist
 # Copy necessary runtime files
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
+# The document runtimes the server spawns (see the virtualenv above).
+COPY --from=builder /app/workers/artifact-compute ./workers/artifact-compute
 
 # Migration payload. `npm run db:migrate:deploy` (scripts/db/deploy-migrate.mjs)
 # runs from THIS image as a one-off ECS task before the services roll — see the
@@ -155,6 +174,30 @@ COPY --from=builder /app/scripts/db ./scripts/db
 # .dockerignore excludes only *.md here, so the PDFs and checksums.txt both ship
 # and template integrity still verifies at runtime.
 COPY --from=builder /app/assets ./assets
+
+# The vendored official FDA IND forms — 1571, 1572, 3454, 356h, 3674 — and the
+# manifest beside each PDF. server/services/ind-forms/template-locations.ts
+# resolves them at <package root>/templates/forms/acroforms, which is /app here
+# (the nearest package.json above dist/index.js). Until 2026-09-24 (defect U7)
+# this COPY was missing, and the same silent downgrade the eSTAR comment above
+# describes happened to IND forms: readTemplate() returned null from its catch,
+# every form rendered as a reconstruction or a labeled draft, and the genuine
+# FDA-secured 1571/3674 was refused as LEAF-ENCRYPTED when the sequence was
+# packaged. Only acroforms/ — the rest of templates/ is not read by the server
+# bundle. ci:image-runtime-assets compares this stage's COPY set with every
+# repository path the bundled server resolves, and fails on the next one.
+COPY --from=builder /app/templates/forms/acroforms ./templates/forms/acroforms
+
+# The vulnerability-disclosure policy, served whole at /.well-known/security-policy
+# (server/routes/well-known.ts reads <cwd>/SECURITY.md; without it the route falls
+# back to a short summary). .dockerignore re-includes it.
+COPY --from=builder /app/SECURITY.md ./SECURITY.md
+
+# The GAMP 5 validation kit: the IQ/OQ protocols a regulated client validates
+# the system with, listed and served by server/routes/validation-kit.ts from
+# <cwd>/docs/validation. Without it production listed an honest but empty
+# catalog. .dockerignore re-includes only this directory of docs/.
+COPY --from=builder /app/docs/validation ./docs/validation
 
 # The Amazon RDS certificate bundle, from the assets copied above
 # (assets/rds-ca/README.md). Production verifies the database certificate, and

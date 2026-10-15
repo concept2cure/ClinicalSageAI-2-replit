@@ -113,8 +113,14 @@ function makeApp() {
 let app: express.Express;
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true });
+  harness = await createIndPgliteDb({ submissionCore: true, shadowReview: true });
   holder.db = harness.db;
+  // P-33: the dispatch-gate, snapshot, cockpit and drift routes answer from
+  // assessSequenceDispatchReadiness, which reads Shadow Review state (as in
+  // assess-dispatch-readiness.original-ind-module3.pglite.test.ts). The release
+  // signature lookup is left real: with no store here it reads `undetermined`,
+  // which blocks — these tests pin shapes, and the verdict itself is pinned by
+  // dispatch-verdict-parity.pglite.test.ts.
   app = makeApp();
   // Seed: one IND submission with a filed annual sequence (org 1).
   const sub = await createSubmission(
@@ -173,7 +179,16 @@ describe('pure compute routes', () => {
   });
 
   it('POST /clock → 200 with receiptDate', async () => {
-    const res = await request(app).post('/api/ind-lifecycle/clock').send({ receiptDate: '2026-01-01', asOf: '2026-02-15' });
+    // 2026-10-15: a bare date with no hold history used to come back
+    // 'safe_to_proceed'. It is a projection until the caller says the date is
+    // FDA's recorded receipt AND supplies the hold history.
+    const bare = await request(app).post('/api/ind-lifecycle/clock').send({ receiptDate: '2026-01-01', asOf: '2026-02-15' });
+    expect(bare.status).toBe(200);
+    expect(bare.body.status).toBe('projected');
+    expect(bare.body.safeToProceed).toBeNull();
+    const res = await request(app)
+      .post('/api/ind-lifecycle/clock')
+      .send({ receiptDate: '2026-01-01', receiptRecorded: true, events: [], asOf: '2026-02-15' });
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('safe_to_proceed');
   });
@@ -300,6 +315,92 @@ describe('document routes', () => {
   it('POST /safety-report/icsr/message → 400 without gateway/senderId/messageNumber', async () => {
     const res = await request(app).post('/api/ind-lifecycle/safety-report/icsr/message').send({ event: reportableEvent() });
     expect(res.status).toBe(400);
+  });
+
+  /* QA 2026-10-08 (j7, findings 1 + 11): the intake card's first assemble,
+     with no dates entered, answered 500 "Request failed." (toISOString of
+     undefined). Every safety-report route refuses an unstated determination
+     or date with 400 and names it — the classify, assemble, PDF and draft
+     routes alike, since they share one engine. */
+  it('POST /safety-report, /classify, /pdf and the draft route → 400 naming each unstated field, never 500', async () => {
+    const datesOnly = { id: 'ae-x', onsetDate: '2026-09-20', reportDate: '2026-09-25' };
+    for (const url of [
+      '/api/ind-lifecycle/safety-report',
+      '/api/ind-lifecycle/safety-report/classify',
+      '/api/ind-lifecycle/safety-report/pdf',
+      `/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`,
+    ]) {
+      const res = await request(app).post(url).send({ event: datesOnly });
+      expect(res.status, url).toBe(400);
+      expect(res.body.error.code, url).toBe('VALIDATION');
+      for (const named of ['event type', 'seriousness criterion', 'causality', 'outcome']) {
+        expect(res.body.error.message, url).toContain(named);
+      }
+      expect(res.body.error.message, url).not.toContain('onset date');
+    }
+    const noDates = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: undefined, reportDate: undefined } });
+    expect(noDates.status).toBe(400);
+    expect(noDates.body.error.message).toContain('onset date');
+    expect(noDates.body.error.message).toContain('sponsor awareness date');
+  });
+
+  /* P-20 (product decision 2026-10-08). The onset date is a date or an
+     explicit "unknown"; with expectedness not recorded there is no verdict, so
+     nothing can be filed or drafted as a report. */
+  it('POST /safety-report accepts an onset stated as "unknown" and prints it; a blank onset is refused', async () => {
+    const unknownOnset = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: 'unknown' } });
+    expect(unknownOnset.status, JSON.stringify(unknownOnset.body)).toBe(200);
+    const desc = unknownOnset.body.document.sections.find((s: { key: string }) => s.key === 'description_of_event').body;
+    expect(desc).toContain('Onset: unknown (stated as unknown).');
+    const blankOnset = await request(app)
+      .post('/api/ind-lifecycle/safety-report')
+      .send({ event: { ...reportableEvent(), onsetDate: '' } });
+    expect(blankOnset.status).toBe(400);
+    expect(blankOnset.body.error.message).toContain('onset date (a date, or stated as unknown)');
+  });
+
+  it('with expectedness not recorded the verdict is NOT_DETERMINED, and file / draft refuse with that name (422), never NOT_REPORTABLE', async () => {
+    const event = { ...reportableEvent(), expectedness: undefined };
+    const classified = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event });
+    expect(classified.status).toBe(200);
+    expect(classified.body.obligation).toBe('NOT_DETERMINED');
+    expect(classified.body.deadline).toBeNull();
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0042', event });
+    expect(filed.status).toBe(422);
+    expect(filed.body.error.code).toBe('NOT_DETERMINED');
+    expect(filed.body.error.message).toMatch(/not determined: expectedness not assessed/);
+    const drafted = await request(app)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports`)
+      .send({ event });
+    expect(drafted.status).toBe(422);
+    expect(drafted.body.error.code).toBe('NOT_DETERMINED');
+  });
+
+  /* P-20 follow-up: "not determined" only where expectedness decides the
+     outcome. A non-serious or not-suspected event is not expedited on those
+     stated facts, whether or not expectedness was recorded. */
+  it('with expectedness not recorded, a non-serious or not-suspected event is NOT_REPORTABLE on its stated facts', async () => {
+    const nonSerious = { ...reportableEvent(), eventType: 'AE', seriousnessCriteria: undefined, expectedness: undefined };
+    const a = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event: nonSerious });
+    expect(a.status, JSON.stringify(a.body)).toBe(200);
+    expect(a.body.obligation).toBe('NOT_REPORTABLE');
+    expect(a.body.rationale).toMatch(/non-serious/);
+    const notSuspected = { ...reportableEvent(), causality: 'unrelated', expectedness: undefined };
+    const b = await request(app).post('/api/ind-lifecycle/safety-report/classify').send({ event: notSuspected });
+    expect(b.status).toBe(200);
+    expect(b.body.obligation).toBe('NOT_REPORTABLE');
+    expect(b.body.rationale).toMatch(/not a suspected adverse reaction/);
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0042', event: notSuspected });
+    expect(filed.status).toBe(422);
+    expect(filed.body.error.code).toBe('NOT_REPORTABLE');
   });
 
   it('POST /annual-report/line-listing → 200 with rows + tabulation', async () => {
@@ -443,16 +544,26 @@ describe('DB-write + program surface (full HTTP flow)', () => {
     expect(res.body.modules.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('POST /sequence/:id/dispatch-gate → 200 with a verdict', async () => {
+  it('POST /sequence/:id/dispatch-gate → 200 with the one verdict (P-33)', async () => {
     const res = await request(app).post(`/api/ind-lifecycle/sequence/${filedSequenceId}/dispatch-gate`).send({});
     expect(res.status).toBe(200);
     expect(res.body.verdict).toHaveProperty('canDispatch');
+    expect(res.body.verdict.source).toBe('assess-dispatch-readiness');
+    expect(res.body.verdict.canDispatch).toBe(res.body.assessment.gate.cleared);
+    // A clinical hold is stated as not assessed — never read from the body, never blocking by its absence.
+    expect(res.body.verdict.blockers.map((b: any) => b.code)).not.toContain('CLINICAL_HOLD_NOT_EVALUATED');
+    expect((res.body.assessment.readiness.findings as any[]).some((f) => f.code === 'CLINICAL_HOLD_NOT_ASSESSED')).toBe(true);
+    // Display parts stay in the response.
+    expect(res.body).toHaveProperty('sequenceValidation');
+    expect(res.body).toHaveProperty('manifest');
+    expect(res.body).toHaveProperty('actionItems');
   });
 
   it('POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200', async () => {
     const snap = await request(app).post(`/api/ind-lifecycle/sequence/${filedSequenceId}/dispatch-gate/snapshot`).send({});
     expect(snap.status).toBe(201);
     expect(snap.body.snapshot).toHaveProperty('id');
+    expect(snap.body.snapshot.verdict.source).toBe('assess-dispatch-readiness');
 
     const hist = await request(app).get(`/api/ind-lifecycle/sequence/${filedSequenceId}/snapshots`);
     expect(hist.status).toBe(200);
@@ -944,7 +1055,9 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
         gateway: 'FDA_FAERS',
         senderId: 'C2C',
         messageNumber,
-        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456' },
+        // C.2.r.4 is stated (code 1, Physician): until 2026-10-15 it was inferred
+        // from reporterType 'investigator', and this case was "ready" only by that.
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456', reporterQualification: '1' },
       });
     expect(prep.status).toBe(201);
     expect(prep.body.status).toBe('prepared');

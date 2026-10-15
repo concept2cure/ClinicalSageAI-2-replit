@@ -1,0 +1,19 @@
+Mutant M01-gateway-no-note: the primary path no longer notes a generation
+
+--- server/services/ai-gateway/gateway.ts
+- // A tool that asked a model for part of its result: AnA's answer check
+        // must not credit what this generation wrote (generation-capture.ts).
+        noteGeneration(response);
++ 
+
+Tests run: server/services/ai-gateway/__tests__/generation-capture.test.ts
+Result: KILLED
+
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes what a model wrote inside the capture 50ms
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside 14ms
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart 9ms
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture opened inside another also notes into the outer one 6ms
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the tool calls a model chose inside the capture are noted too 5ms
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part 5ms
+      Tests  6 failed | 2 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯

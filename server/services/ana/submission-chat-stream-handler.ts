@@ -31,8 +31,10 @@ import {
   parseStreamingStructure,
   verifyRewriteClaims,
   loadArtifact,
+  resolveSubmissionChatThread,
   loadProjectArtifacts,
   loadConversationHistory,
+  submissionConversationTurns,
   loadPriorCitations,
   enrichChunksWithArtifactMetadata,
   type SubmissionChatRequest,
@@ -40,7 +42,6 @@ import {
   type SubmissionChatCitation,
   type SubmissionChatRewrite,
   type CitationRelationship,
-  type ConversationTurn,
 } from './submission-chat-handler.js';
 import {
   TaggedStreamParser,
@@ -156,6 +157,19 @@ export async function handleSubmissionChatStream(
     return;
   }
 
+  let threadId: string;
+  try {
+    threadId = await resolveSubmissionChatThread(input);
+  } catch (error: unknown) {
+    const code = (error as { code?: string }).code;
+    onEvent({
+      type: 'error',
+      code: code === 'AUTH_REQUIRED' || code === 'THREAD_FORBIDDEN' ? code : 'THREAD_UNAVAILABLE',
+      message: 'This conversation could not be opened for the current caller.',
+    });
+    return;
+  }
+
   let artifact;
   try {
     artifact = await loadArtifact(input.artifactId, input.organizationId);
@@ -173,10 +187,15 @@ export async function handleSubmissionChatStream(
   );
 
   // Conversation history + prior-turn citations.
-  const [history, priorCitations] = await Promise.all([
-    loadConversationHistory(input.threadId, HISTORY_TURN_LIMIT),
-    loadPriorCitations(input.threadId, projectArtifacts),
-  ]);
+  const conversation = await Promise.all([
+    loadConversationHistory(threadId, HISTORY_TURN_LIMIT),
+    loadPriorCitations(threadId, projectArtifacts),
+  ]).catch(() => null);
+  if (!conversation) {
+    onEvent({ type: 'error', code: 'HISTORY_UNAVAILABLE', message: 'Earlier conversation could not be loaded. Please retry.' });
+    return;
+  }
+  const [history, priorCitations] = conversation;
 
   const intent = classifyIntent(input.question);
   const targetAgency = detectTargetAgency(input.question);
@@ -192,7 +211,7 @@ export async function handleSubmissionChatStream(
       !!(artifact as any).metadata &&
       (artifact as any).metadata.requiresSignature === true;
     const activeProposal = await getActiveProposalForThreadArtifact(
-      input.threadId,
+      threadId,
       artifact.artifact_id,
       artifact.organization_id
     );
@@ -205,7 +224,7 @@ export async function handleSubmissionChatStream(
 
     onEvent({
       type: 'metadata',
-      threadId: input.threadId,
+      threadId: threadId,
       artifactId: artifact.artifact_id,
       projectId: artifact.project_id,
       intent: 'confirm_apply',
@@ -240,13 +259,13 @@ export async function handleSubmissionChatStream(
     });
     try {
       await saveChatMessage(
-        input.threadId,
+        threadId,
         'user',
         input.question,
         'submission-chat:confirm-stream'
       );
       await saveChatMessage(
-        input.threadId,
+        threadId,
         'assistant',
         directive,
         'submission-chat:confirm-stream'
@@ -261,7 +280,7 @@ export async function handleSubmissionChatStream(
     }
     onEvent({
       type: 'done',
-      threadId: input.threadId,
+      threadId: threadId,
       artifactId: artifact.artifact_id,
       projectId: artifact.project_id,
       model: 'submission-chat:confirm',
@@ -274,7 +293,7 @@ export async function handleSubmissionChatStream(
 
   // Memory + retrieval (same as the non-streaming path).
   const memoryResult = await buildMemoryContextForChat({
-    threadId: input.threadId,
+    threadId: threadId,
     organizationId: artifact.organization_id,
     projectId: artifact.project_id,
     query: input.question,
@@ -287,6 +306,7 @@ export async function handleSubmissionChatStream(
   const validOrgUuid =
     orgUuid && /^[0-9a-f-]{36}$/i.test(orgUuid) ? orgUuid : undefined;
 
+  let retrievalUnavailable = !validOrgUuid;
   let rawHits: Array<{ id: string; title: string; content: string; score: number }> = [];
   if (validOrgUuid) {
     const artifactScope = {
@@ -306,6 +326,7 @@ export async function handleSubmissionChatStream(
         artifactScope,
       })
       .catch((err: any) => {
+        retrievalUnavailable = true;
         console.warn(
           '[AnA submission-chat-stream] advanced retrieval failed:',
           err?.message
@@ -330,7 +351,7 @@ export async function handleSubmissionChatStream(
             organizationUuid: validOrgUuid,
             artifactScope,
           })
-          .catch(() => null)
+          .catch(() => { retrievalUnavailable = true; return null; })
       : Promise.resolve(null);
 
     const [primaryCtx, scanCtx] = await Promise.all([primary, artifactScan]);
@@ -376,7 +397,7 @@ export async function handleSubmissionChatStream(
   // first token arrives.
   onEvent({
     type: 'metadata',
-    threadId: input.threadId,
+    threadId: threadId,
     artifactId: artifact.artifact_id,
     projectId: artifact.project_id,
     intent,
@@ -408,15 +429,10 @@ export async function handleSubmissionChatStream(
       sectionReference,
       history,
       priorCitations,
+      retrievalUnavailable,
     }) + (memoryResult.memoryBlock ? `\n${memoryResult.memoryBlock}` : '');
 
-  const conversationTurns = history.map((turn: ConversationTurn) => ({
-    role: turn.role,
-    content:
-      turn.content.length > 1500
-        ? `${turn.content.slice(0, 1500)}…`
-        : turn.content,
-  }));
+  const conversationTurns = submissionConversationTurns(history);
 
   // Drive the gateway in streaming mode. Each chunk goes through the parser
   // which routes content to answer/rewrite/structure buffers and emits
@@ -536,7 +552,7 @@ export async function handleSubmissionChatStream(
     // proposalId rather than re-sending content.
     try {
       const handle = await persistRewriteProposal({
-        threadId: input.threadId,
+        threadId: threadId,
         artifactId: artifact.artifact_id,
         artifactPk: artifact.id,
         organizationId: artifact.organization_id,
@@ -577,12 +593,12 @@ export async function handleSubmissionChatStream(
   // submission-chat turns see this exchange in their history.
   const modelName = `${gwResponse.provider}/${gwResponse.model}`;
   try {
-    await saveChatMessage(input.threadId, 'user', input.question, modelName);
+    await saveChatMessage(threadId, 'user', input.question, modelName);
     const persistedAssistant = rewriteText
       ? `${answerText}\n\n${rewriteText}`
       : answerText;
     await saveChatMessage(
-      input.threadId,
+      threadId,
       'assistant',
       persistedAssistant,
       modelName,
@@ -602,7 +618,7 @@ export async function handleSubmissionChatStream(
       `INSERT INTO ai_threads (id, organization_id, project_id, created_by)
        VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
       [
-        input.threadId,
+        threadId,
         artifact.organization_id,
         artifact.project_id,
         input.userId ?? null,
@@ -610,14 +626,14 @@ export async function handleSubmissionChatStream(
     );
     await getPool().query(
       `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
-      [input.threadId, input.question]
+      [threadId, input.question]
     );
     const assistantContent = rewriteText
       ? `${answerText}\n\n${rewriteText}`
       : answerText;
     await getPool().query(
       `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'assistant', $2)`,
-      [input.threadId, assistantContent]
+      [threadId, assistantContent]
     );
   } catch (e: any) {
     if (e?.code !== '42P01') {
@@ -630,7 +646,7 @@ export async function handleSubmissionChatStream(
 
   emitMetric({
     name: 'submission_chat.turn',
-    threadId: input.threadId,
+    threadId: threadId,
     artifactId: artifact.artifact_id,
     projectId: artifact.project_id,
     organizationId: artifact.organization_id,
@@ -655,7 +671,7 @@ export async function handleSubmissionChatStream(
 
   onEvent({
     type: 'done',
-    threadId: input.threadId,
+    threadId: threadId,
     artifactId: artifact.artifact_id,
     projectId: artifact.project_id,
     model: modelName,

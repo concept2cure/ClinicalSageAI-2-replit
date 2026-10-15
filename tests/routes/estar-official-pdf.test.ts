@@ -1072,6 +1072,8 @@ describe.skipIf(!fsSync.existsSync(REAL_NIVD))(
         fileName: 'Cover Letter.pdf',
         sha256: createHash('sha256').update(Buffer.from('%PDF-1.7 attachment bytes')).digest('hex'),
       });
+      // Which document was filed, not only its hash (plan critique 15).
+      expect(details.attachments[0].source).toEqual({ kind: 'authored_section', sectionCode: 'A.1' });
       // The bytes themselves are deliberately NOT in the record.
       expect(details.attachments[0]).not.toHaveProperty('bytes');
     });

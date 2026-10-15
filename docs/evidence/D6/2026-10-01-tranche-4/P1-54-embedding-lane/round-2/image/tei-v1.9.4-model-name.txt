@@ -1,0 +1,27 @@
+# Text Embeddings Inference v1.9.4: the model name in an OpenAI-compatible answer. Fetched 2026-10-01T16:31:12Z from raw.githubusercontent.com/huggingface/text-embeddings-inference/v1.9.4/
+
+## router/src/main.rs: served_model_name defaults to --model-id (MODEL_ID=BAAI/bge-m3 in modules/embedding-service)
+42-    /// The name of the model that is being served. If not specified, defaults to `--model-id`. It
+43-    /// is only used for the OpenAI-compatible endpoints via HTTP.
+44-    #[clap(long, env)]
+45:    served_model_name: Option<String>,
+46-
+
+## router/src/http/server.rs (openai_embed): a request's 'model' is not validated, only warned about; the answer names served_model_name
+1154:     // NOTE: Validation of `model` won't fail for the time being given that Text Embeddings
+1155:     // Inference can only serve a single model at a time so no need for the `model` parameter to
+1156:     // differentiate one model from the other, but we at least raise a warning.
+1157:     if let Some(requested_model) = &req.model {
+1158:         if requested_model != &info.served_model_name {
+1159:             tracing::warn!(
+1160:                 "The provided `model={}` has not been found, the `model` parameter should be provided either empty or with `model={}` instead.",
+1161:                 requested_model, info.served_model_name
+1162:             );
+1163:         }
+1164:     }
+...
+1318:     let response = OpenAICompatResponse {
+1319:         object: "list",
+1320:         data: embeddings,
+1321:         model: info.served_model_name.clone(),
+1322:         usage: OpenAICompatUsage {

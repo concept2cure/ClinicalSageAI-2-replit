@@ -1,0 +1,11 @@
+{
+ "runControlStrip": [
+  "AnA is waiting for you before: Global search | Waiting for you before the next step | Next: Global search | If nobody answers within 10 minutes, the turn ends. | Do this instead | The step shown will not run. | Run this step | Stop"
+ ],
+ "liveDriveStrip": [
+  "AnA is driving | Take over | Esc | Stop | Readiness source 1.Readiness source 2."
+ ],
+ "headerButton": [
+  "Waiting for you\n· AnA's progress"
+ ]
+}

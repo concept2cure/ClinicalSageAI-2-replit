@@ -1,0 +1,155 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist appliesTo > applies to IND/NDA/BLA programs 1ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist appliesTo > applies to drug/biologic productType regardless of program 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist appliesTo > does not apply to a vanilla 510(k) device 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > emits info stub when nonclinical intel is missing 7ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > NC_GLP_PIVOTAL_MISSING fires when a pivotal study is non-GLP 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > NC_SPECIES_COVERAGE fires when chronic repeat-dose lacks non-rodent 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > NC_SPECIES_COVERAGE does NOT fire when both species present 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > NC_NOAEL_MARGIN_INSUFFICIENT critical at <2x and warning at <10x 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > NC_NOAEL_MARGIN_INSUFFICIENT does NOT fire when MRHD is unknown (no margins reported) 21ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > NC_GENOTOX_BATTERY_INCOMPLETE lists missing components 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > NC_REPRO_TOX_STAGE_MISMATCH fires for phase ≥ 2 without DART 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > NC_CARC_REQUIRED_MISSING fires for chronic indication without carc 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > preclinical_toxicologist rules > every emitted question carries persona + citation 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > glp_auditor rules > NC_TK_DATA_MISSING fires when repeat-dose without TK 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas-preclinical.test.ts > glp_auditor rules > NC_TK_DATA_MISSING does NOT fire when TK study is present 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > appliesTo > FDA 510(k) reviewer applies to FDA 510K programs only 2ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > appliesTo > FDA PMA reviewer applies to PMA or Class III FDA programs 1ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > appliesTo > Software reviewer applies only when isSoftware/isAiMl=true 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > appliesTo > Cyber reviewer mirrors software-reviewer scope 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > appliesTo > Notified Body clinical applies to EU/CER programs 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > appliesTo > IVDR evaluator applies only to IVD programs 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > appliesTo > Labeling and QMS reviewers always apply 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > rule outputs > FDA 510(k) reviewer raises critical questions on IU_MISMATCH and TECH_DIFFERENCE 3ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > rule outputs > FDA 510(k) reviewer flags low defense readiness as RTA risk 1ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > rule outputs > Software reviewer demands PCCP when ML_ADAPTIVITY is flagged 1ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > rule outputs > Cyber reviewer always asks about SBOM when in scope 4ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > rule outputs > Notified Body clinical references MDR Article 61 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > rule outputs > IVDR evaluator demands all three performance pillars 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > rule outputs > Biostat reviewer ties contradictions to ICH E9(R1) 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-personas.test.ts > rule outputs > every persona emits questions with persona + citation set 7ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > produces a report with overallScore in [0,100] 2ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > scores 100 across all dimensions with no findings 17ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > applies per-severity penalties to the affected dimension (critical=-25, warning=-15, info=-5) 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > stacks multiple findings on the same dimension and floors at 0 1ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > >=85 => audit_ready / low 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > computes overall as the rounded mean of the seven dimension scores 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > derives assessment + risk from the score, then caps by finding severity 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > a SINGLE critical finding caps a 96-score filing off "audit_ready / low" 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > an unresolved WARNING (no critical) caps off "audit_ready", down to needs_work / moderate 29ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > overallAssessment thresholds > info-only findings do NOT cap the verdict (still audit_ready / low) 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (synthetic auditor) > sorts critical findings ahead of warnings and info in topPriorities 0ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (real auditors) > real ind auditor produces findings on empty answers and a valid score band 25ms
+ ✓ tests/ana-intelligence/war-game.test.ts > war-game engine (real auditors) > real csr auditor produces findings on empty answers and a valid score band 2ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is undetermined — never Basic — when the pre-risk-control hazard fact is absent 2ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is Enhanced for a device IEC 62304 rates Class B after controls whose failure could cause probable serious injury before controls 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is Basic only when the fact is recorded as false 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > cites the 2023 guidance on fda.gov as regulator text, with a well-formed basis 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > reads the documentation-level fact from questionnaire answers (yes/no), not from a Level of Concern or an IEC class 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Basic excludes the SDS, unit/integration protocols and reports, and the full CM/maintenance plan 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Basic includes the testing summary (unit, integration and system) and the system-level protocol and report 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Enhanced is Basic plus the SDS, unit/integration protocols and reports, and the full CM/maintenance plan 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > carries no cybersecurity item — that branch is keyed on the cyber-device flag, not on the level 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > every row has a well-formed basis, and every row is labelled recall (only the level definition was checked) 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > is undetermined when cyber-device status is unknown, never "not required" 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > requires the SBOM and threat model for a cyber device, whatever the documentation level 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > is not required for a device recorded as not a cyber device 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > eSTAR software slots (nIVD template) > every named slot exists in the template and files into CH3.05.05.x (software) or CH3.05.05.11 (cybersecurity) 1101ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: a software device with no documentation-level fact gets "FDA software documentation level not determined" 3ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: no software Level of Concern finding anywhere 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: silent once the fact is recorded, and for a device recorded as containing no software 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > PMA auditor: the software finding names the Documentation Level and lists the set for the level 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > software reviewer persona: asks for the Documentation Level, not a "basic / moderate / major" Level of Concern 9ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > shadow reviewer: the 510(k) software question asks for the Documentation Level; cybersecurity is its own question 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > offers AFAP and no ALARP option 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > relabels the stale "ISO 14971 Annex D" option to ISO/TR 24971:2020, keeping its stored value 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > does not claim ISO 14971:2019 requires ALARP, and carries the EU policy text 4ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > keeps the alarp_demonstration field id but relabels it, and its issue check, without ALARP 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > raises a critical regulatory_alignment finding for an EU program stating ALARP or cost 11ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > flags a legacy ich_q9_alarp acceptability criterion for an EU program 13ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU finding for a US-only program, or for clean AFAP text 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU device finding for a pharmaceutical programme, whose RMF is not under MDR/IVDR 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > no auditor text says ALARP is central to EU MDR or justifies stopping on cost-benefit 1ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator-preclinical.test.ts > runReviewerSimulation — preclinical wiring > does not call loader when ctdProgramId is omitted 32ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator-preclinical.test.ts > runReviewerSimulation — preclinical wiring > calls loader when ctdProgramId is provided and merges nonclinical intel 3ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator-preclinical.test.ts > runReviewerSimulation — preclinical wiring > inputsHash is stable across two runs with the same loaded nonclinical fixture 1ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator-preclinical.test.ts > runReviewerSimulation — preclinical wiring > inputsHash differs when nonclinical fixture differs 1ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator-preclinical.test.ts > runReviewerSimulation — preclinical wiring > falls back to info stub when loader returns undefined (flag off) 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator-preclinical.test.ts > runReviewerSimulation — preclinical wiring > preclinical persona is NOT scoped for a vanilla 510(k) device 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator.test.ts > runReviewerSimulation > runs only in-scope personas (FDA 510K + always-on) 30ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator.test.ts > runReviewerSimulation > dryRun does not insert 1ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator.test.ts > runReviewerSimulation > non-dryRun persists with counts and persona scope 10ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator.test.ts > runReviewerSimulation > inputsHash is stable for identical inputs 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator.test.ts > runReviewerSimulation > inputsHash differs when intel changes 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator.test.ts > runReviewerSimulation > explicit persona list filters scope 0ms
+ ✓ server/services/intelligence-engine/__tests__/reviewer-simulator.test.ts > runReviewerSimulation > questions are sorted critical→warning→info 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > recommends the 510(k) pathway from FDA facts 1ms
+ × server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > pulls the 510(k) required documents and forms 12ms
+   → expected [ …(2) ] to include 'eSTAR 510(k) template'
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > marks risk management, biocompatibility and software applicable (CER/PER not) 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > classifies software Class B with architecture (not detailed design) 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > includes the biocompatibility endpoints for a permanent implant 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > attaches the FDA 510(k) reviewer checklist 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > classifies the device IIb (implantable) 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > marks clinical evaluation applicable and gap-checks it 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > uses the Notified Body CER reviewer checklist 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > evidenceReady is false while assessed modules are incomplete 13ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — IVDR companion diagnostic > classifies the IVD Class C 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — IVDR companion diagnostic > marks performance evaluation applicable (not clinical evaluation) 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is 100 / ready when everything is complete 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is not_ready / low when nothing is done, and surfaces gaps 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > scores partial evidence via present/total 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > weights normalise when a dimension is absent (no requirements assessed) 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > derives the scorecard from a blueprint (CER partially authored) 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > credits a fully-authored CER 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software classification (IEC 62304 §4.3) > death/serious injury → Class C 2ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software classification (IEC 62304 §4.3) > non-serious injury → Class B 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software classification (IEC 62304 §4.3) > no possible injury → Class A 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverables by class > Class A excludes architecture and detailed design 1ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverables by class > Class B adds architecture + integration testing but not detailed design 1ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverables by class > Class C adds detailed design 18ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverables by class > deliverable count escalates A < B < C 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverable assessment > reports the missing deliverables for a class 1ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverable assessment > is ready when all class deliverables are present 1ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverable assessment > exposes reviewer questions incl. SOUP and cybersecurity 0ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — question banks > 510(k) questions cover the substantial-equivalence and RTA gate 34ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — question banks > PMA questions cover reasonable assurance + benefit-risk 1ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — checklist builder > builds a 510(k) checklist with consistent severity counts 1ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — checklist builder > sources the CER checklist from the CER structure (single source of truth) 0ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — checklist builder > sources the PER checklist from the PER structure 0ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — checklist builder > covers every device submission type 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > pulls the 510(k) required documents and forms
+AssertionError: expected [ …(2) ] to include 'eSTAR 510(k) template'
+ ❯ server/services/market-specs/__tests__/device-blueprint.test.ts:22:30
+     20|
+     21|   it('pulls the 510(k) required documents and forms', () => {
+     22|     expect(bp.requiredForms).toContain('eSTAR 510(k) template');
+       |                              ^
+     23|     expect(bp.requiredDocuments.some((d) => d.templateId === 'k510_sum…
+     24|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 10 passed (11)
+      Tests  1 failed | 118 passed (119)
+   Start at  03:43:10
+   Duration  5.80s (transform 4.54s, setup 1.64s, import 6.51s, tests 1.60s, environment 5ms)
+
+
+=== importer: server/services/ana/__tests__/submission-center-tools.test.ts (AnaToolExecutor reads device-shadow-reviewer) ===
+ Test Files  1 passed (1)
+      Tests  67 passed (67)
+
+NOTE: device-blueprint.test.ts 'pulls the 510(k) required documents and forms' fails on requiredForms ('eSTAR 510(k) template'), which comes from submission-requirements.ts, changed by the already-committed 433200b9. None of this step's files feed requiredForms.
+
+=== mutation checks (restored afterwards) ===
+estarSlot 'Software/Firmware | SDS' -> 'SDSX': eSTAR slot test FAILS ('sds: "Software/Firmware | SDSX" is not a slot description in the template')
+510(k) auditor without the contains_software=false guard: 'silent ... for a device recorded as containing no software' FAILS

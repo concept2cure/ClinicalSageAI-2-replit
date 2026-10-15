@@ -4,10 +4,15 @@
  * Proves the GA read: an NDA/BLA created in the REAL, org-scoped eCTD submission core
  * (submissions + ectd_sequences + submission_leaves + coauthor_documents) is rolled up
  * into exactly the shape the v2 NdaCockpit "CTD readiness" panel renders — one row per
- * CTD module (M1–M5) as { m, label, pct, docs, open, gate } — with no blob, no fallback
- * fixture, strict org scope, the coauthor authoring vocabulary mapped to readiness, the
- * placed-leaf linkage exercised end to end, and — critically — an IND's sections NEVER
- * leaking into the NDA view (and vice versa the IND assembler filters ='ind').
+ * CTD module (M1–M5) as { m, label, pct, required, complete, open, docs, gate } — with no
+ * blob, no fallback fixture, strict org scope, the coauthor authoring vocabulary mapped to
+ * readiness, the placed-leaf linkage exercised end to end, and — critically — an IND's
+ * sections NEVER leaking into the NDA view (and vice versa the IND assembler filters ='ind').
+ *
+ * 2026-10-15: these cases asserted pct over the AUTHORED sections and only the modules
+ * that had one ("M4 absent — no doc"; two approved sections → every pct 100). They now
+ * assert the canonical denominator — the NDA/BLA required-section profile, pinned in
+ * nda-modules-measured-against-required-sections.pglite.integration.test.ts.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
@@ -21,14 +26,14 @@ const pool = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
-import { assembleOrgNdaModules } from '../nda-modules-view-assembler';
+import { assembleOrgNdaModules, type NdaModuleRow } from '../nda-modules-view-assembler';
 
 const ORG = 7;
 const OTHER = 9;
 
 const DDL = `
 CREATE TABLE organizations (id serial PRIMARY KEY, name text);
-CREATE TABLE submissions (id serial PRIMARY KEY, organization_id int, title text, product_name text, application_type text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
+CREATE TABLE submissions (id serial PRIMARY KEY, organization_id int, title text, product_name text, application_type text, primary_region text NOT NULL DEFAULT 'fda', updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
 CREATE TABLE ectd_sequences (id serial PRIMARY KEY, organization_id int, submission_id int, deleted_at timestamptz);
 CREATE TABLE submission_leaves (id serial PRIMARY KEY, organization_id int, sequence_id int, section_code text, document_table text, document_id int, deleted_at timestamptz);
 CREATE TABLE coauthor_documents (id serial PRIMARY KEY, organization_id int, module_number text, status text, module_name text);
@@ -95,48 +100,58 @@ async function seedApp(
 describe('assembleOrgNdaModules', () => {
   it('rolls a full real NDA up into the CTD-readiness contract (placed-leaf path)', async () => {
     await seedApp(ORG, 'nda', NDA_DOCS);
-    const rows = (await assembleOrgNdaModules(ORG)) as Array<Record<string, unknown>>;
+    const rows = await assembleOrgNdaModules(ORG);
 
-    // Only the modules with authored sections appear, ordered M1→M5 (M4 absent — no doc).
-    expect(rows.map((r) => r.m)).toEqual(['1', '2', '3', '5']);
+    // Every module, ordered M1→M5 — M4 has no doc and reads 0 of its 3 required sections.
+    expect(rows.map((r) => r.m)).toEqual(['1', '2', '3', '4', '5']);
 
-    const byM = Object.fromEntries(rows.map((r) => [r.m, r])) as Record<string, Record<string, unknown>>;
+    const byM = Object.fromEntries(rows.map((r) => [r.m, r])) as Record<string, NdaModuleRow>;
 
-    // M1 — 356h approved (complete), Financial Disclosure draft (open) → 1/2 = 50%.
-    expect(byM['1']).toMatchObject({ label: 'Administrative & prescribing (Module 1)', docs: 2, open: 1, pct: 50 });
-    expect(byM['1'].gate).toContain('Financial Disclosure');
-    expect(byM['1'].gate).toContain('drafting');
+    // M1 — of the NDA's 8 required sections only 1.1 (356h, approved) is complete;
+    // 1.12.14 is in drafting and six are not started. The gate is a not-started one.
+    expect(byM['1']).toMatchObject({ label: 'Administrative & prescribing (Module 1)', docs: 2, required: 8, complete: 1, open: 7, pct: 13 });
+    expect(byM['1'].gate).toBe('1.2 Cover Letter not started · 6 more open');
 
-    // M2 — Clinical Overview review (open) + Safety Summary draft (open) → 0/2 = 0%.
-    // Gate = the least-advanced open section (draft ranks below review).
-    expect(byM['2']).toMatchObject({ docs: 2, open: 2, pct: 0 });
-    expect(byM['2'].gate).toContain('Summary of Clinical Safety');
-    expect(byM['2'].gate).toContain('1 more open');
+    // M2 — Clinical Overview (review) and 2.7 (its 2.7.4 in draft) are open; 0 of 6.
+    expect(byM['2']).toMatchObject({ docs: 2, required: 6, complete: 0, open: 6, pct: 0 });
 
-    // M3 — approved + finalized (both complete) → 2/2 = 100%, no gate.
-    expect(byM['3']).toMatchObject({ docs: 2, open: 0, pct: 100, gate: null });
+    // M3 — 3.2.S holds an approved 3.2.S.2 and a finalized 3.2.S.4, an unsigned freeze
+    // (open since DP-35, 2026-10-01), so 3.2.S is not complete: 0 of 4.
+    expect(byM['3']).toMatchObject({ docs: 2, required: 4, complete: 0, pct: 0 });
 
-    // M5 — signed + approved complete, ISS draft open → 2/3 = 67%.
-    expect(byM['5']).toMatchObject({ docs: 3, open: 1, pct: 67 });
-    expect(byM['5'].gate).toContain('Integrated Summary of Safety');
+    expect(byM['4']).toMatchObject({ docs: 0, required: 3, complete: 0, pct: 0 });
+    expect(byM['4'].gate).toBe('4.2.1 Pharmacology not started · 2 more open');
+
+    // M5 — 5.2 signed (complete); 5.3.5 holds an approved CSR and the ISS in draft (open) → 1 of 2.
+    expect(byM['5']).toMatchObject({ docs: 3, required: 2, complete: 1, open: 1, pct: 50 });
+    expect(byM['5'].gate).toBe('Integrated Summary of Safety (ISS) in drafting');
   });
 
-  it('maps the coarse coauthor vocabulary to readiness (draft/review open; approved/finalized/signed complete)', async () => {
-    // One module, one doc per status, to read the open/complete classification cleanly.
+  it('maps the coarse coauthor vocabulary to readiness (draft/review/finalized open; approved/signed complete)', async () => {
+    // One doc per status on Module 2's six required sections (2.2–2.7, none nested), to
+    // read the open/complete classification cleanly. (This used Module 1 codes 1.4–1.6,
+    // which an NDA does not require — they counted only under the authored denominator.)
     await seedApp(ORG, 'nda', [
-      ['m1.1', 'draft', 'A'], ['m1.2', 'in-progress', 'B'], ['m1.3', 'review', 'C'],
-      ['m1.4', 'approved', 'D'], ['m1.5', 'finalized', 'E'], ['m1.6', 'signed', 'F'],
+      ['m2.2', 'draft', 'A'], ['m2.3', 'in-progress', 'B'], ['m2.4', 'review', 'C'],
+      ['m2.5', 'approved', 'D'], ['m2.6', 'finalized', 'E'], ['m2.7', 'signed', 'F'],
     ]);
-    const rows = (await assembleOrgNdaModules(ORG)) as Array<Record<string, unknown>>;
-    expect(rows).toHaveLength(1);
-    // draft, in-progress, review → open (3); approved, finalized, signed → complete (3).
-    expect(rows[0]).toMatchObject({ m: '1', docs: 6, open: 3, pct: 50 });
+    const rows = await assembleOrgNdaModules(ORG);
+    const m2 = rows.find((r) => r.m === '2');
+    // draft, in-progress, review, finalized (an unsigned freeze, DP-35) → open (4);
+    // approved, signed → complete (2).
+    expect(m2).toMatchObject({ docs: 6, required: 6, complete: 2, open: 4, pct: 33 });
+    expect(m2?.gate).toBe('A in drafting · 3 more open');
   });
 
   it('includes BLA submissions (application_type IN nda/bla), not just NDA', async () => {
     await seedApp(ORG, 'bla', [['m3.2.S.2', 'approved', 'CMC'], ['m2.3', 'draft', 'QOS']]);
-    const rows = (await assembleOrgNdaModules(ORG)) as Array<Record<string, unknown>>;
-    expect(rows.map((r) => r.m)).toEqual(['2', '3']);
+    const rows = await assembleOrgNdaModules(ORG);
+    const byM = Object.fromEntries(rows.map((r) => [r.m, r])) as Record<string, NdaModuleRow>;
+    expect(rows.map((r) => r.m)).toEqual(['1', '2', '3', '4', '5']);
+    expect(byM['2']).toMatchObject({ docs: 1, complete: 0 });
+    expect(byM['3']).toMatchObject({ docs: 1, complete: 1, required: 4 });
+    // Held to the BLA profile (21 CFR 601.2), which has no separate 4.2.2.
+    expect(byM['4']).toMatchObject({ docs: 0, required: 2 });
   });
 
   it('never crosses tenants and returns [] for an org with no NDA/BLA', async () => {
@@ -158,11 +173,13 @@ describe('assembleOrgNdaModules', () => {
 
     // Add the NDA alongside the IND; the NDA view reflects ONLY the NDA's placed sections.
     await seedApp(ORG, 'nda', NDA_DOCS);
-    const rows = (await assembleOrgNdaModules(ORG)) as Array<Record<string, unknown>>;
-    const byM = Object.fromEntries(rows.map((r) => [r.m, r])) as Record<string, Record<string, unknown>>;
-    // M1 has exactly the NDA's 2 sections — the IND's two m1.* docs did not leak in.
+    const rows = await assembleOrgNdaModules(ORG);
+    const byM = Object.fromEntries(rows.map((r) => [r.m, r])) as Record<string, NdaModuleRow>;
+    // M1 has exactly the NDA's 2 sections — the IND's two m1.* docs did not leak in —
+    // and M2 exactly the NDA's 2 (the IND's approved m2.3 QOS is not among them).
     expect(byM['1'].docs).toBe(2);
-    expect(rows.map((r) => r.m)).toEqual(['1', '2', '3', '5']);
+    expect(byM['2']).toMatchObject({ docs: 2, complete: 0 });
+    expect(rows.map((r) => r.m)).toEqual(['1', '2', '3', '4', '5']);
   });
 
   it('falls back to the org workspace when the NDA has no leaves — excluding IND-placed docs', async () => {
@@ -172,9 +189,13 @@ describe('assembleOrgNdaModules', () => {
     // An IND, fully placed, sharing Module 1 — its placed doc must be excluded from the fallback.
     await seedApp(ORG, 'ind', [['m1.1', 'approved', 'IND 356']], { withLeaves: true });
 
-    const rows = (await assembleOrgNdaModules(ORG)) as Array<Record<string, unknown>>;
+    const rows = await assembleOrgNdaModules(ORG);
+    const byM = Object.fromEntries(rows.map((r) => [r.m, r])) as Record<string, NdaModuleRow>;
     // Only the NDA's unplaced workspace sections (M2, M3) — the IND's placed m1.1 is gone.
-    expect(rows.map((r) => r.m)).toEqual(['2', '3']);
-    expect(rows.every((r) => (r.pct as number) === 100)).toBe(true);
+    expect(byM['1']).toMatchObject({ docs: 0, complete: 0 });
+    // Two approved sections are 1 of Module 2's 6 and 1 of Module 3's 4 required sections,
+    // not two complete modules (this asserted every pct === 100).
+    expect(byM['2']).toMatchObject({ docs: 1, complete: 1, required: 6, pct: 17 });
+    expect(byM['3']).toMatchObject({ docs: 1, complete: 1, required: 4, pct: 25 });
   });
 });

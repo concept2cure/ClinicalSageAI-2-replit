@@ -1,0 +1,39 @@
+# CI gates, run on the working tree with this change (2026-10-08).
+
+## npm run ci:undefined-css-classes  (exit 0)
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+## npm run ci:untracked-imports  (exit 0)
+[ci:untracked-imports] OK — every relative import in 9 file(s) resolves to a tracked file.
+
+## npm run ci:migration-set-order  (exit 0)
+[ci:migration-set-order] OK — 364 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+## npm run ci:migration-drop-safety  (exit 0)
+[ci:migration-drop-safety] OK — 364 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+## npm run ci:migration-drop-safety:selftest  (exit 0)
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+
+## npm run ci:check-client-api-calls  (exit 0)
+check-client-api-calls-resolve: 140 client /api prefixes, 313 server /api prefixes.
+✅ every client /api call has a server route behind it.
+
+## npm run ci:launch-scope-api  (exit 0)
+ci:launch-scope-api: 276 API paths named by launch and shell screens; none refused. {"launch":229,"infrastructure":2,"never-gated":45}
+
+## npm run ci:server-error-leaks  (exit 0)
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+
+## ci:untracked-imports reads only the committed push range, so it cannot see an uncommitted file.
+## Exercised with --all: against the real index (the new module untracked) it names this change's import;
+## against a temporary copy of the index with the four new files intent-to-add (the real index untouched), it does not.
+## Both runs exit 1 for entries that are not this change's (pre-existing, or other sessions' new files).
+### real index — this change's lines
+  server/services/ana/lineage-dossier.ts:41  →  ./lineage-dossier-completeness.js
+  server/services/ana/lineage-dossier.ts:44  →  ./lineage-dossier-completeness.js
+### temporary index — this change's lines
+0

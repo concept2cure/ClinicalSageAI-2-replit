@@ -1,0 +1,63 @@
+# g-basis-constants-one-home — GREEN, after the change (working tree on HEAD 5a56280c, 2026-10-05)
+# 1) The step's test alone:
+#    npx vitest run server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts
+
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no regulator URL is bound to two top-level declarations 240ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > each shared constant is declared only in regulatory-basis.ts, and the retired duplicate names nowhere 46ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no file in ind/ctd keeps a local recall()/practice() helper 50ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and e3SectionBasis 1ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > exports every shared basis constant, well formed under the shared rules 24ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > cfr201_57, recall and practice build well-formed bases of the stated confidence 1ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > FDA_E3 is ICH E3 itself, not FDA’s E3 Q&A (R1) 0ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > nothing in ind/ctd binds the E3 Q&A URL to a basis that is not the Q&A 48ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > readers hold the one object, not a copy > the submission chain, the technical rules and the E3 overlay cite the exported constants 57ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+
+# 2) Mutation check (gate shown failing): a planted second M4E(R2) basis in fda-technical-rules.ts and FDA_E3.url set back to media/84857, then restored:
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no regulator URL is bound to two top-level declarations 251ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > each shared constant is declared only in regulatory-basis.ts, and the retired duplicate names nowhere 46ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no file in ind/ctd keeps a local recall()/practice() helper 57ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and e3SectionBasis 1ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > exports every shared basis constant, well formed under the shared rules 21ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > cfr201_57, recall and practice build well-formed bases of the stated confidence 0ms
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > FDA_E3 is ICH E3 itself, not FDA’s E3 Q&A (R1) 2ms
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > nothing in ind/ctd binds the E3 Q&A URL to a basis that is not the Q&A 42ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > readers hold the one object, not a copy > the submission chain, the technical rules and the E3 overlay cite the exported constants 55ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
++   "https://www.fda.gov/media/93569/download <- fda-technical-rules.ts:M4E_COPY, regulatory-basis.ts:M4E_R2",
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+
+# 3) Every test file that imports a changed module (17 files):
+ × tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 111ms
+ × tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > every basis constant the CSR record ships is well formed under the shared rules 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > every basis constant the CSR record ships is well formed under the shared rules
+ ❯ tests/regulatory/regulatory-basis.test.ts:183:26
+ FAIL  tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted
+ ❯ tests/regulatory/requirements-resolver.test.ts:92:17
+ Test Files  2 failed | 15 passed (17)
+      Tests  2 failed | 245 passed (247)
+
+# The two failures are owed outside this step's file list (needs_elsewhere):
+#  - tests/regulatory/regulatory-basis.test.ts:31 iterates csr-e3-basis.ts exports, which now hold one basis (CDISC_CONVENTION); it must iterate ind/ctd/regulatory-basis.ts.
+#  - tests/regulatory/requirements-resolver.test.ts R2 snapshot moves on exactly the 9 CSR headings that cite FDA_E3 (intended: the corrected E3 URL and ref). Delta:
+#    -   "{\"document\":\"csr\",\"section\":\"12.2.2\"}": "162ff3d74dadd86b",
+#    +   "{\"document\":\"csr\",\"section\":\"12.2.2\"}": "8e3ece46df563829",
+#    -   "{\"document\":\"csr\",\"section\":\"12.2.4\"}": "e05f120b379dbd59",
+#    +   "{\"document\":\"csr\",\"section\":\"12.2.4\"}": "4f7ba8aef2927bc0",
+#    -   "{\"document\":\"csr\",\"section\":\"14.3.1\"}": "9a27b73210254720",
+#    +   "{\"document\":\"csr\",\"section\":\"14.3.1\"}": "ff028736bad7b2a3",
+#    -   "{\"document\":\"csr\",\"section\":\"14.3.4\"}": "4ec827663dd95710",
+#    -   "{\"document\":\"csr\",\"section\":\"15\"}": "3ed23f86ca4176bc",
+#    +   "{\"document\":\"csr\",\"section\":\"14.3.4\"}": "e9f1d86faeda86f6",
+#    +   "{\"document\":\"csr\",\"section\":\"15\"}": "17d2237b4b08db76",
+#    -   "{\"document\":\"csr\",\"section\":\"16.1.11\"}": "7e1ec29b39aad2e9",
+#    -   "{\"document\":\"csr\",\"section\":\"16.1.12\"}": "1118ca07d985ada2",
+#    +   "{\"document\":\"csr\",\"section\":\"16.1.11\"}": "f000049df2783a25",
+#    +   "{\"document\":\"csr\",\"section\":\"16.1.12\"}": "8965e52f2cc36c49",
+#    -   "{\"document\":\"csr\",\"section\":\"16.1.9\"}": "3f7fcf636c42caf7",
+#    +   "{\"document\":\"csr\",\"section\":\"16.1.9\"}": "1eaf1d57d483e0d1",
+#    -   "{\"document\":\"csr\",\"section\":\"16.2.7\"}": "6f1951f6b788396b",
+#    +   "{\"document\":\"csr\",\"section\":\"16.2.7\"}": "ac8b9ed8e8ce55d0",

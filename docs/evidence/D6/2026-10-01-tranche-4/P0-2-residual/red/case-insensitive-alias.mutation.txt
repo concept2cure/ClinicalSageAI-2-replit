@@ -1,0 +1,48 @@
+# RED — mutation: the fix with apiKeyRefusal's .toLowerCase() removed (one line, restored after the run)
+# 2026-10-01T06:14:36Z; same posture and command as the main red
+# Express routes case-insensitively, so /api/v1/Auth/… reaches the session alias; without lower-casing the key is taken as a public-API credential there.
+
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > connects as a non-superuser runtime role with RLS enforcing 13ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > the catalog yields API prefixes for all seven launch apps, none on the public allowlist 2ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > A's own session reaches a launch write handler in A's scope and sees A's row 81ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > B's own session reaches it in B's scope and cannot see or touch A's row 35ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > is the connector issuer's own token: type access, token_use mcp, scope c2c:read 1ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > projects: every write method on every API prefix is refused before a handler runs 160ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > vault: every write method on every API prefix is refused before a handler runs 171ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > authoring: every write method on every API prefix is refused before a handler runs 232ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > submission-center: every write method on every API prefix is refused before a handler runs 99ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > submission-readiness: every write method on every API prefix is refused before a handler runs 8ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > qms: every write method on every API prefix is refused before a handler runs 15ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > reporting: every write method on every API prefix is refused before a handler runs 25ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > the /api/v1 pyramid write, outside the boundary, refuses it too 3ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > requireScope reads the key's scopes: granted passes, not granted is 403 INSUFFICIENT_SCOPE 29ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > projects: the key alone is refused on every write route, before a handler runs 100ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > vault: the key alone is refused on every write route, before a handler runs 60ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > authoring: the key alone is refused on every write route, before a handler runs 251ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > submission-center: the key alone is refused on every write route, before a handler runs 81ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > submission-readiness: the key alone is refused on every write route, before a handler runs 5ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > qms: the key alone is refused on every write route, before a handler runs 8ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > reporting: the key alone is refused on every write route, before a handler runs 36ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > off the public API the key opens no tenant scope, even on a path that takes no session 7ms
+ × server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > nor on the session alias under /api/v1, in any letter case Express routes 23ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > projects: A's read-only key with B's session is refused on every write route 80ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > vault: A's read-only key with B's session is refused on every write route 49ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > authoring: A's read-only key with B's session is refused on every write route 217ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > submission-center: A's read-only key with B's session is refused on every write route 70ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > submission-readiness: A's read-only key with B's session is refused on every write route 4ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > qms: A's read-only key with B's session is refused on every write route 8ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > reporting: A's read-only key with B's session is refused on every write route 15ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > the /api/v1 pyramid write refuses the pair too 1ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > A's row was never written by B 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > nor on the session alias under /api/v1, in any letter case Express routes
+AssertionError: /api/v1/Auth/p02b-probe: expected { method: 'POST', …(4) } to match object { status: 401, …(2) }
+- Expected
++ Received
+-   "code": "API_KEY_NOT_ACCEPTED",
+-   "reached": false,
+-   "status": 401,
++   "code": null,
++   "reached": true,
++   "status": 200,
+      Tests  1 failed | 31 passed (32)

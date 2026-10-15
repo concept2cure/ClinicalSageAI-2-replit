@@ -23,9 +23,11 @@ import { pool } from '../../db.js';
 import { requireGovernedReason } from '../../routes/governed-reason.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
+import { FROZEN_STAGES } from './vault-lifecycle.js';
 import {
   VAULT_CLASSIFICATIONS,
   VAULT_INGEST_DOCUMENT_TYPES,
+  vaultIngestTypeLabel,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -91,6 +93,37 @@ function requested(args: EditVaultDocumentMetadataArgs): Partial<Record<Metadata
   return out;
 }
 
+/** A frozen version's stage, in words (VR-13). */
+const FROZEN_PHRASE: Record<string, string> = {
+  approved: 'approved',
+  placed: 'approved and placed in a submission',
+  packaged: 'approved and packaged',
+  submitted: 'approved and submitted',
+  superseded: 'superseded',
+};
+
+const FIELD_NAME: Record<MetadataChange['field'], string> = {
+  document_title: 'Title',
+  document_type: 'Type',
+  classification: 'Classification',
+};
+
+/**
+ * What changed, in words: "Type: Module 3 · quality -> Report". The history
+ * labels this event from it (details.description), so a reviewer reads what
+ * was changed where the bare event name used to be. A type reads as its label,
+ * the way the Vault shows it; a field with no value yet reads as not recorded.
+ */
+function describeChanges(changes: MetadataChange[]): string {
+  return changes
+    .map((c) => {
+      const shown = (v: string | null) =>
+        v == null ? 'not recorded' : c.field === 'document_type' ? vaultIngestTypeLabel(v) : v;
+      return `${FIELD_NAME[c.field]}: ${shown(c.from)} -> ${shown(c.to)}`;
+    })
+    .join('; ');
+}
+
 export async function editVaultDocumentMetadata(
   args: EditVaultDocumentMetadataArgs,
 ): Promise<EditVaultDocumentMetadataResult> {
@@ -127,6 +160,23 @@ export async function editVaultDocumentMetadata(
       await client.query('ROLLBACK');
       return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
     }
+    // An approved version's details are frozen (VR-13; FD6 ships as a
+    // refusal): what was approved is what the record says. Its successor is a
+    // new version.
+    const stage = await client.query(
+      `SELECT stage FROM canonical_documents
+        WHERE organization_id = $1 AND source_refs ? 'vault_documents'
+          AND source_refs -> 'vault_documents' ->> 'nativeId' = $2
+          AND stage = ANY($3::text[])
+        LIMIT 1`,
+      [organizationId, documentId, [...FROZEN_STAGES]],
+    );
+    if (stage.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return refuse(409, 'APPROVED_VERSION_IMMUTABLE',
+        `This version is ${FROZEN_PHRASE[stage.rows[0].stage as string] ?? 'approved'}, so its details cannot be changed. ` +
+          'Upload a new version to change them. Nothing was changed.');
+    }
     const before = found.rows[0] as Record<MetadataChange['field'], string | null>;
     const changes: MetadataChange[] = [];
     for (const [field, to] of Object.entries(wanted) as Array<[MetadataChange['field'], string]>) {
@@ -159,7 +209,10 @@ export async function editVaultDocumentMetadata(
       resourceId: documentId,
       ipAddress: args.ipAddress,
       userAgent: args.userAgent,
-      details: { programId, changes, reason: reason.reason },
+      // The reason on the row's own column, where the history reads it from.
+      // It stays in details as well: the PostgreSQL suite reads it there.
+      reason: reason.reason,
+      details: { programId, changes, reason: reason.reason, description: describeChanges(changes) },
     });
     await client.query('COMMIT');
     return { ok: true, unchanged: false, changes };

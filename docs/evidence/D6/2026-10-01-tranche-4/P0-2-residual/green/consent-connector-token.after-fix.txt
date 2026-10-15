@@ -1,0 +1,40 @@
+# Green run: server/mcp/__tests__/mcp-consent-delegated.dbtest.ts with the fix (consent.ts verifies for the 'grant' purpose; platform-token.ts refuses a connector token for it)
+# 2026-10-01, PostgreSQL 16 local c2c_testdb, NOSUPERUSER NOBYPASSRLS runtime role, RLS_ENFORCE=on
+# npx vitest run --config vitest.db.config.ts server/mcp/__tests__/mcp-consent-delegated.dbtest.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:57:40.793Z","pid":18321,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:57:40.796Z","pid":18321,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:57:40.796Z","pid":18321,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T06:57:41.194Z","pid":18321,"hostname":"vm","context":{"resource":"http://localhost:32969/mcp","issuer":"http://localhost:32969/","resourceMetadataUrl":"http://localhost:32969/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 16ms
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful { timestamp: '2026-10-01T06:57:41.601Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read 389ms
+{"level":30,"time":"2026-10-01T06:57:42.277Z","pid":18321,"hostname":"vm","context":{"userId":989,"tenantId":245,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there 618ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for another client: no code, no code row, and nothing for /mcp 20ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for its own client: no code, no code row, and nothing for /mcp 44ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for another client: no code, no code row, and nothing for /mcp 26ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for its own client: no code, no code row, and nothing for /mcp 16ms
+{"level":30,"time":"2026-10-01T06:57:42.808Z","pid":18321,"hostname":"vm","context":{"userId":989,"tenantId":245,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the c2c:read connector token still opens /mcp for a read 411ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > a refresh cannot widen the grant either 17ms
+{"level":30,"time":"2026-10-01T06:57:43.741Z","pid":18321,"hostname":"vm","context":{"userId":989,"tenantId":245,"resourceId":"9"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T06:57:43.880Z","pid":18321,"hostname":"vm","context":{"userId":989,"tenantId":245,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the user's own session still consents to all three scopes, and that grant files the draft 1053ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  06:57:34
+   Duration  11.13s (transform 3.80s, setup 380ms, import 962ms, tests 8.38s, environment 0ms)
+

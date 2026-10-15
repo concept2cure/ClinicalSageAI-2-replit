@@ -1,0 +1,65 @@
+# MUTATION CHECKS — each mutation applied to the fixed tree, the suite run, the fix restored (cmp-verified)
+# 2026-10-01T03:23:27Z  HEAD 363a41b54 + uncommitted fix
+
+## A. Whole fix reverted (the eight source files restored to HEAD; tests unchanged)
+ FAIL  server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked, and records every dependent whose record changed
+ FAIL  server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > PATCH → completed runs the cascade on its own transaction, before any ledger row, and notifies after COMMIT
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with no reason records null
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a blank reason records null
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/bulk-create records null for each task
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/:id/notify records null
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a blocking dependency: the successor’s transition records null and says why in its summary
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > auto-assign records null and names its method in the summary
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a workflow template records null on every row; each summary names the template
+ FAIL  server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > runs the cascade on the completion’s transaction and records A, then B, before COMMIT; notifies after
+ FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > create_task with no stated reason records null — not a sentence, not the model’s params.reason
+ FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > update_task with no stated reason records null; what happened is the payload summary
+ FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed
+ FAIL  server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is null when the request states none; what happened is the summary
+ FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > the reason a seeded milestone records > is null — what happened is the summary
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records a governed lineage entry for a task mutation
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.create with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.transition with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.link with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.assign with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.notify with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.delete with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records what happened as the payload summary, not as the reason
+ FAIL  server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > every task-event reason is a value handed in — never a sentence the code wrote
+ Test Files  9 failed (9)
+      Tests  24 failed | 102 passed (126)
+
+## B. task-audit.ts lineageRow only: reason: statedTaskReason(reason) ?? `${command} via tasking API`
+ FAIL  server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked, and records every dependent whose record changed
+ FAIL  server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > PATCH → completed runs the cascade on its own transaction, before any ledger row, and notifies after COMMIT
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with no reason records null
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a blank reason records null
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/bulk-create records null for each task
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/:id/notify records null
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a blocking dependency: the successor’s transition records null and says why in its summary
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > auto-assign records null and names its method in the summary
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a workflow template records null on every row; each summary names the template
+ FAIL  server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > runs the cascade on the completion’s transaction and records A, then B, before COMMIT; notifies after
+ FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > create_task with no stated reason records null — not a sentence, not the model’s params.reason
+ FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > update_task with no stated reason records null; what happened is the payload summary
+ FAIL  server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is null when the request states none; what happened is the summary
+ FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > the reason a seeded milestone records > is null — what happened is the summary
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records a governed lineage entry for a task mutation
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.create with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.transition with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.link with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.assign with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.notify with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.delete with no stated reason records a null reason, never one the code wrote
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records what happened as the payload summary, not as the reason
+ Test Files  8 failed | 1 passed (9)
+      Tests  22 failed | 104 passed (126)
+
+## C. taskManagement.routes.ts auto-assign only: summary: 'Workload-balanced auto-assign' -> reason: 'Workload-balanced auto-assign'
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > auto-assign records null and names its method in the summary
+ FAIL  server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > every task-event reason is a value handed in — never a sentence the code wrote
++   "server/routes/taskManagement.routes.ts:1160  reason: 'Workload-balanced auto-assign'",
+ Test Files  2 failed (2)
+      Tests  2 failed | 9 passed (11)
+
+## After restoring: see green.txt (9 files, 126 passed)

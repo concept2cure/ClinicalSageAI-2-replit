@@ -1,0 +1,3 @@
+[ci:component-class-coverage] build is current (newer than every source file it is built from).
+[ci:component-class-coverage] 14469 literal class use(s) across the client; 0 class name(s) with no rule in any of the 25 built chunks, 0 site(s) (baseline 0).
+[ci:component-class-coverage] OK — no new class rendered without a rule behind it.

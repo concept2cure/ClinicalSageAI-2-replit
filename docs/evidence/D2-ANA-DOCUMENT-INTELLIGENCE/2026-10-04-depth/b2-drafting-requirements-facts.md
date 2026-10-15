@@ -1,0 +1,4 @@
+# b2-drafting-requirements — facts relied on (2026-10-04)
+
+1. **ICH M4 / M4E prescribe the structure and content of the CTD, not the grammatical voice or tense of its text.** Confidence: **recall**. No regulator page was re-read (regulator sites are blocked for WebFetch in this container). Because of that, the v1.1 prompt calls the register rule (impersonal third person, past tense for completed studies) a **platform convention, not a regulator requirement**, and asserts nothing about what a regulator mandates.
+2. The section requirements given to the model come from the canonical overlay `CTD_AUTHORING_GUIDANCE` (`server/services/ind/ctd/authoring-guidance.ts`), whose sources are recorded in `docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-04/research.md`. This step adds no new regulator fact.

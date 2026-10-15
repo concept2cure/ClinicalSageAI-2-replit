@@ -1,0 +1,23 @@
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a budget stop is incomplete, and says which budget 11ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict inconclusive is a success 2ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict nothing_checkable is a success 4ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict issues_found is a success 2ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > AGENT_FAILED is an error 1ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a person's Stop stays cancelled; mechanical errors pass through 1ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > an unreadable success is incomplete, never success 1ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > other tools are untouched 1ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > formatTraceForContext > lists a budget-stopped agent on its own, not among attempts to retry 4ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-incomplete-trace.test.ts > hydrateToolTrace > an incomplete agent says its result is incomplete, with the trace's summary 11ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-incomplete-trace.test.ts > hydrateToolTrace > control: an error still reads as not finished 1ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > a door that does not host agents is never offered it 13ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > a hosting turn is offered it 2ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > the kill switch withholds it even from a hosting turn 3ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > in production it is withheld unless switched on (ADR-0015 §2) 2ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > an org-less turn is never offered it 1ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read error withholds run_agent; the rest is what the soft read gives 1ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read that resolves applies the deny list to the whole set 2ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a tenant that denies run_agent is never offered it 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a door that does not host keeps the soft read, untouched 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  15 failed | 5 passed (20)

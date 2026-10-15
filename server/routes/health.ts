@@ -6,6 +6,7 @@
  */
 import express, { Request, Response } from 'express';
 import { createContextLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 import { healthCheck as dbHealthCheck, pool } from '../db';
 import { CircuitState, getCircuitBreaker } from '../middleware/circuitBreaker';
 import { healthCheck as sagePlusHealthCheck } from '../sage-plus-service';
@@ -67,17 +68,41 @@ router.get('/health/ready', async (req: Request, res: Response) => {
     // Return appropriate status code
     res.status(isHealthy ? 200 : 503).json(status);
   } catch (error) {
-    logger.error('Health check failed', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    res.status(500).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    /* A probe router is reached without a session wherever it is mounted, so
+       the thrower's text (a connection target, a driver message) goes to the
+       log against the request id, never into the body (IAM-18 (1), P1-17). */
+    return serverError(res, logger, 'running the readiness check', error);
   }
 });
+
+/**
+ * The fixed sentence a degraded deep-check report carries in place of a
+ * failed probe's own text. The detail is logged; the body states only which
+ * probe failed, which is what a load balancer or an operator dashboard needs.
+ */
+/**
+ * SagePlus probe states that do NOT make the system degraded.
+ *
+ * 'not_configured' is healthy for the same reason it is on the database row
+ * below: nothing was configured to be up, so a dev or test environment with no
+ * DATABASE_URL is not an outage.
+ *
+ * Until 2026-10-12 the verdict read `sagePlusResult.status === 'operational'`
+ * against a healthCheck() that returned 'operational' UNCONDITIONALLY — it put
+ * the probe result in `databaseConnected` and the failure in the log, and said
+ * operational either way. So this conjunct could never be false and contributed
+ * nothing, while `services.sagePlus.status` reported operational to any monitor
+ * reading it. A Set rather than a disjunction keeps the handler's cyclomatic
+ * complexity where the ratchet had it.
+ */
+const SAGE_PLUS_HEALTHY = new Set(['operational', 'not_configured']);
+
+function probeFailed(probe: string, error: unknown): string {
+  logger.warn(`${probe} probe failed`, {
+    err: error instanceof Error ? error.message : String(error),
+  });
+  return `${probe} probe failed; the detail is in the server log`;
+}
 
 /**
  * Deep health check
@@ -112,7 +137,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
       } catch (error) {
         databaseResult = {
           status: 'error',
-          error: error instanceof Error ? error.message : String(error),
+          error: probeFailed('database', error),
           latency: 0,
         };
       }
@@ -138,7 +163,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
     } catch (error) {
       sagePlusResult = {
         status: 'error',
-        error: error instanceof Error ? error.message : String(error),
+        error: probeFailed('SagePlus', error),
         latency: 0,
       };
     }
@@ -151,7 +176,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
         databaseResult.latency = Date.now() - startDb;
       } catch (error) {
         // Keep existing status but note latency error
-        (databaseResult as any).latencyError = error instanceof Error ? error.message : String(error);
+        databaseResult.latencyError = probeFailed('database latency', error);
       }
     }
 
@@ -168,7 +193,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
     // Overall health determination
     const isHealthy =
       (databaseResult.status === 'ok' || databaseResult.status === 'not_configured') &&
-      sagePlusResult.status === 'operational' &&
+      SAGE_PLUS_HEALTHY.has(sagePlusResult.status) &&
       circuitBreakers.validator !== CircuitState.OPEN &&
       circuitBreakers.openai !== CircuitState.OPEN &&
       circuitBreakers.database !== CircuitState.OPEN;
@@ -204,15 +229,8 @@ router.get('/health/deep', async (req: Request, res: Response) => {
 
     res.status(isHealthy ? 200 : 503).json(healthReport);
   } catch (error) {
-    logger.error('Deep health check failed', {
-      error: error instanceof Error ? error.message : String(error),
+    return serverError(res, logger, 'running the deep health check', error, {
       stack: error instanceof Error ? error.stack : undefined,
-    });
-
-    res.status(500).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

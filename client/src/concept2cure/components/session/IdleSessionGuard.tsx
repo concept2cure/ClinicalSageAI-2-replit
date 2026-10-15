@@ -14,7 +14,13 @@ import { useCallback, useEffect, useId, useRef, useState, type ReactElement } fr
 import { useTranslation } from 'react-i18next';
 
 import { authService } from '@/services/portal/authService';
-import { startIdleWatch, type IdleWatch } from '@/services/portal/idleSession';
+import {
+  IDLE_ACTIVITY_KEY,
+  readSessionActivity,
+  startIdleWatch,
+  storeSessionActivity,
+  type IdleWatch,
+} from '@/services/portal/idleSession';
 import { rememberSignOutReason, type SessionEndReason } from '@/utils/sessionEnd';
 
 import styles from './IdleSessionGuard.module.css';
@@ -67,11 +73,19 @@ export function IdleSessionGuard(): ReactElement | null {
     };
   }, []);
 
-  // The idle window.
+  // The idle window. It continues this session's clock from before the mount
+  // (a reload, another tab), and keeps it (QA 2026-10-08, walk 2, j9: a reload
+  // restarted it, and an idle person stayed signed in).
+  const sessionId = policy.sessionId ?? null;
   useEffect(() => {
     const idleMs = Math.max(60_000, policy.idleMinutes * 60_000);
+    const startedAt = Date.now();
+    const lastActivityAt = readSessionActivity(sessionId) ?? startedAt;
+    storeSessionActivity(sessionId, lastActivityAt);
     const watch = startIdleWatch({
       idleMs,
+      lastActivityAt,
+      onActivity: at => storeSessionActivity(sessionId, at),
       warnMs: Math.min(WARN_MS, Math.floor(idleMs / 2)),
       onWarn: remaining => {
         const endAt = Date.now() + remaining;
@@ -82,6 +96,13 @@ export function IdleSessionGuard(): ReactElement | null {
       onIdle: () => endSession('idle'),
     });
     watchRef.current = watch;
+    // The person active in another tab of this session is active here.
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== IDLE_ACTIVITY_KEY) return;
+      const at = readSessionActivity(sessionId, event.newValue);
+      if (at !== null && watch.adopt(at)) stopCountdown();
+    };
+    window.addEventListener('storage', onStorage);
     // A person who reads makes no requests; the server would count that as
     // idle. Activity since the last report is reported, at most every few minutes.
     let reportedAt = Date.now();
@@ -91,13 +112,14 @@ export function IdleSessionGuard(): ReactElement | null {
       authService.keepAlive().catch(() => undefined);
     }, keepAliveIntervalFor(idleMs));
     return () => {
+      window.removeEventListener('storage', onStorage);
       clearInterval(keepAlive);
       watch.stop();
       watchRef.current = null;
       if (countdownRef.current !== null) clearInterval(countdownRef.current);
       countdownRef.current = null;
     };
-  }, [policy.idleMinutes, endSession]);
+  }, [policy.idleMinutes, sessionId, endSession, stopCountdown]);
 
   // The lifetime: over at the moment the server named, whatever the activity.
   useEffect(() => {
@@ -111,6 +133,7 @@ export function IdleSessionGuard(): ReactElement | null {
   const stay = () => {
     stopCountdown();
     watchRef.current?.extend();
+    storeSessionActivity(sessionId, Date.now());
     authService.keepAlive().catch(() => undefined);
   };
 

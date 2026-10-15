@@ -1,0 +1,92 @@
+{
+  "surface": "sign-in",
+  "url": "/concept2cure/login",
+  "tabbableCount": 9,
+  "skipLink": null,
+  "stops": [
+    {
+      "index": 0,
+      "tag": "select",
+      "role": null,
+      "name": "Select language",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 1,
+      "tag": "input",
+      "role": null,
+      "name": "Email",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 2,
+      "tag": "button",
+      "role": null,
+      "name": "Show Password",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 3,
+      "tag": "input",
+      "role": null,
+      "name": "Password",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 4,
+      "tag": "input",
+      "role": null,
+      "name": "Keep me signed in",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 5,
+      "tag": "button",
+      "role": null,
+      "name": "Forgot password?",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 6,
+      "tag": "button",
+      "role": null,
+      "name": "Sign in",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 7,
+      "tag": "button",
+      "role": null,
+      "name": "Demo access",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 8,
+      "tag": "button",
+      "role": null,
+      "name": "Create an account",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    }
+  ],
+  "focusMoved": true,
+  "shortCycle": null,
+  "shiftTabReturns": true
+}

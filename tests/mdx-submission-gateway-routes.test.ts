@@ -9,7 +9,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const PROGRAM_ID = '11111111-2222-3333-4444-000000000204';
 
 const queryFn = vi.fn();
 const connectFn = vi.fn();
@@ -55,6 +54,12 @@ vi.mock('../server/services/mfaService', () => ({
   // the answer cannot be read, so the fixture has to state it.
   isMfaEnabled: vi.fn().mockResolvedValue(false),
 }));
+
+/* §11.10(g): the signer's role is read from the membership row
+   (resolveSignerOrgRole), never the token. Each test states it; by default the
+   member row says what the session says. */
+const { signerRole } = vi.hoisted(() => ({ signerRole: vi.fn<(...a: unknown[]) => Promise<string | null>>() }));
+vi.mock('../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: (...a: unknown[]) => signerRole(...a) }));
 
 /** Re-auth body that satisfies verifyReauth in these tests. */
 // §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
@@ -154,6 +159,7 @@ beforeEach(() => {
   ackFn.mockReset();
   isConfigFn.mockReset();
   configStatusFn.mockReset();
+  signerRole.mockReset().mockResolvedValue('admin');
   // Default: empty result, except the re-auth password lookup which must find a
   // user with a password_hash so verifyReauth can run bcrypt.compare (mocked true).
   queryFn.mockImplementation((sql: string) => {
@@ -183,6 +189,7 @@ describe('submission gateway routes — auth gate', () => {
     ['GET',  '/api/mdx/gateways/transmittals/1/ack'],
     ['POST', '/api/mdx/gateways/transmittals/1/findings'],
     ['PATCH', '/api/mdx/gateways/findings/1/resolve'],
+    ['POST', '/api/mdx/gateways/transmittals/1/technical-rejection'],
   ])('%s %s returns 403 without org context', async (method, url) => {
     const req = request(makeApp({ withAuth: false }));
     const res = await (method === 'GET' ? req.get(url)
@@ -212,6 +219,7 @@ describe('submission gateway routes — role gate', () => {
   const MUTATIONS: Array<[string, string, Record<string, unknown>]> = [
     ['POST', '/api/mdx/gateways/fda/esg/transmit', { ...REAUTH, environment: 'production', submissionType: 'estar', bundle: { hash: 'h' } }],
     ['POST', '/api/mdx/gateways/transmittals/1/rollback', { ...REAUTH }],
+    ['POST', '/api/mdx/gateways/transmittals/1/technical-rejection', { ...REAUTH }],
     ['POST', '/api/mdx/gateways/transmittals/1/findings', { code: 'X', message: 'y' }],
     ['PATCH', '/api/mdx/gateways/findings/1/resolve', { resolution: 'done' }],
   ];
@@ -230,7 +238,8 @@ describe('submission gateway routes — role gate', () => {
     expect(res.body.data.length).toBeGreaterThan(0);
   });
 
-  it.each(['admin', 'manager', 'member'])('a %s may still transmit', async (role) => {
+  it.each(['admin', 'approver', 'reviewer'])('a %s (a signing role) may still transmit', async (role) => {
+    signerRole.mockResolvedValue(role);
     transmitFn.mockResolvedValue({ transmissionId: 'T-1', status: 'sent', receipts: [] });
     const res = await request(makeApp({ withAuth: true, role }))
       .post('/api/mdx/gateways/fda/esg/transmit')
@@ -238,6 +247,9 @@ describe('submission gateway routes — role gate', () => {
     expect(res.status, JSON.stringify(res.body)).not.toBe(403);
   });
 });
+
+/* Signing authority (§11.10(g)) on the two signs here — transmit and technical
+   rejection — is pinned in tests/mdx-submission-gateway-signing-authority.test.ts. */
 
 /* ─── Gateways list + config status ──────────────────────────────── */
 
@@ -364,6 +376,11 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
     queryFn.mockImplementation((sql: string) => {
       if (typeof sql === 'string' && sql.includes('password_hash')) {
         return Promise.resolve({ rows: [{ password_hash: 'hashed' }], rowCount: 1 });
+      }
+      // The creator lookup: a colleague (4242) built the package, so the acting
+      // user (777) transmits as an independent signer.
+      if (typeof sql === 'string' && sql.includes('SELECT created_by_id FROM c2c_submission_packages')) {
+        return Promise.resolve({ rows: [{ created_by_id: 4242 }], rowCount: 1 });
       }
       if (typeof sql === 'string' && sql.includes('FROM c2c_submission_packages')) {
         return Promise.resolve({ rows: [{ metadata: { bundle: STORED } }], rowCount: 1 });

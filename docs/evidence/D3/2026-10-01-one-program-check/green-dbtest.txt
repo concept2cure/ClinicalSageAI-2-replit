@@ -1,0 +1,10 @@
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is true for the caller's own live program
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for another organization's program
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for a deleted program — and true only when the caller opts in by name
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > is false for a program only the legacy registry holds
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > answers the same with the organization as a digit string
+ ✓ tests/db/program-ownership.dbtest.ts > programInOrganization, as the production runtime role with RLS enforcing > throws VerificationUnavailableError, not false, when it cannot run
+ ✓ tests/db/program-ownership.dbtest.ts > the RBM site-risk read asks whether the caller owns the program, not whether it mentions it > refuses tenant B a read for tenant A's program, though B holds a KRI naming it (RLS enforcing)
+ ✓ tests/db/program-ownership.dbtest.ts > the RBM site-risk read asks whether the caller owns the program, not whether it mentions it > does not refuse tenant A its own program for having no RBM records yet
+ Test Files  1 passed (1)
+      Tests  8 passed (8)

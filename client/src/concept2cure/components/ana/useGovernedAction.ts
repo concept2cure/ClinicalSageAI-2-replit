@@ -12,9 +12,10 @@
  * @module client/src/concept2cure/components/ana/useGovernedAction
  */
 
-import { useState, useCallback } from 'react';
-import { extractApiError } from '@/lib/queryClient';
+import { useState, useCallback, useRef } from 'react';
+import { errorCodeOf, extractApiError } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../../utils/authToken';
+import { readAnswerCheck, type AnswerCheckView } from './anaAnswerCheck';
 
 /**
  * The three ways a person takes an action AnA proposed (the server's
@@ -24,6 +25,20 @@ import { getAuthHeaders } from '../../../utils/authToken';
  * takes unaided; security audit 2026-09-24 DP-08, P0-12).
  */
 export type GovernedTier = 'confirm' | 'reason' | 'esignature';
+
+/** A §11.50 meaning as the sign-off dialog spells it (server GOVERNED_ACTION_DECLARED_MEANINGS). */
+export type DeclaredMeaning = 'AUTHOR' | 'REVIEWER' | 'APPROVER' | 'RELEASE';
+const DECLARED_MEANINGS: ReadonlySet<string> = new Set<DeclaredMeaning>(['AUTHOR', 'REVIEWER', 'APPROVER', 'RELEASE']);
+
+/**
+ * The meaning the act fixes, when the envelope names one the dialog has
+ * (server part11-governance.ts requiredSignatureMeaning: approving an artifact
+ * is 'APPROVER', locking it 'RELEASE'). Anything else is dropped, never offered.
+ */
+export function fixedMeaningOf(data: { signatureMeaning?: unknown } | undefined | null): DeclaredMeaning | undefined {
+  const m = data?.signatureMeaning;
+  return typeof m === 'string' && DECLARED_MEANINGS.has(m) ? (m as DeclaredMeaning) : undefined;
+}
 
 /** The tier a server envelope names, or the one its signature flag implies (older servers). */
 export function tierOf(data: { tier?: unknown; signatureRequired?: unknown } | undefined | null): GovernedTier {
@@ -40,6 +55,11 @@ export interface PendingSignoff {
   signatureRequired: boolean;
   /** Which of the three tiers; absent on older fixtures, derived from signatureRequired then. */
   tier?: GovernedTier;
+  /**
+   * The §11.50 meaning the act fixes, when it fixes one: the dialog offers
+   * that meaning only, already chosen, since the server refuses any other.
+   */
+  signatureMeaning?: DeclaredMeaning;
   /** Server's human-readable explanation of what is being signed off. */
   message: string;
   /**
@@ -53,6 +73,13 @@ export interface PendingSignoff {
    */
   runId?: string;
   toolUseId?: string;
+  /**
+   * The server's check of the prose this proposal would store, against what
+   * AnA consulted before she wrote it (GRD-2): shown in the dialog before the
+   * person approves. Absent when the proposal stores no prose, on a frame
+   * from an older server, or when the check arrived malformed.
+   */
+  check?: AnswerCheckView;
 }
 
 /** An `approval_required` frame, as the stream sends one. */
@@ -66,8 +93,10 @@ interface ApprovalRequiredEvent {
     tier?: unknown;
     reasonRequired?: boolean;
     signatureRequired?: boolean;
+    signatureMeaning?: unknown;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
+  check?: unknown;
 }
 
 /**
@@ -88,14 +117,19 @@ export function pendingSignoffFromApproval(event: ApprovalRequiredEvent): Pendin
   if (typeof runId !== 'string' || !runId) return null;
   if (typeof toolUseId !== 'string' || !toolUseId) return null;
   const tier = tierOf(event.data);
+  const signatureMeaning = fixedMeaningOf(event.data);
+  // The strip's own reader: a malformed check is no check, never a guess.
+  const check = readAnswerCheck(event.check);
   return {
     command,
     params: event.data?.retry?.params ?? {},
     signatureRequired: tier === 'esignature',
     tier,
+    ...(signatureMeaning && { signatureMeaning }),
     message: typeof event.message === 'string' ? event.message : defaultMessageFor(tier),
     runId,
     toolUseId,
+    ...(check && { check }),
   };
 }
 
@@ -115,8 +149,11 @@ interface ExecutedCommandResult {
     tier?: unknown;
     reasonRequired?: boolean;
     signatureRequired?: boolean;
+    signatureMeaning?: unknown;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
+  /** The server's check of the proposal's prose (GRD-2), unread until readAnswerCheck. */
+  check?: unknown;
 }
 
 /** The two envelopes a blocked command answers with: the Part 11 gate's, and the proposal gate's. */
@@ -140,12 +177,17 @@ export function extractPendingSignoffs(
     const command = r.data?.retry?.command;
     if (typeof command !== 'string' || command.length === 0) continue;
     const tier = tierOf(r.data);
+    const signatureMeaning = fixedMeaningOf(r.data);
+    // The server's check of the proposal's prose (GRD-2); malformed is none.
+    const check = readAnswerCheck(r.check);
     out.push({
       command,
       params: r.data?.retry?.params ?? {},
       signatureRequired: tier === 'esignature',
       tier,
+      ...(signatureMeaning && { signatureMeaning }),
       message: typeof r.message === 'string' ? r.message : defaultMessageFor(tier),
+      ...(check && { check }),
     });
   }
   return out;
@@ -181,10 +223,15 @@ export interface GovernedActionResult {
 export function useGovernedAction() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /* The code of the last refusal (NO_PENDING_APPROVAL, STALE_APPROVAL, …), read
+     at once by the caller that just awaited `submit` — state would still hold
+     the previous render's value there. */
+  const errorCodeRef = useRef<string | undefined>(undefined);
 
   const submit = useCallback(async (args: SubmitSignoffArgs): Promise<GovernedActionResult | null> => {
     setSubmitting(true);
     setError(null);
+    errorCodeRef.current = undefined;
     try {
       // /api/ana-ri is mounted behind Bearer-only authenticateToken — cookies
       // alone never authenticate it, so the Authorization header is required
@@ -209,6 +256,7 @@ export function useGovernedAction() {
         // different thing entirely — a control-flow branch on an AnA stream
         // event, not display copy — and is deliberately left as it is.
         setError(extractApiError(payload, res.status).message);
+        errorCodeRef.current = errorCodeOf(payload);
         return null;
       }
       // The route returns the underlying CommandResult under `data`.
@@ -248,5 +296,8 @@ export function useGovernedAction() {
     }
   }, []);
 
-  return { submit, decline, submitting, error };
+  const clearError = useCallback(() => setError(null), []);
+  const lastErrorCode = useCallback(() => errorCodeRef.current, []);
+
+  return { submit, decline, submitting, error, clearError, lastErrorCode };
 }

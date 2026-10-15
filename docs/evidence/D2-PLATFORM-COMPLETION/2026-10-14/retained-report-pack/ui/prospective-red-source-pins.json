@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin/node",
+    "/workspace/ClinicalSageAI-2-replit/node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "/tmp/report-pack-ui-red-work/vitest.config.mts",
+    "-t",
+    "retained bundle PDF downloads"
+  ],
+  "exitCode": 1,
+  "durationSeconds": 12.149,
+  "repositorySourcesUnchanged": true,
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "sha256": "21d4eb58897197a2cd81c2715cc750f146148453108a054b4276e135515ed655"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "sha256": "cf6c07adf001d79926fdc50f7ba89546aade55b6f03c87149841617895d75f7c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryModel.ts",
+      "sha256": "bf67d7238440a78e1b817dcb9e225e9834d98a4fa86ec4bac51bd886f3e4672d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "sha256": "e6c8c1b9779e8eeacbac69c1d9b2e6e177e5782367243f4c12a14e1fc82013b2"
+    }
+  ],
+  "externalTestSha256": "7360f2093084bf5b3cb3d036b15b217dcd6082558422d49bb5a956376340bcce",
+  "configSha256": "65908dad8263a23dec714376125578773df455e24a2aeb96dc7d2c65a5ceccdd",
+  "logSha256": "c66d806ea757478383b416cf737c2372e7fe4122a8a50de33c73f0cca6cd6cf5"
+}

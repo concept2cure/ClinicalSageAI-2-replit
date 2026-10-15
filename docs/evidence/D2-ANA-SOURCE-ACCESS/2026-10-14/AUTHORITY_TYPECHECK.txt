@@ -1,0 +1,6 @@
+Scope: 3 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/ana/project-scope-admission.ts: 0 target diagnostics
+server/services/ana/source-read-scope.ts: 0 target diagnostics
+server/services/ana/__tests__/source-read-scope.pglite.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 901
+Total selected-scope diagnostics: 0

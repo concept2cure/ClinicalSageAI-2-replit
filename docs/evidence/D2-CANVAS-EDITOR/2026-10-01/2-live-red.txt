@@ -1,0 +1,17 @@
+# 2. The live card — RED, new suite against the unchanged canvas
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > names the document type in the type line 114ms
+   → expected ' Document · M2 · draft' to contain 'Clinical overview'
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > outlines every section, drafted or not, with the count drafted 5012ms
+   → Unable to find role="list" and name "Sections"
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > shows the section chosen in the outline 5011ms
+   → Unable to find role="list" and name "Sections"
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — keeps up while AnA works > re-reads on a new refreshKey and marks the sections whose text changed 5011ms
+   → Unable to find role="list" and name "Sections"
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — keeps up while AnA works > a quiet re-read that fails keeps the document on screen and says the refresh failed 5014ms
+   → Unable to find role="list" and name "Sections"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+
+# Thread link — RED with ConversationThread.tsx at step 1 (no refreshKey): the canvas reads once and never again
+   × re-reads the document when AnA's turn ends → expected 1 to be 2

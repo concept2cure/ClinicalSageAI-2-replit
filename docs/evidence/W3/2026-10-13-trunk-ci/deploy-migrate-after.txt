@@ -1,0 +1,21 @@
+# the same, with the amended 20260813_knowledge_graph_tenant_keys.sql
+292:      [NOTICE] [kg-tenant] citation_chains gained organization_id
+293:      [NOTICE] [kg-tenant] knowledge_graph_nodes has no organization_id yet — citation_chains attribution waits for the next deploy
+294:      [NOTICE] [kg-tenant] knowledge_graph_nodes gained organization_id
+295:      [NOTICE] [kg-tenant] knowledge_graph_nodes policied
+296:      [NOTICE] [kg-tenant] knowledge_graph_edges gained organization_id
+297:      [NOTICE] [kg-tenant] knowledge_graph_edges policied
+298:      [NOTICE] [kg-tenant] lumen_knowledge_graph_edges gained organization_id
+299:      [NOTICE] [kg-tenant] lumen_knowledge_graph_edges policied
+300:      [NOTICE] [kg-tenant] citation_chains policied
+786:✅ Schema migration complete — safe to roll services.
+
+# the rest of the Blank DB job's steps, as ci.yml defines them, on the same database
+RLS coverage OK after the first deploy.
+[ci:replay-rebuilds-nothing] ✅ a deploy with nothing to change rebuilds nothing
+RLS coverage OK: every non-allowlisted org-keyed base table carries tenant_isolation_policy.
+RLS parent-scope delegates OK: every core.* helper a live policy depends on resolves to identity.* or auth.*.
+rbm_* tables: 12 · cre_* tables: 6
+[deploy-smoke] ✅ all post-deploy invariants hold on a real deployed database.
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (39 baselined)
+✅ purge-coverage: 607 org-keyed tables outside the purge reach (baseline 612, new 0, 5 now covered).   (Guardrails — what a tenant purge cannot reach, rerun after the purge fix)

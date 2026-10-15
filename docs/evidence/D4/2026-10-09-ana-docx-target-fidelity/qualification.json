@@ -1,0 +1,36 @@
+{
+  "launch_workstream": "W3 / D4",
+  "base_published_commit": "7111deff00bc17e0b3aefeccfa40a16975ccc74a",
+  "qualified_code_checkpoint": "20936e89d5005cce86c34e8a0a9a26b5e888ad21",
+  "selected_test_files": 51,
+  "selected_tests_passed": 1171,
+  "selected_tests_failed": 0,
+  "focused_tests_passed": 184,
+  "new_target_cases": 87,
+  "build_exit": 0,
+  "forced_lint_exit": 0,
+  "lint_warning_change": -1,
+  "sql_baseline_change": {
+    "server/services/ana/docx-fidelity.ts": 1
+  },
+  "sql_baseline_reason": "Reviewed static canonical artifactDataEligibleSql('a') fragment; all selector values bound; see SQL_PREDICATE_REVIEW.md",
+  "hook_and_checker_implementations_changed": false,
+  "full_prepush_exit": 0,
+  "typescript_errors": 0,
+  "typescript_compiler_exit": 0,
+  "source_blobs": {
+    "server/services/ana/docx-fidelity.ts": "ccb2a7321eeb360a5385150f13cef12129d5142b",
+    "server/services/ana/AnaToolExecutor.ts": "2503ed7a2ee5b19a2c8cc4e1c4cb03a7c802e364",
+    "server/services/ana/legacy-import-tool-defs.ts": "410c9b4ed4c51d6db2542c988ad076238b75c17d",
+    "server/services/ana/__tests__/verify-docx-against-source.test.ts": "942b27b78d5e94386dbfc487e8a4933e7d4210e5",
+    "server/services/ana/__tests__/verify-docx-claim-scope.test.ts": "c5f01c7174444faad6664ea39e36b27eed42c29f",
+    "server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts": "63c72104e3cdd789a5d77a5fd2a3ed47566a07b4"
+  },
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "new_dependencies": false,
+  "remote_release_qualified": false,
+  "full_ind_qualified": false,
+  "source_qualification": "unassessed",
+  "authenticated_seal_consumer_delivered": false,
+  "final_evidence_commit_scope": "Evidence/docs only after the passed code checkpoint; pinned production/test blobs rechecked unchanged."
+}

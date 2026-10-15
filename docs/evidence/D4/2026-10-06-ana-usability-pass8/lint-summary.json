@@ -1,0 +1,37 @@
+[
+  {
+    "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+    "errors": 0,
+    "warnings": 36
+  },
+  {
+    "file": "client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "file": "client/src/concept2cure/v2/anaWorkModel.ts",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "file": "server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "file": "server/routes/ana-ri/stream.ts",
+    "errors": 0,
+    "warnings": 24
+  },
+  {
+    "file": "shared/ana/__tests__/continuation-context.test.ts",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "file": "shared/ana/continuation-context.ts",
+    "errors": 0,
+    "warnings": 0
+  }
+]

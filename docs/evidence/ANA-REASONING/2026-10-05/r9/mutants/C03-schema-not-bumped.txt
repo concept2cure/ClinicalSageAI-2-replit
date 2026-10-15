@@ -1,0 +1,12 @@
+Mutant C03-schema-not-bumped: a record that carries the new sections still claims the /2 schema
+
+--- server/services/ana/turn-record.ts
+- export const TURN_RECORD_SCHEMA = 'ana-turn-record/3';
++ export const TURN_RECORD_SCHEMA = 'ana-turn-record/2';
+
+Tests run: server/services/ana/__tests__/turn-record-sent.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 8ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

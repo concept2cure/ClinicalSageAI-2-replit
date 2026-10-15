@@ -1,0 +1,109 @@
+# terraform test (terraform/stack, the whole boot_contract.tftest.hcl with the new runs appended) on the UNCHANGED stack
+# terraform 1.9.8, hashicorp/aws 5.100.0 (mocked), 2026-10-01T14:40:43Z
+
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... pass
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... pass
+  run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket"... pass
+  run "the_site_is_served_with_security_headers"... pass
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... pass
+  run "staging_is_distinct_from_production"... pass
+  run "provision_workflow_names_are_the_ones_terraform_creates"... pass
+  run "refuses_a_deployment_without_an_owner"... pass
+  run "refuses_an_owner_address_that_could_never_match"... pass
+  run "refuses_an_api_task_too_small_for_the_scanner"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_a_short_audit_export_key"... pass
+  run "refuses_an_audit_export_key_equal_to_the_jwt_secret"... pass
+  run "refuses_an_audit_export_key_equal_to_an_audit_seal_key"... pass
+  run "refuses_phi_approval_without_zero_retention"... pass
+  run "refuses_an_unknown_data_class"... pass
+  run "refuses_a_non_boolean_zero_retention_flag"... pass
+  run "refuses_a_non_string_intended_use"... pass
+  run "refuses_a_missing_region"... pass
+  run "accepts_the_fail_closed_interim_approvals"... pass
+  run "refuses_an_uppercase_domain_alias"... pass
+  run "refuses_a_domain_alias_with_a_scheme"... pass
+  run "refuses_a_domain_alias_with_a_trailing_dot"... pass
+  run "every_container_can_send_login_codes"... pass
+  run "refuses_an_smtp_port_without_required_tls"... pass
+  run "every_container_can_reach_the_drafting_provider"... pass
+  run "refuses_a_key_that_is_not_anthropics"... pass
+  run "refuses_placement_approvals_that_omit_the_drafting_provider"... pass
+  run "openai_is_absent_unless_a_tenant_elected_it"... pass
+  run "openai_is_a_secret_when_a_tenant_elected_it"... pass
+  run "refuses_an_openai_election_without_a_key"... pass
+  run "refuses_an_openai_key_without_an_election"... pass
+  run "refuses_an_anthropic_key_as_the_openai_key"... pass
+  run "refuses_a_short_attestation_key"... pass
+  run "refuses_an_attestation_key_equal_to_the_audit_export_key"... pass
+  run "error_reporting_is_absent_unless_configured"... pass
+  run "error_reporting_reaches_both_containers_when_configured"... pass
+  run "refuses_a_sentry_dsn_that_is_not_https"... pass
+  run "refuses_a_pinned_rds_minor_version"... pass
+  run "the_api_and_worker_embed_through_the_self_hosted_lane"... fail
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 1065, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+1065:     condition = alltrue([
+1066:       for defs in [module.ecs.api_container, module.ecs.worker_container] :
+1067:       one([for e in defs.environment : e.value if e.name == "EMBEDDING_PROVIDER"]) == "local" &&
+1068:       can(regex("^http://[a-z0-9.-]+\\.internal:[0-9]+/v1$", one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"])))
+1069:     ])
+    ├────────────────
+    │ module.ecs.api_container is object with 9 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+
+The API and the worker must carry EMBEDDING_PROVIDER=local and
+EMBEDDING_LOCAL_BASE_URL=http://<host>.internal:<port>/v1 (the self-hosted
+lane in the VPC).
+
+Error: Reference to undeclared module
+
+  on tests/boot_contract.tftest.hcl line 1077, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+1077:       one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"]) == module.embeddings.base_url
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/boot_contract.tftest.hcl line 1078, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+1078:     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/boot_contract.tftest.hcl line 1078, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+1078:     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/boot_contract.tftest.hcl line 1078, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+1078:     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/boot_contract.tftest.hcl line 1078, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+1078:     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+
+No module call named "embeddings" is declared in the root module.
+  run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address"... skip
+  run "the_embedding_service_admits_the_application_tasks_alone"... skip
+  run "the_embedding_server_is_pinned_and_serves_bge_m3"... skip
+  run "the_embedding_logs_are_kept_as_the_application_logs_are"... skip
+  run "refuses_an_embedding_image_by_tag"... skip
+  run "refuses_a_model_revision_that_is_not_a_commit"... skip
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 43 passed, 1 failed, 6 skipped.

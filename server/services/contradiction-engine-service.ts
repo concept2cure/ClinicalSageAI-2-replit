@@ -86,6 +86,67 @@ export function isReviewState(value: unknown): value is ReviewState {
   return typeof value === 'string' && (REVIEW_STATES as readonly string[]).includes(value);
 }
 
+/**
+ * One project's submission gate, counted over EVERY finding it holds.
+ *
+ * The Inconsistency board used to derive this in the browser from the page of
+ * findings it had read (200 by default, most severe first), so a blocking
+ * finding of lower severity past that page was not counted and the screen could
+ * read "clear" over a project checkPromotionBlocked holds. Counted here, from
+ * the authority each finding was recorded with, by checkPromotionBlocked's own
+ * rule: a finding leaves the gate in a GATE_CLEARING_STATES review state, and
+ * an open one with blocks_promotion blocks.
+ */
+export interface ProjectGate {
+  /** Every finding recorded for the project, in any review state. */
+  total: number;
+  /** Still on the gate: neither resolved nor superseded. */
+  open: number;
+  resolved: number;
+  superseded: number;
+  /** Open findings, by the authority recorded on them. */
+  blocking: number;
+  needApproval: number;
+  needEscalation: number;
+  needReview: number;
+  advisory: number;
+  /** Open findings whose authority_state is none of the five above (the column has no CHECK). */
+  unrecognized: number;
+  blocked: boolean;
+}
+
+/** The gate from `(review_state, authority_state, n)` groups. Pure, so it is tested without a database. */
+export function projectGateFromCounts(
+  groups: ReadonlyArray<{ review_state: string; authority_state: string; n: number | string }>,
+): ProjectGate {
+  const gate: ProjectGate = {
+    total: 0, open: 0, resolved: 0, superseded: 0,
+    blocking: 0, needApproval: 0, needEscalation: 0, needReview: 0, advisory: 0, unrecognized: 0,
+    blocked: false,
+  };
+  for (const g of groups) {
+    const n = Number(g.n);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    gate.total += n;
+    if (GATE_CLEARING_STATES.has(g.review_state as ReviewState)) {
+      if (g.review_state === 'superseded') gate.superseded += n;
+      else gate.resolved += n;
+      continue;
+    }
+    gate.open += n;
+    switch (g.authority_state) {
+      case 'blocks_promotion': gate.blocking += n; break;
+      case 'requires_approval': gate.needApproval += n; break;
+      case 'requires_escalation': gate.needEscalation += n; break;
+      case 'requires_review': gate.needReview += n; break;
+      case 'advisory_only': gate.advisory += n; break;
+      default: gate.unrecognized += n;
+    }
+  }
+  gate.blocked = gate.blocking > 0;
+  return gate;
+}
+
 /** Shortest reason accepted for a review transition — the same bar the revalue route sets. */
 export const REVIEW_REASON_MIN = 8;
 
@@ -642,8 +703,15 @@ class ContradictionEngineService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Execute the consequence path for a finding.
-   * Creates real governed objects (review threads, memos, etc.)
+   * Execute the consequence path for a finding — through
+   * contradictionConsequenceService, the one implementation.
+   *
+   * This was a second copy that created nothing: review_thread, memo,
+   * escalation, harmonization_rewrite and dossier_review_attachment each
+   * returned an invented id (`thread_contradiction_<id>_<ms>`, `memo_<id>`,
+   * `escalation_<id>`, `action_<id>`) and set consequence_executed = true.
+   * Replaced 2026-10-15 (zero duplication; the service creates the object or
+   * refuses).
    */
   async executeConsequence(
     findingId: string,
@@ -653,92 +721,23 @@ class ContradictionEngineService {
     consequenceType: ConsequenceType;
     consequenceObjectId: string | null;
     success: boolean;
+    error?: string;
   }> {
     const finding = await this.getFinding(findingId, organizationId);
     if (!finding) throw new Error('Finding not found');
     if (!finding.consequenceType) throw new Error('No consequence type assigned');
 
-    log.info('Executing consequence', { findingId, type: finding.consequenceType });
-
-    let consequenceObjectId: string | null = null;
-    let success = false;
-
-    switch (finding.consequenceType) {
-      case 'review_thread': {
-        // Create a review thread for the contradiction — works for all object types
-        consequenceObjectId = `thread_contradiction_${findingId}_${Date.now()}`;
-        success = true;
-        break;
-      }
-      case 'assumption_supersession': {
-        // Supersede the older assumption
-        if (finding.objectAType === 'assumption' && finding.objectBType === 'assumption') {
-          const older = finding.objectAId;
-          const newer = finding.objectBId;
-          await assumptionRegistryService.supersede(older, {
-            organizationId,
-            replacementId: newer,
-            reason: `Superseded by contradiction detection: ${finding.title}`,
-            performedBy: executedBy,
-          });
-          consequenceObjectId = newer;
-          success = true;
-        }
-        break;
-      }
-      case 'contradiction_memo': {
-        // Create a contradiction memo artifact
-        consequenceObjectId = `memo_${findingId}`;
-        success = true;
-        break;
-      }
-      case 'escalation': {
-        // Update finding to escalation state
-        consequenceObjectId = `escalation_${findingId}`;
-        success = true;
-        break;
-      }
-      case 'harmonization_rewrite':
-      case 'dossier_review_attachment': {
-        consequenceObjectId = `action_${findingId}`;
-        success = true;
-        break;
-      }
-    }
-
-    // Log the consequence execution
-    await pool!.query(
-      `
-      INSERT INTO contradiction_consequence_log (
-        organization_id, finding_id, consequence_type,
-        consequence_object_id, consequence_object_type,
-        executed_by, execution_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `,
-      [
-        organizationId,
-        findingId,
-        finding.consequenceType,
-        consequenceObjectId,
-        finding.consequenceType,
-        executedBy,
-        success ? 'executed' : 'failed',
-      ]
-    );
-
-    // Update the finding
-    if (success) {
-      await pool!.query(
-        `
-        UPDATE contradiction_findings
-        SET consequence_object_id = $1, consequence_executed = true, updated_at = NOW()
-        WHERE id = $2 AND organization_id = $3
-      `,
-        [consequenceObjectId, findingId, organizationId]
-      );
-    }
-
-    return { consequenceType: finding.consequenceType, consequenceObjectId, success };
+    const { contradictionConsequenceService } = await import('./contradiction-consequence-service.js');
+    const result = await contradictionConsequenceService.executeConsequence(finding, finding.consequenceType, executedBy, {
+      organizationId,
+      projectId: finding.projectId ?? undefined,
+    });
+    return {
+      consequenceType: finding.consequenceType,
+      consequenceObjectId: result.consequenceObjectId,
+      success: result.success,
+      ...(result.error ? { error: result.error } : {}),
+    };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -783,6 +782,20 @@ class ContradictionEngineService {
       blockingFindings,
       warningFindings,
     };
+  }
+
+  /** The project's whole submission gate (ProjectGate). A read failure throws — it is never an empty gate. */
+  async projectGate(organizationId: number, projectId: number): Promise<ProjectGate> {
+    const result = await pool!.query(
+      `
+      SELECT review_state, authority_state, COUNT(*)::int AS n
+      FROM contradiction_findings
+      WHERE organization_id = $1 AND project_id = $2
+      GROUP BY review_state, authority_state
+    `,
+      [organizationId, projectId]
+    );
+    return projectGateFromCounts(result.rows);
   }
 
   /**
@@ -1078,20 +1091,16 @@ class ContradictionEngineService {
       finding = await this.applyOverlays(finding, input.domain, input.programType);
     }
 
-    // Reactive: auto-trigger consequence if confidence and authority allow
+    // Reactive: propagate the finding's impact to linked objects. A
+    // consequence is NOT taken here: autoTriggerConsequence logged
+    // "auto_created_review_thread" / "auto_created_contradiction_memo" /
+    // "auto_superseded_assumption" to impact_propagation_log for every
+    // high-confidence finding and created none of them (removed 2026-10-15).
+    // A person takes a consequence through POST
+    // /api/authoring-actions/contradiction-consequence.
     if (finding.consequenceType) {
       try {
         const { reactiveDependencyService } = await import('./reactive-dependency-service');
-
-        // Auto-trigger consequence path
-        await reactiveDependencyService.autoTriggerConsequence({
-          organizationId: finding.organizationId,
-          projectId: input.projectId ?? 0,
-          findingId: finding.id,
-          confidenceLevel: finding.confidenceLevel,
-          authorityState: finding.authorityState,
-          consequenceType: finding.consequenceType,
-        });
 
         // Propagate impact to linked objects
         if (input.projectId) {
@@ -1530,10 +1539,12 @@ class ContradictionEngineService {
       const { db } = await import('../db.js');
       const { detectBodySpecificGaps } = await import('./body-aware-authoring.js');
 
+      // This tenant's artifacts: the read named no organization, so a scan
+      // could raise findings in one tenant from another tenant's text.
       const artifacts =
         (await db.query.concept2cureArtifacts
           ?.findMany?.({
-            where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+            where: (a: any, { and, eq }: any) => and(eq(a.projectId, projectId), eq(a.organizationId, organizationId)),
           })
           ) || [];
 

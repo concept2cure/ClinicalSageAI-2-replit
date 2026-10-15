@@ -1,0 +1,9 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/shared/regulatory/project-bootstrap.ts
+   714:1  warning  File has too many lines (1002). Maximum allowed is 500                            max-lines
+   897:1  warning  Function 'ms' has too many parameters (6). Maximum allowed is 5                   max-params
+  1249:8  warning  Function 'resolveTaskBlueprintKey' has a complexity of 32. Maximum allowed is 15  complexity
+
+✖ 3 problems (0 errors, 3 warnings)
+

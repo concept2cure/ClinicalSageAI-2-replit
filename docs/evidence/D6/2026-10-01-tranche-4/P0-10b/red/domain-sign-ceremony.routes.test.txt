@@ -1,0 +1,490 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+{
+  "timestamp": "2026-10-01T03:17:00.774Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 46ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 6ms
+   → expected 201 to be 401 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 5ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 5ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 8ms
+   → expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 4ms
+   → expected 201 to be 500 // Object.is equality
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 3ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 4ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 5ms
+   → expected 201 to be 401 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 11ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 4ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+   → expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+   → expected 201 to be 500 // Object.is equality
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 3ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+   → expected 201 to be 401 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+   → expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 2ms
+   → expected 201 to be 500 // Object.is equality
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 2ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+   → expected 201 to be 401 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 3ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+   → expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 2ms
+   → expected 201 to be 500 // Object.is equality
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'update', with no password asked 2ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 4ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+   → expected 201 to be 401 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 2ms
+   → expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 2ms
+   → expected 201 to be 500 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 4ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+   → expected 201 to be 401 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 2ms
+   → expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+   → expected 201 to be 500 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 2ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+   → expected 200 to be 401 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 2ms
+   → expected 200 to be 201 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 2ms
+   → expected 200 to be 500 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 42 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:206:24
+    204|   it('refuses a request that carries no credentials, and writes nothin…
+    205|     const res = await post({ meaning: 'approval' });
+    206|     expect(res.status).toBe(400);
+       |                        ^
+    207|     expect(codeOf(res.body)).toBe('ESIGNATURE_COMPONENT_MISSING');
+    208|     expect(reverifySigner).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing
+AssertionError: expected 201 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:214:24
+    212|   it('refuses a wrong password, and writes nothing', async () => {
+    213|     const res = await post({ meaning: 'approval', password: 'not the p…
+    214|     expect(res.status).toBe(401);
+       |                        ^
+    215|     expect(codeOf(res.body)).toBe('PASSWORD_VERIFICATION_FAILED');
+    216|     expect(NOTHING_WRITTEN(h.log)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:221:24
+    219|   it('refuses a meaning outside the closed vocabulary before checking …
+    220|     const res = await post({ meaning: 'rubber-stamp', password: GOOD }…
+    221|     expect(res.status).toBe(400);
+       |                        ^
+    222|     expect(codeOf(res.body)).toBe('SIGNATURE_MEANING_UNKNOWN');
+    223|     expect(reverifySigner).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:229:24
+    227|   it('refuses a signature that declares no meaning, and writes nothing…
+    228|     const res = await post({ password: GOOD });
+    229|     expect(res.status).toBe(400);
+       |                        ^
+    230|     expect(codeOf(res.body)).toBe('ESIGNATURE_COMPONENT_MISSING');
+    231|     expect(reverifySigner).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together
+AssertionError: expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+    "DOMAIN",
+    "LEDGER:sign:irb-submission:5",
+-   "SIGNATURE:irb-submission:5",
+    "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:238:19
+    236|     const res = await post({ meaning: 'approval', password: GOOD });
+    237|     expect(res.status).toBe(201);
+    238|     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:${route.tar…
+       |                   ^
+    239|     expect(reverifySigner.mock.calls[0][0]).toBe(42);
+    240|     expect(reverifySigner.mock.calls[0][1]).toMatchObject({ password: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+AssertionError: expected 201 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:251:24
+    249|     h.sigFail = new Error('signer identity unresolvable');
+    250|     const res = await post({ meaning: 'approval', password: GOOD });
+    251|     expect(res.status).toBe(500);
+       |                        ^
+    252|     expect(h.log).toContain('ROLLBACK');
+    253|     expect(h.log).not.toContain('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together
+AssertionError: expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+    "DOMAIN",
+    "LEDGER:sign:iacuc-protocol:5",
+-   "SIGNATURE:iacuc-protocol:5",
+    "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:238:19
+    236|     const res = await post({ meaning: 'approval', password: GOOD });
+    237|     expect(res.status).toBe(201);
+    238|     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:${route.tar…
+       |                   ^
+    239|     expect(reverifySigner.mock.calls[0][0]).toBe(42);
+    240|     expect(reverifySigner.mock.calls[0][1]).toMatchObject({ password: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together
+AssertionError: expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+    "DOMAIN",
+    "LEDGER:sign:ibc-registration:5",
+-   "SIGNATURE:ibc-registration:5",
+    "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:238:19
+    236|     const res = await post({ meaning: 'approval', password: GOOD });
+    237|     expect(res.status).toBe(201);
+    238|     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:${route.tar…
+       |                   ^
+    239|     expect(reverifySigner.mock.calls[0][0]).toBe(42);
+    240|     expect(reverifySigner.mock.calls[0][1]).toMatchObject({ password: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together
+AssertionError: expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+    "DOMAIN",
+    "LEDGER:sign:rim-product:5",
+-   "SIGNATURE:rim-product:5",
+    "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:238:19
+    236|     const res = await post({ meaning: 'approval', password: GOOD });
+    237|     expect(res.status).toBe(201);
+    238|     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:${route.tar…
+       |                   ^
+    239|     expect(reverifySigner.mock.calls[0][0]).toBe(42);
+    240|     expect(reverifySigner.mock.calls[0][1]).toMatchObject({ password: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together
+AssertionError: expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+    "DOMAIN",
+    "LEDGER:sign:consent-form:5",
+-   "SIGNATURE:consent-form:5",
+    "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:238:19
+    236|     const res = await post({ meaning: 'approval', password: GOOD });
+    237|     expect(res.status).toBe(201);
+    238|     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:${route.tar…
+       |                   ^
+    239|     expect(reverifySigner.mock.calls[0][0]).toBe(42);
+    240|     expect(reverifySigner.mock.calls[0][1]).toMatchObject({ password: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together
+AssertionError: expected [ 'BEGIN', 'DOMAIN', …(2) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+    "DOMAIN",
+    "LEDGER:sign:protocol-deviation:5",
+-   "SIGNATURE:protocol-deviation:5",
+    "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:238:19
+    236|     const res = await post({ meaning: 'approval', password: GOOD });
+    237|     expect(res.status).toBe(201);
+    238|     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:${route.tar…
+       |                   ^
+    239|     expect(reverifySigner.mock.calls[0][0]).toBe(42);
+    240|     expect(reverifySigner.mock.calls[0][1]).toMatchObject({ password: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:206:24
+    204|   it('refuses a request that carries no credentials, and writes nothin…
+    205|     const res = await post({ meaning: 'approval' });
+    206|     expect(res.status).toBe(400);
+       |                        ^
+    207|     expect(codeOf(res.body)).toBe('ESIGNATURE_COMPONENT_MISSING');
+    208|     expect(reverifySigner).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:214:24
+    212|   it('refuses a wrong password, and writes nothing', async () => {
+    213|     const res = await post({ meaning: 'approval', password: 'not the p…
+    214|     expect(res.status).toBe(401);
+       |                        ^
+    215|     expect(codeOf(res.body)).toBe('PASSWORD_VERIFICATION_FAILED');
+    216|     expect(NOTHING_WRITTEN(h.log)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:221:24
+    219|   it('refuses a meaning outside the closed vocabulary before checking …
+    220|     const res = await post({ meaning: 'rubber-stamp', password: GOOD }…
+    221|     expect(res.status).toBe(400);
+       |                        ^
+    222|     expect(codeOf(res.body)).toBe('SIGNATURE_MEANING_UNKNOWN');
+    223|     expect(reverifySigner).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:229:24
+    227|   it('refuses a signature that declares no meaning, and writes nothing…
+    228|     const res = await post({ password: GOOD });
+    229|     expect(res.status).toBe(400);
+       |                        ^
+    230|     expect(codeOf(res.body)).toBe('ESIGNATURE_COMPONENT_MISSING');
+    231|     expect(reverifySigner).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together
+AssertionError: expected 200 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 200
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:237:24
+    235|   it('with the ceremony: the act, the ledger sign and the signature ro…
+    236|     const res = await post({ meaning: 'approval', password: GOOD });
+    237|     expect(res.status).toBe(201);
+       |                        ^
+    238|     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:${route.tar…
+    239|     expect(reverifySigner.mock.calls[0][0]).toBe(42);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/42]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:251:24
+    249|     h.sigFail = new Error('signer identity unresolvable');
+    250|     const res = await post({ meaning: 'approval', password: GOOD });
+    251|     expect(res.status).toBe(500);
+       |                        ^
+    252|     expect(h.log).toContain('ROLLBACK');
+    253|     expect(h.log).not.toContain('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/42]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  42 failed | 4 passed (46)
+   Start at  03:16:58
+   Duration  3.98s (transform 2.31s, setup 86ms, import 3.39s, tests 195ms, environment 0ms)
+

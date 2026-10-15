@@ -56,8 +56,11 @@ export interface GovernedStudyRow {
 export interface M26SectionRow {
   n: string;
   l: string;
-  /** 'complete' (rendered) | 'missing' — pill-styled by the surface. */
-  st: 'complete' | 'missing';
+  /**
+   * 'complete' (rendered) | 'missing' | 'not_assessed' (nothing this view reads
+   * records it — 2.6.1) — pill-styled by the surface.
+   */
+  st: 'complete' | 'missing' | 'not_assessed';
   note?: string;
 }
 
@@ -214,8 +217,7 @@ export function assembleNonclinicalSummary(
   const hasTox = categories.some(
     (c) => c === 'toxicology' || c === 'genotoxicity' || c === 'carcinogenicity' || c === 'reproductive_tox',
   );
-  const present: Record<'intro' | 'pharm' | 'pk' | 'tox', boolean> = {
-    intro: true, // 2.6.1 is always renderable boilerplate
+  const present: Record<'pharm' | 'pk' | 'tox', boolean> = {
     pharm: hasPharm,
     pk: hasPk,
     tox: hasTox,
@@ -226,9 +228,15 @@ export function assembleNonclinicalSummary(
     tox: 'No toxicology study in the registry (required per ICH M3(R2)).',
   };
 
-  const m26: M26SectionRow[] = M26_SUBSECTIONS.map((s) => {
-    if (present[s.bucket]) return { n: s.n, l: s.l, st: 'complete' };
-    return { n: s.n, l: s.l, st: 'missing', note: missingNote[s.bucket as 'pharm' | 'pk' | 'tox'] };
+  // 2026-10-15: 2.6.1 was `intro: true` ("always renderable boilerplate"), so every
+  // org — even one with no studies — saw §2.6.1 Introduction 'complete'. The
+  // registry holds study records only; nothing here records whether it is written.
+  const m26: M26SectionRow[] = M26_SUBSECTIONS.map(({ n, l, bucket }) => {
+    if (bucket === 'intro') {
+      return { n, l, st: 'not_assessed', note: 'Not assessed: the study registry does not record whether the 2.6.1 introduction (product, pharmacologic class, mechanism, indication) has been written.' };
+    }
+    if (present[bucket]) return { n, l, st: 'complete' };
+    return { n, l, st: 'missing', note: missingNote[bucket] };
   });
 
   // Module 4 placement — finalized / total per 4.2.x group (honest readiness).

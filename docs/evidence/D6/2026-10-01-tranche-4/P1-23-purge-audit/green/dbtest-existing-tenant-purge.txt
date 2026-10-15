@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":40,"time":"2026-10-01T06:46:21.478Z","pid":21431,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_21431_mup67wpe-digest","deletedRows":{"purge_probe_rows":1}},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":30,"time":"2026-10-01T06:46:21.519Z","pid":21431,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:46:21.520Z","pid":21431,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:46:21.520Z","pid":21431,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 101ms
+{"level":20,"time":"2026-10-01T06:46:21.586Z","pid":21431,"hostname":"vm","context":{"table":"purge_probe_no_such_table"},"msg":"[tenant-offboarding] Purge skipped a table not present in this schema"}
+{"level":40,"time":"2026-10-01T06:46:21.594Z","pid":21431,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_21431_mup67wpe-digest","deletedRows":{"purge_probe_rows":1}},"msg":"[tenant-offboarding] Tenant purged"}
+stderr | tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 130ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 46ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 22ms
+{"level":40,"time":"2026-10-01T06:46:21.672Z","pid":21431,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_21431_mup67wpe-digest","deletedRows":{"purge_probe_rows":1}},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":40,"time":"2026-10-01T06:46:21.688Z","pid":21431,"hostname":"vm","context":{"organizationId":90601,"digest":"purge_21431_mup67wpe-truncated","tablesFailed":[],"truncatedTables":["vault.documents"]},"msg":"[tenant-full-export] Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge"}
+{"level":40,"time":"2026-10-01T06:46:21.704Z","pid":21431,"hostname":"vm","context":{"organizationId":90601,"digest":"purge_21431_mup67wpe-partial","tablesFailed":["projects"],"truncatedTables":[]},"msg":"[tenant-full-export] Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge"}
+{"level":40,"time":"2026-10-01T06:46:21.766Z","pid":21431,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_21431_mup67wpe-digest","deletedRows":{"vault.document_chunks":0,"vault.documents":1,"regulatory_programs":1,"purge_probe_rows":1}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 36ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 14ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 14ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 14ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 51ms
+{"level":40,"time":"2026-10-01T06:46:21.811Z","pid":21431,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_21431_mup67wpe-digest","deletedRows":{"vault.document_chunks":0,"vault.documents":1}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07) 46ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 40ms
+{"level":40,"time":"2026-10-01T06:46:21.883Z","pid":21431,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_21431_mup67wpe-digest","deletedRows":{"purge_probe_rows":1}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 28ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  06:46:18
+   Duration  3.75s (transform 1.67s, setup 81ms, import 2.37s, tests 833ms, environment 0ms)
+

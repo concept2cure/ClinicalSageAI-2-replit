@@ -15,16 +15,18 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import type { PoolClient } from 'pg';
 import { authMiddleware, requireAdminRole } from '../auth.js';
 import {
   generateApiKey,
-  validateApiKey as validateApiKeyService,
   revokeApiKey,
   listApiKeys,
   getApiKeyUsage,
 } from '../services/api-key-service.js';
 import { API_KEY_SCOPES } from '../../shared/schema/api-keys.js';
-import auditService from '../services/auditService';
+import { writeChainedAuditRow } from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
+import { requestPgClient } from '../db/requestDb';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('api-keys');
@@ -49,6 +51,8 @@ const createApiKeySchema = z.object({
     .refine(d => d.getTime() > Date.now(), 'expiresAt must be in the future')
     .optional(),
   rateLimit: z.number().int().positive().optional(),
+  // Optional for existing integrations; the admin drawer requires it.
+  reason: z.string().trim().min(1).max(2000).optional(),
   metadata: z.record(z.unknown()).optional(),
 });
 
@@ -56,13 +60,27 @@ const createApiKeySchema = z.object({
 router.use(authMiddleware);
 router.use(requireAdminRole);
 
+/** The auth boundary pins an idle connection and sets session scope; it does
+ * not open a transaction. Each mutation owns one transaction on that connection,
+ * and the credential and chained row use that same client. No pooled fallback. */
+async function apiKeyTransaction<T>(req: Request, callback: (client: Pick<PoolClient, 'query'>) => Promise<T>): Promise<T> {
+  const client = requestPgClient(req) as Pick<PoolClient, 'query'>;
+  await client.query('BEGIN');
+  try {
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  }
+}
+
 /**
- * Best-effort audit for API-key lifecycle events. Keys grant
- * programmatic access to a tenant's data and AI spend — every
- * creation, revocation, and expiration is a security event that
- * regulators expect in the audit trail. Audit-write failures are
- * non-fatal so a transient pipeline issue never breaks the admin
- * UX.
+ * Successful creation and revocation enlist their chained audit row on the
+ * same transaction client as the credential write. A failed audit throws and
+ * the credential write rolls back; the raw key is returned only after commit.
+ * Refused attempts mutate no credential and use the general audit recorder.
  */
 async function auditApiKeyEvent(entry: {
   action: 'api_key_created' | 'api_key_revoked';
@@ -75,8 +93,8 @@ async function auditApiKeyEvent(entry: {
   userAgent?: string;
   outcome: 'success' | 'failure';
   reason?: string;
-}): Promise<void> {
-  const apiKeyAudit = await auditService.logAction({
+}, client?: Pick<PoolClient, 'query'>): Promise<AuditRowOutcome> {
+  const auditEntry = {
     tenantId: entry.organizationId,
     userId: entry.userId,
     action: entry.action,
@@ -84,19 +102,19 @@ async function auditApiKeyEvent(entry: {
     resourceId: String(entry.keyId),
     ipAddress: entry.ipAddress,
     userAgent: entry.userAgent,
+    reason: entry.reason,
     details: {
       outcome: entry.outcome,
       reason: entry.reason,
       keyPrefix: entry.keyPrefix,
       scopes: entry.scopes,
     },
-  });
-  if (!apiKeyAudit.persisted) {
-    log.warn('API-key audit write failed (non-fatal)', {
-      err: apiKeyAudit.error ?? 'no durable store accepted the row',
-      action: entry.action,
-    });
+  };
+  if (client) {
+    await writeChainedAuditRow(client, auditEntry);
+    return { persisted: true, chained: true };
   }
+  return recordAuditRow(auditEntry);
 }
 
 // ============================================================================
@@ -126,33 +144,23 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
     // z.string().trim() has already normalized `name`.
-    const { name, scopes, expiresAt, rateLimit, metadata } = parsed.data;
+    const { name, scopes, expiresAt, rateLimit, metadata, reason } = parsed.data;
     const parsedExpiry: Date | undefined = expiresAt;
 
-    const result = await generateApiKey(
-      organizationId,
-      name,
-      scopes,
-      userId,
-      parsedExpiry,
-      typeof rateLimit === 'number' && rateLimit > 0 ? rateLimit : 60,
-      metadata
-    );
-
-    // Audit: key creation. Records WHO minted the key, WHAT scopes
-    // it carries, and the prefix (NOT the raw key — that's returned
-    // to the caller exactly once and never logged). Future security
-    // reviews can trace which admin authorized which scope grant.
-    await auditApiKeyEvent({
-      action: 'api_key_created',
-      organizationId,
-      userId,
-      keyId: result.keyId,
-      keyPrefix: result.keyPrefix,
-      scopes,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      outcome: 'success',
+    const result = await apiKeyTransaction(req, async client => {
+      const key = await generateApiKey(
+        { organizationId, name, scopes, createdBy: userId, expiresAt: parsedExpiry,
+          rateLimit: typeof rateLimit === 'number' && rateLimit > 0 ? rateLimit : 60, metadata },
+        client,
+      );
+      // The prefix is public; the full secret never enters the audit record.
+      await auditApiKeyEvent({
+        action: 'api_key_created', organizationId, userId,
+        keyId: key.keyId, keyPrefix: key.keyPrefix, scopes, reason,
+        ipAddress: req.ip, userAgent: req.headers['user-agent'] as string | undefined,
+        outcome: 'success',
+      }, client);
+      return key;
     });
 
     return res.status(201).json({
@@ -163,6 +171,7 @@ router.post('/', async (req: Request, res: Response) => {
       name,
       scopes,
       expiresAt: parsedExpiry || null,
+      auditTrail: { persisted: true, chained: true },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -211,14 +220,24 @@ router.delete('/:id', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid key ID' });
     }
 
-    const revoked = await revokeApiKey(keyId, organizationId);
+    const revoked = await apiKeyTransaction(req, async client => {
+      const changed = await revokeApiKey(keyId, organizationId, client);
+      if (changed) {
+        await auditApiKeyEvent({
+          action: 'api_key_revoked', organizationId, userId, keyId,
+          ipAddress: req.ip, userAgent: req.headers['user-agent'] as string | undefined,
+          outcome: 'success',
+        }, client);
+      }
+      return changed;
+    });
 
     if (!revoked) {
       // Audit: revocation attempt against a key that doesn't exist
       // or belongs to another tenant — still an event worth recording.
       // revokeApiKey itself scopes by organizationId so a foreign-
       // tenant id naturally returns false here.
-      await auditApiKeyEvent({
+      const auditTrail = await auditApiKeyEvent({
         action: 'api_key_revoked',
         organizationId,
         userId,
@@ -230,23 +249,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
       });
       return res.status(404).json({
         error: 'API key not found or already revoked',
+        auditTrail,
       });
     }
 
-    // Audit: successful revocation. Inspectors can correlate this
-    // with the original api_key_created event to see the full
-    // lifecycle of a credential.
-    await auditApiKeyEvent({
-      action: 'api_key_revoked',
-      organizationId,
-      userId,
-      keyId,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      outcome: 'success',
-    });
-
-    return res.json({ message: 'API key revoked successfully', keyId });
+    return res.json({ message: 'API key revoked successfully', keyId, auditTrail: { persisted: true, chained: true } });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     log.error('Failed to revoke API key', { err: message });

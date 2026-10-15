@@ -1,0 +1,31 @@
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > an empty history does not claim that the document has no recorded events 5018ms
+ × client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a truncated history labels its returned accessible window without claiming a global history count 5021ms
+ × client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a malformed history row is a failed read, not an empty history or a render crash 5011ms
+ FAIL  client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > an empty history does not claim that the document has no recorded events
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx:94:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a truncated history labels its returned accessible window without claiming a global history count
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx:101:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault history — current-access read limits > a malformed history row is a failed read, not an empty history or a render crash
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx:108:18
+TypeError: e.hash.slice is not a function
+ ❯ client/src/concept2cure/v2/surfaces/Vault.tsx:472:94
+ ❯ DocumentHistory client/src/concept2cure/v2/surfaces/Vault.tsx:465:28
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+     Errors  1 error
+   Start at  01:11:33
+   Duration  17.81s (transform 1.29s, setup 145ms, import 1.50s, tests 15.45s, environment 521ms)

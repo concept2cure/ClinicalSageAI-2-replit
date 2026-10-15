@@ -1,0 +1,298 @@
+# HEAD 0812a990, 2026-10-01T14:38:11Z. Final test file against the unfixed verifiers.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+{
+  "timestamp": "2026-10-01T14:38:14.663Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /api/c2c/actions/verify-chain answers 409 and names the missing head 40ms
+   → expected 200 to be 409 // Object.is equality
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity reports the integrity not ok, with the anchor break 9ms
+   → expected true to be false // Object.is equality
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the licensing history reports the record store broken, not verified 10ms
+   → expected { status: 'verified', …(3) } to match object { status: 'broken', …(2) }
+(2 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only 2ms
+   → expected true to be false // Object.is equality
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > npm run ops:verify-audit-chain reports public.audit_logs broken and exits 1 8ms
+   → expected { table: 'public.audit_logs', …(4) } to match object { status: 'broken', …(1) }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain 6ms
+   → expected undefined to match object { verified: false, …(1) }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity 5ms
+   → expected undefined to match object { verified: false, …(1) }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified 4ms
+   → expected { status: 'verified', …(3) } to match object { status: 'verified', …(2) }
+(2 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict 2ms
+   → expected undefined to match object { verified: false, …(1) }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain 2ms
+   → expected undefined to match object { verified: false, …(1) }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok 3ms
+   → expected 200 to be greater than or equal to 500
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error, never a verdict > npm run ops:verify-audit-chain reports public.audit_logs unverifiable (exit 2), not ok 2ms
+   → expected 'ok' to be 'unverifiable' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /api/c2c/actions/verify-chain answers 409 and names the missing head
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:182:24
+    180|   it('GET /api/c2c/actions/verify-chain answers 409 and names the miss…
+    181|     const res = await request(actionsApp()).get('/api/c2c/actions/veri…
+    182|     expect(res.status).toBe(409);
+       |                        ^
+    183|     expect(res.body.ok).toBe(false);
+    184|     expect(res.body.head).toMatchObject({ verified: false, status: 'br…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity reports the integrity not ok, with the anchor break
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:193:30
+    191|     const res = await request(part11App()).get('/audit-trail/seal-inte…
+    192|     expect(res.status).toBe(200);
+    193|     expect(res.body.data.ok).toBe(false);
+       |                              ^
+    194|     expect(res.body.data.head).toMatchObject({ verified: false, status…
+    195|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the licensing history reports the record store broken, not verified
+AssertionError: expected { status: 'verified', …(3) } to match object { status: 'broken', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "head": "broken",
+-   "reason": "chain-head-broken",
+-   "status": "broken",
++   "reason": "chain-and-seals-verified",
++   "status": "verified",
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:201:32
+    199|     const res = await request(licensingApp()).get('/api/admin/master/l…
+    200|     expect(res.status).toBe(200);
+    201|     expect(res.body.integrity).toMatchObject({ status: 'broken', reaso…
+       |                                ^
+    202|   });
+    203|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:206:22
+    204|   it("the tenant verdict (ledger, export, compliance reports) is broke…
+    205|     const seven = await verifyTenantChainOnAdminScope(7);
+    206|     expect(seven.ok).toBe(false);
+       |                      ^
+    207|     expect(seven.head).toMatchObject({ verified: false, status: 'broke…
+    208|     expect(seven.head.breaks.map((b) => b.organizationId)).toEqual([7]…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > npm run ops:verify-audit-chain reports public.audit_logs broken and exits 1
+AssertionError: expected { table: 'public.audit_logs', …(4) } to match object { status: 'broken', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "firstBreak": {
+-     "reason": "chain head missing or different against the latest anchor",
+-   },
+-   "status": "broken",
++   "status": "ok",
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:218:18
+    216|     const report = await verifyAuditChains(scriptClient(), { AUDIT_ANC…
+    217|     const logs = report.tables.find((t: { table: string }) => t.table …
+    218|     expect(logs).toMatchObject({ status: 'broken', firstBreak: { reaso…
+       |                  ^
+    219|     expect(logs.head).toMatchObject({ verified: false, status: 'broken…
+    220|     expect(report.verdict).toBe('broken');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain
+AssertionError: expected undefined to match object { verified: false, …(1) }
+
+- Expected:
+{
+  "status": "not_configured",
+  "verified": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:234:27
+    232|     expect(res.status).toBe(200);
+    233|     expect(res.body.ok).toBe(true);
+    234|     expect(res.body.head).toMatchObject({ verified: false, status: 'no…
+       |                           ^
+    235|     expect(res.body.head.reason).toMatch(LABEL);
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity
+AssertionError: expected undefined to match object { verified: false, …(1) }
+
+- Expected:
+{
+  "status": "not_configured",
+  "verified": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:240:32
+    238|   it('GET /audit-trail/seal-integrity', async () => {
+    239|     const res = await request(part11App()).get('/audit-trail/seal-inte…
+    240|     expect(res.body.data.head).toMatchObject({ verified: false, status…
+       |                                ^
+    241|     expect(res.body.data.head.reason).toMatch(LABEL);
+    242|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified
+AssertionError: expected { status: 'verified', …(3) } to match object { status: 'verified', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "head": "not-verified",
+    "reason": "chain-and-seals-verified",
+    "status": "verified",
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:247:32
+    245|     answerLicensingReads();
+    246|     const res = await request(licensingApp()).get('/api/admin/master/l…
+    247|     expect(res.body.integrity).toMatchObject({ status: 'verified', rea…
+       |                                ^
+    248|   });
+    249|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict
+AssertionError: expected undefined to match object { verified: false, …(1) }
+
+- Expected:
+{
+  "status": "not_configured",
+  "verified": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:253:20
+    251|     const v = await verifyTenantChainOnAdminScope(7);
+    252|     expect(v.ok).toBe(true);
+    253|     expect(v.head).toMatchObject({ verified: false, status: 'not_confi…
+       |                    ^
+    254|     expect(v.head.reason).toMatch(LABEL);
+    255|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain
+AssertionError: expected undefined to match object { verified: false, …(1) }
+
+- Expected:
+{
+  "status": "not_configured",
+  "verified": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:261:23
+    259|     const logs = report.tables.find((t: { table: string }) => t.table …
+    260|     expect(logs.status).toBe('ok');
+    261|     expect(logs.head).toMatchObject({ verified: false, status: 'not_co…
+       |                       ^
+    262|     expect(logs.head.reason).toMatch(LABEL);
+    263|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok
+AssertionError: expected 200 to be greater than or equal to 500
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:270:24
+    268|     h.objects.set('anchors/audit-chain/2026/10/02/x.json', Buffer.from…
+    269|     const res = await request(actionsApp()).get('/api/c2c/actions/veri…
+    270|     expect(res.status).toBeGreaterThanOrEqual(500);
+       |                        ^
+    271|     expect(res.body.ok).toBeUndefined();
+    272|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error, never a verdict > npm run ops:verify-audit-chain reports public.audit_logs unverifiable (exit 2), not ok
+AssertionError: expected 'ok' to be 'unverifiable' // Object.is equality
+
+Expected: "unverifiable"
+Received: "ok"
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:278:25
+    276|     const report = await verifyAuditChains(scriptClient(), { AUDIT_ANC…
+    277|     const logs = report.tables.find((t: { table: string }) => t.table …
+    278|     expect(logs.status).toBe('unverifiable');
+       |                         ^
+    279|     expect(logs.reason).toMatch(/anchor could not be read/);
+    280|     expect(report.exitCode).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  14:38:11
+   Duration  3.23s (transform 1.60s, setup 105ms, import 2.66s, tests 103ms, environment 0ms)
+

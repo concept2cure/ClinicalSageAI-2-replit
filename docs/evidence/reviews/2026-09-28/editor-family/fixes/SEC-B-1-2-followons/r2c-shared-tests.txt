@@ -1,0 +1,125 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > sorts object keys 2ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > sorts recursively 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > leaves array order alone 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > serializes a null value as null 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > serializes a bare null as null 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > drops a key whose value is undefined 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > serializes a bare undefined as null 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > maps non-finite numbers to null 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > escapes strings through JSON.stringify 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > keeps a key that is the empty string 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > sorts by code unit, not locale 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > honours toJSON 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > serializes an empty object and array 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > maps a function value to null 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > emits valid JSON for every vector — the provenance copy did not 2ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — golden vectors > agrees with JSON.stringify once keys are already sorted 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — the property the hashes depend on > is insensitive to key insertion order 7ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — the property the hashes depend on > is sensitive to array order, which is content and not layout 1ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — the property the hashes depend on > distinguishes an absent key from a null one 0ms
+ ✓ shared/__tests__/canonical-json.test.ts > canonical JSON — the property the hashes depend on > produces a stable 64-char hex digest 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > a pre-migration row (all null) is undeclared, unknown, unreviewed 3ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > null normalises to the undeclared default 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > undefined normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > a string normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > a number normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > an array normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > an empty object normalises to the undeclared default 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis 'reviewed_by_fda' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis 'verified' rather than forwarding it 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis 'STATUTORY_TRANSCRIPTION' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis '' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses the unrecognised source_basis ' ' rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses an unrecognised review_status rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > refuses an unrecognised confidence rather than forwarding it 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > treats whitespace-only prose as absent — it is not a statement 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > trims prose that is a statement 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > accepts the snake_case shape Postgres returns 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > downgrades a "reviewed" pack that names no reviewer 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > accepts a reviewed pack that does name one 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > takes the database's drift verdict over the raw status 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > strips a withdrawn reviewer rather than leaving the name attached 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > accepts the camelCase shape the API emits, so re-normalising is idempotent 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > round-trips the review attribution, which is nested on the way out 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > normalizeRulePackProvenance — nothing becomes a claim > the exported default cannot be mutated by a caller 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > an unreviewed statutory transcription is NOT green 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > an unreviewed harmonised standard is NOT green either 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > only a reviewed, still-current pack is green — and it names the reviewer 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > a sign-off whose tree has changed is NOT green, and says the review does not cover this 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > drift and never-reviewed are distinguishable on screen 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > a reasoned construction warns, and says to check it against the regulation 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > undeclared is the strongest signal, and distinct from constructed 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > guidance is not described as law 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > surfaces the governing rule and the recorded uncertainties 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > every basis produces a non-empty headline and detail 0ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > rulePackProvenanceSelectSql > reads through to_jsonb so an absent column yields NULL instead of 42703 1ms
+ ✓ shared/__tests__/rule-pack-provenance.test.ts > rulePackProvenanceSelectSql > refuses an alias that is not a plain identifier 1ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is the store route followed by an id in the shape the store mints 3ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not dot segments 1ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not dot segments after a valid id 1ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a trailing dot segment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not percent-encoded dot segments 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not upper-case percent-encoding 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a half-encoded dot segment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not backslash segments 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an extra segment 1ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a query 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a fragment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not leading whitespace 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a trailing newline 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a tab inside the id 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an absolute URL to the route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a protocol-relative URL 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a doubled slash 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an id the store does not mint 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an upper-case id 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not the bare route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not another API route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is a base64 PNG, JPEG or GIF: the formats both export branches file 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not WebP, which Word cannot hold 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not SVG, a script container 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not SVG as text 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not HTML 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not image/jpg, which the export does not embed 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not a payload that is not base64 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not a payload carrying markup 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not an empty payload 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "https://collector.example/p.png?d=secret" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "http://example.com/fig.png" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "javascript:alert(1)" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "blob:https://app.example/0b3c" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "x.png" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > a value that is not a string is not a figure 0ms
+ ✓ shared/__tests__/versioned-digest.test.ts > readCanonVersion — absence means old, never current > treats a missing marker as version 1 2ms
+ ✓ shared/__tests__/versioned-digest.test.ts > readCanonVersion — absence means old, never current > accepts the marker in either the number or string form a column may hold 0ms
+ ✓ shared/__tests__/versioned-digest.test.ts > readCanonVersion — absence means old, never current > treats anything unrecognized as version 1 rather than guessing forward 1ms
+ ✓ shared/__tests__/versioned-digest.test.ts > sealing and verifying across the boundary > seals at the current version 1ms
+ ✓ shared/__tests__/versioned-digest.test.ts > sealing and verifying across the boundary > verifies a record sealed BEFORE the serializer changed 1ms
+ ✓ shared/__tests__/versioned-digest.test.ts > sealing and verifying across the boundary > verifies a record sealed AFTER, with the shared serializer 0ms
+ ✓ shared/__tests__/versioned-digest.test.ts > sealing and verifying across the boundary > would fail a v1 record if the version were ignored — which is why it is stored 0ms
+ ✓ shared/__tests__/versioned-digest.test.ts > sealing and verifying across the boundary > still detects tampering under either version 1ms
+ ✓ shared/__tests__/versioned-digest.test.ts > sealing and verifying across the boundary > routes per record, so old and new coexist in one table 1ms
+ ✓ shared/__tests__/versioned-digest.test.ts > the default-parameter trap (rule 3) > normalizing first is what makes an absent marker mean version 1 0ms
+ ✓ shared/__tests__/versioned-digest.test.ts > canonicalAsSealed > is insensitive to key order at v2, at every depth 0ms
+ ✓ shared/__tests__/versioned-digest.test.ts > canonicalAsSealed > preserves the legacy defect at v1, which is the whole reason v1 is kept 0ms
+ ✓ shared/__tests__/client-visibility.test.ts > CLIENT_VISIBILITY domain > models the four-state domain 2ms
+ ✓ shared/__tests__/client-visibility.test.ts > CLIENT_VISIBILITY domain > CLIENT_REVIEW_STATES excludes internal but covers every other state 1ms
+ ✓ shared/__tests__/client-visibility.test.ts > isClientReviewState > accepts exactly the three client-visible states 1ms
+ ✓ shared/__tests__/client-visibility.test.ts > isClientReviewState > rejects internal, null, undefined, and unknown values 1ms
+ ✓ shared/__tests__/client-visibility.test.ts > groupByClientReviewState > buckets rows by state, preserving input order within each bucket 1ms
+ ✓ shared/__tests__/client-visibility.test.ts > groupByClientReviewState > NEVER buckets internal rows — they are dropped, not misfiled 0ms
+ ✓ shared/__tests__/client-visibility.test.ts > groupByClientReviewState > drops unclassified (null) and out-of-domain values 0ms
+ ✓ shared/__tests__/client-visibility.test.ts > groupByClientReviewState > returns all-empty buckets for an empty input 0ms
+ ✓ shared/__tests__/client-visibility.test.ts > countClientReviewGroups > counts per state and totals across visible states only 1ms
+ ✓ shared/__tests__/client-visibility.test.ts > countClientReviewGroups > reports zeros for empty groups 0ms
+
+ Test Files  5 passed (5)
+      Tests  115 passed (115)
+   Start at  00:18:27
+   Duration  645ms (transform 434ms, setup 355ms, import 269ms, tests 80ms, environment 1ms)
+

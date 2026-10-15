@@ -1,0 +1,13 @@
+Mutant R38-every-match-asserted: a declined or conditional verdict is named as stated (HS-6)
+
+--- server/services/ana/answer-grounding.ts
+- .filter((v) => isAssertedVerdict(answer, v.index, v.match))
++ 
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > does not name a verdict declined, made conditional, or about a workflow step 16ms
+ × tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > does not name a verdict asked, doubted, or made conditional after it 1ms
+      Tests  2 failed | 87 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

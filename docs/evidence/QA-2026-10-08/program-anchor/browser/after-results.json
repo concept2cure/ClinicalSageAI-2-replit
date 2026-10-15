@@ -1,0 +1,33 @@
+[
+  {
+    "program": "BX-256",
+    "programId": "099991d1-dac8-43c5-b88a-8baab26194ee",
+    "scheduleOfEventsStatus": 200,
+    "saysNoScheduleRecord": false,
+    "schedulePanelExcerpt": "(panel heading not found)",
+    "screenshot": "01-BX-256-project-home.png"
+  },
+  {
+    "program": "Vorelinib (BX-512)",
+    "programId": "50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+    "scheduleOfEventsStatus": 200,
+    "saysNoScheduleRecord": false,
+    "schedulePanelExcerpt": "(panel heading not found)",
+    "screenshot": "02-Vorelinib-BX-512--project-home.png"
+  },
+  {
+    "createStatus": 201,
+    "programId": "b9073205-f254-4674-ad47-4526fe7ddb51",
+    "code": "P19",
+    "projectAnchorId": 25,
+    "projectAnchorCreated": true
+  },
+  {
+    "program": "new-wizard-program",
+    "programId": "b9073205-f254-4674-ad47-4526fe7ddb51",
+    "scheduleOfEventsStatus": 200,
+    "saysNoScheduleRecord": false,
+    "schedulePanelExcerpt": "(panel heading not found)",
+    "screenshot": "05-new-wizard-program-project-home.png"
+  }
+]

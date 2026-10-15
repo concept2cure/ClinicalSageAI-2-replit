@@ -1,0 +1,5 @@
+# 6. Mutation — the canvas does not pass focusSection: the editor opens at its first section, not the one asked about
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a section not yet drafted is one ask away (2026-10-01) > opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section 4908ms
+   → Unable to find role="button" and name "Insert into 2.5.2 as tracked suggestion"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 skipped (18)

@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-09-28T01:38:02.054Z",
+  "generatedAt": "2026-10-01T22:45:11.641Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 71,
+    "requirements": 82,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 0
+    "uncovered": 11
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 10,
+      "requirements": 21,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 0
+      "uncovered": 11
     },
     "Authoring": {
       "requirements": 15,
@@ -603,7 +603,7 @@
       "id": "URS-VAULT-004",
       "app": "Vault",
       "doc": "URS-002-VAULT.md",
-      "requirement": "The program's vault read model lists every stored document under its folder tree with an honest `documentCount`; every field is derived from a stored column (no fabricated folders or counts).",
+      "requirement": "The program's vault read model lists every stored document under its folder tree with an honest `documentCount` (a document's versions are one document: URS-VAULT-012); every field is derived from a stored column (no fabricated folders or counts).",
       "part11": "none",
       "risk": "medium",
       "steps": [
@@ -773,6 +773,182 @@
         "rationale": "negative test"
       },
       "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-011",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A new version of a document is recorded by naming the document (`supersedesDocumentId`). The server assigns the next major version (1.0 → 2.0), keeps the document code and filing, and links the predecessor. It refuses a version that is not the current one, bytes the document already holds, and a document outside the caller's program or organisation, and the database refuses a link outside the document's family.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Version check-in: server-assigned version, kept code and filing, a validated predecessor link",
+        "risk": "high — a wrong link or number misstates which bytes a filing used",
+        "assurance": "scripted",
+        "rationale": "positive check-in, known-bytes and stale-head negatives; database refusals in `tests/db/vault-version-checkin.dbtest.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-012",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A document is listed once, at its current version, with how many versions it has. Every version of a document is listed newest first with its version, SHA-256, size, uploader and date, and each downloads hash-verified. The document's history carries the events of every version, each naming its version. Search lists current versions unless earlier ones are asked for. A predecessor link the lineage rule would refuse is shown as not linked, never as lineage.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "One entry per document at its current version; every version listed, hash-verified on download, and in the document's history; search shows current versions unless asked",
+        "risk": "high — a superseded version shown as current, or a version missing from the list or history, puts the wrong bytes in a filing or hides who changed what",
+        "assurance": "scripted",
+        "rationale": "tree, versions, download, history and search checks; the legacy-link, cross-tenant and check-in agreement cases in `tests/db/vault-versions.dbtest.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-013",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A Vault version is reviewed and approved on the document lifecycle, apart from its filing. Sending it for review starts one record per version, taking title, type and content hash from the stored version. The review and the approval are electronic signatures: the signer re-authenticates, states a reason, and the record holds the printed name, meaning and time, bound to the version's SHA-256. The uploader and whoever sent the version for review may neither review nor approve it, the reviewer does not approve it, and only the current version is approved. Approving a version supersedes the earlier approved versions of the same document in the same transaction. An approved version's details cannot be edited. A version counts as settled only when approved.",
+      "part11": "§11.10(e), §11.50, §11.70, §11.200",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Review and approval of a Vault version: e-signatures bound to the version's bytes, separation of duties, only the current version approved, supersession in the same transaction, approved details frozen",
+        "risk": "high: an approval over other bytes, a self-approval, or two approved versions of one document misstates what was approved for a filing",
+        "assurance": "scripted (credentialed)",
+        "rationale": "OQ-VAULT-13/14. The refusals, supersession, rollback and the start's audit row are in `tests/db/vault-lifecycle.dbtest.ts`, on PostgreSQL with RLS on"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-014",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person files captured sources from the project's data room into the Vault. Each source goes through the same governed ingest as a Vault upload and lands suggested or unfiled, never confirmed by the system. The answer names each source as filed (with its version and where it landed), already in the Vault (with its version), or refused with the reason. One source's refusal does not undo another's filing, and the batch reports that it is not complete. A source whose stored bytes no longer match the checksum recorded at capture is refused and nothing is stored. A viewer is refused. Another organisation's or another project's source is refused as not found.",
+      "part11": "§11.10(c), §11.10(d), §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "File captured sources from the data room through the governed ingest, with a result for each",
+        "risk": "high: changed bytes filed under a capture's name, a source filed into the wrong project, or a partial batch read as done would put the wrong evidence in the Vault",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-15. The byte-check, antivirus, cross-tenant, cross-project, superseded and viewer cases are in `tests/db/vault-data-room-file.dbtest.ts`, on PostgreSQL with RLS on"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-015",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person confirms the suggested filings in one folder together, with one reason for change that is required, and is recorded on each document's filing and in its own audit row. Each document is confirmed on its own. A document whose folder or status changed since the person loaded the list is refused, and not touched. The answer names each document, and the batch reports when not every filing was confirmed. The Vault shows how many suggested filings await confirmation, counted over the whole program.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Confirm suggested filings together with one required reason, each with its own audit row; a filing changed since the list was loaded is refused",
+        "risk": "high: a confirmation without a reason, or one that lands on a placement the person did not see, puts a machine's guess in the dossier under a person's name",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-16. The reason, conflict, viewer and count cases are in `tests/db/vault-placement-batch.dbtest.ts`, on PostgreSQL with RLS on"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-016",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Two versions of one document are compared: whether their bytes are the same (from the recorded SHA-256s), each recorded detail that differs, and the lines of their extracted text that changed, unchanged runs collapsed. A comparison that was capped says so. A version with no extracted text gets no text comparison and the answer names it. Versions of different documents are refused, and another organisation's document is not found.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Compare two versions of one document: bytes, details and text",
+        "risk": "medium: a comparison that hides a change, or shows two documents as versions of one, misleads a reviewer, but changes no record",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-17. The family, tenancy, missing-text and refusal cases are in `tests/db/vault-version-compare.dbtest.ts`; the caps and the edit budget in `server/services/vault/__tests__/vault-version-compare.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-017",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A search across every project the organisation holds finds documents by title, file name and content, each named with its project, ranked, paginated with a real total, current versions unless earlier ones are asked for. Another organisation's documents are never among them. An empty query answers no results, and a failed search is reported as a failure, not as no matches. A project's own search still searches only that project.",
+      "part11": "§11.10(d)",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Search every project of the organisation at once",
+        "risk": "medium: the risk is disclosure across tenants, which RLS and the statement's own organisation predicate each prevent; a missed hit misleads but changes no record",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-18. The cross-tenant, version and empty-query cases are in `tests/db/vault-library-search.dbtest.ts`, and the predicate itself in `server/services/vault/__tests__/vault-search.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-018",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person can re-prove every stored version of a program: each is re-read through the verifier downloads use and checked against the SHA-256 recorded at ingest. Each verdict (verified, altered, missing, unreadable, or unverifiable when no SHA-256 was recorded) is written to the audit chain against that version, naming the person. The answer gives the counts and names every version that was not verified, and says when the program has more versions than one check covers. A viewer is refused.",
+      "part11": "§11.10(c), §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Re-prove every stored version against its recorded SHA-256, each verdict chained",
+        "risk": "high: undetected alteration or loss of a stored record defeats ALCOA \"original\"; a check that called a changed file intact would be worse than none",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-19 on an untampered installation. The altered and missing cases, with real files changed on disk, and the chained verdicts are in `tests/db/vault-fixity.dbtest.ts`; unreadable, unverifiable and the batch limit in `server/services/vault/__tests__/vault-fixity.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-019",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person can relate one Vault version to another version of the organisation, in any of its projects, as supported by, references or based on it, with an optional note. Both documents list the relationship, each in its own words, and a related version that has since been superseded says so. A document cannot be related to itself or to another version of itself, nor twice in the same way, nor to another organisation's document. Removing a relationship requires a reason for change and keeps the record; nothing changes or deletes a relationship otherwise. Each relate and removal is written to the audit chain against both documents, naming the person. A viewer is refused.",
+      "part11": "§11.10(c), §11.10(e)",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Relate one Vault version to another, remove a relationship with a reason, each change chained on both documents",
+        "risk": "medium: a relationship is context a reviewer follows, not the record itself, so a wrong one misleads but alters no document; a relationship that changed or vanished silently, or reached another organisation's document, would be a data-integrity and confidentiality failure",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-20. The refusals (self, same document, duplicate, unknown kind, another organisation's document or project, a viewer), the table's refusal of every other change, DELETE and TRUNCATE for every role, row security, and the tenant purge are in `tests/db/vault-document-relationships.dbtest.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-020",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Each version in a document's version list names every live submission leaf that carries it: the submission, the sequence and its status, the section, and the leaf's lifecycle operation. A version carried by none says so. A removed leaf, or a leaf in a removed sequence or submission, is not listed, and no other organisation's leaf is. The version also names each official eSTAR export whose record names it as an attachment's source, from the artifact registry or the export's audit row; an export whose record names no source is not inferred from a hash. Each version also carries the server's own verdict on whether it would be transmitted (null when it is approved and current, otherwise the reason the transmit refusal prints), and each placement its sequence's dispatch status; the Vault and the Place dialog print that verdict and never judge approval themselves.",
+      "part11": "§11.10(e)",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "List the live submission leaves that carry each Vault version",
+        "risk": "medium: a read that informs a revision (replace, not new), and transmits nothing. A placement left off could lead to a wrong lifecycle operation in the next sequence; another organisation's placement shown would be a confidentiality failure",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-21. The removed leaf and removed sequence, another organisation's leaf, and the read's organisation filter with row security bypassed are in `tests/db/vault-where-used.dbtest.ts`, with the eSTAR exports written by both real export writers: the registry and the unplaced audit row, a record naming no source (not inferred), and another organisation's record"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-021",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person annotates a Vault version with a comment or a change request, anchored to the whole version, to a page of a version with a recorded page count (the count is recorded with it), or to a passage of its extracted text. A passage is accepted only where it is found at its stated position in the version's stored text, counted in characters (code points); the annotation records that text's SHA-256, so a later change of the text, or of the page count, is shown, and the quote stays as written. Reading a version's text to select a passage is recorded in the audit trail; a read that cannot be recorded is refused. Others reply. An open annotation is resolved with a note, optionally naming the version of its document that addressed it, or retracted by its author with a reason; never both. Its words, author, anchor and time cannot change; its outcome cannot be undone; it cannot be deleted while its version exists, not by a cascade from its program either. Each act is written to the audit chain against the version, with the words, their SHA-256 and the person's name. The review and approval dialogs say which annotations were open on every version when they opened; signing does not resolve them and is not refused for them. A viewer is refused; another organisation's annotations are never read. The document history says when older entries are not shown.",
+      "part11": "§11.10(c), §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Annotate a Vault version; reply; resolve with a note or retract with a reason; read its text to quote a passage",
+        "risk": "high: a change request that silently vanished, was reworded or was attributed to the wrong person, a quote that drifted from the text it named, a program DELETE that erased the review record, an unrecorded disclosure of document text, or a cross-tenant read, would each misstate the review record",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-22. The record's own guards (posted open and checked in SQL, frozen words and anchor, write-once outcome, author-only retraction, DELETE only by the owner once the version is gone, proven against the trigger-depth bypass and the program cascade, no TRUNCATE), the purge, the history window and 15 mutants are in `tests/db/vault-version-annotations-record.dbtest.ts`; the flows, code-point anchoring and roles in `tests/db/vault-version-annotations.dbtest.ts`. Accepted: a page anchor is checked against the page count only (a passage carries no page); re-anchoring after a text change is not attempted, it is shown as stale"
+      },
+      "verdict": "uncovered"
     },
     {
       "id": "URS-AUTH-001",

@@ -1,0 +1,2 @@
+[ci:pdf-runtime-canonicality] FAIL — the gate no longer detects its own probe cases; it would pass anything.
+exit 1

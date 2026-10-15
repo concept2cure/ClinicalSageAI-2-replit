@@ -1,0 +1,25 @@
+{
+  "baselineWarnings": 36,
+  "current": [
+    {
+      "file": "useAnaChat-history-timeout.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "useAnaChat-stream-refusals.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "useAnaChat.ts",
+      "errors": 0,
+      "warnings": 36
+    },
+    {
+      "file": "anaInterruptedHosts.test.tsx",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

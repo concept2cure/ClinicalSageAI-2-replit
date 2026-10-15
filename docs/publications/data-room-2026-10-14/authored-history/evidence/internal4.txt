@@ -1,0 +1,267 @@
+Great—starting **Step 1: Database schema for the Document Authoring system**.
+These are **exact, non‑guessing** instructions for your Replit agent. They will **only** create/align the DB tables required by the editor and will not modify any unrelated data.
+
+---
+
+## Step 1 — Create/Align the Document Authoring Schema (no inference)
+
+### 1. Pre‑flight (read‑only checks)
+
+1. In the Replit shell, print the database URL so we know we can connect:
+
+   ```bash
+   echo "$DATABASE_URL"
+   ```
+
+   * If empty, stop and ask for the correct Postgres connection string. Do **not** proceed.
+
+2. Verify connectivity:
+
+   ```bash
+   psql "$DATABASE_URL" -c "select now();"
+   ```
+
+3. Check if any **doc\_**\* tables already exist (we will align, not overwrite):
+
+   ```bash
+   psql "$DATABASE_URL" -c "\dt doc_*"
+   ```
+
+> If any `doc_*` tables exist, we will **only add missing columns/indexes** (idempotently).
+> If none exist, we will create the full schema below.
+
+---
+
+### 2. Apply the schema (idempotent)
+
+> **Run this whole block in one shot.** It is safe to re‑run (uses `if not exists` & guarded `alter table`).
+
+```sql
+-- ===============================
+-- CMC Document Authoring Core DDL
+-- Safe to re-run (idempotent)
+-- ===============================
+
+-- 0) housekeeping helpers
+create or replace function set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end$$;
+
+-- -------------------------------
+-- 1) Documents and Sections
+-- -------------------------------
+create table if not exists doc_documents (
+  doc_id       uuid primary key default gen_random_uuid(),
+  title        text not null,
+  module       text not null,                -- e.g., 'M3'
+  product_code text,
+  status       text not null default 'DRAFT',-- DRAFT/IN_REVIEW/APPROVED/ARCHIVED
+  locale       text not null default 'en',
+  created_by   text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  check (status in ('DRAFT','IN_REVIEW','APPROVED','ARCHIVED'))
+);
+
+create table if not exists doc_sections (
+  section_id   uuid primary key default gen_random_uuid(),
+  doc_id       uuid not null references doc_documents(doc_id) on delete cascade,
+  code         text not null,                -- e.g., '3.2.S.1'
+  title        text not null,
+  order_idx    int not null default 0,
+  content      jsonb not null default '{}'::jsonb,  -- editor JSON (TipTap/ProseMirror)
+  track_changes boolean not null default false,
+  updated_by   text,
+  updated_at   timestamptz not null default now(),
+  unique (doc_id, code)
+);
+
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname='trg_doc_documents_updated_at') then
+    create trigger trg_doc_documents_updated_at
+      before update on doc_documents
+      for each row execute function set_updated_at();
+  end if;
+
+  if not exists (select 1 from pg_trigger where tgname='trg_doc_sections_updated_at') then
+    create trigger trg_doc_sections_updated_at
+      before update on doc_sections
+      for each row execute function set_updated_at();
+  end if;
+end$$;
+
+create index if not exists idx_doc_sections_doc on doc_sections(doc_id);
+
+-- -------------------------------
+-- 2) Revisions (append-only) & Comments
+-- -------------------------------
+create table if not exists doc_revisions (
+  rev_id     uuid primary key default gen_random_uuid(),
+  section_id uuid not null references doc_sections(section_id) on delete cascade,
+  snapshot   jsonb not null,                 -- full content snapshot
+  diff       jsonb,                          -- optional minimal patch
+  author     text,
+  comment    text,
+  created_at timestamptz not null default now()
+);
+
+-- forbid updates/deletes to keep audit immutable
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname='trg_doc_revisions_block_ud') then
+    create trigger trg_doc_revisions_block_ud
+      before update or delete on doc_revisions
+      for each row execute function pg_catalog.raise_exception('doc_revisions is append-only');
+  end if;
+exception when duplicate_object then
+  -- ignore if it already exists
+  null;
+end$$;
+
+create table if not exists doc_comments (
+  comment_id  uuid primary key default gen_random_uuid(),
+  section_id  uuid not null references doc_sections(section_id) on delete cascade,
+  author      text,
+  body        text not null,
+  anchor      jsonb,                          -- editor position (from,to,attr)
+  status      text not null default 'OPEN',   -- OPEN/RESOLVED
+  created_at  timestamptz not null default now(),
+  resolved_by text,
+  resolved_at timestamptz,
+  check (status in ('OPEN','RESOLVED'))
+);
+
+-- -------------------------------
+-- 3) Citations (token snapshots) & Guidance cache
+-- -------------------------------
+create table if not exists doc_citations (
+  cite_id     uuid primary key default gen_random_uuid(),
+  section_id  uuid not null references doc_sections(section_id) on delete cascade,
+  anchor      jsonb,                          -- where citation sits in content
+  source      text not null,                  -- e.g., 'QUALITY.SPECS.DP'
+  payload     jsonb not null,                 -- frozen snapshot (for traceability)
+  created_at  timestamptz not null default now()
+);
+
+create table if not exists doc_guidance_cache (
+  guide_id     uuid primary key default gen_random_uuid(),
+  section_code text not null,                 -- e.g., '3.2.S.1'
+  region       text not null default 'ICH',   -- ICH/FDA/EMA/PMDA
+  guidance_md  text not null,                 -- rendered markdown
+  deficiencies jsonb not null default '[]'::jsonb,
+  updated_at   timestamptz not null default now(),
+  unique (section_code, region)
+);
+
+create index if not exists idx_doc_citations_section on doc_citations(section_id);
+
+-- -------------------------------
+-- 4) Safe alignment (only if columns missing)
+-- -------------------------------
+-- examples; these "alter if missing" blocks are harmless if already present
+do $$
+begin
+  if not exists (select 1 from information_schema.columns where table_name='doc_sections' and column_name='track_changes') then
+    alter table doc_sections add column track_changes boolean not null default false;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='doc_documents' and column_name='locale') then
+    alter table doc_documents add column locale text not null default 'en';
+  end if;
+end$$;
+
+-- ===============================
+-- END OF DDL
+-- ===============================
+```
+
+**How to run it**
+
+* If you have a migration runner, add the SQL there and run your normal migration process.
+  *OR* run directly:
+
+  ```bash
+  psql "$DATABASE_URL" -f ./doc_authoring_schema.sql
+  ```
+
+  (Place the SQL in a temporary file named as above.)
+
+**Post‑apply verification**
+
+```bash
+psql "$DATABASE_URL" -c "\d doc_documents"
+psql "$DATABASE_URL" -c "\d doc_sections"
+psql "$DATABASE_URL" -c "\d doc_revisions"
+psql "$DATABASE_URL" -c "\d doc_citations"
+psql "$DATABASE_URL" -c "\d doc_guidance_cache"
+```
+
+You should see the columns exactly as defined.
+
+---
+
+### 3. Minimal seed (optional, for UI smoke test)
+
+Create one document and one section so the editor has something to load:
+
+```sql
+-- Insert a test document if none exists
+insert into doc_documents (title, module, product_code, created_by)
+select 'M3 – Test Product', 'M3', 'TAB-10MG', 'system'
+where not exists (select 1 from doc_documents where product_code='TAB-10MG')
+returning doc_id;
+```
+
+> Copy the returned `doc_id` and run:
+
+```sql
+-- Replace :DOC_ID with the returned UUID
+insert into doc_sections (doc_id, code, title, order_idx, content, updated_by)
+values
+  (:DOC_ID, '3.2.S.1', 'General Information', 10,
+   '{"type":"doc","content":[{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"3.2.S.1 - General Information"}]},{"type":"paragraph","content":[{"type":"text","text":"Placeholder draft. Use /Insert token to add live data."}]}]}',
+   'system')
+on conflict (doc_id, code) do nothing
+returning section_id;
+```
+
+**Verify counts**
+
+```bash
+psql "$DATABASE_URL" -c "select count(*) as docs from doc_documents; select count(*) as sections from doc_sections;"
+```
+
+---
+
+### 4. Success criteria (for this step only)
+
+* The five core tables exist: `doc_documents`, `doc_sections`, `doc_revisions`, `doc_comments`, `doc_citations`, plus `doc_guidance_cache`.
+* Triggers for `updated_at` are installed on `doc_documents` and `doc_sections`.
+* `doc_revisions` is **append‑only** (update/delete blocked).
+* A test document/section can be inserted via SQL and will be visible to the UI (Step 2 will add APIs).
+
+---
+
+### 5. Safety/rollback
+
+* This script **does not drop** any tables.
+* If you must rollback the test seed, delete only rows created in this step:
+
+  ```bash
+  delete from doc_sections where doc_id in (select doc_id from doc_documents where product_code='TAB-10MG');
+  delete from doc_documents where product_code='TAB-10MG';
+  ```
+
+---
+
+**When this step is complete**, tell me:
+
+* “Tables created” (or “Aligned: existing tables found”),
+* The `doc_id` of the test document, and
+* Any errors printed by Postgres.
+
+Then we’ll move to **Step 2 (Authoring API: CRUD + history + export + AI endpoints)** and wire the editor UI to this schema.
+

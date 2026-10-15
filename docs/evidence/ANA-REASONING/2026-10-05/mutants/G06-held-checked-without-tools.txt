@@ -1,0 +1,12 @@
+Mutant G06-held-checked-without-tools: the draft is checked without what the tools returned this turn
+
+--- server/routes/ana-ri/stream.ts
+- const check = checkProposal(params, [...turnContextSources, ...toolEvidenceCorpus]);
++ const check = checkProposal(params, [...turnContextSources]);
+
+Tests run: server/routes/ana-ri/__tests__/stream-proposal-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 85ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

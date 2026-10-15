@@ -1,0 +1,139 @@
+$ node scripts/seed-ga-demo.mjs   # npm run db:seed
+
+╔══════════════════════════════════════════════════════╗
+║  Concept2Cure.RI — GA Demo Data Seeder               ║
+╚══════════════════════════════════════════════════════╝
+
+[1/6] Creating organization...
+   ✓ Organization: Concept2Cure Therapeutics (id=1)
+[2/6] Creating admin user...
+   ✓ Admin: jm.smith@concept2cure.pro (id=1)
+   • auth_users not present — skipped
+[3/6] Creating team members...
+   ✓ Sarah Chen (manager)
+   ✓ Raj Patel (manager)
+   ✓ Emily Watson (member)
+   ✓ David Kim (member)
+   ✓ Lisa Johnson (member)
+   ✓ Michael Brown (member)
+[4/6] Creating demo projects...
+   ✓ Client workspace: Default Workspace (id 1)
+   ✓ Project: C2C-001 IND Program (42%)
+   ✓ Project: C2C-001 Phase I Clinical Trial (28%)
+   ✓ Project: C2C-002 Pre-IND Program (15%)
+   ✓ Project: MDX-100 510(k) Submission (65%)
+[5/6] Creating demo documents...
+   ✓ Doc: C2C-001 Module 1 — Administrative & Prescribing Information
+   ✓ Doc: C2C-001 Module 2.5 — Clinical Overview
+   ✓ Doc: C2C-001 Module 2.7 — Clinical Summary
+   ✓ Doc: C2C-001 Module 3 — Quality (CMC)
+   ✓ Doc: C2C-001 Investigator Brochure v3.0
+   ✓ Doc: C2C-001 Phase I Protocol — First-in-Human
+   ✓ Doc: MDX-100 Predicate Device Comparison
+   ✓ Doc: MDX-100 Performance Testing Report
+   ✓ Doc: Annual Product Quality Review — C2C-001 API
+   ✓ Doc: Standard Operating Procedure — Document Control
+[6/6] Creating audit trail entries...
+   ⚠ auth_audit_log table not found — skipping
+[7/7] Creating submission core + evidence demo data...
+   ⚠ submissions/coauthor_documents not found — run drizzle-kit push first, skipping
+   ✓ Change assessments demo seeded
+   ✓ Biopharma pediatric plans demo seeded
+   ✓ Biopharma orphan designations demo seeded
+   ✓ Biopharma lifecycle supplements demo seeded
+   ✓ AnA formatting templates demo seeded
+   ✓ Enablement learning paths demo seeded
+   ✓ Enablement certifications demo seeded
+   ✓ Nonclinical studies (+ SEND) demo seeded
+   ✓ Clinical operations studies demo seeded
+   ✓ Labeling document + translations demo seeded
+   ✓ risk: 9 risk items + 14 controls seeded for BX-204 CGM
+   ✓ agency meetings: 4 meetings seeded
+   ✓ design controls: 7 design inputs seeded
+   ✓ cro portfolio: 5 sponsor clients seeded into cro_clients (10 studies, 6 submissions, 5 milestones, 5 lead assignments)
+   ✓ reg change: 5 regulatory change(s) seeded into reg_change_items
+   ✓ decision lineage: 3 governed artifact trail(s) seeded into the real workflow/audit store
+   ✓ dossier map: project 5 (BX-204) + 19 real CTD project_sections seeded
+   ⚠ coauthor_documents not found — run migrations first, skipping ind-checklist seed
+   ✓ shadow review: 5 reviewer lens run(s) seeded into the real store (submission 1)
+   ✓ market access: 7 payer/HTA position row(s) seeded into market_access_positions
+   ✓ program journey: 1 journey(s) seeded into program_journeys (+ 9 stage rows each)
+   ✓ labeling pi: 18 label section(s) seeded into labeling_pi_sections
+   ⚠ ind program BX-256: not seeded by the GA demo — skipping
+   ⚠ ind program BX-512: not seeded by the GA demo — skipping
+   ✓ protocol dev: 1 real protocol seeded (doc 1: sections, objectives, eligibility, SoA, risks)
+   ⚠ ind authoring doc: program BX-512 not seeded — skipping
+   ✓ research admin: 6 roster member(s) + 20 training record(s) seeded into the real store
+   ✓ NDA cockpit: 11 Module-1 admin document rows seeded
+   ✓ NDA cockpit: 4 Refuse-to-File risk rows seeded
+   ✓ MAA cockpit: 13 non-US Module-1 assembled-component rows seeded
+   ✓ EU SmPC: 10 QRD section status rows seeded
+   ✓ BLA cockpit: 4 biologics assessment rows seeded
+   ✓ Lifecycle: 4 recurring post-approval obligation rows seeded
+   ✓ CMC change control: 3 proposed-change row(s) seeded into cmc_change_controls
+   ✓ Specialty sub-cards: 3 PREA milestone(s), 2 RPD/grant(s), 3 advocacy row(s) seeded
+   ✓ QMS quality: 9 controlled docs, 36 training acks, 6 changes, 9 links seeded
+   ⚠ 124-investigator-brochure.mjs skipped — there is no unique or exclusion constraint matching the ON CONFLICT specification (backing table/columns not provisioned for this surface)
+   ✓ tasks+approvals: 12 unified tasks seeded
+   ✓ tasks+approvals: 3 workflow templates + 6 steps seeded
+   ✓ tasks+approvals: 5 approval workflows (5 documents, 10 step approvals) seeded
+   ✓ tasks+approvals: workflow history seeded
+   ✓ task-graph: 4 tasks, 7 dependency edges, 2 archived, 16 anchored to project 1
+   ✓ task-graph: ga-demo-utask-007 has TWO blocking predecessors — completing either alone leaves it blocked (cascade reverse-edge read)
+   ✓ task-templates: 3 workflow templates (3 inserted)
+   ✓ task-templates: BUILTIN-510K overridden by the org playbook (the built-in catalog entry drops out of GET /templates)
+   ✓ audit timeline: 12 governed-action audit_logs events seeded
+   ✓ submission: 8 transmittals + 9 validation findings seeded
+   ✓ udi: 8 device records seeded for BX-204 variants
+   ⚠ 50-postmarket.mjs skipped — admin is not defined (backing table/columns not provisioned for this surface)
+   ✓ mdx-aggregates: 6 regulatory programs seeded (portfolio + 24-month pace)
+   ✓ mdx-aggregates: 12 kit sections seeded — AnA drafts + device DHF
+   ✓ mdx-aggregates: 6 submission blockers seeded (analytics root-cause list)
+   ✓ mdx-aggregates: 6 engineering artifacts seeded (BOM lines + deliverables)
+   ✓ mdx-aggregates: 3 IVDR classifications seeded (IV-415 CoDx)
+   ✓ mdx-aggregates: 3 IVDR PER documents seeded (completeness flags)
+   ✓ mdx-aggregates: 3 IVDR analytical validations seeded (legacy IvdSurface)
+   ✓ mdx-aggregates: 2 IVDR clinical evidence rows seeded (legacy IvdSurface)
+   ✓ mdx-aggregates: 1 IVDR GSPR assessment seeded (Annex I completeness)
+   ✓ collab-review: 4 threads, 9 comments, 5 review tasks, 4 notifications, 2 live section locks
+   ✓ vault: 9 artifacts + 22 version rows seeded
+   ⚠ client_memory_entries not found — skipping
+   ✓ symbols: 12 ISO 15223-1 labeling symbols seeded
+   ✓ programs: 5 regulatory programs seeded
+   ✓ correspondence: 4 correspondence rows seeded
+   ✓ tlf: 5 TLF builds seeded
+   ⚠ reg_submissions not found — skipping CMC submission
+   ✓ pdev: 9 program activities across 2 programs seeded
+   ✓ evidence-objects: 11 evidence objects seeded into evidence_objects
+   ⚠ project_memory_entries not found — skipping HAQ seed
+   ✓ human factors: 1 HFE/UE file + 6 use scenario(s) seeded into hf_engineering_files
+   ✓ safety narrative: 3 SAE case(s) seeded into adverse_events
+   ⚠ coauthor_documents not found — run migrations first, skipping nda-cockpit seed
+   ✓ evidence asks: 1 grounded ask seeded on the real AI trace chain
+   ✓ doc journey: 1 document + 3 sections, 1 revision, 1 comment, 1 freeze seeded into the real authoring store (doc 7befd71f-36c6-4fb4-841e-120b3e009d59)
+   Domain modules: 41 seeded, 2 skipped (unbuilt surfaces).
+
+╔══════════════════════════════════════════════════════╗
+║  GA DEMO DATA SEEDED SUCCESSFULLY                   ║
+╠══════════════════════════════════════════════════════╣
+║                                                      ║
+║  Organization: Concept2Cure Therapeutics              ║
+║  Tier:         Enterprise                            ║
+║  Industry:     Biotech                               ║
+║                                                      ║
+║  ── LOGIN CREDENTIALS ──                             ║
+║  Email:    jm.smith@concept2cure.pro                 ║
+║  Password: pass-word                                 ║
+║  Role:     Admin (CSO)                               ║
+║                                                      ║
+║  ── TEAM (all use password: demo-2026) ──            ║
+║  sarah.chen@concept2cure.pro    (VP Reg Affairs)     ║
+║  raj.patel@concept2cure.pro     (Dir Clinical Ops)   ║
+║  emily.watson@concept2cure.pro  (Sr Medical Writer)  ║
+║  david.kim@concept2cure.pro     (QA Lead)            ║
+║  lisa.johnson@concept2cure.pro  (CMC Specialist)     ║
+║  michael.brown@concept2cure.pro (Biostatistician)    ║
+║                                                      ║
+╚══════════════════════════════════════════════════════╝
+
+exit=0

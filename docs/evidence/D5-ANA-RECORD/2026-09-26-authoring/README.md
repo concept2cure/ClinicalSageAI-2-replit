@@ -157,11 +157,40 @@ errors. The ESLint ratchet shows no file gaining a warning.
 - **Status and resolution columns.** An owner can still change a comment's
   status in SQL without a trail row. The trail records every change made
   through the app; the columns hold current state, not the record.
-- **Not confirmed through the UI.** `RichSectionEditor` `setContent` under
-  track changes may mark a restored section as a human insertion. It was seen
-  at the extension level only.
 - **Red on trunk, not this change.**
   - `tests/golden-journeys/haq-correction.journey.test.ts` (`action_state`
     'clinical' vs 'regulatory'), before and after this work.
   - `server/routes/__tests__/auth-refresh-session-currency.test.ts` (seen
     2026-09-26).
+  - Seen 2026-09-29, the same on `origin/concept2cure-v2` without this work:
+    `CrossReferenceMapping.no-fabricated-content` (6), `conversation-os` (3),
+    `mdx-imports-routes` (2), `export-governance-fail-closed` (1),
+    `document-consequence` (4).
+
+## Review, 2026-09-29
+
+The four review lenses that could not run on 2026-09-26 ran now. Each
+finding was verified, fixed, and pinned by a test shown red with the fix
+reverted.
+
+| Finding | Fix | Commit |
+|---|---|---|
+| Restoring the browser's unsaved draft, or seeding a live-collaboration document, with track changes on recorded the whole section as the current person's insertion. Insertion marks exclude each other, so it also took AnA's authorship, and turn record, from pending suggestions. | `setContentUntracked` replaces content as it is; all three call sites use it (`untrackedContentReplace.test.ts`). | `e06e01963` |
+| DP-42: any member of the organization could read and export a document's trail. The object authorization middleware passes every GET. | Reading needs `view` on the document and exporting needs `export`, or an organization audit reader (owner/admin/manager). The rail says "No access" on a 403, and an export over 10,000 rows says `truncated`. | `f2134ea6d` |
+| DP-43: authorId `constructor` passed as a machine author. Any caller's `authorId: 'ana'` read as a verified AnA proposal. The session id came from a client header. | `Object.hasOwn`. A proposal is verified only with a turn record of the organization. The session id is the token's `sid`. | `f2134ea6d` |
+| DP-44: an export's chain-break detail could name another organization's row. | `breakForTenant`: only this organization's rows are named. | `f2134ea6d` |
+| DP-31: `commit_document_revision` wrote the stock reason `AnA revised "<title>"`. Four QMS and fact tools had no floor or a 3-character one. The guard scanned one file. Submit passed "Submitted for review by <email>". | Five tools join the gate (98). The rule lives once, in `stated-reason-input.ts`. The guard reads every handler module. Submit takes the submitter's optional stated reason, and without one the canonical bridge does not mirror. | `8767b89b1` |
+| The reason recorded for a governed AnA write was the model's. The card could drop or truncate it, and the route ran the model's params. | A tool that records a reason is held at the reason tier. The card shows AnA's wording whole beside an empty field, with "Use AnA's wording". The route runs the tool with the person's reason and audits the proposal and whether it was adopted. | `c7691741a` |
+
+Other results of the review:
+- Security gates: all green except `ci:tenant-entry-points`, which is red on
+  other lanes' files (`retentionCron.ts`, `mdx-admin.ts`).
+- Migration replay: `deploy-migrate` ran twice on the live database, both
+  clean.
+- Regressions: `server/routes` 3,461 pass. `client/src/concept2cure` 4,883
+  pass. AnA suites 4,135 pass.
+
+Open, not this lane's:
+- `execute_platform_command` task events record "Task created by AnA …" as
+  the reason (`command-executor.ts` ~1162, ~1441). The tasking HTTP routes
+  use `defaultReason` the same way, so this is a product decision.

@@ -216,7 +216,8 @@ describe('enforceAuthorLineage with accepted machine text', () => {
       enforceAuthorLineage(exec, ORG, r, content, AUTHOR, {
         acceptedMachineText: [{ authorId: 'ana', text: `${MACHINE} ${MACHINE_SAFETY}` }],
       }),
-    ).resolves.toBeUndefined();
+      // Two clauses of the content are inside the text this save accepted.
+    ).resolves.toEqual({ clausesInAcceptedText: 2 });
     const spans = await spansOf(r.documentId);
     expect(spans.filter((s) => s.provenanceKind === 'accepted_machine_draft').map((s) => textOf(content, s)))
       .toEqual([MACHINE, MACHINE_SAFETY]);

@@ -5,9 +5,10 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  computeLineageConfidence,
   dossierToRenderedReport,
+  lineageTraceConfidence,
 } from '../lineage-trace-report.js';
+import { measureProvenanceCompleteness } from '../../ana/lineage-dossier.js';
 import {
   buildSealedRecord,
   extractProvenanceAtoms,
@@ -41,12 +42,15 @@ function ledger(): ArtifactLedger {
     project: { projectId: 5, name: 'IND-123' },
     citations: null,
     authoringPlan: null,
+    authoringPlanUnavailable: null,
     auditLog: [],
     auditLogUnavailable: null,
     signatures: [],
     signaturesUnavailable: null,
     proposals: [],
+    proposalsUnavailable: null,
     runs: { totalRuns: 0, latestRunId: null, latestRunAt: null, modelsUsed: [] },
+    runsUnavailable: null,
   };
 }
 
@@ -82,7 +86,7 @@ function richDossier(): DocumentLineageDossier {
       { turn: 1, action: 'interject', message: 'Focus on the pediatric subgroup', round: 2, at: '2026-07-01T00:01:00.000Z' },
     ],
     dataLineage: [
-      { sourceObjectType: 'external_evidence', sourceObjectId: 'PMID:12345', sourceTitle: 'Efficacy of X', sourceContentHash: 'srch', targetObjectType: 'artifact', targetObjectId: 'artifact_abc', linkageType: 'cited_by', transformationType: 'ai_generation', confidenceScore: 88, aiModelUsed: 'anthropic/claude', createdAt: '2026-07-01T00:00:00.000Z' },
+      { sourceObjectType: 'external_evidence', sourceObjectId: 'PMID:12345', sourceTitle: 'Efficacy of X', sourceContentHash: 'srch', targetObjectType: 'artifact', targetObjectId: 'artifact_abc', linkageType: 'cited_by', transformationType: 'ai_generation', confidenceScore: 88, confidenceBasis: 'retrieval_relevance', aiModelUsed: 'anthropic/claude', createdAt: '2026-07-01T00:00:00.000Z' },
     ],
   };
 }
@@ -101,19 +105,138 @@ function thinDossier(): DocumentLineageDossier {
 
 const META = { reportTypeId: 'provenance.evidence_trace_report', reportTypeLabel: 'Evidence & Provenance Trace Report', status: 'partial' as const };
 
-describe('computeLineageConfidence', () => {
-  it('a richly-linked document clears the finalize gate (>= 70)', () => {
-    expect(computeLineageConfidence(richDossier())).toBeGreaterThanOrEqual(70);
+/* P-26 (docs/LAUNCH_DEFINITION_OF_DONE.md): "Confidence is a measured figure
+   or nothing." The trace's confidence was computeLineageConfidence — 30, plus
+   25 for a version, 15 for a decision, 10 for a provenance event, 10 for a
+   lineage row or citations, 5 for a signature, clamped to 30–95: a count of
+   which records exist, which an ordinary document cleared at 75 with nothing
+   traced (reporting review 2026-10-01, PROVENANCE-5). It is now the lineage
+   engine's measured provenance completeness: the share of the document's
+   current text whose origin the span lineage records
+   (summarizeDocumentAttribution, the figure Authoring's attribution bar shows). */
+const completeness = (contentLength: number, attributed: number) =>
+  measureProvenanceCompleteness({
+    contentLength,
+    attributedChars: attributed,
+    unattributedChars: contentLength - attributed,
+    byKind: { fromSources: attributed, authorAsserted: 0, machineDrafted: 0, machineDraftedUnaccepted: 0 },
+    staleChars: 0,
   });
 
-  it('a thin document (iterations only) stays a viewable partial (< 70)', () => {
-    const c = computeLineageConfidence(thinDossier());
-    expect(c).toBeLessThan(70);
-    expect(c).toBeGreaterThanOrEqual(30); // clamped, never fabricates zero-confidence
+describe('measureProvenanceCompleteness — the share of the text with a recorded origin', () => {
+  it('is attributed characters over the text, as a whole percent', () => {
+    expect(completeness(1000, 1000).percent).toBe(100);
+    expect(completeness(1000, 0).percent).toBe(0);
+    expect(completeness(200, 90).percent).toBe(45);
   });
 
-  it('is clamped to [30, 95]', () => {
-    expect(computeLineageConfidence(richDossier())).toBeLessThanOrEqual(95);
+  it('is floored, so a document is never rounded up past the finalize threshold', () => {
+    expect(completeness(1000, 699).percent).toBe(69);
+    expect(completeness(3, 2).percent).toBe(66);
+  });
+
+  it('a document with no text is not measured: null, never 0 or 100', () => {
+    expect(completeness(0, 0).percent).toBeNull();
+  });
+
+  it('carries the partition it was measured from', () => {
+    const c = completeness(200, 150);
+    expect(c).toMatchObject({ contentLength: 200, attributedChars: 150, unattributedChars: 50, staleChars: 0 });
+    expect(c.byKind.fromSources).toBe(150);
+  });
+});
+
+describe('lineageTraceConfidence — the measure, not a count of the records present', () => {
+  it('is the dossier\'s measured provenance completeness', () => {
+    expect(lineageTraceConfidence({ ...richDossier(), provenanceCompleteness: completeness(1000, 640) })).toBe(64);
+  });
+
+  it('a record-rich document with little traced text is not raised by its records', () => {
+    // Versions, an executed decision, a provenance event, a lineage row: 85 under the old count.
+    expect(lineageTraceConfidence({ ...richDossier(), provenanceCompleteness: completeness(1000, 400) })).toBe(40);
+  });
+
+  it('a thin document whose every character has a recorded origin is 100', () => {
+    expect(lineageTraceConfidence({ ...thinDossier(), provenanceCompleteness: completeness(500, 500) })).toBe(100);
+  });
+
+  it('is null — nothing — when the completeness was not measured', () => {
+    expect(lineageTraceConfidence({ ...richDossier(), provenanceCompleteness: null })).toBeNull();
+    expect(lineageTraceConfidence(richDossier())).toBeNull();
+    expect(lineageTraceConfidence({ ...richDossier(), provenanceCompleteness: completeness(0, 0) })).toBeNull();
+  });
+
+  it('is null when the decision record could not be read: the trace is not measured in full', () => {
+    const d = richDossier();
+    expect(lineageTraceConfidence({
+      ...d,
+      provenanceCompleteness: completeness(1000, 1000),
+      decisionSummary: { ...d.decisionSummary, unavailable: 'read failed' },
+    })).toBeNull();
+  });
+});
+
+describe('the rendered trace states its provenance completeness and what it was measured from', () => {
+  const section = (d: DocumentLineageDossier) =>
+    dossierToRenderedReport(d, META).sections.find((x) => x.id === 'provenance-completeness');
+
+  it('prints the figure, the characters behind it and their partition, linked to the span lineage', () => {
+    const s = section({ ...richDossier(), provenanceCompleteness: completeness(1000, 640) })!;
+    expect(s).toBeTruthy();
+    const metrics = s.blocks.filter((b) => b.kind === 'metric') as Array<{ label: string; value: unknown; provenance?: Array<{ sourceTable: string }> }>;
+    const byLabel = Object.fromEntries(metrics.map((m) => [m.label, m.value]));
+    expect(byLabel['Provenance completeness']).toBe('64%');
+    expect(byLabel['Characters with a recorded origin']).toBe('640 of 1000');
+    expect(byLabel['No recorded origin']).toBe(360);
+    expect(metrics.find((m) => m.label === 'Provenance completeness')!.provenance?.[0]?.sourceTable).toBe('document_span_lineage');
+  });
+
+  it('says it was not measured rather than printing a number', () => {
+    const s = section({ ...richDossier(), provenanceCompleteness: null })!;
+    const metric = s.blocks.find((b) => b.kind === 'metric') as { label: string; value: unknown };
+    expect(metric.label).toBe('Provenance completeness');
+    expect(String(metric.value)).toMatch(/^not measured/);
+  });
+
+  it('lists the untraced text as a gap', () => {
+    const gaps = dossierToRenderedReport({ ...richDossier(), provenanceCompleteness: completeness(1000, 640) }, META)
+      .sections.find((x) => x.id === 'gaps')!.blocks[0] as { items: Array<{ title: string }> };
+    expect(gaps.items.map((i) => i.title)).toContain('360 of 1000 characters have no recorded origin');
+  });
+});
+
+describe('the data-lineage table names what its figure is', () => {
+  const lineageTable = (d: DocumentLineageDossier) =>
+    dossierToRenderedReport(d, META).sections.find((x) => x.id === 'data-lineage')!.blocks[0] as { columns: string[]; rows: unknown[][] };
+
+  it('prints the recorded confidence beside its basis, never a bare "Confidence"', () => {
+    const t = lineageTable(richDossier());
+    expect(t.columns).toContain('Recorded confidence');
+    expect(t.columns).toContain('Confidence basis');
+    expect(t.columns).not.toContain('Confidence');
+    expect(t.rows[0][t.columns.indexOf('Confidence basis')]).toBe('retrieval_relevance');
+  });
+
+  it('says the basis was not recorded when the writer recorded none', () => {
+    const d = richDossier();
+    const t = lineageTable({ ...d, dataLineage: [{ ...d.dataLineage[0], confidenceBasis: null }] });
+    expect(t.rows[0][t.columns.indexOf('Confidence basis')]).toBe('not recorded');
+  });
+});
+
+describe('the provenance table names who acted, or says it was not recorded', () => {
+  const provenanceTable = (d: DocumentLineageDossier) =>
+    dossierToRenderedReport(d, META).sections.find((x) => x.id === 'provenance')!.blocks[0] as { columns: string[]; rows: unknown[][] };
+
+  it('prints the recorded actor', () => {
+    const t = provenanceTable(richDossier());
+    expect(t.rows[0][t.columns.indexOf('Actor')]).toBe('AnA');
+  });
+
+  it('does not name "system" for an event that recorded no actor', () => {
+    const d = richDossier();
+    const t = provenanceTable({ ...d, provenanceEvents: [{ ...d.provenanceEvents[0], actorName: null }] });
+    expect(t.rows[0][t.columns.indexOf('Actor')]).toBe('not recorded');
   });
 });
 

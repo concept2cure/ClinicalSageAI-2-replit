@@ -1,0 +1,13 @@
+Mutant R02-unreadable-is-not-found: a claim that may be in a PDF the check cannot read is "not found" (HS-4)
+
+--- server/services/ana/answer-grounding.ts
+- return check.basis === 'no_sources' || unreadable.length > 0 ? 'unchecked' : 'notFound';
++ return check.basis === 'no_sources' ? 'unchecked' : 'notFound';
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — the basis > a source the check cannot read is named, not counted as read 12ms
+ × tests/services/answer-check-r2.test.ts > a source the check cannot read leaves its claims unchecked (HS-4) > claims not found elsewhere are not checked, naming the unread source 12ms
+      Tests  2 failed | 87 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

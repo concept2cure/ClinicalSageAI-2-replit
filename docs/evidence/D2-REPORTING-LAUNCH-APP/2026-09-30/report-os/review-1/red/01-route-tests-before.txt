@@ -1,0 +1,404 @@
+$ NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/routes/__tests__/report-os-audit-recording.test.ts server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts   # review round 1, before the route changes
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer
+{
+  "timestamp": "2026-10-01T01:43:50.478Z",
+  "level": "warn",
+  "message": "[insights-canvas-routes] org portfolio compute failed; degrading to empty",
+  "context": {
+    "organizationId": 7,
+    "err": "connection reset by peer at 10.0.3.xxx:5432"
+  }
+}
+
+ × server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer 32ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > still answers 200 with leadProgram null for an organisation that has no program 5ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 200 with the flagship program when there are programs 5ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T01:43:50.598Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written
+{
+  "timestamp": "2026-10-01T01:43:50.654Z",
+  "level": "error",
+  "message": "[report-os] report run event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_created",
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+{
+  "timestamp": "2026-10-01T01:43:50.700Z",
+  "level": "error",
+  "message": "[report-os] report run event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_finalized",
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > writes report_os.run_created for the run, on a tenant-stamped transaction, and answers 201 42ms
+   → expected [ 'BEGIN', '<audit row>', …(2) ] to deeply equal [ 'BEGIN', …(4) ]
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written 8ms
+   → expected [ 'BEGIN', '<audit row>', …(2) ] to deeply equal [ 'BEGIN', …(4) ]
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a member with 403 before reading anything 8ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a viewer with 403 before reading anything 5ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets an owner finalize: status, seal and chain row commit together 5ms
+   → expected [ 'BEGIN', '<audit row>' ] to deeply equal [ 'BEGIN', …(1) ]
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets an admin finalize: status, seal and chain row commit together 4ms
+   → expected [ 'BEGIN', '<audit row>' ] to deeply equal [ 'BEGIN', …(1) ]
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets an manager finalize: status, seal and chain row commit together 7ms
+   → expected [ 'BEGIN', '<audit row>' ] to deeply equal [ 'BEGIN', …(1) ]
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing 4ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses when a concurrent finalize won the lock, and rolls back 6ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it 5ms
+   → expected 'The report was finalized and sealed b…' to match /not finalized/i
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > records nothing when the truthfulness gate refuses the finalize 3ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-01T01:43:50.761Z",
+  "level": "error",
+  "message": "[report-os] report run event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry
+{
+  "timestamp": "2026-10-01T01:43:50.787Z",
+  "level": "error",
+  "message": "[report-os] seeding taxonomy failed",
+  "context": {
+    "err": "__vite_ssr_import_2__.db.insert(...).values(...).onConflictDoUpdate is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent, then sends the PDF 49ms
+   → expected [ 'BEGIN', '<audit row>', …(2) ] to deeply equal [ 'BEGIN', …(4) ]
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 8ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 9ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 8ms
+   → expected undefined to match object { tenantId: 7, userId: 5, …(4) }
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 6ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 3ms
+   → expected 500 to be 404 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts:60:24
+     58|     h.summary.mockRejectedValue(new Error('connection reset by peer at…
+     59|     const res = await overview();
+     60|     expect(res.status).toBe(503);
+       |                        ^
+     61|     expect(res.body).toEqual({
+     62|       success: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > writes report_os.run_created for the run, on a tenant-stamped transaction, and answers 201
+AssertionError: expected [ 'BEGIN', '<audit row>', …(2) ] to deeply equal [ 'BEGIN', …(4) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+-   "SELECT set_config('app.current_tenant_id', $1, true)",
+    "<audit row>",
+    "COMMIT",
+    "<released>",
+  ]
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:159:26
+    157|       details: { runUuid: RUN.runUuid, reportTypeId: TYPE.typeId, scop…
+    158|     });
+    159|     expect(h.statements).toEqual(['BEGIN', STAMP, '<audit row>', 'COMM…
+       |                          ^
+    160|   });
+    161|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written
+AssertionError: expected [ 'BEGIN', '<audit row>', …(2) ] to deeply equal [ 'BEGIN', …(4) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+-   "SELECT set_config('app.current_tenant_id', $1, true)",
+    "<audit row>",
+    "ROLLBACK",
+    "<released>",
+  ]
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:169:26
+    167|     expect(res.body.error.message).toMatch(/created but could not be r…
+    168|     expect(JSON.stringify(res.body)).not.toContain('audit_logs refused…
+    169|     expect(h.statements).toEqual(['BEGIN', STAMP, '<audit row>', 'ROLL…
+       |                          ^
+    170|   });
+    171| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a member with 403 before reading anything
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a viewer with 403 before reading anything
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:185:24
+    183|     eligible();
+    184|     const res = await finalize(role);
+    185|     expect(res.status).toBe(403);
+       |                        ^
+    186|     expect(h.reads.select).toBe(0);
+    187|     expect(h.statements).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets an owner finalize: status, seal and chain row commit together
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets an admin finalize: status, seal and chain row commit together
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets an manager finalize: status, seal and chain row commit together
+AssertionError: expected [ 'BEGIN', '<audit row>' ] to deeply equal [ 'BEGIN', …(1) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+-   "SELECT set_config('app.current_tenant_id', $1, true)",
++   "<audit row>",
+  ]
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:208:27
+    206|     // One connection, one transaction: the lock, both writes and the …
+    207|     const s = h.statements;
+    208|     expect(s.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+       |                           ^
+    209|     expect(s.slice(-2)).toEqual(['COMMIT', '<released>']);
+    210|     const at = (re: RegExp) => s.findIndex((x) => re.test(x));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:222:24
+    220|     eligible('final');
+    221|     const res = await finalize();
+    222|     expect(res.status).toBe(409);
+       |                        ^
+    223|     expect(res.body).toMatchObject({ success: false, error: { code: 'R…
+    224|     expect(h.statements).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses when a concurrent finalize won the lock, and rolls back
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:232:24
+    230|     lockedAs('final');
+    231|     const res = await finalize();
+    232|     expect(res.status).toBe(409);
+       |                        ^
+    233|     expect(res.body.error.code).toBe('RUN_ALREADY_FINAL');
+    234|     expect(h.statements.filter((x) => /^UPDATE/.test(x))).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+AssertionError: expected 'The report was finalized and sealed b…' to match /not finalized/i
+
+- Expected:
+/not finalized/i
+
++ Received:
+"The report was finalized and sealed but the finalization could not be recorded in the audit trail. Finalize it again once the audit trail is available."
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:246:36
+    244|     expect(res.status).toBe(503);
+    245|     expect(res.body).toMatchObject({ success: false, error: { code: 'R…
+    246|     expect(res.body.error.message).toMatch(/not finalized/i);
+       |                                    ^
+    247|     expect(res.body.error.message).toMatch(/Nothing was changed/);
+    248|     expect(JSON.stringify(res.body)).not.toContain('audit_logs refused…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent, then sends the PDF
+AssertionError: expected [ 'BEGIN', '<audit row>', …(2) ] to deeply equal [ 'BEGIN', …(4) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+-   "SELECT set_config('app.current_tenant_id', $1, true)",
+    "<audit row>",
+    "COMMIT",
+    "<released>",
+  ]
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:285:26
+    283|       details: { reportTypeId: TYPE.typeId, format: 'pdf', filename: '…
+    284|     });
+    285|     expect(h.statements).toEqual(['BEGIN', STAMP, '<audit row>', 'COMM…
+       |                          ^
+    286|   });
+    287|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:322:24
+    320|     h.gate.mockResolvedValue({ entitled: true, tier: 'standard', featu…
+    321|     const res = await exportBundle();
+    322|     expect(res.status).toBe(403);
+       |                        ^
+    323|     const body = JSON.parse((res.body as Buffer).toString('utf8'));
+    324|     expect(body).toMatchObject({ requiredTier: 'enterprise', feature: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF
+AssertionError: expected undefined to match object { tenantId: 7, userId: 5, …(4) }
+
+- Expected:
+{
+  "action": "report_os.bundle_exported",
+  "details": {
+    "byteLength": 1231,
+    "format": "pdf",
+    "runIds": [
+      41,
+      42,
+    ],
+    "sha256": "191c0e5e44684c8afb5e80a7dc9af5971467ee0c61bc17ddf25d01cb0641cf15",
+  },
+  "resourceId": "11111111-1111-4111-8111-111111111111",
+  "resourceType": "report_bundle",
+  "tenantId": 7,
+  "userId": 5,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:335:26
+    333|     const body = res.body as Buffer;
+    334|     expect(body.subarray(0, 4).toString()).toBe('%PDF');
+    335|     expect(auditEntry()).toMatchObject({
+       |                          ^
+    336|       tenantId: 7,
+    337|       userId: 5,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:350:24
+    348|     auditFails();
+    349|     const res = await exportBundle();
+    350|     expect(res.status).toBe(503);
+       |                        ^
+    351|     expect(res.headers['content-disposition']).toBeUndefined();
+    352|     const body = JSON.parse((res.body as Buffer).toString('utf8'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry
+AssertionError: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:360:24
+    358|   it('POST /taxonomy/seed no longer exists: the generated migration se…
+    359|     const res = await request(app).post('/api/report-os/taxonomy/seed'…
+    360|     expect(res.status).toBe(404);
+       |                        ^
+    361|   });
+    362| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  16 failed | 4 passed (20)
+   Start at  01:43:47
+   Duration  2.89s (transform 2.29s, setup 232ms, import 4.27s, tests 230ms, environment 0ms)
+
+exit=1

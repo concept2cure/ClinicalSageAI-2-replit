@@ -1,18 +1,36 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, hasKeys, liveMutateOrNull, type DataState } from '../dataConnect';
+import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { getSegmentModules, getSurfaceMeta } from '../registryModel';
-import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
-import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
-import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
+import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+import { useSurfaceAvailable } from '../surfaceAvailable';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
+import { PJ_LIFECYCLE, Ring, pjInitials } from '../fixtures/project-home-data';
+import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
+import { DocumentDisposition } from './DocumentDisposition';
+import { useProjectThreads } from './projectThreads';
+import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
+import { SourceCatalogLine, SourceSnippet } from '../editor/SourceCatalogLine';
+import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
+import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
+import { clearEditorTarget, setEditorTarget } from '../editorTarget';
+import type { ReviewItem } from '../fixtures/review-data';
+import { reviewStanding, type ReviewStandingGroup } from './reviewStanding';
+import { openReviewDocument } from './Review';
+import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
+import { useProgramMarkets } from './programSequence';
+import { ComingLater } from './ProjectComingLater';
+import { ProjectRespond } from './ProjectRespond';
+import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
+import { sourceReadView } from '@shared/data-room-processing-status';
+import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -49,12 +67,14 @@ declare global {
    Real backend rows — the org-scoped, UUID-keyed project read-models this
    surface anchors to (server/routes/c2c/projects.ts). Every field is projected
    from a verified column; nullable columns are `| null` and rendered null-safe.
-   Slices with no reachable UUID-keyed backend (tasks, readiness, the CTD
-   pyramid, memory/instructions/intelligence, conversations, the vault tree,
-   agency meetings, eTMF, grants, submissions) are rendered as an honest
-   EmptyState rather than a fabricated fixture. The schedule-of-events panel
-   (plan stage) is live for numeric-keyed projects and renders the same honest
-   id-space empty for UUID programs — see SchedulePanel.
+   Slices with no reachable UUID-keyed backend (the CTD pyramid,
+   memory/instructions/intelligence, agency meetings, eTMF, grants) are
+   rendered as an honest EmptyState rather than a fabricated fixture. The
+   project's files, conversations, dispatch readiness and submissions are read
+   by the project's UUID (slices 23 and 24 of ONE_ANA_ONE_CANVAS.md). The
+   program's tasks and approvals (the Review tab, and Tasks on Author) are
+   read by the program UUID from a route the server resolves to the program's
+   anchored projects row — see ProjectWorkPanel.
    ════════════════════════════════════════════════════════════════════════ */
 
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
@@ -81,6 +101,10 @@ interface ProgramRow {
    *  server could not measure it. (This read `progress_percent` until
    *  2026-09-24: a column written once as 0 and never updated.) */
   readiness?: number | null;
+  /** When the server measured `readiness` (ISO); null with no figure. */
+  readinessAsOf?: string | null;
+  /** Whether this caller may change the project; absent on an older server. */
+  canChange?: boolean;
   /** The device taxonomy intake stores for a device / IVD program
    *  (regulatory_programs columns + the metadata-held fields the read lifts).
    *  Every one is null for a drug program, and absent on a server that predates
@@ -131,18 +155,6 @@ interface WorkstreamRow {
   last_updated: string | null;
 }
 
-/** GET /api/c2c/projects/:id/drafts → { drafts: [...] } (recent c2c_document_sections). */
-interface DraftRow {
-  id: string;
-  section_key: string | null;
-  label: string | null;
-  status: string | null;
-  version: string | number | null;
-  updated_at: string | null;
-  doc_type: string | null;
-  document_title: string | null;
-}
-
 /** Format a real ISO timestamp for display (never fabricated — null passes through). */
 function fmtWhen(v: string | null | undefined): string | null {
   if (!v) return null;
@@ -160,6 +172,9 @@ function Anchored<T>(props: {
   emptyTitle: string;
   emptyHint?: string;
   isEmpty?: (d: T) => boolean;
+  /** The empty state as one line, where a panel above other content would
+   *  otherwise push it below the fold. */
+  compactEmpty?: boolean;
   render: (d: T) => React.ReactNode;
 }) {
   const { state } = props;
@@ -173,6 +188,7 @@ function Anchored<T>(props: {
     return <EmptyState tone="error" icon={I.alertTriangle} title={props.errorTitle} hint={props.errorHint} />;
   }
   if (!state.data || (props.isEmpty ? props.isEmpty(state.data) : false)) {
+    if (props.compactEmpty) return <p className="pj-desc" role="status">{[props.emptyTitle, props.emptyHint].filter(Boolean).join(' ')}</p>;
     return <EmptyState icon={I.fileText} title={props.emptyTitle} hint={props.emptyHint} />;
   }
   return <>{props.render(state.data)}</>;
@@ -187,41 +203,64 @@ function Anchored<T>(props: {
    Review. Nothing this surface reads records per-stage completion, so the one
    state stated is the one that is true: which stage is open. */
 
+/* A nav of five buttons, the open one marked aria-current="step". It was a
+   role="tablist" over plain buttons carrying aria-selected, which is not valid
+   on a button, so a screen reader was told of no open stage at all (design
+   review 2026-10-08, a11y lens, WCAG 4.1.2). The stage bodies are not tab
+   panels: each stage renders below the conversations, so a nav is what it is. */
 function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string) => void }) {
   return (
-    <div className="pj-lc" role="tablist" aria-label="Project lifecycle">
+    <nav className="pj-lc" aria-label="Project lifecycle">
       {PJ_LIFECYCLE.map((s) => {
         const status = s.id === stage ? 'active' : undefined;
         return (
-          <button key={s.id} className="pj-lc-stage" data-status={status} aria-selected={stage === s.id || undefined}
+          <button key={s.id} type="button" className="pj-lc-stage" data-status={status} aria-current={stage === s.id ? 'step' : undefined}
             onClick={() => setStage(s.id)} title={s.blurb}>
             <span className="pj-lc-node"><span className="pj-lc-ic">{I[s.icon] || I.grid}</span></span>
             <span className="pj-lc-l">{s.label}</span>
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }
 
-function StagePanel({ stage, onNav }: { stage: string; onNav: (id: string) => void }) {
-  const meta = PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '', blurb: '' };
-  const tools = PJ_STAGE_TOOLS[stage] || [];
+/* ════ Evidence: the project's files ════════════════════════════════════════
+   ONE_ANA_ONE_CANVAS.md slice 23. The Evidence stage said "The document vault
+   opens in its own workspace" and showed nothing, so a person on their
+   project had to leave it to see its files. It now shows them, through the
+   one files panel the editor already uses beside a document: the same read of
+   GET /api/c2c/project-vault/:id, the same search, the same audited download
+   and PDF viewer, and the same honest states (a failed read is an error with a
+   retry, not an empty vault). Filing, uploads and version history stay in the
+   Vault, which the header opens. */
+function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
+  pid: string; name: string | null; onNav: (id: string) => void; onAsk: (text: string) => void; available: (id: string) => boolean;
+}) {
+  const [toast, fireToast] = useToast();
   return (
-    <section className="pj-sec">
-      <div className="pj-sec-h"><h2>{meta.label}</h2><span className="sec-sub">{meta.blurb}</span></div>
-      <div className="pj-tools">
-        {tools.map(t => (
-          <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
-            <span className="pj-tool-ico">{I[t.icon] || I.grid}</span>
-            <span className="pj-tool-b"><span className="pj-tool-t">{t.label}</span><span className="pj-tool-d">{t.desc}</span></span>
-            <span className="pj-tool-go">{I.right}</span>
+    <section className="pj-sec pj-evidence" aria-labelledby="pj-evidence-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-evidence-h">Project files</h2>
+        {available('vault') && (
+          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('vault')}>
+            Open in Vault {I.right}
           </button>
-        ))}
+        )}
       </div>
+      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk}
+        onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />
+      <C2CToast msg={toast} />
     </section>
   );
 }
+
+/* ════ Submit: one row per market (FILING_SPINE.md F9) ════════════════════
+   The project's markets, each with its own server verdict, are read once by
+   useProgramMarkets (programSequence.ts) and shown by ProjectMarkets in the
+   Submit tab and by ProjectStatusLine under the project header. Slice 24's
+   one-verdict-per-project panels were generalised into ProjectMarkets.tsx. */
+
 
 /* ════ Data room ════════════════════════════════════════════════════════════
    The project's sources — every client document this project's documentation is
@@ -232,23 +271,9 @@ function StagePanel({ stage, onNav }: { stage: string; onNav: (id: string) => vo
    composer uses, so a file dropped here and a file attached in chat produce ONE
    identity rather than two records of the same document. */
 
-interface SourceRow {
-  id: number;
-  title: string | null;
-  checksum: string | null;
-  ingestionStatus: string | null;
-  extractionStatus: string | null;
-  createdAt: string | null;
-  mimeType: string | null;
-  fileSize: number | null;
-  artifactId: string | null;
-  origin: string | null;
-  extractionMethod: string | null;
-  /** False once a re-upload superseded it. Absent on a server that predates it. */
-  isCurrent?: boolean;
-  /** Recorded citations of this source. Absent on a server that predates it. */
-  usage?: { sections: number; documents: number; changedSections: number } | null;
-}
+/** The most sources "Write from these sources" hands to one turn. */
+const HANDOFF_LIMIT = 10;
+
 
 /** A section drafted from a source that has since changed. */
 interface ChangedUsageRow {
@@ -262,6 +287,15 @@ interface ChangedUsageRow {
   citedAt: string | null;
 }
 
+interface ChangedUsageRead { changes: ChangedUsageRow[]; count: number }
+
+const isChangedUsageRead: ShapeGuard<ChangedUsageRead> = (value): value is ChangedUsageRead => {
+  if (!value || typeof value !== 'object') return false;
+  const read = value as Partial<ChangedUsageRead>;
+  return Array.isArray(read.changes) && read.count === read.changes.length &&
+    read.changes.every(row => row && typeof row.citationId === 'string' && typeof row.sectionId === 'string' && typeof row.sourceId === 'number');
+};
+
 /**
  * "Used in" — the back-reference, from recorded citations only.
  *
@@ -274,27 +308,31 @@ interface ChangedUsageRow {
  * not the same as "cited nowhere", and guessing would be the fabrication this
  * surface exists to avoid.
  */
-function usedIn(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
+function usedIn(s: SourceRow, scope: SourcesPage['usageScope']): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
   if (!s.usage) return null;
   const { sections, documents, changedSections } = s.usage;
+  if (scope !== 'accessible-citations' || ![sections, documents, changedSections].every(n => Number.isSafeInteger(n) && n >= 0)
+    || changedSections > sections || documents > sections) return {
+    label: 'Citation usage unavailable', tone: 'muted', title: 'Citation counts could not be verified for your current access.',
+  };
   if (sections === 0) {
     return {
-      label: 'Not cited yet',
+      label: 'No accessible citations',
       tone: 'muted',
-      title: 'No section records a citation of this source',
+      title: 'No citations are visible with your current access. This is not a finding about other documents.',
     };
   }
-  const where = `Used in ${sections} section${sections === 1 ? '' : 's'}`;
-  const docs = documents > 0 ? ` · ${documents} document${documents === 1 ? '' : 's'}` : '';
+  const where = `Used in ${sections} accessible section${sections === 1 ? '' : 's'}`;
+  const docs = documents > 0 ? ` · ${documents} accessible document${documents === 1 ? '' : 's'}` : '';
   if (changedSections > 0) {
     return {
       label: `${where}${docs} · ${changedSections} written against older content`,
       tone: 'warn',
       title:
-        'This source changed after those sections cited it. They were drafted from the earlier content — review them; nothing is rewritten automatically.',
+        'This source changed after those accessible sections cited it. They were drafted from the earlier content — review them; nothing is rewritten automatically.',
     };
   }
-  return { label: `${where}${docs}`, tone: 'ok', title: 'Sections that recorded a citation of this source' };
+  return { label: `${where}${docs}`, tone: 'ok', title: 'Sections visible with your current access that recorded a citation of this source' };
 }
 
 function prettyBytes(n: number | null): string | null {
@@ -320,23 +358,57 @@ function kindLabel(mime: string | null): string {
 /**
  * Whether this source's text is actually available to draft from.
  *
- * Reported from the source's own `extraction_status`, never inferred. A
+ * Reported from persisted text availability and recorded processing state. A
  * document whose text could not be read is shown as such: it is still stored
  * and still has an identity, but a section drafted "from" it would not be
  * grounded in anything, and hiding that would be the worst kind of quiet
  * failure on a regulatory surface.
  */
 function readState(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted' } {
-  if (s.extractionStatus === 'extracted') {
-    return { label: s.extractionMethod?.includes('ocr') ? 'Read via OCR' : 'Read', tone: 'ok' };
-  }
-  if (s.extractionStatus === 'failed') return { label: 'Text not readable', tone: 'warn' };
-  return { label: 'Not processed yet', tone: 'muted' };
+  return sourceReadView(s);
+}
+
+
+function sourceReadTitle(source: SourceRow): string {
+  return sourceReadView(source).detail ?? 'Reported from persisted source text and processing state';
+}
+
+function sourcePinTitle(s: SourceRow): string {
+  if (s.dataEligible === false || s.isCurrent === false) return 'This source is excluded from active data use';
+  if (!sourceCanGround(s)) return 'This source has no confirmed readable text, so it cannot ground a draft';
+  if (s.originalFileAvailable === false) return 'Use the retained extracted text as context for AnA; the original file is unavailable';
+  return sourceCanGround(s)
+    ? 'Use this source as context for AnA'
+    : 'This source has no readable text, so it cannot ground a draft';
+}
+
+function SourceWorkButton({ source, projectId, onPull }: { source: SourceRow; projectId: string | null; onPull: (s: SourceRow) => void }) {
+  const reasonId = useId();
+  if (!projectId) return null;
+  const unavailable = sourceImportUnavailableReason(source);
+  return <div className="source-work-action">
+    <button type="button" className="btn ghost" disabled={Boolean(unavailable)} onClick={() => onPull(source)}
+      title={unavailable ?? undefined} aria-describedby={unavailable ? reasonId : undefined}
+      aria-label={`Work on ${source.title || `source ${source.id}`} in editor`}>
+      {I.penLine} Work on document
+    </button>
+    {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
+  </div>;
 }
 
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
+  const available = useSurfaceAvailable();
   const [reloadKey, setReloadKey] = useState(0);
+  const [pullSource, setPullSource] = useState<SourceRow | null>(null);
   const [q, setQ] = useState('');
+  // The search the server runs: settled after the person stops typing, and a
+  // new search starts from the first page.
+  const [term, setTerm] = useState('');
+  const [offset, setOffset] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => { setTerm(q.trim()); setOffset(0); }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
   // Sources the user has pinned as context for the next AnA turn. Handed over
   // via window.C2C_SOURCE_PINS, matching the window.C2C_PROJECT / C2C_CONVO
   // convention this surface already uses for cross-surface handoff.
@@ -344,21 +416,24 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const state = useLiveData<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>(
-    pid ? `/api/c2c/projects/${pid}/sources` : null,
-    [pid, reloadKey],
-    hasKeys<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>('sources'),
+  const sourceRead = useLiveData<SourcesPage>(
+    pid ? sourcesUrl(pid, term, offset) : null,
+    [pid, reloadKey, term, offset],
+    isSourcesPage,
   );
+  const state = !sourceRead.loading && !sourceRead.error && !sourceRead.data
+    ? { ...sourceRead, error: 'The source list could not be verified.', empty: false }
+    : sourceRead;
 
   // Sections in this project drafted from a source that has since changed. Read
   // separately because it answers a different question from the source list, and
-  // an older server that does not serve it simply yields nothing rather than a
-  // fabricated all-clear.
-  const changed = useLiveData<{ changes: ChangedUsageRow[]; count: number }>(
+  // a failed or unverified read cannot establish that no citations are affected.
+  const changed = useLiveData<ChangedUsageRead>(
     pid ? `/api/c2c/projects/${pid}/source-changes` : null,
     [pid, reloadKey],
+    isChangedUsageRead,
   );
-  const changes = changed.data?.changes ?? [];
+  const changes = !changed.loading && !changed.error ? changed.data?.changes ?? [] : [];
 
   // Same upload path as AnA's composer — one file, one identity.
   const { attachments, addFiles, uploading, statusMessage } = useChatUpload({ projectId: pid });
@@ -371,28 +446,60 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   }, [settled]);
 
   const sources = state.data?.sources ?? [];
-  const rows = sources.filter(s =>
-    q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
-  );
+  const citationUsageScope = state.data?.usageScope;
+  // A refreshed lifecycle decision must retire local and cross-surface pins.
+  // A retained-data pin resolves the recorded extraction when its original
+  // file is unavailable; withdrawn and replaced data cannot ground a draft.
+  useEffect(() => {
+    if (state.loading || state.error || !state.data) return;
+    const eligible = new Set(state.data.sources.filter(sourceCanGround).map(s => s.id));
+    setPinned(prev => prev.every(id => eligible.has(id)) ? prev : prev.filter(id => eligible.has(id)));
+    if (window.C2C_SOURCE_PINS) window.C2C_SOURCE_PINS = window.C2C_SOURCE_PINS.filter(id => eligible.has(Number(id)));
+  }, [state.data, state.loading, state.error]);
+  // The server searched title and text; the list is its answer, not a filter of this page.
+  const rows = sources;
   /* One file re-uploaded is one source: its retired revision is listed but not
-     counted. A full window's count is a floor. */
-  const current = sources.filter(s => s.isCurrent !== false);
-  const total = current.length;
-  const readable = current.filter(s => s.extractionStatus === 'extracted').length;
+     counted. The server counts the whole room (currentTotal), not this page. */
+  const current = sources.filter(s => s.isCurrent !== false && s.dataEligible !== false);
+  const total = state.data?.currentTotal ?? current.length;
+  const readable = current.filter(sourceCanGround).length;
   const truncated = state.data?.window?.truncated === true;
+  const searching = term.length > 0;
+  const matched = state.data?.total ?? sources.length;
+  /* Sources whose text can ground a draft, newest first as the route lists
+     them. "Write from these sources" hands over at most HANDOFF_LIMIT: the
+     stream inlines every pinned file into one turn and limits only each
+     file's size, so a whole data room would make a turn the model request
+     cannot carry. When the list is cut, here or by the server's window, the
+     words say "newest" rather than claiming the data room's readable set. */
+  const groundable = sources.filter(sourceCanGround).map(s => s.id);
+  const handed = groundable.slice(0, HANDOFF_LIMIT);
+  const handedWords = `the ${handed.length}${truncated || groundable.length > handed.length ? ' newest' : ''} readable source${handed.length === 1 ? '' : 's'}`;
+  /* Hand a set of sources to AnA. It resolves each source back to the upload
+     its bytes live in and grounds the turn on exactly those documents, not on
+     whatever its own retrieval would have picked. */
+  const handOff = (ids: number[], words: string) => {
+    window.C2C_SOURCE_PINS = ids.map(String);
+    onAsk(words);
+  };
 
   return (
     <section className="pj-sec">
       <div className="pj-sec-h">
         <h2>Data room</h2>
+        {pid && <button type="button" className="btn ghost" disabled={state.loading} title="Refresh only reads status; it does not retry processing" onClick={() => setReloadKey(k => k + 1)}>Refresh sources</button>}
         <span className="sec-sub">
           {/* A failed read must not read as "no sources". Someone who just
               dropped a file in here would take an empty list as data loss. */}
           {state.error
             ? "couldn't load this project's sources — the list below is incomplete"
-            : total > 0
-              ? `${total}${truncated ? '+' : ''} source${total === 1 && !truncated ? '' : 's'} · ${readable} readable${truncated ? ` (newest ${sources.length} shown)` : ''} — what this project's documents are written from`
-              : "the sources this project's documents are written from"}
+            : state.loading
+              ? searching ? 'searching this project’s sources — no matching count is confirmed yet' : 'loading this project’s sources — counts are not confirmed yet'
+              : searching
+              ? `${matched} source${matched === 1 ? '' : 's'} match \u201c${term}\u201d in their title or text`
+              : total > 0
+                ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable on this page${truncated || offset > 0 ? ` (showing ${offset + 1}\u2013${offset + sources.length})` : ''} — what this project's documents are written from`
+                : "the sources this project's documents are written from"}
         </span>
       </div>
 
@@ -422,6 +529,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           ref={fileRef}
           type="file"
           aria-label="Attach files to this project"
+          accept={CHAT_UPLOAD_ACCEPT}
           multiple
           hidden
           onChange={(e) => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ''; }}
@@ -434,6 +542,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           regulated text is not something this surface should do. The point is
           that the affected sections are findable at all: before this they left
           no trace anywhere. */}
+      {!changed.loading && (changed.error || !changed.data) && (
+        <p className="sec-sub" role="status">
+          Source-change citations could not be verified for your current access. No affected-citation count is confirmed.
+        </p>
+      )}
       {changes.length > 0 && (
         <div
           className="sp-tone-warn"
@@ -444,8 +557,8 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           }}
         >
           <b>
-            {changes.length} section{changes.length === 1 ? '' : 's'} in this project{' '}
-            {changes.length === 1 ? 'was' : 'were'} drafted from a source that has since changed.
+            {changes.length} accessible citation{changes.length === 1 ? '' : 's'} shown in this project{' '}
+            point{changes.length === 1 ? 's' : ''} to a source that has since changed.
           </b>
           <div style={{ marginTop: 6, display: 'grid', gap: 3 }}>
             {changes.slice(0, 6).map((c) => (
@@ -484,14 +597,14 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         </div>
       )}
 
-      {total > 0 && (
+      {(total > 0 || searching) && (
         <div style={{ marginBottom: 8 }}>
           <input
             className="pj-input"
-            placeholder="Search sources…"
+            placeholder="Search titles and text…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            aria-label="Search sources"
+            aria-label="Search sources by title or text"
             style={{ width: '100%', maxWidth: 320, fontSize: 13, padding: '5px 10px' }}
           />
         </div>
@@ -508,18 +621,19 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         render={() =>
           rows.length === 0 ? (
             <div className="scaf-note" style={{ padding: '10px' }}>
-              No source matches &ldquo;{q}&rdquo;.
+              No source matches &ldquo;{term}&rdquo; in its title or text.
             </div>
           ) : (
             <div className="pj-srcs">
               {rows.map((s) => {
                 const rs = readState(s);
-                const use = usedIn(s);
+                const use = usedIn(s, citationUsageScope);
                 const size = prettyBytes(s.fileSize);
                 return (
                   <div
                     key={s.id}
                     className="pj-src"
+                    style={{ flexWrap: 'wrap' }}
                   >
                     {/* Pin as context. Only a source whose text was actually
                         read can ground a draft, so an unreadable one cannot be
@@ -528,18 +642,14 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     <input
                       type="checkbox"
                       checked={pinned.includes(s.id)}
-                      disabled={s.extractionStatus !== 'extracted'}
+                      disabled={!sourceCanGround(s)}
                       onChange={(e) =>
                         setPinned((prev) =>
                           e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
                         )
                       }
                       aria-label={`Use ${s.title || `source ${s.id}`} as context`}
-                      title={
-                        s.extractionStatus === 'extracted'
-                          ? 'Use this source as context for AnA'
-                          : 'This source has no readable text, so it cannot ground a draft'
-                      }
+                      title={sourcePinTitle(s)}
                     />
                     <span aria-hidden="true">{I.fileText}</span>
                     <span style={{ flex: 1, minWidth: 0 }}>
@@ -551,6 +661,8 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                         {size ? ` · ${size}` : ''}
                         {fmtWhen(s.createdAt) ? ` · added ${fmtWhen(s.createdAt)}` : ''}
                       </span>
+                      <SourceCatalogLine catalog={s.catalog} />
+                      <SourceSnippet show={searching} text={s.snippet} />
                       {/* Where this source is actually used. Reported from
                           recorded citations; omitted entirely when the server
                           sent no usage field rather than shown as zero. */}
@@ -567,10 +679,15 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     <span
                       className={rs.tone === 'ok' ? 'sp-tone-ok' : rs.tone === 'warn' ? 'sp-tone-warn' : undefined}
                       style={{ fontSize: 11.5, whiteSpace: 'nowrap' }}
-                      title="Reported by the source's own extraction status"
+                      title={sourceReadTitle(s)}
                     >
                       {rs.label}
                     </span>
+                    <SourceWorkButton source={s} projectId={pid} onPull={setPullSource} />
+                    {pid && (!s.disposition || s.disposition === 'keep_data') && <div style={{ flexBasis: '100%' }}><DocumentDisposition
+                      key={`${s.id}-${reloadKey}`} projectId={pid} targetType="captured_source" targetId={String(s.id)}
+                      title={s.title || `Source ${s.id}`} existingChoice={s.disposition} onChanged={() => setReloadKey(k => k + 1)}
+                    /></div>}
                   </div>
                 );
               })}
@@ -579,30 +696,64 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         }
       />
 
+      {/* Pages of the room: every source is reachable, not only the newest 200. */}
+      {(offset > 0 || truncated) && (
+        <div className="cm-pushbar" style={{ marginTop: 8 }}>
+          {offset > 0 && (
+            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setOffset(o => Math.max(0, o - SOURCES_PAGE))}>
+              Newer sources
+            </button>
+          )}
+          {truncated && (
+            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setOffset(o => o + SOURCES_PAGE)}>
+              Older sources
+            </button>
+          )}
+        </div>
+      )}
+
       {/* The caller's chat files with no project yet (PF-07): one audited adopt
           brings a file into this Data Room, and the list reloads. */}
       {pid && <ConversationFilesAdopt pid={pid} onAdopted={() => setReloadKey((k) => k + 1)} />}
+      {pid && pullSource && <SourceImportDialog programId={pid}
+        source={{ kind: 'data-room', sourceId: pullSource.id }} title={pullSource.title || `Source ${pullSource.id}`}
+        onClose={() => setPullSource(null)} onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />}
+
 
       <div className="cm-pushbar" style={{ marginTop: 12 }}>
-        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
-          Trace a claim to its source {I.right}
-        </button>
-        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('document-authoring')} disabled={uploading}>
-          Write from these sources {I.right}
-        </button>
+        {available('source-tracer') && (
+          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
+            Trace a claim to its source {I.right}
+          </button>
+        )}
+        {/* "Write from these sources" opened the editor with no document and
+            no sources (FILING_SPINE.md §6 row 4). It is now the same handoff
+            as "Draft with N pinned": the readable sources go to AnA as the
+            context of the next turn, in the one conversation. With sources
+            pinned, the pinned set is the one handed over. A data room with
+            nothing readable offers neither. */}
+        {pinned.length === 0 && groundable.length > 0 && (
+          <button
+            className="btn ghost"
+            style={{ fontSize: 12, padding: '4px 12px' }}
+            disabled={uploading}
+            title={`Ask AnA to draft from ${handedWords} in this data room`}
+            onClick={() => handOff(
+              handed,
+              `Use ${handedWords} in this project's data room as the context for drafting.`,
+            )}
+          >
+            {I.sparkles} Write from these sources
+          </button>
+        )}
         {pinned.length > 0 && (
           <button
             className="btn"
             style={{ fontSize: 12, padding: '4px 12px' }}
-            onClick={() => {
-              // Hand the chosen set to AnA. It resolves each source back to the
-              // upload its bytes live in and grounds the turn on exactly those
-              // documents — not on whatever its own retrieval would have picked.
-              window.C2C_SOURCE_PINS = pinned.map(String);
-              onAsk(
-                `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
-              );
-            }}
+            onClick={() => handOff(
+              pinned,
+              `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
+            )}
           >
             {I.sparkles} Draft with {pinned.length} pinned source{pinned.length === 1 ? '' : 's'}
           </button>
@@ -612,51 +763,12 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   );
 }
 
-/* ════ Schedule of events — the 'plan' step's screen ════════════════════════
-   AnA's regulatory-aware milestone schedule, read from the REAL store
-   (GET /api/concept2cure/projects/:id/schedule-of-events — plan header in
-   project_schedule_of_events, milestones reusing project_workflow_stages).
+/** A program the server could not anchor to a projects row answers its work
+ *  read 404 (PROGRAM_UNANCHORED). The program itself was already read by
+ *  /api/c2c/projects/:id, so here 404 means "no record", not "no program". */
+const isUnanchored = (s: DataState<unknown>): boolean => !s.loading && s.status === 404;
 
-   IDENTITY: that store is keyed by the NUMERIC projects.id, while this
-   surface's window.C2C_PROJECT.id is normally a regulatory_programs UUID (see
-   the header comment). The panel therefore fetches ONLY when the open ident is
-   numeric-keyed ('12' / 'proj_12' — the SubmissionTwin idiom), and renders the
-   honest id-space empty for UUID programs instead of sending a doomed request
-   or borrowing another project's schedule. Milestone STATUS is displayed as
-   stored; nothing here invents progress, dates, or health. */
-
-/** GET …/schedule-of-events → milestones[] (ScheduleMilestoneView subset). */
-interface ScheduleMilestoneRow {
-  id: number;
-  key: string;
-  title: string;
-  status: string; // not_started | in_progress | at_risk | slipped | blocked | completed
-  targetDate: string | null;
-  isCritical: boolean;
-  regulatoryBasis: string | null;
-  ownerRole: string | null;
-  slipDays: number | null;
-}
-
-/** GET …/schedule-of-events → plan (SchedulePlanView subset); null = none generated. */
-interface SchedulePlanRow {
-  regulatoryFramework: string | null;
-  version: number;
-  targetDate: string | null;
-  confidence: string | null;
-}
-
-interface ScheduleViewRow {
-  plan: SchedulePlanRow | null;
-  milestones: ScheduleMilestoneRow[];
-  health?: { overallStatus?: string; summary?: string } | null;
-}
-
-/** The numeric-keyed ident space the schedule store resolves ('12' / 'proj_12'). */
-const SCHED_IDENT_RE = /^(?:proj_)?\d+$/;
-const SCHED_SHOWN = 8;
-
-/** Real ISO date → display with year (schedules span years); null stays null. */
+/** Real ISO date → display with year (work spans years); null stays null. */
 function fmtDue(v: string | null): string | null {
   if (!v) return null;
   const d = new Date(v);
@@ -664,13 +776,6 @@ function fmtDue(v: string | null): string | null {
     ? null
     : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
-
-const SCHED_STATUS_TONE: Record<string, string> = {
-  completed: 'tone-ok',
-  at_risk: 'tone-warn',
-  slipped: 'tone-warn',
-  blocked: 'tone-warn',
-};
 
 /**
  * The program-header status chip was hardcoded `tone-ok`, so a program whose
@@ -700,152 +805,276 @@ const PRIORITY_TONE: Record<string, string> = {
   high: 'tone-warn',
 };
 
-function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) => void }) {
-  const ident = pid && SCHED_IDENT_RE.test(pid) ? pid : null;
-  const [reloadKey, setReloadKey] = useState(0);
-  const [genBusy, setGenBusy] = useState(false);
-  const [genError, setGenError] = useState<string | null>(null);
+/* ════ Tasks & approvals — the 'review' step's screen ═══════════════════════
+   The program's outstanding work from every store that tracks it, read from
+   the REAL unified work view (GET /api/concept2cure/projects/:id/unified-work,
+   server/services/unified-work/unified-work-view.ts): schedule tasks, review
+   threads and approval blockers, agency correspondence, tracked filings and
+   the task board. Asked by the program's UUID, resolved to its anchored
+   projects row on the server, 404 for a program with none. Each row names the store it lives in; changing it
+   happens where it lives (the task board, the review screen). */
 
-  const state = useLiveData<ScheduleViewRow>(
-    ident ? `/api/concept2cure/projects/${ident}/schedule-of-events` : null,
-    [ident, reloadKey],
-    hasKeys<ScheduleViewRow>('plan', 'milestones'),
+/** GET …/unified-work → items[] (UnifiedWorkItem subset). */
+interface WorkItemRow {
+  id: string;
+  source: 'schedule' | 'review' | 'correspondence' | 'filing' | 'board' | string;
+  title: string;
+  status: 'open' | 'in_progress' | 'blocked' | 'done' | string;
+  priority: string | null;
+  dueAt: string | null;
+  ownerName: string | null;
+  blocking: boolean;
+}
+interface WorkViewRow {
+  items: WorkItemRow[];
+  /** `partial`: a store could not be read, so every count is a floor. */
+  summary?: { total?: number; blocking?: number; done?: number; partial?: boolean } | null;
+}
+
+const WORK_SOURCE_LABEL: Record<string, string> = {
+  schedule: 'Schedule',
+  review: 'Review thread',
+  correspondence: 'Agency correspondence',
+  filing: 'Tracked filing',
+  board: 'Task board',
+};
+const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
+const WORK_SHOWN = 10;
+
+function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: string; onNav: (id: string) => void }) {
+  const available = useSurfaceAvailable();
+  const ident = pid ? encodeURIComponent(pid) : null;
+  const state = useLiveData<WorkViewRow>(
+    ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
+    [ident],
+    hasKeys<WorkViewRow>('items'),
   );
-
-  const askGenerate = () =>
-    onAsk(
-      'Generate a schedule of events for this project — the regulatory milestone plan for its pathway, with dates toward our target submission.',
-    );
-
-  // Real POST /projects/:id/schedule-of-events/generate (routes/
-  // project-schedule-of-events.ts) — offered only in the numeric id-space where
-  // that endpoint actually resolves this project.
-  const generate = async () => {
-    if (!ident || genBusy) return;
-    setGenBusy(true);
-    setGenError(null);
-    const res = await liveMutateOrNull<ScheduleViewRow>(
-      'POST',
-      `/api/concept2cure/projects/${ident}/schedule-of-events/generate`,
-      {},
-    );
-    setGenBusy(false);
-    if (res.error) {
-      setGenError(res.error);
-    } else {
-      setReloadKey((k) => k + 1);
-    }
-  };
-
   return (
-    <section className="pj-sec">
+    <section className="pj-sec" aria-label={title}>
       <div className="pj-sec-h">
-        <h2>Schedule</h2>
-        <span className="sec-sub">
-          {state.data?.plan
-            ? [
-                state.data.plan.regulatoryFramework,
-                `v${state.data.plan.version}`,
-                fmtDue(state.data.plan.targetDate) ? `target ${fmtDue(state.data.plan.targetDate)}` : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')
-            : "AnA's regulatory milestone plan for this project"}
-        </span>
+        <h2>{title}</h2>
+        <span className="sec-sub">tasks, review threads and approvals on this program</span>
       </div>
-
-      {!ident ? (
-        /* UUID program — the schedule store is keyed by the numeric project
-           record, which this workspace doesn't resolve (same identity gap as
-           tasks & readiness). Stated honestly; no phantom generate action. */
+      {!ident ? null : isUnanchored(state) ? (
         <EmptyState
-          icon={I.calendar}
-          title="Schedule isn't wired to this workspace yet"
-          hint="AnA's schedule of events is keyed to the numeric project record, which this workspace doesn't resolve yet — so no milestones can be shown or generated from here."
+          icon={I.checkCircle}
+          title="This program has no task record"
+          hint="Tasks, review threads and approvals are kept on the program's project record, and this program has none, so there is nothing to list for it here."
         />
       ) : (
         <Anchored
           state={state}
-          loadingText="Loading the schedule of events…"
-          errorTitle="Couldn't load the schedule"
-          errorHint="The schedule-of-events read didn't respond. Sign in and retry, or check the service is reachable."
-          emptyTitle="No schedule generated"
-          emptyHint="Ask AnA to generate one — a regulatory milestone plan grounded in this project's pathway — or generate it from the pathway template below."
-          isEmpty={(d) => !d.plan && (d.milestones ?? []).length === 0}
+          loadingText="Loading this program's tasks and approvals…"
+          errorTitle="Couldn't load this program's tasks and approvals"
+          errorHint="The work view didn't respond. Sign in and retry, or check the service is reachable."
+          emptyTitle="No tasks or approvals on this program"
+          emptyHint="Tasks, review threads, approval blockers and agency correspondence recorded on this program appear here."
+          isEmpty={(d) => (d.items ?? []).length === 0}
           render={(d) => {
-            const milestones = d.milestones ?? [];
-            const open = milestones.filter((m) => m.status !== 'completed');
-            const completed = milestones.length - open.length;
-            const shown = open.slice(0, SCHED_SHOWN);
+            const items = d.items ?? [];
+            const open = items.filter((w) => w.status !== 'done');
+            const shown = open.slice(0, WORK_SHOWN);
+            const done = items.length - open.length;
             return (
               <>
-                {d.health?.summary && (
-                  <div className="scaf-note" style={{ padding: '4px 0 10px', fontSize: 12.5 }}>{d.health.summary}</div>
-                )}
-                <div className="pj-sched" style={{ display: 'grid', gap: 0 }}>
-                  {shown.map((m) => {
-                    const due = fmtDue(m.targetDate);
+                <div className="pj-files" data-testid="pj-work">
+                  {shown.map((w) => {
+                    const due = fmtDue(w.dueAt);
                     return (
-                      <div
-                        key={m.key || m.id}
-                        style={{
-                          display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
-                          borderBottom: '1px solid var(--border-subtle)',
-                        }}
-                      >
-                        <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>
-                          {String(m.status || 'not_started').replace(/_/g, ' ')}
-                        </span>
-                        <span style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>
-                            {m.title}
-                            {m.isCritical && <span className="sp-tone-warn" style={{ fontSize: 11, marginLeft: 6 }}>critical path</span>}
+                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}>
+                        <div className="pj-file-top">
+                          <span className="pj-file-badge">{WORK_SOURCE_LABEL[w.source] ?? w.source}</span>
+                          <span className={`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}>
+                            {String(w.status || 'open').replace(/_/g, ' ')}
                           </span>
-                          <span className="sec-sub" style={{ fontSize: 11.5 }}>
-                            {[m.regulatoryBasis, m.ownerRole].filter(Boolean).join(' · ')}
-                          </span>
-                        </span>
-                        <span className="sec-sub" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
-                          {due ?? 'no due date'}
-                          {m.slipDays != null && m.slipDays > 0 && (
-                            <span className="sp-tone-warn"> · {m.slipDays}d late</span>
-                          )}
-                        </span>
+                          {w.blocking && <span className="sp-tone-warn" style={{ fontSize: 11 }}>blocking</span>}
+                        </div>
+                        <div className="pj-file-n">{w.title}</div>
+                        <div className="pj-file-m">
+                          {[w.ownerName, w.priority ? `priority ${w.priority}` : null, due ? `due ${due}` : 'no due date']
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
                 <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
-                  {open.length > SCHED_SHOWN ? `+${open.length - SCHED_SHOWN} more upcoming · ` : ''}
-                  {completed > 0 ? `${completed} completed · ` : ''}
-                  {milestones.length} milestone{milestones.length === 1 ? '' : 's'} total
+                  {open.length > WORK_SHOWN ? `+${open.length - WORK_SHOWN} more open · ` : ''}
+                  {done > 0 ? `${done} done · ` : ''}
+                  {items.length} item{items.length === 1 ? '' : 's'} total
                 </div>
+                {d.summary?.partial && (
+                  <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
+                    One of the stores this list reads could not be read, so it may be incomplete and every count is a minimum.
+                  </div>
+                )}
               </>
             );
           }}
         />
       )}
+      {/* The board these rows live on, by its own id. This sent people to
+          the `task-board` alias, which the project no longer names
+          (FILING_SPINE.md §5, F7); `tasks` is the surface the alias resolved
+          to, so the door opens the same board. Shown only when that board is
+          in this release. */}
+      {available('tasks') && (
+        <div style={{ marginTop: 8 }}>
+          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('tasks')}>Open task board {I.right}</button>
+        </div>
+      )}
+    </section>
+  );
+}
 
-      {/* Empty-state affordances — both real: the composer prompt reaches the
-          generate_schedule_of_events AnA tool, and the button calls the real
-          POST generate endpoint. Rendered only in the numeric id-space where
-          they can actually act on THIS project. */}
-      {ident && !state.loading && !state.error && state.data && !state.data.plan
-        && (state.data.milestones ?? []).length === 0 && (
-        <div className="cm-pushbar" style={{ marginTop: 10 }}>
-          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={askGenerate}>
-            {I.sparkles} Ask AnA to generate one
-          </button>
-          <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} disabled={genBusy} onClick={generate}>
-            {genBusy ? 'Generating…' : 'Generate schedule'}
-          </button>
-        </div>
+/* ════ Review: this filing's reviews ═══════════════════════════════════════
+   FILING_SPINE.md F7, §6 row 3. The Review tab listed the program's tasks and
+   sent people to the `task-board` alias; nothing on it named a document. It
+   now reads the review board for this program
+   (GET /api/review/board?scope=all&programId=<uuid>,
+   server/routes/review-board-routes.ts — the route filters by program), the
+   same read model the Review surface shows, and groups the documents by what
+   they need from the person. A row opens THAT document through the Review
+   surface's own `openReviewDocument` (editor target by id and program).
+   Verdicts and signatures stay where they are recorded: the review board and
+   the editor. A failed read is an error with a retry, never an empty list. */
+
+/** The queue cap asked of the board. The route takes at most 100. */
+const PROJECT_REVIEWS_LIMIT = 100;
+
+function projectReviewsUrl(pid: string): string {
+  return `/api/review/board?scope=all&programId=${encodeURIComponent(pid)}&limit=${PROJECT_REVIEWS_LIMIT}`;
+}
+
+/** GET /api/review/board → data (the part this tab reads). */
+interface ProjectReviewBoard { queue: ReviewItem[] }
+
+type ReviewGroupId = 'mine' | ReviewStandingGroup;
+const REVIEW_GROUPS: Array<{ id: ReviewGroupId; title: string }> = [
+  { id: 'mine', title: 'Waiting on you' },
+  { id: 'in-review', title: 'In review' },
+  { id: 'changes', title: 'Changes requested' },
+  { id: 'declined', title: 'Declined' },
+  { id: 'sign-off', title: 'Reviewers approved, awaiting sign-off' },
+  { id: 'approved', title: 'Approved' },
+];
+
+/** What the document needs from the person first; otherwise where it stands. */
+function reviewGroupOf(r: ReviewItem): ReviewGroupId {
+  if (r.awaitingMyReview || r.atMySignOff) return 'mine';
+  return reviewStanding(r).group;
+}
+
+/** Still out for review: waiting on the person, in review, or reviewers
+ *  approved and sign-off pending. The header line counts these (F9), by the
+ *  same grouping the Review tab shows, so the two cannot disagree. */
+const OUT_FOR_REVIEW: ReadonlySet<ReviewGroupId> = new Set<ReviewGroupId>(['mine', 'in-review', 'sign-off']);
+const isOutForReview = (r: ReviewItem): boolean => OUT_FOR_REVIEW.has(reviewGroupOf(r));
+
+function reviewOwnership(r: ReviewItem): string | null {
+  if (r.awaitingMyReview) return 'Awaiting your review';
+  if (r.atMySignOff) return 'At your sign-off';
+  if (r.requestedByMe) return 'Requested by you';
+  return null;
+}
+
+function ProjectReviewRow({ item, onOpen }: { item: ReviewItem; onOpen: (item: ReviewItem) => void }) {
+  const who = [item.reviewer, item.role].filter(Boolean).join(' · ');
+  const ownership = reviewOwnership(item);
+  const standing = reviewStanding(item);
+  return (
+    <li className="cdl-row" data-doc-id={item.id} data-testid="pj-review-row">
+      <div className="cdl-row-main">
+        <span className="cdl-row-t">{item.doc}</span>
+        <span className="cdl-row-meta">
+          <span className="cdl-pill" data-status={standing.tone}>{standing.words}</span>
+          {ownership && <span>{ownership}</span>}
+          {who && <span>{who}</span>}
+          {item.comments > 0 && <span>{item.comments === 1 ? '1 open comment' : `${item.comments} open comments`}</span>}
+        </span>
+      </div>
+      <div className="cdl-row-actions">
+        <button type="button" className="btn primary" onClick={() => onOpen(item)} aria-label={`Open document: ${item.doc}`}>
+          {I.penLine} Open document
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function ProjectReviewsBody({ state, onRetry, onOpen }: {
+  state: DataState<ProjectReviewBoard>; onRetry: () => void; onOpen: (item: ReviewItem) => void;
+}) {
+  if (state.loading) return <div role="status" aria-busy="true" className="cdl-note">Reading this project’s reviews…</div>;
+  if (state.error || !state.data) {
+    return (
+      <ErrorState
+        title="Couldn’t read this project’s reviews"
+        message={`${state.error ?? 'The review board could not be read.'} This is a failed read, not an empty list.`}
+        retry={onRetry}
+        testId="pj-reviews-error"
+      />
+    );
+  }
+  const queue = state.data.queue ?? [];
+  if (queue.length === 0) {
+    return (
+      <p className="cdl-empty" data-testid="pj-reviews-empty">
+        Nothing in this project is out for review. Send a document for review from the editor, and it is listed here.
+      </p>
+    );
+  }
+  return (
+    <>
+      {REVIEW_GROUPS.map((g) => {
+        const rows = queue.filter((r) => reviewGroupOf(r) === g.id);
+        if (rows.length === 0) return null;
+        return (
+          <div key={g.id} className="pj-rv-group">
+            <h3 className="pj-rv-h">{g.title} <span className="pj-rv-n">{rows.length}</span></h3>
+            <ul className="cdl-list" aria-label={g.title}>
+              {rows.map((r) => <ProjectReviewRow key={r.id} item={r} onOpen={onOpen} />)}
+            </ul>
+          </div>
+        );
+      })}
+      {queue.length >= PROJECT_REVIEWS_LIMIT && (
+        <p className="cdl-note">This list stops at {PROJECT_REVIEWS_LIMIT} documents, so there may be more.</p>
       )}
-      {genError && (
-        <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
-          Couldn&rsquo;t generate the schedule: {genError}
-        </div>
-      )}
+    </>
+  );
+}
+
+/** The board is read once, by ProjectHome (useProjectReviews), and shared
+ *  with the header line, which counts the documents in review (F9). */
+function useProjectReviews(pid: string | null): { state: DataState<ProjectReviewBoard>; retry: () => void } {
+  const [epoch, setEpoch] = useState(0);
+  const url = pid ? projectReviewsUrl(pid) : null;
+  const state = useLiveData<ProjectReviewBoard>(url, [url, epoch], hasKeys<ProjectReviewBoard>('queue'));
+  return { state, retry: () => setEpoch((e) => e + 1) };
+}
+
+function ProjectReviews({ state, onRetry, onNav, available }: {
+  state: DataState<ProjectReviewBoard>; onRetry: () => void; onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  const openDocument = (item: ReviewItem) => openReviewDocument(item, onNav);
+  return (
+    <section className="pj-sec" aria-labelledby="pj-reviews-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-reviews-h">Reviews</h2>
+        <span className="sec-sub">documents in this project sent for review</span>
+        {/* The full board, which starts on the open program (Review.tsx,
+            onlyProgram). Not offered when it is not in this release. */}
+        {available('review') && (
+          <span className="pj-sec-acts">
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('review')}>
+              Open the review board {I.right}
+            </button>
+          </span>
+        )}
+      </div>
+      <ProjectReviewsBody state={state} onRetry={onRetry} onOpen={openDocument} />
     </section>
   );
 }
@@ -869,138 +1098,330 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
    show it. The one remaining message is the standing intro — framing, not a
    reply, and it says nothing about what has been done. */
 
-function ConversationComposer({ productName, onNav }: { productName: string; onNav: (id: string) => void }) {
+function StartConversation({ productName, onNav }: { productName: string; onNav: (id: string) => void }) {
   const [draft, setDraft] = useState('');
 
-  const intro =
-    "I'm your co-author on " + productName + ", bound to this project's governed dossier. " +
-    "Ask me to draft, reconcile, or review a section and I'll open the full thread with " +
-    'every step grounded to its source.';
-
-  const openThread = () => {
-    window.C2C_CONVO = { id: 'new', seed: draft.trim() || '' };
+  /* docs/design/ONE_ANA_ONE_CANVAS.md §2.3: a project's page starts a
+     conversation in the project, as Claude's project page does. It is not a
+     conversation of its own. It drew one: a header "AnA · co-author", an
+     "Open full thread" link and a message in AnA's voice that no model wrote,
+     a second place on the page that looked like talking to AnA. Now it says
+     what it does, and a question typed here starts a new conversation in
+     this project, where AnA answers it. */
+  const start = () => {
+    const text = draft.trim();
+    if (!text) return;
+    window.C2C_CONVO = { id: 'new', seed: text };
     onNav('conversation-thread');
   };
 
   return (
-    <div className="pj-convo">
-      <div className="pj-convo-h">
-        <span className="pj-convo-mark">{I.sparkles}</span>
-        <div className="pj-convo-id"><span className="pj-convo-t">AnA · co-author</span><span className="pj-convo-ctx">{productName} · governed dossier</span></div>
-        <button className="pj-convo-open" onClick={openThread}>Open full thread {I.arrowRight}</button>
-      </div>
-      <div className="pj-convo-scroll">
-        <div className="pj-msg ana"><span className="pj-msg-av">{I.sparkles}</span><div className="pj-msg-b">{intro}</div></div>
+    <section className="pj-convo" aria-labelledby="pj-start-h">
+      <div className="pj-start-h">
+        <h2 id="pj-start-h">Start a conversation in {productName}</h2>
+        <span className="sec-sub">AnA works with this project&apos;s sources, documents and submissions.</span>
       </div>
       <div className="pj-composer">
-        <textarea rows={2} aria-label="Message AnA about this project" placeholder={'Message AnA about ' + productName + '…'} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); openThread(); } }} />
+        <textarea
+          rows={2}
+          aria-labelledby="pj-start-h"
+          placeholder={'Ask AnA to draft, reconcile or review…'}
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); start(); } }}
+        />
         <div className="pj-composer-row">
           <span className="sp" />
-          <button className="pj-comp-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={openThread}>{I.arrowUp}</button>
+          <button className="pj-comp-send" aria-label="Start the conversation" disabled={!draft.trim()} onClick={start}>{I.arrowUp}</button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
 /* ════ Author workspace — real anchored slices + honest empties ════ */
 
-/** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
-interface ThreadRow { id: string; title: string | null; created_at: string | null; updated_at: string | null; program_id?: string | null }
-
-function AuthorWorkspace({
-  seg, pid, completion, onNav, onAsk, teamState, activityState, wsState, draftsState,
-}: {
-  seg: string;
-  /** regulatory_programs UUID — scopes the data room to this project. */
-  pid: string | null;
-  /** Dossier readiness percent from the program row, or null when unknown. */
-  completion: number | null;
-  onNav: (id: string) => void;
-  onAsk: (q: string) => void;
-  teamState: DataState<{ team: TeamRow[] }>;
-  activityState: DataState<{ activity: ActivityRow[] }>;
-  wsState: DataState<{ workstreams: WorkstreamRow[] }>;
-  draftsState: DataState<{ drafts: DraftRow[] }>;
-}) {
-  /* Launch-scope verdicts, for the workspace tool grid below. */
-  const { verdictFor } = useNavEntitlements();
-  /* The program's own AnA threads — REAL. Threads carry the program they were
-     started in (chat_threads.metadata.programId, written when the stream
-     mints the thread), so this lists exactly the conversations held on this
-     project, newest first, and opens one back into the thread surface. Until
-     that key existed this section was an honest empty with nothing behind it:
-     there was no way to resume a project chat from the project. */
-  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
-    pid ? `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8` : null,
-    [pid],
-  );
+/* ════ Conversations held on this project ═══════════════════════════════════
+   The program's own AnA threads. Threads carry the program they were started
+   in (chat_threads.program_id, bound when the stream mints the thread, only to
+   a program of its organization), so this lists exactly the conversations
+   held on this project, newest first, and opens one back into the thread
+   surface. It sits above the tabs with the start box (FILING_SPINE.md §2,
+   "Before the tabs"): a conversation belongs to the project, not to one stage
+   of it. A screenful at a time, with every older one reachable
+   (projectThreads.ts; QA 2026-10-08, j5: the newest 8 were all a project
+   with more could open). */
+function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string) => void }) {
+  const threads = useProjectThreads(pid);
   const resumeThread = (id: string) => {
     window.C2C_CONVO = { id };
     onNav('conversation-thread');
   };
   return (
+    <section className="pj-sec" aria-labelledby="pj-threads-h">
+      <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">yours on this project, to resume</span></div>
+      <Anchored
+        state={threads.state}
+        loadingText="Loading conversations…"
+        errorTitle="Couldn't load conversations"
+        errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
+        /* The server lists the caller's own conversations only, so the empty
+           says whose list it is. */
+        emptyTitle="You have no conversations on this project yet."
+        emptyHint="Start one in the box above; it is kept on this project and listed here."
+        compactEmpty
+        isEmpty={(d) => (d.threads ?? []).length === 0}
+        render={() => (
+          <>
+            <div className="pj-files" data-testid="pj-threads">
+              {threads.shown.map((t) => (
+                <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
+                  <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
+                  <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+                </button>
+              ))}
+            </div>
+            {threads.olderError && (
+              <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>{threads.olderError}</div>
+            )}
+            {threads.hasOlder && (
+              <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', marginTop: 8 }} disabled={threads.loadingOlder} onClick={threads.showOlder}>
+                {threads.loadingOlder ? 'Loading older conversations…' : 'Show older conversations'}
+              </button>
+            )}
+          </>
+        )}
+      />
+    </section>
+  );
+}
+
+/* ════ My work on this project ═════════════════════════════════════════════
+   ONE_ANA_ONE_CANVAS.md slice 24. The program's tasks and approvals are
+   listed just above it (ProjectWorkPanel, read by the program UUID through
+   the server's anchor). My work, the signed-in person's own queue, is not
+   filtered to this project yet; this says so in one line and links to it.
+   This section said "Tasks & submission readiness aren't wired"; the dispatch
+   readiness is on the Submit stage now.
+
+   "Open My work" opens what the nav's My work opens: the task board on the
+   signed-in person's own tasks, asked of the board through the same validated
+   action bus (tasking.filter, mine), not the board on everyone's. */
+function MyWorkLine({ onNav, available }: { onNav: (id: string) => void; available: (id: string) => boolean }) {
+  const openMyWork = () => {
+    const res = resolveSurfaceAction('tasking.filter', { mine: 'true' });
+    if (res.ok) applySurfaceAction(res.directive, () => onNav('tasks'));
+    else onNav('tasks');
+  };
+  return (
+    <section className="pj-sec" aria-labelledby="pj-mywork-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-mywork-h">My work</h2>
+        {available('tasks') && (
+          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openMyWork}>
+            Open My work {I.right}
+          </button>
+        )}
+      </div>
+      <p className="pj-desc">Your work is not filtered to this project yet. My work lists it for every project.</p>
+    </section>
+  );
+}
+
+/* ════ Author: the project's documents ═══════════════════════════════════════
+   FILING_SPINE.md F3. Every document of this project in the authoring store,
+   GET /api/authoring/docs?programId=<uuid>, read and shown with the canvas
+   list's own pieces (editor/CanvasDocumentList.tsx: useDocumentList, rowsOf,
+   StatusPill, updatedWords). It replaces two things:
+     · "Recent drafts", which listed governed sections filtered on a status
+       that editor work never moves (projects.ts /drafts, status != 'todo')
+       and opened the editor without the draft;
+     · the "Every capability, scoped to this project" Workspace grid, which
+       launched organisation-level apps from inside the project.
+   A row opens THAT document: the editor target names it by id and program,
+   and the editor opens it or says why it could not. A failed read is an error
+   with a retry, never an empty list. */
+
+/** Every document of the project in the authoring store, whoever built it. */
+function projectDocumentsUrl(pid: string | null): string | null {
+  return pid ? `/api/authoring/docs?programId=${encodeURIComponent(pid)}` : null;
+}
+
+/** `M2`, `m2` or `2` → 2: the CTD module a document or a section rollup names.
+ *  Anything else (a 510(k) letter, a CSR section number) names no module. */
+function ctdModule(v: string | null | undefined): number | null {
+  const m = /^m?([1-5])$/i.exec(String(v ?? '').trim());
+  return m ? Number(m[1]) : null;
+}
+
+/* ProjectDocumentRow and ProjectDocumentsBody restate CanvasDocumentList's
+   private DocumentRow and ListBody (editor/CanvasDocumentList.tsx), without
+   its per-row "Download working copy" and its return-focus to Open. That is
+   a second copy of one list. The fix is in that file, which this slice does
+   not own: export a scope-agnostic row and body (empty sentence, download and
+   focus as options) and render them here; then these two are deleted. */
+function ProjectDocumentRow({ doc, onOpen }: { doc: BuiltDocument; onOpen: (doc: BuiltDocument) => void }) {
+  const n = ctdModule(doc.module);
+  const module = n ? `Module ${n}` : doc.module;
+  return (
+    <li className="cdl-row" data-doc-id={doc.id} data-testid="pj-doc-row">
+      <div className="cdl-row-main">
+        <span className="cdl-row-t">{doc.title}</span>
+        <span className="cdl-row-meta">
+          <StatusPill status={doc.status} />
+          {module && <span>{module}</span>}
+          <span>Updated <time dateTime={doc.updatedAt ?? undefined}>{updatedWords(doc.updatedAt)}</time></span>
+          {doc.source === 'ana' && <span>Built by AnA</span>}
+        </span>
+      </div>
+      <div className="cdl-row-actions">
+        <button type="button" className="btn primary" onClick={() => onOpen(doc)} aria-label={`Open ${doc.title}`}>
+          {I.penLine} Open
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function ProjectDocumentsBody({ read, onRetry, onOpen }: {
+  read: ListRead; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
+}) {
+  const rows = rowsOf(read);
+  if (read.state === 'error' && !rows) {
+    return (
+      <ErrorState
+        title="Couldn’t list this project’s documents"
+        message={`${read.message} This is a failed read, not an empty list.`}
+        retry={onRetry}
+        testId="pj-docs-error"
+      />
+    );
+  }
+  if (!rows) return <div role="status" aria-busy="true" className="cdl-note">Reading this project’s documents…</div>;
+  if (rows.length === 0) {
+    return <p className="cdl-empty" data-testid="pj-docs-empty">No documents in this project yet. Ask AnA in the box above to draft one.</p>;
+  }
+  return (
+    <>
+      {read.state === 'error' && (
+        <div className="cdl-note" role="status" data-tone="err">
+          Couldn’t refresh the list. This is the list read earlier.{' '}
+          <button type="button" className="btn ghost" onClick={onRetry}>Retry</button>
+        </div>
+      )}
+      <ul className="cdl-list" aria-label="This project’s documents" data-testid="pj-documents">
+        {rows.map((doc) => <ProjectDocumentRow key={doc.id} doc={doc} onOpen={onOpen} />)}
+      </ul>
+    </>
+  );
+}
+
+function ProjectDocuments({ read, onRetry, onOpen, onNav, available }: {
+  read: ListRead; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
+  onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  /* The editor's own view, with no document named: any pending target is
+     dropped so an older one cannot ride along (editorTarget.ts). */
+  const openAuthoring = () => {
+    clearEditorTarget();
+    onNav('document-authoring');
+  };
+  return (
+    <section className="pj-sec" aria-labelledby="pj-docs-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-docs-h">Documents</h2>
+        <span className="pj-sec-acts">
+          {/* Protocols have no program key (protocol_documents, PF-14), so
+              the door says they are the organisation's, not this project's. */}
+          {available('protocol-dev') && (
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('protocol-dev')}>
+              Protocols (organisation-wide) {I.right}
+            </button>
+          )}
+          {available('document-authoring') && (
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openAuthoring}>
+              Open in Authoring {I.right}
+            </button>
+          )}
+        </span>
+      </div>
+      <ProjectDocumentsBody read={read} onRetry={onRetry} onOpen={onOpen} />
+    </section>
+  );
+}
+
+/** One CTD module's section rollup, and the project's newest document in
+ *  that module, which the row opens by id. The rollup counts governed
+ *  sections (c2c_document_sections) and the document is an authoring
+ *  document: two stores, so the figure is named as the module's sections and
+ *  the document is named in words under it, never as the figure's owner.
+ *  When the module holds several documents the row says how many and which
+ *  one it opens. A module with no document of this project, or a list that
+ *  could not be read, is a row with nothing to click: it opened the editor's
+ *  list, which is not the module (FILING_SPINE.md §6 row 4). */
+function ModuleRow({ w, match, onOpen }: {
+  w: WorkstreamRow; match: { doc: BuiltDocument; count: number; n: number } | null; onOpen: (doc: BuiltDocument) => void;
+}) {
+  const done = Number(w.completion_pct ?? 0);
+  const total = Number(w.total);
+  const name = String(w.module ?? '—').toUpperCase();
+  const sections = total ? `${total} section${total === 1 ? '' : 's'}` : '';
+  const label = `${name}${sections ? ` · ${sections}` : ''}`;
+  const body = (
+    <>
+      <span className="pj-lmod-t">{label}</span>
+      <span className="pj-lmod-track"><span className="pj-lmod-fill" data-risk={done < 50 || undefined} style={{ width: done + '%' }} /></span>
+      <span className="pj-lmod-pct">{done}%</span>
+    </>
+  );
+  if (!match) return <div className="pj-lmod" data-none data-risk={done < 50 || undefined}>{body}</div>;
+  const { doc, count, n } = match;
+  const which = count > 1 ? `, the newest of ${count} Module ${n} documents` : '';
+  return (
+    <div className="pj-lmodrow">
+      <button type="button" className="pj-lmod" data-risk={done < 50 || undefined} onClick={() => onOpen(doc)}
+        aria-label={`${name} sections${sections ? ` (${sections})` : ''}: ${done}% complete. Open ${doc.title}${which}`}>
+        {body}
+      </button>
+      <span className="pj-lmod-doc" data-testid="pj-lmod-doc">Opens {doc.title}{which}</span>
+    </div>
+  );
+}
+
+function AuthorWorkspace({
+  pid, completion, readinessAsOf, onNav, teamState, activityState, wsState, docs, onRetryDocs, onOpenDoc,
+}: {
+  /** regulatory_programs UUID — scopes the records to this project. */
+  pid: string | null;
+  /** Dossier readiness percent from the program row, or null when unknown. */
+  completion: number | null;
+  /** "Measured …" for that figure, or null. */
+  readinessAsOf: string | null;
+  onNav: (id: string) => void;
+  teamState: DataState<{ team: TeamRow[] }>;
+  activityState: DataState<{ activity: ActivityRow[] }>;
+  wsState: DataState<{ workstreams: WorkstreamRow[] }>;
+  /** GET /api/authoring/docs?programId= — the project's documents. */
+  docs: ListRead;
+  onRetryDocs: () => void;
+  onOpenDoc: (doc: BuiltDocument) => void;
+}) {
+  const available = useSurfaceAvailable();
+  const docRows = rowsOf(docs) ?? [];
+  /* The newest document of this project in a CTD module (the list is newest
+     first), and how many the module holds. */
+  const docForModule = (module: string | null): { doc: BuiltDocument; count: number; n: number } | null => {
+    const n = ctdModule(module);
+    if (n == null) return null;
+    const inModule = docRows.filter((d) => ctdModule(d.module) === n);
+    return inModule.length ? { doc: inModule[0], count: inModule.length, n } : null;
+  };
+  return (
     <div className="pj-grid">
       <div className="pj-main">
-        {/* Workspace tools — canonical registry navigation (not data) */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Workspace</h2><span className="sec-sub">Every capability, scoped to this project</span></div>
-          {getSegmentModules(seg)
-            /* Tools outside the launch scope are not offered here: this grid
-               is "what you can do in this project", and a card that opens a
-               "not in this release" panel is not a thing you can do. The
-               Apps catalog remains the honest full list. A group left empty
-               by the filter is dropped rather than rendered as a heading
-               over nothing. */
-            .map((grp: { label: string; items: string[] }) => ({
-              label: grp.label,
-              items: grp.items.filter((id: string) => !isLaunchScopeLocked(verdictFor(id))),
-            }))
-            .filter((grp) => grp.items.length > 0)
-            .map((grp: { label: string; items: string[] }) => (
-            <div key={grp.label} className="pj-toolgrp">
-              <div className="pj-toolgrp-l">{grp.label}</div>
-              <div className="pj-tools">
-                {grp.items.map(id => {
-                  const m = getSurfaceMeta(id);
-                  return (
-                    <button key={id} className="pj-tool" title={(m as { notes?: string }).notes || m.label} onClick={() => onNav(id)}>
-                      <span className="pj-tool-ico">{I[(m as { icon?: string }).icon || ''] || I.grid}</span>
-                      <span className="pj-tool-b"><span className="pj-tool-t">{m.label}</span><span className="pj-tool-d">{String((m as { notes?: string }).notes || '').split('. ')[0]}</span></span>
-                      <span className="pj-tool-go">{I.right}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </section>
+        <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} />
 
-        {/* Conversations — the program's persisted AnA threads, resumable */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
-          <Anchored
-            state={threadsState}
-            loadingText="Loading conversations…"
-            errorTitle="Couldn't load conversations"
-            errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
-            emptyTitle="No project conversations yet"
-            emptyHint="Start one in the composer above — threads started here are kept on this project and listed for resuming."
-            isEmpty={(d) => (d.threads ?? []).length === 0}
-            render={(d) => (
-              <div className="pj-files" data-testid="pj-threads">
-                {(d.threads ?? []).map((t) => (
-                  <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
-                    <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
-                    <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          />
-        </section>
-
-        {/* Linked modules — REAL: per-CTD-module section rollup */}
+        {/* Module completion — REAL: per-CTD-module section rollup */}
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">section status by CTD module</span></div>
           <Anchored
@@ -1013,39 +1434,18 @@ function AuthorWorkspace({
             isEmpty={(d) => (d.workstreams ?? []).length === 0}
             render={(d) => (
               <div className="pj-mods">
-                {(d.workstreams ?? []).map((w, i) => {
-                  const done = Number(w.completion_pct ?? 0);
-                  const label = String(w.module ?? '—').toUpperCase();
-                  return (
-                    <button key={i} className="pj-lmod" data-risk={done < 50 || undefined} onClick={() => onNav('dossier-map')}>
-                      <span className="pj-lmod-t">{label}{Number(w.total) ? ` · ${Number(w.total)} section${Number(w.total) === 1 ? '' : 's'}` : ''}</span>
-                      <span className="pj-lmod-track"><span className="pj-lmod-fill" data-risk={done < 50 || undefined} style={{ width: done + '%' }} /></span>
-                      <span className="pj-lmod-pct">{done}%</span>
-                    </button>
-                  );
-                })}
+                {(d.workstreams ?? []).map((w, i) => <ModuleRow key={`${w.module ?? ''}-${i}`} w={w} match={docForModule(w.module)} onOpen={onOpenDoc} />)}
               </div>
             )}
           />
         </section>
 
-        {/* Data room — REAL: the project's canonical client-document sources.
-            Sits directly above the documentation sections it feeds. */}
-        <DataRoom pid={pid} onNav={onNav} onAsk={onAsk} />
+        {/* Tasks — the program's outstanding work, the same panel the Review
+            stage shows (one read, one component). It said "aren't wired" for
+            every program until the work view took the program's UUID. */}
+        <ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} />
 
-        {/* Tasks & readiness — project_tasks / readiness engine are keyed by the
-            NUMERIC projects.id, not reachable from this UUID-scoped surface. */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Tasks &amp; readiness</h2></div>
-          <EmptyState
-            icon={I.checkCircle}
-            title="Tasks &amp; submission readiness aren't wired to this workspace yet"
-            hint={<>Project tasks and the readiness engine are keyed to the numeric project record, which this workspace doesn't resolve yet. Open the task board to see and manage this org's tasks.</>}
-          />
-          <div style={{ marginTop: 8 }}>
-            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
-          </div>
-        </section>
+        <MyWorkLine onNav={onNav} available={available} />
 
         {/* Records in this project — REAL: GET /:id/records, every store read
             by its project key (PF-17). A store it cannot read says so. */}
@@ -1106,15 +1506,31 @@ function AuthorWorkspace({
       <aside className="pj-side">
         {/* Dossier readiness — a status figure, so it lives with the other
             status cards in the aside rather than between the conversation and
-            the work (the constitution's no-KPI-hero rule for project landing). */}
-        {completion != null && (
-          <section className="pj-card">
-            <div className="pj-card-h"><h3>Dossier readiness</h3><span className="sec-sub">{completion}% complete</span></div>
-            <div className="pj-map">
-              <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
-            </div>
-          </section>
-        )}
+            the work (the constitution's no-KPI-hero rule for project landing).
+            Always present, under the name the Projects card uses: the one
+            readiness the server computes for a program, or "not measured". It
+            used to be left out when unmeasured, so the page said nothing while
+            the card said "not measured" (QA 2026-10-08, j1). No ring is drawn
+            for no figure — an empty ring reads as 0%. */}
+        <section className="pj-card">
+          <div className="pj-card-h">
+            <h3>{DOSSIER_READINESS_LABEL}</h3>
+            <span className="sec-sub">{dossierReadinessValue(completion)}</span>
+          </div>
+          {completion != null ? (
+            <>
+              <div className="pj-map" title={DOSSIER_READINESS_MEANS}>
+                <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
+              </div>
+              {readinessAsOf && <p className="pj-card-note">{readinessAsOf}</p>}
+            </>
+          ) : (
+            <p className="pj-card-note">
+              {DOSSIER_READINESS_MEANS} There are no governed sections to measure on this program yet, or the
+              figure could not be read.
+            </p>
+          )}
+        </section>
         {/* Memory / instructions / intelligence — served only by the numeric
             project-home read-model (project_intelligence_profiles), not reachable
             from this UUID-scoped surface. Honest empty, never a fabricated body. */}
@@ -1136,44 +1552,6 @@ function AuthorWorkspace({
           />
         </section>
 
-        {/* Recent drafts — REAL: most-recently-updated governed document sections.
-            (The prior 'Files' card fabricated an uploaded-document list; this shows
-            the project's real drafted sections instead.) */}
-        <section className="pj-card">
-          <div className="pj-card-h"><h3>Recent drafts</h3>
-            {/* Upload is a flagged mock ACTION — no upload endpoint is wired on
-                this surface, so the picker below intentionally does not fabricate
-                a persisted/processing row. Uploading lives in the document
-                workspace. */}
-            <button className="pj-edit" title="Add document (opens the document workspace)" aria-label="Add document (opens the document workspace)" onClick={() => onNav('document-authoring')}>{I.plus}</button>
-          </div>
-          <Anchored
-            state={draftsState}
-            loadingText="Loading recent drafts…"
-            errorTitle="Couldn't load recent drafts"
-            errorHint="The project sections read didn't respond. Sign in and retry, or check the service is reachable."
-            emptyTitle="No drafted sections yet"
-            emptyHint="Governed document sections drafted on this project will appear here, newest first."
-            isEmpty={(d) => (d.drafts ?? []).length === 0}
-            render={(d) => (
-              <div className="pj-files">
-                {(d.drafts ?? []).map((f) => {
-                  const nm = f.label || f.document_title || f.section_key || 'Section';
-                  return (
-                    <button key={f.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => onNav('document-authoring')}>
-                      <div className="pj-file-top">
-                        <span className="pj-file-badge">{String(f.doc_type || 'doc').toUpperCase()}</span>
-                        <span className="pj-file-status" data-s={fileTone(f.status || '')}>{f.status || 'draft'}</span>
-                      </div>
-                      <div className="pj-file-n">{nm}</div>
-                      <div className="pj-file-m">{[f.section_key, f.version != null ? 'v' + f.version : null, fmtWhen(f.updated_at)].filter(Boolean).join(' · ')}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          />
-        </section>
       </aside>
     </div>
   );
@@ -1181,10 +1559,11 @@ function AuthorWorkspace({
 
 /* ════ ProjectHome — the full workspace surface ════ */
 
-export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
+export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // Other v2 surfaces treat onAsk as optional; keep that contract so ProjectHome
   // renders standalone (and in tests) without a host wired up.
   const ask = onAsk || (() => {});
+  const available = useSurfaceAvailable();
   const sel = window.C2C_PROJECT ?? null;
 
   // Selected-project identity handed off from the Projects surface. Its `id` is
@@ -1212,7 +1591,13 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const teamState = useLiveData<{ team: TeamRow[] }>(pid ? `/api/c2c/projects/${pid}/team` : null);
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
   const wsState = useLiveData<{ workstreams: WorkstreamRow[] }>(pid ? `/api/c2c/projects/${pid}/workstreams` : null);
-  const draftsState = useLiveData<{ drafts: DraftRow[] }>(pid ? `/api/c2c/projects/${pid}/drafts` : null);
+  /* The project's documents (FILING_SPINE.md F3), read once for the Author
+     list, its module rows and what AnA is told. */
+  const { read: docsRead, reload: reloadDocs } = useDocumentList(projectDocumentsUrl(pid));
+  /* The project's markets and its review board, each read once and shared by
+     the header line and the Submit and Review tabs (FILING_SPINE.md F9). */
+  const markets = useProgramMarkets(pid);
+  const reviews = useProjectReviews(pid);
 
   const [stage, setStage] = useState('author');
 
@@ -1225,6 +1610,12 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // header then rendered as the project's name — "PROJECT Project" above an
   // H1 "Project" — with no project selected at all.
   const title = sel?.title || prog?.name || null;
+  /* A document row opens THAT document: the editor target carries its id and
+     this program, so the editor opens it or states why it could not. */
+  const openDocument = (doc: BuiltDocument) => {
+    setEditorTarget({ docType: null, docId: doc.id, programId: pid, programTitle: title });
+    onNav('document-authoring');
+  };
   const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
   const clientType = sel?.ws ?? null;
@@ -1244,11 +1635,17 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
   const completion = typeof prog?.readiness === 'number' ? prog.readiness : null;
+  const readinessAsOf = completion === null ? null : dossierReadinessAsOf(prog?.readinessAsOf);
   /* The device taxonomy, read from the row only. A device / IVD program shows
      its class, path, product code, regulation, panel, predicate and flags —
      each field stated as absent when the row lacks it; a drug program shows
      the drug facts and no device block. */
   const deviceProgram = isDeviceProgram(prog?.product_type);
+  /* A device or diagnostic filing: the program's product type, or a
+     selection made from the MDX workspace (the old Workspace grid's medtech
+     segment). Only a project that is read and is neither is an eCTD filing. */
+  const deviceFiling = deviceProgram || clientType === 'MDX';
+  const ectdFiling = !!prog && !deviceFiling;
   const predicateKs = (prog?.predicate_devices ?? [])
     .map((p) => String(p?.kNumber ?? '').trim())
     .filter(Boolean);
@@ -1262,9 +1659,6 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     if (pid && productType) updateShellProject({ productType });
   }, [pid, prog?.product_type]);
 
-  const seg = sel
-    ? ({ MDX: 'medtech', Biotech: 'biotech', Pharma: 'pharma', CRO: 'cro' }[sel.ws ?? ''] ?? 'biotech')
-    : (segment || 'biotech');
 
   const noProject = !pid;
 
@@ -1301,13 +1695,13 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     const team = teamState.data?.team;
     const activity = activityState.data?.activity;
     const workstreams = wsState.data?.workstreams;
-    const drafts = draftsState.data?.drafts;
+    const documents = rowsOf(docsRead);
     return {
       summary:
         `Project home for ${title ? `"${title}"` : 'an untitled project'}${submissionType ? ` (${submissionType})` : ''}: ` +
         [status && `status ${status}`, phase && `phase ${phase}`, priority && `priority ${priority}`,
          region && `primary agency ${region}`, indication && `indication ${indication}`,
-         completion != null && `${completion}% complete`].filter(Boolean).join(', ') +
+         `${DOSSIER_READINESS_LABEL.toLowerCase()} ${dossierReadinessValue(completion)}`].filter(Boolean).join(', ') +
         `. The "${stage}" stage is open.`,
       facts: {
         projectId: pid,
@@ -1329,14 +1723,12 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
               completionPercent: w.completion_pct, lastUpdated: w.last_updated,
             })),
         workstreamsUnavailable: wsState.error ? 'the workstream rollup read failed' : null,
-        recentDrafts: draftsState.loading || draftsState.error || !Array.isArray(drafts)
-          ? null
-          : drafts.slice(0, 10).map((d) => ({
-              id: d.id, section: d.section_key, label: d.label, status: d.status,
-              version: d.version, documentTitle: d.document_title,
-              docType: d.doc_type, updated: d.updated_at,
-            })),
-        draftsUnavailable: draftsState.error ? 'the drafts read failed' : null,
+        documents: documents
+          ? documents.slice(0, 10).map((d) => ({
+              id: d.id, title: d.title, status: d.status, module: d.module, updated: d.updatedAt,
+            }))
+          : null,
+        documentsUnavailable: docsRead.state === 'error' && !documents ? 'the documents read failed' : null,
         recentActivity: activityState.loading || activityState.error || !Array.isArray(activity)
           ? null
           : activity.slice(0, 10).map((a) => ({
@@ -1346,7 +1738,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       },
       availableActions: [
         'Move through the programme lifecycle stages',
-        'Open a recent draft section in the document editor',
+        'Open one of this project’s documents in the editor',
         'Open this project’s documents in the Vault surface, or its filings in the Submission Center',
         'Read the per-module completion rollup and the recent audited activity',
       ],
@@ -1356,7 +1748,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       teamState.loading, teamState.error, teamState.data,
       activityState.loading, activityState.error, activityState.data,
       wsState.loading, wsState.error, wsState.data,
-      draftsState.loading, draftsState.error, draftsState.data]);
+      docsRead]);
   usePublishSurfaceContext('project-home', anaContext);
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -1366,20 +1758,25 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
      same reasoning as vault.search — applying it mid-load is correct, not
      early, and there is no loading refusal and no retry.
 
-     Known gap, not expressible today: leaving the 'author' stage unmounts its
-     composer, whose in-progress draft is child-local state this handler cannot
-     see — a mid-message guard would need that state lifted out of the child.
-     The registry entry's description already warns AnA not to switch away from
-     author uninvited. */
+     The start box sits above the tabs, outside the stage switch (FILING_SPINE.md
+     F2), so switching stage no longer unmounts a half-typed message. 'plan' and
+     'lifecycle' name tabs that were removed; they still resolve, to the tab
+     that holds their work (its `aliases` in PJ_LIFECYCLE), and the answer
+     says so. */
   useSurfaceActionHandlers('project-home', {
     'project-home.set-stage': (params) => {
       if (noProject)
         return { ok: false, reason: 'No project is selected — open one from All projects.' };
-      const target = (params.stage ?? '').trim();
-      const meta = PJ_LIFECYCLE.find((s) => s.id === target);
+      const asked = (params.stage ?? '').trim();
+      const meta = PJ_LIFECYCLE.find((s) => s.id === asked || s.aliases?.includes(asked));
       if (!meta) return { ok: false, reason: `No lifecycle stage named "${params.stage}".` };
       setStage(meta.id);
-      return { ok: true, detail: `Opened the ${meta.id} stage` };
+      return {
+        ok: true,
+        detail: meta.id === asked
+          ? `Opened the ${meta.id} stage`
+          : `Opened the ${meta.id} stage: "${asked}" has no tab of its own; its work is on ${meta.label}`,
+      };
     },
   });
   /* Ready signal — harmless even though set-stage never answers retry: a
@@ -1460,6 +1857,24 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             this is where the control belongs. */}
       </div>
 
+      {/* Where the filing stands (FILING_SPINE.md F9): each market's verdict
+          and the documents in review, from the reads the tabs show. */}
+      {pid && !progState.error && (
+        <ProjectStatusLine markets={markets} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
+      )}
+
+      {/* Before the tabs (FILING_SPINE.md §2): the start box and the
+          conversations held on this project. They are outside the stage
+          switch, so a half-typed message survives a change of tab; they sat
+          inside Author, and leaving Author unmounted the message. Shown, as
+          before, once the project record has not failed. */}
+      {pid && !progState.error && (
+        <div className="pj-start">
+          <StartConversation productName={productName} onNav={onNav} />
+          <ProjectConversations pid={pid} onNav={onNav} />
+        </div>
+      )}
+
       {/* A lifecycle belongs to a project. With none selected the tabs
           switched nothing — the body below is "No project selected" whichever
           is open — and AnA's set-stage already refuses in this state, so the
@@ -1480,7 +1895,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
         <EmptyState
           icon={I.folder}
           title="No project selected"
-          hint="Open a project from All projects to load its governed workspace — team, module completion, drafts and activity."
+          hint="Open a project from All projects to load its governed workspace — documents, module completion, team and activity."
         />
       ) : progState.error ? (
         <EmptyState
@@ -1491,84 +1906,56 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
         />
       ) : (
         <>
-          {/* Evidence — the vault tree read-model (/api/c2c/project-vault/:id) is
-              shaped for the dedicated Vault surface, not this panel's contract.
-              Honest empty rather than a fabricated file tree. */}
-          {stage === 'evidence' && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Evidence &amp; vault</h2></div>
-              <EmptyState
-                icon={I.folder}
-                title="The document vault opens in its own workspace"
-                hint="This project's governed documents, folder tree and version history live in the Vault surface, which renders the real document/section store."
-              />
-            </section>
+          {/* Evidence — the project's files, then its data room: every way a
+              source comes into the project (FILING_SPINE.md F3). The data
+              room sat under Author. */}
+          {stage === 'evidence' && pid && (
+            <div className="pj-stagebody">
+              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} />
+              <DataRoom pid={pid} onNav={onNav} onAsk={ask} />
+            </div>
           )}
 
-          {/* Submit — submissions are owned by the Submission Center surface. */}
-          {stage === 'submit' && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Submissions</h2></div>
-              <EmptyState
-                icon={I.rocket}
-                title="Submissions open in the Submission Center"
-                hint="Agency gateways, the eCTD pipeline and this project's submissions are managed in the Submission Center, wired to the real submissions store."
-              />
-              <div style={{ marginTop: 8 }}>
-                <button className="btn primary" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('submission-center')}>{I.right} Open Submission Center</button>
-              </div>
-            </section>
+          {/* Submit — one row per market, each with its own server verdict
+              (F9), then what Plan and Lifecycle promised, named as coming
+              later (F2). */}
+          {stage === 'submit' && pid && (
+            <div className="pj-stagebody">
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} />
+              <ComingLater stage="submit" device={deviceFiling} />
+            </div>
           )}
 
-          {/* Review — tasks are keyed by the numeric project record, not reachable here. */}
+          {/* Review — this filing's reviews, each opening its document (F7),
+              then the program's tasks and approvals from the unified work
+              view, asked by the program UUID (see ProjectWorkPanel). */}
           {stage === 'review' && (
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Review &amp; approvals</h2></div>
-              <EmptyState
-                icon={I.checkCircle}
-                title="Review tasks aren't wired to this workspace yet"
-                hint="Project tasks and approvals are managed on the task board. This workspace doesn't resolve the numeric project record the task store is keyed on."
-              />
-              <div style={{ marginTop: 8 }}>
-                <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
-              </div>
-            </section>
+            <div className="pj-stagebody">
+              {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
+              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} />
+            </div>
           )}
 
-          {/* Plan — the live schedule-of-events panel, the canonical tool
-              catalog, and honest empties for the panels whose backends are
-              org-shaped/absent here (meetings, eTMF, grants). */}
-          {stage === 'plan' && (<>
-            <SchedulePanel pid={pid} onAsk={ask} />
-            <StagePanel stage="plan" onNav={onNav} />
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Agency meetings &amp; planning data</h2></div>
-              <EmptyState
-                icon={I.calendar}
-                title="Meetings, eTMF and grants open in their own surfaces"
-                hint="Agency meetings, the Trial Master File and grant milestones are managed in their dedicated surfaces, each wired to its real store. Use the tools above to open them."
-              />
-            </section>
-          </>)}
+          {/* Respond: add the agency's letter, draft the answer from it with
+              AnA, start the response sequence (F15). */}
+          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} />}
 
-          {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} />}
-          {stage === 'lifecycle' && <StagePanel stage="lifecycle" onNav={onNav} />}
-
-          {stage === 'author' && (<>
-            <ConversationComposer productName={productName} onNav={onNav} />
-
+          {/* Author — the project's documents, each opened by id, then module
+              completion, the person's work, records and the team. */}
+          {stage === 'author' && (
             <AuthorWorkspace
-              seg={seg}
               pid={pid}
               completion={completion}
+              readinessAsOf={readinessAsOf}
               onNav={onNav}
-              onAsk={ask}
               teamState={teamState}
               activityState={activityState}
               wsState={wsState}
-              draftsState={draftsState}
+              docs={docsRead}
+              onRetryDocs={reloadDocs}
+              onOpenDoc={openDocument}
             />
-          </>)}
+          )}
         </>
       )}
     </div>

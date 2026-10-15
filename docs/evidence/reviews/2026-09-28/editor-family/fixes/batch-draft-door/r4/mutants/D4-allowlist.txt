@@ -1,0 +1,22 @@
+Mutant D4-allowlist: Any attribute is stripped with its tag, as round 3 did.
+Result: KILLED (vitest exit 1, 3 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -290,3 +290,3 @@
+     const allowed = SILENT_ATTRIBUTES.get(name);
+-    if (!allowed || !allowed.test(value)) return null;
++    void allowed;
+   }
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > removes a tag every reader hides, and keeps every other `<` as written 7ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a data attribute): not AnA's 8ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D4: the editor may open any content in source mode > attribute text that could read as prose is not removed (a class): not AnA's 2ms
+
+--- summary ---
+ Test Files  2 failed | 2 passed (4)
+      Tests  3 failed | 144 passed (147)

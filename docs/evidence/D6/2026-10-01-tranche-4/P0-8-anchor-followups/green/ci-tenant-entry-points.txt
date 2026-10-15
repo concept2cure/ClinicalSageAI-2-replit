@@ -1,0 +1,5 @@
+# 2026-10-01T15:02:22Z. ci:tenant-entry-points after the justification was re-read and the digest refreshed by hand (the gate's own recipe: sha256 of the LF-normalised file, first 16 hex). Before, with this item's sweep and HEAD's baseline: exit 1, 'server/jobs/auditChainIntegritySweep.ts (scheduled-sweep) CHANGED since justification' (green/gates.txt). HEAD sweep digest 47d9d558076a0e31 = the baseline's; this item's sweep de1b136742403cf7.
+$ npm run ci:tenant-entry-points
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+exit=0

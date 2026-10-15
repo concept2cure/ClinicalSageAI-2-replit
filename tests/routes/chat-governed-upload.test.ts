@@ -99,7 +99,16 @@ function getPostHandler(path: string) {
 describe('chat upload governance', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPoolQuery.mockResolvedValue({ rows: [] });
+    // 2026-10-01 (PF-03, 1ec8ea494): the upload first checks that the numeric
+    // project is a projects row of the caller's organization, and answers 404
+    // otherwise. Answer that ownership read for this test's own project (12,
+    // org 5) only; every other query keeps the empty default.
+    mockPoolQuery.mockImplementation(async (sql: unknown, params?: unknown[]) =>
+      /FROM projects WHERE id::text = \$1 AND organization_id = \$2/.test(String(sql)) &&
+      params?.[0] === '12' && Number(params?.[1]) === 5
+        ? { rows: [{ present: 1 }] }
+        : { rows: [] },
+    );
     mockResolveGovernedContext.mockReturnValue({
       contract: {
         clientTrack: 'biotech',

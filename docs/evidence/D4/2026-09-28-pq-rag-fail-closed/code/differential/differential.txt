@@ -1,0 +1,10 @@
+combinations: 268800
+parity scope (rag not required+executable, no unknown required+executable component): 151200, differences: 0
+intended-change scope: 117600, differing: 99720
+  HEAD FAIL -> FAIL: 36564
+  HEAD INCOMPLETE -> FAIL: 1758
+  HEAD INCOMPLETE -> INCOMPLETE: 59220
+  HEAD PASS -> FAIL: 66
+  HEAD PASS -> INCOMPLETE: 2112
+the changed verdict PASSes where HEAD did not: 0
+differential exit=0

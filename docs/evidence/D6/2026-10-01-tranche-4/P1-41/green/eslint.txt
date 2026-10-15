@@ -1,0 +1,11 @@
+
+/home/user/ClinicalSageAI-2-replit/server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts
+   58:1   warning  Async function 'fakeQuery' has a complexity of 24. Maximum allowed is 15  complexity
+  241:77  warning  Arrow function has too many lines (188). Maximum allowed is 100           max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts
+  373:35  warning  Async arrow function has too many lines (137). Maximum allowed is 100  max-lines-per-function
+  373:35  warning  Async arrow function has a complexity of 22. Maximum allowed is 15     complexity
+
+✖ 4 problems (0 errors, 4 warnings)
+

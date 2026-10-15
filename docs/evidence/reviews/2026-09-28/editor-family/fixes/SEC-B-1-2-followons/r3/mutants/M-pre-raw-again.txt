@@ -1,0 +1,17 @@
+mutant M-pre-raw-again: server/export/section-html-parse.ts
+- { blockTextElements: { script: true, noscript: true, style: true } }
++ { blockTextElements: { script: true, noscript: true, style: true, pre: true } }
+
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — a figure inside a <pre> is read alike by both readers (D2) > is not refused 11ms
+   → expected [ { position: 1, src: '', …(1) } ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > a <pre> is read as markup by the export > a figure inside one is a figure: filed, and its payload never printed 10ms
+   → expected [] to deeply equal [ Array(1) ]
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > a <pre> is read as markup by the export > a <code> inside one prints its text, not its tags 3ms
+   → expected '<code>if (x < 1) {}</code>' to be 'if (x < 1) {}' // Object.is equality
+ × server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a <pre> is read as markup, verbatim > names a figure inside it, and prints no payload 11ms
+   → expected 'Chromatogram.\n\n<img src="data:image…' to contain '[Figure: Figure 1]'
+ × server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a <pre> is read as markup, verbatim > prints the code, not its tags, and keeps its indentation 1ms
+   → expected '<code>if (x < 1) {\n    y();\n}</code>' to be 'if (x < 1) {\n    y();\n}' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  5 failed | 123 passed (128)

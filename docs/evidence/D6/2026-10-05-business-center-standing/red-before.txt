@@ -1,0 +1,17 @@
+# trunk sources (origin/concept2cure-v2) for the guard, the roster and Access Management; the new and inverted tests added
+$ npx vitest run server/middleware/__tests__/requireBusinessAdmin.test.ts server/routes/admin/__tests__/business-center.test.ts server/routes/admin/__tests__/access-management.test.ts
+ × server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > a tenant membership role of owner is not platform standing
+ × server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > a tenant membership role of business_admin is not platform standing
+ × server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > a tenant membership role of super_admin is not platform standing
+ × server/middleware/__tests__/requireBusinessAdmin.test.ts > requireBusinessAdmin > 403s a tenant owner with no platform grant — every client's financials are not a tenant's
+ × server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 403s a platform admin whose tenant membership role is owner
+ × server/routes/admin/__tests__/business-center.test.ts > a tenant owner is not platform standing (D6, 2026-10-05) > 403s /cost-accounting for a tenant owner with no platform grant
+ × server/routes/admin/__tests__/business-center.test.ts > a tenant owner is not platform standing (D6, 2026-10-05) > 403s /access for a tenant owner with no platform grant
+ × server/routes/admin/__tests__/business-center.test.ts > access roster (designated personnel) > reports grant holders + allowlist from the guard source of truth
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected 200 to be 403 // Object.is equality
+AssertionError: expected 200 to be 403 // Object.is equality
+AssertionError: expected 200 to be 403 // Object.is equality
+AssertionError: expected undefined to match object { email: 'owner@x.io', …(1) }
+      Tests  8 failed | 48 passed (56)

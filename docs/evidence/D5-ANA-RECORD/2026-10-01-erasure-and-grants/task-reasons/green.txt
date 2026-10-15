@@ -1,0 +1,632 @@
+# GREEN — the same tests with the fix applied
+# 2026-10-01T03:31:18Z  HEAD 363a41b54 + uncommitted fix
+# npx vitest run server/services/tasking/__tests__/task-audit.test.ts server/services/tasking/__tests__/task-event-reason-not-invented.test.ts server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts server/routes/__tests__/task-management-reasons.test.ts server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts server/routes/__tests__/unifiedTasks.routes.test.ts server/routes/__tests__/task-management-governed-writes-review.test.ts server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts 
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:07.979Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:31:07.980Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:07.980Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:08.560Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:11.466Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:31:11.472Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:11.475Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked, and records every dependent whose record changed 124ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > writes every ledger row inside the completion’s transaction, after every task-row UPDATE (lock order) 33ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > lists the completion before the unblocking it caused: A, then B, C, D 45ms
+stderr | server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a failed ledger row for B rolls back A’s completion and B’s unblocking: 500, nothing changed, nobody notified
+{
+  "timestamp": "2026-10-01T03:31:12.341Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-B",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > locks every dependent in ONE statement, in task-id order, whichever linkage system names it 40ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > sends the unblock and completion notifications only after COMMIT 33ms
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > each reach the board with a task.create row naming its creator, in the order they were seeded
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a database failure inside the cascade is a rolled-back completion and an honest 500, not a 400 over a committed one
+Error updating task: DrizzleQueryError: Failed query: select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))
+params: TASK-A,true
+    at PglitePreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at PglitePreparedQuery.execute (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at unblockDependents (/home/user/ClinicalSageAI-2-replit/server/services/tasking/task-side-effects.ts:196:26)
+    at cascadeUnblockOnCompletionInTx (/home/user/ClinicalSageAI-2-replit/server/services/tasking/task-side-effects.ts:116:3)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:461:13
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740 {
+  query: 'select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))',
+  params: [ 'TASK-A', true ],
+  cause: error: relation "task_dependencies" does not exist
+      at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+    length: 116,
+    severity: 'ERROR',
+    code: '42P01',
+    detail: undefined,
+    hint: undefined,
+    position: '33',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '1469',
+    routine: 'parserOpenTable',
+    query: 'select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))',
+    params: [ 'TASK-A', true ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > with no creator to name, nothing is seeded — no board task without its record
+{
+  "timestamp": "2026-10-01T03:31:12.443Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 7,
+    "hasUserId": false,
+    "taskId": "TASK-BP-41-pre-ind",
+    "command": "task.create"
+  }
+}
+
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a failed ledger row for B rolls back A’s completion and B’s unblocking: 500, nothing changed, nobody notified 64ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a database failure inside the cascade is a rolled-back completion and an honest 500, not a 400 over a committed one 37ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > each reach the board with a task.create row naming its creator, in the order they were seeded 45ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > seeded twice, the second run adds no task and no row 21ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > with no creator to name, nothing is seeded — no board task without its record 6ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > when the ledger cannot be written, no milestone stays on the board 14ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > a milestone that cannot be written takes the ones before it back: all or none 9ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > the reason a seeded milestone records > is null — what happened is the summary 17ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > an archived task is out of the cascade’s reach, and out of PATCH’s > leaves an archived blocked dependent as it was: no move, no ledger row, no notification 72ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > an archived task is out of the cascade’s reach, and out of PATCH’s > a task archived after PATCH read it is not completed: 409 CONFLICT_STALE, nothing written 24ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > the callers with no transaction of their own keep the old behaviour > runs on db, notifies inline, and writes no ledger row 19ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > the callers with no transaction of their own keep the old behaviour > never re-writes an archived dependent there either 25ms
+ ✓ server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > the scan sees the task-event literals it guards (an empty population proves nothing) 256ms
+ ✓ server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > every task-event reason is a value handed in — never a sentence the code wrote 130ms
+ ✓ server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > the guard recognises a composed reason when it sees one 1ms
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:14.062Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:31:14.063Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:14.063Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:14.228Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:31:14.911Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts
+{
+  "timestamp": "2026-10-01T03:31:15.127Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 403 for an org viewer and writes nothing 34ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 403 for an org viewer and writes nothing 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 403 for an org viewer and writes nothing 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 403 for an org viewer and writes nothing 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 403 with no org role at all 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 403 with no org role at all 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 403 with no org role at all 16ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 403 with no org role at all 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 401 and writes nothing when the session names no actor 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 401 and writes nothing when the session names no actor 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 401 and writes nothing when the session names no actor 4ms
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-01T03:31:15.378Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-N",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-01T03:31:15.384Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.link",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-01T03:31:15.388Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-S1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > reads stay open to a viewer 11ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 403 for an org viewer and writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 403 for an org viewer and writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 403 for an org viewer and writes nothing 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 403 for an org viewer and writes nothing 8ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 403 with no org role at all 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 403 with no org role at all 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 403 with no org role at all 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 403 with no org role at all 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > reads stay open to a viewer 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified creates on ONE transaction with its task.create row, as the session actor 7ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link links the resolved business keys on ONE transaction with its task.link row 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link is 404 and records nothing when an endpoint is gone by the time it writes 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module creates every synced task, then writes one task.create row each, on ONE transaction 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/Vault is refused as unavailable (501) — not a failure, not an empty sync — and records nothing 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status transitions on ONE transaction with its row, attributed to the session — never the body 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 7ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-01T03:31:15.391Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > a store failure is an honest 500 that does not carry the store text, with the write rolled back
+{
+  "timestamp": "2026-10-01T03:31:15.394Z",
+  "level": "error",
+  "message": "[unified-tasks] creating the task failed",
+  "context": {
+    "err": "relation \"unified_tasks\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success
+{
+  "timestamp": "2026-10-01T03:31:15.399Z",
+  "level": "error",
+  "message": "[unified-tasks] creating the task: COMMIT lost, outcome unknown",
+  "context": {
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success
+{
+  "timestamp": "2026-10-01T03:31:15.402Z",
+  "level": "error",
+  "message": "[unified-tasks] linking tasks: COMMIT lost, outcome unknown",
+  "context": {
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success
+{
+  "timestamp": "2026-10-01T03:31:15.406Z",
+  "level": "error",
+  "message": "[unified-tasks] syncing: COMMIT lost, outcome unknown",
+  "context": {
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success
+{
+  "timestamp": "2026-10-01T03:31:15.413Z",
+  "level": "error",
+  "message": "[unified-tasks] updating status: COMMIT lost, outcome unknown",
+  "context": {
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a dependent’s ledger row that fails rolls back the completion and the unblocking; nobody is notified
+{
+  "timestamp": "2026-10-01T03:31:15.419Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-B",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a cascade failure rolls the completion back and is an honest 500
+{
+  "timestamp": "2026-10-01T03:31:15.422Z",
+  "level": "error",
+  "message": "[unified-tasks] updating status failed",
+  "context": {
+    "err": "relation \"task_dependencies\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > never commits a signed completion whose ledger row did not land
+{
+  "timestamp": "2026-10-01T03:31:15.426Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > a store failure is an honest 500 that does not carry the store text, with the write rolled back 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > a malformed body is a 400 that writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 7ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > runs the cascade on the completion’s transaction and records A, then B, before COMMIT; notifies after 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a dependent’s ledger row that fails rolls back the completion and the unblocking; nobody is notified 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a cascade failure rolls the completion back and is an honest 500 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > commits a signed completion with its manifestation in the ledger payload 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > never commits a signed completion whose ledger row did not land 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > GET /all returns 401 when there is no org context 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > GET /all scopes to the JWT org and ignores a client organizationId param 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status 404s on another org's task and writes nothing 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > POST /:id/link 404s when either endpoint is outside the caller org, and writes nothing 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status addressed by numeric id writes with the resolved business key 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status 409s CONFLICT_STALE without a ledger row when the compare-and-set loses 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status to the status the task already has is refused as stale, not re-written 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status runs the state machine — an illegal move 409s without writing 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status demands the e-sign ceremony on approval-gated completion (428) 2ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > answers 500 OUTCOME_UNKNOWN with a sentence that says so, and tells nobody it happened
+Error updating task: Error: Connection terminated unexpectedly
+    at Object.transaction (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:103:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:422:21
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > a failure inside the transaction is still the rolled-back 500, not unknown
+Error updating task: Error: deadlock detected
+    at Object.__vi_import_4__.h.fail (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:124:66)
+    at Object.c.then (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:74:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an insert failure after the first task committed reports that task
+Error bulk creating tasks: Error: deadlock detected
+    at Object.__vi_import_4__.h.fail (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:152:70)
+    at Object.c.then (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:74:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an assignee lookup that throws after the first commit reports that task
+Error bulk creating tasks: Error: roster read failed
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:165:80
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a dependency link that fails after every task committed says the tasks exist and the links do not
+Error bulk creating tasks: Error: fk violation
+    at Object.__vi_import_4__.h.fail (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:176:70)
+    at Object.c.then (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:74:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a COMMIT whose outcome is unknown is reported as unknown, never as not created
+Error bulk creating tasks: Error: Connection terminated unexpectedly
+    at Object.transaction (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:103:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at bulkCreateOne (/home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:573:19)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:633:7
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > POST /tasks/dependencies blocks the successor before writing either ledger row 34ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > PATCH → completed runs the cascade on its own transaction, before any ledger row, and notifies after COMMIT 9ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > answers 500 OUTCOME_UNKNOWN with a sentence that says so, and tells nobody it happened 27ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > a failure inside the transaction is still the rolled-back 500, not unknown 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C10 — PATCH never completes a task archived after it was read > its compare-and-set UPDATE matches only a row that is not archived 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an insert failure after the first task committed reports that task 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an assignee lookup that throws after the first commit reports that task 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a dependency link that fails after every task committed says the tasks exist and the links do not 4ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > auto-assign: a failure after the first assignment committed reports that assignment
+Error auto-assigning tasks: Error: roster read failed
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:203:30
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C4 — a delivered notification whose ledger connection failed is reported as delivered and unrecorded > answers AUDIT_WRITE_FAILED with the delivered sentence, not a generic send failure
+[tasking] audit lineage write failed (non-fatal): connect ETIMEDOUT 10.0.0.5:5432
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a COMMIT whose outcome is unknown is reported as unknown, never as not created 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > auto-assign: a failure after the first assignment committed reports that assignment 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C4 — a delivered notification whose ledger connection failed is reported as delivered and unrecorded > answers AUDIT_WRITE_FAILED with the delivered sentence, not a generic send failure 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C5 — auto-assign never reassigns an archived task, and never ledgers an assignment that did not happen > reads and updates only rows that are not archived 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C5 — auto-assign never reassigns an archived task, and never ledgers an assignment that did not happen > an UPDATE that matched no row writes no ledger row and is not reported as assigned 2ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C6 — the actor and organization are the ones requireEditorAccess resolved > refuses a non-integer actor id with 401 before anything is written 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C6 — the actor and organization are the ones requireEditorAccess resolved > writes the task and its ledger row under the organization the gate checked 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C7 — every dependency edge a batch creates is ledgered with task.link on its own transaction > bulk-create records each edge with the transaction that inserts it 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C7 — every dependency edge a batch creates is ledgered with task.link on its own transaction > from-template records every template edge on the workflow’s transaction 6ms
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row
+[AnA Command] Executed create_task: OK — Created task "Draft Module 2.7.4" — ID: 1.
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so
+[ana-ri] unified_tasks mirror failed (non-fatal): relation "c2c_ana_actions" does not exist
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so
+[AnA Command] Executed create_task: OK — Created task "Draft Module 2.7.3" — ID: 2. It is not on the task board: the board entry and its audit record could not be written.
+
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row 191ms
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > moves the board row with its task.transition ledger row
+[AnA Command] Executed update_task: OK — Task 201 updated.
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so
+[ana-ri] unified_tasks mirror update failed (non-fatal): relation "c2c_ana_actions" does not exist
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so
+[AnA Command] Executed update_task: OK — Task 202 updated. The task board still shows the previous state: the board change and its audit record could not be written.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > create_task with no stated reason records null — not a sentence, not the model’s params.reason
+[AnA Command] Executed create_task: OK — Created task "Draft Module 2.5" — ID: 3.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > update_task with no stated reason records null; what happened is the payload summary
+[AnA Command] Executed update_task: OK — Task 203 updated.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed
+[AnA Command] Executed create_task: OK — Created task "Close the 2.7.4 gap" — ID: 4.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed
+[AnA Command] Executed update_task: OK — Task 204 updated.
+
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so 26ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > moves the board row with its task.transition ledger row 14ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so 30ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > create_task with no stated reason records null — not a sentence, not the model’s params.reason 10ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > update_task with no stated reason records null; what happened is the payload summary 12ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed 41ms
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created"
+{
+  "timestamp": "2026-10-01T03:31:17.928Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "39f1f846-7b18-4e19-af47-5af78ba0a191",
+    "err": "Failed query: INSERT INTO c2c_ana_actions\n       (id, org_id, domain, surface, command, target, risk, payload,\n        agentic_mode, state, proposed_at, proposed_by,\n        decided_at, decided_by, decision_reason,\n        executed_at, audit_row_id, idempotency_key)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8,\n             $9, $10, $11, $12,\n             $13, $14, $15,\n             $16, $17, $18)\nparams: act_4775195e38ba42bea1b16f6f3529e63e,7,tasking,tasking-api,task.create,task:39f1f846-7b18-4e19-af47-5af78ba0a191,low,{\"moduleType\":\"Biostatistics\",\"title\":\"Complete the design: effect size\",\"priority\":\"high\",\"status\":\"pending\",\"sourceEntityType\":\"study_design\",\"sourceEntityId\":\"study-bx-204\",\"blueprintKey\":\"design-gap:effectSize\",\"summary\":\"Raised from the biostatistics assessment of \\\"A phase 3 study of Drug X in type 2 diabetes\\\" (Blocking design gap)\"},suggest,executed,2026-10-01T03:31:17.924Z,5,2026-10-01T03:31:17.924Z,5,Raised at the design review.,2026-10-01T03:31:17.924Z,5f703dd8-69c3-4018-afef-67a0c7d66fd6,"
+  }
+}
+
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > the design proposes at least two tasks (the cases below need a selection of more than one) 5ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised 86ms
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised
+{
+  "timestamp": "2026-10-01T03:31:17.939Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 7,
+    "hasUserId": false,
+    "taskId": "169f0bd5-ea72-4712-b546-ff9742d7972a",
+    "command": "task.create"
+  }
+}
+
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created" 15ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised 9ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > a task that cannot be written takes the ones before it back: all or none 31ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is null when the request states none; what happened is the summary 70ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is the stated reason, verbatim and trimmed 61ms
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-01T03:31:18.185Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 2,
+    "hasUserId": false,
+    "taskId": "T",
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-01T03:31:18.187Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 0,
+    "hasUserId": true,
+    "taskId": "T",
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-01T03:31:18.188Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 2,
+    "hasUserId": true,
+    "taskId": null,
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > never throws when the ledger write fails, and reports that it failed
+[tasking] audit lineage write failed (non-fatal): db down
+
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records a governed lineage entry for a task mutation 5ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.create with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.transition with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.link with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.assign with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.notify with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.delete with no stated reason records a null reason, never one the code wrote 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records what happened as the payload summary, not as the reason 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > uses a provided reason (trimmed) when present 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row) 4ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > never throws when the ledger write fails, and reports that it failed 1ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with no reason records null 38ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a blank reason records null 5ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a stated reason records it, trimmed 4ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/bulk-create records null for each task 4ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/:id/notify records null 5ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a blocking dependency: the successor’s transition records null and says why in its summary 5ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > auto-assign records null and names its method in the summary 4ms
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a workflow template records null on every row; each summary names the template 4ms
+
+ Test Files  9 passed (9)
+      Tests  126 passed (126)
+   Start at  03:31:05
+   Duration  12.72s (transform 8.58s, setup 402ms, import 11.26s, tests 23.75s, environment 1ms)
+

@@ -46,6 +46,7 @@ import path from 'path';
 import { createHash } from 'crypto';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../db';
+import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { coauthorDocuments } from '../../../shared/schema';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
 import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
@@ -54,10 +55,13 @@ import { getStorageProvider, getStorageProviderFor } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
+import { renderComposedSectionLeafPdf } from './typeset-leaf-pdf';
+import { isModule3PlacementSnapshot } from '../cmc/module3-placement-marker';
 import { externalDocumentTableReason } from './leaf-document-tables';
 import type { LeafLineage, ResolvedFile } from './core-to-packager';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
+import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -72,6 +76,16 @@ const VAULT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 function looksLikePdf(buf: Buffer): boolean {
   return buf.length >= 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-';
 }
+
+/** Read-only proof shared by coverage and materialization; never stages bytes. */
+export function verifyRetainedLeafBytes(bytes: Buffer, storedSha256: string | null, requirePdf = false):
+  { verified: true; sha256: string } | { verified: false; code: 'SOURCE_BYTES_HASH_MISMATCH' | 'SOURCE_FORMAT_UNVERIFIED' } {
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  if (!storedSha256 || sha256 !== storedSha256.trim().toLowerCase()) return { verified: false, code: 'SOURCE_BYTES_HASH_MISMATCH' };
+  if (requirePdf && !looksLikePdf(bytes)) return { verified: false, code: 'SOURCE_FORMAT_UNVERIFIED' };
+  return { verified: true, sha256 };
+}
+
 
 /** A leaf whose source document could not be materialized into the package. */
 export interface UnresolvedLeaf {
@@ -140,6 +154,21 @@ export interface MaterializeLeafSourcesResult {
 const FINALIZED_SOURCE_STATUSES: ReadonlySet<string> = new Set(['approved', 'finalized']);
 
 /**
+ * coauthor_documents: `approved` only (DP-35, decided 2026-10-01).
+ *
+ * A co-author document is `finalized` only as the snapshot of a FROZEN
+ * authoring document (coauthor-snapshot.ts snapshotStatusFor), and no request
+ * can write the column (coauthor-status-write.ts). Freezing seals the content;
+ * it is not an approval. It needs no signing authority and no re-authentication,
+ * any document owner may do it, and it writes no signature row. Counting it as
+ * finalized let an unsigned lock clear the "only approved documents"
+ * completeness check and reach an agency. An approval is the signed act
+ * (authoring /sign or /e-sign → APPROVED → `approved`). A frozen document files
+ * after it is approved.
+ */
+const COAUTHOR_TRANSMITTABLE_STATUSES: ReadonlySet<string> = new Set(['approved']);
+
+/**
  * The stores whose status decides whether a leaf built from them may be
  * transmitted, each with its own vocabulary.
  */
@@ -175,13 +204,18 @@ export type FinalizedStatusStore =
  * Anything else, including a missing status (the columns default to a draft
  * state), is unfinalized.
  *
+ *   vault_documents — not a status column, so not in this map: a Vault version
+ *     is decided by vaultVersionNotTransmittable (server/services/vault/
+ *     vault-lifecycle.ts, VR-14) — its VR-13 lifecycle record at a steady stage,
+ *     the version current, the approval bound to the staged bytes.
+ *
  * `store` defaults to the coauthor / unified document vocabulary this
  * predicate was first written for, which is the one server/routes/coauthor.ts
  * checks. A caller reading another store must name it; the default is the
  * stricter answer for `locked`, so an omission fails closed.
  */
 const FINALIZED_STATUSES_BY_STORE: Readonly<Record<FinalizedStatusStore, ReadonlySet<string>>> = {
-  coauthor_documents: FINALIZED_SOURCE_STATUSES,
+  coauthor_documents: COAUTHOR_TRANSMITTABLE_STATUSES,
   unified_documents: FINALIZED_SOURCE_STATUSES,
   c2c_document_sections: C2C_SECTION_COMPLETE_STATUSES,
   concept2cure_artifacts: new Set(['approved', 'locked']),
@@ -191,6 +225,26 @@ export function isFinalizedStatus(
   store: FinalizedStatusStore = 'coauthor_documents',
 ): boolean {
   return FINALIZED_STATUSES_BY_STORE[store].has((status ?? '').toLowerCase());
+}
+
+/**
+ * The status a refusal prints beside a leaf whose source is not finalized, or
+ * null when it is finalized. ONE wording, read by the assembler below and by
+ * dispatch readiness (leaf-document-resolver.ts), so the Validation and
+ * Dispatch tabs name an unapproved leaf in the words freeze, dispatch and
+ * transmit refuse it with (QA 2026-10-08, j6: the gate the client sees did not
+ * name the leaf at all). A coauthor document's 'finalized' is an unsigned
+ * freeze (DP-35), so it is said as such rather than printed as a word that
+ * reads as the opposite of the refusal it sits in.
+ */
+export function notFinalizedStatus(
+  status: string | null | undefined,
+  store: FinalizedStatusStore,
+  whenMissing = 'draft',
+): string | null {
+  if (isFinalizedStatus(status, store)) return null;
+  if (store === 'coauthor_documents' && status === 'finalized') return 'frozen, not approved';
+  return status ?? whenMissing;
 }
 
 /** Rows of a `db.execute` result across drivers (node-postgres QueryResult / PGlite Results / bare array). */
@@ -375,8 +429,14 @@ export async function materializeLeafSources(
   }
   const refs = [...refByKey.values()].filter((ref) => ref.shipsContent);
 
-  const write = async (key: string, baseName: string, content: string, opts: { title?: string; sectionCode?: string }) => {
-    const pdfBytes = await renderLeafPdf(content, opts);
+  const write = async (
+    key: string,
+    baseName: string,
+    content: string,
+    opts: { title?: string; sectionCode?: string },
+    render: typeof renderLeafPdf = renderLeafPdf,
+  ) => {
+    const pdfBytes = await render(content, opts);
     const fileName = leafFileName(baseName, key);
     const sourcePath = path.join(stageDir, fileName);
     await fs.writeFile(sourcePath, pdfBytes);
@@ -417,6 +477,7 @@ export async function materializeLeafSources(
           content: coauthorDocuments.content,
           moduleNumber: coauthorDocuments.moduleNumber,
           status: coauthorDocuments.status,
+          metadata: coauthorDocuments.metadata,
         })
         .from(coauthorDocuments)
         .where(and(eq(coauthorDocuments.id, documentId), eq(coauthorDocuments.organizationId, organizationId)))
@@ -438,18 +499,28 @@ export async function materializeLeafSources(
         miss(`coauthor document "${doc.title ?? documentId}" has no authored content — not materialized`);
         continue;
       }
-      await write(key, doc.moduleNumber || doc.title, coauthorBody, {
-        title: doc.title ?? undefined,
-        sectionCode: doc.moduleNumber ?? undefined,
-      });
+      /* A placed Module 3 section stores its composition in the composer's
+         format (the same bytes as its governed artifact). Rendered as text it
+         was filed with "##" headings and "| --- |" table rows on the page
+         (hand-off item 17); typeset, it is headings, prose and ruled tables,
+         every recorded character kept. */
+      await write(
+        key,
+        doc.moduleNumber || doc.title,
+        coauthorBody,
+        { title: doc.title ?? undefined, sectionCode: doc.moduleNumber ?? undefined },
+        isModule3PlacementSnapshot(doc.metadata) ? renderComposedSectionLeafPdf : renderLeafPdf,
+      );
       // Lineage by identity: which authoring document this snapshot represents,
       // read from the alias map rather than matched by title. Recorded on the
       // staged file so the governance manifest can state it; never in the
       // backbone. The first product reader of the map (ledger L10).
       const staged = byKey.get(key);
       if (staged) staged.lineage = await coauthorLineage(organizationId, documentId);
-      if (!isFinalizedStatus(doc.status, 'coauthor_documents')) {
-        noteUnfinalized(doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, doc.status ?? 'draft');
+      // 'finalized' here is an unsigned freeze (DP-35); notFinalizedStatus says so.
+      const coauthorUnfinalized = notFinalizedStatus(doc.status, 'coauthor_documents');
+      if (coauthorUnfinalized) {
+        noteUnfinalized(doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, coauthorUnfinalized);
       }
       continue;
     }
@@ -464,8 +535,9 @@ export async function materializeLeafSources(
         miss('unified_documents row not found in this organization');
         continue;
       }
-      if (!isFinalizedStatus(doc.status, 'unified_documents')) {
-        noteUnfinalized(doc.title || `unified_documents:${documentId}`, doc.status ?? 'draft');
+      const unifiedUnfinalized = notFinalizedStatus(doc.status, 'unified_documents');
+      if (unifiedUnfinalized) {
+        noteUnfinalized(doc.title || `unified_documents:${documentId}`, unifiedUnfinalized);
       }
       // Body lives in workflow_document_versions; render the latest version's
       // content, falling back to the title when no version content exists.
@@ -586,6 +658,7 @@ export async function materializeLeafSources(
            FROM vault.documents d
           WHERE d.id = $1::uuid
             AND d.deleted_at IS NULL
+            AND ${vaultBinaryAvailableSql('d')}
             AND EXISTS (
               SELECT 1 FROM regulatory_programs rp
                WHERE rp.id = d.program_id
@@ -653,6 +726,17 @@ export async function materializeLeafSources(
         sha256: vaultSha,
       });
       materialized++;
+      // VR-14 (D7, 2026-10-01): staged is not approved. Until now this branch
+      // never reported an unfinalized leaf, so an upload nobody reviewed passed
+      // transmit's "only approved documents" rule. The version must be approved
+      // on its lifecycle record, current, and approved for these very bytes.
+      const notTransmittable = await vaultVersionNotTransmittable(
+        queryableFromDrizzle(db),
+        organizationId,
+        documentUuid,
+        vaultSha,
+      );
+      if (notTransmittable) noteUnfinalized(vaultRow.file_name || `vault_documents:${documentUuid}`, notTransmittable);
       continue;
     }
 
@@ -749,8 +833,9 @@ export async function materializeLeafSources(
         title: row.label ?? undefined,
         sectionCode: row.section_key ?? undefined,
       });
-      if (!isFinalizedStatus(row.status, 'c2c_document_sections')) {
-        noteUnfinalized(row.section_key || `c2c_document_sections:${documentId}`, row.status ?? 'todo');
+      const sectionUnfinalized = notFinalizedStatus(row.status, 'c2c_document_sections', 'todo');
+      if (sectionUnfinalized) {
+        noteUnfinalized(row.section_key || `c2c_document_sections:${documentId}`, sectionUnfinalized);
       }
       continue;
     }

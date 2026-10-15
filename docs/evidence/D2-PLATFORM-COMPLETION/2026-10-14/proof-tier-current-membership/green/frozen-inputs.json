@@ -1,0 +1,840 @@
+{
+  "publishedBase": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "qualification": "Actual input snapshots taken at root-declared final source freeze before the one full npm run test:proof-tier invocation. Includes all three proof directories, config, repaired current-actor helpers and canonical sharing/review migrations. This is not an exhaustive pin of every transitively imported production source.",
+  "sources": [
+    {
+      "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "bytes": 3130,
+      "digestAlgorithm": "sha256",
+      "digest": "0bc9fb272c760e6621d636b98e05faee3459de49d611ffe16840529648190899"
+    },
+    {
+      "path": "db/migrations/20260401_project_sharing_visibility.sql",
+      "bytes": 2653,
+      "digestAlgorithm": "sha256",
+      "digest": "e3e7ebbf7a24b3001e0719275bd831127dbfd816a1639fd8be87ed6a7c282e2c"
+    },
+    {
+      "path": "package.json",
+      "bytes": 49201,
+      "digestAlgorithm": "sha256",
+      "digest": "2af3c3089bbe1de45af981e29b0e96b4c5050031aa6feea07d20299a1d152372"
+    },
+    {
+      "path": "scripts/ci/check-proof-tier.mjs",
+      "bytes": 13019,
+      "digestAlgorithm": "sha256",
+      "digest": "40401df62c674f09d8964d04e9a8d2e0f1f78b3b488d4f690ee5f8abb523bd61"
+    },
+    {
+      "path": "scripts/ci/proof-tier-baseline.json",
+      "bytes": 5187,
+      "digestAlgorithm": "sha256",
+      "digest": "b5c9d0d475f275f3258769cf3d5a79bddab50884c7124e38c63126b6ad261b8d"
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "bytes": 5959,
+      "digestAlgorithm": "sha256",
+      "digest": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d"
+    },
+    {
+      "path": "server/routes/c2c/project-route-access.ts",
+      "bytes": 6385,
+      "digestAlgorithm": "sha256",
+      "digest": "c13ede00095922ea1f960f47ac1ad6c49f86b929650d38be87130e5c6589b4b3"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "bytes": 8717,
+      "digestAlgorithm": "sha256",
+      "digest": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/services/csr/project-scope.ts",
+      "bytes": 9891,
+      "digestAlgorithm": "sha256",
+      "digest": "ae2c152cc51884fe4866e2c9b2a99af788fa6bdbb9663442f887b7e0d623f049"
+    },
+    {
+      "path": "server/services/project-sharing-access.ts",
+      "bytes": 6485,
+      "digestAlgorithm": "sha256",
+      "digest": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815"
+    },
+    {
+      "path": "server/services/report-os/project-access.ts",
+      "bytes": 6784,
+      "digestAlgorithm": "sha256",
+      "digest": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58"
+    },
+    {
+      "path": "tests/export-contract/acroform-fill.proof.test.ts",
+      "bytes": 8230,
+      "digestAlgorithm": "sha256",
+      "digest": "5aaf7851278efa3a3cc5ded02607c2ef055096404ea4b944251c12df9c3f02e3"
+    },
+    {
+      "path": "tests/export-contract/csv-export.proof.test.ts",
+      "bytes": 7713,
+      "digestAlgorithm": "sha256",
+      "digest": "9c511278e90aa33dc3d690c5a09b38e0590f9a8407009cca6cf6477b0acf3586"
+    },
+    {
+      "path": "tests/export-contract/docx-export.proof.test.ts",
+      "bytes": 6807,
+      "digestAlgorithm": "sha256",
+      "digest": "581311acbc89639066b2418edf993fcf80e9cf4855289b5855f21ddeb83ae508"
+    },
+    {
+      "path": "tests/export-contract/html-export.proof.test.ts",
+      "bytes": 6469,
+      "digestAlgorithm": "sha256",
+      "digest": "1943ee503ec16f6e6416dc455954fdcd201cfd49623d1e1deb83a8ee64dc07b1"
+    },
+    {
+      "path": "tests/export-contract/json-export.proof.test.ts",
+      "bytes": 6408,
+      "digestAlgorithm": "sha256",
+      "digest": "de1037f8bd1396f57eb95ae55a17947dfd2a46abaea8ae9759238ff686096b60"
+    },
+    {
+      "path": "tests/export-contract/pdf-export.proof.test.ts",
+      "bytes": 8234,
+      "digestAlgorithm": "sha256",
+      "digest": "f3938439b2af201975aded57dd32397562decf2e111da435e9193d01e4e62b46"
+    },
+    {
+      "path": "tests/export-contract/xlsx-export.proof.test.ts",
+      "bytes": 7752,
+      "digestAlgorithm": "sha256",
+      "digest": "8b11396c91955b38d9143cf2d1b5207ba38e1b0bc867785d4b838d6f3db37114"
+    },
+    {
+      "path": "tests/export-contract/zip-export.proof.test.ts",
+      "bytes": 7837,
+      "digestAlgorithm": "sha256",
+      "digest": "21e3d626c973f62e1c64d261a2c414399aea91ed148e6756de22bcb6fe7c3487"
+    },
+    {
+      "path": "tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts",
+      "bytes": 1788,
+      "digestAlgorithm": "sha256",
+      "digest": "2906925f3f227f180449452ab6de44103a8542bd5da1c0a76324b25f90c252f5"
+    },
+    {
+      "path": "tests/golden-journeys/__tests__/journey-schema-gaps.test.ts",
+      "bytes": 3225,
+      "digestAlgorithm": "sha256",
+      "digest": "d94b5123aa0745cd19c40491b42e28af92f158bac92188f7563f262b022095e7"
+    },
+    {
+      "path": "tests/golden-journeys/cer-eu-mdr.journey.test.ts",
+      "bytes": 40639,
+      "digestAlgorithm": "sha256",
+      "digest": "d1f6416838357ad0767db813be99f0ca0f69414823208a22aed011a6bbb311d1"
+    },
+    {
+      "path": "tests/golden-journeys/device-510k-estar.journey.test.ts",
+      "bytes": 77981,
+      "digestAlgorithm": "sha256",
+      "digest": "633c5b881155917739efea09e41dcdb60fd0881fe18bbfd5139043dbeae533eb"
+    },
+    {
+      "path": "tests/golden-journeys/drug-nda-ectd.journey.test.ts",
+      "bytes": 60967,
+      "digestAlgorithm": "sha256",
+      "digest": "72da7a91871380b2b44421c641bbc394ef802debea35ee80992f99d4d79a5a91"
+    },
+    {
+      "path": "tests/golden-journeys/haq-correction.journey.test.ts",
+      "bytes": 32224,
+      "digestAlgorithm": "sha256",
+      "digest": "55d713f10de7905b6d88df925aa1d1e9c10c8987e6bc540c0cadbc75306f4b26"
+    },
+    {
+      "path": "tests/golden-journeys/harness.ts",
+      "bytes": 23475,
+      "digestAlgorithm": "sha256",
+      "digest": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c"
+    },
+    {
+      "path": "tests/golden-journeys/ind-authoring.journey.test.ts",
+      "bytes": 49065,
+      "digestAlgorithm": "sha256",
+      "digest": "c1a56f6475a881b66f600dd181f6ab9db0dec552601b16c4ffb4ad1ee169f787"
+    },
+    {
+      "path": "tests/golden-journeys/marketing-application.journey.test.ts",
+      "bytes": 20692,
+      "digestAlgorithm": "sha256",
+      "digest": "2399d2443e2e9b52f43030300f75f1eab90fd5fa810ecd7916239deb533fd8a7"
+    },
+    {
+      "path": "tests/golden-journeys/submission-export-package.journey.test.ts",
+      "bytes": 19729,
+      "digestAlgorithm": "sha256",
+      "digest": "a185725803c7acf399fcf486f30f49064c1bd4d4ba7984850c884757d5bf7a99"
+    },
+    {
+      "path": "tests/golden-journeys/submission-export-validation.journey.test.ts",
+      "bytes": 22476,
+      "digestAlgorithm": "sha256",
+      "digest": "ea86ac7337a720b4b63a072ed763591a3afab6369b7b511ebb7f3d5a21413fa3"
+    },
+    {
+      "path": "tests/golden-journeys/submission-release-signature.journey.test.ts",
+      "bytes": 25373,
+      "digestAlgorithm": "sha256",
+      "digest": "cb2ed4c52f62e76ef15a2d18ac563183a2c474b82f239de4be943ab81bc9bd8a"
+    },
+    {
+      "path": "tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts",
+      "bytes": 8762,
+      "digestAlgorithm": "sha256",
+      "digest": "787f017b68e9077152672fc8115bdcbccb8c0870743706d7ed084d29f58fca99"
+    },
+    {
+      "path": "tests/schema-contract/artifacts-relkind.contract.test.ts",
+      "bytes": 5628,
+      "digestAlgorithm": "sha256",
+      "digest": "0f027de40f69392cb2e595ea7150235f44ca449b799bb3e88124b7cdf4c015e5"
+    },
+    {
+      "path": "tests/schema-contract/authoring-auth-parity.contract.test.ts",
+      "bytes": 8270,
+      "digestAlgorithm": "sha256",
+      "digest": "1da4cff598fb146d7fa820f0c674b84811397a4f3d9736a2710a31ed776f073c"
+    },
+    {
+      "path": "tests/schema-contract/authoring-comments-router-columns.contract.test.ts",
+      "bytes": 6492,
+      "digestAlgorithm": "sha256",
+      "digest": "ab4a265731229f63105a601b271a1dc3911ea74a4382ec7b960794c7239f6157"
+    },
+    {
+      "path": "tests/schema-contract/authoring-counters-match-panels.pglite.test.ts",
+      "bytes": 6874,
+      "digestAlgorithm": "sha256",
+      "digest": "fd47510bdf35bf247db271d123d4864572fe351e1a15bb782facb140b83390f3"
+    },
+    {
+      "path": "tests/schema-contract/authoring-durable-applier.contract.test.ts",
+      "bytes": 8075,
+      "digestAlgorithm": "sha256",
+      "digest": "aa9bab5b20676d88e460f4feeec777688efdf5c7e385c938084feacbafb52716"
+    },
+    {
+      "path": "tests/schema-contract/authoring-migration-list-closure.contract.test.ts",
+      "bytes": 10568,
+      "digestAlgorithm": "sha256",
+      "digest": "b1b84ea162ca5c54df4967664afc7e4e7be9f336323d14d34091ca588b8b1d74"
+    },
+    {
+      "path": "tests/schema-contract/authoring-review-audit-comment.contract.test.ts",
+      "bytes": 21303,
+      "digestAlgorithm": "sha256",
+      "digest": "b7c3780407e26c55d2c1893ef2f7d85544a0550c91512af182104eb02283a62b"
+    },
+    {
+      "path": "tests/schema-contract/authoring-role-gate.contract.test.ts",
+      "bytes": 9350,
+      "digestAlgorithm": "sha256",
+      "digest": "25d12813bf9c3a547a604b97077d00497b2c9fb38bcf7c0670b8aa5e957d5691"
+    },
+    {
+      "path": "tests/schema-contract/authoring-router-columns.contract.test.ts",
+      "bytes": 13613,
+      "digestAlgorithm": "sha256",
+      "digest": "181de5b6e94e886e709f4f6d649338b7aab4d0b1c3a8f9e13b3e95bc2c8630ae"
+    },
+    {
+      "path": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+      "bytes": 60820,
+      "digestAlgorithm": "sha256",
+      "digest": "a64506c9c3e0518f3abd101774a9a7542e36f53bef6dca280e096ab4ca4779bb"
+    },
+    {
+      "path": "tests/schema-contract/authoring-section-gate.contract.test.ts",
+      "bytes": 30181,
+      "digestAlgorithm": "sha256",
+      "digest": "d6a0d32896bffdfbda625f56138740c1406ba92c308591ac3b3252a1f07a6266"
+    },
+    {
+      "path": "tests/schema-contract/authoring-section-permissions.contract.test.ts",
+      "bytes": 14535,
+      "digestAlgorithm": "sha256",
+      "digest": "114347533befa5c298db6304d2350e4f162750da50dd02e7dd1ca0cd5207276b"
+    },
+    {
+      "path": "tests/schema-contract/authoring-section-revision-gate.contract.test.ts",
+      "bytes": 9187,
+      "digestAlgorithm": "sha256",
+      "digest": "8f746e6c75a824db33b27fc64dbf31229256627ac592e56d1b9917bca5e0b3f7"
+    },
+    {
+      "path": "tests/schema-contract/baseline-drift-classification.contract.test.ts",
+      "bytes": 3575,
+      "digestAlgorithm": "sha256",
+      "digest": "7dbcb6bc96fed1d9912537d0e22f9b80db950246107050f4828384d23308bfc8"
+    },
+    {
+      "path": "tests/schema-contract/biopharma-programs-router-columns.contract.test.ts",
+      "bytes": 11133,
+      "digestAlgorithm": "sha256",
+      "digest": "160477059ac2a54edceb1ed0ac9d6360f43a21e2395930b1ac54368d771f2ae3"
+    },
+    {
+      "path": "tests/schema-contract/c2c-apply-path.contract.test.ts",
+      "bytes": 7731,
+      "digestAlgorithm": "sha256",
+      "digest": "8900877c8b74a37fc3b2b31006bcd3b77ee40c672760f752d04a2fd9dec005be"
+    },
+    {
+      "path": "tests/schema-contract/c2c-document-submit-requires-filing.contract.test.ts",
+      "bytes": 11599,
+      "digestAlgorithm": "sha256",
+      "digest": "567a95e74d6e23f3d13c6231ea91da28a93255daf492a0dc9fb54e7e599dbde2"
+    },
+    {
+      "path": "tests/schema-contract/c2c-project-scaffold.contract.test.ts",
+      "bytes": 14687,
+      "digestAlgorithm": "sha256",
+      "digest": "24b85eb99680e067eccdcc2c3ba577c6fb43a54e590ec789855fcd81dc51e8e8"
+    },
+    {
+      "path": "tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts",
+      "bytes": 50091,
+      "digestAlgorithm": "sha256",
+      "digest": "d0cbd180a721403f4acd1aaeafec0df380d56db7f765bdd23de0da34b6974fb5"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-ana-backlink.contract.test.ts",
+      "bytes": 8386,
+      "digestAlgorithm": "sha256",
+      "digest": "f7360304ab4724f26d925375d9b1fc3cc4fd5c9826639ca41f86c1703ee3f538"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-completion.contract.test.ts",
+      "bytes": 4590,
+      "digestAlgorithm": "sha256",
+      "digest": "36faf200b61dba9b288635d44f09e7f4d7936da2bf03bd43831846c2e8c12f86"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-has-content.contract.test.ts",
+      "bytes": 13675,
+      "digestAlgorithm": "sha256",
+      "digest": "e368473101c56a91b6477260058edabd5d2d9e3db4fe47abfa7b7052e4201c92"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-lineage-gate.contract.test.ts",
+      "bytes": 12764,
+      "digestAlgorithm": "sha256",
+      "digest": "eae8020806020a24a3c63f726d069696c45eb76f2f421d9a4ddf20e96d4daf73"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-reason-required.contract.test.ts",
+      "bytes": 7183,
+      "digestAlgorithm": "sha256",
+      "digest": "e97e6600b2f93f98475e0868cc2115c57403ce2614abf1913caf8cc3b6c76c2e"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-save.contract.test.ts",
+      "bytes": 12343,
+      "digestAlgorithm": "sha256",
+      "digest": "ca57a7bc9171fc7948d1e33e3dead3e3628bbb56ae0fa0714ca70b5a822a4a6d"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-timestamps.contract.test.ts",
+      "bytes": 8684,
+      "digestAlgorithm": "sha256",
+      "digest": "69a5eba332c801c7c48b95492bbf0d71e4fc37500894b99afbd23d189c8b57fd"
+    },
+    {
+      "path": "tests/schema-contract/c48-stage1-identity-org-bridge.contract.test.ts",
+      "bytes": 7256,
+      "digestAlgorithm": "sha256",
+      "digest": "538521edf66e517426be91d34a7032b384225fd0226bfc39c1a8764ed1f137fc"
+    },
+    {
+      "path": "tests/schema-contract/catalog-module-claims.contract.test.ts",
+      "bytes": 6102,
+      "digestAlgorithm": "sha256",
+      "digest": "e543315d740d53bbed1cabf6de967e1e8697ed2c594b1d7f0eafd2aad78cb83a"
+    },
+    {
+      "path": "tests/schema-contract/chat-thread-access.contract.test.ts",
+      "bytes": 13888,
+      "digestAlgorithm": "sha256",
+      "digest": "68cacc766b5dc155fba8587bdf9e91d14b72c0457143ce2cd802f7d38838d3a5"
+    },
+    {
+      "path": "tests/schema-contract/chat-thread-store.contract.test.ts",
+      "bytes": 9761,
+      "digestAlgorithm": "sha256",
+      "digest": "71e0ebc2d770af99bc11baa7e219811563d16f2c1fe176bd16abab7aa730efa6"
+    },
+    {
+      "path": "tests/schema-contract/chat-threads-program-key.pglite.test.ts",
+      "bytes": 7865,
+      "digestAlgorithm": "sha256",
+      "digest": "be62c42d9134f4da1c4f1f7c40cbe2ae1463eeb6ac5191660a8a79940511aeae"
+    },
+    {
+      "path": "tests/schema-contract/check-constraint-replay.pglite.test.ts",
+      "bytes": 8923,
+      "digestAlgorithm": "sha256",
+      "digest": "d223401a84f3cfaea8f74528ec1630912b96fe27c28120b3691a230ec2f7c444"
+    },
+    {
+      "path": "tests/schema-contract/clinical-ops-provisioning.contract.test.ts",
+      "bytes": 9406,
+      "digestAlgorithm": "sha256",
+      "digest": "dee9bd45e88aae432bf8277596931ae6b9c9e6ebeb8202a8060da5168a429929"
+    },
+    {
+      "path": "tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts",
+      "bytes": 16125,
+      "digestAlgorithm": "sha256",
+      "digest": "db3a0182531cdb10bb5a5fb118c6ec2e64c90d60bd69a869740d440ddcb04f3c"
+    },
+    {
+      "path": "tests/schema-contract/cmc-compliance-tracking-tenancy.contract.test.ts",
+      "bytes": 12299,
+      "digestAlgorithm": "sha256",
+      "digest": "9b306a8ed345ec5df088b5de9490f9cb1a9b0b1ae255c1dd5ad2f99a6490d343"
+    },
+    {
+      "path": "tests/schema-contract/cmc-module3-tenant-arbiter.contract.test.ts",
+      "bytes": 19984,
+      "digestAlgorithm": "sha256",
+      "digest": "389adf232e98d8a94b1c9274c003e2ef2fb046ab7584e8abe07684fd3fb8492d"
+    },
+    {
+      "path": "tests/schema-contract/cmc-playbook-schema.contract.test.ts",
+      "bytes": 6149,
+      "digestAlgorithm": "sha256",
+      "digest": "d87bcf6a43eb69d8585105e1f860c84e1394e764f85423b45d22865d2a35c505"
+    },
+    {
+      "path": "tests/schema-contract/cmc-register-store-parity.contract.test.ts",
+      "bytes": 11310,
+      "digestAlgorithm": "sha256",
+      "digest": "4fe6854e6e0d96d9caa893122b161c26bb7b84c908a37df0457d05f26e92c0e1"
+    },
+    {
+      "path": "tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts",
+      "bytes": 19078,
+      "digestAlgorithm": "sha256",
+      "digest": "4393f216cc903da33caaba92e13e81250e5f711ffbf32889433e069d5bb32ffd"
+    },
+    {
+      "path": "tests/schema-contract/column-reachability-guard.contract.test.ts",
+      "bytes": 16977,
+      "digestAlgorithm": "sha256",
+      "digest": "f3dabfe90375a7b94164472ec7d5bba50571399ab06d278a94c947f480ee9cf6"
+    },
+    {
+      "path": "tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts",
+      "bytes": 8774,
+      "digestAlgorithm": "sha256",
+      "digest": "d00117bf167cbf4e50f1e6a7b5cdb5cc12359681e853bb1bbaf6572263ad6898"
+    },
+    {
+      "path": "tests/schema-contract/declared-table-surface.contract.test.ts",
+      "bytes": 7605,
+      "digestAlgorithm": "sha256",
+      "digest": "c9928d4ea214683538359e64910b87ca152778ae79df97e7d8763eab2d53ee8a"
+    },
+    {
+      "path": "tests/schema-contract/deploy-frontend-after-api.contract.test.ts",
+      "bytes": 5827,
+      "digestAlgorithm": "sha256",
+      "digest": "f58aae340cd18a535cabf9b0cf18a7ab82eac08495ccf476c2a88a7f22c95073"
+    },
+    {
+      "path": "tests/schema-contract/deploy-migration-mechanism.contract.test.ts",
+      "bytes": 15070,
+      "digestAlgorithm": "sha256",
+      "digest": "a6e5a99457f08e624f1f28b755c89c37055b639f05830ac8e69a696cc5944794"
+    },
+    {
+      "path": "tests/schema-contract/document-alias-backfill.pglite.test.ts",
+      "bytes": 5875,
+      "digestAlgorithm": "sha256",
+      "digest": "53a3b7fef31091d71a6a87570366fec4bc2499f9b16d6b3ce67bbec8480aacb7"
+    },
+    {
+      "path": "tests/schema-contract/document-alias-map.pglite.test.ts",
+      "bytes": 6249,
+      "digestAlgorithm": "sha256",
+      "digest": "671be6f93201a81ee35abf17c58fc1aaefde8e7b70391bd56c380b166d1bbcfa"
+    },
+    {
+      "path": "tests/schema-contract/document-alias-store-vocabulary.pglite.test.ts",
+      "bytes": 6062,
+      "digestAlgorithm": "sha256",
+      "digest": "15e52fb16fd2f0028089fa4dc7749b49526dbfc32ffba65a9664cb3a9b225b93"
+    },
+    {
+      "path": "tests/schema-contract/document-catalog-migration.contract.test.ts",
+      "bytes": 6512,
+      "digestAlgorithm": "sha256",
+      "digest": "a06bb1e9e276a3f67246f572fce8520364ae44e472cde45da939d44cce387b9d"
+    },
+    {
+      "path": "tests/schema-contract/document-span-lineage.contract.test.ts",
+      "bytes": 12309,
+      "digestAlgorithm": "sha256",
+      "digest": "dbfe5c1717df72e19c3f4807a19b85cdd62ced806234405f58b021a5db72602a"
+    },
+    {
+      "path": "tests/schema-contract/document-span-lineage.pglite.test.ts",
+      "bytes": 6887,
+      "digestAlgorithm": "sha256",
+      "digest": "1878ed7e6df74a10e1214e6f07956f513858e923aadec6c33638c723b6a20e08"
+    },
+    {
+      "path": "tests/schema-contract/dossier-map-seed-module1-codes.contract.test.ts",
+      "bytes": 2058,
+      "digestAlgorithm": "sha256",
+      "digest": "e9c7b2bad00af02448d5b1c7e7b0de30a331b214ce04a0d489f2b318bd0aaa14"
+    },
+    {
+      "path": "tests/schema-contract/drop-draft-safety.contract.test.ts",
+      "bytes": 5479,
+      "digestAlgorithm": "sha256",
+      "digest": "2cd2172a400d973d72ca499d67a1b73c284f75d309f984ff0127704b26d41456"
+    },
+    {
+      "path": "tests/schema-contract/ectd-sequence-continuity.contract.test.ts",
+      "bytes": 9586,
+      "digestAlgorithm": "sha256",
+      "digest": "95639860b906a14c1d3752e6dcd8daea35503471011fb66f2792cb0b9c958eab"
+    },
+    {
+      "path": "tests/schema-contract/ectd-submission-agent-reachability.contract.test.ts",
+      "bytes": 9016,
+      "digestAlgorithm": "sha256",
+      "digest": "aa91dab7db37ed5ce74a1dd3ab0c01ff3e995198189f1ae42f9d0c8a190b759c"
+    },
+    {
+      "path": "tests/schema-contract/esig-audit-immutability.contract.test.ts",
+      "bytes": 9315,
+      "digestAlgorithm": "sha256",
+      "digest": "c774b9b0881bff54244153296a7c783826a7039211104fb7f4a0dae4208bea94"
+    },
+    {
+      "path": "tests/schema-contract/esig-gate-columns.contract.test.ts",
+      "bytes": 14768,
+      "digestAlgorithm": "sha256",
+      "digest": "49ff7e14cee1b3238ec3d15a19b76646cd886ee8ff44d31cb4c733691b7e6155"
+    },
+    {
+      "path": "tests/schema-contract/esignature-verify-roundtrip.contract.test.ts",
+      "bytes": 11500,
+      "digestAlgorithm": "sha256",
+      "digest": "5f6ecf0e2da188927593018efcb563fb0cc8abd46f9f0751df8d4036253de9cb"
+    },
+    {
+      "path": "tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts",
+      "bytes": 10193,
+      "digestAlgorithm": "sha256",
+      "digest": "cd220a98d2f3d4ca42e27e6f065026ec52fa429f31a744f54fef2201ed4fda1e"
+    },
+    {
+      "path": "tests/schema-contract/fixtures/drizzle-shaped-operating-system.sql",
+      "bytes": 17477,
+      "digestAlgorithm": "sha256",
+      "digest": "c0ee8a0a52567b9fbe73a1cae5b36bd8806ea21d901d6a6c6e8b29fe6b6ea451"
+    },
+    {
+      "path": "tests/schema-contract/governance-boundary-failopen.contract.test.ts",
+      "bytes": 7073,
+      "digestAlgorithm": "sha256",
+      "digest": "e66cd3a2eb4170f6333dfdf12188de38d9667257cf62834fe462fe19356ce563"
+    },
+    {
+      "path": "tests/schema-contract/governance-boundary-gates.contract.test.ts",
+      "bytes": 10420,
+      "digestAlgorithm": "sha256",
+      "digest": "27f7bc4a17171cf07a4c136f69aa0ce7b706163e389885891505b3f491d5e154"
+    },
+    {
+      "path": "tests/schema-contract/governed-command-vocabulary.contract.test.ts",
+      "bytes": 6535,
+      "digestAlgorithm": "sha256",
+      "digest": "816ec88c5be30d7043e08d8c93f5ab5f61c5b0b27e4a357d28248a1136105940"
+    },
+    {
+      "path": "tests/schema-contract/governed-document-binding.contract.test.ts",
+      "bytes": 6882,
+      "digestAlgorithm": "sha256",
+      "digest": "a6ee969a827311a0342c17e7abc94760141a36f53011a08e8e27ad317e3a74a7"
+    },
+    {
+      "path": "tests/schema-contract/harness.ts",
+      "bytes": 5767,
+      "digestAlgorithm": "sha256",
+      "digest": "932dc955cb2db65e6c212188d575113ea224c47b080dfc91a66d031c779acf5e"
+    },
+    {
+      "path": "tests/schema-contract/immutable-report-tenant-index.pglite.test.ts",
+      "bytes": 8436,
+      "digestAlgorithm": "sha256",
+      "digest": "789fe438c9c526d09daa7d763351503d5a9e9a45e18f5badf88dead575cd9d69"
+    },
+    {
+      "path": "tests/schema-contract/integer-project-same-org-keys.pglite.test.ts",
+      "bytes": 13676,
+      "digestAlgorithm": "sha256",
+      "digest": "1b97eb69ba0a7c51f07da9e5ab972605a66eb78fd438df3ad554d1d4cbddc2ab"
+    },
+    {
+      "path": "tests/schema-contract/ivdr-classification-reconciliation.contract.test.ts",
+      "bytes": 11346,
+      "digestAlgorithm": "sha256",
+      "digest": "9a4ffcf3d4c182963ca60b2455d8795264630168a78ac511fa9896b0a3eb8d75"
+    },
+    {
+      "path": "tests/schema-contract/ivdr-history-tenant-isolation.contract.test.ts",
+      "bytes": 7390,
+      "digestAlgorithm": "sha256",
+      "digest": "b1bb3ddf3547cbcd527bebdbab55f1f7bf7b99e7757abf5c7bcc8f0827183116"
+    },
+    {
+      "path": "tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts",
+      "bytes": 10940,
+      "digestAlgorithm": "sha256",
+      "digest": "07cd4281b8097405d1ce97f7e5e524bfe43cb1aa1a9a28803f066ca8bf93e9ee"
+    },
+    {
+      "path": "tests/schema-contract/kernel-hash-chain-honesty.contract.test.ts",
+      "bytes": 6200,
+      "digestAlgorithm": "sha256",
+      "digest": "a23ed9576c522902e1615956c849b5942387e778c7b3f67e75650b3c659fc91d"
+    },
+    {
+      "path": "tests/schema-contract/known-unlisted-reason-holds.contract.test.ts",
+      "bytes": 8066,
+      "digestAlgorithm": "sha256",
+      "digest": "30d0c9f7096d185019a3f5b8b5f3c086921008631a3c8a1f98268be32a2d6192"
+    },
+    {
+      "path": "tests/schema-contract/manufacturing-responses-provisioning.contract.test.ts",
+      "bytes": 5443,
+      "digestAlgorithm": "sha256",
+      "digest": "5747b2159777d198f0f71c907a1eaf3aeb688bfb44758843531dd1b0cf5fa528"
+    },
+    {
+      "path": "tests/schema-contract/migration-reachability-guard.contract.test.ts",
+      "bytes": 10789,
+      "digestAlgorithm": "sha256",
+      "digest": "5b192ed6aa506bad120fff4991d9eeddf7c259e336ab84b6371d9fb0e446b9b7"
+    },
+    {
+      "path": "tests/schema-contract/module-integration-document-exists.contract.test.ts",
+      "bytes": 4839,
+      "digestAlgorithm": "sha256",
+      "digest": "3edd650a411116135064e9b86e0f4645df6ea4825cdc55cb9db175e79771b3c3"
+    },
+    {
+      "path": "tests/schema-contract/no-project-id-coercion.contract.test.ts",
+      "bytes": 2568,
+      "digestAlgorithm": "sha256",
+      "digest": "6f1153e1a612592136c9d4441a6b7845ddbed91f0d315f6a171067af3c9cba4c"
+    },
+    {
+      "path": "tests/schema-contract/one-normalize-ctd-code.contract.test.ts",
+      "bytes": 2585,
+      "digestAlgorithm": "sha256",
+      "digest": "db92cffc2f632f79734c246b8bbb5179200a81bab1d2a05d0004d5ccb05a5ebe"
+    },
+    {
+      "path": "tests/schema-contract/one-program-anchor-reader.contract.test.ts",
+      "bytes": 3324,
+      "digestAlgorithm": "sha256",
+      "digest": "44792885904bfadfaf9b16dcf9051cefff6ac74768978e832b238c7b27afdbe1"
+    },
+    {
+      "path": "tests/schema-contract/operating-system-collision.contract.test.ts",
+      "bytes": 10175,
+      "digestAlgorithm": "sha256",
+      "digest": "27fe6e12e9fe1ebe01539a9895024420ea3ab8ec59ec1c18581bab60012dddfb"
+    },
+    {
+      "path": "tests/schema-contract/orchestrator-ledger-hardening.contract.test.ts",
+      "bytes": 5683,
+      "digestAlgorithm": "sha256",
+      "digest": "58c2f37c569a5d056481235c20a4c4acb296054dd9763c8541347c61ab640f32"
+    },
+    {
+      "path": "tests/schema-contract/pma-governed-assembly.contract.test.ts",
+      "bytes": 9190,
+      "digestAlgorithm": "sha256",
+      "digest": "59fb7392ae67f681e15f9ce5cb146c4cef563e954debd0032446f8796af26542"
+    },
+    {
+      "path": "tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts",
+      "bytes": 7984,
+      "digestAlgorithm": "sha256",
+      "digest": "808a1023b42330986304faf58d1afcca640c167e1cb3fe818957a54b763bb798"
+    },
+    {
+      "path": "tests/schema-contract/program-project-anchor-backfill.pglite.test.ts",
+      "bytes": 11444,
+      "digestAlgorithm": "sha256",
+      "digest": "86c78acb69ba78fefe0f77c8091b860223070eeec1fcf34d915851e0c29a9657"
+    },
+    {
+      "path": "tests/schema-contract/program-same-org-keys.pglite.test.ts",
+      "bytes": 15216,
+      "digestAlgorithm": "sha256",
+      "digest": "f5cab76b04961eb0bd8bc1b17c0c635e480bf69d5d06fa00dd92d63d2824e098"
+    },
+    {
+      "path": "tests/schema-contract/project-charters-declared-columns.contract.test.ts",
+      "bytes": 7558,
+      "digestAlgorithm": "sha256",
+      "digest": "fb9bebd87691cd98f9e738348da27dd260c19eae137ffd3ea22d10824fbb701d"
+    },
+    {
+      "path": "tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts",
+      "bytes": 6826,
+      "digestAlgorithm": "sha256",
+      "digest": "f8420bfbd6eab5b80cc29c54709b76742747eb312addab96a645a06d05db2a7e"
+    },
+    {
+      "path": "tests/schema-contract/projects-registry-context-backfill.pglite.test.ts",
+      "bytes": 10886,
+      "digestAlgorithm": "sha256",
+      "digest": "8a788c24b32203ba3ca392ad71c08d2174ab10cedacc1f6cfb4d417ca66ae324"
+    },
+    {
+      "path": "tests/schema-contract/qms-deployment-prerequisite.contract.test.ts",
+      "bytes": 8843,
+      "digestAlgorithm": "sha256",
+      "digest": "7038cb7eea042afc1f275e8b634cdc1c531533463db9a167b168cb72efa2970f"
+    },
+    {
+      "path": "tests/schema-contract/qms-inspection-parentage.contract.test.ts",
+      "bytes": 9623,
+      "digestAlgorithm": "sha256",
+      "digest": "ade802a1903a02541c7d8e58091b9ae8ba794524a8922eeefaa96f5e211b5413"
+    },
+    {
+      "path": "tests/schema-contract/rds-ca-bundle.contract.test.ts",
+      "bytes": 6452,
+      "digestAlgorithm": "sha256",
+      "digest": "f1d6aa8a181fae62ca3996dee70ea8ca1483172407be748136de1f416d8401a8"
+    },
+    {
+      "path": "tests/schema-contract/reachability-debt-cleared.contract.test.ts",
+      "bytes": 6980,
+      "digestAlgorithm": "sha256",
+      "digest": "4809fc2b92ef1e51b1219c79637592ac47111a2abc77df76a0a3d6e9fa640038"
+    },
+    {
+      "path": "tests/schema-contract/readiness-security-tables.contract.test.ts",
+      "bytes": 5942,
+      "digestAlgorithm": "sha256",
+      "digest": "17e304c562958e74d4bcc718fb467f4e30a3bd7775ccece5ca1d3a827402204c"
+    },
+    {
+      "path": "tests/schema-contract/rendered-leaf-files.contract.test.ts",
+      "bytes": 3552,
+      "digestAlgorithm": "sha256",
+      "digest": "4b315d83886bfc184425d2fe3b31e543be4ea9cae256b9a4b76aa8938a902a26"
+    },
+    {
+      "path": "tests/schema-contract/resolution-receipts.contract.test.ts",
+      "bytes": 9259,
+      "digestAlgorithm": "sha256",
+      "digest": "1b621981d936d37e6ab0e9f7bf2b84aab3f27fbb466db4c02ab8b032963f8ace"
+    },
+    {
+      "path": "tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts",
+      "bytes": 19918,
+      "digestAlgorithm": "sha256",
+      "digest": "44942fbd004064a0fcef22dd9941c6cc7010164c8a9023563b5570378e0311a1"
+    },
+    {
+      "path": "tests/schema-contract/rules-engine-assignee-resolution.contract.test.ts",
+      "bytes": 5381,
+      "digestAlgorithm": "sha256",
+      "digest": "21eb111b27ddb58befd826e08c19ec445ab90e3fe9229dbba1ceba4412282275"
+    },
+    {
+      "path": "tests/schema-contract/schedule-of-events-tenant-arbiter.contract.test.ts",
+      "bytes": 13194,
+      "digestAlgorithm": "sha256",
+      "digest": "55872669d541838b0aa9cad4610944f26c6714b7a437e4a98f0839f9b6180c7b"
+    },
+    {
+      "path": "tests/schema-contract/stability-backing-tables.contract.test.ts",
+      "bytes": 11007,
+      "digestAlgorithm": "sha256",
+      "digest": "365c4978c83cc60b830fa930fab1dcfc58bd366263b3999bcc376c4189af96b0"
+    },
+    {
+      "path": "tests/schema-contract/stability-tenant-isolation.contract.test.ts",
+      "bytes": 8789,
+      "digestAlgorithm": "sha256",
+      "digest": "220cc95f552e7c6c61245f457330bdec0ca6f9ff32b407b6562886fa156391be"
+    },
+    {
+      "path": "tests/schema-contract/submission-core-reachability.contract.test.ts",
+      "bytes": 5367,
+      "digestAlgorithm": "sha256",
+      "digest": "fadf35c0c81cdf21d3635bc2104817ba623191e1e7b813c583288f4b2ed230e9"
+    },
+    {
+      "path": "tests/schema-contract/submissions-program-anchor.pglite.test.ts",
+      "bytes": 6641,
+      "digestAlgorithm": "sha256",
+      "digest": "73a476906a07635ac47d286d5f3831e4177016388f7ec9b9d9e315932f19fa62"
+    },
+    {
+      "path": "tests/schema-contract/template-specs-durable-creator.contract.test.ts",
+      "bytes": 6625,
+      "digestAlgorithm": "sha256",
+      "digest": "b470dc33ab31ac35547c9733b84a7691afbd015e370d436f95039b04e2f3428c"
+    },
+    {
+      "path": "tests/schema-contract/tenant-export-covers-purge.contract.test.ts",
+      "bytes": 8290,
+      "digestAlgorithm": "sha256",
+      "digest": "770ccef63bb66def2872813cbd999ce8aa19783973dc917c7729baba6b8651fe"
+    },
+    {
+      "path": "tests/schema-contract/tenant-isolation-sweep.contract.test.ts",
+      "bytes": 28247,
+      "digestAlgorithm": "sha256",
+      "digest": "2706862fbe67011d71df4324588a445897bfc70a98945f3831ec2c9651080d74"
+    },
+    {
+      "path": "tests/schema-contract/tenant-storage-accounting.contract.test.ts",
+      "bytes": 9358,
+      "digestAlgorithm": "sha256",
+      "digest": "d26baaf0d8726070045ad49315eb192c56d50d96e56a8cbf41cc3264da33b56d"
+    },
+    {
+      "path": "tests/schema-contract/tier5-complete-schema.contract.test.ts",
+      "bytes": 1771,
+      "digestAlgorithm": "sha256",
+      "digest": "90b989bc44e368a4c6c9c91540e37e99dc520d86f43075b59ee8f5f9a377a9f4"
+    },
+    {
+      "path": "tests/schema-contract/uuid-tenant-isolation.contract.test.ts",
+      "bytes": 9272,
+      "digestAlgorithm": "sha256",
+      "digest": "3a6add7289e6d0573ef899ac4567fcdd35257981bc2cc5bfe5f3fef16aa2fb92"
+    },
+    {
+      "path": "vitest.config.ts",
+      "bytes": 3983,
+      "digestAlgorithm": "sha256",
+      "digest": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    }
+  ]
+}

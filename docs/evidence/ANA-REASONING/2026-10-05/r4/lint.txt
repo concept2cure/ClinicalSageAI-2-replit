@@ -1,0 +1,7 @@
+ESLint warnings per file touched by round 4: on the round-4 tree, and on trunk (origin/concept2cure-v2) where the file exists there.
+Command: npx eslint --no-warn-ignored <file>
+
+server/routes/ana-ri/stream.ts                                           round4=24   trunk=24
+server/services/ai-gateway/effort.ts                                     round4=0    trunk=0
+server/services/ai-gateway/__tests__/turn-api-effort.test.ts             round4=0    trunk=new
+server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts         round4=0    trunk=new

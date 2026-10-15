@@ -93,6 +93,9 @@ vi.mock('../../db', () => {
       }),
     }),
   };
+  // The pre-auth account lookup (public.user_id_for_email / user_id_for_reset_token,
+  // services/auth/pre-auth-account.ts) answers with the id of the row this double reads.
+  Object.assign(db, { execute: async () => ({ rows: [{ id: (dbState.selectRows[0] as { id?: number } | undefined)?.id ?? null }] }) });
   // The live-token check reads the revocation list and the account's standing here.
   const pool = {
     query: vi.fn(async (sql: string) =>

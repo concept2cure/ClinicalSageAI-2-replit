@@ -22,9 +22,9 @@
  */
 
 import { and, eq, sql, desc, inArray } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import { regulatoryPrograms, evidenceObjects, evidenceLinks } from '../../../shared/schema/programs';
+import { evidenceObjects, evidenceLinks } from '../../../shared/schema/programs';
 import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
 import {
   concept2cureArtifacts,
@@ -35,6 +35,7 @@ import {
   getActivityByKey,
   type PdevActivityState,
 } from './pdev-activity-registry';
+import { programInOrganization } from '../c2c/program-access';
 
 const logger = createScopedLogger('pdev-provenance-trace');
 
@@ -129,17 +130,7 @@ export class PdevProvenanceTraceService {
     if (!activity) return null;
 
     // Tenant gate.
-    const programRows = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(
-          eq(regulatoryPrograms.id, programId),
-          eq(regulatoryPrograms.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-    if (!programRows[0]) return null;
+        if (!(await programInOrganization(pool, programId, organizationId))) return null;
 
     // 1. Activity-state row (may not exist if no one has touched the activity).
     const stateRow = await db

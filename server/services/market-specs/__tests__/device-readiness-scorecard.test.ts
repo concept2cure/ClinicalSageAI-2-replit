@@ -38,20 +38,42 @@ describe('readiness scorecard — pure scorer', () => {
       classificationKnown: true,
       evidence: [{ id: 'cer', label: 'CER', applicable: true, present: 6, total: 12 }],
     });
-    // classification 100 (w10) + CER 50 (w60) → (1000+3000)/70 ≈ 57 → 'early'.
+    // classification 100 (w10) + required documents not assessed 0 (w30)
+    // + CER 50 (w60) → (1000+0+3000)/100 = 40 → 'early'.
     expect(sc.dimensions.find((d) => d.id === 'evidence:cer')?.score).toBe(50);
-    expect(sc.score).toBe(57);
+    expect(sc.score).toBe(40);
     expect(sc.level).toBe('early');
   });
 
-  it('weights normalise when a dimension is absent (no requirements assessed)', () => {
+  /* This was 'weights normalise when a dimension is absent (no requirements
+     assessed)', and it asserted 100: a determined class and one ready module,
+     with the required documents never looked at, scored 'ready'. The
+     /device/blueprint route and AnA's tool never pass a requirements
+     assessment, so every scorecard they served was normalised that way
+     (2026-10-15). */
+  it('counts a dimension nothing assessed as not assessed — not as absent', () => {
     const sc = computeDeviceReadinessScorecard({
       classificationKnown: true,
       evidence: [{ id: 'rmf', label: 'RMF', applicable: true, ready: true }],
     });
-    // classification (10) + rmf (60), both 100 → 100.
-    expect(sc.score).toBe(100);
-    expect(sc.dimensions.some((d) => d.id === 'required_documents')).toBe(false);
+    // classification 100 (w10) + required documents 0 (w30) + rmf 100 (w60) → 70.
+    expect(sc.score).toBe(70);
+    expect(sc.level).toBe('in_progress');
+    expect(sc.dimensions.find((d) => d.id === 'required_documents')).toMatchObject({ status: 'not_assessed', score: 0, weight: 30 });
+    expect(sc.topGaps).toContain('Required documents not assessed.');
+  });
+
+  it('keeps an applicable evidence module nothing has assessed, as not assessed', () => {
+    const sc = computeDeviceReadinessScorecard({
+      classificationKnown: true,
+      requirements: { present: 5, total: 5 },
+      evidence: [{ id: 'cer', label: 'CER', applicable: true }],
+    });
+    // It used to be dropped, leaving classification + documents: 100, 'ready'.
+    expect(sc.dimensions.find((d) => d.id === 'evidence:cer')).toMatchObject({ status: 'not_assessed', score: 0, weight: 60 });
+    expect(sc.score).toBe(40);
+    expect(sc.level).not.toBe('ready');
+    expect(sc.topGaps).toContain('CER is not assessed.');
   });
 });
 
@@ -78,9 +100,44 @@ describe('readiness scorecard — from blueprint', () => {
       submissionType: 'mdr_td',
       classification: { framework: 'mdr', facts: { implantable: true } },
       present: { cerSectionIds: all, rmfSectionIds: rmfAll },
+      // Without this an unrecorded claim read as "not claimed" and the CER scored ready (2026-10-15).
+      equivalenceClaimed: false,
     });
     const sc = scorecardFromBlueprint(bp);
     expect(sc.dimensions.find((d) => d.id === 'evidence:clinical_evaluation')?.status).toBe('ready');
     expect(sc.dimensions.find((d) => d.id === 'evidence:risk_management')?.status).toBe('ready');
+  });
+});
+
+describe('readiness scorecard — a class the engine could not determine is not "determined"', () => {
+  // The MDR/IVDR engine returns class null with the facts it needs (963c2167). A
+  // classification object that carries no class is not a determined classification.
+  it('scores an MDR classification with a missing deciding fact as not started, naming the fact', () => {
+    const bp = buildDeviceBlueprint({
+      submissionType: 'mdr_td',
+      classification: { framework: 'mdr', facts: { surgicallyInvasive: true } },
+    });
+    const sc = scorecardFromBlueprint(bp);
+    const dim = sc.dimensions.find((d) => d.id === 'classification')!;
+    expect(dim.status).toBe('not_started');
+    expect(dim.score).toBe(0);
+    expect(sc.topGaps.join(' ')).toMatch(/classification not yet determined[\s\S]*duration/i);
+  });
+
+  it('scores an IVDR classification with a missing deciding fact as not started', () => {
+    const bp = buildDeviceBlueprint({
+      submissionType: 'ivdr_td',
+      classification: { framework: 'ivdr', facts: { bloodGrouping: true } },
+    });
+    const sc = scorecardFromBlueprint(bp);
+    expect(sc.dimensions.find((d) => d.id === 'classification')?.status).toBe('not_started');
+  });
+
+  it('still credits a determined class', () => {
+    const bp = buildDeviceBlueprint({
+      submissionType: 'mdr_td',
+      classification: { framework: 'mdr', facts: { implantable: true } },
+    });
+    expect(scorecardFromBlueprint(bp).dimensions.find((d) => d.id === 'classification')?.status).toBe('ready');
   });
 });

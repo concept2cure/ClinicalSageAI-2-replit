@@ -1,0 +1,2 @@
+trunk deploy-migrate with DB_AUDIT_REQUIRED=pgaudit on a server without pgaudit: exit=0
+✅ Schema migration complete — safe to roll services.

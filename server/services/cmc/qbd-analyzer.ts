@@ -9,9 +9,11 @@
  *   - Critical Process Parameters (CPPs) from manufacturing process
  *     records and in-process controls.
  *
- * Replaces the type-string-keyed heuristics in blueprintRoutes.ts for
- * any caller that has a real project. The heuristics remain in place for
- * pre-project blueprint generation where no source data exists yet.
+ * Replaced the type-string-keyed heuristics of server/api/cmc/blueprintRoutes.ts
+ * for any caller with a real project. That router, and with it the heuristics
+ * for pre-project blueprint generation, was retired on 2026-10-05 with no
+ * caller; this analyzer, served at GET /api/cmc/quality/qbd/:projectId, is the
+ * one QbD path.
  *
  * @module server/services/cmc/qbd-analyzer
  */
@@ -347,7 +349,7 @@ export async function analyzeQbdFromSources(
 
   const unlinkedCqas = cqas.filter(c => !c.methodLinked);
   if (unlinkedCqas.length > 0) {
-    gaps.push(`${unlinkedCqas.length} CQA(s) lack a validated analytical method (ICH Q2(R1) gap).`);
+    gaps.push(`${unlinkedCqas.length} CQA(s) lack a validated analytical method (ICH Q2(R2) gap).`);
   }
 
   const unevaluatedInputs = Object.entries(unavailable)

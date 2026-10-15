@@ -93,11 +93,37 @@ never asked whose it was.
   (`deepening-tools.test.ts`, the fourth caller), on the one check. **47 files,
   515 tests pass.**
 
+## Second pass: one guard for every Module 3 router (2026-09-30)
+
+- **Two more routers took `:projectId` unchecked.**
+  - Build state: `GET /build-state/:projectId` and `/uploaded-sources/:projectId`.
+  - Convergence: `POST /classify-artifact/:projectId`,
+    `/build-section/:projectId/:sectionKey` and
+    `GET /source-lineage/:projectId/:sectionKey`.
+  - Their stores are organization-keyed, so a foreign id leaked nothing. But
+    it answered as an **empty project**: "0% built", or "no canonical sources —
+    upload and classify first". That says the project exists and is empty, and
+    it is not true. Fail closed; an error is never an empty result.
+- **The guard is now one module:** `server/api/cmc/module3-project-guard.ts`.
+  - `guardModule3Project(router, logger)` installs the router.param.
+  - `module3OrgId(req)` is the organization read. It replaces four identical
+    private copies, in the operating-system, build-state, convergence and
+    auto-draft routers.
+  - The operating-system router's own guard moved there unchanged.
+  - The auto-draft route composes a preview from its request body and reads
+    nothing stored, so it shares the organization read and takes no guard.
+- **Tests.** `module3ProjectScope.test.ts` mounts all three guarded routers and
+  adds the five routes above. Each answers 404 `PROJECT_NOT_FOUND` with no
+  query issued. The three suites that drive those routers admit their fixture
+  project through the same mock.
+- **`05-red-build-state-convergence.txt`:** with the two routers at trunk,
+  **exactly the 5 new cases fail**.
+- **`06-green-one-guard.txt`:** these suites pass, **50 files, 525 tests**.
+  - The Module 3 routes, the CMC services and cmc-changes.
+  - The Module 3 tenant-arbiter contract and the bundle-invalidation contract.
+  - The build-status service suite and the Module 3 lineage walk (PGlite).
+
 ## Still open in PF-15
 
-- `module3BuildStateRoutes.ts`, `module3AutoDraftRoutes.ts`,
-  `module3ConvergenceRoutes.ts`, `projectRoutes.ts` and `server/api/cmc/routes.ts`
-  also take `:projectId`. They are next.
-- The interview commit's `projectRef` (MISSED-2).
-- `estar_submissions` and the eSTAR export.
-- LX-26, the device filing path, which needs a founder decision.
+- LX-26, the device filing path, and whether a device filing shows its project
+  in Submission Center. Both need the founder decision.

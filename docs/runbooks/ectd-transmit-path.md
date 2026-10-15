@@ -137,15 +137,46 @@ states, leaf by leaf, what it does to what is already on file. `planSequence`
 the FILED history and its fold — and delegates the diff itself to the canonical
 `lifecycle-operator`.
 
-- **Filed means transmitted.** The history is appended by governed transmit when the
-  gateway accepts the bytes, never at assembly. A bundle that was built and never sent is
-  not at the agency and must not be a baseline. The append is shape-checked with the same
-  guard the reader applies, so an unreadable inventory is never persisted: it is reported
+- **Filed means transmitted to production.** The history is appended by governed transmit
+  when the gateway accepts the bytes in the `production` environment, never at assembly. A
+  bundle that was built and never sent is not at the agency and must not be a baseline; nor
+  is one sent to the agency's test environment (`staging`), which is not a regulatory
+  submission. That send reports `filedSequenceRecorded: 'not-applicable'` with
+  `filedSequenceReason: 'test-environment'` (2026-10-01, sweep F14). The append is
+  shape-checked with the same guard the reader applies, so an unreadable inventory is
+  never persisted: it is reported
   as `filedSequenceRecorded: false` with `filedSequenceReason: 'no-usable-manifest'`, and
   the response says to re-assemble before the next sequence. A descriptor assembled before
   the inventory existed is exactly this case. The governed `sign` row and its signature
   manifest both record which sequence the signature filed and whether the history took it —
   a lost baseline used to leave no durable trace beyond a server log.
+- **One bundle per filed sequence** (2026-10-01, sweep F19). A production send of a bundle
+  whose sequence the history already holds on file as a *different* bundle is refused
+  before the bytes leave (`409`, `details.code: 'SEQUENCE_ALREADY_FILED'`): the agency
+  loads at most one of two filings under one number. Re-sending the *same* bundle (after
+  a rollback) is allowed and reports `filedSequenceReason: 'already-recorded'`. If another
+  bundle was recorded under the sequence while this one was in flight, the send reports
+  `filedSequenceRecorded: false`, `filedSequenceReason: 'sequence-conflict'` and names
+  the bundle the history holds (`filedSequenceConflict`); confirm with the agency which
+  one it loaded. A rollback does **not** un-file a sequence — the agency still holds the
+  bytes. An entry marked `state: 'rejected'` is not on file and its number can be reused.
+
+  **Recording an agency technical rejection** (the agency did not load the sequence; for
+  FDA, a failed Ack3) is the only way an entry becomes `rejected`. Upload the agency's
+  notice to the Vault (`POST /api/vault/ingest`), then use **Technical rejection** on the
+  transmittal's row in Gateway transmittals
+  (`POST /api/mdx/gateways/transmittals/:id/technical-rejection` with
+  `{ evidenceDocumentId, reason, meaning, reauth }`; services/ectd/filed-sequence-rejection).
+  It re-authenticates like transmit and, in one transaction under the package lock, writes
+  a governed `sign` and an e-signature bound to the notice's Vault content hash, moves the
+  transmittal from `in_transit`/`received`/`ack1_received`/`ack2_received` to
+  `validation_failed`, marks the entry `rejected` (kept, with its evidence) and clears a
+  stored bundle assembled above it. A failed write un-files nothing. It is keyed on the
+  transmittal: a second send the history never recorded un-files nothing. Refusals (each
+  with `details.code`): `NOT_LATEST_FILED_SEQUENCE` (record the later sequences first,
+  each with its own notice), `TRANSMITTAL_RECORDS_ACCEPTANCE` (Ack3, validation passed,
+  review or later), `EVIDENCE_NOT_FOUND`, `TRANSMITTAL_NOT_ON_FILE`,
+  `NOT_A_PACKAGE_TRANSMITTAL`, `TRANSMITTAL_NOT_FOUND`. There is no undo.
 - **The baseline is a fold, not the last sequence.** A leaf untouched since 0000 is still
   compared to 0000, and `modified-file` points at the sequence folder that actually holds
   the version being superseded. A leaf whose last operation was `delete` has been
@@ -186,6 +217,21 @@ so the refusal names the terms that resolve rather than leaving the operator to 
 the value used to reach the packager and fail there with the reason discarded. EMA, PMDA
 and Health Canada take this field as free text on this path, so nothing is checked against
 a list they do not have.
+
+**What an FDA sequence declares** (2026-10-01, sweep F04, F08). The term is matched to
+FDA's list *exactly* (a code, or the term with case and `_`/`-` ignored), never by
+resemblance: the loose match filed `IND` as IND Safety Reports. An FDA follow-up also
+states its **sub-type** (`submissionSubType`: Original, Amendment, Resubmission, Report,
+Correspondence, ...) and, when it continues a regulatory activity, that activity's first
+sequence (`submissionId`). An IND amendment is `{ submissionType: 'Original Application',
+submissionSubType: 'Amendment', submissionId: '0000' }`. Refusals, all 409 under the same
+gate: `SUBMISSION_TYPE_NOT_FOR_APPLICATION` (a supplement on an IND or master file; IND
+safety reports outside an IND), `SUBMISSION_SUB_TYPE_REQUIRED` / `_UNKNOWN` (with
+`acceptedSubmissionSubTypes`), `SUBMISSION_ID_REQUIRED` (an Amendment or Resubmission names
+no activity), `SUBMISSION_ID_NOT_FILED`, `SUBMISSION_ID_WRONG_ACTIVITY` (the named sequence
+did not open an activity of this type) and `ORIGINAL_APPLICATION_ALREADY_FILED`. The codes
+reach the packager, the bundle descriptor and the filed history. Other regions refuse the
+two fields (400 `FIELD_NOT_FOR_REGION`): their backbones have no place for them.
 
 ### 3. Transmit
 

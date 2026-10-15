@@ -12,10 +12,15 @@
  * Unlike ectdCoauthorNoFixtures.test.tsx this does not mock apiRequest: the
  * refusal copy has to survive apiRequest's serverMessage filter, which drops
  * a message that carries an API route.
+ *
+ * 2026-10-01 (D5, P11-B-3): an approved row is now opened read-only, from the
+ * server's `readOnly` (ectdCoauthorReadOnly.test.tsx), so this refusal is met
+ * only by a row that became approved while it was open: the list served it as
+ * a draft, and the save is refused. The save states its reason (P11-B-1).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EctdCoauthor } from '../surfaces/EctdCoauthor';
 
 /* jsdom has no layout; same shim as ectdCoauthorNoFixtures.test.tsx. */
@@ -83,7 +88,8 @@ beforeEach(() => {
       const method = (init?.method || 'GET').toUpperCase();
       const path = String(url).split('?')[0];
       if (method === 'GET' && path === '/api/coauthor/documents') {
-        return json(200, { documents: [APPROVED_DOC], total: 1 });
+        // As the list read it, before the copy was approved elsewhere.
+        return json(200, { documents: [{ ...APPROVED_DOC, status: 'draft', readOnly: false }], total: 1 });
       }
       if (method === 'PUT' && path === '/api/coauthor/documents/7003') {
         puts.push(JSON.parse(String(init?.body)));
@@ -99,7 +105,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('EctdCoauthor — a save refused because the document is approved', () => {
+describe('EctdCoauthor — a save refused because the document became approved while open', () => {
   it("shows the server's reason and where to go, and does not report the save as done", async () => {
     render(<EctdCoauthor {...props()} />);
 
@@ -108,6 +114,9 @@ describe('EctdCoauthor — a save refused because the document is approved', () 
       editor?: { chain: () => any };
     };
     el.editor!.chain().focus().insertContent(' Edited after approval.').run();
+    fireEvent.change(screen.getByLabelText(/^Reason for change/), {
+      target: { value: 'Late correction to the narrative' },
+    });
 
     const save = await waitFor(() => {
       const b = Array.from(document.querySelectorAll('button')).find((x) =>

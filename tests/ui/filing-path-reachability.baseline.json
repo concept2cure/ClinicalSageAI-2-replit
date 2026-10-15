@@ -1,0 +1,4 @@
+{
+  "_comment": "Hops on the filing path that are still red, from docs/design/FILING_SPINE.md F0. This list may only shrink: the slice that turns a hop green removes its entry in the same change, and tests/ui/filing-path-reachability.test.ts fails until it does. Only the six hops found red on 2026-10-08 may appear here.",
+  "hops": []
+}

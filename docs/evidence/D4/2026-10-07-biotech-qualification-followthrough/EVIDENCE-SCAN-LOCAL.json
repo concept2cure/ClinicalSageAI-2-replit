@@ -1,0 +1,7 @@
+{
+  "check": "synthetic preview token shape in written evidence; not the remote Semgrep gate",
+  "files_checked": 49,
+  "findings": [],
+  "redacted_prior_strings": 3,
+  "scanner_rules_or_baselines_changed": false
+}

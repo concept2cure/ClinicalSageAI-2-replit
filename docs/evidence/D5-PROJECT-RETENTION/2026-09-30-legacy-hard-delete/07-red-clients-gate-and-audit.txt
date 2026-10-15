@@ -1,0 +1,5 @@
+ × server/routes/__tests__/clients-delete-retention.test.ts > DELETE /api/clients/:id — the workspace’s projects > a workspace holding only drafts is deleted, and the delete is audited 8ms
+ × server/routes/__tests__/clients-delete-retention.test.ts > DELETE /api/clients/:id — the workspace’s projects > a viewer is refused 403, and nothing is read or deleted 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)

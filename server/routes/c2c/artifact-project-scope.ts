@@ -21,7 +21,7 @@
  */
 import type { Request } from 'express';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import type { db as runtimeDb } from '../../db';
 import { concept2cureArtifacts } from '../../../shared/schema';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 import { verifyProjectAccess } from './project-access';
@@ -37,8 +37,14 @@ export async function authorizedProjectId(req: Request, organizationId: number):
 
 export type ProjectArtifact = typeof concept2cureArtifacts.$inferSelect;
 
-/** The artifact the URL names, only when it is `projectId`'s own; else null (answer 404). */
+/**
+ * The artifact the URL names, only when it is `projectId`'s own; else null
+ * (answer 404). Read on the caller's handle: the route decides how it reaches
+ * the database (today the shared pool, tracked in the requestDb backlog under
+ * the route's own file), so this helper adds no second shared-pool entry.
+ */
 export async function loadProjectArtifact(
+  db: Pick<typeof runtimeDb, 'select'>,
   organizationId: number,
   projectId: number,
   artifactId: string,

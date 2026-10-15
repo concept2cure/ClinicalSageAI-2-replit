@@ -1,0 +1,179 @@
+# MUTATIONS, track NC (row 74; ADR-0014 §7), the final tree (sha256 in tree.sha256). Script: mutate.py (scratchpad, nc-review).
+# Apply one mutation, run the named test files (--maxWorkers=2), restore the file byte-for-byte, and check its sha256. The
+# script refuses to restore over a change another writer made during the run. 50 mutations, 50 killed (red), 0 survived.
+#   N1-N9, R1-R10, S1-S2: the track NC build's own mutations, re-aimed at the final code (N3 and R3-R6 retargeted at the new code).
+#   V1-V29: the review follow-through, tagged with the objection each one proves.
+# Overcorrections (a gate that sets aside, refuses or flags too much): R4, R5, V4, V5, V9, V15, V20, V23.
+# Test files: NC = numerical-integrity-not-assessed, figure-agreement, figure-reconciliation-not-assessed, the route test
+# (77 tests); NC + H2 adds cross-artifact-consistency-not-assessed (39) for mutations of the shared ladder and agreement rule.
+# The first failing tests (up to four) are listed under each mutation. ANSI stripped.
+
+N1 integrity: no figures is clean: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft with no labelled figures is not_assessed (no_figures), never cl
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical 
+N2 integrity: nothing repeated is clean: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed 
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was fo
+N3 engine counts every fact as compared: KILLED (red) — 7 failed | 70 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed 
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason 2ms
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a com
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean
+N4 engine: every quantity counts as repeated (overcount): KILLED (red) — 7 failed | 70 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > a draft whose labelled quantities are each stated once is not_assessed 
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > clean counts the quantities compared and carries no reason 3ms
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > one value written with and without a thousands separator is a com
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean
+N5 tool copy: not_assessed says the old clean line: KILLED (red) — 4 failed | 73 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical 
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothi
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was fo
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > every reason has its own copy, and no copy is the clean one 2ms
+N6 tool: recommendation is the old ternary: KILLED (red) — 4 failed | 73 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical 
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothi
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was fo
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a real agreement is still clean, and the copy counts what was compared 1
+N7 tool drops notAssessedReason: KILLED (red) — 3 failed | 74 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical 
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothi
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > each quantity stated once: not_assessed, and the copy counts what was fo
+N8 description loses not_assessed: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the tool description names not_assessed and says it is not clean, within the 1024-character trim 14ms
+N9 prompt loses the not_assessed sentence: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > the model hears the same thing > the base system prompt tells AnA never to call not_assessed numbers consistent 7ms
+R1 reconciler: no figures is clean: KILLED (red) — 3 failed | 74 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean 
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reco
+    × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with 
+R2 reconciler: nothing shared is clean: KILLED (red) — 12 failed | 65 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), ne
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cros
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > two documents that state different quantities compare noth
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_ass
+R3 same document counts as two places: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cros
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > one document stated with and without its module is one place: not_ass
+R4 overcorrection: module ignored, one file is one place: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > two modules of one file are two places in the dossier: compared 10ms
+R5 overcorrection: not_assessed hides a conflict inside one document: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement inside one document is still flagged, though nothing w
+R6 device: the hand-built clean report is back: KILLED (red) — 5 failed | 72 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean 
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed 
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reco
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current d
+R7 device tool: always the conflict instruction: KILLED (red) — 6 failed | 71 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reco
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instructio
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current d
+R8 extracted tool: always the conflict instruction: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > figures from one document: not_assessed, and the instruction is not
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict ke
+R9 instruction: clean takes the conflict copy: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was comp
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict ke
+R10 route converts not_assessed to clean: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > documents with no labelled figure: 200, verdict not_assessed with 
+    × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed
+S1 shared ladder ignores high severity: KILLED (red) — 1 failed | 115 passed (116) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a high-severity disagreement across documents is still needs_review (
+S2 shared ladder: a medium finding is nothing: KILLED (red) — 3 failed | 113 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/cross-artifact-consistency-not-assessed.test.ts > checkDossierConsistency: a real comparison keeps its verdict > a missing cross-reference is still flagged when no figure was comp
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a disagreement inside one document is still flagged, though nothing w
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate 9ms
+V1 [1] device reads every version (nothing set aside): KILLED (red) — 9 failed | 68 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a superseded version and its verbatim successor are one
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a version another document names as its predecessor is 
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a value corrected in the successor is not a conflict wi
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a withdrawn document is set aside 1ms
+V2 [1] status only: a successor does not retire its predecessor: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a version another document names as its predecessor is 
+V3 [1] succession only: a withdrawn document is read: KILLED (red) — 4 failed | 73 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a withdrawn document is set aside 8ms
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > two current documents with a superseded third still com
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed 
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current d
+V4 [1] overcorrection: the successor is set aside, not the predecessor: KILLED (red) — 4 failed | 73 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a superseded version and its verbatim successor are one
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a value corrected in the successor is not a conflict wi
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instructio
+    × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed
+V5 [1] overcorrection: drafts are set aside too: KILLED (red) — 18 failed | 59 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > documents that state no labelled figure are not_assessed (no_figures), never clean 
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > only one document with figures is not_assessed (no_shared_quantities) 1ms
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that restate one sensitivity are still clean 4ms
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: the device programme > two documents that disagree are still a blocker 1ms
+V6 [1] documentsScanned counts every version: KILLED (red) — 4 failed | 73 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > a superseded version and its verbatim successor are one
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > two current documents with a superseded third still com
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed 
+    × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed
+V7 [1] every version retired reads as "no figures": KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed 
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current d
+V8 [1] no_current_documents decision removed: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDeviceDocuments: only current documents are compared (review [1]) > every document superseded or withdrawn is not_assessed 
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > every document retired: the instruction says there was no current d
+V9 [1] overcorrection: a caller that read no documents is "no current documents": KILLED (red) — 17 failed | 60 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a single figure is not_assessed (no_shared_quantities), ne
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: nothing compared across documents is not clean > a quantity stated twice in the same document is not a cros
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > a quantity stated in two documents with one value is clean 1ms
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcileDossierNumbers: a real comparison keeps its verdict > clean counts the quantities compared across documents and carries no 
+V10 [1] device tool drops versionsSetAside: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instructio
+V11 [1]/[2] device tool passes no scope: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a superseded version and its copy: not_assessed, and the instructio
+V12 [1] route drops versionsSetAside: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/routes/__tests__/reconcile-device-documents-not-assessed.test.ts > reconcile-device-documents: not_assessed reaches the caller as not_assessed > a superseded version and its verbatim successor: 200, not_assessed
+V13 [1] description loses the set-aside sentence: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_device_documents says superseded and withdrawn versions are not compared 9ms
+V14 [2] integrity: content_too_short decision removed: KILLED (red) — 3 failed | 74 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read 2ms
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothi
+V15 [2] overcorrection: content at the minimum is called too short: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > the minimum is one shared constant, and content at it is read 8ms
+V16 [2] the extractor leaves the shared minimum: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: nothing compared is not clean > content under the extractor minimum is not_assessed (content_too_short)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > content too short to read: the copy states the minimum, and claims nothi
+V17 [2] device no_figures copy speaks for whole documents again: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: not_assessed, and the instruction says nothing was reco
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > no figures: the instruction names what was read, and claims nothing
+V18 [2] integrity no_figures copy claims what the content states: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > no labelled figures: not_assessed with the reason, and no "No numerical 
+V19 [3] ranges compared on the lower bound only: KILLED (red) — 3 failed | 113 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean 12ms
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: an age range whose upper bound differs is a candidate 6ms
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean 2ms
+V20 [3] overcorrection: two ranges never agree: KILLED (red) — 1 failed | 115 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: the same CI in another document is clean 42ms
+V21 [3] dossier divergence text shows the raw unit again: KILLED (red) — 1 failed | 115 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > dossier: a CI whose upper bound differs from another document is a divergence, not clean 17ms
+V22 [5] sample size keeps the rounding spread: KILLED (red) — 2 failed | 114 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: N = 1000 against N = 1004 in one document is a likely inconsist
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: N = 1000 in the draft against N = 1004 in another document is a b
+V23 [5] overcorrection: every label matches exactly: KILLED (red) — 3 failed | 113 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just 
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > dossier: a measured value inside the shared spread agrees across documents
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > values inside the 0.5% spread are a comparison that agreed: clean
+V24 [7] engine leaves the shared spread: KILLED (red) — 1 failed | 115 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > counts match exactly; measured values keep the rounding spread (review [5]) > integrity: a measured value inside the shared spread agrees, and one just 
+V25 [7] copy hard-codes the spread again: KILLED (red) — 1 failed | 115 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > names exact matching for counts and the shared spread, not a hard-coded 0.5% 9ms
+V26 [7] dossier clean copy loses the rule: KILLED (red) — 1 failed | 115 passed (116) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > the clean copy states the rule the check applied (reviews [5], [7]) > the dossier check's clean copy states the same rule, from the same place 7ms
+V27 [6] clean copy says "across documents" only: KILLED (red) — 2 failed | 75 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_device_documents: the tool says nothing was compared > a real agreement is clean, and the instruction counts what was comp
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > reconcile_extracted_figures: the same engine, the same honesty > a real agreement is clean with a counted instruction; a conflict ke
+V28 [6] extracted-figures description loses the module definition: KILLED (red) — 1 failed | 76 passed (77) — restored (sha256 verified)
+    × server/services/reconciliation/__tests__/figure-reconciliation-not-assessed.test.ts > the model hears the same thing > reconcile_extracted_figures states the engine's definition: two documents, or two modules of one do
+V29 [8] integrity ladder inverted: KILLED (red) — 7 failed | 70 passed (77) — restored (sha256 verified)
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a critical quantity stated with two values is still likely_incons
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > checkInternalNumericalIntegrity: a real comparison keeps its verdict > a high-severity quantity stated with two values is still review_c
+    × server/services/intelligence/__tests__/numerical-integrity-not-assessed.test.ts > check_numerical_integrity: the tool says nothing was compared > a disagreement keeps its copy and its candidates 1ms
+    × server/services/intelligence/__tests__/figure-agreement.test.ts > a range is compared on both bounds (review [3]) > integrity: the same lower CI bound with a different upper bound is a candidate, never clean 48ms
+
+Totals: 50 killed, 0 survived, 0 skipped, 0 errored.

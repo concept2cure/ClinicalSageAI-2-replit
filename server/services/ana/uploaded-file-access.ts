@@ -26,10 +26,24 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { capturedDataEligibleSql, uploadedBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
+import type { SpreadsheetEdit } from '../documentIntelligence/spreadsheetService.js';
 import { createHash } from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
+import { assertAnaUploadAccess } from './source-context-admission';
+import { admitAnaProjectScope } from './project-scope-admission';
 
 const logger = createScopedLogger('ana-uploaded-files');
+
+async function checkInteractiveUploadAccess(q: Parameters<typeof assertAnaUploadAccess>[0], organizationId: number | null | undefined,
+  fileIds: string[], actor?: { userId: unknown }): Promise<void> {
+  if (actor) await assertAnaUploadAccess(q, { organizationId, userId: actor.userId, fileIds });
+}
+
+async function checkDerivationDestination(q: Parameters<typeof admitAnaProjectScope>[0], organizationId: number,
+  userId: number, programId: string | null): Promise<void> {
+  if (programId) await admitAnaProjectScope(q, { organizationId, userId, projectRef: programId });
+}
 
 export interface UploadedFile {
   fileId: string;
@@ -53,6 +67,26 @@ export interface UploadedFile {
    * verification for a legacy row by forgetting to check.
    */
   integrity: 'verified' | 'unverifiable';
+}
+
+/**
+ * Why an upload could not be loaded, for a caller that reports per item rather
+ * than relaying a thrown message (the data room's "File into Vault", VR-11).
+ * The messages are the ones this module always threw; only the code is new.
+ *
+ *   UPLOAD_NOT_FOUND         — unknown, or another tenant's (indistinguishable on purpose).
+ *   UPLOAD_BYTES_MISSING     — the row exists but its bytes are gone.
+ *   UPLOAD_INTEGRITY_FAILED  — the bytes no longer match the digest recorded on receipt.
+ */
+export type UploadedFileErrorCode = 'UPLOAD_NOT_FOUND' | 'UPLOAD_BYTES_MISSING' | 'UPLOAD_INTEGRITY_FAILED';
+
+export class UploadedFileError extends Error {
+  readonly code: UploadedFileErrorCode;
+  constructor(code: UploadedFileErrorCode, message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'UploadedFileError';
+    this.code = code;
+  }
 }
 
 /** Lowercase hex SHA-256, the form stored in file_uploads.checksum_sha256. */
@@ -86,7 +120,22 @@ export interface UploadedFileMetadata {
  * (`uploads/file_*`).
  */
 function isUnscopedPath(storagePath: string): boolean {
-  return storagePath.startsWith('uploads/unscoped/') || /^uploads\/file_[^/]+$/.test(storagePath);
+  if (storagePath.startsWith('uploads/unscoped/')) {
+    return resolvesWithinUploadNamespace(storagePath, 'unscoped');
+  }
+  return /^uploads\/file_[^/]+$/.test(storagePath) && resolvesWithinUploadNamespace(storagePath, '');
+}
+
+/**
+ * Lexical containment after resolving dot segments, shared by metadata and
+ * byte readers. A raw org prefix alone accepts org-7/../org-9; the resolved
+ * path must be a CHILD of its permitted namespace, not the directory itself.
+ * This does not resolve symlinks or guarantee filesystem immutability.
+ */
+function resolvesWithinUploadNamespace(storagePath: string, namespace: string): boolean {
+  const directory = path.resolve(uploadsRoot(), namespace);
+  const resolved = path.resolve(process.cwd(), storagePath);
+  return resolved.startsWith(directory + path.sep);
 }
 
 /**
@@ -118,6 +167,7 @@ function rowBelongsToOrg(
   }
 
   if (!storagePath.startsWith(`uploads/org-${Number(organizationId)}/`)) return false;
+  if (!resolvesWithinUploadNamespace(storagePath, `org-${Number(organizationId)}`)) return false;
   if (row.organization_id === undefined) return true; // pre-migration database
   if (row.organization_id === null) return false;
   return Number(row.organization_id) === Number(organizationId);
@@ -134,6 +184,9 @@ function rowBelongsToOrg(
 export async function loadUploadedFileMetadata(
   fileIds: string[],
   organizationId?: number | null,
+  /** Interactive callers supply their authenticated actor; internal exact
+   * source services already enforce source/project permissions separately. */
+  actor?: { userId: unknown },
 ): Promise<UploadedFileMetadata[]> {
   const ids = (Array.isArray(fileIds) ? fileIds : []).filter(
     (id): id is string => typeof id === 'string' && id.length > 0,
@@ -142,6 +195,7 @@ export async function loadUploadedFileMetadata(
 
   const { getPool } = await import('../../db.js');
   const pool = getPool();
+  await checkInteractiveUploadAccess(pool, organizationId, ids, actor);
   const { rows } = await pool.query<{
     id: string;
     original_name: string;
@@ -151,7 +205,7 @@ export async function loadUploadedFileMetadata(
     checksum_sha256: string | null;
   }>(
     `SELECT id, original_name, mime_type, storage_path, organization_id, checksum_sha256
-       FROM file_uploads WHERE id = ANY($1)`,
+       FROM file_uploads f WHERE id = ANY($1) AND ${uploadedBinaryAvailableSql('f')}`,
     [ids],
   );
 
@@ -181,12 +235,14 @@ export async function loadUploadedFileMetadata(
 export async function loadUploadedFile(
   fileId: string,
   organizationId?: number | null,
+  actor?: { userId: unknown },
 ): Promise<UploadedFile> {
   if (!fileId || typeof fileId !== 'string') {
     throw new Error('file_id is required (e.g. "file_1712…" from a chat upload)');
   }
   const { getPool } = await import('../../db.js');
   const pool = getPool();
+  await checkInteractiveUploadAccess(pool, organizationId, [fileId], actor);
   const { rows } = await pool.query<{
     id: string;
     original_name: string;
@@ -197,11 +253,11 @@ export async function loadUploadedFile(
     checksum_sha256: string | null;
   }>(
     `SELECT id, original_name, mime_type, file_size, storage_path, organization_id, checksum_sha256
-       FROM file_uploads WHERE id = $1`,
+       FROM file_uploads f WHERE id = $1 AND ${uploadedBinaryAvailableSql('f')}`,
     [fileId],
   );
   if (rows.length === 0) {
-    throw new Error(`upload "${fileId}" not found`);
+    throw new UploadedFileError('UPLOAD_NOT_FOUND', `upload "${fileId}" not found`);
   }
   const row = rows[0];
   const storagePath = row.storage_path || '';
@@ -209,7 +265,7 @@ export async function loadUploadedFile(
   if (!rowBelongsToOrg(row, organizationId)) {
     // Same response as "not found" — don't confirm a foreign tenant's file exists.
     logger.warn('tenant-scoped upload access denied', { fileId, orgId: organizationId ?? null });
-    throw new Error(`upload "${fileId}" not found`);
+    throw new UploadedFileError('UPLOAD_NOT_FOUND', `upload "${fileId}" not found`);
   }
 
   const resolved = path.resolve(process.cwd(), storagePath);
@@ -217,9 +273,11 @@ export async function loadUploadedFile(
   let buffer: Buffer;
   try {
     buffer = await fs.readFile(resolved);
-  } catch {
-    throw new Error(
+  } catch (err) {
+    throw new UploadedFileError(
+      'UPLOAD_BYTES_MISSING',
       `upload "${fileId}" exists but its bytes are no longer available — ask the user to re-upload the file`,
+      { cause: err },
     );
   }
 
@@ -247,7 +305,8 @@ export async function loadUploadedFile(
         recordedSize: Number(row.file_size) || null,
         actualSize: buffer.length,
       });
-      throw new Error(
+      throw new UploadedFileError(
+        'UPLOAD_INTEGRITY_FAILED',
         `upload "${fileId}" failed its integrity check: the stored bytes no longer match the ` +
           `SHA-256 recorded when it was received. The file has been altered or corrupted since ` +
           `upload and will not be served. Ask the user to re-upload it.`,
@@ -271,13 +330,58 @@ export async function loadUploadedFile(
  * Persist derived bytes (e.g. an edited workbook) as a NEW upload row in the
  * caller's tenant namespace. Returns the new file_id.
  */
-export async function saveDerivedUpload(params: {
+export interface DerivedUploadParams {
   buffer: Buffer;
   fileName: string;
   mimeType: string;
   organizationId?: number | null;
   userId?: number | null;
-}): Promise<{ fileId: string; storagePath: string }> {
+  /** Internal editor association, created only by the verified document
+   * service. Rechecked on the caller's upload/capture transaction. */
+  authoringImage?: {
+    documentId: string; programId: string;
+    pool: { connect(): Promise<import('../../db/requestDb').RequestSqlClient & { release(): void }> };
+    authorize(q: import('../../db/requestDb').RequestSqlClient): Promise<void>;
+  };
+  /** Only the confirmed spreadsheet-edit handler supplies this, from the
+   * verified source bytes and the active session context, never a chosen org. */
+  derivation?: {
+    sourceFileId: string;
+    sourceSha256: string;
+    edits: SpreadsheetEdit[];
+    createdSheets: string[];
+    projectRef?: string | null;
+    projectId?: number | null;
+  };
+}
+
+export interface DerivedUploadResult {
+  fileId: string;
+  storagePath: string;
+  sourceId?: number | null;
+  captureStatus?: 'captured' | 'conversation_only';
+  /** Committed Data Room readability, separate from capture and edit receipt. */
+  processing?: Omit<import('../clinical-regulatory-evidence/data-room-processing.js').SourceProcessingResult, 'extracted'>;
+  derivationAudit?: { resourceType: 'file_upload'; resourceId: string };
+}
+
+/** A processing failure after capture COMMIT cannot deny the saved edit. */
+async function processSpreadsheetCapture(orgId: number, sourceId: number, programId: string | null, params: DerivedUploadParams): Promise<NonNullable<DerivedUploadResult['processing']>> {
+  try {
+    const { processCapturedSource } = await import('../clinical-regulatory-evidence/data-room-processing.js');
+    const done = await processCapturedSource(orgId, sourceId, {
+      bytes: params.buffer, fileName: params.fileName, mimeType: params.mimeType,
+      programId, expectedWorkspaceId: null, processedBy: 'spreadsheet_edit',
+    });
+    return { ok: done.ok, processed: done.processed, status: done.status,
+      ...(done.reasonCode ? { reasonCode: done.reasonCode } : {}) };
+  } catch (err) {
+    logger.warn('Captured spreadsheet processing unavailable', { sourceId, err: err instanceof Error ? err.message : String(err) });
+    return { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' };
+  }
+}
+
+export async function saveDerivedUpload(params: DerivedUploadParams): Promise<DerivedUploadResult> {
   const fileId = `file_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const orgSegment =
     params.organizationId != null ? `org-${Number(params.organizationId)}` : 'unscoped';
@@ -285,6 +389,8 @@ export async function saveDerivedUpload(params: {
 
   const resolved = path.resolve(process.cwd(), storagePath);
   assertWithinUploads(resolved);
+  if (params.authoringImage) return saveAuthoringImageAssociation(params, fileId, storagePath, resolved);
+  if (params.derivation) return saveSpreadsheetDerivation(params, fileId, storagePath, resolved);
   await fs.mkdir(path.dirname(resolved), { recursive: true });
   await fs.writeFile(resolved, params.buffer);
 
@@ -309,4 +415,194 @@ export async function saveDerivedUpload(params: {
 
   logger.info('derived upload saved', { fileId, bytes: params.buffer.length });
   return { fileId, storagePath };
+}
+
+async function saveAuthoringImageAssociation(params: DerivedUploadParams, fileId: string, storagePath: string, resolved: string): Promise<DerivedUploadResult> {
+  const association = params.authoringImage!;
+  const orgId = params.organizationId;
+  const userId = params.userId;
+  if (typeof orgId !== 'number' || !Number.isSafeInteger(orgId) || orgId <= 0 ||
+      typeof userId !== 'number' || !Number.isSafeInteger(userId) || userId <= 0 || params.derivation) {
+    throw new Error('A figure association requires one verified organization and actor.');
+  }
+  const [{ createSource }, { writeChainedAuditRow }, { lockDocumentDispositionProgram }] = await Promise.all([
+    import('../clinical-regulatory-evidence/evidence-spine.service.js'), import('../auditService'),
+    import('../document-data-disposition/program-lock'),
+  ]);
+  const client = await association.pool.connect();
+  let bytesWritten = false;
+  let commitAttempted = false;
+  try {
+    await client.query('BEGIN');
+    await lockDocumentDispositionProgram(client, orgId, association.programId);
+    await association.authorize(client);
+    await fs.mkdir(path.dirname(resolved), { recursive: true });
+    await fs.writeFile(resolved, params.buffer);
+    bytesWritten = true;
+    const checksum = sha256Hex(params.buffer);
+    await client.query(`INSERT INTO file_uploads
+      (id,user_id,organization_id,original_name,mime_type,file_size,storage_path,checksum_sha256,status,created_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'uploaded',NOW())`,
+    [fileId, userId, orgId, params.fileName, params.mimeType, params.buffer.length, storagePath, checksum]);
+    const captured = await createSource(orgId, { sourceType: 'client_document', visibilityClass: 'project_private',
+      clientProgramId: association.programId, title: params.fileName, storedArtifactRef: storagePath, checksum, createdBy: userId,
+      ingestionStatus: 'ingested', extractionStatus: 'pending', provenance: {
+        origin: 'authoring_image_upload', authoringDocumentId: association.documentId,
+        fileUploadId: fileId, storagePath, uploadedByUserId: userId,
+      }, metadata: { originalName: params.fileName, mimeType: params.mimeType, fileSize: params.buffer.length,
+        authoringDocumentId: association.documentId, scientificQualification: 'unassessed' },
+    }, client);
+    await writeChainedAuditRow(client, { tenantId: orgId, userId, action: 'authoring.image.upload',
+      resourceType: 'file_upload', resourceId: fileId, details: { fileId, checksumSha256: checksum,
+        authoringDocumentId: association.documentId, programId: association.programId, sourceId: captured.id } });
+    await association.authorize(client);
+    commitAttempted = true;
+    await client.query('COMMIT');
+    return { fileId, storagePath, sourceId: captured.id, captureStatus: 'captured' };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    if (bytesWritten && !commitAttempted) await fs.unlink(resolved).catch(cleanupError => logger.warn('figure upload cleanup failed', { fileId, error: String(cleanupError) }));
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+function verifiedDerivation(params: DerivedUploadParams) {
+  const derivation = params.derivation!;
+  const orgId = params.organizationId;
+  const userId = params.userId;
+  if (orgId == null || !Number.isSafeInteger(orgId) || orgId <= 0 ||
+      userId == null || !Number.isSafeInteger(userId) || userId <= 0) {
+    throw new Error('A spreadsheet derivation needs an identified tenant and user actor.');
+  }
+  if (!derivation.sourceFileId || !/^[a-f0-9]{64}$/.test(derivation.sourceSha256) || !derivation.edits.length) {
+    throw new Error('A spreadsheet derivation requires its source file, SHA-256 and applied edits.');
+  }
+  if (!/\.xlsx$/i.test(params.fileName) || params.mimeType !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    throw new Error('An edited workbook is saved as .xlsx, including when the source was CSV.');
+  }
+  return { derivation, orgId, userId };
+}
+
+function assertDerivedSourceCurrent(
+  current: { storage_path: string; checksum_sha256: string | null } | undefined,
+  source: UploadedFile, sourceSha256: string,
+) {
+  if (!current || current.storage_path !== source.storagePath ||
+      (source.integrity === 'verified' && current.checksum_sha256 !== sourceSha256) ||
+      (current.checksum_sha256 != null && current.checksum_sha256 !== sourceSha256)) {
+    throw new Error('The source is no longer available or its identity changed. Nothing was saved.');
+  }
+}
+
+/** Preserve the edited copy's lineage in the existing audit/capture stores.
+ * This is capture, not extraction, recalculation, qualification or filing.
+ * Original uploads and sources are never mutated or automatically superseded. */
+async function saveSpreadsheetDerivation(
+  params: DerivedUploadParams, fileId: string, storagePath: string, resolved: string,
+): Promise<DerivedUploadResult> {
+  const { derivation, orgId, userId } = verifiedDerivation(params);
+  // Re-read through the one scoped, integrity-checked loader rather than trust
+  // a caller-supplied filename, path, hash, or tenant association.
+  const source = await loadUploadedFile(derivation.sourceFileId, orgId, { userId });
+  if (sha256Hex(source.buffer) !== derivation.sourceSha256) {
+    throw new Error('The source digest changed since this workbook was edited. Read it again before editing.');
+  }
+
+  const [{ getPool }, { resolveOpenProgram }, { lockDocumentDispositionProgram }, { createSource }, { writeChainedAuditRow }] = await Promise.all([
+    import('../../db.js'), import('../c2c/program-access.js'),
+    import('../document-data-disposition/program-lock.js'),
+    import('../clinical-regulatory-evidence/evidence-spine.service.js'), import('../auditService'),
+  ]);
+  const client = await getPool().connect();
+  let bytesWritten = false;
+  let commitAttempted = false;
+  let clientOwned = true;
+  const releaseCaptureClient = () => {
+    if (clientOwned) { clientOwned = false; client.release(); }
+  };
+  const rollbackCaptureClient = async () => {
+    if (clientOwned) await client.query('ROLLBACK').catch(() => undefined);
+  };
+  try {
+    await client.query('BEGIN');
+    await assertAnaUploadAccess(client, { organizationId: orgId, userId, fileIds: [source.fileId] });
+    const programId = await resolveOpenProgram(client, { organizationId: orgId, projectRef: derivation.projectRef, projectId: derivation.projectId });
+    const requestedProject = Boolean(derivation.projectRef?.trim()) || derivation.projectId != null;
+    if (requestedProject && !programId) throw new Error('The requested project could not be resolved in this organization. Nothing was saved.');
+    await checkDerivationDestination(client, orgId, userId, programId);
+    if (programId) await lockDocumentDispositionProgram(client, orgId, programId);
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    // Upload eligibility is organisation-wide, not only the destination
+    // project. Reserve the tables this transaction will mutate BEFORE its
+    // eligibility read, in disposition.apply's impact-lock order. Its SHARE
+    // locks then serialize withdrawals even across projects/no-project edits.
+    // A dispositions-table lock first would invert that order and deadlock.
+    await client.query('LOCK TABLE public.cre_evidence_sources, public.file_uploads IN ROW EXCLUSIVE MODE');
+    const eligible = await client.query(
+      `SELECT f.id, f.checksum_sha256, f.storage_path FROM file_uploads f
+        WHERE f.id = $1 AND f.organization_id = $2 AND ${uploadedBinaryAvailableSql('f')} FOR SHARE OF f`,
+      [source.fileId, orgId],
+    );
+    assertDerivedSourceCurrent(eligible.rows[0], source, derivation.sourceSha256);
+    const parents = programId ? await client.query(
+      `SELECT s.id FROM cre_evidence_sources s WHERE s.organization_id = $1 AND s.client_program_id = $2
+        AND s.source_type = 'client_document' AND s.is_current = TRUE AND s.deleted_at IS NULL
+        AND s.provenance->>'fileUploadId' = $3 AND s.checksum = $4 AND ${capturedDataEligibleSql('s')} ORDER BY s.id`,
+      [orgId, programId, source.fileId, derivation.sourceSha256],
+    ) : { rows: [] };
+    const parentSourceIds = parents.rows.map(r => Number(r.id));
+    const checksum = sha256Hex(params.buffer);
+    await fs.mkdir(path.dirname(resolved), { recursive: true });
+    await fs.writeFile(resolved, params.buffer);
+    bytesWritten = true;
+    await client.query(
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
+      [fileId, userId, orgId, params.fileName, params.mimeType, params.buffer.length, storagePath, checksum],
+    );
+    const captured = programId ? await createSource(orgId, {
+      sourceType: 'client_document', visibilityClass: 'project_private', clientProgramId: programId,
+      title: params.fileName, storedArtifactRef: storagePath, checksum, createdBy: userId,
+      ingestionStatus: 'ingested', extractionStatus: 'pending',
+      provenance: {
+        origin: 'spreadsheet_edit', fileUploadId: fileId, storagePath, uploadedByUserId: userId,
+        derivedFromFileId: source.fileId, derivedFromSha256: derivation.sourceSha256,
+        sourceIntegrity: source.integrity, parentSourceIds,
+      },
+      metadata: { originalName: params.fileName, mimeType: params.mimeType, fileSize: params.buffer.length,
+        scientificQualification: 'unassessed', formulaResults: 'not_recalculated' },
+    }, client) : null;
+    const sourceId = captured ? captured.id : null;
+    await writeChainedAuditRow(client, {
+      tenantId: orgId, userId, action: 'file_upload.derived', resourceType: 'file_upload', resourceId: fileId,
+      details: {
+        operation: 'spreadsheet_edit', sourceFileId: source.fileId, sourceSha256: derivation.sourceSha256,
+        sourceIntegrity: source.integrity, fileId, checksumSha256: checksum, programId,
+        sourceId, parentSourceIds, edits: derivation.edits, createdSheets: derivation.createdSheets,
+        scientificQualification: 'unassessed', formulaResults: 'not_recalculated',
+      },
+    });
+    commitAttempted = true;
+    await client.query('COMMIT');
+    // The processor claims through its own connection; do not retain a capture
+    // connection while waiting for that claim at the pool's concurrency limit.
+    releaseCaptureClient();
+    const processing = captured ? await processSpreadsheetCapture(orgId, captured.id, programId, params) : undefined;
+    return { fileId, storagePath, sourceId,
+      captureStatus: captured ? 'captured' : 'conversation_only',
+      processing,
+      derivationAudit: { resourceType: 'file_upload', resourceId: fileId } };
+  } catch (err) {
+    await rollbackCaptureClient();
+    // Only this invocation's new file is eligible for cleanup. An ambiguous
+    // COMMIT must retain bytes, since a committed capture may already name them.
+    if (bytesWritten && !commitAttempted) {
+      await fs.unlink(resolved).catch(cleanupErr => logger.warn('derived upload cleanup failed', { fileId, error: String(cleanupErr) }));
+    }
+    throw err;
+  } finally {
+    releaseCaptureClient();
+  }
 }

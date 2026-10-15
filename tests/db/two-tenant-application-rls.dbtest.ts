@@ -167,6 +167,18 @@ describe('WO-03 two-tenant application isolation', () => {
       expect(stillVisible.body).toEqual({ id: ids.B[domain] });
     });
 
+    if (domain === 'audit_logs') {
+      // P0-8: the runtime role holds no UPDATE or DELETE on audit_logs, so a
+      // tenant cannot rewrite even its own audit row. Before the grant was
+      // withdrawn this reached the append-only trigger and answered 500.
+      it('audit_logs: tenant A cannot rewrite its own row either (append-only by privilege)', async () => {
+        await request(app).patch(`/proof/audit_logs/${ids.A.audit_logs}`).set(auth(tokenA)).send({}).expect(404);
+        await request(app).delete(`/proof/audit_logs/${ids.A.audit_logs}`).set(auth(tokenA)).expect(404);
+        const own = await request(app).get(`/proof/audit_logs/${ids.A.audit_logs}`).set(auth(tokenA)).expect(200);
+        expect(own.body).toEqual({ id: ids.A.audit_logs });
+      });
+    }
+
     it(`${domain}: WITH CHECK rejects planting a row into tenant B without leaking details`, async () => {
       const response = await request(app)
         .post(`/proof/${domain}`)

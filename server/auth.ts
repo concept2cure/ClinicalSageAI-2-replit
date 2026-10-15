@@ -14,9 +14,8 @@ import { isTokenRevoked, revokeToken } from './services/token-revocation';
 import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from './services/session-inactivity';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
-  issuedAtOfClaims,
   readAccountStandingBeforeTenant,
-  sessionPredatesPasswordChange,
+  sessionEndedByStanding,
   type AccountStanding,
 } from './services/account-standing';
 import { requireAccessTokenReason } from './middleware/tokenType';
@@ -129,16 +128,28 @@ declare global {
  * change, read in the same statement as the standing (no extra round trip). A
  * reset or change stamps users.password_changed_at; a token issued before the
  * stamp is a session the holder meant to end, and is answered like a revoked
- * one. Same rule as authenticateToken (middleware/auth.ts) and verifyLiveToken.
+ * one. Plan P0-4b: so is a session begun before users.sessions_ended_at (a
+ * sign-out everywhere, the account leaving 'active'), measured from the
+ * session's start (account-standing.ts sessionEndedByStanding). Same rule as
+ * authenticateToken (middleware/auth.ts) and verifyLiveToken. And, R1 of the
+ * same plan, a session that began before the account's membership in the
+ * token's organisation did: a member removed and added back is not handed the
+ * session they held before the removal (the membership's start is read in the
+ * same statement).
  *
  * Answers the request and returns true when it refused: 401 ACCOUNT_INACTIVE
  * for an account out of use, 401 SESSION_ENDED for a session the password
  * change ended, 503 when the standing cannot be read (never a pass).
  */
-async function refusedAccountOrSessionOutOfUse(userId: number, claims: unknown, res: Response): Promise<boolean> {
+async function refusedAccountOrSessionOutOfUse(
+  userId: number,
+  organizationId: number | null,
+  claims: unknown,
+  res: Response,
+): Promise<boolean> {
   let standing: AccountStanding;
   try {
-    standing = await readAccountStandingBeforeTenant(userId);
+    standing = await readAccountStandingBeforeTenant(userId, organizationId);
   } catch (err) {
     logger.error('Account standing could not be read', err);
     res.status(503).json({ error: 'The session could not be checked. Try again.', code: 'SESSION_UNCHECKED' });
@@ -148,7 +159,7 @@ async function refusedAccountOrSessionOutOfUse(userId: number, claims: unknown, 
     res.status(401).json({ error: ACCOUNT_INACTIVE_MESSAGE, code: 'ACCOUNT_INACTIVE' });
     return true;
   }
-  if (sessionPredatesPasswordChange(issuedAtOfClaims(claims), standing.passwordChangedAtSeconds)) {
+  if (sessionEndedByStanding(claims, standing)) {
     res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
     return true;
   }
@@ -165,12 +176,18 @@ async function refusedAccountOrSessionOutOfUse(userId: number, claims: unknown, 
  * session's activity (services/session-inactivity.ts). Answers 401 (503 when
  * the standing cannot be read) and returns true when it refused.
  */
-async function refusedEndedSession(token: string, userId: number | null, claims: unknown, res: Response): Promise<boolean> {
+async function refusedEndedSession(
+  token: string,
+  userId: number | null,
+  organizationId: number | null,
+  claims: unknown,
+  res: Response,
+): Promise<boolean> {
   if (await isTokenRevoked(token)) {
     res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
     return true;
   }
-  if (userId !== null && (await refusedAccountOrSessionOutOfUse(userId, claims, res))) return true;
+  if (userId !== null && (await refusedAccountOrSessionOutOfUse(userId, organizationId, claims, res))) return true;
   const inactivity = await sessionInactivityReason(token, claims);
   if (!inactivity) return false;
   void revokeToken(token, inactivity);
@@ -223,7 +240,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       // AUTH-03, F-29, IAM-04 and IAM-06: a signed-out session, an account out
       // of use, a session the password change ended, and an idle, out-of-time
       // or superseded session open nothing, in that order.
-      if (await refusedEndedSession(token, parsedUserId, decoded, res)) return;
+      if (await refusedEndedSession(token, parsedUserId, parsedOrganizationId, decoded, res)) return;
       // This is the query that VERIFIES the token's tenant claim, so it cannot
       // itself run inside that tenant's scope — the claim is untrusted until it
       // returns. Pool instrumentation blocks unscoped queries once

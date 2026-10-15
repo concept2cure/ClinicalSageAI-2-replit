@@ -11,12 +11,12 @@
  * runtime issues tsc can't see (hook-order violations, data-shape mismatches,
  * missing icon refs) fail the build.
  *
- * Everything here is in-memory (PATHWAY_TABS_DATA + the dossierStore +
- * CORRESP_DETAIL); fetch is mocked to 404 only as a safety net. Since the
- * data-honesty pass, fixtures are reachable ONLY in explicit sample mode —
- * with sample off and no live data the panes render DataGate's honest
- * loading / error / empty states. Tests that need populated panes cross the
- * demo boundary deliberately via setSampleMode(true).
+ * Everything here is in-memory (the dossierStore); fetch
+ * is mocked to 404 only as a safety net, and per case where a pane needs a live
+ * read (the drafter reads its letter from the correspondence route). With no
+ * live data the panes render DataGate's honest loading / error / empty states;
+ * tests that need populated panes serve live-shaped rows through the mocked
+ * fetch. (Sample mode, which used to populate them, was removed on 2026-10-14.)
  */
 
 import { describe, expect, it, beforeAll, beforeEach, afterEach, vi } from 'vitest';
@@ -26,9 +26,7 @@ import * as React from 'react';
 
 import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
 import { AnaDrafter } from '../../client/src/concept2cure/mdx/components/AnaDrafter';
-import { PATHWAY_TABS_DATA } from '../../client/src/concept2cure/mdx/data/pathwayTabs';
 import { DossierStore } from '../../client/src/concept2cure/mdx/store/dossierStore';
-import { setSampleMode } from '../../client/src/concept2cure/mdx/lib/sampleMode';
 import type { PathwayKey } from '../../client/src/concept2cure/mdx/types';
 import { K510Surface } from '../../client/src/concept2cure/mdx/surfaces/K510Surface';
 import { PmaSurface } from '../../client/src/concept2cure/mdx/surfaces/PmaSurface';
@@ -118,65 +116,28 @@ describe('MDX pathway panes smoke', () => {
     });
   });
 
-  it('audit fixtures are unreachable even in sample mode — the pane gates honestly', () => {
-    /* This test used to assert the opposite: that sample mode populated the
-       audit pane from fixtures. Those fixtures were a FABRICATED Part 11
-       hash-chain, and the honesty pass deleted them outright — the audit tab
-       now renders live rows or an honest gate state, never an invented
-       chain, sample mode included. */
-    setSampleMode(true);
-    try {
-      const { getAllByRole, container } = renderWithClient(
-        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-      );
-      fireEvent.click(getAllByRole('tab')[1]); // Audit
-      expect(container.querySelector('.audit-pane')).toBeNull();
-      // One of DataGate's honest states stands where fixture rows used to be.
-      expect(container.querySelector('[data-testid^="data-gate-"]')).toBeTruthy();
-      assertNoReactErrors();
-    } finally {
-      setSampleMode(false);
-    }
-  });
-
-  it('FilesTreePane preview opens a body section in the drawer', () => {
-    // Data honesty redesign: the Files tab renders the tree ONLY on live
-    // backend data or explicit sample mode — with the fetch mocked to 404 and
-    // sample off it correctly shows "unavailable" and mounts nothing. This
-    // smoke test exercises the pane WITH content, so it crosses the demo
-    // boundary the same way a user does: the explicit sample-mode signal plus
-    // the store's opt-in fixtures.
-    setSampleMode(true);
-    DossierStore.enableSampleFixtures();
-    try {
-      const { getAllByRole, container } = renderWithClient(
-        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-      );
-      fireEvent.click(getAllByRole('tab')[4]); // Files
-      expect(container.querySelector('.ftp-pane')).toBeTruthy();
-      assertNoReactErrors();
-    } finally {
-      setSampleMode(false);
-    }
-  });
-
-  it('AnaDrafter renders a drafted response (rta-3)', () => {
-    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-3')!;
-    const { container } = renderWithClient(
-      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
+  it('the audit pane gates honestly — no fixture chain stands in for a failed read', () => {
+    /* This test once asserted that sample mode populated the audit pane from
+       fixtures: a FABRICATED Part 11 hash-chain. The fixtures went first and
+       sample mode after them (2026-10-14); the audit tab renders live rows or
+       one of DataGate's honest states. */
+    const { getAllByRole, container } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
     );
-    expect(container.querySelector('.ana-drafter')).toBeTruthy();
+    fireEvent.click(getAllByRole('tab')[1]); // Audit
+    expect(container.querySelector('.audit-pane')).toBeNull();
+    expect(container.querySelector('[data-testid^="data-gate-"]')).toBeTruthy();
     assertNoReactErrors();
   });
 
-  it('AnaDrafter renders an unstarted response (rta-2)', () => {
-    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;
-    const { container } = renderWithClient(
-      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
-    );
-    expect(container.querySelector('.drafter-unstarted')).toBeTruthy();
-    assertNoReactErrors();
-  });
+  /* 'FilesTreePane preview opens a body section in the drawer' mounted the tree
+     on the store's sample fixtures; both are gone. The tree with content is
+     exercised on live backend rows in 'live dossier wiring' below. */
+
+  /* The two cases here mounted AnaDrafter on fixture letters rta-3 and rta-2
+     from PATHWAY_TABS_DATA. Those letters were invented agency correspondence
+     and are deleted; the drafter now reads a live letter, and the
+     operational-flows block below mounts it on one. */
 
   // The pathway surfaces wrap their existing content as the Workspace tab.
   it('K510Surface mounts the pathway tab bar', () => {
@@ -206,16 +167,16 @@ describe('MDX pathway panes smoke', () => {
 
 // Acceptance #4: edits round-trip through the in-memory store into the audit trail.
 describe('dossierStore round-trip', () => {
-  // Seeding is opt-in since the no-mock-data-in-prod remediation: the store
-  // starts EMPTY and sample content exists only behind the explicit demo
-  // boundary. These round-trip tests exercise store mechanics over that
-  // sample content, so they enable it deliberately.
+  // The store starts EMPTY and holds only what hydration installs from the
+  // backend; these round-trip tests install one section the same way.
   beforeAll(() => {
-    DossierStore.enableSampleFixtures();
+    DossierStore.hydratePathway('k510', 'doc-live', [
+      { key: 11, label: 'Substantial Equivalence Discussion', body: 'The subject device and the predicate share an intended use.' },
+    ]);
   });
 
   it('seeds section bodies and persists an edit — without authoring an audit event', () => {
-    const label = 'Substantial Equivalence Discussion'; // K510_ESTAR id 11
+    const label = 'Substantial Equivalence Discussion';
     const seeded = DossierStore.readSectionBody('k510', 11, label);
     expect(seeded.length).toBeGreaterThan(0);
 
@@ -404,38 +365,42 @@ describe('pathway panes — operational flows', () => {
     assertNoReactErrors();
   });
 
-  it('AnaDrafter fails closed on an unstarted item — it never authors a response itself', async () => {
-    /* This test used to expect a draft to APPEAR here. That draft was
-       fabricated in the browser — templated prose stamped `generated_by:
-       'AnA'` with four invented sign-off reviewers, no request ever made.
-       The fix made Generate adopt a persisted AnA draft or refuse with the
-       reason; for an unstarted letter with no persisted draft, refusal is
-       the only honest outcome. */
-    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;
-    const { container } = renderWithClient(
-      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
-    );
-    expect(container.querySelector('.drafter-unstarted')).toBeTruthy();
-    const cta = container.querySelector('.du-cta') as HTMLElement | null;
-    expect(cta).toBeTruthy();
-    fireEvent.click(cta!); // "Generate draft"
-    await waitFor(() => expect(container.querySelector('.du-error')).toBeTruthy());
-    expect(container.querySelector('.du-error')!.textContent).toContain('cannot draft one');
-    // Nothing was authored: no drafted body, no invented reviewer roster.
-    expect(container.querySelector('.dr-body')).toBeNull();
-    assertNoReactErrors();
-  });
+  /* These two cases drove the drafter with fixture letters: rta-2 (no draft —
+     Generate refused) and rta-3 (a "persisted AnA draft" — adopted). The
+     persisted draft existed only in the fixture; no store holds per-issue
+     response prose for a letter, so there is nothing to adopt. The drafter
+     now reads the tenant's letter and hands drafting to AnA with that
+     letter's real text and issues. */
+  function serveLetter() {
+    const body = {
+      data: { id: 'live-1', sender: 'FDA CDRH', source_channel: 'CDRH Portal', received_at: '2026-09-01T10:00:00Z',
+        subject: 'AI request', parsed_text: 'Please provide the bench data.' },
+      issues: [{ id: 'i-1', category: 'performance', severity: 'high', source_excerpt: 'Provide the bench data.', mapped_ctd_sections: [] }],
+      responsePackages: [],
+    };
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) } as Response),
+    ) as unknown as typeof fetch;
+  }
+  const LIVE_LETTER = {
+    id: 'live-1', kind: 'Additional Information', channel: 'CDRH Portal', from: 'FDA CDRH',
+    received: '2026-09-01T10:00:00Z', due: '2026-10-15', status: 'open' as const,
+    subject: 'AI request', summary: 'Please provide the bench data.', refs: [],
+  };
 
-  it('AnaDrafter renders a persisted AnA draft — adoption, not authorship', () => {
-    /* rta-3 carries a draft AnA actually produced and persisted
-       (`generated_by: 'AnA'`, status drafted). The drafter's job is to
-       present it for review; it mounts straight into the drafted body. */
-    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-3')!;
+  it('AnaDrafter mounts on a live letter and hands drafting to AnA — it authors nothing itself', async () => {
+    serveLetter();
+    const onAskAna = vi.fn();
     const { container } = renderWithClient(
-      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
+      <AnaDrafter correspondence={LIVE_LETTER} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} onAskAna={onAskAna} />,
     );
-    expect(container.querySelector('.dr-body')).toBeTruthy();
-    expect(container.querySelector('.drafter-unstarted')).toBeNull();
+    await waitFor(() => expect(container.querySelector('.drafter-unstarted')).toBeTruthy());
+    expect(container.textContent).toContain('Please provide the bench data.');
+    fireEvent.click(container.querySelector('.du-cta') as HTMLElement);
+    expect(onAskAna).toHaveBeenCalledTimes(1);
+    expect(String(onAskAna.mock.calls[0][0])).toContain('Provide the bench data.');
+    // Nothing was authored: no drafted body, no reviewer roster.
+    expect(container.querySelector('.dr-body')).toBeNull();
     assertNoReactErrors();
   });
 });

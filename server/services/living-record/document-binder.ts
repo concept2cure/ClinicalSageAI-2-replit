@@ -44,7 +44,7 @@ import {
   type ActiveFactView,
   type CitationMatch,
 } from './document-citations';
-import { factChangeFailure as fail, type FactChangeFailure } from './fact-change';
+import { factChangeFailure as fail, livingRecordAuditActor, type FactChangeFailure } from './fact-change';
 import { documentTarget, sectionTarget } from './object-model';
 import { compareValues, toCanonicalValue } from './value-reconciliation';
 
@@ -136,7 +136,9 @@ export async function bindSectionToFact(
           | 'unit_mismatch'
           | 'stale_source'
           | 'missing_target',
-        severity: 'medium',
+        // 2026-10-15: was 'medium' for every divergence — a rating nobody made.
+        // The binder compares values; it does not assess severity.
+        severity: 'unrated',
         detectedBy: 'citation_scan',
       });
       await setBindingStatus(binding.id, 'drifted');
@@ -146,7 +148,7 @@ export async function bindSectionToFact(
 
   await auditService.logAction({
     tenantId: fact.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.section_bound',
     resourceType: 'canonical_fact',
     resourceId: fact.id,
@@ -269,7 +271,7 @@ async function scanProseForCitations(params: {
             | 'unit_mismatch'
             | 'stale_source'
             | 'missing_target',
-          severity: 'medium',
+          severity: 'unrated', // 2026-10-15: was a constant 'medium'; nothing rated it.
           detectedBy: 'citation_scan',
         });
         await setBindingStatus(binding.id, 'drifted');
@@ -297,7 +299,7 @@ async function auditCitationScan(params: {
 }): Promise<void> {
   await auditService.logAction({
     tenantId: params.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.citations_bound',
     resourceType: params.resourceType,
     resourceId: params.resourceId,

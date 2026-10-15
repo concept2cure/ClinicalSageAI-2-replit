@@ -1,0 +1,169 @@
+# 148 unit/contract files that import the standing, revocation, session or auth modules
+# (grep -rlE "account-standing|token-revocation|session-inactivity|routes/auth'|from '\.\./auth'|server/auth'|middleware/auth" server tests --include=*.test.ts, minus *.dbtest.*)
+# passed failed file
+   1    0 server/__tests__/routes/ana-cortex-correlation.test.ts
+   5    0 server/__tests__/routes/ana-mdx-context.test.ts
+  12    0 server/__tests__/routes/ana-tool-policy.test.ts
+   1    0 server/__tests__/routes/anaCortexCompatibility.test.ts
+   6    0 server/__tests__/routes/cortex-prime-unmounted.test.ts
+   8    0 server/__tests__/routes/cortex-threads.runtime.test.ts
+  39    0 server/__tests__/routes/docx-factory.test.ts
+  20    0 server/__tests__/routes/evidence-fabric.test.ts
+   5    0 server/__tests__/routes/global-compliance.gdpr-rights.test.ts
+   5    0 server/__tests__/routes/k510-document-preview.test.ts
+  38    0 server/__tests__/routes/predicate-intelligence.test.ts
+  19    0 server/__tests__/routes/q-sub.test.ts
+  18    0 server/__tests__/routes/smoke.test.ts
+   8    0 server/__tests__/routes/tenant-export.test.ts
+   9    0 server/__tests__/security/audit-trail-contract.test.ts
+   6    0 server/__tests__/security/auth-db-contract-smoke.test.ts
+   3    0 server/__tests__/security/auth-invalid-expired-jwt.test.ts
+   7    0 server/__tests__/security/auth-middleware-session-currency.test.ts
+  12    0 server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts
+  22    0 server/__tests__/security/security-swarm-hardening.test.ts
+  11    0 server/__tests__/security/socket-main-namespace-session.test.ts
+   5    0 server/__tests__/security/tenant-isolation-evidence-sufficiency.contract.test.ts
+   6    0 server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts
+   5    0 server/__tests__/security/tenant-isolation-post-market.contract.test.ts
+   5    0 server/__tests__/security/tenant-isolation-q-sub.contract.test.ts
+   6    0 server/api/cmc/__tests__/cmc-drafting-governance.test.ts
+  25    0 server/bootstrap/__tests__/api-auth-gate.test.ts
+   8    0 server/mcp/__tests__/mcp-standing-unreadable.test.ts
+   5    0 server/mcp/__tests__/platform-token-session.test.ts
+   5    0 server/middleware/__tests__/auth-carries-provider.test.ts
+  23    0 server/middleware/__tests__/auth-establishes-scope.integration.test.ts
+   7    0 server/middleware/__tests__/auth-inactivity-logoff.test.ts
+   5    0 server/middleware/__tests__/auth-session-currency.test.ts
+   7    0 server/middleware/__tests__/auth.test.ts
+   8    0 server/middleware/__tests__/chainIntegration.test.ts
+   4    0 server/middleware/__tests__/extractBearerToken.test.ts
+  13    0 server/middleware/__tests__/platform-role-escalation.test.ts
+  13    0 server/middleware/__tests__/role-claims.test.ts
+   6    0 server/middleware/__tests__/tenant-scope-org-guc.test.ts
+   7    0 server/routes/__tests__/ai-placement-policy.test.ts
+   8    0 server/routes/__tests__/auth-mfa-challenge-factors.test.ts
+   5    0 server/routes/__tests__/auth-refresh-inactivity.test.ts
+   6    0 server/routes/__tests__/auth-refresh-session-currency.test.ts
+   4    0 server/routes/__tests__/auth-sign-in-limits.test.ts
+   7    0 server/routes/__tests__/auth-signup-verification.test.ts
+   7    0 server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts
+   1    0 server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts
+  20    0 server/routes/__tests__/authSurfaceSecurity.test.ts
+  37    0 server/routes/__tests__/coauthorPutStatus.test.ts
+  45    0 server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+   7    0 server/routes/__tests__/coauthorSnapshotSeal.test.ts
+   5    0 server/routes/__tests__/coauthorSnapshotSeeds.test.ts
+  10    0 server/routes/__tests__/coauthorSnapshotStatus.test.ts
+   2    0 server/routes/__tests__/companion-diagnostics.test.ts
+   4    0 server/routes/__tests__/cortex-unified-tenant-context.test.ts
+   5    0 server/routes/__tests__/device-classification.test.ts
+  16    0 server/routes/__tests__/diagnostics-performance.test.ts
+   6    0 server/routes/__tests__/esignature-requires-bearer.test.ts
+  25    0 server/routes/__tests__/esignature-sign.test.ts
+   4    0 server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts
+   7    0 server/routes/__tests__/human-factors-files-read.test.ts
+  11    0 server/routes/__tests__/human-factors-governed-writes.test.ts
+   4    0 server/routes/__tests__/human-factors-read.test.ts
+   6    0 server/routes/__tests__/human-factors-write.test.ts
+   4    0 server/routes/__tests__/ivd-assessments.error-envelope.test.ts
+   4    0 server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+  10    0 server/routes/__tests__/knowledge-base-upload-guards.test.ts
+   4    0 server/routes/__tests__/market-access.test.ts
+  27    0 server/routes/__tests__/module-access-requests.test.ts
+   8    0 server/routes/__tests__/module-subscriptions-platform-admin.test.ts
+  21    0 server/routes/__tests__/passwordResetAuditTrail.test.ts
+   6    0 server/routes/__tests__/pccp-approve-signing.test.ts
+   3    0 server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts
+   1    1 server/routes/__tests__/predicate-intelligence-error-containment.test.ts
+  17    1 server/routes/__tests__/qms-legacy-api-retired.test.ts
+   6    0 server/routes/__tests__/regulatory-correspondence-device-intake.test.ts
+   0    0 server/routes/__tests__/regulatory-correspondence.test.ts
+   7    0 server/routes/__tests__/regulatory-readiness-routes.test.ts
+   5    0 server/routes/__tests__/regulatory-risk-section-screen-removed.test.ts
+   3    0 server/routes/__tests__/regulatoryRoutes.test.ts
+   3    0 server/routes/__tests__/se-matrix-5xx-containment.test.ts
+   9    0 server/routes/__tests__/setup.test.ts
+   5    0 server/routes/__tests__/spl-fhir.test.ts
+  19    0 server/routes/__tests__/ssoRoutes.test.ts
+   3    0 server/routes/__tests__/submission-readiness.test.ts
+   3    0 server/routes/__tests__/submissions-assemble-audit-outcome.test.ts
+   3    0 server/routes/__tests__/submissions-consistency-audit-outcome.test.ts
+   3    0 server/routes/__tests__/submissions-leaf-reason.test.ts
+   5    0 server/routes/__tests__/substantial-equivalence.test.ts
+   4    0 server/routes/__tests__/tenant-export-5xx-containment.test.ts
+  13    0 server/routes/__tests__/tenant-users-audit.test.ts
+   5    0 server/routes/__tests__/udi-ivdr.test.ts
+  14    0 server/services/__tests__/account-standing-session-currency.test.ts
+  24    0 server/services/__tests__/session-inactivity.test.ts
+   4    0 server/services/__tests__/session-registry-redis.test.ts
+   6    0 server/services/__tests__/token-revocation-expiry.test.ts
+   9    0 server/services/ana/__tests__/ana-realtime-auth.test.ts
+   8    0 server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+  37    0 server/services/collab/__tests__/collab-governance.pglite.integration.test.ts
+   9    0 server/services/collab/__tests__/collab-session-recheck.test.ts
+   8    0 server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts
+   9    0 server/startup/__tests__/diagnostic-endpoints-exposure.test.ts
+   6    0 tests/artifact-routes-invalidate-bundles.test.ts
+  42    0 tests/artifact-routes-project-scope.test.ts
+   2    0 tests/artifact-status-audit-outcome.test.ts
+  12    0 tests/artifact-status-lock-covers-approval.test.ts
+   7    0 tests/artifact-status-project-scope.test.ts
+  14    0 tests/biostat-design-stats-routes.test.ts
+   9    0 tests/biostat-multiplicity-design-route.test.ts
+  24    0 tests/build-order-14-governed-export-and-ops.test.ts
+   4    0 tests/communication-center-backend-scaffold.test.ts
+   8    0 tests/field-sync-auth.contract.test.ts
+   8    0 tests/founder-critical-path-proof.test.ts
+   1    0 tests/golden-journeys/cer-eu-mdr.journey.test.ts
+   1    0 tests/golden-journeys/device-510k-estar.journey.test.ts
+   0    1 tests/golden-journeys/ind-authoring.journey.test.ts
+  40    0 tests/mdx-submission-gateway-routes.test.ts
+  27    0 tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+   8    0 tests/post-market-authoring-routes.test.ts
+   9    0 tests/rls-auth-boundary-invariant.contract.test.ts
+  35    0 tests/routes/510k-device-routes.test.ts
+   6    0 tests/routes/ana-apply-rewrite-signature.test.ts
+   5    0 tests/routes/ana-features-coded-503-containment.test.ts
+  18    0 tests/routes/ana-gap-analysis.test.ts
+   6    0 tests/routes/cerv2-export-governance.test.ts
+   7    0 tests/routes/cerv2-literature-record.test.ts
+  19    0 tests/routes/cerv2-literature-screening.test.ts
+   2    0 tests/routes/concept2cure-conversation-project-scope.test.ts
+  10    0 tests/routes/concept2cure-export-governance.test.ts
+   1    0 tests/routes/concept2cure-governed-upload.test.ts
+   2    0 tests/routes/concept2cure-project-collaborators.test.ts
+  10    0 tests/routes/concept2cure.test.ts
+   3    0 tests/routes/device-cockpit.test.ts
+   4    5 tests/routes/estar-build-pma-package.test.ts
+   9    0 tests/routes/estar-entitlement-precheck.test.ts
+  12    3 tests/routes/estar-export-governance.test.ts
+  42    0 tests/routes/estar-official-pdf.test.ts
+  11    0 tests/routes/estar-registration-correspondent.test.ts
+   8    0 tests/routes/estar-submission-filing.test.ts
+   5    0 tests/routes/global-markets.test.ts
+   9    0 tests/routes/ind-forms-artifact-ident.test.ts
+   1    0 tests/routes/notification-routes-governance.test.ts
+  13    0 tests/routes/workspace-config.test.ts
+   7    0 tests/schema-contract/authoring-auth-parity.contract.test.ts
+  28    0 tests/schema-contract/authoring-section-gate.contract.test.ts
+   1    0 tests/schema-contract/authoring-section-permissions.contract.test.ts
+  11    0 tests/socket-tenant-isolation.contract.test.ts
+   2    0 tests/unit/concept2cure-artifact-source-evidence.test.ts
+
+# Failed tests:
+ FAIL  tests/golden-journeys/ind-authoring.journey.test.ts [ tests/golden-journeys/ind-authoring.journey.test.ts ]
+ FAIL  tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+ FAIL  tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > renders one PDF per authored 814.20 section plus the combined PDF/DOCX, labelled as a PMA draft — never the six 510(k) slots
+ FAIL  tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed 510(k) program renders EVERY authored section, not six fixed slots
+ FAIL  tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed denovo document is cut per section and labelled as itself, never as a 510(k)
+ FAIL  tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed cer document is cut per section and labelled as itself, never as a 510(k)
+ FAIL  tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > the LEGACY store keeps the six 510(k) slots those slots were built for
+ FAIL  tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > places the export in the registry when the program HAS a C1 project anchor
+ FAIL  tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > a program anchor reads ITS governed document, not the org-wide legacy store (ESTAR-01/02)
+ FAIL  tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > a program anchor with nothing authored in its governed document 422s and names the store
+ FAIL  server/routes/__tests__/predicate-intelligence-error-containment.test.ts > POST /api/predicate-intelligence/se-discussion/author: the 500 body is contained > answers an authoring failure with INTERNAL_ERROR and the request id, never the thrown text
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  5 failed | 142 passed | 1 skipped (148)
+      Tests  11 failed | 1508 passed | 7 skipped (1526)

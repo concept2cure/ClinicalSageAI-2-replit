@@ -1,0 +1,19 @@
+# 2026-10-01 08:59 UTC, HEAD eefd33e7. Exit code 0.
+# $ node docs/evidence/D6/2026-10-01-tranche-4/P0-11/fix-round/check-dpa-proposal.mjs docs/evidence/D6/2026-10-01-tranche-4/P0-11/fix-round/proposed-dpa-edits.json HEAD
+
+proposal: P0-11 fix round: corrected DPA proposal, against the DPA as rewritten by P1-45 (d29275b1). Adds one clause in two places; removes nothing
+DPA at: HEAD (eefd33e7)
+
+PASS  every text the proposal tells the owner to find occurs exactly once
+PASS  no Annex III subprocessor is dropped
+PASS  no subprocessor is listed twice
+PASS  Moonshot's exclusion is stated exactly once in Annex III (as at HEAD: 1)
+PASS  every Annex III OpenAI row says no key is provisioned without an election
+
+The change this proposal makes to the DPA at HEAD (word diff):
+@@ -146 +146 @@ are `us`, `eu`, `apac`, `on_prem`; "global" means no residency guarantee):
+| OpenAI API | Shared frontier API | global | Only with a signed ZDR agreement (`OPENAI_ZERO_RETENTION`) | Used for a tenant only when its Order Form elects it, for generation, fallback and embeddings; the platform enforces this in production. {+No OpenAI key is provisioned in a deployment unless a tenant's Order Form elects OpenAI (`openai_enabled` in `terraform/stack`).+} Without that election no request, fallback or embedding reaches OpenAI, and when Anthropic is unavailable the tenant's request fails with an error rather than being answered by another provider. Not approved for high-risk regulatory drafting. |
+@@ -270 +270 @@ with `SECURITY.md`.
+| OpenAI, L.L.C. | LLM inference and text embeddings, **only for a Customer whose Order Form elects it** | United States | Customer's written election, recorded as its placement policy; in production nothing of a Customer's reaches OpenAI without [-it-]{+it. No OpenAI key is provisioned in a deployment unless a Customer's Order Form elects OpenAI (`openai_enabled` in `terraform/stack`)+} |
+
+every check holds

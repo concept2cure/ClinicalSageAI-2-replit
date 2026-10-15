@@ -19,6 +19,8 @@
  * deploy creates. The chain proved here is the whole point: cite a source,
  * ingest a revision, and the citation must stop reporting itself current.
  */
+import { seedSourceReadParents } from './source-read-fixture';
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -45,13 +47,22 @@ vi.mock('../../../db', () => ({
   },
 }));
 
+// A data-room capture writes its chained audit row in the same transaction
+// (VR-16b). The chain itself is exercised on PostgreSQL
+// (tests/db/data-room-capture-provenance.dbtest.ts); here the writer is
+// captured, so the spine-only schema needs no audit_logs table.
+vi.mock('../../auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../auditService')>()),
+  writeChainedAuditRow: async () => undefined,
+}));
+
 import * as spine from '../evidence-spine.service';
 import * as usage from '../source-usage.service';
 import { searchFindings } from '../index';
 
 const ORG = 711;
 const PROGRAM = '55555555-5555-4555-8555-555555555555';
-const ACTOR = 'user-1';
+const ACTOR = '1';
 
 function migration(rel: string): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -87,6 +98,8 @@ async function makeSection(code: string): Promise<string> {
 
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
+  await seedSourceReadParents(pglite, [ORG, 712], [PROGRAM, '66666666-6666-4666-8666-666666666666']);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
@@ -95,10 +108,13 @@ beforeAll(async () => {
   // must be applied here too, or this harness builds a schema no deployment has
   // (see tests/schema-contract/authoring-migration-list-closure.contract.test.ts).
   await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
+  // authoring_documents.client_program_id: a citation is judged by its document's project (PF-11).
+  await pglite.exec(migration('migrations/20260727_authoring_document_program_scope.sql'));
   await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
   // The migration under test.
   await pglite.exec(migration('migrations/20260829_cre_source_versioning.sql'));
+  await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
 }, 120_000);
 
 afterAll(async () => { await pglite?.close(); });

@@ -1,0 +1,266 @@
+# The final server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts (16 cases) run against server/lib/tamper-proof-audit.ts as at HEAD c6f2028b
+# (git show HEAD:server/lib/tamper-proof-audit.ts, copied beside the test in a scratch directory; only the tenantStore import path rewritten).
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/54adf5a4-792f-5e11-8798-ae17682e5284/scratchpad/p1-7-27/headlib
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts (16 tests | 12 failed) 35ms
+     × writes the organisation the writer names 9ms
+     × takes the tenant from the request scope when the writer names none 2ms
+     × a row written with no tenant (platform) is NULL, not absent 4ms
+     × an explicit null inside a tenant scope writes a platform row 1ms
+     × refuses to attribute a row to a tenant other than the session’s 3ms
+     × moving a row to another tenant is detected as tampering 2ms
+     × the verifier’s own row is a platform row even when a tenant asked for it 2ms
+     × search inside a tenant scope is that tenant’s rows only 1ms
+     × search naming a tenant outside any scope (a job) filters on it 1ms
+     × search naming another tenant from inside a scope is refused before it runs 1ms
+     × getRecentEntries inside a tenant scope is that tenant’s rows only 1ms
+     × refuses to initialise a store without organization_id, naming the migration 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > writes the organisation the writer names
+AssertionError: expected { sequence_number: 1, …(17) } to have property "organization_id" with value 11
+
+- Expected:
+11
+
++ Received:
+undefined
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:76:26
+     74|     const { pool, log } = fresh();
+     75|     await log.log('RECORD_CREATED', 'create', { a: 1 }, { organization…
+     76|     expect(pool.rows[0]).toHaveProperty('organization_id', 11);
+       |                          ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > takes the tenant from the request scope when the writer names none
+AssertionError: expected { sequence_number: 1, …(17) } to have property "organization_id" with value 11
+
+- Expected:
+11
+
++ Received:
+undefined
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:82:26
+     80|     const { pool, log } = fresh();
+     81|     await inTenant('11', () => log.log('RECORD_UPDATED', 'update', {},…
+     82|     expect(pool.rows[0]).toHaveProperty('organization_id', 11);
+       |                          ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > a row written with no tenant (platform) is NULL, not absent
+AssertionError: expected [ undefined, undefined ] to deeply equal [ null, null ]
+
+- Expected
++ Received
+
+  [
+-   null,
+-   null,
++   undefined,
++   undefined,
+  ]
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:89:51
+     87|     await log.log('SYSTEM_STARTUP', 'boot', {});
+     88|     await runWithSystemTenantScope('dp28-test', () => log.log('SYSTEM_…
+     89|     expect(pool.rows.map(r => r.organization_id)).toEqual([null, null]…
+       |                                                   ^
+     90|   });
+     91|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > an explicit null inside a tenant scope writes a platform row
+AssertionError: expected { sequence_number: 1, …(17) } to have property "organization_id" with value null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:95:26
+     93|     const { pool, log } = fresh();
+     94|     await inTenant('11', () => log.log('AUDIT_VERIFICATION_PASSED', 'v…
+     95|     expect(pool.rows[0]).toHaveProperty('organization_id', null);
+       |                          ^
+     96|   });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > refuses to attribute a row to a tenant other than the session’s
+AssertionError: promise resolved "'25c4bbff-73d5-4556-8fac-7cbd4652a3fd'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"25c4bbff-73d5-4556-8fac-7cbd4652a3fd"
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:102:5
+    100|     await expect(
+    101|       inTenant('11', () => log.log('RECORD_DELETED', 'delete', {}, { o…
+    102|     ).rejects.toThrow(/tenant/i);
+       |     ^
+    103|     expect(pool.rows).toHaveLength(0);
+    104|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > the tenant is inside the hash, and the cut-over breaks nothing > moving a row to another tenant is detected as tampering
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:115:25
+    113|     rows[0].organization_id = 12;
+    114|     const moved = verifyTamperProofLogRows(rows as any, { hmacSecret: …
+    115|     expect(moved.valid).toBe(false);
+       |                         ^
+    116|     expect(moved.invalidReason).toMatch(/content_hash mismatch/);
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > the tenant is inside the hash, and the cut-over breaks nothing > the verifier’s own row is a platform row even when a tenant asked for it
+AssertionError: expected { sequence_number: 2, …(17) } to have property "organization_id" with value null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:141:26
+    139|     await inTenant('11', () => log.verifyChain());
+    140|     const verification = pool.rows.find(r => r.event_type === 'AUDIT_V…
+    141|     expect(verification).toHaveProperty('organization_id', null);
+       |                          ^
+    142|   });
+    143| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > search inside a tenant scope is that tenant’s rows only
+AssertionError: expected undefined to be 11 // Object.is equality
+
+- Expected:
+11
+
++ Received:
+undefined
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:155:28
+    153|     const { pool, log } = fresh();
+    154|     await inTenant('11', () => log.search({ resourceType: 'ind_applica…
+    155|     expect(filterOf(pool)).toBe(11);
+       |                            ^
+    156|   });
+    157|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > search naming a tenant outside any scope (a job) filters on it
+AssertionError: expected undefined to be 11 // Object.is equality
+
+- Expected:
+11
+
++ Received:
+undefined
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:161:28
+    159|     const { pool, log } = fresh();
+    160|     await log.search({ organizationId: 11, limit: 5 });
+    161|     expect(filterOf(pool)).toBe(11);
+       |                            ^
+    162|   });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > search naming another tenant from inside a scope is refused before it runs
+AssertionError: promise resolved "[]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[]
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:166:74
+    164|   it('search naming another tenant from inside a scope is refused befo…
+    165|     const { pool, log } = fresh();
+    166|     await expect(inTenant('11', () => log.search({ organizationId: 12 …
+       |                                                                          ^
+    167|     expect(pool.reads).toHaveLength(0);
+    168|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > getRecentEntries inside a tenant scope is that tenant’s rows only
+AssertionError: expected undefined to be 11 // Object.is equality
+
+- Expected:
+11
+
++ Received:
+undefined
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:173:28
+    171|     const { pool, log } = fresh();
+    172|     await inTenant('11', () => log.getRecentEntries(10));
+    173|     expect(filterOf(pool)).toBe(11);
+       |                            ^
+    174|   });
+    175|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  __tests__/tamper-proof-audit-tenant-column.test.ts > boot says plainly when the column is missing > refuses to initialise a store without organization_id, naming the migration
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ __tests__/tamper-proof-audit-tenant-column.test.ts:196:34
+    194|   it('refuses to initialise a store without organization_id, naming th…
+    195|     const log = new TamperProofAuditLog(bootPool(false) as unknown as …
+    196|     await expect(log.initialize()).rejects.toThrow(/organization_id.*2…
+       |                                  ^
+    197|   });
+    198|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 4 passed (16)
+   Start at  06:29:01
+   Duration  518ms (transform 173ms, setup 0ms, import 211ms, tests 35ms, environment 0ms)
+
+exit=1

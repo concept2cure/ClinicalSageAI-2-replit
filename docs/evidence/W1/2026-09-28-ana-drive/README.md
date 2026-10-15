@@ -240,8 +240,46 @@ With it on, the whole battery passed 23/23:
 
 No defect (`launch-scope-on.txt`).
 
+## Every read tool, called for real
+
+A register AnA could not reach was reporting zero. All 145 tools the register
+classes `read` were called through their real handlers against the local
+database. 115 answered cleanly, 29 refused honestly, 1 threw.
+
+The one wrong answer was the worst kind. FAERS and MAUDE — the drug and device
+adverse-event registers — answered a FAILED request as a search that found
+nothing: "Analysis of undefined FDA FAERS reports found undefined serious
+reports (0%)", with provenance reading "(0 reports)". Nobody had reached the
+register. A tool that cannot ask now says so and carries no counts, and a call
+naming nothing to search for is refused rather than sent (`tool-honesty.txt`).
+
+## Can she operate the screens she reaches? (seventh pass)
+
+Earlier passes proved AnA could move. None asked what she can do once she
+arrives. Of the 29 launch-catalog screens, she could operate 16 and **walk
+into 13 and touch nothing** — including the audit trail, where the training
+demonstration ends. Two shipped screens, eCTD Compile and the conversation,
+had no navigation target at all, so she could not reach them.
+
+This pass wired the demonstration's last stop and the apps catalog (6
+actions), and made eCTD Compile reachable. Three of the 13 are honestly empty
+and stay so: Submission Readiness and the Part 11 console are verdicts with no
+view state, and Setup is a launcher. Seven more are surveyed, specified and
+deliberately NOT registered until their handlers land — a registered action
+with no handler is a dead end.
+
+A latent trap is recorded there too: every id under `dispatch-readiness.` is
+refused as governed work, because the screen's own name starts with a
+governed verb.
+
+`ui-coverage.txt` has the audit, the actions, the tests and the browser run.
+
 ## Evidence
 
+- `ui-coverage.txt`, `ui-coverage-audit-filter.png`: the launch-catalog
+  coverage audit and the actions wired on the audit trail.
+- `tool-honesty.txt`, `harness/read-tool-smoke.mts`: every read tool called,
+  what each answered, and the openFDA fix.
 - `launch-scope-on.txt`: the whole battery with launch scope enforced, as
   production runs it.
 

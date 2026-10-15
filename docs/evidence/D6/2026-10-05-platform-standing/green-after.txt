@@ -1,0 +1,3 @@
+$ npx vitest run <the twelve suites>   # with the fix
+Test Files  12 passed (12)
+Tests  168 passed (168)

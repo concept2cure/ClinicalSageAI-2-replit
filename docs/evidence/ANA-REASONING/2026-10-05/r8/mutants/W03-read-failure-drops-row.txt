@@ -1,0 +1,13 @@
+Mutant W03-read-failure-drops-row: an unreadable thread loses the whole summary row
+
+--- server/services/working-memory.ts
+- logger.warn(`working memory: the thread's checks could not be read
++ throw error;
+    logger.warn(`working memory: the thread's checks could not be read
+
+Tests run: server/services/__tests__/working-memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 9ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,464 @@
+# S4 mutations of the finished tree (review follow-through), 2026-09-28. ANSI stripped.
+# Each mutation applied alone to the finished tree, its suite(s) run, the file restored and its
+# sha256 re-checked; the S4 tree hash (tree.sha256's files) compared before and after the pass.
+# Script: scratchpad s4/mutate-review.py. B = S4 behaviour, R = review fixes ([n] = objection),
+# O = overcorrections.
+# RESULT: 65/65 red.
+# S4 tree hash before: de0ca744153c44a0d2db49605820490448074c7290c9cfdd6299822812cfc214
+# S4 tree hash after:  de0ca744153c44a0d2db49605820490448074c7290c9cfdd6299822812cfc214
+# (after R01's re-run, the tree hash was compared again: identical — TREE True)
+
+## B01 parseRunPolicy reads any casing ("AUTO" runs as Auto)
+  file: server/services/ana/run-status.ts
+  suites: server/services/ana/__tests__/run-status-policy.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  2 failed | 61 passed (63)
+  × server/services/ana/__tests__/run-status-policy.test.ts > parseRunPolicy — only the exact names choose a policy > anything else is no policy, not an error 6ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "AUTO" → runPolicy null 12ms
+
+## B02 isHoldable ignores the owner (a hold nobody may answer)
+  file: server/services/ana/run-status.ts
+  suites: server/services/ana/__tests__/run-status-policy.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  2 failed | 61 passed (63)
+  × server/services/ana/__tests__/run-status-policy.test.ts > isHoldable — a hold needs a run row AND an owner who can resume it > not with an unowned run — nobody could press Run this step 7ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 10ms
+
+## B03 manualHoldDue holds before round 1
+  file: server/services/ana/run-status.ts
+  suites: server/services/ana/__tests__/run-status-policy.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  22 failed | 41 passed (63)
+  × server/services/ana/__tests__/run-status-policy.test.ts > manualHoldDue — when Manual stops before a step > not before round 1: the step the message asked for runs 9ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 26ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold before a step that already goes to a person 7ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > a person pausing a Manual turn is a person, not the policy 12ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 6ms
+
+## B04 turnStoppedReason drops hold_unavailable (reads as a Stop)
+  file: server/services/ana/run-status.ts
+  suites: server/services/ana/__tests__/run-status-policy.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  10 failed | 53 passed (63)
+  × server/services/ana/__tests__/run-status-policy.test.ts > turnStoppedReason — the turn reports why IT stopped > a hold that could not be made outranks everything 7ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 11ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 4ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails 
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fail
+
+## B05 Manual never holds (the checkpoint ignores the policy)
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  15 failed | 24 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 12ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 4ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 4ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 6ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 4ms
+
+## B06 Do this instead runs the held step anyway
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 10ms
+
+## B07 Manual resumes a hold nobody answered (expiry resume, no endHeldRun)
+  file: server/routes/ana-ri/stream.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  3 failed | 36 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 12ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > a person's own pause in a Manual turn ends it the same way 4ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her st
+
+## B08 Manual that cannot hold runs on as Auto (no MANUAL_UNAVAILABLE)
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  2 failed | 37 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 11ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 4ms
+
+## B09 Auto ignores its work ceiling
+  file: server/services/ana/run-status.ts
+  suites: server/services/ana/__tests__/run-status-policy.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  2 failed | 61 passed (63)
+  × server/services/ana/__tests__/run-status-policy.test.ts > policyStopDirective — what the stream tells the loop after each round > Auto stops past 15 minutes of work or 40 minutes in all 6ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > past 15 minutes of work the next call is the closing answer 8ms
+
+## B10 time held for a person counts as Auto work
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > time held for a person is not work 9ms
+
+## B11 the stream ignores the policy for the round budget
+  file: server/routes/ana-ri/stream.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Auto keeps going past the effort ceiling while each round is new, to 20 rounds 16ms
+
+## B12 done never says the policy
+  file: server/routes/ana-ri/stream.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts, server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts
+  RED: Tests  5 failed | 42 passed (47)
+  × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 5ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "auto" → runPolicy "auto" 45ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "manual" → runPolicy "manual" 11ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 4ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 4ms
+
+## B13 metadata drops her holds
+  file: server/services/ana/tool-trace.ts
+  suites: server/services/ana/__tests__/tool-trace-run-policy.test.ts
+  RED: Tests  4 failed | 20 passed (24)
+  × server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > stores all three with the reason and rounds 11ms
+  × server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > a finished Manual turn keeps its policy and holds, and no reason 2ms
+  × server/services/ana/__tests__/tool-trace-run-policy.test.ts > the assistant message keeps the policy, the holds and the steps not run > keeps only well-formed labels and holds 1ms
+  × server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > the new outcomes are kept with the message; an unknown one is not 1m
+
+## B14 unrun steps are not filed not_run
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  12 failed | 27 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 15ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 5ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 5ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails 
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fail
+
+## B15 the dossier drops her holds
+  file: server/services/ana/lineage-dossier.ts
+  suites: server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts
+  RED: Tests  7 failed | 3 passed (10)
+  × server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts > the dossier reads AnA’s own holds beside the human controls > a Manual hold and the resume that answered it are two records, in two sections 16ms
+  × server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts > the dossier reads AnA’s own holds beside the human controls > numbers turns across the thread and skips a malformed hold 3ms
+  × server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts > the XML and the trace report carry them, after the human controls > <PolicyHolds> follows <HumanControls>, one <Hold> each with its next step 3ms
+  × server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts > the XML and the trace report carry them, after the human controls > the trace report has 'AnA's own holds (Manual)' after the human control actions 2
+  × server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts > review follow-through: a corrupt hold is counted, and the report reads plainly > a malformed hold is counted as unreadable, in the dossier and its XM
+
+## B16 the hook never sends run_policy
+  file: client/src/concept2cure/components/ana/useAnaChat.ts
+  suites: client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+  RED: Tests  2 failed | 15 passed (17)
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > sends run_policy from the options 54ms
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > a send's own policy wins for that turn 29ms
+
+## B17 V2App does not send the preference
+  file: client/src/concept2cure/v2/V2App.tsx
+  suites: client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+  RED: Tests  1 failed | 18 passed (19)
+  × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > V2App sends the preference as the shell chat’s run policy > passes runPolicy: prefs.anaRunPolicy into the shell useAnaChat 5ms
+
+## B18 the preference defaults to Manual
+  file: client/src/concept2cure/v2/V2App.tsx
+  suites: client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+  RED: Tests  1 failed | 18 passed (19)
+  × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > V2App sends the preference as the shell chat’s run policy > defaults the preference to Auto and provides the switch its context 6ms
+
+## B19 the conversation screen has no strip
+  file: client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  RED: Tests  4 failed | 8 passed (12)
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > says she is waiting, names the next step, and offers the three answers 88ms
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > a hold that ran out says so, with nothing to press 62ms
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > offers only Stop before the run is controllable, as the rail does 516ms
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > the conversation screen passes the turn policy to the strip, and the hold to
+
+## B20 a second strip defined in Shell (the move undone)
+  file: client/src/concept2cure/v2/Shell.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  RED: Tests  1 failed | 11 passed (12)
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > one strip in the codebase > only AnaWorkSections.tsx defines .ana-runctl markup 51ms
+
+## B21 the co-author drops its dock note
+  file: client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx
+  suites: client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx
+  RED: Tests  2 failed | 5 passed (7)
+  × client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > each dock mounts it beside its composer > EctdCoauthor — the co-author composer 13ms
+  × client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > each dock mounts it beside its composer > the co-author, rendered, says each policy in its own words 61ms
+
+## B22 the client drops hold_expired (reads Finished)
+  file: client/src/concept2cure/components/ana/anaProgress.ts
+  suites: client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts, client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts
+  RED: Tests  4 failed | 19 passed (23)
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > hold_expired ends the run on the client too, and says what did not run 95ms
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > accepts the run-policy reasons now that the server produces them and every s
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_expired 55ms
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a reopened thread > restores the policy and the steps a stop left unrun 5ms
+
+## B23 Manual hold reads Paused, not Waiting for you
+  file: client/src/concept2cure/v2/anaWorkModel.ts
+  suites: client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+  RED: Tests  2 failed | 18 passed (20)
+  × client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > while Manual holds, she is waiting for the person — not paused 9ms
+  × client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > the panel reads the hold it is given 15ms
+
+## R01 [6/15/23/33] a hold not written stands on any row (runs the step)
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 39 passed (40)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written though the row reads running, twice: fails closed,
+  (first pass: NOT RED — NOT RED: Tests  39 passed (39). The build's second guard, settleHold's
+   re-read, caught every failed/finished/gone row, so the gates could not tell this mutation apart. A
+   gate for the one case only placeHold decides — the write matched nothing, yet the row reads
+   running, twice — was added, shown red against the pre-review code (red.txt C2), and R01 re-run.)
+
+## R02 [15/23] a row that left the hold failed/finished/gone counts as an answer
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  3 failed | 36 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "failed" — no person answered: fails closed 
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "finished" — no person answered: fails close
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as null — no person answered: fails closed 4ms
+
+## R03 [9] a person's pause at a due hold is not her hold (fails closed instead)
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold:
+
+## R04 [1/18] an early steer is filed as a hold she made
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 14ms
+
+## R05 [3/17/25] Stop at a hold leaves its step unrecorded
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > Stop at a hold: not run, named on done, and the hold filed as stopped 9ms
+
+## R06 [3/17/25] a disconnect at a hold leaves its step unrecorded
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/services/ana/__tests__/turn-run-policy.test.ts
+  RED: Tests  1 failed (1)
+  × server/services/ana/__tests__/turn-run-policy.test.ts > a client that disconnects while AnA holds > the held step does not run, is filed not-run with why, and the hold is kept as disconnected 9ms
+
+## R07 [16] a demo the model starts switches Manual off
+  file: server/routes/ana-ri/stream.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2c) a demonstration the model starts does not switch Manual off > Manual with Live Drive on (not a demo), round 1 starts a demo: a hold is still due before ro
+
+## R08 [19] a person's expired pause filed as AnA waiting
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her st
+
+## R09 [19] the record says AnA waited, for a person's pause
+  file: server/services/ana/tool-trace.ts
+  suites: server/services/ana/__tests__/tool-trace-run-policy.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  2 failed | 61 passed (63)
+  × server/services/ana/__tests__/tool-trace-run-policy.test.ts > review follow-through: the record never claims a hold, or a wait, that did not happen > a person's pause that expired is the person's pause, not AnA waiting
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her st
+
+## R10 [20/27/44] a hard-coded duration back in the record
+  file: server/services/ana/tool-trace.ts
+  suites: server/services/ana/__tests__/tool-trace-run-policy.test.ts
+  RED: Tests  1 failed | 23 passed (24)
+  × server/services/ana/__tests__/tool-trace-run-policy.test.ts > the record states durations from the shared ceilings, never as literals > tool-trace.ts has no hard-coded minute count 6ms
+
+## R11 [22] a malformed hold dropped in silence
+  file: server/services/ana/lineage-dossier-holds.ts
+  suites: server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts
+  RED: Tests  1 failed | 9 passed (10)
+  × server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts > review follow-through: a corrupt hold is counted, and the report reads plainly > a malformed hold is counted as unreadable, in the dossier and its XM
+
+## R12 [12/30/43] the report loses its Turn column
+  file: server/services/report-os/lineage-trace-report.ts
+  suites: server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts
+  RED: Tests  1 failed | 9 passed (10)
+  × server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts > review follow-through: a corrupt hold is counted, and the report reads plainly > the trace report names the turn, and says each outcome in words 10ms
+
+## R13 [21] the gate reads the TurnPolicy (Auto waves an approval through)
+  file: server/routes/ana-ri/stream.ts
+  suites: server/services/ana/__tests__/auto-never-approves.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  2 failed | 45 passed (47)
+  × server/services/ana/__tests__/auto-never-approves.test.ts > the run policy has no path to the approval gate > never in the stream's approval code, settleApprovals through awaitDecision 7ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > an approval nobody answers ends the turn with a closing answer 10ms
+
+## R14 [24] the expired hold is cleared on done ("Working")
+  file: client/src/concept2cure/components/ana/useAnaChat.ts
+  suites: client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+  RED: Tests  1 failed | 16 passed (17)
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > hold_expired ends the run on the client too, and says what did not run 86ms
+
+## R15 [8] Still working after hold_expired
+  file: client/src/concept2cure/v2/anaWorkModel.ts
+  suites: client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+  RED: Tests  1 failed | 19 passed (20)
+  × client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > between hold_expired and done the state line says she stopped waiting, not "Still wor
+
+## R16 [7] the chip says Working during a hold
+  file: client/src/concept2cure/v2/anaWorkModel.ts
+  suites: client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx, client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  RED: Tests  2 failed | 30 passed (32)
+  × client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > the progress chip — what shows with the panel closed — says she is waiting, or paused
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > the conversation screen passes the turn policy to the strip, and the hold to
+
+## R17 [2/26] the replaced step is not shown
+  file: client/src/concept2cure/v2/AnaActivity.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+  RED: Tests  1 failed | 19 passed (20)
+  × client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a step replaced by a steer is shown as not run, beside the turn 6ms
+
+## R18 [2/26] a reopened thread loses the replaced steps
+  file: client/src/concept2cure/components/ana/anaProgress.ts
+  suites: client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+  RED: Tests  1 failed | 16 passed (17)
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > a reopened thread shows the steps a steer replaced (from the stored holds) 8ms
+
+## R19 [3] a Stop at a hold says nothing on reload
+  file: client/src/concept2cure/v2/anaWorkModel.ts
+  suites: client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+  RED: Tests  1 failed | 19 passed (20)
+  × client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a Stop at a hold names the step it left unrun (a reload must not read as a plain Stop
+
+## R20 [10] the unavailable warning said twice
+  file: client/src/concept2cure/components/ana/useAnaChat.ts
+  suites: client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+  RED: Tests  1 failed | 16 passed (17)
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > Manual's unavailable warning is said once — by the turn's stopped note, not again in its warnings 61ms
+
+## R21 [32] the note promises "try again"
+  file: client/src/concept2cure/v2/anaWorkModel.ts
+  suites: client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+  RED: Tests  1 failed | 19 passed (20)
+  × client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > Manual that could not hold says why and what to do — switch to Auto, then Continue; never "try
+
+## R22 [34] the hold is not announced to assistive technology
+  file: client/src/concept2cure/v2/AnaWorkSections.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  RED: Tests  1 failed | 11 passed (12)
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > announces the hold once to assistive technology, with the step, and says whe
+
+## R23 [34] the hold's deadline is not shown
+  file: client/src/concept2cure/v2/AnaWorkSections.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  RED: Tests  1 failed | 11 passed (12)
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > announces the hold once to assistive technology, with the step, and says whe
+
+## R24 [41] Run this step is not tied to its step
+  file: client/src/concept2cure/v2/AnaWorkSections.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  RED: Tests  1 failed | 11 passed (12)
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > Run this step and Do this instead are described by the step they act on 20ms
+
+## R25 [1] a Manual turn's running steer box says nothing of replacing
+  file: client/src/concept2cure/v2/AnaWorkSections.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  RED: Tests  2 failed | 10 passed (12)
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > while a Manual turn is working, the steer box says a steer replaces her next
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > the conversation screen passes the turn policy to the strip, and the hold to
+
+## R26 [1] the conversation screen does not pass the turn policy
+  file: client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  RED: Tests  1 failed | 11 passed (12)
+  × client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > the conversation screen passes the turn policy to the strip, and the hold to
+
+## R27 [5/40] the radios are not described
+  file: client/src/concept2cure/v2/RunPolicySwitch.tsx
+  suites: client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+  RED: Tests  2 failed | 17 passed (19)
+  × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > menu: each radio is named by its label and described by its description 14ms
+  × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > foot: each radio is named by its label and described by its description 16ms
+
+## R28 [5] the foot shows no words for the chosen policy
+  file: client/src/concept2cure/v2/RunPolicySwitch.tsx
+  suites: client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+  RED: Tests  1 failed | 18 passed (19)
+  × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the foot shows, in words on screen, what the chosen policy does 14ms
+
+## R29 [38] the checked option is colour alone
+  file: client/src/concept2cure/v2/RunPolicySwitch.tsx
+  suites: client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+  RED: Tests  1 failed | 18 passed (19)
+  × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the checked option is marked by more than colour: a check mark 20ms
+
+## R30 [39] the switch animates under reduced motion
+  file: client/src/concept2cure/v2/styles/app-v2.css
+  suites: client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+  RED: Tests  1 failed | 18 passed (19)
+  × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the switch does not animate under reduced motion 10ms
+
+## R31 [13] the docks say nothing under Auto
+  file: client/src/concept2cure/v2/RunPolicySwitch.tsx
+  suites: client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx
+  RED: Tests  2 failed | 5 passed (7)
+  × client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > the note > is said under Auto too, in its own words: Auto's time limit and its stop on an unanswered request do not reach a dock 15ms
+  × client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx > each dock mounts it beside its composer > the co-author, rendered, says each policy in its own words 75ms
+
+## R32 [4] Quick ask does not say what Auto does to it
+  file: client/src/concept2cure/v2/registryModel.ts
+  suites: client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+  RED: Tests  1 failed | 18 passed (19)
+  × client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Quick ask says what Auto does to it, where the engine is chosen 7ms
+
+## R33 [1] the hook does not know the turn's policy
+  file: client/src/concept2cure/components/ana/useAnaChat.ts
+  suites: client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+  RED: Tests  1 failed | 16 passed (17)
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > knows the policy of the turn in flight — what it sent, not the preference now 35ms
+
+## O01 Auto holds too (manualHoldDue ignores the policy)
+  file: server/services/ana/run-status.ts
+  suites: server/services/ana/__tests__/run-status-policy.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  4 failed | 59 passed (63)
+  × server/services/ana/__tests__/run-status-policy.test.ts > manualHoldDue — when Manual stops before a step > never under Auto or with no policy 10ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > Auto and no policy never hold on their own 12ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > under Auto the same steer does not replace anything: it applies after the step 4ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today 5ms
+
+## O02 Manual holds even while a person-started demo drives
+  file: server/routes/ana-ri/stream.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold while a demonstration drives 11ms
+
+## O03 a door with no policy gets Auto's budget
+  file: server/routes/ana-ri/stream.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  1 failed | 38 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy the same turn keeps its effort ceiling (balanced: 6 + 2) 17ms
+
+## O04 an unanswered approval ends a turn with no policy too
+  file: server/services/ana/run-status.ts
+  suites: server/services/ana/__tests__/run-status-policy.test.ts, server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  2 failed | 61 passed (63)
+  × server/services/ana/__tests__/run-status-policy.test.ts > policyStopDirective — what the stream tells the loop after each round > an unanswered approval ends a policy turn, but not a turn with no policy 9ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, the same unanswered approval is a denial and the turn goes on 9ms
+
+## O05 Manual fails closed at every hold (even when it could hold)
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  9 failed | 30 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 19ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 4ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 5ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 6ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 3ms
+
+## O06 a person's resume is never taken as an answer (only "running" on a re-read after Stop)
+  file: server/services/ana/turn-run-policy.ts
+  suites: server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+  RED: Tests  4 failed | 35 passed (39)
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 18ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 4ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Manual keeps the effort ceiling too 3ms
+  × server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold:
+
+## O07 Auto stamps humanConfirmed on a gated call
+  file: server/routes/ana-ri/stream.ts
+  suites: server/services/ana/__tests__/auto-never-approves.test.ts
+  RED: Tests  1 failed | 7 passed (8)
+  × server/services/ana/__tests__/auto-never-approves.test.ts > the run policy has no path to the approval gate > never in the stream's approval code, settleApprovals through awaitDecision 7ms
+
+## O08 the expired hold is never cleared (strip stuck after the stream closes)
+  file: client/src/concept2cure/components/ana/useAnaChat.ts
+  suites: client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+  RED: Tests  1 failed | 16 passed (17)
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > hold_expired ends the run on the client too, and says what did not run 116ms
+
+## O09 Ask/Agent replaced by the switch (the previous revision)
+  file: client/src/concept2cure/v2/Shell.tsx
+  suites: client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx
+  RED: Tests  1 failed | 13 passed (14)
+  × client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx > AnaRail — Ask / Agent is what AnA will actually do > reads Agent when AnA drives, and Ask switches her hands off 322ms

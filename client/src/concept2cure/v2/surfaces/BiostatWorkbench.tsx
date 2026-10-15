@@ -6,8 +6,9 @@
  *
  * Wired to two real backends:
  *   • Statistical defensibility (server/routes/statistical-defensibility.ts,
- *     mounted /api/statistical-defensibility — deterministic, no DB):
- *       POST /assess          — reviewer-risk assessment of a study's statistics
+ *     mounted /api/statistical-defensibility): POST /assess — the deterministic
+ *     judgment engine (ana-biostats), the one AnA's assess_statistical_
+ *     defensibility tool runs. Until 2026-10-05 this was a model's score.
  *   • Design-stats calculators (server/routes/biostat-design-stats.ts under
  *     /api/biostat, org-scoped): FIFTEEN deterministic engines, declared as data
  *     in `biostatCalculators.ts` and rendered by one generic form below.
@@ -30,7 +31,7 @@
  * work immediately; the design calculators require a signed-in org and surface a
  * 401 honestly rather than showing an empty result.
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -40,6 +41,8 @@ import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   CALCULATORS,
   buildRequestBody,
+  calculatorEndpoint,
+  calculatorResultKey,
   initialValues,
   isFieldVisible,
   type Calculator,
@@ -49,32 +52,64 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import type { FireToast } from '../toast';
 import { saveToAuthoring } from '../authoringHandoff';
-import { engineResultToHtml } from '../engineResultHtml';
+import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
+import { BiostatKnowledgePanel } from './biostatKnowledge';
+import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
 
-interface Defensibility {
-  overallScore?: number | null;
-  overallRating?: string | null;
-  /**
-   * WO-16C finding 45. The server withholds the overall score when the model
-   * left a dimension unscored, rather than substituting a midpoint for it. The
-   * score and rating chips are already null-guarded, so without rendering this
-   * reason the card would simply go blank — an error shown as an empty result.
-   */
-  scoreBasis?: { ran?: boolean; reason?: string };
-  reviewerRiskLevel?: string;
-  criticalIssues?: any[];
-  majorIssues?: any[];
-  recommendations?: any;
+/** A dimension of the engine's judgment (ana-biostats JudgmentDimension). */
+interface JudgedDimension {
+  name: string;
+  verdict: 'adequate' | 'marginal' | 'inadequate' | 'insufficient_information';
+  score: number;
+  rationale: string;
+  flags: string[];
 }
 
-async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+/** POST /api/statistical-defensibility/assess, status 'assessed' (deterministic). */
+interface Defensibility {
+  status: 'assessed';
+  engine: 'deterministic';
+  sampleSize: number | null;
+  power: number | null;
+  /* What the engine says it computed. The payload carried only the N, the
+     power and the judgment, so nothing on screen stated the hazard ratio the
+     sizing used — which is why a mislabelled input could show an 11x
+     under-sizing with a verdict chip beside it and nothing to contradict it.
+     `formula` prints "HR=0.700". */
+  method?: string | null;
+  formula?: string | null;
+  assumptions?: Array<{ parameter: string; value: number | string; source: string; sensitivity: string }>;
+  judgment: {
+    overallVerdict: JudgedDimension['verdict'];
+    overallRisk: 'low' | 'moderate' | 'high' | 'critical';
+    actionRecommendation: 'proceed' | 'proceed_with_conditions' | 'revise' | 'escalate';
+    dimensions: JudgedDimension[];
+    escalationReasons: string[];
+  };
+}
+
+/**
+ * POST and read the result out of the envelope the server used.
+ *
+ * `resultKey` exists because the two routers this surface drives answer
+ * differently: `/api/biostat` sends `{success, data}` and
+ * `/api/diagnostics-performance` sends `{result}`. Reading the wrong key
+ * yields null, which this surface renders as "Calculation failed" — a refusal
+ * where a result was returned. One parameter, declared per calculator in
+ * `biostatCalculators.ts`, rather than two copies of this function.
+ */
+async function readData<T = any>(
+  path: string,
+  body: unknown,
+  resultKey: 'data' | 'result' = 'data',
+): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
   try {
     const res = await apiRequest('POST', path, body);
     const parsed = (await res.json().catch(() => null)) as any;
     return {
       ok: res.ok,
       status: res.status,
-      data: (parsed?.data ?? null) as T | null,
+      data: (parsed?.[resultKey] ?? null) as T | null,
       // Servers here report failures as { error } or { message }; surfacing the
       // server's own words beats a generic "calculation failed", because the
       // usual cause is a domain constraint the form cannot check locally (an
@@ -102,13 +137,10 @@ async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boo
     };
   }
 }
-function issueText(x: any): string {
-  if (typeof x === 'string') return x;
-  return String(x?.message ?? x?.issue ?? x?.description ?? JSON.stringify(x));
-}
 function ratingTone(r: string | undefined) {
   const v = String(r ?? '').toLowerCase();
-  if (v.includes('high') || v.includes('poor') || v.includes('weak')) return 'err';
+  if (v.includes('high') || v.includes('critical') || v.includes('inadequate') || v.includes('escalate')) return 'err';
+  if (v.includes('marginal') || v.includes('insufficient') || v.includes('revise')) return 'warn';
   if (v.includes('moderate') || v.includes('medium') || v.includes('fair')) return 'warn';
   return 'ok';
 }
@@ -130,15 +162,32 @@ function fmt(v: number): string {
 type Row = [string, string];
 
 /**
+ * Keys whose value EXPLAINS AN ABSENCE, and so is rendered whatever its length.
+ *
+ * The 120-character cap below exists to keep a long memo (external-control's
+ * renderExternalControlMemo) out of the row table and in the raw view. That is
+ * right for a memo and wrong for the one kind of string a reader cannot do
+ * without. The interim engine reports conditional power under H1 as
+ * `{drift: null, conditionalPower: null, reason: '<148 characters>'}` when no
+ * design effect was supplied — deliberately, rather than defaulting a drift
+ * nobody chose. The null yielded no row and the sentence was over the cap, so
+ * the H1 figure vanished from the table with no explanation anywhere on
+ * screen: a refusal rendered as nothing, which this product forbids.
+ */
+const EXPLAINS_ABSENCE = new Set(['reason', 'note', 'notAssessedReason', 'notComputedReason']);
+
+/**
  * Flatten a result object into labeled scalar rows, descending into nested
  * objects. Arrays of numbers are joined; anything else is left to the raw view
  * so nothing is quietly dropped.
  */
-function scalarRows(value: unknown, prefix = '', depth = 0): Row[] {
+function scalarRows(value: unknown, prefix = '', depth = 0, key = ''): Row[] {
   if (depth > 3 || value === null || value === undefined) return [];
   if (typeof value === 'number') return [[prefix || 'value', Number.isFinite(value) ? fmt(value) : String(value)]];
   if (typeof value === 'boolean') return [[prefix || 'value', value ? 'yes' : 'no']];
-  if (typeof value === 'string') return value.length <= 120 ? [[prefix || 'value', value]] : [];
+  if (typeof value === 'string') {
+    return value.length <= 120 || EXPLAINS_ABSENCE.has(key) ? [[prefix || 'value', value]] : [];
+  }
   if (Array.isArray(value)) {
     if (value.every(v => typeof v === 'number')) {
       return [[prefix, (value as number[]).map(fmt).join(', ')]];
@@ -150,32 +199,58 @@ function scalarRows(value: unknown, prefix = '', depth = 0): Row[] {
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       // Provenance is a reproducibility record, not a result; it has its own row.
       if (k === 'provenance') continue;
-      out.push(...scalarRows(v, prefix ? `${prefix} · ${humanize(k)}` : humanize(k), depth + 1));
+      out.push(...scalarRows(v, prefix ? `${prefix} · ${humanize(k)}` : humanize(k), depth + 1, k));
     }
     return out;
   }
   return [];
 }
 
-/** Tabular sub-results (OC grids, decision tables, tipping grids) worth showing as tables. */
-function objectTables(value: unknown): Array<{ label: string; rows: Record<string, unknown>[] }> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
-  const out: Array<{ label: string; rows: Record<string, unknown>[] }> = [];
-  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+/**
+ * Tabular sub-results (OC grids, decision tables, tipping grids, survival
+ * curves) worth showing as tables.
+ *
+ * Descends ONE level, which `scalarRows` has always done and this did not.
+ * That asymmetry surfaced on 2026-10-12: `restrictedMeanSurvival` began
+ * carrying the Kaplan–Meier table it had always computed and discarded, and in
+ * the two-arm case `rmstDifference` embeds each arm's whole result — so the
+ * curves sit at `treatment.survivalCurve` and `control.survivalCurve`. The
+ * single-arm call rendered its table and the two-arm call, which is the common
+ * case, rendered nothing while showing "Treatment · Rmst" and the rest of that
+ * arm's scalars beside it. Data on the wire and not on the screen reads as
+ * "this engine has no curve" rather than "this renderer did not look".
+ *
+ * Copying the curves up to the top level of the difference result would have
+ * fixed the one case and left two places holding one table. One level of
+ * descent fixes it for every engine that nests a table. Nested labels carry
+ * the parent key, as the scalar rows do, so a reader can tell the arms apart.
+ */
+function objectTables(value: unknown, prefix = '', depth = 0): EngineResultTable[] {
+  if (!isPlainObject(value)) return [];
+  const out: EngineResultTable[] = [];
+  for (const [k, v] of Object.entries(value)) {
+    // Provenance is a reproducibility record, not a result; it has its own row.
     if (k === 'provenance') continue;
-    if (Array.isArray(v) && v.length > 0 && v.every(r => r && typeof r === 'object' && !Array.isArray(r))) {
-      out.push({ label: humanize(k), rows: v as Record<string, unknown>[] });
+    const label = prefix ? `${prefix} · ${humanize(k)}` : humanize(k);
+    if (isRowArray(v)) {
+      const table: EngineResultTable = { label, rows: v };
+      table.columns = engineResultTableColumns(table).map(({ key }) => ({ key, label: humanize(key) }));
+      out.push(table);
+    } else if (depth === 0 && isPlainObject(v)) {
+      out.push(...objectTables(v, label, depth + 1));
     }
   }
   return out;
 }
 
-function cell(v: unknown): string {
-  if (typeof v === 'number') return Number.isFinite(v) ? fmt(v) : String(v);
-  if (typeof v === 'boolean') return v ? 'yes' : 'no';
-  if (v === null || v === undefined) return '—';
-  if (typeof v === 'object') return JSON.stringify(v);
-  return String(v);
+/** An object worth descending into: not null, not an array. */
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+/** An array of records, which is what a table is made of. */
+function isRowArray(v: unknown): v is Array<Record<string, unknown> | null> {
+  return Array.isArray(v) && v.length > 0 && v.every((r) => r === null || isPlainObject(r));
 }
 
 function Field({ field, value, error, onChange }: {
@@ -223,7 +298,10 @@ function Field({ field, value, error, onChange }: {
 
 function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: FireToast }) {
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
-  const [result, setResult] = useState<any>(null);
+  const [acceptedResult, setAcceptedResult] = useState<{ generation: number; data: any } | null>(null);
+  const calculationGeneration = useRef(0);
+  const result = acceptedResult?.data ?? null;
+  const [resultNotice, setResultNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
   const [inserting, setInserting] = useState(false);
@@ -234,15 +312,34 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
   const tables = useMemo(() => objectTables(result), [result]);
   const provenance = result?.provenance ?? null;
 
+  // An edit-back is still a new input revision. Invalidate synchronously so
+  // even a response or filing callback queued before the next render is stale.
+  const discardResult = useCallback(() => {
+    const generation = ++calculationGeneration.current;
+    setAcceptedResult(null);
+    setShowRaw(false);
+    setBusy(false);
+    return generation;
+  }, []);
+
+  useEffect(() => () => { calculationGeneration.current += 1; }, []);
+
   /* BP-W2-4: file the tabulated result + full-hash provenance stamp as a
      governed authoring section. Never throws; the outcome is toasted either
      way, and on failure nothing navigates and the result stays on screen. */
   const insertIntoDocument = useCallback(async () => {
+    if (!acceptedResult || acceptedResult.generation !== calculationGeneration.current) {
+      fireToast('Compute again before inserting a result into a document.', 'error');
+      return;
+    }
+    // This explicit click authorizes this accepted snapshot. Later input edits
+    // do not cancel an Authoring write that has already started.
     setInserting(true);
     try {
       const html = engineResultToHtml({
         title: `${calc.title} — engine result`,
         rows: rows.map(([k, v]) => [k, v] as [string, unknown]),
+        tables,
         provenance,
       });
       const outcome = await saveToAuthoring({
@@ -256,12 +353,15 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
     } finally {
       setInserting(false);
     }
-  }, [calc, rows, provenance, fireToast]);
+  }, [acceptedResult, calc, rows, tables, provenance, fireToast]);
 
   const run = useCallback(async () => {
+    const generation = discardResult();
+    setResultNotice(null);
     const { body, errors, fieldErrors: errs } = buildRequestBody(calc, values);
     setFieldErrors(errs);
     if (errors.length > 0) {
+      setResultNotice('Calculation not run. Correct the marked inputs and compute again.');
       // The toast announces (via its live region) that submission was refused
       // and names the first problem; the per-field messages say which controls.
       fireToast(errors.length === 1 ? errors[0] : `${errors[0]} (${errors.length} fields need attention.)`, 'error');
@@ -269,8 +369,10 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
     }
     setBusy(true);
     try {
-      const res = await readData(`/api/biostat${calc.path}`, body);
+      const res = await readData(calculatorEndpoint(calc), body, calculatorResultKey(calc));
+      if (generation !== calculationGeneration.current) return;
       if (!res.ok || res.data === null) {
+        setResultNotice('Calculation failed. Compute again before inserting a result into a document.');
         fireToast(
           res.status === 401
             ? 'Sign in to your tenant to run the design calculators.'
@@ -279,11 +381,18 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
         );
         return;
       }
-      setResult(res.data);
-    } finally { setBusy(false); }
-  }, [calc, values, fireToast]);
+      setAcceptedResult({ generation, data: res.data });
+    } finally {
+      if (generation === calculationGeneration.current) setBusy(false);
+    }
+  }, [calc, values, fireToast, discardResult]);
 
-  const reset = useCallback(() => { setValues(initialValues(calc)); setResult(null); setFieldErrors({}); }, [calc]);
+  const reset = useCallback(() => {
+    discardResult();
+    setValues(initialValues(calc));
+    setFieldErrors({});
+    setResultNotice(null);
+  }, [calc, discardResult]);
 
   return (
     <div className="pj-card">
@@ -302,6 +411,10 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
               value={values[f.key] ?? ''}
               error={fieldErrors[f.key]}
               onChange={v => {
+                if (result !== null || busy) {
+                  setResultNotice('Inputs changed. Compute again before inserting a result into a document.');
+                }
+                discardResult();
                 setValues(s => ({ ...s, [f.key]: v }));
                 // Clear this field's error as soon as the user acts on it —
                 // leaving it up while they type says the new value is wrong too.
@@ -315,9 +428,9 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
           <button className="btn primary" style={{ height: 32 }} onClick={run} disabled={busy}>
             {I.zap} {busy ? 'Computing…' : 'Compute'}
           </button>
-          <button className="btn" style={{ height: 32 }} onClick={reset} disabled={busy}>Reset</button>
+          <button className="btn" style={{ height: 32 }} onClick={reset}>Reset</button>
           {result && <button className="btn" style={{ height: 32 }} aria-expanded={showRaw} aria-controls={`raw-${calc.id}`} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
-          {result !== null && rows.length > 0 && (
+          {result !== null && (rows.length > 0 || tables.length > 0) && (
             /* BP-W2-4: these numbers are SAP content, and until this button the
                only way off this screen was retyping them — which severs the
                provenance stamp from the result. The section is filed as the
@@ -332,6 +445,10 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
             </button>
           )}
         </div>
+
+        {resultNotice && (
+          <div role="status" style={{ marginTop: 12, fontSize: 12, color: 'var(--text-300,#6b6963)' }}>{resultNotice}</div>
+        )}
 
         {result !== null && (
           <div style={{ marginTop: 12 }}>
@@ -351,10 +468,16 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
                     <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{t.label}</div>
                     <div style={{ overflowX: 'auto' }}>
                       <table className="reg-tbl">
-                        <thead><tr>{Object.keys(t.rows[0]).map(h => <th key={h}>{humanize(h)}</th>)}</tr></thead>
+                        <thead><tr>{t.columns?.length
+                          ? t.columns.map(({ key, label }) => <th key={key}>{label}</th>)
+                          : <th>Record</th>}</tr></thead>
                         <tbody>
                           {t.rows.slice(0, 60).map((r, i) => (
-                            <tr key={i}>{Object.keys(t.rows[0]).map(h => <td key={h} className="mono">{cell(r[h])}</td>)}</tr>
+                            <tr key={i}>{t.columns?.length
+                              ? t.columns.map(({ key }) => <td key={key} className="mono">{engineResultCellText(
+                                r !== null && Object.prototype.hasOwnProperty.call(r, key) ? r[key] : null,
+                              )}</td>)
+                              : <td className="mono">{engineResultCellText(r)}</td>}</tr>
                           ))}
                         </tbody>
                       </table>
@@ -393,11 +516,88 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
 }
 
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'];
+const DESIGN_TYPES = ['superiority', 'non_inferiority', 'equivalence', 'single_arm'] as const;
+const ENDPOINT_TYPES = ['continuous', 'binary', 'time_to_event'] as const;
+const OBJECTIVES = ['efficacy', 'safety', 'performance', 'bioequivalence'] as const;
+const label = (v: string) => v.replace(/_/g, ' ');
+
+/**
+ * What the defensibility engine computed, and its judgment OF that.
+ *
+ * Its own component since 2026-10-12, when it grew the engine's own statement
+ * of the computation — `method`, `formula` and `assumptions`. Those three were
+ * absent from the payload, so the panel showed a total and a verdict chip with
+ * nothing to check them against; the workbench meanwhile labelled the engine's
+ * `effectSize` "Hazard ratio" when the engine reads it as the hazard-ratio
+ * REDUCTION, and an eleven-fold under-sizing had nothing on screen to
+ * contradict it. `formula` is where the hazard ratio actually used is printed.
+ */
+function DefensibilityResult({ asmtRes }: { asmtRes: Defensibility }) {
+  return (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 10 }}>
+              <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.overallVerdict)}>{label(asmtRes.judgment.overallVerdict)}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Verdict</div></div>
+              <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.overallRisk)}>{asmtRes.judgment.overallRisk}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Reviewer risk</div></div>
+              <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.actionRecommendation)}>{label(asmtRes.judgment.actionRecommendation)}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Recommended action</div></div>
+              {asmtRes.sampleSize != null && <div><div style={{ fontSize: 22, fontWeight: 700 }}>{asmtRes.sampleSize}</div><div style={{ fontSize: 12, color: 'var(--text-300)' }}>Total N computed</div></div>}
+            </div>
+            <table className="ctable" style={{ width: '100%', fontSize: 13 }}>
+              <caption style={{ textAlign: 'left', fontSize: 12, color: 'var(--text-300)', paddingBottom: 4 }}>Judged by dimension</caption>
+              <thead><tr><th scope="col">Dimension</th><th scope="col">Verdict</th><th scope="col">Why</th></tr></thead>
+              <tbody>
+                {asmtRes.judgment.dimensions.map((d) => (
+                  <tr key={d.name}>
+                    <td>{d.name}</td>
+                    <td><span className={'rd-chip tone-' + ratingTone(d.verdict)}>{label(d.verdict)}</span></td>
+                    <td>{d.rationale}{d.flags.length > 0 ? ` — ${d.flags.join('; ')}` : ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {asmtRes.judgment.escalationReasons.length > 0 && (
+              <div style={{ marginTop: 8 }}><div style={{ fontSize: 12, fontWeight: 600 }}>Escalation reasons</div>
+                <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.judgment.escalationReasons.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+            )}
+            {/* What the engine computed, in its own words. The verdict above
+                is a judgment OF this; without it a reader cannot check the
+                number against the design in front of them — and the formula
+                is where the hazard ratio actually used is printed. */}
+            {(asmtRes.method || asmtRes.formula) && (
+              <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-300,#6b6963)' }}>
+                {asmtRes.method && <div><b style={{ color: 'var(--text-200,#44423d)' }}>Method:</b> {asmtRes.method}</div>}
+                {asmtRes.formula && <div style={{ fontFamily: 'var(--font-mono, ui-monospace, monospace)', marginTop: 2 }}>{asmtRes.formula}</div>}
+              </div>
+            )}
+            {Array.isArray(asmtRes.assumptions) && asmtRes.assumptions.length > 0 && (
+              <table className="ctable" style={{ width: '100%', fontSize: 13, marginTop: 8 }}>
+                <caption style={{ textAlign: 'left', fontSize: 12, color: 'var(--text-300)', paddingBottom: 4 }}>Assumptions the engine used</caption>
+                <thead><tr><th scope="col">Assumption</th><th scope="col">Value</th><th scope="col">Source</th><th scope="col">Answer turns on it</th></tr></thead>
+                <tbody>
+                  {asmtRes.assumptions.map((a) => (
+                    <tr key={a.parameter}>
+                      <td style={{ whiteSpace: 'nowrap' }}>{a.parameter}</td>
+                      <td style={{ fontFamily: 'var(--font-mono, ui-monospace, monospace)' }}>{String(a.value)}</td>
+                      <td>{a.source === 'user_provided' ? 'from the design' : a.source}</td>
+                      <td><span className={'rd-chip tone-' + (a.sensitivity === 'high' ? 'warn' : 'idle')}>{a.sensitivity}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+  );
+}
 
 export function BiostatWorkbench(_props: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
-  const [asmt, setAsmt] = useState({ studyPhase: 'Phase 3', indication: '', studyDesign: '', primaryEndpoint: '', sampleSize: '' });
+  // The engine's own inputs (ana-biostats StatisticalInput). It judges the
+  // design it computes from these, so what it needs is what the form asks for.
+  const [asmt, setAsmt] = useState({
+    studyPhase: 'Phase 3', indication: '', studyType: 'superiority', objectiveType: 'efficacy',
+    endpointType: 'continuous', effectSize: '', controlRate: '', treatmentRate: '', margin: '',
+    alpha: '0.05', powerTarget: '0.8', attritionRate: '0.1', allocationRatio: '1',
+  });
   const [asmtRes, setAsmtRes] = useState<Defensibility | null>(null);
   const [asmtBusy, setAsmtBusy] = useState(false);
 
@@ -438,7 +638,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
       summary: `Biostatistics workbench, "${active.title}" selected — ${active.subtitle}.`,
       facts: {
         calculatorId: active.id,
-        endpoint: `/api/biostat${active.path}`,
+        endpoint: calculatorEndpoint(active),
         computes: active.about,
         requiredInputs: active.fields.filter(f => !f.optional).map(f => f.label),
         optionalInputs: active.fields.filter(f => f.optional).map(f => f.label),
@@ -458,16 +658,26 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
   usePublishSurfaceContext('biostat-workbench', anaContext);
 
   const runAssess = useCallback(async () => {
-    if (!asmt.indication || !asmt.studyDesign || !asmt.primaryEndpoint) { fireToast('Enter indication, study design, and primary endpoint.', 'error'); return; }
     setAsmtBusy(true);
     try {
-      const { ok, status, data } = await readData<Defensibility>('/api/statistical-defensibility/assess', {
-        studyPhase: asmt.studyPhase, indication: asmt.indication, studyDesign: asmt.studyDesign,
-        primaryEndpoint: asmt.primaryEndpoint, sampleSize: asmt.sampleSize ? Number(asmt.sampleSize) : 0,
+      const n = (v: string) => (v.trim() === '' ? undefined : Number(v));
+      const { ok, status, data, error } = await readData<Defensibility>('/api/statistical-defensibility/assess', {
+        clientTrack: 'biotech_pharma',
+        phase: asmt.studyPhase, indication: asmt.indication || undefined,
+        studyType: asmt.studyType, objectiveType: asmt.objectiveType, endpointType: asmt.endpointType,
+        effectSize: n(asmt.effectSize), controlRate: n(asmt.controlRate), treatmentRate: n(asmt.treatmentRate),
+        nonInferiorityMargin: asmt.studyType === 'non_inferiority' ? n(asmt.margin) : undefined,
+        equivalenceMargin: asmt.studyType === 'equivalence' ? n(asmt.margin) : undefined,
+        alpha: n(asmt.alpha), powerTarget: n(asmt.powerTarget), attritionRate: n(asmt.attritionRate),
+        allocationRatio: n(asmt.allocationRatio),
       });
-      if (!ok || !data) { fireToast(`Assessment failed (HTTP ${status}).`, 'error'); return; }
+      if (!ok || !data) {
+        setAsmtRes(null);
+        fireToast(error ?? `Assessment failed (HTTP ${status}).`, 'error');
+        return;
+      }
       setAsmtRes(data);
-      fireToast('Reviewer-risk assessment complete.');
+      fireToast('Defensibility assessed.');
     } finally { setAsmtBusy(false); }
   }, [asmt, fireToast]);
 
@@ -476,7 +686,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Biostatistics workbench</span><span className="s">Reviewer-risk assessment + {CALCULATORS.length} design engines</span></div>
         <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300,#6b6963)' }}>
-          The design calculators below run on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser. The reviewer-risk defensibility assessment is not one of them: it is a model’s review of the fields you enter, and it scores only the dimensions those fields support.
+          The design calculators below run on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser. The defensibility assessment runs on the same engine: it computes the design from the inputs below and judges what it computed.
         </div>
       </div>
 
@@ -484,41 +694,48 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Statistical defensibility</span><span className="s">Reviewer-risk assessment</span></div>
         <div className="pj-card-b">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 8, marginBottom: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 8, marginBottom: 10 }}>
             <label style={{ fontSize: 12 }}>Phase<select className="c2c-input" style={{ height: 30 }} value={asmt.studyPhase} onChange={(e) => setAsmt({ ...asmt, studyPhase: e.target.value })}>{PHASES.map((p) => <option key={p}>{p}</option>)}</select></label>
             <label style={{ fontSize: 12 }}>Indication<input className="c2c-input" style={{ height: 30 }} value={asmt.indication} onChange={(e) => setAsmt({ ...asmt, indication: e.target.value })} placeholder="e.g. NSCLC" /></label>
-            <label style={{ fontSize: 12 }}>Study design<input className="c2c-input" style={{ height: 30 }} value={asmt.studyDesign} onChange={(e) => setAsmt({ ...asmt, studyDesign: e.target.value })} placeholder="e.g. randomized double-blind" /></label>
-            <label style={{ fontSize: 12 }}>Primary endpoint<input className="c2c-input" style={{ height: 30 }} value={asmt.primaryEndpoint} onChange={(e) => setAsmt({ ...asmt, primaryEndpoint: e.target.value })} placeholder="e.g. PFS" /></label>
-            <label style={{ fontSize: 12 }}>Sample size<input className="c2c-input" style={{ height: 30 }} inputMode="numeric" value={asmt.sampleSize} onChange={(e) => setAsmt({ ...asmt, sampleSize: e.target.value.replace(/\D/g, '') })} /></label>
+            <label style={{ fontSize: 12 }}>Design<select className="c2c-input" style={{ height: 30 }} value={asmt.studyType} onChange={(e) => setAsmt({ ...asmt, studyType: e.target.value })}>{DESIGN_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+            <label style={{ fontSize: 12 }}>Objective<select className="c2c-input" style={{ height: 30 }} value={asmt.objectiveType} onChange={(e) => setAsmt({ ...asmt, objectiveType: e.target.value })}>{OBJECTIVES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+            <label style={{ fontSize: 12 }}>Primary endpoint type<select className="c2c-input" style={{ height: 30 }} value={asmt.endpointType} onChange={(e) => setAsmt({ ...asmt, endpointType: e.target.value })}>{ENDPOINT_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+            {asmt.endpointType === 'binary' ? (
+              <>
+                <label style={{ fontSize: 12 }}>Control rate<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.controlRate} onChange={(e) => setAsmt({ ...asmt, controlRate: e.target.value })} placeholder="e.g. 0.5" /></label>
+                <label style={{ fontSize: 12 }}>Treatment rate<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.treatmentRate} onChange={(e) => setAsmt({ ...asmt, treatmentRate: e.target.value })} placeholder="e.g. 0.7" /></label>
+              </>
+            ) : (
+              <label style={{ fontSize: 12 }}>
+                {/* The engine reads this field for a time-to-event design as
+                    the hazard-ratio REDUCTION (computation-engine.ts
+                    hazardRatio, HR = 1 − effectSize). It was labelled "Hazard
+                    ratio" with the placeholder 0.7, so an oncologist typing
+                    their protocol's HR sized for HR 0.300: 50 subjects where
+                    550 is right. The sibling surface (Biostatistics.tsx)
+                    already called it a reduction; the label now says it and
+                    the hint states the arithmetic, because a convention a
+                    reader has to infer is one that will be got wrong. */}
+                {asmt.endpointType === 'time_to_event' ? 'Hazard-ratio reduction (1 − HR)' : 'Effect size (standardized)'}
+                <input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.effectSize} onChange={(e) => setAsmt({ ...asmt, effectSize: e.target.value })} placeholder={asmt.endpointType === 'time_to_event' ? 'e.g. 0.3' : 'e.g. 0.5'} />
+                {asmt.endpointType === 'time_to_event' && (
+                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>
+                    Not the hazard ratio itself. For a protocol stating HR 0.7, enter 0.3.
+                  </span>
+                )}
+              </label>
+            )}
+            {(asmt.studyType === 'non_inferiority' || asmt.studyType === 'equivalence') && (
+              <label style={{ fontSize: 12 }}>{asmt.studyType === 'equivalence' ? 'Equivalence margin' : 'Non-inferiority margin'}<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.margin} onChange={(e) => setAsmt({ ...asmt, margin: e.target.value })} /></label>
+            )}
+            <label style={{ fontSize: 12 }}>Alpha (two-sided)<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.alpha} onChange={(e) => setAsmt({ ...asmt, alpha: e.target.value })} /></label>
+            <label style={{ fontSize: 12 }}>Power<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.powerTarget} onChange={(e) => setAsmt({ ...asmt, powerTarget: e.target.value })} /></label>
+            <label style={{ fontSize: 12 }}>Dropout rate<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.attritionRate} onChange={(e) => setAsmt({ ...asmt, attritionRate: e.target.value })} /></label>
+            <label style={{ fontSize: 12 }}>Allocation ratio<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.allocationRatio} onChange={(e) => setAsmt({ ...asmt, allocationRatio: e.target.value })} /></label>
           </div>
           <button className="btn primary" style={{ height: 32 }} onClick={runAssess} disabled={asmtBusy}>{I.zap} {asmtBusy ? 'Assessing…' : 'Assess defensibility'}</button>
 
-          {asmtRes && (
-            <div style={{ marginTop: 12 }}>
-              <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 10 }}>
-                {asmtRes.overallScore != null && <div><div style={{ fontSize: 26, fontWeight: 700 }}>{asmtRes.overallScore}</div><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)' }}>Overall score</div></div>}
-                {asmtRes.overallRating && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.overallRating)}>{asmtRes.overallRating}</span><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>Rating</div></div>}
-                {asmtRes.reviewerRiskLevel && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.reviewerRiskLevel)}>{asmtRes.reviewerRiskLevel}</span><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>Reviewer risk</div></div>}
-              </div>
-              {asmtRes.scoreBasis?.ran === false && (
-                <div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginBottom: 10 }}>
-                  No overall score: {asmtRes.scoreBasis.reason}
-                </div>
-              )}
-              {Array.isArray(asmtRes.criticalIssues) && asmtRes.criticalIssues.length > 0 && (
-                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--error,#b63939)' }}>Critical issues</div>
-                  <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.criticalIssues.map((x, i) => <li key={i}>{issueText(x)}</li>)}</ul></div>
-              )}
-              {Array.isArray(asmtRes.majorIssues) && asmtRes.majorIssues.length > 0 && (
-                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--warning,#955d22)' }}>Major issues</div>
-                  <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.majorIssues.map((x, i) => <li key={i}>{issueText(x)}</li>)}</ul></div>
-              )}
-              {Array.isArray(asmtRes.recommendations) && asmtRes.recommendations.length > 0 && (
-                <div><div style={{ fontSize: 12, fontWeight: 600 }}>Recommendations</div>
-                  <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.recommendations.map((x: any, i: number) => <li key={i}>{issueText(x)}</li>)}</ul></div>
-              )}
-            </div>
-          )}
+          {asmtRes && <DefensibilityResult asmtRes={asmtRes} />}
         </div>
       </div>
 
@@ -546,6 +763,14 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
           a leftover value under a key the next engine also uses would be sent
           silently. */}
       <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} />
+
+      {/* The two stored-state capabilities. Everything above is stateless: a
+          figure is computed and nothing is kept. These two record — an interim
+          look and the decision signed on it, and the method graph built from
+          the sponsor's own CSRs — so they sit below the engines that feed them.
+          Panels of this workbench, not rail destinations (CLAUDE.md RULE 2). */}
+      <AdaptiveMonitoringPanel />
+      <BiostatKnowledgePanel />
 
       <C2CToast msg={toast} />
     </div>

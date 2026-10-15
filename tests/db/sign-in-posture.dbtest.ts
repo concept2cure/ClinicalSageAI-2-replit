@@ -108,7 +108,13 @@ async function addMember(key: string, factor: 'totp' | 'email' | 'disabled' | 'g
     [email, `Lane Posture ${key}`, await bcrypt.hash(PASSWORD, 4), ORG],
   );
   const id = user.rows[0].id as number;
-  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [ORG, id]);
+  // The membership begins a minute before the suite's faked clock (T0), as a membership
+  // precedes every session in life; one begun after a session ends it (plan P0-4b R1).
+  // A timestamptz, so the naive column holds it in this connection's zone, as now() would.
+  await owner.query(
+    `INSERT INTO organization_users (organization_id, user_id, role, created_at) VALUES ($1, $2, 'admin', $3::timestamptz)`,
+    [ORG, id, new Date(T0 - 60_000).toISOString()],
+  );
   let secret = '';
   if (factor !== 'email') {
     // Through the functions /api/auth/mfa/setup, /enable and /disable call.
@@ -321,11 +327,13 @@ describe('before any credential, every address gets the same answer', () => {
   });
 });
 
-describe('the enterprise router refuses setup over an enrolled authenticator, and says so (F-26)', () => {
+describe('the enterprise router serves no authenticator setup of its own (P-25 follow-up)', () => {
   // mfaService.generateSecret refuses while a factor is enrolled (F-26,
-  // 0c912e67e; the password router's route and rotation are pinned by
-  // tests/db/second-factor-binding.dbtest.ts). The enterprise router's
-  // /mfa/setup reaches the same guard, and answered its refusal with a 500.
+  // 0c912e67e; the one route that reaches it, POST /api/auth/mfa/setup, and the
+  // rotation are pinned by tests/db/second-factor-binding.dbtest.ts). The
+  // enterprise router had its own /mfa/setup, /mfa/enable and /mfa/disable, a
+  // second implementation no client called; they were removed on 2026-10-08.
+  // Here: the door is gone, and knocking on it changes nothing.
   let bearer: { Authorization: string };
 
   beforeAll(async () => {
@@ -341,14 +349,13 @@ describe('the enterprise router refuses setup over an enrolled authenticator, an
     };
   });
 
-  it('409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched', async () => {
+  it('404, no secret handed out, the enrolled secret untouched', async () => {
     at(1);
     const stored = async () =>
       (await owner.query('SELECT mfa_secret, mfa_enabled FROM users WHERE id = $1', [members.guarded.id])).rows[0];
     const before = await stored();
     const res = await request(app).post('/api/auth/enterprise/mfa/setup').set(bearer).send({});
-    expect(res.status, JSON.stringify(res.body)).toBe(409);
-    expect(res.body.error).toBe('MFA_ALREADY_ENABLED');
+    expect(res.status, JSON.stringify(res.body)).toBe(404);
     expect(JSON.stringify(res.body)).not.toMatch(/otpauth|"secret"/);
     expect(await stored()).toEqual(before);
   });

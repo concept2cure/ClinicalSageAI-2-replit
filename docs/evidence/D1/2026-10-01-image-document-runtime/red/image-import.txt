@@ -1,0 +1,9 @@
+# red: in the built image, the interpreter the spawners used before (plain python3) — no virtualenv
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'docx'
+exit 1
+
+# green: the interpreter ANA_DOCX_PYTHON names
+python-docx and lxml 6.1.1 import
+exit 0

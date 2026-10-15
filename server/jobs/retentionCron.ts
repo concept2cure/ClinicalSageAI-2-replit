@@ -29,7 +29,6 @@
  * task's disk.
  */
 
-import nodemailer from 'nodemailer';
 import cron from 'node-cron';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
@@ -40,7 +39,9 @@ import {
 } from '../../shared/schema/vault';
 import { writeChainedAuditRow } from '../services/auditService';
 import { reportSecurityAlert } from '../services/security-alerts';
+import { sendGenericEmail } from '../services/emailService';
 import { runWithSystemTenantScope } from '../db/tenantStore';
+import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('retention-sweep');
@@ -65,6 +66,11 @@ export interface RetentionSummary {
   destructionRefused: number;
   /** Expired documents left in place because a legal hold covers them. */
   heldByLegalHold: number;
+  /**
+   * Expired documents another run had already disposed of by the time this
+   * one reached them: nothing archived, nothing audited (U19).
+   */
+  alreadyDisposed: number;
   errors: number;
 }
 
@@ -115,7 +121,7 @@ async function organisationOf(client: TxClient, doc: VaultDocument): Promise<num
 async function disposeDocument(
   doc: VaultDocument,
   behaviour: { archiveBeforeDelete: boolean; policyMatched: boolean },
-): Promise<void> {
+): Promise<'disposed' | 'already_disposed'> {
   const client = (await pool.connect()) as unknown as TxClient;
   try {
     await client.query('BEGIN');
@@ -131,7 +137,16 @@ async function disposeDocument(
         [doc.id, doc.programId, doc.documentCode, doc.documentTitle, doc.documentType, doc.retentionPolicy, JSON.stringify(doc)],
       );
     }
-    await client.query('UPDATE vault.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL', [doc.id]);
+    // Only the run whose UPDATE matched records the disposition. Another
+    // process may have disposed of the document since the sweep listed it; its
+    // archive snapshot above is rolled back with this transaction, and no
+    // second retention_soft_delete audit row records a deletion this run did
+    // not make (U19).
+    const softDelete = await client.query('UPDATE vault.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL', [doc.id]);
+    if (softDelete.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return 'already_disposed';
+    }
     await writeChainedAuditRow(
       client,
       {
@@ -152,6 +167,7 @@ async function disposeDocument(
       doc.id,
     );
     await client.query('COMMIT');
+    return 'disposed';
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw error;
@@ -200,6 +216,7 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
       softDeleted: 0,
       destructionRefused: 0,
       heldByLegalHold: 0,
+      alreadyDisposed: 0,
       errors: 0,
     };
 
@@ -249,7 +266,11 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
           continue;
         }
 
-        await disposeDocument(doc, { archiveBeforeDelete, policyMatched: Boolean(policy) });
+        const outcome = await disposeDocument(doc, { archiveBeforeDelete, policyMatched: Boolean(policy) });
+        if (outcome === 'already_disposed') {
+          summary.alreadyDisposed += 1;
+          continue;
+        }
         if (archiveBeforeDelete) summary.archived += 1;
         summary.softDeleted += 1;
       } catch (error) {
@@ -265,46 +286,43 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
   });
 }
 
-/** Best-effort admin notification. Recipients come from RETENTION_ADMIN_EMAILS
- *  (comma-separated); silently skipped when SMTP or recipients are unconfigured. */
+/**
+ * Best-effort admin notification. Recipients come from RETENTION_ADMIN_EMAILS
+ * (comma-separated); with none configured nothing is sent.
+ *
+ * Sent through the one mail path (services/emailService.ts), which reads the
+ * SMTP_HOST / SMTP_USER / SMTP_PASS that terraform/stack renders. This used to
+ * build its own transport from SMTP_PASSWORD, which nothing sets, so in
+ * production the summary was never sent and nothing said so. Recipients with
+ * no deliverable mail now raise the alert instead of passing silently.
+ */
 async function notifyAdmins(summary: RetentionSummary): Promise<void> {
   const recipients = (process.env.RETENTION_ADMIN_EMAILS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
+  if (!recipients.length) return;
 
-  if (!recipients.length || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    return;
-  }
-
-  try {
-    const transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.example.com',
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
-    });
-    await transport.sendMail({
-      from: process.env.EMAIL_FROM || 'Concept2Cure Vault <no-reply@trialsage.ai>',
-      to: recipients.join(', '),
-      subject: `[Retention] ${summary.softDeleted} document(s) processed, ${summary.destructionRefused} destruction(s) refused`,
-      html: `<p>Document retention sweep complete.</p>
-        <ul>
-          <li>Scanned (expired): ${summary.scanned}</li>
-          <li>Archived: ${summary.archived}</li>
-          <li>Soft-deleted: ${summary.softDeleted}</li>
-          <li>Destruction refused (policy asks to destroy; awaiting the retention decision): ${summary.destructionRefused}</li>
-          <li>Errors: ${summary.errors}</li>
-        </ul>`,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('[RETENTION] Failed to send notification:', message);
+  const lines: Array<[string, number]> = [
+    ['Scanned (expired)', summary.scanned],
+    ['Archived', summary.archived],
+    ['Soft-deleted', summary.softDeleted],
+    ['Destruction refused (policy asks to destroy; awaiting the retention decision)', summary.destructionRefused],
+    ['Already disposed of by another run', summary.alreadyDisposed],
+    ['Errors', summary.errors],
+  ];
+  const sent = await sendGenericEmail(
+    recipients.join(', '),
+    `[Retention] ${summary.softDeleted} document(s) processed, ${summary.destructionRefused} destruction(s) refused`,
+    ['Document retention sweep complete.', ...lines.map(([label, n]) => `${label}: ${n}`)].join('\n'),
+    `<p>Document retention sweep complete.</p>\n<ul>${lines.map(([label, n]) => `<li>${label}: ${n}</li>`).join('')}</ul>`,
+  );
+  if (!sent) {
+    logger.error('Retention sweep admin notification was not delivered', { recipients: recipients.length });
     reportSecurityAlert({
       kind: 'retention_notify_failed',
-      message: 'Retention sweep admin notification failed',
+      message: 'Retention sweep admin notification was not delivered',
       detail: {
-        error: message,
         scanned: summary.scanned,
         softDeleted: summary.softDeleted,
         destructionRefused: summary.destructionRefused,
@@ -368,6 +386,9 @@ export function resolveRetentionSweepPosture(env: NodeJS.ProcessEnv = process.en
 
 export const DEFAULT_RETENTION_SWEEP_CRON = '30 3 * * *';
 
+/** The sweep runs at most once per UTC day across every server process. */
+const RETENTION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 /** Schedule the nightly sweep, or say why not. Called once at boot (server/index.ts). */
 export function startRetentionSchedule(): void {
   const posture = resolveRetentionSweepPosture(process.env);
@@ -381,8 +402,11 @@ export function startRetentionSchedule(): void {
   }
   const expr = process.env.RETENTION_SWEEP_CRON || DEFAULT_RETENTION_SWEEP_CRON;
   try {
+    // Every server process schedules this (two API tasks and the worker). One
+    // run per day: the first process to claim the day's window runs it, the
+    // others skip (U19). A run that throws gives the window back.
     cron.schedule(expr, () => {
-      void runRetentionJob().catch((err) =>
+      void runScheduledOncePerWindow('retention-sweep', windowKeyOf(RETENTION_WINDOW_MS), () => runRetentionJob()).catch((err) =>
         logger.error('Scheduled retention sweep failed', { error: err instanceof Error ? err.message : String(err) }),
       );
     });

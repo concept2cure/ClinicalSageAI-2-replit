@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts",
+    "--reporter=verbose"
+  ],
+  "cwd": "/workspace/scratch/bd36ee581acd/concept2cure",
+  "startedAt": "2026-10-08T13:44:03.093902+00:00",
+  "durationSeconds": 1.11,
+  "exitCode": 1,
+  "files": {
+    "server/services/ana/run-control.ts": "8d65fabfeae96b859423dea90795ce3906d99040",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts": "33e20ff3348694fd0957bd5c2824fd9a8c21670f"
+  },
+  "head": "e6183e52ee8d8d47b01eb2325f9790097ac16a1a"
+}

@@ -229,7 +229,9 @@ describe('CTD proposals you can trust (VR-04)', () => {
     expect(pharma('Clinical Overview.pdf').ctdSection).toBe('2.5');
     expect(pharma('ISS tables.pdf').ctdSection).toBe('5.3.5.3');
     expect(pharma('stability-protocol.pdf').ctdSection).toBe('3.2.P.8');
-    expect(pharma('cover letter.pdf').ctdSection).toBe('1.1');
+    // FDA regional Module 1: 1.1 is FORMS, 1.2 is the Cover Letter (shared/regulatory/regional-module1.ts).
+    // This control pinned 1.1 — the swapped pair the ingestion detector carried until 2026-10-12.
+    expect(pharma('cover letter.pdf').ctdSection).toBe('1.2');
     expect(pharma('Nonclinical Overview.pdf').ctdSection).toBe('2.4');
   });
 });

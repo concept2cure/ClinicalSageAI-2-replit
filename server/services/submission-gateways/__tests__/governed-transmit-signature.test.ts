@@ -25,6 +25,20 @@ const { queries, connectMock, transmitMock } = vi.hoisted(() => {
 });
 
 vi.mock('../../../db', () => ({ pool: { connect: connectMock, query: vi.fn() } }));
+// This suite tests the signature record, not separation of duties. Its pool is
+// a bare stub, so the package-author lookup assertTransmitterIndependent runs
+// would fail and refuse every transmit. The signer is modelled as independent
+// of the package here; requiresIndependence stays real. Independence itself is
+// tested in governed-transmit-independence.test.ts.
+vi.mock('../../governance/separation-of-duties', async (orig) => ({
+  ...(await orig<typeof import('../../governance/separation-of-duties')>()),
+  assertSignerIsNotAuthor: vi.fn().mockResolvedValue({ checked: true, reason: 'test: signer independent of the package' }),
+}));
+// The signer's role in this organization, as the server reads it. An approver
+// may sign by the default policy (signing-authority.ts); the authority suite
+// below steers it.
+const role = vi.hoisted(() => ({ value: 'approver' as string | null }));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: vi.fn(async () => role.value) }));
 vi.mock('../index', () => ({ getGateway: () => ({ transmit: transmitMock }) }));
 vi.mock('../fda-esg', () => ({ findActiveTransmittal: vi.fn().mockResolvedValue(null) }));
 vi.mock('../../submission-bundle-storage', () => ({ getBundle: vi.fn() }));
@@ -187,5 +201,77 @@ describe('executeGovernedTransmit — the sign is an electronic signature', () =
     connectMock.mockResolvedValue(client);
     await executeGovernedTransmit(input({ log: { error: vi.fn() } }));
     expect(queries.some((q) => /UPDATE submission_transmittals[\s\S]*SET metadata/.test(q.sql))).toBe(false);
+  });
+});
+
+/**
+ * Membership: the independence check is ON the transmit path, before anything
+ * reaches the gateway. A check that exists but is never called refuses nothing,
+ * and every test of the check alone still passes.
+ */
+describe('executeGovernedTransmit — the package creator cannot transmit it', () => {
+  beforeEach(() => {
+    queries.length = 0;
+    transmitMock.mockReset();
+    transmitMock.mockResolvedValue({ transmittalId: 901, transmissionId: 'core-id-2', status: 'received' });
+    process.env.NODE_ENV = 'test';
+  });
+
+  it('refuses when the signer created the package, and the gateway is never called', async () => {
+    const sod = await import('../../governance/separation-of-duties');
+    vi.mocked(sod.assertSignerIsNotAuthor).mockRejectedValueOnce(new sod.SeparationOfDutiesError('author'));
+    await expect(executeGovernedTransmit(input())).rejects.toMatchObject({
+      name: 'GovernedTransmitRefusal',
+      code: 'SIGNER_IS_AUTHOR',
+      httpStatus: 403,
+    });
+    expect(transmitMock, 'bytes left for the agency under a refused signer').not.toHaveBeenCalled();
+  });
+
+  it('refuses a transmission signed as authorship before asking who authored the package', async () => {
+    const sod = await import('../../governance/separation-of-duties');
+    vi.mocked(sod.assertSignerIsNotAuthor).mockClear();
+    await expect(executeGovernedTransmit(input({ meaning: 'authorship' }))).rejects.toMatchObject({
+      code: 'AUTHORSHIP_NOT_A_RELEASE',
+    });
+    expect(sod.assertSignerIsNotAuthor).not.toHaveBeenCalled();
+    expect(transmitMock).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * SEC-1008-1 (weekly review 2026-10-08): only a role the signing policy
+ * authorizes transmits to an agency. Before, any role that may write could, and
+ * the transmission was then recorded as that person's electronic signature.
+ */
+describe('executeGovernedTransmit — only a role that may sign transmits (21 CFR 11.10(g))', () => {
+  beforeEach(() => {
+    queries.length = 0;
+    connectMock.mockReset();
+    transmitMock.mockReset();
+    transmitMock.mockResolvedValue({ transmittalId: 902, transmissionId: 'core-id-3', status: 'received' });
+    process.env.NODE_ENV = 'test';
+  });
+
+  it.each(['member', 'manager', 'viewer', null])('refuses a signer whose role is %s, and nothing is read, signed or sent', async (r) => {
+    role.value = r;
+    try {
+      await expect(executeGovernedTransmit(input())).rejects.toMatchObject({
+        name: 'GovernedTransmitRefusal',
+        code: 'ESIGNATURE_NO_AUTHORITY',
+        httpStatus: 403,
+      });
+    } finally {
+      role.value = 'approver';
+    }
+    expect(transmitMock, 'bytes left for the agency under a signer with no authority').not.toHaveBeenCalled();
+    expect(connectMock, 'a signature row was opened for a signer with no authority').not.toHaveBeenCalled();
+  });
+
+  it('an approver transmits, signed', async () => {
+    connectMock.mockResolvedValue(fakeClient());
+    const out = await executeGovernedTransmit(input());
+    expect(transmitMock).toHaveBeenCalledTimes(1);
+    expect(out.result).toMatchObject({ transmittalId: 902 });
   });
 });

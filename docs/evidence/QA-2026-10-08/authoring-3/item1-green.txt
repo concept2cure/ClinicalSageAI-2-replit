@@ -1,0 +1,23 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > refuses to re-place an edited document over the copy leaf 2.5 files: text, title and hash stay the pin 114ms
+ ✓ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > a leaf in a dispatched sequence pins its copy the same way, and the refusal says the sequence keeps it 37ms
+ ✓ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > the same text, now approved, promotes the copy status in place and says it wrote; the pin still holds 59ms
+ ✓ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > an unchanged re-place writes nothing, and says so 42ms
+ ✓ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > a filing copy a leaf pins is never rewritten by placing its source again > once the leaf is removed the copy is no longer filed, and an edited document is re-taken into it 55ms
+ ✓ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > upsertLeaf answers "unchanged" only while the pin still matches > re-placing a document whose text changed since its leaf pinned it is refused by name, and the leaf is untouched 32ms
+ ✓ server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts > upsertLeaf answers "unchanged" only while the pin still matches > the same document with its pinned text intact is still answered unchanged 41ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > prefills the document’s own code — the parent of its sections — not the open section’s 411ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > refuses one of the document’s own section codes — the leaf would hold the other sections too — and writes nothing 148ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a one-section document is filed at that section’s code 62ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a whole document is filed at its own code, and a repeat placement says so > a repeat placement the server answers with the existing leaf is reported as already placed, not as a new leaf 78ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an edited document over a filed copy: the server’s refusal verbatim, and no leaf is requested 65ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > an unchanged re-placement says nothing was written 77ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPlaceWholeDocument.test.tsx > a re-placement says exactly what was written > a re-placement that promoted the copy’s status says so, and never says nothing was written 72ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  13:41:21
+   Duration  12.17s (transform 3.53s, setup 296ms, import 6.09s, tests 4.55s, environment 681ms)
+

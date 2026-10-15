@@ -36,7 +36,12 @@
  * @module server/services/vault/document-passage-search
  */
 
-import { pool } from '../../db.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, ProgramReadAccessError, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
+import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { supersededSql } from './vault-version-family.js';
+import type { AdmittedAnaSourceReadScope } from '../ana/source-read-scope.js';
+import { assertRetrievalScope, pinRetrievalReadScope, verifyRetrievalSources, withRetrievalReadScope, type RetrievalQueryable } from './retrieval-source-access.js';
 
 export class PassageSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -105,6 +110,12 @@ export interface PassageSearchResult {
   hits: PassageHit[];
   /** Null when the chunking ledger could not be read — unknown, not zero. */
   coverage: PassageCoverage | null;
+  /**
+   * How the hits were ranked: 'text' when the query could not be embedded (no
+   * key, or egress refused) and the text index answered alone; 'meaning_and_text'
+   * when the embedding arm ran too. Null when nothing was returned to rank.
+   */
+  ranking: 'text' | 'meaning_and_text' | null;
 }
 
 /**
@@ -118,8 +129,59 @@ export interface PassageSearchResult {
 /** How many unfiled uploads the coverage line probes for before saying "more". */
 const UNFILED_UPLOAD_PROBE = 20;
 
-export async function getPassageCoverage(organizationId: number): Promise<PassageCoverage> {
-  const { rows } = await pool.query(
+async function readUnfiledUploadCoverage(db: RetrievalQueryable, organizationId: number, userId: number, programId: string | null, scope?: AdmittedAnaSourceReadScope): Promise<Pick<PassageCoverage, 'unfiledUploads' | 'unfiledUploadsMore'>> {
+  try {
+    const { listChatUploads, listChatUploadsInReadScope } = await import('./document-catalog.service.js');
+    const page = scope ? await listChatUploadsInReadScope(db, scope, { limit: UNFILED_UPLOAD_PROBE })
+      : await listChatUploads(db, organizationId, { userId, programId, limit: UNFILED_UPLOAD_PROBE });
+    return { unfiledUploads: page.uploads.length, unfiledUploadsMore: page.hasMore };
+  } catch {
+    return { unfiledUploads: null, unfiledUploadsMore: false };
+  }
+}
+
+function ledgerCount(value: unknown): number {
+  if (typeof value !== 'number' && (typeof value !== 'string' || !/^\d+$/.test(value))) {
+    throw new Error('The passage index ledger could not be verified.');
+  }
+  const count = Number(value);
+  if (!Number.isSafeInteger(count) || count < 0) throw new Error('The passage index ledger could not be verified.');
+  return count;
+}
+
+function recordedCoverage(r: Record<string, any>, uploads: Pick<PassageCoverage, 'unfiledUploads' | 'unfiledUploadsMore'>): PassageCoverage {
+  const counts = ['total', 'indexed', 'pending', 'failed'].map(key => ledgerCount(r[key]));
+  if (counts[1] + counts[2] + counts[3] > counts[0]) throw new Error('The passage index ledger could not be verified.');
+  return { ...uploads, total: counts[0], indexed: counts[1], pending: counts[2], failed: counts[3],
+    failureReasons: Array.isArray(r.failure_reasons) ? r.failure_reasons.filter((reason): reason is string => typeof reason === 'string' && reason.length > 0) : [] };
+}
+
+function requireMatchingPassageSourceActor(scope: AdmittedAnaSourceReadScope | undefined, organizationId: number, userId: number, programId: string | null): void {
+  if (!scope) return;
+  assertRetrievalScope(scope, organizationId, programId);
+  if (scope.userId !== userId) throw new ProgramReadAccessError(403, 'PROJECT_SCOPE_UNVERIFIED', 'The requested actor does not match the source scope.');
+}
+
+export async function getPassageCoverage(
+  db: RequestSqlClient,
+  organizationId: number,
+  opts: { userId: number; programId?: string | null; allowedProgramIds?: readonly string[]; sourceReadScope?: AdmittedAnaSourceReadScope },
+  verifiedScope?: CurrentAccessibleProgramScope,
+): Promise<PassageCoverage> {
+  opts = Object.freeze({ ...opts, allowedProgramIds: opts.allowedProgramIds ? Object.freeze([...opts.allowedProgramIds]) : undefined });
+  const programId = opts.programId ?? null;
+  const sourceReadScope = opts.sourceReadScope ? pinRetrievalReadScope(opts.sourceReadScope) : undefined;
+  const requestedPrograms = opts.allowedProgramIds ? [...opts.allowedProgramIds] : undefined;
+  requireMatchingPassageSourceActor(sourceReadScope, organizationId, opts.userId, programId);
+  const identity = { organizationId, userId: opts.userId, programId };
+  if (verifiedScope) assertVerifiedProgramScope(db, identity, verifiedScope);
+  const programScope = verifiedScope ?? await getCurrentAccessibleProgramScope(db, identity);
+  if (sourceReadScope) await withRetrievalReadScope(sourceReadScope, async () => undefined);
+  const narrowed = sourceReadScope?.accessibleProgramIds ?? requestedPrograms;
+  const allowedProgramIds = narrowed === undefined ? programScope.programIds : programScope.programIds.filter(id => narrowed.includes(id));
+  const params: unknown[] = [organizationId, programId, allowedProgramIds];
+  const allowed = 'AND d.program_id = ANY($3::uuid[])';
+  const { rows } = await db.query(
     `SELECT COUNT(*)::int AS total,
             COUNT(*) FILTER (WHERE c.chunk_status = 'chunked' AND COALESCE(c.chunk_count, 0) > 0)::int AS indexed,
             COUNT(*) FILTER (WHERE c.chunk_status IS NULL OR c.chunk_status = 'pending')::int AS pending,
@@ -131,42 +193,88 @@ export async function getPassageCoverage(organizationId: number): Promise<Passag
                WHERE c.chunk_status = 'chunk_failed' AND c.chunk_error IS NOT NULL
              ))[1:3] AS failure_reasons
        FROM vault.documents d
-       JOIN regulatory_programs p ON p.id = d.program_id
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE p.organization_id = $1 AND d.deleted_at IS NULL`,
-    [organizationId],
+       JOIN regulatory_programs p ON p.id = d.program_id AND p.deleted_at IS NULL
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
+      WHERE p.organization_id = $1 AND d.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+        AND NOT ${supersededSql('d')}
+        AND ($2::uuid IS NULL OR d.program_id = $2::uuid) ${allowed}`,
+    params,
   );
-  const r = rows[0] ?? {};
+  if (rows.length !== 1) throw new Error('The passage index ledger could not be verified.');
   /* The uploads outside the corpus, through the one definition of "the chat
      uploads this organization currently has". Bounded — the coverage line needs
      to say THAT files sit outside the index and roughly how many, not to
      enumerate them — and independently fault-tolerant, because a coverage
      figure that fails the whole search would be a worse answer than a partial
      one. */
-  let unfiledUploads: number | null;
-  let unfiledUploadsMore = false;
+  const coverage = recordedCoverage(rows[0] ?? {}, await readUnfiledUploadCoverage(db, organizationId, opts.userId, programId, sourceReadScope));
+  await requireProgramScopeStillCurrent(db, identity, programScope);
+  if (sourceReadScope) await withRetrievalReadScope(sourceReadScope, async () => undefined);
+  return coverage;
+}
+
+/* Coverage is context for the answer, not the answer. A ledger read that
+   fails must not take the search down with it — but it must not quietly
+   become "all indexed" either, so it becomes null and the caller says so. */
+async function coverageOrUnknown(db: RequestSqlClient, identity: { organizationId: number; userId: number; programId: string | null }, opts: PassageSearchOptions, programScope: CurrentAccessibleProgramScope): Promise<PassageCoverage | null> {
   try {
-    const { listChatUploads } = await import('./document-catalog.service.js');
-    const page = await listChatUploads(organizationId, null, UNFILED_UPLOAD_PROBE);
-    unfiledUploads = page.uploads.length;
-    unfiledUploadsMore = page.hasMore;
-  } catch {
-    // Unknown, which the coverage note reports as unchecked — never as zero.
-    unfiledUploads = null;
+    return await getPassageCoverage(db, identity.organizationId, { ...opts, userId: identity.userId, programId: identity.programId }, programScope);
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError) throw error;
+    return null;
   }
-  return {
-    unfiledUploads,
-    unfiledUploadsMore,
-    total: Number(r.total ?? 0),
-    indexed: Number(r.indexed ?? 0),
-    pending: Number(r.pending ?? 0),
-    failed: Number(r.failed ?? 0),
-    failureReasons: Array.isArray(r.failure_reasons) ? r.failure_reasons.filter(Boolean) : [],
-  };
+}
+
+/** How retrieval ranked what it returned (see PassageSearchResult.ranking). */
+function rankingOf(documents: Array<{ lexicalOnly?: boolean }>): PassageSearchResult['ranking'] {
+  if (documents.length === 0) return null;
+  return documents.every(d => d.lexicalOnly) ? 'text' : 'meaning_and_text';
 }
 
 export interface PassageSearchOptions {
   limit?: number;
+  /**
+   * One program's passages only: the open project (PF-10 S7). Pushed into the
+   * vault SQL, so a passage of the open project that ranks below another
+   * project's is still found; null = the actor's verified accessible library.
+   */
+  programId?: string | null;
+  allowedProgramIds?: readonly string[];
+  sourceReadScope?: AdmittedAnaSourceReadScope;
+}
+
+function pinPassageSearchOptions(opts: PassageSearchOptions): PassageSearchOptions {
+  return Object.freeze({ ...opts, allowedProgramIds: opts.allowedProgramIds ? Object.freeze([...opts.allowedProgramIds]) : undefined });
+}
+
+function hasNoSearchablePassages(allowedProgramIds: readonly string[], coverage: PassageCoverage | null): boolean {
+  return allowedProgramIds.length === 0 || (coverage !== null && coverage.total > 0 && coverage.indexed === 0);
+}
+
+type PassageSearchArgs = { organizationId: number; userId: number; organizationUuid: string | null | undefined; query: string };
+
+async function preparePassageSearch(db: RequestSqlClient, args: PassageSearchArgs, opts: PassageSearchOptions) {
+  const query = args.query.trim();
+  if (query.length < 3) throw new PassageSearchUnavailableError('the query must be at least 3 characters.');
+  if (!args.organizationUuid || !UUID_RE.test(args.organizationUuid)) {
+    throw new PassageSearchUnavailableError('no organization identity is on this request, so the vault cannot be searched for one tenant. Nothing was searched — this is not an empty result.');
+  }
+  const programId = opts.programId ?? null;
+  const identity = { organizationId: args.organizationId, userId: args.userId, programId };
+  const scope = opts.sourceReadScope ? pinRetrievalReadScope(opts.sourceReadScope) : undefined;
+  const requestedPrograms = opts.allowedProgramIds ? [...opts.allowedProgramIds] : undefined;
+  requireMatchingPassageSourceActor(scope, args.organizationId, args.userId, programId);
+  const programScope = await getCurrentAccessibleProgramScope(db, identity);
+  const { rows } = await db.query('SELECT id FROM organizations WHERE id=$1 AND uuid=$2::uuid', [args.organizationId, args.organizationUuid]);
+  if (rows.length !== 1 || Number(rows[0].id) !== args.organizationId) throw new PassageSearchUnavailableError('the organization identity could not be verified. Nothing was searched.');
+  if (scope) await withRetrievalReadScope(scope, async () => undefined);
+  return { query, organizationUuid: args.organizationUuid, programId, scope, identity, programScope,
+    admittedOpts: { ...opts, sourceReadScope: scope, allowedProgramIds: programScope.programIds.filter(id => (scope?.accessibleProgramIds ?? requestedPrograms)?.includes(id) ?? true) } };
+}
+
+function passageFilters(programId: string | null, allowedProgramIds?: readonly string[]) {
+  if (!programId && allowedProgramIds === undefined) return undefined;
+  return { ...(programId ? { programId } : {}), ...(allowedProgramIds !== undefined ? { allowedProgramIds } : {}) };
 }
 
 /**
@@ -180,36 +288,15 @@ export interface PassageSearchOptions {
  * catalog exists to stop.
  */
 export async function searchDocumentPassages(
-  args: {
-    organizationId: number;
-    organizationUuid: string | null | undefined;
-    query: string;
-  },
+  db: RequestSqlClient,
+  args: PassageSearchArgs,
   opts: PassageSearchOptions = {},
 ): Promise<PassageSearchResult> {
-  const query = args.query.trim();
-  if (query.length < 3) {
-    throw new PassageSearchUnavailableError('the query must be at least 3 characters.');
-  }
-  if (!args.organizationUuid || !UUID_RE.test(args.organizationUuid)) {
-    // The pipeline would refuse this by returning [], which reads as "nothing
-    // matched". Say what actually happened instead.
-    throw new PassageSearchUnavailableError(
-      'no organization identity is on this request, so the vault cannot be searched for one tenant. ' +
-        'Nothing was searched — this is not an empty result.',
-    );
-  }
+  args = Object.freeze({ ...args });
+  opts = pinPassageSearchOptions(opts);
   const limit = Math.min(25, Math.max(1, opts.limit ?? 8));
-
-  /* Coverage is context for the answer, not the answer. A ledger read that
-     fails must not take the search down with it — but it must not quietly
-     become "all indexed" either, so it becomes null and the caller says so. */
-  let coverage: PassageCoverage | null;
-  try {
-    coverage = await getPassageCoverage(args.organizationId);
-  } catch {
-    coverage = null;
-  }
+  const { query, organizationUuid, programId, scope, admittedOpts, identity, programScope } = await preparePassageSearch(db, args, opts);
+  let coverage = await coverageOrUnknown(db, identity, admittedOpts, programScope);
 
   /* NOTHING IS INDEXED — answer without embedding anything.
      The two feature flags are independent, and catalog-on/chunking-off is the
@@ -223,8 +310,10 @@ export async function searchDocumentPassages(
      Checked against `indexed`, not `total`: an organization with no documents
      at all is a different (also honest) message the caller composes from the
      same coverage. */
-  if (coverage && coverage.total > 0 && coverage.indexed === 0) {
-    return { hits: [], coverage };
+  if (hasNoSearchablePassages(admittedOpts.allowedProgramIds, coverage)) {
+    if (scope) await withRetrievalReadScope(scope, async () => undefined);
+    await requireProgramScopeStillCurrent(db, identity, programScope);
+    return { hits: [], coverage, ranking: null };
   }
 
   const { ragRouter } = await import('../ragRouter.js');
@@ -234,8 +323,11 @@ export async function searchDocumentPassages(
       query,
       intent: 'regulatory_qa',
       corpus: 'vault',
-      organizationUuid: args.organizationUuid,
+      organizationUuid,
       limit,
+      filters: passageFilters(programId, admittedOpts.allowedProgramIds),
+      sourceReadScope: scope,
+      vaultRead: { sqlClient: db, ...identity, verifiedScope: programScope },
       /* Two deliberate departures from the regulatory_qa defaults, both because
          this runs INSIDE an agent turn rather than behind a request a person is
          waiting on once.
@@ -257,11 +349,23 @@ export async function searchDocumentPassages(
     });
     documents = ctx?.documents ?? [];
   } catch (err) {
+    if (err instanceof ProgramReadAccessError) throw err;
     throw new PassageSearchUnavailableError(
       err instanceof Error ? err.message : String(err),
     );
   }
 
+  if (scope) await withRetrievalReadScope(scope, q => verifyRetrievalSources(q, scope, documents.map(d => ({
+    documentId: d.documentId ?? '', programId: d.programId ?? '', contentHash: d.contentHash ?? '',
+  }))));
+  if (scope) {
+    // Ledger/counts were read before asynchronous retrieval. Refresh within
+    // the current actor scope; failed ledger reads remain explicitly unknown.
+    coverage = await coverageOrUnknown(db, identity, admittedOpts, programScope);
+    await withRetrievalReadScope(scope, async () => undefined);
+  }
+
+  await requireProgramScopeStillCurrent(db, identity, programScope);
   const hits: PassageHit[] = documents.slice(0, limit).map(d => ({
     documentId: d.documentId ?? null,
     documentTitle: d.title || 'Untitled',
@@ -273,5 +377,5 @@ export async function searchDocumentPassages(
     similarity: Number(d.finalScore ?? d.initialScore ?? 0),
   }));
 
-  return { hits, coverage };
+  return { hits, coverage, ranking: rankingOf(documents) };
 }

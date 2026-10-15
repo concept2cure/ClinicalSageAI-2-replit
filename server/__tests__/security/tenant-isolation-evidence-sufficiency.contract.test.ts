@@ -60,6 +60,11 @@ vi.mock('../../db', () => ({
       }),
     }),
   },
+  // The program check (programInOrganization): $1 is the program, $2 the org.
+  pool: {
+    query: async (_sql: string, params: unknown[]) =>
+      programOwnership.get(params[0] as string) === params[1] ? { rows: [{ id: params[0] }] } : { rows: [] },
+  },
 }));
 
 vi.mock('../../services/evidence-sufficiency/evidence-sufficiency.service', () => ({

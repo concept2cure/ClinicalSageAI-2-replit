@@ -3,7 +3,6 @@
  *
  * Full CRUD for approval workflows:
  *   POST   /api/approval-workflows/start              Start a workflow on a document
- *   POST   /api/approval-workflows/:id/approve         Approve current step
  *   POST   /api/approval-workflows/:id/reject          Reject at current step
  *   POST   /api/approval-workflows/:id/delegate        Delegate to another user
  *   GET    /api/approval-workflows/pending              Get pending approvals for current user
@@ -21,23 +20,20 @@ import { workflowTemplates, workflowSteps } from '../../shared/schema/unified_wo
 
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from '../middleware/tokenType';
 
 const logger = createScopedLogger('approval-workflow');
 
 const router = Router();
 
-const isDev = process.env.NODE_ENV === 'development';
-
 // ── Auth helper ────────────────────────────────────────────────────────────
 
 function getUser(req: Request): { userId: string; organizationId: string } | null {
+  // IAM-23 (2026-10-01): no development fallback identity (it answered a
+  // request with no token as user 1 of organisation 2), and only an access
+  // token: a refresh, pre-MFA or connector token is not a session.
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
-
-  if (isDev && !token) {
-    return { userId: '1', organizationId: '2' };
-  }
-
   if (!token) return null;
 
   try {
@@ -45,6 +41,7 @@ function getUser(req: Request): { userId: string; organizationId: string } | nul
       userId: string;
       organizationId?: string;
     };
+    if (requireAccessTokenReason(decoded as Parameters<typeof requireAccessTokenReason>[0])) return null;
     if (decoded.organizationId === undefined) return null;
     return {
       userId: decoded.userId,
@@ -102,40 +99,11 @@ router.post('/start', async (req: Request, res: Response) => {
   }
 });
 
-// ============================================================================
-// POST /api/approval-workflows/:id/approve — Approve current step
-// ============================================================================
-
-router.post('/:id/approve', async (req: Request, res: Response) => {
-  const user = requireAuth(req, res);
-  if (!user) return;
-
-  try {
-    const approvalId = parseInt(String(req.params.id), 10);
-    const { comments } = req.body;
-
-    const result = await approvalOrchestrator.processApproval({
-      approvalId,
-      action: 'approve',
-      performedBy: user.userId,
-      comments,
-    });
-
-    return res.json({
-      success: true,
-      ...result,
-      message: result.workflowCompleted
-        ? 'Workflow completed — all steps approved'
-        : result.workflowAdvanced
-        ? `Step approved. Advanced to step ${result.nextStep}`
-        : 'Step approved',
-    });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Approve error', { err: message });
-    return res.status(400).json({ error: message });
-  }
-});
+// POST /api/approval-workflows/:id/approve is not served. It marked a step,
+// and on the last step the document, approved from a session alone: no
+// re-verification, no meaning, no electronic signature. Nothing called it.
+// Removed 2026-10-08 (P-25 follow-up); an approval is a signed act and goes
+// through the signing ceremony (services/part11/reverify-signer.ts).
 
 // ============================================================================
 // POST /api/approval-workflows/:id/reject — Reject at current step

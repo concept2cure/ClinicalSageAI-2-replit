@@ -1,0 +1,5 @@
+# 2026-10-01T14:55:56Z. Scratch HEAD with the stack mutated: AUDIT_ANCHOR_BUCKET removed from the containers' environment. deploy-aws.yml as at HEAD. Runs that passed are omitted below; the boot-contract runs read the preflight list.
+$ sed -i "/AUDIT_ANCHOR_BUCKET/d" main.tf; terraform test
+run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket"... fail
+Failure! 42 passed, 1 failed.
+exit=1

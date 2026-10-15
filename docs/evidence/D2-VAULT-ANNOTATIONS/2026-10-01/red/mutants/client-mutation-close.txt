@@ -1,0 +1,636 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > lists what the server returns, open by default, with the summary, the three anchors and stale notes 297ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > says when nothing is open on any version 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 500 says so and never reads as no open annotations 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 200 that is not the expected shape says so too 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > claims a whole-document comment only once the server answered 201 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a 409 shows the server message, keeps the form and claims nothing 29ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a returned 401 is not a success either 25ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > codePointRange converts UTF-16 offsets and refuses a split character or an empty range 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > posts the selected passage at its absolute code-point offset with the hash as read 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > offers Retract only on the actor’s own annotations and replies 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a 422 on resolve shows the server message and keeps the form 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a retraction is claimed after the 200, with its reason sent 53ms
+ × client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a reply is claimed after the 201, and its form closes 5066ms
+   → expected <div class="vd-d-filing" …(1)>…(2)</div> to be null
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        data-testid="vault-annotations"
+      >
+        <div
+          class="vd-d-seclbl"
+        >
+          Review annotations
+        </div>
+        <div
+          class="vd-d-idx"
+          data-testid="vault-annotations-summary"
+        >
+          Open: v2.0 — 2 (1 change request) · v1.0 — 1 (1 change request)
+        </div>
+        <div
+          aria-label="Show annotations"
+          class="vd-d-filing-acts"
+          role="group"
+        >
+          <button
+            aria-pressed="true"
+            class="sp-primary"
+          >
+            Open (3)
+          </button>
+          <button
+            aria-pressed="false"
+            class="sp-ask"
+          >
+            Resolved (1)
+          </button>
+          <button
+            aria-pressed="false"
+            class="sp-ask"
+          >
+            Retracted (1)
+          </button>
+        </div>
+        <div
+          aria-label="Review annotations"
+          class="vd-d-filing"
+          role="list"
+        >
+          <div
+            class="vd-cmp"
+            data-testid="vault-annotation"
+            role="listitem"
+          >
+            <div
+              class="vd-cmp-head"
+            >
+              <span
+                class="rd-chip tone-idle"
+              >
+                Comment
+              </span>
+              <span
+                class="vd-ver-m"
+              >
+                Rhea Reviewer · 2026-09-30 14:05 UTC
+              </span>
+            </div>
+            <div
+              class="vd-ver-m"
+            >
+              Whole document
+            </div>
+            <div
+              class="vd-cmp-line"
+            >
+              Section 2 needs the batch numbers.
+            </div>
+            <div
+              class="vd-d-filing"
+              data-testid="vault-annotation-reply"
+            >
+              <div
+                class="vd-d-filing-row"
+              >
+                <span
+                  class="k"
+                >
+                  Reply
+                </span>
+                <span
+                  class="v"
+                >
+                  Ari Author · 2026-09-30 15:00 UTC
+                </span>
+              </div>
+              <div
+                class="vd-cmp-line"
+              >
+                Added in the next upload.
+              </div>
+              <div
+                class="vd-d-filing-acts"
+              >
+                <button
+                  class="sp-ask"
+                >
+                  Retract reply
+                </button>
+              </div>
+            </div>
+            <div
+              class="vd-d-filing"
+              data-testid="vault-annotation-reply-form"
+            >
+              <label
+                class="vd-d-filing-row"
+              >
+                <span
+                  class="k"
+                >
+                  Reply
+                </span>
+                <textarea
+                  class="vd-d-filing-reason"
+                  placeholder="At most 4,000 characters."
+                  rows="3"
+                >
+                  Batch numbers added in v2.1.
+                </textarea>
+              </label>
+              <div
+                class="vd-d-filing-acts"
+              >
+                <button
+                  class="sp-primary"
+                >
+                  Post reply
+                </button>
+                <button
+                  class="sp-ask"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            class="vd-cmp"
+            data-testid="vault-annotation"
+            role="listitem"
+          >
+            <div
+              class="vd-cmp-head"
+            >
+              <span
+                class="rd-chip tone-warn"
+              >
+                Change request
+              </span>
+              <span
+                class="vd-ver-m"
+              >
+                Posted on 
+                v1.0
+              </span>
+              <span
+                class="vd-ver-m"
+              >
+                Sam Second · 2026-09-30 14:05 UTC
+              </span>
+            </div>
+            <div
+              class="vd-ver-m"
+            >
+              Page 
+              4
+               of 
+              12
+            </div>
+            <div
+              class="vd-ver-m"
+            >
+              This version's page count has changed since this was posted.
+            </div>
+            <div
+              class="vd-cmp-line"
+            >
+              Table 3 totals do not add up.
+            </div>
+            <div
+              class="vd-d-filing-acts"
+            >
+              <button
+                class="sp-ask"
+              >
+                Reply
+              </button>
+              <button
+                class="sp-ask"
+              >
+                Resolve
+              </button>
+            </div>
+          </div>
+          <div
+            class="vd-cmp"
+            data-testid="vault-annotation"
+            role="listitem"
+          >
+            <div
+              class="vd-cmp-head"
+            >
+              <span
+                class="rd-chip tone-warn"
+              >
+                Change request
+              </span>
+              <span
+                class="vd-ver-m"
+              >
+                Rhea Reviewer · 2026-09-30 14:05 UTC
+              </span>
+            </div>
+            <blockquote
+              class="vd-d-preview"
+            >
+              shall be stored at 2–8 °C
+            </blockquote>
+            <div
+              class="vd-ver-m"
+            >
+              The extracted text has changed since this was posted; the quote is as the reviewer saw it.
+            </div>
+            <div
+              class="vd-cmp-line"
+            >
+              Name the excursion limits.
+            </div>
+            <div
+              class="vd-d-filing-acts"
+            >
+              <button
+                class="sp-ask"
+              >
+                Reply
+              </button>
+              <button
+                class="sp-ask"
+              >
+                Resolve
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="vd-d-idx"
+          role="status"
+        >
+          Reply posted. Recorded in the document's history.
+        </div>
+        <div
+          class="vd-d-filing-acts"
+        >
+          <button
+            class="sp-ask"
+            data-testid="vault-annotations-open"
+          >
+            Add annotation
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > offers the page input when the text read gives a page count 40ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > does not offer it when the version has no recorded page count 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > openAnnotationsSentence (7) > says what was open, or that it could not be read 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a reply is claimed after the 201, and its form closes
+AssertionError: expected <div class="vd-d-filing" …(1)>…(2)</div> to be null
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        data-testid="vault-annotations"
+      >
+        <div
+          class="vd-d-seclbl"
+        >
+          Review annotations
+        </div>
+        <div
+          class="vd-d-idx"
+          data-testid="vault-annotations-summary"
+        >
+          Open: v2.0 — 2 (1 change request) · v1.0 — 1 (1 change request)
+        </div>
+        <div
+          aria-label="Show annotations"
+          class="vd-d-filing-acts"
+          role="group"
+        >
+          <button
+            aria-pressed="true"
+            class="sp-primary"
+          >
+            Open (3)
+          </button>
+          <button
+            aria-pressed="false"
+            class="sp-ask"
+          >
+            Resolved (1)
+          </button>
+          <button
+            aria-pressed="false"
+            class="sp-ask"
+          >
+            Retracted (1)
+          </button>
+        </div>
+        <div
+          aria-label="Review annotations"
+          class="vd-d-filing"
+          role="list"
+        >
+          <div
+            class="vd-cmp"
+            data-testid="vault-annotation"
+            role="listitem"
+          >
+            <div
+              class="vd-cmp-head"
+            >
+              <span
+                class="rd-chip tone-idle"
+              >
+                Comment
+              </span>
+              <span
+                class="vd-ver-m"
+              >
+                Rhea Reviewer · 2026-09-30 14:05 UTC
+              </span>
+            </div>
+            <div
+              class="vd-ver-m"
+            >
+              Whole document
+            </div>
+            <div
+              class="vd-cmp-line"
+            >
+              Section 2 needs the batch numbers.
+            </div>
+            <div
+              class="vd-d-filing"
+              data-testid="vault-annotation-reply"
+            >
+              <div
+                class="vd-d-filing-row"
+              >
+                <span
+                  class="k"
+                >
+                  Reply
+                </span>
+                <span
+                  class="v"
+                >
+                  Ari Author · 2026-09-30 15:00 UTC
+                </span>
+              </div>
+              <div
+                class="vd-cmp-line"
+              >
+                Added in the next upload.
+              </div>
+              <div
+                class="vd-d-filing-acts"
+              >
+                <button
+                  class="sp-ask"
+                >
+                  Retract reply
+                </button>
+              </div>
+            </div>
+            <div
+              class="vd-d-filing"
+              data-testid="vault-annotation-reply-form"
+            >
+              <label
+                class="vd-d-filing-row"
+              >
+                <span
+                  class="k"
+                >
+                  Reply
+                </span>
+                <textarea
+                  class="vd-d-filing-reason"
+                  placeholder="At most 4,000 characters."
+                  rows="3"
+                >
+                  Batch numbers added in v2.1.
+                </textarea>
+              </label>
+              <div
+                class="vd-d-filing-acts"
+              >
+                <button
+                  class="sp-primary"
+                >
+                  Post reply
+                </button>
+                <button
+                  class="sp-ask"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            class="vd-cmp"
+            data-testid="vault-annotation"
+            role="listitem"
+          >
+            <div
+              class="vd-cmp-head"
+            >
+              <span
+                class="rd-chip tone-warn"
+              >
+                Change request
+              </span>
+              <span
+                class="vd-ver-m"
+              >
+                Posted on 
+                v1.0
+              </span>
+              <span
+                class="vd-ver-m"
+              >
+                Sam Second · 2026-09-30 14:05 UTC
+              </span>
+            </div>
+            <div
+              class="vd-ver-m"
+            >
+              Page 
+              4
+               of 
+              12
+            </div>
+            <div
+              class="vd-ver-m"
+            >
+              This version's page count has changed since this was posted.
+            </div>
+            <div
+              class="vd-cmp-line"
+            >
+              Table 3 totals do not add up.
+            </div>
+            <div
+              class="vd-d-filing-acts"
+            >
+              <button
+                class="sp-ask"
+              >
+                Reply
+              </button>
+              <button
+                class="sp-ask"
+              >
+                Resolve
+              </button>
+            </div>
+          </div>
+          <div
+            class="vd-cmp"
+            data-testid="vault-annotation"
+            role="listitem"
+          >
+            <div
+              class="vd-cmp-head"
+            >
+              <span
+                class="rd-chip tone-warn"
+              >
+                Change request
+              </span>
+              <span
+                class="vd-ver-m"
+              >
+                Rhea Reviewer · 2026-09-30 14:05 UTC
+              </span>
+            </div>
+            <blockquote
+              class="vd-d-preview"
+            >
+              shall be stored at 2–8 °C
+            </blockquote>
+            <div
+              class="vd-ver-m"
+            >
+              The extracted text has changed since this was posted; the quote is as the reviewer saw it.
+            </div>
+            <div
+              class="vd-cmp-line"
+            >
+              Name the excursion limits.
+            </div>
+            <div
+              class="vd-d-filing-acts"
+            >
+              <button
+                class="sp-ask"
+              >
+                Reply
+              </button>
+              <button
+                class="sp-ask"
+              >
+                Resolve
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="vd-d-idx"
+          role="status"
+        >
+          Reply posted. Recorded in the document's history.
+        </div>
+        <div
+          class="vd-d-filing-acts"
+        >
+          <button
+            class="sp-ask"
+            data-testid="vault-annotations-open"
+          >
+            Add annotation
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected:
+null
+
++ Received:
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotation-reply-form"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Reply
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      placeholder="At most 4,000 characters."
+      rows="3"
+    >
+      Batch numbers added in v2.1.
+    </textarea>
+  </label>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+    >
+      Post reply
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx:276:85
+    274|     expect((await screen.findByRole('status')).textContent).toBe("Repl…
+    275|     expect(apiRequest).toHaveBeenCalledWith('POST', act('a-doc', 'repl…
+    276|     await waitFor(() => expect(screen.queryByTestId('vault-annotation-…
+       |                                                                                     ^
+    277|     expect(onChanged).toHaveBeenCalledTimes(1);
+    278|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  21:40:48
+   Duration  7.03s (transform 291ms, setup 162ms, import 309ms, tests 5.79s, environment 544ms)
+

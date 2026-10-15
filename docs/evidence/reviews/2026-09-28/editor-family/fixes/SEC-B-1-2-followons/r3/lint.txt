@@ -1,0 +1,11 @@
+server/export/__tests__/authoring-images-figure-rule.test.ts now=0/0 head=0/0
+server/export/authoring-images.ts now=1/0 head=1/0
+server/export/authoring-section-content.ts now=6/0 head=5/0
+server/services/authoring/__tests__/authoring-html-sanitizer.test.ts now=0/0 head=0/0
+server/services/authoring/__tests__/section-generation-figures.test.ts now=0/0 head=0/0
+server/services/authoring/authoring-documents.ts now=0/0 head=0/0
+server/services/authoring/authoring-html-sanitizer.ts now=0/0 head=0/0
+server/services/authoring/section-generation-service.ts now=0/0 head=0/0
+server/services/ectd/__tests__/leaf-pdf-renderer.test.ts now=0/0 head=0/0
+server/services/ectd/leaf-pdf-renderer.ts now=2/0 head=2/0
+server/export/section-html-parse.ts now=0/0 head=new

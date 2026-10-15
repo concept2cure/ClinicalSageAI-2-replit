@@ -57,15 +57,20 @@ export interface NotificationRow {
 /**
  * Fire a notification. Always returns the inserted id; callers should
  * not await this in hot paths — use `void createNotification(...)`.
+ * Governed delivery passes its transaction client and awaits the insert so
+ * output, notification, audit and delivery cursor commit together.
  */
-export async function createNotification(input: CreateNotificationInput): Promise<number> {
+export async function createNotification(
+  input: CreateNotificationInput,
+  executor: Pick<typeof pool, 'query'> = pool,
+): Promise<number> {
   if (!['info', 'warning', 'critical'].includes(input.severity)) {
     throw new Error(`createNotification: severity must be info | warning | critical`);
   }
   if (!input.title || !input.category) {
     throw new Error('createNotification: title + category are required');
   }
-  const { rows } = await pool.query<{ id: number }>(
+  const { rows } = await executor.query<{ id: number }>(
     `INSERT INTO mdx_notifications (
        organization_id, recipient_user_id, recipient_role, category, severity,
        title, body, resource_type, resource_id, action_url, metadata, expires_at

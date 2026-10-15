@@ -1,0 +1,2 @@
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+[self-test] OK — 10 copies found, 6 reads passed.

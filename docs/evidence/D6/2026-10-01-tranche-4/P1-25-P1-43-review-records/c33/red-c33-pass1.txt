@@ -1,0 +1,4 @@
+6714: FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated
+6715-Error: pass 1: migrations/20261001_compliance_review_records.sql failed — column es.superseded_by does not exist
+6716- ❯ tests/schema-contract/tenant-isolation-sweep.contract.test.ts:283:17
+6717-    281|         } catch (err) {

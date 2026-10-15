@@ -52,6 +52,7 @@ jobs:
           - terraform/modules/cloudfront
           - terraform/modules/github-deploy-roles
           - terraform/modules/compliance-evidence
+          - terraform/modules/vpc-secure
     env:
       TF_IN_AUTOMATION: true
     steps:

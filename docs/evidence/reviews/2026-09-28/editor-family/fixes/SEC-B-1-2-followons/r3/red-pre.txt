@@ -1,0 +1,7 @@
+ × htmlToPlainText — a <pre> is read as markup, verbatim > names a figure inside it, and prints no payload 11ms
+ × htmlToPlainText — a <pre> is read as markup, verbatim > prints the code, not its tags, and keeps its indentation 2ms
+ × a <pre> is read as markup by the export > a figure inside one is a figure: filed, and its payload never printed 10ms
+ × a <pre> is read as markup by the export > a <code> inside one prints its text, not its tags 3ms
+ × refusedFigures — a figure inside a <pre> is read alike by both readers (D2) > is not refused 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 121 passed (126)

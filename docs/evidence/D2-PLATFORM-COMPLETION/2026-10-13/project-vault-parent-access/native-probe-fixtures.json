@@ -1,0 +1,60 @@
+{
+  "tag": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2",
+  "organizationId": 17,
+  "organizationUuid": "f628ce2c-671c-458d-8d35-26b7c781624e",
+  "actors": {
+    "ownerA": {
+      "id": 43,
+      "email": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2-ownerA@example.invalid"
+    },
+    "ownerB": {
+      "id": 44,
+      "email": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2-ownerB@example.invalid"
+    },
+    "unassigned": {
+      "id": 45,
+      "email": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2-unassigned@example.invalid"
+    },
+    "member": {
+      "id": 46,
+      "email": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2-member@example.invalid"
+    },
+    "downgraded": {
+      "id": 47,
+      "email": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2-downgraded@example.invalid"
+    },
+    "revoked": {
+      "id": 48,
+      "email": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2-revoked@example.invalid"
+    }
+  },
+  "programs": {
+    "public": {
+      "id": "42c80a0c-33c9-4873-b763-722aeaf3fb2a",
+      "project": 13,
+      "title": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 public QA project",
+      "document": "b3cc7f58-ef4a-4dd2-8491-2ae195c21e47"
+    },
+    "privateA": {
+      "id": "aca0bb82-d5fe-4ce9-9706-0e7f0db5fb68",
+      "project": 14,
+      "title": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateA QA project",
+      "document": "7be2fd97-43e5-4b0b-9f4c-1a87cc8b0013"
+    },
+    "privateB": {
+      "id": "99b17716-6fd9-406c-8824-b4b0c3874bc0",
+      "project": 15,
+      "title": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 privateB QA project",
+      "document": "909054f7-6920-42b8-8e63-e481ce6321d5"
+    },
+    "downgraded": {
+      "id": "5cf713e8-a0c5-4489-9217-deaec96a21bd",
+      "project": 16,
+      "title": "native-parent-f4fe0e7e-3578-449b-b056-f39daab507d2 downgraded QA project",
+      "document": "6553a33d-9f66-43a4-911e-540356d9ee01"
+    }
+  },
+  "privateUploadId": "file_4c710058-f2db-4ad4-82ea-6d102cb9d819",
+  "sourceId": 3,
+  "retained": "QA records, source bytes and actual audit history; no login tokens included."
+}

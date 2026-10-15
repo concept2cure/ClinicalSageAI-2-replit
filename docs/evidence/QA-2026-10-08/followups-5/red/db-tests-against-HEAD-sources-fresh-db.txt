@@ -1,0 +1,34 @@
+$ HEAD_FILES=<the seven sources above> CI=true NODE_ENV=test RLS_ENFORCE=on DATABASE_URL=.../concept2cure-ri_qa_fresh2 APP_DATABASE_URL=<runtime role>/concept2cure-ri_qa_fresh2 npx vitest run --config <scratch>/vitest.head.db.config.ts tests/db/protocol-reviewer-signing-authority.dbtest.ts tests/db/report-os-registry-seed.dbtest.ts
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ × tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a member, whose role cannot sign, is refused with 409 in a plain sentence, and nothing is written 137ms
+   → {"documentId":10,"assignmentId":6,"actionId":"act_24f2f9c7e89e4220ac96aa363ce3bc42","auditId":"252bd28e-6db4-4c5a-8f3d-5b520938c554","sha256Chain":"7374d964db4eccf85a33e028429eab8d2835cc090ae0aa81ae96654d4b94e7d9"}: expected 201 to be 409 // Object.is equality
+ × tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a manager, whose role cannot sign, is refused with 409 in a plain sentence, and nothing is written 25ms
+   → {"documentId":11,"assignmentId":7,"actionId":"act_986946aae2cd44aea5e8e3a1a6c82175","auditId":"d4571113-092a-4871-bf9b-956c6c3f42d8","sha256Chain":"6377883681cb6c3c4dcb2face50618e32fd44b6cd3708c7311ce0831193e5ad5"}: expected 201 to be 409 // Object.is equality
+ × tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > the member list the reviewer picker reads marks who can sign, as the assignment judges it 27ms
+   → expected { '2066': undefined, …(3) } to deeply equal { '2066': true, '2067': false, …(2) }
+ ✓ tests/db/protocol-reviewer-signing-authority.dbtest.ts > a protocol review is assigned only to someone who can sign its disposition > a reviewer is assigned, and signs the disposition: the assignment does not end at a 403 104ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 17ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 15ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 163ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a run and its chain row, together > when report_os.run_created is refused, the run and its snapshot roll back with it (503, nothing saved) 66ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a member: nothing is sealed and nothing is recorded 14ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a password that is not the signer's: nothing is sealed, signed or recorded 43ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed) 48ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > an admin finalizes: status, seal, one chained row and the signature, together 54ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > a second finalize is refused: the seal stands and nothing more is recorded 21ms
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > refuses a manager whose role carries no signing authority, with the right password: nothing sealed, signed or recorded 27ms
+   → expected 'Your role does not permit applying an…' to be 'Your role does not permit applying an…' // Object.is equality
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > the signed final report is exported with no second ceremony, and the chain row names its signature 41ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > reads the seal back and re-verifies it, with the signer and the act (GET /runs/:id/seal) 27ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > another organisation's session reads neither the seal nor the sealed document: 404, nothing in the body 40ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > shows the final run as the stored sealed document (GET /runs/:id/rendered) 23ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record > a stored document changed after sealing reads as a mismatch, not intact 39ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: what a rewrite of the mutable rows cannot hide > a sealed document removed from the snapshot reads as a mismatch, and nothing is re-rendered in its place 33ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: what a rewrite of the mutable rows cannot hide > a run whose status was rewritten after finalizing reads as a mismatch, not as a run never sealed 71ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the export of the sealed record > exports the final run as its sealed document, signed and verified, and records the export id it prints 230ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > the seal on the record: a forgery by the app role is not the record > a run given final status, a forged sealed document and an unchained finalization row reads as a mismatch 99ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a bundle export on the record (review round 1, DP-50) > a bundle export is recorded on the chain with the hash of the bytes sent 79ms
+ Test Files  2 failed (2)
+      Tests  4 failed | 21 passed (25)
+   Start at  12:14:43
+   Duration  8.90s (transform 3.41s, setup 121ms, import 2.91s, tests 5.28s, environment 0ms)

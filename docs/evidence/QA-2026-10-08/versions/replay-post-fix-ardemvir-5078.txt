@@ -1,0 +1,21 @@
+S1 Vault upload A (bytes A, name Protocol-Stability.pdf)
+  HTTP 201
+  {"success":true,"document":{"id":"9f7dabca-aa4d-4333-94b6-fd8acc3b1d76","documentCode":"Protocol-Stability.pdf","version":"1.0","contentHash":"b0fda7fb90a3"}}
+S2 Vault upload B (same name, DIFFERENT bytes B)
+  HTTP 409
+  {"error":{"code":"VERSION_CONTENT_CONFLICT","message":"A different document is already recorded at code \"Protocol-Stability.pdf\" version \"1.0\" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one."}}
+S3 capture B [data room capture]
+  HTTP 200
+  {"sourceId":35,"dataRoom":{"recorded":true}}
+S3 File B [File into Vault]
+  HTTP 200
+  {"success":true,"complete":false,"items":[{"sourceId":35,"outcome":"refused","code":"VERSION_CONTENT_CONFLICT","message":"A different document is already recorded at code \"Protocol-Stability.pdf\" version \"1.0\" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.","headDocumentId":"9f7dabca-aa4d-4333-94b6-fd8acc3b1d76","headVersion":"1.0"}]}
+S4 capture REVISED C [data room capture]
+  HTTP 200
+  {"sourceId":36,"dataRoom":{"recorded":true}}
+S4 File C [File into Vault]
+  HTTP 200
+  {"success":true,"complete":false,"items":[{"sourceId":36,"outcome":"refused","code":"VERSION_CONTENT_CONFLICT","message":"A different document is already recorded at code \"Protocol-Stability.pdf\" version \"1.0\" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.","headDocumentId":"9f7dabca-aa4d-4333-94b6-fd8acc3b1d76","headVersion":"1.0"}]}
+S5 offer taken: add C as the next version of the document it conflicts with [File into Vault]
+  HTTP 200
+  {"success":true,"complete":true,"items":[{"sourceId":36,"outcome":"filed","documentId":"afac7757-b99d-49b9-aafc-258765fa23a3","version":"2.0","placementStatus":"suggested","folderLabel":"Module 3 · Quality","needsReview":false}]}

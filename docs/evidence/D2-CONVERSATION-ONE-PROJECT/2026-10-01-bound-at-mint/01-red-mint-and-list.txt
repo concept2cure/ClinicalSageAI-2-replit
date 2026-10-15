@@ -1,0 +1,22 @@
+# server/services/__tests__/chat-thread-program-key.test.ts and server/routes/chat/__tests__/threads-program-list.test.ts, new cases, against HEAD 541a8d2e9
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > programIdForThread > accepts a UUID (normalised to lower case) and nothing else
+ × server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title
+   → expected 'SELECT t.id, t.created_at, t.updated_…' to match /t\.program_id = \$2/
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > refuses a program id that is not a UUID rather than querying with it
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > returns nothing without an organization — never a cross-tenant list
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads
+ × server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > binds the program, lower-cased, to program_id once it is the organization's
+   → Cannot read properties of undefined (reading '1')
+ × server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > a program of another organization, or a deleted one, is never bound: the thread is minted unbound
+   → expected undefined to be defined
+ × server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > without an organization nothing is bound, and nothing is asked
+   → expected { …(6) } to match object { organization_id: null, …(1) }
+ × server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > a check that could not complete mints nothing: it is not read as "not ours"
+   → promise resolved "'ana-ri_1790838394657_jtw9h52e0'" instead of rejecting
+ × server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > binds nothing, and asks nothing, when no project is open or the id is not a program key
+   → undefined: expected undefined to be null
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > does not re-home an existing thread — continuing a conversation never rewrites its program
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > programIdForThread accepts only a UUID
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > the stream route hands the mint its program key > passes the request's project id through programIdForThread
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 7 passed (13)

@@ -17,6 +17,7 @@
 import crypto from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { getPool } from '../../db';
+import { projectBelongsToTenant } from '../cmc/project-membership';
 import { recordArtifactProvenance } from '../provenance/artifact-provenance';
 import {
   enforceAuthorLineage,
@@ -210,6 +211,15 @@ async function insertNewArtifact(
   };
 }
 
+/** A draft named a project that is not a projects row of its organization (PF-03). */
+export class ArtifactProjectNotFoundError extends Error {
+  readonly code = 'PROJECT_NOT_FOUND';
+  constructor(projectId: unknown) {
+    super(`Project ${String(projectId)} is not a project of this organization; the draft was not saved.`);
+    this.name = 'ArtifactProjectNotFoundError';
+  }
+}
+
 /**
  * Upsert a draft into the governed artifact version history for an AnA thread.
  *
@@ -257,6 +267,15 @@ export async function upsertDocumentArtifactVersionTx(
   client: PoolClient,
   input: UpsertDocumentArtifactVersionInput
 ): Promise<UpsertDocumentArtifactVersionResult> {
+  /* The draft's project is a projects row of its organization (PF-03). Both
+     callers pass an integer they did not check: the stream's draft save takes
+     it from the request body, and commit_document_revision from the model's
+     project_id. So a draft could be versioned under another organization's
+     project. Thrown before the locking SELECT, so the caller's transaction
+     rolls back and nothing is written. */
+  if (!(await projectBelongsToTenant({ organizationId: input.organizationId, projectId: String(input.projectId) }, client))) {
+    throw new ArtifactProjectNotFoundError(input.projectId);
+  }
   const now = new Date();
   const titleSlug = normalizeTitleSlug(input.title);
   const contentHash = sha256(input.content);

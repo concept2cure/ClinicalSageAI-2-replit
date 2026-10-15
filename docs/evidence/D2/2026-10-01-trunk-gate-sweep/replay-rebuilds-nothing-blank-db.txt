@@ -1,0 +1,2 @@
+[ci:replay-rebuilds-nothing] replayed deploy-migrate over 8914 constraints and indexes: 0 rebuilt, 0 dropped, 0 created
+[ci:replay-rebuilds-nothing] ✅ a deploy with nothing to change rebuilds nothing

@@ -10,11 +10,20 @@ resource "aws_db_subnet_group" "this" {
 resource "aws_db_instance" "this" {
   identifier = var.identifier
 
-  engine                = "postgres"
-  engine_version        = var.engine_version
-  instance_class        = var.instance_class
-  allocated_storage     = var.allocated_storage
-  max_allocated_storage = var.max_allocated_storage
+  engine = "postgres"
+  # The MAJOR version (2026-10-01, B10): RDS creates on its current minor of
+  # it and applies minor (security) patches in maintenance_window below. A
+  # pinned minor is retired by AWS on a schedule; "15.4" was, so the first apply
+  # and any rebuild from nothing would have failed to create the instance. A
+  # major upgrade is never automatic: it changes the validated system and is
+  # planned, tested and applied deliberately. The version actually running is
+  # the engine_version_actual output, for the IQ record.
+  engine_version              = var.engine_version
+  auto_minor_version_upgrade  = true
+  allow_major_version_upgrade = false
+  instance_class              = var.instance_class
+  allocated_storage           = var.allocated_storage
+  max_allocated_storage       = var.max_allocated_storage
 
   db_name  = var.database_name
   username = var.master_username
@@ -45,8 +54,10 @@ resource "aws_db_instance" "this" {
   maintenance_window      = "Mon:04:00-Mon:05:00"
 
   performance_insights_enabled = true
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
+  # Performance Insights keeps query text; on the instance's own key, not aws/rds.
+  performance_insights_kms_key_id = var.kms_key_id
+  monitoring_interval             = 60
+  monitoring_role_arn             = aws_iam_role.rds_monitoring.arn
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
@@ -92,6 +103,19 @@ resource "aws_db_parameter_group" "this" {
   parameter {
     name  = "log_statement"
     value = "ddl"
+  }
+
+  # pgaudit runs only when preloaded (2026-10-01, security audit INF-13, plan
+  # P1-11). pgaudit.log below was set from the start and recorded nothing for
+  # want of this. A static parameter: it takes effect at boot, which a new
+  # instance does after this group is attached. It replaces RDS's default list,
+  # so pg_stat_statements is named too. deploy-migrate creates the extension and
+  # refuses to roll services when DB_AUDIT_REQUIRED=pgaudit and it is not
+  # recording (scripts/db/database-audit.mjs).
+  parameter {
+    name         = "shared_preload_libraries"
+    value        = "pg_stat_statements,pgaudit"
+    apply_method = "pending-reboot"
   }
 
   parameter {

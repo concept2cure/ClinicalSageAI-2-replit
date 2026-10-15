@@ -1,0 +1,5 @@
+      [NOTICE] [audit] append-only grants applied to app_service
+      [NOTICE] [child-rls] pdev_readiness_snapshots already policied — leaving it alone
+  ✓ append-only: UPDATE, DELETE, TRUNCATE withdrawn on 10 record table(s)
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+✅ Schema migration complete — safe to roll services.

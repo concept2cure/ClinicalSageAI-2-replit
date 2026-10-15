@@ -1,0 +1,12 @@
+
+> concept2cure-riai@1.0.0 ci:launch-scope-api
+> npx tsx scripts/ci/check-launch-scope-api.ts
+
+ci:launch-scope-api: 1 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [unmapped] /api/vault/legal-holds/retention
+    called by artifacts-center, apps, audit-trail, setup
+    in client/src/concept2cure/v2/surfaces/RetentionPeriodCard.tsx

@@ -1,0 +1,12 @@
+Mutant F04-no-masking: a number written beside a figure (the 95 of a 95% CI) vouches for a figure of its own
+
+--- server/services/ana/memory-fact-check.ts
+- const content = claim.text.replace(NUMBER, (n) => (keep.has(canonNumber(n)) ? n : '#'));
++ const content = keep.size >= 0 ? claim.text : claim.text.replace(NUMBER, (n) => (keep.has(canonNumber(n)) ? n : '#'));
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > credits a figure's own number, never another number written beside it 10ms
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -22,7 +22,7 @@
  */
 import { z } from 'zod';
 import { and, eq, isNull } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, getPool } from '../../db';
 import { withoutTenantKey, withoutOrgId } from '../../utils/authedOrgId';
 import {
   cmcCharacterizationStudies,
@@ -51,6 +51,7 @@ import {
   writeThroughMaterialSpec,
 } from '../cmc-write-through';
 import { linkToModule3, type Module3Linkage, type ProjectSource } from './link-to-module3';
+import { projectBelongsToTenant } from './project-membership';
 
 /* ─── Body primitives, shared with the routes ─────────────────────────────── */
 
@@ -133,6 +134,93 @@ export class RegisterWriteRefusal extends Error {
     super(message);
     this.name = 'RegisterWriteRefusal';
   }
+}
+
+/* ─── The program a register record is filed under ────────────────────────── */
+
+export const PROJECT_NOT_IN_TENANT_REFUSAL =
+  'The program named is not one of this organisation’s programs, so the record was not filed under it.';
+
+/**
+ * The program a NEW register record is filed under: the body's, once it is
+ * shown to be this organisation's. A create used to store (or forward) a body
+ * projectId without asking, so a record could be filed under a program the
+ * caller does not hold (discovery map, create-paths-skip-project-membership).
+ */
+export async function filedProjectOnCreate(orgId: number, sent: unknown): Promise<string | null> {
+  const projectId = typeof sent === 'string' ? sent.trim() : '';
+  if (!projectId) return null;
+  if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
+    throw new RegisterWriteRefusal(PROJECT_NOT_IN_TENANT_REFUSAL);
+  }
+  return projectId;
+}
+
+/** A register table that carries its program, and the source type its rows file as. */
+export interface ProgramFiledRegister {
+  table: string;
+  sourceType: string;
+}
+
+export const PROGRAM_FILED_REGISTERS = {
+  drugSubstance: { table: 'drug_substances', sourceType: 'drug_substance' },
+  drugProduct: { table: 'drug_products', sourceType: 'drug_product' },
+  stabilityStudy: { table: 'stability_studies', sourceType: 'stability' },
+  analyticalMethod: { table: 'analytical_methods', sourceType: 'method' },
+  processValidation: { table: 'process_validation', sourceType: 'process_validation' },
+  changeControl: { table: 'cmc_change_control', sourceType: 'change_control' },
+} as const satisfies Record<string, ProgramFiledRegister>;
+
+/**
+ * What an edit may do to a record's program. A filed record keeps its
+ * program: an edit never moves it, whatever the body says. A legacy record
+ * with no program (written before migrations/20261005_cmc_core_registers_
+ * project.sql) is filed under the body's program on its first edit — once that
+ * program is shown to be this organisation's, and only if no OTHER program
+ * already holds the record's canonical source object. That last case is the
+ * fork the column exists to end: editing program A's substance while program B
+ * was open filed a second copy under B. It is refused, and nothing is written.
+ *
+ * Returns `found: false` when the record is not this organisation's.
+ */
+export async function projectOnEdit(
+  orgId: number,
+  register: ProgramFiledRegister,
+  id: number,
+  sent: unknown,
+): Promise<{ found: boolean; set: { projectId?: string } }> {
+  const pool = getPool();
+  const stored = await pool.query(
+    `SELECT project_id FROM ${register.table} WHERE id = $1 AND organization_id = $2`,
+    [id, orgId],
+  );
+  if (stored.rows.length === 0) return { found: false, set: {} };
+  if (stored.rows[0].project_id) return { found: true, set: {} };
+  const projectId = typeof sent === 'string' ? sent.trim() : '';
+  if (!projectId) return { found: true, set: {} };
+  if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
+    throw new RegisterWriteRefusal(PROJECT_NOT_IN_TENANT_REFUSAL);
+  }
+  const elsewhere = await pool.query(
+    `SELECT DISTINCT project_id FROM cmc_source_objects
+      WHERE organization_id = $1 AND source_type = $2 AND source_key = $3 AND project_id <> $4
+      LIMIT 1`,
+    [orgId, register.sourceType, `${register.sourceType}:${id}`, projectId],
+  );
+  if (elsewhere.rows.length > 0) {
+    throw new RegisterWriteRefusal(
+      'This record is already part of another program’s Module 3, so it was not filed under this one and nothing ' +
+        'was changed. Open that program to edit it, or record it again in this program.',
+    );
+  }
+  return { found: true, set: { projectId } };
+}
+
+/** An edit body without its program: a filed record's program is fixed at creation. */
+export function withoutProject<T extends Record<string, unknown>>(data: T): Omit<T, 'projectId'> {
+  const rest: Record<string, unknown> = { ...data };
+  delete rest.projectId;
+  return rest as Omit<T, 'projectId'>;
 }
 
 export interface QualificationVocab {
@@ -242,9 +330,10 @@ export async function createDrugSubstance(
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof drugSubstances.$inferSelect>> {
   const validated = drugSubstanceBody.parse(body);
+  const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
   const [row] = await db
     .insert(drugSubstances)
-    .values({ ...validated, organizationId: orgId } as typeof drugSubstances.$inferInsert)
+    .values({ ...validated, projectId, organizationId: orgId } as typeof drugSubstances.$inferInsert)
     .returning();
   const linkage = await linkToModule3('write_through_drug_substance', orgId, row, writeThroughDrugSubstance, link);
   return { row, ...linkage };
@@ -256,9 +345,10 @@ export async function createDrugProduct(
   link?: ProjectSource,
 ): Promise<RegisterCreated<typeof drugProducts.$inferSelect>> {
   const validated = drugProductBody.parse(body);
+  const projectId = await filedProjectOnCreate(orgId, (validated as { projectId?: unknown }).projectId);
   const [row] = await db
     .insert(drugProducts)
-    .values({ ...validated, organizationId: orgId } as typeof drugProducts.$inferInsert)
+    .values({ ...validated, projectId, organizationId: orgId } as typeof drugProducts.$inferInsert)
     .returning();
   const linkage = await linkToModule3('write_through_drug_product', orgId, row, writeThroughDrugProduct, link);
   return { row, ...linkage };

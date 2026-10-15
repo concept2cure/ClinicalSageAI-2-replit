@@ -1,0 +1,957 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > trial schema > hands the SVG over as a figure and prints a missing study day as not recorded 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > trial schema > a schema the engine could not draw has no figure and carries its gaps 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > SPIRIT 2013 > prints the engine's four counts verbatim and keeps not_assessable as its own status 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > SPIRIT 2013 > never prints a count the engine did not return 9ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > critical-to-quality factors > labels every rating a seed and names the design element it came from 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > decentralised elements > a null off-site share reads "not assessed", never 0% 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > decentralised elements > prints a stated share beside its numerator and denominator, and each finding 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > BOIN dose escalation > prints every parameter with its source, so an engine default never reads as a sponsor decision 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > BOIN dose escalation > a missing escalation design shows its gap and no table 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > enrollment forecast > a target the sites cannot reach reads "not reached", never a time 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > enrollment forecast > with no accrual plan there is no forecast line, only the gap 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > USDM export > prints the conformance status and reason verbatim — unverified stays unverified 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > WHO registration data set > prints each item with its status and the engine's gap, and says nothing was registered 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > interim-analysis characteristics > shows a recorded-vs-solved discrepancy as its own entry and a null power as not computed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > MMRM sizing > states a shortfall against the planned N, and prints nothing sized when nothing was 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > external-control plan > lists each pre-specification element stated or not, and never shows a posterior 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > multiplicity control > prints both rates with their SE and the controlled verdict, never recomputed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > specimens and blood volume > prints lower bounds as lower bounds and an unknown reference comparison as not known 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > master protocol structure > lists each element stated or not, and claims no adequacy 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > what the fixed engines report, said as they report it > enrollment: some simulations short of the target is "not reported", none is "not reached"; a derived seed says so 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > what the fixed engines report, said as they report it > interim: the binding figure is printed beside the non-binding type I error, never in its place 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > what the fixed engines report, said as they report it > MMRM: "per arm" only at 1:1; an unequal allocation prints each arm and where the ratio comes from 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > what the fixed engines report, said as they report it > dose escalation: a row with no eliminating count prints the engine's reason; the elimination defaults are labelled 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > what the fixed engines report, said as they report it > external control: an element the design has no field for is "not recordable yet", not "not stated" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > what the fixed engines report, said as they report it > multiplicity: says whether the recorded allocation or a textbook split was simulated, and what it spends 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > what the fixed engines report, said as they report it > biospecimens: a within-unknown reference says why; unscheduled blood and the upper-bound frequency are shown 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > what the fixed engines report, said as they report it > master protocol: a not-applicable result gives its reason 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts > the pane's projection list > every industry projection points at a distinct engine path and never pre-computes a percentage 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > round-trips: the prefill of a recorded block parses back to the same block, φ1 and φ2 included 14ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > refuses a non-number with its label, and a starting dose that is not a level 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > refuses, before any request, what the server would refuse: range, whole number, the cohort rules and the neighbourhood 8ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > reads only plain decimals: "0x9", "0b1" and "Infinity" are not numbers 2ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > refuses a dose line with a "|" inside a value, naming the line, rather than dropping what follows it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > refuses a dose label listed twice, so the starting dose names one level 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > a recorded dose holding "|" is shown as recorded, and the drawer says it must be corrected — never rewritten to "/" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > a recorded start on a duplicated label is not silently moved to the first 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > leaves a blank optional field out rather than defaulting it; "Clear" sends null 10ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > reports a bad site line by the number the author sees, and round-trips a recorded plan 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > refuses a duplicate site id and a sixth field, each by line 6ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > pre-selects no choice for a block that is not recorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > parses MMRM retention as a list and refuses a bad entry, and an empty slot, by position 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > refuses a retention that rises or does not match the visits, a target visit outside them, and more visits than the bound 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > external control > round-trips a plan of either method, keeping "not stated" as absent 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > external control > sends only the discount the chosen method reads, and requires it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > registration titles > round-trips recorded titles, and never prefills the public title from the official one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > registration titles > refuses a record with neither title, and leaves a blank one out 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > round-trips a recorded plan from its own prefill: optional fields, an arm with a comma, and each shared-control state 2ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > a sub-study stated as not biomarker-defined round-trips as null, distinct from a blank biomarker; the justification round-trips 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > refuses a not-biomarker-defined id that is no sub-study, is listed twice, or also names a biomarker 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > refuses an arm the design does not carry, a line with no arm, a duplicate id, and an eighth field 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > a recorded population with a line break is not split into two sub-studies on the next edit: the drawer says so 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > offers the shared control from the design's arms, keeping a recorded one the design lacks, marked 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > lossless editing: what cannot come back exactly is named, and recording it is a stated choice > a recorded key the form has no field for is named, and no action is pre-selected 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > lossless editing: what cannot come back exactly is named, and recording it is a stated choice > text a single-line input cannot hold is shown as the input would hold it, and named 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > lossless editing: what cannot come back exactly is named, and recording it is a stated choice > a recorded value no option shows is named rather than held out of sight 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > lossless editing: what cannot come back exactly is named, and recording it is a stated choice > losses compares numbers as text and names additions 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > one activity > edits only the activity it was opened for: no activity picker, and the id is the drawer's 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > one activity > "Not stated" and "None recorded" clear, a value records, a bad volume is refused 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > parity with the server > the location and specimen vocabularies, and the MMRM visit bound, are the server's 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > biospecimen view > prints the worst 8-week window as a lower bound when the totals are lower bounds 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a design that cannot be read is an alert, never an empty panel 861ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a refused write keeps the drawer open and reports the server's own details, framed as nothing written 1129ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a successful write carries the block as read, and the badge says "recorded" only after the design is re-read 607ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a block another author wrote in between is refused: the drawer closes and the design is re-read 342ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a request that did not complete is not reported as nothing written; the design is re-read 435ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > an activity drawer posts for its own activity, with what it recorded as the precondition 580ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a viewer's buttons name their target and say why they are disabled; no Schedule of Activities is stated 224ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > lists the program's persisted designs with their statistical readiness 3261ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > picking a design seeds the engine from the server adapter, not from a preset 3453ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > loads the design handed over on the navigation channel 1721ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol 6670ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id 3201ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > a design the server could not size shows its blocking gap and disables the write-back 4109ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, honest states > an unbound protocol says so and draws NO diff groups 3261ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route 2200ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, honest states > a failed read is reported as a failure, not as an empty derivation 931ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > renders all five, each explaining what the bucket means 1524ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router 1515ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > a conflict shows both values, the reason, and what accepting means 582ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route 1958ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list 601ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > a proposed row names the protocol rows it came from 1335ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > files the document under the module the placement catalog names, and says where 5869ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > an incomplete row offers NO accept control and names the fields a human must supply 1016ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH 2439ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > an unevidenced row offers NO accept control and is not described as a defect 1105ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > applying the sample size requires a reason and reports only what the server confirmed 2816ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict 428ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router 590ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > posts acceptedPaths and a reason, and never a derived value 1420ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > a refused write-back is shown as the refusal, never as success 2582ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT 1610ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > shows applied and rejected paths distinctly after the write 2027ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route 1878ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > raising tasks posts exactly the chosen keys and skips what is already on the board 2594ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > refuses a reason shorter than the governed minimum without posting 2330ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > assigns the review to a member's account, so the reviewer signs their own review 1978ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > renders the statistical review as a risk table with the verdict and the gate codes 2097ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an empty object is reported as a failure, not as an empty derivation 1336ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an error carried on a 200 is reported as a failure, not as an empty derivation 1318ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > the read model inside an envelope is reported as a failure, not as an empty derivation 490ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > when the member list cannot be read it says so, and a reviewer can still be named without an account 1418ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > cross-links open the protocol workspace, the task board and the submission center 2561ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a design id and no derivation is reported as a failure, not as an empty derivation 640ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > neither an account nor a name: nothing is sent 1993ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation missing its buckets is reported as a failure, not as an empty derivation 1114ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation with one bucket null is reported as a failure, not as an empty derivation 1010ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > a disposition is signed, not submitted: nothing is sent until the signer re-authenticates 1693ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > a derivation whose five buckets are genuinely empty is still drawn as empty 643ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > a derivation read that is not a derivation is a failed read (HS-C-3) > an apply whose answer carries no derivation says the diff could not be re-read 877ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > finalize — the replacement for the deleted reason-only drawer is reachable > Finalize protocol opens the e-signature and posts the signed finalization 1313ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads 754ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds 557ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 861ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an empty object reads as a failed load 38ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an envelope around an object reads as a failed load 51ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an error carried on a 200 reads as a failed load 49ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > rows with no fields reads as a failed load 7ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row with an id and nothing else reads as a failed load 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row whose fields are present but null reads as a failed load 25ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a store that is not provisioned says so, and offers no start 27ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > empty state > names the open project and offers both a start and an AnA draft 100ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > the protocol tab strip is a tablist (GA-2) > exposes every tab, which one is selected, and the panel it controls 915ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > the registry says which surfaces claim the rail column > the four fixed surfaces no longer hide the rail they were writing to 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > "Invite member" opens the invite form rather than asking the rail 755ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > a member-level grant is a governed ask, not a local mutation 774ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > csr-workflow — its section rows reach the rail > opens a section through the shell conversation 47ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > says no design is bound and offers the bind action, claiming nothing 1480ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > the protocol tab strip is a tablist (GA-2) > Left, Right, Home and End move focus and selection, and wrap 2138ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > lists this tenant's persisted designs in the bind drawer 778ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a review assigned to someone else says why it cannot be signed (GA-7) > states the reason as visible text on the row, and the disabled button is described by it 900ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a review assigned to someone else says why it cannot be signed (GA-7) > the assigned reviewer sees no such note and an enabled button 550ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > protocol-dev — "Ask AnA" reaches the rail > hands the completeness question to the shell conversation 1944ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > insights — no button hands a question to a rail it hides > renders the canvas with no "Ask AnA about this report" affordance 58ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > shows the design identity and the design gates' findings 1411ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > reports an unresolved link as unresolved, not as a clean design 537ms
+stderr | client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > offers all five, each labelled with what it is a projection OF
+An update to PlanningInputsPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > offers all five, each labelled with what it is a projection OF 1633ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > views the ICH M11 protocol projection with each section's status 1592ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a projection the design cannot fill as its gap, not as an empty success 1213ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says there is NO PACKAGE when the IRB submission was never linked, and shows no rows 1951ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a failed projection read as a failure, not as an empty projection 859ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an empty object is a failed read, not an organisation with no design 438ms
+stderr | client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > will not save a governed record without one
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says the read FAILED rather than drawing an empty manifest 1314ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an error carried on a 200 is a failed read, not an organisation with no design 1003ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says the read FAILED when the IRB register itself does not answer 626ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says so plainly when no IRB submission exists for this protocol 280ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > the list inside an envelope is a failed read, not an organisation with no design 903ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > renders NO percentage anywhere — the headline is counts 720ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > designs present but null is a failed read, not an organisation with no design 974ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > will not save a governed record without one 3205ms
+stderr | client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > says what is missing rather than just being inert
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > a design with no id is a failed read, not an organisation with no design 534ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > shows an undetermined requirement’s settling field and never draws it as satisfied 718ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > orders undetermined requirements first, because they are the actionable ones 983ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > says what is missing rather than just being inert 1196ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an HTML page on a 200 is a failed read, not an organisation with no design 879ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the bind drawer reports a list it could not read (HS-C-3) > an organisation with genuinely no design is still told so 624ms
+stderr | client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > states the requirement in text the field and Save both point to
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > shows an unresolvable placement and labels it a placeholder 578ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > explains IN WORDS why the package is not ready, naming the undecided requirements 745ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > never claims a delivery the platform did not perform (D3) 490ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > states no verdict and names no review category (D4) 446ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > states the requirement in text the field and Save both point to 1884ms
+stderr | client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > carries the stated reason on the save
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > carries the stated reason on the save 1856ms
+stderr | client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > does not accept whitespace as a reason
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > does not accept whitespace as a reason 686ms
+stderr | client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > stays stated across repeated saves of the same section
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > stays stated across repeated saves of the same section
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > stays stated across repeated saves of the same section 3224ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > is inert until a governed reason for change is entered 633ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > headlines three numbers and renders NO percentage anywhere 2433ms
+stderr | client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > refuses a Cmd-S that bypasses the button, and says so
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx > the editor asks why, once per section > refuses a Cmd-S that bypasses the button, and says so 1255ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > sets a cell through POST /api/protocol-soa/cells, carrying the numeric ids and the reason 529ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > clearing an already-set cell goes to /cells/clear, not back to /cells 309ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > orders the standards that carry unmet findings first 1168ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > reverts the tick when the server refuses — the grid never shows a cell the record lacks 546ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > says the grid is read-only when the protocol has no governed id 22ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names a ticked cell by its assessment and visit, not by its glyph 184ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names an unticked cell the same way 187ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > keeps every grid cell a table cell, with the checkbox inside it 129ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > shows each finding’s clause, message and remediation 1157ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > still takes a click anywhere in the cell, and Space on the focused checkbox 219ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > gives the checkbox the whole cell and the focus ring the cell had 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > presents a not-assessed rule as "not assessed", never as a pass 879ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > collapses a standard group without losing what it said 764ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > says so honestly when the rule pack found no applicable rule 609ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > says so when the record carries no rule evaluation at all 1007ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the biopharma domain claims no section and no blocker 295ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the medtech domain claims no section and no blocker 203ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the diagnostics domain claims no section and no blocker 316ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the cro domain claims no section and no blocker 266ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > Protocol development in the health domain claims no section and no blocker 257ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > no authoring surface reports a section or sends a prompt that presumes one 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no invented current section > the focus on an authoring surface does not change with the domain picker 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no internal identifiers in "Working in" > Protocol development shows no ticket range and no doubled period 93ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no internal identifiers in "Working in" > Vault and Tasks show no route or schema names 212ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no internal identifiers in "Working in" > no registered surface puts an internal identifier in module, here or focus 254ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > AnA rail — no internal identifiers in "Working in" > Home is named Home, not by its raw id 152ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > Quick access — no entry promises a feature that does not exist > there is no "Starred Items" entry (nothing in the product can be starred) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx > Quick access — no entry promises a feature that does not exist > Projects, the destination that entry opened, is still on the rail 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > "Ask AnA" names the protocol on screen, not its stored number 2432ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > "Draft with AnA" names the section on screen, not its stored title or the protocol number 1517ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > the empty state's ask names the programme open in the workspace, not its stored name 114ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > with no programme open, the empty state's ask does not claim one is 111ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the protocol the header ask refers to 758ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the section open on screen, and follows the outline when it changes 679ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the programme the empty state is for 58ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > mounts the canonical rich section editor on the stored content 1737ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > refuses to save until a governed reason is given, and writes nothing 924ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > saves through the section PATCH with the reason and the concurrency token 756ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > reports a concurrent change as a refusal, and does not report a save 1037ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports a concurrent change in the words the route used 844ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports any other refusal in the route’s own words too 399ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports a save the canvas refused with no server reason as exactly that 177ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > turns a thrown 409 SECTION_CHANGED into the editor’s conflict, not a generic failure 13ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > names the act and says nothing was written, carrying the server’s sentence 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > reports a thrown 401 as an unauthenticated session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > does not swallow a failure that is not an API refusal 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 409 SECTION_CHANGED as the conflict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 401 as an unauthenticated session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a reason under eight characters with no request at all 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a cover-page save with no field to change 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the section save carries the concurrency token and the status > sends expectedUpdatedAt, status and the reason on the section PATCH 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > finalize sends the meaning, the reason and the credentials for the server to re-verify 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a disposition carries the decision with the signature 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a rejected password is reported as a rejected password, not an expired session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a refused finalize names the act and carries the server’s reason 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > refuses a reason under eight characters with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > posts severity, a boolean safety impact, the rationale and the reason 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses no severity chosen with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses safety impact left open with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > a deviation assessment is a person’s, complete, or not sent > refuses no rationale with no request at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > risk → POST /api/protocol-risks/documents/:id/risks with domain fields + reason 17ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > milestone → POST /api/protocol-milestones/documents/:id/milestones 12ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > amendment → POST /api/protocol-amendments/amendments with protocolDocumentId in the body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > deviation → POST /api/protocol-deviations/deviations with protocolDocumentId in the body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > rejects a governed reason under 8 chars before any network call 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > surfaces a server rejection honestly (nothing persisted) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > ProtocolRegisterForm — onDone only after the server confirms > renders the governed create form for a register kind 124ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > objective → POST /api/protocol-development/documents/:id/objectives 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > eligibility → POST /api/protocol-development/documents/:id/eligibility with the arm 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > refuses every one of them below the reason floor — nothing is sent 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is the person’s to fill while nothing derives it 789ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > is read-only once derived, and its value alone satisfies the required check 114ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > a derived C2CForm field > submits the derived value, never what was typed there before it applied 154ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is the account’s name, read-only 481ms
+ ✓ client/src/concept2cure/v2/__tests__/riskAndDialogA11y.test.tsx > the risk register is operable without a mouse > makes a populated matrix cell a real control and an empty one inert 433ms
+ ✓ client/src/concept2cure/v2/__tests__/riskAndDialogA11y.test.tsx > the risk register is operable without a mouse > names each cell by its axes and count rather than by position alone 37ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > is what is sent, never a name typed before the account was chosen 484ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameReadOnly.test.tsx > the reviewer name once an account is chosen > becomes a free field again when "no account" is chosen 697ms
+ ✓ client/src/concept2cure/v2/__tests__/riskAndDialogA11y.test.tsx > the risk register is operable without a mouse > opens a risk from the keyboard and reports its expanded state 118ms
+ ✓ client/src/concept2cure/v2/__tests__/riskAndDialogA11y.test.tsx > the collaboration modal — on every screen — can be named and left > is a named dialog, not an anonymous pair of divs 806ms
+ ✓ client/src/concept2cure/v2/__tests__/riskAndDialogA11y.test.tsx > the collaboration modal — on every screen — can be named and left > closes on Escape 260ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > shows the bound design's statistical readiness and the checks that still fail 2372ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > resolves the bound design by id and never shows another design in the program 901ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > hands the design to the Biostatistics designer on the navigation channel 746ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > says plainly when no design is bound — and does not borrow one from the program 1016ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > renders a failed read as a failure, not as "no design" 611ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > who signed, as what, and when, from the signature row 287ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for 69ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a revoked signature says it is revoked 75ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a recorded disposition with no signature on record says so 34ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > a signature record that could not be read is said, not left blank 62ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature 48ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing 20ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned 12ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx > SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words 12ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > are each at least 24 × 24px 4ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > fit side by side inside the visit column, so the grid does not widen 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a review bound to an account, names the signer only, never a stored label 850ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the disposition signing dialog > for a reviewer with no account, keeps the name the decision is recorded for 148ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolReviewerNameBinding.test.tsx > the request-a-review drawer > says a chosen account is listed under its own name, before anything is typed 930ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read "Ready to finalize" 2509ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why 645ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol still in development keeps the gate and its action 1273ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol in development with a blocker keeps the gate, with the action disabled 763ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > marks the open section as current, and moves the mark with the selection 2895ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded: shows the signed state and opens nothing 488ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing 96ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing 101ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > an open review still offers the signature, to anyone who may record it 66ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx > the disposition control on a review row > an open review assigned to someone else stays disabled, with that reason 29ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > never has more than one current section, across a tab change 1098ms
+
+ Test Files  26 passed (26)
+      Tests  279 passed (279)
+   Start at  08:15:41
+   Duration  104.99s (transform 13.91s, setup 8.48s, import 51.06s, tests 184.99s, environment 50.81s)
+

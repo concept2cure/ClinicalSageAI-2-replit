@@ -41,6 +41,10 @@ const { svc, audit } = vi.hoisted(() => ({
     })),
     upsertMapping: vi.fn(async (..._a: any[]) => ({ id: 'm-1' })),
     createDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1', code: 'PMCF-1' })),
+    authorPostMarketDocument: vi.fn(async (..._a: any[]) => ({
+      document: { id: 'd-1', documentType: 'pmcf_plan', code: 'PMCF-PLAN', version: 1, status: 'draft' },
+      validation: { passesGate: true, criticalCount: 0, warningCount: 0, findings: [] },
+    })),
     updateDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1', updated: true })),
     validateDocument: vi.fn((..._a: any[]) => ({ valid: true, findings: [] })),
     supersedeDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-2' })),
@@ -64,11 +68,19 @@ const { TenantAccessError } = vi.hoisted(() => ({
   },
 }));
 
-const ownership = vi.hoisted(() => ({ check: vi.fn(async () => true) }));
+const ownership = vi.hoisted(() => ({ check: vi.fn(async (_programId: string, _orgId: number) => true) }));
 // The tool proves program ownership through the canonical guard (ledger L195);
 // these tests exercise what happens after it answers, so it answers yes unless a
 // case says otherwise.
-vi.mock('../../../routes/innovation-routes', () => ({ programBelongsToOrg: ownership.check }));
+// The one program check (server/services/c2c/program-access.ts), answered by the test.
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
 vi.mock('../../q-sub/q-sub.service', () => ({
   createQSubmission: (...a: any[]) => (svc.createQSubmission as any)(...a),
   setCommitmentRolledIn: (...a: any[]) => (svc.setCommitmentRolledIn as any)(...a),
@@ -80,16 +92,18 @@ vi.mock('../../../shared/schema/q-sub', () => ({
 }));
 vi.mock('../../auditService', () => ({ default: audit }));
 const { dbMockFactory } = vi.hoisted(() => ({
-  dbMockFactory: () => ({
-    pool: {
+  dbMockFactory: () => {
+    const pool = {
       query: vi.fn(async (sql: string) => {
         if (sql.includes('SELECT id, section_number')) {
           return { rows: [{ id: 1, section_number: '6.0', section_title: 'SE', status: 'todo' }] };
         }
         return { rows: [] };
       }),
-    },
-  }),
+    };
+    // getPool: the program check resolves its connection through it.
+    return { pool, getPool: () => pool };
+  },
 }));
 // The handler imports '../../db' from its own location
 // (server/services/ana-ri/mdx-command-handlers.ts), which resolves to
@@ -123,6 +137,11 @@ vi.mock('../../../routes/c2c/actions', () => ({
 }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
   upsertMapping: (...a: any[]) => (svc.upsertMapping as any)(...a),
+}));
+// post_market.document.create authors through the canonical engine (PR #1315 port).
+vi.mock('../../gspr-postmarket/post-market-authoring', () => ({
+  authorPostMarketDocument: (...a: any[]) => (svc.authorPostMarketDocument as any)(...a),
+  AUTHORABLE_DOCUMENT_TYPES: ['pms_plan', 'pms_report', 'pmcf_plan', 'pmcf_evaluation', 'psur', 'sscp'],
 }));
 vi.mock('../../gspr-postmarket/post-market.service', () => ({
   approveDocument: (...a: any[]) => (svc.approveDocument as any)(...a),
@@ -246,8 +265,8 @@ const PROBES: Probe[] = [
       postMarketDocumentCreate(CTX, {
         ...yes,
         programId: PROGRAM,
-        documentType: 'PMCF',
-        code: 'PMCF-1',
+        documentType: 'pmcf_plan',
+        deviceName: 'Acme Stent',
         title: 'Q3 PMCF',
       }),
   },

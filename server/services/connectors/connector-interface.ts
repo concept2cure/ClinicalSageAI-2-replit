@@ -95,6 +95,35 @@ export interface DataConnector {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// DOCUMENT REPOSITORIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The organisation's own document repositories: the only connectors that
+ * search_connected_repositories (and GET /api/knowledge-base/search-connectors)
+ * search. Every other catalog entry is either a public source — PubMed,
+ * ClinicalTrials.gov, Drugs@FDA, EMA, … which need no credential and so count
+ * as configured — or a system of record that is not a document store.
+ *
+ * Static, and the tool schema's `connectors` enum: a per-tenant list would make
+ * the schema differ by tenant and defeat prompt caching (AnA Summary S2,
+ * docs/design/ANA_AGENT_WORK_VIEW_2026-10-08.md).
+ */
+export const REPOSITORY_CONNECTOR_IDS = ['google_drive', 'box', 'onedrive', 'sharepoint', 'veeva_vault'] as const;
+
+/**
+ * A connector id as the registry spells it: lower case, with `_` for `-` and
+ * spaces. So `google-drive` and `Google Drive` both name `google_drive`.
+ */
+export function canonicalConnectorId(id: string): string {
+  return id.trim().toLowerCase().replace(/[\s-]+/g, '_');
+}
+
+export function isRepositoryConnector(id: string): boolean {
+  return (REPOSITORY_CONNECTOR_IDS as readonly string[]).includes(canonicalConnectorId(id));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CONNECTOR CATALOG
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -123,6 +152,11 @@ export interface ConnectorCatalogEntry {
   icon?: string;
   category: 'regulatory' | 'literature' | 'clinical_data' | 'dms' | 'ehr' | 'funding' | 'compliance' | 'sor';
   setupGuide?: ConnectorSetupGuide;
+  /**
+   * false: listed so a user can see it is planned, but nothing searches it —
+   * never configured, never preselected, skipped by repository search.
+   */
+  available?: false;
 }
 
 export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
@@ -274,22 +308,26 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
     name: 'PMDA Review Reports',
     type: 'scraper',
     category: 'regulatory',
-    description: 'Japanese Pharmaceuticals and Medical Devices Agency review reports and approval information.',
+    description:
+      'Japanese Pharmaceuticals and Medical Devices Agency review reports. Not connected: no search runs, so it returns no results.',
     requiredTier: 'professional',
+    available: false,
     requiresCredentials: false,
     icon: 'scroll',
     setupGuide: {
-      overview: 'PMDA review reports are publicly accessible. English translations are available for most recently approved products.',
+      overview:
+        'PMDA review reports are public web pages and PDFs with no search API, and this connector does not read them yet. Search them on the PMDA website.',
       prerequisites: ['Professional tier subscription'],
       credentialFields: [],
       steps: [
-        { step: 1, title: 'Enable the connector', instructions: 'Toggle the connector on to access PMDA review reports.' },
-        { step: 2, title: 'Search by product', instructions: 'Search by INN, product name, or therapeutic area. English translations are available for recent approvals.' },
+        {
+          step: 1,
+          title: 'Search on the PMDA website',
+          instructions:
+            'Open https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html and search there.',
+        },
       ],
-      troubleshooting: [
-        'Some review reports are only available in Japanese. Machine translation is applied where English versions are unavailable.',
-        'PMDA website may have intermittent availability during maintenance windows.',
-      ],
+      troubleshooting: ['A search through this connector is refused and reported as skipped; it returns no results.'],
     },
   },
   {
@@ -297,22 +335,25 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
     name: 'NMPA / CDE Approvals',
     type: 'scraper',
     category: 'regulatory',
-    description: 'China National Medical Products Administration and Center for Drug Evaluation approval data.',
+    description:
+      'China National Medical Products Administration and Center for Drug Evaluation approval data. Not connected: no search runs, so it returns no results.',
     requiredTier: 'professional',
+    available: false,
     requiresCredentials: false,
     icon: 'scroll',
     setupGuide: {
-      overview: 'NMPA/CDE approval data is scraped from public Chinese regulatory databases.',
+      overview:
+        'This connector does not read the CDE or NMPA databases yet. Search them on the agency websites.',
       prerequisites: ['Professional tier subscription'],
       credentialFields: [],
       steps: [
-        { step: 1, title: 'Enable the connector', instructions: 'Toggle the connector on to access NMPA/CDE approval data.' },
-        { step: 2, title: 'Search by drug name', instructions: 'Search by INN, Chinese drug name, or registration number.' },
+        {
+          step: 1,
+          title: 'Search on the agency websites',
+          instructions: 'Open https://www.cde.org.cn/ or https://www.nmpa.gov.cn/ and search there.',
+        },
       ],
-      troubleshooting: [
-        'Data is primarily in Chinese with machine-translated summaries. Use INN for best cross-language matching.',
-        'CDE website access may be intermittent from non-China regions.',
-      ],
+      troubleshooting: ['A search through this connector is refused and reported as skipped; it returns no results.'],
     },
   },
 

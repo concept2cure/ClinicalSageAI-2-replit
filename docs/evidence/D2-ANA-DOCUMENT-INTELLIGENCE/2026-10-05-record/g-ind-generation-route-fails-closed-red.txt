@@ -1,0 +1,355 @@
+# RED — HEAD d68ab20b, server/routes/ind-generation.ts unmodified (git diff --stat HEAD on it is empty: ''); 2026-10-05T03:53:34Z
+# npx vitest run server/routes/__tests__/ind-generation-fail-closed.test.ts server/routes/__tests__/ind-generation-error-containment.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-05T03:53:37.042Z",
+  "level": "error",
+  "message": "[ind-generation] generating the section failed",
+  "context": {
+    "err": "SENTINEL-PROVIDER-DETAIL: 401 invalid x-api-key for model claude-set-b at api.example.internal",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text 25ms
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > leaves the unknown-section 400 exactly as it was 4ms
+ × server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > generate-section: the save failure text never reaches the body 8ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > status: the read failure text never reaches the body 4ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false, with no draft content, when the save fails as the uncredentialed loopback does 30ms
+   → reported success for a save that did not happen: expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save throws (connection refused) 5ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save answers 2xx but returns no artifact id 5ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > passes the artifact route's 404 through: the project is not the caller's 8ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > saves with the caller's own credentials and reports the artifact id the store returned 4ms
+   → expected undefined to be 'Bearer caller-token-7-41' // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > gives the gateway the caller's organizationId and userId 6ms
+   → expected { taskType: 'document_drafting', …(4) } to match object { organizationId: 7, userId: 41, …(1) }
+(4 matching properties omitted from actual)
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a missing projectId with 400 before any model call 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a a path segment projectId with 400 before any model call 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a dot-dot projectId with 400 before any model call 5ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status answers an error, with no sections, when the artifact read fails 4ms
+   → a failed read was reported as a project status: expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status answers an error when the read throws 3ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status passes the 404 through for a project that is not the caller's 2ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status reads with the caller's credentials and maps the saved artifacts 3ms
+   → expected undefined to be 'Bearer caller-token-7-41' // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /device-status answers an error, with no sections, when the artifact read fails 2ms
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > refuses a malformed projectId on both reads without a fetch 2ms
+   → /api/ind-generation/status/a%2Fb: expected 200 to be 400 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > generate-section: the save failure text never reaches the body
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/ind-generation-error-containment.test.ts:73:28
+     71|     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error(FETCH_S…
+     72|     const r = await request(app()).post('/api/ind-generation/generate-…
+     73|     expect(r.body.success).toBe(false);
+       |                            ^
+     74|     expect(JSON.stringify(r.body)).not.toContain('SENTINEL-LOOPBACK-DE…
+     75|     expect(JSON.stringify(r.body)).not.toContain('ECONNREFUSED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > status: the read failure text never reaches the body
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/ind-generation-error-containment.test.ts:81:28
+     79|     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error(FETCH_S…
+     80|     const r = await request(app()).get('/api/ind-generation/status/3')…
+     81|     expect(r.body.success).toBe(false);
+       |                            ^
+     82|     expect(JSON.stringify(r.body)).not.toContain('SENTINEL-LOOPBACK-DE…
+     83|     expect(JSON.stringify(r.body)).not.toContain('ECONNREFUSED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false, with no draft content, when the save fails as the uncredentialed loopback does
+AssertionError: reported success for a save that did not happen: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:83:79
+     81|     });
+     82|     const r = await request(app()).post('/api/ind-generation/generate-…
+     83|     expect(r.body.success, 'reported success for a save that did not h…
+       |                                                                               ^
+     84|     expect(r.status).toBeGreaterThanOrEqual(400);
+     85|     expect(r.body.data?.artifactId).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save throws (connection refused)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:93:28
+     91|     fetchMock.mockRejectedValue(new Error('connect ECONNREFUSED 127.0.…
+     92|     const r = await request(app()).post('/api/ind-generation/generate-…
+     93|     expect(r.body.success).toBe(false);
+       |                            ^
+     94|     expect(r.status).toBe(502);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save answers 2xx but returns no artifact id
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:100:28
+     98|     fetchMock.mockResolvedValue(json(201, { success: true, data: {} })…
+     99|     const r = await request(app()).post('/api/ind-generation/generate-…
+    100|     expect(r.body.success).toBe(false);
+       |                            ^
+    101|     expect(r.status).toBe(502);
+    102|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > passes the artifact route's 404 through: the project is not the caller's
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:107:22
+    105|     fetchMock.mockResolvedValue(json(404, { success: false, error: 'Pr…
+    106|     const r = await request(app()).post('/api/ind-generation/generate-…
+    107|     expect(r.status).toBe(404);
+       |                      ^
+    108|     expect(r.body.success).toBe(false);
+    109|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > saves with the caller's own credentials and reports the artifact id the store returned
+AssertionError: expected undefined to be 'Bearer caller-token-7-41' // Object.is equality
+
+- Expected:
+"Bearer caller-token-7-41"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:120:46
+    118|     expect(save, 'no save was attempted').toBeDefined();
+    119|     expect(String(save![0])).toMatch(/\/api\/concept2cure\/projects\/3…
+    120|     expect(headerOf(save!, 'authorization')).toBe(TOKEN);
+       |                                              ^
+    121|   });
+    122|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > gives the gateway the caller's organizationId and userId
+AssertionError: expected { taskType: 'document_drafting', …(4) } to match object { organizationId: 7, userId: 41, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "callerModule": "ind-generation",
+-   "organizationId": 7,
+-   "userId": 41,
+  }
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:127:36
+    125|     await request(app()).post('/api/ind-generation/generate-section').…
+    126|     expect(route).toHaveBeenCalledTimes(1);
+    127|     expect(route.mock.calls[0][0]).toMatchObject({ organizationId: 7, …
+       |                                    ^
+    128|   });
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a missing projectId with 400 before any model call
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a a path segment projectId with 400 before any model call
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a dot-dot projectId with 400 before any model call
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:139:22
+    137|       .set('Authorization', TOKEN)
+    138|       .send({ ...BODY, projectId });
+    139|     expect(r.status).toBe(400);
+       |                      ^
+    140|     expect(r.body.success).toBe(false);
+    141|     expect(route).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status answers an error, with no sections, when the artifact read fails
+AssertionError: a failed read was reported as a project status: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:150:78
+    148|     fetchMock.mockResolvedValue(NO_TOKEN_401);
+    149|     const r = await request(app()).get('/api/ind-generation/status/3');
+    150|     expect(r.body.success, 'a failed read was reported as a project st…
+       |                                                                              ^
+    151|     expect(r.status).toBe(502);
+    152|     expect(r.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status answers an error when the read throws
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:158:28
+    156|     fetchMock.mockRejectedValue(new Error('connect ECONNREFUSED 127.0.…
+    157|     const r = await request(app()).get('/api/ind-generation/status/3')…
+    158|     expect(r.body.success).toBe(false);
+       |                            ^
+    159|     expect(r.status).toBe(502);
+    160|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status passes the 404 through for a project that is not the caller's
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:165:22
+    163|     fetchMock.mockResolvedValue(json(404, { success: false, error: 'Pr…
+    164|     const r = await request(app()).get('/api/ind-generation/status/3')…
+    165|     expect(r.status).toBe(404);
+       |                      ^
+    166|     expect(r.body.success).toBe(false);
+    167|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status reads with the caller's credentials and maps the saved artifacts
+AssertionError: expected undefined to be 'Bearer caller-token-7-41' // Object.is equality
+
+- Expected:
+"Bearer caller-token-7-41"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:176:64
+    174|     const s25 = r.body.data.sections.find((s: { code: string }) => s.c…
+    175|     expect(s25).toMatchObject({ status: 'draft', artifactId: 'artifact…
+    176|     expect(headerOf(fetchMock.mock.calls[0], 'authorization')).toBe(TO…
+       |                                                                ^
+    177|   });
+    178|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /device-status answers an error, with no sections, when the artifact read fails
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:182:28
+    180|     fetchMock.mockResolvedValue(NO_TOKEN_401);
+    181|     const r = await request(app()).get('/api/ind-generation/device-sta…
+    182|     expect(r.body.success).toBe(false);
+       |                            ^
+    183|     expect(r.status).toBe(502);
+    184|     expect(r.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > refuses a malformed projectId on both reads without a fetch
+AssertionError: /api/ind-generation/status/a%2Fb: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/ind-generation-fail-closed.test.ts:190:30
+    188|     for (const path of ['/api/ind-generation/status/a%2Fb', '/api/ind-…
+    189|       const r = await request(app()).get(path).set('Authorization', TO…
+    190|       expect(r.status, path).toBe(400);
+       |                              ^
+    191|     }
+    192|     expect(fetchMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  17 failed | 2 passed (19)
+   Start at  03:53:35
+   Duration  1.64s (transform 1.28s, setup 317ms, import 1.89s, tests 133ms, environment 0ms)
+

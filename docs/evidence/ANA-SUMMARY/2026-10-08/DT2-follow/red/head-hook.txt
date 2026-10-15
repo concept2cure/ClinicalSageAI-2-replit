@@ -1,0 +1,58 @@
+# head-hook: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 1. a reloaded thread whose last question has a live run renders a followed turn after it, with the plan and the phase line 25ms
+   → expected [ 'user' ] to deeply equal [ 'user', 'assistant' ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a new conversation’s first turn is rejoined the same way: by its stamped thread and question 4ms
+   → expected [ 'm-501' ] to deeply equal [ 'm-501', 'f-run_live' ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 3. a sealed run hands over to its record: the stored answer takes the turn’s place, under the same id 11ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay 5ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. the reader backs off 2, 4, 8 … s while its network fails 7ms
+   → expected +0 to be 1 // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. with no record: "Recording…" while the owner is still trying, then the run’s reason, its rows and "Not recorded" 4ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. …or after 30 s from its end, when the owner never releases it 9ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a colleague’s read is refused in the server’s words, and nothing is followed 3ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > an admin follows with cancel scope 3ms
+   → expected undefined to be 'cancel' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 2. overlapping SSE frames and polled rows render once 82ms
+   → expected [ 1, 2 ] to deeply equal [ 1, 2, 3, 4 ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a failed cancel on a detachable turn says "Stop not confirmed. Retrying." and does not abort; a later 200 shows Stopped 79ms
+   → expected undefined to be true // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a 409 (already stopped) shows Stopped 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > a turn that asked to drive keeps today’s Stop: a failed cancel still aborts 82ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 'leave' never cancels and never says Stopped 80ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_IN_PROGRESS: the refusal is said in the design’s words, and the run that holds the conversation is followed after its question 118ms
+   → expected [ 'm-501', 'u', 'a' ] to deeply equal [ Array(5) ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_LIMIT: the refusal is said in the design’s words, and nothing is followed 92ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'You have three turns running. Stop on…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  14 failed | 2 passed (16)
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 1. a reloaded thread whose last question has a live run renders a followed turn after it, with the plan and the phase line
+AssertionError: expected [ 'user' ] to deeply equal [ 'user', 'assistant' ]
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a new conversation’s first turn is rejoined the same way: by its stamped thread and question
+AssertionError: expected [ 'm-501' ] to deeply equal [ 'm-501', 'f-run_live' ]
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 3. a sealed run hands over to its record: the stored answer takes the turn’s place, under the same id
+TypeError: Cannot read properties of undefined (reading 'streaming')
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay
+TypeError: liveAlertLine is not a function
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. the reader backs off 2, 4, 8 … s while its network fails
+AssertionError: expected +0 to be 1 // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. with no record: "Recording…" while the owner is still trying, then the run’s reason, its rows and "Not recorded"
+TypeError: Cannot read properties of undefined (reading 'streaming')
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. …or after 30 s from its end, when the owner never releases it
+TypeError: Cannot read properties of undefined (reading 'turnRecord')
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a colleague’s read is refused in the server’s words, and nothing is followed
+TypeError: liveAlertLine is not a function
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > an admin follows with cancel scope
+AssertionError: expected undefined to be 'cancel' // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 2. overlapping SSE frames and polled rows render once
+AssertionError: expected [ 1, 2 ] to deeply equal [ 1, 2, 3, 4 ]
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a failed cancel on a detachable turn says "Stop not confirmed. Retrying." and does not abort; a later 200 shows Stopped
+AssertionError: expected undefined to be true // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 'leave' never cancels and never says Stopped
+AssertionError: expected true to be false // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_IN_PROGRESS: the refusal is said in the design’s words, and the run that holds the conversation is followed after its question
+AssertionError: expected [ 'm-501', 'u', 'a' ] to deeply equal [ Array(5) ]
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_LIMIT: the refusal is said in the design’s words, and nothing is followed
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'You have three turns running. Stop on…' // Object.is equality

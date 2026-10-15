@@ -1,5 +1,5 @@
 {
- "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails.",
+ "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails. Amended 2026-10-12 (decision P-28): CMC / Module 3 joined the launch catalog, so its 10 tools and 6 commands moved from hiddenApp to inScope. The move is bookkeeping, not the mechanism — anaCapabilityInLaunchScope re-checks the surface against LAUNCH_SURFACE_IDS rather than trusting this file, so the tools came back the moment the surface did. What this file would otherwise say is that a launch surface is outside the catalog.",
  "classifiedOn": "2026-09-26",
  "tools": {
   "hiddenApp": [
@@ -52,23 +52,6 @@
      "create_clinical_investigator",
      "create_financial_disclosure",
      "review_financial_disclosure"
-    ]
-   },
-   {
-    "surfaces": [
-     "cmc"
-    ],
-    "names": [
-     "answer_intelligence_question",
-     "assess_recorded_batch_poolability",
-     "assess_recorded_process_capability",
-     "assess_recorded_stability_trend",
-     "commit_intelligence_flow",
-     "compare_recorded_dissolution",
-     "estimate_recorded_shelf_life",
-     "list_cmc_registers",
-     "resume_intelligence_flow",
-     "start_intelligence_flow"
     ]
    },
    {
@@ -204,19 +187,6 @@
      "review_tmf_completeness",
      "seed_tmf",
      "update_tmf_artifact_status"
-    ]
-   },
-   {
-    "surfaces": [
-     "insights"
-    ],
-    "names": [
-     "explain_report_blockers",
-     "generate_report",
-     "list_report_definitions",
-     "list_report_types",
-     "save_report_definition",
-     "suggest_reports"
     ]
    },
    {
@@ -471,6 +441,7 @@
    "analyze_rmst",
    "analyze_safety_signal",
    "analyze_win_ratio",
+   "answer_intelligence_question",
    "apply_fact_change",
    "apply_protocol_design_derivation",
    "approve_import",
@@ -557,6 +528,9 @@
    "assess_qtc_risk",
    "assess_rare_disease_endpoint",
    "assess_readability",
+   "assess_recorded_batch_poolability",
+   "assess_recorded_process_capability",
+   "assess_recorded_stability_trend",
    "assess_regulatory_landscape",
    "assess_respiratory_safety_pharmacology",
    "assess_rolling_submission",
@@ -623,9 +597,11 @@
    "code_meddra",
    "code_whodrug",
    "commit_document_revision",
+   "commit_intelligence_flow",
    "compare_document_versions",
    "compare_global_pathways",
    "compare_proposed_design_to_precedent",
+   "compare_recorded_dissolution",
    "compare_statistical_scenarios",
    "compare_submission_against_precedent",
    "compare_vault_versions",
@@ -647,7 +623,8 @@
    "create_protocol_document",
    "create_protocol_template",
    "create_qms_document",
-   "cross_region_gap_analysis",
+   "critique_document",
+   "critique_draft",
    "define_estimand",
    "derive_ctq_factors",
    "describe_capabilities",
@@ -714,11 +691,14 @@
    "draft_quality_overall_summary_m2_3",
    "draft_safety_narrative",
    "edit_spreadsheet",
+   "estimate_recorded_shelf_life",
    "estimate_sample_size",
    "estimate_shelf_life",
    "evaluate_pbpk_model",
    "execute_platform_command",
+   "explain_cmc_topic",
    "explain_design_risk",
+   "explain_report_blockers",
    "explain_resolution_plan",
    "explain_validation_findings",
    "export_protocol_document",
@@ -730,6 +710,7 @@
    "fetch_template_and_fill",
    "file_chat_upload_to_vault",
    "finalize_protocol_document",
+   "find_cmc_guidance",
    "fire_notification",
    "forecast_enrollment",
    "format_references",
@@ -741,6 +722,7 @@
    "generate_document",
    "generate_dsur_structure",
    "generate_psur_structure",
+   "generate_report",
    "generate_schedule_of_events",
    "generate_sop",
    "generate_spl",
@@ -751,10 +733,12 @@
    "get_biocompatibility_endpoints",
    "get_biotech_program_status",
    "get_client_journey",
+   "get_cmc_requirements",
    "get_csr_template",
    "get_ctd_module_home",
    "get_device_labeling",
    "get_device_reviewer_checklist",
+   "get_document_section_requirements",
    "get_document_template",
    "get_document_versions",
    "get_electrical_standards",
@@ -799,8 +783,6 @@
    "guidance_change_radar",
    "guidance_for_anda",
    "import_ris_references",
-   "ind_generate_section",
-   "ind_get_status",
    "insert_clause_template",
    "insert_document_content",
    "inspect_uploaded_document",
@@ -808,14 +790,19 @@
    "link_program_clinical_study",
    "lint_references",
    "list_app_screens",
+   "list_authoring_outline",
+   "list_cmc_registers",
    "list_demo_scripts",
    "list_fda_forms",
+   "list_fda_technical_rules",
    "list_governed_documents",
    "list_intelligence_flows",
    "list_platform_commands",
    "list_project_documents",
    "list_protocol_templates",
    "list_regulatory_capabilities",
+   "list_report_definitions",
+   "list_report_types",
    "list_screen_actions",
    "list_validation_rules",
    "list_vault_documents",
@@ -863,6 +850,7 @@
    "plan_orphan_drug_designation",
    "plan_rare_disease_program",
    "plan_submission",
+   "plan_submission_from_database_lock",
    "plan_vaccine_special_populations",
    "position_coa_endpoint",
    "prepare_fda_form",
@@ -875,6 +863,7 @@
    "qms_change_transition",
    "query_rim_patterns_by_domain",
    "rasterize_page",
+   "read_authoring_section",
    "read_governed_document",
    "read_project_document",
    "read_spreadsheet",
@@ -893,6 +882,7 @@
    "resolve_regulatory_structure",
    "resolve_submission_plan",
    "resolve_validation_finding",
+   "resume_intelligence_flow",
    "retire_qms_document",
    "review_amendment",
    "review_biospecimen_profile",
@@ -920,10 +910,12 @@
    "review_protocol_timeline",
    "review_schedule_of_events_health",
    "review_soa_matrix",
+   "review_sop_requirements",
    "review_spirit_conformance",
    "review_trial_schema",
    "review_who_ictrp_record",
    "revise_qms_document",
+   "run_agent",
    "run_cdisc_pipeline",
    "run_compliance_checklist",
    "run_in_container",
@@ -934,6 +926,7 @@
    "run_submission_premortem",
    "save_document_as_template",
    "save_document_to_vault",
+   "save_report_definition",
    "scan_document_citations",
    "scan_project_risks",
    "scan_regulatory_deficiencies",
@@ -944,6 +937,7 @@
    "screen_restricted_party",
    "screen_signal_panel",
    "search_all_documents",
+   "search_authoring_sections",
    "search_chembl_compound",
    "search_clinical_evidence",
    "search_clinical_regulatory_evidence",
@@ -987,12 +981,14 @@
    "set_soa_cell",
    "set_specifications",
    "size_diagnostic_study",
+   "start_intelligence_flow",
    "start_legacy_import",
    "start_product_demo",
    "start_war_game",
    "stress_test_protocol",
    "structure_benefit_risk_framework",
    "structure_smpc",
+   "suggest_reports",
    "summarize_onboarding_readiness",
    "summarize_rim_intelligence",
    "surgical_docx_xml_edit",
@@ -1016,8 +1012,10 @@
    "validate_spl_structure",
    "validate_udi",
    "value_dossier_guidance",
+   "verify_citations",
    "verify_docx_against_source",
-   "verify_memory_atom"
+   "verify_memory_atom",
+   "verify_revision"
   ]
  },
  "commands": {
@@ -1028,19 +1026,6 @@
     ],
     "names": [
      "assess_defensibility"
-    ]
-   },
-   {
-    "surfaces": [
-     "cmc"
-    ],
-    "names": [
-     "cmc_status",
-     "control_strategy",
-     "ich_compliance",
-     "module3_contradictions",
-     "module3_lineage",
-     "module3_readiness"
     ]
    },
    {
@@ -1214,10 +1199,12 @@
    "audit.explain",
    "check_dossier_readiness",
    "check_promotion_blockers",
+   "cmc_status",
    "compare_versions",
    "compute_dose_escalation",
    "compute_readiness",
    "compute_sample_size",
+   "control_strategy",
    "correspondence.ingest",
    "create_artifact",
    "create_milestone",
@@ -1235,6 +1222,7 @@
    "freeze_document",
    "generate_checklist",
    "generate_sap",
+   "ich_compliance",
    "k510_workflow.preflight",
    "k510_workflow.transmit",
    "list_artifact_versions",
@@ -1248,7 +1236,10 @@
    "module3_build_all",
    "module3_build_section",
    "module3_classify_source",
+   "module3_contradictions",
+   "module3_lineage",
    "module3_missing_inputs",
+   "module3_readiness",
    "module3_refresh_stale",
    "module3_stale_sections",
    "pdev.activity.ai_draft",
@@ -1274,5 +1265,6 @@
    "update_task",
    "variations_classify"
   ]
- }
+ },
+ "amendedOn": "2026-10-12"
 }

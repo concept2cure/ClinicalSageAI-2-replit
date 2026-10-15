@@ -43,7 +43,12 @@ vi.mock('../../../db', () => {
   }
   return {
     db: { select: () => ({ from: (t: unknown) => readChain(H.nameOf(t)) }) },
-    pool: undefined,
+    // The program check (programInOrganization): $1 is the program, $2 the org.
+    pool: {
+      query: async (_sql: string, params: unknown[]) => ({
+        rows: H.tables.regulatory_programs.filter(r => r.id === params[0] && r.organizationId === params[1]),
+      }),
+    },
     getPool: () => { throw new Error('not in test scope'); },
   };
 });

@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T14:07:02.557Z","pid":20097,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T14:07:02.558Z","pid":20097,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T14:07:02.558Z","pid":20097,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T14:07:02.744Z', poolSize: 1 }
+
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-registry-seed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 21ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 21ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 173ms
+{"level":50,"time":"2026-10-01T14:07:04.456Z","pid":20097,"hostname":"vm","context":{"runId":107,"error":"refused by the review round 1 dbtest"},"msg":"[report-os] report finalize not recorded on the audit chain; rolled back"}
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a member: nothing is sealed and nothing is recorded 16ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a password that is not the signer's: nothing is sealed, signed or recorded 38ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed) 49ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > an admin finalizes: status, seal, one chained row and the signature, together 46ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > a second finalize is refused: the seal stands and nothing more is recorded 15ms
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > refuses a manager whose role carries no signing authority, with the right password: nothing sealed, signed or recorded 51ms
+   → {"data":{"runId":108,"status":"final","seal":{"algorithm":"sha256","canonVersion":2,"contentHash":"669874e75cfad2d1baa162d425652a704a0cabe1501a2408e0cea203959d7638","atoms":[],"atomCount":0,"aiDisclosed":false,"sealedAt":"2026-10-01T14:07:04.551Z"},"signature":{"signatureId":701,"signedAt":"2026-10-01T14:07:04.567Z","meaning":"approval"}}}: expected 200 to be 403 // Object.is equality
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > the signed final report is exported with no second ceremony, and the chain row names its signature 23ms
+   → {"success":false,"error":{"code":"E_SIGNATURE_REQUIRED","message":"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."}}: expected 409 to be 201 // Object.is equality
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > a bundle export on the record (review round 1, DP-50) > a bundle export is recorded on the chain with the hash of the bytes sent 94ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > refuses a manager whose role carries no signing authority, with the right password: nothing sealed, signed or recorded
+AssertionError: {"data":{"runId":108,"status":"final","seal":{"algorithm":"sha256","canonVersion":2,"contentHash":"669874e75cfad2d1baa162d425652a704a0cabe1501a2408e0cea203959d7638","atoms":[],"atomCount":0,"aiDisclosed":false,"sealedAt":"2026-10-01T14:07:04.551Z"},"signature":{"signatureId":701,"signedAt":"2026-10-01T14:07:04.567Z","meaning":"approval"}}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:365:50
+    363|       .set(auth(accessToken(managerId, ORG_B, 'manager')))
+    364|       .send(SIGNED);
+    365|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    366|     expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    367|     expect(await runState(own)).toEqual({ status: 'completed', seal_ha…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize is the run's signed act (P1-44b) > the signed final report is exported with no second ceremony, and the chain row names its signature
+AssertionError: {"success":false,"error":{"code":"E_SIGNATURE_REQUIRED","message":"A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."}}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:386:50
+    384|       .set(auth(adminToken))
+    385|       .send({ runId, channel: 'external_pdf_export', subject, recipien…
+    386|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    387|     expect(res.body.data).toMatchObject({ status: 'exported', runId, s…
+    388|     const chain = await owner.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  14:07:00
+   Duration  4.75s (transform 1.98s, setup 93ms, import 3.33s, tests 936ms, environment 0ms)
+

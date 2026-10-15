@@ -1,0 +1,20 @@
+Mutant DUP-reaccept: A clause carried forward and accepted again does not count against the records.
+Result: KILLED (vitest exit 1, 1 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -570,3 +570,3 @@
+   const budget = new Map<string, number>();
+-  const credited = new Map(opts.reaccepted);
++  const credited = new Map<string, number>();
+   const held = new Map<string, number>();
+
+--- failing tests ---
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor does accepting the same draft again: the clause carried forward counts against the record 62ms
+
+--- summary ---
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 146 passed (147)

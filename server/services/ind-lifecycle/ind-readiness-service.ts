@@ -45,9 +45,23 @@ export interface IndReadinessInput {
   sectionStatus: Record<string, SectionStatus>;
   /** Completed Module 1 form ids (e.g. 'FDA_1571'). Only checked for initial filings. */
   completedForms?: string[];
-  /** Count of expedited IND safety reports (312.32) past their reporting deadline. */
+  /**
+   * Count of TRACKED expedited IND safety reports (312.32) past their reporting
+   * deadline — drafted reports in the register; an adverse event whose clock
+   * lapsed with no drafted report is not in it. Omitted on an amendment,
+   * readiness is not stated (a `nothing_assessed` blocker). An initial IND has
+   * no IND safety reports yet, so it needs none.
+   */
   overdueSafetyReports?: number;
 }
+
+/** Blocker code for an amendment evaluated without an overdue safety-report count. */
+export const OVERDUE_SAFETY_REPORTS_NOT_ASSESSED = 'overdue_safety_reports';
+
+/** What the overdue count can and cannot see, stated wherever it is used. */
+export const TRACKED_SAFETY_REPORTS_NOTE =
+  'Overdue IND safety reports are counted from tracked reports only (drafted reports in the register past their deadline); ' +
+  'an adverse event whose 7- or 15-day clock has lapsed with no drafted report is not counted.';
 
 export interface ModuleProgress {
   module: CTDModule;
@@ -67,7 +81,7 @@ export interface ReadinessGap {
 }
 
 export interface ReadinessBlocker {
-  kind: 'required_section' | 'required_form' | 'overdue_safety_report' | 'nothing_assessed';
+  kind: 'required_section' | 'required_form' | 'overdue_safety_report' | 'nothing_assessed' | 'lifecycle';
   code: string;
   message: string;
 }
@@ -100,6 +114,33 @@ export interface IndReadinessReport {
 
 function statusOf(map: Record<string, SectionStatus>, code: string): SectionStatus {
   return map[code] ?? 'not_started';
+}
+
+/**
+ * The blocker the overdue safety-report count raises, if any. 2026-10-15: the
+ * count was read `?? 0`, so an amendment evaluated with none was stated ready
+ * with no overdue IND safety report — for a register nobody read. Omitted on
+ * an amendment it is now a `nothing_assessed` blocker; an initial IND has no
+ * IND safety reports to be overdue.
+ */
+function overdueSafetyBlocker(overdue: number | null, isAmendment: boolean): ReadinessBlocker | null {
+  if (overdue !== null && overdue > 0) {
+    return {
+      kind: 'overdue_safety_report',
+      code: 'safety',
+      message: `${overdue} tracked expedited IND safety report(s) past the 21 CFR 312.32 reporting deadline.`,
+    };
+  }
+  if (overdue === null && isAmendment) {
+    return {
+      kind: 'nothing_assessed',
+      code: OVERDUE_SAFETY_REPORTS_NOT_ASSESSED,
+      message:
+        'The count of expedited IND safety reports past their 21 CFR 312.32 deadline was not supplied, so it has not been ' +
+        'assessed; readiness is not stated without it.',
+    };
+  }
+  return null;
 }
 
 /**
@@ -174,14 +215,9 @@ export function evaluateIndReadiness(input: IndReadinessInput): IndReadinessRepo
       message: `Required Module 1 form ${form} is not complete.`,
     });
   }
-  const overdue = input.overdueSafetyReports ?? 0;
-  if (overdue > 0) {
-    blockers.push({
-      kind: 'overdue_safety_report',
-      code: 'safety',
-      message: `${overdue} expedited IND safety report(s) past the 21 CFR 312.32 reporting deadline.`,
-    });
-  }
+  const overdue = typeof input.overdueSafetyReports === 'number' ? input.overdueSafetyReports : null;
+  const safetyBlocker = overdueSafetyBlocker(overdue, isAmendment);
+  if (safetyBlocker) blockers.push(safetyBlocker);
 
   /* 5. Weighted overall percentage: required sections + required forms, each
         item weighted equally.
@@ -219,6 +255,8 @@ export function evaluateIndReadiness(input: IndReadinessInput): IndReadinessRepo
   if (Object.keys(sectionStatus).length === 0) {
     warnings.push('No section status was supplied; every required section is treated as not_started.');
   }
+  // A stated count — zero included — says what it covers.
+  if (overdue !== null) warnings.push(TRACKED_SAFETY_REPORTS_NOTE);
 
   return {
     filingType: input.filingType,

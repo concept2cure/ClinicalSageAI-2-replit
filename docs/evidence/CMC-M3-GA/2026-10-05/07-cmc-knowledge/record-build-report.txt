@@ -1,0 +1,136 @@
+source hc-qos-ce-nds-cpid: date 'unknown' not established -> undated, low confidence
+authority normalised: Environment and Climate Change Canada / Health Canada -> Health Canada
+source eccc-nsn-cgt-guidance: date 'unknown' not established -> undated, low confidence
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+source tga-cta-scheme-forms: date 'unknown' not established -> undated, low confidence
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+source tga-isg-list: date 'unknown' not established -> undated, low confidence
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+source tga-isg-m4q: date 'unknown' not established -> undated, low confidence
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+source tga-dmf-cep: date 'unknown' not established -> undated, low confidence
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+authority normalised: Therapeutic Goods Administration (TGA), Australia -> TGA
+source tga-understanding-ctd: date 'unknown' not established -> undated, low confidence
+authority normalised: Peer-reviewed literature (Health Policy, Elsevier) -> Literature
+authority normalised: Peer-reviewed literature (Journal of Law and Medicine) -> Literature
+authority normalised: Peer-reviewed literature (Cytotherapy) -> Literature
+authority normalised: Peer-reviewed literature (Frontiers in Medicine) -> Literature
+authority normalised: Peer-reviewed literature (Clinical and Experimental Vaccine Research) -> Literature
+authority normalised: Peer-reviewed literature (Frontiers in Medicine); co-authored by Health Canada BRDD, TGA, FDA, EMA, MHRA and PMDA staff -> Literature
+authority normalised: Peer-reviewed literature (Frontiers in Medicine); co-authored by Health Canada BRDD and TGA staff -> Literature
+authority normalised: Peer-reviewed literature (Journal of Pharmaceutical Sciences) -> Literature
+authority normalised: NPC Standing Committee (PRC); administered by NMPA -> NMPA
+authority normalised: SAMR (State Administration for Market Regulation); implemented by NMPA/CDE -> NMPA
+authority normalised: SAMR; implemented by NMPA and provincial MPAs -> NMPA
+authority normalised: CFDA (now NMPA) -> NMPA
+authority normalised: SFDA (now NMPA) -> NMPA
+authority normalised: CFDA (now NMPA) -> NMPA
+authority normalised: CFDA (now NMPA) -> NMPA
+authority normalised: CFDA/NMPA - CDE -> NMPA
+authority normalised: Chinese Pharmacopoeia Commission; promulgated by NMPA and NHC -> NMPA
+authority normalised: Chinese Pharmacopoeia Commission; promulgated by NMPA and NHC -> NMPA
+authority normalised: Ministry of Health (now administered by NMPA) -> NMPA
+authority normalised: CFDA (now NMPA) - CDE -> NMPA
+authority normalised: NPC Standing Committee (PRC); administered by NMPA -> NMPA
+authority normalised: SAMR; implemented by NMPA and NIFDC -> NMPA
+source ec-qp-declaration-imp-template: date 'unknown' not established -> undated, low confidence
+source ec-eudralex-volume-4: date 'unknown' not established -> undated, low confidence
+source eudralex-v2b-nta-ctd: date 'unknown' not established -> undated, low confidence
+authority normalised: EDQM (Council of Europe), recognised in EU legislation -> EDQM
+source edqm-cep-procedure: date 'unknown' not established -> undated, low confidence
+source ema-asmf-procedure-guideline: date 'unknown' not established -> undated, low confidence
+source ema-qp-declaration-active-substance-template: date 'unknown' not established -> undated, low confidence
+source ema-nitrosamine-qa: date 'unknown' not established -> undated, low confidence
+group fda: UNVERIFIED (verifier did not run) — entries capped at medium confidence
+source fda-21cfr-312-23: date 'current eCFR text (accessed 2026-10); originally promulgated in the 1987 IND rewrite' not established -> undated, low confidence
+source fda-21cfr-312-6: date 'current eCFR text (accessed 2026-10)' not established -> undated, low confidence
+source fda-21cfr-312-31: date 'current eCFR text (accessed 2026-10)' not established -> undated, low confidence
+source fda-21cfr-312-33: date 'current eCFR text (accessed 2026-10)' not established -> undated, low confidence
+source fda-21cfr-210-2c: date '2008-07-15 (published); effective 2008-09-15' not established -> undated, low confidence
+source fda-21cfr-25-31: date 'current eCFR text (accessed 2026-10)' not established -> undated, low confidence
+source fda-21cfr-314-50: date 'current eCFR text (accessed 2026-10)' not established -> undated, low confidence
+source fda-21cfr-314-420: date 'current eCFR text (accessed 2026-10)' not established -> undated, low confidence
+source fda-21cfr-601-2: date 'current eCFR text (accessed 2026-10); amended by the 2024 BLA/master file final rule (effective 2024-03-13)' not established -> undated, low confidence
+source fda-bla-master-files-rule-2024: date '2024-02-12 (published); effective 2024-03-13' not established -> undated, low confidence
+source fda-21cfr-314-70: date 'current eCFR text (accessed 2026-10)' not established -> undated, low confidence
+source fda-21cfr-601-12: date 'current eCFR text (accessed 2026-10)' not established -> undated, low confidence
+source fda-ectd-comprehensive-toc: date 'unknown (version/date not verified)' not established -> undated, low confidence
+source jp-jp19: date 'unknown' not established -> undated, low confidence
+source jp-gene-therapy-quality-notification: date 'unknown (recalled as 2019-07-09)' not established -> undated, low confidence
+source jp-pmda-consultation: date 'unknown' not established -> undated, low confidence
+source kr-ind-approval-regulation: date 'unknown (in force by 2009 per PMC7921003; current consolidated revision not established)' not established -> undated, low confidence
+source kr-gmp-regulation: date 'unknown (current consolidated revision not established)' not established -> undated, low confidence
+source kr-approval-review-regulation: date 'unknown (current consolidated revision not established)' not established -> undated, low confidence
+authority normalised: Peer-reviewed literature (Clin Transl Sci; Novartis Pharma K.K. authors) -> Literature
+authority normalised: Peer-reviewed literature (Ther Innov Regul Sci; JPMA Regulatory Affairs Committee) -> Literature
+authority normalised: Peer-reviewed literature (Integr Med Res) -> Literature
+authority normalised: Peer-reviewed literature (Front Bioeng Biotechnol) -> Literature
+authority normalised: Peer-reviewed literature (BioTech (Basel)) -> Literature
+authority normalised: Peer-reviewed literature (Adv Exp Med Biol; PMDA authors) -> Literature
+authority normalised: Peer-reviewed literature (Adv Exp Med Biol; PMDA authors) -> Literature
+authority normalised: Literature (Kokuritsu Iyakuhin Shokuhin Eisei Kenkyusho Hokoku; NIHS) -> Literature
+authority normalised: Peer-reviewed literature (J Pharm Pharm Sci; PMDA authors, IGDRP ASMF/DMF WG) -> Literature
+authority normalised: Peer-reviewed literature (Adv Exp Med Biol) -> Literature
+source anvisa-manual-qualidade-biologicos-3ed: date 'unknown' not established -> undated, low confidence
+duplicate source id eu-dr-2017-1569 (row) — first kept
+authority normalised: Academic literature -> Literature
+authority normalised: Academic literature -> Literature
+authority normalised: Academic literature -> Literature
+authority normalised: Academic literature -> Literature
+authority normalised: Academic literature -> Literature
+authority normalised: Academic literature -> Literature
+authority normalised: Academic literature -> Literature
+authority normalised: Academic literature -> Literature
+authority normalised: Academic literature -> Literature
+authority normalised: UK Parliament / MHRA -> MHRA
+authority normalised: UK Parliament / MHRA -> MHRA
+authority normalised: UK Parliament / MHRA -> MHRA
+authority normalised: UK Parliament / MHRA -> MHRA
+authority normalised: UK Parliament / MHRA -> MHRA
+source mhra-ct-apply-guidance: date 'unknown' not established -> undated, low confidence
+authority normalised: HRA / MHRA -> MHRA
+source mhra-apply-ma-guidance: date 'unknown' not established -> undated, low confidence
+source mhra-gmp-gdp-guidance: date 'unknown' not established -> undated, low confidence
+authority normalised: British Pharmacopoeia Commission / MHRA -> MHRA
+source ich-members-observers: date 'unknown' not established -> undated, low confidence
+duplicate source id ich-m4q-r1 (uk-ch) — first kept
+authority normalised: UK Government / Swiss Federal Council -> Swissmedic
+authority normalised: Access Consortium (TGA, Health Canada, HSA, Swissmedic, MHRA) -> Health Canada
+authority normalised: Swiss Confederation / Swissmedic -> Swissmedic
+authority normalised: Swiss Confederation -> Swissmedic
+authority normalised: Swiss Federal Council -> Swissmedic
+authority normalised: Swiss Federal Council -> Swissmedic
+authority normalised: Swiss Federal Council -> Swissmedic
+authority normalised: Swiss Federal Council -> Swissmedic
+source swissmedic-ct-medicinal-products: date 'unknown' not established -> undated, low confidence
+source swissmedic-nas-authorisation-guidance: date 'unknown' not established -> undated, low confidence
+source swissmedic-formal-requirements-guidance: date 'unknown' not established -> undated, low confidence
+source swissmedic-art13-tpa-guidance: date 'unknown' not established -> undated, low confidence
+authority normalised: SFDA / CFDA / NMPA -> NMPA
+authority normalised: Chinese Pharmacopoeia Commission -> NMPA
+topic analytics-lifecycle-regional gaps: 1. No official regulator text was retrieved. The WebSearch budget was used up (200/200) before this task started, and WebFetch and direct NCBI E-utilities were blocked by the proxy. Every regulatory fact is therefore corroborated through PubMed/PMC literature, some of it co-authored by FDA, CDE/NMPA, EMA, Health Canada, TGA and PMDA staff. None is confirmed from an official-domain snippet.
+2. Regi
+topic biologics-atmp gaps: WebSearch was unavailable: the session's 200-search budget was already used up before this subagent ran, and regulator sites cannot be fetched from here. So no official-domain search snippets were gathered in this run.
+
+Where the official identifiers, dates, statuses and URLs came from:
+- Most come from the repo's existing multi-agent CMC record (server/services/cmc/knowledge/cmc-regulatory-record
+topic dp-stability gaps: 1) Web search was unavailable: WebSearch returned "budget exhausted (200/200)" on the first call, and WebFetch to regulator sites is blocked. No official regulator page was opened or re-searched in this session. All 31 cited articles were retrieved through PubMed (metadata, plus full text for PMC12846058, PMC13610799, PMC6848239, PMC12389050 and PMC13134992).
+
+2) Official identifiers, dates and UR
+topic ds-small-molecule gaps: WebSearch was unavailable for this whole run: the session's 200-search budget was already used up, so no regulator website could be reached. Every regulatory fact here comes from (a) Federal Register notices indexed in PubMed (Q6A 65 FR 83041; Q3A(R) 68 FR 6924; Q3B(R) 68 FR 64628; Q3C maintenance 68 FR 64352 and 77 FR 10754; Q11 77 FR 69634; Q1E 69 FR 32010, which cites Q1A(R2) at 68 FR 65717; ph

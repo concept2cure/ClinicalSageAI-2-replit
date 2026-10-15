@@ -8,7 +8,7 @@
  * Soft-links to the governed protocol records (iacuc_protocols / irb_submissions /
  * clinical_studies) via (protocol_kind, linked_protocol_id).
  *
- * Section templates follow ICH M11 / ICH E6(R2) (clinical), PHS Policy / AWA 9 CFR
+ * Section templates follow ICH M11 / ICH E6(R3) Appendix B (clinical), PHS Policy / AWA 9 CFR
  * 2.31 3Rs (IACUC), and 45 CFR 46.111 (IRB). Conventions match the platform;
  * status/type columns are CHECK-constrained. Mutations are governed + audited.
  *

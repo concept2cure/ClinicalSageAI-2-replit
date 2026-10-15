@@ -1,0 +1,12 @@
+Mutant M21-no-sources-as-found: no source consulted reads as checked
+
+--- client/src/concept2cure/v2/AnaGrounding.tsx
+- if (check.basis === 'no_sources') {
++ if (check.basis === 'no_sources' && false) {
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > with no source consulted, the claims are not checked — never found, never a pass 14ms
+      Tests  1 failed | 16 passed (17)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

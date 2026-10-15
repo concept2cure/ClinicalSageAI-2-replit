@@ -1,0 +1,51 @@
+# Working tree with the P0-12 residual changes (ana-guidance-executor.ts, post-processing.ts, send-message.ts), 2026-10-01
+# NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts server/services/ana-ri/__tests__/chat-turn-proposals.test.ts server/services/ana-ri/__tests__/chat-doors-propose-only.test.ts server/services/__tests__/ana-guidance-executor.test.ts
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > detects a well-formed memo action block 24ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > detects multiple action blocks 29ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > detects HTML comment fallback format 1ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > rejects invalid action types 27ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > rejects invalid confidence levels 1ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > rejects empty title or content 1ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > ignores malformed JSON blocks 0ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > ignores blocks missing required fields 0ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > returns empty array when no action blocks present 1ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > handles all valid action types 42ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > detectActionSignals > handles all valid confidence levels 1ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > stripActionSignals > removes fenced action blocks from response text 1ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > stripActionSignals > removes HTML comment action blocks 49ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > stripActionSignals > preserves non-action code blocks 0ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > stripActionSignals > returns original text when no action blocks 0ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > shouldPropose > puts a strong block to the person 0ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > shouldPropose > puts a moderate block to the person 0ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > shouldPropose > proposes nothing for a provisional block 0ms
+ ✓ server/services/__tests__/ana-guidance-executor.test.ts > AnA Guidance Executor > shouldPropose > proposes nothing for an uncertain block 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > is lifted as the executor built it 2ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a Part 11 signature demand is lifted too 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a command that ran, or was refused, is not a prompt 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a proposal without the command to retry is not a prompt (nothing to confirm) 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a tool that writes on its own handler is not lifted: it is confirmable only from a held run 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > an unreadable result is not a prompt 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > collects them from the loop’s tool results 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > puts them in executedCommands 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > a proposal: nothing has changed yet 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > only refusals: it does not say anything was executed 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > everything ran: it says so 0ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created 9ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name 3ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing 2ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it 2ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one 1ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content 3ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > the action-block module writes nothing itself 1ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > both chat paths hand the proposals to the response the sign-off prompt reads 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it 4832ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals 7ms
+ ✓ server/services/ana-ri/__tests__/chat-doors-propose-only.test.ts > a ```command block in AnA’s reply (the stream’s post-processing) > every write is a proposal; nothing is written, the erasure included 25ms
+ ✓ server/services/ana-ri/__tests__/chat-doors-propose-only.test.ts > a ```command block in AnA’s reply (the stream’s post-processing) > a confirmation the model writes into params is not a confirmation 2ms
+ ✓ server/services/ana-ri/__tests__/chat-doors-propose-only.test.ts > a ```command block in AnA’s reply (the stream’s post-processing) > CONTROL: the same block with a person’s confirmation on the context reaches the handler 2ms
+ ✓ server/services/ana-ri/__tests__/chat-doors-propose-only.test.ts > the agentic loop’s execute_platform_command (/api/chat, the /ana socket, /api/claude/agent) > a write comes back as the proposal, and the /api/chat response can lift it for the person 6404ms
+ ✓ server/services/ana-ri/__tests__/chat-doors-propose-only.test.ts > the agentic loop’s execute_platform_command (/api/chat, the /ana socket, /api/claude/agent) > a confirmation on the TOOL context is not passed to the command: the command is still proposed 2ms
+ ✓ server/services/ana-ri/__tests__/chat-doors-propose-only.test.ts > the agentic loop’s execute_platform_command (/api/chat, the /ana socket, /api/claude/agent) > CONTROL: a read runs through the same bridge 1ms
+ Test Files  5 passed (5)
+      Tests  46 passed (46)
+   Duration  21.69s (transform 23.45s, setup 642ms, import 36.56s, tests 11.56s, environment 2ms)

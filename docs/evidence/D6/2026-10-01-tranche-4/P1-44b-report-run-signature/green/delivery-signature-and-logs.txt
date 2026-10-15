@@ -1,0 +1,72 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:03:59.095Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:03:59.532Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:03:59.533Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-delivery-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:03:59.534Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > answers 'sent' only after the correspondence row, the delivery record and report_os.delivery_sent commit 56ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused correspondence write is not sent: 503, no chain row, nothing recorded 31ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused delivery record is not sent: 503, the letter rolls back with it, no chain row 20ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused chain row is not sent: 503, the letter and the record roll back with it 21ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > the learning memory is written inside the same transaction 25ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with a message at the schema limit is stored whole, so it can be listed again 15ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with no project is refused (422), not answered and stored nowhere 4ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a final report is sent inside the platform without an e-signature (the platform channel has no signature gate) 17ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries needs the finalize tier (DP-61) > a member cannot send an outbound letter or record an export: 403, nothing written 11ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > records 'exported' with report_os.delivery_exported on one transaction, and no letter 27ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a final run that carries no signature (409 E_SIGNATURE_REQUIRED) and records nothing 5ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a bundle holding a run that is final NOW and unsigned, whatever the bundle recorded when it was made 6ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signed final run is exported with no second ceremony: 201 'exported', and the record and chain row name the signature 18ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > the read is scoped to this organization and these runs 14ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature over a different seal does not count: 409, nothing recorded 4ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature that was revoked (superseded) does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature marked invalid does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signature whose verification status is revoked does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a signed run whose seal is not on its snapshot does not count: 409, nothing recorded 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a live signature counts even when an older one on the run was revoked 15ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a bundle of signed final runs is exported, naming each signature 13ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a bundle with one unsigned final run is refused, naming that run only 3ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b) > a non-final run needs no signature, and the delivery names none 9ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the correspondence write is refused, the log line carries the delivery id and the code, and no letter text 10ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the delivery record is refused, the log line carries the delivery id and the code, and no letter text 10ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > when the chain row is refused, the log line carries the delivery id and the code, and no letter text 11ms
+ ✓ server/routes/__tests__/report-os-delivery-recording.test.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a failure before the transaction is logged by its code, with no error text 4ms
+
+ Test Files  1 passed (1)
+      Tests  27 passed (27)
+   Start at  14:03:56
+   Duration  3.76s (transform 1.74s, setup 97ms, import 2.96s, tests 367ms, environment 0ms)
+

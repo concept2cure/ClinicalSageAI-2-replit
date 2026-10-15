@@ -1,0 +1,85 @@
+--- a/tests/db/account-standing.dbtest.ts
++++ b/tests/db/account-standing.dbtest.ts
+@@ -177,7 +177,13 @@
+     [email, `Lane Standing ${key}`, await bcrypt.hash(PASSWORD, 4), ORG],
+   );
+   const id = user.rows[0].id as number;
+-  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [ORG, id]);
++  // The membership begins a minute before the suite's faked clock (T0), as a membership
++  // precedes every session in life; one begun after a session ends it (plan P0-4b R1).
++  // A timestamptz, so the naive column holds it in this connection's zone, as now() would.
++  await owner.query(
++    `INSERT INTO organization_users (organization_id, user_id, role, created_at) VALUES ($1, $2, 'admin', $3::timestamptz)`,
++    [ORG, id, new Date(T0 - 60_000).toISOString()],
++  );
+   let secret = '';
+   // Through the functions the enrolment routes call, in the member's scope.
+   await inScope(`enrol-${key}`, async () => {
+--- a/tests/db/one-time-credentials.dbtest.ts
++++ b/tests/db/one-time-credentials.dbtest.ts
+@@ -170,7 +170,13 @@
+     [email, `Lane Replay ${key}`, await bcrypt.hash(PASSWORD, 4), ORG],
+   );
+   const id = user.rows[0].id as number;
+-  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [ORG, id]);
++  // The membership begins a minute before the suite's faked clock (T0), as a membership
++  // precedes every session in life; one begun after a session ends it (plan P0-4b R1).
++  // A timestamptz, so the naive column holds it in this connection's zone, as now() would.
++  await owner.query(
++    `INSERT INTO organization_users (organization_id, user_id, role, created_at) VALUES ($1, $2, 'admin', $3::timestamptz)`,
++    [ORG, id, new Date(T0 - 60_000).toISOString()],
++  );
+   let secret = '';
+   if (enrolTotp) {
+     // Through the functions /api/auth/mfa/setup and /enable call, in the
+--- a/tests/db/second-factor-binding.dbtest.ts
++++ b/tests/db/second-factor-binding.dbtest.ts
+@@ -160,7 +160,13 @@
+     [email, `Lane Binding ${key}`, await bcrypt.hash(PASSWORD, 4), ORG],
+   );
+   const id = user.rows[0].id as number;
+-  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [ORG, id]);
++  // The membership begins a minute before the suite's faked clock (T0), as a membership
++  // precedes every session in life; one begun after a session ends it (plan P0-4b R1).
++  // A timestamptz, so the naive column holds it in this connection's zone, as now() would.
++  await owner.query(
++    `INSERT INTO organization_users (organization_id, user_id, role, created_at) VALUES ($1, $2, 'admin', $3::timestamptz)`,
++    [ORG, id, new Date(T0 - 60_000).toISOString()],
++  );
+   let secret = '';
+   if (enrolTotp) {
+     // Through the functions the enrolment routes call, in the member's scope.
+--- a/tests/db/sign-in-posture.dbtest.ts
++++ b/tests/db/sign-in-posture.dbtest.ts
+@@ -108,7 +108,13 @@
+     [email, `Lane Posture ${key}`, await bcrypt.hash(PASSWORD, 4), ORG],
+   );
+   const id = user.rows[0].id as number;
+-  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [ORG, id]);
++  // The membership begins a minute before the suite's faked clock (T0), as a membership
++  // precedes every session in life; one begun after a session ends it (plan P0-4b R1).
++  // A timestamptz, so the naive column holds it in this connection's zone, as now() would.
++  await owner.query(
++    `INSERT INTO organization_users (organization_id, user_id, role, created_at) VALUES ($1, $2, 'admin', $3::timestamptz)`,
++    [ORG, id, new Date(T0 - 60_000).toISOString()],
++  );
+   let secret = '';
+   if (factor !== 'email') {
+     // Through the functions /api/auth/mfa/setup, /enable and /disable call.
+--- a/tests/db/signing-lockout.dbtest.ts
++++ b/tests/db/signing-lockout.dbtest.ts
+@@ -144,7 +144,13 @@
+     [email, `Lane Lockout ${key}`, await bcrypt.hash(PASSWORD, 4), ORG],
+   );
+   const id = user.rows[0].id as number;
+-  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [ORG, id]);
++  // The membership begins a minute before the suite's faked clock (T0), as a membership
++  // precedes every session in life; one begun after a session ends it (plan P0-4b R1).
++  // A timestamptz, so the naive column holds it in this connection's zone, as now() would.
++  await owner.query(
++    `INSERT INTO organization_users (organization_id, user_id, role, created_at) VALUES ($1, $2, 'admin', $3::timestamptz)`,
++    [ORG, id, new Date(T0 - 60_000).toISOString()],
++  );
+   let secret = '';
+   if (enrolTotp) {
+     // Through the functions the enrolment routes call, in the member's scope.

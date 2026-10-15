@@ -1,0 +1,48 @@
+# Mutation: the fix with verifyPlatformBearer's DEFAULT purpose flipped to 'grant' (an over-reaching fix that shuts connector tokens out of /mcp).
+# Expected red on the three controls; the four refusal cases stay green. File restored afterwards (cmp against the saved fixed copy).
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:58:00.907Z","pid":19100,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:58:00.912Z","pid":19100,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:58:00.912Z","pid":19100,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T06:58:01.292Z","pid":19100,"hostname":"vm","context":{"resource":"http://localhost:41179/mcp","issuer":"http://localhost:41179/","resourceMetadataUrl":"http://localhost:41179/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 30ms
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful { timestamp: '2026-10-01T06:58:01.557Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read 229ms
+ × server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there 17ms
+   → Streamable HTTP error: Error POSTing to endpoint: {"error":"invalid_token","error_description":"A connector token cannot authorise a grant. Sign in to Concept2Cure and try again."}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for another client: no code, no code row, and nothing for /mcp 19ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for its own client: no code, no code row, and nothing for /mcp 15ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for another client: no code, no code row, and nothing for /mcp 17ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for its own client: no code, no code row, and nothing for /mcp 18ms
+ × server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the c2c:read connector token still opens /mcp for a read 6ms
+   → Streamable HTTP error: Error POSTing to endpoint: {"error":"invalid_token","error_description":"A connector token cannot authorise a grant. Sign in to Concept2Cure and try again."}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > a refresh cannot widen the grant either 16ms
+ × server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the user's own session still consents to all three scopes, and that grant files the draft 59ms
+   → Streamable HTTP error: Error POSTing to endpoint: {"error":"invalid_token","error_description":"A connector token cannot authorise a grant. Sign in to Concept2Cure and try again."}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there
+ FAIL  server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the c2c:read connector token still opens /mcp for a read
+ FAIL  server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the user's own session still consents to all three scopes, and that grant files the draft
+Error: Streamable HTTP error: Error POSTing to endpoint: {"error":"invalid_token","error_description":"A connector token cannot authorise a grant. Sign in to Concept2Cure and try again."}
+ ❯ StreamableHTTPClientTransport.send node_modules/@modelcontextprotocol/sdk/src/client/streamableHttp.ts:552:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 401 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  06:57:56
+   Duration  5.95s (transform 1.81s, setup 150ms, import 665ms, tests 4.33s, environment 0ms)
+

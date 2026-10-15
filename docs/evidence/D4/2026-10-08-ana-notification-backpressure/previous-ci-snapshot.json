@@ -1,0 +1,55 @@
+{
+  "commit": "e6183e52ee8d8d47b01eb2325f9790097ac16a1a",
+  "workflows": [
+    {
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37783848193"
+    },
+    {
+      "name": "C2C Agent — Validate & Audit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37783848395"
+    },
+    {
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37783848352"
+    },
+    {
+      "name": "CI",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37783848788"
+    },
+    {
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37783848220"
+    },
+    {
+      "name": "Semgrep",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37783848186"
+    }
+  ],
+  "semgrep_delta": {
+    "blocking_findings": 6,
+    "paths": [
+      "client/src/concept2cure/v2/__tests__/accountPanel.test.tsx",
+      "client/src/concept2cure/v2/__tests__/shellNav.test.tsx",
+      "docs/evidence/ANA-SUMMARY/2026-10-08/S3-step-labels/review/generate_present.py",
+      "docs/evidence/QA-2026-10-08/projects/harness/home.mjs",
+      "server/routes/c2c/actions.ts",
+      "server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts"
+    ],
+    "run_control_batch_findings": 0,
+    "baseline": "661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19"
+  },
+  "scope_note": "Exact prior delivery workflow snapshot; overall CI still in progress at observation. Semgrep findings attributed only to listed files; no suppressions or UI fixes added."
+}

@@ -1,0 +1,445 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:19:15.085Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:19:15.087Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:19:15.088Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (ind, FDA) is built and sequenced, and says transmit is not proven 3ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (nda, FDA) is built and sequenced, and says transmit is not proven 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (bla, FDA) is built and sequenced, and says transmit is not proven 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (anda, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU MAA: Module 1 is flat, so no EMA sequence is built 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU clinical trial (CTA through CTIS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (510k): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (de_novo): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (pma): authored, no sequence 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (ide): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a master file: bound to the harmonised Module 3 outline, as creation binds it, and authored 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a continuing PMDA application (approval number on file): authored, Module 1 flat 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nds, Health_Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, Health Canada) 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (cta, Health_Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, TGA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, NMPA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, MFDS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EMA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (ind, MHRA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, ANVISA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, FDA) 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (jnda, PMDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > refuses a variation for FDA, however the region is named 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > an EU variation, and every other FDA type, is not refused here 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA NDA names the NDA and the marketing applications of its family, and no meeting, designation, supplement, report or QMS record 3ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA BLA names the BLA and the 351(k), not the supplement 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an author-only or refused offer is not scoped to named filings 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (mdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (ivdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (cer, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > however the catalog or an API caller names it 3ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, us) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, US) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, EU) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, eu) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, FDA) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Health Canada) → Health_Canada 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (mdr, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (ivdr, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (cer, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Swissmedic) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (device, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > Health Canada: the channel says nothing is sent, not that an adapter posts > the statement uses the Health Canada sentence, which the adapter refusal also uses 0ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-refuses.test.ts > Health Canada refuses to transmit > refuses before the wire, with the reason, and records no transmittal 5ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-refuses.test.ts > Health Canada refuses to transmit > is never configured, whatever variables are set 1ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-refuses.test.ts > Health Canada refuses to transmit > never polls Health Canada for status: the stored row comes back, saying why 1ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-gateway.f19bpatched.test.ts > HealthCanadaGateway > is registered in the gateway registry as ca/hc_cesg (rest) 3ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-gateway.f19bpatched.test.ts > HealthCanadaGateway > reports not-configured when CESG credentials are absent 1ms
+ ✓ server/services/submission-gateways/__tests__/health-canada-gateway.f19bpatched.test.ts > HealthCanadaGateway > refuses to transmit and records no transmittal row when unconfigured 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — the guard refuses before the gateway > is true for a guard refusal, and the gateway is never called 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit 6ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the FDA NextGen REST refusal (UnverifiedTransportError, transmitted === false) 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the requiredAgencyMetadata refusal raised before the transmittal row 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the CESP refusal of a centralised-procedure MAA, raised before the transmittal row 6ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the PMDA refusal over its unsourced protocol 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > requiredAgencyMetadata marks both of its refusals, and only those 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a CredentialError raised by a gateway's credential check (real MHRA transmit, no credentials) 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a TransportError only when its throw site passed NOTHING_TRANSMITTED 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 301ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.f19bpatched.test.ts > test setup keeps staged bundles out of the repository > resolves the bundle root outside the working tree 0ms
+stdout | server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts
+{
+  "timestamp": "2026-10-08T17:19:19.373Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:19:19.375Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts
+{
+  "timestamp": "2026-10-08T17:19:19.375Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an original IND sequence is an Original Application, sub-type original 3ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence with no type recorded is treated as an original 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an amendment / response sequence is an Original Application, sub-type amendment 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a withdrawal sequence is refused, never coded as an Original Application 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an annual sequence is an Annual Report 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence carrying a safety-report leaf is an IND Safety Report, whatever its type says 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > every derived value resolves to the us-regional code the FDA vocabulary defines 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > buildPackagerInputFromCore — the fda admin block > carries the application type and the sequence-derived submission type for an FDA sequence 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > buildPackagerInputFromCore — the fda admin block > codes an annual sequence as an annual report 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > buildPackagerInputFromCore — the fda admin block > adds no fda block for a non-FDA sequence 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > us-regional.xml — the emitted submission-type follows the sequence > without the fda block an original IND is no longer coded as an IND safety report 59ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an original IND sequence is emitted as fdaat4 / fdast1 / fdasst1 28ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.f19bpatched.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an amendment is emitted as fdast1 with sub-type fdasst4; an annual report as fdast5 70ms
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts
+{
+  "timestamp": "2026-10-08T17:19:21.170Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > 403 without org context 45ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > 400 when name is missing 8ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches SQL) 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract 14ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505) 16ms
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written
+{
+  "timestamp": "2026-10-08T17:19:21.586Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit_logs write failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01)
+{
+  "timestamp": "2026-10-08T17:19:21.609Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "99b9a30b-5ace-4308-a49a-6a0a4473be52",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-10-08T17:19:21.615Z",
+  "level": "error",
+  "message": "[c2c-projects] 42P01 names a relation that EXISTS — not a provisioning failure",
+  "context": {
+    "correlationId": "2cda1f9b-1610-4f77-a834-0c52c2acd796",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "code": "42P01",
+    "route": "/api/c2c/projects",
+    "detail": "relation \"audit_logs\" does not exist"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+{
+  "timestamp": "2026-10-08T17:19:21.615Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "relation \"audit_logs\" does not exist",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent
+{
+  "timestamp": "2026-10-08T17:19:21.620Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "f68e56cc-86ba-4ef3-b419-9ac366648969",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+{
+  "timestamp": "2026-10-08T17:19:21.627Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "dfa3e2a1-78a2-49fc-946d-dda670e87f45",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "PROJECT_RECORD_UNAVAILABLE",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent
+{
+  "timestamp": "2026-10-08T17:19:21.627Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: the anchor column is not provisioned",
+  "context": {
+    "correlationId": "dfa3e2a1-78a2-49fc-946d-dda670e87f45",
+    "orgId": 7,
+    "reason": "PENDING_ANCHOR_COLUMN",
+    "detail": "projects.regulatory_program_id is not present in this database (migrations/20260814_projects_regulatory_program_anchor.sql has not been applied). A program cannot be created without its PM-spine anchor."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen
+{
+  "timestamp": "2026-10-08T17:19:21.631Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "52fa7a37-6642-4fd0-906a-58ff03beab9f",
+    "orgId": 7,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "This organization has 2 client workspaces, none of them marked as the organization’s own, and the program names none of them. projects.client_workspace_id decides who can see a project, so it is not defaulted. A program cannot be created without its PM-spine anchor."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails
+{
+  "timestamp": "2026-10-08T17:19:21.648Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "submissions insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01)
+{
+  "timestamp": "2026-10-08T17:19:21.651Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "7e11c94c-ebab-4439-abc0-a88001fde485",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object
+{
+  "timestamp": "2026-10-08T17:19:21.654Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "6b038c54-7aae-49c6-9a34-7cb9b9b53869",
+    "step": "creating the project",
+    "store": "submissions",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed
+{
+  "timestamp": "2026-10-08T17:19:21.657Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "f7a71d9e-39a0-4f30-a340-529dbeb5c457",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed
+{
+  "timestamp": "2026-10-08T17:19:21.661Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "null value in column \"code\" violates not-null constraint",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure
+{
+  "timestamp": "2026-10-08T17:19:21.663Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "boom",
+    "correlationId": "3b46779335ffb1ec4187935db4df7570",
+    "code": "23502"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client 7ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > a scaffold that finds no outline refuses the filing (422 FILING_NOT_OFFERED) and rolls the creation back 11ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01) 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS 6ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > refuses 503 PENDING_STORE, rolled back with no audit row, when the anchor column is absent 4ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects > refuses 409 PROJECT_RECORD_UNAVAILABLE, rolled back, when no workspace can be chosen 5ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01) 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed 3ms
+ ✓ server/routes/c2c/__tests__/projects-create.f19bpatched.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure 3ms
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:19:22.880Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:19:22.882Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:19:22.882Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no channel 3ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Structured Module 1 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no channel 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Unmapped 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is refused at creation, with the reason 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 2ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 1ms
+
+ Test Files  7 passed (7)
+      Tests  126 passed (126)
+   Start at  17:19:12
+   Duration  10.50s (transform 2.76s, setup 196ms, import 8.12s, tests 784ms, environment 1ms)
+

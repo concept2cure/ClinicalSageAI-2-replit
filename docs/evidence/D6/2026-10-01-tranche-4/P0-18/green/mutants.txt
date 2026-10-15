@@ -1,0 +1,44 @@
+# 2026-10-01T06:44:02Z, PostgreSQL 16.13 c2c_testdb; each mutant applied with psql -1, then the dbtest; original restored via applyMigrationFiles
+=== mutant no-organisation-filter: < WHERE es.organization_id = NEW.organization_id > WHERE true 
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 84ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:281:5
+      Tests  1 failed | 12 passed (13)
+=== mutant no-type-filter: < AND es.signature_type = required_type > -- AND es.signature_type = required_type 
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 55ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:274:5
+      Tests  1 failed | 12 passed (13)
+=== mutant revoked-counts: < AND es.superseded_by IS NULL < AND es.is_valid IS DISTINCT FROM false < AND es.verification_status IS DISTINCT FROM 'revoked' > -- AND es.superseded_by IS NULL > -- AND es.is_valid IS DISTINCT FROM false > -- AND es.verification_status IS DISTINCT FROM 'revoked' 
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 81ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:288:5
+      Tests  1 failed | 12 passed (13)
+=== mutant any-transaction: < AND es.created_at = LOCALTIMESTAMP > -- AND es.created_at = LOCALTIMESTAMP 
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 258ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:299:112
+      Tests  1 failed | 12 passed (13)
+=== mutant not-deferred: < DEFERRABLE INITIALLY DEFERRED > NOT DEFERRABLE < DEFERRABLE INITIALLY DEFERRED > NOT DEFERRABLE 
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 164ms
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction 28ms
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 34ms
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 28ms
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses 22ms
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:294:40
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:308:50
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:318:40
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:327:40
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:113:21
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:351:5
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:358:7
+ ❯ tests/db/qms-document-signature-required.dbtest.ts:357:5
+      Tests  6 failed | 7 passed (13)
+=== restore the file as written, through the deploy applier
+✓ applied: migrations/20261001_qms_document_signature_required.sql
+{"applied":["migrations/20261001_qms_document_signature_required.sql"],"failures":[]}
+trg_qms_documents_signed_status_ins deferrable=true initdeferred=true
+trg_qms_documents_signed_status_upd deferrable=true initdeferred=true
+t

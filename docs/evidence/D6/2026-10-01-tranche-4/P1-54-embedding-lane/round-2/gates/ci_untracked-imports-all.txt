@@ -1,0 +1,5 @@
+# 2026-10-01T16:31:13Z: node scripts/ci/check-untracked-imports.mjs --all (every tracked file, read from the index). The three lines below are this item's: ana-readiness.test.ts (tracked) imports support/embedding-lane.ts, which is new and therefore untracked until it is committed with it. The push-range run (npm run ci:untracked-imports, ci_untracked-imports.txt) passes. Commit the two together.
+  server/startup/__tests__/ana-readiness.test.ts:31  →  ./support/embedding-lane
+  server/startup/__tests__/ana-readiness.test.ts:42  →  ./support/embedding-lane
+  server/startup/__tests__/ana-readiness.test.ts:45  →  ./support/embedding-lane
+(the rest of --all's output concerns files this item did not touch)

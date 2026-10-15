@@ -18,12 +18,14 @@ import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import {
   validatePackage as validateStructural,
+  auditStfCoverage,
   type ECTDLeaf,
   type ValidationFinding,
   type ValidationResult,
 } from './ectd4-validator.js';
 import {
   validateRegionalPackage,
+  isRegionalRulePackEncoded,
   type RegionalContext,
   type RegionalFinding,
   type RegionalLeafRef,
@@ -31,6 +33,7 @@ import {
 } from './ectd-regional-rules.js';
 import {
   ICH_BACKBONE,
+  ECTD_XLINK_NS,
   allHeadingElements,
 } from '../submission-gateways/ectd-packager/ich-headings.js';
 
@@ -71,7 +74,13 @@ export interface HardenedValidationResult extends ValidationResult {
   dtd: DtdFinding[];
   /** Composite score across structural + regional + sequence + dtd */
   hardenedScore: number;
-  /** True iff zero blocker errors across all categories */
+  /**
+   * False when the region's own rules are not encoded: its regional findings
+   * cover only the universal invariants, and a REGION_RULES_NOT_ENCODED finding
+   * says what was not assessed.
+   */
+  regionalRulesAssessed: boolean;
+  /** True iff zero blocker errors across all categories and the region's own rules were assessed */
   gatewayReady: boolean;
 }
 
@@ -170,7 +179,7 @@ export async function validateEctdPackageHardened(
   const md5Findings = enforceMd5Checksums(leaves, context.leafBuffers);
 
   // 4) Study-id tagging audit
-  const studyIdFindings = auditStudyIdTagging(leaves);
+  const studyIdFindings = auditStudyIdTagging(leaves, context.region);
 
   // Add MD5 + study-id findings into the structural findings list (they are leaf-level)
   const allStructural: ValidationFinding[] = [
@@ -216,11 +225,16 @@ export async function validateEctdPackageHardened(
     dtdFindings.filter(f => f.severity === 'warning').length;
   const hardenedScore = Math.max(0, 100 - errorCount * 12 - warningCount * 3);
 
+  // 2026-10-15: a region with no encoded rules of its own (UK, AU, CH, BR, IN,
+  // SG; CN and KR check only the same two invariants) came back gatewayReady
+  // with none of its rules applied. No findings there is not a clean result.
+  const regionalRulesAssessed = isRegionalRulePackEncoded(context.region);
   const gatewayReady =
     errorCount === 0 &&
     structural.summary.errors === 0 &&
     !regionalFindings.some(f => f.severity === 'error') &&
-    !sequenceFindings.some(f => f.severity === 'error');
+    !sequenceFindings.some(f => f.severity === 'error') &&
+    regionalRulesAssessed;
 
   return {
     valid: structural.valid && gatewayReady,
@@ -237,11 +251,43 @@ export async function validateEctdPackageHardened(
     sequence: sequenceFindings,
     dtd: dtdFindings,
     hardenedScore,
+    regionalRulesAssessed,
     gatewayReady,
   };
 }
 
 // ── DTD validation ──────────────────────────────────────────────────────────
+
+/**
+ * xmlns:xlink is #FIXED by the ICH 3.2 DTD to ECTD_XLINK_NS, the non-W3C
+ * spelling; see that constant. 2026-10-01 (W5/D7, sweep F01): this check
+ * required the W3C value, so it passed every DTD-invalid backbone the packager
+ * wrote and refused a valid one as missing. A declaration with the wrong value
+ * is reported as such, apart from a missing one.
+ */
+function xlinkNamespaceFindings(xml: string): DtdFinding[] {
+  const declared = [...xml.matchAll(/\bxmlns:xlink\s*=\s*(?:"([^"]*)"|'([^']*)')/g)].map(
+    (m) => m[1] ?? m[2],
+  );
+  if (declared.length === 0) {
+    return [{
+      severity: 'error',
+      code: 'DTD_MISSING_XLINK_NS',
+      message: 'XLink namespace declaration missing on root element',
+      fix: `Add xmlns:xlink="${ECTD_XLINK_NS}" to the root element`,
+    }];
+  }
+  const wrong = declared.find((ns) => ns !== ECTD_XLINK_NS);
+  if (wrong === undefined) return [];
+  return [{
+    severity: 'error',
+    code: 'DTD_WRONG_XLINK_NS',
+    message:
+      `xmlns:xlink is declared as "${wrong}", but the ICH eCTD 3.2 DTD fixes it (#FIXED) ` +
+      `to "${ECTD_XLINK_NS}"; any other value, including the W3C spelling, is a DTD validity error`,
+    fix: `Set xmlns:xlink="${ECTD_XLINK_NS}" on the root element`,
+  }];
+}
 
 /**
  * Validate that the backbone XML conforms to the ICH eCTD DTD reference structure.
@@ -292,7 +338,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
       severity: 'error',
       code: 'DTD_BAD_ROOT',
       message: 'Root element is not <ectd:ectd>',
-      fix: 'Wrap content in <ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink">',
+      fix: `Wrap content in <ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="${ECTD_XLINK_NS}">`,
     });
   }
 
@@ -305,14 +351,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
       fix: 'Add xmlns:ectd="http://www.ich.org/ectd" to the root element',
     });
   }
-  if (!/xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/.test(xml)) {
-    findings.push({
-      severity: 'error',
-      code: 'DTD_MISSING_XLINK_NS',
-      message: 'XLink namespace declaration missing on root element',
-      fix: 'Add xmlns:xlink="http://www.w3.org/1999/xlink" to the root element',
-    });
-  }
+  findings.push(...xlinkNamespaceFindings(xml));
 
   // Per-leaf attribute requirements
   const leafMatches = xml.matchAll(/<leaf\b([^>]*)\/?>/g);
@@ -447,48 +486,30 @@ export function enforceMd5Checksums(
 // ── Study-id tagging audit ──────────────────────────────────────────────────
 
 /**
- * Audit per-leaf @study-id tagging. Required for M4/M5 leaves that contain
- * study data. Without this, the FDA STF (Study Tagging File) cannot resolve
- * the leaf to a CDISC dataset.
+ * Audit per-leaf study tagging for FDA eCTD validation 1789: every file in a
+ * Module 4 or 5 study section (all but 4.3, 5.2, 5.3.6 and 5.4) must be
+ * referenced by a Study Tagging File, which needs the leaf's study id.
+ *
+ * An adapter over the one coverage check, `auditStfCoverage` in
+ * ectd4-validator.ts, which the v3.2.2 packager also calls. The leaf
+ * validator's ECTDLeaf carries no STF file-tag, so only the study id is checked
+ * here; the packager checks both.
+ *
+ * 2026-10-05 (g-stf-1789-fail-closed): this read `studyId || lifecycleOperator`
+ * — any lifecycle operator id passed for a study id — covered a private list of
+ * nine section prefixes that left out 4.1, 5.1 and leaves filed at the 4.2 and
+ * 5.3 headings, and reported a warning citing the STF specification rather than
+ * the rejection criterion. The study id is now `leaf.studyId` alone; the finding is
+ * an error for a US sequence, an unknown region or no region, and a warning
+ * for a region that resolves to anything else.
+ *
+ * @param region the sequence's region in any platform vocabulary ('US', 'fda', 'EU', ...).
  */
-export function auditStudyIdTagging(leaves: ECTDLeaf[]): ValidationFinding[] {
-  const findings: ValidationFinding[] = [];
-  let id = 0;
-
-  // Sections that MUST carry @study-id per ICH M8
-  const studyTaggedSections = [
-    'm4.2.1',  // pharmacology study reports
-    'm4.2.2',  // pharmacokinetic study reports
-    'm4.2.3',  // toxicology study reports
-    'm5.3.1',  // BA / BE study reports
-    'm5.3.2',  // PK study reports
-    'm5.3.3',  // human PK reports
-    'm5.3.4',  // PD study reports
-    'm5.3.5',  // efficacy & safety study reports
-    'm5.3.7',  // case report forms
-  ];
-
-  for (const leaf of leaves) {
-    const requiresStudyId = studyTaggedSections.some(s => leaf.sectionCode.startsWith(s));
-    if (!requiresStudyId) continue;
-
-    // We use lifecycleOperator as the study-id slot per the existing schema —
-    // a real ICH M8 implementation would carry it on a dedicated field.
-    const studyId = (leaf as any).studyId || leaf.lifecycleOperator;
-    if (!studyId) {
-      findings.push({
-        id: `STF${++id}`,
-        severity: 'warning',
-        code: 'STF_MISSING_STUDY_ID',
-        sectionCode: leaf.sectionCode,
-        message: `Leaf "${leaf.title}" in section ${leaf.sectionCode} lacks @study-id`,
-        fix: 'Tag the leaf with the controlling study identifier (matches CDISC ODM / FDA STF)',
-        rule: 'FDA Study Tagging File (STF) Specification v2.6.1',
-      });
-    }
-  }
-
-  return findings;
+export function auditStudyIdTagging(leaves: ECTDLeaf[], region?: string): ValidationFinding[] {
+  return auditStfCoverage(
+    leaves.map((l) => ({ section: l.sectionCode, title: l.title, operation: l.operation, studyId: l.studyId })),
+    { region, fileTagModelled: false },
+  );
 }
 
 // ── Sequence-gap detection ──────────────────────────────────────────────────

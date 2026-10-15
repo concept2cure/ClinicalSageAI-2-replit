@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:surface-text-ramp
+> node scripts/design/generate-surface-text-ramp.mjs --check
+
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.

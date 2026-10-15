@@ -1,0 +1,37 @@
+Warning: modified files without companion tests (non-blocking):
+ - client/src/concept2cure/v2/AccountPanel.tsx
+ - client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+ - client/src/concept2cure/v2/surfaces/AdminAccess.tsx
+ - client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx
+ - client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx
+ - client/src/concept2cure/v2/surfaces/Onboarding.tsx
+ - client/src/concept2cure/v2/surfaces/Projects.tsx
+ - client/src/services/portal/authService.tsx
+ - server/bootstrap/register-tenant-routes.ts
+ - server/routes/api-keys.ts
+ - server/routes/authoring-permissions.ts
+ - server/routes/organizations-routes.ts
+ - server/routes/tenant-config.ts
+ - server/services/ana-platform-controller.ts
+ - server/services/api-key-service.ts
+ - server/services/authoring/authoring-permissions.ts
+ - server/services/tenant/tenant-settings-writer.ts
+ - shared/schema/api-keys.ts
+Missing corresponding tests for:
+ - client/src/concept2cure/v2/AccountOnboardingSettings.tsx
+ - client/src/concept2cure/v2/OrganizationSwitcher.tsx
+ - client/src/concept2cure/v2/__tests__/onboardingDiscoveryFixtures.ts
+ - client/src/concept2cure/v2/editor/DocumentPermissionsPanel.tsx
+ - client/src/concept2cure/v2/reportingPersona.ts
+ - client/src/concept2cure/v2/surfaces/AdminApiKeyCreate.tsx
+ - client/src/concept2cure/v2/surfaces/AdminApiKeyUsage.tsx
+ - client/src/concept2cure/v2/surfaces/AdminPlatformGrants.tsx
+ - client/src/concept2cure/v2/surfaces/DiscoveryQuestions.tsx
+ - client/src/concept2cure/v2/surfaces/LegalHoldsCard.tsx
+ - client/src/concept2cure/v2/surfaces/ProjectDiscoveryHandoff.tsx
+ - server/routes/onboarding-discovery-routes.ts
+ - shared/constants/api-key-scopes.ts
+ - shared/constants/platform-grant-roles.ts
+ - shared/types/onboarding-discovery.ts
+VERIFY_TESTS_STRICT is not enabled; continuing with warning-only mode.
+Test presence verified for added/renamed source files.

@@ -14,6 +14,9 @@
  *      prestar-mapper for Q-Sub/IDE/513(g)) → are the required sections present?
  *   4. official-template producibility — whether the platform can actually fill
  *      the official FDA PDF (template vendored + verified field map)
+ *   5. template version currency  — whether the official template on file is the
+ *      version FDA currently publishes (estar-versions.templateVersionCurrency).
+ *      A 7.0 PDF filled while FDA's page names 7.1 used to report "Can file now".
  *
  * PURE + DETERMINISTIC + HONEST-BY-CONSTRUCTION: no DB, no network, no filesystem.
  * Producibility is passed in (the caller reads it from the template registry / fill
@@ -33,7 +36,12 @@ import {
   type EstarClientRegistration,
   type EstarRegistrationRequirement,
 } from './estar-registration';
-import type { EstarProgramSubmissionType, EstarTemplateFamily } from './estar-versions';
+import {
+  isVersionTableStale,
+  templateVersionCurrency,
+  type EstarProgramSubmissionType,
+  type EstarTemplateFamily,
+} from './estar-versions';
 import { mapToEstar, type EstarType, type DeviceFlags } from './estar-mapper';
 import { mapToPma, type PmaSubmissionType } from '../pma/pma-mapper';
 import { mapToPreStar, type QSubType } from '../prestar/prestar-mapper';
@@ -189,6 +197,17 @@ export interface EstarFilingReadinessInput {
    */
   templateAvailable?: boolean;
   fieldMapPopulated?: boolean;
+  /**
+   * The FDA version of the official template on file — the caller fills it from
+   * `descriptorFor(type, variant).version` (estar-template-registry). Absent or
+   * `'unset'` fails closed: a version nobody pinned is not FDA's current one.
+   */
+  vendoredTemplateVersion?: string;
+  /**
+   * The date (YYYY-MM-DD) the version table's age is judged at. This module
+   * reads no clock; without it `versionTableStale` is reported true.
+   */
+  asOf?: string;
 }
 
 export interface EstarFilingReadinessResult {
@@ -214,6 +233,11 @@ export interface EstarFilingReadinessResult {
   templateAvailable: boolean;
   fieldMapPopulated: boolean;
   officialTemplateProducible: boolean;
+  // Template version currency (vendored template vs FDA's current version).
+  vendoredTemplateVersion: string | null;
+  templateVersionCurrent: boolean;
+  /** The version table is older than the currency registry's verification window (or no as-of date was given). */
+  versionTableStale: boolean;
   // Overall verdict.
   canFileNow: boolean;
   blockers: string[];
@@ -222,8 +246,9 @@ export interface EstarFilingReadinessResult {
 /**
  * Assess whether a client can file a given eSTAR submission today, and what's
  * blocking the rest. `canFileNow` is true only when the client is registered for
- * it, the content is complete, AND the platform can produce the official FDA
- * template — every failing dimension is reported in `blockers`.
+ * it, the content is complete, the platform can produce the official FDA
+ * template, AND that template is FDA's current version — every failing
+ * dimension is reported in `blockers`.
  */
 export function assessEstarFilingReadiness(
   input: EstarFilingReadinessInput,
@@ -246,6 +271,11 @@ export function assessEstarFilingReadiness(
   const templateAvailable = input.templateAvailable ?? false;
   const fieldMapPopulated = input.fieldMapPopulated ?? false;
   const officialTemplateProducible = templateAvailable && fieldMapPopulated;
+
+  // 4. Template version currency (one comparison, in estar-versions; fails closed).
+  const family: EstarTemplateFamily = resolved?.family ?? 'nivd';
+  const versionCurrency = templateVersionCurrency(family, input.vendoredTemplateVersion);
+  const versionTableStale = input.asOf ? isVersionTableStale(input.asOf) : true;
 
   // Overall verdict + human-readable blockers.
   const blockers: string[] = [];
@@ -274,6 +304,7 @@ export function assessEstarFilingReadiness(
         : 'the field map is not populated/verified';
     blockers.push(`Cannot produce a submittable eSTAR: ${what}.`);
   }
+  if (versionCurrency.blocker) blockers.push(versionCurrency.blocker);
 
   return {
     catalogKey: input.catalogKey,
@@ -283,7 +314,7 @@ export function assessEstarFilingReadiness(
     center: entry.center,
     regulatoryRef: entry.regulatoryRef,
     reviewGoalDays: entry.reviewGoalDays,
-    family: resolved?.family ?? 'nivd',
+    family,
     currentVersion: resolved?.currentVersion ?? null,
     ombNumbers: resolved?.ombNumbers ?? [],
     eligible,
@@ -294,7 +325,10 @@ export function assessEstarFilingReadiness(
     templateAvailable,
     fieldMapPopulated,
     officialTemplateProducible,
-    canFileNow: eligible && content.ready && officialTemplateProducible,
+    vendoredTemplateVersion: versionCurrency.vendoredVersion,
+    templateVersionCurrent: versionCurrency.current,
+    versionTableStale,
+    canFileNow: eligible && content.ready && officialTemplateProducible && versionCurrency.current,
     blockers,
   };
 }

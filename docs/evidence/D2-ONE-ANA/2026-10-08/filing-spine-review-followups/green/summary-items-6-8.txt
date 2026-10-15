@@ -1,0 +1,6 @@
+# Items 6-8 (review open items 9 and 10; F14's door class), 2026-10-08
+vitest, affected suites (Project home, Projects, Submission Center, filing path, New submission, market support, compile, AnA verbs, regulatory services, c2c projects routes, market-support route): 136 files, 1243 passed, 0 failed (items-6-8-vitest.txt)
+npm run typecheck: exit 0 (the first run found TS2532 in the amended market-support test; the test now asserts the dated fact exists before naming its date)
+gates exit 0: ci:internals-in-copy, ci:action-overclaim, check:microcopy, ci:design-system, ci:check-phantom-tokens, ci:undefined-css-classes, ci:check-css-selector-shadowing, ci:surface-text-ramp, ci:token-cascade, ci:launch-scope, ci:launch-scope-api, ci:surface-discoverability, ci:canvas-path, check-js-ts-shadows
+ci:eslint-ratchet:since HEAD: no file changed its warning count
+amended in place, each with a dated note: market-support.test.ts (PMDA line), projects-detail-taxonomy.test.ts (the create's body carries readinessAsOf: null)

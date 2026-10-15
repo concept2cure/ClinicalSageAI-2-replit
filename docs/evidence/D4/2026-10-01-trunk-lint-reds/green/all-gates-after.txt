@@ -1,0 +1,47 @@
+$ node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+[ci:requestdb-coverage] OK — no new shared-pool routes (228 current, 228 baseline)
+exit 0
+
+$ npm run -s ci:unbacked-tables
+[ci:unbacked-tables] 1479 tables/views created across migrations, drizzle and runtime DDL; 737 referenced in server SQL; 23 unbacked; 23 baselined
+[ci:unbacked-tables] ✅ no new references to tables nothing creates.
+exit 0
+
+$ npm run -s ci:compose-boot-contract:selftest
+ok   list-form environment is read
+ok   an excusal the preflight no longer needs is reported
+[ci:compose-boot-contract] self-test: every case behaves
+exit 0
+
+$ npm run -s ci:compose-boot-contract
+[ci:compose-boot-contract] OK — 2 production Compose stack(s) carry the boot contract (27 preflight names, 4 excused for Compose, + ALLOWED_ORIGINS).
+exit 0
+
+$ npm run -s ci:ana-surface-context
+  several, and a child can publish for a parent that has no call of its own
+  (78 surface file(s) hold a call).
+
+exit 0
+
+$ npm run -s ci:unkeyed-request-tables
+[ci:unkeyed-request-tables] 1074 tables created; 603 read by a per-request path; 108 of those carry NO tenant column; 108 baselined, 99 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+exit 0
+
+$ npm run -s ci:unkeyed-request-tables:selftest
+
+[selftest] ✅ the gate fails on the case it exists to catch, and only on that case.
+
+exit 0
+
+$ npm run -s ci:surface-text-ramp
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+
+$ npm run -s ci:tenant-entry-points
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+exit 0
+

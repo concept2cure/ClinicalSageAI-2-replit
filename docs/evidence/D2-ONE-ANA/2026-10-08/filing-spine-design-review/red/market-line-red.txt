@@ -1,0 +1,86 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words 171ms
+   → expected 'Structured Module 1. Transmit not pro…' to be 'Structured Module 1. Transmit not pro…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say 70ms
+   → expected 'alert' to be 'status' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a read in flight claims nothing about the market 3ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > says nothing, and reads nothing, without both an application type and a market 2ms
+ × client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing 1ms
+   → expected 'No outline, no channel' to be 'No outline, no channel.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a line that opens with the summary is shown once, not after the summary 1ms
+   → expected 'Not offered. Not offered: the UK has …' to be 'Not offered: the UK has no IND applic…' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words
+AssertionError: expected 'Structured Module 1. Transmit not pro…' to be 'Structured Module 1. Transmit not pro…' // Object.is equality
+
+Expected: "Structured Module 1. Transmit not proven: the ESG transmission is not signed as FDA requires."
+Received: "Structured Module 1. Transmit not proven: the ESG transmission is not signed as FDA requires"
+
+ ❯ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx:80:67
+     78|     const [nda, maa] = screen.getAllByTestId('pj-submission');
+     79|     await waitFor(() => expect(within(nda).getByTestId('market-support…
+     80|     expect(within(nda).getByTestId('market-support').textContent).toBe…
+       |                                                                   ^
+     81|     await waitFor(() => expect(within(maa).getByTestId('market-support…
+     82|     expect(within(maa).getByTestId('market-support').textContent).toCo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say
+AssertionError: expected 'alert' to be 'status' // Object.is equality
+
+Expected: "status"
+Received: "alert"
+
+ ❯ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx:95:76
+     93|     serve(false);
+     94|     // One status per row, not one alert per row; the Retry names its …
+     95|     expect(within(nda).getByTestId('market-support').getAttribute('rol…
+       |                                                                            ^
+     96|     fireEvent.click(within(nda).getByRole('button', { name: 'Retry: pl…
+     97|     await waitFor(() => expect(within(nda).getByTestId('market-support…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing
+AssertionError: expected 'No outline, no channel' to be 'No outline, no channel.' // Object.is equality
+
+Expected: "No outline, no channel."
+Received: "No outline, no channel"
+
+ ❯ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx:119:102
+    117|
+    118|   it('does not repeat the summary when the line says the same thing', …
+    119|     expect(marketSupportText({ summary: 'No outline, no channel', line…
+       |                                                                                                      ^
+    120|     expect(marketSupportText({ summary: 'Flat Module 1, no channel', l…
+    121|       .toBe('Flat Module 1, no channel. Applicant uploads through the …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a line that opens with the summary is shown once, not after the summary
+AssertionError: expected 'Not offered. Not offered: the UK has …' to be 'Not offered: the UK has no IND applic…' // Object.is equality
+
+Expected: "Not offered: the UK has no IND application type."
+Received: "Not offered. Not offered: the UK has no IND application type"
+
+ ❯ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx:129:8
+    127|   it('a line that opens with the summary is shown once, not after the …
+    128|     expect(marketSupportText({ summary: 'Not offered', line: 'Not offe…
+    129|       .toBe('Not offered: the UK has no IND application type.');
+       |        ^
+    130|     expect(marketSupportText({ summary: 'Not supported', line: 'Not su…
+    131|       .toBe('Not supported: the platform has no filing outline or chan…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  17:16:20
+   Duration  3.03s (transform 932ms, setup 257ms, import 1.18s, tests 255ms, environment 1.14s)
+

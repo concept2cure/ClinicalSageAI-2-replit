@@ -311,3 +311,16 @@ export function citationLookupFor(
   for (const s of sources) if (s && s.id != null) byId.set(String(s.id), s);
   return (sourceId: string) => byId.get(String(sourceId)) ?? null;
 }
+
+/** Actionable refusals shared by refresh responses and the existing Sources rail. */
+export function citationRefreshRefusalMessage(reason: string): string {
+  const messages: Record<string, string> = {
+    not_found: 'Citation not found on this section. Nothing was changed.',
+    frozen: 'This citation is frozen and cannot be re-resolved',
+    not_a_source_citation: 'This citation does not reference a canonical source, so there is nothing to re-read. Nothing was changed.',
+    unresolved_source: 'The cited source no longer resolves in this organization. Nothing was changed.',
+    source_withdrawn: 'This source has been withdrawn or superseded. Choose a current source whose data use is permitted. Nothing was changed.',
+    cross_project: 'This source belongs to another project. Choose a source from this document’s project. Nothing was changed.',
+  };
+  return messages[reason] ?? 'The recorded source could not be verified. Nothing was changed.';
+}

@@ -15,6 +15,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 const DETERMINISTIC_NOTE =
   'DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.';
@@ -214,7 +215,7 @@ export const GENERATE_DECLARATION_OF_CONFORMITY: AnaTool = {
       srn: { type: 'string', description: 'Single Registration Number.' },
       productName: { type: 'string' },
       basicUdiDi: { type: 'string' },
-      riskClass: { type: 'string', enum: ['A', 'B', 'C', 'D'] },
+      riskClass: { type: 'string', enum: [...IVDR_CLASSES] },
       notifiedBodyNumber: { type: 'string' },
       certificateNumber: { type: 'string' },
       conformityRoute: { type: 'string' },
@@ -227,16 +228,16 @@ export const GENERATE_DECLARATION_OF_CONFORMITY: AnaTool = {
 export const BUILD_POSTMARKET_REPORT: AnaTool = {
   name: 'build_postmarket_report',
   description:
-    'Draft a device/IVD post-market regulatory report — eMDR (US FDA), MIR (EU manufacturer incident report), FSN (field safety notice), or PSUR (periodic safety update). Returns the structured report payload, or valid:false with the missing[] required fields when incomplete. Set reportType and provide that report\'s fields. ' +
+    'Draft a device/IVD post-market regulatory report — eMDR (US FDA), MIR (EU manufacturer incident report) or FSN (field safety notice). Returns the structured report payload, or valid:false with the missing[] required fields when incomplete. Set reportType and provide that report\'s fields. A PSUR is not built here: it is a program\'s post-market document, authored with the post_market.document.create command (documentType "psur"). ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
-      reportType: { type: 'string', enum: ['emdr', 'mir', 'fsn', 'psur'], description: 'Which report to build.' },
+      reportType: { type: 'string', enum: ['emdr', 'mir', 'fsn'], description: 'Which report to build.' },
       fields: {
         type: 'object',
         description:
-          "The report's fields. eMDR: manufacturerName, deviceBrandName, eventType(death|serious_injury|malfunction), becameAwareDate, eventDescription, reportType(initial|supplemental|followup). MIR: manufacturerName, deviceName, incidentType(serious_incident|fsca), becameAwareDate, incidentDescription. FSN: manufacturerName, deviceName, affectedLots[], actionType(recall|software_update|advisory|modification|return), reasonForAction, riskToHealth, recommendedUserAction, contactDetails. PSUR: deviceName, riskClass, reportingPeriodStart, reportingPeriodEnd, complaintCount, seriousIncidentCount, fscaCount, signalsDetected, benefitRiskConclusion.",
+          "The report's fields. eMDR: manufacturerName, deviceBrandName, eventType(death|serious_injury|malfunction), becameAwareDate, eventDescription, reportType(initial|supplemental|followup). MIR: manufacturerName, deviceName, incidentType(serious_incident|fsca), becameAwareDate, incidentDescription. FSN: manufacturerName, deviceName, affectedLots[], actionType(recall|software_update|advisory|modification|return), reasonForAction, riskToHealth, recommendedUserAction, contactDetails.",
       },
     },
     required: ['reportType', 'fields'],

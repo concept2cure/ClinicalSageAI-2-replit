@@ -1,0 +1,240 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T13:32:12.080Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:32:12.081Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T13:32:12.081Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T13:32:16.556Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > with a reason only (no verified signature): refused, and nothing is written 23ms
+   → "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row 14ms
+   → expected { status: 'approved', …(2) } to match object { status: 'approved', …(1) }
+(1 matching property omitted from actual)
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning release: refused, nothing written — the act fixes its meaning 6ms
+   → "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning authorship: refused, nothing written — the act fixes its meaning 6ms
+   → "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning review: refused, nothing written — the act fixes its meaning 7ms
+   → "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a member, whom the status route does not let approve: refused, nothing written 6ms
+   → "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a manager, whom the status route does not let approve: refused, nothing written 7ms
+   → "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a author, whom the status route does not let approve: refused, nothing written 7ms
+   → "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > with a reason only: refused, not locked, no snapshot 9ms
+   → "Clinical overview" status changed: approved → locked. It cannot be filed yet: its status is 'locked' but no locked version is recorded, so its current content (v2) cannot be shown to be the content that was locked. A locked version is recorded only by the review workflow's Lock action (the status route's approved → locked, an electronic signature with the meaning 'release', or authoring-actions lock-artifact); this command records none, so repeating it will not make the artifact filable. To file it, unlock it (locked → draft), return it to review, approve it through the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact), and lock it through that Lock action.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning release: locked at the version, with its snapshot, signature and ledger row 7ms
+   → expected { status: 'locked', …(2) } to match object { status: 'locked', …(2) }
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning approval: refused, not locked 6ms
+   → "Clinical overview" status changed: approved → locked. It cannot be filed yet: its status is 'locked' but no locked version is recorded, so its current content (v2) cannot be shown to be the content that was locked. A locked version is recorded only by the review workflow's Lock action (the status route's approved → locked, an electronic signature with the meaning 'release', or authoring-actions lock-artifact); this command records none, so repeating it will not make the artifact filable. To file it, unlock it (locked → draft), return it to review, approve it through the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact), and lock it through that Lock action.: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > a reviewer, whom the status route lets approve but not lock: refused 5ms
+   → "Clinical overview" status changed: approved → locked. It cannot be filed yet: its status is 'locked' but no locked version is recorded, so its current content (v2) cannot be shown to be the content that was locked. A locked version is recorded only by the review workflow's Lock action (the status route's approved → locked, an electronic signature with the meaning 'release', or authoring-actions lock-artifact); this command records none, so repeating it will not make the artifact filable. To file it, unlock it (locked → draft), return it to review, approve it through the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact), and lock it through that Lock action.: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > with a reason only (no verified signature): refused, and nothing is written
+AssertionError: "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:157:44
+    155|     const result = await updateArtifactStatus(reasonOnly, params('appr…
+    156|
+    157|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    158|     expect(await artifactRow(), 'approved from a reason for change alo…
+    159|     expect(await signatures()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row
+AssertionError: expected { status: 'approved', …(2) } to match object { status: 'approved', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "approved_version_id": 2,
++   "approved_version_id": null,
+    "status": "approved",
+  }
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:168:33
+    166|
+    167|     expect(result.success, result.message).toBe(true);
+    168|     expect(await artifactRow()).toMatchObject({ status: 'approved', ap…
+       |                                 ^
+    169|     expect(await signatures()).toEqual([
+    170|       {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning release: refused, nothing written — the act fixes its meaning
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning authorship: refused, nothing written — the act fixes its meaning
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning review: refused, nothing written — the act fixes its meaning
+AssertionError: "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:187:46
+    185|       const result = await updateArtifactStatus(signed(meaning), param…
+    186|
+    187|       expect(result.success, result.message).toBe(false);
+       |                                              ^
+    188|       expect(result.message).toContain('approval');
+    189|       expect(await artifactRow()).toMatchObject({ status: 'review', ap…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a member, whom the status route does not let approve: refused, nothing written
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a manager, whom the status route does not let approve: refused, nothing written
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a author, whom the status route does not let approve: refused, nothing written
+AssertionError: "Clinical overview" status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v2) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:201:46
+    199|       const result = await updateArtifactStatus(signed('approval'), pa…
+    200|
+    201|       expect(result.success, result.message).toBe(false);
+       |                                              ^
+    202|       expect(await artifactRow()).toMatchObject({ status: 'review', ap…
+    203|       expect(await signatures()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > with a reason only: refused, not locked, no snapshot
+AssertionError: "Clinical overview" status changed: approved → locked. It cannot be filed yet: its status is 'locked' but no locked version is recorded, so its current content (v2) cannot be shown to be the content that was locked. A locked version is recorded only by the review workflow's Lock action (the status route's approved → locked, an electronic signature with the meaning 'release', or authoring-actions lock-artifact); this command records none, so repeating it will not make the artifact filable. To file it, unlock it (locked → draft), return it to review, approve it through the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact), and lock it through that Lock action.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:213:44
+    211|     const result = await updateArtifactStatus(reasonOnly, params('lock…
+    212|
+    213|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    214|     expect(await artifactRow()).toMatchObject({ status: 'approved', pu…
+    215|     expect(await snapshots()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning release: locked at the version, with its snapshot, signature and ledger row
+AssertionError: expected { status: 'locked', …(2) } to match object { status: 'locked', …(2) }
+
+- Expected
++ Received
+
+  {
+    "approved_version_id": 2,
+-   "published_version_id": 2,
++   "published_version_id": null,
+    "status": "locked",
+  }
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:224:33
+    222|
+    223|     expect(result.success, result.message).toBe(true);
+    224|     expect(await artifactRow()).toMatchObject({ status: 'locked', appr…
+       |                                 ^
+    225|     expect(await signatures()).toEqual([
+    226|       expect.objectContaining({ signature_type: 'publish', signature_m…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning approval: refused, not locked
+AssertionError: "Clinical overview" status changed: approved → locked. It cannot be filed yet: its status is 'locked' but no locked version is recorded, so its current content (v2) cannot be shown to be the content that was locked. A locked version is recorded only by the review workflow's Lock action (the status route's approved → locked, an electronic signature with the meaning 'release', or authoring-actions lock-artifact); this command records none, so repeating it will not make the artifact filable. To file it, unlock it (locked → draft), return it to review, approve it through the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact), and lock it through that Lock action.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:237:44
+    235|     const result = await updateArtifactStatus(signed('approval'), para…
+    236|
+    237|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    238|     expect(result.message).toContain('release');
+    239|     expect(await artifactRow()).toMatchObject({ status: 'approved', pu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > a reviewer, whom the status route lets approve but not lock: refused
+AssertionError: "Clinical overview" status changed: approved → locked. It cannot be filed yet: its status is 'locked' but no locked version is recorded, so its current content (v2) cannot be shown to be the content that was locked. A locked version is recorded only by the review workflow's Lock action (the status route's approved → locked, an electronic signature with the meaning 'release', or authoring-actions lock-artifact); this command records none, so repeating it will not make the artifact filable. To file it, unlock it (locked → draft), return it to review, approve it through the review workflow's Approve action (the status route's review → approved, an electronic signature with the meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact), and lock it through that Lock action.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts:248:44
+    246|     const result = await updateArtifactStatus(signed('release'), param…
+    247|
+    248|     expect(result.success, result.message).toBe(false);
+       |                                            ^
+    249|     expect(await artifactRow()).toMatchObject({ status: 'approved', pu…
+    250|     expect(await signatures()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  13:32:08
+   Duration  13.13s (transform 3.91s, setup 108ms, import 8.57s, tests 4.13s, environment 0ms)
+

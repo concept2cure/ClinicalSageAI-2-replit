@@ -98,8 +98,8 @@ export function createContainerClosureStabilityNodes(): QuestionNode[] {
             { value: 'headspace_analysis', label: 'Headspace Analysis (O₂ / CO₂)' },
             { value: 'hlpc', label: 'High-Voltage Leak Detection (HVLD)' },
             { value: 'microbial_ingress', label: 'Microbial Ingress' },
-            { value: 'other', label: 'Other' },
           ],
+          allowOther: {},
           helpText:
             'For sterile products, describe the CCI test method used to demonstrate that the container closure system maintains sterility throughout shelf life.',
         },

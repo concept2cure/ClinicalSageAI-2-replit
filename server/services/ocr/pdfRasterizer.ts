@@ -44,12 +44,21 @@ export interface RasterizeOptions {
   pages?: number[];
   /** Crop each rendered page to this fractional region. */
   region?: RasterizeRegion;
+  /**
+   * Most pixels one page may render to. A larger page renders at the dpi that
+   * fits, reported on the page. Unset means no cap — callers rendering a
+   * document someone else supplied should set one: an A0 page at 300 dpi is
+   * ~140 Mpx and over 500 MB of canvas in the server process.
+   */
+  maxPixels?: number;
 }
 
 export interface RasterizedPage {
   /** 1-based page number in the source PDF. */
   page: number;
   png: Buffer;
+  /** The dpi the page was rendered at (lower than requested under maxPixels). */
+  dpi: number;
 }
 
 function clamp01(n: number): number {
@@ -72,6 +81,18 @@ function selectPages(numPages: number, options: RasterizeOptions): number[] {
     selected = selected.slice(0, options.maxPages);
   }
   return selected;
+}
+
+/**
+ * The render scale for a page: the requested one, or the largest at which the
+ * canvas (whose sides are rounded up) stays within maxPixels.
+ */
+function scaleWithin(base: { width: number; height: number }, scale: number, maxPixels?: number): number {
+  const pixels = (s: number) => Math.ceil(base.width * s) * Math.ceil(base.height * s);
+  if (!maxPixels || pixels(scale) <= maxPixels) return scale;
+  let s = Math.sqrt(maxPixels / (base.width * base.height));
+  while (s > 0 && pixels(s) > maxPixels) s *= 0.995;
+  return s;
 }
 
 /** Render selected pages of a PDF to PNG buffers, tagged with page numbers. */
@@ -101,7 +122,8 @@ export async function rasterizePdfPages(
     const pages: RasterizedPage[] = [];
     for (const n of pageNumbers) {
       const page = await pdf.getPage(n);
-      const viewport = page.getViewport({ scale });
+      const pageScale = scaleWithin(page.getViewport({ scale: 1 }), scale, options.maxPixels);
+      const viewport = page.getViewport({ scale: pageScale });
       const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
       const ctx = canvas.getContext('2d');
       // pdfjs v5 accepts the canvas alongside the 2d context.
@@ -119,9 +141,9 @@ export async function rasterizePdfPages(
         const sh = Math.max(1, Math.min(canvas.height - sy, Math.ceil(canvas.height * height)));
         const crop = createCanvas(sw, sh);
         crop.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-        pages.push({ page: n, png: crop.toBuffer('image/png') });
+        pages.push({ page: n, png: crop.toBuffer('image/png'), dpi: pageScale * 72 });
       } else {
-        pages.push({ page: n, png: canvas.toBuffer('image/png') });
+        pages.push({ page: n, png: canvas.toBuffer('image/png'), dpi: pageScale * 72 });
       }
       page.cleanup();
     }

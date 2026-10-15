@@ -36,6 +36,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 export * from './schema/vault';
+export * from './schema/ana-source-read-receipts';
 export * from './schema/csr-knowledge-db';
 export * from './schema/submissions';
 export * from './schema/evidence';
@@ -2610,6 +2611,9 @@ export const users = pgTable('users', {
   lastFailedLogin: timestamp('last_failed_login'),
   // Password policy fields
   passwordChangedAt: timestamp('password_changed_at'),
+  // Every session that began before it is over: a sign-out everywhere, or the account
+  // leaving status 'active'. migrations/20261001_users_sessions_ended_at.sql (plan P0-4b).
+  sessionsEndedAt: timestamp('sessions_ended_at', { withTimezone: true }),
   passwordHistory: json('password_history'), // array of previous password hashes
   mustChangePassword: boolean('must_change_password').default(false),
   // Password reset fields
@@ -3658,6 +3662,9 @@ export const analyticalMethods = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     methodCode: text('method_code').notNull(),
     title: text('title').notNull(),
     purpose: text('purpose').notNull(),
@@ -3688,6 +3695,9 @@ export const processValidation = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     processName: text('process_name').notNull(),
     stage: text('stage').notNull(), // design, qualification, verification
     batchNumbers: text('batch_numbers').array(),
@@ -3716,6 +3726,9 @@ export const stabilityStudies = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     studyTitle: text('study_title'),
     productName: text('product_name').notNull(),
     batchNumber: text('batch_number').notNull(),
@@ -3786,6 +3799,9 @@ export const cmcChangeControl = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     changeNumber: text('change_number').notNull(),
     changeType: text('change_type').notNull(), // process, analytical, specification, etc.
     description: text('description').notNull(),
@@ -3813,6 +3829,9 @@ export const drugSubstances = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     substanceName: text('substance_name').notNull(),
     structuralFormula: text('structural_formula'),
     molecularFormula: text('molecular_formula'),
@@ -3855,6 +3874,9 @@ export const drugProducts = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* The program the record is filed under (migrations/20261005_cmc_core_registers_project.sql).
+       Set at create, never moved by an ordinary edit; NULL is an unfiled legacy row. */
+    projectId: text('project_id'),
     productName: text('product_name').notNull(),
     dosageForm: text('dosage_form').notNull(),
     strength: text('strength').notNull(),
@@ -5304,7 +5326,10 @@ export const croStudies = pgTable(
     csoAssignments: json('cso_assignments'), // Clinical Study Operations assignments
     timeline: json('timeline'), // Study milestones and timelines
     riskAssessment: json('risk_assessment'), // Risk factors and mitigation
-    complianceStatus: text('compliance_status').default('compliant').notNull(), // compliant, minor_deviation, major_deviation, critical
+    // compliant, minor_deviation, major_deviation, critical — or null: not
+    // assessed. It was NOT NULL DEFAULT 'compliant', so every new study read
+    // 'compliant' with nothing assessed (2026-10-15).
+    complianceStatus: text('compliance_status'),
     notes: text('notes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -6195,7 +6220,8 @@ export const conversationWorkingMemory = pgTable(
     // job can promote thread-keyed rows (conversation_id NULL — the live AnA
     // chat path) into project_memory_entries. Nullable: surfaces with no
     // project in scope write NULL and stay excluded from promotion.
-    projectId: integer('project_id').references(() => projects.id),
+    // ON DELETE SET NULL: a summary does not hold its project (20260820, amended 2026-10-01).
+    projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
@@ -12490,7 +12516,10 @@ export const coauthorValidationHistory = pgTable(
     // Document Context
     documentVersion: integer('document_version'),
     module: text('module').notNull(),
-    agency: text('agency').notNull(),
+    // The agency the caller named, or null: the checks are not agency-specific,
+    // and 'FDA' was assumed when none was named (2026-10-15,
+    // migrations/20261015f_coauthor_validation_history_agency_nullable.sql).
+    agency: text('agency'),
 
     // Validation Summary
     totalIssues: integer('total_issues').default(0),
@@ -15395,7 +15424,9 @@ export const clientMemoryEntries = pgTable(
     sourcePageOrSection: text('source_page_or_section'), // Page/section reference
 
     // ── Intelligence Metadata ────────────────────────────────────
-    confidenceScore: real('confidence_score').default(0.8), // 0.0 - 1.0
+    // 0.0 - 1.0; null when no writer stated one. 2026-10-15: defaulted to 0.8,
+    // so a row whose writer stated nothing claimed an 80% confidence.
+    confidenceScore: real('confidence_score'),
     importanceLevel: text('importance_level').default('medium'), // low, medium, high, critical
     isVerifiedByUser: boolean('is_verified_by_user').default(false),
     verifiedAt: timestamp('verified_at'),
@@ -15567,7 +15598,8 @@ export const projectMemoryEntries = pgTable(
     sourceDocumentType: text('source_document_type'),
 
     // ── Intelligence Metadata ───────────────────────────────────
-    confidenceScore: real('confidence_score').default(0.8),
+    // null when no writer stated one (2026-10-15: defaulted to 0.8, as above).
+    confidenceScore: real('confidence_score'),
     importanceLevel: text('importance_level').default('medium'),
     isVerifiedByUser: boolean('is_verified_by_user').default(false),
 
@@ -17523,7 +17555,7 @@ export const indemnificationAttestations = pgTable(
     guidelineReference: text('guideline_reference'), // e.g. "ICH E3 Section 11.4"
 
     // Attestation result
-    complianceStatus: text('compliance_status').notNull(), // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable'
+    complianceStatus: text('compliance_status').notNull(), // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable', 'not_assessed'
     complianceScore: real('compliance_score'), // 0-100
     findings: json('findings'), // [{finding, severity, recommendation}]
     evidenceReferences: json('evidence_references'), // [{type, id, description}] pointers to supporting evidence
@@ -18140,7 +18172,7 @@ export type PlatformRoleGrant = InferSelectModel<typeof platformRoleGrants>;
  *   "Where was this data used?" (downstream)
  *   "What justified this content?" (evidence basis)
  *
- * Complies with 21 CFR Part 11 §11.10(e) and ICH E6(R3) §5.5.3
+ * Complies with 21 CFR Part 11 §11.10(e) and ICH E6(R3) Annex 1 §4.3 (computerised systems)
  */
 export const dataLineageRecords = pgTable('data_lineage_records', {
   id: serial('id').primaryKey(),
@@ -18940,6 +18972,9 @@ export const rbmMonitoringPlans = pgTable(
     title:          text('title').notNull(),
     strategy:       text('strategy').default('risk_based').notNull(),
     status:         text('status').default('draft').notNull(),
+    /** Plan version within the study. An approved plan is read-only; revising
+     *  it opens the next version (migrations/20260930_rbm_plan_versioning.sql). */
+    version:        integer('version').default(1).notNull(),
     approvedBy:     integer('approved_by').references(() => users.id),
     approvedAt:     timestamp('approved_at', { withTimezone: true }),
     metadata:       jsonb('metadata').default('{}'),

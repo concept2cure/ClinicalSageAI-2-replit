@@ -16,6 +16,7 @@ import { createScopedLogger } from '../../utils/logger';
 // them exactly as before.
 import {
   CONVENE_DRAFTING_COUNCIL,
+  RUN_AGENT,
   GET_CLIENT_JOURNEY,
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
@@ -42,6 +43,18 @@ import {
   SEARCH_PROJECT_DOCUMENTS,
   SEARCH_DOCUMENT_PASSAGES,
 } from './document-catalog-tool-defs.js';
+// Read-only outline / section / search over the open project's authoring store
+// (authoring_documents + authoring_sections). Handlers registered from
+// authoring-read-tools.ts (inject-and-sibling).
+import { AUTHORING_READ_TOOLS } from './authoring-read-tools.js';
+// What a document or section must contain, the database-lock-to-submission
+// chain and where the open project stands, FDA's technical rules — read from
+// server/services/ind/ctd. Handlers registered from regulatory-knowledge-tools.ts.
+import { REGULATORY_KNOWLEDGE_TOOLS } from './regulatory-knowledge-tools.js';
+// What agencies require of a CMC dossier, which documents say so in which
+// version, and the science behind it — read from server/services/cmc/knowledge.
+// Handlers registered from cmc-knowledge-tools.ts.
+import { CMC_KNOWLEDGE_TOOLS } from './cmc-knowledge-tools.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -51,6 +64,7 @@ import {
   ASSESS_IMMUNOGENICITY,
   ASSESS_BLA_FILING_RISK,
   GENERATE_SOP,
+  REVIEW_SOP_REQUIREMENTS,
   RESOLVE_SUBMISSION_PLAN,
   GET_CTD_MODULE_HOME,
   COMPUTE_FIH_DOSE,
@@ -360,7 +374,6 @@ import {
   VALIDATE_ECTD_PACKAGE,
   PLAN_SUBMISSION,
   EXPLAIN_VALIDATION_FINDINGS,
-  CROSS_REGION_GAP_ANALYSIS,
   DISPATCH_QC_CHECK,
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
@@ -485,6 +498,7 @@ import { CHANGE_PROPAGATION_TOOLS } from './changePropagationTools';
 import { IVD_LIFECYCLE_TOOLS } from './ivdLifecycleTools';
 import { CAPA_MDR_TOOLS } from './capaMdrTools';
 import { PREDICATE_INTELLIGENCE_TOOLS } from './predicateIntelligenceTools';
+import { WRITING_QUALITY_TOOLS } from './writingQualityTools';
 import { REGULATORY_CURRENCY_TOOLS } from './regulatoryCurrencyTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
@@ -624,23 +638,13 @@ export const SEARCH_DRUG_ADVERSE_EVENTS: AnaTool = {
 export const LOOKUP_FDA_GUIDANCE: AnaTool = {
   name: 'lookup_fda_guidance',
   description:
-    'Look up FDA guidance documents, regulations (21 CFR), and draft/final guidance relevant to a topic. Returns guidance title, document number, key requirements, and citation-ready references.',
+    'Return the dated US regulatory facts the verified currency registry holds for a topic (for example the eSTAR mandates), each with its status, effective date and source. No FDA guidance index is connected, so this does not name guidance documents, docket numbers or their requirements; say an FDA guidance needs confirming unless the user supplied it.',
   input_schema: {
     type: 'object',
     properties: {
       topic: {
         type: 'string',
-        description: 'Regulatory topic to look up (e.g., "510(k) predicate comparison", "biocompatibility testing")',
-      },
-      regulation_type: {
-        type: 'string',
-        enum: ['guidance', '21cfr', 'federal_register', 'any'],
-        description: 'Type of regulatory document',
-      },
-      device_class: {
-        type: 'string',
-        enum: ['I', 'II', 'III', 'any'],
-        description: 'FDA device classification',
+        description: 'Regulatory topic to look up (e.g., "510(k)", "eSTAR", "De Novo")',
       },
     },
     required: ['topic'],
@@ -681,7 +685,7 @@ export const LOOKUP_ICH_GUIDELINE: AnaTool = {
     properties: {
       guideline: {
         type: 'string',
-        description: 'ICH guideline code (e.g., "E6(R2)", "E8(R1)", "E9(R1)", "M4") or topic to search',
+        description: 'ICH guideline code (e.g., "E6(R3)", "E8(R1)", "E9(R1)", "M4") or topic to search',
       },
       section: {
         type: 'string',
@@ -699,28 +703,28 @@ export const LOOKUP_ICH_GUIDELINE: AnaTool = {
 export const VALIDATE_CROSS_REFERENCES: AnaTool = {
   name: 'validate_cross_references',
   description:
-    'Validate cross-references within a document — check that cited sections exist, table/figure numbers are correct, and internal references are consistent.',
+    "Check CTD section references (\"Section 3.2.P.5.1\", \"Module 2.7.3\", \"m2.5\") against the section outlines of one of the organization's documents and the other documents in its project. Each reference is reported found in this document, found in another document of the project (named), present only as a parent section, or not found. Table and figure numbers are not assessed.",
   input_schema: {
     type: 'object',
     properties: {
       document_id: {
         type: 'string',
-        description: 'Internal document ID to validate',
+        description: "The document the references are in (a governed document id, e.g. 'doc_…').",
       },
       section_references: {
         type: 'array',
         items: { type: 'string' },
-        description: 'List of section references to validate (e.g., ["Section 3.2", "Table 4", "Figure 1"])',
+        description: 'The references to check (e.g., ["Section 3.2.P.5.1", "Module 2.7.3"])',
       },
     },
-    required: ['document_id'],
+    required: ['document_id', 'section_references'],
   },
 };
 
 export const GENERATE_CITATION: AnaTool = {
   name: 'generate_citation',
   description:
-    'Generate a properly formatted regulatory citation for a given source. Supports FDA guidance, ICH guidelines, EU MDR articles, journal articles, and 21 CFR references.',
+    'Format a citation, labelled with what it rests on. A journal article (PMID or DOI, else a title) is looked up in PubMed / Crossref and formatted from the record found — or not formatted at all when it cannot be verified. An ICH guideline takes its title from the ICH corpus. FDA guidance, 21 CFR, EU MDR and ISO citations are formatted from the identifier given and labelled not verified. Journal styles: Vancouver or AMA.',
   input_schema: {
     type: 'object',
     properties: {
@@ -731,15 +735,44 @@ export const GENERATE_CITATION: AnaTool = {
       },
       source_identifier: {
         type: 'string',
-        description: 'Source identifier (guidance number, DOI, CFR section, etc.)',
+        description: 'Source identifier (PMID, DOI, ICH code, CFR section, guidance title, article, standard number)',
       },
       citation_style: {
         type: 'string',
-        enum: ['regulatory', 'apa', 'vancouver'],
-        description: 'Citation style (default: regulatory)',
+        enum: ['regulatory', 'vancouver', 'ama'],
+        description: 'Citation style for a journal article (default: Vancouver)',
       },
     },
     required: ['source_type', 'source_identifier'],
+  },
+};
+
+export const VERIFY_CITATIONS: AnaTool = {
+  name: 'verify_citations',
+  description:
+    "Check that each reference in a list exists, against PubMed (by PMID) and Crossref (by DOI), else by title search — with retraction status and any field that disagrees with the record. Returns each reference's verdict (verified, not_found, unverifiable, error) and the counts. Use it to audit a draft's reference list; report its verdicts, do not decide them. With the organization's public-source lookups off, every reference is unverifiable.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      citations: {
+        type: 'array',
+        description: 'The references to check (at most 50). Each needs at least one of raw, title, doi or pmid.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Your label for the reference, echoed back (e.g. "ref 12")' },
+            raw: { type: 'string', description: 'The reference as written in the document' },
+            title: { type: 'string' },
+            authors: { type: 'string' },
+            journal: { type: 'string' },
+            year: { type: 'number' },
+            doi: { type: 'string' },
+            pmid: { type: 'string' },
+          },
+        },
+      },
+    },
+    required: ['citations'],
   },
 };
 
@@ -836,6 +869,7 @@ export const DOCUMENT_DRAFTING_TOOLS: AnaTool[] = [
   LOOKUP_FDA_GUIDANCE,
   LOOKUP_ICH_GUIDELINE,
   GENERATE_CITATION,
+  VERIFY_CITATIONS,
   ANALYZE_PREDICATE_DEVICE,
 ];
 
@@ -964,74 +998,36 @@ export const BUILD_FROM_TEMPLATE: AnaTool = {
   },
 };
 
-/** Generate an IND CTD section */
-export const IND_GENERATE_SECTION: AnaTool = {
-  name: 'ind_generate_section',
-  description: 'Generate a specific CTD section for an IND submission. Creates a governed draft artifact with regulatory-quality content. Use when the user asks to draft, generate, or create a specific IND/CTD section (e.g., "draft section 2.5", "generate the clinical overview", "create Module 3 drug substance section").',
-  input_schema: {
-    type: 'object',
-    properties: {
-      section_code: {
-        type: 'string',
-        description: 'CTD section code (e.g., "2.5" for Clinical Overview, "3.2.S" for Drug Substance, "4.2.3" for Toxicology)',
-      },
-      project_id: {
-        type: 'string',
-        description: 'Project ID to save the generated section to',
-      },
-      product_name: { type: 'string', description: 'Name of the drug/product' },
-      indication: { type: 'string', description: 'Therapeutic indication' },
-      sponsor: { type: 'string', description: 'Sponsor company name' },
-      phase: { type: 'string', description: 'Clinical phase (Phase 1, Phase 2, etc.)' },
-    },
-    required: ['section_code'],
-  },
-};
-
-/** Get IND submission status and structure */
-export const IND_GET_STATUS: AnaTool = {
-  name: 'ind_get_status',
-  description: 'Get the complete IND submission structure and section-by-section completion status. Use when the user asks about IND progress, what sections are done, what\'s missing, or the overall readiness of their IND submission.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      project_id: {
-        type: 'string',
-        description: 'Project ID to check status for',
-      },
-    },
-    required: ['project_id'],
-  },
-};
-
 /** Rasterize a document page for visual inspection */
 export const RASTERIZE_PAGE: AnaTool = {
   name: 'rasterize_page',
-  description: 'Rasterize (render as image) a specific page of a DOCX or PDF document for visual inspection. Returns a PNG image of the page. Use when the user wants to preview, inspect, or visually verify a generated document page.',
+  description:
+    "Render one page of a PDF or DOCX in the organization's document workspace (an upload included) to a PNG file. Returns the PNG's path, page count, pixel size, dpi and SHA-256 — or an error naming why no page was rendered. A DOCX is converted to PDF first; a very large page is rendered at a lower dpi. The PNG is a file on the server: it is not shown to the user or to you.",
   input_schema: {
     type: 'object',
     properties: {
       document_path: {
         type: 'string',
-        description: 'Path to the DOCX or PDF document',
+        description: "Path of the PDF or DOCX in the organization's document workspace",
       },
       page_number: {
         type: 'number',
-        description: 'Page number to rasterize (1-based)',
+        description: 'Page to render (1-based, default 1)',
       },
       dpi: {
         type: 'number',
-        description: 'Resolution in DPI (default: 150)',
+        description: 'Resolution, 36–300 (default 150)',
       },
     },
     required: ['document_path'],
   },
 };
 
-/** Overlay content onto a PDF template (forms, headers, signatures, stamps) */
+/** PDF overlay — unavailable: no overlay engine is connected, so the handler applies nothing. */
 export const PDF_OVERLAY: AnaTool = {
   name: 'pdf_overlay',
-  description: 'Overlay text, images, or regulatory stamps onto specific coordinates of an existing PDF template. Use for form filling, adding signatures, watermarks, approval stamps, or finalizing templates with positioned content. Supports multi-page overlay.',
+  description:
+    'Currently unavailable: no PDF overlay engine is connected, so this applies nothing and returns status "unavailable". Do not use it to place text or stamps on a PDF; tell the user it cannot be done here yet.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1058,7 +1054,7 @@ export const PDF_OVERLAY: AnaTool = {
       },
       output_path: {
         type: 'string',
-        description: 'Path for the finalized output PDF',
+        description: 'Where an overlaid PDF would be written; nothing is written while this is unavailable',
       },
     },
     required: ['base_pdf_path', 'overlays'],
@@ -1298,17 +1294,19 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
   name: 'package_ectd_for_region',
   description:
-    `Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: ${agencyList()}. Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. Use after AnA has gathered the leaf manifest for a submission.`,
+    `Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: ${agencyList()}. Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. The application number and the applicant are not inputs: they are read from the record of the project named by program_id (its recorded agency application number, and the organisation's name), and the tool refuses PACKAGE_IDENTITY_MISSING, naming what is missing, when the record lacks either. Use after AnA has gathered the leaf manifest for a submission.`,
   input_schema: {
     type: 'object',
     properties: {
       region:          { type: 'string', enum: [...ALL_REGIONS] },
-      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
+      // 2026-10-08 (P-27, Rule 2): application_id, sponsor_id and sponsor_name
+      // were model input, so the backbone's application number and applicant
+      // were whatever the model wrote. They are read from the record now
+      // (ectd/package-identity.ts), as export and compile read them.
+      program_id:      { type: 'string', description: 'The project (regulatory_programs.id, UUID) this package is filed for. The agency application number and the applicant are read from its record and the organisation\'s; they are never taken from this call.' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
       application_type: { type: 'string', description: 'REQUIRED for region "fda": what is being filed — nda | snda | anda | bla | ind | dmf. The us-regional backbone carries this as the application-type attribute, and it is a statement about the filing, so the packager refuses to guess it. Device pathways (510k, de_novo, pma) have no eCTD Module 1 code and are not filed on this backbone.' },
-      sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
-      sponsor_name:    { type: 'string' },
       product_name:    { type: 'string' },
       leaves: {
         type: 'array',
@@ -1328,7 +1326,16 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
           'omit source_path and give modified_file, which names the withdrawn leaf by the prior sequence\'s backbone and that leaf\'s ID ' +
           '(e.g. ../0000/index.xml#leaf-3-2-S-2-file, the ID as that sequence\'s leaf manifest recorded it; never a file path). ' +
           'replace / append in a follow-up sequence also require modified_file, naming the filed leaf they act on the same way. ' +
-          'Sequence 0000 cannot carry a delete: nothing is on file to withdraw.',
+          'Sequence 0000 cannot carry a delete: nothing is on file to withdraw. ' +
+          // FDA validation 1789 is a high-severity Technical Rejection Criterion: a file submitted in a
+          // Module 4/5 study section must be referenced by a Study Tagging File. The packager refuses a
+          // US sequence that breaks it rather than ship one FDA will technically reject, so the fields
+          // that satisfy it are asked for here, with the rule and its exemptions stated.
+          'FDA validation 1789: every file filed in a Module 4 or Module 5 STUDY section must be referenced by a ' +
+          'Study Tagging File, so each such leaf must carry study_id and stf_file_tag. The sections that need no STF ' +
+          'are 4.3 Literature references, 5.2 Tabular listings, 5.3.6 Postmarketing reports and 5.4 Literature ' +
+          'references. A US sequence with an untagged study file is refused, naming each file; outside the US the ' +
+          'package is built and the count is reported on the bundle.',
         items: {
           type: 'object',
           properties: {
@@ -1338,13 +1345,15 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
             file_name:     { type: 'string' },
             title:         { type: 'string' },
             modified_file: { type: 'string', description: 'The filed leaf this one acts on, from this sequence root: the prior sequence\'s backbone, \'#\', and the leaf ID it recorded (e.g. ../0000/index.xml#leaf-3-2-S-2-file, or ../0000/m1/us/us-regional.xml#leaf-1-2-cover for Module 1). Never a file path. Required for every delete, and for a replace / append after 0000 (a delete in sequence 0000 is refused).' },
+            study_id:      { type: 'string', description: 'The sponsor study this leaf belongs to, as the Study Tagging File will carry it (e.g. DPL-301). Required for a file in a Module 4 or 5 study section when region is "fda" (validation 1789); omit it only where the leaf belongs to no study. It is never inferred — a leaf that names none is refused by name rather than tagged by guess.' },
+            stf_file_tag:  { type: 'string', description: 'The FDA STF file-tag this leaf is referenced under (e.g. study-report-body, legacy-data-tabulation-dataset-send), from the FDA Study Tagging File specification. Required alongside study_id for a Module 4/5 study file in an FDA sequence: a leaf with a study id and no tag is in no STF, so 1789 still fires.' },
           },
           required: ['ctd_section', 'operation', 'file_name', 'title'],
         },
       },
       output_dir: { type: 'string', description: 'Where to write the zip: a directory in your organization\'s AnA workspace. Omit it to use a fresh one.' },
     },
-    required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
+    required: ['region', 'program_id', 'sequence', 'submission_type', 'product_name', 'leaves'],
   },
 };
 
@@ -1390,7 +1399,7 @@ export const CHECK_SUBMISSION_STATUS: AnaTool = {
 export const GET_SUBMISSION_ACK: AnaTool = {
   name: 'get_submission_ack',
   description:
-    "Download the latest acknowledgment for a transmittal as a text summary. Includes the gateway's transmission id, current status, ack timestamp, and (when present) the raw acknowledgment payload. Use when the user wants to inspect the receipt or attach it to the audit trail.",
+    "Download the latest acknowledgment for a transmittal. `provenance` says what it is: 'agency' is the agency's own response stored verbatim (an FDA AS2 MDN); 'platform-record' is this platform's summary of its transmittal row and is not evidence the agency received anything — say so, and never call it a receipt. `receivedAt` is null when no acknowledgement time was recorded. Includes the gateway's transmission id and status.",
   input_schema: {
     type: 'object',
     properties: { transmittal_id: { type: 'number' } },
@@ -1964,6 +1973,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   CHECK_REGULATORY_COMPLIANCE,
   VALIDATE_CROSS_REFERENCES,
   GENERATE_CITATION,
+  VERIFY_CITATIONS,
   LOOKUP_REGULATORY_PRECEDENTS,
   COMPARE_SUBMISSION_AGAINST_PRECEDENT,
   ASSESS_CLAIM_EVIDENCE_INTEGRITY,
@@ -2013,7 +2023,6 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   VALIDATE_ECTD_PACKAGE,
   PLAN_SUBMISSION,
   EXPLAIN_VALIDATION_FINDINGS,
-  CROSS_REGION_GAP_ANALYSIS,
   DISPATCH_QC_CHECK,
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
@@ -2227,6 +2236,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   COMMIT_DOCUMENT_REVISION,
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
+  RUN_AGENT,
   DRAFT_FDA_IR_RESPONSE,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
@@ -2244,6 +2254,9 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   PLACE_PROJECT_DOCUMENT,
   SEARCH_PROJECT_DOCUMENTS,
   SEARCH_DOCUMENT_PASSAGES,
+  ...AUTHORING_READ_TOOLS,
+  ...REGULATORY_KNOWLEDGE_TOOLS,
+  ...CMC_KNOWLEDGE_TOOLS,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
@@ -2271,13 +2284,12 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ASSESS_IMMUNOGENICITY,
   ASSESS_BLA_FILING_RISK,
   GENERATE_SOP,
+  REVIEW_SOP_REQUIREMENTS,
   RESOLVE_SUBMISSION_PLAN,
   GET_CTD_MODULE_HOME,
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
-  IND_GENERATE_SECTION,
-  IND_GET_STATUS,
   RASTERIZE_PAGE,
   PDF_OVERLAY,
   // AnA device/IVD + global-market advisory (grounded, non-LLM; honest about
@@ -2403,9 +2415,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   {
     name: 'detect_evidence_contradictions',
     description:
-      'Deterministically flag contradictions across gathered evidence (no LLM): same-subject numeric mismatches and ' +
-      'opposing positive/negative assertions. Pass structured claims (subject required; optional metric/value/polarity/date). ' +
-      'Use before stating a synthesized conclusion to catch self-contradicting sources.',
+      'Check supplied structured evidence for potential disagreements (no LLM). Use observed source fields, never invented metadata. ' +
+      'Numeric comparisons require matching endpoints and compatible units; unspecified units remain preliminary. ' +
+      'Different dates alone do not establish authority or supersession. Read assessed, comparedPairs, inputIssues and notes: an unassessed or skipped comparison does not prove consistency. ' +
+      'Correct invalid tool fields from available source context and retry before asking the client to repeat known facts. ' +
+      'Verify scope, population, methods and source authority before synthesizing; retrieve available context and ask targeted questions only for consequential remaining gaps.',
     input_schema: {
       type: 'object',
       properties: {
@@ -2418,9 +2432,9 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
               id: { type: 'string' },
               source: { type: 'string' },
               subject: { type: 'string', description: 'Entity the claim is about (required to pair claims).' },
-              metric: { type: 'string' },
+              metric: { type: 'string', description: 'Observed endpoint or quantity; different endpoints are not directly compared.' },
               value: { type: 'number' },
-              unit: { type: 'string' },
+              unit: { type: 'string', description: 'Observed measurement unit; incompatible units require explicit verified conversion before comparison.' },
               polarity: { type: 'string', enum: ['positive', 'negative', 'neutral'] },
               date: { type: 'string' },
               text: { type: 'string' },
@@ -2439,9 +2453,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   {
     name: 'detect_evidence_gaps',
     description:
-      'Deterministically detect what the gathered evidence is MISSING relative to the question (no LLM): geographic, ' +
-      'population, outcome, and temporal/recency gaps. Returns gaps with suggested follow-up queries. Use to decide whether ' +
-      'to answer now or first offer to broaden the search.',
+      'Check requested geographic, population, outcome and recency coverage against supplied structured metadata (no LLM). ' +
+      'Use observed source fields, never invented metadata. Population labels match exactly after normalization. ' +
+      'Read assessed, complete, inputIssues and notes: complete covers only assessed metadata dimensions, not scientific sufficiency or joint applicability. ' +
+      'Correct invalid tool fields from available source context and retry before asking the client to repeat known facts. ' +
+      'A metadata gap does not prove evidence is absent. Retrieve available context or ask targeted questions about consequential remaining uncertainty before synthesizing.',
     input_schema: {
       type: 'object',
       properties: {
@@ -2647,6 +2663,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // substantial-equivalence matrix, and read the defense preview (shadow-service
   // proxy with org→program ownership).
   ...PREDICATE_INTELLIGENCE_TOOLS,
+  // Writing Precision Gate — deterministic critique (grounding, in-document
+  // consistency, readability, abbreviations, claims, structure) + revision brief
+  // that closes the draft->critique->revise loop for long-form medical writing.
+  // See docs/architecture/WRITING_PRECISION_GATE.md.
+  ...WRITING_QUALITY_TOOLS,
   // Regulatory Currency Engine: curated, freshness-stamped registry of DATED facts
   // (vacated/superseded/upcoming-mandatory rules) so AnA never advises on a VOID
   // rule from its static knowledge. See regulatoryCurrencyTools.ts.

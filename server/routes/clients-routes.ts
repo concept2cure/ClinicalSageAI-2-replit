@@ -16,6 +16,11 @@ import { authMiddleware } from '../auth';
 const router = Router();
 
 import { createScopedLogger } from '../utils/logger.js';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { ProjectDeletionRefused, projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
+import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { mapWithConcurrency } from '../services/ana/agentic-loop';
 const log = createScopedLogger('clients-routes');
 
@@ -49,10 +54,6 @@ function getAuthedOrgId(req: any): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function getAuthedRole(req: any): string | undefined {
-  return req.user?.role ?? req.userRole;
-}
-
 /**
  * Tenant guard for `/:id`-scoped routes. Fetches the workspace row and
  * confirms it belongs to the caller's org. Returns:
@@ -63,8 +64,11 @@ function getAuthedRole(req: any): string | undefined {
  * Returns 404 (not 403) on tenant mismatch so a foreign workspace looks
  * identical to "not found" — no existence enumeration.
  *
- * super_admin (platform staff) bypasses the org filter and gets the row
- * verbatim. Every other role is org-scoped.
+ * Platform staff (platform standing for super_admin, holdsPlatformRole) bypass
+ * the org filter and get the row verbatim. Everyone else is org-scoped. This
+ * read the request role until 2026-10-05, which behind server/auth.ts is the
+ * tenant membership role, so a membership row naming super_admin reached any
+ * organization's workspaces (D6, docs/evidence/D6/2026-10-05-cross-tenant-staff/).
  */
 async function loadWorkspaceForCaller(
   workspaceIdRaw: string | undefined,
@@ -79,7 +83,7 @@ async function loadWorkspaceForCaller(
   }
 
   const callerOrgId = getAuthedOrgId(req);
-  const isSuperAdmin = getAuthedRole(req) === 'super_admin';
+  const isSuperAdmin = await holdsPlatformRole(req, ['super_admin']);
 
   if (!isSuperAdmin && callerOrgId == null) {
     return { ok: false, status: 403, error: 'Tenant context required' };
@@ -847,7 +851,8 @@ router.patch('/:id/security-settings', async (req, res) => {
  * Delete client with cascade deletion
  * API: DELETE /api/clients/:id
  */
-router.delete('/:id', async (req, res) => {
+/* A writing role deletes a workspace (PF-08); any member could. */
+router.delete('/:id', requireEditorAccess, async (req, res) => {
   try {
     const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
@@ -875,6 +880,16 @@ router.delete('/:id', async (req, res) => {
       if (existingClient.length === 0) {
         throw new Error('Client workspace not found');
       }
+
+      /* The workspace's projects are deleted below, and their artifacts
+         cascade with them. A program's anchor row, or a project holding
+         documents past draft, is never deleted this way (PF-08; PF-13 founder
+         decision 2026-09-26). Thrown, so the transaction rolls back whole. */
+      const refused = projectDeletionRefusal(
+        await projectDeletionHolds(queryableFromDrizzle(tx), { workspaceId: clientId }),
+        'workspace',
+      );
+      if (refused) throw new ProjectDeletionRefused(refused);
 
       // Delete project modules associated with projects of this client
       const deletedProjectModules = await tx
@@ -919,13 +934,40 @@ router.delete('/:id', async (req, res) => {
       `Successfully deleted client workspace ${id}: ${result.client.name} (${result.deletedProjects} projects, ${result.deletedProjectModules} project modules)`
     );
 
+    /* The §11.10(e) record of a delete that took projects, and their draft
+       documents and conversations, with it. It had none. Written beside the
+       completed delete, and its outcome is reported rather than assumed, the
+       way DELETE /api/device-projects/:id reports it. */
+    const auditTrail = await recordAuditRow({
+      organizationId: Number(guard.workspace.organizationId),
+      userId: governedActorId(req) ?? undefined,
+      action: 'CLIENT_WORKSPACE_DELETED',
+      resourceType: 'client_workspace',
+      resourceId: String(clientId),
+      details: {
+        name: result.client?.name ?? null,
+        deletedProjects: result.deletedProjects,
+        deletedProjectModules: result.deletedProjectModules,
+      },
+    });
+
     res.json({
       success: true,
       message: 'Client workspace and all associated data deleted successfully',
       deletedProjects: result.deletedProjects,
       deletedProjectModules: result.deletedProjectModules,
+      auditTrail,
     });
   } catch (error: any) {
+    if (error instanceof ProjectDeletionRefused) {
+      return res.status(error.refusal.status).json({ success: false, ...error.refusal.body });
+    }
+    // A store keeps records under one of its projects, or under the workspace; the delete rolled back (PF-13).
+    const blocked = projectDeleteBlockedRefusal(error, 'workspace');
+    if (blocked) {
+      log.warn(`Client ${req.params.id} delete refused by the database: a store keeps records under it`, blocked.heldBy);
+      return res.status(blocked.status).json({ success: false, ...blocked.body });
+    }
     log.error(`Error deleting client ${req.params.id}:`, error);
 
     if (error.message === 'Client workspace not found') {

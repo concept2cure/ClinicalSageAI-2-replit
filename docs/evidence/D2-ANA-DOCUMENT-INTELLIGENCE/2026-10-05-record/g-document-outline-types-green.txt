@@ -1,0 +1,23 @@
+# g-document-outline-types green — 2026-10-05
+# Run: npx vitest run <the new test + 26 test files that import types.ts / section-brief.ts / csr-e3-guidance.ts> --reporter=verbose
+# Files: tests/regulatory/{document-outline-render,regulatory-basis,requirements-resolver,ctd-guidance-presentation,csr-e3-overlay,ana-ctd-section-truth,ind-generation-prompt,ctd-guidance-correctness,ctd-authoring-depth,citation-accuracy,meetings-and-dsur-truth,template-library-truth,fda-safety-presentation}.test.ts tests/schema-contract/{c2c-rule-pack-outlines,one-normalize-ctd-code}.contract.test.ts server/services/ana/__tests__/{submission-context-block,blueprint-grounded-drafting,in-text-references,regulatory-knowledge-tools,document-template-description}.test.ts server/services/__tests__/{kernel-router-open-section,csr-builder-e3-brief,csr-builder-completeness}.test.ts server/services/ind/ctd/__tests__/{record-purity,basis-constants-one-home,jp-programs}.test.ts server/services/authoring/__tests__/section-generation-requirements.test.ts
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the top level > lists the top-level headings in order, marks a heading-only one, and carries the governing basis 5ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the top level > treats an empty section the same as none 1ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > renders what the node carries, the headings under it, and every basis through basisLabel 1ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > falls back to the governing basis for a node with none of its own 1ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > a heading-only node says its content is not encoded and renders none of it 0ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > a conditional node names its condition and says it is undetermined until known 0ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > renders the local title beside the title 0ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > normalises the asked-for number and finds an unnumbered node by title 1ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > returns null for a section the outline does not have 5ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — one node > refuses an outline with no governing basis instead of rendering it unsourced 1ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the cap and the brief mode > drops optional blocks under a cap but never the basis 0ms
+ ✓ tests/regulatory/document-outline-render.test.ts > renderOutlineBrief — the cap and the brief mode > the brief mode renders identity and basis, not the content lists 0ms
+ ✓ tests/regulatory/document-outline-render.test.ts > E3Section is an OutlineNode > the E3 tree renders as an outline without conversion 0ms
+ ✓ tests/regulatory/document-outline-render.test.ts > E3Section is an OutlineNode > keeps E3 applicability narrower than Necessity 0ms
+ Test Files  27 passed (27)
+      Tests  553 passed (553)
+# Typecheck (2026-10-05, through the tsc lock): npx tsc --noEmit -p .  -> 0 errors, exit 0 (whole tree, other lanes' working copies included)
+# Type contract of the test (tests/ is outside tsconfig include): npx tsc -p <scratch tsconfig extending ./tsconfig.json, include = tests/regulatory/document-outline-render.test.ts> -> 0 errors, exit 0
+#   (expectTypeOf: E3Section extends OutlineNode; E3Applicability == Exclude<Necessity,'conditional'>; E3Section['number'] is string)
+# Lint: npx eslint on the working copy vs HEAD — types.ts 0/0 -> 0/0; section-brief.ts 0/0 -> 0/0 (warnings/errors); new test 0/0

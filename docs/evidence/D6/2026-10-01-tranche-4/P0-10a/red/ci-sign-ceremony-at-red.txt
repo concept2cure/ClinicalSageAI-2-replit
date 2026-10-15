@@ -1,0 +1,12 @@
+[ci:sign-ceremony] FAIL — the baseline allows more than exists. Lower these entries (or remove them at 0) so the freed allowance cannot absorb a new site:
+  ✗ server/api/cmc/batchRecordRoutes.ts: 0 now, baseline 1
+  ✗ server/api/cmc/routes.ts: 0 now, baseline 1
+  ✗ server/api/cmc/specificationRoutes.ts: 0 now, baseline 1
+  ✗ server/routes/biopharma/bla-workbench.ts: 0 now, baseline 1
+  ✗ server/routes/iacuc.ts: 0 now, baseline 1
+  ✗ server/routes/ibc.ts: 0 now, baseline 1
+  ✗ server/routes/irb.ts: 0 now, baseline 1
+  ✗ server/routes/protocol-consent.ts: 0 now, baseline 1
+  ✗ server/routes/protocol-deviations.ts: 0 now, baseline 1
+  ✗ server/routes/rim.ts: 0 now, baseline 1
+gate_exit=1

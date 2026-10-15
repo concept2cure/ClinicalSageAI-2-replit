@@ -1,0 +1,143 @@
+# s4-manual — rows in postgresql://127.0.0.1:5432/ana_e2e_2
+# runs: run_60207743-31c3-4de6-81d1-0a546cacf052
+# threads: ana-ri_1790620430623_sofq2gogg
+
+## ana_runs
+                    id                    |  status  | stopped_reason | current_round |    surface    | controls | pending_command | decided | decided_by |   created    |   finished   
+------------------------------------------+----------+----------------+---------------+---------------+----------+-----------------+---------+------------+--------------+--------------
+ run_60207743-31c3-4de6-81d1-0a546cacf052 | finished | no_more_tools  |             3 | ana-ri-stream |        2 |                 |         |            | 18:33:50.599 | 18:33:53.883
+(1 row)
+
+
+## ana_runs.control_events
+                    id                    |                                    jsonb_pretty                                     
+------------------------------------------+-------------------------------------------------------------------------------------
+ run_60207743-31c3-4de6-81d1-0a546cacf052 | [                                                                                  +
+                                          |     {                                                                              +
+                                          |         "at": "2026-09-28T18:33:52.254Z",                                          +
+                                          |         "round": 2,                                                                +
+                                          |         "action": "resume",                                                        +
+                                          |         "byUserId": 1                                                              +
+                                          |     },                                                                             +
+                                          |     {                                                                              +
+                                          |         "at": "2026-09-28T18:33:53.705Z",                                          +
+                                          |         "round": 3,                                                                +
+                                          |         "action": "interject",                                                     +
+                                          |         "message": "Skip that source; summarise what the first two found instead.",+
+                                          |         "byUserId": 1                                                              +
+                                          |     }                                                                              +
+                                          | ]
+(1 row)
+
+
+## chat_messages (the saved turn; metadata fields S1/S4 write)
+ id |   role    |                                          content                                           | stopped_reason | rounds | run_policy | pending_steps 
+----+-----------+--------------------------------------------------------------------------------------------+----------------+--------+------------+---------------
+  5 | user      | Check three readiness sources for BX-512, one at a time.                                   |                |        |            | 
+  6 | assistant | Readiness source 1.Readiness source 2.Readiness source 3.Stand-in answer: I did not run th |                | 3      | manual     | 
+(2 rows)
+
+
+## chat_messages.metadata policyHolds / humanControls / warnings (assistant rows)
+ id |                                      jsonb_pretty                                       
+----+-----------------------------------------------------------------------------------------
+  6 | {                                                                                      +
+    |     "policyHolds": [                                                                   +
+    |         {                                                                              +
+    |             "at": "2026-09-28T18:33:52.260Z",                                          +
+    |             "next": [                                                                  +
+    |                 "Global search"                                                        +
+    |             ],                                                                         +
+    |             "round": 2,                                                                +
+    |             "reason": "manual",                                                        +
+    |             "outcome": "continued"                                                     +
+    |         },                                                                             +
+    |         {                                                                              +
+    |             "at": "2026-09-28T18:33:53.711Z",                                          +
+    |             "next": [                                                                  +
+    |                 "Global search"                                                        +
+    |             ],                                                                         +
+    |             "round": 3,                                                                +
+    |             "reason": "manual",                                                        +
+    |             "outcome": "redirected"                                                    +
+    |         }                                                                              +
+    |     ],                                                                                 +
+    |     "humanControls": [                                                                 +
+    |         {                                                                              +
+    |             "at": "2026-09-28T18:33:52.254Z",                                          +
+    |             "round": 2,                                                                +
+    |             "action": "resume",                                                        +
+    |             "byUserId": 1                                                              +
+    |         },                                                                             +
+    |         {                                                                              +
+    |             "at": "2026-09-28T18:33:53.705Z",                                          +
+    |             "round": 3,                                                                +
+    |             "action": "interject",                                                     +
+    |             "message": "Skip that source; summarise what the first two found instead.",+
+    |             "byUserId": 1                                                              +
+    |         }                                                                              +
+    |     ]                                                                                  +
+    | }
+(1 row)
+
+
+## ana_turn_records ff4f321f-e186-4c36-a4bc-f45c45c15de2 (row columns, then the record's own fields)
+                  run_id                  | outcome  |  schema_version   | hash_ok 
+------------------------------------------+----------+-------------------+---------
+ run_60207743-31c3-4de6-81d1-0a546cacf052 | answered | ana-turn-record/1 | t
+(1 row)
+
+{
+ "model": {
+  "effort": "balanced",
+  "model": "claude-opus-5-5",
+  "calls": 4
+ },
+ "turn": {
+  "runId": "run_60207743-31c3-4de6-81d1-0a546cacf052",
+  "outcome": "answered",
+  "surface": "conversation-thread"
+ },
+ "warnings": [
+  "Manual: AnA stopped before round 2 (Global search) and waited; the person said to run it.",
+  "Manual: AnA stopped before round 3 (Global search); the person replaced the step with an instruction, and it was not run."
+ ],
+ "controls": [
+  {
+   "action": "resume",
+   "at": "2026-09-28T18:33:52.254Z",
+   "byUserId": 1,
+   "round": 2
+  },
+  {
+   "action": "interject",
+   "at": "2026-09-28T18:33:53.705Z",
+   "byUserId": 1,
+   "message": "Skip that source; summarise what the first two found instead.",
+   "round": 3
+  }
+ ],
+ "steps": [
+  {
+   "round": 1,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 2,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 3,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "not_run",
+   "error": "redirected by the person before it ran"
+  }
+ ]
+}

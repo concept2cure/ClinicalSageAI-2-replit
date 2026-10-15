@@ -1,0 +1,11 @@
+# 4. Every AnA draft opens as a document — RED, new thread cases against the unchanged thread
+# (draftToDocument.ts present but unwired; the card's only control was Edit → the authoring workspace, no document)
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates the document from the draft, split at its headings, and opens it beside the conversation 5142ms
+   → Unable to find role="button" and name "Open Statistical Analysis Plan — C2C-101 as a document in the editor"
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > opens the document already made from that turn instead of creating a second copy 5071ms
+   → Unable to find role="button" and name "Open Statistical Analysis Plan — C2C-101 as a document in the editor"
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates nothing when it cannot check for an earlier copy, and says so 5067ms
+   → Unable to find role="button" and name "Open Statistical Analysis Plan — C2C-101 as a document in the editor"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 12 skipped (15)

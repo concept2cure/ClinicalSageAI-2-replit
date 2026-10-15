@@ -1,0 +1,7 @@
+# 2026-10-01T15:02:51Z. Mutant N of this change: the boundary moved: an anchor exactly 48 hours old is stale.
+$ npx vitest run server/jobs/__tests__/auditChainIntegritySweep.test.ts
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > at exactly 48 hours the anchor is not yet stale 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { store: 'audit_logs.anchor', …(2) } to match object { status: 'ok' }
+ Test Files  1 failed (1)
+      Tests  1 failed | 31 passed (32)

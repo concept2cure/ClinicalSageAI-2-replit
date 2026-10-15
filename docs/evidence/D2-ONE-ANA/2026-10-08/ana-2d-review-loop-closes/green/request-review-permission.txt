@@ -1,0 +1,565 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member of the organization with no role on the document: 403, the standard body
+{
+  "timestamp": "2026-10-08T07:36:04.450Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is REVIEWER
+{
+  "timestamp": "2026-10-08T07:36:04.454Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-granted",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is APPROVER
+{
+  "timestamp": "2026-10-08T07:36:04.456Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-granted",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is VIEWER
+{
+  "timestamp": "2026-10-08T07:36:04.457Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-granted",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-08T07:36:04.506Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/
+{
+  "timestamp": "2026-10-08T07:36:04.515Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review
+{
+  "timestamp": "2026-10-08T07:36:04.522Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-08T07:36:04.529Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review
+{
+  "timestamp": "2026-10-08T07:36:04.539Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /API/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/
+{
+  "timestamp": "2026-10-08T07:36:04.545Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member of the organization with no role on the document: 403, the standard body 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is REVIEWER 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is APPROVER 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a member whose only grant is VIEWER 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s OWNER, classified as an edit of this document 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits the document’s AUTHOR, classified as an edit of this document 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > admits a global admin without a grant, as on every other authoring object 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > answers 404 for a document this tenant does not have, before any grant is read 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > refuses a sealed document with 409: a request would reopen verdicts on a signed record 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > leaves the verdict route alone: a reviewer has no grant, and still reaches POST /documents/:id/review 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > POST /documents/:id/request-review — only the document’s owner or author sends it for review > matches the request path exactly, not a longer path that only begins with it 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review 42ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/request-review/ 9ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Request-Review 8ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/Documents/10000000-0000-4000-8000-000000000001/request-review 8ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/documents/10000000-0000-4000-8000-000000000001/request-review 10ms
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/
+{
+  "timestamp": "2026-10-08T07:36:04.551Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions
+{
+  "timestamp": "2026-10-08T07:36:04.557Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/
+{
+  "timestamp": "2026-10-08T07:36:04.564Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze
+{
+  "timestamp": "2026-10-08T07:36:04.570Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-colleague",
+    "method": "POST",
+    "path": "/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /API/AUTHORING/DOCUMENTS/10000000-0000-4000-8000-000000000001/REQUEST-REVIEW/ 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/ 5ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/documents/10000000-0000-4000-8000-000000000001/Tracked-Change-Decisions 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/authoring/docs/10000000-0000-4000-8000-000000000001/freeze/ 7ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > POST /api/Authoring/Docs/10000000-0000-4000-8000-000000000001/Freeze 6ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > decides on the document the handler acts on: the id keeps the spelling the caller sent 4ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts > every spelling the router accepts meets the gate > a path that only begins like an authoring route is still not classified 3ms
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > denies a same-tenant authenticated user with no object permission
+{
+  "timestamp": "2026-10-08T07:36:04.805Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "unrelated-user",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER comment but does not let the reviewer edit content
+{
+  "timestamp": "2026-10-08T07:36:04.807Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "reviewer-user",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a section-scoped APPROVER reach an approval action but not an ordinary edit
+{
+  "timestamp": "2026-10-08T07:36:04.808Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "approver-user",
+    "method": "DELETE",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": "20000000-0000-4000-8000-000000000001",
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12)
+{
+  "timestamp": "2026-10-08T07:36:04.810Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "approver-user",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/e-sign",
+    "action": "approve",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export
+{
+  "timestamp": "2026-10-08T07:36:04.814Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/export",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export
+{
+  "timestamp": "2026-10-08T07:36:04.815Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/export",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault
+{
+  "timestamp": "2026-10-08T07:36:04.816Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/file-to-vault",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault
+{
+  "timestamp": "2026-10-08T07:36:04.816Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/file-to-vault",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager
+{
+  "timestamp": "2026-10-08T07:36:04.817Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/send-to-packager",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager
+{
+  "timestamp": "2026-10-08T07:36:04.818Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/send-to-packager",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy
+{
+  "timestamp": "2026-10-08T07:36:04.818Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/working-copy",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy
+{
+  "timestamp": "2026-10-08T07:36:04.819Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "POST",
+    "path": "/authoring/docs/10000000-0000-4000-8000-000000000001/working-copy",
+    "action": "export",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > fails closed with 503 when the permission store cannot be queried
+{
+  "timestamp": "2026-10-08T07:36:04.822Z",
+  "level": "error",
+  "message": "[authoring-object-authorization] Authoring authorization unavailable; denying mutation",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-author",
+    "method": "PATCH",
+    "path": "/authoring/sections/20000000-0000-4000-8000-000000000001",
+    "error": "permission store unavailable"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for
+{
+  "timestamp": "2026-10-08T07:36:04.824Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-outsider",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies the same caller on the bulk route identically
+{
+  "timestamp": "2026-10-08T07:36:04.825Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-outsider",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions/bulk",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stderr | server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout
+{
+  "timestamp": "2026-10-08T07:36:04.826Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "user-reviewer",
+    "method": "POST",
+    "path": "/authoring/documents/10000000-0000-4000-8000-000000000001/tracked-change-decisions",
+    "action": "edit",
+    "docId": "10000000-0000-4000-8000-000000000001",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > ignores non-authoring API mutations at the shared /api mount 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows document creation so the database trigger can seed OWNER and AUTHOR 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows a document author to edit the section 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > denies a same-tenant authenticated user with no object permission 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER comment but does not let the reviewer edit content 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a section-scoped APPROVER reach an approval action but not an ordinary edit 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12) 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/export 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/file-to-vault 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/send-to-packager 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/working-copy 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > blocks content mutation after the document becomes immutable 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > fails closed with 503 when the permission store cannot be queried 3ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > rejects a mutation when verified principal or tenant context is missing 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > does not impose mutation permission checks on safe reads 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies the same caller on the bulk route identically 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > still allows the document author — an AUTHOR grant is enough to record a decision 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > refuses a FROZEN document with 409, not a silent pass-through 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > does not match a document id that merely starts with "docs" or an unrelated /documents/ route 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts > POST /api/authoring/docs/from-draft passes the object-authorization gate > reaches the router (the gate treats it like POST /docs — no object exists yet) 30ms
+
+ Test Files  3 passed (3)
+      Tests  49 passed (49)
+   Start at  07:36:03
+   Duration  1.40s (transform 211ms, setup 107ms, import 481ms, tests 202ms, environment 0ms)
+

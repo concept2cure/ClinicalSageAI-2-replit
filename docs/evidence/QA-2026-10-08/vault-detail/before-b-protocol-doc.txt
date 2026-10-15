@@ -1,0 +1,56 @@
+AUTO-FILED · CONFIRM
+v1.0
+NOT SENT FOR REVIEW
+3.2.P.8 - Protocol-Stability
+Test reports - Emily Watson - updated just now
+Protocol-Stability.pdf · 625 B · SHA-256 b0fda7fb90a3…
+Review file removal
+SUBMISSION
+Filing
+File into an eCTD sequence. The leaf points at the vault copy, so what is assembled is what is stored here.
+Place into submission…
+DOSSIER FILING
+Folder
+Module 3 · Quality
+Looks like
+Report
+CTD section
+3.2.P.8
+Classifier (high confidence): CTD pattern "Stability" → Module 3 (3.2.P.8).
+Confirm filing
+Move to…
+Module 1 · Administrative
+Module 2 · Summaries
+Module 3 · Quality
+Module 4 · Nonclinical
+Module 5 · Clinical
+eCTD sequences
+Agency correspondence
+Shared · Templates
+Move
+DETAILS
+Title
+Protocol-Stability
+Type
+Protocol
+Classification
+Internal
+Edit details
+FILE
+Size
+625 B
+SHA-256
+b0fda7fb90a3ea58…
+VERSIONS
+The versions of this document could not be read. No list is shown because it would be incomplete. Reload the page to try again.
+Upload new version
+REVIEW ANNOTATIONS
+The review annotations could not be read; none are shown rather than an incomplete list. Too many document requests. Please wait.
+Add annotation
+RELATED DOCUMENTS
+No related documents are recorded for this version.
+Relate a document
+HISTORY
+This document's history could not be read. Nothing is shown rather than an incomplete history.
+Ask AnA
+Download

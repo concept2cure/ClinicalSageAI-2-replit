@@ -16,11 +16,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient } from './catalog-native-fixture';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 
-const PREFIX = 'dbtest-catalog-role ';
-const CODE = 'DBTEST-CATALOG-ROLE-DOC';
+const RUN = nativeCatalogRunId();
+const PREFIX = `dbtest-catalog-role-${RUN} `;
+const CODE = `DBTEST-CATALOG-ROLE-DOC-${RUN}`;
 const TEXT = 'Certificate of Analysis. Batch number: 23-104. Assay (HPLC): 99.2 % of label claim.';
 const HASH = 'e'.repeat(64);
 
@@ -35,24 +37,23 @@ beforeAll(async () => {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PREFIX}tenant`, 'dbtest-catalog-role-tenant'],
+    [`${PREFIX}tenant`, `dbtest-catalog-role-tenant-${RUN}`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, 'not-a-real-hash')
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-catalog-role@example.test', `${PREFIX}actor`],
+    [`dbtest-catalog-role-${RUN}@example.test`, `${PREFIX}actor`],
   );
   userId = Number(user.rows[0].id);
-  await owner.query('DELETE FROM vault.documents WHERE document_code = $1', [CODE]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PREFIX}%`]);
   const prog = await owner.query(
     `INSERT INTO regulatory_programs
        (name, code, organization_id, program_type, product_type, primary_agency, product_name)
-     VALUES ($1, 'DBTEST-CATROLE', $2, '510k', 'device', 'FDA', 'Role AF-1') RETURNING id`,
-    [`${PREFIX}program`, orgId],
+     VALUES ($1, $2, $3, '510k', 'device', 'FDA', 'Role AF-1') RETURNING id`,
+    [`${PREFIX}program`, `DBTEST-CATROLE-${RUN}`, orgId],
   );
+  await seedNativeCatalogProject(owner, { organizationId: orgId, userId, programId: String(prog.rows[0].id), namespace: `dbtest-catalog-role-${RUN}` });
   const doc = await owner.query(
     `INSERT INTO vault.documents
        (program_id, organization_id, document_code, document_title, document_type,
@@ -77,8 +78,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await owner.query('DELETE FROM vault.documents WHERE document_code = $1', [CODE]).catch(() => {});
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PREFIX}%`]).catch(() => {});
+  // Retain the fresh fixture rows and their historical audit record.
   await owner.end().catch(() => {});
 });
 
@@ -97,21 +97,20 @@ async function setMembership(role: string): Promise<void> {
 async function catalogAs(role: string) {
   await setMembership(role);
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
   const handler = getToolHandler('catalog_project_document');
   if (!handler) throw new Error('catalog_project_document is not registered');
-  const raw = await runWithTenantScope(
-    { tenantId: String(orgId), orgUuid, role, source: 'request', caller: 'document-catalog-role.dbtest' },
-    () =>
+  const raw = await withNativeCatalogClient(
+    { organizationId: orgId, organizationUuid: orgUuid, userId, role, caller: 'document-catalog-role.dbtest' },
+    sqlClient =>
       handler(
         {
           document_id: documentId,
-          document_kind: 'Certificate of Analysis',
+          document_kind: 'cert',
           purpose: 'Release evidence for one clinical batch.',
           summary: 'CoA for batch 23-104: assay 99.2 % of label claim.',
           key_data: { batch: '23-104', assay_pct: 99.2 },
         },
-        { organizationId: orgId, userId, humanConfirmed: true },
+        { organizationId: orgId, userId, sqlClient, humanConfirmed: true },
       ),
   );
   return JSON.parse(raw);

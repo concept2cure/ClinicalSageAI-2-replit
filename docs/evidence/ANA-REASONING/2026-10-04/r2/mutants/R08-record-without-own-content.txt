@@ -1,0 +1,12 @@
+Mutant R08-record-without-own-content: a record holding only echoes and bare numbers (a search of the model's own text) confirms what it echoes (F6)
+
+--- server/services/ana/answer-check-sources.ts
+- if (acc.ownContent) ctx.out.push(...acc.kept, ...acc.confirmed);
++ ctx.out.push(...acc.kept, ...acc.confirmed);
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record holding only the model's own identifier and a position confirms nothing 11ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

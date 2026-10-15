@@ -43,7 +43,7 @@ export const READ_UPLOADED_DOCUMENT: AnaTool = {
   description:
     'Read and extract the content of an uploaded file by file_id — AnA\'s front door to learn from and study any client ' +
     'document. Handles PDF (born-digital text with automatic OCR fallback for scanned pages), DOCX, Markdown, plain ' +
-    'text/CSV/JSON, Excel (.xlsx, all sheets rendered as text), and images (OCR). Returns the extracted text (paged via ' +
+    'text/CSV/TSV/JSON/XML (raw UTF-8 text, not dataset/schema validation), Excel (.xlsx, all sheets rendered as text), and images (OCR). Returns the extracted text (paged via ' +
     'max_chars/offset), the extraction method and OCR confidence, plus a structural outline (sections, tables, figures). ' +
     'For PDFs you can scope to a page range (page_start/page_end) — preferred for large documents; run ' +
     'inspect_uploaded_document first to plan. For cell-level Excel access (values, formulas, specific sheets) use ' +
@@ -119,6 +119,8 @@ export const READ_SPREADSHEET: AnaTool = {
   description:
     'Structured, cell-level read of an uploaded Excel (.xlsx) or CSV file: returns the sheet inventory plus the requested ' +
     'sheet\'s rows as a table — display values with row numbers, and formulas preserved alongside their cached results. ' +
+    'CSV fields remain literal strings so subject/lot identifiers, leading zeros, long IDs and date-like labels are not ' +
+    'silently converted; scientific type, unit and date mapping must be deliberate. XLSX retains its stored cell types. ' +
     'Page through big sheets with start_row/max_rows, and keep paging while `truncated` is true: `lastRow` is where the ' +
     'sheet ends, while `totalRows` only counts rows that hold values, so a sheet with blank rows ends after totalRows. ' +
     'Use this (not read_uploaded_document) whenever you need to study ' +
@@ -144,7 +146,11 @@ export const EDIT_SPREADSHEET: AnaTool = {
   name: 'edit_spreadsheet',
   description:
     'Edit an uploaded Excel workbook (or CSV, promoted to .xlsx on save) and persist the result as a NEW uploaded file — ' +
-    'the original is never mutated, so provenance is preserved. Supply cell edits as A1 addresses with either a literal ' +
+    'the original is never mutated. A durable audit records the parent file/hash and edits. With a valid project open, ' +
+    'the new file is captured in that project’s Data Room; otherwise it remains a conversation upload. Extraction, ' +
+    'Vault filing and scientific qualification are still required; Excel formula results are NOT recalculated. ' +
+    'Untouched CSV fields retain their literal strings in the edited XLSX; only explicit typed edits change their types. ' +
+    'Supply cell edits as A1 addresses with either a literal ' +
     '`value` (string/number/boolean; null clears the cell) or an Excel `formula` (without the leading "="). Optionally ' +
     'create missing sheets. Returns the new file_id of the edited copy plus a summary of every applied edit — report that ' +
     'new file_id to the user. ALWAYS read_spreadsheet first to confirm the target cells before editing.',
@@ -196,7 +202,7 @@ export const MINE_PRECEDENTS: AnaTool = {
 export const CHECK_NUMERICAL_INTEGRITY: AnaTool = {
   name: 'check_numerical_integrity',
   description:
-    "Scan a single drafted artifact for same labelled quantity stated with multiple distinct values. Surfaces candidates like: sample size N=648 in the narrative but N=641 in Table 14.1; p<0.001 in text but p<0.01 in the forest plot; 100 mg/kg NOAEL in one paragraph and 200 mg/kg two pages later. This is the classic 'numbers drift between text and table' failure that triggers FDA RTFs. The checker reports CANDIDATES — multi-arm studies legitimately report different N per arm or timepoint — so the author or model must adjudicate whether each candidate is a real inconsistency or documented variance. Call this AFTER drafting a regulatory artifact containing numerical claims and BEFORE finalizing. Returns verdict (clean | review_candidates | likely_inconsistency) with per-candidate severity and context snippets.",
+    "Scan a single drafted artifact for same labelled quantity stated with multiple distinct values. Surfaces candidates like: sample size N=648 in the narrative but N=641 in Table 14.1; p<0.001 in text but p<0.01 in the forest plot; 100 mg/kg NOAEL in one paragraph and 200 mg/kg two pages later. This is the classic 'numbers drift between text and table' failure that triggers FDA RTFs. The checker reports CANDIDATES — multi-arm studies legitimately report different N per arm or timepoint — so the author or model must adjudicate whether each candidate is a real inconsistency or documented variance. Call this AFTER drafting a regulatory artifact containing numerical claims and BEFORE finalizing. Returns verdict (clean | review_candidates | likely_inconsistency | not_assessed) with per-candidate severity and context snippets. not_assessed means no labelled quantity is stated twice, so nothing was compared (notAssessedReason says why); it is not a clean result.",
   input_schema: {
     type: 'object',
     properties: {
@@ -241,7 +247,12 @@ export const COMPUTE_SAMPLE_SIZE: AnaTool = {
       },
       effectSize: {
         type: 'number',
-        description: "Standardized effect size (e.g. Cohen's d for continuous). For binary endpoints you may instead supply controlRate and treatmentRate and the engine derives the effect.",
+        description:
+          "Standardized effect size (e.g. Cohen's d for continuous). For binary endpoints you may instead supply controlRate and treatmentRate and the engine derives the effect. "
+          + 'FOR A time_to_event ENDPOINT THIS IS THE HAZARD-RATIO REDUCTION, not the hazard ratio: HR = 1 - effectSize. '
+          + 'A sponsor who says "a hazard ratio of 0.7" must be sent effectSize 0.3. Sending 0.7 sizes the trial for HR 0.300 '
+          + 'instead, which is roughly an eleven-fold under-sizing (50 subjects where 550 is right at 80% power). '
+          + 'If the user states a hazard ratio, convert it and say in your reply that you did.',
       },
       controlRate: {
         type: 'number',
@@ -401,7 +412,7 @@ export const GENERATE_STATISTICAL_DOCUMENT: AnaTool = {
 export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
   name: 'check_dossier_consistency',
   description:
-    "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly.",
+    "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker | not_assessed) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly. not_assessed means nothing was compared (notAssessedReason says why); it is not a clean result, so never call such a draft consistent.",
   input_schema: {
     type: 'object',
     properties: {
@@ -419,7 +430,7 @@ export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
       },
       exclude_artifact_id: {
         type: 'number',
-        description: 'Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version.',
+        description: "Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version. A project document whose text is exactly the draft's is set aside without it (draftCopiesSetAside); an earlier version with different text is not, so pass its id.",
       },
     },
     required: ['draft_content', 'project_id'],

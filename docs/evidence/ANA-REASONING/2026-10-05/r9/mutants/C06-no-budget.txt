@@ -1,0 +1,12 @@
+Mutant C06-no-budget: the thinking budget sent is not recorded
+
+--- server/services/ana/turn-record.ts
+- budgetTokens: req.thinking.budgetTokens ?? null
++ budgetTokens: null
+
+Tests run: server/services/ana/__tests__/turn-record-sent.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 10ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

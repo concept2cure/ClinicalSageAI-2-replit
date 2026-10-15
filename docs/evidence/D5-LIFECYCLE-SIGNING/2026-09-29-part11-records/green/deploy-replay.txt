@@ -1,0 +1,6 @@
+# node scripts/db/deploy-migrate.mjs, run twice on a local PostgreSQL 16 (the second run is the replay every deploy does); excerpt
+  ✓ applied: migrations/20260731c_canonical_documents.sql
+  ✓ applied: migrations/20260925_canonical_documents_append_only.sql
+✅ Schema migration complete — safe to roll services.
+# information_schema after replay:
+canonical_documents.created_by integer

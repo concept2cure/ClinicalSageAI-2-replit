@@ -1,0 +1,140 @@
+# Red: the new and changed tests run against HEAD's version of every source file this change touches
+# (served by vitest.head.config.ts.txt; the shared working tree was not modified). RLS_ENFORCE=off.
+# HEAD_FILES: server/services/ind-lifecycle/ind-safety-report-service.ts,server/services/ectd/assess-dispatch-readiness.ts,server/routes/ind-forms.routes.ts,server/services/ind-forms/form-context-assembler.ts,server/db/pglite-harness.ts,shared/schema/programs.ts,server/services/ana/lineage-dossier.ts,server/services/report-os/lineage-trace-report.ts,server/routes/report-os.ts,server/services/report-os/orchestrator.ts,client/src/concept2cure/v2/surfaces/IndLifecycle.tsx,client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx,client/src/concept2cure/v2/surfaces/programSequence.ts,client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx,client/src/concept2cure/v2/surfaces/ProjectHome.tsx,client/src/concept2cure/v2/surfaces/Insights.tsx
+# Test files: server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts server/routes/__tests__/ind-forms.contract.integration.test.ts client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx server/services/ind-forms/__tests__/form-context-assembler.test.ts client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx server/services/report-os/__tests__/lineage-trace-report.test.ts server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts server/routes/__tests__/report-os-run-engine.test.ts client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx
+# Lines kept: FAIL/× results, the assertion that failed, and the summary (vitest prints each FAIL twice).
+
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record 9ms
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts refuses an IND type outside the registry, an IND type on a program that is not an IND, an empty body, and another organisation's program — writing nothing 5ms
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > a stated value in the build request still wins over the recorded one 17ms
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with no project record is refused 409 PROGRAM_NOT_ANCHORED, and nothing is written 9ms
+ × server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > with expectedness not recorded, a non-serious or not-suspected event is NOT_REPORTABLE on its stated facts 12ms
+ × client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file 103ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build 5070ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a 200 with no artifact id is not reported as any kind of save 93ms
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a submission with no project recorded is not gated by name: no verdict, and the panels agree 5063ms
+ × server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > measures the share of the current text whose origin the span lineage records 13ms
+ × server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a document with no span lineage measures 0 — the text is there and none of it is traced 2ms
+ × server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a lineage read that fails is not measured (null), never a zero 2ms
+ × server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a document with no text is measured as having nothing to measure 1ms
+ × client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack lists only the types an engine computes — no not-computed tile inside it 107ms
+ × client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack button counts the reports it runs, not the ones no engine computes 19ms
+ × client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > engine-less types are listed once, as not computed in this release 5019ms
+ × server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > its confidence is the document's measured provenance completeness, not a count of the records present 144ms
+ × server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > a completeness that was not measured is no confidence at all, so the run stays below final 20ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission with no recorded project is NOT matched by name: nothing is gated, and the screen says how to anchor it 5034ms
+ × server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is held to its 1.1 form (Form FDA 1571), as an error, and to nothing else 15ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > is attributed characters over the text, as a whole percent 6ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > is floored, so a document is never rounded up past the finalize threshold 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > a document with no text is not measured: null, never 0 or 100 2ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > carries the partition it was measured from 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is the dossier's measured provenance completeness 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > a record-rich document with little traced text is not raised by its records 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > a thin document whose every character has a recorded origin is 100 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is null — nothing — when the completeness was not measured 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is null when the decision record could not be read: the trace is not measured in full 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > prints the figure, the characters behind it and their partition, linked to the span lineage 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > says it was not measured rather than printing a number 1ms
+ × server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > lists the untraced text as a gap 0ms
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > a NOT-SUSPECTED event with expectedness unrecorded is not reportable, on the stated causality 28ms
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > a NON-SERIOUS event with expectedness unrecorded is not reportable, on the stated seriousness 2ms
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > non-serious AND not suspected names both stated facts 1ms
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > the assembled report of such an event has no report to file and reads "not individually reportable", with expectedness "not recorded" 1ms
+ × server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > maps the recorded sponsor address and IND type to where the 1571 build reads them 13ms
+ × server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > a blank address or IND type is absent, and an IND type is never carried for a program that is not an IND 1ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > with a program open, the recorded sponsor address and IND type are shown, and a build sends neither — the record is the source 114ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > "Save to program" records the sponsor address and IND type on the program, then re-reads the record 778ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a refused save says why, in the server's words, as an error 295ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a program that is not an IND has no IND type to record 32ms
+ × server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > lineageTraceConfidence > is no figure at all on a dossier whose decision read failed 4ms
+ × server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > lineageTraceConfidence > is the measured completeness for a dossier whose decisions were genuinely read 2ms
+ FAIL  server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+ FAIL  server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts refuses an IND type outside the registry, an IND type on a program that is not an IND, an empty body, and another organisation's program — writing nothing
+AssertionError: expected 404 to be 400 // Object.is equality
+ FAIL  server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > a stated value in the build request still wins over the recorded one
+AssertionError: expected { …(16) } to match object { Object (sponsor_address, ind_type) }
+ FAIL  server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with no project record is refused 409 PROGRAM_NOT_ANCHORED, and nothing is written
+AssertionError: {"governed":false,"audited":true,"artifactId":null,"formId":"FDA_1571","projectId":null,"programId":"f9850445-0f40-423c-8700-cc1f95a7539f","ready":false,"missingRequired":["sponsor_address","indication","ind_type","phase_of_study"],"sponsorMustComplete":["ind_type","phase_of_study"],"contentHash":"811b644166f0dca41c9874477529e1df0ea4671d5b226203e83d5ac3317ee5d7","artifact_registry":"unplaced — this program has no anchored project row, and the governed artifact registry (concept2cure_artifacts) requires one; the built field map is audit-logged with its content hash"}: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > its confidence is the document's measured provenance completeness, not a count of the records present
+AssertionError: expected 95 to be 64 // Object.is equality
+ FAIL  server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > a completeness that was not measured is no confidence at all, so the run stays below final
+AssertionError: expected 95 to be null
+ FAIL  server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > with expectedness not recorded, a non-serious or not-suspected event is NOT_REPORTABLE on its stated facts
+AssertionError: expected 'NOT_DETERMINED' to be 'NOT_REPORTABLE' // Object.is equality
+ FAIL  server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > lineageTraceConfidence > is no figure at all on a dossier whose decision read failed
+TypeError: lineageTraceConfidence is not a function
+ FAIL  server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > lineageTraceConfidence > is the measured completeness for a dossier whose decisions were genuinely read
+TypeError: lineageTraceConfidence is not a function
+ FAIL  server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > measures the share of the current text whose origin the span lineage records
+AssertionError: expected undefined to match object { percent: 90, …(4) }
+ FAIL  server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a document with no span lineage measures 0 — the text is there and none of it is traced
+AssertionError: expected undefined to match object { percent: +0, …(2) }
+ FAIL  server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a lineage read that fails is not measured (null), never a zero
+AssertionError: expected undefined to be null
+ FAIL  server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a document with no text is measured as having nothing to measure
+AssertionError: expected undefined to be null
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is held to its 1.1 form (Form FDA 1571), as an error, and to nothing else
+AssertionError: expected undefined to deeply equal [ '1.1' ]
+ FAIL  server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > maps the recorded sponsor address and IND type to where the 1571 build reads them
+AssertionError: expected undefined to deeply equal { Object (address) }
+ FAIL  server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > a blank address or IND type is absent, and an IND type is never carried for a program that is not an IND
+AssertionError: expected undefined to deeply equal { address: '1 Main St' }
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > a NOT-SUSPECTED event with expectedness unrecorded is not reportable, on the stated causality
+AssertionError: unrelated: expected 'NOT_DETERMINED' to be 'NOT_REPORTABLE' // Object.is equality
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > a NON-SERIOUS event with expectedness unrecorded is not reportable, on the stated seriousness
+AssertionError: expected 'NOT_DETERMINED' to be 'NOT_REPORTABLE' // Object.is equality
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > non-serious AND not suspected names both stated facts
+AssertionError: expected 'NOT_DETERMINED' to be 'NOT_REPORTABLE' // Object.is equality
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > the assembled report of such an event has no report to file and reads "not individually reportable", with expectedness "not recorded"
+AssertionError: expected 'NOT_DETERMINED' to be 'NOT_REPORTABLE' // Object.is equality
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > is attributed characters over the text, as a whole percent
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > is floored, so a document is never rounded up past the finalize threshold
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > a document with no text is not measured: null, never 0 or 100
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > carries the partition it was measured from
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is the dossier's measured provenance completeness
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > a record-rich document with little traced text is not raised by its records
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > a thin document whose every character has a recorded origin is 100
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is null — nothing — when the completeness was not measured
+TypeError: lineageTraceConfidence is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is null when the decision record could not be read: the trace is not measured in full
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > prints the figure, the characters behind it and their partition, linked to the span lineage
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > says it was not measured rather than printing a number
+TypeError: Cannot read properties of undefined (reading 'blocks')
+ FAIL  server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > lists the untraced text as a gap
+TypeError: measureProvenanceCompleteness is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission with no recorded project is NOT matched by name: nothing is gated, and the screen says how to anchor it
+AssertionError: expected 'AnA · dispatch gate · proven, not gen…' to match /No submission for OQ-005 Readiness pr…/
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build
+AssertionError: expected "vi.fn()" to be called with arguments: [ …(2) ]
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a 200 with no artifact id is not reported as any kind of save
+AssertionError: expected "vi.fn()" to be called with arguments: [ StringMatching{…}, 'error' ]
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > with a program open, the recorded sponsor address and IND type are shown, and a build sends neither — the record is the source
+AssertionError: expected '' to be '1 Main St, Boston MA 02110, US' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > "Save to program" records the sponsor address and IND type on the program, then re-reads the record
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Save to program"
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a refused save says why, in the server's words, as an error
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Save to program"
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a program that is not an IND has no IND type to record
+AssertionError: expected <select class="c2c-input" …(1)>…(5)</select> to be null
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file
+AssertionError: expected 'Not assessed — the expedited verdict …' to be 'Not assessed — decides the verdict on…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack lists only the types an engine computes — no not-computed tile inside it
+AssertionError: expected [ <div …(2)>…(3)</div> ] to deeply equal []
+ FAIL  client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack button counts the reports it runs, not the ones no engine computes
+AssertionError: expected ' BLA assembly packTracks readiness an…' to match /2 governed reports/
+ FAIL  client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > engine-less types are listed once, as not computed in this release
+TestingLibraryElementError: Unable to find an element by: [data-testid="ro-not-computed"]
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a submission with no project recorded is not gated by name: no verdict, and the panels agree
+AssertionError: expected 'SubmissionsCompile and download  Open…' to contain 'No submissions for this project yet'
+ Test Files  15 failed | 4 passed (19)
+      Tests  44 failed | 332 passed (376)

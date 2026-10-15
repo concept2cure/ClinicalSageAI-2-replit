@@ -13,6 +13,9 @@ function input(overrides: Partial<CoverLetterInput> = {}): CoverLetterInput {
     indication: 'NSCLC',
     submissionType: 'original',
     serialNumber: '0000',
+    // 2026-10-15: the center is a required particular now (it was always CDER,
+    // unstated); a complete letter states it.
+    fdaCenter: 'CDER',
     fdaDivision: 'Division of Oncology 1',
     contactName: 'Dr. Jane Roe',
     contactPhone: '+1-617-555-0100',

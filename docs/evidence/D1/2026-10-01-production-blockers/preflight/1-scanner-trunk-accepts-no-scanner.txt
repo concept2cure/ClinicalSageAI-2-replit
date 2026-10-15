@@ -1,0 +1,3 @@
+=== td-no-scanner — trunk's preflight (2625137d)
+[terraform-preflight-proof] ok — deploy-aws.yml's preflight accepted the task definition
+[terraform-preflight-proof] every check holds.

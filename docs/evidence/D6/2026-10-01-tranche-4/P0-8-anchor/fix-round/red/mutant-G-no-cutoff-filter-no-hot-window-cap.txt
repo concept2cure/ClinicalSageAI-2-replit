@@ -1,0 +1,31 @@
+MUTANT G-no-cutoff-filter-no-hot-window-cap: neither the cutoff filter nor the cap on the verifier's clock: the first-round rule for heads ($3 kept referenced so the statement still parses)
+diff against the fix:
+303c303
+<             LEAST(max(cutoff), $2::timestamptz - $3::interval) AS excusable_before
+---
+>             (max(cutoff) + $3::interval * 0) AS excusable_before
+306,307c306
+<         AND archived_at <= $2::timestamptz
+<         AND cutoff <= archived_at - $3::interval`,
+---
+>         AND archived_at <= $2::timestamptz`,
+
+$ npx vitest run --config vitest.db.config.ts server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 40ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 262ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 96ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 37ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 22ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 9ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 56ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 13ms
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot turn a truncated head into "archived" 47ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot turn a truncated head into "archived" 62ms
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot excuse rows removed before an intact head 55ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot excuse rows removed before an intact head 44ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 11. a ledger row that keeps the door's own rules still never excuses a head inside the 24-month window 52ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 12. a head older than the 24-month floor, removed through the door, is archived: not tampering, not verified 34ms
+AssertionError: expected { …(7) } to match object { status: 'broken', …(2) }
+AssertionError: expected { …(7) } to match object { status: 'broken', …(2) }
+      Tests  2 failed | 12 passed (14)
+exit=1

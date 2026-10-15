@@ -1,0 +1,11 @@
+mutant M-plain-text-rule-off: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- (readAsPlainText && HOLDS_BROWSER_TAG.test(c.text))
++ false
+
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > with no known tag in the content, a clause holding a tag-shaped token is not the machine's 8ms
+   → shown by the editor and the export, credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > content read as plain text shows every `<…>` > a tag-shaped token typed into AnA's sentence, in content with no known tag, is not AnA's 41ms
+   → shown to the editor's reader, credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  2 failed | 57 passed (59)

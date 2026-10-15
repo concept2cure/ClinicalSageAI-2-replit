@@ -1,0 +1,41 @@
+# server/services/__tests__/account-standing-session-currency.test.ts with the R1 and R3 unit cases, against account-standing.ts BEFORE the change. Run 2026-10-01T14:03:24Z
+TypeError: endingStampOf is not a function
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:208:30
+    206|
+    207|   it('ends a session begun in the event\'s own second and admits one b…
+    208|     const stamp = Math.floor(endingStampOf(2_000_600).getTime() / 1000…
+       |                              ^
+    209|     const standing = { active: true, passwordChangedAtSeconds: stamp, …
+    210|     expect(sessionEndedByStanding({ iat: 2_000, sst: 2_000 }, standing…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > returns the status and the password-change second, parsing the bigint pg hands back as text
+AssertionError: expected { active: true, …(2) } to deeply equal { active: true, …(3) }
+
+- Expected
++ Received
+
+  {
+    "active": true,
+-   "membershipBeganAtSeconds": null,
+    "passwordChangedAtSeconds": 1700000000,
+    "sessionsEndedAtSeconds": null,
+  }
+
+ ❯ server/services/__tests__/account-standing-session-currency.test.ts:228:43
+    226|   it('returns the status and the password-change second, parsing the b…
+    227|     state.passwordChangedAtSeconds = '1700000000';
+    228|     expect(await readAccountStanding(42)).toEqual({ active: true, pass…
+       |                                           ^
+    229|     state.passwordChangedAtSeconds = 1_700_000_001;
+    230|     state.sessionsEndedAtSeconds = '1700000500';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 13 passed (20)
+   Start at  14:03:24
+   Duration  717ms (transform 215ms, setup 86ms, import 198ms, tests 109ms, environment 0ms)
+

@@ -58,9 +58,10 @@ describe('detectDocumentTemplate — positive matches', () => {
     ['QOS', 'draft the quality overall summary', 'ctd_2_3_qos'],
     ['QOS section ref', 'ctd section 2.3', 'ctd_2_3_qos'],
     ['Nonclinical Overview', 'draft the nonclinical overview 2.4', 'ctd_2_4_nonclinical_overview'],
-    ['Efficacy Summary', 'summary of clinical efficacy', 'ctd_2_7_4_efficacy_summary'],
-    ['Efficacy Summary section', 'section 2.7.4', 'ctd_2_7_4_efficacy_summary'],
-    ['Safety Summary', 'summary of clinical safety', 'ctd_2_7_5_safety_summary'],
+    ['Efficacy Summary', 'summary of clinical efficacy', 'ctd_2_7_3_efficacy_summary'],
+    ['Efficacy Summary section', 'section 2.7.3', 'ctd_2_7_3_efficacy_summary'],
+    ['Safety Summary', 'summary of clinical safety', 'ctd_2_7_4_safety_summary'],
+    ['Safety Summary section', 'section 2.7.4', 'ctd_2_7_4_safety_summary'],
     ['CMC Drug Substance', 'cmc drug substance section', 'cmc_drug_substance'],
     ['CMC 3.2.S', 'module 3.2.s drug substance narrative', 'cmc_drug_substance'],
     ['CMC Drug Product', 'cmc drug product section', 'cmc_drug_product'],
@@ -72,8 +73,19 @@ describe('detectDocumentTemplate — positive matches', () => {
     ['PMA SSED', 'pma summary of safety and effectiveness', 'pma_summary_safety_effectiveness'],
     ['CSR', 'draft a clinical study report', 'clinical_study_report'],
     ['DSUR', 'write the dsur for this ind', 'dsur'],
-    ['Type B Meeting', 'draft a type b meeting request package', 'fda_type_b_meeting_package'],
-    ['EOP2 meeting', 'end of phase 2 meeting', 'fda_type_b_meeting_package'],
+    // One template per lifecycle meeting entry since 2026-10-04 (was one
+    // hand-kept fda_type_b_meeting_package; tests/regulatory/meetings-and-dsur-truth.test.ts).
+    ['Type B Meeting', 'draft a type b meeting request package', 'fda_formal_meeting_package'],
+    ['EOP2 meeting', 'end of phase 2 meeting', 'fda_eop_meeting_package'],
+    ['EOP2 abbreviation', 'draft the EOP2 meeting package', 'fda_eop_meeting_package'],
+    ['Pre-Phase 3 meeting', 'pre-phase 3 meeting briefing', 'fda_eop_meeting_package'],
+    // An EOP1 meeting is Type B(EOP) only for subpart E/H products, otherwise
+    // plain Type B; it gets the generic package, which names the type first.
+    ['EOP1 meeting', 'end of phase 1 meeting', 'fda_formal_meeting_package'],
+    ['EOP1 abbreviation', 'EOP1 meeting package', 'fda_formal_meeting_package'],
+    ['Pre-IND meeting', 'draft our pre-IND meeting package', 'fda_pre_ind_meeting_package'],
+    ['Pre-NDA meeting', 'pre-NDA meeting briefing document', 'fda_pre_nda_meeting_package'],
+    ['Pre-BLA meeting', 'pre-BLA meeting request', 'fda_pre_bla_meeting_package'],
     ['PBRER', 'draft a pbrer', 'psur_pbrer'],
     ['Safety Narrative', 'write a safety narrative for this sae', 'safety_narrative'],
     ['FDA IR Response', 'draft an fda information request response', 'fda_information_request_response'],
@@ -115,9 +127,11 @@ describe('detectDocumentTemplate — specificity', () => {
       .toBe('ctd_2_5_clinical_overview');
   });
 
-  it('efficacy summary wins when section 2.7.4 is mentioned', () => {
-    expect(detectDocumentTemplate('section 2.7.4 summary of clinical efficacy')!.template.id)
-      .toBe('ctd_2_7_4_efficacy_summary');
+  // ICH M4E: 2.7.3 is the Summary of Clinical Efficacy (this case pinned 2.7.4
+  // until 2026-10-04; tests/regulatory/ana-ctd-section-truth.test.ts).
+  it('efficacy summary wins when section 2.7.3 is mentioned', () => {
+    expect(detectDocumentTemplate('section 2.7.3 summary of clinical efficacy')!.template.id)
+      .toBe('ctd_2_7_3_efficacy_summary');
   });
 
   it('CMC drug substance wins when 3.2.S is mentioned', () => {

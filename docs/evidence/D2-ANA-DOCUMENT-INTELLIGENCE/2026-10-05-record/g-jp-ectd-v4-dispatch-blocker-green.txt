@@ -1,0 +1,67 @@
+== step test ==
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+{
+  "timestamp": "2026-10-05T03:25:45.298Z",
+  "level": "info",
+  "context": {}
+{
+  "timestamp": "2026-10-05T03:25:45.299Z",
+  "level": "info",
+  "context": {
+    "mode": "on"
+  }
+{
+  "timestamp": "2026-10-05T03:25:45.299Z",
+  "level": "warn",
+  "context": {}
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > blocks an original PMDA sequence on or after the fact's effective date, naming that date 3ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > reads the effective date itself — the first day it is in force blocks 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > resolves every spelling of Japan the platform uses (jp, JP, PMDA) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > does not block before the effective date 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > does not block a continuing sequence of a lifecycle begun in v3.2.2 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > is scoped to Japan — an FDA or EU original is untouched 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > follows the registry when its date moves — the date is never copied 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > fails closed when the registry no longer carries the fact 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > fails closed when no usable as-of date is supplied for a Japanese original 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED is a named corpus rule > is catalogued as a Japan dispatch-readiness rule that references the currency fact and the notices 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > the assessor hands the sequence's region and an as-of date to the validator > passes region, original-ness, sequence number and asOf through 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > the assessor hands the sequence's region and an as-of date to the validator > a continuing Japanese sequence is not an original 6ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  03:25:42
+   Duration  5.36s (transform 2.95s, setup 159ms, import 4.70s, tests 19ms, environment 0ms)
+
+== importers (27 files) ==
+ Test Files  27 passed (27)
+      Tests  330 passed (330)
+files:
+client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx
+client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx
+client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx
+client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx
+client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx
+client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx
+client/src/concept2cure/v2/__tests__/dispatchWorkspaceHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+server/routes/__tests__/knowledge-error-containment.test.ts
+server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts
+server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+server/services/ectd/__tests__/dispatch-readiness.test.ts
+server/services/ectd/__tests__/release-signature-gate.test.ts
+server/services/ectd/__tests__/release-signature-status.test.ts
+server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts
+server/services/ectd/__tests__/validation-rule-corpus.test.ts
+server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts
+server/services/market-specs/__tests__/market-submission-specs.test.ts
+server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts
+server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts
+server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts
+server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+server/services/translation/terminology/__tests__/terminology.test.ts
+server/services/ana/__tests__/regulatory-currency-tools.test.ts
+
+== also: freeze-gate-row-lock.pg.test.ts (skipped, no Postgres), tests/golden-journeys/drug-nda-ectd.journey.test.ts: 1 passed ==

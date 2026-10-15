@@ -14,7 +14,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const chunkAndEmbedDocument = vi.hoisted(() => vi.fn());
 const recordChunkOutcome = vi.hoisted(() => vi.fn(async () => {}));
 
-vi.mock('../document-chunking.service.js', () => ({ chunkAndEmbedDocument, recordChunkOutcome }));
+vi.mock('../document-chunking.service.js', () => ({ chunkAndEmbedDocument, recordChunkOutcome, isVaultChunkingEnabled: async () => false }));
+vi.mock('../document-catalog.service.js', () => ({ recordExtractionOutcome: vi.fn(async () => {}), buildExtractionOutcome: () => ({}) }));
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn(), connect: vi.fn() } }));
 
 import { backfillVaultChunks, type Queryable } from '../document-chunking-backfill.service';

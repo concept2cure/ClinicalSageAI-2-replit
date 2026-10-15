@@ -1,0 +1,286 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > records the QMSR as in force from 2026-02-02 against the Federal Register final rule 9ms
+   → expected [] to deeply equal [ 'us-qmsr' ]
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > never supersedes a bare "21 CFR 820" — that would mark every 820.10 citation superseded 2ms
+   → expected [] to deeply equal [ 'us-qmsr' ]
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > lets check_guidance_freshness flag a removed-section citation and pass a QMSR one 3ms
+   → expected null to be false // Object.is equality
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > is appended, so findFacts(...)[0] for LDT and EUDAMED still returns their own facts 1ms
+   → expected -1 to be greater than 8
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the filing catalog agrees with the QMSR fact > names 21 CFR 820 the QMSR, dated from the fact, with QSR kept as a search synonym 1ms
+   → expected 'QSR (21 CFR 820)' to be 'QMSR (21 CFR 820)' // Object.is equality
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the filing catalog agrees with the QMSR fact > cites design controls as ISO 13485:2016 §7.3 via 21 CFR 820.10, with 820.30 only as "formerly" 1ms
+   → US_DHF: expected 'Compilation of design control records…' to match /ISO 13485:2016 §7\.3 via 21 CFR 820\.…/
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the filing catalog agrees with the QMSR fact > never cites a removed QSR section as current in any catalog description 3ms
+   → expected [ …(4) ] to deeply equal []
+ ✓ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the LDT position agrees with the void-rule fact > keeps US_LDT active and in the filing catalog (founder decision 18) 1ms
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the LDT position agrees with the void-rule fact > presents US_LDT as a regulatory-status entry, not a filing under the void rule 1ms
+   → expected 'Laboratory Developed Test (LDT) Notif…' not to match /notification/i
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the LDT position agrees with the void-rule fact > tells AnA the rule is void, not vacated "pending appeal" 1ms
+   → expected 'Laboratory-developed tests (LDTs): th…' not to match /pending appeal/i
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the LDT position agrees with the void-rule fact > marks register_ldt grandfathering and phase fields historical, as /api/mdx/ldt does 1ms
+   → expected 'Register a laboratory-developed test …' not to match /used for grandfathering eligibility …/i
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > records the QMSR as in force from 2026-02-02 against the Federal Register final rule
+AssertionError: expected [] to deeply equal [ 'us-qmsr' ]
+
+- Expected
++ Received
+
+- [
+-   "us-qmsr",
+- ]
++ []
+
+ ❯ qmsrFact tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:52:34
+     50| function qmsrFact() {
+     51|   const facts = findFacts({ topic: 'QMSR', jurisdiction: 'US' });
+     52|   expect(facts.map((f) => f.id)).toEqual(['us-qmsr']);
+       |                                  ^
+     53|   return facts[0];
+     54| }
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:58:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > never supersedes a bare "21 CFR 820" — that would mark every 820.10 citation superseded
+AssertionError: expected [] to deeply equal [ 'us-qmsr' ]
+
+- Expected
++ Received
+
+- [
+-   "us-qmsr",
+- ]
++ []
+
+ ❯ qmsrFact tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:52:34
+     50| function qmsrFact() {
+     51|   const facts = findFacts({ topic: 'QMSR', jurisdiction: 'US' });
+     52|   expect(facts.map((f) => f.id)).toEqual(['us-qmsr']);
+       |                                  ^
+     53|   return facts[0];
+     54| }
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:72:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > lets check_guidance_freshness flag a removed-section citation and pass a QMSR one
+AssertionError: expected null to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+null
+
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:87:32
+     85|       ],
+     86|     });
+     87|     expect(results[0].current).toBe(false);
+       |                                ^
+     88|     expect(results[0].basis?.id).toBe('us-qmsr');
+     89|     expect(results[1].current).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > is appended, so findFacts(...)[0] for LDT and EUDAMED still returns their own facts
+AssertionError: expected -1 to be greater than 8
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:96:36
+     94|   it('is appended, so findFacts(...)[0] for LDT and EUDAMED still retu…
+     95|     const ids = REGULATORY_FACTS.map((f) => f.id);
+     96|     expect(ids.indexOf('us-qmsr')).toBeGreaterThan(ids.indexOf('eu-eud…
+       |                                    ^
+     97|     expect(ids.indexOf('us-qmsr')).toBeGreaterThan(ids.indexOf('us-ldt…
+     98|     expect(findFacts({ topic: 'LDT' })[0].id).toBe('us-ldt-final-rule-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the filing catalog agrees with the QMSR fact > names 21 CFR 820 the QMSR, dated from the fact, with QSR kept as a search synonym
+AssertionError: expected 'QSR (21 CFR 820)' to be 'QMSR (21 CFR 820)' // Object.is equality
+
+Expected: "QMSR (21 CFR 820)"
+Received: "QSR (21 CFR 820)"
+
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:107:28
+    105|     const e = getApplicationType('QMS_QSR_820');
+    106|     expect(e?.active).toBe(true);
+    107|     expect(e?.displayName).toBe('QMSR (21 CFR 820)');
+       |                            ^
+    108|     expect(e?.description).toMatch(/Quality Management System Regulati…
+    109|     expect(e?.description).toContain(qmsrFact().effectiveDate);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the filing catalog agrees with the QMSR fact > cites design controls as ISO 13485:2016 §7.3 via 21 CFR 820.10, with 820.30 only as "formerly"
+AssertionError: US_DHF: expected 'Compilation of design control records…' to match /ISO 13485:2016 §7\.3 via 21 CFR 820\.…/
+
+- Expected:
+/ISO 13485:2016 §7\.3 via 21 CFR 820\.10/
+
++ Received:
+"Compilation of design control records per 21 CFR 820.30; design inputs, outputs, reviews, verification, validation, transfer"
+
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:118:34
+    116|       const e = getApplicationType(id);
+    117|       expect(e?.active, id).toBe(true);
+    118|       expect(e?.description, id).toMatch(/ISO 13485:2016 §7\.3 via 21 …
+       |                                  ^
+    119|       expect(e?.description, id).toMatch(/formerly 21 CFR 820\.30/);
+    120|       /* Kept so a search for the old citation still finds the entry. …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the filing catalog agrees with the QMSR fact > never cites a removed QSR section as current in any catalog description
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "US_DHF: Compilation of design control records per 21 CFR 820.30; design inputs, outputs, reviews, verification, validation, transfer",
++   "QMS_DESIGN_CONTROLS: Design control records per 21 CFR 820.30 and ISO 13485 §7.3; design planning through design transfer",
++   "QMS_DMR: 21 CFR 820.181; procedures and specifications for a finished device including production processes and QA procedures",
++   "QMS_DHR: 21 CFR 820.184; production record for each batch/unit demonstrating manufacture per DMR",
++ ]
+
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:130:23
+    128|       return REMOVED_QSR_SECTION.test(d) && !/\bformerly\b/i.test(d);
+    129|     }).map((e) => `${e.id}: ${e.description}`);
+    130|     expect(offenders).toEqual([]);
+       |                       ^
+    131|   });
+    132| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the LDT position agrees with the void-rule fact > presents US_LDT as a regulatory-status entry, not a filing under the void rule
+AssertionError: expected 'Laboratory Developed Test (LDT) Notif…' not to match /notification/i
+
+- Expected:
+/notification/i
+
++ Received:
+"Laboratory Developed Test (LDT) Notification"
+
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:144:32
+    142|     const fact = ldtFact();
+    143|     expect(fact.status).toBe('void');
+    144|     expect(e?.displayName).not.toMatch(/notification/i);
+       |                                ^
+    145|     expect(e?.displayName).toMatch(/regulatory status/i);
+    146|     expect(e?.description).not.toMatch(/phased requirements/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the LDT position agrees with the void-rule fact > tells AnA the rule is void, not vacated "pending appeal"
+AssertionError: expected 'Laboratory-developed tests (LDTs): th…' not to match /pending appeal/i
+
+- Expected:
+/pending appeal/i
+
++ Received:
+"Laboratory-developed tests (LDTs): the 2024 FDA rule and its 2025 vacatur
+LDTs are tests designed, manufactured, and used within a single CLIA lab. FDA historically exercised enforcement discretion. In May 2024 FDA finalized a rule to phase out that discretion and regulate LDTs as devices; in March 2025 a federal court vacated the rule, holding FDA lacks that authority — leaving LDTs governed by CLIA pending appeal/legislation.
+An LDT is an in-vitro diagnostic designed, manufactured, and used within a single laboratory certified under CLIA for high-complexity testing. For decades FDA asserted that LDTs are \"devices\" subject to its authority but exercised \"enforcement discretion,\" so labs validated LDTs under CLIA (CMS) rather than obtaining FDA clearance/approval.
+
+On 6 May 2024 FDA published a final rule amending its regulations to make explicit that IVDs are devices \"including when the manufacturer is a laboratory,\" and announced a phaseout of general enforcement discretion over roughly four years in five stages: Stage 1 (~May 2025) MDR, correction/removal, and complaint-handling; Stage 2 (~May 2026) registration, listing, labeling, and investigational-use requirements; Stage 3 (~May 2027) quality system (QS/QMSR) requirements; Stage 4 (~Nov 2027) premarket review for high-risk tests; Stage 5 (~May 2028) premarket review for moderate/low-risk tests — with several carve-outs (e.g., certain currently-marketed LDTs, 1976-type LDTs, HLA, forensic, and some others).
+
+The American Clinical Laboratory Association and the Association for Molecular Pathology sued in the U.S. District Court for the Eastern District of Texas. On 31 March 2025 the court granted summary judgment for the plaintiffs and vacated the LDT rule, holding that the FD&C Act does not give FDA authority over LDTs, which are professional testing services regulated under CLIA, not manufactured \"devices.\" As of the knowledge cutoff the rule is vacated and not in effect; LDTs continue under the CLIA framework, while the prospect of an FDA appeal and/or federal legislation (the long-pending VALID Act, which would create a distinct in-vitro clinical test category) remains unresolved. Strategy implication: monitor closely — a successful appeal or VALID-style legislation would reintroduce FDA-style obligations for labs.
+LDT = test designed/made/used within one CLIA high-complexity lab.
+2024 FDA final rule: phase out enforcement discretion in 5 stages (2025–2028).
+March 2025: E.D. Texas vacated the rule (FDA lacks LDT authority; LDTs are services).
+As of cutoff: rule not in effect; LDTs under CLIA; appeal/VALID Act unresolved.
+Treating the 2024 rule's phaseout dates as currently operative — it was vacated.
+Ignoring that a successful appeal or VALID Act would reverse this."
+
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:158:22
+    156|     expect(entry).toBeDefined();
+    157|     const text = [entry!.title, entry!.summary, entry!.detail, ...entr…
+    158|     expect(text).not.toMatch(/pending appeal/i);
+       |                      ^
+    159|     expect(text).not.toMatch(/appeal\/VALID Act unresolved/i);
+    160|     expect(text).not.toMatch(/successful appeal/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the LDT position agrees with the void-rule fact > marks register_ldt grandfathering and phase fields historical, as /api/mdx/ldt does
+AssertionError: expected 'Register a laboratory-developed test …' not to match /used for grandfathering eligibility …/i
+
+- Expected:
+/used for grandfathering eligibility per/i
+
++ Received:
+"Register a laboratory-developed test in the LDT inventory. Tracks lab name, CLIA certificate, intended use, first-offered date (used for grandfathering eligibility per FDA 2024 LDT final rule), and FDA pathway. current_phase starts at 1 per the rule's phased transition schedule; use set_ldt_phase_milestone to log specific milestone progress."
+
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:170:42
+    168|
+    169|   it('marks register_ldt grandfathering and phase fields historical, a…
+    170|     expect(REGISTER_LDT.description).not.toMatch(/used for grandfather…
+       |                                          ^
+    171|     expect(REGISTER_LDT.description).toMatch(/void/i);
+    172|     expect(REGISTER_LDT.description).toContain(ldtFact().id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 1 passed (11)
+   Start at  02:20:21
+   Duration  593ms (transform 224ms, setup 77ms, import 186ms, tests 28ms, environment 0ms)
+
+
+================================================================
+FIX ROUND 1 (review, 2026-10-05) — red
+Two assertions added before the fix:
+ - the QMSR rule's own FR title ('Medical Devices; Quality System Regulation Amendments', 'Quality System Regulation Amendments (89 FR 7496)') must not read as superseded, and must resolve to us-qmsr
+ - findFacts({topic:'CGMP', jurisdiction:'US'}) must not return us-qmsr (keyword 'device CGMP')
+Run against the code before the alias/keyword fix: 2 failed | 11 passed (13)
+================================================================
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > does not call the QMSR final rule superseded when it is cited by its Federal Register title 8ms
+   → expected false not to be false // Object.is equality
+ × tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > is not returned for a drug CGMP question (21 CFR 210/211) 2ms
+   → expected [ 'us-qmsr' ] to not include 'us-qmsr'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > does not call the QMSR final rule superseded when it is cited by its Federal Register title
+AssertionError: expected false not to be false // Object.is equality
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:107:29
+    105|     });
+    106|     for (const r of results) {
+    107|       expect(r.current).not.toBe(false);
+       |                             ^
+    108|       expect(r.basis?.id).toBe('us-qmsr');
+    109|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/regulatory/dated-facts-agree-with-currency-registry.test.ts > the QMSR is a dated fact in the currency registry > is not returned for a drug CGMP question (21 CFR 210/211)
+AssertionError: expected [ 'us-qmsr' ] to not include 'us-qmsr'
+ ❯ tests/regulatory/dated-facts-agree-with-currency-registry.test.ts:113:83
+    111|
+    112|   it('is not returned for a drug CGMP question (21 CFR 210/211)', () =…
+    113|     expect(findFacts({ topic: 'CGMP', jurisdiction: 'US' }).map((f) =>…
+       |                                                                                   ^
+    114|   });
+    115|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  02:57:52
+   Duration  990ms (transform 417ms, setup 128ms, import 344ms, tests 42ms, environment 0ms)
+

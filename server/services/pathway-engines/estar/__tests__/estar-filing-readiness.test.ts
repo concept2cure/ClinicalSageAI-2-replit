@@ -112,7 +112,7 @@ describe('assessEstarFilingReadiness', () => {
     expect(r.blockers.some((b) => /not registered/i.test(b))).toBe(true);
   });
 
-  it('canFileNow is true only when registered + content complete + template producible', () => {
+  it('canFileNow is true only when registered + content complete + template producible + template current', () => {
     const r = assessEstarFilingReadiness({
       catalogKey: '510k',
       variant: 'device',
@@ -121,6 +121,9 @@ describe('assessEstarFilingReadiness', () => {
       deviceFlags: PLAIN_DEVICE,
       templateAvailable: true,
       fieldMapPopulated: true,
+      // FDA's current nIVD version; the vendored 7.0 file is pinned in
+      // estar-version-currency.test.ts, where it blocks.
+      vendoredTemplateVersion: '7.1',
     })!;
     expect(r.eligible).toBe(true);
     expect(r.contentReady).toBe(true);
@@ -154,7 +157,7 @@ describe('assessEstarFilingReadiness', () => {
       leaves: [],
     })!;
     expect(k510.family).toBe('nivd');
-    expect(k510.currentVersion).toBe('7.0');
+    expect(k510.currentVersion).toBe('7.1');
     expect(k510.ombNumbers).toContain('0910-0120');
 
     const ivd = assessEstarFilingReadiness({
@@ -172,7 +175,7 @@ describe('assessEstarFilingReadiness', () => {
       leaves: [],
     })!;
     expect(qsub.family).toBe('prestar');
-    expect(qsub.currentVersion).toBe('3.0');
+    expect(qsub.currentVersion).toBe('3.1');
     expect(qsub.ombNumbers).toContain('0910-0756');
   });
 
@@ -248,8 +251,9 @@ describe('assessEstarFilingReadiness', () => {
       registration: UNREGISTERED,
       leaves: [],
     })!;
-    // registration + content + producibility all blocking.
-    expect(r.blockers.length).toBe(3);
+    // registration + content + producibility + template version all blocking.
+    expect(r.blockers.length).toBe(4);
+    expect(r.templateVersionCurrent).toBe(false);
     expect(r.canFileNow).toBe(false);
   });
 });

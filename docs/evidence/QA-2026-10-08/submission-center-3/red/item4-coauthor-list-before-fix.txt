@@ -1,0 +1,8 @@
+ ✓ server/routes/__tests__/coauthorDocumentsListTotal.test.ts > GET /api/coauthor/documents total > reports the organisation count when the page is capped by limit 45ms
+ ✓ server/routes/__tests__/coauthorDocumentsListTotal.test.ts > GET /api/coauthor/documents total > total equals the page length when every row fits, and excludes other organisations 8ms
+ × server/routes/__tests__/coauthorDocumentsListTotal.test.ts > GET /api/coauthor/documents search and paging > q finds a document by title, case-insensitively, in this organisation only, and total counts the matches 13ms
+ × server/routes/__tests__/coauthorDocumentsListTotal.test.ts > GET /api/coauthor/documents search and paging > q finds a document by its module number 9ms
+ × server/routes/__tests__/coauthorDocumentsListTotal.test.ts > GET /api/coauthor/documents search and paging > a search is text, not a pattern: % and _ match themselves 20ms
+ × server/routes/__tests__/coauthorDocumentsListTotal.test.ts > GET /api/coauthor/documents search and paging > offset pages through the list: two pages of 4 hold every document once 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 2 passed (6)

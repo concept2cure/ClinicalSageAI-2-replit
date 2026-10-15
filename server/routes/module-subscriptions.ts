@@ -320,7 +320,7 @@ router.get('/user-intelligence', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /work-queue — AI-recommended next tasks for the user
+// GET /work-queue — next tasks derived from the project's section status
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/work-queue', async (req: Request, res: Response) => {
   try {
@@ -347,8 +347,12 @@ router.get('/work-queue', async (req: Request, res: Response) => {
       activeProjectId: projectId,
     });
 
+    // 2026-10-15: `workQueue || []` answered a failed read (null) as an empty queue.
+    if (intelligence?.workQueue === null) {
+      return res.status(503).json({ error: 'The work queue could not be read' });
+    }
     return res.json({
-      queue: intelligence?.workQueue || [],
+      queue: intelligence?.workQueue ?? [],
       activeProject: intelligence?.activeProject || null,
     });
   } catch (error) {

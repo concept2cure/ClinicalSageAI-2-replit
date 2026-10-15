@@ -79,15 +79,24 @@ describe('validateTenantContext, given a session', () => {
 describe('where it is mounted', () => {
   it('applyAuthBoundary mounts the boundary and then the detector on /api', () => {
     const app = express();
-    const stack = () => ((app as any).router ?? (app as any)._router).stack as Array<{ handle: { name: string } }>;
+    const stack = () => ((app as any).router ?? (app as any)._router).stack as Array<{
+      handle: { name: string };
+      route?: { path: string; methods: Record<string, boolean>; stack: Array<{ handle: { name: string } }> };
+    }>;
     const before = stack().length;
     applyAuthBoundary(app);
-    const added = stack().slice(before).map((l) => l.handle.name);
+    const layers = stack().slice(before);
+    const added = layers.map((l) => l.handle.name);
     // The boundary, then the detector; then, since 2026-09-26, the Concept2Cure
     // body parsers and their scrub, which read a body only for a session that
     // passed the boundary (security audit IAM-18 item 7).
     expect(added.slice(0, 2), 'the detector is not mounted behind the boundary').toHaveLength(2);
     expect(added[1]).toBe('validateTenantContext');
-    expect(added.slice(2), 'the Concept2Cure parsers do not follow the boundary').toEqual(['jsonParser', 'urlencodedParser', 'sanitizeInput']);
+    expect(added.slice(2,5), 'the Concept2Cure parsers do not follow the boundary').toEqual(['jsonParser', 'urlencodedParser', 'sanitizeInput']);
+    const reportParser = layers[5]?.route;
+    expect(reportParser?.path).toBe('/api/audit/reports/convert');
+    expect(reportParser?.methods).toEqual({ post: true });
+    expect(reportParser?.stack.map(layer => layer.handle.name)).toEqual(['jsonParser','sanitizeInput']);
+    expect(layers).toHaveLength(6);
   });
 });

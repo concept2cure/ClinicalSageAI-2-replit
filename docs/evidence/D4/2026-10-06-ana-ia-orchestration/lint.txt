@@ -1,0 +1,17 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana-ri/orchestrator.ts
+   335:8  warning  Function 'orchestrate' has too many lines (273). Maximum allowed is 100                     max-lines-per-function
+   335:8  warning  Function 'orchestrate' has a complexity of 96. Maximum allowed is 15                        complexity
+   714:8  warning  Async function 'preloadRIMContext' has a complexity of 17. Maximum allowed is 15            complexity
+   733:1  warning  File has too many lines (1448). Maximum allowed is 500                                      max-lines
+  1315:1  warning  Function 'buildContinuityContext' has too many lines (132). Maximum allowed is 100          max-lines-per-function
+  1315:1  warning  Function 'buildContinuityContext' has a complexity of 22. Maximum allowed is 15             complexity
+  1488:1  warning  Function 'detectConversationPhase' has a complexity of 18. Maximum allowed is 15            complexity
+  1601:8  warning  Async function 'extractThreadIntelligence' has a complexity of 20. Maximum allowed is 15    complexity
+  1704:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info     no-console
+  1720:1  warning  Function 'formatProjectIntelligenceBlock' has too many lines (112). Maximum allowed is 100  max-lines-per-function
+  1720:1  warning  Function 'formatProjectIntelligenceBlock' has a complexity of 49. Maximum allowed is 15     complexity
+
+✖ 11 problems (0 errors, 11 warnings)
+

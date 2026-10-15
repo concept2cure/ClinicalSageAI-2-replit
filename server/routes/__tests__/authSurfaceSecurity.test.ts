@@ -170,25 +170,20 @@ describe('Defect 2: token-class guard on /api/auth/enterprise/*', () => {
     expect(res.body.authenticated).toBe(true);
   });
 
-  it('POST /mfa/setup rejects a partial token', async () => {
-    const res = await request(app).post('/api/auth/enterprise/mfa/setup').set(bearer(partialToken()));
-    expect(res.status).toBe(401);
-  });
-
-  it('POST /mfa/enable rejects a partial token', async () => {
-    const res = await request(app)
-      .post('/api/auth/enterprise/mfa/enable')
-      .set(bearer(partialToken()))
-      .send({ code: '123456' });
-    expect(res.status).toBe(401);
-  });
-
-  it('POST /mfa/disable rejects a partial token', async () => {
-    const res = await request(app)
-      .post('/api/auth/enterprise/mfa/disable')
-      .set(bearer(partialToken()))
-      .send({ password: 'x', code: '123456' });
-    expect(res.status).toBe(401);
+  /* P-25 follow-up (2026-10-08): the enterprise router's own authenticator
+     enrolment (/mfa/setup, /mfa/enable, /mfa/disable) was a second
+     implementation of /api/auth/mfa/* with no caller. It is gone; the one
+     implementation's partial-token refusals are pinned in the next block. */
+  it('serves no authenticator enrolment of its own: /mfa/setup, /mfa/enable and /mfa/disable are not routes here', async () => {
+    const statuses: Record<string, number> = {};
+    for (const door of ['setup', 'enable', 'disable']) {
+      const res = await request(app)
+        .post(`/api/auth/enterprise/mfa/${door}`)
+        .set(bearer(accessToken()))
+        .send({ password: 'x', code: '123456' });
+      statuses[door] = res.status;
+    }
+    expect(statuses).toEqual({ setup: 404, enable: 404, disable: 404 });
   });
 });
 

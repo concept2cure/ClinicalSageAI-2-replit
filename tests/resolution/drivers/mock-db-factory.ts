@@ -305,21 +305,24 @@ export function createMockDb(state: ResolutionTestState) {
   // ─────────────────────────────────────────────────────────
   // ASSEMBLED MOCK
   // ─────────────────────────────────────────────────────────
-  return {
-    db: {
-      select: () => createSelectChain(),
-      insert: () => createInsertChain(),
-      update: (table: any) => {
-        const tName = table?.name || table?.[Symbol.for('drizzle:Name')] || '';
-        return createUpdateChain(tName);
-      },
-      execute: mockExecute,
-      /* stageRewrite wraps its version write and its lineage in one transaction
-         (ledger L177). The mock has no real transaction to give it, so the
-         callback runs against the same execute — enough for these
-         decision-matrix tests, which assert outcomes rather than atomicity. */
-      transaction: async (fn: (tx: any) => any) => fn({ execute: mockExecute }),
+  const db: Record<string, any> = {
+    select: () => createSelectChain(),
+    insert: () => createInsertChain(),
+    update: (table: any) => {
+      const tName = table?.name || table?.[Symbol.for('drizzle:Name')] || '';
+      return createUpdateChain(tName);
     },
+    execute: mockExecute,
+  };
+  /* stageRewrite (ledger L177) and executeSupersede (record, confirm and
+     archive) each run inside db.transaction, and a Drizzle transaction exposes
+     the same select / insert / update / execute surface as db. The mock has no
+     real transaction to give, so the callback gets the same surface — enough
+     for these decision-matrix tests, which assert outcomes rather than
+     atomicity (supersede-fails-closed.pglite.test.ts proves the atomicity). */
+  db.transaction = async (fn: (tx: any) => any) => fn(db);
+  return {
+    db,
     drivers: {
       supersession: supersessionDriver,
       artifact: artifactDriver,

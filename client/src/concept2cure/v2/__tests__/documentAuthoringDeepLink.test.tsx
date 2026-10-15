@@ -245,3 +245,29 @@ describe('DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PA
     });
   });
 });
+
+describe('an exact document target keeps its returned section identity', () => {
+  it('opens the returned code inside only the saved document, including a non-first section', async () => {
+    const baseline = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string) => url === '/api/authoring/docs/D2/sections' ? Promise.resolve(ok({ sections: [
+      { ...D2_SECTIONS.sections[0], id: 'S20', code: '10', content: 'Earlier section.' }, D2_SECTIONS.sections[0],
+    ] })) : baseline(method, url));
+    setEditorTarget({ docId: 'D2', docType: null, code: '11' }); render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(canvasText()).toBe('SE discussion body.'));
+  });
+  it('refuses a code absent from the named document even when another document holds it', async () => {
+    setEditorTarget({ docId: 'D1', docType: null, code: '11' }); render(<DocumentAuthoring {...props()} />);
+    await screen.findByText(/section 11 could not be resolved uniquely/);
+    expect(canvasText()).toBe('Default document content.');
+    expect(apiRequest.mock.calls.some(c => c[1] === '/api/authoring/docs/D2/sections')).toBe(false);
+  });
+});
+
+it('a saved copy with no assigned module is labelled as an unbound draft', async () => {
+  const baseline = apiRequest.getMockImplementation()!;
+  apiRequest.mockImplementation((method: string, url: string) => url.startsWith('/api/authoring/docs?')
+    ? Promise.resolve(ok({ documents: [{ ...DOCS.documents[1], module: null, c2c_document_id: null }] })) : baseline(method, url));
+  setEditorTarget({ docId: 'D2', docType: null }); render(<DocumentAuthoring {...props()} />);
+  await waitFor(() => expect(canvasText()).toBe('SE discussion body.'));
+  expect(document.querySelector('.ed-h .sep-first')?.textContent ?? document.querySelector('.sep-first')?.textContent).toBe('Unbound draft');
+});

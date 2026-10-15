@@ -101,7 +101,12 @@ fi
 # good case here; any other non-zero status is a real failure and must not be
 # mistaken for a clean run.
 set +e
-HITS="$(printf '%s\n' "${FILES}" | xargs grep -nE "${PATTERN}" 2>/dev/null)"
+# xargs splits the list into batches and exits 123 if ANY batch's grep exits
+# 1-125, and a batch with no match exits 1. Once server/ outgrew one batch,
+# every clean run reported "grep exited 123" (CI run 12735). So each batch
+# maps its own "no match" (1) to 0, and only a real grep error (>=2) still
+# reaches xargs as 123. -H keeps the file name when a batch holds one file.
+HITS="$(printf '%s\n' "${FILES}" | xargs -d '\n' sh -c 'grep -nHE "$0" "$@"; s=$?; [ "$s" -le 1 ] && exit 0; exit "$s"' "${PATTERN}" 2>/dev/null)"
 GREP_STATUS=$?
 set -e
 

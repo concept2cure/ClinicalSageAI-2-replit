@@ -85,6 +85,7 @@ vi.mock('../surfaceActions', async (importOriginal) => {
   const real = await importOriginal<typeof import('../surfaceActions')>();
   return {
     ...real,
+    cancelPendingSurfaceAction: vi.fn(real.cancelPendingSurfaceAction),
     applySurfaceAction: vi.fn(
       (_d: unknown, _nav: unknown, onDeferred: (o: SurfaceActionOutcome) => void): SurfaceActionOutcome => {
         const now = bus.immediate.shift();
@@ -112,7 +113,7 @@ import { AuthProvider } from '@/services/portal/authService';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { V2App } from '../V2App';
 import { locationForSurface } from '../routing';
-import { applySurfaceAction } from '../surfaceActions';
+import { applySurfaceAction, cancelPendingSurfaceAction } from '../surfaceActions';
 import { setAnaLockedScreens } from '../../components/ana/anaLockedScreens';
 
 const SEARCH = { actionType: 'surface_action', actionId: 'vault.search', params: { query: 'stability' } };
@@ -187,6 +188,7 @@ beforeEach(() => {
   bus.immediate.length = 0;
   bus.deferred.length = 0;
   vi.mocked(applySurfaceAction).mockClear();
+  vi.mocked(cancelPendingSurfaceAction).mockClear();
   vi.stubGlobal(
     'fetch',
     vi.fn(async () => ({ ok: false, status: 503, body: null, json: async () => ({}) })),
@@ -299,7 +301,7 @@ describe('C / D — a move that did not land is reported to the run that made it
     expect(chat.interject).not.toHaveBeenCalled();
   });
 
-  it('a move that settles after a newer turn began is reported to ITS turn, not the newer one', async () => {
+  it('a pending move cancelled by a newer turn is reported to ITS turn, not the newer one', async () => {
     await mountShell();
     const a = turnControls();
     drive(START_ASSIST, a);
@@ -315,6 +317,7 @@ describe('C / D — a move that did not land is reported to the run that made it
 
     act(() => bus.deferred[0]({ status: 'failed', reason: 'The vault screen is not open.' }));
     await waitFor(() => expect(a.reportScreen).toHaveBeenCalledTimes(1));
+    expect(a.reportScreen.mock.calls[0][0]).toContain('It was cancelled before it could be made.');
     expect(b.reportScreen).not.toHaveBeenCalled();
     expect(a.interject).not.toHaveBeenCalled();
     expect(b.interject).not.toHaveBeenCalled();
@@ -334,6 +337,12 @@ describe('every move is settled back to the run that made it, exactly once', () 
     drive({ type: 'drive_action', directive: SEARCH, moveId: 'toolu_act' }, a);
     drive({ type: 'drive_navigation', directive: NAV_HERE, moveId: 'toolu_nav' }, a);
     await waitFor(() => expect(a.moveLanded.mock.calls.map(c => c[0])).toEqual(['toolu_act', 'toolu_nav']));
+    expect(applySurfaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({ actionId: 'vault.search' }),
+      expect.any(Function),
+      expect.any(Function),
+      { waitForCommit: true },
+    );
     expect(a.reportScreen).not.toHaveBeenCalled();
   });
 
@@ -369,19 +378,25 @@ describe('every move is settled back to the run that made it, exactly once', () 
     expect(applySurfaceAction).not.toHaveBeenCalled();
   });
 
-  it('a move cleared before its turn came is settled as not made', async () => {
+  it('a pending action and the move behind it are both settled as not made when cleared', async () => {
     await mountShell();
     const a = turnControls();
     drive(START_ASSIST, a);
-    drive({ type: 'drive_action', directive: SEARCH, moveId: 'toolu_1' }, a); // in flight
+    drive({ type: 'drive_action', directive: SEARCH, moveId: 'toolu_1' }, a); // waiting on its screen
     drive({ type: 'drive_action', directive: FILTER, moveId: 'toolu_2' }, a); // queued behind it
     await flush();
     drive(START_ASSIST, turnControls()); // a new turn clears the queue
     act(() => bus.deferred[0]({ status: 'applied' }));
-    await waitFor(() => expect(a.reportScreen).toHaveBeenCalledTimes(1));
-    expect(a.reportScreen.mock.calls[0][0]).toContain('It was cancelled before it could be made.');
-    expect(a.reportScreen.mock.calls[0][1]).toBe('toolu_2');
-    expect(a.moveLanded.mock.calls.map(c => c[0])).toEqual(['toolu_1']);
+    await waitFor(() => expect(a.reportScreen).toHaveBeenCalledTimes(2));
+    for (const [reason] of a.reportScreen.mock.calls) {
+      expect(reason).toContain('It was cancelled before it could be made.');
+    }
+    expect(a.reportScreen.mock.calls.map(c => c[1])).toEqual(['toolu_1', 'toolu_2']);
+    expect(cancelPendingSurfaceAction).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ actionId: 'vault.search', params: { query: 'stability' } }),
+      'It was cancelled before it could be made.',
+    );
+    expect(a.moveLanded).not.toHaveBeenCalled();
   });
 
   it('a move is settled once, even when reporting its landing fails', async () => {
@@ -574,5 +589,23 @@ describe('F / G — the strip names a screen only once it has opened, and words 
     );
     await waitFor(() => expect(a.reportScreen).toHaveBeenCalledTimes(1));
     expect(a.reportScreen.mock.calls[0][0]).toContain('Opening the CMC / Quality (Module 3) screen did not happen');
+  });
+});
+
+/* docs/design/ONE_ANA_ONE_CANVAS.md, slice 4, found in a real browser on
+   2026-10-08 (docs/evidence/D2-ONE-ANA/2026-10-08/ana-9-rail-goes/screens/):
+   with Live Drive on, the conversation screen still showed the drive strip's
+   own "Ask or steer AnA…" box beside the composer that steers the run. The
+   shell's own drive hands the strip its controls, and the guard read any
+   controls as "another chat is driving". On a screen that owns its
+   conversation the strip draws no box, whichever chat drives. */
+describe('one box: the drive strip draws no steer field on the conversation screen', () => {
+  it('while the shell’s own turn drives', async () => {
+    await mountShell();
+    drive(START_ASSIST, turnControls());
+    expect(within(strip()!).getByText('AnA is driving')).toBeTruthy();
+    expect(strip()!.querySelector('.ana-drive-steer-input')).toBeNull();
+    // Stop and take-over stay.
+    expect(within(strip()!).getByRole('button', { name: /Stop/ })).toBeTruthy();
   });
 });

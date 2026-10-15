@@ -6,9 +6,13 @@ import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
   workstreamForFilingType,
+  MEDICINAL_PRODUCT_TYPES,
+  PRODUCT_TYPES,
+  type ProductType,
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
 import {
   listedChoices,
   notifySurfaceActionReady,
@@ -24,7 +28,9 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 // Importing RegistryBridge also runs its side effects, which populate the
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
 import { RegistryPicker } from './AnaVerbs';
+import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
+import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
 import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
   usesDeviceClassification, type DeviceFlagId,
@@ -66,36 +72,22 @@ const SEG2WS: Record<string, string> = {
   diagnostics: 'MDX', cro: 'CRO', health: 'Biotech',
 };
 
-/**
- * UI segment → the product class the lane implies.
- *
- * This map used to be sent to the server AS `productType`, which is how a
- * 510(k) came to be recorded as a biologic: the wizard opens on the Pharma &
- * Biotech tab by default, `SEG2PRODUCT['biotech']` is `'biologic'`, and that
- * value was submitted explicitly — overriding the server's own correct
- * derivation from the filing type. The review step rendered what it sent:
- * `510K · biologic`.
- *
- * The product class now comes from the FILING TYPE
- * (`productTypeForFilingType`, shared with the server so the two cannot drift).
- * The lane survives only as a REFINEMENT within the device family — a 510(k)
- * started from the Diagnostics lane is an IVD 510(k) — which is a real signal
- * and the only one available at creation time. It can no longer make a device
- * filing medicinal.
- */
-const SEG2PRODUCT: Record<string, string> = {
-  biotech: 'biologic', pharma: 'drug', medtech: 'device',
-  diagnostics: 'ivd', cro: 'drug', health: 'biologic',
-};
+/* The product class comes from the FILING TYPE (`productTypeForFilingType`,
+   shared with the server so the two cannot drift); the lane only refines within
+   the device family (a 510(k) from the Diagnostics lane is an IVD 510(k)).
 
-/**
- * The product class this wizard will persist: the filing type decides, the lane
- * refines within the device family, and the lane's own default applies only to
- * a filing type the shared vocabulary cannot classify.
- */
-function productTypeForSelection(programType: string, uiSeg: string): string {
-  return productTypeForFilingType(programType, uiSeg) ?? SEG2PRODUCT[uiSeg] ?? 'drug';
-}
+   Where the filing type does not fix the class — an IND, CTA, MAA, J-NDA or
+   DMF covers drugs and biologics alike — the person states it (P-21). A lane
+   map (`SEG2PRODUCT`) used to fill it in: the Pharma & Biotech tab made a
+   510(k) a biologic, and once that was closed the Biotech tab still made every
+   IND a biologic, an inhaled small molecule included (QA 2026-10-08, second
+   walk, j1/j7). The map is gone; nothing fills a class nobody chose. */
+
+/** The medicinal classes a person can state, labelled from the one vocabulary. */
+const STATED_CLASS_CHOICES = PRODUCT_TYPES.filter((t) => MEDICINAL_PRODUCT_TYPES.includes(t.value));
+
+/** The prompt a regulated select shows until the person states a value (P-21). */
+const NOT_STATED = 'Not stated — choose';
 
 // UI segment → human label, for the wizard's "Tailored for …" banner.
 /* Registry tab → UI segment, so the banner can follow a tab change. Only the
@@ -110,34 +102,6 @@ const SEG_LABELS: Record<string, string> = {
   biotech: 'Biotech', pharma: 'Pharma', medtech: 'Medical Devices',
   diagnostics: 'Diagnostics & IVD', cro: 'CRO / Services', health: 'Digital Health',
 };
-
-/* ── Therapeutic areas — the create form's indication axis (self-contained) ── */
-const TA_GROUPS: { id: string; label: string }[] = [
-  { id: 'onc', label: 'Oncology' },
-  { id: 'neuro', label: 'Neurology & Neuromuscular' },
-  { id: 'immuno', label: 'Immunology & Inflammation' },
-  { id: 'cardio', label: 'Cardiovascular & Metabolic' },
-  { id: 'id', label: 'Infectious Disease & Vaccines' },
-  { id: 'rare', label: 'Rare & Genetic Disease' },
-  { id: 'resp', label: 'Respiratory' },
-  { id: 'other', label: 'Other' },
-];
-const TA_LIST: { id: string; label: string; group: string }[] = [
-  { id: 'onc_solid', label: 'Solid tumors', group: 'onc' },
-  { id: 'onc_heme', label: 'Hematologic malignancies', group: 'onc' },
-  { id: 'onc_general', label: 'Oncology (general)', group: 'onc' },
-  { id: 'neuro_cns', label: 'CNS / neurodegeneration', group: 'neuro' },
-  { id: 'neuro_nmj', label: 'Neuromuscular', group: 'neuro' },
-  { id: 'immuno_rheum', label: 'Rheumatology / autoimmune', group: 'immuno' },
-  { id: 'immuno_derm', label: 'Dermatology / inflammation', group: 'immuno' },
-  { id: 'cardio_hf', label: 'Heart failure / cardiology', group: 'cardio' },
-  { id: 'cardio_metab', label: 'Metabolic / endocrine', group: 'cardio' },
-  { id: 'id_vaccine', label: 'Vaccines', group: 'id' },
-  { id: 'id_amr', label: 'Anti-infectives', group: 'id' },
-  { id: 'rare_genetic', label: 'Rare genetic disease', group: 'rare' },
-  { id: 'resp_obstructive', label: 'COPD / asthma', group: 'resp' },
-  { id: 'other_unspec', label: 'Other / not specified', group: 'other' },
-];
 
 /** Map a chosen registry template + segment → a canonical program_type the
  *  backend accepts (server VALID_PROGRAM_TYPES) and WS_CASE buckets. */
@@ -234,11 +198,19 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
-  const [ta, setTa] = useState('onc_general');
-  /* The device taxonomy. Step 2 offered a therapeutic-area dropdown and nothing
-     else — an oncology / vaccines list, defaulting to "Oncology (general)",
-     shown to someone filing a peak flow meter. These are the fields a device
-     reviewer opens the file to find. */
+  /* The indication, as the person states it, or nothing (P-21). Step 2 used to
+     offer a therapeutic-area dropdown that started on "Oncology (general)",
+     and its label was saved as the program's indication — the value Form 1571
+     carries. "QA-W2 Tolvexa · idiopathic pulmonary fibrosis" was recorded with
+     the indication "COPD / asthma" (QA 2026-10-08, second walk, j1/j7). A
+     therapeutic area is not an indication; the dropdown is gone and nothing
+     else reads it. */
+  const [indication, setIndication] = useState('');
+  /* The drug / biologic class, for a filing type that does not fix it. Starts
+     unstated; Continue waits for it. */
+  const [statedClass, setStatedClass] = useState<ProductType | ''>('');
+  /* The device taxonomy. These are the fields a device reviewer opens the file
+     to find. */
   const [productCode, setProductCode] = useState('');
   const [regulationNumber, setRegulationNumber] = useState('');
   const [deviceClass, setDeviceClass] = useState('');
@@ -265,7 +237,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
    * created a second copy of a program that was already there.
    */
   const [outcome, setOutcome] = useState<
-    { kind: 'error' | 'notice'; message: string; correlationId?: string } | null
+    { kind: 'error' | 'notice'; message: string; correlationId?: string; notOffered?: boolean } | null
   >(null);
   const fail = (message: string, correlationId?: string) =>
     setOutcome({ kind: 'error', message, correlationId });
@@ -287,27 +259,47 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const selTpl: SelTpl | null = ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null;
-  /* From the FILING TYPE, not the lane: a 510(k) picked from any tab is a
-     device filing, and a pharma filing picked from the device tab is not. */
-  const isDeviceFiling = usesDeviceClassification(
-    productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
-  );
+  const programType = programTypeFor(selTpl, uiSeg);
+  /* The class the FILING TYPE fixes, or null when it does not, in which case
+     the person states it. From the filing type, not the lane: a 510(k) picked
+     from any tab is a device filing, and a pharma filing picked from the device
+     tab is not. */
+  const fixedClass = productTypeForFilingType(programType, uiSeg);
+  const asksClass = fixedClass === null;
+  const recordedClass: string | null = fixedClass ?? (statedClass || null);
+  const isDeviceFiling = usesDeviceClassification(fixedClass);
+  const savedIndication = indication.trim();
+
+  /* The name and product exactly as they will be saved — the review prints
+     these and the create call sends these, so the two cannot disagree. The
+     name used to fall back to the filing type's label ("Investigational New
+     Drug Application") while the review read "(unnamed)", and programs were
+     saved under identical generic names (QA 2026-10-08, j1). It is required
+     now. A blank product is recorded as the name, which is what the server
+     does with one (POST /api/c2c/projects: productName || name), and the
+     review says so. */
+  const savedName = name.trim();
+  const savedProduct = product.trim() || savedName;
+  /* Configure is complete when the name is given and, where the filing type
+     leaves it open, the class is chosen. */
+  const configured = savedName !== '' && recordedClass !== null;
 
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
   // the error instead of pretending the project was created.
   const doCreate = async () => {
+    if (!configured || recordedClass === null) return;
     setCreating(true);
     setOutcome(null);
-    const taLabel = TA_LIST.find(t => t.id === ta)?.label ?? null;
     const body = {
-      name: name || selTpl?.label || 'New project',
-      productName: product || name || (selTpl?.label ?? ''),
-      programType: programTypeFor(selTpl, uiSeg),
-      productType: productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
+      name: savedName,
+      productName: savedProduct,
+      programType,
+      productType: recordedClass,
       primaryAgency: selTpl?.agency || 'FDA',
       submissionTypeId: selTpl?.id,
-      indication: isDeviceFiling ? (intendedUse || undefined) : taLabel,
+      // Only what was stated: a blank indication sends none (P-21).
+      indication: isDeviceFiling ? (intendedUse || undefined) : (savedIndication || undefined),
       ...(isDeviceFiling
         ? {
             deviceClassification: {
@@ -342,34 +334,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       // technical file as a US NDA is worse than filing nothing — but only if
       // the customer is told which of the two happened. Surfacing it is the
       // other half of routing those 33 registry rows to their true program type.
-      // The SAME silence, one field along. The server also reports when it
-      // created the program but declined the PM-spine anchor
-      // (meta.projectAnchorSkipped / projectAnchorDetail, from
-      // services/c2c/program-project-anchor.ts). Nothing read that either, so
-      // an unanchored program looked like a normal creation and surfaced weeks
-      // later as a permanently empty artifact registry: compile reports
-      // success, every section skips the bridge, and the Vault shows no
-      // Module 3 branch. Checked BEFORE the scaffold skip because it is the
-      // more consequential of the two — a scaffold can be added by hand, an
-      // anchor cannot.
-      const anchorSkipped = j?.meta?.projectAnchorSkipped as string | undefined;
-      if (anchorSkipped) {
-        const anchorDetail =
-          typeof j?.meta?.projectAnchorDetail === 'string' ? j.meta.projectAnchorDetail : '';
-        setOutcome({
-          kind: 'notice',
-          message: (
-            anchorDetail ||
-            'Project created without a project-management anchor, so governed exports cannot be ' +
-              'placed into the document registry for it.'
-          ).replace(/\s+/g, ' '),
-        });
-        setCreating(false);
-        // Same reasoning as the scaffold skip below: the project exists and is
-        // listed, and dropping the user into it is how this went unnoticed.
-        return;
-      }
-
+      // (The server used to report a declined PM-spine anchor here too. Since
+      // P-19 it refuses the program instead — 409 PROJECT_RECORD_UNAVAILABLE,
+      // nothing saved — and that refusal reaches the catch below like any other.)
       const skipped = j?.meta?.scaffoldSkipped as string | undefined;
       if (skipped) {
         const detail = typeof j?.meta?.scaffoldDetail === 'string' ? j.meta.scaffoldDetail : '';
@@ -416,6 +383,14 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       // check straight onto the screen. That is engineer text in a regulated
       // UI, arriving by a path the server-envelope filter cannot see.
       const known = e instanceof ApiRequestError;
+      // 422 FILING_NOT_OFFERED: the market verdict refuses this filing, with its
+      // reason (POST /api/c2c/projects, F19b). Sending it again gets the same
+      // answer, so the way out is another filing, not "Try again".
+      if (known && e.code === 'FILING_NOT_OFFERED' && e.message) {
+        setOutcome({ kind: 'error', message: e.message, correlationId: e.correlationId, notOffered: true });
+        setCreating(false);
+        return;
+      }
       fail(
         known && e.message
           ? e.message
@@ -425,9 +400,6 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       setCreating(false);
     }
   };
-
-  const taGroups = TA_GROUPS;
-  const taList = TA_LIST;
 
   return (
     /* ── Full canvas, not a modal ────────────────────────────────────────────
@@ -528,6 +500,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
               <RegistryPicker
                 value={tpl ?? ''}
                 onChange={(id) => setTpl(id)}
+                /* The type creation will send for each filing, so the picker
+                   asks the market verdict about exactly what it would create. */
+                applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, uiSeg)}
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
               />
@@ -538,6 +513,23 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
           {step === 1 && selTpl && (
             <div className="npw-form">
               <h2 className="npw-h2">Configure your {selTpl.label} project</h2>
+              {/* What the platform can carry for the market this filing type
+                  opens, in the server's words (FILING_SPINE.md F19). */}
+              <p className="npw-seg-s" data-testid="npw-market-support">
+                <MarketSupportLine applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
+              </p>
+
+              <ProjectDiscoveryHandoff
+                fields={{ name, target, indication, intendedUse }}
+                isDeviceFiling={isDeviceFiling}
+                disabled={creating}
+                onApply={(fields) => {
+                  if (fields.name !== undefined) setName(current => current.trim() ? current : fields.name!);
+                  if (fields.target !== undefined) setTarget(current => current.trim() ? current : fields.target!);
+                  if (fields.indication !== undefined) setIndication(current => current.trim() ? current : fields.indication!);
+                  if (fields.intendedUse !== undefined) setIntendedUse(current => current.trim() ? current : fields.intendedUse!);
+                }}
+              />
 
               <div className="npw-fields">
                 <label className="npw-field">
@@ -547,7 +539,13 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder={`e.g. ${selTpl.id === '510k' ? 'Aurora CGM — 510(k)' : 'BX-204 — ' + selTpl.label}`}
+                    required
+                    aria-required="true"
+                    aria-describedby="npw-name-help"
                   />
+                  <span className="npw-field-help" id="npw-name-help">
+                    Required. The program is listed under this name.
+                  </span>
                 </label>
 
                 <label className="npw-field">
@@ -580,15 +578,37 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                   </label>
                 ) : (
                   <label className="npw-field">
-                    <span className="npw-field-l">Therapeutic area</span>
-                    <select className="c2c-input" value={ta} onChange={e => setTa(e.target.value)}>
-                      {taGroups.map(g => {
-                        const items = taList.filter(t => t.group === g.id);
-                        return items.length
-                          ? <optgroup key={g.id} label={g.label}>{items.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</optgroup>
-                          : null;
-                      })}
+                    <span className="npw-field-l">Indication</span>
+                    <input
+                      className="c2c-input"
+                      value={indication}
+                      onChange={e => setIndication(e.target.value)}
+                      placeholder="e.g. idiopathic pulmonary fibrosis"
+                      aria-describedby="npw-indication-help"
+                    />
+                    <span className="npw-field-help" id="npw-indication-help">
+                      The disease or condition, as Form 1571 will state it. Leave it blank if it is not settled yet.
+                    </span>
+                  </label>
+                )}
+
+                {asksClass && (
+                  <label className="npw-field">
+                    <span className="npw-field-l">Product type</span>
+                    <select
+                      className="c2c-input"
+                      value={statedClass}
+                      onChange={e => setStatedClass(e.target.value as ProductType | '')}
+                      required
+                      aria-required="true"
+                      aria-describedby="npw-class-help"
+                    >
+                      <option value="">{NOT_STATED}</option>
+                      {STATED_CLASS_CHOICES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
+                    <span className="npw-field-help" id="npw-class-help">
+                      Required. A {programType.toUpperCase()} covers drugs and biologics; the program records which.
+                    </span>
                   </label>
                 )}
 
@@ -732,16 +752,21 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                 )}
                 <div className="npw-review-row">
                   <dt>Project name</dt>
-                  <dd>{name || '(unnamed)'}</dd>
+                  <dd>{savedName}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Product</dt>
-                  <dd>{product || '—'}</dd>
+                  <dd>
+                    {savedProduct}
+                    {!product.trim() && <span style={{ color: 'var(--text-300)' }}> (same as the project name)</span>}
+                  </dd>
                 </div>
-                <div className="npw-review-row">
-                  <dt>Therapeutic area</dt>
-                  <dd>{taList.find(t => t.id === ta)?.label || ta}</dd>
-                </div>
+                {!isDeviceFiling && (
+                  <div className="npw-review-row">
+                    <dt>Indication</dt>
+                    <dd>{savedIndication || 'Not stated'}</dd>
+                  </div>
+                )}
                 <div className="npw-review-row">
                   <dt>Target date</dt>
                   <dd>{target || 'Not set'}</dd>
@@ -757,11 +782,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     for a device filing — and then stored it. */}
                 <div className="npw-review-row">
                   <dt>Workstream</dt>
-                  <dd>{workstreamForFilingType(programTypeFor(selTpl, uiSeg)) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
+                  <dd>{workstreamForFilingType(programType) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Recorded as</dt>
-                  <dd>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg)}</dd>
+                  <dd>{programType.toUpperCase().replace(/_/g, ' ')} · {recordedClass ?? 'not stated'}</dd>
                 </div>
                 {/* Only what was actually entered. A device row that reads
                     "Not recorded" is the truth about the programme; filling it
@@ -840,10 +865,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
             <div className="npw-outcome">
               <ErrorState
                 variant="inline"
-                title="The project was not created"
+                title={outcome.notOffered ? 'This filing is not offered here' : 'The project was not created'}
                 message={outcome.message}
                 correlationId={outcome.correlationId}
-                retry={doCreate}
+                retry={outcome.notOffered ? () => { setOutcome(null); setStep(0); } : doCreate}
+                retryLabel={outcome.notOffered ? 'Choose another filing' : undefined}
                 busy={creating}
                 onDismiss={() => setOutcome(null)}
                 testId="new-project-outcome"
@@ -878,12 +904,17 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
           {step > 0 && <button type="button" className="btn ghost" onClick={() => setStep(s => s - 1)}>Back</button>}
           <span className="npw-foot-gap" />
           {step < 2 && (
-            <button type="button" className="btn primary" disabled={step === 0 && !tpl} onClick={() => setStep(s => s + 1)}>
+            <button
+              type="button"
+              className="btn primary"
+              disabled={(step === 0 && !tpl) || (step === 1 && !configured)}
+              onClick={() => setStep(s => s + 1)}
+            >
               Continue
             </button>
           )}
           {step === 2 && (
-            <button type="button" className="btn primary" disabled={creating} onClick={doCreate}>
+            <button type="button" className="btn primary" disabled={creating || !configured} onClick={doCreate}>
               {creating ? 'Creating project…' : <>{I.plus} Create project</>}
             </button>
           )}
@@ -920,7 +951,8 @@ function PortfolioPagedNote({ paged, settled, count }: { paged: boolean; settled
  * column (progress_percent → readiness, phase → stage, target_submission_date →
  * due, lead_user_id → lead). `blocker` is in the projection but the list query
  * returns it as a literal NULL — no blocker is computed at list level — so it is
- * typed nullable and rendered null-safe, never fabricated.
+ * typed nullable and rendered null-safe, never fabricated. Null means "not
+ * assessed here", never "none": the card says nothing about blockers then.
  */
 interface ProjPortfolioEntry {
   id: string;
@@ -935,11 +967,30 @@ interface ProjPortfolioEntry {
   lead: string;
   blocker: string | null;
   due: string;
+  /** target_submission_date as YYYY-MM-DD, or null when none is set. */
+  due_date?: string | null;
   activity: string;
+}
+
+/** Whole days from today to a YYYY-MM-DD date, in the viewer's calendar; null
+ *  for no date or an unreadable one. */
+function daysUntil(isoDate: string | null | undefined, today: Date = new Date()): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate ?? '');
+  if (!m) return null;
+  const due = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const now = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((due - now) / 86_400_000);
 }
 
 /** Workstream → chip tone (presentation config, not data). */
 const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'warn', CRO: 'idle' };
+
+/* A program whose stored status is `blocked` while the list carries no blocker
+   for it. The product writes only active and archived (POST and the close-out
+   routes); a `blocked` row comes from data loaded some other way, and the list
+   does not assess blockers. The card states the gap instead of a bare red chip. */
+const BLOCKED_NO_CAUSE = 'No cause recorded';
+const BLOCKED_NO_CAUSE_TITLE = 'This program’s status is recorded as blocked, and no blocker is recorded against it.';
 
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
@@ -994,12 +1045,24 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const meanReadiness = measured.length
     ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%'
     : '—';
+  /* No "Blocked" figure. A program's status is only ever written as active or
+     archived (POST and the close-out routes in server/routes/c2c/projects.ts),
+     and the list computes no blocker, so the count could only read 0: an
+     all-clear nothing had assessed. Readiness is assessed per program, on
+     Project home and in Submission Center. */
+  const filingSoon = projects.filter(p => {
+    const d = daysUntil(p.due_date);
+    return d != null && d >= 0 && d < 60;
+  }).length;
   const health = [
     { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
     { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '' },
-    { l: 'Blocked', n: kv(String(projects.filter(p => p.status === 'blocked').length)), m: 'need attention', t: 'err' },
-    { l: 'Filing < 60 days', n: kv(String(projects.filter(p => /days/.test(p.due)).length)), m: 'near-term submissions', t: 'warn' },
+    { l: 'Filing < 60 days', n: kv(countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
   ];
+  /* The status filter offers the statuses the portfolio actually holds. It
+     offered Blocked and Complete, which nothing writes, so both always showed
+     an empty list. One status (or none) needs no filter. */
+  const statuses = ['all', ...Array.from(new Set(projects.map(p => p.status).filter(Boolean)))];
   const wss = ['all', 'MDX', 'Biotech', 'Pharma'];
 
   /* What AnA can see of this screen.
@@ -1042,7 +1105,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         availableActions: ['Retry the portfolio read'],
       };
     }
-    const blocked = projects.filter(p => p.status === 'blocked');
     /* The search narrows the list exactly as the two dropdowns do, so it has to
        be named here for the same reason they are: a summary that said "filtered
        by workstream and status" while a search term was also hiding rows would
@@ -1059,7 +1121,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         `Projects portfolio: ${projects.length} regulatory program(s)` +
         (truncated ? ` — the first ${projects.length} only; more exist, and every figure here covers the first ${projects.length}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
-        `. ${blocked.length} blocked, average readiness ${health[1].n}. Shown as a ${view}.`,
+        `. Average readiness ${health[1].n}; ${health[2].n} with a target filing date in the next 60 days. ` +
+        'Blockers are not assessed on this list; each program\'s readiness is on its project home. ' +
+        `Shown as a ${view}.`,
       facts: {
         totalPrograms: projects.length,
         portfolioTruncated: truncated,
@@ -1067,8 +1131,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         workstreamFilter: ws,
         statusFilter: status,
         searchQuery: q.trim() || null,
-        blockedCount: blocked.length,
         averageReadiness: health[1].n,
+        filingWithin60Days: health[2].n,
+        blockersAssessed: false,
         // Enough to name a programme back to the user, not the whole row set.
         // `p.lead` is deliberately NOT published: the server projects it as
         // COALESCE(u.name, u.email, '—'), so a lead with no name set resolves to
@@ -1265,13 +1330,15 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         {wss.map(w => <button key={w} className={`ws-btn${ws === w ? ' on' : ''}`} onClick={() => setWs(w)}>{w === 'all' ? 'All workstreams' : w}</button>)}
       </div>
 
-      <div className="seg" style={{ marginBottom: 18 }}>
-        {(['all', 'active', 'blocked', 'complete'] as const).map(s => (
-          <button key={s} className={`seg-b${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>
-            {s[0].toUpperCase() + s.slice(1)}
-          </button>
-        ))}
-      </div>
+      {statuses.length > 2 && (
+        <div className="seg" style={{ marginBottom: 18 }}>
+          {statuses.map(s => (
+            <button key={s} className={`seg-b${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>
+              {s[0].toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {live.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
@@ -1314,7 +1381,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                 <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
               </div>
               <div className="pj-card-r">
-                <span>{p.readiness == null ? 'Readiness not measured' : `${p.readiness}% ready`}</span><span>{p.due}</span>
+                <span title={DOSSIER_READINESS_MEANS}>{DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness)}</span><span>{p.due}</span>
               </div>
               <div className="pj-card-f">
                 <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
@@ -1323,9 +1390,16 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                     the one thing on this card that changes what you do next,
                     and colour is not carrying it alone — the icon and the text
                     both say so. */}
-                {p.blocker
-                  ? <span className="pj-card-blk">{I.alertTriangle} {p.blocker}</span>
-                  : <span className="pj-card-ok">{I.check} No open blockers</span>}
+                {/* Nothing when no blocker came back: the list does not
+                    assess blockers, so "No open blockers" was an all-clear
+                    nothing had checked. */}
+                {p.blocker && <span className="pj-card-blk">{I.alertTriangle} {p.blocker}</span>}
+                {/* A status of blocked with no blocker behind it (NM-512 in the
+                    QA organisation, QA 2026-10-08 j1) says so in words. The red
+                    chip alone read as a finding with its cause withheld. */}
+                {!p.blocker && p.status === 'blocked' && (
+                  <span className="pj-card-blk" title={BLOCKED_NO_CAUSE_TITLE}>{I.alertTriangle} {BLOCKED_NO_CAUSE}</span>
+                )}
               </div>
             </button>
           ))}
@@ -1347,8 +1421,16 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                 <div className="ph-bar-track" style={{ marginTop: 5 }}>
                   <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: (p.readiness ?? 0) + '%' }} />
                 </div>
+                <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 3 }} title={DOSSIER_READINESS_MEANS}>
+                  {DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness)}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: p.blocker ? 'var(--warning)' : 'var(--text-400)' }}>{p.blocker ? '1 blocker' : '—'}</div>
+              <div
+                style={{ fontSize: 11, color: p.blocker || p.status === 'blocked' ? 'var(--warning)' : 'var(--text-400)' }}
+                title={!p.blocker && p.status === 'blocked' ? BLOCKED_NO_CAUSE_TITLE : undefined}
+              >
+                {p.blocker ? '1 blocker' : p.status === 'blocked' ? BLOCKED_NO_CAUSE : '—'}
+              </div>
               <div style={{ fontSize: 11.5 }}>{p.lead}</div>
               <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.due}</div>
             </button>

@@ -16,10 +16,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 
 const gateScript = new URL('../check-dependency-risk.mjs', import.meta.url);
 const resealScript = new URL('../reseal-dependency-risk-ledger.mjs', import.meta.url);
 const repoRoot = new URL('../../../', import.meta.url);
+const require = createRequire(import.meta.url);
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const report = vulnerabilities => ({
@@ -141,6 +143,90 @@ test('passes a diamond: two wrappers sharing one reviewed transitive', () => {
   assert.equal(result.status, 0, result.stderr);
 });
 
+test('passes a reviewed high cause alongside a separately reported moderate-only branch', () => {
+  // CI 37498480047: Jest inherited the reviewed braces high finding and a
+  // separate moderate js-yaml path. The high threshold must apply to causes,
+  // while every linked node is still traversed and validated.
+  const fx = fixture();
+  const result = runGate(report({
+    wrapper: { severity: 'high', via: ['image-size', 'instrumentation'] },
+    instrumentation: { severity: 'moderate', via: ['yaml'] },
+    yaml: { severity: 'moderate', via: [{ severity: 'moderate', url: 'https://github.com/advisories/GHSA-mmmm-nnnn-pppp' }] },
+    'image-size': { severity: 'high', via: [{ severity: 'high', url: 'https://github.com/advisories/GHSA-w3rx-r6r6-pgpr' }] },
+  }), fx);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /GHSA-W3RX-R6R6-PGPR image-size high: unreachable/);
+});
+
+test('blocks an uncovered high cause even when its wrapper claims moderate severity', () => {
+  const fx = fixture();
+  const result = runGate(report({
+    wrapper: { severity: 'high', via: ['image-size', 'instrumentation'] },
+    instrumentation: { severity: 'moderate', via: ['surprise'] },
+    surprise: { severity: 'moderate', via: [{ severity: 'high', url: 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc' }] },
+    'image-size': { severity: 'high', via: [{ severity: 'high', url: 'https://github.com/advisories/GHSA-w3rx-r6r6-pgpr' }] },
+  }), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);
+});
+
+test('blocks an uncovered critical advisory even when every wrapper claims moderate severity', () => {
+  const fx = fixture();
+  const result = runGate(report({
+    instrumentation: { severity: 'moderate', via: ['surprise'] },
+    surprise: { severity: 'moderate', via: [{ severity: 'critical', url: 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc' }] },
+  }), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);
+});
+
+test('passes a well-formed moderate-only scanner graph without a high decision', () => {
+  const fx = fixture();
+  const result = runGate(report({
+    instrumentation: { severity: 'moderate', via: ['yaml'] },
+    yaml: { severity: 'moderate', via: [{ severity: 'moderate', url: 'https://github.com/advisories/GHSA-mmmm-nnnn-pppp' }] },
+  }), fx);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('blocks a truncated moderate branch beside a reviewed high cause', () => {
+  const fx = fixture();
+  const result = runGate(report({
+    wrapper: { severity: 'high', via: ['image-size', 'instrumentation'] },
+    instrumentation: { severity: 'moderate', via: ['missing-yaml'] },
+    'image-size': { severity: 'high', via: [{ severity: 'high', url: 'https://github.com/advisories/GHSA-w3rx-r6r6-pgpr' }] },
+  }), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);
+});
+
+test('blocks a cycle in a moderate branch beside a reviewed high cause', () => {
+  const fx = fixture();
+  const result = runGate(report({
+    wrapper: { severity: 'high', via: ['image-size', 'instrumentation'] },
+    instrumentation: { severity: 'moderate', via: ['yaml'] },
+    yaml: { severity: 'moderate', via: ['instrumentation'] },
+    'image-size': { severity: 'high', via: [{ severity: 'high', url: 'https://github.com/advisories/GHSA-w3rx-r6r6-pgpr' }] },
+  }), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);
+});
+
+test('blocks malformed advisory metadata in a moderate branch', () => {
+  const fx = fixture();
+  const result = runGate(report({
+    wrapper: { severity: 'high', via: ['image-size', 'instrumentation'] },
+    instrumentation: { severity: 'moderate', via: [null] },
+    'image-size': { severity: 'high', via: [{ severity: 'high', url: 'https://github.com/advisories/GHSA-w3rx-r6r6-pgpr' }] },
+  }), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);
+});
+
+test('blocks a high wrapper with no reported high or critical cause', () => {
+  const fx = fixture();
+  const result = runGate(report({
+    wrapper: { severity: 'high', via: ['yaml'] },
+    yaml: { severity: 'moderate', via: [{ severity: 'moderate', url: 'https://github.com/advisories/GHSA-mmmm-nnnn-pppp' }] },
+  }), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /unreviewed Critical\/High/);
+});
+
 test('fails closed on a true via cycle', () => {
   const fx = fixture();
   const result = runGate(report({
@@ -179,6 +265,39 @@ test('fails closed on an expired exception', () => {
   });
   const result = runGate(report({}), fx, { DEPENDENCY_RISK_NOW: '2026-08-28T00:00:00.000Z' });
   assert.equal(result.status, 1); assert.match(result.stderr, /exception expired/);
+});
+
+test('fails closed on a malformed validation clock instead of bypassing expiration', () => {
+  const fx = fixture();
+  const result = runGate(coveredAudit(), fx, { DEPENDENCY_RISK_NOW: 'not-a-clock' });
+  assert.equal(result.status, 1); assert.match(result.stderr, /validation clock is invalid/);
+});
+
+test('fails closed on an invalid decision expiry instead of accepting NaN', () => {
+  const fx = fixture({ findings: [unreachableRow('GHSA-w3rx-r6r6-pgpr', { expiresAt: 'not-an-expiry' })] });
+  const result = runGate(coveredAudit(), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /expiry is invalid/);
+});
+
+test('fails closed on an impossible calendar date in a decision expiry', () => {
+  const fx = fixture({ findings: [unreachableRow('GHSA-w3rx-r6r6-pgpr', { expiresAt: '2099-02-30T00:00:00.000Z' })] });
+  const result = runGate(coveredAudit(), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /expiry is invalid/);
+});
+
+test('fails closed on a malformed decision review date', () => {
+  const fx = fixture({ findings: [unreachableRow('GHSA-w3rx-r6r6-pgpr', { reviewDate: 'not-a-review-date' })] });
+  const result = runGate(coveredAudit(), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /review date is invalid/);
+});
+
+test('fails closed on a malformed exception approval timestamp', () => {
+  const fx = fixture({ findings: [unreachableRow('GHSA-w3rx-r6r6-pgpr', {
+    disposition: 'exception', expiresAt: '2099-01-01T00:00:00.000Z',
+    approval: { owner: 'Fixture Owner', approvedBy: 'Named Reviewer', approvedAt: 'not-an-approval-date' },
+  })] });
+  const result = runGate(coveredAudit(), fx);
+  assert.equal(result.status, 1); assert.match(result.stderr, /approval timestamp is invalid/);
 });
 
 test('fails closed when the ledger seal does not match the lockfile', () => {
@@ -274,6 +393,85 @@ test('reseal rebinds an unchanged finding set and the gate passes again', () => 
 });
 
 // ─── Integration: real repo state (DELIBERATELY repo-coupled) ───────────────
+
+test('security patch: a mapped IPv6 subnet cannot trust every IPv4 client', () => {
+  const proxyaddr = require('proxy-addr');
+  assert.equal(proxyaddr.compile('::ffff:10.0.0.0/8')('203.0.113.8', 0), false);
+  assert.equal(proxyaddr.compile('::ffff:10.0.0.0/104')('10.2.3.4', 0), true);
+  assert.equal(proxyaddr.compile('::ffff:10.0.0.0/104')('203.0.113.8', 0), false);
+});
+
+test('security patch: shell quoting rejects line terminators after a comment', () => {
+  const shellQuote = require('shell-quote');
+  for (const terminator of ['\n', '\r', '\u2028', '\u2029']) {
+    assert.throws(() => shellQuote.quote(['echo', 'ok', { comment: 'context' }, `value${terminator}extra`]), TypeError);
+  }
+  assert.deepEqual(shellQuote.parse(shellQuote.quote(['ordinary value', 'line\nbreak'])), ['ordinary value', 'line\nbreak']);
+});
+
+test('security patch: an extreme indexed source-map offset is rejected in a bounded child', () => {
+  // The vulnerable implementation spins for the attacker-chosen line offset.
+  // Isolate it behind a hard timeout so a regression cannot hang the runner.
+  const result = spawnSync(process.execPath, ['-e', `
+    const assert = require('node:assert/strict');
+    const { SourceMapConsumer, SourceNode } = require('source-map-js');
+    assert.throws(() => new SourceMapConsumer({ version: 3, sections: [{
+      offset: { line: 1000000000000, column: 0 },
+      map: { version: 3, sources: ['input.js'], names: [], mappings: 'AAAA' }
+    }] }), /Section offset line must not exceed/);
+    const consumer = new SourceMapConsumer({ version: 3, sections: [{
+      offset: { line: 0, column: 0 },
+      map: { version: 3, sources: ['input.js'], sourcesContent: ['value'], names: [], mappings: 'AAAA' }
+    }] });
+    assert.equal(SourceNode.fromStringWithSourceMap('value', consumer).toString(), 'value');
+  `], { cwd: repoRoot.pathname, encoding: 'utf8', timeout: 3000 });
+  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('security patch: an aborted compressed response destroys its zlib stream', () => {
+  // Real HTTP close and real zlib stream: observes resource cleanup rather
+  // than merely asserting that the package version number increased.
+  const result = spawnSync(process.execPath, ['-e', `
+    const assert = require('node:assert/strict');
+    const http = require('node:http');
+    const zlib = require('node:zlib');
+    const original = zlib.createGzip;
+    let stream;
+    Object.defineProperty(zlib, 'createGzip', { configurable: true, value(...args) {
+      stream = original(...args); return stream;
+    }});
+    const compression = require('compression')({ threshold: 0 });
+    const server = http.createServer((req, res) => compression(req, res, () => {
+      res.setHeader('Content-Type', 'text/plain');
+      res.write('streamed content '.repeat(2000)); res.flush();
+    }));
+    (async () => {
+      await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+      try {
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error('aborted response left its zlib stream open')), 1500);
+          const req = http.get({ hostname: '127.0.0.1', port: server.address().port,
+            headers: { 'Accept-Encoding': 'gzip' } }, res => {
+            res.once('data', () => {
+              assert.ok(stream, 'fixture created a real gzip stream');
+              stream.once('close', () => { clearTimeout(timer); resolve(); });
+              res.destroy();
+            });
+          });
+          req.on('error', error => { clearTimeout(timer); reject(error); });
+        });
+        assert.equal(stream.destroyed, true);
+      } finally {
+        if (stream) stream.destroy();
+        server.closeAllConnections();
+        await new Promise(resolve => server.close(resolve));
+      }
+    })().catch(error => { console.error(error.message); process.exitCode = 1; });
+  `], { cwd: repoRoot.pathname, encoding: 'utf8', timeout: 5000 });
+  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.status, 0, result.stderr);
+});
 
 test('integration: committed ledger seals the committed package-lock.json', () => {
   // This is the ONE test that validates repo state instead of script logic:

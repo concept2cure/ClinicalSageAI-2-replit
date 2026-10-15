@@ -1,0 +1,8 @@
+ × server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > a project of the organization is recorded on the filing 7ms
+ × server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > another organization's project is refused NOT_FOUND — no row, no audit entry 2ms
+ × server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > an id naming no project is refused NOT_FOUND — no row, no audit entry 1ms
+ × server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > a project lookup that cannot complete writes nothing and is not a "not found" 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts > createEstarSubmission — the filing’s project > a filing tracked with no project yet looks nothing up and is recorded unattached 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)

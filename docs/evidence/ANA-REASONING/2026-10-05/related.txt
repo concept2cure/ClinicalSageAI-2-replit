@@ -1,0 +1,12 @@
+Every suite of the modules rounds 1-3 touch, on the round-3 tree (trunk 962f15f7f plus this change).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <the round-2 related set, plus tests/services/proposal-check.test.ts>
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 433 passed | 1 skipped (435)
+      Tests  15 failed | 6013 passed | 3 skipped (6031)
+
+The one failing file, server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts (15 tests), needs a CONNECTOR_ENCRYPTION_KEY this container does not set. It fails the same way, 15 of 15, on an export of trunk 962f15f7f (git archive), before this change:
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  15 failed (15)
+   → handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false 

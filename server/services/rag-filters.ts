@@ -21,6 +21,14 @@ export interface QueryFilters {
   dateRange?: { start: Date; end: Date };
   /** No corpus has a column for this — accepted on the type, never applied. */
   domain?: string;
+  /**
+   * One program's documents only: the open project (PF-10 S7). A scope, not a
+   * hint: a corpus without a program column refuses it rather than searching
+   * wider. Never extracted from the query; only a caller sets it.
+   */
+  programId?: string;
+  /** Server-admitted actor scope. Empty means no allowed programme. */
+  allowedProgramIds?: readonly string[];
 }
 
 /** The columns a corpus exposes for filtering (null when the corpus lacks one). */
@@ -28,6 +36,7 @@ export interface DocFilterColumns {
   documentType: string | null;
   source: string | null;
   date: string | null;
+  program: string | null;
 }
 
 /**
@@ -41,10 +50,19 @@ export interface DocFilterColumns {
 export function buildDocFilterClause(
   filters: QueryFilters | undefined,
   params: unknown[],
-  cols: DocFilterColumns
+  cols: DocFilterColumns,
+  /** Server-only restriction, verified by the caller; never extracted from a query. */
+  programIds?: readonly string[]
 ): string {
-  if (!filters) return '';
   let clause = '';
+  if (programIds !== undefined) {
+    if (!cols.program || !Array.isArray(programIds)) {
+      throw new Error('This corpus cannot honor the verified project scope. Nothing was searched.');
+    }
+    params.push(programIds);
+    clause += `\n          AND ${cols.program} = ANY($${params.length}::uuid[])`;
+  }
+  if (!filters) return clause;
   if (filters.atomType && cols.documentType) {
     params.push(filters.atomType);
     clause += `\n          AND ${cols.documentType} ILIKE $${params.length}`;
@@ -52,6 +70,20 @@ export function buildDocFilterClause(
   if (filters.source && cols.source) {
     params.push(filters.source);
     clause += `\n          AND ${cols.source} ILIKE $${params.length}`;
+  }
+  if (filters.programId != null) {
+    if (!cols.program) {
+      throw new Error('This corpus has no program column, so a search scoped to one project cannot be honoured. Nothing was searched.');
+    }
+    params.push(filters.programId);
+    clause += `\n          AND ${cols.program} = $${params.length}::uuid`;
+  }
+  if (filters.allowedProgramIds !== undefined) {
+    if (!cols.program) {
+      throw new Error('This corpus has no program column, so an actor programme scope cannot be honoured. Nothing was searched.');
+    }
+    params.push([...filters.allowedProgramIds]);
+    clause += `\n          AND ${cols.program} = ANY($${params.length}::uuid[])`;
   }
   if (filters.dateRange && cols.date) {
     params.push(filters.dateRange.start);
@@ -67,11 +99,13 @@ export const VAULT_FILTER_COLUMNS: DocFilterColumns = {
   documentType: 'd.document_type',
   source: null,
   date: 'd.created_at',
+  program: 'd.program_id',
 };
 export const RAG_FILTER_COLUMNS: DocFilterColumns = {
   documentType: 'd.document_type',
   source: 'd.source',
   date: 'd.document_date',
+  program: null,
 };
 
 /**
@@ -86,6 +120,7 @@ export function mergeFilters(
   if (!extracted && !explicit) return undefined;
   const merged: QueryFilters = { ...extracted, ...explicit };
   const hasAny =
-    merged.atomType != null || merged.source != null || merged.dateRange != null || merged.domain != null;
+    merged.atomType != null || merged.source != null || merged.dateRange != null || merged.domain != null ||
+    merged.programId != null || merged.allowedProgramIds !== undefined;
   return hasAny ? merged : undefined;
 }

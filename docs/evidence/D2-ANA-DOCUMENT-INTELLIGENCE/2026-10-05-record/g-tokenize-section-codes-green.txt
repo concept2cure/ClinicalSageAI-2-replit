@@ -1,0 +1,264 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+{
+  "timestamp": "2026-10-05T03:53:55.095Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:53:55.096Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+{
+  "timestamp": "2026-10-05T03:53:55.096Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-selection-routing.test.ts
+{
+  "timestamp": "2026-10-05T03:53:55.112Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:53:55.116Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+{
+  "timestamp": "2026-10-05T03:53:55.116Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the always-on bridge + core are always offered 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the surface is genuinely over the cap (filtering actually engages) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_fda_form'" for: "'prepare FDA form 1571 as an editable …'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'amend_fda_form'" for: "'amend this FDA form with a reason for…'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_forms'" for: "'list all FDA forms available in the c…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_effort_certification'" for: "'open a time and effort certification …'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_coi_disclosure'" for: "'file a foreign appointment conflict o…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'search_grants_gov'" for: "'search grants.gov for posted cancer f…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'screen_restricted_party'" for: "'screen this vendor against the SAM.go…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'research_compliance_briefing'" for: "'what needs my attention across resear…'" 10ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'open_grant_closeout'" for: "'open the grant closeout and track the…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'request_no_cost_extension'" for: "'request a no cost extension to extend…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_grant_budget'" for: "'reconcile the budget versus actual ex…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_expenditure'" for: "'record an actual expenditure booked a…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_subaward'" for: "'record a subaward to a subrecipient u…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'register_controlled_substance'" for: "'register a schedule II controlled sub…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps dotted section codes and annex keys (it used to return only ["see"]) 10ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps eSTAR CH tokens whole, without a stray "05.06" fragment 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a code at the end of a sentence or in brackets without the punctuation 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a CTD Module 3 code with a letter segment whole, never a "3.2" fragment 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > emits no fragment from a code followed by a dot and a word 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > never emits the region acronyms eu, us or jp 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > is additive: the word tokens it produced before are unchanged 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > "2.5" reaches a tool describing 2.5, and never one describing only 12.5 or 2.5.1 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the description (+2) outranks one matching word (+1) 9ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the name (+3) outranks a code in the description (+2) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a CTD Module 3 code does not reach a tool described only by "21 CFR 3.2(e)" 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > an annex key does not match inside a longer one ("ii.6.1" is not "iii.6.1") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a single-number annex key is a code token too ("ii.6" is not inside "iii.6.1" or "ii.61") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "draft 3.2.P.5.1" offers none of the 21 CFR 3.2(e) tools 7ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "what goes in 3.2.S.4.1 specification for the drug substance" offers none of the 21 CFR 3.2(e) tools 15ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > every expected tool is in the launch-scoped pool (so the cases cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'fulfill_regulatory_commitment'" for: "'mark this PMR regulatory commitment f…'" 16ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_ha_interaction'" for: "'is this FDA formal meeting interactio…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_cost_share_contribution'" for: "'record an institutional cost share co…'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_training_gate'" for: "'review the training gate, is the PI c…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_opportunity'" for: "'record this grants.gov funding opport…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'assess_study_onboarding'" for: "'what approvals and training do we nee…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_award_closeout'" for: "'can we close out this grant award yet…'" 13ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_meeting_package'" for: "'are we ready for the FDA meeting, do …'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'triage_compliance_attention'" for: "'triage the critical compliance attent…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what has to go in section 12.2 advers…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what should the summary of clinical e…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'we just locked the database, what hap…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'what is blocking the clinical overvie…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'will our dossier pass FDA technical v…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'why would the FDA gateway reject our …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > each record tool is in the launch-scoped pool (so the cases below cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the ISS'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should I write the clinical overv…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what does FDA want in 2.7.4'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how do I structure a CSR'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'help me write the quality overall sum…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should the investigator brochure …'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'review my clinical overview'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'list_fda_technical_rules'" for: "'will my submission be rejected'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'plan_submission_from_database_lock'" for: "'what do I do after database lock'" 2ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > normalises titles and keeps the declared order and statuses 2ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses no steps 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an empty list 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses a step with no title 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an unknown status 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses duplicate titles 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses more than the cap 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > clips an over-long title rather than overflowing the panel 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > the handler reports the plan as recorded, with no completion it was not given 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits for a successful update_plan call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for another tool 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a failed call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a cancelled call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a result that is not ok 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for an unparseable result 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > survives relevance trimming 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > names drafting and project search by what they act on 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > labels the step by its size, not as a raw tool name 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > counts unresolved uploads and keeps the content/name distinction 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > a failed memory read is unavailable, never "none" 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > lists the memory items the assembler rendered, and drops what the budget cut 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores the last validated plan on the assistant metadata 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores nothing for a turn that declared no plan 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > reads the refusal a handler returned instead of throwing 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > is null for a result that did not refuse 0ms
+stdout | server/services/ana/__tests__/tool-selection.test.ts
+{
+  "timestamp": "2026-10-05T03:53:57.791Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:53:57.792Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection.test.ts
+{
+  "timestamp": "2026-10-05T03:53:57.797Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/tool-selection.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/tool-selection.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/tool-selection.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the platform command bridge — nothing is ever out of reach 6ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the core search/guidance/authoring tools 13ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > surfaces the nonclinical tools for a nonclinical turn 5ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > surfaces clin-pharm tools for a DDI / QTc turn, and respects the cap 5ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > returns the full surface unchanged below the cap 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > returns only the always-on set when the query carries no intent signal 9ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > passes everything through when disabled via env 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the user-pinned tools from the picker 2ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > selects by context (document type) even when the message is terse 3ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > getToolCatalog > groups the surface into categories for the picker 4ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > getToolCatalog > routes representative tools to sensible categories 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > keeps a healthy relevant tool over an unhealthy one when over the cap 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > without deprioritization, ranks purely by relevance (stable order) 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > never drops an always-on tool even if marked unhealthy (capability guarantee) 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > generate_document — no from-scratch regulatory artefacts > no longer offers ectd_backbone or icsr as document types 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > names the tools a round ran when the model wrote no text before calling them 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > treats whitespace-only narration as no narration 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > names a tool once however many times the round called it 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > is still non-empty when there is neither text nor a result to name 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > assistantTurnContent — the transcript the next round reads > passes real narration through unchanged — it is what the model said 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > continues past maxRounds once the floor rises mid-turn 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > never lowers maxRounds — a floor below it changes nothing 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > runAgenticToolLoop — maxRoundsFloor > without a floor the ceiling holds exactly as before 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > the surface is over the cap, so filtering is really engaged 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > names exactly the six tools that move and operate a screen 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "go to biostatistics" 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "open settings" 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "show me around the product" 5ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "search the vault for stability" 5ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "switch to the billing tab" 11ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins SELF_DRIVE_TOOLS is offered all six for "run the sales demo" 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > pinned, they survive when the turn carries project context (IND) 4ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > none of them is always-on — voice and deep investigations cannot drive 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > a caller that pins nothing is not handed them for a turn with no screen in it 3ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > selectToolsForTurn — AnA has her hands where a move can be made > both routes that can surface a move pin them 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > navigate_to refuses a locked target with no directive to apply 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > list_app_screens does not offer a locked screen 16ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > act_on_screen refuses an action whose screen is locked 24ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > self-drive handlers — screens closed to this workspace > the demonstration tools drop scripts that would walk onto a locked screen 12ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > with no program open and none named, asks which — listing this org's programs 8ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > opens the named program — by code — on the directive 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > refuses to guess between several matches 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > says so when nothing matches, with the programs that do exist 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > never resolves another organisation's program 1ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > a global screen needs no program 0ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > turnState — "open BX-301, then take me to its Vault" > act_on_screen projects.open-program sets the turn's program, and navigate_to follows it 2ms
+ ✓ server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — screenActions on arrival > lists the destination's registry actions so the next move needs no discovery round 1ms
+
+ Test Files  5 passed (5)
+      Tests  146 passed (146)
+   Start at  03:53:50
+   Duration  9.70s (transform 12.66s, setup 359ms, import 21.01s, tests 568ms, environment 0ms)
+

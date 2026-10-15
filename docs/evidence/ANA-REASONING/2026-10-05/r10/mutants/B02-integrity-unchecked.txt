@@ -1,0 +1,14 @@
+Mutant B02-integrity-unchecked: a record that does not verify is read as one that does not hold the words
+
+--- server/services/authoring/machine-claim-verify.ts
+- if (!rec.intact) {
+      refuse('record_not_intact');
++ if (false) {
+      refuse('record_not_intact');
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: a record that does not verify vouches for nothing, even for its own words 61ms
+      Tests  1 failed | 19 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

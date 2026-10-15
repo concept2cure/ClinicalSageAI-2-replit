@@ -1,0 +1,354 @@
+{
+  "surface": "submission-center",
+  "url": "/concept2cure/submission-center",
+  "tabbableCount": 38,
+  "skipLink": "Skip to content",
+  "stops": [
+    {
+      "index": 0,
+      "tag": "a",
+      "role": null,
+      "name": "Skip to content",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 1,
+      "tag": "button",
+      "role": null,
+      "name": "Document workspace",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 2,
+      "tag": "button",
+      "role": null,
+      "name": "Medical Device & IVD",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 3,
+      "tag": "button",
+      "role": null,
+      "name": "Biotech & Pharma",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 4,
+      "tag": "button",
+      "role": null,
+      "name": "Diagnostics",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 5,
+      "tag": "button",
+      "role": null,
+      "name": "CRO / Research",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 6,
+      "tag": "button",
+      "role": null,
+      "name": "Health Systems",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 7,
+      "tag": "button",
+      "role": null,
+      "name": "Project management",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 8,
+      "tag": "button",
+      "role": null,
+      "name": "Vault",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 9,
+      "tag": "button",
+      "role": null,
+      "name": "Submission Center",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 10,
+      "tag": "button",
+      "role": null,
+      "name": "Tasking",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 11,
+      "tag": "button",
+      "role": null,
+      "name": "Reporting & analytics",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 12,
+      "tag": "button",
+      "role": null,
+      "name": "CMC / Module 3",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 13,
+      "tag": "button",
+      "role": null,
+      "name": "Risk-based monitoring",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 14,
+      "tag": "button",
+      "role": null,
+      "name": "AnA Command",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 15,
+      "tag": "button",
+      "role": null,
+      "name": "AnA memory",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 16,
+      "tag": "button",
+      "role": null,
+      "name": "Apps catalog",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 17,
+      "tag": "button",
+      "role": null,
+      "name": "Artifacts Center",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 18,
+      "tag": "button",
+      "role": null,
+      "name": "Conversation",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 19,
+      "tag": "button",
+      "role": null,
+      "name": "Recent Documents",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 20,
+      "tag": "button",
+      "role": null,
+      "name": "My Tasks",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 21,
+      "tag": "button",
+      "role": null,
+      "name": "Expand",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 22,
+      "tag": "button",
+      "role": null,
+      "name": "JM Smith",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 23,
+      "tag": "button",
+      "role": null,
+      "name": "Switch client domain",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 24,
+      "tag": "button",
+      "role": null,
+      "name": "Search, jump, or run a command",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 25,
+      "tag": "button",
+      "role": null,
+      "name": "New task — assign & track from this screen",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 26,
+      "tag": "button",
+      "role": null,
+      "name": "Collaborate",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 27,
+      "tag": "button",
+      "role": null,
+      "name": "Your work",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 28,
+      "tag": "button",
+      "role": null,
+      "name": "Get help",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 29,
+      "tag": "button",
+      "role": "tab",
+      "name": "Submissions",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 30,
+      "tag": "button",
+      "role": "tab",
+      "name": "Planner",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 31,
+      "tag": "button",
+      "role": "tab",
+      "name": "Builder",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 32,
+      "tag": "button",
+      "role": "tab",
+      "name": "Sequences",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 33,
+      "tag": "button",
+      "role": "tab",
+      "name": "Validation",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 34,
+      "tag": "button",
+      "role": "tab",
+      "name": "Shadow review",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 35,
+      "tag": "button",
+      "role": "tab",
+      "name": "Cross-region",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 36,
+      "tag": "button",
+      "role": "tab",
+      "name": "Dispatch",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    },
+    {
+      "index": 37,
+      "tag": "button",
+      "role": null,
+      "name": "Open AnA · ⌘\\",
+      "visible": true,
+      "underAriaHidden": false,
+      "indicatorVisible": true
+    }
+  ],
+  "focusMoved": true,
+  "shortCycle": null,
+  "shiftTabReturns": true,
+  "skipLinkReachesContent": true
+}

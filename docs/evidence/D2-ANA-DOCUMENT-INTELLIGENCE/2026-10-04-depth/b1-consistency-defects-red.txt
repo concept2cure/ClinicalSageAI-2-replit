@@ -1,0 +1,93 @@
+=== per-test results (verbose reporter) ===
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (a) two-number facts keep their sign and both bounds > a CI keeps the signed lower bound and the upper bound, and has no unit 10ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (a) two-number facts keep their sign and both bounds > normalises a Unicode minus so the bound parses as a number 3ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (a) two-number facts keep their sign and both bounds > an age range keeps both ends 3ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (a) two-number facts keep their sign and both bounds > ages 18 to 65 and ages 18 to 75 in one document are a candidate 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (a) two-number facts keep their sign and both bounds > a CI that crosses zero diverges from one that excludes it, across documents 2ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (a) two-number facts keep their sign and both bounds > a different upper bound diverges too 2ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (a) a label stated more than once is not decided on its first occurrence > the same two arms listed in a different order are not a divergence 3ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (a) a label stated more than once is not decided on its first occurrence > disjoint value sets are flagged at medium, saying the values could not be paired 2ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (b) check_numerical_integrity takes its likely verdict from the canonical rule > a correct two-arm N is a review candidate, not a likely inconsistency, and never RTF 5564ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (b) check_numerical_integrity takes its likely verdict from the canonical rule > two dose cohorts are a review candidate, not a likely inconsistency 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (b) check_numerical_integrity takes its likely verdict from the canonical rule > the same document-level sample size stated twice is still a likely inconsistency 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (b) check_numerical_integrity takes its likely verdict from the canonical rule > the engine itself no longer issues a likely verdict from a severity label 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > the engine marks each early return notCompared 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > project_id 0 answers with an error and no verdict 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > a 99-character draft answers with an error and no verdict 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > a draft with no labelled figures answers with an error and no verdict 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > reports truncated when more artifacts exist than were compared 1ms
+ ✓ server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > is not truncated when every artifact fit under the cap 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > the tool says when its 25-document cap cut the comparison short 1ms
+
+=== tail -60 of default reporter ===
+- Expected:
+"no_draft_facts"
+
++ Received:
+undefined
+
+ ❯ server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts:209:29
+    207|   it('a draft with no labelled figures answers with an error and no ve…
+    208|     const out = await runTool({ draft_content: 'x'.repeat(150), projec…
+    209|     expect(out.notCompared).toBe('no_draft_facts');
+       |                             ^
+    210|     expect(out).not.toHaveProperty('verdict');
+    211|   }, 30_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+ FAIL  server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > reports truncated when more artifacts exist than were compared
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts:217:30
+    215|     const report = await checkDossierConsistency({ projectId: 12, orga…
+    216|     expect(report.artifactsCompared).toBe(2);
+    217|     expect(report.truncated).toBe(true);
+       |                              ^
+    218|   });
+    219|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/18]⎯
+
+ FAIL  server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts > (c) check_dossier_consistency does not call "nothing compared" clean > the tool says when its 25-document cap cut the comparison short
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/intelligence/__tests__/cross-artifact-consistency-honesty.test.ts:231:27
+    229|     const out = await runTool({ draft_content: DRAFT, project_id: 12 }…
+    230|     expect(out.artifactsCompared).toBe(25);
+    231|     expect(out.truncated).toBe(true);
+       |                           ^
+    232|     expect(out.recommendation).toMatch(/^Only 25 of this project's doc…
+    233|   }, 30_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed | 1 passed (19)
+   Start at  20:35:24
+   Duration  7.25s (transform 4.55s, setup 92ms, import 1.45s, tests 5.39s, environment 0ms)
+
+
+=== second red pass: two tests added after the first fix pass ===
+Run with only the two corresponding code lines reverted to their original form
+(the zero-max spread shortcut in the clustering check; the zero-row
+recommendation). On the original code the zero-row text read "No consistency
+issues detected against the existing dossier."
+ × (a) two-number facts keep their sign and both bounds > a lower bound of 0 does not hide a negative one in the same document
+ × (c) check_dossier_consistency does not call "nothing compared" clean > zero other documents is not described as "no consistency issues"
+Expected: "No other documents in this project were found, so nothing was compared."
+Received: "No consistency issues detected against the documents compared."
+      Tests  2 failed | 19 skipped (21)

@@ -1,0 +1,124 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/orchestration/__tests__/task-completion-percent.test.ts
+{
+  "timestamp": "2026-10-01T13:39:50.859Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:39:50.860Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/task-completion-percent.test.ts
+{
+  "timestamp": "2026-10-01T13:39:50.861Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/orchestration/__tests__/task-completion-percent.test.ts
+[database] Database connection successful
+
+ × server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is done over total, rounded 9ms
+   → expected 100 to be 40 // Object.is equality
+ × server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is 0, not 100, when nothing is done and nothing is blocked (the old ratio read 100) 1ms
+   → expected 100 to be +0 // Object.is equality
+ × server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is no figure when there is nothing to complete (the old code read 100) 1ms
+   → expected 100 to be null
+ × server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is no figure when a task store went unread — the counts are a floor 1ms
+   → expected 100 to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is done over total, rounded
+AssertionError: expected 100 to be 40 // Object.is equality
+
+- Expected
++ Received
+
+- 40
++ 100
+
+ ❯ server/services/orchestration/__tests__/task-completion-percent.test.ts:14:94
+     12| describe('taskCompletionPercent', () => {
+     13|   it('is done over total, rounded', () => {
+     14|     expect(taskCompletionPercent({ totalTasks: 5, doneTasks: 2, taskCo…
+       |                                                                                              ^
+     15|     expect(taskCompletionPercent({ totalTasks: 3, doneTasks: 3, taskCo…
+     16|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is 0, not 100, when nothing is done and nothing is blocked (the old ratio read 100)
+AssertionError: expected 100 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 100
+
+ ❯ server/services/orchestration/__tests__/task-completion-percent.test.ts:19:94
+     17|
+     18|   it('is 0, not 100, when nothing is done and nothing is blocked (the …
+     19|     expect(taskCompletionPercent({ totalTasks: 4, doneTasks: 0, taskCo…
+       |                                                                                              ^
+     20|   });
+     21|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is no figure when there is nothing to complete (the old code read 100)
+AssertionError: expected 100 to be null
+
+- Expected:
+null
+
++ Received:
+100
+
+ ❯ server/services/orchestration/__tests__/task-completion-percent.test.ts:23:94
+     21|
+     22|   it('is no figure when there is nothing to complete (the old code rea…
+     23|     expect(taskCompletionPercent({ totalTasks: 0, doneTasks: 0, taskCo…
+       |                                                                                              ^
+     24|   });
+     25|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is no figure when a task store went unread — the counts are a floor
+AssertionError: expected 100 to be null
+
+- Expected:
+null
+
++ Received:
+100
+
+ ❯ server/services/orchestration/__tests__/task-completion-percent.test.ts:27:93
+     25|
+     26|   it('is no figure when a task store went unread — the counts are a fl…
+     27|     expect(taskCompletionPercent({ totalTasks: 5, doneTasks: 5, taskCo…
+       |                                                                                             ^
+     28|   });
+     29| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  13:39:48
+   Duration  2.83s (transform 1.27s, setup 120ms, import 2.29s, tests 17ms, environment 0ms)
+

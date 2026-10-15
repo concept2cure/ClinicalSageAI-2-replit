@@ -1,0 +1,14 @@
+ok   a complete stack passes
+ok   SMTP_HOST absent
+ok   a bare ${ANTHROPIC_API_KEY}
+ok   an empty default
+ok   RLS_ENFORCE defaulting to off
+ok   hmac signer nobody accepted
+ok   s3 vault with no bucket
+ok   no ALLOWED_ORIGINS
+FAIL the connector turned on with no allowlist
+     expected ["MCP_CLIENT_REDIRECT_ALLOWLIST is not passed"], got []
+ok   the connector turned on with an allowlist
+ok   list-form environment is read
+ok   an excusal the preflight no longer needs is reported
+[ci:compose-boot-contract] self-test: 1 case(s) failed

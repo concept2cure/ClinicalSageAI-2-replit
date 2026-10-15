@@ -1,0 +1,96 @@
+R2C MUTANT 27: the label gets the alt attribute as written, not collapsed and trimmed
+file: server/services/ectd/leaf-pdf-renderer.ts
+sha256 before: 7577a3c2e518dd0d018c0eb5240669083e097a7adad752248d0c4d1929d9b482
+sha256 after restore: 7577a3c2e518dd0d018c0eb5240669083e097a7adad752248d0c4d1929d9b482
+--- mutation (diff vs the fix) ---
+--- <scratch>/fixes2/figure-writers/r2c/mutant-tmp-leaf-pdf-renderer.ts	2026-09-28 23:53:55.208971820 +0000
++++ ./server/services/ectd/leaf-pdf-renderer.ts	2026-09-28 23:53:55.209446889 +0000
+@@ -354,7 +354,7 @@
+       // that is the tail of its base64 payload, or the whole payload when the
+       // payload holds no "/" (periodic review 2026-09-28, editor family).
+       const alt = collapseInline(node.getAttribute('alt') ?? '').trim();
+-      return '\n[Figure: ' + unfiledFigureLabel({ src: node.getAttribute('src') ?? '', alt }) + ']\n';
++      return '\n[Figure: ' + unfiledFigureLabel({ src: node.getAttribute('src') ?? '', alt: node.getAttribute('alt') ?? '' }) + ']\n';
+     }
+ 
+     case 'pre':
+
+--- test run ---
+
+ RUN  v4.1.7 ./
+
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — table cell boundaries > delimits adjacent cells instead of concatenating them 7ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — table cell boundaries > does not leave a dangling separator at the end of a row 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — table cell boundaries > leaves non-table content unchanged 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText > reduces HTML to readable text with block boundaries 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a superscript is not silently dropped > keeps the magnitude: 10^6, not 106 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a superscript is not silently dropped > keeps an exponent in a unit 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a superscript is not silently dropped > leaves subscript inline, which is the conventional written form 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > does not fuse a proposed replacement into one garbled value 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > does not accept a proposed DELETION into the filed leaf 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > does not accept a proposed INSERTION either 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > handles the attributed marks the editor actually writes 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > leaves settled prose completely alone 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > transliterates Greek letters instead of deleting them 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > leaves no Greek letter unaccounted for — the fallback marks, never removes 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > keeps exponents as exponents 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > uses one exponent notation throughout, including the Latin-1 superscripts 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > renders subscripts as ordinary digits in chemical formulae 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > preserves the CP1252 punctuation the encoder can actually draw 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > still substitutes operators outside the code page rather than dropping them 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > leaves WinAnsi characters clinical text depends on untouched 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — the retained characters are drawable > renders CP1252 punctuation and transliterated statistics without throwing 44ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — the retained characters are drawable > draws the redline brackets and the caret this renderer now emits 4ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — the retained characters are drawable > is total over arbitrary Unicode — unmappable input degrades, never crashes 3ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > never drops a figure silently 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > keeps ordered-list numbering, including an explicit start 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > keeps list nesting depth distinguishable 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > separates definition terms from their definitions 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > decodes the named and numeric entities a document actually contains 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > preserves indentation inside <pre> 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > does not leak stylesheet or script bodies into the document 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > keeps a row intact when a cell contains a block element or a nested table 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > keeps the shared inline marks the DOCX pipeline also emits 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > is total over malformed markup and empty input 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > is deterministic — the leaf checksum contract depends on it 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > inline PNG data whose payload holds a "/" 2ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > inline PNG data whose payload holds no "/" 2ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > inline WebP data 2ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > an external address 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > a path outside the image store 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > names a governed upload by its reference, as the export names one it could not file 0ms
+ × server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > names the figure by its alt text when it has one; alt text of spaces is none 8ms
+   → expected '[Figure: Kaplan-Meier curve ]' to be '[Figure: Kaplan-Meier curve]' // Object.is equality
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > says a figure with no src and no alt text is an unresolved reference 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — list nesting reaches the page > draws each nesting level further from the margin than the one above it 194ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > produces a valid PDF (correct header, loadable, ≥1 page) 8ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > adds a document-level bookmark (/Outlines) for navigation per FDA eCTD guidance 4ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > is deterministic — identical input yields byte-identical output 9ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > paginates long content across multiple pages 65ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > renders empty content as a valid one-page PDF (no crash) 2ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 47 passed (48)
+   Start at  23:53:56
+   Duration  1.79s (transform 287ms, setup 124ms, import 1.13s, tests 372ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by its src > names the figure by its alt text when it has one; alt text of spaces is none
+AssertionError: expected '[Figure: Kaplan-Meier curve ]' to be '[Figure: Kaplan-Meier curve]' // Object.is equality
+
+Expected: "[Figure: Kaplan-Meier curve]"
+Received: "[Figure: Kaplan-Meier curve ]"
+
+ ❯ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts:392:79
+    390|   it('names the figure by its alt text when it has one; alt text of sp…
+    391|     const src = `data:image/png;base64,${PAYLOAD_WITH_SLASH}`;
+    392|     expect(htmlToPlainText(`<img src="${src}" alt=" Kaplan-Meier  curv…
+       |                                                                               ^
+    393|     expect(htmlToPlainText(`<img src="${src}" alt="   ">`)).toBe('[Fig…
+    394|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -1,0 +1,15 @@
+# RED — the P-23 void against the real immutability trigger, before the amendment (577a008f7, 2026-10-15T07:21:58Z)
+
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the revocation statement from signature-persistence.ts succeeds (supersession + the verification column group in one statement)
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a superseded row can never be modified again
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the verification column group cannot change outside a supersession
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a supersession cannot restore validity or give the superseded signature a status other than revoked
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the attested columns never change, even in the supersession statement
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a plain supersession (pointer only) still passes, and DELETE is refused
+ × server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > the void statement from signature-persistence.ts lands on the row: out of force, no successor, attested columns untouched
+   → IMMUTABILITY_VIOLATION: electronic_signatures rows are append-only (§11.70); only the write-once superseded_by transition is permitted. Insert a correcting signature instead of modifying row 14.
+ × server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > a voided row can never be modified again: not re-validated, not superseded, not touched
+   → IMMUTABILITY_VIOLATION: electronic_signatures rows are append-only (§11.70); only the write-once superseded_by transition is permitted. Insert a correcting signature instead of modifying row 15.
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > a void sets the verification column group and nothing else, and never leaves the row valid
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)

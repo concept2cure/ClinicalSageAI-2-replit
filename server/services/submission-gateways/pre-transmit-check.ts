@@ -9,18 +9,21 @@
  *   1. Gateway size limit — HARD, always. A package over the region gateway's
  *      ceiling cannot be transmitted via the gateway (FDA Form 5640 v2.0: ESG
  *      for ≤10 GB, physical media above). This is a fact about the channel, not
- *      a policy toggle, so it always blocks.
+ *      a policy toggle, so it always blocks — where the figure has a source.
+ *      JP is exempt (a warning) until a PMDA size source is filed: its 1 GB
+ *      figure is unsourced (see SIZE_LIMIT_UNSOURCED).
  *   2. PDF/A submission grade — blocks in production when ECTD_REQUIRE_PDFA and
  *      the bundle shows unconverted PDF leaves.
  *   3. DTD self-containment — blocks in production when ECTD_REQUIRE_DTD and the
  *      bundle is not DTD self-contained.
- *   4. External agency-grade validation — folds evaluateExternalValidationGate
+ *   4. External validation — folds evaluateExternalValidationGate
  *      when a report is supplied / required (ECTD_REQUIRE_EVALIDATOR).
  *
  * Flag-gated checks are report-only by default (identical to today's behavior);
  * they only block a production send when the operator has opted in. Missing
- * evidence never blocks (we warn rather than halt a legitimate send we cannot
- * disprove) — demonstrated non-compliance blocks.
+ * PDF/A or DTD evidence warns when absent. Required production external
+ * validation fails closed when no qualifying assessment is established.
+ * Advisory policy clearance never means the external assessment passed.
  *
  * PURE (no I/O): callers pass the bundle + an optional external report.
  *
@@ -33,8 +36,9 @@ import {
   evaluateExternalValidationGate,
   evalidatorRequiredFromEnv,
   type ExternalValidationReport,
+  type ExternalValidator,
 } from '../ectd/external-validator';
-import { pdfaRequiredFromEnv } from '../ectd/pdfa-readiness';
+import { pdfaRequirementFrom, pdfaRequirementWho, type PdfARequirement } from '../ectd/pdfa-requirement';
 import { dtdRequiredFromEnv } from '../ectd/dtd-bundler';
 import {
   evaluateRegionalBackboneGate,
@@ -61,6 +65,20 @@ const REGION_TO_REGULATORY: Record<Region, RegulatoryRegion> = {
   sg: 'SG',
 };
 
+/**
+ * Gateway regions whose size figure (getGatewaySizeLimit) has no regulator
+ * source. Exceeding it is reported as a warning, never as a blocker: refusing a
+ * send on a number nobody sourced is a fabricated verdict.
+ *
+ * 2026-10-05 (D2 record, step g-pmda-transmit-unverified): JP's 1 GB comes from
+ * ectd-regional-rules PMDA-003, which cites a "PMDA eCTD Submission Manual v2.0
+ * §4.2" not found on pmda.go.jp, and is itself only a warning there; this gate
+ * turned it into a hard blocker. Remove an entry only when the source is filed.
+ */
+const SIZE_LIMIT_UNSOURCED: Partial<Record<Region, string>> = {
+  pmda: 'no PMDA source for the 1 GB figure has been filed (ectd-regional-rules PMDA-003 cites a manual not found on pmda.go.jp)',
+};
+
 export interface PreTransmitCheck {
   name: string;
   passed: boolean;
@@ -71,17 +89,25 @@ export interface PreTransmitInput {
   region: Region;
   bundle: SubmissionBundle;
   environment: 'staging' | 'production';
-  /** An already-run external (agency-grade) validation report, if available. */
+  /** A supplied validation report; it does not establish its own authority. */
   externalReport?: ExternalValidationReport | null;
-  /** Whether a licensed external engine is configured (default false). */
+  /** Trusted server-selected adapter identity/classification, never inferred from the report. */
+  selectedExternalValidator?: Pick<ExternalValidator, 'name' | 'kind'>;
+  /** Configuration discovery, not proof of licence or qualified coverage (default false). */
   externalConfigured?: boolean;
   /**
-   * Fold the external agency-grade validation gate into the decision. Default
+   * Fold the external validation gate into the decision. Default
    * true (the route layer, which has run the validator + holds the report).
    * The low-level gateway guard sets this false — it cannot run/receive a
    * report, and external enforcement already lives in assess-dispatch-readiness.
    */
   enforceExternal?: boolean;
+  /**
+   * Whether PDF/A is required, and by whom (ectd/pdfa-requirement.ts). The
+   * transmit guard resolves it with the organisation's own setting; absent, it
+   * is the deployment's ECTD_REQUIRE_PDFA alone.
+   */
+  pdfa?: PdfARequirement;
   /** Env overrides (tests). */
   env?: NodeJS.ProcessEnv;
 }
@@ -161,6 +187,40 @@ function evaluateDtdSelfContainment(
 }
 
 /** Evaluate the pre-transmit preconditions for a package. Pure + deterministic. */
+function checkPdfA(
+  grade: SubmissionBundle['submissionGrade'],
+  pdfa: PdfARequirement,
+  isProd: boolean,
+): { check?: PreTransmitCheck; blocker?: string; warning?: string } {
+  // A grade is evidence only when it carries the list the check reads; `{}`
+  // used to pass as "0 not converted".
+  if (!grade || !Array.isArray(grade.notConverted)) {
+    return isProd && pdfa.required
+      ? { warning: `PDF/A is required (${pdfaRequirementWho(pdfa)}) but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.` }
+      : {};
+  }
+  const notConverted = grade.notConverted.length;
+  const asIssued = Array.isArray(grade.agencyFormsAsIssued) && grade.agencyFormsAsIssued.length > 0
+    ? `; ${grade.agencyFormsAsIssued.length} agency form(s) shipped as issued (${grade.agencyFormsAsIssued.join(', ')})`
+    : '';
+  const check: PreTransmitCheck = {
+    name: 'pdfa-submission-grade',
+    // Plain PDF fails this check only where PDF/A was chosen.
+    passed: notConverted === 0 || !pdfa.required,
+    detail:
+      `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} plain PDF` +
+      asIssued +
+      (pdfa.required ? `. PDF/A required: ${pdfaRequirementWho(pdfa)}.` : '. PDF/A not required: the agency accepts plain PDF 1.4–1.7.'),
+  };
+  if (!(isProd && pdfa.required && notConverted > 0)) return { check };
+  return {
+    check,
+    blocker:
+      `${notConverted} PDF leaf/leaves are not PDF/A (${grade.notConverted.slice(0, 3).join(', ')}${notConverted > 3 ? ', …' : ''}), ` +
+      `and ${pdfaRequirementWho(pdfa)}. The agency itself also accepts plain PDF 1.4–1.7.`,
+  };
+}
+
 export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult {
   const env = input.env ?? process.env;
   const blockers: string[] = [];
@@ -168,18 +228,26 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   const checks: PreTransmitCheck[] = [];
   const isProd = input.environment === 'production';
 
-  // 1. Size limit — hard, always.
+  // 1. Size limit — hard, always, where the figure is sourced; a warning where
+  // it is not (SIZE_LIMIT_UNSOURCED).
   const limit = getGatewaySizeLimit(REGION_TO_REGULATORY[input.region]);
   const sizeOk = input.bundle.sizeBytes <= limit;
+  const unsourced = SIZE_LIMIT_UNSOURCED[input.region];
   checks.push({
     name: 'gateway-size-limit',
     passed: sizeOk,
     detail: `${
       input.bundle.sizeBytes
-    } bytes vs ${limit} byte limit for ${input.region.toUpperCase()}`,
+    } bytes vs ${limit} byte limit for ${input.region.toUpperCase()}` +
+      (unsourced ? ` (not enforced: ${unsourced})` : ''),
   });
-  if (!sizeOk) {
-    const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
+  const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
+  if (!sizeOk && unsourced) {
+    warnings.push(
+      `Package is ${gb(input.bundle.sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ` +
+        `${input.region.toUpperCase()} gateway. Not enforced: ${unsourced}.`
+    );
+  } else if (!sizeOk) {
     blockers.push(
       `Package is ${gb(
         input.bundle.sizeBytes
@@ -190,37 +258,13 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
     );
   }
 
-  // 2. PDF/A submission grade.
-  const grade = input.bundle.submissionGrade;
-  const pdfaRequired = pdfaRequiredFromEnv(env);
-  // A grade is evidence only when it carries the list the check reads; `{}`
-  // used to pass as "0 not converted".
-  if (grade && Array.isArray(grade.notConverted)) {
-    const notConverted = grade.notConverted?.length ?? 0;
-    const pdfaOk = notConverted === 0;
-    checks.push({
-      name: 'pdfa-submission-grade',
-      passed: pdfaOk,
-      detail:
-        `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} not converted` +
-        (Array.isArray(grade.agencyFormsAsIssued) && grade.agencyFormsAsIssued.length > 0
-          ? `; ${grade.agencyFormsAsIssued.length} agency form(s) shipped as issued (${grade.agencyFormsAsIssued.join(', ')})`
-          : ''),
-    });
-    if (isProd && pdfaRequired && !pdfaOk) {
-      blockers.push(
-        `${notConverted} PDF leaf/leaves are not PDF/A (${grade.notConverted
-          .slice(0, 3)
-          .join(', ')}${
-          notConverted > 3 ? ', …' : ''
-        }); ECTD_REQUIRE_PDFA blocks this production transmit.`
-      );
-    }
-  } else if (isProd && pdfaRequired) {
-    warnings.push(
-      'ECTD_REQUIRE_PDFA is set but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.'
-    );
-  }
+  // 2. PDF/A submission grade. Required only when the deployment or the
+  // organisation chose it: every agency here accepts plain PDF 1.4–1.7 too
+  // (ectd/pdfa-requirement.ts, decided 2026-10-01).
+  const pdfaOutcome = checkPdfA(input.bundle.submissionGrade, input.pdfa ?? pdfaRequirementFrom(env, false), isProd);
+  if (pdfaOutcome.check) checks.push(pdfaOutcome.check);
+  if (pdfaOutcome.blocker) blockers.push(pdfaOutcome.blocker);
+  if (pdfaOutcome.warning) warnings.push(pdfaOutcome.warning);
 
   // 3. DTD + stylesheet self-containment.
   const dtdGate = evaluateDtdSelfContainment(
@@ -335,20 +379,29 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   blockers.push(...m3RegionalGate.blockers);
   warnings.push(...m3RegionalGate.warnings);
 
-  // 4. External agency-grade validation gate (route layer only — see enforceExternal).
+  // 4. External validation gate (route layer only — see enforceExternal).
   if (input.enforceExternal !== false) {
     const extGate = evaluateExternalValidationGate({
       report: input.externalReport ?? null,
+      selectedValidator: input.selectedExternalValidator,
       configured: input.externalConfigured ?? false,
       requireEvalidator: evalidatorRequiredFromEnv(env),
       environment: input.environment,
     });
+    const externalDetail =
+      `status=${extGate.assessmentStatus}; kind=${extGate.validatorKind}; ` +
+      `errorCountKnown=${extGate.errorCountKnown}; ` +
+      `errors=${extGate.errorCountKnown ? extGate.externalErrorCount : 'unknown'}; ` +
+      `ran=${extGate.ran}; enforced=${extGate.enforced}`;
     checks.push({
       name: 'external-evalidator',
-      passed: extGate.cleared,
-      detail: extGate.ran ? `${extGate.externalErrorCount} agency error(s)` : 'did not run',
+      passed: extGate.assessmentStatus === 'passed',
+      detail: externalDetail,
     });
     blockers.push(...extGate.blockers);
+    if (!extGate.enforced && extGate.assessmentStatus !== 'passed') {
+      warnings.push(`External validation is advisory: ${externalDetail}. No qualifying passed external assessment is established.`);
+    }
   }
 
   return { cleared: blockers.length === 0, blockers, checks, warnings };

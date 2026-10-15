@@ -27,6 +27,18 @@ vi.mock('../../../db', () => ({ db: {}, pool: {}, getPool: () => ({}) }));
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'member' }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole: async () => 'member' }));
 vi.mock('../program-link', () => ({ resolveLegacyProgram: async () => null }));
+// 2026-10-01: AnA tools that name a program now check it is the caller's
+// (tool-record-scope.ts, d8214c170) before running. The database is stubbed, so
+// the ownership read is too, true only for this test's own program and org.
+// The one program check (server/services/c2c/program-access.ts), answered by the test.
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => (async (p: string, o: number) => p === 'prog-1' && o === 7)(programId, orgId),
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => (async (p: string, o: number) => p === 'prog-1' && o === 7)(programId, orgId),
+}));
 vi.mock('../../living-file/change-router.service', () => ({ propagateRegulatoryChange: async () => undefined }));
 vi.mock('../../resolution/resolution-planner', () => ({ createResolutionPlan: async () => null }));
 
@@ -132,6 +144,8 @@ describe("AnA's governed-fact tools pass the outcome on", () => {
     h.logAction.mockResolvedValueOnce(lost);
     const res = await tool('establish_governed_fact', {
       programId: 'prog-1', entity: 'study', field: 'enrollment', valueNum: 186, unit: 'subjects',
+      // 2026-09-29: a governed value is established only with the person's stated reason.
+      reason: 'Enrollment target set in protocol v3.',
     });
     expect(res.status).toBe('established');
     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });

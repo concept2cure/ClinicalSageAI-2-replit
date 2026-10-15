@@ -1,0 +1,4 @@
+# Stopped at 18:40:48 UTC: server and stand-in processes killed by PID; port 5077 and 8797 then refused connections.
+app: 000  stand-in: 000  (000 = connection refused)
+e2e databases left in the cluster: ana_e2e_1, ana_e2e_2
+ana_runs constraints: ana_runs_organization_id_fkey, ana_runs_pkey, ana_runs_status_chk, ana_runs_user_id_fkey

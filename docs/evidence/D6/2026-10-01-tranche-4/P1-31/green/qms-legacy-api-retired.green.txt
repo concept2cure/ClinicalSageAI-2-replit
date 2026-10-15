@@ -1,0 +1,23 @@
+# working tree on HEAD 747f7c68 with the P1-31 change; 2026-10-01T03:11:01Z
+# NODE_OPTIONS=--max-old-space-size=2560 npx vitest run server/routes/__tests__/qms-legacy-api-retired.test.ts
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition 4926ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot supersede an effective document through POST /api/qms/documents/11/transition 5ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot revoke a supplier through POST /api/qms/suppliers/12/approval 4ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot disposition nonconforming product through POST /api/qms/nonconformances/13/disposition 65ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > an editor cannot either: the door is gone, not narrowed 4ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > none of its reads answer either 11ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot requalify or revoke a supplier through PATCH /api/mdx/qms/suppliers/12 4ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot disposition nonconforming product through PATCH /api/mdx/qms/nonconforming/13/disposition 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot qualify a supplier through POST /api/mdx/qms/suppliers 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot record a nonconformance through POST /api/mdx/qms/nonconforming 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot log an internal audit through POST /api/mdx/qms/internal-audits 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot close out an internal audit through PATCH /api/mdx/qms/internal-audits/14 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot sign off a management review through POST /api/mdx/qms/management-reviews 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot retire a document (already gated by 6582e3a3) through POST /api/mdx/qms/documents/11/retire 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still revokes a supplier, and the change is audited 4ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a member still dispositions nonconforming product, and the change is audited 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still routes a draft for review: the twin of transition to=in_review 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer still acknowledges training on a procedure: that is their own record, not a governed change 3ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Duration  13.73s (transform 9.13s, setup 91ms, import 8.26s, tests 5.05s, environment 0ms)

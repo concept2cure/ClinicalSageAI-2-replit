@@ -1,0 +1,363 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > does not report an SmPC with no shelf life, container or date of revision as complete 14ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > takes its headers from the QRD catalog, sections 1-10 only 3ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > keeps radiopharmaceutical sections 11 and 12 in the catalog, flagged and excluded by default 1ms
+   → cat.smpcQrdSections is not a function
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > writes top-level headings as "N. UPPER CASE" and subsections as "N.N Sentence case" 1ms
+   → cat.qrdHeader is not a function
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > accepts the QRD forms of 6.6 (optional "<and other handling>") and 9 (no spaces around the slash) 1ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > carries a basis for the headings: QRD v10.4 on an EMA URL, wording labelled recall 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > no longer promises "12 numbered SmPC sections" 1ms
+   → expected 'Generate the required section structu…' not to match /12 numbered/
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-authoring.ts holds no SmPC section title of its own 7ms
+   → expected [ '1', '2', '3', '4.1', '4.2', …(13) ] to deeply equal []
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-structure.ts holds no SmPC section title of its own 2ms
+   → expected [ '1', '2', '3', '4.1', '4.2', …(12) ] to deeply equal []
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/labeling/labeling-intelligence-knowledge.ts holds no SmPC section title of its own 2ms
+   → expected [ '1', '2', '3', '4', '4.1', …(23) ] to deeply equal []
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/market-specs/document-template-library.ts holds no SmPC section title of its own 1ms
+   → expected [ '1', '2', '3', '4', '5', '6', …(3) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > does not report an SmPC with no shelf life, container or date of revision as complete
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:52:24
+     50|   it('does not report an SmPC with no shelf life, container or date of…
+     51|     const g = checkSectionGuard('eu', TRUNK_EU_18.join('\n'));
+     52|     expect(g.complete).toBe(false);
+       |                        ^
+     53|     expect(g.missing).toContain('6.3 Shelf life');
+     54|     expect(g.missing).toContain('6.5 Nature and contents of container'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > takes its headers from the QRD catalog, sections 1-10 only
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:62:40
+     60|
+     61|   it('takes its headers from the QRD catalog, sections 1-10 only', () …
+     62|     expect(typeof cat.smpcQrdSections).toBe('function');
+       |                                        ^
+     63|     expect(typeof cat.qrdGuardHeader).toBe('function');
+     64|     const fromCatalog = cat.smpcQrdSections!().map((s) => cat.qrdGuard…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > keeps radiopharmaceutical sections 11 and 12 in the catalog, flagged and excluded by default
+TypeError: cat.smpcQrdSections is not a function
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:73:23
+     71|
+     72|   it('keeps radiopharmaceutical sections 11 and 12 in the catalog, fla…
+     73|     const radio = cat.smpcQrdSections!({ radiopharmaceutical: true });
+       |                       ^
+     74|     const s11 = radio.find((s) => s.number === '11');
+     75|     const s12 = radio.find((s) => s.number === '12');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > writes top-level headings as "N. UPPER CASE" and subsections as "N.N Sentence case"
+TypeError: cat.qrdHeader is not a function
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:84:16
+     82|   it('writes top-level headings as "N. UPPER CASE" and subsections as …
+     83|     const byNumber = (n: string) => cat.SMPC_QRD_SECTIONS.find((s) => …
+     84|     expect(cat.qrdHeader!(byNumber('6'))).toBe('6. PHARMACEUTICAL PART…
+       |                ^
+     85|     expect(cat.qrdHeader!(byNumber('6.3'))).toBe('6.3 Shelf life');
+     86|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > accepts the QRD forms of 6.6 (optional "<and other handling>") and 9 (no spaces around the slash)
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:95:34
+     93|     const g = checkSectionGuard('eu', draft);
+     94|     const item = (n: string) => g.items.find((i) => i.number === n);
+     95|     expect(item('6.6')?.present).toBe(true);
+       |                                  ^
+     96|     expect(item('9')?.present).toBe(true);
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > carries a basis for the headings: QRD v10.4 on an EMA URL, wording labelled recall
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:100:37
+     98|
+     99|   it('carries a basis for the headings: QRD v10.4 on an EMA URL, wordi…
+    100|     expect(cat.SMPC_QRD_BASIS?.ref).toMatch(/QRD.*10\.4/);
+       |                                     ^
+    101|     expect(cat.SMPC_QRD_BASIS?.url).toMatch(/^https:\/\/www\.ema\.euro…
+    102|     expect(cat.SMPC_QRD_BASIS?.confidence).toBe('recall');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > no longer promises "12 numbered SmPC sections"
+AssertionError: expected 'Generate the required section structu…' not to match /12 numbered/
+
+- Expected:
+/12 numbered/
+
++ Received:
+"Generate the required section structure for an EU Summary of Product Characteristics (SmPC) per the EMA Quality Review of Documents (QRD) template (current revision). Returns all 12 numbered SmPC sections (1. Name of the medicinal product through 12. Instructions for use) with required subsections, mandatory language blocks (e.g., black triangle statement for additional monitoring products, reporting statement for suspected adverse reactions), and procedure-specific requirements for centralized (CP), mutual recognition (MRP), decentralized (DCP), and national procedures. Identifies product-type-specific content (herbal traditional use registration, homeopathic registration), special population requirements (paediatric, elderly, renal/hepatic impairment), and cross-references to the Package Leaflet and labelling text. Cites Directive 2001/83/EC Article 11, Regulation (EC) No 726/2004, and the current EMA QRD template annotated guidance. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value."
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:108:44
+    106| describe('structure_smpc says sections 1-10, with 11 and 12 for radiop…
+    107|   it('no longer promises "12 numbered SmPC sections"', () => {
+    108|     expect(STRUCTURE_SMPC.description).not.toMatch(/12 numbered/);
+       |                                            ^
+    109|     expect(STRUCTURE_SMPC.description).toMatch(/radiopharmaceutical/i);
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-authoring.ts holds no SmPC section title of its own
+AssertionError: expected [ '1', '2', '3', '4.1', '4.2', …(13) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1",
++   "2",
++   "3",
++   "4.1",
++   "4.2",
++   "4.3",
++   "4.4",
++   "4.5",
++   "4.6",
++   "4.7",
++   "4.8",
++   "4.9",
++   "5.1",
++   "5.2",
++   "5.3",
++   "6.1",
++   "6.4",
++   "7",
++ ]
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:139:29
+    137|     it(`${f} holds no SmPC section title of its own`, () => {
+    138|       const src = readFileSync(path.join(root, f), 'utf8');
+    139|       expect(copiesIn(src)).toEqual([]);
+       |                             ^
+    140|     });
+    141|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-structure.ts holds no SmPC section title of its own
+AssertionError: expected [ '1', '2', '3', '4.1', '4.2', …(12) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1",
++   "2",
++   "3",
++   "4.1",
++   "4.2",
++   "4.3",
++   "4.4",
++   "4.6",
++   "4.7",
++   "4.8",
++   "4.9",
++   "5.1",
++   "5.2",
++   "5.3",
++   "6.1",
++   "6.4",
++   "7",
++ ]
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:139:29
+    137|     it(`${f} holds no SmPC section title of its own`, () => {
+    138|       const src = readFileSync(path.join(root, f), 'utf8');
+    139|       expect(copiesIn(src)).toEqual([]);
+       |                             ^
+    140|     });
+    141|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/labeling/labeling-intelligence-knowledge.ts holds no SmPC section title of its own
+AssertionError: expected [ '1', '2', '3', '4', '4.1', …(23) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1",
++   "2",
++   "3",
++   "4",
++   "4.1",
++   "4.2",
++   "4.3",
++   "4.4",
++   "4.5",
++   "4.6",
++   "4.7",
++   "4.8",
++   "4.9",
++   "5",
++   "5.1",
++   "5.2",
++   "5.3",
++   "6",
++   "6.1",
++   "6.2",
++   "6.3",
++   "6.4",
++   "6.5",
++   "6.6",
++   "7",
++   "8",
++   "9",
++   "10",
++ ]
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:139:29
+    137|     it(`${f} holds no SmPC section title of its own`, () => {
+    138|       const src = readFileSync(path.join(root, f), 'utf8');
+    139|       expect(copiesIn(src)).toEqual([]);
+       |                             ^
+    140|     });
+    141|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/market-specs/document-template-library.ts holds no SmPC section title of its own
+AssertionError: expected [ '1', '2', '3', '4', '5', '6', …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1",
++   "2",
++   "3",
++   "4",
++   "5",
++   "6",
++   "7",
++   "8",
++   "10",
++ ]
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:139:29
+    137|     it(`${f} holds no SmPC section title of its own`, () => {
+    138|       const src = readFileSync(path.join(root, f), 'utf8');
+    139|       expect(copiesIn(src)).toEqual([]);
+       |                             ^
+    140|     });
+    141|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed (11)
+   Start at  02:06:53
+   Duration  540ms (transform 141ms, setup 77ms, import 92ms, tests 39ms, environment 0ms)
+
+
+==================================================================
+Fix round 1 (2026-10-05): red run of the three tests added for the review findings
+(scaffold 6.6 heading; recall labels on structure_smpc text). Before the change:
+==================================================================
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > does not report an SmPC with no shelf life, container or date of revision as complete 8ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > takes its headers from the QRD catalog, sections 1-10 only 10ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > keeps radiopharmaceutical sections 11 and 12 in the catalog, flagged and excluded by default 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > writes top-level headings as "N. UPPER CASE" and subsections as "N.N Sentence case" 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > accepts the QRD forms of 6.6 (optional "<and other handling>") and 9 (no spaces around the slash) 1ms
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > prints the full QRD heading in the scaffold while the guard accepts the short 6.6 19ms
+   → expected '6.6 Special precautions for disposal' to be '6.6 Special precautions for disposal …' // Object.is equality
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > carries a basis for the headings: QRD v10.4 on an EMA URL, wording labelled recall 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > no longer promises "12 numbered SmPC sections" 1ms
+ × server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > labels its statements about the QRD template text as recall 6ms
+   → expected 'Generate the required section structu…' to match /v10\.4[^.]*recall/i
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-authoring.ts holds no SmPC section title of its own 5ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/ana/labeling-structure.ts holds no SmPC section title of its own 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/labeling/labeling-intelligence-knowledge.ts holds no SmPC section title of its own 16ms
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts > no second copy of the SmPC headings > server/services/market-specs/document-template-library.ts holds no SmPC section title of its own 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > EU SmPC section guard covers QRD sections 1-10 > prints the full QRD heading in the scaffold while the guard accepts the short 6.6
+AssertionError: expected '6.6 Special precautions for disposal' to be '6.6 Special precautions for disposal …' // Object.is equality
+
+Expected: "6.6 Special precautions for disposal and other handling"
+Received: "6.6 Special precautions for disposal"
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:105:34
+    103|     // carry the record's heading, not the guard's relaxed one.
+    104|     const r = buildTemplateReplacements('eu', 'Examplumab');
+    105|     expect(r['{{SECTION_6_6}}']).toBe('6.6 Special precautions for dis…
+       |                                  ^
+    106|     expect(r['{{SECTION_6_3}}']).toBe('6.3 Shelf life');
+    107|     expect(r['{{SECTION_4}}']).toBe('4. CLINICAL PARTICULARS');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana/__tests__/labeling-authoring-qrd.test.ts > structure_smpc says sections 1-10, with 11 and 12 for radiopharmaceuticals only > labels its statements about the QRD template text as recall
+AssertionError: expected 'Generate the required section structu…' to match /v10\.4[^.]*recall/i
+
+- Expected:
+/v10\.4[^.]*recall/i
+
++ Received:
+"Generate the required section structure for an EU Summary of Product Characteristics (SmPC) per the EMA Quality Review of Documents (QRD) template (v10.4). Returns SmPC sections 1-10 (1. Name of the medicinal product through 10. Date of revision of the text) with their subsections; sections 11 (Dosimetry) and 12 (Instructions for preparation of radiopharmaceuticals) apply to radiopharmaceuticals only and are not returned. Also returns mandatory language blocks (e.g., black triangle statement for additional monitoring products, reporting statement for suspected adverse reactions), and procedure-specific requirements for centralized (CP), mutual recognition (MRP), decentralized (DCP), and national procedures. Identifies product-type-specific content (herbal traditional use registration, homeopathic registration), special population requirements (paediatric, elderly, renal/hepatic impairment), and cross-references to the Package Leaflet and labelling text. Cites Directive 2001/83/EC Article 11, Regulation (EC) No 726/2004, and the current EMA QRD template annotated guidance. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value."
+
+ ❯ server/services/ana/__tests__/labeling-authoring-qrd.test.ts:127:40
+    125|     // The heading wording has not been read from the EMA PDF (SMPC_QR…
+    126|     // is 'recall'), so tool output that describes the template says s…
+    127|     expect(STRUCTURE_SMPC.description).toMatch(/v10\.4[^.]*recall/i);
+       |                                        ^
+    128|     const s6 = structureSmPC({ productType: 'medicinal_product', proce…
+    129|       .smpcSections.find((s) => s.sectionNumber === '6');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  02:58:05
+   Duration  1.63s (transform 483ms, setup 239ms, import 302ms, tests 75ms, environment 0ms)
+

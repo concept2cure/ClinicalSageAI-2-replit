@@ -1,0 +1,287 @@
+# Fix round, 2026-10-01T15:27:41Z. git HEAD: 0812a990 + the shared working tree (P1-47 fix round included)
+# command: TEST_DATABASE_URL=postgres(owner) APP_DATABASE_URL=app_service RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts server/mcp/__tests__/mcp-connector.dbtest.ts server/mcp/__tests__/mcp-consent-delegated.dbtest.ts server/mcp/__tests__/mcp-account-standing.dbtest.ts server/middleware/__tests__/delegated-credential-scope.dbtest.ts tests/db/admin-change-audit.dbtest.ts tests/db/compliance-reports.dbtest.ts tests/db/organizations-writes.dbtest.ts tests/db/role-config-change-audit.dbtest.ts tests/db/memberships.dbtest.ts
+# (structured JSON log lines filtered out)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:27:45.931Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 165ms
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 396ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 13ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 18ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 17ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 7ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2391ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2442ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a password change ends the connector grants authorised before it > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2403ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a sign-out of every session ends the connector grants authorised before it (R2) > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2379ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 25ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 61ms
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful { timestamp: '2026-10-01T15:27:59.150Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 20ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 38ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client 119ms
+stderr | server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 260ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 251ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 2734ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > is denied to a connector token without c2c:file 85ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 125ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 78ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 61ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 4852ms
+stdout | server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > A's own session reaches a launch write handler in A's scope and sees A's row
+[database] Database connection successful
+
+stdout | server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > A's own session reaches a launch write handler in A's scope and sees A's row
+[database] Database connection successful { timestamp: '2026-10-01T15:28:10.540Z', poolSize: 1 }
+
+stdout | server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > A's own session reaches a launch write handler in A's scope and sees A's row
+[database] Database connection successful { timestamp: '2026-10-01T15:28:10.541Z', poolSize: 2 }
+
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > connects as a non-superuser runtime role with RLS enforcing 15ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > the catalog yields API prefixes for all seven launch apps, none on the public allowlist 2ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > A's own session reaches a launch write handler in A's scope and sees A's row 88ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > B's own session reaches it in B's scope and cannot see or touch A's row 30ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > is the connector issuer's own token: type access, token_use mcp, scope c2c:read 0ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > projects: every write method on every API prefix is refused before a handler runs 158ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > vault: every write method on every API prefix is refused before a handler runs 69ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > authoring: every write method on every API prefix is refused before a handler runs 272ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > submission-center: every write method on every API prefix is refused before a handler runs 96ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > submission-readiness: every write method on every API prefix is refused before a handler runs 14ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > qms: every write method on every API prefix is refused before a handler runs 14ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > reporting: every write method on every API prefix is refused before a handler runs 21ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > the /api/v1 pyramid write, outside the boundary, refuses it too 3ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > requireScope reads the key's scopes: granted passes, not granted is 403 INSUFFICIENT_SCOPE 30ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > projects: the key alone is refused on every write route, before a handler runs 84ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > vault: the key alone is refused on every write route, before a handler runs 61ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > authoring: the key alone is refused on every write route, before a handler runs 223ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > submission-center: the key alone is refused on every write route, before a handler runs 78ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > submission-readiness: the key alone is refused on every write route, before a handler runs 5ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > qms: the key alone is refused on every write route, before a handler runs 14ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > reporting: the key alone is refused on every write route, before a handler runs 14ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > off the public API the key opens no tenant scope, even on a path that takes no session 2ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > nor on the session alias under /api/v1, in any letter case Express routes 3ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > projects: A's read-only key with B's session is refused on every write route 90ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > vault: A's read-only key with B's session is refused on every write route 70ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > authoring: A's read-only key with B's session is refused on every write route 195ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > submission-center: A's read-only key with B's session is refused on every write route 59ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > submission-readiness: A's read-only key with B's session is refused on every write route 5ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > qms: A's read-only key with B's session is refused on every write route 10ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > reporting: A's read-only key with B's session is refused on every write route 13ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > the /api/v1 pyramid write refuses the pair too 2ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > A's row was never written by B 2ms
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful { timestamp: '2026-10-01T15:28:14.973Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 7ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read 142ms
+stderr | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there 143ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for another client: no code, no code row, and nothing for /mcp 12ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for its own client: no code, no code row, and nothing for /mcp 10ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for another client: no code, no code row, and nothing for /mcp 10ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for its own client: no code, no code row, and nothing for /mcp 9ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the c2c:read connector token still opens /mcp for a read 98ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > a refresh cannot widen the grant either 12ms
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the user's own session still consents to all three scopes, and that grant files the draft 220ms
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization
+[database] Database connection successful { timestamp: '2026-10-01T15:28:18.837Z', poolSize: 1 }
+
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 133ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 38ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 8ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 11ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 19ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 8ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-10-01T15:28:19.487Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 422,
+    "granted": 20
+  }
+}
+
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 816ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+[database] Database connection successful { timestamp: '2026-10-01T15:28:19.879Z', poolSize: 2 }
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-01T15:28:19.915Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-01T15:28:19.926Z",
+  "level": "warn",
+  "message": "[tenant-users] Audit log write failed (non-fatal)",
+  "context": {
+    "action": "user_invited",
+    "err": "new row violates row-level security policy for table \"audit_logs\""
+  }
+}
+
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 26ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 251ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 43ms
+stderr | tests/db/role-config-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > when its audit row cannot be written, the role stays as it was 60ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > an added member: one chained row on the organisation's chain, written by the change's own transaction 30ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a member already in the group: nothing changes, nothing is recorded 10ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a removed member is set to member, with the role it held recorded 26ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > removal from a group the member is not in changes nothing and records nothing 10ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > DELETE: a refused event leaves the account active; otherwise status and event share a transaction 40ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PUT active=false: a refused event leaves the account active 42ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PATCH active=false on a shared account: a refused event leaves this organisation's membership 31ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > POST: a refused event provisions nobody; otherwise membership and event share a transaction 21ms
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T15:28:22.094Z', poolSize: 1 }
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T15:28:22.096Z', poolSize: 2 }
+
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were 115ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a settings change writes the record the tenant configuration route writes, and keeps what it does not name 107ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a module toggle is recorded by the same writer 41ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/settings naming the connector: 403, nothing stored, no row written 11ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/settings, beside another key naming the connector: 403, nothing stored, no row written 19ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/ai-config naming the connector: 403, nothing stored, no row written 15ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > POST /api/ana/platform/execute (settings) naming the connector: 403, nothing stored, no row written 40ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > POST /api/ana/platform/execute (ai_config) naming the connector: 403, nothing stored, no row written 16ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/organizations/:id/settings (with a reason) naming the connector: 403, nothing stored, no row written 19ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/organizations/:id/settings (bare) naming the connector: 403, nothing stored, no row written 20ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > control: the same administrator, on the same doors, still changes another setting 134ms
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-reports.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-01T15:28:25.191Z', poolSize: 1 }
+
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 70ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 40ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 19ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 21ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 25ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 42ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 42ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 40ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row 30ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not 46ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one 25ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 31ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 12ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only 25ms
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why 130ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 34ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's 24ms
+stderr | tests/db/admin-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful { timestamp: '2026-10-01T15:28:27.683Z', poolSize: 1 }
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful { timestamp: '2026-10-01T15:28:27.689Z', poolSize: 2 }
+
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded 118ms
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back
+{
+  "timestamp": "2026-10-01T15:28:27.753Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays
+{
+  "timestamp": "2026-10-01T15:28:27.819Z",
+  "level": "error",
+  "message": "[tenant-users] Error removing user from organization:",
+  "context": {}
+}
+
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back 37ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the reason 32ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays 23ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > writes one chained row with the role the member held 22ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > when its audit row cannot be written, the settings stay as they were 49ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after 68ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a notifications change names the webhook field and never records its address 64ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a reset writes one tenant_settings_reset row with the retention values 46ms
+stderr | tests/db/organizations-writes.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful { timestamp: '2026-10-01T15:28:29.881Z', poolSize: 1 }
+
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 5ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 127ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 23ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 36ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 36ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 53ms
+
+ Test Files  9 passed (9)
+      Tests  131 passed (131)
+   Start at  15:27:42
+   Duration  47.86s (transform 9.22s, setup 413ms, import 7.76s, tests 37.82s, environment 1ms)
+

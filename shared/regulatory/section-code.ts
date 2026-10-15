@@ -158,6 +158,42 @@ export function sectionInsertIndex(orderedCodes: readonly string[], code: string
   return orderedCodes.length;
 }
 
+/** One stored section, as the create path reads it to place a new one. */
+export interface StoredSectionSlot {
+  id: string;
+  code: string;
+  /** authoring_sections.order_index as stored. */
+  orderIndex: number;
+}
+
+/**
+ * The `order_index` a new section is stored at, and the rows that move down by
+ * one to make room for it.
+ *
+ * QA 2026-10-08 (j4): the create path used the LIST POSITION from
+ * sectionInsertIndex as the stored index. Template-seeded sections are stored
+ * at their template ordering (100, 200 … 700), so a 2.5.8 created after them
+ * was stored at 7 and assembled, exported and filed ahead of 2.5.1. The index
+ * now comes from the stored indexes themselves: the new section takes the
+ * index of the row it goes in front of (that row and every row after it move
+ * down by one), or one past the last row when it belongs at the end.
+ *
+ * The rows to move are named by id, not by value, so rows that share an index
+ * (documents created before positions were assigned) keep their relative order.
+ */
+export function sectionInsertSlot(
+  ordered: ReadonlyArray<StoredSectionSlot>,
+  code: string,
+): { orderIndex: number; shiftIds: string[] } {
+  const pos = sectionInsertIndex(ordered.map((r) => r.code), code);
+  if (pos >= ordered.length) {
+    const last = ordered[ordered.length - 1];
+    return { orderIndex: last ? (Number.isFinite(last.orderIndex) ? last.orderIndex : 0) + 1 : 0, shiftIds: [] };
+  }
+  const at = ordered[pos].orderIndex;
+  return { orderIndex: Number.isFinite(at) ? at : 0, shiftIds: ordered.slice(pos).map((r) => r.id) };
+}
+
 /**
  * Structural problems with a document's section codes.
  *

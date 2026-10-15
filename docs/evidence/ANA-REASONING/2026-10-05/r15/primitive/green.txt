@@ -1,0 +1,9 @@
+The suite, and every suite that exercises the two modules it changes.
+
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <the 7 files>
+  turn-record-served-models, machine-attribution, turn-served-models.pglite,
+  authoring-draft-accept-record, authoring-decision-source,
+  authoring-record-export, accepted-machine-text
+
+ Test Files  7 passed (7)
+      Tests  90 passed (90)

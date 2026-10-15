@@ -1,0 +1,7 @@
+# 2026-10-01T15:02:55Z. Mutant O of this change: the organisation scope is ignored: one tenant's verdict is broken by another tenant's truncation.
+$ npx vitest run server/services/audit/__tests__/chain-head-on-demand.test.ts
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)

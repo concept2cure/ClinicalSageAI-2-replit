@@ -1,0 +1,260 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids non-admins (403)
+{
+  "timestamp": "2026-10-01T19:00:19.202Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/admin/scim-tenants"
+  }
+}
+
+stderr | server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403)
+{
+  "timestamp": "2026-10-01T19:00:19.210Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/admin/scim-ip-allowlist"
+  }
+}
+
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids non-admins (403) 101ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > creates a tenant, returns the token ONCE, stores only a SHA-256 hash 13ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > 400 when organizationId is missing 5ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > rotate issues a fresh token (200) 5ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > disables a tenant via PATCH 4ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > deletes a tenant (204), 404 when missing 6ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403) 130ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > creates a rule with a valid CIDR (201) 12ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > rejects an invalid CIDR (400) 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > 400 when organizationId is missing 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > lists rules (never org-filtered from query) 5ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > disables a rule via PATCH 5ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > deletes a rule (204), 404 when missing 9ms
+stderr | server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — auth > rejects requests with no bearer token (401)
+{
+  "timestamp": "2026-10-01T19:00:20.096Z",
+  "level": "error",
+  "message": "[scim] Failed to load SCIM tenants from DB",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — auth > rejects requests with no bearer token (401) 31ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — auth > rejects requests with the wrong bearer token (401) 6ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — lifecycle > JIT-creates a new user and returns an active SCIM resource (201) 13ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — lifecycle > PATCH active=false deprovisions the user (200, active=false) 7ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — lifecycle > returns 404 for a deactivate (DELETE) on a non-member user 5ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — lifecycle > DELETE deactivates a member and writes a deprovision audit event in the same transaction (204) 4ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — Groups (RBAC roles) > lists the four role-groups (200, ListResponse) 5ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — Groups (RBAC roles) > gets a single role-group with members (200) 4ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — Groups (RBAC roles) > 404 for an unknown group (not a valid role) 10ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — Groups (RBAC roles) > PATCH add assigns the group role to a member (org-scoped UPDATE, recorded in its transaction) 7ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — multi-tenant tokens > resolves a second tenant token to its own org (org-scoped queries) 3ms
+stderr | server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > REFUSES to create a user for a non-entitled organization
+{
+  "timestamp": "2026-10-01T19:00:20.190Z",
+  "level": "warn",
+  "message": "[scim] SCIM provisioning refused — organization is not entitled",
+  "context": {
+    "orgId": 7
+  }
+}
+
+stderr | server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > REFUSES an ACTIVATING patch for a non-entitled organization
+{
+  "timestamp": "2026-10-01T19:00:20.200Z",
+  "level": "warn",
+  "message": "[scim] SCIM provisioning refused — organization is not entitled",
+  "context": {
+    "orgId": 7
+  }
+}
+
+stderr | server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > is reversible without a deploy via SCIM_PROVISIONING_ON_SUSPENDED_TENANT=allow
+{
+  "timestamp": "2026-10-01T19:00:20.203Z",
+  "level": "error",
+  "message": "[scim] SCIM create user failed",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — multi-tenant tokens > still rejects an unknown token under multi-tenant config (401) 3ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — discovery > exposes ResourceTypes (User + Group) 3ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — discovery > exposes Schemas (User + Group) 3ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — discovery > discovery still requires the bearer token (401) 2ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — DB-backed tenant tokens > resolves a DB token (matched by SHA-256 hash) to its org 3ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — DB-backed tenant tokens > rejects a token present in neither env nor DB (401) 3ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > REFUSES to create a user for a non-entitled organization 4ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > STILL deactivates a user for a non-entitled organization 3ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > STILL allows a DEACTIVATING patch for a non-entitled organization 3ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > REFUSES an ACTIVATING patch for a non-entitled organization 3ms
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > is reversible without a deploy via SCIM_PROVISIONING_ON_SUSPENDED_TENANT=allow 4ms
+stderr | server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a refused audit row rolls the whole request back: 500, nothing dropped, no detail leaked
+{
+  "timestamp": "2026-10-01T19:00:20.266Z",
+  "level": "error",
+  "message": "[scim] SCIM patch group failed",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > add: each change and its audit row in one transaction; each changed member dropped after COMMIT 75ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > replace: each change and its audit row in one transaction; each changed member dropped after COMMIT 5ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > remove: a member holding the group role is demoted to member, recorded, and dropped after COMMIT 5ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a member already holding the role, or not holding the removed one, changes nothing and drops nothing 7ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a user who is not a member of this organisation is not given the role 5ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a refused audit row rolls the whole request back: 500, nothing dropped, no detail leaked 6ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a group that names no member changes no role and drops nothing 5ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > opens a per-user scope and attaches a request DB client 5ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent when a scope is already active (does not clobber) 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent when req.dbClient is already set 3ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > does NOT fabricate a scope for a tenant-less identity 0ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > rejects a non-integer org id rather than scoping to a garbage tenant 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > routes a SYSTEM-prefixed path to the system scope, not the caller org 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > REPLACES a pre-auth placeholder scope with the caller org once authenticated 2ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > leaves the pre-auth placeholder untouched when there is no verified tenant yet 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > forces the system scope on a system path even when a per-user scope opened first 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestTenantScope > is idempotent on a system path already under the system scope 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > establishRequestSystemScope > opens the cross-tenant system scope and attaches a client 3ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > isSystemScopedPath > matches exact and sub-path, not sibling prefixes 1ms
+ ✓ server/middleware/__tests__/establishRequestTenantScope.test.ts > isSystemScopedPath > every declared prefix is recognized 0ms
+stderr | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > DELETE removes the caller's membership row and never touches users.status (204)
+{
+  "timestamp": "2026-10-01T19:00:20.906Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=true on a platform-suspended shared account is a no-op on status; response reflects the stored status
+{
+  "timestamp": "2026-10-01T19:00:20.995Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — account status is platform-wide and the user belongs to other organisations",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended",
+    "organizationCount": 2
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > adds the membership only, never writes users.status; 201 reflects the stored (suspended) status
+{
+  "timestamp": "2026-10-01T19:00:21.001Z",
+  "level": "info",
+  "message": "[scim] SCIM provision joined an existing account whose status is not active; status unchanged",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > DELETE removes the caller's membership row and never touches users.status (204) 1846ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=false removes the caller's membership row and never touches users.status (200, active=false) 28ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with a new displayName is refused: 403, scimType mutability, no write 11ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH replace displayName is refused: 403, scimType mutability, no write 7ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with the SAME name and active=false still deprovisions (membership removed, not 403) 8ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=true on a platform-suspended shared account is a no-op on status; response reflects the stored status 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > adds the membership only, never writes users.status; 201 reflects the stored (suspended) status 6ms
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=true does not lift the suspension: no status write, no activation row, active=false
+{
+  "timestamp": "2026-10-01T19:00:21.039Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — the account is held by the platform",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with active: true does not lift the suspension
+{
+  "timestamp": "2026-10-01T19:00:21.044Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — the account is held by the platform",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT still renames: the name is the sole organisation's, the status is not
+{
+  "timestamp": "2026-10-01T19:00:21.053Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — the account is held by the platform",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > active:false in the body for an existing account deactivates nobody 8ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > DELETE still issues the global UPDATE users SET status = 'inactive' (204) 9ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > PATCH active=false still deactivates globally (200, active=false) 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > PUT with a new displayName renames as before (200) 11ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=true does not lift the suspension: no status write, no activation row, active=false 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with active: true does not lift the suspension 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with no active at all does not lift the suspension 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT still renames: the name is the sole organisation's, the status is not 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=false removes this organisation's membership and leaves the suspension in place 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT active=false removes this organisation's membership and leaves the suspension in place 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > DELETE removes this organisation's membership and leaves the suspension in place 3ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > a deactivated sole-organisation account stays inactive 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > a shared account: a replace with no `active` removes no membership and writes no status 3ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > control: PATCH active=true still reactivates an account SCIM deactivated 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — unknown membership count fails closed > DELETE with no count row removes only the membership and never writes users.status 4ms
+stderr | server/__tests__/security/scim-ip-allowlist-enforcement.test.ts
+{
+  "timestamp": "2026-10-01T19:00:21.470Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > valid token from outside the allowlist is rejected (403)
+{
+  "timestamp": "2026-10-01T19:00:21.521Z",
+  "level": "warn",
+  "message": "[scim] SCIM request from non-allowlisted IP",
+  "context": {
+    "orgId": 7,
+    "sourceIp": "8.8.8.xxx"
+  }
+}
+
+stderr | server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > a leaked token cannot claim an allowlisted address: the load balancer's entry decides (403)
+{
+  "timestamp": "2026-10-01T19:00:21.530Z",
+  "level": "warn",
+  "message": "[scim] SCIM request from non-allowlisted IP",
+  "context": {
+    "orgId": 7,
+    "sourceIp": "8.8.8.xxx"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > no rules → unrestricted (200) 26ms
+ ✓ server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > valid token from outside the allowlist is rejected (403) 10ms
+ ✓ server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > valid token from inside the allowlist is admitted (200) 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > a leaked token cannot claim an allowlisted address: the load balancer's entry decides (403) 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > another org's rule does not restrict this org (200) 4ms
+
+ Test Files  7 passed (7)
+      Tests  82 passed (82)
+   Start at  19:00:18
+   Duration  3.16s (transform 2.09s, setup 368ms, import 3.18s, tests 2.63s, environment 1ms)
+
+exit 0

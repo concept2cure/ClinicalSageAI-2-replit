@@ -1,0 +1,292 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:44:50.251Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a re-type records the reason on the entry and names the old and new type 37ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a title and a type changed together are both named, in the order the form lists them 13ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the reason stays in the recorded details too, where the existing record reads it 8ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the chain still verifies with the reason on the row 10ms
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-10-08T01:44:54.122Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-10-08T01:44:54.282Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:44:54.283Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-10-08T01:44:54.283Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract
+{
+  "timestamp": "2026-10-08T01:44:55.963Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page
+{
+  "timestamp": "2026-10-08T01:44:55.977Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs
+{
+  "timestamp": "2026-10-08T01:44:55.988Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > 403 without org context 19ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract 7ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > carries the target filing date as a date, so days to filing can be counted 3ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > clamps ?limit to its maximum and never issues an unbounded read 3ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page 5ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > fails closed to an empty envelope when the store is not provisioned 3ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > 404s a non-uuid id instead of 500ing on the uuid cast 3ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs 3ms
+stderr | server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts
+{
+  "timestamp": "2026-10-08T01:44:56.951Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > selects the stored device columns and returns them for a 510(k) IVD program 22ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > a drug program is unchanged: existing keys present, device fields honestly null 5ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > GET /api/c2c/projects/:id — device taxonomy > serializeProgramDetail never invents: a metadata string that is not JSON, or a null, yields nulls 1ms
+ ✓ server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > POST /api/c2c/projects — the create answers with the same serializer > 201 carries `program` from serializeProgramDetail, so the read returns what the write stored 13ms
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:44:58.008Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:44:58.448Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:44:58.448Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:44:58.449Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind
+{
+  "timestamp": "2026-10-08T01:44:58.519Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\"....",
+    "enforcement": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind
+{
+  "timestamp": "2026-10-08T01:44:58.520Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > an unfiled document in the Unfiled queue shows the same label
+{
+  "timestamp": "2026-10-08T01:44:58.536Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > a document never re-typed keeps the classifier kind as its label
+{
+  "timestamp": "2026-10-08T01:44:58.541Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind 41ms
+ ✓ server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > an unfiled document in the Unfiled queue shows the same label 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > a document never re-typed keeps the classifier kind as its label 6ms
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-08T01:44:59.587Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-08T01:44:59.673Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:44:59.674Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-08T01:44:59.674Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > asks for one past the window and reports a full window as truncated 33ms
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > says which sources a re-upload retired; a row older than the column is current 6ms
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:45:01.369Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:45:01.370Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:45:01.371Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:45:01.478Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 2ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf carries the file type the filing action decides on > projects mime_type as mimeType 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > an upload has no authoring completion, and says so > projects pct as null, not 0 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > an edited type wins over the classifier kind the upload arrived with 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a recorded type shows when the classifier recorded no kind 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label while the type is the OTHER "not told" value 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label when no type was recorded at all 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a file with neither a type nor a kind reads as File 0ms
+
+ Test Files  6 passed (6)
+      Tests  33 passed (33)
+   Start at  01:44:48
+   Duration  13.48s (transform 2.92s, setup 203ms, import 9.46s, tests 2.74s, environment 1ms)
+

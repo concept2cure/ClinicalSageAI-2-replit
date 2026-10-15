@@ -1,0 +1,23 @@
+# 2026-10-01T06:26:16Z the recipe as an RDS-shaped applier: a LOGIN CREATEROLE NOSUPERUSER master that owns the database and the stores (throwaway database p08_rds_9670, dropped after)
+applier: {"current_user":"p08_master_9670","rolsuper":false,"rolcreaterole":true}
+  ✓ role p08_rt_9670 created (LOGIN · NOSUPERUSER · NOBYPASSRLS)
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 2/11 append-only store(s) present: public.audit_logs, public.electronic_signatures
+public.audit_logs DELETE=false
+public.audit_logs INSERT=true
+public.audit_logs SELECT=true
+public.audit_logs TRUNCATE=false
+public.audit_logs UPDATE=false
+public.electronic_signatures DELETE=false
+public.electronic_signatures INSERT=true
+public.electronic_signatures SELECT=true
+public.electronic_signatures TRUNCATE=false
+public.electronic_signatures UPDATE=false
+public.organizations DELETE=true
+public.organizations INSERT=true
+public.organizations SELECT=true
+public.organizations TRUNCATE=false
+public.organizations UPDATE=true
+esig column UPDATE: superseded_by=true is_valid=true signer_id=false signature_hash=false
+audit excess: [] denied on stores: []
+exit=0
+cleanup done

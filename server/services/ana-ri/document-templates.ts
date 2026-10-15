@@ -13,6 +13,27 @@
  * @module server/services/ana-ri/document-templates
  */
 
+import {
+  e3TopLevel,
+  renderE3Brief,
+  LIFECYCLE_DOCUMENT_TYPES,
+  type E3Section,
+  type LifecycleComponent,
+} from '../ind/ctd/index.js';
+import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11.js';
+import { getDocumentTemplate } from '../market-specs/document-template-library.js';
+import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
+import {
+  FDA_FORMAL_MEETING_TIMELINES,
+  FDA_FORMAL_MEETINGS_GUIDANCE,
+  FDA_MEETING_PACKAGE_CORE,
+  ICH_E2F_DSUR_SECTIONS,
+  meetingPackageDeadline,
+  meetingTypeName,
+  type E2fSection,
+  type FdaMeetingType,
+} from '../ind/ctd/lifecycle-document-types.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Template Registry Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,9 +73,190 @@ export interface RegulatoryDocumentTemplate {
   regulatoryReferences?: string[];
 }
 
+/**
+ * What ICH E3 §12.3.2 asks every narrative of a death, other serious adverse
+ * event or other significant adverse event to carry, read from the E3 tree
+ * (ind/ctd/csr-e3-sections-results.ts) and rendered by its own brief, with the
+ * brief's headings set below the block's "### DRAFTING INSTRUCTIONS". Until
+ * 2026-10-05 the safety-narrative template kept its own outline, which left out
+ * post-mortem findings, countermeasures, the sponsor's causality opinion and the
+ * disease's duration. With no §12.3.2 node it says so rather than supplying one.
+ */
+function e3NarrativeElements(): string {
+  const brief = renderE3Brief('12.3.2');
+  if (!brief) return 'ICH E3 §12.3.2 (narratives): content not encoded — do not supply from memory.';
+  return brief.replace(/^(#{2,3}) /gm, (_m, hashes: string) => `${hashes}## `);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Template Registry
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** One ICH E3 top-level heading as a template section, its guidance the tree's own one-line summary. */
+function e3TemplateSection(s: E3Section): TemplateSection {
+  return { heading: `${s.number}. ${s.title}`, required: s.applies === 'always', guidance: e3SectionSummary(s) };
+}
+
+/** One ICH E2F heading as a template section, numbered as E2F numbers it. */
+function e2fTemplateSection(s: E2fSection): TemplateSection {
+  return { heading: s.number ? `${s.number}. ${s.title}` : s.title, required: s.required, guidance: s.guidance };
+}
+
+/** One lifecycle-record component (or meeting-package core component) as a template section: its title, what it carries, whether it is required. */
+function lifecycleTemplateSection(c: Pick<LifecycleComponent, 'title' | 'required' | 'guidance'>): TemplateSection {
+  return { heading: c.title, required: c.required, guidance: c.guidance };
+}
+
+const MEETING_ENTRIES = LIFECYCLE_DOCUMENT_TYPES.filter((t) => t.meetingPackage);
+
+function meetingEntry(id: string) {
+  const entry = MEETING_ENTRIES.find((t) => t.id === id);
+  if (!entry) throw new Error(`document-templates: lifecycle meeting entry "${id}" is missing`);
+  return entry;
+}
+
+/** The deadline sentence, from FDA_FORMAL_MEETING_TIMELINES: the request and the package are separate submissions for Type B and B(EOP). */
+function meetingDeadlineSentence(type: FdaMeetingType): string {
+  const row = FDA_FORMAL_MEETING_TIMELINES[type];
+  const separate = row.packageDue === 'with-request' ? 'The meeting package goes' : 'The meeting package is a separate submission from the request, due';
+  return `FDA schedules a ${meetingTypeName(type)} meeting within ${row.scheduleDays} days of receiving the meeting request. ${separate} ${meetingPackageDeadline(type)}.`;
+}
+
+/** Every meeting type's schedule and package deadline, one line each, from FDA_FORMAL_MEETING_TIMELINES. */
+function meetingDeadlineTable(): string {
+  return Object.values(FDA_FORMAL_MEETING_TIMELINES)
+    .map((row) => `${meetingTypeName(row.type)}: scheduled within ${row.scheduleDays} days of receiving the request; meeting package ${meetingPackageDeadline(row.type)}.`)
+    .join(' ');
+}
+
+const MEETING_QUESTION_RULE = "Questions must be specific and answerable, each with the sponsor's position and the data behind it — do NOT ask open-ended questions.";
+
+/** A meeting-package template whose sections are the lifecycle entry's components, so the two cannot drift. */
+function lifecycleMeetingTemplate(
+  lifecycleId: string,
+  type: FdaMeetingType,
+  meta: Pick<RegulatoryDocumentTemplate, 'id' | 'chipLabel' | 'submissionFamily' | 'detectionPatterns'>,
+): RegulatoryDocumentTemplate {
+  const entry = meetingEntry(lifecycleId);
+  return {
+    ...meta,
+    displayName: entry.label,
+    authority: 'FDA',
+    minConfidence: 0.7,
+    draftingInstructions: `Draft the ${entry.label} per ${FDA_FORMAL_MEETINGS_GUIDANCE}. ${meetingDeadlineSentence(type)} ${MEETING_QUESTION_RULE}`,
+    regulatoryReferences: entry.regulatoryBasis,
+    sections: entry.components.map(lifecycleTemplateSection),
+  };
+}
+
+/**
+ * The IB sections chat drafting uses, projected from the platform's one IB
+ * outline (market-specs 'investigators_brochure', ICH E6(R3) Appendix A) — the
+ * outline the open-document brief and get_document_template give. Until
+ * 2026-10-15 this was a hand-written copy (no "and Formulation", a mandatory
+ * References chapter). Only the drafting guidance and word ranges are local.
+ */
+const IB_DRAFTING: Record<string, { guidance: string; targetWords: [number, number] }> = {
+  '1': { targetWords: [300, 600], guidance: 'Brief summary of the compound: pharmacological class, proposed indication, key nonclinical and clinical findings, and guidance to the investigator.' },
+  '2': { targetWords: [200, 400], guidance: 'Chemical name, INN/USAN, mechanism of action, therapeutic rationale, and overview of current development stage.' },
+  '3': { targetWords: [200, 400], guidance: 'Physicochemical properties, formulations used in clinical trials, storage conditions, and handling precautions.' },
+  '4': { targetWords: [800, 1500], guidance: 'Key nonclinical findings relevant to human safety and clinical monitoring: pharmacology (primary and safety pharmacology), ADME, and toxicology (repeat-dose, genotoxicity, reproductive, carcinogenicity if available). Express safety margins in multiples of clinical exposure.' },
+  '5': { targetWords: [600, 1200], guidance: 'All available human data: PK/PD from phase 1 studies, efficacy signals from phase 2, safety data. If phase 3 data are available, include key findings. Integrate nonclinical-to-clinical PK correlations.' },
+  '6': { targetWords: [300, 600], guidance: 'Overall benefit-risk assessment at the current stage of development. Specific guidance on monitoring, dose modifications, and management of anticipated adverse events.' },
+};
+
+function ibOutline() {
+  const outline = getDocumentTemplate('investigators_brochure');
+  if (!outline) throw new Error("The Investigator's Brochure outline is unavailable.");
+  return outline;
+}
+
+const IB_OUTLINE_BASIS = ibOutline().regulatoryBasis;
+
+function ibTemplateSections(): TemplateSection[] {
+  return ibOutline().sections.map((s) => ({
+    heading: `${s.number}. ${s.heading}`,
+    required: s.required,
+    guidance: IB_DRAFTING[s.number]?.guidance ?? s.purpose,
+    ...(IB_DRAFTING[s.number] ? { targetWords: IB_DRAFTING[s.number].targetWords } : {}),
+  }));
+}
+
+/**
+ * The protocol chat drafting uses: the ICH M11 front matter and level-1
+ * headings from the platform's one protocol record (shared/regulatory/
+ * protocol-m11.ts), the outline the open-document brief and the Projects
+ * blueprint give. Until 2026-10-15 this was ten headings of its own whose
+ * numbering diverged from M11 at section 5. The phase 1 drafting guidance and
+ * word ranges stay local, keyed by M11 heading.
+ */
+const M11_PHASE1_DRAFTING: Record<string, { guidance: string; targetWords?: [number, number] }> = {
+  '1': { targetWords: [400, 700], guidance: 'Protocol synopsis, trial schema and schedule of activities: title, design, objectives and estimands, endpoints, population, dose range, duration and statistical approach.' },
+  '2': { targetWords: [300, 600], guidance: 'Purpose of the trial and the assessment of risks and benefits: disease background, unmet need, mechanism of action, nonclinical support, and the rationale for dose, schedule and route.' },
+  '3': { targetWords: [200, 400], guidance: 'Primary objective (typically safety, tolerability, MTD or RP2D) and secondary objectives (PK, PD, preliminary efficacy), each with an operationally defined endpoint and, where applicable, its estimand.' },
+  '4': { targetWords: [300, 600], guidance: 'Phase, design type (3+3, mTPI, BOIN or other), dose levels and escalation rules, sentinel dosing, the DLT window, and expansion cohorts if applicable.' },
+  '5': { targetWords: [300, 600], guidance: 'Inclusion and exclusion criteria (disease, performance status, organ function, concurrent and prior therapy), each justified.' },
+  '6': { targetWords: [300, 600], guidance: 'Administration, formulation, pre-medication, dose modifications, de-escalation and re-escalation criteria, and concomitant therapy.' },
+  '7': { targetWords: [150, 300], guidance: 'Stopping rules for the trial intervention, and participant discontinuation and withdrawal.' },
+  '8': { targetWords: [300, 600], guidance: 'Safety assessments (AE monitoring, laboratory, ECG, vital signs), the PK sampling schedule, PD and biomarker assessments, and efficacy assessments if applicable.' },
+  '9': { targetWords: [200, 400], guidance: 'DLT definitions, AE and SAE recording, and IND safety reporting of serious and unexpected suspected adverse reactions (21 CFR 312.32).' },
+  '10': { targetWords: [200, 400], guidance: 'Study size justification, the DLT/MTD determination method, PK and PD analysis, and handling of missing data.' },
+  '11': { targetWords: [150, 300], guidance: 'IRB/IEC review, the informed consent process, sponsor and investigator responsibilities, data monitoring, and protocol amendments.' },
+  '14': { guidance: 'Key literature supporting the scientific rationale and trial design.' },
+};
+
+function m11TemplateSections(): TemplateSection[] {
+  return ICH_M11_PROTOCOL_SECTIONS.filter((s) => !s.number || !s.number.includes('.')).map((s) => {
+    const local = s.number ? M11_PHASE1_DRAFTING[s.number] : undefined;
+    return {
+      heading: s.number ? `${s.number}. ${s.title}` : s.title,
+      required: true,
+      guidance: local?.guidance ?? s.purpose,
+      ...(local?.targetWords ? { targetWords: local.targetWords } : {}),
+    };
+  });
+}
+
+/**
+ * The PBRER chat drafting uses: ICH E2C(R2) §1–§19 from the platform's outline
+ * (market-specs 'pbrer'). Until 2026-10-15 this was sixteen headings that
+ * dropped §13–§15 and renumbered the rest. Drafting guidance and word ranges
+ * stay local, keyed by E2C(R2) section number.
+ */
+const PBRER_DRAFTING: Record<string, { guidance: string; targetWords?: [number, number] }> = {
+  '1': { targetWords: [150, 300], guidance: 'Product description, reporting interval, PBRER scope, and structure.' },
+  '2': { targetWords: [200, 400], guidance: 'Table of all approvals, dates, indications, dose forms, and any restrictions.' },
+  '3': { targetWords: [200, 400], guidance: 'All regulatory actions taken globally during the interval (withdrawals, suspensions, modifications, label changes) with rationale.' },
+  '4': { targetWords: [100, 200], guidance: 'Changes to the reference safety information (company core data sheet) during the interval.' },
+  '5': { targetWords: [150, 300], guidance: 'Cumulative and interval exposure estimates by indication, region and dose form, and patterns of use.' },
+  '6': { guidance: 'Reference to cumulative and interval summary tabulations of serious adverse events (MedDRA-coded).' },
+  '7': { targetWords: [300, 600], guidance: 'Significant safety findings from ongoing and completed clinical trials, including long-term extensions and special population studies.' },
+  '8': { targetWords: [150, 300], guidance: 'Signal-relevant data from observational studies, registries and databases.' },
+  '9': { targetWords: [150, 300], guidance: 'Other clinical trial sources and data on abuse, withdrawal, overdose and medication errors.' },
+  '10': { targetWords: [100, 200], guidance: 'New nonclinical findings with clinical safety implications.' },
+  '11': { targetWords: [150, 300], guidance: 'Key publications on safety or benefit-risk that appeared during the interval.' },
+  '16': { targetWords: [400, 800], guidance: 'Evaluation of signals and characterisation of risks: identified and potential risks, and missing information.' },
+  '17': { targetWords: [300, 600], guidance: 'Current evidence for efficacy or effectiveness in the approved indication(s), compared with alternatives and assessed for clinical meaningfulness.' },
+  '18': { targetWords: [400, 800], guidance: 'Structured benefit-risk evaluation weighing all relevant evidence for the approved indications, in context of the intended population. State whether the benefit-risk balance remains favorable.' },
+  '19': { targetWords: [200, 400], guidance: 'Summary conclusions and recommended actions (label update, REMS or RMP modification, additional post-market study, enhanced monitoring).' },
+};
+
+function pbrerOutline() {
+  const outline = getDocumentTemplate('pbrer');
+  if (!outline) throw new Error('The PBRER outline is unavailable.');
+  return outline;
+}
+
+const PBRER_BASIS = pbrerOutline().regulatoryBasis;
+
+function pbrerTemplateSections(): TemplateSection[] {
+  return pbrerOutline().sections.map((s) => ({
+    heading: `${s.number}. ${s.heading}`,
+    required: s.required,
+    guidance: PBRER_DRAFTING[s.number]?.guidance ?? s.purpose,
+    ...(PBRER_DRAFTING[s.number]?.targetWords ? { targetWords: PBRER_DRAFTING[s.number].targetWords } : {}),
+  }));
+}
 
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
 
@@ -165,27 +367,31 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       { heading: '2.5.3 Overview of Clinical Pharmacology', required: true, code: '2.5.3', targetWords: [300, 600], guidance: 'PK characterization (dose-proportionality, accumulation, variability), PD, DDI, special populations, PK/PD relationships supporting the proposed dose and label.' },
       { heading: '2.5.4 Overview of Efficacy', required: true, code: '2.5.4', targetWords: [600, 1200], guidance: 'Pivotal trial results with confidence intervals and p-values, primary and key secondary endpoints, subgroup consistency, clinical meaningfulness, and comparison to active comparators if applicable.' },
       { heading: '2.5.5 Overview of Safety', required: true, code: '2.5.5', targetWords: [600, 1200], guidance: 'Overall exposure dataset, adverse events by severity/relatedness, deaths, serious AEs, discontinuations, lab abnormalities, vital signs, special population safety, and identified safety signals.' },
-      { heading: '2.5.6 Summary of Benefits and Risks', required: true, code: '2.5.6', targetWords: [400, 800], guidance: 'Integrated benefit-risk assessment. Explicitly weigh efficacy benefits against identified risks for the proposed indication and population. Address uncertainties and how they are managed.' },
+      { heading: '2.5.6 Benefits and Risks Conclusions', required: true, code: '2.5.6', targetWords: [400, 800], guidance: 'Integrated benefit-risk assessment. Explicitly weigh efficacy benefits against identified risks for the proposed indication and population. Address uncertainties and how they are managed.' },
       { heading: '2.5.7 Literature References', required: false, code: '2.5.7', targetWords: [50, 100], guidance: 'Key published literature cited in this overview.' },
     ],
   },
 
-  ctd_2_7_4_efficacy_summary: {
-    id: 'ctd_2_7_4_efficacy_summary',
-    displayName: 'Clinical Efficacy Summary (2.7.4)',
+  // ICH M4E numbers the clinical summaries 2.7.3 efficacy, 2.7.4 safety, 2.7.5
+  // literature references. These two templates were filed one section late
+  // (2.7.4 efficacy, 2.7.5 safety) until 2026-10-04, so "section 2.7.4"
+  // fetched the efficacy template (tests/regulatory/ana-ctd-section-truth.test.ts).
+  ctd_2_7_3_efficacy_summary: {
+    id: 'ctd_2_7_3_efficacy_summary',
+    displayName: 'Summary of Clinical Efficacy (2.7.3)',
     chipLabel: 'Clinical Efficacy Summary',
-    primaryCode: '2.7.4',
+    primaryCode: '2.7.3',
     authority: 'ICH',
     submissionFamily: 'NDA/BLA/MAA',
     detectionPatterns: [
       /\b(?:clinical\s+)?efficacy\s+summary\b/i,
-      /\bsection\s+2\.7\.4\b/i,
-      /\bctd\s+2\.7\.4\b/i,
-      /\bmodule\s+2\.7\.4\b/i,
+      /\bsection\s+2\.7\.3\b/i,
+      /\bctd\s+2\.7\.3\b/i,
+      /\bmodule\s+2\.7\.3\b/i,
       /\bsummary\s+of\s+(?:clinical\s+)?efficacy\b/i,
     ],
     minConfidence: 0.6,
-    draftingInstructions: 'Draft an ICH CTD Section 2.7.4 Summary of Clinical Efficacy. Cover all studies that contribute to the efficacy claim. For each pivotal study, include: design, population, primary/key secondary results (with CIs and p-values), consistency across subgroups, and comparison to relevant standards of care. Conclusions must align with the proposed indication in Section 2.5.',
+    draftingInstructions: 'Draft an ICH CTD Section 2.7.3 Summary of Clinical Efficacy. Cover all studies that contribute to the efficacy claim. For each pivotal study, include: design, population, primary/key secondary results (with CIs and p-values), consistency across subgroups, and comparison to relevant standards of care. Section 2.7.3 summarises; the integrated analyses themselves (the ISE, 21 CFR 314.50(d)(5)(v)) are filed in 5.3.5.3 and cross-referenced. Conclusions must align with the Overview of Efficacy in Section 2.5.4.',
     regulatoryReferences: ['ICH M4E(R2)', 'ICH E9(R1) (estimands)', 'ICH E17 (multi-regional trials)'],
     sections: [
       { heading: 'Background and Overview of Clinical Efficacy Studies', required: true, targetWords: [200, 400], guidance: 'List of clinical studies providing efficacy data, organized by study type (dose-finding, pivotal, supportive).' },
@@ -197,24 +403,24 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
   },
 
-  ctd_2_7_5_safety_summary: {
-    id: 'ctd_2_7_5_safety_summary',
-    displayName: 'Clinical Safety Summary (2.7.5)',
+  ctd_2_7_4_safety_summary: {
+    id: 'ctd_2_7_4_safety_summary',
+    displayName: 'Summary of Clinical Safety (2.7.4)',
     chipLabel: 'Clinical Safety Summary',
-    primaryCode: '2.7.5',
+    primaryCode: '2.7.4',
     authority: 'ICH',
     submissionFamily: 'NDA/BLA/MAA',
     detectionPatterns: [
       /\b(?:clinical\s+)?safety\s+summary\b/i,
-      /\bsection\s+2\.7\.5\b/i,
-      /\bctd\s+2\.7\.5\b/i,
-      /\bmodule\s+2\.7\.5\b/i,
+      /\bsection\s+2\.7\.4\b/i,
+      /\bctd\s+2\.7\.4\b/i,
+      /\bmodule\s+2\.7\.4\b/i,
       /\bsummary\s+of\s+(?:clinical\s+)?safety\b/i,
       /\baggregate\s+safety\b/i,
     ],
     minConfidence: 0.6,
-    draftingInstructions: 'Draft an ICH CTD Section 2.7.5 Summary of Clinical Safety. Aggregate safety data from all clinical studies. Present data as overall exposure → AEs → deaths → serious AEs → discontinuations → lab abnormalities → vital signs → special populations → identified safety signals → benefit-risk. Use ICH E2E-consistent MedDRA terminology.',
-    regulatoryReferences: ['ICH M4E(R2)', 'ICH E2E (pharmacovigilance)', 'ICH E2C(R2) (PSUR)', 'MedDRA coding'],
+    draftingInstructions: 'Draft an ICH CTD Section 2.7.4 Summary of Clinical Safety. Aggregate safety data from all clinical studies. Present data as overall exposure → AEs → deaths → serious AEs → discontinuations → lab abnormalities → vital signs → special populations → identified safety signals. Section 2.7.4 summarises; the integrated analyses themselves (the ISS, 21 CFR 314.50(d)(5)(vi)) are filed in 5.3.5.3 and cross-referenced, and the benefit-risk weighing belongs in 2.5.6. Code events in MedDRA, one MedDRA version across every pooled study.',
+    regulatoryReferences: ['ICH M4E(R2)', 'ICH E1 (extent of population exposure)', 'ICH E2A (clinical safety data management)', 'MedDRA (ICH M1)'],
     sections: [
       { heading: 'Exposure to the Drug', required: true, targetWords: [200, 400], guidance: 'Overall safety database: total subjects exposed, exposure duration, dose groups, special populations. Comparison of safety population to efficacy population.' },
       { heading: 'Adverse Events', required: true, targetWords: [600, 1200], guidance: 'Overall incidence of AEs, deaths, SAEs, and discontinuations due to AEs. Common AEs (≥X%) by MedDRA SOC and PT. Dose-response and dose-duration relationships. Relationship to treatment.' },
@@ -246,17 +452,8 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
     minConfidence: 0.65,
     draftingInstructions: "Draft an ICH E6(R3)-compliant Investigator's Brochure. This document is provided to investigators to enable informed decisions about clinical trial participation. Include all relevant preclinical and clinical data, clearly labeling what is known vs. investigational. Follow the ICH E6(R3) template structure. Write for a clinically trained audience who may be unfamiliar with this compound.",
-    regulatoryReferences: ['ICH E6(R3) (GCP)', 'ICH M4S / M4E (nonclinical / clinical sections)', '21 CFR 312.23(a)(5)'],
-    sections: [
-      { heading: 'Table of Contents', required: true, guidance: 'Complete TOC with section numbers and page numbers.' },
-      { heading: '1. Summary', required: true, targetWords: [300, 600], guidance: 'Brief summary of the compound: pharmacological class, proposed indication, key nonclinical and clinical findings, and guidance to the investigator.' },
-      { heading: '2. Introduction', required: true, targetWords: [200, 400], guidance: 'Chemical name, INN/USAN, mechanism of action, therapeutic rationale, and overview of current development stage.' },
-      { heading: '3. Physical, Chemical, and Pharmaceutical Properties', required: true, targetWords: [200, 400], guidance: 'Physicochemical properties, formulations used in clinical trials, storage conditions, and handling precautions.' },
-      { heading: '4. Nonclinical Studies', required: true, targetWords: [800, 1500], guidance: 'Key nonclinical findings relevant to human safety and clinical monitoring: pharmacology (primary and safety pharmacology), ADME, and toxicology (repeat-dose, genotoxicity, reproductive, carcinogenicity if available). Express safety margins in multiples of clinical exposure.' },
-      { heading: '5. Effects in Humans', required: true, targetWords: [600, 1200], guidance: 'All available human data: PK/PD from phase 1 studies, efficacy signals from phase 2, safety data. If phase 3 data are available, include key findings. Integrate nonclinical-to-clinical PK correlations.' },
-      { heading: '6. Summary of Data and Guidance for the Investigator', required: true, targetWords: [300, 600], guidance: 'Overall benefit-risk assessment at the current stage of development. Specific guidance on monitoring, dose modifications, and management of anticipated adverse events.' },
-      { heading: 'References', required: true, guidance: 'Comprehensive reference list. All nonclinical and clinical study reports referenced should be available as IND appendices.' },
-    ],
+    regulatoryReferences: [IB_OUTLINE_BASIS, 'ICH M4S / M4E (nonclinical / clinical sections)', '21 CFR 312.23(a)(5)'],
+    sections: ibTemplateSections(),
   },
 
   ind_phase1_protocol: {
@@ -274,19 +471,8 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
     minConfidence: 0.65,
     draftingInstructions: 'Draft an FDA-compliant Phase 1 clinical trial protocol per ICH E6(R3) and FDA guidance. The protocol must be self-contained: a reviewer with no other knowledge should be able to understand the science, patient safety, and operational plan from this document alone. Include statistical rationale for dose escalation and stopping rules.',
-    regulatoryReferences: ['ICH E6(R3) (GCP)', 'ICH E8(R1) (clinical study design)', '21 CFR 312.23 (IND application)', 'FDA Phase 1 Protocol Guidance'],
-    sections: [
-      { heading: '1. Protocol Synopsis', required: true, targetWords: [400, 700], guidance: 'Concise summary: title, design, objectives, endpoints, population, dose range, duration, statistical approach.' },
-      { heading: '2. Introduction and Rationale', required: true, targetWords: [300, 600], guidance: 'Disease background, unmet need, mechanism of action, nonclinical support for clinical development, and rationale for the chosen dose, schedule, and route.' },
-      { heading: '3. Objectives and Endpoints', required: true, targetWords: [200, 400], guidance: 'Primary objective (typically safety/tolerability/MTD/RP2D), secondary objectives (PK, PD, preliminary efficacy). Endpoints must be operationally defined and measurable.' },
-      { heading: '4. Study Design', required: true, targetWords: [300, 600], guidance: 'Phase (1, open-label, first-in-human), design type (3+3, mTPI, BOIN, or other), dose levels, escalation rules, schedule, DLT window, and expansion cohorts if applicable.' },
-      { heading: '5. Selection of Subjects', required: true, targetWords: [300, 600], guidance: 'Inclusion criteria (disease, ECOG/Karnofsky, organ function), exclusion criteria (concurrent drugs, organ dysfunction, prior therapy). Justify each criterion.' },
-      { heading: '6. Treatment Plan', required: true, targetWords: [300, 600], guidance: 'Dose administration, formulation, pre-medications, dose modifications, and stopping rules. De-escalation and re-escalation criteria. Duration of treatment and off-treatment follow-up.' },
-      { heading: '7. Assessments', required: true, targetWords: [300, 600], guidance: 'Safety assessments (AE monitoring, DLT definitions, laboratory, ECG, vitals). PK sampling schedule. PD and biomarker assessments. Efficacy assessments if applicable.' },
-      { heading: '8. Statistical Considerations', required: true, targetWords: [200, 400], guidance: 'Study size justification, DLT/MTD determination method, PK and PD analysis plan, handling of missing data.' },
-      { heading: '9. Regulatory, Ethical, and Administrative Information', required: true, targetWords: [150, 300], guidance: 'IRB/IEC requirements, informed consent process, sponsor/investigator responsibilities, data monitoring, protocol amendments, safety reporting timelines (SUSAR: 7/15 day).' },
-      { heading: '10. References', required: true, guidance: 'Key literature supporting scientific rationale and study design.' },
-    ],
+    regulatoryReferences: [ICH_M11_PROTOCOL_BASIS.ref, 'ICH E6(R3) Appendix B', 'ICH E8(R1) (clinical study design)', '21 CFR 312.23 (IND application)'],
+    sections: m11TemplateSections(),
   },
 
   // ── CMC Module 3 ──────────────────────────────────────────────────────────
@@ -421,23 +607,11 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       /\bwrite\s+(?:a\s+)?clinical\s+study\s+report\b/i,
     ],
     minConfidence: 0.65,
-    draftingInstructions: 'Draft a Clinical Study Report (CSR) per ICH E3 guidelines. The CSR must be comprehensive: a self-contained document enabling a regulatory agency to independently evaluate the trial\'s conduct, results, and reliability without reference to the protocol or other documents. Follow ICH E3 section numbering exactly.',
+    draftingInstructions: 'Draft a Clinical Study Report (CSR) per ICH E3: one integrated report of the study\'s clinical and statistical description, presentations and analyses, which a reviewer can evaluate on its own, with the protocol, the statistical methods and the patient listings in its appendices. Keep E3\'s headings and order where they fit and adapt them where the study calls for it, saying so (ICH E3 Q&A (R1): E3 is a guideline, not a template). Every number comes from the section 14 outputs and the analysis datasets; where a value is not yet available, leave a clearly marked placeholder rather than a figure.',
     regulatoryReferences: ['ICH E3 (Structure and Content of CSRs)', 'ICH E6(R3) (GCP)', 'ICH E9(R1) (statistical considerations)', 'ICH E19 (safety data collection optimization)'],
-    sections: [
-      { heading: '1. Title Page', required: true, guidance: 'Protocol title, study code, phase, drug name, indication, investigators, dates, sponsor, sponsor reference number.' },
-      { heading: '2. Synopsis', required: true, targetWords: [600, 1200], guidance: 'Concise structured summary of the complete report: objectives, design, patients, efficacy results, safety results, conclusions.' },
-      { heading: '3. Table of Contents', required: true, guidance: 'Complete TOC with page numbers.' },
-      { heading: '4. List of Abbreviations and Definitions of Terms', required: true, guidance: 'All abbreviations and specialized terms used in the report.' },
-      { heading: '5. Ethics', required: true, targetWords: [150, 300], guidance: 'IRB/IEC review and approval, GCP compliance statement, patient consent process.' },
-      { heading: '6. Investigators and Study Administrative Structure', required: true, targetWords: [150, 300], guidance: 'List of investigators, sites, and administrative/coordinating functions.' },
-      { heading: '7. Introduction', required: true, targetWords: [300, 600], guidance: 'Disease background, drug development rationale, nonclinical support for clinical use, prior clinical experience with the compound, and this study\'s objectives within the development program.' },
-      { heading: '8. Study Objectives', required: true, targetWords: [100, 200], guidance: 'Primary and secondary objectives stated precisely as they appear in the protocol.' },
-      { heading: '9. Investigational Plan', required: true, targetWords: [500, 1000], guidance: 'Overall design (phase, type, blinding, allocation), selection of subjects, treatments administered, dosing, assessment schedule, statistical methodology, data quality assurance, protocol deviations.' },
-      { heading: '10. Study Patients', required: true, targetWords: [300, 600], guidance: 'Disposition of all randomized patients (treated, discontinued, completed). Deviations. Demographic and baseline characteristics.' },
-      { heading: '11. Efficacy Evaluation', required: true, targetWords: [800, 1500], guidance: 'Data sets analyzed (ITT, PP, safety). Efficacy results — primary endpoint (with 95% CI and p-value), key secondary endpoints, subgroup analyses, interaction tests. Statistical methods applied.' },
-      { heading: '12. Safety Evaluation', required: true, targetWords: [600, 1200], guidance: 'Exposure, AEs (all grades and ≥Grade 3 by MedDRA SOC/PT), deaths, SAEs, discontinuations. Laboratory, vital signs, ECG. Clinical assessment of safety signals.' },
-      { heading: '13. Discussion and Conclusions', required: true, targetWords: [400, 800], guidance: 'Integrated interpretation of efficacy and safety. Context vs. prior results and standard of care. What the study establishes, what remains uncertain, and implications for the development program.' },
-    ],
+    // ICH E3 §1–§16, read from the overlay (ind/ctd/csr-e3-guidance.ts). This was
+    // a hand-kept §1–§13, with demographics under §10 (E3: §11.2).
+    sections: e3TopLevel().map(e3TemplateSection),
   },
 
   // ── FDA Safety ────────────────────────────────────────────────────────────
@@ -448,63 +622,97 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     chipLabel: 'DSUR',
     authority: 'ICH',
     submissionFamily: 'IND/CTA',
+    // An IND annual report is its own lifecycle entry (ind_annual_report), not
+    // a DSUR. The pattern that once named it here held a form feed (\f) and
+    // never matched; it is deleted, not redirected.
     detectionPatterns: [
       /\bdsur\b/i,
       /\bdevelopment\s+safety\s+update\s+(?:report|annual)\b/i,
       /\bannual\s+(?:safety\s+)?report\s+(?:to\s+fda|for\s+ind)\b/i,
-      /\find\s+annual\s+report\b/i,
     ],
     minConfidence: 0.70,
-    draftingInstructions: 'Draft an ICH E2F Development Safety Update Report (DSUR). This annual report is submitted to health authorities to summarize all safety data collected on the investigational product during the reporting period. Follow the ICH E2F structure exactly. Include a benefit-risk evaluation for the current stage of development.',
+    draftingInstructions: 'Draft an ICH E2F Development Safety Update Report (DSUR): the annual review and evaluation of safety information on the investigational drug across the development programme for the reporting period ending at the data lock point. Use the E2F headings and numbering below; where a section has nothing to report, keep the heading and say so. Section 19 is the cumulative Summary of Important Risks; Section 20 states the conclusions. In the US a DSUR may serve the 21 CFR 312.33 annual report, with the US IND items in the region-specific appendices (Section 16).',
     regulatoryReferences: ['ICH E2F (DSUR guidance)', '21 CFR 312.33 (IND annual reports)', 'FDA Safety Reporting Guidance (2012)'],
-    sections: [
-      { heading: 'Title Page', required: true, guidance: 'Product name, INN, reporting period, data lock point, sponsor name/address, DAN number.' },
-      { heading: '1. Introduction', required: true, targetWords: [150, 300], guidance: 'Overview of the investigational product, reporting period, and structure of this DSUR.' },
-      { heading: '2. Worldwide Marketing Approval Status', required: true, targetWords: [100, 200], guidance: 'List of countries where the product is approved and any significant labeling changes during the period.' },
-      { heading: '3. Actions Taken for Safety Reasons', required: true, targetWords: [200, 400], guidance: 'Significant actions taken during the reporting period (clinical holds, protocol amendments for safety, labeling revisions, product withdrawals).' },
-      { heading: '4. Changes to Reference Safety Information', required: true, targetWords: [100, 200], guidance: 'Changes to the IB or reference safety document that occurred during the reporting period.' },
-      { heading: '5. Clinical Study/Trial Patient Exposure', required: true, targetWords: [200, 400], guidance: 'Summary of patient exposure in all ongoing and completed clinical studies during the period.' },
-      { heading: '6. Data in Line Listings and Summary Tabulations', required: true, targetWords: [100, 200], guidance: 'Reference to appended line listings and summary tables of SAEs, SUSARs, non-serious events.' },
-      { heading: '7. Significant Findings from Clinical Studies', required: true, targetWords: [300, 600], guidance: 'Summary of significant efficacy and safety findings, any new safety signals identified, and new information from ongoing studies that may affect the benefit-risk profile.' },
-      { heading: '8. Safety Findings from Non-Interventional Studies', required: false, targetWords: [100, 200], guidance: 'Relevant safety data from observational studies, registries, or real-world evidence if applicable.' },
-      { heading: '9. Information from Other Clinical Trials/Studies', required: false, targetWords: [100, 200], guidance: 'Safety data from related studies (different indications, combinations, or related compounds).' },
-      { heading: '10. Non-Clinical Data', required: true, targetWords: [150, 300], guidance: 'Summary of new nonclinical safety findings from studies completed during the reporting period.' },
-      { heading: '11. Literature', required: true, targetWords: [100, 200], guidance: 'Summary of published literature relevant to drug safety during the period.' },
-      { heading: '12. Summary of Significant Risks', required: true, targetWords: [200, 400], guidance: 'Cumulative list of identified risks (labeled and unlabeled) and risks under investigation.' },
-      { heading: '13. Overall Safety Evaluation', required: true, targetWords: [300, 600], guidance: 'Integrated benefit-risk evaluation for the current stage of development, including new information, changes in the benefit-risk profile, and adequacy of current risk minimization measures.' },
-      { heading: '14. Conclusions', required: true, targetWords: [100, 200], guidance: 'Key conclusions regarding subject safety during the reporting period and any recommended actions.' },
-    ],
+    // ICH E2F Title Page–§20 and Appendices, read from lifecycle-document-types
+    // (ICH_E2F_DSUR_SECTIONS). This was a hand-kept 14-heading list, numbered
+    // off by one from §5 and ending "14. Conclusions" (E2F: §20).
+    sections: ICH_E2F_DSUR_SECTIONS.map(e2fTemplateSection),
   },
 
   // ── FDA Meeting Packages ──────────────────────────────────────────────────
 
-  fda_type_b_meeting_package: {
-    id: 'fda_type_b_meeting_package',
-    displayName: 'FDA Type B Meeting Request Package',
-    chipLabel: 'Type B Meeting Package',
+  // Sections are the lifecycle meeting entries' components and deadlines come
+  // from FDA_FORMAL_MEETING_TIMELINES. This was one hand-kept 7-heading
+  // fda_type_b_meeting_package for every meeting: it had no CMC, nonclinical
+  // or clinical-plan section, said the package "accompanies the meeting
+  // request" (Type A, D and INTERACT only), and cited the 2017 draft.
+
+  fda_pre_ind_meeting_package: lifecycleMeetingTemplate('pre_ind_meeting', 'B', {
+    id: 'fda_pre_ind_meeting_package',
+    chipLabel: 'Pre-IND Meeting Package',
+    submissionFamily: 'IND',
+    detectionPatterns: [
+      /\bpre.?ind\s+meeting\b/i,
+      /\bpre.?ind\s+(?:meeting\s+)?(?:package|request|briefing)\b/i,
+    ],
+  }),
+
+  fda_eop_meeting_package: lifecycleMeetingTemplate('end_of_phase_2_meeting', 'B(EOP)', {
+    id: 'fda_eop_meeting_package',
+    chipLabel: 'EOP Meeting Package',
+    submissionFamily: 'IND',
+    // Phase 2 only: an EOP1 meeting is Type B(EOP) only for subpart E/H
+    // products, so EOP1 requests go to fda_formal_meeting_package.
+    detectionPatterns: [
+      /\bend[\s-]+of[\s-]+phase[\s-]*(?:2|ii)\s+meeting\b/i,
+      /\beop2\s+meeting\b/i,
+      /\btype\s*b\s*\(?eop\)?/i,
+      /\bend[\s-]+of[\s-]+phase[\s-]*(?:2|ii)\b.*\bbriefing\b/i,
+      /\bpre[\s-]*phase[\s-]*(?:3|iii)\s+meeting\b/i,
+    ],
+  }),
+
+  fda_pre_nda_meeting_package: lifecycleMeetingTemplate('pre_nda_meeting', 'B', {
+    id: 'fda_pre_nda_meeting_package',
+    chipLabel: 'Pre-NDA Meeting Package',
+    submissionFamily: 'NDA',
+    detectionPatterns: [
+      /\bpre.?nda\s+meeting\b/i,
+      /\bpre.?nda\s+(?:meeting\s+)?(?:package|request|briefing)\b/i,
+    ],
+  }),
+
+  fda_pre_bla_meeting_package: lifecycleMeetingTemplate('pre_bla_meeting', 'B', {
+    id: 'fda_pre_bla_meeting_package',
+    chipLabel: 'Pre-BLA Meeting Package',
+    submissionFamily: 'BLA',
+    detectionPatterns: [
+      /\bpre.?bla\s+meeting\b/i,
+      /\bpre.?bla\s+(?:meeting\s+)?(?:package|request|briefing)\b/i,
+    ],
+  }),
+
+  fda_formal_meeting_package: {
+    id: 'fda_formal_meeting_package',
+    displayName: 'FDA Formal Meeting Package',
+    chipLabel: 'FDA Meeting Package',
     authority: 'FDA',
     submissionFamily: 'IND/NDA/BLA',
     detectionPatterns: [
       /\btype\s*b\s+meeting\s+(?:package|request|briefing)\b/i,
-      /\bend\s+of\s+phase\s*[12]\s+meeting\b/i,
-      /\beop[12]\s+meeting\b/i,
-      /\bpre.?ind\s+meeting\s+(?:package|request)\b/i,
-      /\bpre.?nda\s+meeting\s+(?:package|request)\b/i,
-      /\bpre.?bla\s+meeting\s+(?:package|request)\b/i,
       /\bfda\s+meeting\s+(?:package|briefing\s+document)\b/i,
+      /\bformal\s+meeting\s+(?:package|request|briefing)\b/i,
+      /\bend[\s-]+of[\s-]+phase[\s-]*(?:1|i)\s+meeting\b/i,
+      /\beop1\s+meeting\b/i,
     ],
     minConfidence: 0.70,
-    draftingInstructions: "Draft an FDA Type B Meeting Request Package per FDA's Formal Meetings Between FDA and Sponsors or Applicants of PDUFA Products guidance. This package accompanies the meeting request and must contain enough background that FDA reviewers can engage substantively. Questions must be specific and answerable — do NOT ask open-ended questions.",
-    regulatoryReferences: ["FDA Formal Meetings Guidance (2017)", "21 CFR 312.47 (pre-NDA meetings)", "PDUFA Letter"],
-    sections: [
-      { heading: 'Cover Letter and Meeting Request', required: true, targetWords: [150, 300], guidance: 'Brief letter identifying the meeting type, proposed date, meeting format (in-person/teleconference), and sponsor contact.' },
-      { heading: 'Product Description and Development Status', required: true, targetWords: [200, 400], guidance: 'Drug name, INN, therapeutic class, indication, current phase of development, and IND number.' },
-      { heading: 'Background', required: true, targetWords: [500, 1000], guidance: 'Summary of the nonclinical program, completed clinical studies, and key findings. What has been established and what is still uncertain. This is the key informational section — be comprehensive but focused on what is relevant to the meeting questions.' },
-      { heading: 'Meeting Objectives', required: true, targetWords: [100, 200], guidance: 'One paragraph: what the sponsor hopes to achieve in the meeting. Not the questions themselves.' },
-      { heading: 'Specific Questions for FDA', required: true, targetWords: [300, 600], guidance: 'Numbered list of specific, answerable questions. Each question should: (1) provide brief background context, (2) state the sponsor\'s position or proposed approach, and (3) ask a specific yes/no or constrained question. Do NOT ask "Is our program adequate?" — ask "Does FDA agree that Study XYZ is adequate to support the proposed indication?"' },
-      { heading: 'Proposed Agenda', required: true, targetWords: [100, 200], guidance: 'Draft agenda for the meeting with time allocation per topic.' },
-      { heading: 'Proposed Attendee List', required: true, targetWords: [80, 150], guidance: 'Sponsor attendees by name and role. Request FDA attendees by division and discipline.' },
-    ],
+    draftingInstructions: `Draft an FDA formal-meeting package per ${FDA_FORMAL_MEETINGS_GUIDANCE}. Name the meeting type first, because the deadline follows from it. ${meetingDeadlineTable()} An End-of-Phase 1 meeting is Type B(EOP) only for a product under 21 CFR 312 subpart E or 21 CFR 314 subpart H; otherwise it is Type B. The sections below are the ones every FDA formal-meeting package carries; add the discipline summaries (CMC, nonclinical, clinical) the meeting's questions need. ${MEETING_QUESTION_RULE}`,
+    regulatoryReferences: [FDA_FORMAL_MEETINGS_GUIDANCE, '21 CFR 312.47 (meetings)', 'PDUFA VII commitment letter (meeting management goals)'],
+    // The meeting-type-neutral core (lifecycle-document-types.ts
+    // FDA_MEETING_PACKAGE_CORE). Until 2026-10-05 these were the pre-IND
+    // entry's components, which called every request a "Formal Type B
+    // meeting request" (follow-up F17).
+    sections: FDA_MEETING_PACKAGE_CORE.map(lifecycleTemplateSection),
   },
 
   // ── Post-Market Safety ────────────────────────────────────────────────────
@@ -523,25 +731,8 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
     minConfidence: 0.70,
     draftingInstructions: 'Draft a Periodic Benefit-Risk Evaluation Report (PBRER) per ICH E2C(R2). This report is submitted to health authorities at defined intervals post-approval to evaluate the evolving benefit-risk profile. The benefit-risk conclusion must be evidence-based and clearly communicated.',
-    regulatoryReferences: ['ICH E2C(R2) (PBRER/PSUR)', 'EMA PSUR guidance', 'FDA PADER requirements (21 CFR 314.81(b)(2))'],
-    sections: [
-      { heading: '1. Introduction', required: true, targetWords: [150, 300], guidance: 'Product description, reporting interval, PBRER scope, and structure.' },
-      { heading: '2. Worldwide Marketing Approval Status', required: true, targetWords: [200, 400], guidance: 'Table of all approvals, dates, indications, dose forms, and any restrictions.' },
-      { heading: '3. Actions Taken for Safety Reasons', required: true, targetWords: [200, 400], guidance: 'All regulatory actions taken globally during the interval (withdrawals, suspensions, modifications, label changes) with rationale.' },
-      { heading: '4. Changes to Reference Product Information', required: true, targetWords: [100, 200], guidance: 'Changes to the SmPC/USPI/core data sheet that occurred during the period.' },
-      { heading: '5. Estimated Patient Exposure', required: true, targetWords: [150, 300], guidance: 'Cumulative and interval patient exposure estimates by indication, region, and dose form.' },
-      { heading: '6. Data in Line Listings and Summary Tabulations', required: true, guidance: 'Reference to cumulative and interval line listings. MedDRA-coded SAEs.' },
-      { heading: '7. Summaries of Significant Safety Findings from Clinical Studies', required: true, targetWords: [300, 600], guidance: 'Significant safety findings from ongoing/completed clinical studies, including long-term extensions and special population studies.' },
-      { heading: '8. Findings from Non-Interventional Studies', required: false, targetWords: [150, 300], guidance: 'Signal-relevant data from observational studies, registries, and databases.' },
-      { heading: '9. Information from Other Clinical Trials/Sources', required: false, targetWords: [150, 300], guidance: 'Abuse, withdrawal, overdose data; medication errors; reports from related compounds.' },
-      { heading: '10. Non-Clinical Data', required: true, targetWords: [100, 200], guidance: 'New nonclinical findings with clinical safety implications.' },
-      { heading: '11. Literature', required: true, targetWords: [150, 300], guidance: 'Key publications on safety/benefit-risk that appeared during the interval.' },
-      { heading: '12. Other PBRER Information', required: false, targetWords: [100, 200], guidance: 'Pharmacogenomics, late-breaking information, etc.' },
-      { heading: '13. Characterization of Risks', required: true, targetWords: [400, 800], guidance: 'Summary of the risk profile: identified risks (labeled and unlabeled), risks under investigation, missing information. Apply CIOMS categories.' },
-      { heading: '14. Benefit Evaluation', required: true, targetWords: [300, 600], guidance: 'Current evidence for efficacy/effectiveness in the approved indication(s). Compare to alternatives. Assess clinical meaningfulness.' },
-      { heading: '15. Integrated Benefit-Risk Analysis', required: true, targetWords: [400, 800], guidance: 'Structured benefit-risk evaluation weighing all relevant evidence. Contextualize for the intended patient population. State whether the benefit-risk balance remains favorable.' },
-      { heading: '16. Conclusions and Actions', required: true, targetWords: [200, 400], guidance: 'Summary conclusions. Recommended actions (label update, REMS modification, additional post-market study, enhanced monitoring). Risk management plan updates.' },
-    ],
+    regulatoryReferences: [PBRER_BASIS, 'EMA PSUR guidance', 'FDA PADER requirements (21 CFR 314.81(b)(2))'],
+    sections: pbrerTemplateSections(),
   },
 
   // ── Safety Narrative ──────────────────────────────────────────────────────
@@ -550,26 +741,33 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     id: 'safety_narrative',
     displayName: 'Serious Adverse Event Safety Narrative',
     chipLabel: 'SAE Narrative',
+    primaryCode: 'E3 12.3.2',
     authority: 'ICH',
     submissionFamily: 'IND/NDA/BLA',
     detectionPatterns: [
       /\bsafety\s+narrative\b/i,
       /\bsae\s+narrative\b/i,
       /\badverse\s+event\s+narrative\b/i,
-      /\bcasual\s+(?:assessment|narrative)\b/i,
+      // "causal": spelled "casual" until 2026-10-05, so this never matched.
+      /\bcausal\s+(?:assessment|narrative)\b/i,
       /\bindividual\s+patient\s+narrative\b/i,
       /\bwrite\s+(?:a\s+)?(?:patient|case)\s+narrative\b/i,
     ],
     minConfidence: 0.65,
-    draftingInstructions: 'Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.',
-    regulatoryReferences: ['ICH E3 (Section 12, individual patient data)', 'ICH E2A (SAE reporting)', 'MedDRA coding conventions'],
+    // The elements a narrative carries come from the E3 §12.3.2 node; the
+    // sections below are the order they are written in.
+    draftingInstructions: [
+      'Draft a patient-level narrative of a death, other serious adverse event or other significant adverse event, as ICH E3 §12.3.2 describes it. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows. Every element below belongs in the narrative; where the case record does not supply one, leave a placeholder for it.',
+      e3NarrativeElements(),
+    ].join('\n\n'),
+    regulatoryReferences: ['ICH E3 §12.3.2 (narratives; long narratives in §14.3.3)', 'ICH E2A (SAE reporting)', 'MedDRA coding conventions'],
     sections: [
-      { heading: 'Patient Identification and Demographics', required: true, targetWords: [80, 150], guidance: 'Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.' },
-      { heading: 'Study Drug Exposure', required: true, targetWords: [80, 150], guidance: 'Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.' },
-      { heading: 'Event Description', required: true, targetWords: [200, 400], guidance: 'Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).' },
-      { heading: 'Clinical Course and Investigations', required: true, targetWords: [200, 400], guidance: 'Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.' },
-      { heading: 'Causality Assessment', required: true, targetWords: [100, 200], guidance: 'Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.' },
-      { heading: 'Conclusion', required: true, targetWords: [80, 150], guidance: 'One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.' },
+      { heading: 'Patient Identification and Background', required: true, targetWords: [80, 150], guidance: 'The patient before the event: the identification, general clinical condition, disease (with its duration), and previous and concomitant illness and medication elements ICH E3 §12.3.2 lists above.' },
+      { heading: 'Study Drug Exposure', required: true, targetWords: [80, 150], guidance: 'Test drug, dose, start date and duration up to the event, and any dose modifications before it.' },
+      { heading: 'Event Description', required: true, targetWords: [200, 400], guidance: 'The event as recorded: its nature and intensity (NCI CTCAE grade if oncology), the MedDRA term as coded in the study, onset and timing relative to the test drug, and the seriousness criterion met.' },
+      { heading: 'Clinical Course and Investigations', required: true, targetWords: [200, 400], guidance: 'Chronological course from onset to outcome: relevant laboratory measurements, imaging and ECG findings; whether and when the test drug was stopped; countermeasures and clinical management; post-mortem findings for a death. State the outcome as recorded (resolved, resolving, not resolved, fatal) and time to resolution if resolved.' },
+      { heading: 'Causality Assessment', required: true, targetWords: [100, 200], guidance: 'The investigator\'s opinion on causality and, where one was made, the sponsor\'s, each stated as recorded, in the causality categories the protocol defines, with the rationale each gives. Where they differ, give both. Do not restate an assessment on a scale the study did not use. Include de-challenge and re-challenge where recorded.' },
+      { heading: 'Conclusion', required: true, targetWords: [80, 150], guidance: 'One-paragraph synthesis: the event, its relationship to the test drug as the investigator and the sponsor assessed it, and the outcome. What action was taken and what follow-up is planned.' },
     ],
   },
 
@@ -580,7 +778,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     displayName: 'FDA Information Request Response',
     chipLabel: 'IR Response',
     authority: 'FDA',
-    submissionFamily: 'NDA/BLA/510(k)',
+    submissionFamily: 'NDA/BLA',
     detectionPatterns: [
       /\bfda\s+(?:ir|information\s+request)\s+response\b/i,
       /\binformation\s+request\s+(?:response|reply|letter)\b/i,
@@ -588,10 +786,17 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       /\bdraft\s+(?:an?\s+)?(?:fda\s+)?ir\s+(?:response|letter)\b/i,
     ],
     minConfidence: 0.70,
-    draftingInstructions: 'Draft a formal FDA Information Request (IR) response. This is a regulatory submission — every statement is on the record. Lead with clear, direct answers to each IR question. Provide evidence, cite the relevant sections of the submission, and summarize what action has been taken. Do not hedge. If a question cannot be answered, state so explicitly and propose an alternative path.',
-    regulatoryReferences: ['21 CFR 314.100–314.110 (review timelines)', 'FDA MAPP for review staff', 'FDA Complete Response Letter Guidance'],
+    draftingInstructions: 'Draft a formal FDA Information Request (IR) response. This is a regulatory submission — every statement is on the record. Lead with clear, direct answers to each IR question. Provide evidence, cite the relevant sections of the submission, and summarize what action has been taken. Do not hedge. If a question cannot be answered, state so explicitly and propose an alternative path. The response is an amendment to the pending application (21 CFR 314.60 for an NDA). A 510(k) Additional Information request is a different procedure and is not covered by this template.',
+    // Until 2026-10-05 this cited 21 CFR 314.100–314.110 (review timelines) and
+    // FDA's complete-response-letter guidance, neither of which governs a reply
+    // to an IR, and claimed 510(k) on the same basis
+    // (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-post-filing-citation-facts-facts.md).
+    regulatoryReferences: [
+      '21 CFR 314.60 — amendment to an unapproved NDA: a major amendment filed within 3 months of the end of the review cycle extends that cycle by 3 months, or FDA may instead defer review of the amendment to the next cycle; a cycle is extended only once for a major amendment',
+      'BLA: the reply is an amendment to the pending BLA; no 21 CFR Part 601 provision for it is encoded here (recall, not checked against regulator text)',
+    ],
     sections: [
-      { heading: 'Cover Letter', required: true, targetWords: [150, 300], guidance: 'Reference the FDA IR letter (date, reference number), the submission (NDA/BLA/510(k) number), and briefly state the purpose of this response.' },
+      { heading: 'Cover Letter', required: true, targetWords: [150, 300], guidance: 'Reference the FDA IR letter (date, reference number), the application (NDA or BLA number), and briefly state the purpose of this response.' },
       { heading: 'Response to Question [1]', required: true, targetWords: [300, 600], guidance: 'Quote the FDA question verbatim. Then provide a direct answer in the first sentence. Support with data, analysis, or citation to submission sections. If new data is provided, include it as a labeled appendix.' },
       { heading: 'Response to Question [2]', required: false, targetWords: [300, 600], guidance: 'Repeat structure for each additional question. Each question should stand alone — do not cross-reference previous answers without explanation.' },
       { heading: 'Summary of Actions Taken', required: true, targetWords: [150, 300], guidance: 'List all amendments to the submission triggered by this IR. Reference the section/module and the nature of the change (new data added, label revised, module updated).' },
@@ -701,11 +906,13 @@ export function buildDocumentTemplateBlock(detected: DetectedDocumentTemplate): 
 
   lines.push('### REQUIRED DOCUMENT STRUCTURE');
   lines.push('');
-  lines.push('You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present. Optional sections should be included when relevant data exists.');
-  lines.push('');
-
   const required = template.sections.filter(s => s.required);
   const optional = template.sections.filter(s => !s.required);
+
+  // The optional-sections sentence only where the template has any: a DSUR
+  // (E2F) has none, and told the model otherwise until 2026-10-05.
+  lines.push(`You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.${optional.length > 0 ? ' Optional sections should be included when relevant data exists.' : ''}`);
+  lines.push('');
 
   lines.push('**Required sections:**');
   for (const section of required) {

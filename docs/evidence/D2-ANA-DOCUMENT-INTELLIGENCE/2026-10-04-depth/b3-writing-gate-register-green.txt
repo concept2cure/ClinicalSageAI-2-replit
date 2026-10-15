@@ -1,0 +1,59 @@
+# b3-writing-gate-register — green, after review round 3 (2026-10-05)
+
+## New test + existing gate and screener tests
+$ npx vitest run server/services/ana/__tests__/writing-gate-regulatory-register.test.ts server/services/ana/__tests__/writing-precision-gate.test.ts server/services/ana/__tests__/promotional-screening.test.ts
+ Test Files  3 passed (3)
+      Tests  140 passed (140)
+
+## Round-3 fixes (the 14 red in b3-writing-gate-register-fix3-red.txt), now
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > AE outcome with a time point gives no claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > AE outcome at clause end gives no claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the IRB, then by FDA.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Steering Committee and then by FDA.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor's target date of 2027.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor-requested action date.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor (FDA) next year.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients completed treatment with no relapse. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and improved. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and benefited. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and none relapsed. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X completely resolved the disease. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Treatment with drug X completely resolved the infection. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X resolved completely the symptoms of psoriasis. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X completely resolved psoriasis in the majority of patients. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The infection was completely resolved by drug X. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients completed treatment with no relapse. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and improved. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and benefited. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and none relapsed. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X completely resolved the disease. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Treatment with drug X completely resolved the infection. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X resolved completely the symptoms of psoriasis. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X completely resolved psoriasis in the majority of patients. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The infection was completely resolved by drug X. keeps a high claims finding
+
+## Round-2 fixes (the 14 red in b3-writing-gate-register-fix2-red.txt), still green
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The protocol will be approved by the IRB and submitted to FDA with the IND.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the end of 2027.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by Q3 2027.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: We expect that drug X will be approved by year-end.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Food and Drug Administration in 2027.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by MHLW in Japan.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Ministry of Health, Labour and Welfare.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by CDER.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by Swissmedic.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The Food and Drug Administration will approve drug X.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: MHLW will approve drug X next year.
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: These results continue to demonstrate that drug X is superior to standard of care. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients completed treatment without relapse. keeps a high claims finding
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients in the study were treated successfully. keeps a high claims finding
+
+## Every test file that references AnaToolExecutor, AnaToolDefinitions, promotional-screening, writing-precision-gate or writingQualityTools
+$ npx vitest run $(grep -rlE 'AnaToolExecutor|AnaToolDefinitions|promotional-screening|writing-precision-gate|writingQualityTools' --include=*.test.ts --include=*.test.tsx --include=*.spec.ts server tests client shared scripts)  # 157 files
+ Test Files  156 passed | 1 skipped (157)
+      Tests  2892 passed | 2 skipped (2894)
+
+## eslint
+$ npx eslint server/services/ana/promotional-screening.ts server/services/ana/writing-precision-gate.ts server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+(no output, exit 0)
+ratchet (--since origin/concept2cure-v2 --gate): net +10, all in other lanes' files (notification_routes, lineage-dossier, register-advanced-platform-routes, gateway, module3Composer); none of this step's files appear.

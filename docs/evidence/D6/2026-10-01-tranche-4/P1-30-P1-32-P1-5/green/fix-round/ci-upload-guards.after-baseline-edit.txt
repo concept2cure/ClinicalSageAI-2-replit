@@ -1,0 +1,22 @@
+# 2026-10-01T07:25:11Z. Both against the hand-edited scripts/ci/upload-guards-baseline.json (authoring.router.ts and chat.ts entries removed; vault-ingest.ts kept).
+
+## 1. npm run -s ci:upload-guards on the working tree
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 19 file(s) build uploads.
+exit=0
+
+## 2. The same mutant as red/fix-round/ci-upload-guards.stale-baseline-absorbs-regression.txt (one bare multer appended to each of
+##    authoring.router.ts and chat.ts), now with the edited baseline. Expected: exit 1 naming both files.
+[ci:upload-guards] FAIL — server/routes/authoring.router.ts: 1 unguarded multer site(s), baseline allows 0 — line 7416 lacks limits.fileSize, fileFilter
+[ci:upload-guards] FAIL — server/routes/chat.ts: 1 unguarded multer site(s), baseline allows 0 — line 131 lacks limits.fileSize, fileFilter
+[ci:upload-guards] A multer site needs limits.fileSize, a fileFilter and an assertUploadSafe call in its file (server/middleware/uploadAllowlist.ts, server/middleware/uploadSafety.ts).
+exit=1
+
+## 3. npm run -s ci:upload-guards:selftest
+[ci:upload-guards] selftest caught: bare site is one site lacking all three
+[ci:upload-guards] selftest caught: guarded site lacks nothing
+[ci:upload-guards] selftest caught: comment is not a site; the real site lacks only fileFilter
+[ci:upload-guards] selftest caught: empty baseline: the two unguarded files fail
+[ci:upload-guards] selftest caught: a reasonless baseline entry fails even at its count
+[ci:upload-guards] selftest caught: a file above its baseline count fails
+[ci:upload-guards] selftest 6/6 caught
+exit=0

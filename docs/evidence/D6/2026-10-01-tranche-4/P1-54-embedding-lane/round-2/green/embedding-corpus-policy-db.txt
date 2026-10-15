@@ -1,0 +1,19 @@
+# GREEN, 2026-10-01T16:15:50Z: TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:5432/c2c_testdb APP_DATABASE_URL=postgresql://app_service:***@127.0.0.1:5432/c2c_testdb RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts server/services/__tests__/embedding-corpus-policy.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T16:15:53.682Z","pid":5054,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T16:15:53.684Z","pid":5054,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T16:15:53.684Z","pid":5054,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > runs as a role RLS applies to (not the owner, not BYPASSRLS) 1560ms
+ ✓ server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > the platform scope cannot see a Vault chunk: reading it alone would report the Vault clean 13ms
+ ✓ server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > finds organization A's Vault chunk from another model, in organization A's own scope 501ms
+ ✓ server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > finds the platform knowledge entry from another model, in the platform scope 433ms
+ ✓ server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > does not count the padded vector the self-hosted lane wrote: organization B's corpus is clean 352ms
+ ✓ server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > and finds organization B as soon as it holds one vector from another model 302ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  16:15:51
+   Duration  3.69s (transform 825ms, setup 81ms, import 37ms, tests 3.24s, environment 0ms)
+

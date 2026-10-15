@@ -1,0 +1,12 @@
+  run "the_database_tier_is_under_customer_managed_keys"... fail
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 1087, in run "the_database_tier_is_under_customer_managed_keys":
+RDS storage (and so its snapshots and backups) must be on a customer-managed
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 1091, in run "the_database_tier_is_under_customer_managed_keys":
+Performance Insights holds query text; it must be on the database's key.
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 1095, in run "the_database_tier_is_under_customer_managed_keys":
+Every secret must be on a customer-managed key, not aws/secretsmanager.
+Error: Invalid function argument
+  on tests/boot_contract.tftest.hcl line 1105, in run "the_database_tier_is_under_customer_managed_keys":

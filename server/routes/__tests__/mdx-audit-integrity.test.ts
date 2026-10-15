@@ -34,7 +34,9 @@ import mdxAuditRouter from '../mdx-audit';
 function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org };
+    // An audit reader: GET /api/mdx/audit answers owners, admins and managers
+    // (DP-18, second door, 2026-10-01; audit-second-doors.test.ts).
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, role: 'admin' };
     next();
   });
   app.use('/api/mdx', mdxAuditRouter);

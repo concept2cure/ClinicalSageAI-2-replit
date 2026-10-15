@@ -70,6 +70,25 @@ vi.mock('../../services/clinical-regulatory-evidence/lineage-gate', async (orig)
   ...(await orig<any>()),
   enforceAuthorLineage: async () => undefined,
 }));
+/* DP-35 (2026-10-01): a freeze is signed — signing authority and the platform
+   re-verification. Both have their own suites (authoring-signing-authority,
+   authoring-sign-ceremony, authoring-governed-delete-signed-freeze); here they
+   pass, so this file keeps proving what it is about: the seal and the filing. */
+vi.mock('../../services/part11/resolve-signer-role.js', () => ({
+  resolveSignerOrgRole: async () => 'approver',
+}));
+vi.mock('../../services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async (plain: string) => plain === 'signer-password',
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    isAccountActive: async () => true,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
+    warn: () => {},
+  }),
+}));
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -117,6 +136,8 @@ beforeAll(async () => {
       ADD COLUMN IF NOT EXISTS metadata JSONB, ADD COLUMN IF NOT EXISTS ectd_module_id INTEGER,
       ADD COLUMN IF NOT EXISTS module_name TEXT, ADD COLUMN IF NOT EXISTS embedding TEXT;
     INSERT INTO organizations (id, name) VALUES (${ORG}, 'Org') ON CONFLICT DO NOTHING;
+    CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+    INSERT INTO users VALUES (3,'Filing reviewer','member@org.test');
   `);
   for (const m of MIGRATIONS) await h.pglite.exec(readFileSync(path.join(ROOT, m), 'utf8'));
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
@@ -142,7 +163,7 @@ const freeze = (docId: string) =>
   request(app)
     .post(`/api/authoring/docs/${docId}/freeze`)
     .set('Authorization', `Bearer ${token()}`)
-    .send({ reason: 'seal for filing' });
+    .send({ reason: 'seal for filing', meaning: 'AUTHOR', password: 'signer-password' });
 
 /** A DRAFT authoring document with one section, frozen through the real router. */
 async function frozenDocument(docId: string, sectionId: string, text: string): Promise<void> {
@@ -161,7 +182,8 @@ async function frozenDocument(docId: string, sectionId: string, text: string): P
 }
 
 const place = (docId: string) =>
-  request(app).post('/api/coauthor/documents').send({ moduleNumber: 'm3.2.p.5', sourceAuthoringDocId: docId });
+  // The stated reason a filing copy now requires (2026-10-08, filing-spine design review).
+  request(app).post('/api/coauthor/documents').send({ moduleNumber: 'm3.2.p.5', sourceAuthoringDocId: docId, changeReason: 'Placing this document into the filing' });
 const applyTemplate = (docId: string) =>
   request(app)
     .post(`/api/authoring/docs/${docId}/apply-template`)

@@ -1,0 +1,60 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run that is not paused passes straight through: no frame, no wait 3ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a run already cancelled reports cancelled, with no frame 1ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then resumed: one paused frame, one resumed frame, both carrying the round and nothing else 2ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then cancelled: cancelled, and no resumed frame 3ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > paused then ended some other way: the turn carries on, with no resumed frame (as the stream did) 3ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > nobody comes back: resumed as abandoned once, at the ceiling, and the resumed frame is sent 144ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > the pause clock starts when the hold is entered, before the first read (as pauseStart did) 10ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > a dropped client stops the run and reports disconnected 1ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'resume' — today's pause, moved unchanged > two separate pauses each get their own clock 232ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > three concurrent callers: one paused frame and one resumed frame 4ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > heldMs is the one interval the run was held, not the sum of every waiter’s 6ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > the abandoned-pause resume runs once however many are waiting 135ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an aborted signal releases its own waiter as cancelled while the others keep waiting 5ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > a waiter whose read was issued before another saw the resume does not announce a second pause 4ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > several waiters share one hold > an announcement rides the paused frame 3ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > ends the held run once, reports expired, aborts expiredSignal, sends one hold_expired frame, and never resumes 136ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > two callers entering 60s apart both return expired by the FIRST caller’s deadline 135ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a caller entering after expiry returns expired at once, without reading the row 135ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > when a Continue wins the race (endHeld writes nothing), it re-reads and carries on 135ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > expiry 'end' — an unanswered hold ends the turn, it never resumes it > a waiter held on its wake is released the moment the hold expires 132ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > the last waiter leaving by its own signal closes the pause, and a later hold starts its own clock 227ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a dropped client closes the pause: held time stops at the disconnect 4ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > one waiter leaving by its signal does NOT close the pause the others are still waiting on 139ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > a wake that rejects is thrown out of the hold, as `await runHandle.wake()` threw out of the checkpoint 5ms
+ ✓ server/services/ana/__tests__/run-hold.test.ts > a waiter that leaves while the run is still paused > expiry 'end': a failed end write is thrown, not read as a Continue; the turn is not expired and the pause closes 139ms
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > releases immediately, cleans its listener, and observes a later query rejection 4ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > also releases during a later read and closes the held-time interval 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > throws the original query error while the signal is live and removes its listener 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale paused result after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale running result after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > cancels one pending reader while another waiter can still resume normally 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > removes read listeners after an uninterrupted status read completes 0ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > Stop between the inner read and its outer consumer > does not consume a settled paused read after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > Stop between the inner read and its outer consumer > does not consume a settled running read after Stop 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending null policy hold when Stop lands 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending auto policy hold when Stop lands 1ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending manual policy hold when Stop lands 2ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > person hold cancelled by outcome does not start another drain 0ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > person hold cancelled by signal does not start another drain 2ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by outcome does not start another drain 2ms
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > a cancelled hold settles before further status or queue reads > manual hold cancelled by signal does not start another drain 1ms
+(node:46) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/turn-run-policy.test.ts > a client that disconnects while AnA holds > the held step does not run, is filed not-run with why, and the hold is kept as disconnected 3ms
+
+ Test Files  3 passed (3)
+      Tests  42 passed (42)
+   Start at  13:57:12
+   Duration  2.47s (transform 152ms, setup 101ms, import 117ms, tests 1.77s, environment 0ms)

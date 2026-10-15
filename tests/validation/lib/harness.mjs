@@ -38,6 +38,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { freshTotp } from './totp.mjs';
+import { resolveRunDate } from '../../../scripts/validation/env-files.mjs';
 
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -48,7 +49,7 @@ function repoRelative(text) {
   return String(text).split(`file://${REPO_ROOT}/`).join('').split(`${REPO_ROOT}/`).join('');
 }
 
-export const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-27';
+export const RUN_DATE = resolveRunDate();
 export const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
 export const CHROMIUM_PATH =
   process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';

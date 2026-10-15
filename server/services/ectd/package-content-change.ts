@@ -27,6 +27,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db, pool } from '../../db';
 import { recordGovernedAction } from '../../routes/c2c/actions';
+import { filedEntryHolding, type FiledSequenceState } from './package-sequence-lifecycle';
 import {
   c2cArtifactSectionMap,
   c2cPackageSections,
@@ -160,6 +161,18 @@ export async function recordPackageGovernedAction(params: {
 /* ─── A sequence was filed ───────────────────────────────────────── */
 
 /**
+ * What recording a filed sequence did. `conflict`: the history already holds
+ * this sequence ON FILE as a DIFFERENT bundle, so nothing was written — two
+ * bundles have gone to the agency under one number and the history cannot say
+ * which one it loaded. `write-failed`: the history could not be written.
+ */
+export type RecordFiledSequenceOutcome =
+  | { outcome: 'recorded' }
+  | { outcome: 'already-recorded' }
+  | { outcome: 'conflict'; filed: { sha256: string; transmittalId: number | null } }
+  | { outcome: 'write-failed' };
+
+/**
  * Append a sequence to the package's FILED history — the record of what this
  * application has actually put on file, which the next sequence diffs against
  * to derive each leaf's lifecycle operation.
@@ -169,17 +182,25 @@ export async function recordPackageGovernedAction(params: {
  * would make the following sequence file `replace` against a version the agency
  * has never seen.
  *
- * Append-only and idempotent on the sequence number: re-recording a sequence
- * already present leaves the history untouched, so a retried post-transmit
- * write cannot double-count a filing. Returns false when the history could not
- * be written — the transmit still happened, and the caller must SAY so rather
- * than let the next sequence silently diff against a stale history.
+ * Append-only and idempotent on (sequence, bundle): re-recording the same
+ * bundle leaves the history untouched, so a retried post-transmit write cannot
+ * double-count a filing. A DIFFERENT bundle under a sequence already on file is
+ * a conflict and writes nothing (2026-10-01, W5/D7, sweep F19: it answered
+ * `true` and kept the first bundle's inventory). An entry the agency rejected
+ * is not on file (isRejectedFiling), so its number takes a new entry beside
+ * it. The caller must SAY anything but recorded / already-recorded: the
+ * transmit still happened, and the next sequence would diff against a history
+ * that does not describe it.
  */
 export async function recordFiledSequence(
   packageDbId: number,
   entry: {
     sequence: string;
     submissionType: string;
+    /** The us-regional identity the backbone declared (FDA; sweep F04). */
+    submissionTypeCode?: string;
+    submissionSubTypeCode?: string;
+    submissionId?: string;
     sha256: string;
     transmittalId?: number | null;
     // leafId + backbone: what a later sequence's modified-file names (W5/D7, 2026-09-29).
@@ -188,23 +209,29 @@ export async function recordFiledSequence(
       leafKey?: string; modifiedFile?: string; leafId?: string; backbone?: string;
     }>;
   },
-): Promise<boolean> {
+): Promise<RecordFiledSequenceOutcome> {
   try {
-    return await withPackageMetadataLock<boolean>(packageDbId, (current) => {
+    return await withPackageMetadataLock<RecordFiledSequenceOutcome>(packageDbId, (current) => {
+      const holder = filedEntryHolding(current.filedSequences, entry.sequence);
+      if (holder) {
+        return {
+          metadata: null,
+          result: holder.sha256 === entry.sha256.toLowerCase()
+            ? { outcome: 'already-recorded' }
+            : { outcome: 'conflict', filed: holder },
+        };
+      }
       const history = Array.isArray(current.filedSequences) ? [...(current.filedSequences as unknown[])] : [];
-      const already = history.some(
-        (h) => !!h && typeof h === 'object' && (h as { sequence?: unknown }).sequence === entry.sequence,
-      );
-      if (already) return { metadata: null, result: true };
-      history.push({ ...entry, filedAt: new Date().toISOString() });
-      return { metadata: { ...current, filedSequences: history }, result: true };
+      const state: FiledSequenceState = 'transmitted';
+      history.push({ ...entry, state, filedAt: new Date().toISOString() });
+      return { metadata: { ...current, filedSequences: history }, result: { outcome: 'recorded' } };
     });
   } catch (e) {
     console.error(
       '[package-content-change] filed-sequence-record-failed',
       { packageDbId, sequence: entry.sequence, message: e instanceof Error ? e.message : String(e) },
     );
-    return false;
+    return { outcome: 'write-failed' };
   }
 }
 

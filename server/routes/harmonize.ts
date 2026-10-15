@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { harmonizeEngine } from '../services/harmonize-engine';
 import { authMiddleware } from '../auth.js';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 
 const router = Router();
 const log = createScopedLogger('harmonize-routes');
@@ -33,9 +34,8 @@ router.post('/check', async (req: Request, res: Response) => {
     }
     const result = await harmonizeEngine.check(parsed.data);
     res.json({ success: true, data: result });
-  } catch (err: any) {
-    log.error(`HARMONIZE check failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err) {
+    serverError(res, log, 'running the harmonization check', err);
   }
 });
 

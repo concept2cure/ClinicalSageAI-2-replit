@@ -18,7 +18,19 @@ vi.mock('../../../db.js', () => ({
 vi.mock('../../audit-trail-ledger.routes.js', () => ({ readRecordAuditHistory }));
 vi.mock('../../../services/tenant/governed-tenant-context.js', () => ({ setTenantContextTx }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization, and every
+   /:documentId on the document being this organization's (read on the request's
+   own connection). Its program reads are answered from seats
+   (support/current-member.ts); an unseated caller is refused as the real gate
+   refuses. */
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import createProjectVaultRoutes from '../project-vault';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const DOC = '22222222-2222-4222-8222-222222222222';
@@ -28,20 +40,35 @@ function app() {
   const a = express();
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3 };
+    // The request's own connection, which the production request scope supplies.
+    (req as unknown as { dbClient: unknown }).dbClient = { query };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
   return a;
 }
 
-const entry = { id: 'AUD-1', event: 'Vault Document Download', actor: 'Dana Reviewer', at: '2026-09-24T10:00:00.000Z', hash: 'h1', prevHash: 'h0', seq: 9 };
+const entry = { id: 'AUD-1', event: 'Vault Document Download', actor: 'Dana Reviewer', at: '2026-09-24T10:00:00.000Z', hash: 'h1', prevHash: 'h0', seq: 9, target: `vault_document:${DOC}` };
+const V0 = '33333333-3333-4333-8333-333333333333';
+/** The version family read (VR-09): this document at 2.0, and its predecessor. */
+const familyRows = [
+  { id: DOC, version: '2.0', created_at: '2026-09-24T09:00:00.000Z', current: true, link: 'verified' },
+  { id: V0, version: '1.0', created_at: '2026-09-23T09:00:00.000Z', current: false, link: 'none' },
+];
 const verdict = { store: 'audit_logs', ok: true, rowsChecked: 3, legacyRows: 0, sequencedRows: 3 };
+
+/** The document row as vault.documents holds it: it names its organization. */
+const docRow = { id: DOC, organization_id: 7 };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearSeats();
+  seatMember(7, 3, 'member');
+  seatProgram(7, PROGRAM);
   query.mockImplementation(async (sql: string) =>
-    /FROM regulatory_programs/.test(sql) && !/vault\.documents/.test(sql) ? { rows: [{ id: PROGRAM }] }
-    : /FROM vault\.documents/.test(sql) ? { rows: [{ id: DOC }] }
+    /WITH RECURSIVE/.test(sql) ? { rows: familyRows }
+    : /FROM regulatory_programs/.test(sql) && !/vault\.documents/.test(sql) ? { rows: [{ id: PROGRAM }] }
+    : /FROM vault\.documents/.test(sql) ? { rows: [docRow] }
     : { rows: [] });
   clientQuery.mockResolvedValue({ rows: [] });
   readRecordAuditHistory.mockResolvedValue({ data: [entry], meta: { chain: verdict } });
@@ -51,13 +78,25 @@ describe('document history route', () => {
   it('reads this document\'s rows from the ledger, in a tenant-stamped transaction', async () => {
     const res = await request(app()).get(url);
     expect(res.status).toBe(200);
-    expect(res.body.data.entries).toEqual([entry]);
+    // Each entry names the version it was recorded against (VR-09).
+    expect(res.body.data.entries).toEqual([{ ...entry, version: '2.0' }]);
     expect(res.body.data.chain).toEqual(verdict);
     const [, orgId, record] = readRecordAuditHistory.mock.calls[0];
     expect(orgId).toBe(7);
-    expect(record).toMatchObject({ tableName: 'vault_document', recordId: DOC });
+    // Every version's trail, not this row's alone (VR-09).
+    expect(record).toMatchObject({ tableName: 'vault_document', recordId: [DOC, V0] });
     expect(setTenantContextTx).toHaveBeenCalledWith(expect.anything(), 7);
     expect(clientQuery.mock.calls.map((c) => c[0])).toEqual(expect.arrayContaining(['BEGIN', 'COMMIT']));
+  });
+
+  it('reads its own trail when it has no live family (a deleted version)', async () => {
+    query.mockImplementation(async (sql: string) =>
+      /WITH RECURSIVE/.test(sql) ? { rows: [] }
+      : /FROM vault\.documents/.test(sql) ? { rows: [docRow] }
+      : { rows: [{ id: PROGRAM }] });
+    const res = await request(app()).get(url);
+    expect(res.status).toBe(200);
+    expect(readRecordAuditHistory.mock.calls[0][2]).toMatchObject({ recordId: DOC });
   });
 
   it('404s a document that is not this program\'s or this org\'s, and reads nothing', async () => {

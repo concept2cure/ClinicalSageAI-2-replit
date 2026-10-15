@@ -1,0 +1,18 @@
+# ESLint warnings per file, HEAD (git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>) vs the working tree
+client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx HEAD=5w/0e now=5w/0e
+client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx HEAD=8w/0e now=8w/0e
+client/src/concept2cure/v2/surfaces/ShadowReviewWaiver.tsx (new) now=0w/0e
+client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx (new) now=0w/0e
+
+# Client gates
+ci:undefined-css-classes: pass — [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+ci:class-vocabulary: pass — [ci:class-vocabulary] OK — 5061 file(s) scanned, no restated class vocabulary.
+ci:surface-text-ramp: pass — [ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+ci:check-chip-tones: pass — [chip-tones] OK — 169 literal tone use(s), all 28 resolve to a CSS rule.
+ci:internals-in-copy: pass — check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+ci:empty-state-honesty: pass — check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s).
+ci:action-overclaim: pass — check-action-overclaim: no new occurrences. 0 baselined.
+ci:success-before-ok: pass — check-success-before-ok: no occurrences across 265 file(s).
+ci:sign-ceremony: pass — [ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 5 baselined re-authentication(s) sign nothing, exactly as baseline
+ci:check-client-api-calls: pass — ✅ every client /api call has a server route behind it.
+ci:unreferenced-modules: pass — OK: no new unreachable modules.

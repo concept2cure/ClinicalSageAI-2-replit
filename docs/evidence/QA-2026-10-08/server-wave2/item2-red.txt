@@ -1,0 +1,84 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:39:48.817Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a re-type records the reason on the entry and names the old and new type 35ms
+   → the entry carries the reason for the change: expected null to be 'Reclassified after the quality review…' // Object.is equality
+ × server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a title and a type changed together are both named, in the order the form lists them 14ms
+   → expected 'Vault Document Metadata Edit' to be 'Title: Protocol-Stability -> Clinical…' // Object.is equality
+ × server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the reason stays in the recorded details too, where the existing record reads it 8ms
+   → expected null to be 'Reclassified after the quality review…' // Object.is equality
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the chain still verifies with the reason on the row 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a re-type records the reason on the entry and names the old and new type
+AssertionError: the entry carries the reason for the change: expected null to be 'Reclassified after the quality review…' // Object.is equality
+
+- Expected:
+"Reclassified after the quality review of the batch analysis."
+
++ Received:
+null
+
+ ❯ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts:88:80
+     86|     const hist = await readRecordAuditHistory(h.pg as never, ORG, { ta…
+     87|     expect(hist.data).toHaveLength(1);
+     88|     expect(hist.data[0].reason, 'the entry carries the reason for the …
+       |                                                                                ^
+     89|     expect(hist.data[0].event, 'the entry names what changed').toBe('T…
+     90|     expect(hist.data[0].actor).toBe('Dana Reviewer');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a title and a type changed together are both named, in the order the form lists them
+AssertionError: expected 'Vault Document Metadata Edit' to be 'Title: Protocol-Stability -> Clinical…' // Object.is equality
+
+Expected: "Title: Protocol-Stability -> Clinical protocol; Type: Module 3 · quality -> Protocol"
+Received: "Vault Document Metadata Edit"
+
+ ❯ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts:99:32
+     97|     });
+     98|     const hist = await readRecordAuditHistory(h.pg as never, ORG, { ta…
+     99|     expect(hist.data[0].event).toBe('Title: Protocol-Stability -> Clin…
+       |                                ^
+    100|   });
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the reason stays in the recorded details too, where the existing record reads it
+AssertionError: expected null to be 'Reclassified after the quality review…' // Object.is equality
+
+- Expected:
+"Reclassified after the quality review of the batch analysis."
+
++ Received:
+null
+
+ ❯ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts:108:32
+    106|     const row = await h.pg.query<{ reason: string | null; new_values: …
+    107|       `SELECT reason, new_values FROM audit_logs WHERE action = 'vault…
+    108|     expect(row.rows[0].reason).toBe(REASON);
+       |                                ^
+    109|     expect(row.rows[0].new_values.reason).toBe(REASON);
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  01:39:46
+   Duration  5.15s (transform 929ms, setup 85ms, import 1.80s, tests 2.93s, environment 0ms)
+

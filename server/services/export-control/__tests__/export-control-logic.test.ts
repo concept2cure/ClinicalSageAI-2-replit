@@ -6,8 +6,9 @@ import { describe, it, expect } from 'vitest';
 import { evaluateExportControl, evaluateExportReviewReadiness } from '../export-control-logic';
 
 describe('evaluateExportControl', () => {
+  // 2026-10-15: physical export is now answered here; left unanswered it was read as "no".
   it('applies the FRE to unrestricted EAR research information', () => {
-    const a = evaluateExportControl({ jurisdiction: 'ear', hasPublicationRestrictions: false, hasProprietaryRestrictions: false });
+    const a = evaluateExportControl({ jurisdiction: 'ear', hasPublicationRestrictions: false, hasProprietaryRestrictions: false, involvesPhysicalExport: false });
     expect(a.freApplies).toBe(true);
     expect(a.licenseRequired).toBe('no');
     expect(a.citations).toContain('15 CFR 730–774');
@@ -77,14 +78,18 @@ describe('evaluateExportReviewReadiness', () => {
     expect(r.blockers.some((b) => /countries/i.test(b))).toBe(true);
   });
 
+  /* 2026-10-15: these two passed with the screening questions unanswered, which
+     the gate read as four "no"s and let a final determination through. */
+  const answeredNo = { hasPublicationRestrictions: false, hasProprietaryRestrictions: false, involvesPhysicalExport: false, involvesForeignNationals: false };
+
   it('is ready for a clean not-subject review', () => {
-    const r = evaluateExportReviewReadiness({ jurisdiction: 'not_subject' });
+    const r = evaluateExportReviewReadiness({ jurisdiction: 'not_subject', ...answeredNo });
     expect(r.readyToDetermine).toBe(true);
     expect(r.blockers).toHaveLength(0);
   });
 
   it('is ready for an EAR99 review with a definite outcome', () => {
-    const r = evaluateExportReviewReadiness({ jurisdiction: 'ear', classification: 'EAR99', involvesForeignNationals: false });
+    const r = evaluateExportReviewReadiness({ jurisdiction: 'ear', classification: 'EAR99', ...answeredNo });
     expect(r.readyToDetermine).toBe(true);
   });
 });

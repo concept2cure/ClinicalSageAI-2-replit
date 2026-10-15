@@ -1,0 +1,264 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/anaCommandNoBaseline.test.tsx > AnaCommand — continuity with no baseline yet > says "no baseline yet" and never "stable" 169ms
+ ✓ client/src/concept2cure/v2/__tests__/anaCommandNoBaseline.test.tsx > AnaCommand — continuity with no baseline yet > still names a real trend against a baseline, with the baseline date 88ms
+ ✓ client/src/concept2cure/v2/__tests__/anaCommandRecConfidence.test.tsx > AnaCommand — confidence chip > renders no percentage for a rules-based recommendation 190ms
+ ✓ client/src/concept2cure/v2/__tests__/anaCommandRecConfidence.test.tsx > AnaCommand — confidence chip > still renders a chip for a recommendation that carries a computed confidence 80ms
+stdout | server/services/unified-work/__tests__/unified-work-view.test.ts
+{
+  "timestamp": "2026-10-01T13:39:22.755Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:39:22.757Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/unified-work/__tests__/unified-work-view.test.ts
+{
+  "timestamp": "2026-10-01T13:39:22.757Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/unified-work/__tests__/unified-work-view.test.ts
+[database] Database connection successful
+
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > reports compliance and consistency as unassessed for an empty project 7ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > scores an empty project 0 / not_started rather than 15 / in_progress 1ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > renormalises the weights over the assessed dimensions only 1ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > still reports a number for a dimension that really was measured 1ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > marks only the dimension that was not assessed 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > maps project_tasks vocabulary 6ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > maps work-item vocabulary (resolved and closed are both done) 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > treats a filing awaiting additional info as BLOCKED, not merely in flight 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > passes through the shared scale 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > maps correspondence severities onto the shared scale 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > returns null for unknown/absent rather than inventing a priority 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > flags a blocked task and a critical-to-quality task as blocking 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > routes correspondence work items into their own lane 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > does not treat a resolved work item as blocking even with a blockerType 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > maps a filing awaiting agency info to a blocking item with its decision clock 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > gives every source a globally unique composite id 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > puts blockers first, then soonest due, with undated last 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > is a stable, deterministic comparator 12ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > handles the empty case without inventing anything 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > summary roll-up > counts by status and by source 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > summary roll-up > adapts canonical board tasks (unified_tasks) into the shared shape 2ms
+ ✓ server/services/orchestration/__tests__/recommendation-engine.rules-based-confidence.test.ts > orchestration recommendation engine — no fabricated confidence > trips the analyzers this fixture is built for 6ms
+ ✓ server/services/orchestration/__tests__/recommendation-engine.rules-based-confidence.test.ts > orchestration recommendation engine — no fabricated confidence > reports every rules-based recommendation as rules_based with no confidence 2ms
+ ✓ server/services/orchestration/__tests__/recommendation-engine.rules-based-confidence.test.ts > orchestration recommendation engine — no fabricated confidence > lets no numeric confidence reach the wire 2ms
+ ✓ server/services/orchestration/__tests__/recommendation-engine.rules-based-confidence.test.ts > orchestration recommendation engine — no fabricated confidence > orders one severity band by the declared rule precedence, not by a score 1ms
+ ✓ server/services/orchestration/__tests__/recommendation-engine.rules-based-confidence.test.ts > orchestration recommendation engine — no fabricated confidence > derives the next best action from the engine's own priority order 1ms
+ ✓ server/services/orchestration/__tests__/recommendation-engine.rules-based-confidence.test.ts > orchestration recommendation engine — no fabricated confidence > is deterministic across runs 1ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.module-completeness.test.ts > an unassessed module is not a zero-percent module > scores completeness over the measured modules only 6ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.module-completeness.test.ts > an unassessed module is not a zero-percent module > gives no completeness score at all when nothing was measured 1ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.module-completeness.test.ts > an unassessed module is not a zero-percent module > does not let an unmeasured module contribute a completeness term to its own score 1ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.module-completeness.test.ts > an unassessed module is not a zero-percent module > is not fooled by document count alone 1ms
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it
+{
+  "timestamp": "2026-10-01T13:39:23.973Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "documents",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.975Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "artifacts",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.975Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "module placements",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it
+{
+  "timestamp": "2026-10-01T13:39:23.975Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "project",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > never lets a project nothing could be read from be assessed
+{
+  "timestamp": "2026-10-01T13:39:23.981Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "last signal",
+    "error": "could not read the CMC tables"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.982Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "CMC signals",
+    "error": "could not read the CMC tables"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.982Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "project",
+    "error": "could not read projects"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.982Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "documents",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.982Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "artifacts",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.982Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "validations",
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.983Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "tasks",
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.983Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "module placements",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.983Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "recent actions",
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-10-01T13:39:23.983Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "evidence",
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project the organisation does not hold > is refused, not assessed as "Unknown Project"
+{
+  "timestamp": "2026-10-01T13:39:23.988Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Module 3 section completeness could not be read",
+  "context": {
+    "projectId": 7,
+    "error": "[vitest] No \"getPool\" export is defined on the \"../../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project with no records > is an empty payload that names the project it read
+{
+  "timestamp": "2026-10-01T13:39:23.990Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Module 3 section completeness could not be read",
+  "context": {
+    "projectId": 7,
+    "error": "[vitest] No \"getPool\" export is defined on the \"../../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it 12ms
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > never lets a project nothing could be read from be assessed 7ms
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project the organisation does not hold > is refused, not assessed as "Unknown Project" 3ms
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project with no records > is an empty payload that names the project it read 4ms
+ ✓ server/services/orchestration/__tests__/continuity-changes.fail-closed.test.ts > continuity briefing when the audit trail cannot be read > is refused, naming the read that failed 8ms
+ ✓ server/services/orchestration/__tests__/continuity-changes.fail-closed.test.ts > continuity briefing when the audit trail cannot be read > records no snapshot, so it can never become a baseline 3ms
+ ✓ server/services/orchestration/__tests__/continuity-changes.fail-closed.test.ts > continuity briefing when the audit trail cannot be read > an audit trail with nothing in the window is still an answer: no changes, recorded 3ms
+stdout | server/services/orchestration/__tests__/task-completion-percent.test.ts
+{
+  "timestamp": "2026-10-01T13:39:25.113Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:39:25.115Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/task-completion-percent.test.ts
+{
+  "timestamp": "2026-10-01T13:39:25.115Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/orchestration/__tests__/task-completion-percent.test.ts
+[database] Database connection successful
+
+ ✓ server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is done over total, rounded 2ms
+ ✓ server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is 0, not 100, when nothing is done and nothing is blocked (the old ratio read 100) 0ms
+ ✓ server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is no figure when there is nothing to complete (the old code read 100) 0ms
+ ✓ server/services/orchestration/__tests__/task-completion-percent.test.ts > taskCompletionPercent > is no figure when a task store went unread — the counts are a floor 0ms
+
+ Test Files  9 passed (9)
+      Tests  46 passed (46)
+   Start at  13:39:19
+   Duration  5.90s (transform 3.10s, setup 852ms, import 9.77s, tests 695ms, environment 1.91s)
+

@@ -227,7 +227,7 @@ export const REGISTER_ANIMAL_COHORT: AnaTool = {
 export const REVIEW_IACUC_PROTOCOL: AnaTool = {
   name: 'review_iacuc_protocol',
   description:
-    "Run the deterministic IACUC completeness gate on a protocol (read-only): the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status. Returns cited findings + risk level. Use to tell the user what is missing before committee review.",
+    "Run the deterministic IACUC completeness gate on a protocol (read-only): text present for the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status. The expiry is the expiration date on record (reviewStatus.expirationSource 'recorded'), else approval + 3 years, labelled 'computed'; with neither date it is undetermined ('none'). Say which when you state it. Returns cited findings, the checks run and a risk level; medium means a major finding is open. Use to tell the user what is missing before committee review.",
   input_schema: {
     type: 'object',
     properties: { protocol_id: { type: 'number' } },
@@ -238,7 +238,7 @@ export const REVIEW_IACUC_PROTOCOL: AnaTool = {
 export const CREATE_IRB_SUBMISSION: AnaTool = {
   name: 'create_irb_submission',
   description:
-    "Open an IRB/IEC human-subjects review submission (revised Common Rule 45 CFR 46 / 21 CFR 56 / ICH E6). risk_level drives the review pathway (greater-than-minimal → full board). Flag vulnerable populations and single-IRB (sIRB) for multi-site studies. Returns the submission id and recommended review type. Governed + audited, org-scoped.",
+    "Open an IRB/IEC human-subjects review submission (revised Common Rule 45 CFR 46 / 21 CFR 56 / ICH E6). risk_level drives the review pathway (greater-than-minimal → full board). Flag vulnerable populations and single-IRB (sIRB) for multi-site studies. Omit involves_vulnerable_populations unless the user has answered it: omitted is recorded as not recorded, never as no. Returns the submission id and recommended review type. Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
@@ -277,7 +277,7 @@ export const ADD_IRB_SITE: AnaTool = {
 export const REVIEW_IRB_SUBMISSION: AnaTool = {
   name: 'review_irb_submission',
   description:
-    "Run the deterministic IRB approval-criteria gate (45 CFR 46.111) on a submission (read-only): informed consent / waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type, plus continuing-review status. Returns cited findings + risk level.",
+    "Run four deterministic checks on an IRB submission (read-only): an informed-consent document or waiver, vulnerable-population safeguards (46.111(b)), sIRB for multi-site, and risk versus review type. The other 45 CFR 46.111 criteria are the board's and are not evaluated. Returns cited findings, the checks run and those not assessed (an unrecorded fact), a risk level (undetermined when a check could not run), and the approval lifecycle (approval, expiration and its source, continuing review), which says unknown where the record is silent.",
   input_schema: {
     type: 'object',
     properties: { irb_submission_id: { type: 'number' } },
@@ -288,7 +288,7 @@ export const REVIEW_IRB_SUBMISSION: AnaTool = {
 export const CREATE_IBC_REGISTRATION: AnaTool = {
   name: 'create_ibc_registration',
   description:
-    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Returns the registration id and whether convened IBC review is required. Governed + audited, org-scoped.",
+    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Omit biosafety_level, involves_recombinant_dna, nih_guidelines_section and involves_human_gene_transfer unless the user has stated them: omitted is recorded as not recorded (no level declared), never as BSL-1 or no. Returns the registration id and whether convened IBC review is required (true, false, or null when that cannot be determined yet). Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
@@ -301,7 +301,7 @@ export const CREATE_IBC_REGISTRATION: AnaTool = {
       involves_human_gene_transfer: { type: 'boolean' },
       reason: STATED_REASON_INPUT,
     },
-    required: ['registration_number', 'title', 'biosafety_level'],
+    required: ['registration_number', 'title'],
   },
 };
 
@@ -325,7 +325,7 @@ export const ADD_BIOLOGICAL_AGENT: AnaTool = {
 export const REVIEW_IBC_REGISTRATION: AnaTool = {
   name: 'review_ibc_registration',
   description:
-    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings + risk level.",
+    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings, the checks run and those not assessed (no agents, an undeclared BSL, an unrecorded section or gene-transfer answer), and a risk level; highestRequiredBsl is null when it cannot be derived. The expiry is the expiration date on record (expiration.expirationSource 'recorded'), else approval + 1 year, labelled 'computed'; with neither date it is undetermined ('none'). Say which when you state it.",
   input_schema: {
     type: 'object',
     properties: { registration_id: { type: 'number' } },
@@ -383,7 +383,7 @@ export const CREATE_PROTOCOL_DOCUMENT: AnaTool = {
       therapeutic_area: { type: 'string' },
       linked_protocol_id: { type: 'number' },
       synopsis: { type: 'string' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['protocol_kind', 'title'],
   },
@@ -395,7 +395,7 @@ export const UPDATE_PROTOCOL_SECTION: AnaTool = {
     "Write or update a protocol section's content and mark its status (not_started / draft / complete). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { section_id: { type: 'number' }, content: { type: 'string' }, status: { type: 'string', enum: ['not_started', 'draft', 'complete'] }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } }, reason: { type: 'string' } },
+    properties: { section_id: { type: 'number' }, content: { type: 'string' }, status: { type: 'string', enum: ['not_started', 'draft', 'complete'] }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } }, reason: STATED_REASON_INPUT },
     required: ['section_id'],
   },
 };
@@ -406,7 +406,7 @@ export const ADD_PROTOCOL_OBJECTIVE: AnaTool = {
     "Add an objective + endpoint to a protocol (primary / secondary / exploratory), with an optional analysis timepoint. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { document_id: { type: 'number' }, objective_type: { type: 'string', enum: ['primary', 'secondary', 'exploratory'] }, objective: { type: 'string' }, endpoint: { type: 'string' }, timepoint: { type: 'string' }, reason: { type: 'string' } },
+    properties: { document_id: { type: 'number' }, objective_type: { type: 'string', enum: ['primary', 'secondary', 'exploratory'] }, objective: { type: 'string' }, endpoint: { type: 'string' }, timepoint: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['document_id', 'objective'],
   },
 };
@@ -417,7 +417,7 @@ export const ADD_ELIGIBILITY_CRITERION: AnaTool = {
     "Add an inclusion or exclusion eligibility criterion to a protocol. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { document_id: { type: 'number' }, kind: { type: 'string', enum: ['inclusion', 'exclusion'] }, criterion: { type: 'string' }, reason: { type: 'string' } },
+    properties: { document_id: { type: 'number' }, kind: { type: 'string', enum: ['inclusion', 'exclusion'] }, criterion: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['document_id', 'kind', 'criterion'],
   },
 };
@@ -441,7 +441,7 @@ export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
 export const ADD_PROTOCOL_RISK: AnaTool = {
   name: 'add_protocol_risk',
   description:
-    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
+    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R3) Annex 1 §3.10.1, risk management). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
   input_schema: {
     type: 'object',
     properties: {
@@ -452,9 +452,10 @@ export const ADD_PROTOCOL_RISK: AnaTool = {
       impact: { type: 'string', enum: ['negligible', 'minor', 'moderate', 'major', 'severe'] },
       mitigation: { type: 'string' },
       owner: { type: 'string' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
-    required: ['document_id', 'description'],
+    // The ratings are an assessment; ask for them rather than default them.
+    required: ['document_id', 'description', 'likelihood', 'impact'],
   },
 };
 
@@ -478,7 +479,7 @@ export const CREATE_PROTOCOL_AMENDMENT: AnaTool = {
       rationale: { type: 'string' }, amendment_type: { type: 'string', enum: ['major', 'minor', 'administrative'] },
       affects_consent: { type: 'boolean', description: 'Does the change affect the informed-consent content? Omit if not assessed.' },
       affects_risk: { type: 'boolean', description: 'Does the change INCREASE risk to subjects or worsen the risk/benefit balance? A risk-reducing change is false. Omit if not assessed.' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['protocol_document_id', 'title'],
   },
@@ -489,7 +490,7 @@ export const ADD_AMENDMENT_CHANGE: AnaTool = {
   description: "Add a specific change (section, previous → proposed text) to a protocol amendment. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { amendment_id: { type: 'number' }, section_ref: { type: 'string' }, change_description: { type: 'string' }, previous_text: { type: 'string' }, proposed_text: { type: 'string' }, reason: { type: 'string' } },
+    properties: { amendment_id: { type: 'number' }, section_ref: { type: 'string' }, change_description: { type: 'string' }, previous_text: { type: 'string' }, proposed_text: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['amendment_id', 'change_description'],
   },
 };
@@ -511,7 +512,7 @@ export const REPORT_PROTOCOL_DEVIATION: AnaTool = {
       category: { type: 'string', enum: ['enrollment', 'consent', 'procedure', 'safety', 'data', 'other'] },
       severity: { type: 'string', enum: ['minor', 'major', 'critical'], description: "Only the severity the user stated. Omit if they did not." },
       affects_safety: { type: 'boolean', description: "Only if the user stated whether it affected subject safety. Omit if not." },
-      root_cause: { type: 'string' }, reason: { type: 'string' },
+      root_cause: { type: 'string' }, reason: STATED_REASON_INPUT,
     },
     required: ['protocol_document_id', 'description'],
   },
@@ -522,7 +523,7 @@ export const ADD_CAPA_ACTION: AnaTool = {
   description: "Add a corrective/preventive action (CAPA) to a protocol deviation. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { deviation_id: { type: 'number' }, action: { type: 'string' }, owner: { type: 'string' }, due_date: { type: 'string' }, reason: { type: 'string' } },
+    properties: { deviation_id: { type: 'number' }, action: { type: 'string' }, owner: { type: 'string' }, due_date: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['deviation_id', 'action'],
   },
 };
@@ -538,7 +539,7 @@ export const ASSIGN_PROTOCOL_REVIEWER: AnaTool = {
   description: "Assign a reviewer to a protocol document with a review role (scientific/statistical/ethics/safety/regulatory/general). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { protocol_document_id: { type: 'number' }, reviewer_name: { type: 'string' }, reviewer_user_id: { type: 'number' }, role: { type: 'string', enum: ['scientific', 'statistical', 'ethics', 'safety', 'regulatory', 'general'] }, due_date: { type: 'string' }, reason: { type: 'string' } },
+    properties: { protocol_document_id: { type: 'number' }, reviewer_name: { type: 'string' }, reviewer_user_id: { type: 'number' }, role: { type: 'string', enum: ['scientific', 'statistical', 'ethics', 'safety', 'regulatory', 'general'] }, due_date: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['protocol_document_id', 'reviewer_name'],
   },
 };
@@ -548,7 +549,7 @@ export const ADD_PROTOCOL_REVIEW_COMMENT: AnaTool = {
   description: "Add a review comment to a protocol document (optionally tied to an assignment / section), with severity (blocking/major/minor/info). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { protocol_document_id: { type: 'number' }, comment: { type: 'string' }, assignment_id: { type: 'number' }, section_ref: { type: 'string' }, severity: { type: 'string', enum: ['blocking', 'major', 'minor', 'info'] }, reason: { type: 'string' } },
+    properties: { protocol_document_id: { type: 'number' }, comment: { type: 'string' }, assignment_id: { type: 'number' }, section_ref: { type: 'string' }, severity: { type: 'string', enum: ['blocking', 'major', 'minor', 'info'] }, reason: STATED_REASON_INPUT },
     required: ['protocol_document_id', 'comment'],
   },
 };
@@ -564,7 +565,7 @@ export const CREATE_CONSENT_FORM: AnaTool = {
   description: "Create an informed-consent form (optionally for a protocol document), auto-seeded with the 45 CFR 46.116 required elements as not-yet-present rows. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { title: { type: 'string' }, protocol_document_id: { type: 'number' }, version: { type: 'string' }, language: { type: 'string' }, reading_level: { type: 'string' }, reason: { type: 'string' } },
+    properties: { title: { type: 'string' }, protocol_document_id: { type: 'number' }, version: { type: 'string' }, language: { type: 'string' }, reading_level: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['title'],
   },
 };
@@ -574,7 +575,7 @@ export const UPDATE_CONSENT_ELEMENT: AnaTool = {
   description: "Write a consent-form element's content and mark it present. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { element_id: { type: 'number' }, content: { type: 'string' }, present: { type: 'boolean' }, reason: { type: 'string' }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
+    properties: { element_id: { type: 'number' }, content: { type: 'string' }, present: { type: 'boolean' }, reason: STATED_REASON_INPUT, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
     required: ['element_id'],
   },
 };
@@ -592,7 +593,7 @@ export const CREATE_DMS_PLAN: AnaTool = {
   description: "Create an NIH Data Management & Sharing (DMS) plan (optionally linked to a grant proposal and/or protocol document), auto-seeded with the six required DMS plan elements (NIH NOT-OD-21-013) as not-yet-addressed rows. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { title: { type: 'string' }, grant_proposal_id: { type: 'number' }, protocol_document_id: { type: 'number' }, reason: { type: 'string' } },
+    properties: { title: { type: 'string' }, grant_proposal_id: { type: 'number' }, protocol_document_id: { type: 'number' }, reason: STATED_REASON_INPUT },
     required: ['title'],
   },
 };
@@ -602,7 +603,7 @@ export const UPDATE_DMS_PLAN_ELEMENT: AnaTool = {
   description: "Write a DMS plan element's narrative content and mark it addressed. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { element_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
+    properties: { element_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: STATED_REASON_INPUT, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
     required: ['element_id'],
   },
 };
@@ -626,7 +627,7 @@ export const CREATE_OTHER_SUPPORT: AnaTool = {
   description: "Create an NIH Other Support document for a person (optionally linked to a research-personnel roster row and/or a grant proposal). Add funding-source entries next, then certify. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { person_name: { type: 'string' }, personnel_id: { type: 'number' }, grant_proposal_id: { type: 'number' }, era_commons_id: { type: 'string' }, role: { type: 'string' }, reason: { type: 'string' } },
+    properties: { person_name: { type: 'string' }, personnel_id: { type: 'number' }, grant_proposal_id: { type: 'number' }, era_commons_id: { type: 'string' }, role: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['person_name'],
   },
 };
@@ -650,7 +651,7 @@ export const ADD_OTHER_SUPPORT_ENTRY: AnaTool = {
       major_goals: { type: 'string' },
       overlap_statement: { type: 'string' },
       award_identifier: { type: 'string' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['document_id', 'project_title', 'funding_source'],
   },
@@ -675,7 +676,7 @@ export const CREATE_BIOSKETCH: AnaTool = {
   description: "Create an NIH biosketch for a person (optionally linked to a research-personnel roster row and/or a grant proposal), auto-seeded with the required NIH biosketch sections (FORMS-H: Personal Statement; Positions/Appointments/Honors; Contributions to Science) as not-yet-addressed rows. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { person_name: { type: 'string' }, personnel_id: { type: 'number' }, grant_proposal_id: { type: 'number' }, biosketch_type: { type: 'string', enum: ['nih', 'nsf', 'other'] }, reason: { type: 'string' } },
+    properties: { person_name: { type: 'string' }, personnel_id: { type: 'number' }, grant_proposal_id: { type: 'number' }, biosketch_type: { type: 'string', enum: ['nih', 'nsf', 'other'] }, reason: STATED_REASON_INPUT },
     required: ['person_name'],
   },
 };
@@ -685,7 +686,7 @@ export const UPDATE_BIOSKETCH_SECTION: AnaTool = {
   description: "Write a biosketch section's content and mark it addressed. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { section_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' }, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
+    properties: { section_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: STATED_REASON_INPUT, sources: { type: 'array', description: "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room source; everything else as your own assertion. Unresolvable entries are dropped and reported back.", items: { type: 'object', properties: { evidence_source_id: { type: 'integer' }, artifact_id: { type: 'string' }, excerpt: { type: 'string' }, title: { type: 'string' } }, required: ['excerpt'] } } },
     required: ['section_id'],
   },
 };
@@ -712,7 +713,7 @@ export const CREATE_INVENTION_DISCLOSURE: AnaTool = {
     properties: {
       title: { type: 'string' }, inventors: { type: 'string' }, funding_source: { type: 'string' },
       federal_funding: { type: 'boolean' }, federal_award: { type: 'string' }, disclosure_date: { type: 'string', description: 'yyyy-mm-dd' },
-      grant_proposal_id: { type: 'number' }, reason: { type: 'string' },
+      grant_proposal_id: { type: 'number' }, reason: STATED_REASON_INPUT,
     },
     required: ['title'],
   },
@@ -727,7 +728,7 @@ export const UPDATE_INVENTION_DISCLOSURE: AnaTool = {
       disclosure_id: { type: 'number' },
       status: { type: 'string', enum: ['submitted', 'under_review', 'elected', 'patent_filed', 'licensed', 'released', 'abandoned'] },
       inventors: { type: 'string' }, funding_source: { type: 'string' }, federal_funding: { type: 'boolean' }, federal_award: { type: 'string' },
-      disclosure_date: { type: 'string' }, election_date: { type: 'string' }, decision_rationale: { type: 'string' }, reason: { type: 'string' },
+      disclosure_date: { type: 'string' }, election_date: { type: 'string' }, decision_rationale: { type: 'string' }, reason: STATED_REASON_INPUT,
     },
     required: ['disclosure_id'],
   },
@@ -742,7 +743,7 @@ export const REVIEW_INVENTION_DISCLOSURE: AnaTool = {
 export const SUBMIT_INVENTION_DISCLOSURE: AnaTool = {
   name: 'submit_invention_disclosure',
   description: "Submit an invention disclosure for TTO review behind the deterministic readiness gate (title, inventors, funding source, disclosure date; federal award if federally funded). Governed + audited.",
-  input_schema: { type: 'object', properties: { disclosure_id: { type: 'number' }, reason: { type: 'string' } }, required: ['disclosure_id'] },
+  input_schema: { type: 'object', properties: { disclosure_id: { type: 'number' }, reason: STATED_REASON_INPUT }, required: ['disclosure_id'] },
 };
 
 // ─── Export Control review (C2C-26) ───────────────────────────────────────────
@@ -757,7 +758,7 @@ export const CREATE_EXPORT_CONTROL_REVIEW: AnaTool = {
       jurisdiction: { type: 'string', enum: ['itar', 'ear', 'ofac', 'not_subject', 'pending'] },
       classification: { type: 'string' }, involves_foreign_nationals: { type: 'boolean' }, foreign_countries: { type: 'string' },
       has_publication_restrictions: { type: 'boolean' }, has_proprietary_restrictions: { type: 'boolean' }, involves_physical_export: { type: 'boolean' },
-      grant_proposal_id: { type: 'number' }, reason: { type: 'string' },
+      grant_proposal_id: { type: 'number' }, reason: STATED_REASON_INPUT,
     },
     required: ['project_title'],
   },
@@ -773,7 +774,7 @@ export const UPDATE_EXPORT_CONTROL_REVIEW: AnaTool = {
       jurisdiction: { type: 'string', enum: ['itar', 'ear', 'ofac', 'not_subject', 'pending'] },
       classification: { type: 'string' }, involves_foreign_nationals: { type: 'boolean' }, foreign_countries: { type: 'string' },
       has_publication_restrictions: { type: 'boolean' }, has_proprietary_restrictions: { type: 'boolean' }, involves_physical_export: { type: 'boolean' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['review_id'],
   },
@@ -804,7 +805,7 @@ export const CREATE_RESEARCH_AGREEMENT: AnaTool = {
       material_or_data_description: { type: 'string' }, contains_phi: { type: 'boolean' }, contains_human_data: { type: 'boolean' },
       is_deidentified: { type: 'boolean' }, limited_data_set: { type: 'boolean' }, ip_rights_terms: { type: 'string' }, publication_rights: { type: 'boolean' },
       effective_date: { type: 'string' }, expiration_date: { type: 'string' }, grant_proposal_id: { type: 'number' }, protocol_document_id: { type: 'number' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['title', 'other_party'],
   },
@@ -821,7 +822,7 @@ export const UPDATE_RESEARCH_AGREEMENT: AnaTool = {
       agreement_type: { type: 'string', enum: ['mta', 'dua', 'cda'] }, direction: { type: 'string', enum: ['incoming', 'outgoing'] },
       material_or_data_description: { type: 'string' }, contains_phi: { type: 'boolean' }, contains_human_data: { type: 'boolean' },
       is_deidentified: { type: 'boolean' }, limited_data_set: { type: 'boolean' }, ip_rights_terms: { type: 'string' }, publication_rights: { type: 'boolean' },
-      effective_date: { type: 'string' }, expiration_date: { type: 'string' }, reason: { type: 'string' },
+      effective_date: { type: 'string' }, expiration_date: { type: 'string' }, reason: STATED_REASON_INPUT,
     },
     required: ['agreement_id'],
   },
@@ -846,7 +847,7 @@ export const CREATE_PROTOCOL_TEMPLATE: AnaTool = {
   description: "Create an org protocol template (named, kind-scoped) that can later be cloned into new protocol documents. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { name: { type: 'string' }, protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] }, design_type: { type: 'string' }, description: { type: 'string' }, reason: { type: 'string' } },
+    properties: { name: { type: 'string' }, protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] }, design_type: { type: 'string' }, description: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['name', 'protocol_kind'],
   },
 };
@@ -856,7 +857,7 @@ export const CLONE_PROTOCOL_TEMPLATE: AnaTool = {
   description: "Clone a protocol template into a new protocol document, seeding its sections (any required catalog section missing from the template is injected automatically). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { template_id: { type: 'number' }, title: { type: 'string' }, protocol_number: { type: 'string' }, reason: { type: 'string' } },
+    properties: { template_id: { type: 'number' }, title: { type: 'string' }, protocol_number: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['template_id', 'title'],
   },
 };
@@ -866,7 +867,7 @@ export const SAVE_DOCUMENT_AS_TEMPLATE: AnaTool = {
   description: "Snapshot an existing protocol document's sections into a new reusable org template. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { document_id: { type: 'number' }, name: { type: 'string' }, description: { type: 'string' }, reason: { type: 'string' } },
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, description: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['document_id', 'name'],
   },
 };
@@ -882,7 +883,7 @@ export const ADD_PROTOCOL_MILESTONE: AnaTool = {
   description: "Add a milestone to a protocol document's timeline (IRB submission, first/last subject, database lock, CSR, …) with a target date. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { document_id: { type: 'number' }, name: { type: 'string' }, milestone_type: { type: 'string', enum: ['protocol_approval', 'irb_submission', 'site_activation', 'first_subject', 'last_subject', 'enrollment_complete', 'database_lock', 'csr', 'closeout', 'other'] }, target_date: { type: 'string', description: 'YYYY-MM-DD.' }, notes: { type: 'string' }, reason: { type: 'string' } },
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, milestone_type: { type: 'string', enum: ['protocol_approval', 'irb_submission', 'site_activation', 'first_subject', 'last_subject', 'enrollment_complete', 'database_lock', 'csr', 'closeout', 'other'] }, target_date: { type: 'string', description: 'YYYY-MM-DD.' }, notes: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['document_id', 'name'],
   },
 };
@@ -892,7 +893,7 @@ export const SET_PROTOCOL_MILESTONE_STATUS: AnaTool = {
   description: "Transition a protocol milestone's status (planned/in_progress/met/missed/cancelled); 'met' stamps the actual date. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { milestone_id: { type: 'number' }, status: { type: 'string', enum: ['planned', 'in_progress', 'met', 'missed', 'cancelled'] }, actual_date: { type: 'string' }, reason: { type: 'string' } },
+    properties: { milestone_id: { type: 'number' }, status: { type: 'string', enum: ['planned', 'in_progress', 'met', 'missed', 'cancelled'] }, actual_date: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['milestone_id', 'status'],
   },
 };
@@ -922,7 +923,7 @@ export const ADD_SOA_ASSESSMENT: AnaTool = {
   description: "Add an assessment (row) to a protocol's schedule-of-assessments matrix (category: lab/imaging/exam/vital_signs/pk/questionnaire/procedure/eligibility/other). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { document_id: { type: 'number' }, name: { type: 'string' }, category: { type: 'string', enum: ['lab', 'imaging', 'exam', 'vital_signs', 'pk', 'questionnaire', 'procedure', 'eligibility', 'other'] }, reason: { type: 'string' } },
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, category: { type: 'string', enum: ['lab', 'imaging', 'exam', 'vital_signs', 'pk', 'questionnaire', 'procedure', 'eligibility', 'other'] }, reason: STATED_REASON_INPUT },
     required: ['document_id', 'name'],
   },
 };
@@ -932,7 +933,7 @@ export const SET_SOA_CELL: AnaTool = {
   description: "Mark an assessment as performed at a visit in the SoA matrix (cell = assessment_id × visit_id; visit_id is a protocol_schedule_visits id). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { assessment_id: { type: 'number' }, visit_id: { type: 'number' }, required: { type: 'boolean' }, notes: { type: 'string' }, reason: { type: 'string' } },
+    properties: { assessment_id: { type: 'number' }, visit_id: { type: 'number' }, required: { type: 'boolean' }, notes: { type: 'string' }, reason: STATED_REASON_INPUT },
     required: ['assessment_id', 'visit_id'],
   },
 };
@@ -950,7 +951,7 @@ export const ADD_PROTOCOL_BUDGET_ITEM: AnaTool = {
   description: "Add a per-subject budget line item to a protocol (category, unit cost, quantity per subject, payer). Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { document_id: { type: 'number' }, category: { type: 'string', enum: ['personnel', 'procedure', 'lab', 'imaging', 'overhead', 'equipment', 'patient_stipend', 'other'] }, description: { type: 'string' }, unit_cost: { type: 'number' }, quantity_per_subject: { type: 'number' }, payer: { type: 'string', enum: ['sponsor', 'institution', 'other'] }, reason: { type: 'string' } },
+    properties: { document_id: { type: 'number' }, category: { type: 'string', enum: ['personnel', 'procedure', 'lab', 'imaging', 'overhead', 'equipment', 'patient_stipend', 'other'] }, description: { type: 'string' }, unit_cost: { type: 'number' }, quantity_per_subject: { type: 'number' }, payer: { type: 'string', enum: ['sponsor', 'institution', 'other'] }, reason: STATED_REASON_INPUT },
     required: ['document_id', 'description', 'unit_cost'],
   },
 };
@@ -960,7 +961,7 @@ export const SET_PROTOCOL_BUDGET_PARAMS: AnaTool = {
   description: "Set a protocol's budget parameters (target enrollment, sponsor payment per subject, F&A/indirect rate %). Upsert — one per document. Governed + audited.",
   input_schema: {
     type: 'object',
-    properties: { document_id: { type: 'number' }, target_enrollment: { type: 'number' }, sponsor_payment_per_subject: { type: 'number' }, indirect_rate_pct: { type: 'number' }, reason: { type: 'string' } },
+    properties: { document_id: { type: 'number' }, target_enrollment: { type: 'number' }, sponsor_payment_per_subject: { type: 'number' }, indirect_rate_pct: { type: 'number' }, reason: STATED_REASON_INPUT },
     required: ['document_id'],
   },
 };
@@ -994,7 +995,7 @@ export const IMPORT_CITI_RECORDS: AnaTool = {
           required: ['training_type'],
         },
       },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['personnel_id', 'records'],
   },
@@ -1029,7 +1030,7 @@ export const SET_FUNDING_PROFILE: AnaTool = {
       institution_type: { type: 'string', description: 'e.g. higher_ed, nonprofit, small_business.' },
       min_award: { type: 'number' },
       max_award: { type: 'number' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: [],
   },
@@ -1073,7 +1074,7 @@ export const ASSIGN_COMMITTEE_MEMBER: AnaTool = {
       voting_member: { type: 'boolean' },
       scientist: { type: 'boolean' },
       affiliated: { type: 'boolean' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['committee_type', 'member_name'],
   },
@@ -1088,7 +1089,7 @@ export const CONVENE_COMMITTEE_MEETING: AnaTool = {
     properties: {
       meeting_id: { type: 'number' },
       present_member_ids: { type: 'array', items: { type: 'number' }, description: 'committee_members ids recorded present.' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['meeting_id', 'present_member_ids'],
   },
@@ -1106,7 +1107,7 @@ export const ADD_COMMITTEE_AGENDA_ITEM: AnaTool = {
       protocol_id: { type: 'number' },
       title: { type: 'string' },
       review_type: { type: 'string' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['meeting_id', 'protocol_kind', 'protocol_id', 'title'],
   },
@@ -1123,7 +1124,7 @@ export const CAST_COMMITTEE_VOTE: AnaTool = {
       member_id: { type: 'number' },
       vote: { type: 'string', enum: ['approve', 'approve_with_modifications', 'disapprove', 'abstain', 'recuse'] },
       comment: { type: 'string' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['agenda_item_id', 'member_id', 'vote'],
   },
@@ -1180,7 +1181,7 @@ export const SET_COVERAGE_QUALIFYING_DETERMINATION: AnaTool = {
       has_medicare_benefit_category: { type: 'boolean' },
       deemed_qualifying: { type: 'boolean', description: 'IND / IDE Cat B / AHRQ- or federally-funded — auto-qualifies.' },
       desirable_characteristics_count: { type: 'number', description: '0..7, advisory only.' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['analysis_id', 'has_therapeutic_intent', 'enrolls_diagnosis_treatment', 'has_medicare_benefit_category'],
   },
@@ -1200,7 +1201,7 @@ export const ADD_COVERAGE_ITEM: AnaTool = {
       icd10_code: { type: 'string' },
       is_standard_of_care: { type: 'boolean' },
       sponsor_paid_in_budget: { type: 'boolean' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['analysis_id', 'item_description'],
   },
@@ -1219,7 +1220,7 @@ export const CLASSIFY_COVERAGE_ITEM: AnaTool = {
       ncd_citation: { type: 'string' },
       lcd_citation: { type: 'string' },
       coverage_doc_url: { type: 'string' },
-      reason: { type: 'string' },
+      reason: STATED_REASON_INPUT,
     },
     required: ['item_id', 'is_standard_of_care', 'sponsor_paid_in_budget'],
   },
@@ -1273,14 +1274,14 @@ export const TRIAGE_COMPLIANCE_ATTENTION: AnaTool = {
   name: 'triage_compliance_attention',
   description:
     "Turn the cross-domain compliance briefing into ACTION: for each CRITICAL attention item (overdue commitments/closeouts, expired training, unmanaged COI, unscreened subawards, over-spends, expiring IACUC, overdue lifecycle obligations) create a high-priority review task in the platform's central task list (unified_tasks). Idempotent — a critical item already tracked is left alone, so re-running won't duplicate. Governed + audited. Use after research_compliance_briefing to dispatch the work.",
-  input_schema: { type: 'object', properties: { reason: { type: 'string' } }, required: [] },
+  input_schema: { type: 'object', properties: { reason: STATED_REASON_INPUT }, required: [] },
 };
 
 export const FULFILL_REGULATORY_COMMITMENT: AnaTool = {
   name: 'fulfill_regulatory_commitment',
   description:
     "Mark a regulatory commitment (PMR/PMC/REMS/meeting commitment) fulfilled, optionally with the date it was met. Closes the commitment lifecycle. Governed + audited, org-scoped.",
-  input_schema: { type: 'object', properties: { commitment_id: { type: 'number' }, fulfilled_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: { type: 'string' } }, required: ['commitment_id'] },
+  input_schema: { type: 'object', properties: { commitment_id: { type: 'number' }, fulfilled_date: { type: 'string', description: 'YYYY-MM-DD.' }, reason: STATED_REASON_INPUT }, required: ['commitment_id'] },
 };
 
 export const REVIEW_HA_INTERACTION: AnaTool = {
@@ -1303,7 +1304,7 @@ export const REGISTER_CONTROLLED_SUBSTANCE: AnaTool = {
     "Register a controlled substance under a DEA registration so transactions can be booked against it (21 CFR 1304 perpetual inventory). Specify the DEA schedule (I–V); optionally link the DEA registration and set the unit. Governed + audited. Pair with log_cs_transaction to maintain the running balance.",
   input_schema: {
     type: 'object',
-    properties: { substance_name: { type: 'string' }, dea_schedule: { type: 'string', enum: ['I', 'II', 'III', 'IV', 'V'] }, unit: { type: 'string' }, dea_registration_id: { type: 'number' }, reason: { type: 'string' } },
+    properties: { substance_name: { type: 'string' }, dea_schedule: { type: 'string', enum: ['I', 'II', 'III', 'IV', 'V'] }, unit: { type: 'string' }, dea_registration_id: { type: 'number' }, reason: STATED_REASON_INPUT },
     required: ['substance_name', 'dea_schedule'],
   },
 };
@@ -1522,7 +1523,7 @@ export const REVIEW_TMF_COMPLETENESS: AnaTool = {
 export const RUN_COMPLIANCE_CHECKLIST: AnaTool = {
   name: 'run_compliance_checklist',
   description:
-    "Resolve the DETERMINISTIC compliance checklist for a research activity (the auto-updating, regulation-cited engine, not the LLM): which committee approvals (IRB/IACUC/IBC) are required, which personnel training is required, and the ordered steps. Use to tell a client what they must do before they can start. Read-only.",
+    "Resolve the DETERMINISTIC compliance checklist for a research activity (the auto-updating, regulation-cited engine, not the LLM): which committee approvals (IRB/IACUC/IBC) are required, which personnel training is required, and the ordered steps. Use to tell a client what they must do before they can start. Pass only the facts the user has stated: an omitted fact is not assumed false, and funding_source and region are not defaulted. What an omitted fact could require is returned as undeterminedApprovals / undeterminedTraining with the input that would settle it (notStated); ask the user for those before saying nothing is required. Read-only.",
   input_schema: {
     type: 'object',
     properties: {
@@ -1540,7 +1541,7 @@ export const RUN_COMPLIANCE_CHECKLIST: AnaTool = {
 export const ASSESS_STUDY_ONBOARDING: AnaTool = {
   name: 'assess_study_onboarding',
   description:
-    "One-shot study-onboarding assessment (read-only orchestration): resolves the required committee approvals + training for the activity profile, runs the training gate over the named team, and CROSS-REFERENCES each training gap to the specific approval it blocks (e.g. a PI missing CITI human-subjects blocks the IRB submission, not the IACUC one). Returns per-committee readiness, overall readyToSubmit, and a prioritized blocker list. Answers 'what do I need to stand up this study and is my team ready?' in one turn.",
+    "One-shot study-onboarding assessment (read-only orchestration): resolves the required committee approvals + training for the activity profile, runs the training gate over the named team, and CROSS-REFERENCES each training gap to the specific approval it blocks (e.g. a PI missing CITI human-subjects blocks the IRB submission, not the IACUC one). Returns per-committee readiness, overall readyToSubmit, and a prioritized blocker list. Answers 'what do I need to stand up this study and is my team ready?' in one turn. An omitted fact is not assumed false: what it could require is returned as not determined, and readyToSubmit is true, false, or null (not determined: a fact was not stated, or no personnel_ids were given). Never report null as ready.",
   input_schema: {
     type: 'object',
     properties: {
@@ -1576,7 +1577,7 @@ export const ADD_PERSONNEL_TRAINING: AnaTool = {
 export const REVIEW_TRAINING_GATE: AnaTool = {
   name: 'review_training_gate',
   description:
-    "Run the 'no index until trained' gate for a set of personnel against the required training for a research activity (read-only): returns whether the team is cleared, who is missing or expired on what training, and who is expiring soon. Use before letting a protocol proceed.",
+    "Run the 'no index until trained' gate for a set of personnel against the required training for a research activity (read-only): returns whether the team is cleared, who is missing or expired on what training, and who is expiring soon. Use before letting a protocol proceed. cleared is true, false, or null: null when the training required is not determined (an omitted activity fact is not assumed false) or no personnel were named; never report null as cleared. A personnel id not on this organization's roster is refused.",
   input_schema: {
     type: 'object',
     properties: {
@@ -1595,17 +1596,17 @@ export const REVIEW_TRAINING_GATE: AnaTool = {
 export const CREATE_EFFORT_CERTIFICATION: AnaTool = {
   name: 'create_effort_certification',
   description: "Open a time-&-effort certification statement for a person and period (2 CFR 200.430). Returns the statement id for adding effort lines. Governed + audited, org-scoped.",
-  input_schema: { type: 'object', properties: { personnel_id: { type: 'number' }, period_start: { type: 'string' }, period_end: { type: 'string' }, reason: { type: 'string', description: 'Audit reason (>= 8 chars).' } }, required: ['personnel_id', 'period_start', 'period_end'] },
+  input_schema: { type: 'object', properties: { personnel_id: { type: 'number' }, period_start: { type: 'string' }, period_end: { type: 'string' }, reason: STATED_REASON_INPUT }, required: ['personnel_id', 'period_start', 'period_end'] },
 };
 export const ADD_EFFORT_LINE: AnaTool = {
   name: 'add_effort_line',
   description: "Add an effort line to a certification: an activity/award with committed % and actual %. Total across lines must not exceed 100%; a sponsored line whose actual deviates materially from committed triggers recertification. Governed + audited.",
-  input_schema: { type: 'object', properties: { certification_id: { type: 'number' }, activity_label: { type: 'string' }, committed_pct: { type: 'number' }, actual_pct: { type: 'number' }, award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['certification_id', 'activity_label', 'committed_pct', 'actual_pct'] },
+  input_schema: { type: 'object', properties: { certification_id: { type: 'number' }, activity_label: { type: 'string' }, committed_pct: { type: 'number' }, actual_pct: { type: 'number' }, award_id: { type: 'number' }, reason: STATED_REASON_INPUT }, required: ['certification_id', 'activity_label', 'committed_pct', 'actual_pct'] },
 };
 export const CREATE_COI_DISCLOSURE: AnaTool = {
   name: 'create_coi_disclosure',
   description: "File a research-security / conflict-of-interest disclosure (NOT-OD-26-017 / NSPM-33): outside activity, financial interest, foreign appointment/support, other support, gift, or IP. Foreign appointments/support are flagged for research-security review. Governed + audited, org-scoped.",
-  input_schema: { type: 'object', properties: { personnel_id: { type: 'number' }, disclosure_type: { type: 'string', enum: ['financial_interest','outside_activity','foreign_appointment','foreign_support','other_support','gift','intellectual_property','other'] }, entity_name: { type: 'string' }, country: { type: 'string' }, description: { type: 'string' }, monetary_value: { type: 'number' }, reason: { type: 'string' } }, required: ['personnel_id', 'disclosure_type', 'entity_name'] },
+  input_schema: { type: 'object', properties: { personnel_id: { type: 'number' }, disclosure_type: { type: 'string', enum: ['financial_interest','outside_activity','foreign_appointment','foreign_support','other_support','gift','intellectual_property','other'] }, entity_name: { type: 'string' }, country: { type: 'string' }, description: { type: 'string' }, monetary_value: { type: 'number' }, reason: STATED_REASON_INPUT }, required: ['personnel_id', 'disclosure_type', 'entity_name'] },
 };
 export const SEARCH_GRANTS_GOV: AnaTool = {
   name: 'search_grants_gov',

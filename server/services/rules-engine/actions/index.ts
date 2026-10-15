@@ -400,67 +400,35 @@ export class UpdateFieldHandler implements ActionHandler {
 // Trigger AI Analysis Handler
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * A rule's "trigger AI analysis" action — which nothing performs.
+ *
+ * It wrote an open, medium-severity 'quality_drift' sentinel finding titled
+ * "AI Analysis Requested", with metadata `queued: true`, and reported success.
+ * Nothing anywhere reads that queue: no analysis ever ran, and a finding that
+ * found nothing sat in the sentinel findings and their counts (removed
+ * 2026-10-15). The action now fails, saying so, and writes nothing. Rules
+ * that carry it — an existing rule, or one built from the old "AI Risk
+ * Assessment on Status Change" template — record a failed action rather than
+ * a performed one.
+ */
 export class TriggerAIAnalysisHandler implements ActionHandler {
   readonly type = 'trigger_ai_analysis' as const;
 
-  constructor(private pool: Pool) {}
-
   async execute(
     action: RuleAction,
-    payload: RuleEventPayload,
-    rule: RuleDefinition
+    _payload: RuleEventPayload,
+    _rule: RuleDefinition
   ): Promise<ActionResult> {
-    const start = Date.now();
-    try {
-      const params = action.params as any;
-
-      // Queue AI analysis request through sentinel_findings for async processing
-      const findingId = uuidv4();
-      await this.pool.query(
-        `INSERT INTO sentinel_findings (
-           finding_id, organization_id, project_id,
-           analyzer_type, severity, title, summary,
-           details, recommendations, affected_items,
-           status, metadata, created_at, updated_at
-         ) VALUES (
-           $1, $2, $3, $4, 'medium',
-           $5, $6, $7, '[]'::json, $8, 'open', $9, NOW(), NOW()
-         )`,
-        [
-          findingId,
-          payload.organizationId,
-          payload.projectId,
-          'quality_drift', // Default analyzer type
-          `AI Analysis Requested: ${params.analysisType}`,
-          `Rule "${rule.name}" triggered AI analysis of type "${params.analysisType}" for project ${payload.projectId}`,
-          JSON.stringify({
-            analysisType: params.analysisType,
-            scope: params.scope,
-            triggerEvent: payload.event,
-          }),
-          JSON.stringify([{ type: params.scope, id: payload.projectId }]),
-          JSON.stringify({
-            ruleId: rule.ruleId,
-            priority: params.priority || 'normal',
-            queued: true,
-          }),
-        ]
-      );
-
-      return {
-        actionType: 'trigger_ai_analysis',
-        success: true,
-        data: { findingId, analysisType: params.analysisType },
-        durationMs: Date.now() - start,
-      };
-    } catch (error: any) {
-      return {
-        actionType: 'trigger_ai_analysis',
-        success: false,
-        error: error.message,
-        durationMs: Date.now() - start,
-      };
-    }
+    const analysisType = (action.params as { analysisType?: unknown } | undefined)?.analysisType;
+    return {
+      actionType: 'trigger_ai_analysis',
+      success: false,
+      error:
+        `No analysis runner is connected to rules, so the ${String(analysisType ?? 'requested')} analysis ` +
+        'was not requested and nothing was recorded.',
+      durationMs: 0,
+    };
   }
 }
 
@@ -644,7 +612,7 @@ export function registerAllHandlers(engine: ProjectRulesEngine, pool: Pool): voi
   engine.registerHandler(new BlockTransitionHandler(pool));
   engine.registerHandler(new EscalateHandler(pool));
   engine.registerHandler(new UpdateFieldHandler(pool));
-  engine.registerHandler(new TriggerAIAnalysisHandler(pool));
+  engine.registerHandler(new TriggerAIAnalysisHandler());
   engine.registerHandler(new AdvanceStageHandler(pool));
   engine.registerHandler(new CreateChildProjectHandler(pool));
 }

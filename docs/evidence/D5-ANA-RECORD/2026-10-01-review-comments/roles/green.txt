@@ -1,0 +1,12 @@
+$ npx vitest run --config vitest.db.config.ts tests/db/review-comments-record.dbtest.ts   # PostgreSQL 16.13, install-fresh + deploy-migrate
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > commits the comment with a chained row carrying its words and their sha256 140ms
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > writes neither when the chained row cannot be written 49ms
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > refuses another tenant's caller on this thread 23ms
+ ✓ tests/db/review-comments-record.dbtest.ts > the words are fixed > PATCH is refused with COMMENT_TEXT_FIXED, and the words are unchanged 58ms
+ ✓ tests/db/review-comments-record.dbtest.ts > the words are fixed > the database refuses a rewrite, a direct delete and a truncate from the owner 68ms
+ ✓ tests/db/review-comments-record.dbtest.ts > retraction > hides the comment, keeps its words, and chains who retracted it and why 104ms
+ ✓ tests/db/review-comments-record.dbtest.ts > a comment goes only with what it belongs to > deleting its thread removes it (the cascade), and the chained rows remain 59ms
+ ✓ tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a member doing the work comments and asks for changes 107ms
+ ✓ tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a member cannot reassign the thread; a manager can, and resolves it 96ms
+ ✓ tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a viewer reads and cannot comment 31ms
+      Tests  10 passed (10)

@@ -24,9 +24,17 @@
  *   - startCitationRunPruneScheduler(): same lifecycle as the proposal
  *     sweep — fixed interval, .unref()'d, disabled in tests.
  *
+ * The scheduled global sweep runs under a cross-process lease
+ * (db/scheduledOnce), which also supplies the audited system scope its
+ * estate-wide DELETE needs. It used to issue an unscoped pool.query: under
+ * RLS_ENFORCE=on that fails closed, so it never pruned anything while
+ * getCitationRunPruneStatus() kept reporting `running: true`. A failing tick
+ * is now visible there as `lastFailure`.
+ *
  * @module server/services/ana/citation-run-pruner
  */
 import { getPool } from '../../db/runtime.js';
+import { runScheduledOnce } from '../../db/scheduledOnce';
 
 const DEFAULT_KEEP_LAST_N = parseInt(
   process.env.ANA_CITATION_RUN_KEEP_LAST_N ?? '10',
@@ -123,6 +131,7 @@ export async function pruneOldCitationRuns(
 let timer: NodeJS.Timeout | null = null;
 let startupTimer: NodeJS.Timeout | null = null;
 let lastTick: { at: Date; result: PruneCitationRunsResult } | null = null;
+let lastFailure: { at: Date; error: string } | null = null;
 
 function isDisabled(): boolean {
   if (process.env.NODE_ENV === 'test') return true;
@@ -134,14 +143,20 @@ async function tick(): Promise<void> {
   try {
     // Global sweep — all orgs. The CTE inside pruneOldCitationRuns
     // partitions by artifact, so cross-org partitions stay disjoint.
-    const result = await pruneOldCitationRuns({ keepLastN: DEFAULT_KEEP_LAST_N });
+    const outcome = await runScheduledOnce('citation-run-prune', () =>
+      pruneOldCitationRuns({ keepLastN: DEFAULT_KEEP_LAST_N })
+    );
+    if (!outcome.ran) return; // another process is pruning this tick
+    const result = outcome.value;
     lastTick = { at: new Date(), result };
+    lastFailure = null;
     if (result.prunedRunCount > 0) {
       console.log(
         `[citation-run-prune] pruned ${result.prunedRunCount} runs across ${result.prunedArtifactCount} artifacts`
       );
     }
   } catch (err: any) {
+    lastFailure = { at: new Date(), error: String(err?.message || err).slice(0, 200) };
     console.warn(
       '[citation-run-prune] tick failed (will retry next interval):',
       err?.message || err
@@ -185,6 +200,8 @@ export function getCitationRunPruneStatus(): {
   intervalMs: number;
   keepLastN: number;
   lastTick: { at: string; result: PruneCitationRunsResult } | null;
+  /** Most recent failed tick since the last successful one, or null. */
+  lastFailure: { at: string; error: string } | null;
 } {
   return {
     running: !!timer,
@@ -196,5 +213,6 @@ export function getCitationRunPruneStatus(): {
           result: lastTick.result,
         }
       : null,
+    lastFailure: lastFailure ? { at: lastFailure.at.toISOString(), error: lastFailure.error } : null,
   };
 }

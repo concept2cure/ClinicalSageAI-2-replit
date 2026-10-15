@@ -420,6 +420,8 @@ export function deriveAuthoringPlan(input: {
         'The contradictions list below is NOT complete: treat this section as unscanned, not contradiction-free.',
     });
   }
+  const consistencyGap = consistencyFailed ? null : consistencyNotAssessed(readiness);
+  if (consistencyGap) riskFactors.push(consistencyGap.factor);
   if (readiness?.nextActions?.length) {
     for (const action of readiness.nextActions) {
       const actionSection = action.references?.ctdSection ?? null;
@@ -554,6 +556,8 @@ export function deriveAuthoringPlan(input: {
     summaryParts.push(
       `${sectionContradictions.length} unresolved contradiction${sectionContradictions.length === 1 ? '' : 's'}`
     );
+  } else if (consistencyGap) {
+    summaryParts.push(consistencyGap.summary);
   }
   if (therapeutic.profile) {
     summaryParts.push(`${therapeutic.profile.displayName} reviewer expectations applied`);
@@ -660,6 +664,30 @@ function buildOutline(
       'Pre-empt the top reviewer expectations from the therapeutic-area profile (if set) and the section\'s guidance reference.',
   });
   return out;
+}
+
+/**
+ * 2026-10-15: a project with no consistency scan result on record reached the
+ * plan as an empty contradiction list, read the same as a scanned, clean one.
+ * The readiness aggregate names it in notAssessed; the plan says so too.
+ */
+function consistencyNotAssessed(
+  readiness: Awaited<ReturnType<typeof getProjectReadinessAggregate>> | null
+): { factor: AuthoringPlanRiskFactor; summary: string } | null {
+  const entry = (readiness?.notAssessed ?? []).find(n => n.component === 'consistency');
+  if (!entry) return null;
+  return {
+    factor: {
+      id: 'consistency-not-assessed',
+      source: 'consistency',
+      severity: 'info',
+      message: `${entry.detail} The contradiction list is empty because nothing was assessed, not because none exist.`,
+    },
+    summary:
+      entry.reason === 'unavailable'
+        ? 'contradictions not assessed (the consistency alerts could not be read)'
+        : 'contradictions not assessed (no consistency scan result on record)',
+  };
 }
 
 function computePlanScore(input: {

@@ -19,8 +19,11 @@ import {
 } from '../services/invention-disclosure/invention-disclosure-service';
 import { recordDisclosureCreated, recordDisclosureUpdated, recordDisclosureSubmitted } from '../services/invention-disclosure-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('invention-disclosure');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -38,7 +41,7 @@ const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) { res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } }); return; }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the invention-disclosure request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use yyyy-mm-dd.');

@@ -1,0 +1,13 @@
+# unit + PGlite: catalog/passage/placement tools, RAG pipeline/router/filters, vault services, the walk, send-message suites
+ × server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > hands back the passage with the document and locator that make it citable
+ × server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > caps the requested limit rather than passing it through
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 57 passed (58)
+      Tests  2 failed | 668 passed (670)
+# document-passage-tools.test.ts after its two exact-argument assertions learned programId: null
+      Tests  17 passed (17)
+# real PostgreSQL 16 (c2c_dbtest, migrated to trunk f94e746b2): catalog, placement, passage, RAG
+ Test Files  9 passed (9)
+      Tests  80 passed (80)
+# lint ratchet --since HEAD: no file changed its warning count
+# tsc --noEmit -p tsconfig.json: exit 0, 0 errors

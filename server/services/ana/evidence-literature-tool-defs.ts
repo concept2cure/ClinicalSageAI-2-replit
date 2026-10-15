@@ -13,6 +13,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { REPOSITORY_CONNECTOR_IDS } from '../connectors/connector-interface';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -97,14 +98,21 @@ export const SEARCH_MEDICARE_COVERAGE: AnaTool = {
   },
 };
 
+// AnA Summary S2 (2026-10-08): the `connectors` enum is static — the same five
+// repositories for every tenant — so the schema, and the prompt cache, do not
+// vary by tenant. Which of them a tenant has connected is the result's
+// `searched` / `skipped`, never the schema.
 export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
   name: 'search_connected_repositories',
   description:
-    "Search the organization's connected external document repositories (Google Drive, Box, " +
-    'OneDrive, SharePoint, Veeva Vault, …) for source material relevant to a query. Use when the ' +
-    "user references documents that live in their own connected systems rather than this project's " +
-    'uploaded corpus (use project_knowledge_search for the latter). Returns matching documents with ' +
-    'their source system, summary, and a link. Reports which systems are not yet connected.',
+    "Search the organization's own connected document repositories (Google Drive, including shared " +
+    'drives; Box; OneDrive; SharePoint; Veeva Vault) for source material relevant to a query. Use when ' +
+    "the user references documents that live in their own systems rather than this project's uploaded " +
+    'corpus (use project_knowledge_search for the latter). Returns matching documents with their ' +
+    'source system, summary, and a link, and names each system that was not searched and why. ' +
+    'It never searches public sources: use search_literature for published literature and the agency ' +
+    'lookups (search_drug_approvals, search_drug_labels, search_ema_epar, search_clinical_evidence, …) ' +
+    'for regulatory and trial data.',
   input_schema: {
     type: 'object',
     properties: {
@@ -114,9 +122,10 @@ export const SEARCH_CONNECTED_REPOSITORIES: AnaTool = {
       },
       connectors: {
         type: 'array',
-        items: { type: 'string' },
+        items: { type: 'string', enum: [...REPOSITORY_CONNECTOR_IDS] },
         description:
-          "Optional connector ids to restrict the search (e.g. ['google-drive']). Omit to search all connected systems.",
+          "Optional: restrict the search to these repositories (e.g. ['google_drive']). Omit to search " +
+          'every repository connected for this organization.',
       },
       max_results: {
         type: 'number',
@@ -475,37 +484,33 @@ export const PLAN_ORPHAN_DRUG_DESIGNATION: AnaTool = {
   },
 };
 
-// IND narrative-module authoring (E11). Author a CTD Module 2 clinical summary
-// (2.5 Clinical Overview / 2.7 Clinical Summary) from a STRUCTURED source and
-// derive the required_strings for verify_docx_against_source from the source's
-// key facts/figures — so the verify step proves transcription fidelity (a
-// missing/mistyped figure fails) before the user signs + seals the persisted
-// version. Honesty contract: sample/not_assessed sources are non-sealable.
+// IND narrative-module planning (E11). A supplied-string scaffold with a
+// plan-text self-check, without authored-file or independent source verification.
 export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
   name: 'plan_ind_module_authoring',
   description:
-    'Author a transcription-safe IND narrative module (CTD Module 2.5 Clinical Overview or 2.7 Clinical ' +
-    'Summary) from a STRUCTURED source. Returns the author_docx_native title + markdown content (every ' +
-    'mandatory CTD Module 2 section header) and the required_strings to pass to verify_docx_against_source. ' +
-    'CRITICAL: required_strings include the section headers PLUS every source figure VALUE, so the verify ' +
-    'step proves each figure was transcribed verbatim and CATCHES a missing or mistyped figure before the ' +
-    'draft can be sealed. Honesty contract: a sample/not_assessed source is never sealable, and a draft ' +
-    'whose figures do not verify is non-sealable. Supply the structured source facts/figures in `facts`.',
+    'Plan an IND transcription scaffold (CTD Module 2.5 Clinical Overview or 2.7 Clinical Summary) from ' +
+    'unverified caller/model-supplied structured facts. Returns the author_docx_native title + markdown ' +
+    'content with supported template headers and required_strings for later transcription checks. ' +
+    'The returned verification is plan-text self-consistency only: this tool does not author a file or ' +
+    'independently verify an artifact, underlying study, source qualification, or provenance. The planning ' +
+    'receipt is always non-sealable, even with provenance live and verification.ok true. Verify the actual ' +
+    'governed artifact and its qualified source evidence separately before sealing. Supply facts in `facts`.',
   input_schema: {
     type: 'object',
     properties: {
       module: {
         type: 'string',
         enum: ['2.5', '2.7'],
-        description: 'CTD Module 2 clinical summary to author: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
+        description: 'Supported CTD Module 2 template to plan: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
       },
       product_name: { type: 'string', description: 'Product / compound name for the title + running header.' },
       indication: { type: 'string', description: 'Proposed indication.' },
       facts: {
         type: 'array',
         description:
-          'Structured source facts/figures to transcribe verbatim. Each value becomes a required_strings entry, ' +
-          'so a mistyped figure fails verification.',
+          'Unverified caller/model-supplied facts/figures to transcribe verbatim. Each value becomes a ' +
+          'required_strings entry for plan-text self-consistency; this does not qualify the underlying source.',
         items: {
           type: 'object',
           properties: {
@@ -516,9 +521,9 @@ export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
             label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
             value: {
               type: 'string',
-              description: 'The verbatim figure/string to transcribe AND verify (e.g. "42.3%", "200 mg", "24 months").',
+              description: 'The supplied figure/string to transcribe and self-check (e.g. "42.3%", "200 mg", "24 months").',
             },
-            source: { type: 'string', description: 'Optional source pointer (table/dataset id) recorded for provenance.' },
+            source: { type: 'string', description: 'Optional supplied source pointer (table/dataset id), not resolved or verified.' },
           },
           required: ['section_id', 'label', 'value'],
         },
@@ -526,7 +531,7 @@ export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
       provenance: {
         type: 'string',
         enum: ['live', 'sample', 'not_assessed'],
-        description: 'Provenance of the source data. sample/not_assessed sources are non-sealable.',
+        description: 'Caller-declared provenance label; it does not establish source qualification or sealability. All planning receipts are non-sealable.',
       },
     },
     required: ['module', 'product_name', 'indication'],
@@ -536,7 +541,7 @@ export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
 export const ADVISE_GCP: AnaTool = {
   name: 'advise_gcp',
   description:
-    'Good Clinical Practice (ICH E6(R2)) advisor: returns the GCP principles or a specific ' +
+    'Good Clinical Practice (ICH E6(R3)) advisor: returns the GCP principles or a specific ' +
     'responsibility domain (sponsor, investigator, IRB/IEC) with the key obligations and citation. ' +
     'Use when briefing teams on GCP roles or preparing for inspection readiness.',
   input_schema: {
@@ -550,9 +555,9 @@ export const ADVISE_GCP: AnaTool = {
 export const REVIEW_INFORMED_CONSENT: AnaTool = {
   name: 'review_informed_consent',
   description:
-    'QC an informed-consent form draft for the required elements of informed consent (ICH E6(R2) §4.8 ' +
-    'and 21 CFR 50.25 / 45 CFR 46.116): flags missing required and when-appropriate elements with their ' +
-    'citation and returns a completeness score. Cue-based and advisory — IRB/EC review is authoritative.',
+    'QC an informed-consent form draft for the required elements of informed consent (ICH E6(R3) Annex 1 §2.8 ' +
+    'and 21 CFR 50.25): flags missing required and when-appropriate elements with their ' +
+    'citation, and counts the required elements found in the wording (not a compliance score). Cue-based and advisory — IRB/EC review is authoritative.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1135,10 +1140,12 @@ export const BUILD_ABBREVIATION_LIST: AnaTool = {
 export const MEDICAL_WRITING_REVIEW: AnaTool = {
   name: 'medical_writing_review',
   description:
-    "Self-review a draft (or pre-draft) against a document type's governing standard — checks section " +
-    'coverage vs the required structure (ICH E3/M4E, EU MDR/IVDR, ICMJE, …) and returns a conformance ' +
-    'checklist (structure, key requirements, pitfalls) plus a readiness verdict. Use before handing ' +
-    'off or finalizing any regulatory/scientific document to QC it like an expert medical writer.',
+    "Review a draft (or pre-draft) against an indexed document type's heading outline " +
+    '(ICH E3/M4E, EU MDR/IVDR, ICMJE, …). Returns detected-heading evidence, a human/evidence ' +
+    'review checklist and up to three focused client clarification prompts. Read project sources ' +
+    'and prior answers first; ask only unresolved material questions outside the formal document. ' +
+    'Heading coverage never establishes scientific completeness, compliance, approval or filing readiness; ' +
+    'this deterministic tool does not read or verify source evidence.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1148,7 +1155,7 @@ export const MEDICAL_WRITING_REVIEW: AnaTool = {
       },
       draft_text: {
         type: 'string',
-        description: 'Optional draft text — when provided, section coverage is assessed against it.',
+        description: 'Optional draft text — checks actual headings against the indexed outline, not narrative keyword mentions or substantive evidence completeness.',
       },
     },
     required: ['document_type'],
@@ -1742,7 +1749,7 @@ export const ASSEMBLE_BRIEFING_BOOK: AnaTool = {
 export const SCAN_REGULATORY_DEFICIENCIES: AnaTool = {
   name: 'scan_regulatory_deficiencies',
   description:
-    "Deterministically scan regulatory text for known deficiency and reviewer-trigger patterns using AnA's codified pattern registry — NO language-model call, pure heuristic/regex matching, fast and reproducible. Returns each match with the pattern name, category (deficiency / reviewer_trigger), severity, the matched text, a confidence score, the reviewer question it is likely to provoke, the regulatory basis, and concrete remediation plus stronger alternative phrasings. Use it as a quick, defensible first pass over a draft section, or whenever you want pattern-level analysis without invoking the full model. Optional filters narrow to an agency, submission type, category, or minimum severity.",
+    "Deterministically scan regulatory text for known deficiency and reviewer-trigger patterns using AnA's codified pattern registry — NO language-model call, pure heuristic/regex matching, fast and reproducible. Returns each match with the pattern name, category (deficiency / reviewer_trigger), severity, the matched text, matchConfidence null with matchConfidenceBasis 'not_computed' (a hit is a trigger-phrase match, not a probability), the reviewer question it is likely to provoke, the regulatory basis, and concrete remediation plus stronger alternative phrasings. Use it as a quick, defensible first pass over a draft section, or whenever you want pattern-level analysis without invoking the full model. Optional filters narrow to an agency, submission type, category, or minimum severity.",
   input_schema: {
     type: 'object',
     properties: {

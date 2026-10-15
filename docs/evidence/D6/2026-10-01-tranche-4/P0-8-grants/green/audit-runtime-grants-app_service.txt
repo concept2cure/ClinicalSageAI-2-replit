@@ -1,0 +1,8 @@
+# working tree (fixed audit; app_service refreshed), 2026-10-01T06:14:37Z
+▶ grant audit on c2c_testdb as postgres; auditing role app_service (from --role)
+  role app_service: superuser=false bypassrls=false login=true; 1286 application relations audited
+  denied: 0
+  excess beyond the audit ceiling (non-owned relations): 0
+
+✓ runtime role app_service holds the recipe posture on all 1286 relations.
+exit=0

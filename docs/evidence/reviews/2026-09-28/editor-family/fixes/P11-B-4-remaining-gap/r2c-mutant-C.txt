@@ -1,0 +1,177 @@
+R2C MUTANT C (this round) diff (final -> mutant):
+698c698
+<     return { undo: undoFloorAt(floor, oldState), redo, seen, undid };
+---
+>     return { undo: floor.undo, redo, seen, undid }; // MUTANT C: apply keeps the floor as stored
+suggestions.ts in place: sha256 5a0af6840ebc0ccc...
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted 105ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back 23ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept all, then Undo: nothing returns to pending 25ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > an AnA draft inserted and accepted in this session is not removed by Undo 26ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > CONTROL: ordinary typing is still undoable 17ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': Accept, then Undo: the accepted change stands 18ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': Accept, then Undo: the accepted change stands 16ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': Accept all, then Undo: the accepted change stands 12ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': Accept all, then Undo: the accepted change stands 14ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': typing after the decision is still undoable, Undo stops at the decision, Redo re-applies it 18ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': typing after the decision is still undoable, Undo stops at the decision, Redo re-applies it 13ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: own 'insertion' with no decision: Undo and Redo behave as before 15ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: own 'deletion' with no decision: Undo and Redo behave as before 16ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: an AnA insert is not a decision; the typing before it stays undoable 13ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Redo cannot bring back a step undone before a recorded decision > own insertion: deleted, the delete undone, accepted, then Redo: the accepted text stays 11ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Redo cannot bring back a step undone before a recorded decision > AnA draft: deleted, the delete undone, accepted, then Redo: the accepted draft stays 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Redo cannot bring back a step undone before a recorded decision > typing after that decision is redoable once undone 12ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > 141 events, Accept, 1 more: Undo reverses exactly those, then stops at the decision 196ms
+   → expected +0 to be 1 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > 141 events, Accept, 16 more: Undo reverses exactly those, then stops at the decision 225ms
+   → expected +0 to be 16 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > 141 events, Accept, 40 more: Undo reverses exactly those, then stops at the decision 324ms
+   → expected +0 to be 40 // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > an Undo pressed straight after the edit that made history cut passes 347ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > once history has cut everything from before the decision, Undo reverses all it still holds 261ms
+   → expected 99 to be 100 // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > decisionFloorAllows > says no at both floors, where can() says yes, and yes to what came after 19ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > decisionFloorAllows > after history has cut (140 edits, Accept, 16 more), with can() it foretells every Undo press 352ms
+   → expected +0 to be 16 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > decisionFloorAllows > after history has cut (0 edits, Accept, 120 more), with can() it foretells every Undo press 272ms
+   → expected 99 to be 100 // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > decisionFloorAllows > refuses nothing where prosemirror-history holds nothing, as under live co-editing 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an accepted text present, unmarked, in the document — across a formatting split 11ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is back under a pending insertion mark, and its author with it 10ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is struck by a pending deletion 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text the document no longer holds 8ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an author while any one of their accepted texts survives 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > does not match a text across a paragraph boundary 21ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after Accept leaves the decision, the canvas and the save in agreement 365ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > attributes nothing to AnA once the accepted text is gone from the section 84ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after accepting one’s own tracked insertion leaves the accepted text (gap (e)) 149ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > answers the same whichever list the host reads first 69ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > 141 events, Accept, 1 more: Undo reverses exactly those, then stops at the decision
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:446:40
+    444|
+    445|       // A floor held at 120 while history fell back to 100 refused ev…
+    446|       expect(undoUntilRefused(editor)).toBe(after);
+       |                                        ^
+    447|       expect(editor.state.doc.textContent).toBe(`Base text.${CLAUSE}Ot…
+    448|       // The accepted clause, unmarked.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > 141 events, Accept, 16 more: Undo reverses exactly those, then stops at the decision
+AssertionError: expected +0 to be 16 // Object.is equality
+
+- Expected
++ Received
+
+- 16
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:446:40
+    444|
+    445|       // A floor held at 120 while history fell back to 100 refused ev…
+    446|       expect(undoUntilRefused(editor)).toBe(after);
+       |                                        ^
+    447|       expect(editor.state.doc.textContent).toBe(`Base text.${CLAUSE}Ot…
+    448|       // The accepted clause, unmarked.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > 141 events, Accept, 40 more: Undo reverses exactly those, then stops at the decision
+AssertionError: expected +0 to be 40 // Object.is equality
+
+- Expected
++ Received
+
+- 40
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:446:40
+    444|
+    445|       // A floor held at 120 while history fell back to 100 refused ev…
+    446|       expect(undoUntilRefused(editor)).toBe(after);
+       |                                        ^
+    447|       expect(editor.state.doc.textContent).toBe(`Base text.${CLAUSE}Ot…
+    448|       // The accepted clause, unmarked.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops exactly at the decision after history has cut its oldest events > once history has cut everything from before the decision, Undo reverses all it still holds
+AssertionError: expected 99 to be 100 // Object.is equality
+
+- Expected
++ Received
+
+- 100
++ 99
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:470:38
+    468|     expect(depthAtDecision).toBe(1);
+    469|
+    470|     expect(undoUntilRefused(editor)).toBe(100);
+       |                                      ^
+    471|     expect(editor.state.doc.textContent).toBe(`Base text.${CLAUSE}Othe…
+    472|     editor.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > decisionFloorAllows > after history has cut (140 edits, Accept, 16 more), with can() it foretells every Undo press
+AssertionError: expected +0 to be 16 // Object.is equality
+
+- Expected
++ Received
+
+- 16
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:511:46
+    509|       const { editor } = longSession(before, after);
+    510|       const live = () => editor.can().undo() && decisionFloorAllows(ed…
+    511|       expect(undoUntilRefused(editor, live)).toBe(Math.min(after, 100)…
+       |                                              ^
+    512|       editor.destroy();
+    513|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > decisionFloorAllows > after history has cut (0 edits, Accept, 120 more), with can() it foretells every Undo press
+AssertionError: expected 99 to be 100 // Object.is equality
+
+- Expected
++ Received
+
+- 100
++ 99
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:511:46
+    509|       const { editor } = longSession(before, after);
+    510|       const live = () => editor.can().undo() && decisionFloorAllows(ed…
+    511|       expect(undoUntilRefused(editor, live)).toBe(Math.min(after, 100)…
+       |                                              ^
+    512|       editor.destroy();
+    513|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 30 passed (36)
+   Start at  00:21:10
+   Duration  4.97s (transform 674ms, setup 154ms, import 1.02s, tests 3.11s, environment 517ms)
+
+RESTORED: suggestions.ts matches the final copy byte for byte

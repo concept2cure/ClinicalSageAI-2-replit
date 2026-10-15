@@ -1,0 +1,243 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps US IND from legacy type 41ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps US IND from registryId 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps EU MAA from legacy type 2ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps 510K from legacy type 2ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps BLA from registryId 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps EU CTA from registryId 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps Canada NDS from registryId with the dedicated HC blueprint 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps Japan marketing approval with the dedicated PMDA blueprint 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > returns null for unknown type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > returns null when no type specified 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > generates instructions with product name 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > each section row has required fields 17ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns count for US_IND 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns count for legacy type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns 0 for unknown type 1ms
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > seeds CTIS Form/MSC and Parts I/II as authoring groups rather than CTD modules 10ms
+   → expected 'M1' to be 'CTIS Form/MSC' // Object.is equality
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > seeds the Japan notification outline with a Notification group 2ms
+   → expected false to be true // Object.is equality
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > seeds the dedicated amendment components instead of the initial IND deep dossier 1ms
+   → expected true to be false // Object.is equality
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > ICH_DSUR uses Document for standalone module-zero rows 1ms
+   → expected false to be true // Object.is equality
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > ICH_CSR uses Document for standalone module-zero rows 1ms
+   → expected false to be true // Object.is equality
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > EU_CTA preserves outline provenance and limitations on every stored section row 2ms
+   → expected undefined to deeply equal [ …(3) ]
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > JP_CTN preserves outline provenance and limitations on every stored section row 1ms
+   → expected undefined to deeply equal [ …(6) ]
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > US_IND_AMENDMENT preserves outline provenance and limitations on every stored section row 1ms
+   → expected undefined to deeply equal [ …(5) ]
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > CA_CTA preserves outline provenance and limitations on every stored section row 1ms
+   → expected undefined to deeply equal [ …(4) ]
+ × tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > CA_CTA_A preserves outline provenance and limitations on every stored section row 0ms
+   → expected undefined to deeply equal [ …(4) ]
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > preserves genuine CTD M1–M5 labels, including the initial US IND deep adapter 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > seeds CTIS Form/MSC and Parts I/II as authoring groups rather than CTD modules
+AssertionError: expected 'M1' to be 'CTIS Form/MSC' // Object.is equality
+
+Expected: "CTIS Form/MSC"
+Received: "M1"
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:126:82
+    124|     it('seeds CTIS Form/MSC and Parts I/II as authoring groups rather …
+    125|       const result = await bootstrapFromRegistry({ registryId: 'EU_CTA…
+    126|       expect(result!.sections.find(s => s.sectionCode === 'FORM.COVER'…
+       |                                                                                  ^
+    127|       expect(result!.sections.find(s => s.sectionCode === 'MSC')?.modu…
+    128|       expect(result!.sections.find(s => s.sectionCode === 'PART_I.PROT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > seeds the Japan notification outline with a Notification group
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:136:72
+    134|       const result = await bootstrapFromRegistry({ registryId: 'JP_CTN…
+    135|       expect(result!.sections.length).toBeGreaterThan(0);
+    136|       expect(result!.sections.every(s => s.module === 'Notification'))…
+       |                                                                        ^
+    137|       expect(result!.sections.map(s => s.sectionCode)).toEqual((await …
+    138|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > seeds the dedicated amendment components instead of the initial IND deep dossier
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:143:39
+    141|       const result = await bootstrapFromRegistry({ registryId: 'US_IND…
+    142|       const blueprint = (await getSectionBlueprint('US_IND_AMENDMENT')…
+    143|       expect(result!.usedDeepAdapter).toBe(false);
+       |                                       ^
+    144|       expect(result!.sections.map(s => s.sectionCode)).toEqual(bluepri…
+    145|       expect(result!.sections.every(s => s.module === 'Amendment')).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > ICH_DSUR uses Document for standalone module-zero rows
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > ICH_CSR uses Document for standalone module-zero rows
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:156:70
+    154|         const result = await bootstrapFromRegistry({ registryId: id });
+    155|         expect(result!.sections.length).toBeGreaterThan(0);
+    156|         expect(result!.sections.every(s => s.module === 'Document')).t…
+       |                                                                      ^
+    157|         expect(result!.sections.map(s => s.sectionCode)).toEqual((awai…
+    158|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > EU_CTA preserves outline provenance and limitations on every stored section row
+AssertionError: expected undefined to deeply equal [ …(3) ]
+
+- Expected:
+[
+  "Numeric module values are platform groups: 1 = CTIS Form/MSC, 2 = Part I, 3 = Part II. They are not CTD module designations.",
+  "Required flags are baseline preparation expectations including permitted alternatives; false flags leave applicability unresolved, not waived. Confirm Part I-only scope, each product and each Member State.",
+  "This outline does not create CTIS fields, validate language or disclosure copies, resolve conditional evidence, or establish filing readiness.",
+]
+
++ Received:
+undefined
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:167:55
+    165|         expect(context.limitations.length).toBeGreaterThan(0);
+    166|         for (const section of result!.sections) {
+    167|           expect(section.metadata.outlineLimitations).toEqual(context.…
+       |                                                       ^
+    168|           if (context.basis) expect(section.metadata.outlineBasis).toE…
+    169|         }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > JP_CTN preserves outline provenance and limitations on every stored section row
+AssertionError: expected undefined to deeply equal [ …(6) ]
+
+- Expected:
+[
+  "Required flags are platform scaffold expectations, not a determination that every field or attachment is legally required for every notification.",
+  "This scaffold follows company-sponsored drug notification handling; confirm a different sponsor pathway, product modality or lifecycle category against its current notice.",
+  "The module field is a compatibility grouping, not a Japan CTD Module 1 designation. CTN is not a full marketing CTD.",
+  "Timing depends on the notification category and whether the 30-day review applies; verify the applicable clock and planned site contract, rather than assigning every trial a 30-day start rule.",
+  "Confirm document-level language acceptance and Japanese/foreign evidence needs with the client and PMDA; neither additional Japanese studies nor a language exemption is automatic.",
+  "Generate and validate the current official XML/PDF notification through its technical workflow; an authored outline does not generate that schema, submit it or establish readiness.",
+]
+
++ Received:
+undefined
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:167:55
+    165|         expect(context.limitations.length).toBeGreaterThan(0);
+    166|         for (const section of result!.sections) {
+    167|           expect(section.metadata.outlineLimitations).toEqual(context.…
+       |                                                       ^
+    168|           if (context.basis) expect(section.metadata.outlineBasis).toE…
+    169|         }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > US_IND_AMENDMENT preserves outline provenance and limitations on every stored section row
+AssertionError: expected undefined to deeply equal [ …(5) ]
+
+- Expected:
+[
+  "Confirm whether this is a new protocol, protocol change, new investigator, or information amendment before selecting evidence branches.",
+  "Required flags are platform scaffold expectations, not a conclusion that every branch or CTD section applies to every amendment.",
+  "The module field groups authoring components for compatibility; substantive data must be placed in the affected current regional CTD location, not inferred from this grouping.",
+  "Protocol amendments, information amendments, IND safety reports and annual reports are distinct pathways; this record does not replace safety reporting or a response-to-hold review.",
+  "Verify category-specific implementation and notification timing, IRB requirements, immediate-hazard exceptions and current delivery specifications separately; an outline is not an approval or filing-readiness decision.",
+]
+
++ Received:
+undefined
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:167:55
+    165|         expect(context.limitations.length).toBeGreaterThan(0);
+    166|         for (const section of result!.sections) {
+    167|           expect(section.metadata.outlineLimitations).toEqual(context.…
+       |                                                       ^
+    168|           if (context.basis) expect(section.metadata.outlineBasis).toE…
+    169|         }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > CA_CTA preserves outline provenance and limitations on every stored section row
+AssertionError: expected undefined to deeply equal [ …(4) ]
+
+- Expected:
+[
+  "Canadian trial applications use Modules 1–3 as applicable, not a full marketing CTD. Confirm eCTD or non-eCTD and the current trial-specific delivery instructions.",
+  "Required flags are platform preparation expectations. Quality, site and clinical-change applicability remain unresolved until client sources and change scope are reviewed.",
+  "PSEAT-CTA is an initial-CTA synopsis; verify current protocol, consent, quality and site records.",
+  "A scaffold does not determine approval, technical conformance or filing readiness.",
+]
+
++ Received:
+undefined
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:167:55
+    165|         expect(context.limitations.length).toBeGreaterThan(0);
+    166|         for (const section of result!.sections) {
+    167|           expect(section.metadata.outlineLimitations).toEqual(context.…
+       |                                                       ^
+    168|           if (context.basis) expect(section.metadata.outlineBasis).toE…
+    169|         }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > regional and standalone authoring groups > CA_CTA_A preserves outline provenance and limitations on every stored section row
+AssertionError: expected undefined to deeply equal [ …(4) ]
+
+- Expected:
+[
+  "Canadian trial applications use Modules 1–3 as applicable, not a full marketing CTD. Confirm eCTD or non-eCTD and the current trial-specific delivery instructions.",
+  "Required flags are platform preparation expectations. Quality, site and clinical-change applicability remain unresolved until client sources and change scope are reviewed.",
+  "Select clinical, quality or combined amendment scope; the initial-only PSEAT-CTA synopsis is excluded.",
+  "A scaffold does not determine approval, technical conformance or filing readiness.",
+]
+
++ Received:
+undefined
+
+ ❯ tests/regulatory/projectBootstrapFromRegistry.test.ts:167:55
+    165|         expect(context.limitations.length).toBeGreaterThan(0);
+    166|         for (const section of result!.sections) {
+    167|           expect(section.metadata.outlineLimitations).toEqual(context.…
+       |                                                       ^
+    168|           if (context.basis) expect(section.metadata.outlineBasis).toE…
+    169|         }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 16 passed (26)
+   Start at  22:19:16
+   Duration  1.29s (transform 783ms, setup 91ms, import 797ms, tests 92ms, environment 0ms)

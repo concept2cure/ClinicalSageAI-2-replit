@@ -1,0 +1,389 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > refuses a real clean subset despite configured=true, retaining its scoped diagnostics 55ms
+   → expected { externalErrorCount: +0, …(10) } to match object { …(9) }
+(3 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > classifies an unavailable resolver without inventing a run 2ms
+   → expected { externalErrorCount: +0, …(10) } to match object { validatorKind: 'unavailable', …(6) }
+(5 matching properties omitted from actual)
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > classifies the external adapter path while expressly making no licence/provider claim 1ms
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > preserves the unrun operational failure envelope without fabricating content errors 2ms
+   → expected { externalErrorCount: +0, …(10) } to match object { ran: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > clears a coherent matching external report only for this control contract 4ms
+   → expected { externalErrorCount: +0, …(10) } to match object { configured: true, ran: true, …(7) }
+(3 matching properties omitted from actual)
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > retains warnings on a coherent external pass 0ms
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > records an actual coherent failed external run and refuses clearance 1ms
+   → expected { externalErrorCount: 1, …(10) } to match object { qualifyingRun: true, …(4) }
+(7 matching properties omitted from actual)
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses missing classification even if configured=true 2ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses explicit unknown even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses runtime unknown class even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses missing adapter name even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses a selected external path whose configuration is not established 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > does not accept truthy configuration string false 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > does not accept truthy configuration string true 0ms
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses no report without confusing configuration with execution 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { configured: true, ran: false, …(4) }
+(6 matching properties omitted from actual)
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity fda-criteria-subset when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity noop when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity unknown when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity LORENZ-EVALIDATOR when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity lorenz-evalidator  when the selected adapter is LORENZ 2ms
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with truthy ran 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with truthy passed 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with false passed with no errors 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with negative count 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with fractional count 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with NaN count 0ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with infinite count 0ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with unsafe count 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with bad warning count 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with finding/count disagreement 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with warning/count disagreement 0ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with count with no findings 1ms
+   → expected { externalErrorCount: 1, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with passed true with coherent error findings 0ms
+   → expected { externalErrorCount: 1, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with unknown severity 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with missing findings 0ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with invalid date 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with serialized date without caller parsing 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with missing profile 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps an external failure visible while nonblocking: { environment: 'staging', requireEvalidator: true } 1ms
+   → expected { externalErrorCount: 1, …(10) } to match object { qualifyingRun: true, …(6) }
+(5 matching properties omitted from actual)
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps an external failure visible while nonblocking: { environment: 'production', requireEvalidator: false } 1ms
+   → expected { externalErrorCount: 1, …(10) } to match object { qualifyingRun: true, …(6) }
+(5 matching properties omitted from actual)
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps mismatched advisory evidence invalid rather than passed/not_assessed 0ms
+ × server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > marks a zero compatibility placeholder as unknown rather than a clean advisory tally 1ms
+   → expected { externalErrorCount: +0, …(10) } to match object { assessmentStatus: 'invalid', …(3) }
+(8 matching properties omitted from actual)
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > retains raw executed subset diagnostics without an external assessment or blocker 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > refuses a real clean subset despite configured=true, retaining its scoped diagnostics
+AssertionError: expected { externalErrorCount: +0, …(10) } to match object { …(9) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,9 @@
+  {
+    "assessmentStatus": "not_assessed",
+    "configured": false,
+    "enforced": true,
+-   "errorCountKnown": true,
+    "qualifyingRun": false,
+    "ran": true,
+    "reportedValidatorName": "fda-criteria-subset",
+    "selectedValidatorName": "fda-criteria-subset",
+    "validatorKind": "internal_subset",
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:70:20
+     68|     expect(result.cleared).toBe(false);
+     69|     expect(validator.kind).toBe('internal_subset');
+     70|     expect(result).toMatchObject({
+       |                    ^
+     71|       validatorKind: 'internal_subset',
+     72|       selectedValidatorName: 'fda-criteria-subset',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > classifies an unavailable resolver without inventing a run
+AssertionError: expected { externalErrorCount: +0, …(10) } to match object { validatorKind: 'unavailable', …(6) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessmentStatus": "not_assessed",
+    "cleared": false,
+    "configured": false,
+-   "errorCountKnown": false,
+    "qualifyingRun": false,
+    "ran": false,
+    "validatorKind": "unavailable",
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:91:97
+     89|     const unavailableReport = await validator.validate({ packageDir: '…
+     90|     expect(validator).toMatchObject({ name: 'noop', kind: 'unavailable…
+     91|     expect(gate({ selectedValidator: validator, report: unavailableRep…
+       |                                                                                                 ^
+     92|       validatorKind: 'unavailable', configured: false, ran: false, qua…
+     93|       assessmentStatus: 'not_assessed', errorCountKnown: false, cleare…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > preserves the unrun operational failure envelope without fabricating content errors
+AssertionError: expected { externalErrorCount: +0, …(10) } to match object { ran: false, …(4) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessmentStatus": "not_assessed",
+    "cleared": false,
+-   "errorCountKnown": false,
+    "qualifyingRun": false,
+    "ran": false,
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:113:41
+    111|     expect(failedRun).toMatchObject({ validator: 'lorenz-evalidator', …
+    112|     expect(failedRun.findings).toContainEqual(expect.objectContaining(…
+    113|     expect(gate({ report: failedRun })).toMatchObject({
+       |                                         ^
+    114|       ran: false, qualifyingRun: false, assessmentStatus: 'not_assesse…
+    115|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > clears a coherent matching external report only for this control contract
+AssertionError: expected { externalErrorCount: +0, …(10) } to match object { configured: true, ran: true, …(7) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -2,10 +2,9 @@
+    "assessmentStatus": "passed",
+    "blockers": [],
+    "cleared": true,
+    "configured": true,
+    "enforced": true,
+-   "errorCountKnown": true,
+    "qualifyingRun": true,
+    "ran": true,
+    "validatorKind": "external_engine",
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:121:20
+    119| describe('D7 required production controls', () => {
+    120|   it('clears a coherent matching external report only for this control…
+    121|     expect(gate()).toMatchObject({
+       |                    ^
+    122|       configured: true, ran: true, validatorKind: 'external_engine',
+    123|       qualifyingRun: true, assessmentStatus: 'passed', errorCountKnown…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > records an actual coherent failed external run and refuses clearance
+AssertionError: expected { externalErrorCount: 1, …(10) } to match object { qualifyingRun: true, …(4) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessmentStatus": "failed",
+    "cleared": false,
+-   "errorCountKnown": true,
+    "externalErrorCount": 1,
+    "qualifyingRun": true,
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:139:20
+    137|       errorCount: 1, passed: false,
+    138|     }) });
+    139|     expect(result).toMatchObject({ qualifyingRun: true, assessmentStat…
+       |                    ^
+    140|     expect(result.blockers.join(' ')).toMatch(/1 error/i);
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses no report without confusing configuration with execution
+AssertionError: expected { externalErrorCount: +0, …(10) } to match object { configured: true, ran: false, …(4) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessmentStatus": "not_assessed",
+    "cleared": false,
+    "configured": true,
+-   "errorCountKnown": false,
+    "qualifyingRun": false,
+    "ran": false,
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:167:36
+    165|
+    166|   it('refuses no report without confusing configuration with execution…
+    167|     expect(gate({ report: null })).toMatchObject({
+       |                                    ^
+    168|       configured: true, ran: false, qualifyingRun: false, assessmentSt…
+    169|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with truthy ran
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with truthy passed
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with false passed with no errors
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with negative count
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with fractional count
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with NaN count
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with infinite count
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with unsafe count
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with bad warning count
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with finding/count disagreement
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with warning/count disagreement
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with unknown severity
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with missing findings
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with invalid date
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with serialized date without caller parsing
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with missing profile
+AssertionError: expected { externalErrorCount: +0, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessmentStatus": "invalid",
+    "cleared": false,
+-   "errorCountKnown": false,
+    "externalErrorCount": 0,
+    "qualifyingRun": false,
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:200:55
+    198|     ['missing profile', { profile: '  ' }],
+    199|   ])('refuses executed report with %s', (_label, mutation) => {
+    200|     expect(gate({ report: report(mutation as any) })).toMatchObject({
+       |                                                       ^
+    201|       qualifyingRun: false, assessmentStatus: 'invalid', errorCountKno…
+    202|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with count with no findings
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with passed true with coherent error findings
+AssertionError: expected { externalErrorCount: 1, …(10) } to match object { qualifyingRun: false, …(4) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessmentStatus": "invalid",
+    "cleared": false,
+-   "errorCountKnown": false,
+-   "externalErrorCount": 0,
++   "externalErrorCount": 1,
+    "qualifyingRun": false,
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:200:55
+    198|     ['missing profile', { profile: '  ' }],
+    199|   ])('refuses executed report with %s', (_label, mutation) => {
+    200|     expect(gate({ report: report(mutation as any) })).toMatchObject({
+       |                                                       ^
+    201|       qualifyingRun: false, assessmentStatus: 'invalid', errorCountKno…
+    202|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps an external failure visible while nonblocking: { environment: 'staging', requireEvalidator: true }
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps an external failure visible while nonblocking: { environment: 'production', requireEvalidator: false }
+AssertionError: expected { externalErrorCount: 1, …(10) } to match object { qualifyingRun: true, …(6) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessmentStatus": "failed",
+    "blockers": [],
+    "cleared": true,
+    "enforced": false,
+-   "errorCountKnown": true,
+    "externalErrorCount": 1,
+    "qualifyingRun": true,
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:216:57
+    214|     { environment: 'production' as const, requireEvalidator: false },
+    215|   ])('keeps an external failure visible while nonblocking: %o', policy…
+    216|     expect(gate({ ...policy, report: failedReport() })).toMatchObject({
+       |                                                         ^
+    217|       qualifyingRun: true, assessmentStatus: 'failed', errorCountKnown…
+    218|       enforced: false, cleared: true, blockers: [],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/27]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > marks a zero compatibility placeholder as unknown rather than a clean advisory tally
+AssertionError: expected { externalErrorCount: +0, …(10) } to match object { assessmentStatus: 'invalid', …(3) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessmentStatus": "invalid",
+    "cleared": true,
+-   "errorCountKnown": false,
+    "externalErrorCount": 0,
+  }
+
+ ❯ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts:230:66
+    228|   it('marks a zero compatibility placeholder as unknown rather than a …
+    229|     const supplied = report({ errorCount: NaN });
+    230|     expect(gate({ requireEvalidator: false, report: supplied })).toMat…
+       |                                                                  ^
+    231|       assessmentStatus: 'invalid', errorCountKnown: false, externalErr…
+    232|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/27]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  27 failed | 16 passed (43)
+   Start at  03:33:39
+   Duration  760ms (transform 206ms, setup 112ms, import 194ms, tests 91ms, environment 0ms)
+

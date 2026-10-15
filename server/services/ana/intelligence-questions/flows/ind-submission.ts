@@ -13,6 +13,10 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { getDocumentTemplate } from '../../../market-specs/document-template-library.js';
+
+/** The IB body headings, from the platform's one IB outline ('investigators_brochure'). */
+const IB_BODY = (getDocumentTemplate('investigators_brochure')?.sections ?? []).map((sec) => `${sec.number}. ${sec.heading}`).join('; ');
 
 export function createIndSubmissionFlow(): FlowDefinition {
   return {
@@ -294,8 +298,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'inhaled', label: 'Inhaled' },
               { value: 'intrathecal', label: 'Intrathecal' },
               { value: 'intravitreal', label: 'Intravitreal' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'is_biologic',
@@ -360,8 +364,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'plant', label: 'Plant-based' },
               { value: 'viral_vector', label: 'Viral Vector Production (AAV, Lentiviral, etc.)' },
               { value: 'cell_expansion', label: 'Autologous/Allogeneic Cell Expansion' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'purification_overview',
@@ -435,8 +439,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'patch', label: 'Transdermal Patch' },
               { value: 'cream_ointment', label: 'Cream / Ointment' },
               { value: 'implant', label: 'Implant' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'strengths',
@@ -564,8 +568,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'cynomolgus_monkey', label: 'Cynomolgus Monkey' },
               { value: 'rhesus_monkey', label: 'Rhesus Monkey' },
               { value: 'minipig', label: 'Minipig' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'ICH M3(R2) requires toxicology in at least two species (one rodent, one non-rodent) for small molecules. For biologics (ICH S6(R1)), one pharmacologically relevant species may suffice.',
           },
           {
@@ -820,8 +824,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'noael_hed', label: 'NOAEL-based HED (with BSA scaling per FDA 2005 guidance)' },
               { value: 'mabel', label: 'MABEL (Minimum Anticipated Biological Effect Level)' },
               { value: 'pad', label: 'Pharmacologically Active Dose (PAD) based' },
-              { value: 'other', label: 'Other (explain below)' },
             ],
+            allowOther: { label: 'Other (explain below)' },
           },
           {
             id: 'safety_factor',
@@ -857,7 +861,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the status and content of the Investigator\'s Brochure (IB). Per 21 CFR 312.23(a)(5), the IB is a required component of the initial IND submission.',
         guidance:
-          'Per 21 CFR 312.23(a)(5) and ICH E6(R2) Section 7, the Investigator\'s Brochure must contain all relevant nonclinical and clinical information known about the investigational product that is relevant to the study of the product in human subjects. The IB should be updated at least annually (21 CFR 312.55(a)) and whenever significant new information becomes available. The IB structure should follow ICH E6(R2) Section 7.4 and include: physical/chemical/pharmaceutical properties, nonclinical studies summary, clinical studies summary, marketing experience (if any), and a summary of data and guidance for the investigator.',
+          'Per 21 CFR 312.23(a)(5) and ICH E6(R3) Appendix A, the Investigator\'s Brochure must contain all relevant nonclinical and clinical information known about the investigational product that is relevant to the study of the product in human participants. The IB should be updated at least annually (21 CFR 312.55(a)) and whenever significant new information becomes available. The IB structure should follow ICH E6(R3) Appendix A (Investigator\'s Brochure) and include: physical/chemical/pharmaceutical properties, nonclinical studies summary, clinical studies summary, marketing experience (if any), and a summary of data and guidance for the investigator.',
         fields: [
           {
             id: 'ib_version',
@@ -874,10 +878,10 @@ export function createIndSubmissionFlow(): FlowDefinition {
           },
           {
             id: 'ib_content_complete',
-            label: 'Does the IB contain all required sections per ICH E6(R2) Section 7.4?',
+            label: 'Does the IB contain all required sections per ICH E6(R3) Appendix A?',
             type: 'yes_no',
             required: true,
-            helpText: 'Required sections: Title Page, Confidentiality Statement, Summary, Introduction, Physical/Chemical/Pharmaceutical Properties, Nonclinical Studies, Effects in Humans (if any), Summary of Data and Guidance for the Investigator.',
+            helpText: `Front matter: title page, confidentiality statement, table of contents. Then: ${IB_BODY}.`,
           },
           {
             id: 'ib_prior_human_experience',
@@ -1231,12 +1235,13 @@ export function createIndSubmissionFlow(): FlowDefinition {
               'Any additional information, concerns, or known regulatory risks for this IND submission...',
           },
         ],
-        branches: [
-          {
-            when: { field: 'ind_type_selection', operator: 'eq', value: 'emergency' },
-            goto: 'ind_review',
-          },
-        ],
+        /* An emergency-IND branch onto this node itself, which can only ask
+           this question again: it was inert while branches read one node's
+           answers, and reading every answer made it a loop. Removed rather
+           than left to loop; the engine now refuses the shape as well. What
+           an emergency shortcut would need is a branch on the node BEFORE
+           review, naming the node an emergency IND should jump TO — which is
+           a flow decision, not a repair (founder's directive, 2026-10-12). */
         defaultNext: 'drug_substance_characterization',
         issueChecks: [
           {

@@ -1,0 +1,445 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T16:22:33.892Z","pid":3859,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T16:22:33.893Z","pid":3859,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T16:22:33.893Z","pid":3859,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T16:22:33.980Z', poolSize: 1 }
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-document-relationships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T16:22:34.597Z","pid":3859,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:3859) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.676Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 16,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.759Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0d199364-ccbf-4338-a9dc-c471e4e399e1",
+    "code": "DBTEST-VREL-PROT",
+    "type": "OTHER",
+    "size": 16,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:22:34.772Z","pid":3859,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.773Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 3,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.786Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ce4eb637-daf0-4fa0-af81-b20fa80b5792",
+    "code": "DBTEST-VREL-CSR",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:22:34.794Z","pid":3859,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.794Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 30,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.805Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d398f61f-b8ec-4d82-ab2b-8877a69757b4",
+    "code": "DBTEST-VREL-SAP",
+    "type": "OTHER",
+    "size": 30,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:22:34.813Z","pid":3859,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.821Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 30,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.839Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f5a96b05-13bd-4d4e-bd31-154e0ed9802f",
+    "code": "DBTEST-VREL-SAP",
+    "type": "OTHER",
+    "size": 30,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:22:34.849Z","pid":3859,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.850Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.859Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e95122cf-a57e-4fb7-8c30-e4b1d3b1aad4",
+    "code": "DBTEST-VREL-IB",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:22:34.865Z","pid":3859,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.866Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 15,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.875Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "320eede0-dea1-4860-8042-cac61a58c2a1",
+    "code": "DBTEST-VREL-THEIRS",
+    "type": "OTHER",
+    "size": 15,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:22:34.881Z","pid":3859,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.882Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.889Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b2b8d37f-0450-419d-83ba-7050c50f26bc",
+    "code": "DBTEST-VREL-GA",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:22:34.895Z","pid":3859,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.895Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 28,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:22:34.904Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c3d8d45d-8e08-4cfd-8051-c9ff1a506ab3",
+    "code": "DBTEST-VREL-GB",
+    "type": "OTHER",
+    "size": 28,
+    "hasText": true
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > each relate and unrelate is a chained row on both documents' histories
+[database] Database connection successful { timestamp: '2026-10-01T16:22:34.984Z', poolSize: 2 }
+
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > relates two versions, and both ends list it in their own words 19ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > relates to a version in another project of the organisation, and names that project 5ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > says when the related version has since been superseded 3ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > refuses a self relationship, two versions of one document, a duplicate and an unknown kind 5ms
+   → expected [ 404, undefined ] to deeply equal [ 400, 'SELF_RELATIONSHIP' ]
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > refuses another organisation's document, a viewer, and another organisation's project 4ms
+   → expected [ 404, undefined ] to deeply equal [ 404, 'TARGET_NOT_FOUND' ]
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > removing one requires a reason, keeps the row, and cannot be done twice 4ms
+   → expected [ 404, undefined ] to deeply equal [ 422, 'REASON_REQUIRED' ]
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > each relate and unrelate is a chained row on both documents' histories 52ms
+   → expected [ 'Vault Document Ingest' ] to deeply equal ArrayContaining{…}
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > the table refuses every other change, for every role, and another organisation reads none of it 2ms
+   → relation "public.vault_document_relationships" does not exist
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > the tenant purge takes an organisation's relationships with its documents, and no one else's 4ms
+   → {}: expected 404 to be 201 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > relates two versions, and both ends list it in their own words
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:184:50
+    182|   it('relates two versions, and both ends list it in their own words',…
+    183|     const res = await relate(mine, ids.csr, { toDocumentId: ids.protoc…
+    184|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    185|     csrSupportedByProtocol = res.body.data.id;
+    186|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > relates to a version in another project of the organisation, and names that project
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:203:50
+    201|   it('relates to a version in another project of the organisation, and…
+    202|     const res = await relate(mine, ids.csr, { toDocumentId: ids.elsewh…
+    203|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    204|     const out = await list(mine, ids.csr);
+    205|     expect(out.body.data.relationships).toContainEqual(expect.objectCo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > says when the related version has since been superseded
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:213:50
+    211|   it('says when the related version has since been superseded', async …
+    212|     const res = await relate(mine, ids.csr, { toDocumentId: ids.sap, t…
+    213|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    214|     const out = await list(mine, ids.csr);
+    215|     expect(out.body.data.relationships).toContainEqual(expect.objectCo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > refuses a self relationship, two versions of one document, a duplicate and an unknown kind
+AssertionError: expected [ 404, undefined ] to deeply equal [ 400, 'SELF_RELATIONSHIP' ]
+
+- Expected
++ Received
+
+  [
+-   400,
+-   "SELF_RELATIONSHIP",
++   404,
++   undefined,
+  ]
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:222:44
+    220|   it('refuses a self relationship, two versions of one document, a dup…
+    221|     const self = await relate(mine, ids.csr, { toDocumentId: ids.csr, …
+    222|     expect([self.status, self.body.error]).toEqual([400, 'SELF_RELATIO…
+       |                                            ^
+    223|     const family = await relate(mine, ids.sapV2, { toDocumentId: ids.s…
+    224|     expect([family.status, family.body.error]).toEqual([409, 'SAME_DOC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > refuses another organisation's document, a viewer, and another organisation's project
+AssertionError: expected [ 404, undefined ] to deeply equal [ 404, 'TARGET_NOT_FOUND' ]
+
+- Expected
++ Received
+
+  [
+    404,
+-   "TARGET_NOT_FOUND",
++   undefined,
+  ]
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:233:62
+    231|   it("refuses another organisation's document, a viewer, and another o…
+    232|     const foreignTarget = await relate(mine, ids.csr, { toDocumentId: …
+    233|     expect([foreignTarget.status, foreignTarget.body.error]).toEqual([…
+       |                                                              ^
+    234|     const viewer = await relate(mine, ids.csr, { toDocumentId: ids.sap…
+    235|     expect(viewer.status).toBe(403);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > removing one requires a reason, keeps the row, and cannot be done twice
+AssertionError: expected [ 404, undefined ] to deeply equal [ 422, 'REASON_REQUIRED' ]
+
+- Expected
++ Received
+
+  [
+-   422,
+-   "REASON_REQUIRED",
++   404,
++   undefined,
+  ]
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:245:52
+    243|   it('removing one requires a reason, keeps the row, and cannot be don…
+    244|     const noReason = await remove(mine, csrSupportedByProtocol, {});
+    245|     expect([noReason.status, noReason.body.error]).toEqual([422, 'REAS…
+       |                                                    ^
+    246|     const done = await remove(mine, csrSupportedByProtocol, { reason: …
+    247|     expect(done.status, JSON.stringify(done.body)).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > each relate and unrelate is a chained row on both documents' histories
+AssertionError: expected [ 'Vault Document Ingest' ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "Related: supported by Protocol v1.0",
+-   "Relationship removed: supported by Protocol v1.0",
++ [
++   "Vault Document Ingest",
+  ]
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:260:48
+    258|
+    259|   it("each relate and unrelate is a chained row on both documents' his…
+    260|     expect(await historyEvents(mine, ids.csr)).toEqual(expect.arrayCon…
+       |                                                ^
+    261|       'Related: supported by Protocol v1.0',
+    262|       'Relationship removed: supported by Protocol v1.0',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > the table refuses every other change, for every role, and another organisation reads none of it
+error: relation "public.vault_document_relationships" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/vault-document-relationships.dbtest.ts:279:19
+    277|
+    278|   it('the table refuses every other change, for every role, and anothe…
+    279|     const live = (await owner.query(
+       |                   ^
+    280|       `SELECT id FROM public.vault_document_relationships WHERE organi…
+    281|     refused(await asRuntime(`UPDATE public.vault_document_relationship…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 134, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '16', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > the tenant purge takes an organisation's relationships with its documents, and no one else's
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:294:50
+    292|   it("the tenant purge takes an organisation's relationships with its …
+    293|     const res = await relate(gone, ids.goneA, { toDocumentId: ids.gone…
+    294|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    295|     const count = async (orgId: number) => Number((await owner.query(
+    296|       'SELECT count(*)::int AS n FROM public.vault_document_relationsh…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  16:22:31
+   Duration  3.32s (transform 1.37s, setup 74ms, import 167ms, tests 2.75s, environment 0ms)
+

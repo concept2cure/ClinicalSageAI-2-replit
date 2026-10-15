@@ -1,0 +1,63 @@
+# tests/schema-contract/tenant-isolation-sweep.contract.test.ts (C-33) is RED with this change: its PGlite base-schema
+# fixture reads the drizzle journal, which has no report_type_registry, and the new migration refuses a
+# database without that table (by design). The test file is outside this helper's list; the proposed
+# fixture line is in README.md. Below: the vitest failure, then a scratch replica of C-33 (c33-probe.mjs.txt)
+# run without and with the proposed fixture line.
+
+$ NODE_OPTIONS=--max-old-space-size=3072 npx vitest run tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > is in C2C_MIGRATION_FILES, and is the LAST entry 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the batch-2 files are wired ahead of it 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the once-excluded files are now wired, having been RESOLVED not skipped 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > still refuses the _consolidated tree, which was never merely unwired 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > DOES wire enhanced_cortex, whose identity conflict C-36 resolved 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the canonical lumen_data_atoms.id is an integer, not a uuid 10ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > every atom-referencing column is an integer, so the FKs are implementable 8ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the two previously-impossible foreign keys now exist 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the services' real JOIN typechecks (it could not before) 3ms
+ ↓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced
+ ↓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > policies electronic_signatures — the Part 11 record that had no tenant key
+ ↓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > actually blocks a cross-tenant read on a table it sweeps
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > a TEXT tenant key is SKIPPED, not raised — a deploy must not halt on pre-existing drift 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > never clobbers a policy a subsystem installed for itself 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > FORCES a table that had the policy but no FORCE (owner-bypass close, C-43) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a policy-LESS RLS table un-forced (no owner default-deny surprise) 19ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44) 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a clean allowlisted table unpoliced (the first loop honors the allowlist) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > skips the allowlist, tables with no tenant column, and views 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated
+Error: pass 1: migrations/20260930_report_type_registry_seed.sql failed — report_type_registry does not exist. drizzle-kit push creates it from shared/schema/report-os.ts when the database is provisioned (scripts/db/install-fresh.mjs); this database was not provisioned completely, and this migration does not create the table.
+ ❯ tests/schema-contract/tenant-isolation-sweep.contract.test.ts:274:17
+    272|         } catch (err) {
+    273|           await pg.exec('ROLLBACK').catch(() => {});
+    274|           throw new Error(`pass ${pass}: ${rel} failed — ${(err as Err…
+       |                 ^
+    275|         }
+    276|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 passed | 3 skipped (19)
+   Start at  00:21:10
+   Duration  11.27s (transform 151ms, setup 83ms, import 137ms, tests 10.72s, environment 0ms)
+
+exit=1
+
+$ node c33-probe.mjs   # replica, fixture as committed
+report_type_registry present before batch = null
+pass 1: migrations/20260930_report_type_registry_seed.sql failed — report_type_registry does not exist. drizzle-kit push creates it from shared/schema/report-os.ts when the database is provisioned (scripts/db/install-fresh.mjs); this database was not provisioned completely, and this migration does not create the table.
+
+$ WITH_FIX=1 node c33-probe.mjs   # replica, with the proposed fixture line
+fixture: report_type_registry block applied = true
+report_type_registry present before batch = report_type_registry
+batch of 249 applied twice
+unpoliced tenant tables = []
+seeded registry rows = 61

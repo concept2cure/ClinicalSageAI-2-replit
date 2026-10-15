@@ -1,0 +1,6 @@
+[ci:pdf-runtime-canonicality] FAIL — approved files that no longer generate PDF:
+
+  server/routes/report-os.ts
+
+An unused approval admits whatever PDF generation is added to that file next, unreviewed. Delete each entry from APPROVED.
+exit 1

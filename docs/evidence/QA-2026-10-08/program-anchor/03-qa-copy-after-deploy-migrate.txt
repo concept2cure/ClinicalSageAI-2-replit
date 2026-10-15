@@ -1,0 +1,53 @@
+-- 03-qa-copy-after-deploy-migrate.txt — c2c_p19_scratch is a pg_dump copy of c2c_qa (taken 2026-10-08); the shared QA DB was not written.
+-- deploy-migrate.mjs was run twice against the copy (DATABASE_URL=<copy>, ADMIN_URL=<postgres>, no app-role password). Lines naming the anchor files:
+--- run 1:
+      [NOTICE] program anchor backfill: 1 project row(s) linked on an unambiguous same-org exact code/name match; every ambiguous or unmatched project left NULL
+      [NOTICE] P-19: 11 program(s) given their project record
+  ✓ applied: migrations/20261008_program_project_anchor_backfill.sql
+✅ Schema migration complete — safe to roll services.
+--- run 2:
+      [NOTICE] program anchor backfill: 0 project row(s) linked on an unambiguous same-org exact code/name match; every ambiguous or unmatched project left NULL
+      [NOTICE] P-19: 0 program(s) given their project record
+  ✓ applied: migrations/20261008_program_project_anchor_backfill.sql
+✅ Schema migration complete — safe to roll services.
+
+-- Every live program and its anchor row after run 2
+  code   |                 program                  | project_id | p_org | ws | ws_org |    type    | status | priority | created_by_id | owner_id 
+---------+------------------------------------------+------------+-------+----+--------+------------+--------+----------+---------------+----------
+ BX-099  | BX-099 · generalized myasthenia gravis ( |         16 |     1 |  1 |      1 | regulatory | active | high     |               |         
+ BX-204  | BX-204 Continuous Glucose Monitor        |          5 |     1 |  1 |      1 | bla        | active | high     |             1 |        1
+ BX-256  | BX-256 · systemic lupus erythematosus (I |         19 |     1 |  1 |      1 | regulatory | active | high     |               |         
+ BX-301  | BX-301 · paroxysmal nocturnal hemoglobin |         17 |     1 |  1 |      1 | regulatory | active | high     |               |         
+ BX-420  | BX-420 · neuromyelitis optica (J-NDA)    |         14 |     1 |  1 |      1 | regulatory | active | medium   |               |         
+ BX-512  | Vorelinib · KIT-mutant GIST (IND)        |         23 |     1 |  1 |      1 | regulatory | active | high     |               |         
+ CV-117  | CV-117 ECG Patch                         |         20 |     1 |  1 |      1 | regulatory | active | low      |               |         
+ IV-415  | IV-415 Companion Diagnostic              |         21 |     1 |  1 |      1 | regulatory | active | high     |               |         
+ NM-512  | NM-512 Neuromodulation Lead              |         15 |     1 |  1 |      1 | regulatory | active | high     |               |         
+ OR-801  | OR-801 Pedicle Screw System              |         24 |     1 |  1 |      1 | regulatory | active | high     |               |         
+ PM-660  | PM-660 Patient Monitor                   |         22 |     1 |  1 |      1 | regulatory | active | medium   |               |         
+ RX-340  | RX-340 Surgical Stapler                  |         18 |     1 |  1 |      1 | regulatory | active | medium   |               |         
+ NXV-777 | Nexavir · moderate-to-severe Crohn's dis |          6 |     1 |  1 |      1 | regulatory | active | medium   |             1 |        1
+ QMPS    | QA member-created project (should be ref |          7 |     1 |  1 |      1 | regulatory | active | medium   |             4 |        4
+ Q       | Investigational New Drug Application     |          8 |     1 |  1 |      1 | regulatory | active | medium   |             1 |        1
+ ARD-410 | QA-J1 Ardemvir · relapsing multiple scle |          9 |     1 |  1 |      1 | regulatory | active | medium   |             1 |        1
+ ARD-411 | Investigational New Drug Application     |         10 |     1 |  1 |      1 | regulatory | active | medium   |             1 |        1
+ H       | HLV-333 — Investigational New Drug Appli |         11 |     1 |  1 |      1 | regulatory | active | medium   |             1 |        1
+ Q       | J9 Selfserve IND                         |         12 |    15 |  4 |     15 | regulatory | active | medium   |            18 |       18
+ HLV-334 | HLV-334 — Investigational New Drug Appli |         13 |     1 |  1 |      1 | regulatory | active | medium   |             3 |        3
+(20 rows)
+
+ unanchored_live_programs | rows_crossing_an_organisation | programs_with_two_anchors 
+--------------------------+-------------------------------+---------------------------
+                        0 |                             0 |                         0
+(1 row)
+
+
+# resolveProgramProjectAnchor({strict:true}) — the real function, on c2c_qa (read-only) and on its copy after deploy-migrate
+## c2c_qa (before):
+BX-256  program 099991d1-dac8-43c5-b88a-8baab26194ee  resolve(strict, org 1) = null   resolve(strict, org 15) = null
+BX-512  program 50c41bb6-5796-4dc6-a848-72e4d1246ebd  resolve(strict, org 1) = null   resolve(strict, org 15) = null
+H       program d979e567-4622-46f1-8cb7-8bf434227f25  resolve(strict, org 1) = 11   resolve(strict, org 15) = null
+## c2c_p19_scratch = pg_dump copy of c2c_qa, after deploy-migrate x2:
+BX-256  program 099991d1-dac8-43c5-b88a-8baab26194ee  resolve(strict, org 1) = 19   resolve(strict, org 15) = null
+BX-512  program 50c41bb6-5796-4dc6-a848-72e4d1246ebd  resolve(strict, org 1) = 23   resolve(strict, org 15) = null
+H       program d979e567-4622-46f1-8cb7-8bf434227f25  resolve(strict, org 1) = 11   resolve(strict, org 15) = null

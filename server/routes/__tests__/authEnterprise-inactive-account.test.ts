@@ -24,6 +24,8 @@ vi.hoisted(() => {
 const state = vi.hoisted(() => ({
   status: 'active' as string,
   userRow: null as Record<string, unknown> | null,
+  /** users.sessions_ended_at, whole seconds (a password change, a sign-out everywhere). */
+  sessionsEndedAt: null as number | null,
 }));
 const authEvents = vi.hoisted(() => vi.fn(async (_e: unknown) => undefined));
 const verifyEmailOtp = vi.hoisted(() => vi.fn(async (_userId: number, _code: string) => true));
@@ -33,7 +35,10 @@ const dbDouble = vi.hoisted(() => {
     query: async (sql: string) => {
       if (/FROM revoked_tokens/i.test(sql)) return { rows: [], rowCount: 0 };
       if (/SELECT status FROM users/i.test(sql)) {
-        return { rows: [{ status: state.status, password_changed_at_seconds: null }], rowCount: 1 };
+        return {
+          rows: [{ status: state.status, password_changed_at_seconds: null, sessions_ended_at_seconds: state.sessionsEndedAt }],
+          rowCount: 1,
+        };
       }
       return { rows: [], rowCount: 0 };
     },
@@ -46,6 +51,9 @@ const dbDouble = vi.hoisted(() => {
   chain.limit = async () => (state.userRow ? [state.userRow] : []);
   chain.update = () => chain;
   chain.set = () => chain;
+  // The pre-auth account lookup (public.user_id_for_email / user_id_for_reset_token,
+  // services/auth/pre-auth-account.ts) answers with the id of the row this double reads.
+  chain.execute = async () => ({ rows: [{ id: (state.userRow as { id?: number } | null)?.id ?? null }] });
   return { db: chain, pool, getPool: () => pool, getDb: () => chain };
 });
 vi.mock('../../db', () => dbDouble);
@@ -108,6 +116,7 @@ function app() {
 beforeEach(() => {
   state.status = 'active';
   state.userRow = user('active');
+  state.sessionsEndedAt = null;
   authEvents.mockClear();
   verifyEmailOtp.mockClear();
 });
@@ -141,6 +150,33 @@ describe('POST /verify-mfa', () => {
   it('control: an active account with a verified code proceeds past the standing check', async () => {
     const r = await request(app()).post('/api/auth/enterprise/verify-mfa').send({ partialToken: partialToken(), code: '123456' });
     expect(r.status).not.toBe(403);
+    expect(verifyEmailOtp).toHaveBeenCalled();
+  });
+});
+
+/*
+ * P0-4b residual R3 (2026-10-01): the first factor was shown when the partial
+ * token was issued, so a challenge from before a password change or a sign-out
+ * everywhere is a sign-in begun before it. The /api/auth door refuses it
+ * (routes/auth.ts refuseAccountAtSecondFactor); this door read only the
+ * account's status, and completed it.
+ */
+describe('POST /verify-mfa: a sign-in begun before the account\'s sessions were ended', () => {
+  it('is refused at the second factor (401 SIGN_IN_ENDED), no code is spent, and the refusal is audited', async () => {
+    state.sessionsEndedAt = Math.floor(Date.now() / 1000) + 2;
+    const r = await request(app()).post('/api/auth/enterprise/verify-mfa').send({ partialToken: partialToken(), code: '123456' });
+    expect(r.status, 'a challenge from before the sessions were ended became a session').toBe(401);
+    expect(r.body).toMatchObject({ error: 'SIGN_IN_ENDED' });
+    expect(JSON.stringify(r.body)).not.toMatch(/"token"/);
+    expect(verifyEmailOtp).not.toHaveBeenCalled();
+    expect(authEvents).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: 'failure', reason: 'sign_in_begun_before_sessions_ended', userId: 7 }),
+    );
+  });
+
+  it('control: sessions ended before the challenge was issued do not stop it', async () => {
+    state.sessionsEndedAt = Math.floor(Date.now() / 1000) - 120;
+    await request(app()).post('/api/auth/enterprise/verify-mfa').send({ partialToken: partialToken(), code: '123456' });
     expect(verifyEmailOtp).toHaveBeenCalled();
   });
 });

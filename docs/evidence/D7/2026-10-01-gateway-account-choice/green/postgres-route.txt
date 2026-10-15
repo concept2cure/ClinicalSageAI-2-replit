@@ -1,0 +1,11 @@
+# tests/db/gateway-accounts.dbtest.ts — PostgreSQL 16 (c2c_d3d, migrated by deploy-migrate.mjs including 20261001g), runtime role app_service, RLS enforcing, real route + authMiddleware
+stdout | tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > lists every gateway × environment, the platform account by default
+stdout | tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > lists every gateway × environment, the platform account by default
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > lists every gateway × environment, the platform account by default 118ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > a viewer cannot change it 45ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > an admin cannot change it without confirming their password, and nothing is written 42ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > an admin chooses their own FDA account: stored encrypted, never returned, audited by field name 134ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > another organisation never sees the choice and keeps the platform account 25ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > choosing the platform account again clears every secret held 43ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > the table carries the tenant policy the sweep attaches 3ms
+      Tests  7 passed (7)

@@ -1,0 +1,22 @@
+ESLint warnings and errors per file touched by round 2: on the round-2 tree, and on trunk (origin/concept2cure-v2 at the merge, round 1 not yet on it) where the file exists there.
+Command: npx eslint --no-warn-ignored <file> (the repo's config). 'ignored' = outside the repo's lint set (eslint ignore pattern).
+
+file                                                                                 round2      trunk
+client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts             ignored        new
+client/src/concept2cure/components/ana/anaAnswerCheck.ts                            ignored        new
+client/src/concept2cure/v2/AnaGrounding.tsx                                           0w 0e      0w 0e
+client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx                            0w 0e      0w 0e
+client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx                        1w 0e      1w 0e
+client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx                0w 0e      0w 0e
+client/src/concept2cure/v2/surfaces/ConversationThread.tsx                            6w 0e      6w 0e
+server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts                   0w 0e        new
+server/routes/ana-ri/__tests__/stream-answer-sources.test.ts                          0w 0e        new
+server/routes/ana-ri/stream.ts                                                       24w 0e     24w 0e
+server/services/__tests__/ana-trust-summary.test.ts                                   0w 0e      0w 0e
+server/services/ana-ri/response-contract.ts                                           0w 0e      0w 0e
+server/services/ana/answer-check-figures.ts                                           0w 0e        new
+server/services/ana/answer-check-sources.ts                                           0w 0e        new
+server/services/ana/answer-grounding.ts                                               0w 0e      1w 0e
+server/services/clinical-regulatory-evidence/governance.ts                            0w 0e      0w 0e
+tests/services/answer-check-r2.test.ts                                                0w 0e        new
+tests/services/answer-check.test.ts                                                   0w 0e        new

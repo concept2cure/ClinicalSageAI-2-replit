@@ -7,6 +7,33 @@ import {
 } from '../types';
 
 describe('computeNextRun', () => {
+  it('honors the recorded UTC offset across the local calendar boundary', () => {
+    expect(computeNextRun({ cadence: 'daily', hour: 9, timeZoneOffsetMinutes: 540 }, new Date('2026-06-15T23:00:00Z')).toISOString()).toBe('2026-06-16T00:00:00.000Z');
+  });
+
+  it('honors IANA timezone daylight-saving changes', () => {
+    const schedule = { cadence: 'daily' as const, hour: 9, timeZone: 'America/New_York' };
+    expect(computeNextRun(schedule, new Date('2026-03-07T15:00:00Z')).toISOString()).toBe('2026-03-08T13:00:00.000Z');
+  });
+
+  it('shifts a nonexistent local time forward by the spring DST gap', () => {
+    expect(computeNextRun({ cadence: 'daily', hour: 2, minute: 30, timeZone: 'America/New_York' }, new Date('2026-03-07T12:00:00Z')).toISOString()).toBe('2026-03-08T07:30:00.000Z');
+  });
+
+  it('runs once at the earlier occurrence of an ambiguous autumn time', () => {
+    const schedule = { cadence: 'daily' as const, hour: 1, minute: 30, timeZone: 'America/New_York' };
+    expect(computeNextRun(schedule, new Date('2026-10-31T12:00:00Z')).toISOString()).toBe('2026-11-01T05:30:00.000Z');
+    expect(computeNextRun(schedule, new Date('2026-11-01T05:30:00Z')).toISOString()).toBe('2026-11-02T06:30:00.000Z');
+  });
+
+  it('uses the local weekday and month rather than the UTC date', () => {
+    expect(computeNextRun({ cadence: 'weekly', hour: 7, dayOfWeek: 1, timeZone: 'Pacific/Auckland' }, new Date('2026-06-14T20:00:00Z')).toISOString()).toBe('2026-06-21T19:00:00.000Z');
+    expect(computeNextRun({ cadence: 'monthly', hour: 7, dayOfMonth: 1, timeZone: 'Asia/Tokyo' }, new Date('2026-06-30T23:00:00Z')).toISOString()).toBe('2026-07-31T22:00:00.000Z');
+  });
+
+  it('refuses an invalid timezone instead of silently running in UTC', () => {
+    expect(() => computeNextRun({ cadence: 'daily', hour: 9, timeZone: 'Invalid/Zone' }, new Date())).toThrow();
+  });
   describe('daily', () => {
     const schedule: ReportSchedule = { cadence: 'daily', hour: 9, minute: 30 };
 
@@ -115,18 +142,70 @@ describe('isDue', () => {
     expect(isDue(schedule, lastRun, now)).toBe(false);
   });
 
-  it('is due when there has been no prior run', () => {
-    const now = new Date(Date.UTC(2026, 5, 16, 9, 0, 0));
-    expect(isDue(schedule, null, now)).toBe(true);
+  /* ── The epoch anchor (coverage review C-26b) ────────────────────────────
+     This case used to read "is due when there has been no prior run" and pass
+     `null`, which `isDue` substituted with `new Date(0)`. Every next-run
+     computed from 1970 is in the past, so EVERY never-run subscription was due
+     on the next sweep whatever its cadence — while the row's own `nextRunAt`,
+     computed from the creation time, showed a date weeks away. The screen and
+     the sweep disagreed, and the screen was right.
+     The anchor is now the creation time and the parameter is non-nullable, so
+     the sentinel cannot come back through a null. */
+  it('a never-run schedule is NOT due minutes after it was created', () => {
+    const createdAt = new Date(Date.UTC(2026, 9, 12, 14, 0, 0));
+    const monthly: ReportSchedule = { cadence: 'monthly', dayOfMonth: 1, hour: 7 };
+    expect(isDue(monthly, createdAt, new Date(Date.UTC(2026, 9, 12, 14, 10, 0)))).toBe(false);
   });
+
+  it('a never-run schedule IS due on its first real occurrence', () => {
+    const createdAt = new Date(Date.UTC(2026, 9, 12, 14, 0, 0));
+    const monthly: ReportSchedule = { cadence: 'monthly', dayOfMonth: 1, hour: 7 };
+    expect(isDue(monthly, createdAt, new Date(Date.UTC(2026, 10, 1, 7, 0, 0)))).toBe(true);
+  });
+
+  /* The convergence the fix rests on, asserted rather than trusted:
+     `createSubscription` stores `nextRunAt = computeNextRun(schedule, now)` in
+     the same call that the database stamps `createdAt`, so anchoring `isDue` on
+     `createdAt` reproduces exactly the stored column. If these ever diverge, the
+     screen and the sweep disagree again. */
+  it.each([
+    ['daily', { cadence: 'daily', hour: 7 }],
+    ['weekly', { cadence: 'weekly', dayOfWeek: 3, hour: 7 }],
+    ['monthly', { cadence: 'monthly', dayOfMonth: 1, hour: 7 }],
+  ] as Array<[string, ReportSchedule]>)(
+    'the %s due-point anchored on createdAt is the stored nextRunAt',
+    (_name, sched) => {
+      const createdAt = new Date(Date.UTC(2026, 9, 12, 14, 0, 0));
+      const storedNextRunAt = computeNextRun(sched, createdAt);
+      // Not due one millisecond before the stored date, due exactly at it.
+      expect(isDue(sched, createdAt, new Date(storedNextRunAt.getTime() - 1))).toBe(false);
+      expect(isDue(sched, createdAt, storedNextRunAt)).toBe(true);
+    },
+  );
 });
 
 describe('decideDelivery', () => {
-  it('external + final requires e-signature and is not watermarked', () => {
-    const decision = decideDelivery({ status: 'final' }, 'external');
+  /* P1-44b (2026-10-01): finalizing a run is its signature, so the gate now
+     knows whether the report carries one. Before, it could only say that one
+     was required, and the route refused every external send of a final report. */
+  it('external + final with the signature it was finalized under is allowed, not watermarked, and names that signature', () => {
+    const decision = decideDelivery({ status: 'final', signatureId: 900 }, 'external');
     expect(decision.allowed).toBe(true);
     expect(decision.requiresESignature).toBe(true);
+    expect(decision.signatureId).toBe(900);
     expect(decision.watermark).toBe(false);
+  });
+
+  it('external + final without a signature is refused: the e-signature rule is the gate, not advice to the caller', () => {
+    const decision = decideDelivery({ status: 'final' }, 'external');
+    expect(decision.allowed).toBe(false);
+    expect(decision.requiresESignature).toBe(true);
+    expect(decision.signatureId).toBeUndefined();
+    expect(decision.reason).toMatch(/carries none/);
+  });
+
+  it('a null signature is no signature', () => {
+    expect(decideDelivery({ status: 'final', signatureId: null }, 'external').allowed).toBe(false);
   });
 
   it('external + partial is watermarked and does not require e-signature', () => {
@@ -146,11 +225,13 @@ describe('decideDelivery', () => {
   it('sealed flag forces e-signature on external even when not final', () => {
     const decision = decideDelivery({ status: 'draft', sealed: true }, 'external');
     expect(decision.requiresESignature).toBe(true);
+    expect(decision.allowed).toBe(false);
     expect(decision.watermark).toBe(false);
   });
 
   it('platform + final has no watermark and no e-signature', () => {
     const decision = decideDelivery({ status: 'final' }, 'platform');
+    expect(decision.allowed).toBe(true);
     expect(decision.requiresESignature).toBe(false);
     expect(decision.watermark).toBe(false);
   });
@@ -164,7 +245,7 @@ describe('decideDelivery', () => {
 
 describe('describeDeliveryAudit', () => {
   it('returns the expected normalized keys', () => {
-    const decision = decideDelivery({ status: 'final' }, 'external');
+    const decision = decideDelivery({ status: 'final', signatureId: 900 }, 'external');
     const audit = describeDeliveryAudit({
       subscriptionId: 42,
       reportTypeId: 'readiness_summary',
@@ -181,6 +262,7 @@ describe('describeDeliveryAudit', () => {
       recipients: ['a@example.com', 'b@example.com'],
       allowed: true,
       requiresESignature: true,
+      signatureId: 900,
       watermark: false,
       reason: decision.reason ?? null,
       at: '2026-06-15T00:00:00.000Z',
@@ -197,6 +279,7 @@ describe('describeDeliveryAudit', () => {
     });
     expect(audit.subscriptionId).toBeNull();
     expect(audit.reason).toBeNull();
+    expect(audit.signatureId).toBeNull();
     expect(audit.recipientCount).toBe(0);
   });
 });

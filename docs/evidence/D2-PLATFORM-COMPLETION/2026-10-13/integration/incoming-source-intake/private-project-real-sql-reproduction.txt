@@ -1,0 +1,12 @@
+{"level":40,"time":"2026-10-13T20:04:38.074Z","pid":28821,"hostname":"843541c42987","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+{"level":40,"time":"2026-10-13T20:04:39.875Z","pid":28821,"hostname":"843541c42987","context":{},"msg":"[audit-service] Database pool not available — audit logging to console only"}
+{
+  "canonicalProjectPolicyAllows": false,
+  "importSucceeded": true,
+  "byteReads": 1,
+  "conversions": 1,
+  "createInvocations": 1,
+  "sourceKind": "vault",
+  "scope": "private project100 in organization1, actor7 not assigned; owner42"
+}
+DEFECT REPRODUCED: existing project policy denied actor, but canonical import read the source and invoked creation.

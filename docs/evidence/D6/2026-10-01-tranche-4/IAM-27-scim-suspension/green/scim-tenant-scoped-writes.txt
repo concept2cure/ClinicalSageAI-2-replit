@@ -1,0 +1,104 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > DELETE removes the caller's membership row and never touches users.status (204)
+{
+  "timestamp": "2026-10-01T19:00:13.934Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=true on a platform-suspended shared account is a no-op on status; response reflects the stored status
+{
+  "timestamp": "2026-10-01T19:00:13.995Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — account status is platform-wide and the user belongs to other organisations",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended",
+    "organizationCount": 2
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > adds the membership only, never writes users.status; 201 reflects the stored (suspended) status
+{
+  "timestamp": "2026-10-01T19:00:14.001Z",
+  "level": "info",
+  "message": "[scim] SCIM provision joined an existing account whose status is not active; status unchanged",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=true does not lift the suspension: no status write, no activation row, active=false
+{
+  "timestamp": "2026-10-01T19:00:14.023Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — the account is held by the platform",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with active: true does not lift the suspension
+{
+  "timestamp": "2026-10-01T19:00:14.027Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — the account is held by the platform",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT still renames: the name is the sole organisation's, the status is not
+{
+  "timestamp": "2026-10-01T19:00:14.034Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — the account is held by the platform",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > DELETE removes the caller's membership row and never touches users.status (204) 1683ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=false removes the caller's membership row and never touches users.status (200, active=false) 15ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with a new displayName is refused: 403, scimType mutability, no write 6ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH replace displayName is refused: 403, scimType mutability, no write 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with the SAME name and active=false still deprovisions (membership removed, not 403) 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=true on a platform-suspended shared account is a no-op on status; response reflects the stored status 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > adds the membership only, never writes users.status; 201 reflects the stored (suspended) status 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > active:false in the body for an existing account deactivates nobody 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > DELETE still issues the global UPDATE users SET status = 'inactive' (204) 6ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > PATCH active=false still deactivates globally (200, active=false) 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > PUT with a new displayName renames as before (200) 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=true does not lift the suspension: no status write, no activation row, active=false 3ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with active: true does not lift the suspension 3ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with no active at all does not lift the suspension 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT still renames: the name is the sole organisation's, the status is not 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=false removes this organisation's membership and leaves the suspension in place 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT active=false removes this organisation's membership and leaves the suspension in place 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > DELETE removes this organisation's membership and leaves the suspension in place 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > a deactivated sole-organisation account stays inactive 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > a shared account: a replace with no `active` removes no membership and writes no status 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > control: PATCH active=true still reactivates an account SCIM deactivated 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — unknown membership count fails closed > DELETE with no count row removes only the membership and never writes users.status 3ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  19:00:11
+   Duration  2.45s (transform 990ms, setup 116ms, import 221ms, tests 1.79s, environment 0ms)
+
+exit 0

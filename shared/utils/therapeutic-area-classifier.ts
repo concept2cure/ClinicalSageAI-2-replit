@@ -1,11 +1,16 @@
-// This is a stub file to prevent import errors from shared/utils/therapeutic-area-classifier
-
-export function classifyTherapeuticArea(indicationText: string): string {
-  console.warn(
-    '[stub] classifyTherapeuticArea() called – replace shared/utils/therapeutic-area-classifier import'
-  );
-
-  // Basic fallback classification based on keywords
+/**
+ * Keyword classification of an indication into a therapeutic area; null when
+ * no keyword matches, because that is not a classification.
+ *
+ * Until 2026-10-15 it returned 'Other', which its one consumer
+ * (server/protocol-analyzer-service.ts) took for a classification: an explicit
+ * indication it could not classify — "relapsed multiple myeloma" — was
+ * replaced by "Other", and two unrelated unclassified indications scored as
+ * the same therapeutic area in protocol similarity. getTherapeuticArea, which
+ * paired the answer with a constant 0.75 / 0.3 "confidence", had no callers
+ * and is removed.
+ */
+export function classifyTherapeuticArea(indicationText: string): string | null {
   const indicationLower = indicationText.toLowerCase();
 
   if (/cancer|oncology|tumor|carcinoma|lymphoma|leukemia|melanoma|sarcoma/.test(indicationLower)) {
@@ -34,20 +39,5 @@ export function classifyTherapeuticArea(indicationText: string): string {
     return 'Infectious Disease';
   }
 
-  return 'Other';
-}
-
-/**
- * Returns an object with the classified area and a confidence score (0..1).
- * Accepts optional secondary text (e.g. protocol abstract) to refine the
- * classification.
- */
-export function getTherapeuticArea(
-  indicationText: string,
-  secondaryText?: string
-): { area: string; confidence: number } {
-  const combined = `${indicationText ?? ''} ${secondaryText ?? ''}`.trim();
-  const area = classifyTherapeuticArea(combined || indicationText || '');
-  const confidence = area === 'Other' ? 0.3 : 0.75;
-  return { area, confidence };
+  return null;
 }

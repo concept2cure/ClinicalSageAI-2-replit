@@ -37,7 +37,43 @@
  *     assembler cannot build into the package. transmitSequence fails closed on
  *     ANY unresolved leaf, external ones included, so a dispatch-clear verdict
  *     here would promise an operator a transmit the system will refuse.
+ *   - MISSING_REQUIRED_SECTION, when the regulation requires the section in
+ *     THIS sequence — see `requiredByRegulation` below.
  *   - INVALID_LIFECYCLE_OP — an operation outside new|replace|append|delete
+ *   - JP_ECTD_V4_REQUIRED — an original sequence for a Japanese application
+ *     on or after the date PMDA stopped accepting eCTD v3.2.2 for new
+ *     applications. The platform builds Japan packages in v3.2.2 only, so such
+ *     a package would not be received. The date is the currency registry's
+ *     fact `pmda-ectd-v4-mandatory`, read here, never copied; a continuing
+ *     sequence of a lifecycle begun in v3.2.2 is not affected. Added
+ *     2026-10-05 (g-jp-ectd-v4-dispatch-blocker).
+ *   - IND_MODULE3_REQUIRED — the original sequence of a US IND carries no
+ *     leaf under a Module 3 heading the IND profile requires (3.2.S, 3.2.P;
+ *     required-sections.requiredSectionProfileFor), and no cross-reference on
+ *     record covers that heading with a Letter of Authorization on file. 21 CFR
+ *     312.23(a)(7) asks the initial IND for its chemistry, manufacturing and
+ *     controls information; 312.23(b) lets it be incorporated by reference.
+ *     An amendment is not asked. The DB-bound assessor decides whether the
+ *     sequence is an original IND and reads the cross-reference register; this
+ *     module only compares. Until 2026-10-05 (CMC-M3-GA item 21) the dispatch
+ *     path checked Module 1 alone, as warnings, and an original IND with no
+ *     CMC section read dispatch-clear.
+ *
+ * RELEASE BLOCKERS are findings that do not fail validation but that freeze,
+ * dispatch and transmit refuse. They are reported as warnings, marked
+ * `blocksRelease`, and counted in `releaseBlockers`, never in `errors`:
+ *   - DOCUMENT_NOT_APPROVED — the source document resolves but is not
+ *     transmittable (a Vault version not approved for these bytes, a draft or
+ *     frozen-not-approved co-author document, …), judged by the assembler's
+ *     own rule (leaf-source-resolver notFinalizedStatus / vault-lifecycle
+ *     vaultVersionNotTransmittable). FD5, founder decision 2026-10-01. Added
+ *     2026-10-08 (QA j6) so the verdict read before an e-signature names the
+ *     leaf that the post-signature assembly would refuse. Since P-22 (product
+ *     decision 2026-10-08, "approval gates the release, not the technical
+ *     validation") it is a warning at Validated — publishers validate while
+ *     final approvals are collected — and the release gates refuse it
+ *     (assess-dispatch-readiness composes `releaseBlockers` into the freeze,
+ *     dispatch and transmit verdicts).
  *
  * The delete exemption is scoped to the CONTENT checks (UNRESOLVED_DOCUMENT
  * and DOCUMENT_CONTENT_MISMATCH). A delete is backbone-only and correctly
@@ -52,13 +88,23 @@
  * DOCUMENT_CONTENT_MISMATCH on a delete, like UNRESOLVED_DOCUMENT, would be
  * a refusal transmit does not share.
  *
- * Required-section completeness is reported as a non-blocking WARNING (Module-1
- * numbering and leaf section codes don't align cleanly across regions, so it is
- * informative, not provable). Pathway/regional completeness is covered separately
- * by the pathway engines and the AI dispatch-qc advisory.
+ * Required-section completeness is decided per section, never by default
+ * (QA 2026-10-08, j7): a section the regulation requires in THIS sequence
+ * (`requiredByRegulation` — the regional Module 1 record's requirement for an
+ * original sequence of an application kind it models) is an ERROR when no
+ * leaf carries it; a section a region profile lists without that
+ * determination (`requiredSections` — an unmodelled region or kind) stays an
+ * informative WARNING, and a warning never blocks. Until 2026-10-08 every
+ * missing section was a warning, so a one-leaf original IND with no Form 1571,
+ * no Investigator's Brochure and no general investigational plan read
+ * "structural gate satisfied", while the IND's own gate called the same gaps
+ * hard blockers. Pathway/regional completeness is covered separately by the
+ * pathway engines and the AI dispatch-qc advisory.
  *
- * PURE + DETERMINISTIC: no DB, no network, no LLM (leaf-document-tables holds
- * the table vocabulary and has no imports of its own). Document EXISTENCE and
+ * PURE + DETERMINISTIC: no DB, no network, no LLM, no wall clock
+ * (leaf-document-tables holds the table vocabulary and has no imports of its
+ * own; the currency registry and region identity are pure data). A date-
+ * effective rule is judged against the caller's explicit `asOf`. Document EXISTENCE and
  * the content-pin comparison need the database, so the DB-bound caller
  * (assess-dispatch-readiness) resolves each leaf's pointer through
  * leaf-document-resolver and hands the resolution in on `ReadinessLeaf.document`;
@@ -69,6 +115,8 @@
  */
 
 import type { RuleView } from './validation-rule-corpus';
+import { findFacts } from '../regulatory-currency/currency-registry';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
 import {
   documentTableKeyKind,
   externalDocumentTableReason,
@@ -97,6 +145,8 @@ export interface LeafDocumentResolution {
   status:
     /** A document exists in this organization and its pin, if any, matches. */
     | 'resolved'
+    /** Request-owned coverage could not establish the retained source proof. */
+    | 'undetermined'
     /** The pointer is incomplete — no table, or not the key the table uses. */
     | 'no_pointer'
     /** The table is outside the placeable set; nothing can look it up. */
@@ -117,6 +167,25 @@ export interface LeafDocumentResolution {
   pin: LeafDocumentPinVerdict;
   /** Human-readable detail for anything but a clean resolution. */
   reason: string | null;
+  /**
+   * Why the document may not be transmitted, in the words the assembler's
+   * refusal prints ('not reviewed', 'draft', 'frozen, not approved', …), or
+   * null when it may. Absent for a store with no approval state (rendered
+   * files, uploads) and on resolutions built before this field existed.
+   * The assembler applies the same rule (materializeLeafSources →
+   * assembledTransmitBlockers), and the governed freeze, dispatch and transmit
+   * refuse on it; carried here so the verdict the client reads BEFORE an
+   * e-signature names the leaf (QA 2026-10-08, j6).
+   */
+  notTransmittable?: string | null;
+  /**
+   * The document exists but holds no content the assembler can build into a
+   * leaf (an empty co-author body or governed section). The assembler reports
+   * such a leaf unresolved, and no placement can pin it, so it is not a
+   * pin warning (QA 2026-10-08, j6: "Re-place the leaf to pin its content"
+   * could not clear it).
+   */
+  noContent?: boolean;
 }
 
 export interface ReadinessLeaf {
@@ -140,6 +209,13 @@ export interface ReadinessFinding {
   code: string;
   sectionCode: string | null;
   message: string;
+  /**
+   * True on a finding that does not fail validation but that the release
+   * steps — freeze, dispatch and transmit — refuse (P-22: approval gates the
+   * release, not the technical validation). Always a warning; counted in
+   * `releaseBlockers`, never in `errors`.
+   */
+  blocksRelease?: true;
   /** The corpus rule this finding is an instance of — attached by the
    *  assessment (withRules); null when the corpus names no such rule. */
   rule?: RuleView | null;
@@ -149,12 +225,27 @@ export interface DispatchReadinessReport {
   errors: number;
   warnings: number;
   infos: number;
+  /** Warnings the release steps refuse (`blocksRelease`) — P-22. Included in
+   *  `warnings`; the freeze, dispatch and transmit verdicts block on them. */
+  releaseBlockers: number;
   findings: ReadinessFinding[];
 }
 
 export interface ComputeReadinessOptions {
-  /** Section codes the region marks required (e.g. region profile Module-1). */
+  /**
+   * Section codes a region profile lists as required where requiredness for
+   * THIS sequence is not established (an unmodelled region or application
+   * kind). A missing one is an informative WARNING and never blocks.
+   */
   requiredSections?: string[];
+  /**
+   * Section codes the regulation requires in THIS sequence, with the record
+   * that says so. A missing one is an ERROR: it blocks Validated, freeze,
+   * dispatch and transmit. The DB-bound assessor supplies the regional
+   * Module 1 record's requirement for an original sequence of a modelled
+   * application kind (readinessOptionsForSequence).
+   */
+  requiredByRegulation?: { codes: string[]; basis: string };
   /**
    * True for an original (0000) sequence. In an original there is no prior
    * content, so any replace/append/delete lifecycle operation is a filing error —
@@ -163,6 +254,109 @@ export interface ComputeReadinessOptions {
   isOriginalSequence?: boolean;
   /** The sequence number — eCTD requires exactly four digits (e.g. "0000"). */
   sequenceNumber?: string;
+  /**
+   * The sequence's region, in any of the platform's spellings ('jp', 'pmda',
+   * 'JP', 'PMDA' are all Japan — resolved through shared/regulatory/region-identity).
+   * Date-effective format-acceptance rules are judged for this region only;
+   * omitted, none is judged.
+   */
+  region?: string;
+  /**
+   * ISO date (YYYY-MM-DD) the sequence is judged as at — for dispatch, the day
+   * it would be filed. Explicit, never read from the clock here. A region with
+   * a date-effective rule and no usable date fails closed on that rule.
+   */
+  asOf?: string;
+  /**
+   * The Module 3 this sequence must carry because it is the original of a US
+   * IND, and the cross-references that may stand in for it. Set by the
+   * DB-bound assessor (assess-dispatch-readiness) only for such a sequence;
+   * absent or null, nothing is asked of Module 3.
+   */
+  originalModule3?: OriginalModule3Requirement | null;
+}
+
+/** One external file the application relies on, as its cross-reference register records it. */
+export interface Module3CrossReference {
+  /** "DMF 012345". */
+  fileLabel: string;
+  /** Sections recorded as relied upon. Empty is scope not recorded (SCOPE_NOT_SPECIFIED), which names no heading. */
+  authorizedSections: readonly string[];
+  /** A Letter of Authorization is recorded as on file for it. */
+  loaOnFile: boolean;
+}
+
+/** The Module 3 an original application must carry, and what may stand in for a heading it does not. */
+export interface OriginalModule3Requirement {
+  /** How the sequence is named in a finding: "the original IND (sequence 0000)". */
+  label: string;
+  /** Required Module 3 headings, unprefixed ('3.2.S'), with their ICH M4 titles. */
+  headings: ReadonlyArray<{ code: string; title: string | null }>;
+  /** The submission's recorded cross-references; null when the register could not be read. */
+  crossReferences: ReadonlyArray<Module3CrossReference> | null;
+  /** Why the register could not be read, when it could not. */
+  crossReferenceError?: string | null;
+}
+
+/** The currency fact that dates PMDA's end of eCTD v3.2.2 for new applications. */
+export const PMDA_ECTD_V4_FACT_ID = 'pmda-ectd-v4-mandatory';
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The dated fact that PMDA takes only eCTD v4.0 for new applications, as at
+ *  `asOf`, or undefined when the registry no longer carries it. Read by the
+ *  readiness finding below and by the market line (market-support.ts, F19). */
+export function pmdaEctdV4Fact(asOf: string) {
+  return findFacts({ jurisdiction: 'JP', asOf }).find((f) => f.id === PMDA_ECTD_V4_FACT_ID);
+}
+
+/**
+ * JP_ECTD_V4_REQUIRED: an original sequence for a Japanese application, on or
+ * after the date in force for fact `pmda-ectd-v4-mandatory`, is not a package
+ * PMDA will receive — the platform builds Japan in eCTD v3.2.2 only and has no
+ * JP v4.0 packager (DECISIONS.md, decision 10). A continuing sequence of a
+ * lifecycle begun in v3.2.2 is not judged here.
+ *
+ * Fails closed when it cannot establish the answer: no usable as-of date, or
+ * the registry no longer carries the fact, is a blocker saying so — never a
+ * silent pass on a Japanese original.
+ */
+function jpEctdV4Findings(opts: ComputeReadinessOptions): ReadinessFinding[] {
+  if (!opts.isOriginalSequence || canonicalRegionOf(opts.region) !== 'JP') return [];
+  const asOf = opts.asOf;
+  if (!asOf || !ISO_DATE.test(asOf)) {
+    return [{
+      severity: 'error',
+      code: 'JP_ECTD_V4_REQUIRED',
+      sectionCode: null,
+      message:
+        'This is an original sequence for a Japanese application, and readiness was computed with no usable as-of date, ' +
+        'so it cannot be shown to precede the date PMDA stopped accepting eCTD v3.2.2 for new applications. ' +
+        'This platform builds Japan packages in v3.2.2 only.',
+    }];
+  }
+  const fact = pmdaEctdV4Fact(asOf);
+  if (!fact || !ISO_DATE.test(fact.effectiveDate)) {
+    return [{
+      severity: 'error',
+      code: 'JP_ECTD_V4_REQUIRED',
+      sectionCode: null,
+      message:
+        `The regulatory currency registry carries no dated fact "${PMDA_ECTD_V4_FACT_ID}", so whether PMDA accepts eCTD v3.2.2 ` +
+        'for this new Japanese application cannot be established. This platform builds Japan packages in v3.2.2 only.',
+    }];
+  }
+  // Lexicographic comparison is exact for zero-padded ISO dates. A fact whose
+  // status as at asOf is not in force (e.g. rescinded) does not block.
+  if (asOf < fact.effectiveDate || fact.status !== 'in_force') return [];
+  return [{
+    severity: 'error',
+    code: 'JP_ECTD_V4_REQUIRED',
+    sectionCode: null,
+    message:
+      `PMDA accepts only eCTD v4.0 for new applications from ${fact.effectiveDate}; this platform builds Japan packages in v3.2.2 only. ` +
+      'A continuing sequence of an application first filed in v3.2.2 is not affected.',
+  }];
 }
 
 const VALID_OPS = new Set(['new', 'replace', 'append', 'delete']);
@@ -179,6 +373,83 @@ function normalizeCode(code: string): string {
     .replace(/^m(?=\d)/, '')
     .replace(/[^a-z0-9]+/g, '.')
     .replace(/^\.+|\.+$/g, '');
+}
+
+/** `code` is `heading` or a sub-heading of it, on a segment boundary ('3.2.s.4.1' under '3.2.s'; '3.2.s1' is not). Both normalized. */
+function isAtOrUnder(code: string, heading: string): boolean {
+  return code === heading || code.startsWith(`${heading}.`);
+}
+
+/**
+ * A recorded section covers a required heading when it is that heading, a
+ * sub-heading of it (the same reading a placed leaf gets), or a heading that
+ * contains it ('3.2' contains '3.2.S'). An empty list — "the file in its
+ * entirety" — names no heading, so it covers none: which part of Module 3 a
+ * whole Drug Master File holds is not recorded, and is not guessed.
+ */
+function namesHeading(ref: Module3CrossReference, heading: string): boolean {
+  return ref.authorizedSections.some((s) => {
+    const n = normalizeCode(s);
+    return n !== '' && (isAtOrUnder(n, heading) || isAtOrUnder(heading, n));
+  });
+}
+
+/** What the register holds that does NOT clear the heading, so the finding says why. */
+function crossReferenceNote(req: OriginalModule3Requirement, heading: string, code: string): string {
+  if (req.crossReferences === null) {
+    return ` The cross-reference register could not be read${req.crossReferenceError ? ` (${req.crossReferenceError})` : ''}, so no referenced file can be counted for ${code}.`;
+  }
+  const withoutLoa = req.crossReferences.filter((r) => !r.loaOnFile && namesHeading(r, heading)).map((r) => r.fileLabel);
+  const notNamed = req.crossReferences.filter((r) => r.loaOnFile && !namesHeading(r, heading)).map((r) => r.fileLabel);
+  let note = '';
+  if (withoutLoa.length) note += ` Recorded for ${code} but with no Letter of Authorization on file: ${withoutLoa.join(', ')}.`;
+  if (notNamed.length) note += ` Recorded with a Letter of Authorization but not naming ${code} among its sections: ${notNamed.join(', ')}.`;
+  return note;
+}
+
+/**
+ * IND_MODULE3_REQUIRED — the original IND's Module 3. Each heading the
+ * requirement names must have a leaf at or under it in this sequence, or a
+ * recorded cross-reference that names it with a Letter of Authorization on
+ * file; a heading with neither is a blocking error. A heading that stands on a
+ * cross-reference alone is reported as an info finding, so a clean verdict
+ * says what it rests on.
+ */
+function originalModule3Findings(activeNonDelete: ReadinessLeaf[], opts: ComputeReadinessOptions): ReadinessFinding[] {
+  const req = opts.originalModule3;
+  if (!req) return [];
+  const placed = activeNonDelete.map((l) => normalizeCode(l.sectionCode));
+  const out: ReadinessFinding[] = [];
+  for (const h of req.headings) {
+    const heading = normalizeCode(h.code);
+    if (placed.some((p) => isAtOrUnder(p, heading))) continue;
+    const named = `${h.code}${h.title ? ` ${h.title}` : ''}`;
+    const byReference = (req.crossReferences ?? []).filter((r) => r.loaOnFile && namesHeading(r, heading));
+    if (byReference.length) {
+      out.push({
+        severity: 'info',
+        code: 'IND_MODULE3_BY_REFERENCE',
+        sectionCode: h.code,
+        message:
+          `${named} has no leaf in ${req.label}; it is incorporated by reference to ${byReference.map((r) => r.fileLabel).join(', ')}, ` +
+          'with a Letter of Authorization on file (21 CFR 312.23(b)).',
+      });
+      continue;
+    }
+    out.push({
+      severity: 'error',
+      code: 'IND_MODULE3_REQUIRED',
+      sectionCode: h.code,
+      message:
+        `There is no ${named} leaf in ${req.label}, and no cross-reference on record covers ${h.code} with a Letter of Authorization on file. ` +
+        'An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference ' +
+        'to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module ' +
+        `(CMC / Module 3, "Place into the submission"), or record the cross-reference to the Drug Master File that holds ${h.code}, ` +
+        `naming ${h.code} among its sections, with its Letter of Authorization on file (Module 1.4.1).` +
+        crossReferenceNote(req, heading, h.code),
+    });
+  }
+  return out;
 }
 
 /**
@@ -238,6 +509,61 @@ function pointerLabel(leaf: ReadinessLeaf): string {
 }
 
 /**
+ * What a resolved document's CONTENT and APPROVAL say about its leaf. Not
+ * raised on a delete: a withdrawal ships none of the document.
+ *
+ *  - QA 2026-10-08 (j6): a document with no content was reported as a pin
+ *    warning whose advice ("re-place the leaf") cannot work — there is nothing
+ *    to pin. The assembler leaves such a leaf out of the package, and freeze,
+ *    dispatch and transmit refuse it, so it is the error those steps report.
+ *  - 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
+ *    so "content not verified" read exactly like "content matches".
+ *  - FD5 (founder decision 2026-10-01): only approved documents leave for an
+ *    agency. Freeze, dispatch and transmit already refused an unapproved leaf,
+ *    but only after the assembly that runs once the e-signature is taken; the
+ *    gate the client reads before signing did not name it (QA 2026-10-08, j6).
+ */
+function contentFindings(leaf: ReadinessLeaf, resolution: LeafDocumentResolution, isDelete: boolean): ReadinessFinding[] {
+  if (isDelete || resolution.status === 'missing') return [];
+  if (resolution.status === 'resolved' && resolution.noContent) {
+    return [{
+      severity: 'error',
+      code: 'UNRESOLVED_DOCUMENT',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, which has no authored content, so it cannot be ` +
+        'assembled into the package. Write the document first; its content is pinned when it is placed again.',
+    }];
+  }
+  const out: ReadinessFinding[] = [];
+  if (resolution.status === 'resolved' && resolution.pin === 'unpinned') {
+    out.push({
+      severity: 'warning',
+      code: 'DOCUMENT_CONTENT_NOT_PINNED',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
+        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
+    });
+  }
+  // P-22 (2026-10-08): approval gates the release, not the technical
+  // validation. A warning here — Validated does not wait for final approvals —
+  // marked for the release steps, which refuse it (releaseBlockers).
+  if (resolution.notTransmittable) {
+    out.push({
+      severity: 'warning',
+      code: 'DOCUMENT_NOT_APPROVED',
+      sectionCode: leaf.sectionCode,
+      blocksRelease: true,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, which is not yet approved (${resolution.notTransmittable}). ` +
+        'Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.',
+    });
+  }
+  return out;
+}
+
+/**
  * What the DB-bound resolver found behind a complete pointer. A document the
  * resolver could not find is exactly as unassemblable as no pointer at all,
  * and reads under the same code; a document whose content no longer matches
@@ -270,18 +596,7 @@ function resolutionFindings(leaf: ReadinessLeaf, isDelete: boolean): ReadinessFi
         `${resolution.reason ? ` — ${resolution.reason}` : ''}. Re-file the leaf against the current document, or restore the filed content, before dispatch.`,
     });
   }
-  // 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
-  // so "content not verified" read exactly like "content matches".
-  if (!isDelete && resolution.status === 'resolved' && resolution.pin === 'unpinned') {
-    out.push({
-      severity: 'warning',
-      code: 'DOCUMENT_CONTENT_NOT_PINNED',
-      sectionCode: leaf.sectionCode,
-      message:
-        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
-        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
-    });
-  }
+  out.push(...contentFindings(leaf, resolution, isDelete));
   return out;
 }
 
@@ -344,6 +659,50 @@ function documentPointerFindings(leaf: ReadinessLeaf): ReadinessFinding[] {
 }
 
 /**
+ * The required sections no leaf carries (prefix match). A section is present iff
+ * a leaf is the required section itself or a true sub-section; the trailing '.'
+ * enforces a segment boundary so '1.20' does not satisfy required '1.2' (only
+ * '1.2', '1.2.1', '1.2.x', … do).
+ *
+ *  - ERROR: the regulation requires the section in this sequence
+ *    (`requiredByRegulation`). QA 2026-10-08 (j7): decided per section, never a
+ *    warning counted as a blocker.
+ *  - WARNING: listed as required (`requiredSections`) where requiredness for
+ *    this sequence is not established — informative, never blocking. A section
+ *    already decided by regulation is not reported twice.
+ */
+function requiredSectionFindings(activeNonDelete: ReadinessLeaf[], opts: ComputeReadinessOptions): ReadinessFinding[] {
+  const presentNorm = activeNonDelete.map(l => normalizeCode(l.sectionCode));
+  const isPresent = (code: string): boolean => {
+    const reqNorm = normalizeCode(code);
+    return !reqNorm || presentNorm.some(p => p === reqNorm || p.startsWith(`${reqNorm}.`));
+  };
+  const out: ReadinessFinding[] = [];
+  const byRegulation = opts.requiredByRegulation;
+  const decided = new Set<string>();
+  for (const required of byRegulation?.codes ?? []) {
+    decided.add(normalizeCode(required));
+    if (isPresent(required)) continue;
+    out.push({
+      severity: 'error',
+      code: 'MISSING_REQUIRED_SECTION',
+      sectionCode: required,
+      message: `Required section ${required} has no leaf in this sequence. ${byRegulation!.basis}`,
+    });
+  }
+  for (const required of opts.requiredSections ?? []) {
+    if (decided.has(normalizeCode(required)) || isPresent(required)) continue;
+    out.push({
+      severity: 'warning',
+      code: 'MISSING_REQUIRED_SECTION',
+      sectionCode: required,
+      message: `Required section ${required} has no leaf in this sequence.`,
+    });
+  }
+  return out;
+}
+
+/**
  * Evaluate a sequence's canonical leaves for dispatch readiness. `errors` is the
  * authoritative count the dispatch gate must use; it is never inflated by the
  * informative warning/info findings.
@@ -375,6 +734,12 @@ export function computeDispatchReadiness(
       message: `Sequence number "${opts.sequenceNumber}" is not a valid eCTD 4-digit sequence (expected e.g. "0000").`,
     });
   }
+
+  // ERROR: a new Japanese application in a format PMDA no longer receives.
+  findings.push(...jpEctdV4Findings(opts));
+
+  // ERROR: an original IND with no Module 3 placed and none incorporated by reference.
+  findings.push(...originalModule3Findings(activeNonDelete, opts));
 
   for (const leaf of leaves) {
     // ERROR: invalid lifecycle operation.
@@ -421,26 +786,7 @@ export function computeDispatchReadiness(
     }
   }
 
-  // WARNING: required sections not present (informative — prefix match).
-  if (opts.requiredSections && opts.requiredSections.length) {
-    const presentNorm = activeNonDelete.map(l => normalizeCode(l.sectionCode));
-    for (const required of opts.requiredSections) {
-      const reqNorm = normalizeCode(required);
-      if (!reqNorm) continue;
-      // Present iff a leaf is the required section itself or a true sub-section.
-      // The trailing '.' enforces a segment boundary so '1.20' does not satisfy
-      // required '1.2' (only '1.2', '1.2.1', '1.2.x', … do).
-      const present = presentNorm.some(p => p === reqNorm || p.startsWith(`${reqNorm}.`));
-      if (!present) {
-        findings.push({
-          severity: 'warning',
-          code: 'MISSING_REQUIRED_SECTION',
-          sectionCode: required,
-          message: `Required section ${required} has no leaf in this sequence.`,
-        });
-      }
-    }
-  }
+  findings.push(...requiredSectionFindings(activeNonDelete, opts));
 
   // INFO: a section carries more than one active "new" leaf.
   const newBySection = new Map<string, number>();
@@ -464,6 +810,7 @@ export function computeDispatchReadiness(
     errors: findings.filter(f => f.severity === 'error').length,
     warnings: findings.filter(f => f.severity === 'warning').length,
     infos: findings.filter(f => f.severity === 'info').length,
+    releaseBlockers: findings.filter(f => f.blocksRelease === true).length,
     findings,
   };
 }

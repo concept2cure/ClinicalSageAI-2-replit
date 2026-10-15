@@ -1,0 +1,70 @@
+# re-verification 2026-10-01T05:56:32Z at HEAD c6f2028b; psql -X -f docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe-red-mutant.sql (probe.sql with this file's ten triggers dropped inside the always-rolled-back transaction)
+BEGIN
+SET
+== MUTANT: this file's ten triggers dropped, inside the rolled-back transaction (= HEAD before the fix)
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+DROP TRIGGER
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+== the legitimate path: INSERT, as app_service under RLS
+SET
+ rls | tenant | current_user 
+-----+--------+--------------
+ on  | 108    | app_service
+(1 row)
+
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+== UPDATE, as app_service under RLS (each must be refused)
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+== DELETE, as app_service under RLS (each must be refused)
+DELETE 1
+DELETE 1
+DELETE 1
+DELETE 1
+DELETE 1
+RESET
+== cascades from a parent, as the owner (each must be refused)
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+DELETE 1
+DELETE 1
+DELETE 1
+== TRUNCATE, as the owner (each must be refused)
+TRUNCATE TABLE
+TRUNCATE TABLE
+TRUNCATE TABLE
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe-red-mutant.sql:76: NOTICE:  truncate cascades to table "c2c_document_section_versions"
+TRUNCATE TABLE
+TRUNCATE TABLE
+== what survived inside the transaction
+           t           | count 
+-----------------------+-------
+ workflow_history      |     0
+ document_audit_logs   |     0
+ regulatory_audit_logs |     0
+ c2c_ana_actions       |     0
+ authoring_signatures  |     0
+(5 rows)
+
+ROLLBACK

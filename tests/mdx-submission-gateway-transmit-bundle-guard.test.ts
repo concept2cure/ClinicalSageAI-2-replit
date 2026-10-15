@@ -38,6 +38,15 @@ const connectFn = vi.fn();
 // The signing ceremony reads the signer's account standing (VSR-001 F-28);
 // every signer here is active. Suspended and deprovisioned signers are pinned
 // by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1). The route asks the signer's role on the
+// membership row (checkSigningAuthority) before the password, and
+// executeGovernedTransmit asks again through the same check.
+// An approver unless a case sets `signerRole.next`, which is used once (SEC-1008-1).
+const signerRole = vi.hoisted(() => ({ next: null as string | null }));
+vi.mock('../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async () => { const r = signerRole.next ?? 'approver'; signerRole.next = null; return r; },
+}));
 vi.mock('../server/services/account-standing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../server/services/account-standing')>()),
   isAccountActive: async () => true,
@@ -70,14 +79,16 @@ vi.mock('bcryptjs', () => ({
 }));
 vi.mock('../server/services/mfaService', () => ({
   verifyToken: vi.fn().mockResolvedValue(true),
-  // The operator has no second factor enrolled. verifyReauth asks (the canonical
-  // §11.200 rule: the code is required whenever one is enrolled) and refuses when
-  // the answer cannot be read, so the fixture has to state it.
-  isMfaEnabled: vi.fn().mockResolvedValue(false),
+  // The operator has an authenticator enrolled, and the body carries its code.
+  // These cases run under NODE_ENV='production', where a signer with none is
+  // refused before anything is read (ADR-0014 P1-2b, from P-25 on 2026-10-08),
+  // so "fully re-authenticated" means password and code. verifyReauth refuses
+  // when the enrolment cannot be read, so the fixture has to state it.
+  isMfaEnabled: vi.fn().mockResolvedValue(true),
 }));
 
 // §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
-const REAUTH = { reason: 'governed transmit reason', meaning: 'release', reauth: { password: 'pw-123456' } };
+const REAUTH = { reason: 'governed transmit reason', meaning: 'release', reauth: { password: 'pw-123456', totp: '123456' } };
 
 const { transmitFn, statusFn, ackFn, isConfigFn, configStatusFn } = vi.hoisted(() => ({
   transmitFn:     vi.fn(),
@@ -147,9 +158,29 @@ function makeApp(orgId = CALLER_ORG) {
  * BOTH the id and the org_id bind params match, mirroring the tenant-scoped
  * WHERE clause the route issues.
  */
-type StoredPackage = { id: number; orgId: number; bundle: unknown };
+/** `createdBy` is the package's recorded creator (separation of duties: the
+ *  creator may not transmit it). Defaults to 4242 — a colleague of the acting
+ *  user (777), so these cases exercise an independent transmitter. */
+type StoredPackage = { id: number; orgId: number; bundle: unknown; regulatory?: Record<string, unknown>; filedSequences?: unknown[]; createdBy?: number | null };
 let packages: StoredPackage[] = [];
 const packageSelects: Array<unknown[]> = [];
+
+/**
+ * Transmittal rows the duplicate-send lock reads. The stub answers its two
+ * statements — by the bundle's bytes, and by the sequence + environment a row
+ * was sent under — as the SQL states them; the SQL itself runs against the
+ * real table in active-transmittal-sequence-lock.pglite.test.ts.
+ */
+type TransmittalRow = { id: number; orgId: number; packageId: number; sha256: string; status: string; metadata: Record<string, unknown> };
+let transmittals: TransmittalRow[] = [];
+const ACTIVE_STATUSES = ['pending', 'in_transit', 'received'];
+function activeTransmittalRows(sql: string, params: unknown[]) {
+  const [orgId, packageId, key, environment] = params as [number, number, string, string | undefined];
+  const bySequence = /metadata->>'sequence'/.test(sql);
+  const hit = transmittals.find((t) => t.orgId === orgId && t.packageId === packageId && ACTIVE_STATUSES.includes(t.status) &&
+    (bySequence ? t.metadata.sequence === key && t.metadata.environment === environment : t.sha256 === key));
+  return hit ? { rows: [{ id: hit.id, status: hit.status }], rowCount: 1 } : { rows: [], rowCount: 0 };
+}
 
 /** The package's content as the transmit gate re-reads it. A good descriptor
  *  carries the fingerprint of CONTENT; a test edits `contentRows` to drift it. */
@@ -173,6 +204,14 @@ function signPayload(): Record<string, any> | undefined {
   }
   return undefined;
 }
+/** The transmit's electronic-signature MANIFEST as persisted (a JSON param) —
+ *  the attributed record an auditor reads, not only the digest it is bound to. */
+function transmitManifest(): Record<string, any> | undefined {
+  return ledgerQuery.mock.calls
+    .flatMap((c) => ((c[1] as unknown[]) ?? []))
+    .map((p) => { try { return typeof p === 'string' ? JSON.parse(p) : p; } catch { return null; } })
+    .find((o) => o && typeof o === 'object' && (o as any).kind === 'governed-transmit');
+}
 
 function installDb() {
   queryFn.mockReset();
@@ -180,13 +219,25 @@ function installDb() {
     if (typeof sql === 'string' && sql.includes('password_hash')) {
       return Promise.resolve({ rows: [{ password_hash: 'hashed' }], rowCount: 1 });
     }
+    // The creator lookup (assertTransmitterIndependent → resolveTargetAuthors),
+    // answered with the same tenant scoping. Its id arrives as text ($1::int).
+    if (typeof sql === 'string' && sql.includes('SELECT created_by_id FROM c2c_submission_packages')) {
+      const [id, orgId] = params as [unknown, number];
+      const row = packages.find((p) => p.id === Number(id) && p.orgId === orgId);
+      return Promise.resolve(row
+        ? { rows: [{ created_by_id: row.createdBy === undefined ? 4242 : row.createdBy }], rowCount: 1 }
+        : { rows: [], rowCount: 0 });
+    }
     if (typeof sql === 'string' && sql.includes('FROM c2c_submission_packages')) {
       packageSelects.push(params);
       const [id, orgId] = params as [number, number];
       const row = packages.find((p) => p.id === id && p.orgId === orgId);
       return row
-        ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle } }], rowCount: 1 })
+        ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle, regulatory: row.regulatory, filedSequences: row.filedSequences } }], rowCount: 1 })
         : Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    if (typeof sql === 'string' && /SELECT\s+id,\s+status\s+FROM submission_transmittals/.test(sql)) {
+      return Promise.resolve(activeTransmittalRows(sql, params));
     }
     if (typeof sql === 'string' && sql.includes('FROM c2c_package_sections')) {
       contentSelects.push(params);
@@ -254,6 +305,7 @@ beforeEach(() => {
 
   packages = [];
   packageSelects.length = 0;
+  transmittals = [];
   contentRows = CONTENT;
   contentSelects.length = 0;
   installDb();
@@ -303,6 +355,22 @@ function goodDescriptor(overrides: Record<string, unknown> = {}) {
 }
 
 /* ── Client descriptors cannot name a filesystem path ────────────── */
+
+describe('POST transmit — only a role that may sign transmits (SEC-1008-1)', () => {
+  it.each(['member', 'manager'])('refuses a %s: 403 before the password is read, and nothing is sent', async (role) => {
+    queryFn.mockClear();
+    signerRole.next = role;
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ environment: 'staging', packageId: 1, ...REAUTH });
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('ESIGNATURE_NO_AUTHORITY');
+    // No password_hash read: the refusal cost the account no lockout attempt.
+    const credentialReads = queryFn.mock.calls.filter((c: unknown[]) => /password_hash/i.test(String(c[0])));
+    expect(credentialReads, 'a password attempt was spent on a role that may not sign').toHaveLength(0);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+});
 
 describe('POST transmit — client-supplied bundle descriptors (C2C-SUB-003)', () => {
   it('refuses an explicit descriptor pointing at an arbitrary server-readable file', async () => {
@@ -506,6 +574,28 @@ describe('POST transmit — cross-tenant packages (C2C-SUB-003)', () => {
 /* ── Positive control ────────────────────────────────────────────── */
 
 describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
+  it('refuses the package creator — 403 SIGNER_IS_AUTHOR, and nothing reaches the gateway', async () => {
+    // Separation of duties (2026-10-05): whoever created the package does not
+    // transmit it. Before, transmit re-authenticated the human and never asked.
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: 777 }];
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(res.body)).toMatch(/SIGNER_IS_AUTHOR/);
+    expect(transmitFn, 'bytes went to the agency under the package creator').not.toHaveBeenCalled();
+  });
+
+  it('refuses a package with no recorded creator — 409, never guessed', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: null }];
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toMatch(/SIGNER_INDEPENDENCE_UNRESOLVED/);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
   it('transmits a tenant-owned, in-namespace, validated package under production', async () => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
     transmitFn.mockResolvedValueOnce({
@@ -518,7 +608,7 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
 
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
 
     expect(res.status).toBe(201);
     expect(res.body.data.transmittalId).toBe(4242);
@@ -562,11 +652,14 @@ describe('POST transmit — filed-sequence history (C2C-SUB-003)', () => {
       leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
     }) }];
     transmitFn.mockResolvedValueOnce({ transmittalId: 4244, transmissionId: 'mdn-filed', status: 'received', transport: 'as2', httpStatus: 200 });
+    // A PRODUCTION send: only that puts a sequence on file (the staging case is below).
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].environment).toBe('production');
     expect(res.body.data.filedSequenceRecorded).toBe(true);
+    expect(res.body.data.filedSequenceReason).toBe('recorded');
     // The history was appended under the package row lock, carrying the leaf
     // inventory the next sequence diffs against.
     const write = ledgerQuery.mock.calls.find((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])));
@@ -575,6 +668,33 @@ describe('POST transmit — filed-sequence history (C2C-SUB-003)', () => {
     expect(written.filedSequences).toHaveLength(1);
     expect(written.filedSequences[0]).toMatchObject({ sequence: '0000', submissionType: 'original', sha256: legitSha, transmittalId: 4244 });
     expect(written.filedSequences[0].leaves[0]).toMatchObject({ ctdSection: '2.5', fileName: 'clinical-overview.pdf', md5: 'md5-co' });
+  });
+
+  it('a send to the agency TEST environment (staging) puts nothing on file: no history write, and the sign record does not say it filed', async () => {
+    /* 2026-10-01 (W5/D7, sweep F14). FDA ESG's test environment is not a
+       regulatory submission. Recording a staging 0000 as filed made the real
+       0000 unassemblable (SEQUENCE_ALREADY_FILED) and planned 0001 against a
+       0000 that FDA's production record does not have. */
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4249, transmissionId: 'mdn-test-env', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].environment).toBe('staging');
+    expect(res.body.data.filedSequenceRecorded).toBe('not-applicable');
+    expect(res.body.data.filedSequenceReason).toBe('test-environment');
+    expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
+    // Nothing was meant to be filed, so no lost-baseline warning either.
+    expect(res.body.data.filedSequenceWarning).toBeUndefined();
+    // The Part 11 sign row and the signature manifest name the sequence the
+    // bundle carried and say it was NOT filed.
+    const notFiled = { sequence: '0000', filedSequenceRecorded: 'not-applicable', filedSequenceReason: 'test-environment' };
+    expect(signPayload()).toMatchObject(notFiled);
+    expect(transmitManifest(), 'the transmit signature manifest was persisted').toMatchObject(notFiled);
   });
 
   it('a bundle that files no sequence records no history, and says so rather than reporting a failure', async () => {
@@ -615,7 +735,7 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     transmitFn.mockResolvedValueOnce({ transmittalId: 4246, transmissionId: 'mdn-partial', status: 'received', transport: 'as2', httpStatus: 200 });
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(201);
     expect(res.body.data.filedSequenceRecorded).toBe(false);
     expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
@@ -633,7 +753,7 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     transmitFn.mockResolvedValueOnce({ transmittalId: 4247, transmissionId: 'mdn-nomanifest', status: 'received', transport: 'as2', httpStatus: 200 });
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(201);
     expect(res.body.data.filedSequenceRecorded).toBe(false);
     expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
@@ -650,7 +770,7 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     transmitFn.mockResolvedValueOnce({ transmittalId: 4248, transmissionId: 'mdn-sign', status: 'received', transport: 'as2', httpStatus: 200 });
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(201);
     expect(signPayload()).toMatchObject({
       sequence: '0000', submissionType: 'original',
@@ -659,12 +779,115 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     // And in the signature MANIFEST — the attributed record an auditor reads.
     // The payload only reaches the signature as a digest, which answers no
     // question about what was filed.
-    const manifest = ledgerQuery.mock.calls
-      .flatMap((c) => ((c[1] as unknown[]) ?? []))
-      .map((p) => { try { return typeof p === 'string' ? JSON.parse(p) : p; } catch { return null; } })
-      .find((o) => o && typeof o === 'object' && (o as any).kind === 'governed-transmit');
+    const manifest = transmitManifest();
     expect(manifest, 'the transmit signature manifest was persisted').toBeDefined();
     expect(manifest).toMatchObject({ sequence: '0000', filedSequenceRecorded: true });
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F15). The duplicate-send lock was keyed on the
+ * bundle's BYTES. Re-assembling a sequence produces new bytes (JSZip stamps
+ * entry dates), so while the first send of 0000 was still in flight, or was
+ * delivered but unconfirmed (the gateway threw after the bytes left: the row
+ * stays in_transit and nothing is on file), a re-assembled 0000 passed the
+ * lock and the same sequence went to the agency twice. The lock now also
+ * holds the sequence a row was sent under, per environment.
+ */
+describe('POST transmit — one active send per sequence, per environment (sweep F15)', () => {
+  const sequenceZero = () => goodDescriptor({ sequence: '0000', submissionType: 'original' });
+  /** The first send of 0000 — other bytes — as the gateway left its row. */
+  const firstSend = (status: string, environment: string): TransmittalRow => ({
+    id: 4300, orgId: CALLER_ORG, packageId: 5, sha256: 'f'.repeat(64), status, metadata: { sequence: '0000', environment },
+  });
+
+  it.each(['pending', 'in_transit', 'received'])('refuses a re-assembled bundle of a sequence whose send is still %s in the same environment, before the gateway', async (status) => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceZero() }];
+    transmittals = [firstSend(status, 'production')];
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/Sequence 0000 of this package/);
+    expect(res.body.error).toMatch(/id=4300/);
+    expect(res.body.error).toMatch(/confirm receipt at the agency/i);
+    expect(res.body.error).toMatch(/transmittals\/4300\/rollback before sending sequence 0000 again/);
+    expect(res.body.details).toMatchObject({ transmittalId: 4300, status, sequence: '0000', environment: 'production' });
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it.each([['staging', 'production'], ['production', 'staging']])('a %s send of the sequence does not hold it in %s', async (heldIn, sendTo) => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceZero() }];
+    transmittals = [firstSend('in_transit', heldIn)];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4301, transmissionId: 'mdn-other-env', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: sendTo, ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(transmitFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('the row is written under the sequence and environment the lock reads, taken from the stored descriptor', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceZero(), regulatory: { applicationNumber: 'IND123456' } }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4302, transmissionId: 'mdn-keys', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', metadata: { note: 'kept' }, ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].metadata).toEqual({ note: 'kept', sequence: '0000', applicationId: 'IND123456', environment: 'staging' });
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F18). The caller's free-form metadata reached the
+ * gateway as-is, so a body naming another sequence or application number than
+ * the assembled descriptor and the package record deposited the bytes under
+ * one identity (the SFTP path, the transmittal row) and filed them under
+ * another (the filed history). For a package bundle the descriptor decides.
+ */
+describe('POST transmit — agency metadata comes from the assembled descriptor (sweep F18)', () => {
+  const withNumber = (): StoredPackage => ({
+    id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({ sequence: '0000', submissionType: 'original' }),
+    regulatory: { applicationNumber: 'IND123456' },
+  });
+  const send = (metadata: Record<string, unknown>) => request(makeApp())
+    .post('/api/mdx/gateways/fda/esg/transmit')
+    .send({ packageId: 5, environment: 'production', metadata, ...REAUTH });
+
+  it.each([
+    ['another sequence', { sequence: '0001' }, /metadata\.sequence/],
+    ['another application number', { applicationId: 'IND999999' }, /metadata\.applicationId/],
+    ['an application number that is not an identifier', { applicationId: '../IND123456' }, /metadata\.applicationId/],
+  ])('refuses a body naming %s, before the gateway', async (_label, metadata, names) => {
+    packages = [withNumber()];
+    const res = await send(metadata);
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(names);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('refuses an application number the package does not record', async () => {
+    packages = [{ ...withNumber(), regulatory: undefined }];
+    const res = await send({ applicationId: 'IND123456' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/records none/);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('accepts a body that agrees with the descriptor, and sends the descriptor values', async () => {
+    packages = [withNumber()];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4303, transmissionId: 'mdn-agrees', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send({ sequence: '0000', applicationId: ' IND123456 ' });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].metadata).toMatchObject({ sequence: '0000', applicationId: 'IND123456' });
+  });
+
+  it('a bundle that files no sequence is sent with the caller metadata unchanged', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), regulatory: { applicationNumber: 'IND123456' } }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4304, transmissionId: 'mdn-no-sequence', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send({ applicationId: 'K123456' });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].metadata).toEqual({ applicationId: 'K123456', environment: 'production' });
   });
 });
 
@@ -829,7 +1052,8 @@ describe('POST transmit — packager evidence is forwarded to the pre-transmit g
     });
     expect(blocked.cleared).toBe(false);
     expect(blocked.blockers.some((b) => /ECTD_REQUIRE_DTD blocks/.test(b))).toBe(true);
-    expect(blocked.blockers.some((b) => /ECTD_REQUIRE_PDFA blocks/.test(b))).toBe(true);
+    // 2026-10-01 (D7, the PDF/A rule): the refusal names who required PDF/A.
+    expect(blocked.blockers.some((b) => /not PDF\/A .*this deployment requires PDF\/A for every submission \(ECTD_REQUIRE_PDFA\)/.test(b))).toBe(true);
 
     // Report-only when not opted in — the same evidence is surfaced, not blocking.
     const reported = evaluatePreTransmit({
@@ -838,5 +1062,143 @@ describe('POST transmit — packager evidence is forwarded to the pre-transmit g
     });
     expect(reported.cleared).toBe(true);
     expect(reported.checks.find((c) => c.name === 'dtd-self-contained')?.passed).toBe(false);
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F19). The filed history answered `true` for a
+ * DIFFERENT bundle sent under a sequence already on file, and kept the first
+ * one's inventory — so a second filing under one number left the platform and
+ * was reported recorded. Such a send is now refused before the bytes leave,
+ * from the package row the transmit already reads; one that races in during
+ * the send is reported as a conflict. A sequence the agency REJECTED (the
+ * governed technical-rejection action) no longer holds its number.
+ */
+describe('POST transmit — one bundle per filed sequence (sweep F19)', () => {
+  const SHA_OTHER = 'f'.repeat(64);
+  const LEAVES = [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co-v2', operation: 'replace' }];
+  const FILED_0000 = { sequence: '0000', submissionType: 'original', sha256: 'a'.repeat(64), transmittalId: 4200, filedAt: '2026-09-01T00:00:00.000Z', leaves: [{ ...LEAVES[0], md5: 'md5-co', operation: 'new' }] };
+  const FILED_0001 = { sequence: '0001', submissionType: 'Efficacy Supplement', sha256: SHA_OTHER, transmittalId: 4300, filedAt: '2026-09-20T00:00:00.000Z', leaves: LEAVES };
+  const REJECTED_0001 = {
+    ...FILED_0001, state: 'rejected',
+    rejection: {
+      recordedAt: '2026-09-25T00:00:00.000Z', recordedBy: 777, reason: 'FDA Ack3 reports a technical rejection',
+      evidence: { vaultDocumentId: '0b6f8f3e-6c1d-4f43-9a63-2f1d0c9b7a51', contentSha256: 'e'.repeat(64) },
+      transmittalStatus: { previous: 'ack2_received', current: 'validation_failed' }, actionId: 'act_r', signatureId: 31,
+    },
+  };
+  const CONFLICT = { sequence: '0001', filedSha256: SHA_OTHER, filedTransmittalId: 4300 };
+  const sequenceOne = () => goodDescriptor({ sequence: '0001', submissionType: 'Efficacy Supplement', leafManifest: LEAVES });
+  const send = (environment: string) => request(makeApp())
+    .post('/api/mdx/gateways/fda/esg/transmit')
+    .send({ packageId: 5, environment, ...REAUTH });
+  /** What the history writer reads under the package row lock (the transaction client). */
+  function lockReads(history: () => unknown[]) {
+    const signer = ledgerQuery.getMockImplementation()!;
+    ledgerQuery.mockImplementation(async (sql: unknown, params?: unknown) =>
+      /FROM c2c_submission_packages WHERE id = \$1 FOR UPDATE/.test(String(sql))
+        ? { rows: [{ metadata: { bundle: sequenceOne(), filedSequences: history() } }], rowCount: 1 }
+        : signer(sql, params));
+  }
+  const historyWrite = () => ledgerQuery.mock.calls.find((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])));
+
+  it('refuses a bundle of a sequence the history holds on file as ANOTHER bundle, before the gateway, from the row it already reads', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, FILED_0001] }];
+    const res = await send('production');
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.details).toEqual({ code: 'SEQUENCE_ALREADY_FILED', ...CONFLICT });
+    expect(res.body.error).toMatch(/Sequence 0001/);
+    expect(res.body.error).toMatch(/transmittal 4300/);
+    expect(res.body.error, 'the operator is not handed an API path').not.toMatch(/\/api\/|POST /);
+    expect(transmitFn).not.toHaveBeenCalled();
+    expect(packageSelects, 'no second read of the package').toEqual([[5, CALLER_ORG]]);
+  });
+
+  it('the same bundle already on file is not refused (a re-send after a rollback), and the history is left as it is', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, { ...FILED_0001, sha256: legitSha }] }];
+    lockReads(() => [FILED_0000, { ...FILED_0001, sha256: legitSha }]);
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4309, transmissionId: 'mdn-resend', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send('production');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data).toMatchObject({ filedSequenceRecorded: true, filedSequenceReason: 'already-recorded', filedSequenceConflict: null });
+    expect(historyWrite()).toBeUndefined();
+  });
+
+  it('a send to the agency TEST environment files nothing, so the history does not hold it back', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, FILED_0001] }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4308, transmissionId: 'mdn-staging', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send('staging');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.filedSequenceReason).toBe('test-environment');
+  });
+
+  it('a 0001 the agency REJECTED does not hold the number: the new bundle is sent and recorded beside it', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, REJECTED_0001] }];
+    lockReads(() => [FILED_0000, REJECTED_0001]);
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4310, transmissionId: 'mdn-refile', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send('production');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data).toMatchObject({ filedSequenceRecorded: true, filedSequenceReason: 'recorded', filedSequenceConflict: null });
+    const written = JSON.parse(String((historyWrite()![1] as unknown[])[1]));
+    expect(written.filedSequences).toHaveLength(3);
+    expect(written.filedSequences[1], 'the rejected entry is kept, for audit').toEqual(REJECTED_0001);
+    expect(written.filedSequences[2]).toMatchObject({ sequence: '0001', sha256: legitSha, transmittalId: 4310, state: 'transmitted' });
+  });
+
+  it('a different bundle of the sequence recorded WHILE this one was sending: not recorded, said, and on the sign record', async () => {
+    let history: unknown[] = [FILED_0000];
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: history }];
+    lockReads(() => history);
+    transmitFn.mockImplementationOnce(async () => {
+      history = [FILED_0000, FILED_0001]; // another send of 0001 was recorded meanwhile
+      return { transmittalId: 4311, transmissionId: 'mdn-race', status: 'received', transport: 'as2', httpStatus: 200 };
+    });
+    const res = await send('production');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data).toMatchObject({ filedSequenceRecorded: false, filedSequenceReason: 'sequence-conflict', filedSequenceConflict: CONFLICT });
+    expect(res.body.data.filedSequenceWarning).toMatch(/could not be added to the package filed history/);
+    expect(res.body.data.filedSequenceWarning).toMatch(/transmittal 4300/);
+    expect(res.body.data.filedSequenceWarning).toMatch(/at most one/);
+    expect(historyWrite(), 'nothing was written over the other bundle').toBeUndefined();
+    expect(signPayload()).toMatchObject({ filedSequenceReason: 'sequence-conflict', filedSequenceConflict: CONFLICT });
+    expect(transmitManifest()).toMatchObject({ filedSequenceRecorded: false, filedSequenceConflict: CONFLICT });
+  });
+});
+
+/**
+ * GET /gateways/transmit-independence — the Transmit form's advance answer to
+ * "may I transmit this package?", from the transmit's own separation-of-duties
+ * check. The acting user is 777; a package's default creator is 4242.
+ */
+describe('GET /api/mdx/gateways/transmit-independence', () => {
+  it('marks the package the caller created, and leaves a colleague\'s package independent', async () => {
+    packages = [
+      { id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: 777 },
+      { id: 6, orgId: CALLER_ORG, bundle: goodDescriptor() },
+      { id: 8, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: null },
+    ];
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5,6,8');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ 5: 'author', 6: 'independent', 8: 'no-creator' });
+  });
+
+  it("another tenant's package reads exactly like one that does not exist — nothing disclosed", async () => {
+    packages = [{ id: 5501, orgId: OTHER_ORG, bundle: goodDescriptor(), createdBy: 777 }];
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5501,9999');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ 5501: 'no-creator', 9999: 'no-creator' });
+  });
+
+  it('refuses a malformed or unbounded id list (422), never a partial answer', async () => {
+    for (const q of ['', 'abc', '5,-1', '5;6', Array.from({ length: 101 }, (_, i) => i + 1).join(',')]) {
+      const res = await request(makeApp()).get(`/api/mdx/gateways/transmit-independence?packageIds=${q}`);
+      expect(res.status, `packageIds=${q.slice(0, 20)}`).toBe(422);
+    }
+  });
+
+  it('asks nothing of the gateway', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: 777 }];
+    await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5');
+    expect(transmitFn).not.toHaveBeenCalled();
   });
 });

@@ -29,7 +29,7 @@
  *   - §11.10(g) signing-authority (role gate);
  *   - §11.200 password re-verification.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
@@ -46,6 +46,7 @@ const hoisted = vi.hoisted(() => {
     verifyMfaToken: vi.fn(),
     writeChainedAuditRow: vi.fn(),
     isSigningAuthorized: vi.fn(),
+    resolveSignerOrgRole: vi.fn(),
     buildVersionBindingDigest: vi.fn(),
     // The sign route checks out a dedicated client for the signature+audit
     // transaction; the pre-flight reads (password hash, signer identity,
@@ -91,6 +92,10 @@ vi.mock('../../services/part11/version-binding.js', () => ({
 vi.mock('../../services/part11/signing-authority', () => ({
   isSigningAuthorized: (...a: unknown[]) => hoisted.isSigningAuthorized(...a),
 }));
+// The signer's role comes from the membership row (P-27, checkSigningAuthority).
+vi.mock('../../services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => hoisted.resolveSignerOrgRole(...a),
+}));
 
 import esignatureRouter from '../esignature';
 
@@ -114,7 +119,9 @@ const signBody = (over: Record<string, unknown> = {}) => ({
   documentId: 10,
   versionId: 1,
   signaturePurpose: 'approval',
-  signatureMeaning: 'I approve',
+  // A meaning from the closed vocabulary (part11/signature-meanings.ts). Free
+  // text ('I approve') was accepted here until P1-42 and is now refused.
+  signatureMeaning: 'approval',
   action: 'approved',
   password: PASSWORD,
   ...over,
@@ -152,6 +159,7 @@ beforeEach(async () => {
   if (!PW_HASH) PW_HASH = await bcrypt.hash(PASSWORD, 4);
   vi.clearAllMocks();
   hoisted.isSigningAuthorized.mockReturnValue(true);
+  hoisted.resolveSignerOrgRole.mockResolvedValue('approver');
   hoisted.isMfaEnabled.mockResolvedValue(false);
   hoisted.buildVersionBindingDigest.mockReturnValue('bound-digest');
   hoisted.writeChainedAuditRow.mockResolvedValue(undefined);
@@ -248,6 +256,20 @@ describe('POST /api/esignature/sign — input + authority guards', () => {
     expect(hoisted.poolQuery).not.toHaveBeenCalled();
   });
 
+  // P-27 (2026-10-08): the role was read from the request (resolveUserRole),
+  // which the membership resolver's own header calls unreliable on signing
+  // routes. A request claiming 'approver' for a member signed. One policy now:
+  // checkSigningAuthority, which reads the membership row.
+  it("judges the signer's membership role, not the role the request carries", async () => {
+    hoisted.isSigningAuthorized.mockImplementation((r: unknown) => ['admin', 'approver', 'reviewer'].includes(String(r)));
+    hoisted.resolveSignerOrgRole.mockResolvedValue('member'); // the request says 'approver'
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(hoisted.resolveSignerOrgRole).toHaveBeenCalledWith(7, 3);
+    expect(hoisted.clientQuery).not.toHaveBeenCalled();
+  });
+
   it('401s when the password fails re-verification (§11.200)', async () => {
     const res = await request(makeApp()).post('/api/esignature/sign')
       .send(signBody({ password: 'wrong-password' }));
@@ -263,6 +285,106 @@ describe('POST /api/esignature/sign — input + authority guards', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/mfaToken/i);
   });
+});
+
+/* ADR-0014 P1-2b, enforced from P-25 (2026-10-08): in production a signer
+   with no authenticator is refused by the ceremony (reverifySigner), before
+   the signature transaction is opened. */
+describe('POST /api/esignature/sign — in production an authenticator is required (ADR-0014 P1-2b)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('refuses a signer with no authenticator (403), in the decided words, and writes nothing', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    hoisted.isMfaEnabled.mockResolvedValue(false);
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'Enrol an authenticator in Account to sign. Nothing was signed.', code: 'AUTHENTICATOR_REQUIRED' });
+    expect(hoisted.clientQuery, 'no signature transaction was opened').not.toHaveBeenCalled();
+    expect(hoisted.writeChainedAuditRow).not.toHaveBeenCalled();
+  });
+
+  it('a signer with an authenticator goes on to the code check', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    hoisted.isMfaEnabled.mockResolvedValue(true);
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('MFA_TOKEN_REQUIRED');
+    expect(hoisted.clientQuery).not.toHaveBeenCalled();
+  });
+
+  it('control: outside production the password alone still signs', async () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    hoisted.isMfaEnabled.mockResolvedValue(false);
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(201);
+  });
+});
+
+/* §11.50(a)(3) — security audit 2026-09-24 DP-55, plan P1-42. The route took
+   signatureMeaning as optional free text and wrote `signatureMeaning ?? null`,
+   so a signature could be recorded with no meaning at all, or one nobody
+   defined. The governed sign path (/api/c2c/actions/sign) has refused both
+   since P1-21; this route now refuses them the same way, with the same codes,
+   BEFORE the signer is re-verified (no password is checked for a request that
+   would be refused anyway). */
+describe('POST /api/esignature/sign — §11.50(a)(3) signature meaning', () => {
+  const withoutMeaning = () => {
+    const body: Record<string, unknown> = signBody();
+    delete body.signatureMeaning;
+    return body;
+  };
+
+  it('refuses a signature that declares no meaning (400 SIGNATURE_MEANING_REQUIRED) before re-verifying the signer', async () => {
+    const res = await request(makeApp()).post('/api/esignature/sign').send(withoutMeaning());
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('SIGNATURE_MEANING_REQUIRED');
+    // Nothing read: not the password hash, not the signer, not the version.
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
+    expect(hoisted.clientQuery).not.toHaveBeenCalled();
+    expect(hoisted.writeChainedAuditRow).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['an empty string', ''],
+    ['null', null],
+    ['a number', 1],
+    ['an object', { id: 'approval' }],
+  ])('refuses %s as a meaning with the same code', async (_label, meaning) => {
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ signatureMeaning: meaning }));
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('SIGNATURE_MEANING_REQUIRED');
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
+  });
+
+  it('refuses free text outside the vocabulary (400 SIGNATURE_MEANING_UNKNOWN), names what is accepted, and checks no password', async () => {
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ signatureMeaning: 'I approve' }));
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('SIGNATURE_MEANING_UNKNOWN');
+    expect(String(res.body.error)).toContain('approval');
+    // The caller's text is not echoed back.
+    expect(JSON.stringify(res.body)).not.toContain('I approve');
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
+  });
+
+  it('refuses a near-miss spelling rather than normalising it (Approval is not approval)', async () => {
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ signatureMeaning: 'Approval' }));
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('SIGNATURE_MEANING_UNKNOWN');
+  });
+
+  it.each(['approval', 'review', 'APPROVED', 'AUTHORSHIP'])(
+    'signs with the vocabulary meaning %s and persists exactly that meaning',
+    async (meaning) => {
+      const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ signatureMeaning: meaning }));
+      expect(res.status).toBe(201);
+      const insert = hoisted.clientQuery.mock.calls.find((c) => /INSERT INTO electronic_signatures/i.test(String(c[0])));
+      expect(insert).toBeDefined();
+      // $16 is signature_meaning (persistElectronicSignature's column order).
+      expect((insert![1] as unknown[])[15]).toBe(meaning);
+    },
+  );
 });
 
 describe('POST /api/esignature/sign — §11.50 signer attribution', () => {
@@ -313,5 +435,39 @@ describe('POST /api/esignature/verify-password — whether a second factor is en
     hoisted.isMfaEnabled.mockRejectedValue(new Error('users unreachable'));
     const res = await request(makeApp()).post('/api/esignature/verify-password').send({ password: PASSWORD });
     expect(res.body).toEqual({ valid: true });
+  });
+});
+
+describe('POST /api/esignature/sign — §11.70: the version signed belongs to the document named', () => {
+  /* Version 1 belongs to document 10 in the signer's organisation. The lookup
+     used to be (version id, organisation) only, so a body naming document 99
+     with version 1 was signed: the row and manifest said document 99 while the
+     binding digest was taken over document 10's content. The SQL stub honours
+     a document predicate when the route sends one. */
+  function wireVersionOfDocument10() {
+    hoisted.poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (/SELECT password_hash FROM users/i.test(sql)) return { rows: [{ password_hash: PW_HASH }] };
+      if (/FROM users u\s+JOIN organization_users/i.test(sql)) return { rows: [{ name: 'A Signer', email: 's@x.test', title: 'Study Director' }] };
+      if (/FROM document_versions/i.test(sql)) {
+        const documentParam = /dv\.document_id\s*=\s*\$3/i.test(sql) ? Number(params[2]) : undefined;
+        if (documentParam !== undefined && documentParam !== 10) return { rows: [] };
+        return { rows: [{ document_id: 10, version_number: '1', content: 'body' }] };
+      }
+      return { rows: [] };
+    });
+  }
+
+  it('refuses a version of another document, and writes nothing', async () => {
+    wireVersionOfDocument10();
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ documentId: 99, versionId: 1 }));
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('ESIGNATURE_VERSION_NOT_FOUND');
+    expect(issued(/INSERT INTO electronic_signatures/i)).toBe(false);
+  });
+
+  it('signs a version of the document it names', async () => {
+    wireVersionOfDocument10();
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ documentId: 10, versionId: 1 }));
+    expect(res.status).toBe(201);
   });
 });

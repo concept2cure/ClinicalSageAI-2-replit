@@ -122,8 +122,10 @@ export const REGULATORY_MEETING_TYPES: DomainEntry<RegulatoryMeetingType>[] = [
   {
     value: 'consultation',
     label: 'Regulatory Consultation',
-    description: 'PMDA regulatory consultation (面談) covering development strategy, clinical trial design, and submission planning for the Japanese market. Available as RS Soudankai (regulatory science consultation) or individual consultations.',
-    regulatoryRefs: ['PMDA Consultation Guidance'],
+    // 2026-10-05: "RS Soudankai" was not a PMDA term. The consultation types and
+    // their bases are recorded in server/services/ind/ctd/jp-programs.ts.
+    description: 'PMDA face-to-face advice (対面助言) on development strategy, clinical trial design, and submission planning for the Japanese market. PMDA consultation types include 事前面談 (pre-consultation meeting), 治験相談 (clinical trial consultations, e.g. 第II相試験終了後相談 and 申請前相談), and RS戦略相談 (regulatory science strategy consultation).',
+    regulatoryRefs: ['PMDA face-to-face advice and consultations (対面助言・治験相談等)'],
   },
 
   /* ─── Catch-all ──────────────────────────────────────────────────────── */

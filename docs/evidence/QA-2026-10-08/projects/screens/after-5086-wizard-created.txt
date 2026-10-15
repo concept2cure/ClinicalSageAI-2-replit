@@ -1,0 +1,153 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Project home
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+All projects
+PROJECT
+HLV-334 — Investigational New Drug Application (QA-FIX j1)
+HLV-334 — Investigational New Drug Application (QA-FIX j1)
+BIOTECH
+HLV-334
+FDA
+ONCOLOGY (GENERAL)
+ACTIVE
+PRIORITY: MEDIUM
+PLANNING
+SPONSOR
+Concept2Cure Therapeutics
+PRODUCT
+Helvanta
+INDICATION
+Oncology (general)
+IND NUMBER
+not assigned
+Plan
+Evidence
+Author
+Review
+Submit
+Respond
+Lifecycle
+Author
+Draft eCTD sections with AnA, track changes
+AnA · co-author
+Helvanta · governed dossier
+Open full thread
+I'm your co-author on Helvanta, bound to this project's governed dossier. Ask me to draft, reconcile, or review a section and I'll open the full thread with every step grounded to its source.
+Workspace
+Every capability, scoped to this project
+AUTHOR & ASSEMBLE
+Document editor & authoring
+Section editor with tracked changes, threaded comments, version history and diff, approval routing, and e-signature manifestation (21 CFR §11.50).
+Compile & export eCTD
+eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id.
+EVIDENCE & DATA
+Vault (DMS)
+The program dossier tree (rule-pack builds) plus the filing cabinet: uploads are virus-scanned, SHA-256 hashed, auto-classified to a suggested dossier folder per the program's client-type taxonomy (CTD modules / device submission folders / TMF zones), and confirmed or moved via the governed, audited /file route
+Artifacts center
+Cross-project artifact library, version chain, provenance, signature status.
+Reporting & analytics
+AnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs.
+APPLICATIONS & FILING
+Submission center
+Package preview, eValidator pass, and the choice between an ESG submission and an eSTAR export.
+REVIEW & GOVERN
+Review & approval
+Review queue, threaded comments (open/resolved/outdated), reject-with-reason, e-sign manifestation (21 CFR §11.50).
+Dispatch readiness
+The deterministic last gate before transmit
+Tasks & collaboration
+Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates
+Audit trail
+Log entries, filters, signed PDF export
+Quality & Assurance
+Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).
+Conversations
+resume a thread held on this project
+No project conversations yet
+Start one in the composer above — threads started here are kept on this project and listed for resuming.
+Module completion
+section status by CTD module
+1 · 18 sections
+0%
+2 · 14 sections
+0%
+3 · 23 sections
+0%
+4 · 22 sections
+0%
+5 · 10 sections
+0%
+M1 · 1 section
+0%
+M2 · 1 section
+0%
+M3 · 1 section
+0%
+M4 · 1 section
+0%
+M5 · 1 section
+0%
+Data room
+the sources this project's documents are written from
+Add sources — drop files here or click to browse. They’re read on upload and become available to AnA for this project.
+No sources in this project yet
+Add the documents this project's submission will be written from — protocols, CSRs, prior correspondence. Every file is read on upload and becomes a traceable source.
+Write from these sources
+Tasks
+tasks, review threads and approvals on this program
+No tasks or approvals on this program
+Tasks, review threads, approval blockers and agency correspondence recorded on this program appear here.
+Open task board
+Records in this project
+Submissions 1
+HLV-334 — Investigational New Drug Application (QA-FIX j1)
+ind · fda · planning
+Data Room sources 0
+None in this project yet.
+Authoring documents 0
+None in this project yet.
+Vault documents 0
+None in this project yet.
+Study designs 0
+None in this project yet.
+Filing documents 1
+Helvanta — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5
+ind
+Team & activity
+RP
+Raj Patel
+LEAD
+Raj Patel
+c2c.project.create · regulatory_programs
+Oct 8
+Raj Patel
+c2c.work.transition · document
+Oct 8
+Dossier readiness
+0%
+0%
+Dossier
+readiness
+Memory
+No project memory yet
+AnA's persisted regulatory-strategy memory, open blockers, and decisions-on-record for this project will appear here once enriched.
+Instructions
+No custom instructions yet
+Authoring instructions saved on this project's intelligence profile will appear here.
+Recent drafts
+No drafted sections yet
+Governed document sections drafted on this project will appear here, newest first.

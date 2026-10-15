@@ -10,6 +10,9 @@
  * @module server/services/pathway-engines
  */
 
+import type { PathwayEvidenceLeaf } from './source-aware-evidence';
+import { SUBMISSION_DELIVERABLE_PATHWAYS, type Pathway } from '../../../shared/types/submission-api';
+export type { Pathway } from '../../../shared/types/submission-api';
 import { mapToCtis, type CtisInputLeaf } from './ctis/ctis-mapper';
 import { assembleTechDoc, type TechDocInputLeaf } from './mdr-ivdr/tech-doc-assembler';
 import { mapToEstar, type EstarInputLeaf, type DeviceFlags } from './estar/estar-mapper';
@@ -24,33 +27,10 @@ export * from './pmda/pmda-shonin';
 export * from './pma/pma-mapper';
 export * from './prestar/prestar-mapper';
 
-export type Pathway =
-  | 'ctis'
-  | 'mdr'
-  | 'ivdr'
-  | 'estar_510k'
-  | 'estar_de_novo'
-  | 'pmda_shonin'
-  | 'pma'
-  | 'prestar_q_sub'
-  | 'prestar_ide'
-  | 'prestar_513g';
-
-export const PATHWAYS: Pathway[] = [
-  'ctis',
-  'mdr',
-  'ivdr',
-  'estar_510k',
-  'estar_de_novo',
-  'pmda_shonin',
-  'pma',
-  'prestar_q_sub',
-  'prestar_ide',
-  'prestar_513g',
-];
+export const PATHWAYS: Pathway[] = [...SUBMISSION_DELIVERABLE_PATHWAYS];
 
 /** A canonical leaf accepted by any pathway engine. */
-export interface PathwayLeaf {
+export interface PathwayLeaf extends PathwayEvidenceLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
@@ -66,10 +46,20 @@ export interface PathwayReadiness {
 }
 
 export interface AssessPathwayInput {
+  sourceAware?: boolean;
+  /** Recorded product family only; never inferred from placement titles. */
+  deviceVariant?: 'device' | 'ivd';
   pathway: Pathway;
   leaves: PathwayLeaf[];
   /** CTIS only: concerned EU member states. */
   memberStates?: string[];
+  /**
+   * CTIS only: Annex I rows the sponsor recorded as not applicable, as
+   * `I:<slot-id>` or `II:<MS>:<slot-id>`. Without it, "if applicable" rows
+   * (GMP for an unmodified authorised IMP, recruitment, insurance, fee) stay
+   * undetermined and the application is not ready.
+   */
+  ctisNotApplicable?: string[];
   /** PMA only: application/supplement type (defaults to 'original'). */
   pmaSubmissionType?: PmaSubmissionType;
   /** PreSTAR Q-Sub only: sub-type (defaults to 'pre_submission'). */
@@ -80,6 +70,16 @@ export interface AssessPathwayInput {
    * required only for some devices cannot be judged without them (W1-5).
    */
   deviceFlags?: DeviceFlags;
+  /**
+   * PMDA Shōnin only: whether the device needs clinical trial results
+   * (臨床試験の試験成績). Unanswered, an absent clinical slot is undetermined
+   * and counted as a gap.
+   */
+  clinicalDataRequired?: boolean;
+}
+
+function requiredGaps(summary:{missingRequired:string[];undetermined?:string[]}) {
+  return [...summary.missingRequired,...(summary.undetermined??[])];
 }
 
 /** Run the right pathway engine and return a normalized readiness verdict. */
@@ -87,21 +87,33 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
   switch (input.pathway) {
     case 'ctis': {
-      const d = mapToCtis({ leaves: leaves as CtisInputLeaf[], memberStates: input.memberStates ?? [] });
+      const d = mapToCtis({
+        sourceAware: input.sourceAware,
+        leaves: leaves as CtisInputLeaf[],
+        memberStates: input.memberStates ?? [],
+        notApplicable: input.ctisNotApplicable,
+      });
+      // Undetermined slots are gaps, as in the eSTAR branch below: an "if
+      // applicable" row nobody answered, or a Part II document with no Member
+      // State, is not a slot the application can go without.
       const missing = [
         ...d.summary.partIMissingRequired.map((m) => `I:${m}`),
+        ...d.summary.partIUndetermined.map((m) => `I:${m}`),
         ...Object.entries(d.summary.partIIMissingByState).flatMap(([ms, ids]) => ids.map((m) => `II:${ms}:${m}`)),
+        ...Object.entries(d.summary.partIIUndeterminedByState).flatMap(([ms, ids]) => ids.map((m) => `II:${ms}:${m}`)),
       ];
       return { pathway: 'ctis', ready: d.summary.ready, missingRequired: missing, detail: d };
     }
     case 'mdr':
     case 'ivdr': {
-      const r = assembleTechDoc({ leaves: leaves as TechDocInputLeaf[], regulation: input.pathway });
-      return { pathway: input.pathway, ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = assembleTechDoc({ leaves: leaves as TechDocInputLeaf[], regulation: input.pathway, sourceAware: input.sourceAware });
+      return { pathway: input.pathway, ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     case 'estar_510k':
     case 'estar_de_novo': {
       const r = mapToEstar({
+        sourceAware: input.sourceAware,
+        variant: input.deviceVariant,
         leaves: leaves as EstarInputLeaf[],
         type: input.pathway === 'estar_de_novo' ? 'de_novo' : '510k',
         flags: input.deviceFlags,
@@ -116,24 +128,30 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
       };
     }
     case 'pmda_shonin': {
-      const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[] });
-      return { pathway: 'pmda_shonin', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[], clinicalDataRequired: input.clinicalDataRequired, sourceAware: input.sourceAware });
+      // Undetermined slots are gaps, as in the eSTAR and CTIS branches.
+      return {
+        pathway: 'pmda_shonin',
+        ready: r.summary.ready,
+        missingRequired: [...r.summary.missingRequired, ...r.summary.undetermined],
+        detail: r,
+      };
     }
     case 'pma': {
-      const r = mapToPma({ leaves: leaves as PmaInputLeaf[], submissionType: input.pmaSubmissionType });
-      return { pathway: 'pma', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToPma({ leaves: leaves as PmaInputLeaf[], submissionType: input.pmaSubmissionType, sourceAware: input.sourceAware });
+      return { pathway: 'pma', ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     case 'prestar_q_sub': {
-      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'q_sub', qSubType: input.qSubType });
-      return { pathway: 'prestar_q_sub', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'q_sub', qSubType: input.qSubType, sourceAware: input.sourceAware });
+      return { pathway: 'prestar_q_sub', ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     case 'prestar_ide': {
-      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'ide' });
-      return { pathway: 'prestar_ide', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'ide', sourceAware: input.sourceAware });
+      return { pathway: 'prestar_ide', ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     case 'prestar_513g': {
-      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: '513g' });
-      return { pathway: 'prestar_513g', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: '513g', sourceAware: input.sourceAware });
+      return { pathway: 'prestar_513g', ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     default: {
       const _exhaustive: never = input.pathway;

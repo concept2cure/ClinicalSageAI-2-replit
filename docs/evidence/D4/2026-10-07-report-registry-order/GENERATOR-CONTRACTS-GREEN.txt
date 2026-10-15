@@ -1,0 +1,17 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > is byte-identical to what the generator writes from the in-code report types 5ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > seeds every in-code report type, base, global and prediction, once each, row for row 4ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refreshes every descriptive column on conflict and never touches enabled 2ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > writes each json column as the JSON text drizzle sends for it 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > raises on a missing table and on a short registry 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > a copy with one label changed does not match 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refuses a duplicated type id and a missing column instead of writing a file that fails on deploy 1ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:19:06
+   Duration  836ms (transform 268ms, setup 135ms, import 174ms, tests 19ms, environment 0ms)
+

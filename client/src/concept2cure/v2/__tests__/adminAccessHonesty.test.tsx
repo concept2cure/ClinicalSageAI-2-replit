@@ -203,3 +203,25 @@ describe('names and times, not ids and ISO strings', () => {
     );
   });
 });
+
+/**
+ * QA 2026-10-08 (j9, finding 4): the server now reports an invitee who has not
+ * set a password as `invited`. The KPI counts active members only and says how
+ * many are invited; the Invited filter finds them.
+ */
+describe('invited members are not counted as active', () => {
+  const invitee = { id: 'u-2', userId: 2, self: false, initials: 'PP', name: 'Pat Pending', email: 'pat@c2c.test', role: 'Manager', groups: [], sso: '', mfa: false, lastSeen: '', state: 'invited', programs: [] };
+
+  it('the Members KPI reads "1 active · 1 invited", and the Invited filter lists the invitee', async () => {
+    const p = payload();
+    serve(payload([], { members: [...(p.data.members as object[]), invitee] }));
+    render(<AdminAccess {...props()} />);
+    await screen.findAllByText('JM Smith');
+
+    expect(kpi('Members')).toEqual({ value: '2', meta: '1 active · 1 invited' });
+    fireEvent.click(Array.from(document.querySelectorAll('.seg-btn')).find((b) => b.textContent === 'Invited') as Element);
+    const rows = Array.from(document.querySelectorAll('button.ctable-row')).map((r) => r.textContent || '');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toContain('Pat Pending');
+  });
+});

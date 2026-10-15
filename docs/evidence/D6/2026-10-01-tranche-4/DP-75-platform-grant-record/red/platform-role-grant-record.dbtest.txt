@@ -1,0 +1,82 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T19:04:26.867Z","pid":26457,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:04:26.869Z","pid":26457,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:04:26.869Z","pid":26457,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/platform-role-grant-record.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > runs as a role RLS applies to (not the owner, not BYPASSRLS) 4ms
+stdout | tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > writes the grant and one chained platform row with its reason
+[database] Database connection successful
+
+stdout | tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > writes the grant and one chained platform row with its reason
+[database] Database connection successful { timestamp: '2026-10-01T19:04:27.458Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-01T19:04:27.471Z","pid":26457,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:04:27.473Z","pid":26457,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":30,"time":"2026-10-01T19:04:27.497Z","pid":26457,"hostname":"vm","context":{"userId":3598,"tenantId":0,"resourceId":"3595:support"},"msg":"[audit-service] [AUDIT] data_modify platform_role_grant"}
+ ✓ tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > writes the grant and one chained platform row with its reason 144ms
+{"level":40,"time":"2026-10-01T19:04:27.545Z","pid":26457,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:04:27.547Z","pid":26457,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":30,"time":"2026-10-01T19:04:27.555Z","pid":26457,"hostname":"vm","context":{"userId":3598,"tenantId":0,"resourceId":"3595:platform_admin"},"msg":"[audit-service] [AUDIT] data_modify platform_role_grant"}
+{"level":50,"time":"2026-10-01T19:04:27.566Z","pid":26457,"hostname":"vm","context":{"error":"refused by the DP-75 dbtest","stack":"error: refused by the DP-75 dbtest\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/access-management.ts:140:5"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":40,"time":"2026-10-01T19:04:27.600Z","pid":26457,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:04:27.603Z","pid":26457,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":30,"time":"2026-10-01T19:04:27.613Z","pid":26457,"hostname":"vm","context":{"userId":3598,"tenantId":0,"resourceId":"3595:support"},"msg":"[audit-service] [AUDIT] data_modify platform_role_grant"}
+ × tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > when the record is refused, nothing is granted: 503, no grant row, no record 54ms
+   → {"id":86,"user_id":3595,"role":"platform_admin","granted_by":null,"granted_at":"2026-10-01T19:04:27.552Z","reason":"wo03_26457_mupwl414 should not stand"}: expected 200 to be 503 // Object.is equality
+ × tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > a revocation stands and says its row was written 46ms
+   → expected undefined to deeply equal { persisted: true, chained: true }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > when the record is refused, nothing is granted: 503, no grant row, no record
+AssertionError: {"id":86,"user_id":3595,"role":"platform_admin","granted_by":null,"granted_at":"2026-10-01T19:04:27.552Z","reason":"wo03_26457_mupwl414 should not stand"}: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ tests/db/platform-role-grant-record.dbtest.ts:94:52
+     92|     try {
+     93|       const res = await grant('platform_admin', `${TAG} should not sta…
+     94|       expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                    ^
+     95|       expect(res.body.code).toBe('GRANT_NOT_RECORDED');
+     96|       expect(JSON.stringify(res.body)).not.toContain('refused by the D…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > a revocation stands and says its row was written
+AssertionError: expected undefined to deeply equal { persisted: true, chained: true }
+
+- Expected:
+{
+  "chained": true,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ tests/db/platform-role-grant-record.dbtest.ts:112:33
+    110|       .send({ reason: `${TAG} offboarding` });
+    111|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    112|     expect(res.body.auditTrail).toEqual({ persisted: true, chained: tr…
+       |                                 ^
+    113|     const [row] = await grantRows('support');
+    114|     expect(row.revoked_at).not.toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  19:04:24
+   Duration  3.05s (transform 1.20s, setup 75ms, import 2.12s, tests 575ms, environment 0ms)
+
+exit 1

@@ -1,11 +1,15 @@
 {
-  "$comment": "SEED gold dataset for RAG evaluation. Expand to 30-50 items before treating the numbers as a quality bar. Populate expectedSourceIds with real chunk/atom ids from your corpus (run scripts/verify-rag-corpus.mjs to find them) so the retrieval metrics become meaningful. expectedAnswerContains and referenceAnswer work without corpus ids.",
-  "version": "0.2.0-seed",
+  "$comment": "RAG PQ gold set: 20 items, 18 positive and 2 negative controls, still BELOW the 30-50 the PQ needs, and not PQ-ready. 0.3.0-seed (2026-09-28; authority docs/evidence/D4/2026-09-28-pq-rag-unblock-misdescribed/, E4 and 'What rag needs' item 4; proof at docs/evidence/D4/2026-09-28-pq-rag-fail-closed/data/) changed no item's meaning. It added three things. (1) expectedSourceKeys on every item: document_code@version keys into guidance-corpus-manifest.json, [] on the two negative controls. (2) keysProvisional: true while any keyed manifest entry has an unverified version; verification may re-pin a version and then rewrites the key here in the same commit. (3) openChecks on items whose expected substrings may not appear in the keyed official text; each is resolved from the verified text before the item is scored. expectedSourceIds stays [] on purpose. run-eval compares each retrieved documentId, so expected ids must be DOCUMENT ids (not chunk or atom ids, as this comment said before 0.3.0) of the evaluation organisation's Vault corpus, and those ids differ per database. The resolver from keys to ids belongs to server/eval/rag/run-eval.ts and does not exist yet. It resolves through the vault upsert key (programme, document_code, version), checks content_hash against the manifest sha256 and refuses unverified entries. Until it lands, hit-rate still scores 0 items. Every manifest entry is verified:false (no issuer site was reachable on 2026-09-28), so no key may resolve until its entry is verified. No items were added: a new positive item requires an 'evidence' field ({document_code, section, quote}) quoting the verified official text that answers it, and no official text could be fetched. expectedAnswerContains on new items must be substrings of that quote.",
+  "version": "0.3.0-seed",
+  "corpusManifest": "guidance-corpus-manifest.json",
+  "keyFormat": "document_code@version",
+  "keysProvisional": true,
   "items": [
     {
       "id": "ich-q1a-stability",
       "question": "What long-term stability testing storage conditions does ICH Q1A(R2) recommend for a drug substance intended for storage at room temperature?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-Q1A-R2@Step4"],
       "expectedAnswerContains": ["25", "60%", "long-term"],
       "tags": ["ICH", "stability", "Q1A"]
     },
@@ -13,6 +17,7 @@
       "id": "ich-e6-gcp-essential-docs",
       "question": "Under ICH E6(R2) good clinical practice, who is responsible for maintaining the trial master file?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-E6-R2@Step4"],
       "expectedAnswerContains": ["sponsor", "investigator"],
       "tags": ["ICH", "GCP", "E6"]
     },
@@ -20,6 +25,7 @@
       "id": "fda-ind-content",
       "question": "What are the required contents of an FDA Investigational New Drug (IND) application under 21 CFR 312.23?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["US-21CFR-312.23@2025-04-01"],
       "expectedAnswerContains": ["investigator brochure", "protocol", "chemistry"],
       "tags": ["FDA", "IND", "21CFR312"]
     },
@@ -27,13 +33,16 @@
       "id": "ich-m4-ctd-modules",
       "question": "How many modules make up the Common Technical Document (CTD) and what does Module 1 contain?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-M4-R4@Step4"],
       "expectedAnswerContains": ["five", "regional", "administrative"],
-      "tags": ["ICH", "CTD", "M4"]
+      "tags": ["ICH", "CTD", "M4"],
+      "openChecks": ["expectedAnswerContains 'five': confirm the M4(R4) text states the number of CTD modules in words; an answer that follows a numeral 5 misses the substring."]
     },
     {
       "id": "ich-q3a-impurity-thresholds",
       "question": "What reporting and identification thresholds for impurities does ICH Q3A(R2) define for a new drug substance?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-Q3A-R2@Step4"],
       "expectedAnswerContains": ["reporting threshold", "identification threshold", "qualification"],
       "tags": ["ICH", "impurities", "Q3A"]
     },
@@ -41,20 +50,25 @@
       "id": "ema-paediatric-investigation-plan",
       "question": "When must a Paediatric Investigation Plan (PIP) be submitted to the EMA relative to adult clinical development?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["EU-REG-1901-2006@CONS-2019-01-28"],
       "expectedAnswerContains": ["paediatric", "before"],
-      "tags": ["EMA", "PIP"]
+      "tags": ["EMA", "PIP"],
+      "openChecks": ["expectedAnswerContains 'before': the search index reports Article 16 of Regulation (EC) No 1901/2006 as requiring submission not later than upon completion of the adult human pharmacokinetic studies, wording without that word. Confirm from the verified Article 16 text. EMA's procedural advice (EMA-PROC-ADVICE-PAEDIATRIC-APPLICATIONS, UNPINNED) may contain it: key that document once pinned, read and verified, or change the expected substring (a gold change)."]
     },
     {
       "id": "stats-primary-endpoint-multiplicity",
       "question": "How should multiplicity be controlled when a confirmatory trial has more than one primary endpoint?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-E9@Step4"],
       "expectedAnswerContains": ["family-wise error", "multiplicity"],
-      "tags": ["statistics", "endpoints", "ICH E9"]
+      "tags": ["statistics", "endpoints", "ICH E9"],
+      "openChecks": ["Grounding source undecided. Read ICH E9 (sections 2.2.5 and 5.6, per the search index) for 'family-wise error'. If E9 lacks it, key FDA-GUID-MULTIPLE-ENDPOINTS once read and verified (and re-role it answer-source), or change the expected phrase (a gold change)."]
     },
     {
       "id": "ich-e9-estimands",
       "question": "What are the five attributes of an estimand as defined in ICH E9(R1)?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-E9-R1@Step4"],
       "expectedAnswerContains": ["population", "treatment", "endpoint", "intercurrent", "summary"],
       "tags": ["ICH", "statistics", "E9R1", "estimand"]
     },
@@ -62,13 +76,16 @@
       "id": "fda-bla-vs-nda",
       "question": "What is the difference between a Biologics License Application (BLA) and a New Drug Application (NDA)?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["US-USC-42-262@USCODE-2024", "US-USC-21-355@USCODE-2024"],
       "expectedAnswerContains": ["biologic", "351", "505"],
-      "tags": ["FDA", "BLA", "NDA"]
+      "tags": ["FDA", "BLA", "NDA"],
+      "openChecks": ["expectedAnswerContains '351': the codified 42 U.S.C. 262 refers to itself as this section; per the search index '351' appears only in its source credit (title III, §351). Confirm from the verified US Code text, or key FDA-GUID-DEEMED-TO-BE-A-LICENSE-QA once read and verified, which per the index names section 351 of the PHS Act."]
     },
     {
       "id": "ich-q7-gmp-api",
       "question": "What does ICH Q7 cover and to which stage of manufacturing do its GMP requirements begin to apply?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-Q7@Step4"],
       "expectedAnswerContains": ["active pharmaceutical ingredient", "starting material"],
       "tags": ["ICH", "GMP", "Q7"]
     },
@@ -76,6 +93,7 @@
       "id": "fda-510k-substantial-equivalence",
       "question": "What two things must a 510(k) submission demonstrate to establish substantial equivalence to a predicate device?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["FDA-GUID-510K-SUBSTANTIAL-EQUIVALENCE@final-2014-07-28"],
       "expectedAnswerContains": ["intended use", "technological characteristics"],
       "tags": ["FDA", "510k", "substantial-equivalence"]
     },
@@ -83,6 +101,7 @@
       "id": "eu-mdr-clinical-evaluation",
       "question": "Under the EU MDR, what is a Clinical Evaluation Report and why must it be kept up to date?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["EU-REG-2017-745@CONS-2026-01-01"],
       "expectedAnswerContains": ["clinical evaluation", "post-market", "updated"],
       "tags": ["EU-MDR", "CER"]
     },
@@ -90,6 +109,7 @@
       "id": "ich-q2-method-validation",
       "question": "Which analytical performance characteristics does ICH Q2(R1) address for validation of analytical procedures?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-Q2-R1@Step4"],
       "expectedAnswerContains": ["accuracy", "precision", "specificity", "linearity"],
       "tags": ["ICH", "analytical", "Q2"]
     },
@@ -97,6 +117,7 @@
       "id": "fda-orphan-drug-designation",
       "question": "What US patient prevalence qualifies a drug for FDA orphan drug designation?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["US-21CFR-316@2025-04-01"],
       "expectedAnswerContains": ["200,000"],
       "tags": ["FDA", "orphan"]
     },
@@ -104,13 +125,16 @@
       "id": "ich-e2a-serious-adverse-event",
       "question": "Under ICH E2A, what outcomes make an adverse event 'serious'?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-E2A@Step4"],
       "expectedAnswerContains": ["death", "life-threatening", "hospitalization"],
-      "tags": ["ICH", "safety", "E2A"]
+      "tags": ["ICH", "safety", "E2A"],
+      "openChecks": ["expectedAnswerContains 'hospitalization': confirm the E2A text's spelling; if the text spells it hospitalisation, a grounded answer that follows the text misses the substring."]
     },
     {
       "id": "ich-e6-informed-consent",
       "question": "What are key required elements of informed consent under ICH E6(R2) good clinical practice?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-E6-R2@Step4"],
       "expectedAnswerContains": ["voluntary", "risks", "purpose"],
       "tags": ["ICH", "GCP", "consent"]
     },
@@ -118,6 +142,7 @@
       "id": "fda-breakthrough-therapy",
       "question": "What is the purpose of FDA Breakthrough Therapy designation?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["FDA-GUID-EXPEDITED-PROGRAMS-SERIOUS-CONDITIONS@final-2014-05"],
       "expectedAnswerContains": ["expedite", "serious"],
       "tags": ["FDA", "expedited"]
     },
@@ -125,6 +150,7 @@
       "id": "ich-q8-quality-by-design",
       "question": "What does Quality by Design (QbD) mean in ICH Q8 and what is a design space?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": ["ICH-Q8-R2@Step4"],
       "expectedAnswerContains": ["critical quality attributes", "design space"],
       "tags": ["ICH", "QbD", "Q8"]
     },
@@ -132,6 +158,7 @@
       "id": "negative-control-out-of-scope",
       "question": "What is the airspeed velocity of an unladen swallow?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": [],
       "expectedAnswerContains": ["could not find"],
       "tags": ["negative-control", "out-of-scope"]
     },
@@ -139,6 +166,7 @@
       "id": "negative-control-no-corpus-fact",
       "question": "What were the exact enrollment numbers for the sponsor's 2027 phase 3 oncology trial?",
       "expectedSourceIds": [],
+      "expectedSourceKeys": [],
       "expectedAnswerContains": ["could not find"],
       "tags": ["negative-control", "ungrounded"]
     }

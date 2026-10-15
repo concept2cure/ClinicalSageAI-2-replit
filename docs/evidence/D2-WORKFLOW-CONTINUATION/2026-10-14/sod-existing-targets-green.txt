@@ -1,0 +1,55 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a statement timeout
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: canceling statement due to statement timeout
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a dropped connection
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: Connection terminated unexpectedly
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an RLS / permission refusal
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: permission denied
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an undefined column
+[governance/SoD] authorship lookup failed for "ectd-sequence:42"; refusing to sign: column does not exist
+
+stderr | server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > names the target and says nothing was signed
+[governance/SoD] authorship lookup failed for "document:doc-1"; refusing to sign: timeout
+
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > an authorship signature is not a separation-of-duties case 3ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning review requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning approval requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning responsibility requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning release requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning undefined requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > meaning  requires independence (undeclared fails closed) 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > lock always requires independence 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > scope by 21 CFR 11.50(a)(3) meaning > the author signing AS AUTHOR is allowed, without even querying 2ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a section author is caught even when the document owner is someone else (the scaffolder) 2ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > whoever accepted a drafted section is an author of record 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > template scaffolds are excluded from the version-ledger query 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > every source is org-scoped 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a non-author passes, and the result says which sources were checked 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > eCTD sequence authorship is its creator, org-scoped 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > blocker authorship uses the real org column (org_id, not organization_id) 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > a modelled record with no recorded author → AuthorUnresolved (was: log and allow) 2ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of submission:sub-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of specification:spec-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of batch:b-1 (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > an approval of haq:x (authorship not modelled) is refused, not waved through 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > an author who cannot be determined refuses the signature (409), never allows it > but an authorship signature on such a record is allowed 2ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a statement timeout 2ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > a dropped connection 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an RLS / permission refusal 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > an undefined column 1ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > a failed lookup refuses the signature (503) — the check did not run > names the target and says nothing was signed 2ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > the sequence creator: author 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a colleague: independent 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > no recorded creator: unresolved — nobody can be shown independent 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a record type with no authorship modelled: unresolved 0ms
+ ✓ server/services/governance/__tests__/separation-of-duties.test.ts > signerIndependenceOf — the advance answer is the check's own answer > a failed lookup: unverified — never independent 0ms
+
+ Test Files  1 passed (1)
+      Tests  32 passed (32)
+   Start at  19:39:24
+   Duration  475ms (transform 114ms, setup 88ms, import 52ms, tests 24ms, environment 0ms)

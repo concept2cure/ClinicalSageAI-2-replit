@@ -1,0 +1,12 @@
+# npx eslint <file> (warnings/errors), HEAD copy linted beside the file vs the working tree. No file has more than at HEAD.
+server/routes/ana-ri/__tests__/stream-project-anchor.test.ts                    HEAD new file    now 0w/0e
+server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts                   HEAD 0w/0e       now 0w/0e
+server/routes/ana-ri/stream.ts                                                  HEAD 23w/0e      now 23w/0e
+server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts     HEAD new file    now 0w/0e
+server/services/ana-ri/__tests__/prefetch-program-project.test.ts               HEAD new file    now 0w/0e
+server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts          HEAD new file    now 0w/0e
+server/services/ana-ri/chat-context-builder.ts                                  HEAD 4w/0e       now 4w/0e
+server/services/ana-ri/context-enrichment.ts                                    HEAD 6w/0e       now 6w/0e
+server/services/ana-ri/relational-profile-service.ts                            HEAD 3w/0e       now 3w/0e
+server/services/c2c/__tests__/project-ref-anchor-read.test.ts                   HEAD new file    now 0w/0e
+server/services/c2c/program-project-anchor.ts                                   HEAD 1w/0e       now 1w/0e

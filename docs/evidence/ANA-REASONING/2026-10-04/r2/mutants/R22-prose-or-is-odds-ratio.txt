@@ -1,0 +1,16 @@
+Mutant R22-prose-or-is-odds-ratio: "Phase 2 or 3" states an odds ratio of 3 (HS-7)
+
+--- server/services/ana/answer-check-figures.ts
+- 'g',
+    ),
+    build: (m) => one(m[1] === 'HR' ? 'hr' : m[1] === 'OR' ? 'or' : 'rr', m, [m[2]]),
++ 'gi',
+    ),
+    build: (m) => one(m[1] === 'HR' ? 'hr' : m[1] === 'OR' ? 'or' : 'rr', m, [m[2]]),
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > figures the check reads (F8) > "or" in prose is not an odds ratio (HS-7) 10ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

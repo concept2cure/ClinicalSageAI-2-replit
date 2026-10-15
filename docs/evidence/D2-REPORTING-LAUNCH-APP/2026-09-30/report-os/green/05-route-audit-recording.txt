@@ -1,0 +1,258 @@
+$ NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/routes/__tests__/report-os-audit-recording.test.ts server/routes/__tests__/report-os-portfolio-empty.test.ts server/routes/__tests__/report-os-insights.contract.test.ts server/services/report-os/__tests__ tests/ops/report-os-foundation.test.mjs
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > is byte-identical to what the generator writes from the in-code report types 5ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > seeds every in-code report type, base, global and prediction, once each 4ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refreshes every descriptive column on conflict and never touches enabled 2ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > writes each json column as the JSON text drizzle sends for it 6ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > raises on a missing table and on a short registry 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > a copy with one label changed does not match 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refuses a duplicated type id and a missing column instead of writing a file that fails on deploy 1ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > defines at least ~25 global report types 14ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every entry has all required ReportTypeDefinition fields 14ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every entry has non-empty allowedScopes and allowedPersonas 12ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every allowedScope is a valid ReportScope 2ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > all typeIds are unique within the global seed 0ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > no typeId collides with the existing REPORT_TYPE_SEED 1ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every governanceRequirements has part11 === true 1ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > region-specific families include a region key in governanceRequirements 1ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every truthfulnessRules allows partial where appropriate and is an object 2ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > every entry includes the ana-ri module 2ms
+ ✓ server/services/report-os/__tests__/taxonomy-global.test.ts > GLOBAL_REPORT_TYPE_SEED > spot-checks that specific expected typeIds exist 1ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > passes a clean final report with no reasons 2ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > leaves a draft request untouched regardless of rules 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > forbidFinalIfMissingCritical > downgrades final to partial when critical blockers exist and partial is allowed 1ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > forbidFinalIfMissingCritical > downgrades final to draft when critical blockers exist and partial is not allowed 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > forbidFinalIfMissingCritical > does not downgrade when there are no critical blockers 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireConfidence > downgrades final to partial when confidence is below the threshold 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireConfidence > keeps final when confidence is exactly at the threshold 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireConfidence > downgrades to draft when confidence is low and partial is not allowed 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireExplicitGaps > downgrades final to partial when the gaps section is missing 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireExplicitGaps > keeps final when the gaps section is present 2ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireBlockers > downgrades final to partial when blockers are present 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > requireBlockers > does not downgrade when there are no blockers 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > partial not allowed > downgrades a requested partial to draft when allowPartial is not true 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > partial not allowed > keeps a requested partial when allowPartial is true 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > combinations > aggregates multiple reasons and ends at the most restrictive status 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > combinations > applies confidence then gaps then blockers when partial is allowed 0ms
+ ✓ server/services/report-os/__tests__/truthfulness.test.ts > evaluateTruthfulness > combinations > ignores unknown extra keys in the rules object 0ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T00:25:07.024Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts
+{
+  "timestamp": "2026-10-01T00:25:07.052Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > computeLineageConfidence > a richly-linked document clears the finalize gate (>= 70) 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > computeLineageConfidence > a thin document (iterations only) stays a viewable partial (< 70) 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > computeLineageConfidence > is clamped to [30, 95] 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > produces a document-scoped RenderedReport for the evidence-trace type 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > includes the expected sections 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > emits AI-disclosed narrative for AnA reasoning 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > carries provenance atoms on the decision and data-lineage tables 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > governed seal integration (the whole point) > the EXISTING seal captures real provenance atoms — not the empty set 1ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written
+{
+  "timestamp": "2026-10-01T00:25:07.082Z",
+  "level": "error",
+  "message": "[report-os] report run event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_created",
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers a failed read with 500, never with the empty answer
+{
+  "timestamp": "2026-10-01T00:25:07.089Z",
+  "level": "error",
+  "message": "[report-os] loading org failed",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > answers 503 saying the report was sealed but not recorded when the row cannot be written
+{
+  "timestamp": "2026-10-01T00:25:07.093Z",
+  "level": "error",
+  "message": "[report-os] report run event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_finalized",
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers 200 with data: null when the organisation has no programs 20ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > still answers the summary when there are programs 5ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > still refuses an organisation the plan gate refuses 4ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers a failed read with 500, never with the empty answer 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > writes report_os.run_created for the run, in its own transaction, and answers 201 30ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written 7ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > writes report_os.run_finalized carrying the seal hash, and answers 200 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > answers 503 saying the report was sealed but not recorded when the row cannot be written 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > records nothing when the truthfulness gate refuses the finalize 4ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-01T00:25:07.164Z",
+  "level": "error",
+  "message": "[report-os] report run event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent, then sends the PDF 56ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 14ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /taxonomy/seed and the registry migration write the same rows > upserts exactly the generator rows, in the generator order 5ms
+stdout | server/services/report-os/__tests__/segment.test.ts
+{
+  "timestamp": "2026-10-01T00:25:08.352Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:25:08.353Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/report-os/__tests__/segment.test.ts
+{
+  "timestamp": "2026-10-01T00:25:08.354Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/report-os/__tests__/entitlement-map.test.ts
+{
+  "timestamp": "2026-10-01T00:25:08.364Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:25:08.366Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/report-os/__tests__/entitlement-map.test.ts
+{
+  "timestamp": "2026-10-01T00:25:08.366Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/report-os/__tests__/entitlement-map.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/report-os/__tests__/entitlement-map.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/report-os/__tests__/entitlement-map.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/report-os/__tests__/segment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/report-os/__tests__/segment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/report-os/__tests__/segment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps prediction forecast types to prediction_forecast_report 2ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps CRL/RTF pre-mortem types to crl_rtf_premortem 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > maps portfolio/board-pack types to portfolio_rollup 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > defaults every governed report family to report_families 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > reportTypeToFeatureKey > assigns a feature key to every seeded report type (no orphans) 2ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > free tier is locked out of every paid report family 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > standard unlocks report_families but not prediction/portfolio 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > professional unlocks prediction + premortem but not enterprise portfolio 0ms
+ ✓ server/services/report-os/__tests__/entitlement-map.test.ts > decideReportEntitlement (tier gating) > enterprise unlocks everything, including portfolio_rollup 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > productTypesToSegments > maps each product type to its segment 2ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > productTypesToSegments > returns the distinct union for multi-product orgs, in canonical order 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > productTypesToSegments > is case/whitespace tolerant and drops unknown types 0ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > serviceSegmentFor > maps CRO/CDMO client types to the cro service segment 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > serviceSegmentFor > does NOT treat product-owning client types (incl. the pharma default) as service 0ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > CRO segment anchoring (real taxonomy) > a CRO org sees the eTMF completeness pack; a program-less non-service org does not 0ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > always keeps universal (empty allowedClientSegments) types 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > keeps a typed row only when its segments intersect the org segments 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > shows a multi-segment type to any matching segment 1ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > intersects on persona when a persona filter is given 0ms
+ ✓ server/services/report-os/__tests__/segment.test.ts > filterTypesForSegment > anchors the real taxonomy: a pharma org excludes the device-only 510(k) matrix 0ms
+stdout | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-01T00:25:08.671Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:25:08.672Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-01T00:25:08.673Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > report-os-insights router contract > exports an Express router (a function) 2ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > defines exactly three prediction report types 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > has unique typeIds in the prediction family 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > uses only valid allowedScopes 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > requires Part 11 governance on every prediction type 0ms
+
+ Test Files  9 passed (9)
+      Tests  80 passed (80)
+   Start at  00:25:04
+   Duration  4.33s (transform 3.51s, setup 335ms, import 9.52s, tests 307ms, environment 1ms)
+
+exit=0

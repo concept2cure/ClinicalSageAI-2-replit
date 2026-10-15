@@ -26,8 +26,11 @@ import {
 } from '../services/ha-interactions/ha-service';
 import { evaluateMeetingReadiness, deriveCommitmentStatus, summarizeCommitmentPortfolio } from '../services/ha-interactions/ha-logic';
 import { recordHaInteractionCreated, recordHaCommitmentCreated, recordHaCommitmentFulfilled } from '../services/ha-metrics';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('ha-interactions');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -48,7 +51,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the health-authority interaction request', err);
 }
 function today(): string {
   return new Date().toISOString().slice(0, 10);

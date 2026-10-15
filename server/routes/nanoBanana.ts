@@ -20,11 +20,27 @@ import {
   nanoBananaCache,
   getUsageStats,
 } from '../middleware/nanoBananaGuard';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('nano-banana');
 
 // Apply rate limiting to all routes, caching to generation routes
 router.use(nanoBananaRateLimit);
+
+/**
+ * The model's reply held no image (the service's NO_IMAGE_RETURNED). Until
+ * 2026-10-15 these routes answered 200 `{ success: true, images: [] }`, and
+ * /chat "Here's the image I generated". Matched by code, not class identity.
+ */
+function noImageReturned(res: Response, err: unknown): Response | null {
+  if ((err as { code?: unknown } | null)?.code !== 'NO_IMAGE_RETURNED') return null;
+  return res.status(502).json({
+    error: 'NO_IMAGE_RETURNED',
+    message: 'The image model returned no image, so nothing was generated.',
+  });
+}
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 
@@ -62,12 +78,8 @@ router.post('/generate', nanoBananaCache, async (req: Request, res: Response) =>
       success: true,
       ...result,
     });
-  } catch (err: any) {
-    console.error('[nano-banana] generate error:', err.message);
-    return res.status(500).json({
-      success: false,
-      error: err.message || 'Image generation failed',
-    });
+  } catch (err) {
+    return noImageReturned(res, err) ?? serverError(res, log, 'generating the image', err);
   }
 });
 
@@ -96,12 +108,8 @@ router.post('/edit', async (req: Request, res: Response) => {
       success: true,
       ...result,
     });
-  } catch (err: any) {
-    console.error('[nano-banana] edit error:', err.message);
-    return res.status(500).json({
-      success: false,
-      error: err.message || 'Image editing failed',
-    });
+  } catch (err) {
+    return noImageReturned(res, err) ?? serverError(res, log, 'editing the image', err);
   }
 });
 
@@ -132,12 +140,8 @@ router.post('/presentation', async (req: Request, res: Response) => {
     }
 
     return res.send(result.pptxBuffer);
-  } catch (err: any) {
-    console.error('[nano-banana] presentation error:', err.message);
-    return res.status(500).json({
-      success: false,
-      error: err.message || 'Presentation generation failed',
-    });
+  } catch (err) {
+    return serverError(res, log, 'generating the presentation', err);
   }
 });
 
@@ -169,12 +173,8 @@ router.post('/chat', nanoBananaCache, async (req: Request, res: Response) => {
     }
 
     return res.json(response);
-  } catch (err: any) {
-    console.error('[nano-banana] chat error:', err.message);
-    return res.status(500).json({
-      success: false,
-      error: err.message || 'Nano Banana chat failed',
-    });
+  } catch (err) {
+    return noImageReturned(res, err) ?? serverError(res, log, 'answering the Nano Banana chat turn', err);
   }
 });
 

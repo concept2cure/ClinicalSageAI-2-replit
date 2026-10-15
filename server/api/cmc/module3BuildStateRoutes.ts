@@ -10,18 +10,29 @@
  *
  * This is the single API the dossier tree, editor, and AnA use to understand
  * Module 3 build readiness. No separate dashboard needed.
+ *
+ * GET /section-labels and GET /uploaded-sources/:projectId were deleted on
+ * 2026-10-05 with no caller in client/src or server (decision P-28;
+ * docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/; kept gone by
+ * server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts). Each section
+ * GET /build-state/:projectId returns carries its sectionLabel and its
+ * uploadedSourceCount; the Vault documents evidencing a record are
+ * /source-evidence/:projectId (sourceEvidenceRoutes.ts).
  */
 
 import express from 'express';
-import { getPool } from '../../db';
-import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 import { deriveBuildState, getModule3BuildStatus, getSectionLabels } from '../../services/module3-convergence-service';
 import { MODULE3_SECTION_RULES } from '../../services/module3Composer';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
+import { guardModule3Project, module3OrgId } from './module3-project-guard';
 
 const router = express.Router();
 const log = createScopedLogger('module3-build-state');
+/* Every route here that names a project reads or builds only in a project of
+   the caller's organization (PF-15); another organization's project is 404,
+   not an empty build state. */
+guardModule3Project(router, log);
 
 // ── Canonical section constants — imported, never copied ──────────────────────
 //
@@ -50,14 +61,6 @@ export type { Module3BuildState } from '../../services/module3-convergence-servi
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getOrgId(req: express.Request): number {
-  const orgId = parseInt(
-    String((req as any).tenantId || (req as any).tenantContext?.organizationId || 0),
-    10
-  );
-  if (!orgId || Number.isNaN(orgId)) throw new Error('Organization context required');
-  return orgId;
-}
 
 // ── GET /build-state/:projectId ───────────────────────────────────────────────
 // Returns the unified Module 3 build state for all 15 subsections.
@@ -65,7 +68,7 @@ function getOrgId(req: express.Request): number {
 
 router.get('/build-state/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId } = req.params;
 
     /* ONE reader. getModule3BuildStatus resolves the artifact spine, reads the
@@ -156,65 +159,6 @@ router.get('/build-state/:projectId', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return serverError(res, log, 'computing the build state', error);
-  }
-});
-
-// ── GET /section-labels ───────────────────────────────────────────────────────
-// Returns the canonical section label map. Used by frontend for display.
-
-router.get('/section-labels', (_req, res) => {
-  return res.json({ success: true, data: SECTION_LABELS });
-});
-
-// ── GET /uploaded-sources/:projectId ──────────────────────────────────────────
-// Returns all uploaded source documents classified for Module 3 feed.
-
-router.get('/uploaded-sources/:projectId', async (req, res) => {
-  try {
-    const orgId = getOrgId(req);
-    const { projectId } = req.params;
-    const pool = getPool();
-
-    // Same spine translation as build-state: the registry keys integer
-    // projects.id; the raw TEXT id aborts the query for uuid programs.
-    const spine = await resolveCmcArtifactProject(orgId, projectId);
-    if (spine.state !== 'linked') {
-      return res.json({
-        success: true,
-        data: [],
-        artifactRegistry: { state: spine.state, detail: spine.detail },
-      });
-    }
-
-    const { rows } = await pool.query(
-      `SELECT id, artifact_id as "artifactId", title, ctd_section as "ctdSection",
-              status, metadata, created_at as "createdAt"
-       FROM concept2cure_artifacts
-       WHERE organization_id = $1 AND project_id = $2
-             AND category = 'source'
-             AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'
-       ORDER BY created_at DESC`,
-      [orgId, spine.artifactProjectId]
-    );
-
-    return res.json({
-      success: true,
-      artifactRegistry: { state: 'linked' },
-      data: rows.map((r: any) => ({
-        id: r.id,
-        artifactId: r.artifactId,
-        title: r.title,
-        ctdSection: r.ctdSection,
-        status: r.status,
-        classification: r.metadata?.dossierClassification || null,
-        createdAt: r.createdAt,
-      })),
-    });
-  } catch (error) {
-    if (String((error as Error)?.message || '').includes('Organization context required')) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    return serverError(res, log, 'loading uploaded sources', error);
   }
 });
 

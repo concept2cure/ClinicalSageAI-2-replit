@@ -1,0 +1,102 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports no_provider — the incident — when the gateway has zero providers 2ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports ready and names the providers when at least one is enabled 137ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports deterministic — never ready — when the fixture mode is opted into 2ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports error rather than throwing when the gateway cannot be constructed 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports error when getGateway returns nothing 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > defaults to unknown, and unknown does not serve 1ms
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+{
+  "timestamp": "2026-10-01T14:59:41.459Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:59:41.460Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+{
+  "timestamp": "2026-10-01T14:59:41.461Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts
+{
+  "timestamp": "2026-10-01T14:59:41.646Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > is NOT serving in production when drafting runs only on Vertex, a lane an organization must elect
+{
+  "timestamp": "2026-10-01T14:59:41.726Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane
+{
+  "timestamp": "2026-10-01T14:59:41.731Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture 3023ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving when an Anthropic key is present, and names the drafting model 7ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving with OpenAI and Anthropic together 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts 6ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > still reports no_provider — not no_high_risk_model — when nothing is configured 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > fails closed when the gateway exposes no model registry to check 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > /readyz answers 503 with ana down on an OpenAI-only deployment 32ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is NOT serving in production when embeddings run on OpenAI, the default lane 6ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > an OpenAI key does not make the OpenAI lane serve an organization that has not elected it 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is serving in production with the self-hosted embedding lane, and says which lane embeds 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > is NOT serving when the self-hosted lane names no address 4ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > outside production nothing needs an election, so the default embedding lane does not change the verdict 4ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54) > /readyz answers 503 with ana down when the only embedding lane needs an election 9ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > is NOT serving in production when drafting runs only on Vertex, a lane an organization must elect 6ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane 8ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > prints to console.error when AnA cannot answer 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > warns — not errors — that responses are fixtures in deterministic mode 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says drafting — not chat — is what failed when no model is approved for it 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says who is refused when a lane serves elected organizations only (R4) 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says search is what fails when the embedding lane cannot be built (R4) 0ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > stays quiet on the happy path 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when AnA has no provider, with every other dependency green 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when AnA readiness was never evaluated 6ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when the gateway failed to construct 14ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is ready when AnA has a live provider 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > serves in deterministic mode but says so on the success path 4ms
+
+ Test Files  1 passed (1)
+      Tests  32 passed (32)
+   Start at  14:59:36
+   Duration  4.87s (transform 2.53s, setup 209ms, import 779ms, tests 3.32s, environment 0ms)
+

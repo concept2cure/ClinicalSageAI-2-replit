@@ -24,7 +24,7 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
     properties: {
       doc_number: { type: 'string' },
       title:      { type: 'string' },
-      doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] },
+      doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'] },
       category:   { type: 'string', description: "e.g. design / production / capa / training." },
       version:    { type: 'string' },
       reason:     STATED_REASON_INPUT,
@@ -50,13 +50,11 @@ export const APPROVE_QMS_DOCUMENT: AnaTool = {
 export const ACK_TRAINING: AnaTool = {
   name: 'ack_training',
   description:
-    "Record that a user acknowledged training on a specific QMS document version. Captures method (electronic_signature / attestation / trainer_verified) and optional quiz score. Expires in 365 days for periodic refresh.",
+    "AnA cannot acknowledge training for anyone. A read-and-understood acknowledgement is the trainee's own attestation. Direct the person to Quality, open the controlled document, read its released revision and choose Acknowledge this revision. This tool writes nothing and cannot record team training, quiz results or an electronic signature.",
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
-      method:      { type: 'string', enum: ['electronic_signature', 'attestation', 'trainer_verified'] },
-      quiz_score:  { type: 'number', minimum: 0, maximum: 100 },
     },
     required: ['document_id'],
   },
@@ -70,7 +68,7 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
-      reason:      { type: 'string', description: 'Reason for change (required).' },
+      reason:      STATED_REASON_INPUT,
     },
     required: ['document_id', 'reason'],
   },
@@ -139,7 +137,7 @@ export const QMS_CHANGE_CREATE: AnaTool = {
       change_type:                { type: 'string', enum: ['document', 'process', 'equipment', 'material', 'supplier', 'method', 'facility', 'computer_system', 'specification', 'other'] },
       classification:             { type: 'string', enum: ['minor', 'major', 'critical'] },
       risk_level:                 { type: 'string', enum: ['low', 'medium', 'high'] },
-      reason:                     { type: 'string', description: 'Reason for the change (captured for 21 CFR Part 11).' },
+      reason:                     STATED_REASON_INPUT,
       impact_assessment:          { type: 'string' },
       implementation_plan:        { type: 'string' },
       target_implementation_date: { type: 'string', description: 'ISO date (YYYY-MM-DD).' },
@@ -158,7 +156,7 @@ export const QMS_CHANGE_TRANSITION: AnaTool = {
     properties: {
       change_id:            { type: 'number' },
       to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
-      reason:               { type: 'string', description: 'Reason-for-change for this governed transition.' },
+      reason:               STATED_REASON_INPUT,
       effectiveness_review: { type: 'string', description: 'Effectiveness-check outcome — provide when moving to closed.' },
     },
     required: ['change_id', 'to'],

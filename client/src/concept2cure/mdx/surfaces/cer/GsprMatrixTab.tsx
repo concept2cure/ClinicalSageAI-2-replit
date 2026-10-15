@@ -2,16 +2,14 @@
  * GsprMatrixTab — the Annex I GSPR conformity matrix, backed by the real
  * /api/gspr backend (catalog + per-program mappings + deterministic coverage
  * report). A clause with no applicability decision renders as `unmapped` —
- * real information, not a fabricated status. The kit's 23-row GSPR fixture
- * renders ONLY under the explicit sample-mode guard and only when the live
- * catalog is unavailable or empty.
+ * real information, not a fabricated status. (The kit's 23-row example
+ * matrix, CER_GSPR, was removed with sample mode on 2026-10-14.)
  */
 
 import * as React from 'react';
 import { I } from '../../icons';
 import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { AskAnaChip } from '../AskAnaChip';
-import { CER_GSPR } from '../../data/cer';
 import {
   groupGsprRowsByChapter,
   useCerGspr,
@@ -19,8 +17,6 @@ import {
   type GsprRegulation,
   type GsprRowStatus,
 } from '../../hooks/useCerGspr';
-import { SampleDataBanner } from '../../components/SampleDataBanner';
-import { useSampleMode } from '../../components/DataGate';
 
 export interface GsprMatrixTabProps {
   programId: string | null;
@@ -63,16 +59,15 @@ function rowMatchesFilter(row: GsprMatrixRow, filter: Filter): boolean {
 export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMatrixTabProps) {
   const [regulation, setRegulation] = React.useState<GsprRegulation>(defaultRegulation);
   const [filter, setFilter] = React.useState<Filter>('all');
-  const sampleOn = useSampleMode();
   const { rows, coverage, loading, error, refresh } = useCerGspr(programId, regulation);
 
   const liveAvailable = rows !== null && rows.length > 0;
-  const usingSample = !liveAvailable && sampleOn;
 
   const summary = loading
     ? 'Loading the GSPR catalog and this program’s mappings…'
     : liveAvailable && coverage
-      ? `${coverage.totalApplicable} in-scope requirements · ${coverage.coveragePercent}% decided · ` +
+      ? `${coverage.totalApplicable} ${coverage.scopeUndetermined > 0 ? 'requirements in scope or of undetermined scope' : 'in-scope requirements'} · ` +
+        `${coverage.coveragePercent}% decided · ` +
         `${coverage.unmapped} unmapped · ${coverage.nonConformantCount} non-conformant · ` +
         (coverage.passesGate ? 'gate passes' : 'gate blocked')
       : liveAvailable
@@ -121,7 +116,11 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
           <div className="metric-card" data-tone={coverage.unmapped === 0 ? 'ok' : 'err'}>
             <div className="metric-label">Unmapped</div>
             <div className="metric-val">{coverage.unmapped}</div>
-            <div className="metric-meta">No applicability decision yet — each one blocks the gate</div>
+            <div className="metric-meta">
+              No applicability decision yet — each one blocks the gate
+              {coverage.scopeUndetermined > 0 &&
+                ` · ${coverage.scopeUndetermined} of undetermined scope (not recorded on the program: ${coverage.undeterminedFacts.join(', ')})`}
+            </div>
           </div>
           <div className="metric-card">
             <div className="metric-label">Applies</div>
@@ -146,7 +145,6 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
         </div>
       )}
 
-      <SampleDataBanner show={usingSample} loading={loading} label="GSPR requirements" />
 
       {liveAvailable && (
         <div className="panel">
@@ -255,59 +253,7 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
         </div>
       )}
 
-      {usingSample && (
-        <div className="panel">
-          <div className="panel-hdr">
-            <div>
-              <div className="t">Sample requirement-by-requirement status</div>
-              {/* The count is the REGULATION's, not a constant. This read
-                  "23 requirements" whichever regulation was selected — MDR's
-                  number, shown above an IVDR checklist. */}
-              <div className="s">
-                Canonical example content · {regulation === 'IVDR' ? 20 : 23} requirements
-              </div>
-            </div>
-          </div>
-          <div className="tbl-scroll">
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th style={{ width: '7%' }}>§</th>
-                  <th style={{ width: '40%' }}>Requirement</th>
-                  <th style={{ width: '13%' }}>Status</th>
-                  <th style={{ width: '22%' }}>Evidence</th>
-                  <th>Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CER_GSPR.map((r) => (
-                  <tr key={r.id}>
-                    <td>
-                      <span className="k-num">{r.id}</span>
-                    </td>
-                    <td>
-                      <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
-                        {r.title}
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-pill ${r.status === 'conform' ? 'complete' : r.status === 'partial' ? 'review' : r.status === 'gap' ? 'blocked' : 'na'}`}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: 11, color: 'var(--text-300)' }}>{r.evidence}</td>
-                    <td style={{ fontSize: 11, color: 'var(--text-300)', lineHeight: 1.5 }}>
-                      {r.note || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {!liveAvailable && !usingSample && !loading && (
+      {!liveAvailable && !loading && (
         <div className="panel">
           {/* A FAILURE AND AN EMPTY CATALOG WERE ONE POLITE PANEL.
               `role="status"` on a backend failure means a screen reader is told

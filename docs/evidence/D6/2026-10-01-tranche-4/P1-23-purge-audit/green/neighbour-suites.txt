@@ -1,0 +1,339 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > moves an active organization to pending_deletion and starts the clock
+{
+  "timestamp": "2026-10-01T06:45:59.726Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding requested",
+  "context": {
+    "organizationId": 42,
+    "requestedByUserId": 7,
+    "retentionDays": 30,
+    "purgeEligibleAt": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > clamps a short retention request up to the minimum
+{
+  "timestamp": "2026-10-01T06:45:59.733Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding requested",
+  "context": {
+    "organizationId": 42,
+    "requestedByUserId": 7,
+    "retentionDays": 7,
+    "purgeEligibleAt": null
+  }
+}
+
+stdout | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > is idempotent — a second request does NOT reset or shorten the window
+{
+  "timestamp": "2026-10-01T06:45:59.734Z",
+  "level": "info",
+  "message": "[tenant-offboarding] Deletion re-requested for an organization already pending deletion; no change",
+  "context": {
+    "organizationId": 42,
+    "purgeEligibleAt": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > returns a pending_deletion organization to active and clears the evidence
+{
+  "timestamp": "2026-10-01T06:45:59.739Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding cancelled",
+  "context": {
+    "organizationId": 42,
+    "cancelledByUserId": 7
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason
+{
+  "timestamp": "2026-10-01T06:45:59.753Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": "regulator-ordered immediate destruction",
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed
+{
+  "timestamp": "2026-10-01T06:45:59.757Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence
+{
+  "timestamp": "2026-10-01T06:45:59.759Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed
+{
+  "timestamp": "2026-10-01T06:45:59.762Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction
+{
+  "timestamp": "2026-10-01T06:45:59.765Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 0,
+      "documents": 0
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > moves an active organization to pending_deletion and starts the clock 8ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > clamps a short retention request up to the minimum 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > is idempotent — a second request does NOT reset or shorten the window 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an unknown organization 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an already-purged organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > returns a pending_deletion organization to active and clears the evidence 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses when the organization is not scheduled for deletion 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses to restore a purged organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses without a final export digest 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > VERIFIES the digest — a fabricated string does not open the gate 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > scopes the receipt lookup to THIS organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > checks the digest BEFORE reading the organization — cheapest refusal first 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses while the retention window is still open 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses to purge a tenant that was never scheduled for deletion 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason 7ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed 3ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence 3ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction 3ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > rejects an unsafe table name rather than interpolating it 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > ships a frozen child-table list that excludes the audit trail and billing 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > names the vault tables where they actually live 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes chunks before the documents their scoping predicate reads 0ms
+stdout | server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:46:00.934Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:46:00.949Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:46:00.949Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+{
+  "timestamp": "2026-10-01T06:46:01.728Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:46:01.730Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+{
+  "timestamp": "2026-10-01T06:46:01.730Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+{
+  "timestamp": "2026-10-01T06:46:06.175Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:46:06.182Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+{
+  "timestamp": "2026-10-01T06:46:06.182Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+{
+  "timestamp": "2026-10-01T06:46:06.590Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users) 5219ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a platform admin gets the full list (no membership join) 9ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > an ORG admin does NOT get the cross-tenant list — only their own orgs 13ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a non-admin cannot read another tenant directory (no query runs) 9ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a non-admin can read their own tenant directory 21ms
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot create a tenant
+{
+  "timestamp": "2026-10-01T06:46:06.723Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot delete a tenant
+{
+  "timestamp": "2026-10-01T06:46:06.735Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants/5"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a refused creation provisions nothing
+{
+  "timestamp": "2026-10-01T06:46:06.798Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants"
+  }
+}
+
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a platform admin can read any tenant directory 15ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot create a tenant 21ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot delete a tenant 23ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > the legacy organisation API-key mint is gone (its keys were Math.random and nothing read them) 34ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a platform admin creating a tenant provisions the launch catalog for THAT tenant 11ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a refused creation provisions nothing 12ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenants — auth > 401s without a token 13ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases every vault document the tenant owns, including one on a soft-deleted programme 13ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases the chunks of those documents too 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > never reaches another tenant's documents 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > the old organization_id-only predicate leaves the bytes behind (why this changed) 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > scopes chunks through the same document predicate, not a weaker one 3ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > keeps the predicate map frozen and free of request-derived input 3ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > for every tenant: removes the rows the predicate selects, returns one row per version, and spares the rest 18ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > refuses an organization that is not pending deletion, and deletes nothing 8ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > exports the document on a soft-deleted programme that the purge will erase 25ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > for every tenant: the purge set is a subset of the export set — exactly equal here 101ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > never exports another tenant's document 26ms
+stderr | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+{
+  "timestamp": "2026-10-01T06:46:08.661Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > discovers a substantial share of the schema, not a handful of tables 2ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > EVERY table the purge destroys is covered by the export 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > no purge target is on the export exclusion list 0ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > excludes secrets and cross-tenant infrastructure from the return 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > resolves one tenant column per table, preferring organization_id 9ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > provisions the receipts table the purge verifies against 3ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > is stable under key reordering — it depends on data, not insertion order 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > changes when any value changes 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > distinguishes nesting from flattening 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > canonicalizes arrays positionally — order is data, not noise 0ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > is prefixed so the algorithm is self-describing 0ms
+
+ Test Files  4 passed (4)
+      Tests  57 passed (57)
+   Start at  06:45:54
+   Duration  16.56s (transform 8.40s, setup 488ms, import 14.75s, tests 25.54s, environment 1ms)
+

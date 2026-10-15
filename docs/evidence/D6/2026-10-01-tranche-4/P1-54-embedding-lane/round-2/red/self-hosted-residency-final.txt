@@ -1,0 +1,118 @@
+# RED again with the final test file (the two Azure cases were added after the first mutation pass): the same tests against gateway.ts as committed at HEAD (f8d40474), in a hard-linked scratch copy. 2026-10-01T16:15:07Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/54adf5a4-792f-5e11-8798-ae17682e5284/scratchpad/p54r2/mut
+
+stdout | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > an EU-resident tenant embeds PII through the in-VPC lane
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > a US-resident zero-retention tenant embeds PHI through it
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > the approval still decides: without intended use "embedding" the lane is refused PII
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the tenant floor: an EU-resident tenant elected OpenAI (global only) and is still refused, any data class
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant > an approval granted for another region does not carry PII for an EU tenant (DENY_TENANT_POLICY)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant > the same request is dispatched when the approval is for the region the tenant requires
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate compares the tenant's region, not the lane's first one: Azure declared for us and eu > an approval for US data does not carry an EU tenant's PII (DENY_TENANT_POLICY)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate compares the tenant's region, not the lane's first one: Azure declared for us and eu > an approval for EU data does, at the EU region
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:4555) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4555) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:4555) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:4555) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:4555) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:4555) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:4555) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:4555) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ × server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > an EU-resident tenant embeds PII through the in-VPC lane 23ms
+   → promise rejected "GatewayPolicyError: This request cannot b…" instead of resolving
+ × server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > a US-resident zero-retention tenant embeds PHI through it 4ms
+   → promise rejected "GatewayPolicyError: This request cannot b…" instead of resolving
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > an on-prem tenant was already admitted, and still is 3ms
+ × server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > the approval still decides: without intended use "embedding" the lane is refused PII 9ms
+   → expected GatewayPolicyError: This request cannot b… to match object { name: 'GatewayPolicyError', …(1) }
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the tenant floor: an EU-resident tenant elected OpenAI (global only) and is still refused, any data class 2ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant > an approval granted for another region does not carry PII for an EU tenant (DENY_TENANT_POLICY) 11ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant > the same request is dispatched when the approval is for the region the tenant requires 9ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate compares the tenant's region, not the lane's first one: Azure declared for us and eu > an approval for US data does not carry an EU tenant's PII (DENY_TENANT_POLICY) 3ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate compares the tenant's region, not the lane's first one: Azure declared for us and eu > an approval for EU data does, at the EU region 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > an EU-resident tenant embeds PII through the in-VPC lane
+AssertionError: promise rejected "GatewayPolicyError: This request cannot b…" instead of resolving
+ ❯ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts:118:5
+    116|     await expect(
+    117|       gateway.authorizeEmbedding({ provider: 'local', texts: [PII_TEXT…
+    118|     ).resolves.toMatchObject({ placementReasonCode: 'ALLOW_APPROVED_PL…
+       |     ^
+    119|     // The decision names where the text went: the lane's own region, …
+    120|     expect(sensitiveDecision()).toMatchObject({ provider: 'local', reg…
+
+Caused by: GatewayPolicyError: This request cannot be sent to the configured AI service (DENY_TENANT_POLICY). Contact your administrator to review the approved data-placement policy.
+ ❯ AIGateway.assertSensitiveDispatchAllowed server/services/ai-gateway/gateway.ts:2090:13
+ ❯ AIGateway.authorizeEmbedding server/services/ai-gateway/gateway.ts:1706:33
+ ❯ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts:116:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > a US-resident zero-retention tenant embeds PHI through it
+AssertionError: promise rejected "GatewayPolicyError: This request cannot b…" instead of resolving
+ ❯ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts:129:5
+    127|     await expect(
+    128|       gateway.authorizeEmbedding({ provider: 'local', texts: [PHI_TEXT…
+    129|     ).resolves.toMatchObject({ placementReasonCode: 'ALLOW_APPROVED_PL…
+       |     ^
+    130|   });
+    131|
+
+Caused by: GatewayPolicyError: This request cannot be sent to the configured AI service (DENY_TENANT_POLICY). Contact your administrator to review the approved data-placement policy.
+ ❯ AIGateway.assertSensitiveDispatchAllowed server/services/ai-gateway/gateway.ts:2090:13
+ ❯ AIGateway.authorizeEmbedding server/services/ai-gateway/gateway.ts:1706:33
+ ❯ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts:127:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > the approval still decides: without intended use "embedding" the lane is refused PII
+AssertionError: expected GatewayPolicyError: This request cannot b… to match object { name: 'GatewayPolicyError', …(1) }
+
+- Expected
++ Received
+
+- {
+-   "message": StringContaining "DENY_UNAPPROVED_INTENDED_USE",
++ GatewayPolicyError {
+    "name": "GatewayPolicyError",
+  }
+
+ ❯ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts:148:5
+    146|     await expect(
+    147|       gateway.authorizeEmbedding({ provider: 'local', texts: [PII_TEXT…
+    148|     ).rejects.toMatchObject({ name: GatewayPolicyError.name, message: …
+       |     ^
+    149|   });
+    150| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  16:15:08
+   Duration  2.56s (transform 1.30s, setup 113ms, import 2.16s, tests 76ms, environment 0ms)
+

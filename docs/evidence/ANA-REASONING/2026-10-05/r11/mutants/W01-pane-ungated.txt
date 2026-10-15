@@ -1,0 +1,13 @@
+Mutant W01-pane-ungated: the pane offers every answer
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- refusal={anaInsertRefusal(m.turnRecord)}
++ refusal={null}
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer a model not approved for regulatory drafting wrote: disabled, and the reason is on screen 6045ms
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer whose models the record does not give: disabled, failing closed 5480ms
+      Tests  2 failed | 2 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

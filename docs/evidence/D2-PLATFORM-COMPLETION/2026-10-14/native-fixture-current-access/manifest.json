@@ -1,0 +1,79 @@
+{
+  "scope": "five native current-access fixtures; no production policy change",
+  "phases": {
+    "originalActualRed": {
+      "passed": 44,
+      "failed": 2,
+      "skipped": 0,
+      "durationSeconds": 37.32
+    },
+    "approvedFollowupGreen": {
+      "passed": 46,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 34.53
+    }
+  },
+  "artifacts": [
+    {
+      "path": "original-native-red.txt",
+      "sha256": "ffb67d5330abc9d099c7e8daaa211e8a36b12491baa1f6fe9de4de005d8dab1a"
+    },
+    {
+      "path": "original-native-result.json",
+      "sha256": "10e023bf4eb253c701a5977612f8589152f58956ad6fba8595ea5b32afe233d5"
+    },
+    {
+      "path": "original-source-pins.json",
+      "sha256": "0a60172c42ef29eb1426979d59b5dd260b24c19989ff39e5d76628ffca1ff6b3"
+    },
+    {
+      "path": "final-native-green.txt",
+      "sha256": "be61edab51be7acf8d5eda1557e2bce08015f1ff9d487e2970b4a17d7db2f98a"
+    },
+    {
+      "path": "final-native-result.json",
+      "sha256": "ad61eca0b5e0b3ded77bbeda89694273f27d359f3f1a599865fa424dc47e5c62"
+    },
+    {
+      "path": "final-source-pins.json",
+      "sha256": "bbcdaa1cfe13e6fe2d721052b5f03e82d01c7d6deed0fd4c37600331060dca4e"
+    },
+    {
+      "path": "final-context-source-pins.json",
+      "sha256": "34293532b9e658281b9362023fcfe2564b38c8eeeb50d350b2f3700506ff1a56"
+    },
+    {
+      "path": "final-lint.json",
+      "sha256": "5cc879c94ab0a435d4335f6b73f38292f312033ff2f33b25d589b4e8ab023424"
+    },
+    {
+      "path": "original-lint.json",
+      "sha256": "9fcb7f9ea5669c79c8a8c243c4358fed76903c350fdf27563977a99c4fd963fb"
+    },
+    {
+      "path": "retained-after-all.json",
+      "sha256": "bc2f21bb3e17952b5012b6b2fd3a6c2b208cdd319ff195538b58157e60c167d5"
+    },
+    {
+      "path": "strict-install-result.json",
+      "sha256": "70e491390d22280c170c7923e650401a993af321517cee770594edbba1b82861"
+    },
+    {
+      "path": "launcher-source-pins.json",
+      "sha256": "a2a1f5a4572c2860ed859c455bcff249942e5cb20b3bef6bf1e0cfd788cc83cd"
+    },
+    {
+      "path": "original-phase-summary.json",
+      "sha256": "9cebc2a16f5d60bde9ee6af0fc1e41f677bef8bff88185f58c59a05da7765918"
+    },
+    {
+      "path": "final-phase-summary.json",
+      "sha256": "c0c69280de1fc37f241d82825251e9d8d79c6689ceb486a3d2f66befeaf3fac0"
+    }
+  ],
+  "credentialScan": "passed private literal and bearer/JWT scan",
+  "originalRedPreserved": true,
+  "globalRolesAndMembershipsUnchanged": true,
+  "sourceFreeze": true
+}

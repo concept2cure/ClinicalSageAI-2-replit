@@ -68,6 +68,27 @@ describe('coauthor status vocabulary', () => {
    "was signed off for a filing" and that an edit "would file text nobody
    approved". A 'finalized' copy comes from its author's freeze — no signature,
    no approval — so the refusal states only what each status says. */
+/* DP-35 (decided 2026-10-01): a co-author 'finalized' is the sealed snapshot of
+   a FROZEN authoring document, and a freeze is not an approval: no signing
+   authority, no re-authentication, no signature row. The resolver no longer
+   files it; a PUT still can never award it. */
+describe('a freeze is not an approval', () => {
+  it('the eCTD resolver transmits an approved co-author document and refuses a frozen one', async () => {
+    const { isFinalizedStatus } = await import('../../ectd/leaf-source-resolver');
+    expect(isFinalizedStatus('approved', 'coauthor_documents')).toBe(true);
+    expect(isFinalizedStatus('finalized', 'coauthor_documents')).toBe(false);
+    expect(isFinalizedStatus('FINALIZED', 'coauthor_documents')).toBe(false);
+    // The default store is the co-author one, so an omission fails closed too.
+    expect(isFinalizedStatus('finalized')).toBe(false);
+  });
+
+  it("'finalized' stays a verdict a PUT cannot award", async () => {
+    const { isCoauthorVerdictStatus, planCoauthorStatusWrite } = await import('../coauthor-status-write');
+    expect(isCoauthorVerdictStatus('finalized')).toBe(true);
+    expect(planCoauthorStatusWrite('finalized').kind).not.toBe('set');
+  });
+});
+
 describe('the read-only refusal states only what the status says', () => {
   it.each(['approved', 'finalized', 'signed', 'locked'])('%s', async (status) => {
     const { coauthorReadOnlyRefusal } = await import('../coauthor-status-write');

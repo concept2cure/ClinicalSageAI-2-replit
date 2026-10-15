@@ -56,6 +56,12 @@
 -- Pinned by tests/regulatory/canonical-documents-append-only.pglite.test.ts
 -- (the UPDATE rules) and tests/db/canonical-documents-append-only.dbtest.ts
 -- (DELETE, TRUNCATE and concurrent transitions, as the runtime role).
+--
+-- AMENDED 2026-09-29 (VR-12, row D5): created_by is write-once (NULL → value,
+-- never changed or cleared). 20260731c adds the column in the same change; the
+-- separation-of-duties check reads it, so a reassigned author would let the
+-- real author pass that check. Amended in place per CLAUDE.md Rule 1. Pinned by
+-- server/routes/__tests__/document-lifecycle-part11-record.test.ts.
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.canonical_documents_guard()
@@ -95,6 +101,13 @@ BEGIN
      OR NEW.source_refs IS DISTINCT FROM OLD.source_refs THEN
     RAISE EXCEPTION
       'IMMUTABILITY_VIOLATION: the identity, tenant, creation time and source binding of canonical document % are frozen.', OLD.canonical_id
+      USING ERRCODE = 'raise_exception';
+  END IF;
+
+  -- VR-12: the recorded creator is write-once.
+  IF OLD.created_by IS NOT NULL AND NEW.created_by IS DISTINCT FROM OLD.created_by THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY_VIOLATION: the creator of canonical document % is recorded and cannot be changed.', OLD.canonical_id
       USING ERRCODE = 'raise_exception';
   END IF;
 

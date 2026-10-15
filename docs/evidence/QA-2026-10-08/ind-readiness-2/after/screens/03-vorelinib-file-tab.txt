@@ -1,0 +1,451 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Biotech & Pharma
+›
+IND lifecycle
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+IND LIFECYCLE — 21 CFR 312
+Vorelinib · BX-512 — Initial IND
+
+Vorelinib · KIT-mutant GIST (IND) — Concept2Cure Therapeutics — eCTD v4.0 (FDA)
+
+Showing the open program's IND (Vorelinib · KIT-mutant GIST (IND)) — 9 other INDs in this organization.
+
+Dossier
+Ask AnA
+IS THE VORELINIB · BX-512 IND READY TO FILE — AND WHAT STANDS BETWEEN YOU AND SUBMISSION
+The Vorelinib · BX-512 IND is 8% ready. 48 things stand between you and a fileable submission (21 CFR 312.23).
+46 required sections are not yet approved and 1 Module 1 form is open. Close those and the package is fileable.
+None of these are FDA findings — they are the checklist I hold so nothing slips before you submit.
+Resolve the top blocker
+Live from this program's IND checklist — readiness checks the full required set, including missing sections.
+Vorelinib · BX-512_IND_filing-readiness_312.23
+NOT YET FILEABLE
+Ask AnA to draft this
+IND Filing Readiness — 21 CFR 312.23
+Vorelinib · KIT-mutant GIST (IND)
+Concept2Cure Therapeutics
+Initial IND — eCTD v4.0 (FDA)
+Assessed Oct 8, 2026
+8%
+1 — MODULE PROGRESS
+Module 1: Regional Administrative Information
+11%
+2/18 required sections approved
+Module 2: CTD Summaries
+0%
+0/29 required sections approved
+Module 3: Quality
+0%
+0/17 required sections approved
+Module 4: Nonclinical Study Reports
+0%
+0/20 required sections approved
+Module 5: Clinical Study Reports
+0%
+0/12 required sections approved
+2 — MODULE 1 FORMS — 21 CFR 312.23(a)(1)
+Form FDA 1571 — IND Application
+21 CFR 312.23(a)(1)
+COMPLETE
+Form FDA 1572 — Statement of Investigator
+21 CFR 312.53(c)
+COMPLETE
+Form FDA 3674 — Certification of Compliance (ClinicalTrials.gov)
+42 USC 282(j)(5)(B)
+OPEN
+2A — BUILD & RENDER THE FDA FORM PDFS -- real form engine
+Read from the program record — every form below is filled with these values.
+SPONSOR
+Concept2Cure Therapeutics
+DRUG
+Vorelinib · BX-512
+INDICATION
+KIT-mutant gastrointestinal stromal tumor · 4L+
+IND NUMBER
+000512
+Sponsor address
+IND type
+Not stated — choose
+Commercial IND
+Research IND
+Emergency Use IND
+Treatment IND
+Phase
+Not stated — choose
+Phase 1
+Phase 2
+Phase 3
+Phase 4
+Serial number
+File completed, signed forms into — choose the submission and the sequence. Nothing is filed until you choose.
+Target submission
+Choose a submission…
+Vorelinib · KIT-mutant GIST (IND) · IND · FDA
+12 submissions belong to other projects or to no project and are not offered: a document is placed only into its own project’s submissions.
+FORM	FIELD CHECK	ACTIONS
+FDA 1571 — IND application
+Returns the official FDA form (edition 2025-03-28) with the program's values written into it. Complete the remaining boxes and sign it in Adobe Acrobat.
+8 box(es) left for you to complete on the form.
+This asset has no named reviewer yet.
+	Not checked yet
+COMPLETED FORM FILED
+m1.1 · sequence 0001 · 2.8 MB · SHA-256 470061cf6a27…
+	
+Build & check
+PDF
+Save to dossier
+Attach completed form
+FDA 1572 — Statement of investigator
+Returns the official FDA form (edition 2025-04-13) with the program's values filled in and flattened.
+2 box(es) left for you to complete on the form.
+Asset reviewed by <reviewer e-mail, redacted>.
+	Not checked yet
+COMPLETED FORM FILED
+m1.1 · sequence 0001 · 2.1 MB · SHA-256 2eb47772f93a…
+	
+Build & check
+PDF
+Save to dossier
+Attach completed form
+FDA 3674 — ClinicalTrials.gov certification
+Returns the official FDA form (edition 2024-04-15) with the program's values written into it. Complete the remaining boxes and sign it in Adobe Acrobat.
+3 box(es) left for you to complete on the form.
+This asset has no named reviewer yet.
+	Not checked yet	
+Build & check
+PDF
+Save to dossier
+Attach completed form
+FDA 3454 — Financial disclosure (none)
+Returns the official FDA form (edition 2026-02-26) with the program's values filled in and flattened.
+2 box(es) left for you to complete on the form.
+Asset reviewed by <reviewer e-mail, redacted>.
+	Not checked yet	
+Build & check
+PDF
+Save to dossier
+Attach completed form
+FDA 3455 — Financial disclosure (disclosed)
+No official template is installed, so this returns a labeled draft — not the official FDA form.
+	Not checked yet	
+Build & check
+PDF
+Save to dossier
+Attach completed form
+FDA 1574 — Assurance of IRB review
+No official template is installed, so this returns a labeled draft — not the official FDA form.
+	Not checked yet	
+Build & check
+PDF
+Save to dossier
+Attach completed form
+3 — BLOCKERS TO FILING — 48 — ready = assessed with zero blockers
+SECTION
+m1 — Module 1: Regional Administrative Information -- Not started
+21 CFR 312.23(a)(1)
+Resolve
+SECTION
+m1.1 — FDA Forms -- Not started
+21 CFR 312.23(a)(1)(i)
+Resolve
+SECTION
+m1.1.3 — Form FDA 3674 -- Not started
+42 USC 282(j)(5)(B)
+Resolve
+SECTION
+m1.2 — Cover Letter -- Not started
+21 CFR 312.23(a)(1)
+Resolve
+SECTION
+m1.3 — Administrative Information -- Not started
+21 CFR 312.23(a)(1)
+Resolve
+SECTION
+m1.12 — Other Correspondence -- Not started
+FDA eCTD Module 1 Specification v2.3 §1.12
+Resolve
+SECTION
+m1.12.14 — Environmental Assessment or Claim of Categorical Exclusion -- Not started
+21 CFR 25.31; FDA eCTD Module 1 Specification v2.3 §1.12.14 (environmental analysis)
+Resolve
+SECTION
+m1.14 — Labeling -- Not started
+21 CFR 312.23(a)(7)(iv)(d); FDA eCTD Module 1 Specification v2.3 §1.14
+Resolve
+SECTION
+m1.14.4.1 — Investigator's Brochure -- Not started
+21 CFR 312.23(a)(5); FDA eCTD Module 1 Specification v2.3 §1.14.4.1 (investigator brochure)
+Resolve
+SECTION
+m1.14.4.2 — Investigational Drug Labeling -- Not started
+21 CFR 312.6; 21 CFR 312.23(a)(7)(iv)(d); FDA eCTD Module 1 Specification v2.3 §1.14.4.2
+Resolve
+SECTION
+m1.20 — Introductory Statement and General Investigational Plan -- Not started
+21 CFR 312.23(a)(3); FDA eCTD Module 1 Specification v2.3 §1.20 (general investigational plan for initial IND)
+Resolve
+SECTION
+m2 — Module 2: CTD Summaries -- Not started
+ICH M4
+Resolve
+SECTION
+m2.3 — Quality Overall Summary -- Not started
+ICH M4Q(R1)
+Resolve
+SECTION
+m2.3.S — Drug Substance -- Not started
+ICH M4Q S
+Resolve
+SECTION
+m2.3.P — Drug Product -- Not started
+ICH M4Q P
+Resolve
+SECTION
+m2.4 — Nonclinical Overview -- Not started
+ICH M4S(R2)
+Resolve
+SECTION
+m2.6 — Nonclinical Written and Tabulated Summaries -- Not started
+ICH M4S(R2)
+Resolve
+SECTION
+m2.6.2 — Pharmacology Written Summary -- Not started
+ICH M4S
+Resolve
+SECTION
+m2.6.4 — Pharmacokinetics Written Summary -- Not started
+ICH M4S
+Resolve
+SECTION
+m2.6.6 — Toxicology Written Summary -- Not started
+ICH M4S
+Resolve
+SECTION
+m3 — Module 3: Quality -- Not started
+21 CFR 312.23(a)(7)
+Resolve
+SECTION
+m3.2.S — Drug Substance -- Not started
+ICH M4Q S
+Resolve
+SECTION
+m3.2.S.1 — General Information -- Not started
+ICH Q6A/Q6B
+Resolve
+SECTION
+m3.2.S.2 — Manufacture -- Not started
+ICH Q7
+Resolve
+SECTION
+m3.2.S.3 — Characterization -- Not started
+ICH Q6A/Q6B
+Resolve
+SECTION
+m3.2.S.4 — Control of Drug Substance -- Not started
+ICH Q6A
+Resolve
+SECTION
+m3.2.S.6 — Container Closure System -- Not started
+ICH M4Q
+Resolve
+SECTION
+m3.2.S.7 — Stability -- Not started
+ICH Q1A/Q1B
+Resolve
+SECTION
+m3.2.P — Drug Product -- Not started
+ICH M4Q P
+Resolve
+SECTION
+m3.2.P.1 — Description and Composition -- Not started
+ICH M4Q P.1
+Resolve
+SECTION
+m3.2.P.3 — Manufacture -- Not started
+ICH Q7
+Resolve
+SECTION
+m3.2.P.4 — Control of Excipients -- Not started
+ICH M4Q P.4
+Resolve
+SECTION
+m3.2.P.5 — Control of Drug Product -- Not started
+ICH Q6A
+Resolve
+SECTION
+m3.2.P.7 — Container Closure System -- Not started
+ICH M4Q P.7
+Resolve
+SECTION
+m3.2.P.8 — Stability -- Not started
+ICH Q1A/Q5C
+Resolve
+SECTION
+m4 — Module 4: Nonclinical Study Reports -- Not started
+21 CFR 312.23(a)(8)
+Resolve
+SECTION
+m4.2.1 — Pharmacology -- Not started
+ICH S7A/S7B
+Resolve
+SECTION
+m4.2.1.1 — Primary Pharmacodynamics -- Not started
+ICH S7A
+Resolve
+SECTION
+m4.2.1.3 — Safety Pharmacology -- Not started
+ICH S7A/S7B
+Resolve
+SECTION
+m4.2.2 — Pharmacokinetics -- Not started
+ICH S3A/S3B
+Resolve
+SECTION
+m4.2.3 — Toxicology -- Not started
+ICH M3(R2)/S2(R1)/S5(R3)
+Resolve
+SECTION
+m4.2.3.1 — Single-Dose Toxicity -- Not started
+ICH M3(R2)
+Resolve
+SECTION
+m4.2.3.2 — Repeat-Dose Toxicity -- Not started
+ICH M3(R2)
+Resolve
+SECTION
+m4.2.3.3 — Genotoxicity -- Not started
+ICH S2(R1)
+Resolve
+SECTION
+m5 — Module 5: Clinical Study Reports -- Not started
+21 CFR 312.23(a)(6)
+Resolve
+SECTION
+m5.3.5 — Reports of Efficacy and Safety Studies -- Not started
+21 CFR 312.23(a)(6)(iii)(a)
+Resolve
+FORM
+FDA_3674
+21 CFR 312.23(a)(1)
+Resolve
+SECTION
+unresolved_lifecycle
+21 CFR 312.32
+Resolve
+Regulatory clock
+PROJECTED FROM TARGET DATE
+299
+days, projected from the target date
+Target FDA receipt
+Jul 4, 2027
+30-day clears
+Aug 3, 2027
+21 CFR
+312.40(b) / 312.42
+
+FDA receipt has not been recorded for this IND, so the 312.40(b) 30-day period has not started. The date above is projected from the program's target submission date — it is a plan, not a clearance to proceed.
+
+Documents AnA assembles
+For filing
+Lifecycle
+IND Safety Report
+AnA
+eCTD amendment
+21 CFR 312.32
+Classifies the event (7/15-day reportability) and assembles the expedited safety report + E2B(R3) ICSR.
+De-identified patient id
+Event description
+Event type
+Not stated — choose
+SAE — serious adverse event
+SUSAR
+AESI
+AE — non-serious
+Seriousness criterion (ICH E2A)
+Not stated — choose
+death
+life_threatening
+hospitalization
+disability
+congenital_anomaly
+medically_important
+Causality (WHO-UMC)
+Not stated — choose
+definite
+probable
+possible
+unlikely
+unrelated
+Outcome
+Not stated — choose
+recovered
+recovering
+not_recovered
+fatal
+unknown
+Expectedness vs RSI
+Not assessed — the expedited verdict is not determined
+Expected (listed in RSI)
+Unexpected (not listed in RSI)
+Onset date
+Onset date unknown
+Sponsor awareness date (clock start)
+Country of occurrence (ISO-2)
+Assemble now
+PDF
+Ask AnA
+IND Annual Report / DSUR
+AnA
+eCTD annual sequence
+21 CFR 312.33
+Assembles the annual report / DSUR section model with the serious-AE line listing (312.33(b)).
+IND number
+Reporting period start
+Reporting period end
+Summary of safety information (312.33(b))
+General investigational plan (312.33(c))
+Assemble now
+PDF
+Ask AnA
+Protocol / Information Amendment
+AnA
+eCTD amendment sequence
+21 CFR 312.30/.31
+Plans a protocol or information amendment and the leaves it touches.
+IND number
+Changed document id / ref
+Changed document title
+Content category
+Not stated — choose
+protocol
+protocol_amendment_summary
+new_investigator
+cmc
+pharmacology_toxicology
+clinical_summary
+investigators_brochure
+other
+Change kind
+Not stated — choose
+added
+revised
+appended
+withdrawn
+Prior leaf GUID (revise / append / withdraw)
+Assemble now
+Ask AnA
+Each document assembles here end-to-end from this IND's recorded identity plus the particulars you enter — the rendered model and its gap list are the server's verdict. The lifecycle documents can then be filed into a real eCTD sequence under this application.

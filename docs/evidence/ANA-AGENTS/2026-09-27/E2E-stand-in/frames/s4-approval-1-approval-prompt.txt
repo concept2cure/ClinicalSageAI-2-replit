@@ -1,0 +1,83 @@
+Concept2Cure.RI
+›
+Conversation
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+3
+Project
+Create a review task for the BX-512 stability protocol.
+Conversation
+AnA
+New conversation
+Working
+· AnA's progress
+Create a review task for the BX-512 stability protocol.
+✻
+Reading this as an audit
+Reasoning
+Stand-in thinking summary.
+Executing platform command: create_task
+running
+
+I will propose the task; it needs your approval.
+
+Confirm the proposed action
+
+This action changes the record, so it is taken by a person rather than on your behalf. Review it and confirm to continue. AnA is waiting on this before she goes on.
+
+Action
+create_task
+projectId
+1
+title
+E2E stand-in: review the stability protocol
+description
+Proposed by the scripted stand-in model.
+priority
+medium
+Cancel
+Confirm and run
+Working
+Steer
+Pause
+Stop
+AnA drives: on
+Demos
+Between steps
+Manual
+AnA takes one step, then waits for you to run the next, change it or stop. If nobody answers within 10 minutes, or the page is closed, she stops there. A demonstration you start runs through without stopping.
+Auto
+AnA keeps going, step after step, until she judges the task done — for up to 20 rounds whichever engine you chose, 15 minutes of work or 40 minutes in all. Anything that changes a record waits for you; if nobody answers within 10 minutes, it does not happen and she stops.
+She keeps going: up to 20 rounds, 15 minutes of work.
+Applies to your next message
+Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.
+Progress
+Still working · 1s
+Planning response…
+— done
+0 ms
+Loading project memory…
+— done
+51 ms
+Generating response…
+— done
+117 ms
+Reasoning through the question…
+— done
+0 ms
+Composing the answer…
+— done
+57 ms
+Running 1 step…
+— in progress
+0s
+Executing platform command: create_task
+Used in this session
+Memory
+Could not be read
+Tools
+Executing platform command: create_task

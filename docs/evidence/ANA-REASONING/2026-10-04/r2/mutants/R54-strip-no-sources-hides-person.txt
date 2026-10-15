@@ -1,0 +1,12 @@
+Mutant R54-strip-no-sources-hides-person: with nothing consulted, the strip does not say which claims are the person's
+
+--- client/src/concept2cure/v2/AnaGrounding.tsx
+- {check.fromPerson.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, a claim only in the person's message is said to be theirs (F1) 13ms
+      Tests  1 failed | 21 passed (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

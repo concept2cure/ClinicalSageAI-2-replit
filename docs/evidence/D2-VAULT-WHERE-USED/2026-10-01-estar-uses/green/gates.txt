@@ -1,0 +1,27 @@
+== ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+== ci:launch-scope-api
+ci:launch-scope-api: 287 API paths named by launch and shell screens; none refused. {"launch":241,"never-gated":44,"infrastructure":2}
+== ci:check-client-api-calls
+✅ every client /api call has a server route behind it.
+== ci:internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+== ci:action-overclaim
+check-action-overclaim: no new occurrences. 0 baselined.
+== ci:success-before-ok
+check-success-before-ok: no occurrences across 198 file(s).
+== ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+== ci:column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+== ci:runtime-ddl
+[ci:runtime-ddl] ✅ no new runtime DDL.
+== ci:unkeyed-request-tables
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+== tsc
+exit 0, no output
+== regression
+estaruse-regress-client.txt: Test Files  22 passed (22)
+estaruse-regress-client.txt:      Tests  129 passed (129)
+estaruse-regress-server.txt: Test Files  55 passed (55)
+estaruse-regress-server.txt:      Tests  428 passed (428)

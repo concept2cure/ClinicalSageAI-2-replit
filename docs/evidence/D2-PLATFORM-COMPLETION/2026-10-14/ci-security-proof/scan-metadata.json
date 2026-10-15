@@ -1,0 +1,24 @@
+{
+  "head": "920b230bd1509a41347fe653605babdabea2ae78",
+  "branch": "concept2cure-v2",
+  "historyIsShallow": false,
+  "headReachableCommits": 13930,
+  "scannerProcessedCommits": 10195,
+  "scannerVersion": "8.28.0",
+  "scannerConfigChanged": false,
+  "beforeFindingCount": 7,
+  "afterFindingCount": 0,
+  "exactReviewedFingerprintDelta": 7,
+  "previousFingerprintsPreserved": true,
+  "liveNoticeBlocksBefore": 3,
+  "liveNoticeBlocksAfter": 3,
+  "sourceValuesEmitted": false,
+  "existingCredentialsRevokedOrRotated": false,
+  "scannerContract": {
+    "files": 1,
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0
+  },
+  "fullHistoryCommand": "gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts=\"--full-history --diff-filter=tuxdb HEAD\" ."
+}

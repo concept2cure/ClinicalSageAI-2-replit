@@ -17,6 +17,7 @@
  */
 import React from 'react';
 import { liveGetOrNull } from '../dataConnect';
+import { shellProgramId, useShellProject } from '../shellProject';
 import { SC_SEQ_STATUS } from '../fixtures/submission';
 import { normalizeCtdCode, ctdFolderSlug } from '@shared/regulatory/section-code';
 import {
@@ -44,6 +45,8 @@ export interface SubmissionRow {
   applicationType: string;
   primaryRegion: string;
   status: string;
+  /** submissions.program_id: the project the submission belongs to; null when unanchored. */
+  programId?: string | null;
 }
 
 /** GET /api/submissions/:id/sequences → listSequences() rows. */
@@ -59,7 +62,13 @@ export interface SequenceRow {
  *  isSequenceLocked) — mirrored here so the picker can say WHY it excludes. */
 export const isLocked = (status: string) => status === 'frozen' || status === 'dispatched';
 
-interface SubsState { state: 'idle' | 'loading' | 'ready' | 'error'; rows: SubmissionRow[]; error?: string }
+interface SubsState {
+  state: 'idle' | 'loading' | 'ready' | 'error';
+  rows: SubmissionRow[];
+  error?: string;
+  /** Submissions of other projects, not offered (PF-11): said, never silently dropped. */
+  hiddenOtherProjects?: number;
+}
 interface SeqsState { state: 'idle' | 'loading' | 'ready' | 'error'; rows: SequenceRow[]; error?: string }
 
 export interface FilingTarget {
@@ -85,13 +94,20 @@ export interface FilingTarget {
  * as "no sequences" — the two look identical to the person and only one of them
  * means their work has nowhere to go.
  */
-export function useFilingTarget(onChange?: () => void): FilingTarget {
+export function useFilingTarget(onChange?: () => void, programId?: string | null): FilingTarget {
   const [subs, setSubs] = React.useState<SubsState>({ state: 'idle', rows: [] });
   const [subId, setSubId] = React.useState<number | null>(null);
   const [seqs, setSeqs] = React.useState<SeqsState>({ state: 'idle', rows: [] });
   const [seqId, setSeqId] = React.useState<number | null>(null);
 
+  const shellProject = useShellProject();
+  const project = (programId ?? shellProgramId(shellProject))?.toLowerCase() ?? null;
+  const reads = React.useRef({ submissions: 0, sequences: 0, active: false });
+
   const reset = React.useCallback(() => {
+    reads.current.submissions += 1;
+    reads.current.sequences += 1;
+    reads.current.active = false;
     setSubId(null);
     setSeqId(null);
     setSeqs({ state: 'idle', rows: [] });
@@ -99,21 +115,56 @@ export function useFilingTarget(onChange?: () => void): FilingTarget {
   }, []);
 
   const load = React.useCallback(() => {
+    const request = ++reads.current.submissions;
+    reads.current.sequences += 1;
+    reads.current.active = true;
     setSubId(null);
     setSeqId(null);
     setSeqs({ state: 'idle', rows: [] });
     setSubs({ state: 'loading', rows: [] });
-    void liveGetOrNull<SubmissionRow[]>('/api/submissions').then((r) => {
+    /* The list is scoped on the server to this project (?programId): the
+       server returns only the project's own submissions and says how many it
+       left out (meta.notOffered). Only the project's own submissions are offered
+       (PF-11; founder decision 2026-09-26): an unanchored submission belongs to
+       no project and is not offered for one, because a document is placed only
+       into its own project's submissions. The same rule is applied to the rows
+       here, so a list that was not scoped is still never offered wrongly. */
+    const path = project ? `/api/submissions?programId=${encodeURIComponent(project)}` : '/api/submissions';
+    void liveGetOrNull<SubmissionRow[]>(path).then((r) => {
+      if (request !== reads.current.submissions) return;
       if (r.error || !Array.isArray(r.data)) {
         setSubs({ state: 'error', rows: [], error: r.error ?? 'unexpected response shape' });
         return;
       }
-      setSubs({ state: 'ready', rows: r.data });
+      const own = project
+        ? r.data.filter((row) => row.programId?.toLowerCase() === project)
+        : r.data;
+      const leftOut = r.meta?.notOffered;
+      const leftOutByServer = typeof leftOut === 'number' ? leftOut : 0;
+      setSubs({
+        state: 'ready',
+        rows: own,
+        hiddenOtherProjects: leftOutByServer + (r.data.length - own.length),
+      });
     });
-  }, []);
+  }, [project]);
+
+  // Clear old choices before another project can use them. A currently open
+  // picker reloads; an idle picker waits for its dialog's existing load action.
+  React.useLayoutEffect(() => {
+    const pendingReads = reads.current;
+    const active = pendingReads.active;
+    reset();
+    if (active) load();
+    return () => {
+      pendingReads.submissions += 1;
+      pendingReads.sequences += 1;
+    };
+  }, [project, reset, load]);
 
   const pickSubmission = React.useCallback(
     (id: number | null) => {
+      const request = ++reads.current.sequences;
       setSubId(id);
       setSeqId(null);
       onChange?.();
@@ -123,15 +174,21 @@ export function useFilingTarget(onChange?: () => void): FilingTarget {
       }
       setSeqs({ state: 'loading', rows: [] });
       void liveGetOrNull<SequenceRow[]>(`/api/submissions/${id}/sequences`).then((r) => {
+        if (request !== reads.current.sequences) return;
         if (r.error || !Array.isArray(r.data)) {
           setSeqs({ state: 'error', rows: [], error: r.error ?? 'unexpected response shape' });
           return;
         }
         setSeqs({ state: 'ready', rows: r.data });
-        // Preselect the first sequence that can actually take a leaf, never a
-        // locked one — preselecting a locked sequence would stage a refusal.
-        const firstOpen = r.data.find((s) => !isLocked(s.status));
-        setSeqId(firstOpen ? firstOpen.id : null);
+        // Pre-select a sequence only when exactly one can take a leaf: then
+        // there is no choice to make. With two or more open (an original 0000
+        // and a draft amendment 0001), which one a document is filed in is the
+        // person's regulatory decision, so nothing is chosen until they choose
+        // (P-21, product decision 2026-10-08). It used to take the FIRST open
+        // one. A locked sequence is never pre-selected — that would stage a
+        // refusal.
+        const open = r.data.filter((s) => !isLocked(s.status));
+        setSeqId(open.length === 1 ? open[0].id : null);
       });
     },
     [onChange],
@@ -143,10 +200,59 @@ export function useFilingTarget(onChange?: () => void): FilingTarget {
   return { subs, subId, seqs, seqId, seq, lockedSeqs, load, reset, pickSubmission, setSeqId };
 }
 
+/** "1 submission is not offered", plural-aware. Covers another project's submission and an unanchored one alike. */
+function otherProjectsPhrase(n: number): string {
+  return n === 1
+    ? '1 submission belongs to another project or to no project and is not offered'
+    : `${n} submissions belong to other projects or to no project and are not offered`;
+}
+
 export interface FilingTargetFieldsProps {
   target: FilingTarget;
   /** Prefix for the field ids, so two dialogs can coexist in one document. */
   idPrefix: string;
+}
+
+/** The submission choice, with every state said, and what is not offered counted (PF-11). */
+function SubmissionChoice({ target, idPrefix }: FilingTargetFieldsProps) {
+  const { subs, subId, pickSubmission } = target;
+  return (
+    <div className="de-field">
+      <label className="de-label" htmlFor={`${idPrefix}-sub`}>Target submission</label>
+      {subs.state === 'loading' ? (
+        <div role="status" className="de-desc">Loading this organization’s submissions…</div>
+      ) : subs.state === 'error' ? (
+        <div className="de-err" role="status">
+          Couldn’t load the submissions — {subs.error}. There is no target to place into.
+        </div>
+      ) : subs.rows.length === 0 ? (
+        <div className="de-desc">
+          {subs.hiddenOtherProjects
+            ? `No submissions of this project yet. ${otherProjectsPhrase(subs.hiddenOtherProjects)} — create one for this project in the Submission Center first.`
+            : 'No submissions in this organization yet — create one in the Submission Center first.'}
+        </div>
+      ) : (
+        <select
+          id={`${idPrefix}-sub`}
+          className="c2c-input"
+          value={subId ?? ''}
+          onChange={(e) => pickSubmission(e.target.value === '' ? null : Number(e.target.value))}
+        >
+          <option value="">Choose a submission…</option>
+          {subs.rows.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.title} · {s.applicationType.toUpperCase()} · {s.primaryRegion.toUpperCase()}
+            </option>
+          ))}
+        </select>
+      )}
+      {subs.state === 'ready' && subs.rows.length > 0 && !!subs.hiddenOtherProjects && (
+        <div className="de-desc" data-testid={`${idPrefix}-hidden-other-projects`}>
+          {otherProjectsPhrase(subs.hiddenOtherProjects)}: a document is placed only into its own project’s submissions.
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -158,37 +264,10 @@ export interface FilingTargetFieldsProps {
  * under cover of moving code — which is how reviewed copy degrades.
  */
 export function FilingTargetFields({ target, idPrefix }: FilingTargetFieldsProps) {
-  const { subs, subId, seqs, seqId, lockedSeqs, pickSubmission, setSeqId } = target;
+  const { subId, seqs, seqId, lockedSeqs, setSeqId } = target;
   return (
     <>
-      <div className="de-field">
-        <label className="de-label" htmlFor={`${idPrefix}-sub`}>Target submission</label>
-        {subs.state === 'loading' ? (
-          <div role="status" className="de-desc">Loading this organization’s submissions…</div>
-        ) : subs.state === 'error' ? (
-          <div className="de-err" role="status">
-            Couldn’t load the submissions — {subs.error}. There is no target to place into.
-          </div>
-        ) : subs.rows.length === 0 ? (
-          <div className="de-desc">
-            No submissions in this organization yet — create one in the Submission Center first.
-          </div>
-        ) : (
-          <select
-            id={`${idPrefix}-sub`}
-            className="c2c-input"
-            value={subId ?? ''}
-            onChange={(e) => pickSubmission(e.target.value === '' ? null : Number(e.target.value))}
-          >
-            <option value="">Choose a submission…</option>
-            {subs.rows.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title} · {s.applicationType.toUpperCase()} · {s.primaryRegion.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+      <SubmissionChoice target={target} idPrefix={idPrefix} />
 
       {subId != null && (
         <div className="de-field">
@@ -338,12 +417,15 @@ export function PlacementReasonField({
   idPrefix,
   disabled,
   variant = 'dialog',
+  label = 'Reason for this placement',
 }: {
   value: string;
   onChange: (value: string) => void;
   /** Prefix for the field id, so two forms can coexist in one document. */
   idPrefix: string;
   disabled?: boolean;
+  /** The field's name, when the act is not a first placement (a re-place). */
+  label?: string;
   /** `dialog` for the de- dialog kit, `inline` for the Submission Center form. */
   variant?: keyof typeof REASON_KIT;
 }) {
@@ -358,7 +440,7 @@ export function PlacementReasonField({
   return (
     <div className={kit.field}>
       <label className={kit.label} htmlFor={id}>
-        Reason for this placement<span className="req" aria-hidden="true">*</span>
+        {label}<span className="req" aria-hidden="true">*</span>
       </label>
       <textarea
         id={id}
@@ -379,4 +461,46 @@ export function PlacementReasonField({
       </div>
     </div>
   );
+}
+/** Confirmation returned by the existing canonical leaf write, shared by both filing dialogs. */
+export interface FilingLeafReceipt {
+  id: number;
+  sequenceId: number;
+  sectionCode: string;
+  lifecycleOp: string;
+  documentTable: string;
+  documentId?: number | null;
+  documentUuid?: string | null;
+  /** null when nothing was written (see `unchanged`): there is no audit row to report. */
+  auditTrail?: { persisted?: boolean; chained?: boolean } | null;
+  /** The document was already placed at this section; the existing leaf came back and nothing was written. */
+  unchanged?: true;
+}
+
+export function validReceiptId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+}
+
+type ExpectedLeaf = { sequenceId: number; sectionCode: string; lifecycleOp: string } & (
+  | { documentTable: 'coauthor_documents'; documentId: number }
+  | { documentTable: 'vault_documents'; documentUuid: string }
+);
+
+/** A nonempty body is not confirmation that the requested document was filed. */
+export function matchingLeafReceipt(value: unknown, expected: ExpectedLeaf): value is FilingLeafReceipt {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as FilingLeafReceipt;
+  if (!validReceiptId(row.id) || row.sequenceId !== expected.sequenceId ||
+      row.sectionCode !== expected.sectionCode || row.lifecycleOp !== expected.lifecycleOp ||
+      row.documentTable !== expected.documentTable) return false;
+  return expected.documentTable === 'vault_documents'
+    ? row.documentUuid === expected.documentUuid
+    : row.documentId === expected.documentId;
+}
+
+/** Placement can stand while its audit write or retrievable history is incomplete. */
+export function placementAuditWarning(row: FilingLeafReceipt): string {
+  if (row.auditTrail?.persisted !== true) return ' The placement audit entry was not confirmed. Check the audit history and follow up before treating this as a complete governed filing.';
+  if (row.auditTrail.chained !== true) return ' The placement audit entry is not confirmed in retrievable history. Follow up before treating this as a complete governed filing.';
+  return '';
 }

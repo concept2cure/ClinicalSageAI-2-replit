@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > "Open in editor" sets the editor target to the document id, then opens the editor 685ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the sign-off button opens the document to sign, not the editor’s list 203ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > a document in another program opens that program first, so the editor can see it 111ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the editor then opens on that document, not on its default first row 769ms
+ × client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > an AI comment’s button is named for what it does: it opens the document, it applies nothing 380ms
+   → expected <button class="btn ghost" …(1)></button> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > an AI comment’s button is named for what it does: it opens the document, it applies nothing
+AssertionError: expected <button class="btn ghost" …(1)></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="btn ghost"
+  style="height: 26px;"
+>
+  Apply in editor
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx:161:71
+    159|     render(<Review {...p} />);
+    160|     await screen.findByText('Cite the CSR table for the endpoint.');
+    161|     expect(screen.queryByRole('button', { name: 'Apply in editor' })).…
+       |                                                                       ^
+    162|     fireEvent.click(screen.getByRole('button', { name: 'Open the docum…
+    163|     expect(peekEditorTarget()?.docId).toBe(DOC);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  06:01:34
+   Duration  8.47s (transform 3.31s, setup 305ms, import 4.34s, tests 2.16s, environment 1.13s)
+

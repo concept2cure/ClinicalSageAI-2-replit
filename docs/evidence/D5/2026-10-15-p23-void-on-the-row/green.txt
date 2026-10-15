@@ -1,0 +1,30 @@
+# GREEN — the amended trigger (577a008f7 + this change, 2026-10-15T07:24:52Z)
+
+ ✓ tests/schema-contract/esig-audit-immutability.contract.test.ts > Part 11 DB-level immutability — electronic_signatures > is journaled in the canonical migration manifest (never push-only)
+ ✓ tests/schema-contract/esig-audit-immutability.contract.test.ts > Part 11 DB-level immutability — electronic_signatures > INSERT still works — append is the one permitted verb
+ ✓ tests/schema-contract/esig-audit-immutability.contract.test.ts > Part 11 DB-level immutability — electronic_signatures > refuses UPDATE of substantive columns (signer, hash, meaning, digest)
+ ✓ tests/schema-contract/esig-audit-immutability.contract.test.ts > Part 11 DB-level immutability — electronic_signatures > refuses DELETE outright
+ ✓ tests/schema-contract/esig-audit-immutability.contract.test.ts > Part 11 DB-level immutability — electronic_signatures > permits ONLY the write-once supersession transition, then freezes the row
+ ✓ tests/schema-contract/esig-audit-immutability.contract.test.ts > Part 11 DB-level immutability — device_audit_trail > INSERT still works
+ ✓ tests/schema-contract/esig-audit-immutability.contract.test.ts > Part 11 DB-level immutability — device_audit_trail > refuses UPDATE of any column — strictly append-only
+ ✓ tests/schema-contract/esig-audit-immutability.contract.test.ts > Part 11 DB-level immutability — device_audit_trail > refuses DELETE — history cannot be erased
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > e-signature verify round-trip (§11.70 integrity) > a freshly created signature validates as valid — hash covers the stored manifest
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > e-signature verify round-trip (§11.70 integrity) > detects a manifest that does not match its hash — integrity is not vacuous
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > release-gate OQ-3 uniqueness backstop > refuses a second ACTIVE release signature for the same (org, digest)
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > release-gate OQ-3 uniqueness backstop > allows the SAME digest once the first is superseded (append-only re-sign)
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > release-gate OQ-3 uniqueness backstop > does NOT block document multi-signature (different signature_type, same digest)
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the revocation statement from signature-persistence.ts succeeds (supersession + the verification column group in one statement)
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a superseded row can never be modified again
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the verification column group cannot change outside a supersession
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a supersession cannot restore validity or give the superseded signature a status other than revoked
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the attested columns never change, even in the supersession statement
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a plain supersession (pointer only) still passes, and DELETE is refused
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > the void statement from signature-persistence.ts lands on the row: out of force, no successor, attested columns untouched
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > a voided row can never be modified again: not re-validated, not superseded, not touched
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > a void sets the verification column group and nothing else, and never leaves the row valid
+ ✓ server/startup/__tests__/middleware.guards.test.ts > startup middleware guard helpers > detects Concept2Cure API routes from originalUrl/path/url
+ ✓ server/startup/__tests__/middleware.guards.test.ts > startup middleware guard helpers > blocks only destructive audit mutations and precise bulk-delete paths
+ Test Files  4 passed (4)
+      Tests  24 passed | 1 skipped (25)
+
+## Every suite touching a void or this trigger, plus server/services/part11: 21 files, 230 passed, 1 skipped

@@ -1,0 +1,52 @@
+# r2c: after the mutant runs, machine-attribution.ts changed in its JSDoc only (three statements corrected).
+# diff <the byte copy the mutant runs used (sha256 = r2c-sums-final.txt)> <final>:
+97,99c97,99
+<  *   `<?x?>`. The first three are text a browser shows (the last three it
+<  *   hides as comments), and a match that keeps them can only fail. Stripping
+<  *   every `<…>` run (periodic review 2026-09-28, editor family, the batch-draft
+---
+>  *   `<?x?>`. The first two are text a browser shows (the last three it hides
+>  *   as comments), and a match that keeps them can only fail. Stripping every
+>  *   `<…>` run (periodic review 2026-09-28, editor family, the batch-draft
+102,103c102,103
+<  * - A tag with a `<` inside it is not stripped, and one with a quoted `>` is
+<  *   stripped only up to it: the rest stays, and the match fails.
+---
+>  * - A tag with a `<` or a quoted `>` inside it is stripped at most in part:
+>  *   what is left stays, and the match fails.
+125,129c125,129
+<  * of the verifier holds: the `\|` table escape reads as `|` and `*` emphasis
+<  * markers are dropped, because the editor shows neither. Every text the
+<  * lineage compares is text as shown, so it never sets it, and the verifier
+<  * never sets it for a claim: a claim with an asterisk the record lacks then
+<  * does not verify.
+---
+>  * of the verifier holds: the `\|` table escape reads as `|` and every `*` is
+>  * dropped (emphasis and list markers), because the editor shows neither. Every
+>  * text the lineage compares is text as shown, so it never sets it, and the
+>  * verifier never sets it for a claim: a claim with an asterisk the record
+>  * lacks then does not verify.
+
+# Later, two more comment-only corrections (a doc comment in the route, a block comment in the test):
+# diff <the byte copy the mutant runs used> <final> for server/routes/batch-draft-routes.ts:
+271,272c271,273
+<  *  when a claim verified; otherwise every clause is recorded as the accepter's
+<  *  own, and these say so too. */
+---
+>  *  when a claim verified. Otherwise this accept records none of its text as
+>  *  AnA's (a clause an earlier accept verified keeps its own attribution), and
+>  *  these do not say it does. */
+# diff <r2c-sums-final.txt state, the test file the mutant runs used> <final> for the lineage test (no runner copy: no mutant edits the test; reconstructed by reversing the edit):
+# reversed text sha256 = 753f1ae3d9f3c06f3d818265f33c2d1cabfdd456a382705032c1cddda499e32a (r2c-sums-final.txt had 753f1ae3d9f3c06f3d818265f33c2d1cabfdd456a382705032c1cddda499e32a) MATCH
+--- mutant-run
++++ final
+@@ -570,7 +570,7 @@
+ 
+ /* The audit reason, the superseded version's summary and lastDraftSource were
+    written the same on every accept, naming AnA even when nothing verified and
+-   every clause was recorded as the accepter's. They name AnA only when a
++   the accept recorded none of its text as AnA's. They name AnA only when a
+    claim verified. */
+ describe('POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does', () => {
+   const NOT_ANA = ["Batch-draft text accepted into document; none of it verified as AnA's", "Superseded by batch-draft text not verified as AnA's", 'batch-unverified'];
+

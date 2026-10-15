@@ -1,0 +1,24 @@
+# npm run test:db, this change, RLS_ENFORCE=on, app_service runtime role, 2026-10-01T15:47:07Z
+# The one failure (actor-displays, project activity feed) is order-dependent: it passes alone and on trunk's code, and is noted on the board.
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers 35ms
+stdout | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stderr | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stdout | tests/db/vault-fixity.dbtest.ts
+stderr | tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > reports each version verified, altered or missing, and lists the failures
+stderr | tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > reports each version verified, altered or missing, and lists the failures
+stdout | tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > the document's history shows the check
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > reports each version verified, altered or missing, and lists the failures 48ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > writes one chained verdict per version, naming the person 3ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > the document's history shows the check 41ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > a viewer is refused, and another organisation's program is not found 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 123 passed (124)
+      Tests  1 failed | 1304 passed (1305)

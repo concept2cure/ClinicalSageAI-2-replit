@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:07:12.504Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > retains recorded machine composition identities without relabeling attribution or changing the partition 31ms
+   → expected [ Array(4) ] to deeply equal [ [ 'machine_draft', …(1) ], …(3) ]
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > partitions the document by character, and the parts sum exactly
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > counts characters, not spans — the figure span counts would get wrong
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > counts overlapping citations once rather than over-crediting the document
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports the WEAKER claim where two kinds cover the same characters
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports stale citations as stale AND still sourced, never as unattributed
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > clips a span that reaches past the end of the current text
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports a document with no lineage as fully unattributed, not as covered
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > projects the spans for painting — clipped, ordered, and without the checksum
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > marks a span whose source moved as stale for the painter too
+ ↓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports empty content as empty rather than dividing by zero
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > retains recorded machine composition identities without relabeling attribution or changing the partition
+AssertionError: expected [ Array(4) ] to deeply equal [ [ 'machine_draft', …(1) ], …(3) ]
+
+- Expected
++ Received
+
+  [
+    [
+      "machine_draft",
+-     "workflow_import",
++     undefined,
+    ],
+    [
+      "accepted_machine_draft",
+-     "ana",
++     undefined,
+    ],
+    [
+      "author_assertion",
+-     null,
++     undefined,
+    ],
+    [
+      "cre_evidence_source",
+-     null,
++     undefined,
+    ],
+  ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts:151:75
+    149|     const summary = await summarizeDocumentAttribution(ORG, DOC, 50, e…
+    150|
+    151|     expect(summary.spans.map(s => [s.provenanceKind, s.machineAuthorId…
+       |                                                                           ^
+    152|       ['machine_draft', 'workflow_import'],
+    153|       ['accepted_machine_draft', 'ana'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  22:07:09
+   Duration  7.20s (transform 1.56s, setup 128ms, import 3.03s, tests 3.60s, environment 0ms)

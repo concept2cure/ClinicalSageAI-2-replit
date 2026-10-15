@@ -16,7 +16,16 @@
  *                            function the service's verifyChain runs
  *                            (verifyTamperProofLogRows) — one recipe, not two.
  *   public.audit_logs        sha256_chain (server/services/audit/chain.ts) and
- *                            the optional hmac_seal keyed by AUDIT_HMAC_KEY.
+ *                            the optional hmac_seal keyed by AUDIT_HMAC_KEY;
+ *                            and every chain head against the latest anchor in
+ *                            the evidence bucket named by AUDIT_ANCHOR_BUCKET
+ *                            (chain-anchor.ts verifyChainHead). The walk cannot
+ *                            see the newest rows removed; the anchor can. A
+ *                            missing or changed anchored head is `broken`;
+ *                            without an anchor bucket the table's `head` says
+ *                            the verdict is the walk only; an anchor that
+ *                            cannot be read makes the table unverifiable (P0-8
+ *                            follow-up, 2026-10-01).
  *   public.audit_events      record_hash/previous_hash set by the DB trigger
  *                            audit_events_hash_chain (recomputed here IN SQL
  *                            with the trigger's own expression, per org), and
@@ -46,6 +55,7 @@ import {
   verifyAuditChainSeals,
   verifyAuditEventsChainSeals,
 } from '../../server/services/audit/chain.ts';
+import { resolveAuditAnchorStore, verifyChainHead } from '../../server/services/audit/chain-anchor.ts';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 dotenv.config({ path: path.join(repoRoot, '.env'), quiet: true });
@@ -87,7 +97,7 @@ async function verifyTamperProofLog(client, env) {
   };
 }
 
-async function verifyAuditLogs(client, env) {
+async function verifyAuditLogs(client, env, anchorStore) {
   const name = 'public.audit_logs';
   if (!(await tableExists(client, name))) return { table: name, status: 'unverifiable', reason: 'table absent' };
   const counts = (await client.query(
@@ -103,6 +113,22 @@ async function verifyAuditLogs(client, env) {
     const seals = await verifyAuditChainSeals(client);
     if (!seals.valid) return { ...out, status: 'broken', firstBreak: { sealedIndex: seals.brokenAt, reason: 'hmac_seal does not verify' } };
     out.sealsVerified = counts.sealed;
+  }
+  // The head: what the walk cannot see. An anchor that cannot be read is not a verdict.
+  let head;
+  try {
+    head = await verifyChainHead(client, { store: anchorStore });
+  } catch (err) {
+    return { ...out, status: 'unverifiable', reason: `the anchor could not be read: ${err.message}` };
+  }
+  out.head = head;
+  if (head.status === 'broken') {
+    const b = head.breaks[0];
+    return {
+      ...out,
+      status: 'broken',
+      firstBreak: { id: b.rowId, organizationId: b.organizationId, kind: b.kind, reason: 'chain head missing or different against the latest anchor' },
+    };
   }
   return out;
 }
@@ -155,9 +181,14 @@ async function verifyAuditEvents(client, env) {
   return out;
 }
 
-/** Verify every chained table on `client`. Pure over the connection: SELECTs only. */
-export async function verifyAuditChains(client, env = process.env) {
-  const tables = [await verifyTamperProofLog(client, env), await verifyAuditLogs(client, env), await verifyAuditEvents(client, env)];
+/**
+ * Verify every chained table on `client`. Pure over the connection: SELECTs
+ * only (and reads of the anchor bucket). `anchorStore` omitted: resolved from
+ * `env` (AUDIT_ANCHOR_BUCKET); null: not configured; a proof passes its own.
+ */
+export async function verifyAuditChains(client, env = process.env, { anchorStore } = {}) {
+  const store = anchorStore !== undefined ? anchorStore : resolveAuditAnchorStore(env);
+  const tables = [await verifyTamperProofLog(client, env), await verifyAuditLogs(client, env, store), await verifyAuditEvents(client, env)];
   const broken = tables.filter((t) => t.status === 'broken');
   const unverifiable = tables.filter((t) => t.status === 'unverifiable');
   const verdict = broken.length ? 'broken' : unverifiable.length ? 'unverifiable' : 'ok';

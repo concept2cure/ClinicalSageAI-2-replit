@@ -2,7 +2,7 @@
  * @fileoverview Investigator's Brochure (IB) Authoring Engine
  * @module server/services/authoring/ib-builder
  *
- * Generates a complete ICH E6(R2) §7 Investigator's Brochure with AI-powered
+ * Generates a complete ICH E6(R3) Appendix A Investigator's Brochure with AI-powered
  * section drafting. Pulls source content from the nonclinical summaries
  * (M2.4 Nonclinical Overview / M2.6 Written & Tabulated Summaries), the clinical
  * summaries (M2.5 Clinical Overview / M2.7 Clinical Summary), and a structured
@@ -29,11 +29,12 @@
  *   loaders' study shape (`NonclinicalStudyInput`) so the IB consumes the same
  *   upstream artefacts the CTD composers produce. No existing files are edited.
  *
- * @compliance ICH E6(R2) §7; ICH M4S(R2); ICH M4E(R2).
+ * @compliance ICH E6(R3) Appendix A (Investigator's Brochure); ICH M4S(R2); ICH M4E(R2).
  */
 
 import type { M2Summary } from '../m2-summary-builders.js';
 import type { NonclinicalStudyInput } from '../preclinical/nonclinical-m24-adapter.js';
+import { getDocumentTemplate } from '../market-specs/document-template-library.js';
 
 // AI-powered drafting via the unified AI client (Claude primary) — identical
 // acquisition pattern to csr-builder so behaviour and audit routing match.
@@ -46,7 +47,7 @@ try {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// IB SECTION STRUCTURE (ICH E6(R2) §7 / IB guidance)
+// IB SECTION STRUCTURE (ICH E6(R3) Appendix A / IB guidance)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface IBSection {
@@ -69,15 +70,27 @@ export type IBInputDomain =
   | 'safety' // integrated safety / marketing experience
   | 'none'; // boilerplate / structural
 
+/**
+ * Body headings 1–6 come from the platform's one IB outline (market-specs
+ * 'investigators_brochure', ICH E6(R3) Appendix A); the front matter, the
+ * sub-sections and the gap-engine inputs are this builder's own until that
+ * outline carries them (2026-10-15).
+ */
+function ibHeading(number: string): string {
+  const s = getDocumentTemplate('investigators_brochure')?.sections.find((x) => x.number === number);
+  if (!s) throw new Error(`The IB outline has no section ${number}.`);
+  return s.heading;
+}
+
 export const IB_STRUCTURE: IBSection[] = [
   { number: '0', title: 'Title Page', required: true, status: 'empty', inputs: ['none'], description: 'Sponsor name, product identifier(s), IB edition number and date, supersedes statement' },
   { number: '0a', title: 'Confidentiality Statement', required: true, status: 'empty', inputs: ['none'], description: 'Confidentiality notice and intended-recipient statement for investigators and IRB/IEC' },
   { number: '0b', title: 'Table of Contents', required: true, status: 'empty', inputs: ['none'], description: 'Auto-generated table of contents for the IB' },
-  { number: '1', title: 'Summary', required: true, status: 'empty', inputs: ['nonclinical', 'clinical', 'safety'], description: 'Concise summary (typically <2 pages) of significant physical, chemical, pharmaceutical, pharmacological, toxicological, pharmacokinetic, and clinical information' },
-  { number: '2', title: 'Introduction', required: true, status: 'empty', inputs: ['product', 'none'], description: 'Chemical name, active ingredients, pharmacological class, rationale and anticipated indication(s), general approach to evaluation' },
-  { number: '3', title: 'Physical, Chemical, and Pharmaceutical Properties and Formulation', required: true, status: 'empty', inputs: ['product'], description: 'Description of the substance (structural formula), physical/chemical/pharmaceutical properties, formulation and excipients, storage and handling' },
+  { number: '1', title: ibHeading('1'), required: true, status: 'empty', inputs: ['nonclinical', 'clinical', 'safety'], description: 'Concise summary (typically <2 pages) of significant physical, chemical, pharmaceutical, pharmacological, toxicological, pharmacokinetic, and clinical information' },
+  { number: '2', title: ibHeading('2'), required: true, status: 'empty', inputs: ['product', 'none'], description: 'Chemical name, active ingredients, pharmacological class, rationale and anticipated indication(s), general approach to evaluation' },
+  { number: '3', title: ibHeading('3'), required: true, status: 'empty', inputs: ['product'], description: 'Description of the substance (structural formula), physical/chemical/pharmaceutical properties, formulation and excipients, storage and handling' },
   {
-    number: '4', title: 'Nonclinical Studies', required: true, status: 'empty', inputs: ['nonclinical'], description: 'Summary of nonclinical pharmacology, pharmacokinetics, and toxicology results',
+    number: '4', title: ibHeading('4'), required: true, status: 'empty', inputs: ['nonclinical'], description: 'Summary of nonclinical pharmacology, pharmacokinetics, and toxicology results',
     childSections: [
       { number: '4.1', title: 'Nonclinical Pharmacology', required: true, status: 'empty', inputs: ['nonclinical'], description: 'Primary and secondary pharmacodynamics, mechanism of action, safety pharmacology' },
       { number: '4.2', title: 'Pharmacokinetics and Product Metabolism in Animals', required: true, status: 'empty', inputs: ['nonclinical'], description: 'Absorption, distribution, metabolism, and excretion (ADME) in animal species' },
@@ -85,14 +98,14 @@ export const IB_STRUCTURE: IBSection[] = [
     ],
   },
   {
-    number: '5', title: 'Effects in Humans', required: true, status: 'empty', inputs: ['clinical', 'safety'], description: 'Summary of clinical pharmacokinetics, metabolism, safety, efficacy, and marketing experience',
+    number: '5', title: ibHeading('5'), required: true, status: 'empty', inputs: ['clinical', 'safety'], description: 'Summary of clinical pharmacokinetics, metabolism, safety, efficacy, and marketing experience',
     childSections: [
       { number: '5.1', title: 'Pharmacokinetics and Metabolism in Humans', required: true, status: 'empty', inputs: ['clinical'], description: 'Human PK including absorption, distribution, protein binding, metabolism, excretion; population PK and special populations' },
       { number: '5.2', title: 'Safety and Efficacy', required: true, status: 'empty', inputs: ['clinical', 'safety'], description: 'Summary of safety and efficacy across studies; adverse drug reactions by body system; identified and potential risks' },
       { number: '5.3', title: 'Marketing Experience', required: false, status: 'empty', inputs: ['safety'], description: 'Countries where marketed/approved/withdrawn; post-marketing findings significant to safety' },
     ],
   },
-  { number: '6', title: 'Summary of Data and Guidance for the Investigator', required: true, status: 'empty', inputs: ['nonclinical', 'clinical', 'safety'], description: 'Integrated discussion of nonclinical and clinical data; practical guidance on recognition and treatment of possible overdose and adverse drug reactions; risk-benefit context' },
+  { number: '6', title: ibHeading('6'), required: true, status: 'empty', inputs: ['nonclinical', 'clinical', 'safety'], description: 'Integrated discussion of nonclinical and clinical data; practical guidance on recognition and treatment of possible overdose and adverse drug reactions; risk-benefit context' },
   { number: '7', title: 'References', required: false, status: 'empty', inputs: ['none'], description: 'List of references to publications and reports cited in the IB' },
 ];
 
@@ -193,7 +206,7 @@ export interface IBBuildJob {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Build a full Investigator's Brochure. Drafts each ICH E6(R2) §7 section via
+ * Build a full Investigator's Brochure. Drafts each ICH E6(R3) Appendix A section via
  * the unified AI gateway (falling back to templates), returns each section's
  * content with a deterministic `{ status, gaps }` verdict, and rolls up an
  * overall completeness score.
@@ -373,7 +386,7 @@ async function draftSectionWithAI(section: IBSection, request: IBBuildRequest): 
   const p = request.product;
   const sourceContext = buildSourceContext(section, request);
 
-  const systemPrompt = `You are an expert medical writer drafting an Investigator's Brochure (IB) compliant with ICH E6(R2) Section 7.
+  const systemPrompt = `You are an expert medical writer drafting an Investigator's Brochure (IB) compliant with ICH E6(R3) Appendix A (Investigator's Brochure).
 You are drafting one section of the IB for an investigational product.
 
 Product:
@@ -394,7 +407,7 @@ insert an explicit placeholder like [DATA TO BE INSERTED]. Do NOT use markdown �
         { role: 'system', content: systemPrompt },
         {
           role: 'user',
-          content: `Draft IB Section ${section.number}: ${section.title}\n\nSection scope: ${section.description}\n\nSOURCE DATA:\n${sourceContext || '[No structured source data supplied for this section.]'}\n\nWrite a complete, submission-ready draft for this section per ICH E6(R2) §7.`,
+          content: `Draft IB Section ${section.number}: ${section.title}\n\nSection scope: ${section.description}\n\nSOURCE DATA:\n${sourceContext || '[No structured source data supplied for this section.]'}\n\nWrite a complete, submission-ready draft for this section per ICH E6(R3) Appendix A.`,
         },
       ],
       {

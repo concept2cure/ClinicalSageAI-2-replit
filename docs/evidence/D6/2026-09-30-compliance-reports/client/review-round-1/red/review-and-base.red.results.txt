@@ -1,0 +1,99 @@
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > lists every report with its purpose and basis, read from the catalog route 203ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > a report that does not check the chain says so, and offers the integrity attestation 5353ms
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > shows the readers notice and no Run control when the member cannot run reports 5012ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > renders a failed catalog read as an error with a retry, never as an empty catalog 44ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > treats a 200 that is not the catalog shape as a failed read 25ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > every check intact: "All 3 integrity checks passed at generation" 5114ms
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > renders sections, the empty-section sentence, what is not recorded and the chain statement 5163ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > uses only the as-of date for an as-of report 159ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > refuses a period whose start is after its end without calling the server 104ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > shows the not-recorded refusal for a 503 and no table 139ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > uses the server sentence for a 503 when it sends one 107ms
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > maps a 403 to the readers notice and a 400 to the server message 101ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > shows at most 200 rows on screen and says the download has the rest 215ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > saves the CSV run’s export.data byte for byte, with its manifest beside it 166ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > saves the JSON bundle as data, manifest, signature and verification 134ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > reports a refused download as a failure, not a success 136ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the full audit trail entry > runs through its own signed-export endpoint and renders the rows in one table 145ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > a break is an error, not a warning, and carries its reason 5097ms
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > accessibility of the populated screen > names every control and field in the catalog, the period form and a result 5090ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > Insights with no lead program still reaches the reports 15ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > Insights with a lead program links to the reports from its left pane header 26ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > the audit trail links to the compliance reports beside its signed export 24ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > checks that could not verify are counted, with the reason 5107ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > ok:true over zero rows is never shown as verified 96ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > styles each verdict cell by its verdict, with the word always present 103ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > the full audit trail states each store on its own line, never one merged verdict 5091ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > says what the seal is, who ran the report, and that it is not an electronic signature 5098ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > copies the full SHA-256, and shows it when the browser refuses 5095ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > verifies a saved JSON bundle with exactly its data, manifest and signature 16ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > verifies a CSV with its manifest file, sending the CSV text exactly as read 12ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > refuses files that are not a saved report without calling the server 12ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 3. an as-of report says which fields are as of the date > describes the as-of rule, and notes current status for a past date only 43ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > a section without a rows array could not be read 5095ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > a section whose row count disagrees with its rows could not be read 5102ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > one malformed catalog entry fails the whole read 5006ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 5. Download CSV says it ran the report again > names the new export and its time, and warns when its row counts differ 91ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 6. timestamps read as UTC > formats ISO instants as YYYY-MM-DD HH:MM:SS UTC and marks their column 100ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 7. no audit-trail row has a blank actor > adds a User id column when a row has no user name 98ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 7. no audit-trail row has a blank actor > leaves the column out when every row names its user 125ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > takes the readers notice from the catalog 5006ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > a restricted-read 403 shows the readers notice; any other 403 shows its own message 116ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > a 429 for a run in progress says a report is already running 5118ms
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 9. Insights renders a 503 overview as an error > shows the error state, not "No program readiness yet", and keeps the reports reachable 30ms
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > shows the readers notice and no Run control when the member cannot run reports
+TestingLibraryElementError: Unable to find an element with the text: Available to organisation owners, admins and managers, and platform administrators.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > renders sections, the empty-section sentence, what is not recorded and the chain statement
+TestingLibraryElementError: Unable to find an element with the text: This report does not verify the audit chain.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > maps a 403 to the readers notice and a 400 to the server message
+AssertionError: expected 'Available to organisation owners, adm…' to match 'Available to organisation owners, adm…'
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > accessibility of the populated screen > names every control and field in the catalog, the period form and a result
+TestingLibraryElementError: Unable to find an element with the text: This report does not verify the audit chain.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > a report that does not check the chain says so, and offers the integrity attestation
+TestingLibraryElementError: Unable to find an element with the text: This report does not verify the audit chain.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > every check intact: "All 3 integrity checks passed at generation"
+TestingLibraryElementError: Unable to find an element with the text: All 3 integrity checks passed at generation. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > a break is an error, not a warning, and carries its reason
+TestingLibraryElementError: Unable to find an element with the text: A break was found at generation. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > checks that could not verify are counted, with the reason
+TestingLibraryElementError: Unable to find an element with the text: 1 of 3 checks could not verify. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > ok:true over zero rows is never shown as verified
+AssertionError: expected <span></span> to be null
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > styles each verdict cell by its verdict, with the word always present
+AssertionError: expected undefined to be 'error' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > the full audit trail states each store on its own line, never one merged verdict
+TestingLibraryElementError: Unable to find an element with the text: Event chain: intact, 5 rows checked. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > says what the seal is, who ran the report, and that it is not an electronic signature
+TestingLibraryElementError: Unable to find role="heading" and name "What the seal means"
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > copies the full SHA-256, and shows it when the browser refuses
+TestingLibraryElementError: Unable to find role="button" and name "Copy SHA-256"
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > verifies a saved JSON bundle with exactly its data, manifest and signature
+TestingLibraryElementError: Unable to find a label with the text of: Saved report files
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > verifies a CSV with its manifest file, sending the CSV text exactly as read
+TestingLibraryElementError: Unable to find a label with the text of: Saved report files
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > refuses files that are not a saved report without calling the server
+TestingLibraryElementError: Unable to find a label with the text of: Saved report files
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 3. an as-of report says which fields are as of the date > describes the as-of rule, and notes current status for a past date only
+TestingLibraryElementError: Unable to find an element with the text: Membership is taken as of one date; other fields are shown as they are when the report is run, as each section notes.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > a section without a rows array could not be read
+TestingLibraryElementError: Unable to find an element with the text: This section could not be read.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > a section whose row count disagrees with its rows could not be read
+TestingLibraryElementError: Unable to find an element with the text: This section could not be read.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > one malformed catalog entry fails the whole read
+TestingLibraryElementError: Unable to find role="alert"
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 5. Download CSV says it ran the report again > names the new export and its time, and warns when its row counts differ
+TestingLibraryElementError: Unable to find an element with the text: Each run is recorded on the audit trail. Download CSV runs the report again and is recorded as its own run.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 6. timestamps read as UTC > formats ISO instants as YYYY-MM-DD HH:MM:SS UTC and marks their column
+TestingLibraryElementError: Unable to find an element with the text: When (UTC). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 7. no audit-trail row has a blank actor > adds a User id column when a row has no user name
+TestingLibraryElementError: Unable to find an element with the text: User id. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > takes the readers notice from the catalog
+TestingLibraryElementError: Unable to find an element with the text: Available to owners and auditors.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > a restricted-read 403 shows the readers notice; any other 403 shows its own message
+AssertionError: expected 'Available to organisation owners, adm…' to be 'Available to organisation owners, adm…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > a 429 for a run in progress says a report is already running
+TestingLibraryElementError: Unable to find an element with the text: A report is already running for your organisation. Try again when it finishes.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 9. Insights renders a 503 overview as an error > shows the error state, not "No program readiness yet", and keeps the reports reachable
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Audit & compliance reports"
+ Test Files  2 failed (2)
+      Tests  27 failed | 16 passed (43)

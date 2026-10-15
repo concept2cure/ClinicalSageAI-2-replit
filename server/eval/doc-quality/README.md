@@ -30,10 +30,13 @@ The metric functions (`doc-quality-metrics.ts`) are pure and unit-tested
 
 ## Status / how to make the numbers real
 
-`gold-tasks.json` carries the ground truth a PQ run is scored against: 10
-generation tasks per `docType` (the floor in `server/eval/pq/pq-protocol.json`,
-enforced by `server/eval/pq/__tests__/gold-bank-floor.test.ts`) and 4 extraction
-tasks per `docType`, each with a source `input`.
+`gold-tasks.json` carries the ground truth a PQ run is scored against: 12
+generation and 12 extraction tasks per `docType`, each with a source `input`.
+`server/eval/pq/pq-protocol.json` sets a floor of 10 for each component.
+`server/eval/pq/__tests__/gold-bank-floor.test.ts` checks that the bank meets
+both floors with headroom, so retiring one task does not drop it below either.
+It also checks that every expected extraction value is stated in its own
+source passage (P-31 conditions 3 and 5, 2026-10-15).
 
 **Most tasks carry no captured candidate, deliberately.** A `candidateContent` /
 `candidateExtraction` is a *real model output*; none was captured for the tasks
@@ -47,9 +50,9 @@ candidate and scores only what the pinned model returns.
 To make the per-document-type accuracy publishable:
 
 1. ~~Expand `gold-tasks.json` to 10+ tasks per `docType`~~ — **done** for
-   generation (510k, cer, ind at 10 each) and extraction (4 each, which the
-   protocol sets no floor for). Adding a NEW `docType` re-opens this: the floor
-   applies to every document type present, so a new one starts below it.
+   both components (510k, cer, ind at 12 each, against floors of 10). Adding a
+   NEW `docType` re-opens this: the floors apply to every document type
+   present, so a new one starts below them.
 2. ~~Wire `--live` mode in `run-eval.ts`~~ — **do not. This step is done, and
    not here.** `--live` existed in this runner until 2026-09-22 and was removed
    deliberately: it scored a task's captured candidate in preference to the live

@@ -1,0 +1,16 @@
+# green: the gate against the repository with this change
+[ci:image-document-runtime] OK — 4 runtime(s) copied, their imports installed and probed.
+exit 0
+
+# the gate's self-test (each check shown failing on the real files with its line removed)
+ok 1 - the repository passes
+ok 2 - fails when the runtimes are not copied into the production stage
+ok 3 - fails when the virtualenv does not install the packages, or nothing probes them
+ok 4 - fails when the image does not point ANA_DOCX_PYTHON at the virtualenv
+ok 5 - fails when a spawner runs plain python3
+ok 6 - fails when a runtime starts importing a package nothing installs
+ok 7 - fails when requirements.txt stops pinning a package the runtimes import
+ok 8 - reads imports the way the runtimes write them
+# tests 8
+# pass 8
+# fail 0

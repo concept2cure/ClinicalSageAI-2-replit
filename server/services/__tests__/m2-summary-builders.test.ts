@@ -7,7 +7,8 @@
 import { describe, it, expect } from 'vitest';
 
 import { buildM25ClinicalOverview, buildM24NonclinicalOverview, buildM27ClinicalSummary, buildM23QualityOverallSummary, type CSRSummaryInput } from '../m2-summary-builders';
-import { composeModule3FromCanonicalSources } from '../module3Composer';
+import { composeModule3FromCanonicalSources, type CanonicalSource } from '../module3Composer';
+import { assessRecordedTrending, inspectRecordedSeriesCriterion, unassignedObservations, type StabilityPointRecord } from '../cmc/recorded-stability';
 
 const pivotal: CSRSummaryInput = {
   studyId: 'S3',
@@ -16,6 +17,9 @@ const pivotal: CSRSummaryInput = {
   studyDesign: 'randomized, double-blind, placebo-controlled',
   primaryEndpoint: 'change in HbA1c at 24 weeks',
   primaryResult: '-1.2% vs placebo (p<0.001)',
+  // 2026-10-15: efficacy is concluded only from a recorded outcome, never from
+  // a Phase 3 CSR existing; this fixture records the outcome its result describes.
+  primaryEndpointMet: true,
   sampleSize: 600,
   ittPopulation: 590,
   saeCount: 12,
@@ -54,6 +58,140 @@ describe('buildM23QualityOverallSummary (QOS via Module 3 composition)', () => {
   });
 });
 
+const condition = '25°C/60%RH';
+const shortTimes = [0, 3, 6, 9, 12, 18, 24];
+const monthlyTimes = Array.from({ length: 37 }, (_, index) => index);
+const materials = ['drug_substance', 'drug_product'] as const;
+type Material = typeof materials[number];
+const points = (times: number[], parameter = 'Assay'): StabilityPointRecord[] => times.map((timePoint, index) => ({
+  timePoint, parameter, result: 100 - timePoint * 0.1 + [0.03, -0.02, 0.01][index % 3], specification: '>= 95%',
+}));
+const unnamed = (timePoint: number): StabilityPointRecord => ({ timePoint, parameter: '', result: 99, specification: '>= 95%' });
+const source = (material: Material, times: number[], results: StabilityPointRecord[], id = 41): CanonicalSource => ({
+  id: `recorded-study-${id}`, sourceType: 'stability', sourceHash: `fixture-hash-${id}`,
+  sourcePayload: {
+    studyName: 'Recorded LT', stabilityScope: material,
+    storageCondition: condition, storageConditions: [condition], timePoints: times,
+    drugSubstanceTimePoints: material === 'drug_substance' ? times : null,
+    drugSubstanceStorageCondition: material === 'drug_substance' ? condition : null,
+    shelfLifeClaim: '24 months', drugProductShelfLifeClaim: material === 'drug_product' ? '24 months' : null,
+    batchesStudied: [`B${id}`], results,
+  },
+});
+const compose = (material: Material, sources: CanonicalSource[]) => {
+  const sourcesBefore = globalThis.structuredClone(sources);
+  const sections = composeModule3FromCanonicalSources(sources);
+  const upstream = sections.find(section => section.sectionKey === (material === 'drug_substance' ? '3.2.S.7' : '3.2.P.8'))!;
+  const sectionsBefore = globalThis.structuredClone(sections);
+  const qos = buildM23QualityOverallSummary({ module3Sections: sections });
+  const heading = material === 'drug_substance' ? '2.3.S.7 Stability' : '2.3.P.8 Stability';
+  const paragraph = qos.narrative.split(`${heading}\n`)[1].split('\n\n')[0];
+  expect(sources).toEqual(sourcesBefore);
+  expect(sections).toEqual(sectionsBefore);
+  const results = upstream.tables.find(table => table.title.startsWith('Stability Results'))!;
+  expect(results.rows).toHaveLength(sources.reduce((count, study) => count + study.sourcePayload.results.length, 0));
+  expect(results.rows.every(row => row[6] === 'within')).toBe(true);
+  return { upstream, paragraph };
+};
+
+describe('QOS preserves the upstream stability qualification', () => {
+  it.each(materials)('keeps the %s hold and row reason after a recorded monthly schedule', material => {
+    const results = [...points(monthlyTimes), unnamed(36)];
+    const { upstream, paragraph } = compose(material, [source(material, monthlyTimes, results)]);
+    expect(upstream.narrativeDraft).toMatch(/All 38 recorded result\(s\).*within their recorded acceptance criteria/);
+    expect(upstream.narrativeDraft).toMatch(/NOT established/);
+    expect(upstream.narrativeDraft).toMatch(/recorded-study-41, row 38:.*no assigned parameter/);
+    expect(paragraph).toContain('NOT established');
+    expect(paragraph).toMatch(/recorded-study-41, row 38:.*no assigned parameter/);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('retains the complete %s source/row reason when a short hold already fits', material => {
+    const results = [...points(shortTimes), unnamed(24)];
+    const reason = `Stability source recorded-study-41, row 8: ${unassignedObservations(results)[0].reason}`;
+    const { upstream, paragraph } = compose(material, [source(material, shortTimes, results)]);
+    expect(upstream.narrativeDraft).toContain(reason);
+    expect(paragraph).toContain('NOT established');
+    expect(paragraph).toContain(reason);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('retains the existing %s criterion-conflict reason', material => {
+    const results = points(shortTimes).map((point, index) => ({ ...point, specification: index < 3 ? '>= 95%' : '>= 90%' }));
+    const reason = inspectRecordedSeriesCriterion(results).reason!;
+    const { upstream, paragraph } = compose(material, [source(material, shortTimes, results)]);
+    expect(reason).toContain('different acceptance criteria');
+    expect(upstream.narrativeDraft).toContain(reason);
+    expect(upstream.narrativeDraft).toContain('NOT established');
+    expect(paragraph).toContain(reason);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('retains a named unestimable %s trend without changing its assessment', material => {
+    const water = points(shortTimes, 'Water').slice(0, 2).map(point => ({ ...point, result: 0.3, specification: '<= 2%' }));
+    const results = [...points(shortTimes), ...water];
+    const trend = assessRecordedTrending({ id: 41, storageConditions: [condition], stabilityData: results });
+    if (!trend.ok) throw new Error(trend.error);
+    const waterTrend = trend.data.series.find(series => series.parameter === 'Water')!.outcome;
+    expect(waterTrend.ok).toBe(false);
+    if (waterTrend.ok) throw new Error('Expected the existing short-series refusal');
+    const reason = `Water (${condition}): trend not assessed: ${waterTrend.detail}.`;
+    const { upstream, paragraph } = compose(material, [source(material, shortTimes, results)]);
+    expect(upstream.narrativeDraft).toContain(reason);
+    expect(paragraph).toContain(reason);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('retains a later %s study’s source and row refusal', material => {
+    const laterResults = [unnamed(36)];
+    const reason = `Stability source recorded-study-42, row 1: ${unassignedObservations(laterResults)[0].reason}`;
+    const { upstream, paragraph } = compose(material, [
+      source(material, monthlyTimes, points(monthlyTimes)), source(material, monthlyTimes, laterResults, 42),
+    ]);
+    expect(upstream.narrativeDraft).toContain(reason);
+    expect(upstream.narrativeDraft).toContain('NOT established');
+    expect(paragraph).toContain(reason);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('keeps a valid %s monthly series and its trend without inventing a hold', material => {
+    const { upstream, paragraph } = compose(material, [source(material, monthlyTimes, points(monthlyTimes))]);
+    expect(upstream.narrativeDraft).toContain('supporting stability of');
+    expect(upstream.narrativeDraft).toContain('no out-of-trend points');
+    expect(paragraph).not.toMatch(/NOT established|no assigned parameter|trend not assessed/);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it('keeps headline tables, input keys, gaps and completeness for the supplied stability sections', () => {
+    const sources = materials.map(material => source(material, shortTimes, points(shortTimes)));
+    const sourcesBefore = globalThis.structuredClone(sources);
+    const stabilitySections = composeModule3FromCanonicalSources(sources).filter(section => ['3.2.S.7', '3.2.P.8'].includes(section.sectionKey));
+    const sectionsBefore = globalThis.structuredClone(stabilitySections);
+    const qos = buildM23QualityOverallSummary({ module3Sections: stabilitySections });
+    expect(qos.inputSectionKeys).toEqual(['3.2.S.7', '3.2.P.8']);
+    // 2026-10-15: gaps and completeness are over the 15 ICH M4Q sections the QOS
+    // summarizes; this pinned 8 of an invented `expected = 10` (20%).
+    expect(qos.gaps).toEqual(
+      ['3.2.S.1', '3.2.S.2', '3.2.S.3', '3.2.S.4', '3.2.S.5', '3.2.S.6', '3.2.P.1', '3.2.P.2', '3.2.P.3', '3.2.P.4', '3.2.P.5', '3.2.P.6', '3.2.P.7']
+        .map(key => `${key} — not composed`),
+    );
+    expect(qos.completeness).toBe(13);
+    expect(qos.tables).toEqual(stabilitySections.map(section => section.tables[0]));
+    expect(sources).toEqual(sourcesBefore);
+    expect(stabilitySections).toEqual(sectionsBefore);
+  });
+
+  it('keeps missing-section placeholders and absence metadata', () => {
+    const qos = buildM23QualityOverallSummary({ module3Sections: [] });
+    expect(qos.narrative).toContain('[Section 3.2.S.7 not yet composed — stability data missing]');
+    expect(qos.narrative).toContain('[Section 3.2.P.8 not yet composed]');
+    expect(qos.inputSectionKeys).toEqual([]);
+    expect(qos.gaps).toHaveLength(15); // the ICH M4Q 2.3.S/2.3.P list (was an invented 10)
+    expect(qos.completeness).toBe(0);
+    expect(qos.tables).toEqual([]);
+  });
+});
+
 describe('buildM25ClinicalOverview', () => {
   it('composes the 2.5.1–2.5.6 critical assessment and leaves the benefit-risk conclusion to the sponsor', () => {
     const r = buildM25ClinicalOverview({
@@ -70,9 +208,13 @@ describe('buildM25ClinicalOverview', () => {
     expect(r.narrative).not.toMatch(/favorable/);
     expect(r.narrative).toMatch(/requires the sponsor's medical and regulatory judgment/);
     expect(r.narrative).toMatch(/BX-301/); // pivotal study cited
-    expect(r.gaps).toEqual(['benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)']);
-    // Completeness measures the clinical data present, which is all of it.
-    expect(r.completeness).toBe(100);
+    expect(r.gaps).toEqual([
+      'biopharmaceutics (2.5.2): no biopharmaceutic data recorded',
+      'benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)',
+    ]);
+    // Completeness measures the clinical data present. 2026-10-15: this pinned
+    // 100 by counting 2.5.2 biopharmaceutics, which has no input, as summarized.
+    expect(r.completeness).toBe(83);
     expect(r.tables.map(t => t.title)).toContain('Benefit-Risk Safety Overview');
   });
 
@@ -105,7 +247,7 @@ describe('buildM25ClinicalOverview', () => {
   });
 });
 
-describe('buildM24NonclinicalOverview — the conclusion is only drawn when nothing is open', () => {
+describe('buildM24NonclinicalOverview — the safety conclusion is never drawn automatically', () => {
   const study = (studyType: any, id: string) => ({ studyId: id, studyType, primaryFinding: 'No finding of concern.', reportSection: '4.2.1.1' });
 
   it('does not say the safety profile supports the plan while it lists the missing study categories', () => {
@@ -115,11 +257,16 @@ describe('buildM24NonclinicalOverview — the conclusion is only drawn when noth
     expect(r.narrative).toMatch(/incomplete; no conclusion on the proposed clinical investigational plan is drawn pending:/);
   });
 
-  it('draws the conclusion when every category the overview requires is present', () => {
+  // 2026-10-15: this pinned "the safety profile ... supports the proposed
+  // clinical investigational plan. No nonclinical issues preclude clinical
+  // development" once each category had a study — whatever the studies found.
+  it('leaves the conclusion to the sponsor when every category the overview requires is present', () => {
     const all = ['pharmacology', 'safety_pharmacology', 'pharmacokinetics', 'toxicology', 'reproductive_tox', 'genotoxicity', 'carcinogenicity'].map((t, i) => study(t, `S-${i}`));
     const r = buildM24NonclinicalOverview({ nonclinicalStudies: all, drugSubstanceName: 'BX-115' });
-    expect(r.gaps).toHaveLength(0);
-    expect(r.narrative).toMatch(/supports the proposed clinical investigational plan/);
+    expect(r.gaps).toEqual(['nonclinical safety conclusion (sponsor toxicology judgment; not drawn automatically)']);
+    expect(r.completeness).toBe(100);
+    expect(r.narrative).not.toMatch(/No nonclinical issues preclude clinical development/);
+    expect(r.narrative).toMatch(/is the sponsor's toxicology judgment and is not drawn automatically/);
   });
 });
 

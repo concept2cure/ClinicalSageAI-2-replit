@@ -87,7 +87,12 @@ export function renderIvdrPackHtml(content: IvdrPackContent): string {
 <div class="kv"><strong>Rationale:</strong> ${esc(classification.rationale)}</div>
 <div class="kv"><strong>Classified:</strong> ${esc(classification.classifiedDate)}</div>`);
   } else {
-    parts.push(`<p class="muted">No classification record found.</p>`);
+    // 2026-10-15: printed "No classification record found." even when the read
+    // failed — a claim that the device has no classification. §2/§3 already
+    // used sectionEmptyText; §1 and §4 were missed.
+    parts.push(
+      `<p class="muted">${esc(sectionEmptyText(content, 'classification', 'classification'))}</p>`
+    );
   }
 
   // ── § 2 Analytical validation ──────────────────────────────────────────
@@ -140,7 +145,7 @@ export function renderIvdrPackHtml(content: IvdrPackContent): string {
 <div class="kv"><strong>Assay:</strong> ${esc(cdx.assayTechnology)}</div>
 <div class="kv"><strong>Status:</strong> ${esc(cdx.status)}</div>`);
   } else {
-    parts.push(`<p class="muted">No CDx workflow record.</p>`);
+    parts.push(`<p class="muted">${esc(sectionEmptyText(content, 'cdx', 'CDx workflow'))}</p>`);
   }
 
   // ── § 5 Binder evidence ────────────────────────────────────────────────
@@ -201,7 +206,11 @@ export function renderIvdrPackHtml(content: IvdrPackContent): string {
       }
     }
   } else {
-    parts.push(`<p class="muted">AI provenance chain not available.</p>`);
+    // 2026-10-15: "AI provenance chain not available." whether no AI run was
+    // recorded or the read failed; the manifest now records the failure.
+    parts.push(
+      `<p class="muted">${esc(sectionEmptyText(content, 'provenanceChain', 'AI provenance'))}</p>`
+    );
   }
 
   // ── § 7 Hashes ─────────────────────────────────────────────────────────

@@ -1,0 +1,12 @@
+Mutant G02-unnamed-admitted: a model the record does not name goes in when marked qualified
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- served.find((m) => m.model === null || !m.qualified)
++ served.find((m) => !m.qualified)
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses a model the record does not name, even one marked qualified 6ms
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,7 @@
+[ci:pdf-runtime-canonicality] FAIL — new PDF entry points detected:
+
+  server/routes/analytics-routes.ts
+    → require() of 'pdfkit'/'pdf-lib'
+
+Total: 1 file(s). New PDF generation should route through server/services/pdf-converter.ts for deterministic, audit-bound output. If this file is a legitimate exception, add it to the APPROVED list with a one-line justification.
+exit 1

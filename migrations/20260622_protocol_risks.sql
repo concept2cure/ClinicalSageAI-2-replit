@@ -1,3 +1,25 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Protocol risk register (ICH E6(R3) Annex 1 §3.10 risk management).
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 5 (clinical protocol risk management)
+--   - Integrity Risk Addressed: a risk level recorded from ratings nobody made
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - AMENDED 2026-10-15: likelihood / impact lose their 'possible' /
+--     'moderate' defaults (3 x 3 = 9, banded 'high', for a risk nobody rated).
+--     Amended in place per CLAUDE.md RULE 1; this file is applied by the
+--     migrations/ overlay only, so
+--     migrations/20261015d_protocol_risk_ratings_no_default.sql (deploy set)
+--     drops the defaults on databases provisioned before.
+-- =============================================================================
 -- ============================================================================
 -- Protocol Risk Register (Capability C2C-19)
 -- ============================================================================
@@ -19,8 +41,8 @@ CREATE TABLE IF NOT EXISTS protocol_risks (
   category             text NOT NULL DEFAULT 'operational'
                          CHECK (category IN ('participant_safety','data_integrity','regulatory','operational','privacy','other')),
   description          text NOT NULL,
-  likelihood           text NOT NULL DEFAULT 'possible' CHECK (likelihood IN ('rare','unlikely','possible','likely','almost_certain')),
-  impact               text NOT NULL DEFAULT 'moderate' CHECK (impact IN ('negligible','minor','moderate','major','severe')),
+  likelihood           text NOT NULL CHECK (likelihood IN ('rare','unlikely','possible','likely','almost_certain')),
+  impact               text NOT NULL CHECK (impact IN ('negligible','minor','moderate','major','severe')),
   mitigation           text,
   residual_likelihood  text CHECK (residual_likelihood IN ('rare','unlikely','possible','likely','almost_certain')),
   residual_impact      text CHECK (residual_impact IN ('negligible','minor','moderate','major','severe')),

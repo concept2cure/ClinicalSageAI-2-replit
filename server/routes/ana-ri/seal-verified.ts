@@ -24,8 +24,7 @@ import {
   type SealVerifiedVersionInput,
 } from '../../services/ana/verifiedSealService.js';
 import { sendError, sendSuccess, extractRequestContext } from './shared.js';
-import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
-import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role.js';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate.js';
 import { clientIpOf } from '../../utils/client-ip';
 
 /** Is E1 enabled? Mirrors the client ENABLE_ANA_DOCUMENT_STUDIO flag (off by
@@ -50,6 +49,14 @@ function buildSealInput(
       ? {
           ok: body.verification.ok === true,
           message: typeof body.verification.message === 'string' ? body.verification.message : undefined,
+          scope: body.verification.scope,
+          artifactVerified: body.verification.artifactVerified,
+          sourceVerified: body.verification.sourceVerified,
+          sourceDiffPerformed: body.verification.sourceDiffPerformed,
+          // Preserve explicit qualification limits; never launder them into ok-only sealing.
+          sourceQualification: body.verification.sourceQualification,
+          sealEligible: body.verification.sealEligible,
+          receipt: body.verification.receipt,
         }
       : { ok: false };
   const ipAddress = clientIpOf(req) ?? undefined;
@@ -74,11 +81,12 @@ function buildSealInput(
     isSample: body.isSample === true,
     isDraft: body.isDraft === true,
     atoms: Array.isArray(body.atoms) ? body.atoms : undefined,
-    // Build-1 integration points — consumed when present.
-    artifactPk: typeof body.artifactPk === 'number' ? body.artifactPk : undefined,
-    artifactExternalId: typeof body.artifactExternalId === 'string' ? body.artifactExternalId : undefined,
-    existingVersionId: typeof body.existingVersionId === 'number' ? body.existingVersionId : undefined,
-    existingVersionNumber: typeof body.existingVersionNumber === 'number' ? body.existingVersionNumber : undefined,
+    // Keep explicit malformed selectors: the central gate must refuse them,
+    // rather than interpreting a dropped selector as a new-document request.
+    artifactPk: body.artifactPk,
+    artifactExternalId: body.artifactExternalId,
+    existingVersionId: body.existingVersionId,
+    existingVersionNumber: body.existingVersionNumber,
     ipAddress,
     signatureVerified: true,
     secondFactorVerified,
@@ -101,6 +109,16 @@ export async function handleSealVerifiedVersion(req: Request, res: Response): Pr
     return sendError(res, 400, 'A title and content are required to seal a version', null, 'MISSING_CONTENT');
   }
 
+  // §11.10(g): identity is not authority. Sealing a verified version applies a
+  // manifested electronic signature — permitted only for a signer whose org role
+  // carries signing authority: the platform's one policy (checkSigningAuthority,
+  // the membership row, never a client flag). Asked BEFORE the password since
+  // 2026-10-08 (P-27); asked after it, a role that may not sign could test one.
+  const authority = await checkSigningAuthority(userId, numericOrgId);
+  if (authority) {
+    return sendError(res, authority.status, authority.message, { code: authority.code }, authority.code);
+  }
+
   // §11.200: re-verify the signer server-side (never a client flag). Sealing is
   // a manifested electronic signature, so credentials are always required.
   const password = typeof body.password === 'string' ? body.password : '';
@@ -110,20 +128,6 @@ export async function handleSealVerifiedVersion(req: Request, res: Response): Pr
     return sendError(res, credentials.status, credentials.error, { code: credentials.code }, 'SIGNATURE_REJECTED');
   }
 
-  // §11.10(g): identity is not authority. Sealing a verified version applies a
-  // manifested electronic signature — permitted only for a signer whose org role
-  // carries signing authority. Role resolved from the membership record (never a
-  // client flag), gated by the same policy as /api/esignature/sign.
-  const signerRole = await resolveSignerOrgRole(userId, numericOrgId);
-  if (!isSigningAuthorized(signerRole)) {
-    return sendError(
-      res,
-      403,
-      'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-      { code: 'ESIGNATURE_NO_AUTHORITY' },
-      'ESIGNATURE_NO_AUTHORITY',
-    );
-  }
 
   try {
     const result = await sealVerifiedVersion(

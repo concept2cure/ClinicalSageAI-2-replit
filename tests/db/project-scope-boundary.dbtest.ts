@@ -39,6 +39,8 @@ import {
   ORG_B,
   owner,
   tokenA,
+  accessToken,
+  provisionMember,
   userA,
   userB,
   workspaceA,
@@ -74,6 +76,10 @@ describe("A project-scoped request acts on the caller's own project, plan and se
   let memoryA: number;
   let memoryB1: number;
   let memoryB2: number;
+  // /api/ana/platform writes need the owner or admin role since IAM-20
+  // (9fbc9aa8f); the member token is refused before the scope check this
+  // suite proves, so those cases run as an org admin of tenant A.
+  let adminTokenA: string;
   let planA: string;
   let planB: string;
   let emailA: string;
@@ -92,6 +98,7 @@ describe("A project-scoped request acts on the caller's own project, plan and se
     // declares (a closure there, so reproduced here).
     const preAuthScope: express.RequestHandler = (req, _res, next) =>
       runWithPreAuthScope(`auth:${req.method} ${req.path}`, next);
+    adminTokenA = accessToken(await provisionMember(ORG_A, 'admin', 'l195-admin'), ORG_A, 'admin');
     app = express();
     app.use(express.json());
     app.use('/api/client-intelligence', authenticateToken, clientIntelligenceRouter);
@@ -308,7 +315,7 @@ describe("A project-scoped request acts on the caller's own project, plan and se
   it("AnA's project update cannot hang a project from another tenant's project or workspace", async () => {
     const res = await request(app)
       .patch(`/api/ana/platform/projects/${ids.A.projects}`)
-      .set(auth(tokenA))
+      .set(auth(adminTokenA))
       .send({
         description: `${TAG} reconfigured`,
         clientWorkspaceId: workspaceB,
@@ -331,7 +338,7 @@ describe("A project-scoped request acts on the caller's own project, plan and se
   it("AnA's project update cannot move a project to another tenant", async () => {
     const res = await request(app)
       .patch(`/api/ana/platform/projects/${projectA2}`)
-      .set(auth(tokenA))
+      .set(auth(adminTokenA))
       .send({ description: `${TAG} moved?`, organizationId: ORG_B });
     const row = await one('SELECT organization_id, description FROM projects WHERE id=$1', [projectA2]);
     expect(row.organization_id, "tenant A's project must stay in tenant A").toBe(ORG_A);

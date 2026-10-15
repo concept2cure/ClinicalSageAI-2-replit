@@ -1,0 +1,18 @@
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > reads a short document whole and reports no truncation
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > reads a document exactly at the bound whole
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > cuts an over-long document at the bound and reports the numbers
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > cuts at a paragraph boundary near the bound rather than mid-sentence
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > falls back to the hard bound when there is no boundary to cut on
+ ✓ server/services/ingestion/__tests__/document-text-bound.test.ts > boundDocumentText > treats empty and whitespace input as read-whole rather than truncated
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > sequence 1 (frozen): no leaf, and the placement is reported as not made
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > sequence 2 (dispatched): no leaf, and the placement is reported as not made
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > sequence 3 (draft): no leaf, and the placement is reported as not made
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > sequence 4 (another organisation's): no leaf, and the placement is reported as not made
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > returns the leaf a person would place, for them to place as its own step
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > document 201 (a draft): its section, metadata and stamp are unchanged
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > document 202 (an approved filing copy): its section, metadata and stamp are unchanged
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > never takes the placement outcome from the model
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > proposes no leaf when the model proposed no section
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > extractStructure records its link, and changes no document > leaves the document's metadata and stamp as they were
+ Test Files  2 passed (2)
+      Tests  16 passed (16)

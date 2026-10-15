@@ -1,0 +1,285 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > flags same subject + metric values 0.45 vs 0.20 as numerical_mismatch major 3ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > does not flag 0.45 vs 0.46 (within default tolerance) 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > classifies a difference beyond tolerance but ≤ 0.25 as minor 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > respects a custom relativeTolerance 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > does not pair values across DIFFERENT metrics 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > treats both-near-zero values as equal (no mismatch) 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > flags opposite polarity (positive vs negative) as direct_conflict critical 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > does not flag positive vs neutral 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > matches subjects case-insensitively 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — temporal_inconsistency > reports opposite polarity + differing dates as temporal_inconsistency, later supersedes 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — temporal_inconsistency > treats opposite polarity with identical dates as a plain direct_conflict 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — claim selection & counting > ignores claims missing a subject; checkedClaims counts only considered claims 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — claim selection & counting > uses the array index as the ref id when id is absent 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > returns an empty contradictions array and empty subjects when consistent 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > handles empty input → empty report 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > always carries the honest structural-only caveat in notes 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > is deterministic: same input twice deep-equals 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > orders findings by subject then type precedence (stable) 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > orders multiple finding types within a subject by precedence 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > CONTRADICTION_TYPES > exposes the three known types in precedence order 0ms
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not claim that a newer dated finding replaces the older finding 5ms
+   → expected 'Opposite polarity assertions for "Dru…' not to match /supersedes/i
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not declare 1 mg and 1000 micrograms contradictory without an explicit conversion 3ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > keeps a same-unit numerical mismatch and its unit provenance 1ms
+   → expected { id: 'a', metric: 'dose', value: 1 } to have property "unit" with value ' mg '
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not treat efficacy benefit and a safety signal as contradictory endpoints 1ms
+   → expected [ { type: 'direct_conflict', …(5) } ] to deeply equal []
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > unlabelled numerical values cannot establish a mismatch of the same metric 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > a unit missing on one side does not become an assumed equal unit 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > a structural mismatch with both units unspecified carries that limitation 1ms
+   → expected 'Structural detection over the provide…' to match /units.*unspecified/i
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > invalid dates cannot establish temporal ordering 3ms
+   → expected 'temporal_inconsistency' to be 'direct_conflict' // Object.is equality
+ × server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > empty input is explicitly unassessed, not evidence of consistency 1ms
+   → expected 'Structural detection over the provide…' to match /assessment not performed/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not claim that a newer dated finding replaces the older finding
+AssertionError: expected 'Opposite polarity assertions for "Dru…' not to match /supersedes/i
+
+- Expected:
+/supersedes/i
+
++ Received:
+"Opposite polarity assertions for \"DrugX\" on different dates (positive @ 2020-01-01 vs negative @ 2023-06-01); the later-dated claim (new @ 2023-06-01) supersedes."
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:252:49
+    250|     ]);
+    251|     expect(report.contradictions).toHaveLength(1);
+    252|     expect(report.contradictions[0].detail).not.toMatch(/supersedes/i);
+       |                                                 ^
+    253|     expect(report.contradictions[0].detail).toMatch(/unresolved/i);
+    254|     expect(report.contradictions[0].detail).toMatch(/dates alone/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not declare 1 mg and 1000 micrograms contradictory without an explicit conversion
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "claimA": {
++       "id": "a",
++       "metric": "dose",
++       "value": 1,
++     },
++     "claimB": {
++       "id": "b",
++       "metric": "dose",
++       "value": 1000,
++     },
++     "detail": "Conflicting values for \"dose\" on \"DrugX\": 1 vs 1000 (relative difference 99.9%, beyond tolerance 10.0%).",
++     "severity": "major",
++     "subject": "DrugX",
++     "type": "numerical_mismatch",
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:261:35
+    259|       { id: 'b', subject: 'DrugX', metric: 'dose', value: 1000, unit: …
+    260|     ]);
+    261|     expect(report.contradictions).toEqual([]);
+       |                                   ^
+    262|     expect(report.notes.join(' ')).toMatch(/units.*not compared/i);
+    263|     expect(report.notes.join(' ')).toContain('a');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > keeps a same-unit numerical mismatch and its unit provenance
+AssertionError: expected { id: 'a', metric: 'dose', value: 1 } to have property "unit" with value ' mg '
+
+- Expected:
+" mg "
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:272:45
+    270|     ]);
+    271|     expect(report.contradictions).toHaveLength(1);
+    272|     expect(report.contradictions[0].claimA).toHaveProperty('unit', ' m…
+       |                                             ^
+    273|     expect(report.contradictions[0].claimB).toHaveProperty('unit', 'MG…
+    274|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not treat efficacy benefit and a safety signal as contradictory endpoints
+AssertionError: expected [ { type: 'direct_conflict', …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "claimA": {
++       "id": "efficacy",
++       "metric": "efficacy",
++       "polarity": "positive",
++     },
++     "claimB": {
++       "id": "safety",
++       "metric": "safety",
++       "polarity": "negative",
++     },
++     "detail": "Directly conflicting polarity for \"DrugX\": positive (efficacy) vs negative (safety).",
++     "severity": "critical",
++     "subject": "DrugX",
++     "type": "direct_conflict",
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:280:35
+    278|       { id: 'safety', subject: 'DrugX', metric: 'safety', polarity: 'n…
+    279|     ]);
+    280|     expect(report.contradictions).toEqual([]);
+       |                                   ^
+    281|     expect(report.notes.join(' ')).toMatch(/different metrics.*not com…
+    282|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > unlabelled numerical values cannot establish a mismatch of the same metric
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "claimA": {
++       "id": "#0",
++       "value": 1,
++     },
++     "claimB": {
++       "id": "#1",
++       "value": 10,
++     },
++     "detail": "Conflicting values for \"(unlabeled metric)\" on \"DrugX\": 1 vs 10 (relative difference 90.0%, beyond tolerance 10.0%).",
++     "severity": "major",
++     "subject": "DrugX",
++     "type": "numerical_mismatch",
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:285:35
+    283|   it('unlabelled numerical values cannot establish a mismatch of the s…
+    284|     const report = detectContradictions([{ subject: 'DrugX', value: 1 …
+    285|     expect(report.contradictions).toEqual([]);
+       |                                   ^
+    286|     expect(report.notes.join(' ')).toMatch(/metric.*missing/i);
+    287|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > a unit missing on one side does not become an assumed equal unit
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "claimA": {
++       "id": "#0",
++       "metric": "dose",
++       "value": 1,
++     },
++     "claimB": {
++       "id": "#1",
++       "metric": "dose",
++       "value": 10,
++     },
++     "detail": "Conflicting values for \"dose\" on \"DrugX\": 1 vs 10 (relative difference 90.0%, beyond tolerance 10.0%).",
++     "severity": "major",
++     "subject": "DrugX",
++     "type": "numerical_mismatch",
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:290:35
+    288|   it('a unit missing on one side does not become an assumed equal unit…
+    289|     const report = detectContradictions([{ subject: 'DrugX', metric: '…
+    290|     expect(report.contradictions).toEqual([]);
+       |                                   ^
+    291|     expect(report.notes.join(' ')).toMatch(/unit.*missing/i);
+    292|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > a structural mismatch with both units unspecified carries that limitation
+AssertionError: expected 'Structural detection over the provide…' to match /units.*unspecified/i
+
+- Expected:
+/units.*unspecified/i
+
++ Received:
+"Structural detection over the provided fields (subject, metric, value, polarity, date) only — this is NOT semantic NLP. A clean report means no structural contradiction was found in those fields, not that the evidence is necessarily consistent in meaning."
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:296:36
+    294|     const report = detectContradictions([{ subject: 'DrugX', metric: '…
+    295|     expect(report.contradictions).toHaveLength(1);
+    296|     expect(report.notes.join(' ')).toMatch(/units.*unspecified/i);
+       |                                    ^
+    297|   });
+    298|   it('invalid dates cannot establish temporal ordering', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > invalid dates cannot establish temporal ordering
+AssertionError: expected 'temporal_inconsistency' to be 'direct_conflict' // Object.is equality
+
+Expected: "direct_conflict"
+Received: "temporal_inconsistency"
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:303:43
+    301|       { subject: 'DrugX', polarity: 'negative', date: 'yesterday' },
+    302|     ]);
+    303|     expect(report.contradictions[0].type).toBe('direct_conflict');
+       |                                           ^
+    304|     expect(report.notes.join(' ')).toMatch(/invalid.*date/i);
+    305|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > empty input is explicitly unassessed, not evidence of consistency
+AssertionError: expected 'Structural detection over the provide…' to match /assessment not performed/i
+
+- Expected:
+/assessment not performed/i
+
++ Received:
+"Structural detection over the provided fields (subject, metric, value, polarity, date) only — this is NOT semantic NLP. A clean report means no structural contradiction was found in those fields, not that the evidence is necessarily consistent in meaning."
+
+ ❯ server/services/ana/__tests__/evidence-contradiction-detector.test.ts:307:54
+    305|   });
+    306|   it('empty input is explicitly unassessed, not evidence of consistenc…
+    307|     expect(detectContradictions([]).notes.join(' ')).toMatch(/assessme…
+       |                                                      ^
+    308|   });
+    309| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 20 passed (29)
+   Start at  12:29:43
+   Duration  420ms (transform 95ms, setup 76ms, import 43ms, tests 28ms, environment 0ms)
+

@@ -1,0 +1,410 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T16:34:18.616Z","pid":9151,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T16:34:18.617Z","pid":9151,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T16:34:18.617Z","pid":9151,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T16:34:18.689Z', poolSize: 1 }
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-document-relationships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T16:34:19.334Z","pid":9151,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:9151) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.422Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 16,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.499Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "392a6b88-d10e-4767-ac61-c3cb8cdb3400",
+    "code": "DBTEST-VREL-PROT",
+    "type": "OTHER",
+    "size": 16,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:19.513Z","pid":9151,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.514Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 3,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.528Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ea09b338-c590-46b2-af1d-242d8f1157e3",
+    "code": "DBTEST-VREL-CSR",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:19.537Z","pid":9151,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.538Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 30,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.548Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "54a2aea5-d91f-4e2e-8c9e-9f29b1b4d1e9",
+    "code": "DBTEST-VREL-SAP",
+    "type": "OTHER",
+    "size": 30,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:19.555Z","pid":9151,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.562Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 30,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.578Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "181a4f5c-2cc4-428d-b11a-1998e2b6bbef",
+    "code": "DBTEST-VREL-SAP",
+    "type": "OTHER",
+    "size": 30,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:19.586Z","pid":9151,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.587Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.597Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c3c32f5c-843f-4bbb-91c0-24bded2272fc",
+    "code": "DBTEST-VREL-IB",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:19.604Z","pid":9151,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.605Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 15,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.616Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ddf14eba-667e-40a5-a17d-9fe28cca8eee",
+    "code": "DBTEST-VREL-THEIRS",
+    "type": "OTHER",
+    "size": 15,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:19.623Z","pid":9151,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.623Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.632Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8031e826-a4fd-4c8a-8880-5285991f360f",
+    "code": "DBTEST-VREL-GA",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:19.638Z","pid":9151,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.639Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 28,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:19.647Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "04e9ae84-42a5-4db6-856b-84e2d1366a46",
+    "code": "DBTEST-VREL-GB",
+    "type": "OTHER",
+    "size": 28,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > relates two versions, and both ends list it in their own words 73ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > relates to a version in another project of the organisation, and names that project 30ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > says when the related version has since been superseded 24ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses a self relationship, two versions of one document, a duplicate and an unknown kind 32ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses another organisation's document, a viewer, and another organisation's project 16ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > removing one requires a reason, keeps the row, and cannot be done twice 32ms
+stdout | tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > each relate and unrelate is a chained row on both documents' histories
+[database] Database connection successful { timestamp: '2026-10-01T16:34:19.894Z', poolSize: 2 }
+
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > each relate and unrelate is a chained row on both documents' histories 81ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the table refuses every other change, for every role, and another organisation reads none of it 22ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the tenant purge takes an organisation's relationships with its documents, and no one else's 38ms
+{"level":30,"time":"2026-10-01T16:34:21.015Z","pid":9171,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T16:34:21.016Z","pid":9171,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T16:34:21.016Z","pid":9171,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-fixity.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T16:34:21.051Z', poolSize: 1 }
+
+stdout | tests/db/vault-fixity.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-fixity.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T16:34:21.280Z","pid":9171,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:9171) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-fixity.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:21.309Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-fixity.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:21.363Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4eb2995f-5bc0-4c42-bbb0-d5c7d9fb4fdd",
+    "code": "DBTEST-VFIX-INTACT",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:21.376Z","pid":9171,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-fixity.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:21.387Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-fixity.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:21.403Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "67999954-4072-4a8c-a7b7-0d79c7a1e5f0",
+    "code": "DBTEST-VFIX-INTACT",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:21.410Z","pid":9171,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-fixity.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:21.410Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 30,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-fixity.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:21.422Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "bc819efb-a492-47b6-85e2-20c5464b0c38",
+    "code": "DBTEST-VFIX-ALTERED",
+    "type": "OTHER",
+    "size": 30,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:34:21.430Z","pid":9171,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-fixity.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:21.431Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 35,
+    "wordCount": 7,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-fixity.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:34:21.438Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "39c3d515-5b84-4f02-affe-eecc9b08c014",
+    "code": "DBTEST-VFIX-MISSING",
+    "type": "OTHER",
+    "size": 35,
+    "hasText": true
+  }
+}
+
+stderr | tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > reports each version verified, altered or missing, and lists the failures
+{
+  "timestamp": "2026-10-01T16:34:21.470Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored version not readable for this organization",
+  "context": {
+    "documentId": "39c3d515-5b84-4f02-affe-eecc9b08c014"
+  }
+}
+
+stderr | tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > reports each version verified, altered or missing, and lists the failures
+{
+  "timestamp": "2026-10-01T16:34:21.475Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "bc819efb-a492-47b6-85e2-20c5464b0c38",
+    "recorded": "da217f196648",
+    "actual": "55828c0a8b89"
+  }
+}
+
+stdout | tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > the document's history shows the check
+[database] Database connection successful { timestamp: '2026-10-01T16:34:21.518Z', poolSize: 2 }
+
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > reports each version verified, altered or missing, and lists the failures 45ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > writes one chained verdict per version, naming the person 3ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > the document's history shows the check 38ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > a viewer is refused, and another organisation's program is not found 10ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > its creating migration is in the deploy set 53ms
+{"level":30,"time":"2026-10-01T16:34:22.474Z","pid":9187,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T16:34:22.475Z","pid":9187,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T16:34:22.475Z","pid":9187,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the retention job's write still works in the organisation's scope (control) 708ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > an archive cannot be changed, deleted or truncated 17ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > another organisation cannot read it 8ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the tenant purge erases the organisation's archives, and no one else's 19ms
+
+ Test Files  3 passed (3)
+      Tests  18 passed (18)
+   Start at  16:34:16
+   Duration  5.85s (transform 1.42s, setup 131ms, import 283ms, tests 4.88s, environment 0ms)
+

@@ -1,0 +1,256 @@
+Selected results from /workspace/scratch/global-biotech-projection-final.log; routine request/setup logs omitted.
+
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > preserves every IND source object and snapshot without added metadata 330ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > contains exactly the existing IND sources, selected registry rows, components and explicit leaflet gap 35ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PRE_IND' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IND' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IND_AMENDMENT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_NDA' outline and regional identity 5ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA' outline and regional identity 5ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ANDA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_505B2' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_NDA_SUPP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_SUPP' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_DMF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CTA' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MAA' outline and regional identity 6ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_ASMF' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_VARIATION_IA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_VARIATION_IB' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_VARIATION_II' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PIP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_ORPHAN' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_RMP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PSUR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_RENEWAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_CTA' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_CTA_A' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_NDS' outline and regional identity 5ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_SNDS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_ANDS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_SANDS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_MF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_CTN' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_MKT_APPROVAL' outline and regional identity 5ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_MF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_PARTIAL_CHANGE' outline and regional identity 4ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_MINOR_CHANGE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_SCIENTIFIC_ADVICE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ORPHAN' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BTD' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PRIME' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_FAST_TRACK' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_RMAT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IND_SR' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IND_ANNUAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_DSUR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_PROTOCOL' outline and regional identity 6ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_IB' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_ICF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CSR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_SAP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_351K' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ACCEL_APPROVAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CMA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ROLLING' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PSP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CBE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_NDA_ANNUAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_REMS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PMR' outline and regional identity 6ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_SUPAC' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ICSR_15DAY' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PADER' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_M3_DS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_M3_DP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_QOS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_COMPARABILITY' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_EA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_TYPE_A_MEETING' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_TYPE_B_MEETING' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_TYPE_C_MEETING' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_PRESUB_MEETING' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_PRE_CONSULT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_SAKIGAKE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PRIORITY_REVIEW' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_ACCEL_ASSESS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_BIOSIMILAR_MAA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_BIOSIMILAR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_GENERIC_DCP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CLIN_OVERVIEW' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CLIN_SUMMARY' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_NONCLIN_OVERVIEW' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_NONCLIN_SUMMARY' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_TABULATED_SUMMARIES' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_LINE_EXTENSION' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_EUDRAVIGILANCE_ICSR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_SUSAR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CEP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_GMP_CERT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_STABILITY_PROTOCOL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MDR_ART117_NBOP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'quality_overall_summary' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'nonclinical_overview' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'clinical_overview' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'clinical_summary' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'cover_letter' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'smpc' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'impd' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'investigators_brochure' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'risk_management_plan' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'pbrer' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'clinical_study_report' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'protocol' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'statistical_analysis_plan' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'informed_consent' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'drug_substance' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'drug_product' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'dsur' document component without device-only templates 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > does not turn ordinal headings, whole filings or cover letters into a Module 1 placement 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > keeps the leaflet metadata gap explicit and preserves originals instead of copying SmPC headings 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > resolves exact UUIDs case-insensitively, stays deterministic, and never resolves a filing label as a template 133ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for smpc and refuses a conflicting market 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for impd and refuses a conflicting market 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for risk_management_plan and refuses a conflicting market 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for rmp and refuses a conflicting market 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for pil and refuses a conflicting market 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > keeps shared documents GLOBAL and allows a confirmed supported target market 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 26ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the existing ICH_M3_DS project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the existing ICH_M3_DP project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > clinical overview and summary registry ids share their existing component sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact EU_CTA scaffold with its scope limitations 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact CA_CTA scaffold with its scope limitations 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact CA_CTA_A scaffold with its scope limitations 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact JP_CTN scaffold with its scope limitations 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact ICH_NONCLIN_SUMMARY scaffold with its scope limitations 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact US_IND_AMENDMENT scaffold with its scope limitations 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists every active biotech entry once and says explicitly which outlines remain unavailable 5ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > the protocol projects the current M11 retained headings including estimands, immunogenicity and quality management 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > named, registry and project protocols share one current tree without a CTD module placement claim 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > the existing outline renderer explains heading retention, applicable content and deeper unmodelled fields 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — subtype-scoped IND safety scaffold > keeps numeric compatibility keys without assigning all safety reports to Module 5 or requiring every case component 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > current protocol registry authority > identifies the current M11 structure and keeps the separate SAP discoverable 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > shares inquiry prompts without exposing mutable preparation defaults or changing priorities 3ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > asks three decisive questions and never certifies readiness 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > continues an interview without re-asking answered topics or promoting them to evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps all discussion markers from becoming a filing-ready verdict 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps an EU CTA on CTIS, with national documents and disclosure questions 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not confuse Canada CTA with a full marketing dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not re-label a Japanese trial notification as a marketing eCTD 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > makes Japanese language and ethnic evidence conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps pediatric and advanced-therapy overlays conditional 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not infer an application from an ambiguous alias or an unknown id 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects contradictory market and filing identity 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not assume a drug pathway for a device entry 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > routes all four marketing regions with independent regional requirements 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses document-specific questions, not trial results for every build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses the shared component mapping for registry-only protocol and SAP builds 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses device component preparation without requiring a registry id 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses smpc as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses impd as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses risk_management_plan as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses rmp as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > keeps safety messages and datasets outside generic prose build claims 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects unrecognized topics instead of silently skipping questions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_DMF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_ASMF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks CA_MF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks JP_MF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > resolves US_IND_AMENDMENT change scope and agency issues before generic scientific drafting 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > resolves CA_CTA_A change scope and agency issues before generic scientific drafting 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_NDA_SUPP approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_BLA_SUPP approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_CBE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_SUPAC approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_IA approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_IB approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_II approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_LINE_EXTENSION approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes CA_SNDS approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes CA_SANDS approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes JP_PARTIAL_CHANGE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes JP_MINOR_CHANGE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_PRE_IND around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_A_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_B_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_C_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares EU_SCIENTIFIC_ADVICE around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares CA_PRESUB_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares JP_PRE_CONSULT around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_PSP about age groups, extrapolation and existing plan decisions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_PIP about age groups, extrapolation and existing plan decisions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_ORPHAN for regional rarity evidence and a defensible condition definition 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_ORPHAN for regional rarity evidence and a defensible condition definition 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_351K for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_BIOSIMILAR_MAA for reference-product comparative evidence without prescribing a universal study 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks JP_BIOSIMILAR for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares ICH_ICSR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares ICH_SUSAR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_ICSR_15DAY as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares EU_EUDRAVIGILANCE_ICSR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_IND_SR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_IND_ANNUAL about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_NDA_ANNUAL about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_PSUR about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_PADER about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares post-marketing studies from the actual obligation and milestone record 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_COMPARABILITY for the specific quality experiment rather than human trial results 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_STABILITY_PROTOCOL for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_CTD_M3 for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_NONCLIN_SUMMARY about nonclinical findings and their translational limits 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_CTD_M4 about nonclinical findings and their translational limits 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > keeps a selected protocol interview scientific even when the filing context is an amendment 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > rejects a global device clinical-investigation entry instead of treating its family as a medicinal product 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > does not turn complete lifecycle discussion markers into qualified evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > keeps IND aggregate safety assessment available alongside individual cases 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_CTN 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MF 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MINOR_CHANGE 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_PRE_CONSULT 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not turn an integral-device opinion into a medicines meeting package 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks US_REMS about risk controls and their assessment, not just adverse events 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks EU_RMP about risk controls and their assessment, not just adverse events 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > requires reviewed signal evidence and alternative explanations before concluding a risk 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_DMF inquiry within the existing paged tool budget 2ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_ASMF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the CA_MF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the JP_MF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_IND_AMENDMENT inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the CA_CTA_A inquiry within the existing paged tool budget 2ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_351K inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_PSP inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_PIP inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_ORPHAN inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the ICH_COMPARABILITY inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the ICH_STABILITY_PROTOCOL inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_IND_SR inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/regional-template-source-selection.test.ts > regional template source selection > EU PSUR uses every numbered section of the canonical PBRER 3ms
+ ✓ server/services/market-specs/__tests__/regional-template-source-selection.test.ts > regional template source selection > NDA/BLA annual reports use the post-approval lifecycle record, not IND annual headings 2ms
+ Test Files  4 passed (4)
+      Tests  250 passed (250)
+   Start at  20:36:45
+   Duration  3.64s (transform 1.19s, setup 147ms, import 1.79s, tests 885ms, environment 1ms)

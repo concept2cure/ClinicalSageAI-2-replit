@@ -1,0 +1,13 @@
+$ tsx server/eval/register/run-eval.ts --transcript repetition-probe.json
+[register-eval] 3 turn(s)
+  a                                                chat     PASS score=1.00 
+  b                                                chat     PASS score=1.00 
+  c                                                chat     PASS score=1.00 
+
+[register-eval] chat register:
+  turns=3 passed=3 passRate=100.0% meanScore=1
+  exclamationTurnRate=0.67 emojiTurnRate=0
+  catchphrase x2: "another one bites the dust"
+[register-eval] 67% of chat turns carry an exclamation mark; most should carry none (max 20%)
+[register-eval] 1 playful line(s) repeat within a conversation; repetition turns charm into a tic
+exit=1 expected; see above

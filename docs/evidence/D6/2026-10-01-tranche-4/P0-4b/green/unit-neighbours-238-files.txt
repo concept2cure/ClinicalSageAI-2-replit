@@ -1,0 +1,284 @@
+# Fix round, 2026-10-01T14:18:41.354Z: 238 unit/contract files (no *.dbtest.*):
+#   grep -rlE "account-standing|token-revocation|session-inactivity|routes/auth['"]|['"]../auth['"]|['"]../../auth['"]|server/auth['"]|middleware/auth|registerPlatformRoutes|socketServer|hocuspocus-server|mcp/auth|reverify-signer" server tests shared --include=*.test.ts --include=*.test.tsx
+#   plus every file that hand-builds organization_users (CREATE TABLE ... organization_users).
+#   Wider than round 1, whose grep missed dynamic imports (import('../auth')).
+# totals: files 238, passed 2655, failed 33
+# passed failed file
+   1    0 server/__tests__/routes/ana-cortex-correlation.test.ts
+   5    0 server/__tests__/routes/ana-mdx-context.test.ts
+  12    0 server/__tests__/routes/ana-tool-policy.test.ts
+   1    0 server/__tests__/routes/anaCortexCompatibility.test.ts
+   6    0 server/__tests__/routes/cortex-prime-unmounted.test.ts
+   8    0 server/__tests__/routes/cortex-threads.runtime.test.ts
+  39    0 server/__tests__/routes/docx-factory.test.ts
+  20    0 server/__tests__/routes/evidence-fabric.test.ts
+   5    0 server/__tests__/routes/global-compliance.gdpr-rights.test.ts
+   5    0 server/__tests__/routes/k510-document-preview.test.ts
+  38    0 server/__tests__/routes/predicate-intelligence.test.ts
+  19    0 server/__tests__/routes/q-sub.test.ts
+  18    0 server/__tests__/routes/smoke.test.ts
+   8    0 server/__tests__/routes/tenant-export.test.ts
+   7    0 server/__tests__/security/audit-siem-export.test.ts
+   9    0 server/__tests__/security/audit-trail-contract.test.ts
+   6    0 server/__tests__/security/auth-db-contract-smoke.test.ts
+   3    0 server/__tests__/security/auth-hardening.test.ts
+   3    0 server/__tests__/security/auth-invalid-expired-jwt.test.ts
+   7    0 server/__tests__/security/auth-middleware-session-currency.test.ts
+   8    0 server/__tests__/security/coauthor-document-delete-audit.contract.test.ts
+  19    0 server/__tests__/security/mcp-client-registration.contract.test.ts
+   7    0 server/__tests__/security/scim-ip-allowlist-admin.test.ts
+  12    0 server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts
+   6    0 server/__tests__/security/scim-tenants-admin.test.ts
+  22    0 server/__tests__/security/security-swarm-hardening.test.ts
+  11    0 server/__tests__/security/socket-main-namespace-session.test.ts
+   5    0 server/__tests__/security/tenant-isolation-evidence-sufficiency.contract.test.ts
+   6    0 server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts
+   5    0 server/__tests__/security/tenant-isolation-post-market.contract.test.ts
+   5    0 server/__tests__/security/tenant-isolation-q-sub.contract.test.ts
+  12    0 server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts
+   6    0 server/api/cmc/__tests__/cmc-drafting-governance.test.ts
+  25    0 server/bootstrap/__tests__/api-auth-gate.test.ts
+  19    0 server/mcp/__tests__/mcp-connector-enablement.test.ts
+   8    0 server/mcp/__tests__/mcp-standing-unreadable.test.ts
+   5    0 server/mcp/__tests__/platform-token-session.test.ts
+   5    0 server/mcp/auth/__tests__/findMembership.pglite.test.ts
+   5    0 server/middleware/__tests__/auth-carries-provider.test.ts
+  23    0 server/middleware/__tests__/auth-establishes-scope.integration.test.ts
+   7    0 server/middleware/__tests__/auth-inactivity-logoff.test.ts
+   5    0 server/middleware/__tests__/auth-session-currency.test.ts
+   7    0 server/middleware/__tests__/auth.test.ts
+   8    0 server/middleware/__tests__/chainIntegration.test.ts
+   4    0 server/middleware/__tests__/extractBearerToken.test.ts
+  13    0 server/middleware/__tests__/platform-role-escalation.test.ts
+  13    0 server/middleware/__tests__/role-claims.test.ts
+  25    0 server/middleware/__tests__/session-permissions.test.ts
+   6    0 server/middleware/__tests__/tenant-scope-org-guc.test.ts
+   1    0 server/middleware/__tests__/token-class-every-verifier.test.ts
+  10    0 server/routes/__tests__/510k-device-profile-estar-fields.test.ts
+   4    0 server/routes/__tests__/510k-estar-entitlement.test.ts
+  10    0 server/routes/__tests__/admin-prefix-gate.test.ts
+   7    0 server/routes/__tests__/ai-placement-policy.test.ts
+   4   14 server/routes/__tests__/approval-workflow.contract.test.ts
+  13    0 server/routes/__tests__/audit-trail-ledger.routes.test.ts
+   8    0 server/routes/__tests__/auth-mfa-challenge-factors.test.ts
+   0    8 server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts
+   5    0 server/routes/__tests__/auth-refresh-inactivity.test.ts
+   6    0 server/routes/__tests__/auth-refresh-session-currency.test.ts
+   4    0 server/routes/__tests__/auth-sign-in-limits.test.ts
+   7    0 server/routes/__tests__/auth-signup-verification.test.ts
+  10    0 server/routes/__tests__/authEnterprise-audit-organisation.test.ts
+   4    0 server/routes/__tests__/authEnterprise-inactive-account.test.ts
+   7    0 server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts
+   1    0 server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts
+   4    0 server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts
+   3    0 server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts
+   7    0 server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts
+  20    0 server/routes/__tests__/authSurfaceSecurity.test.ts
+   8    0 server/routes/__tests__/authoring-atomic-mutations.test.ts
+  19    0 server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts
+  13    0 server/routes/__tests__/authoring-sign-ceremony.test.ts
+   5    0 server/routes/__tests__/authoringApprovalNoWorkflow.test.ts
+   3    0 server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+  19    0 server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts
+   7    0 server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts
+   5    0 server/routes/__tests__/cerv2-document-save-workspace.test.ts
+  18    0 server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts
+  18    0 server/routes/__tests__/client-portal.test.ts
+   5    0 server/routes/__tests__/clients-delete-retention.test.ts
+  13    0 server/routes/__tests__/clients-routes.tenant-isolation.test.ts
+   2    0 server/routes/__tests__/coauthorDocumentsListTotal.test.ts
+  37    0 server/routes/__tests__/coauthorPutStatus.test.ts
+  45    0 server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+   7    0 server/routes/__tests__/coauthorSnapshotSeal.test.ts
+   5    0 server/routes/__tests__/coauthorSnapshotSeeds.test.ts
+  10    0 server/routes/__tests__/coauthorSnapshotStatus.test.ts
+   2    0 server/routes/__tests__/companion-diagnostics.test.ts
+   4    0 server/routes/__tests__/cortex-unified-tenant-context.test.ts
+   5    0 server/routes/__tests__/device-classification.test.ts
+  16    0 server/routes/__tests__/diagnostics-performance.test.ts
+  16    0 server/routes/__tests__/document-lifecycle-part11-record.test.ts
+  62    0 server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+   6    0 server/routes/__tests__/esignature-requires-bearer.test.ts
+  27    0 server/routes/__tests__/esignature-sign.test.ts
+   1    3 server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts
+   2    0 server/routes/__tests__/external-evidence-error-containment.test.ts
+   2    0 server/routes/__tests__/firecrawl-error-containment.test.ts
+   7    0 server/routes/__tests__/human-factors-files-read.test.ts
+  11    0 server/routes/__tests__/human-factors-governed-writes.test.ts
+   4    0 server/routes/__tests__/human-factors-read.test.ts
+   6    0 server/routes/__tests__/human-factors-write.test.ts
+   4    0 server/routes/__tests__/ivd-assessments.error-envelope.test.ts
+  11    0 server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+  10    0 server/routes/__tests__/knowledge-base-upload-guards.test.ts
+   4    0 server/routes/__tests__/market-access.test.ts
+  15    0 server/routes/__tests__/mdx-qms-retire.test.ts
+   6    0 server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts
+  17    0 server/routes/__tests__/mdx-rbm-signed-records.test.ts
+  27    0 server/routes/__tests__/module-access-requests.test.ts
+   8    0 server/routes/__tests__/module-subscriptions-platform-admin.test.ts
+  19    0 server/routes/__tests__/onboarding-proposals.test.ts
+  18    0 server/routes/__tests__/organizations-profile-settings.test.ts
+  21    0 server/routes/__tests__/passwordResetAuditTrail.test.ts
+   6    0 server/routes/__tests__/pccp-approve-signing.test.ts
+   3    0 server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts
+   0    2 server/routes/__tests__/predicate-intelligence-error-containment.test.ts
+   8    0 server/routes/__tests__/qms-change-approval-signature.test.ts
+  13    0 server/routes/__tests__/qms-document-approval-signature.test.ts
+  18    0 server/routes/__tests__/qms-legacy-api-retired.test.ts
+  34    0 server/routes/__tests__/qms-subrouters-governed.test.ts
+  28    0 server/routes/__tests__/quality-gating-not-assessed.pglite.integration.test.ts
+  24    0 server/routes/__tests__/quality-plans-governed.test.ts
+  10    0 server/routes/__tests__/record-exports-recorded.test.ts
+   6    0 server/routes/__tests__/regulatory-correspondence-device-intake.test.ts
+   0    0 server/routes/__tests__/regulatory-correspondence.test.ts
+   7    0 server/routes/__tests__/regulatory-readiness-routes.test.ts
+   5    0 server/routes/__tests__/regulatory-risk-section-screen-removed.test.ts
+   3    0 server/routes/__tests__/regulatoryRoutes.test.ts
+  32    0 server/routes/__tests__/report-os-audit-recording.test.ts
+  27    0 server/routes/__tests__/report-os-delivery-recording.test.ts
+   4    0 server/routes/__tests__/report-os-portfolio-empty.test.ts
+   8    0 server/routes/__tests__/report-os-predictions-scoped.test.ts
+  24    0 server/routes/__tests__/report-os-viewer-writes.test.ts
+   0    6 server/routes/__tests__/se-matrix-5xx-containment.test.ts
+   5    0 server/routes/__tests__/session-open-contract.test.ts
+  14    0 server/routes/__tests__/setup.test.ts
+   5    0 server/routes/__tests__/spl-fhir.test.ts
+  19    0 server/routes/__tests__/ssoRoutes.test.ts
+   3    0 server/routes/__tests__/submission-readiness.test.ts
+   3    0 server/routes/__tests__/submissions-assemble-audit-outcome.test.ts
+   3    0 server/routes/__tests__/submissions-consistency-audit-outcome.test.ts
+   3    0 server/routes/__tests__/submissions-leaf-reason.test.ts
+   5    0 server/routes/__tests__/substantial-equivalence.test.ts
+  10    0 server/routes/__tests__/tenant-config-audit.test.ts
+  23    0 server/routes/__tests__/tenant-config-claude-connector.test.ts
+   4    0 server/routes/__tests__/tenant-export-5xx-containment.test.ts
+  15    0 server/routes/__tests__/tenant-users-audit.test.ts
+   3    0 server/routes/__tests__/tenants-simple-purge-audit.test.ts
+   5    0 server/routes/__tests__/udi-ivdr.test.ts
+  44    0 server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts
+  15    0 server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+   5    0 server/routes/c2c/__tests__/document-lock-ceremony.test.ts
+  13    0 server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+   5    0 server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+   3    0 server/services/__tests__/account-lockout-read-fails-closed.test.ts
+  20    0 server/services/__tests__/account-standing-session-currency.test.ts
+  13    0 server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts
+  24    0 server/services/__tests__/session-inactivity.test.ts
+   4    0 server/services/__tests__/session-registry-redis.test.ts
+   6    0 server/services/__tests__/token-revocation-expiry.test.ts
+   9    0 server/services/ana/__tests__/ana-realtime-auth.test.ts
+   8    0 server/services/ana/__tests__/ana-realtime-session-recheck.test.ts
+   9    0 server/services/ana/__tests__/clinical-regulatory-evidence-tools.test.ts
+   3    0 server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts
+  37    0 server/services/collab/__tests__/collab-governance.pglite.integration.test.ts
+   9    0 server/services/collab/__tests__/collab-session-recheck.test.ts
+   3    0 server/services/collab/__tests__/collab-transport.test.ts
+   5    0 server/services/cro/__tests__/cro-portfolio-view-assembler.pglite.integration.test.ts
+  26    0 server/services/part11/__tests__/reverify-signer.test.ts
+  12    0 server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+  32    0 server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+  22    0 server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts
+   8    0 server/services/protocol-reviews/__tests__/reviewer-name-binding.pglite.integration.test.ts
+   8    0 server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+   8    0 server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts
+  14    0 server/services/tasking/__tests__/task-signoff.test.ts
+   9    0 server/startup/__tests__/diagnostic-endpoints-exposure.test.ts
+   6    0 tests/artifact-routes-invalidate-bundles.test.ts
+  42    0 tests/artifact-routes-project-scope.test.ts
+   2    0 tests/artifact-status-audit-outcome.test.ts
+  12    0 tests/artifact-status-lock-covers-approval.test.ts
+   7    0 tests/artifact-status-project-scope.test.ts
+   5    0 tests/authoring-program-scope.pglite.test.ts
+  14    0 tests/biostat-design-stats-routes.test.ts
+   9    0 tests/biostat-multiplicity-design-route.test.ts
+  24    0 tests/build-order-14-governed-export-and-ops.test.ts
+   4    0 tests/communication-center-backend-scaffold.test.ts
+   8    0 tests/field-sync-auth.contract.test.ts
+   8    0 tests/founder-critical-path-proof.test.ts
+   4    0 tests/gates/unverified-verdicts/signature-write-paths.gate.test.ts
+   1    0 tests/golden-journeys/cer-eu-mdr.journey.test.ts
+   1    0 tests/golden-journeys/device-510k-estar.journey.test.ts
+   1    0 tests/golden-journeys/drug-nda-ectd.journey.test.ts
+   1    0 tests/golden-journeys/ind-authoring.journey.test.ts
+   1    0 tests/golden-journeys/submission-release-signature.journey.test.ts
+  28    0 tests/mdx-qms-labeling-search-analytics-routes.test.ts
+  40    0 tests/mdx-submission-gateway-routes.test.ts
+  39    0 tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+   8    0 tests/post-market-authoring-routes.test.ts
+  14    0 tests/regulatory-honesty.contract.test.ts
+  18    0 tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+   9    0 tests/rls-auth-boundary-invariant.contract.test.ts
+  35    0 tests/routes/510k-device-routes.test.ts
+   6    0 tests/routes/ana-apply-rewrite-signature.test.ts
+   5    0 tests/routes/ana-features-coded-503-containment.test.ts
+  18    0 tests/routes/ana-gap-analysis.test.ts
+   6    0 tests/routes/cerv2-export-governance.test.ts
+   7    0 tests/routes/cerv2-literature-record.test.ts
+  19    0 tests/routes/cerv2-literature-screening.test.ts
+   2    0 tests/routes/concept2cure-conversation-project-scope.test.ts
+  10    0 tests/routes/concept2cure-export-governance.test.ts
+   1    0 tests/routes/concept2cure-governed-upload.test.ts
+   2    0 tests/routes/concept2cure-project-collaborators.test.ts
+  10    0 tests/routes/concept2cure.test.ts
+   3    0 tests/routes/device-cockpit.test.ts
+   9    0 tests/routes/estar-build-pma-package.test.ts
+   9    0 tests/routes/estar-entitlement-precheck.test.ts
+  15    0 tests/routes/estar-export-governance.test.ts
+  42    0 tests/routes/estar-official-pdf.test.ts
+  11    0 tests/routes/estar-registration-correspondent.test.ts
+   8    0 tests/routes/estar-submission-filing.test.ts
+   5    0 tests/routes/global-markets.test.ts
+   9    0 tests/routes/ind-forms-artifact-ident.test.ts
+   1    0 tests/routes/notification-routes-governance.test.ts
+  13    0 tests/routes/route-ownership.test.ts
+  13    0 tests/routes/workspace-config.test.ts
+   7    0 tests/schema-contract/authoring-auth-parity.contract.test.ts
+  30    0 tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+  28    0 tests/schema-contract/authoring-section-gate.contract.test.ts
+   1    0 tests/schema-contract/authoring-section-permissions.contract.test.ts
+   5    0 tests/schema-contract/esignature-verify-roundtrip.contract.test.ts
+   4    0 tests/schema-contract/rules-engine-assignee-resolution.contract.test.ts
+   3    0 tests/seed/ind-program-spine-anchor.test.ts
+  11    0 tests/socket-tenant-isolation.contract.test.ts
+   2    0 tests/unit/concept2cure-artifact-source-evidence.test.ts
+  18    0 tests/unit/submission-sign-release-route.test.ts
+
+# The failures, and why none is a defect of this change:
+## server/routes/__tests__/approval-workflow.contract.test.ts
+  - POST /start → 400 without documentId/templateId :: AssertionError: expected 401 to be 400 // Object.is equality
+  - POST /:id/reject → 400 without a rejection reason :: AssertionError: expected 401 to be 400 // Object.is equality
+  - POST /:id/delegate → 400 without delegateTo :: AssertionError: expected 401 to be 400 // Object.is equality
+  - POST /templates → 400 without name/moduleType/steps :: AssertionError: expected 401 to be 400 // Object.is equality
+  - POST /start → 400 (error surfaced) for a template with no steps :: AssertionError: expected 401 to be 400 // Object.is equality
+  - starts a workflow, advances on first approval, completes on the last, and reports status :: AssertionError: expected 401 to be 201 // Object.is equality
+  - GET /:workflowId/status → 404 for an unknown workflow :: AssertionError: expected 401 to be 404 // Object.is equality
+  - POST /:id/approve → 400 when the performer is not an assigned approver :: AssertionError: expected 401 to be 400 // Object.is equality
+  - rejects the workflow at the current step and marks the document rejected :: AssertionError: expected 401 to be 200 // Object.is equality
+  - reassigns a pending approval to the delegate :: AssertionError: expected 401 to be 200 // Object.is equality
+  - GET /pending → 200 returns approvals assigned to the current user in their org :: AssertionError: expected 401 to be 200 // Object.is equality
+  - GET /templates → 200 lists active templates for the org with step counts :: AssertionError: expected 401 to be 200 // Object.is equality
+  - GET /templates does NOT leak another org's templates :: AssertionError: expected 401 to be 200 // Object.is equality
+  - GET /templates?moduleType=cer filters by module type :: AssertionError: expected 401 to be 200 // Object.is equality
+## server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts
+  - 5 wrong codes lock the account in its users row; the right code is then refused 423 AUTH_002 without being spent :: AssertionError: wrong code 1 was not refused: expected 500 to be 401 // Object.is equality
+  - the count is one per account across tasks: wrong codes on two tasks lock it, and a third task refuses the right code :: AssertionError: expected 500 to be 401 // Object.is equality
+  - the last wrong code is audited as the one that locked the account :: AssertionError: expected undefined to be 'invalid_code_threshold_exceeded' // Object.is equality
+  - a right password does not clear what the second factor counted, so signing in again buys no fresh guesses :: AssertionError: expected 500 to be 401 // Object.is equality
+  - a completed sign-in (right code) clears the count the wrong codes built :: AssertionError: expected 500 to be 401 // Object.is equality
+  - wrong passwords and wrong codes are one count, one threshold: the password step refuses an account the codes locked :: AssertionError: expected 500 to be 401 // Object.is equality
+  - a locked account completes no sign-in with a challenge issued before the lock, even with a code that would verify :: AssertionError: a locked account was signed in with an emailed code: expected 500 to be 423 // Object.is equality
+  - control: wrong emailed codes keep their own cap (emailOtpService) and are not added to the account lockout :: AssertionError: expected 500 to be 401 // Object.is equality
+## server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts
+  - POST /programs/:programId/assess :: AssertionError: expected undefined to be 'INTERNAL_ERROR' // Object.is equality
+  - GET /programs/:programId/assessments :: AssertionError: expected undefined to be 'INTERNAL_ERROR' // Object.is equality
+  - leaves the 422 and 404 answers unchanged :: AssertionError: expected 500 to be 422 // Object.is equality
+## server/routes/__tests__/predicate-intelligence-error-containment.test.ts
+  - answers an authoring failure with INTERNAL_ERROR and the request id, never the thrown text :: AssertionError: expected { …(2) } to match object { error: 'INTERNAL_ERROR', …(1) }
+  - leaves the no-matrix 422 exactly as it was :: AssertionError: expected 500 to be 422 // Object.is equality
+## server/routes/__tests__/se-matrix-5xx-containment.test.ts
+  - a failed program-access read answers 500 with the envelope :: AssertionError: expected '[["checking program access failed",{"…' to contain 'SENTINEL-DB-DETAIL'
+  - an unreachable shadow service answers 502 with its sentence and no detail :: AssertionError: expected 500 to be 502 // Object.is equality
+  - a shadow service answering >= 500 with 'a JSON 500 body' answers 502 with no detail :: AssertionError: expected 500 to be 502 // Object.is equality
+  - a shadow service answering >= 500 with 'a plain-text 503 body' answers 502 with no detail :: AssertionError: expected 500 to be 502 // Object.is equality
+  - still relays a shadow 4xx validation body with its status (intended behaviour) :: AssertionError: expected 500 to be 422 // Object.is equality
+  - leaves the 403 and 422 answers unchanged :: AssertionError: expected 500 to be 403 // Object.is equality

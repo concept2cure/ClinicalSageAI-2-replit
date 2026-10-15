@@ -1,0 +1,51 @@
+## Step tests (the three red files)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses MAA (EU_MAA) before the transmittal row and before any https request 31ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_MAA (EU_MAA) before the transmittal row and before any https request 1ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_VARIATION_II (EU_VARIATION_II) before the transmittal row and before any https request 1ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses renewal (EU_RENEWAL) before the transmittal row and before any https request 0ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses psur (EU_PSUR) before the transmittal row and before any https request 13ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses CMA (EU_CMA) before the transmittal row and before any https request 0ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_BIOSIMILAR_MAA (EU_BIOSIMILAR_MAA) before the transmittal row and before any https request 0ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses a CTIS filing (EU_CTA) and an IRIS filing (EU_ORPHAN), naming their channels 1ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses a filing whose channel is another region's gateway (US_NDA → fda:esg) 1ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — positive controls: what CESP does carry still proceeds > a national decentralised filing (EU_GENERIC_DCP) passes the refusal and reaches the wire 6ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — positive controls: what CESP does carry still proceeds > a lifecycle type that names no registry filing (seq.type "original") is not refused here 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — the guard refuses before the gateway > is true for a guard refusal, and the gateway is never called 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit 6ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the FDA NextGen REST refusal (UnverifiedTransportError, transmitted === false) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the requiredAgencyMetadata refusal raised before the transmittal row 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the CESP refusal of a centralised-procedure MAA, raised before the transmittal row 9ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > requiredAgencyMetadata marks both of its refusals, and only those 0ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a CredentialError raised by a gateway's credential check (real MHRA transmit, no credentials) 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a TransportError only when its throw site passed NOTHING_TRANSMITTED 0ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 476ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > test setup keeps staged bundles out of the repository > resolves the bundle root outside the working tree 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes FDA (all client types) to ESG 2ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes Japan (all client types) to the PMDA gateway 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > refuses a centralised-procedure EU dossier: no gateway, never CESP 6ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > names the eSubmission Gateway / Web Client and why CESP is not it, for a centralised MAA 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > refuses an EU CTA (CTIS portal) and an IRIS filing, naming the channel 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes a national decentralised EU filing (EU_GENERIC_DCP) to CESP 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > fails closed for an EU dossier whose filing type names no EU registry entry 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU device/IVD (mdx|ivd) to EUDAMED, whatever the filing type 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > returns null for an unknown region (caller raises VALIDATION) 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called 10ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > positive control: a DCP submission is routed on to ema:cesp 1ms
+
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+   Start at  04:33:00
+   Duration  6.05s (transform 7.69s, setup 330ms, import 11.52s, tests 703ms, environment 0ms)
+
+
+## Importers of submission-service / ema-cesp / submission-gateways index, plus the channel-function tests
+ Test Files  37 passed | 1 skipped (38)
+      Tests  608 passed | 2 skipped (610)

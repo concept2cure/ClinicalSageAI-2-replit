@@ -54,8 +54,37 @@
  * governed-transmit baseline entries). These limits are why the baseline carries
  * reasons and why each signing surface keeps its own behavioural tests.
  *
+ * ── Approval stamps (2026-10-01) ──────────────────────────────────────────────
+ * A SQL write that sets approver_id / approved_by / approved_by_user_id /
+ * approved_at to a value is also a site. An approval is read as a signed record
+ * whatever ledger verb records it. The QMS controlled-document approval
+ * (e1c224f69) and change-control approval (028a0c704) both stamped one under
+ * `command: 'transition'`, from an AnA tool and from HTTP, and this gate saw
+ * neither. A stamp needs a signature-row write in its handler. Re-verification is
+ * not demanded there, because an approval's ceremony is usually the route's, one
+ * function boundary away. Limits: a template-built placeholder
+ * (`approved_by = $${i}`) is not seen, though its `approved_at = NOW()` partner
+ * usually is; Drizzle `.set({ approvedBy })` is not seen at all; and a helper that
+ * writes the stamp for a caller holding the ceremony is baselined with that
+ * reason.
+ *
  * The baseline is exact: an entry above the current count fails too, so fixing a
  * site means lowering its entry, and a freed allowance cannot absorb a new site.
+ *
+ * ── Signing authority (2026-10-08) ────────────────────────────────────────────
+ * Re-authentication proves who is signing; it never proves they may (§11.10(g)).
+ * QA j6 found the Gateway transmit re-verifying a manager's password under a
+ * "Release" meaning with no authority check, and the sweep that followed found
+ * six more handlers doing the same. So a second rule: every handler that calls
+ * verifyReauth / reverifySigner must also ask the platform's one signing policy
+ * in that handler — checkSigningAuthority (services/part11/signing-authority-gate),
+ * and since P-27 (2026-10-08) nothing else: isSigningAuthorized written out in
+ * the handler, and the three wrappers that once applied it (signingAuthorityRefusal
+ * in c2c/actions, assertSigningAuthority, refusedWithoutSigningAuthority in
+ * api/cmc/cmc-signer), no longer count and are deleted. A re-authentication
+ * that is not a signature (a rollback, a lock, a gateway-account change) is
+ * baselined under `authority` with the reason it signs nothing. Same limits as
+ * above: textual, per top-level handler, a helper's caller is not seen.
  *
  * Usage:
  *   node scripts/ci/check-sign-ceremony.mjs            # fail on new sites
@@ -71,7 +100,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const BASELINE = path.join(ROOT, 'scripts/ci/sign-ceremony-baseline.json');
 
 const REAUTH = /\b(?:verifyReauth|reverifySigner)\s*\(/;
-const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation)\s*\(/;
+// insertAuthoringSignature (server/routes/authoring.router.ts) writes the
+// authoring_signatures row, the Authoring module's Part 11 signature record — the
+// row the baseline's authoring.router.ts reason already names as the ceremony's.
+// Added 2026-10-08 when the e-sign handler began stamping approved_at beside it
+// (QA j4); the selftest shows the same stamp failing without it.
+const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation|insertAuthoringSignature)\s*\(/;
 
 /** Top-level statement starts: the unit a "handler" is measured over. */
 const HANDLER_START = /^(?:router\s*\.\s*\w+\s*\(|registerToolHandler\s*\(|(?:export\s+)?(?:default\s+)?(?:async\s+)?function\b|(?:export\s+)?const\s+[\w$]+\s*=\s*(?:async\b|\()|app\s*\.\s*\w+\s*\()/;
@@ -214,8 +248,29 @@ export function findSignSites(code) {
   }
   const wm = /\bwriteMutation\s*\(\s*(['"`])sign\1/g;
   while ((m = wm.exec(code))) sites.push({ index: m.index, kind: 'writeMutation' });
+  // An approval stamp in SQL: the approver or the approval time set to a value.
+  // Clearing one (`= NULL`, a revision) is not an approval.
+  // One site per line: `approved_by = $2, approved_at = NOW()` is one stamp.
+  APPROVAL_STAMP.lastIndex = 0;
+  const stampLines = new Set();
+  while ((m = APPROVAL_STAMP.exec(code))) {
+    const line = lineOf(code, m.index);
+    if (stampLines.has(line)) continue;
+    stampLines.add(line);
+    sites.push({ index: m.index, kind: 'approval-stamp' });
+  }
   return sites.sort((a, b) => a.index - b.index);
 }
+
+/**
+ * A SQL assignment that records an approval: the approver, or the approval
+ * time, set to a value. Added 2026-10-01. An approval need not be written as a
+ * `sign` ledger row to be read as a signed one. The QMS controlled-document
+ * approval (e1c224f69) and the change-control approval (028a0c704) both stamped
+ * approver and approval time under `command: 'transition'`, from an AnA tool
+ * and from HTTP, and this gate saw neither.
+ */
+const APPROVAL_STAMP = /\b(?:approver_id|approved_by|approved_by_user_id|approved_at)\s*=\s*(?!NULL\b)(?:\$\d+|NOW\(\)|now\(\)|CURRENT_TIMESTAMP|COALESCE\()/g;
 
 /** The enclosing top-level statement: from its column-0 start to the next one. */
 export function handlerBody(code, index) {
@@ -239,8 +294,49 @@ export function scanSource(src) {
     const body = handlerBody(code, s.index);
     const reauth = REAUTH.test(body.text);
     const signatureRow = s.kind === 'writeMutation' || SIGNATURE_ROW.test(body.text);
-    return { line: lineOf(code, s.index), kind: s.kind, handlerLine: body.startLine, reauth, signatureRow, ok: reauth && signatureRow };
+    // An approval stamp is held to the signature row only. The re-verification
+    // for an approval is usually the route's, one function boundary away (the QMS
+    // approvals call reverifySigner in the route, then the signed service), which
+    // this scanner cannot see. The row is what an inspector reads as the signature.
+    const ok = s.kind === 'approval-stamp' ? signatureRow : reauth && signatureRow;
+    return { line: lineOf(code, s.index), kind: s.kind, handlerLine: body.startLine, reauth, signatureRow, ok };
   });
+}
+
+/**
+ * The platform's one signing-authority policy. Since 2026-10-08 (P-27) only the
+ * gate itself counts: the predicate written out in a handler, and the local
+ * wrappers that once applied it (signingAuthorityRefusal, assertSigningAuthority,
+ * refusedWithoutSigningAuthority), were copies that drifted — a failed role
+ * lookup answered 500 in one and threw in another, two read the role from the
+ * request, three asked after the password. They are deleted.
+ */
+const AUTHORITY = /\bcheckSigningAuthority\s*\(/;
+const REAUTH_CALL = /\b(?:verifyReauth|reverifySigner)\s*\(/g;
+
+/**
+ * Every call that re-verifies a signer, with whether its handler also asks the
+ * signing-authority policy. A declaration (`function verifyReauth(`) is not a call.
+ */
+export function scanAuthority(src) {
+  const code = stripComments(src);
+  const out = [];
+  REAUTH_CALL.lastIndex = 0;
+  let m;
+  while ((m = REAUTH_CALL.exec(code))) {
+    if (isDeclaration(code, m.index)) continue;
+    const body = handlerBody(code, m.index);
+    out.push({ line: lineOf(code, m.index), handlerLine: body.startLine, authority: AUTHORITY.test(body.text) });
+  }
+  return out;
+}
+
+/** Compare an authority scan to the baseline's `authority` section. Pure, like `evaluate`. */
+export function evaluateAuthority(scan, section) {
+  return evaluate(
+    Object.fromEntries(Object.entries(scan).map(([f, sites]) => [f, sites.map((x) => ({ ...x, ok: x.authority }))])),
+    section ?? { files: {} },
+  );
 }
 
 function serverFiles() {
@@ -251,13 +347,26 @@ function serverFiles() {
     .filter((f) => !/(^|\/)__tests__\//.test(f) && !/\.(test|spec|dbtest)\.ts$/.test(f) && !f.endsWith('.d.ts'));
 }
 
+export function scanRepoAuthority() {
+  const results = {};
+  for (const f of serverFiles()) {
+    const abs = path.join(ROOT, f);
+    if (!existsSync(abs)) continue;
+    const src = readFileSync(abs, 'utf8');
+    if (!/\b(?:verifyReauth|reverifySigner)\s*\(/.test(src)) continue;
+    const sites = scanAuthority(src);
+    if (sites.length) results[f] = sites;
+  }
+  return results;
+}
+
 export function scanRepo() {
   const results = {};
   for (const f of serverFiles()) {
     const abs = path.join(ROOT, f);
     if (!existsSync(abs)) continue;
     const src = readFileSync(abs, 'utf8');
-    if (!/['"]sign['"]/.test(src)) continue;
+    if (!/['"]sign['"]/.test(src) && !/\b(?:approver_id|approved_by|approved_by_user_id|approved_at)\s*=/.test(src)) continue;
     const sites = scanSource(src);
     if (sites.length) results[f] = sites;
   }
@@ -290,12 +399,16 @@ export function evaluate(scan, baseline) {
 function main() {
   const args = process.argv.slice(2);
   const scan = scanRepo();
+  const authorityScan = scanRepoAuthority();
   if (args.includes('--list')) {
     for (const [f, sites] of Object.entries(scan)) {
       for (const s of sites) {
-        const why = s.ok ? 'ok' : [!s.reauth && 'no signer re-verification', !s.signatureRow && 'no signature row'].filter(Boolean).join(', ');
+        const why = s.ok ? 'ok' : s.kind === 'approval-stamp' ? 'no signature row' : [!s.reauth && 'no signer re-verification', !s.signatureRow && 'no signature row'].filter(Boolean).join(', ');
         console.log(`${f}:${s.line}  ${s.kind}  ${why}`);
       }
+    }
+    for (const [f, sites] of Object.entries(authorityScan)) {
+      for (const s of sites) console.log(`${f}:${s.line}  re-authentication  ${s.authority ? 'ok' : 'no signing-authority check in its handler'}`);
     }
     return;
   }
@@ -306,7 +419,12 @@ function main() {
       const n = sites.filter((s) => !s.ok).length;
       if (n) files[f] = { count: n, reason: prior.files?.[f]?.reason ?? 'TODO: write why this file may keep an unceremonied sign write' };
     }
-    writeFileSync(BASELINE, JSON.stringify({ $note: prior.$note, files }, null, 2) + '\n');
+    const authorityFiles = {};
+    for (const [f, sites] of Object.entries(authorityScan)) {
+      const n = sites.filter((s) => !s.authority).length;
+      if (n) authorityFiles[f] = { count: n, reason: prior.authority?.files?.[f]?.reason ?? 'TODO: write why this re-authentication signs nothing, or fix it' };
+    }
+    writeFileSync(BASELINE, JSON.stringify({ $note: prior.$note, files, authority: { $note: prior.authority?.$note, files: authorityFiles } }, null, 2) + '\n');
     console.log(`[ci:sign-ceremony] wrote ${Object.keys(files).length} file(s) to the baseline. Replace every TODO with a reason.`);
     return;
   }
@@ -315,10 +433,12 @@ function main() {
   let failed = false;
   if (failures.length) {
     failed = true;
-    console.error('[ci:sign-ceremony] FAIL — a `sign` ledger write without the signature ceremony:');
+    console.error('[ci:sign-ceremony] FAIL — a `sign` ledger write, or an approval stamp, without the signature ceremony:');
     for (const f of failures) {
       for (const s of f.sites) {
-        const why = [!s.reauth && 'no verifyReauth/reverifySigner', !s.signatureRow && 'no signature-row write'].filter(Boolean).join(', ');
+        const why = s.kind === 'approval-stamp'
+          ? 'approval stamp with no signature-row write in its handler'
+          : [!s.reauth && 'no verifyReauth/reverifySigner', !s.signatureRow && 'no signature-row write'].filter(Boolean).join(', ');
         console.error(`  ✗ ${f.file}:${s.line}  (${why})`);
       }
       if (f.allowed) console.error(`    ${f.file}: ${f.count} site(s), baseline allows ${f.allowed}.`);
@@ -339,8 +459,31 @@ function main() {
     console.error('[ci:sign-ceremony] FAIL — the baseline allows more than exists. Lower these entries (or remove them at 0) so the freed allowance cannot absorb a new site:');
     for (const x of shrinkable) console.error(`  ✗ ${x.file}: ${x.count} now, baseline ${x.allowed}`);
   }
+  const authority = evaluateAuthority(authorityScan, baseline.authority);
+  if (authority.failures.length) {
+    failed = true;
+    console.error('[ci:sign-ceremony] FAIL — a signer re-verified with no signing-authority check in the same handler (§11.10(g)):');
+    for (const f of authority.failures) {
+      for (const s of f.sites) console.error(`  ✗ ${f.file}:${s.line}  (handler at line ${s.handlerLine})`);
+      if (f.allowed) console.error(`    ${f.file}: ${f.count} site(s), baseline allows ${f.allowed}.`);
+    }
+    console.error('\n  Identity is not authority. Ask checkSigningAuthority(userId, orgId)');
+    console.error('  (server/services/part11/signing-authority-gate.ts) before the password, or');
+    console.error('  baseline the file under `authority` with the reason the act signs nothing.');
+  }
+  if (authority.unreasoned.length) {
+    failed = true;
+    console.error('[ci:sign-ceremony] FAIL — `authority` baseline entries with no written reason:');
+    for (const f of authority.unreasoned) console.error(`  ✗ ${f}`);
+  }
+  if (authority.shrinkable.length) {
+    failed = true;
+    console.error('[ci:sign-ceremony] FAIL — the `authority` baseline allows more than exists. Lower these entries:');
+    for (const x of authority.shrinkable) console.error(`  ✗ ${x.file}: ${x.count} now, baseline ${x.allowed}`);
+  }
   if (failed) process.exit(1);
   console.log(`[ci:sign-ceremony] OK — no new sign write without the ceremony. ${baselined} baselined site(s) remain, exactly as baselined.`);
+  console.log(`[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; ${authority.baselined} baselined re-authentication(s) sign nothing, exactly as baselined.`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) main();

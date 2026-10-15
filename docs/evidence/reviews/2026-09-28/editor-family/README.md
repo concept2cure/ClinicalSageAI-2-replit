@@ -158,20 +158,113 @@ refute them.
 - `f569d49d`: the SEC-C-4 class, draft prompt.
 - `e6822dac`: the SEC-C-7 follow-on.
 - `dfe08dea`: SEC-C-4 (a), server half, inert.
+- `f2ab9b3cd` (2026-10-04, on trunk at the merge `25740b97c`): P11-B-4,
+  remaining gap. A recorded accept or reject is an undo and redo floor in a
+  session of any length (`fixes/P11-B-4-remaining-gap/`). The first
+  attempt's reviewers found that redo reversed a decision too, and that a
+  long session disabled undo; both are fixed and pinned.
+- `e93ee0387` (2026-10-04, same merge): SEC-B-1/2 follow-ons a, b1, b6.
+  Create from an organization template, AI section drafting and export apply
+  the section figure rule (`fixes/SEC-B-1-2-followons/`). The first attempt's
+  reviewers found that the export placeholder printed a whole base64 payload,
+  and that generated drafts were double-escaped; both are fixed and pinned.
 
-**Still in progress**, each after its reviewers found a blocking defect in
-the first attempt:
-- **P11-B-4, remaining gap.** Undo past a recorded decision. The reviewers
-  found that redo reversed a decision too, and that a long session disabled
-  undo.
-- **SEC-B-1/2 follow-ons a, b1, b6.** The reviewers found:
-  - the export placeholder printed a whole base64 payload;
-  - generated drafts were double-escaped.
-- **The batch-draft door.** The reviewers found that a `< … >` span in the
-  text passed both the verifier and the lineage.
-- **NEW-P11-B-1a.** The reviewers found:
-  - the leaf path still re-filed an approved row;
-  - the actor was named "System".
+These two were reviewed by agents told to refute them in their first
+attempts. The final fix-up cycle was checked by this lane alone (each fix
+failing first, mutants), because review agents were unavailable that week.
+Independent refute-reviews at the merge are recorded in round 3 below.
+
+**Withdrawn unpushed:** NEW-P11-B-1a. This lane's attempt (classify refused
+to re-file a verdict row) was superseded by `c3f2b287a` (`…01SuVLo2`,
+2026-10-01), which closes the same finding more strictly: classify and
+extract propose and write nothing. Its evidence folder is not filed.
+
+**Still in progress:** the batch-draft door. The reviewers found that a
+`< … >` span in the text passed both the verifier and the lineage. Round 3
+below takes it up.
+
+## Round 3 (2026-10-04)
+
+The lane resumed after five days, with 1,170 commits on trunk. It carried
+two lanes onto trunk (above) and withdrew one.
+
+- **The batch-draft door: closed** (`fixes/batch-draft-door/`). The round-2c
+  reviewer's three blockers are fixed, and its two gaps are pinned, each red
+  first against round 2c's code:
+  - the blockers: a raw-text element split from its opener, an honest
+    markdown draft refused, and surviving mutants N1 and N5;
+  - the gaps: a one-word claim naming AnA, and the empty-needle guard (N8).
+
+  Two more were found while fixing them, and are closed too:
+  - content read as plain text shows every `<…>`;
+  - a carried-forward clause inside a later raw-text region kept AnA's name.
+
+  The known-tag rule became one shared copy, in linear time
+  (`fixes/known-tag-rule/`). 15 of 15 mutants are killed. Self-reviewed;
+  independent review to follow.
+- **Independent refute-reviews of the two lanes landed above**, by agents
+  told to refute them, at the merge `25740b97c`:
+  - **P11-B-4 undo floor.** The floor held: a model-based fuzz of 300 seeds ×
+    500 steps found nothing, and that fuzz kills 5 of 5 mutants. The defects
+    are in its wiring:
+    - the ribbon's Undo and Redo stay enabled at a floor (medium, already on
+      this lane's list);
+    - live co-editing's Yjs undo has no floor. That path is behind
+      `ENABLE_LIVE_COEDITING`, which is off, but this is a blocker before
+      the flag is turned on.
+  - **SEC-B-1/2 figure rule.** Defect found:
+    - one high this commit introduced: an image with a duplicated `src`
+      attribute is filed by the export as the second value, while the canvas
+      shows the first;
+    - mediums and lows in the same rule;
+    - a high in another door: the CMC Module 3 placement stores markdown the
+      eCTD leaf renderer reads as HTML, so "Impurity B was <LOQ in all 3
+      batches" is filed as "Impurity B was 98.0%)".
+
+  The figure review is answered in `fixes/SEC-B-1-2-followons/r3/`:
+  - D1 to D6 are fixed, each red first. The two readers of a section's images,
+    a browser and the export's parser, must agree, or no image of the section
+    is filed and the save is refused. One parse reads `<pre>` as markup.
+  - O1 is fixed at its class: the eCTD leaf opens stored content as the
+    editor does.
+  - 11 of 11 mutants are killed.
+  - The rest is handed on (board items 17 and 18).
+
+  The undo review's ribbon item stays on this lane's list. Its co-editing
+  floor is a blocker before `ENABLE_LIVE_COEDITING` is turned on (board
+  item 19).
+
+## Round 4 (2026-10-04): the batch-draft door's refute-review, answered
+
+An independent refute-review of round 3's batch-draft change (`283fe08c4`)
+found eleven defects. Round 3 is not closed, and its "Not done here" premise
+was refuted: attribute text is not hidden from every reader. The editor's
+source mode shows it, and the leaf and the export print an alt, a footnote
+and a locator. The worst defect:
+
+- **D2, blocker.** A tag-shaped token (`<b"3 patients died">`) was hidden by a
+  browser and by the comparison form, but printed by the leaf and the export.
+  So a clause showing words AnA never wrote was credited to her.
+
+All eleven are fixed in `fixes/batch-draft-door/r4/`, each red first. They
+reach the live authoring AI-draft accept through the same lineage, and a
+test block pins that door too. The rule now reads:
+
+- A tag is removed for comparison only when a browser and the export's parser
+  read it alike, and its attributes are the presentational ones the editor
+  writes.
+- A clause overlapping an image or a printed attribute is not compared.
+- Everything from the first point the readers may disagree is not compared.
+- Content that opens in source mode, or that holds no known tag, is compared
+  character for character.
+
+22 of 22 mutants are killed. Work went to a background agent with a fixed
+file list, and was reviewed here before commit.
+
+Found while landing it: `batch-draft-accept.test.ts` had pinned, since
+`283fe08c4`, a call that round 3 replaced. The snapshot still takes the
+replaced content, through the transaction's one queryable. The pin is
+updated.
 
 ## Files
 

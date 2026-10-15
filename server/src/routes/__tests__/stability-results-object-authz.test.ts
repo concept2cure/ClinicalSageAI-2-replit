@@ -52,6 +52,7 @@ function app(user: unknown = { id: 1, email: 'qa@example.test', organizationId: 
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as any).user = user;
+    (req as any).userRole = 'member'; // a writing role (requireEditorAccessForWrites)
     (req as any).tenantId = 7;
     next();
   });

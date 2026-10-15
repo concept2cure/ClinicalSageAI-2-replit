@@ -1,0 +1,11 @@
+# mutation: the organisation predicate removed from searchVaultDocuments
+## on PostgreSQL as app_service with RLS on, the DB suite still passes: RLS hides the other organisation's documents (the first wall)
+      Tests  4 passed (4)
+## the unit test pins the predicate itself (the second wall), and fails
+ × server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > the library search names the organisation in the count and in the page 6ms
+ × server/services/vault/__tests__/vault-search.test.ts > searchVaultDocuments > a project search adds the project, and keeps the organisation 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)
+## ci:tenant-isolation:no-regression on the mutant
+  server/services/vault/vault-search.ts#f101dcaf54cb:documents
+  server/services/vault/vault-search.ts#c08da4de636d:documents

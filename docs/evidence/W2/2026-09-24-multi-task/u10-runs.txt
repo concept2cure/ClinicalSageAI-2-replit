@@ -1,0 +1,28 @@
+## deploy order — before
+ × tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > needs deploy-api 7ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > publishes: a full release, API rolled 1ms
+ × tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: the migration failed, so the API was not rolled 4ms
+ × tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: the API deploy failed or was rolled back 1ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > publishes: a frontend-only dispatch (deploy_api=false) 0ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: an API-only dispatch (deploy_frontend=false) 0ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: tests failed on a frontend-only dispatch 0ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > the smoke test still runs after a frontend-only dispatch 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 5 passed (8)
+
+## deploy order — after
+ Test Files  2 passed (2)
+      Tests  363 passed (363)
+
+## client — before
+ × client/src/__tests__/errorBoundaryChunkReload.test.tsx > a chunk from the previous release > is classified as a load failure, not a fault of ours (Vite's CSS preload message) 9ms
+ × client/src/__tests__/errorBoundaryChunkReload.test.tsx > a chunk from the previous release > "Try Again" on the root boundary loads the page again 184ms
+ ✓ client/src/__tests__/errorBoundaryChunkReload.test.tsx > a chunk from the previous release > a render crash still resets in place (no reload for our own defects) 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected false to be true // Object.is equality
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+      Tests  2 failed | 1 passed (3)
+
+## client — after
+ Test Files  2 passed (2)
+      Tests  11 passed (11)

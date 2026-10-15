@@ -1,0 +1,85 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > requires one explicit organization and defaults to bounded report-only work
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: undefined
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org=42"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > calls only the canonical tenant wrapper and preserves report caps
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > explicit apply forwards exact-source/retry selection and counts readable completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports extraction_failed as unresolved rather than clean completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retryable_failure as unresolved rather than clean completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports blocked as unresolved rather than clean completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports stale_source as unresolved rather than clean completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports busy as unresolved rather than clean completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retry_not_due as unresolved rather than clean completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retry_exhausted as unresolved rather than clean completion
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > keeps bounded diagnostics visible when no runnable source was selected
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > allows an empty clean dry-run without claiming any source was processed
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > whitelists report content and never prints raw private data or provider errors
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > fails closed on a malformed or mode-mismatched service report
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > refuses a report for another exact source before printing any source identity
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > closes the loaded service after fatal errors and emits a safe error code
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator failure handling > reports cleanup failure without emitting its private message
+ ↓ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > rejects invalid arguments with usage exit 2 before any server import
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > resolves the real server imports and refuses a missing database without a socket 760ms
+   → expected '{"level":40,"time":"2026-10-14T04:13:…' to be '' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > resolves the real server imports and refuses a missing database without a socket
+AssertionError: expected '{"level":40,"time":"2026-10-14T04:13:…' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ {"level":40,"time":"2026-10-14T04:13:25.703Z","pid":16703,"hostname":"6420e02dc63d","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
++
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:213:22
+    211|     expect(r.error).toBeUndefined();
+    212|     expect(r.status).toBe(1);
+    213|     expect(r.stdout).toBe('');
+       |                      ^
+    214|     expect(`${r.stdout}\n${r.stderr}`).not.toMatch(/ERR_MODULE_NOT_FOU…
+    215|     expect(r.stderr).toContain('DATABASE_UNAVAILABLE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 52 skipped (53)
+   Start at  04:13:24
+   Duration  1.05s (transform 66ms, setup 66ms, import 17ms, tests 762ms, environment 0ms)
+

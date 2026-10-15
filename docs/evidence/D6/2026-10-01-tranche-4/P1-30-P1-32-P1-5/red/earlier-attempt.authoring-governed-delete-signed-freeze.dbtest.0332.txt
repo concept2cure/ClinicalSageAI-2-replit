@@ -1,0 +1,176 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:32:27.725Z","pid":15111,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:32:27.726Z","pid":15111,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:32:27.726Z","pid":15111,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+✅ Template tables initialized
+
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 170ms
+   → expected 401 to be 403 // Object.is equality
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 49ms
+   → {"error":"admin token required"}: expected 401 to be 200 // Object.is equality
+{"level":30,"time":"2026-10-01T03:32:31.226Z","pid":15111,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 51b24eb3-22a7-45e4-9e50-991ae728a6f9 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T03:32:31.228Z","pid":15111,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"d6e7f062-de6e-4946-8ccd-43e46e4f6257"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 96ms
+   → {"error":"admin token required"}: expected 401 to be 409 // Object.is equality
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 36ms
+   → expected 401 to be 404 // Object.is equality
+{"level":30,"time":"2026-10-01T03:32:31.417Z","pid":15111,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc ec651e5a-4675-453f-8ea0-2af303e61d9e by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T03:32:31.502Z","pid":15111,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 3d47d689-5fa0-4145-8dc6-4742d1c94aad by d***@c2c.test"}
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 157ms
+   → expected 200 to be 400 // Object.is equality
+{"level":30,"time":"2026-10-01T03:32:31.557Z","pid":15111,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc fe385ffa-aacc-47ed-a840-0fe7dfe4a33c by d***@c2c.test"}
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 71ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 71ms
+   → expected [] to have a length of 1 but got +0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays
+AssertionError: expected 401 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 401
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:155:24
+    153|       .set('Authorization', actors.member.auth)
+    154|       .send({ reason: REASON });
+    155|     expect(res.status).toBe(403);
+       |                        ^
+    156|     expect(await docRow(id)).toBeTruthy();
+    157|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason
+AssertionError: {"error":"admin token required"}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:165:50
+    163|       .set('Authorization', actors.admin.auth)
+    164|       .send({ reason: REASON });
+    165|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    166|     expect(await docRow(id)).toBeUndefined();
+    167|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only
+AssertionError: {"error":"admin token required"}: expected 401 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 401
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:192:50
+    190|       .set('Authorization', actors.admin.auth)
+    191|       .send({ reason: REASON });
+    192|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    193|     expect(res.body.code).toBe('AUTHORING_DOCUMENT_HAS_HISTORY');
+    194|     expect(await docRow(id)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays
+AssertionError: expected 401 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 401
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:203:24
+    201|       .set('Authorization', actors.outsider.auth)
+    202|       .send({ reason: REASON });
+    203|     expect(res.status).toBe(404);
+       |                        ^
+    204|     expect(await docRow(id)).toBeTruthy();
+    205|     // And the outsider's own organisation is untouched by the attempt.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:217:24
+    215|       .set('Authorization', actors.admin.auth)
+    216|       .send({ reason: 'dbtest-p130: seal attempted without credentials…
+    217|     expect(res.status).toBe(400);
+       |                        ^
+    218|     expect(res.body.code).toBe('PASSWORD_REQUIRED');
+    219|     expect(String((await docRow(id))?.status).toUpperCase()).not.toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:228:24
+    226|       .set('Authorization', actors.member.auth)
+    227|       .send({ reason: 'dbtest-p130: member seal attempt', meaning: 'AU…
+    228|     expect(res.status).toBe(403);
+       |                        ^
+    229|     expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    230|     expect(String((await docRow(id))?.status).toUpperCase()).not.toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:246:22
+    244|       [res.body.signatureId, orgA],
+    245|     );
+    246|     expect(sig.rows).toHaveLength(1);
+       |                      ^
+    247|     expect(sig.rows[0]).toMatchObject({
+    248|       signer_email: 'dbtest-p130-admin@c2c.test',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  03:32:24
+   Duration  7.16s (transform 3.14s, setup 88ms, import 295ms, tests 6.21s, environment 0ms)
+

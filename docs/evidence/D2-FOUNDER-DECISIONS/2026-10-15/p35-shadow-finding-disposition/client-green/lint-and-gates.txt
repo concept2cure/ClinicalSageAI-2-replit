@@ -1,0 +1,47 @@
+# ESLint per file, HEAD (git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>) vs the working tree — 2026-10-15
+server/services/submission-service/submission-service.ts HEAD=8w/0e now=8w/0e
+server/routes/submissions.ts HEAD=1w/0e now=1w/0e
+shared/schema/shadow-review.ts HEAD=0w/0e now=0w/0e
+server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts HEAD=0w/0e now=0w/0e
+server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts HEAD=0w/0e now=0w/0e
+client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx HEAD=5w/0e now=5w/0e
+client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx HEAD=8w/0e now=8w/0e
+server/services/ectd/shadow-finding-disposition.ts (new) now=0w/0e
+server/services/ectd/__tests__/shadow-finding-disposition.pglite.integration.test.ts (new) now=0w/0e
+server/routes/__tests__/submissions-shadow-finding-disposition.test.ts (new) now=0w/0e
+server/services/ana/__tests__/ana-cannot-disposition-shadow-finding.test.ts (new) now=0w/0e
+client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx (new) now=0w/0e
+client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx (new) now=0w/0e
+
+# Client gates
+ci:undefined-css-classes: [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s). 
+ci:class-vocabulary: [ci:class-vocabulary] OK — 5066 file(s) scanned, no restated class vocabulary. 
+ci:surface-text-ramp: [ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets. 
+ci:check-chip-tones: [chip-tones] OK — 170 literal tone use(s), all 28 resolve to a CSS rule. 
+ci:internals-in-copy: check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s). 
+ci:empty-state-honesty: check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s). 
+ci:action-overclaim: check-action-overclaim: no new occurrences. 0 baselined. 
+ci:success-before-ok: check-success-before-ok: no occurrences across 266 file(s). 
+ci:sign-ceremony: [ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined. [ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 5 baselined re-authentication(s) sign nothing, exactly as baselined. 
+ci:check-client-api-calls: check-client-api-calls-resolve: 143 client /api prefixes, 311 server /api prefixes. ✅ every client /api call has a server route behind it. 
+ci:unreferenced-modules: Unreferenced modules: 81 (baseline 81) OK: no new unreachable modules. 
+ci:check-test-imports: FAIL — 1 import names a missing file: server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts:4 → ../../../../shared/types/database (pre-existing; not a P-35 file)
+ci:check-unrun-tests: [ci:unrun-tests] 4379 test files · 13 vitest globs · 7 non-vitest runner globs · 0 unrun (0 allowlisted). [ci:unrun-tests] OK — every test file is reachable by a runner, or explained. 
+
+# Scoped typecheck (full tsc runs out of memory on this host): a scratch tsconfig extending tsconfig.json with files = the 13 touched/new TS files (final tree, incl. submissions-leaf-remove-and-precheck.test.ts); tsc follows their imports.
+# 21 errors (EXIT 2), none in a touched file — all pre-existing, in files P-35 does not touch:
+      3 server/middleware/establishRequestTenantScope.ts
+      3 client/src/concept2cure/v2/shellProject.ts
+      2 server/services/mfaService.ts
+      2 server/services/ana/AnaToolExecutor.ts
+      1 server/utils/jwtVerify.ts
+      1 server/services/token-revocation.ts
+      1 server/services/memory/document-text-extraction.ts
+      1 server/services/cmc/link-to-module3.ts
+      1 server/services/authoring/authoring-permissions.ts
+      1 server/services/ana-ri/proposal-seal.ts
+      1 server/routes/c2c/shared.ts
+      1 server/middleware/requirePlatformAdmin.ts
+      1 client/src/concept2cure/v2/surfaceActions.ts
+      1 client/src/concept2cure/components/ana/CrlPremortemPanel.tsx
+      1 client/src/concept2cure/components/ana/BriefingBookPanel.tsx

@@ -1,0 +1,11 @@
+# ci:env-var-docs (scripts/ci/check-env-var-docs.mjs; wired into no npm script or hook).
+# AUDIT_ANCHOR_BUCKET is read as env.AUDIT_ANCHOR_BUCKET inside resolveAuditAnchorStore(env = process.env),
+# the same shape as resolveAuditChainSweepPosture(process.env). The gate matches process.env.NAME only, so it does
+# NOT list the variable: a pass here proves nothing about it. The .env.example line is proposed in the README
+# (that file carries another lane's uncommitted edit and is not this item's).
+# 2026-10-01T07:01:57Z
+$ node scripts/ci/check-env-var-docs.mjs --strict-no-regression | grep -c AUDIT_ANCHOR
+0
+$ node scripts/ci/check-env-var-docs.mjs --strict-no-regression | head -2   (pre-existing state of the tree, other lanes included)
+[ci:env-var-docs] 22 baseline var(s) now documented or removed: APP_VERSION, AUTH_JWT_SECRET, CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW, CONNECTOR_ENCRYPTION_KEY, ECTD_DTD_DIR, EMBED_MODEL, ENABLE_CERV2_SAMPLE_EXPORTS, ENABLE_SEMANTIC_WORKING_MEMORY, FDA_ESG_CERT_PATH, FDA_ESG_KEY_PATH, FDA_ESG_PASSWORD, FDA_ESG_URL, FDA_ESG_USERNAME, GOOGLE_API_KEY, JWT_SECRET_PROD, REPORT_OS_ALLOW_SEED, REPORT_OS_SEED_KEY, SEARCH_TOP_K, SEAT_LIMIT_ENFORCEMENT, SMTP_FROM, …
+  Consider running `npm run ci:env-var-docs:write-baseline` to ratchet the bar tighter.

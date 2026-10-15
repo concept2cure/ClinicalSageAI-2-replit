@@ -164,7 +164,11 @@ function sampleSize(design: StudyDesign): Body {
     ].filter(present);
     lines.push(`Assumptions: ${bits.join(', ')}.`);
     const hasProvenance = Array.isArray(pa.evidence) && pa.evidence.length > 0;
-    if (hasProvenance) lines.push(`Provenance: ${pa.evidence!.map(e => e.source).join('; ')}.`);
+    // A computed N's evidence names its stored run and inputs hash (S5b), so the
+    // SAP says which reproducible record the figure came from.
+    const cite = (e: { source: string; ref?: string }) =>
+      e.ref?.startsWith('sha256:') ? `${e.source} (inputs ${e.ref.slice(0, 7 + 12)}…)` : e.source;
+    if (hasProvenance) lines.push(`Provenance: ${pa.evidence!.map(cite).join('; ')}.`);
     else gaps.push('The sample-size assumptions carry no evidence provenance.');
   } else {
     // Do not fabricate the determinants — defer to the statistician, honestly.

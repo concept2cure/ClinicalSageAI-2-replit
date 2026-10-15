@@ -1,0 +1,213 @@
+{
+  "branch": "concept2cure-v2",
+  "workstream": "W1",
+  "launchRow": "D2",
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "bytes": 119864,
+      "digestAlgorithm": "sha256",
+      "digest": "6dfff90e38b57f70eb12ee10cc1024a8990c42dec95fff94af2e48affd1ebbf9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "bytes": 15984,
+      "digestAlgorithm": "sha256",
+      "digest": "7110f31f02e40ed9c83e4f6460bacc69ce1a44ec16909a0ce57cd31d2775ea16"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "bytes": 55868,
+      "digestAlgorithm": "sha256",
+      "digest": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "bytes": 25120,
+      "digestAlgorithm": "sha256",
+      "digest": "9ac80be7062f273e6c06992a11c45a15c0cbf22a8bdc9501202bf6eb892f5a5f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "bytes": 21973,
+      "digestAlgorithm": "sha256",
+      "digest": "df530808d3111b0bffbb50f02272475900bdeb90eceee11aabcecb53603e6ee2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "bytes": 7610,
+      "digestAlgorithm": "sha256",
+      "digest": "6f35aa6dcd2b2e2f448a5a3e308f49caa028f9dca6db9644431465bb4c1aedfd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_insights-library-fixture.tsx",
+      "bytes": 3808,
+      "digestAlgorithm": "sha256",
+      "digest": "0d6da9925dadb44f23abf8785b66b6230acec49e1bd8efcd6a3d4023bf061b54"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsBundlesPanel.tsx",
+      "bytes": 6843,
+      "digestAlgorithm": "sha256",
+      "digest": "37ad4b808994d04f329fbcc347870da5ba99401a40edc786647003523b377d6f"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/prospective-9-fail-2-pass.log",
+      "bytes": 13117,
+      "digestAlgorithm": "sha256",
+      "digest": "72225e9afc12ed2552c1c2b4e3445a48d2af8b56b379741326ae79a2d72cb223",
+      "normalization": "Terminal blank lines removed; final newline retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/prospective-9-fail-2-pass.raw.txt.gz",
+      "rawArchiveBytes": 1807,
+      "rawArchiveDigest": "cc69f31c8afa89b2bda9e29f38a33201a016f81b26ccb7361bbc610ac153ce3f",
+      "uncompressedRawBytes": 13118,
+      "uncompressedRawDigest": "f9d84ca18b774d46efe382665c27bd59934cb598b6635f2b9e534caecac4292d",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/final-55-pass.log",
+      "bytes": 11331,
+      "digestAlgorithm": "sha256",
+      "digest": "1ed405dfa5729fd30505bc2af12773d1ba3aba9a29e8bcd69e6e2a237cd1e3d6",
+      "normalization": "Terminal blank lines removed; final newline retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/final-55-pass.raw.txt.gz",
+      "rawArchiveBytes": 2230,
+      "rawArchiveDigest": "a57cc60f00f7657a7542a383aaf269c67e734ed542736f9c84ac32c3b5634992",
+      "uncompressedRawBytes": 11332,
+      "uncompressedRawDigest": "9eedce50f6e72a57b3daf298546a7e92c39c293b2614a3dcbb6a98513edbe7f6",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/final-scoped-lint.log",
+      "bytes": 884,
+      "digestAlgorithm": "sha256",
+      "digest": "b58df9f7446811d3dfd0c52258f2700f238beaef99c2008ba98c689fa0c771a5",
+      "normalization": "Terminal blank lines removed; final newline retained.",
+      "rawArchivePath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/final-scoped-lint.raw.txt.gz",
+      "rawArchiveBytes": 346,
+      "rawArchiveDigest": "681eacd1314b713fa4447f95fb6e3e8b2522f104440d7699b04fec983f6b7507",
+      "uncompressedRawBytes": 885,
+      "uncompressedRawDigest": "60d741d4bba29bb4fbfdeca1f936f2be5b1a696dd5193b4d4760a729e53bf943",
+      "rawRoundTripVerified": true
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/baseline-source-pins.json",
+      "bytes": 636,
+      "digestAlgorithm": "sha256",
+      "digest": "e2228458a08394992c6cc00ee7c7340b2371ccf46903a8f3097db7613cb17cfd"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui-session-revision/test-inventory.json",
+      "bytes": 13414,
+      "digestAlgorithm": "sha256",
+      "digest": "7b2ebdab5fb566931534afef056afeb74c9f51f745a5f59ae558790c3c0890cb"
+    }
+  ],
+  "prior44CaseEvidenceUnmodifiedAndVerified": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/README.md",
+      "bytes": 5177,
+      "digestAlgorithm": "sha256",
+      "digest": "612d5c82dc277342c844e114f960e04fc93f28aaa32a4d65492e20c1bba8626f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-44-pass.log",
+      "bytes": 9096,
+      "digestAlgorithm": "sha256",
+      "digest": "104c6ec6f683a0b91b9801040538b4d92ab83de86943b0a983c96eed1e8585ed"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-44-pass.raw.txt.gz",
+      "bytes": 1990,
+      "digestAlgorithm": "sha256",
+      "digest": "3ec59e47bfcf98bca3a43ccd0491042cbc22e80ab04274144546448516ed9f0c"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-scoped-lint.log",
+      "bytes": 884,
+      "digestAlgorithm": "sha256",
+      "digest": "90bf1e5f5842f27f08f8d2d47a4659f6e163e60a14d270604cbf7a8c96554b94"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/final-scoped-lint.raw.txt.gz",
+      "bytes": 345,
+      "digestAlgorithm": "sha256",
+      "digest": "acbb9c7296d5191524921f09180dae736ad89b32c8b3a2b641dcbad8da25e57d"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-integration-41-pass-3-test-selector-fail.log",
+      "bytes": 51709,
+      "digestAlgorithm": "sha256",
+      "digest": "45c70fbe099a16e8955653339c173836e05d72d15c4f70f463b83a1612db2f78"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-integration-41-pass-3-test-selector-fail.raw.txt.gz",
+      "bytes": 4285,
+      "digestAlgorithm": "sha256",
+      "digest": "7d919c54f789123e2c056bd353b709f036c3da8ace618f2a13468fcef83deb2a"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-lint-two-test-size-warnings.log",
+      "bytes": 1197,
+      "digestAlgorithm": "sha256",
+      "digest": "e159303d461c51ccb7974a6d0b1b461d8064ad86d7d27f89e3e294097e967362"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/first-lint-two-test-size-warnings.raw.txt.gz",
+      "bytes": 407,
+      "digestAlgorithm": "sha256",
+      "digest": "53a95af9852c9c6b0f69e84067d60c783f46cc3102bcd9d06b81260c0fc55d5b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/lint-warning-preservation.json",
+      "bytes": 414,
+      "digestAlgorithm": "sha256",
+      "digest": "2da5d3cde86cbce98875ff93ca7decff384883407ce24ee5acd2ff6ee1e1a356"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red-source-pins.json",
+      "bytes": 1361,
+      "digestAlgorithm": "sha256",
+      "digest": "97a009284cc9d69bb84e1a570e35f396e7ebc492075724e176d671e57d5d2f92"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red.log",
+      "bytes": 225131,
+      "digestAlgorithm": "sha256",
+      "digest": "cc116331039528278fb0a4eeeb2a04b50608d3c2eb5d898a649923259e372878"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/prospective-red.raw.txt.gz",
+      "bytes": 7463,
+      "digestAlgorithm": "sha256",
+      "digest": "64070bd13451c26c5f197af0ada5b16403c4c703b4185579ea8005ecfe9553bc"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/source-and-artifact-manifest.json",
+      "bytes": 8447,
+      "digestAlgorithm": "sha256",
+      "digest": "929159a5e7b319af9c11ae8e789f2b5b543b0d42f8592370f0ce91678bace4a8"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/ui/test-inventory.json",
+      "bytes": 10800,
+      "digestAlgorithm": "sha256",
+      "digest": "711b60d75e1d5708fc33620f620ba164ecf79cff6e5f6ce63d37270cee6edb79"
+    }
+  ],
+  "authServiceSourceUnchanged": true,
+  "finalVerification": {
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0,
+    "files": 3,
+    "vitestDurationSeconds": 20.59,
+    "scopedLintErrors": 0,
+    "scopedLintWarnings": 7,
+    "testWarnings": 0,
+    "warningCountGrowth": 0
+  },
+  "scope": "Bundle export response ownership across session revisions; no individual-run or platform-wide session-ownership claim."
+}

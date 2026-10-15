@@ -1,0 +1,23 @@
+# green: slice 2 on c026894b + working tree
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > resolves each reference against the outlines of the tenant's own documents 30ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not assess table and figure numbers, and does not pass them 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses a document outside the organization, and says the same as for one that does not exist 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses without a tenant, and asks for the references it is to check 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > matches a section by its code, not by a longer code that starts the same 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > describes what it checks, not a table or figure check it does not do 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a journal article from the record PubMed returned for its PMID 47ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > looks a DOI up as a DOI 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is not_found — never a placeholder 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is unverifiable — never a placeholder 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is error — never a placeholder 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > carries a retraction with the citation 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > takes an ICH guideline's title from the ICH corpus 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats an ICH code the corpus does not hold, and says it is not in the corpus 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a 21cfr citation from the identifier given and labels it not verified 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a fda_guidance citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a eu_mdr citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a iso_standard citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > applies the style it names, and says when it cannot apply the one asked for 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > asks for what is missing instead of formatting nothing 0ms
+ Test Files  2 passed (2)
+      Tests  20 passed (20)

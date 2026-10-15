@@ -1,0 +1,67 @@
+Red first: round 6's tests against trunk d11ee2368's code (tool-selection.ts, tool-trace.ts, stream.ts and tool-selection.test.ts as trunk has them).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Each test that passes here is a negative control; its red is its mutant (mutants/).
+
+ × server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > an object never adds the word "object" 34ms
+   → expected [ 'list_platform_commands', …(49) ] to deeply equal [ 'list_platform_commands', …(49) ]
+ × server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > hints that are not a list do not throw, and a list keeps only its strings 2ms
+   → expected [Function] to not throw an error but 'TypeError: ((intermediate value) ?? […' was thrown
+ × server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > the tools that succeeded, most recent first, each once 1ms
+   → carriedToolsFrom is not a function
+ × server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > never a step a person declined (recorded as an error), and nothing from no steps 1ms
+   → carriedToolsFrom is not a function
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the EU?" is still offered get_cmc_requirements 13ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'get_cmc_requirements'
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and as a victim?" is still offered assess_ddi_risk 15ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'assess_ddi_risk'
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "what about with itraconazole?" is still offered assess_ddi_risk 8ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'assess_ddi_risk'
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and with 80% power?" is still offered estimate_sample_size 5ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'estimate_sample_size'
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the drug product?" is still offered design_stability_study 9ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'design_stability_study'
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "now the toxicology part" is still offered draft_nonclinical_overview_m2_4 9ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'draft_nonclinical_overview_m2_4'
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "go on" is still offered explain_cmc_topic 4ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'explain_cmc_topic'
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > a bare continuation is offered the carried tool first, right after the always-on core and the pins 6ms
+   → expected 'plan_ind_module_authoring' to be 'get_cmc_requirements' // Object.is equality
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carries at most undefined, in the order carried, inside the cap 4ms
+   → expected [ 'list_platform_commands', …(2) ] to deeply equal [ 'list_platform_commands', …(22) ]
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carried tools never cost a question its own tools near the end of its slots 12ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > offers a carried tool once, though the current request also selects it 4ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > never offers a carried name outside the governed set, nor carries an unhealthy one ahead 1ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > with nothing carried the selection is what it was 23ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > reads the eval 0ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'prepare_fda_form' after any other topic 102ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'amend_fda_form' after any other topic 118ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_forms' after any other topic 105ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'search_grants_gov' after any other topic 101ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'screen_restricted_party' after any other topic 115ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'triage_compliance_attention' after any other topic 135ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 113ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 99ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 103ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 128ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 125ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 123ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 113ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 115ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 95ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 105ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'explain_cmc_topic' after any other topic 119ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 84ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 83ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 73ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 90ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 85ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 89ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 88ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 83ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 92ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 50ms
+   → expected [ 'list_platform_commands', …(2) ] to include 'get_cmc_requirements'
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 16ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  14 failed | 32 passed (46)

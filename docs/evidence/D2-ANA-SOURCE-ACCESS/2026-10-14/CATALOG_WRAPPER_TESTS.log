@@ -1,0 +1,19 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > uses one stamped connection and current persisted viewer role, then re-admits before success 13ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: missing_actor 4ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: wrong_tenant 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: no_tenant 0ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > inactive actor refuses before protected source callback and rolls back 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > revocation after the protected read refuses the loaded result 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > unknown pool/SQL failure returns named unavailable and never empty 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > copies actor input before any await 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > composite result cannot use a newly widened or changed role scope as its old authorization 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > same pinned scope can finish a composite read 1ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  19:39:13
+   Duration  4.12s (transform 1.75s, setup 227ms, import 2.99s, tests 27ms, environment 0ms)
+

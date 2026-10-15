@@ -1,0 +1,15 @@
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > the probes stand for hidden tools and one in-scope tool 3ms
+ × server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, is refused and its handler never runs (the CMC interview fast path included) 9ms
+ × server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, a hidden write is refused before a person is asked to confirm it 6ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, an in-scope tool still runs 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > with launch scope off (a development server), a hidden tool runs 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, is refused and its handler never runs (the CMC interview fast path included)
+AssertionError: answer_intelligence_question: expected undefined to be 'LAUNCH_SCOPE' // Object.is equality
+- Expected:
++ Received:
+ FAIL  server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, a hidden write is refused before a person is asked to confirm it
+AssertionError: expected 'create_ha_interaction was not run: it…' to be 'LAUNCH_SCOPE' // Object.is equality
+Expected: "LAUNCH_SCOPE"
+Received: "create_ha_interaction was not run: it is a governed change, and the audit trail records the person's reason for it, but no reason of at least 8 characters was given. Nothing was recorded or changed. Ask the person why they are making this change, then call create_ha_interaction again with their answer in "reason". Do not write a reason they did not give."
+      Tests  2 failed | 3 passed (5)

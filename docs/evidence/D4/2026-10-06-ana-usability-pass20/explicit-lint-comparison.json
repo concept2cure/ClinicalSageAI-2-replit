@@ -1,0 +1,26 @@
+[
+  {
+    "gate": "explicit-lint-comparison",
+    "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+    "current": {
+      "errors": 0,
+      "warnings": 36
+    },
+    "previous": {
+      "errors": 0,
+      "warnings": 36
+    }
+  },
+  {
+    "gate": "explicit-lint-comparison",
+    "file": "client/src/concept2cure/v2/AnaActivity.tsx",
+    "current": {
+      "errors": 0,
+      "warnings": 2
+    },
+    "previous": {
+      "errors": 0,
+      "warnings": 2
+    }
+  }
+]

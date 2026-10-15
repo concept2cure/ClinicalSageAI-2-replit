@@ -17,7 +17,10 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+/* Partial: SubmissionCenter's reads key on the real authService session
+   (submissionScopedRead.ts, 1bd3af0bc), so only the hooks are stubbed. */
+vi.mock('@/services/portal/authService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: 7, firstName: 'Ada' } }),
   useAuthUser: () => ({ id: 7, firstName: 'Ada' }),
 }));
@@ -243,7 +246,7 @@ describe('ProjectHome — set-stage drives the lifecycle rail', () => {
     const out = apply('project-home.set-stage', { stage: 'evidence' });
     expect(out.status).toBe('applied');
     await waitFor(() => {
-      const active = document.querySelector('.pj-lc-stage[aria-selected="true"]');
+      const active = document.querySelector('.pj-lc-stage[aria-current="step"]');
       expect(active?.textContent).toContain('Evidence');
     });
   });

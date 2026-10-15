@@ -1,0 +1,17 @@
+
+🚫 [ci:duplicate-exported-types] 3 NEW exported type name(s) now mean more than one thing:
+
+  CtqCategory
+      server/services/rbm/rbm-actuator.ts
+      server/services/study-design/ctq-derivation.ts
+  DocumentProvenance
+      server/services/ana-biostats/types.ts
+      server/services/authoring/authoring-from-draft.ts
+  EligibilityAssessment
+      server/services/market-specs/pathway-eligibility.ts
+      server/services/study-design/eligibility-model.ts
+
+Give each module's type the name of what it actually is. A reader who greps the noun
+must land on the module that owns it — that is the difference between a canonical
+claim and a canonical fact.
+

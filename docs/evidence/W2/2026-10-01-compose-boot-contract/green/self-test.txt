@@ -1,0 +1,12 @@
+$ node scripts/ci/check-compose-boot-contract.mjs --self-test
+ok   a complete stack passes
+ok   SMTP_HOST absent
+ok   a bare ${ANTHROPIC_API_KEY}
+ok   an empty default
+ok   RLS_ENFORCE defaulting to off
+ok   hmac signer nobody accepted
+ok   s3 vault with no bucket
+ok   no ALLOWED_ORIGINS
+ok   list-form environment is read
+[ci:compose-boot-contract] self-test: every case behaves
+exit=0

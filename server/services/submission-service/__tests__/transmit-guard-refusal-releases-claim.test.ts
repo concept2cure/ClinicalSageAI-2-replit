@@ -62,7 +62,7 @@ const state = { dispatchStatus: 'pending' as string };
 vi.mock('../../../db', () => {
   const rowsFor = (tableName: string) => {
     if (tableName === 'ectd_sequences') return [{ id: 1, submissionId: 1, region: 'fda', sequenceNumber: '0000', status: 'dispatched', dispatchStatus: state.dispatchStatus, type: 'original', organizationId: 7 }];
-    if (tableName === 'submissions') return [{ id: 1, clientType: 'biotech', applicationType: 'ind', organizationId: 7 }];
+    if (tableName === 'submissions') return [{ id: 1, clientType: 'biotech', applicationType: 'ind', organizationId: 7, programId: 'p-1' }];
     return [];
   };
   const tableNameOf = (t: any) => t?.[Symbol.for('drizzle:Name')] ?? t?._?.name ?? '';
@@ -91,6 +91,9 @@ vi.mock('../../../db', () => {
       if (/SET dispatch_status = 'pending'/.test(text)) { if (state.dispatchStatus === 'transmitting') state.dispatchStatus = 'pending'; return { rowCount: 1, rows: [] }; }
       // The FDA gateway's transmittal row (only the SFTP case reaches it).
       if (/INSERT INTO submission_transmittals/.test(text)) return { rowCount: 1, rows: [{ id: 99 }] };
+      // What the package names, from the record (package-identity.ts, QA j6).
+      if (/FROM organizations/.test(text)) return { rowCount: 1, rows: [{ name: 'Concept2Cure Therapeutics' }] };
+      if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: 'IND123456' }] };
       return { rowCount: 0, rows: [] };
     },
     connect: async () => { throw new Error('not expected'); },
@@ -168,6 +171,8 @@ const REST_ENV = {
 const AS2_ENV: Record<string, string> = {
   FDA_ESG_STAGING_URL: 'https://esg.example.invalid',
   FDA_ESG_STAGING_AS2_FROM: 'SPONSOR',
+  // FDA's AS2 identifier has no default (2026-10-01, W5/D7, sweep F16).
+  FDA_ESG_STAGING_AS2_TO: 'FDA-AS2-ID-TEST',
 };
 beforeAll(async () => {
   const d = await fs.mkdtemp(path.join(os.tmpdir(), 'fda-as2-pem-'));
@@ -308,6 +313,7 @@ describe('the FDA AS2 POST, classified by the delivery classifier', () => {
   const mtlsEnv = (client: 'trusted' | 'rogue'): Record<string, string> => ({
     FDA_ESG_STAGING_URL: `https://127.0.0.1:${server.port}/as2`,
     FDA_ESG_STAGING_AS2_FROM: 'SPONSOR-AS2',
+    FDA_ESG_STAGING_AS2_TO: 'FDA-AS2-ID-TEST',
     FDA_ESG_STAGING_CERT_PATH: client === 'trusted' ? pki.paths.clientCert : pki.paths.rogueCert,
     FDA_ESG_STAGING_KEY_PATH: client === 'trusted' ? pki.paths.clientKey : pki.paths.rogueKey,
     FDA_ESG_STAGING_FDA_CERT_PATH: pki.paths.ca,

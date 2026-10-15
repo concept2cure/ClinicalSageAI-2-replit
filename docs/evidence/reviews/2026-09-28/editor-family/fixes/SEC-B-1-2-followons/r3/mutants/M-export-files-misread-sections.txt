@@ -1,0 +1,26 @@
+mutant M-export-files-misread-sections: server/export/authoring-images.ts
+-     if (unfileable.has(src)) continue;
+
++ 
+
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > a duplicated src: the browser shows the first, the parser files the last: nothing from the section is filed 12ms
+   → filed an image the canvas does not show as it is: expected [ 'JgBBBB==' ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > the same, where the second is also shown elsewhere in the section: nothing from the section is filed 4ms
+   → filed an image the canvas does not show as it is: expected [ 'JgBBBB==' ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside a bogus comment: nothing from the section is filed 5ms
+   → filed an image the canvas does not show as it is: expected [ 'JgBBBB==' ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside a processing-instruction-shaped comment: nothing from the section is filed 4ms
+   → filed an image the canvas does not show as it is: expected [ 'JgBBBB==' ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside a textarea: nothing from the section is filed 4ms
+   → filed an image the canvas does not show as it is: expected [ 'JgBBBB==' ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside an xmp: nothing from the section is filed 3ms
+   → filed an image the canvas does not show as it is: expected [ 'JgBBBB==' ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > inside a template: nothing from the section is filed 3ms
+   → filed an image the canvas does not show as it is: expected [ 'JgBBBB==' ] to deeply equal []
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > a governed reference behind a duplicated src is not even loaded 2ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > the export files an image only where a browser shows the same one > a source hidden or swapped in one section is filed for no other section of the export 3ms
+   → expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  9 failed | 30 passed (39)

@@ -30,6 +30,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 import { stripComments } from './_strip-comments';
 
@@ -38,6 +39,19 @@ const SRC = path.join(REPO, 'client/src/concept2cure');
 
 const read = (p: string, isCss = false) =>
   stripComments(fs.readFileSync(path.join(REPO, p), 'utf8'), isCss);
+
+/** Inspect the registered host, not unrelated child callbacks in its file. */
+function componentImplementation(file: string, name: string): string {
+  const source = ts.createSourceFile(file, read(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  for (const node of source.statements) {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === name) return node.getText(source);
+    if (ts.isVariableStatement(node)) {
+      const declaration = node.declarationList.declarations.find(candidate => ts.isIdentifier(candidate.name) && candidate.name.text === name);
+      if (declaration) return declaration.getText(source);
+    }
+  }
+  throw new Error(`Registered component ${name} was not found in ${file}`);
+}
 
 /** Every .tsx under concept2cure, repo-relative. */
 function allTsx(dir = SRC, out: string[] = []): string[] {
@@ -144,27 +158,22 @@ describe('one shell', () => {
     // AnA rail's column has to answer somewhere, and these answer in their own
     // dock rather than writing into a rail the screen does not draw.
     //
-    //   V2App.tsx              the shell's rail — the one conversation every
-    //                          surface that KEEPS the rail shares.
-    //   ConversationThread.tsx the dedicated thread surface. Also the
-    //                          destination for `window.C2C_CONVO` seeds from
-    //                          Home, ProjectHome and the shell's own ⌘K.
+    //   V2App.tsx              the shell's one conversation. The right rail
+    //                          that drew it beside every screen is deleted
+    //                          (ONE_ANA_ONE_CANVAS.md, slice 9); the
+    //                          conversation screen renders it. Shell.tsx never
+    //                          called the hook, so the rail's deletion leaves
+    //                          this list as it was.
+    //   ConversationThread.tsx a fallback instance, used only when no shell
+    //                          chat is passed in (tests). In the app the screen
+    //                          renders V2App's chat (`shellChat`), and it is
+    //                          the destination for `window.C2C_CONVO` seeds
+    //                          from Home, ProjectHome and the shell's own ⌘K.
     //   Rbm.tsx                the RBM co-monitor dock, study-scoped.
-    //   editor/DocumentWorkbench.tsx
-    //                          the editor's right-rail pane, section-scoped via
-    //                          authoringContext. The editor cannot give the
-    //                          rail's column back (`.ed` has a hard 940px
-    //                          minimum with a rail mode open) and its asks are
-    //                          about the section under the cursor, so the
-    //                          answer has to arrive without leaving the editor.
-    //                          It lived in surfaces/DocumentAuthoring.tsx until
-    //                          2026-09-21, when the editing core moved, unchanged,
-    //                          into the workbench (docs/design/ANA_DOCUMENT_CANVAS.md);
-    //                          DocumentAuthoring no longer calls the hook. The
-    //                          workbench is also mounted inside the conversation
-    //                          thread's canvas, so there it must hand every ask
-    //                          to the host's `onAsk` and never send on its own
-    //                          thread — asserted below.
+    //   DocumentWorkbench has no conversation hook. Standalone asks preserve
+    //                          the saved document through its leave guard and
+    //                          prefill ConversationThread; inside DocumentCanvas
+    //                          they prefill that same host in place.
     //   EctdCoauthor.tsx       the co-author's middle intelligence pane,
     //                          document-scoped. The pane already had a
     //                          composer; it had no answer.
@@ -172,7 +181,6 @@ describe('one shell', () => {
       'client/src/concept2cure/v2/V2App.tsx',
       'client/src/concept2cure/v2/surfaces/ConversationThread.tsx',
       'client/src/concept2cure/v2/surfaces/Rbm.tsx',
-      'client/src/concept2cure/v2/editor/DocumentWorkbench.tsx',
       'client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx',
     ]);
     const WORKBENCH = 'client/src/concept2cure/v2/editor/DocumentWorkbench.tsx';
@@ -207,16 +215,21 @@ describe('one shell', () => {
         "shell's `onAsk`, or add it here with a note saying which named conversation it owns.",
     ).toEqual([]);
 
-    // The workbench's own thread is only spoken on when no host owns the
-    // conversation: inside the thread's canvas the ask goes to `onAsk` and
-    // returns before the pane's `ana.send`, so one conversation stays on screen.
+    // Neither host may open another conversation or send silently. The
+    // saved-record handoff is staged only after the existing leave guard.
     const wb = read(WORKBENCH);
     const askAna = wb.slice(wb.indexOf('const askAna = useCallback('), wb.indexOf('const askAnaToDraft'));
     expect(askAna.length, 'askAna not found in ' + WORKBENCH).toBeGreaterThan(0);
-    const handOff = askAna.search(/if \(onAsk\) \{\s*onAsk\(clean\);\s*return;\s*\}/);
+    const handOff = askAna.search(/if \(onAsk\) onAsk\(prompt,\s*originWithSavedVersion\(/);
     expect(handOff, 'the workbench must hand the ask to its host when one owns the conversation').toBeGreaterThan(-1);
-    expect(askAna.indexOf('ana.send(')).toBeGreaterThan(handOff);
-    expect(wb.split('ana.send(').length - 1, 'a second send path on the workbench thread').toBe(1);
+    expect(askAna).toContain("requestLeave({ kind: 'conversation', prompt })");
+    expect(wb).not.toMatch(/\buseAnaChat\s*\(/);
+    expect(wb).not.toMatch(/\bana\.send\s*\(/);
+    expect(wb).toContain('prefillConversation(target.prompt');
+    const channel = read('client/src/concept2cure/v2/editor/askAnaToDraft.ts');
+    const prefill = channel.slice(channel.indexOf('export function prefillConversation'), channel.indexOf('export function askAnaToDraftPrompt'));
+    expect(prefill).toContain("id: 'current'");
+    expect(prefill).toContain('sendOnArrival: false');
   });
 
   it('no surface takes the AnA rail column and still calls the shell onAsk', () => {
@@ -287,7 +300,7 @@ describe('one shell', () => {
         // (`const ask = onAsk` — what EctdCoauthor used to do, and a bare
         // call-site grep misses), and forwarding it into a child as a JSX prop.
         if (!file) return false;
-        const src = read(file);
+        const src = componentImplementation(file, comp);
         return /\bonAsk\s*\(/.test(src) || /=\s*onAsk\b/.test(src) || /\{\s*onAsk\s*\}/.test(src);
       })
       .map(([id]) => id)

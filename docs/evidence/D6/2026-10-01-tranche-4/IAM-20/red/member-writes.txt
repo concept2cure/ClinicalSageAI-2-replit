@@ -1,0 +1,14 @@
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing 54ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > returns entitlements when tenant context provides organization id 7ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /settings is refused before the controller runs 19ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /modules/toggle is refused before the controller runs 7ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /projects is refused before the controller runs 5ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /projects/7 is refused before the controller runs 4ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /ai-config is refused before the controller runs 13ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /compliance is refused before the controller runs 8ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /onboard is refused before the controller runs 8ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /execute is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > an admin may still change settings 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member may still read settings 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 4 passed (12)

@@ -27,7 +27,8 @@ function app(org = 7) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any).user = { id: 5, organizationId: org };
+    // A writing role: the RIM router refuses a viewer's writes (c81212ac).
+    (req as any).user = { id: 5, organizationId: org, role: 'member' };
     (req as any).tenantContext = { organizationId: org };
     next();
   });

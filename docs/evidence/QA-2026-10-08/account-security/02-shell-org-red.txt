@@ -1,0 +1,11 @@
+# Item 1 RED (client) — the shell's top bar names 'Organization' when no organisation is known
+# Shell.tsx unchanged; the AccountPanel pin is green from the start (it already printed 'None on this session' for an empty name)
+$ npx vitest run client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx client/src/concept2cure/v2/__tests__/accountPanel.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a session with no organisation says so, and names none (P-25) 22ms
+stderr | client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25)
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25) 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25)
+AssertionError: an organisation chip with no organisation: expected <div class="tb-org" …(1)>…(2)</div> to be null
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 30 passed (31)

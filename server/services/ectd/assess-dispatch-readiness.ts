@@ -8,8 +8,27 @@
  * input to the hard gate is therefore computed from server state — a client can
  * no longer pass `validationErrors: 0` to talk the gate out of a blocker.
  *
- * Required-section context comes from the region profile (Module-1), used only
- * for non-blocking warnings.
+ * Required-section context: for an original sequence of an application kind
+ * the regional Module 1 record models, the record's requirement — a missing
+ * section is an error; for a continuing US NDA, BLA or ANDA sequence, its 1.1
+ * application form, as an error; for a continuing US IND sequence, its 1.1,
+ * 1.2 and type content from the IND sequence validator (P-33, below);
+ * otherwise the region profile's list, as non-blocking warnings
+ * (readinessOptionsForSequence).
+ *
+ * Module 3 of an original US IND is asked separately, because the Module 1
+ * record does not model it: its required headings come from the IND profile
+ * (required-sections.requiredSectionProfileFor), and a heading with no leaf
+ * and no cross-reference covered by a Letter of Authorization blocks
+ * (IND_MODULE3_REQUIRED; see originalModule3Requirement).
+ *
+ * One dispatch verdict per sequence (decision P-33, 2026-10-15): the IND's own
+ * gate (ind-lifecycle/ind-dispatch-gate.ts) was merged here and deleted, and
+ * the IND lifecycle routes answer from this assessment. What it checked and
+ * this did not is carried for every US IND sequence by ind-program-findings —
+ * a cross-reference with no Letter of Authorization (blocks), an overdue IND
+ * safety report (warns), a clinical hold (stated as not assessed), and a
+ * continuing sequence's transmittal pair and type content (validateSequenceLeaves).
  *
  * Tenant-scoped + DB-bound. Running it needs a database.
  *
@@ -17,18 +36,42 @@
  */
 
 import { ruleView, DISPATCH_GATE_RULE_IDS, type RuleView } from './validation-rule-corpus';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, lt, sql } from 'drizzle-orm';
 import { db } from '../../db';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
-import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
+import { shadowReviewRuns } from '../../../shared/schema/shadow-review';
+// P-34: the presence gate reads the sequence's signed Shadow Review waiver.
+import {
+  evaluateShadowPresenceWithWaiver,
+  resolveShadowReviewWaiver,
+  shadowReviewWaivable,
+  type ShadowReviewWaivability,
+  type ShadowReviewWaiverStatus,
+} from './shadow-review-waiver';
+// P-35: a closed critical stands closed only under a signature in force.
+import { criticalsStandingOpen, reopenedCriticalSentence } from './shadow-finding-disposition';
+// P-33: the IND gate's checks, carried into this assessment.
+import { appendReadinessFindings, assessIndProgram, isUsIndApplication, module3CrossReferencesOf, readCrossReferenceRegister, type CrossReferenceRead, type IndProgramView } from './ind-program-findings';
 import {
   getSubmissionRegionProfile,
   requiredModule1CodesForRegion,
+  regulationRequiredModule1,
 } from '../region-profiles/region-profile-service';
-import { computeDispatchReadiness, type DispatchReadinessReport, type ReadinessFinding } from './dispatch-readiness';
+import { moduleOfSectionKey, requiredSectionProfileFor } from './required-sections';
+import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings';
+import {
+  computeDispatchReadiness,
+  type ComputeReadinessOptions,
+  type DispatchReadinessReport,
+  type Module3CrossReference,
+  type OriginalModule3Requirement,
+  type ReadinessFinding,
+} from './dispatch-readiness';
 import { resolveLeafDocuments } from './leaf-document-resolver';
 import {
   evaluateDispatchGate,
+  evaluateReleaseApprovalGate,
   mergeDispatchGates,
   evaluateReleaseSignatureGate,
   type DispatchGateResult,
@@ -46,6 +89,9 @@ import {
   evaluateExternalValidationGate,
   evalidatorRequiredFromEnv,
   type ExternalValidationReport,
+  type ExternalValidationGateResult,
+  type ExternalValidator,
+  type ExternalValidatorKind,
 } from './external-validator';
 
 export interface AssessDispatchReadinessParams {
@@ -58,6 +104,106 @@ export interface AssessDispatchReadinessParams {
    * fail-closed rule applies under ECTD_REQUIRE_EVALIDATOR in production.
    */
   externalValidationReport?: ExternalValidationReport | null;
+  /**
+   * ISO date (YYYY-MM-DD) the sequence is judged as at. Defaults to today
+   * (UTC) — dispatch files the sequence now, so a date-effective acceptance
+   * rule (JP_ECTD_V4_REQUIRED) is judged against the filing day. Tests and
+   * replays pass it explicitly.
+   */
+  asOf?: string;
+}
+
+/** Today's date (UTC, YYYY-MM-DD) — the filing day a dispatch assessment is judged as at. */
+export function dispatchAsOfDate(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * The Module 1 heading (1.1 Forms) every US submission's application form is
+ * filed under, and the form a continuing sequence of each kind carries: a
+ * Form FDA 356h for an NDA, BLA or ANDA (21 CFR 314 and 601). An original is
+ * held to its kind's whole list, which includes 1.1, so this is read for
+ * continuing sequences only. A continuing IND sequence is not here: since
+ * P-33 the IND's own sequence validator holds it to its Form FDA 1571 (1.1),
+ * its cover letter (1.2) and the content its type requires
+ * (ind-program-findings.continuingIndCompletenessFindings).
+ */
+const US_APPLICATION_FORM_SECTION = '1.1';
+const US_CONTINUING_FORM: Readonly<Record<string, string>> = Object.freeze({
+  nda: 'Every submission to an NDA carries a Form FDA 356h (21 CFR 314)',
+  bla: 'Every submission to a BLA carries a Form FDA 356h (21 CFR 601)',
+  anda: 'Every submission to an ANDA carries a Form FDA 356h (21 CFR 314)',
+});
+
+/**
+ * The validator options for one stored sequence. The region and as-of date go
+ * through so a date-effective, region-scoped acceptance rule can be judged;
+ * until 2026-10-05 (g-jp-ectd-v4-dispatch-blocker) neither did, and a new
+ * Japanese application in eCTD v3.2.2 read dispatch-clear after PMDA stopped
+ * receiving that format for new applications.
+ *
+ * Required sections, decided per sequence (QA 2026-10-08, j7):
+ *   - an ORIGINAL sequence is the application itself, so for an application
+ *     kind the regional Module 1 record models (US ind/nda/bla/anda, EU maa,
+ *     JP jnda) every heading the record requires of that kind must carry a
+ *     leaf, and a missing one is an error (`requiredByRegulation`);
+ *   - a CONTINUING sequence of a modelled kind is not held to the
+ *     application's requirements: an IND amendment does not re-file the
+ *     Investigator's Brochure or the general investigational plan, and the
+ *     record makes no per-sequence claim, so nothing is reported as missing
+ *     (it used to say "Required section 1.20 has no leaf" of every amendment);
+ *   - except its application form: every IND submission carries a Form FDA
+ *     1571 (21 CFR 312; P-20 follow-up), and every submission to an NDA, BLA
+ *     or ANDA a Form FDA 356h ("Form 356h" follow-up decision; both in
+ *     docs/LAUNCH_DEFINITION_OF_DONE.md), so a continuing US sequence of those
+ *     kinds is held to the 1.1 form, as an error, and to nothing else.
+ *     d155ef099 exempted continuing sequences from every requirement, which let
+ *     an amendment or supplement with no form clear the structural gate;
+ *   - P-33 (2026-10-15): a continuing US IND sequence is not decided here. The
+ *     IND sequence validator (validateSequenceLeaves, by filingTypeForSequence)
+ *     holds it to its transmittal pair — the 1571 at 1.1, the cover letter at
+ *     1.2 — and its type's content, as errors, from ind-program-findings. The
+ *     j7 reasoning above still holds: the application's Module 1 list (the IB,
+ *     the general investigational plan, 1.20) is never asked of it;
+ *   - an unmodelled region or kind keeps the region profile's list as
+ *     informative warnings, as before.
+ */
+export function readinessOptionsForSequence(
+  sequence: { region: string; type: string | null; sequenceNumber: string },
+  applicationType: string | null,
+  asOf: string,
+): ComputeReadinessOptions {
+  // An original is type 'original' or sequence number '0000'.
+  const isOriginalSequence = sequence.type === 'original' || sequence.sequenceNumber === '0000';
+  const regulated = regulationRequiredModule1(sequence.region, applicationType);
+  const sections: Pick<ComputeReadinessOptions, 'requiredSections' | 'requiredByRegulation'> = !regulated
+    ? { requiredSections: requiredModule1Codes(sequence.region, applicationType) }
+    : isOriginalSequence
+      ? {
+          requiredByRegulation: {
+            codes: regulated.codes,
+            basis:
+              `The regional Module 1 record (${regulated.jurisdiction}) requires it in an original ` +
+              `${regulated.kind.toUpperCase()} application, so this sequence cannot be validated, frozen or dispatched without it.`,
+          },
+        }
+      : regulated.jurisdiction === 'US' && US_CONTINUING_FORM[regulated.kind]
+        ? {
+            requiredByRegulation: {
+              codes: [US_APPLICATION_FORM_SECTION],
+              basis:
+                `${US_CONTINUING_FORM[regulated.kind]}, filed under 1.1 (Forms), so this ` +
+                'sequence cannot be validated, frozen or dispatched without it.',
+            },
+          }
+        : {};
+  return {
+    ...sections,
+    isOriginalSequence,
+    sequenceNumber: sequence.sequenceNumber,
+    region: sequence.region,
+    asOf,
+  };
 }
 
 /** A composed dispatch gate, keyed as composeDispatchGates takes it. */
@@ -69,11 +215,14 @@ export interface DispatchGateView {
   rule: RuleView | null;
   cleared: boolean;
   blockers: string[];
-  /** Set when the gate adds no blocker only because its check did not run and
+  /** Set when the gate adds no blocker although no external assessment qualified and
    *  is not required on this installation — the external validator with
    *  ECTD_REQUIRE_EVALIDATOR off. Cleared is still true (it does not block);
    *  this says the check was not made, so no surface reads it as passed. */
   notAssessed?: string;
+  /** Actual external assessment, separately from the gate's enforcement policy. */
+  assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
+  assessmentNote?: string;
 }
 
 /** composeDispatchGates' merge order — the gate views follow it, so the list
@@ -89,6 +238,7 @@ const GATE_ORDER: DispatchGateKey[] = ['structural', 'external', 'shadowPresence
 export function dispatchGateViews(
   gates: Record<DispatchGateKey, DispatchGateResult>,
   notAssessed: Partial<Record<DispatchGateKey, string>> = {},
+  externalAssessment?: Pick<DispatchGateView, 'assessmentStatus' | 'assessmentNote'>,
 ): DispatchGateView[] {
   return GATE_ORDER.map((key) => ({
     key,
@@ -96,18 +246,84 @@ export function dispatchGateViews(
     cleared: gates[key].cleared,
     blockers: [...gates[key].blockers],
     ...(gates[key].cleared && notAssessed[key] ? { notAssessed: notAssessed[key] } : {}),
+    ...(key === 'external' && externalAssessment ? externalAssessment : {}),
   }));
 }
 
-/** Why the external gate cleared without a report, when it did. The dispatch
+/** Why the external gate cleared without a qualifying assessment. The dispatch
  *  screen printed "The agency-grade validator's report for this package
  *  carries no errors — Satisfied." over a sequence no validator had run on
  *  (populated-org sweep, 2026-09-28): advisory is not passed. */
-export function externalNotAssessed(ext: { ran: boolean; configured: boolean }): string | undefined {
-  if (ext.ran) return undefined;
+export function externalNotAssessed(ext: {
+  ran: boolean;
+  configured: boolean;
+  qualifyingRun?: boolean;
+  validatorKind?: ExternalValidatorKind;
+  assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
+}): string | undefined {
+  if (ext.assessmentStatus === 'failed' || ext.assessmentStatus === 'invalid') return undefined;
+  if (ext.qualifyingRun ?? ext.ran) return undefined;
+  if (ext.validatorKind === 'internal_subset') {
+    return 'The selected adapter is the internal FDA criteria subset; it does not establish an external-engine assessment. External validation is advisory here, so this gate does not block dispatch.';
+  }
   return ext.configured
     ? 'The agency-grade validator is configured but did not run for this package, so no report exists. It is not required on this installation, so it does not block dispatch — but the package has not been checked against it.'
     : 'No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.';
+}
+
+/** Bind the DB assessor's supplied report to server-selected configuration.
+ * This inspects a report; it does not run or qualify a vendor engine. */
+export async function assessExternalValidationReport(
+  validator: ExternalValidator,
+  report: ExternalValidationReport | null,
+  requireEvalidator: boolean,
+  environment: 'staging' | 'production',
+): Promise<ExternalValidationGateResult & { assessmentNote: string }> {
+  const result = evaluateExternalValidationGate({
+    report,
+    selectedValidator: { name: validator.name, kind: validator.kind },
+    configured: await validator.isConfigured(),
+    requireEvalidator,
+    environment,
+  });
+  return { ...result, assessmentNote: externalAssessmentNote(result, report) };
+}
+
+function externalAssessmentNote(result: ExternalValidationGateResult, report: ExternalValidationReport | null): string {
+  const policy = result.enforced
+    ? 'External validation is required for production dispatch.'
+    : 'External validation is advisory here, so this gate does not block dispatch.';
+  const selected = result.selectedValidatorName ?? 'none';
+  switch (result.assessmentStatus) {
+    case 'passed':
+      return `The selected external validator "${selected}" returned a coherent, matching report with no error-severity findings. ${policy} Engine/profile qualification and binding to exact package bytes are separate controls.`;
+    case 'failed':
+      return `The selected external validator "${selected}" reported ${result.externalErrorCount} error-severity finding(s). ${policy}`;
+    case 'invalid':
+      return `The supplied external validation report is malformed or does not match the selected engine (selected="${selected}", reported="${result.reportedValidatorName ?? 'none'}"). Its counts do not establish a clean external assessment. ${policy}`;
+    case 'not_assessed': {
+      const scope = result.validatorKind === 'internal_subset'
+        ? `The selected adapter is the internal FDA criteria subset. The supplied report declares ${result.ran ? 'execution' : 'no execution'} from "${result.reportedValidatorName ?? 'none'}"; it does not establish an external-engine assessment.`
+        : result.configured ? 'The configured external validator did not supply a qualifying execution.' : 'No configured external-engine assessment is established.';
+      const diagnostics = unrunExternalDiagnostics(report);
+      return `${scope} ${policy}${diagnostics ? ` Execution diagnostic: ${diagnostics}` : ''}`;
+    }
+  }
+}
+
+function unrunExternalDiagnostics(report: ExternalValidationReport | null): string {
+  if (report?.ran !== false || !Array.isArray(report.findings)) return '';
+  return report.findings.filter((f) => f && typeof f === 'object' && typeof f.message === 'string').map((f) => f.message).join(' ');
+}
+
+function externalValidationView(result: ExternalValidationGateResult & { assessmentNote: string }): DispatchReadinessAssessment['externalValidation'] {
+  return {
+    configured: result.configured, ran: result.ran, errorCount: result.externalErrorCount,
+    errorCountKnown: result.errorCountKnown, cleared: result.cleared, blockers: result.blockers,
+    validatorKind: result.validatorKind, selectedValidatorName: result.selectedValidatorName,
+    reportedValidatorName: result.reportedValidatorName, qualifyingRun: result.qualifyingRun,
+    assessmentStatus: result.assessmentStatus, assessmentNote: result.assessmentNote, enforced: result.enforced,
+  };
 }
 
 /** Each finding with the corpus rule it is an instance of (null when the corpus names none). */
@@ -115,28 +331,88 @@ export function withRules<F extends ReadinessFinding>(findings: F[]): Array<F & 
   return findings.map((f) => ({ ...f, rule: ruleView(f.code) }));
 }
 
+/**
+ * Whether a sequence recorded as Validated still is, by the validation the
+ * assessment just ran. Null for any other status.
+ *
+ * QA 2026-10-08 (j7, finding 20): sequence 0000 showed the stored stage
+ * VALIDATED beside a dispatch-blocked gate. Since 0e50993c5, Validated is
+ * reached only through a validation with no error, recorded as
+ * validation_status 'passed', and a leaf change returns the sequence to
+ * Assembling. A stage stored before that (no verdict), or one whose validation
+ * now finds an error a leaf write did not cause (a document emptied in place, a
+ * requirement decided since), is the stored label and nothing more: every
+ * surface says so from this one answer rather than deriving its own.
+ */
+export type ValidatedStage =
+  | { holds: true; verdictRecorded: boolean }
+  | { holds: false; verdictRecorded: boolean; errors: number; reason: string };
+
+/** Pure: the Validated-stage verdict from the stored row and the current error count. */
+export function validatedStageOf(
+  sequence: { status: string; validationStatus: string | null; sequenceNumber: string },
+  errors: number,
+): ValidatedStage | null {
+  if (sequence.status !== 'validated') return null;
+  const verdictRecorded = sequence.validationStatus === 'passed';
+  if (Number.isFinite(errors) && errors === 0) return { holds: true, verdictRecorded };
+  const n = Number.isFinite(errors) ? errors : NaN;
+  const count = Number.isNaN(n) ? 'an undetermined number of errors' : `${n} ${n === 1 ? 'error' : 'errors'}`;
+  return {
+    holds: false,
+    verdictRecorded,
+    errors: n,
+    reason:
+      `Sequence ${sequence.sequenceNumber} is recorded as Validated, but its validation now finds ${count}` +
+      `${verdictRecorded ? '' : ', and no validation verdict was recorded when it was marked'}. ` +
+      'Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then.',
+  };
+}
+
 export interface DispatchReadinessAssessment {
   sequenceId: number;
   region: string;
   sequenceStatus: string;
+  /** For a sequence recorded as Validated, whether that still holds; null otherwise. */
+  validatedStage: ValidatedStage | null;
   /** Authoritative, server-computed gate inputs. */
   validationErrors: number;
   unacknowledgedShadowCriticals: number;
   /** Completed Shadow Review runs for this sequence. */
   shadowReviewRunCount: number;
-  /** Gate clear but no Shadow Review has run — dispatch allowed, never reviewed. */
+  /** No completed Shadow Review has run for this sequence. The presence gate
+   *  blocks on it unless an active signed waiver stands in (P-34); either way
+   *  the dossier was not adversarially reviewed, and this stays true. */
   shadowReviewMissing: boolean;
+  /** The sequence's newest signed Shadow Review waiver and whether it stands
+   *  (P-34): 'active' clears the presence gate as not assessed; 'lapsed',
+   *  'revoked' and 'undetermined' block with their own sentence; 'none' when
+   *  no waiver was recorded. */
+  shadowReviewWaiver: ShadowReviewWaiverStatus;
+  /** Whether a waiver may be signed now, and the failed run it would answer.
+   *  Asked only while no completed Shadow Review exists — otherwise there is
+   *  nothing to waive and it is absent. */
+  shadowReviewWaivable?: ShadowReviewWaivability;
   /** External agency-grade (eValidator) gate contribution (P0-4). */
   externalValidation: {
-    /** A licensed engine is configured. */
+    /** A selected external-engine path is configured; licence/qualification are separate. */
     configured: boolean;
-    /** An external validation actually ran (report supplied). */
+    /** The supplied report declares execution, including internal subsets. */
     ran: boolean;
-    /** Error-severity findings from the external (agency-grade) validator. */
+    /** Reported error tally, including subset diagnostics; consult errorCountKnown/status. */
     errorCount: number;
+    /** Whether errorCount is a coherent executed tally rather than a numeric placeholder. */
+    errorCountKnown?: boolean;
     /** This gate adds no blocker. */
     cleared: boolean;
     blockers: string[];
+    validatorKind?: ExternalValidatorKind;
+    selectedValidatorName?: string | null;
+    reportedValidatorName?: string | null;
+    qualifyingRun?: boolean;
+    assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
+    assessmentNote?: string;
+    enforced?: boolean;
   };
   /** Release-signature state (21 CFR Part 11 §11.70, §6c). */
   releaseSignature: {
@@ -177,6 +453,11 @@ export interface DispatchReadinessAssessment {
    *  finding carries the corpus rule it is an instance of. */
   readiness: DispatchReadinessReport;
   leafCount: number;
+  /** The IND program's inputs to this verdict (P-33: cross-references without
+   *  a Letter of Authorization, overdue IND safety reports, the clinical hold
+   *  stated as not assessed). Present on a US IND sequence only; each is also
+   *  a finding in `readiness`, and the blocking ones are in `gate`. */
+  indProgram?: IndProgramView;
 }
 
 /**
@@ -198,21 +479,6 @@ export function resolveDispatchEnvironment(
 }
 
 /**
- * Gate on Shadow Review having actually run. Zero completed runs is UNASSESSED,
- * not clean — it must block dispatch, never clear it. Pure + exported for test.
- */
-export function evaluateShadowPresenceGate(shadowReviewRunCount: number): DispatchGateResult {
-  return shadowReviewRunCount > 0
-    ? { cleared: true, blockers: [] }
-    : {
-        cleared: false,
-        blockers: [
-          'No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.',
-        ],
-      };
-}
-
-/**
  * Compose every hard gate into the single dispatch verdict.
  *
  * Extracted as a PURE function so the SET of gates is testable without a
@@ -221,7 +487,7 @@ export function evaluateShadowPresenceGate(shadowReviewRunCount: number): Dispat
  * nothing, and a purely-unit-tested gate cannot detect its own absence from
  * the composition. This function is the one place the membership is asserted.
  *
- * Pure + exported for test, same idiom as evaluateShadowPresenceGate.
+ * Pure + exported for test, same idiom as evaluateShadowPresenceWithWaiver.
  */
 export function composeDispatchGates(gates: {
   structural: DispatchGateResult;
@@ -392,9 +658,139 @@ async function loadApplicationType(submissionId: number, organizationId: number)
 }
 
 /**
+ * The Module 3 headings an original IND must carry, read from the IND profile
+ * (required-sections.requiredSectionProfileFor) and never restated here, with
+ * their ICH M4 titles. Null for anything that is not a US IND — the scope the
+ * CMC launch decision (P-28) ships. Pure + exported for test.
+ */
+export function originalIndModule3Headings(
+  applicationType: string | null,
+  region: string,
+): Array<{ code: string; title: string | null }> | null {
+  const profile = requiredSectionProfileFor(applicationType ?? '', region);
+  if (!profile || profile.submissionType !== 'IND') return null;
+  return [...profile.sections]
+    .filter((code) => moduleOfSectionKey(code) === 'm3')
+    .map((code) => ({ code, title: ichHeadingTitle(code) }));
+}
+
+/**
+ * Is this sequence the original of its application? Sequence 0000 always is.
+ * Any other number is only when it is typed 'original' AND no earlier live
+ * sequence of the same submission and region exists: the type column defaults
+ * to 'original', so a later sequence created without a type reads 'original',
+ * and asking an amendment for an original's content would block a filing the
+ * agency accepts. Pure + exported for test.
+ */
+export function isOriginalApplicationSequence(
+  sequence: { type: string | null; sequenceNumber: string },
+  earlierSequenceExists: boolean,
+): boolean {
+  return sequence.sequenceNumber === '0000' || (sequence.type === 'original' && !earlierSequenceExists);
+}
+
+type SequenceIdentity = { submissionId: number; region: string; type: string | null; sequenceNumber: string };
+
+/** A live sequence of the same submission and region numbered before this one. Tenant-scoped. */
+async function hasEarlierSequence(sequence: SequenceIdentity, organizationId: number): Promise<boolean> {
+  const [{ value }] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(ectdSequences)
+    .where(
+      and(
+        eq(ectdSequences.submissionId, sequence.submissionId),
+        eq(ectdSequences.organizationId, organizationId),
+        eq(ectdSequences.region, sequence.region),
+        // Four-digit, zero-padded: string order is numeric order.
+        lt(ectdSequences.sequenceNumber, sequence.sequenceNumber),
+        isNull(ectdSequences.deletedAt),
+      ),
+    );
+  return (value ?? 0) > 0;
+}
+
+/**
+ * The submission's recorded cross-references (ind_cross_references, the
+ * Module 1.4 register the LOA filing route marks), tenant-scoped. A register
+ * that cannot be read is returned as null with the reason — never as an empty
+ * register, which would read as "nothing is referenced". The finding stays
+ * blocking either way; the reason is what it says.
+ *
+ * Since P-33 it is the register's own reader (getCrossReferenceRegister,
+ * through ind-program-findings.readCrossReferenceRegister), read once per
+ * assessment and shared with the Letter-of-Authorization rule; this module's
+ * own query of the same table was the second copy.
+ */
+async function loadModule3CrossReferences(
+  submissionId: number,
+  organizationId: number,
+  read?: CrossReferenceRead | null,
+): Promise<{ refs: Module3CrossReference[] | null; error: string | null }> {
+  const register = read ?? (await readCrossReferenceRegister(submissionId, organizationId));
+  return { refs: module3CrossReferencesOf(register), error: register.error };
+}
+
+/**
+ * What an original US IND must carry in Module 3 — its required headings and
+ * the cross-references that may stand in for them — or null when the sequence
+ * is not one: another application type, another region, or a later sequence.
+ * An IND amendment is not asked; 21 CFR 312.23(a)(7) is the initial IND's
+ * content. Until 2026-10-05 (CMC-M3-GA item 21) nothing on the dispatch path
+ * asked, and an original IND with Module 1 alone read dispatch-clear.
+ */
+export async function originalModule3Requirement(
+  sequence: SequenceIdentity,
+  applicationType: string | null,
+  organizationId: number,
+  crossReferences?: CrossReferenceRead | null,
+): Promise<OriginalModule3Requirement | null> {
+  const headings = originalIndModule3Headings(applicationType, sequence.region);
+  if (!headings || headings.length === 0) return null;
+  const earlier =
+    sequence.sequenceNumber !== '0000' && sequence.type === 'original'
+      ? await hasEarlierSequence(sequence, organizationId)
+      : false;
+  if (!isOriginalApplicationSequence(sequence, earlier)) return null;
+  const { refs, error } = await loadModule3CrossReferences(sequence.submissionId, organizationId, crossReferences);
+  return {
+    label:
+      sequence.sequenceNumber === '0000'
+        ? 'the original IND (sequence 0000)'
+        : `the original IND (sequence ${sequence.sequenceNumber}, its first sequence)`,
+    headings,
+    crossReferences: refs,
+    crossReferenceError: error,
+  };
+}
+
+/**
  * Assess whether a sequence is clear to dispatch, computing every gate input from
  * server-side truth. Throws if the sequence is not found in the tenant.
  */
+/** The database every other read here uses, as the waiver and disposition
+ *  modules' reads take it (text and $n parameters). */
+function asWaiverQueryable(): { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> } {
+  return queryableFromDrizzle(db);
+}
+
+/** Is a waiver offered now? shadowReviewWaivable throws on a failed read; here
+ *  that is "not offered", with the reason, because the client offers a
+ *  signature only on `eligible`. The waive act asks again under its own lock. */
+async function waivabilityOrNotOffered(
+  q: ReturnType<typeof asWaiverQueryable>,
+  sequenceId: number,
+  organizationId: number,
+): Promise<ShadowReviewWaivability> {
+  try {
+    return await shadowReviewWaivable(q, { sequenceId, organizationId });
+  } catch {
+    return {
+      eligible: false,
+      reason: 'Whether a Shadow Review waiver may be offered could not be determined, so none is offered. Try again.',
+    };
+  }
+}
+
 export async function assessSequenceDispatchReadiness(
   params: AssessDispatchReadinessParams
 ): Promise<DispatchReadinessAssessment> {
@@ -410,6 +806,12 @@ export async function assessSequenceDispatchReadiness(
     throw Object.assign(new Error('Sequence not found in this organization.'), { code: 'NOT_FOUND' });
   }
   const submissionApplicationType = await loadApplicationType(sequence.submissionId, organizationId);
+  const asOf = params.asOf ?? dispatchAsOfDate();
+  // P-33: a US IND's cross-reference register, read once — the Module 3
+  // check and the Letter-of-Authorization rule both read it.
+  const usIndCrossReferences = isUsIndApplication(sequence.region, submissionApplicationType)
+    ? await readCrossReferenceRegister(sequence.submissionId, organizationId)
+    : null;
 
   // 2. Tenant-scoped, non-deleted leaves.
   const leaves = await db
@@ -434,6 +836,7 @@ export async function assessSequenceDispatchReadiness(
   const documents = await resolveLeafDocuments(leaves, organizationId);
 
   // 3. Deterministic structural validation over the canonical core.
+  const sequenceOptions = readinessOptionsForSequence(sequence, submissionApplicationType, asOf);
   const readiness = computeDispatchReadiness(
     leaves.map((l, i) => ({
       sectionCode: l.sectionCode,
@@ -445,11 +848,9 @@ export async function assessSequenceDispatchReadiness(
       document: documents[i],
     })),
     {
-      requiredSections: requiredModule1Codes(sequence.region, submissionApplicationType),
-      // An original is type 'original' or sequence number '0000'.
-      isOriginalSequence: sequence.type === 'original' || sequence.sequenceNumber === '0000',
-      sequenceNumber: sequence.sequenceNumber,
-    }
+      ...sequenceOptions,
+      originalModule3: await originalModule3Requirement(sequence, submissionApplicationType, organizationId, usIndCrossReferences),
+    },
   );
 
   // Fail-visible on an unrecognized region: requiredModule1Codes returns [] for a
@@ -467,26 +868,30 @@ export async function assessSequenceDispatchReadiness(
     readiness.warnings += 1;
   }
 
-  // 4. Open CRITICAL Shadow Review findings for this sequence (server truth).
-  const [{ value: criticalCount }] = await db
-    .select({ value: sql<number>`count(*)::int` })
-    .from(shadowReviewFindings)
-    .innerJoin(shadowReviewRuns, eq(shadowReviewFindings.runId, shadowReviewRuns.id))
-    .where(
-      and(
-        eq(shadowReviewRuns.sequenceId, sequenceId),
-        eq(shadowReviewFindings.organizationId, organizationId),
-        eq(shadowReviewFindings.severity, 'critical'),
-        eq(shadowReviewFindings.status, 'open'),
-        isNull(shadowReviewFindings.deletedAt),
-        isNull(shadowReviewRuns.deletedAt)
-      )
-    );
+  // 3b. The IND program (P-33; see ind-program-findings): its findings join the
+  //     structural count, so a blocking one blocks every governed step.
+  const indProgram = await assessIndProgram({
+    sequence, leaves, organizationId, crossReferences: usIndCrossReferences, asOf: params.asOf,
+    isOriginalSequence: sequenceOptions.isOriginalSequence === true,
+  });
+  if (indProgram) appendReadinessFindings(readiness, indProgram.findings);
 
-  const unacknowledgedShadowCriticals = criticalCount ?? 0;
+  // 4. CRITICAL Shadow Review findings that block (server truth): every open
+  //    one, and (P-35) every one closed under a signature no longer in force —
+  //    a revoked closure closes nothing (criticalsStandingOpen).
+  const shadowCriticals = await criticalsStandingOpen(asWaiverQueryable(), { sequenceId, organizationId });
+  const unacknowledgedShadowCriticals = shadowCriticals.count;
 
   // 4b. Has this sequence ever been Shadow-Reviewed? See countCompletedShadowRuns.
   const shadowReviewRunCount = await countCompletedShadowRuns(sequenceId, organizationId);
+
+  // 4c. The signed Shadow Review waiver (P-34), and — while no review has
+  //     completed — whether one is offered. A failed read resolves to
+  //     'undetermined' (never 'active'); an unreadable offer is not offered.
+  const waiverReads = asWaiverQueryable();
+  const shadowReviewWaiver = await resolveShadowReviewWaiver(waiverReads, { sequenceId, organizationId });
+  const shadowReviewWaivability =
+    shadowReviewRunCount === 0 ? await waivabilityOrNotOffered(waiverReads, sequenceId, organizationId) : undefined;
 
   // 5. External agency-grade validation gate (P0-4), composed with the structural
   //    + shadow gate. Default-off: behavior is identical to before unless
@@ -495,19 +900,27 @@ export async function assessSequenceDispatchReadiness(
   //    caller that already ran it passes the report in; otherwise the fail-closed
   //    "could not run" rule blocks a required production dispatch.
   const externalValidator = await resolveExternalValidator();
-  const externalConfigured = externalValidator.name !== 'noop';
-  const externalGate = evaluateExternalValidationGate({
-    report: params.externalValidationReport ?? null,
-    configured: externalConfigured,
-    requireEvalidator: evalidatorRequiredFromEnv(),
-    environment: resolveDispatchEnvironment(process.env.NODE_ENV),
-  });
+  const externalGate = await assessExternalValidationReport(
+    externalValidator,
+    params.externalValidationReport ?? null,
+    evalidatorRequiredFromEnv(),
+    resolveDispatchEnvironment(process.env.NODE_ENV),
+  );
 
-  // 6. Hard gate over the server-computed inputs, composed with the external gate.
-  const structuralGate = evaluateDispatchGate({
-    validationErrors: readiness.errors,
-    unacknowledgedShadowCriticals,
-  });
+  // 6. Hard gate over the server-computed inputs, composed with the external
+  //    gate. P-22 (2026-10-08): a leaf whose document is not yet approved is a
+  //    validation WARNING, and a release blocker — the structural verdict every
+  //    release step reads (freeze, dispatch, transmit) refuses it by its own
+  //    blocker, never by counting it as an error.
+  const structuralGate = mergeDispatchGates(
+    evaluateDispatchGate({
+      validationErrors: readiness.errors,
+      unacknowledgedShadowCriticals,
+    }),
+    evaluateReleaseApprovalGate(readiness.releaseBlockers),
+    // Why a critical that was closed blocks again, by finding and signature.
+    { cleared: shadowCriticals.reopened.length === 0, blockers: shadowCriticals.reopened.map(reopenedCriticalSentence) },
+  );
 
   // 6b. Never-Shadow-Reviewed is not clean, it is UNASSESSED. A sequence with
   //     zero completed Shadow Review runs has zero open criticals for the same
@@ -515,8 +928,12 @@ export async function assessSequenceDispatchReadiness(
   //     Like an undetermined count in the hard gate, that must not clear
   //     dispatch — otherwise a dossier that was never adversarially reviewed is
   //     transmitted to the agency with a `cleared: true` verdict. Block until at
-  //     least one completed Shadow Review run exists.
-  const shadowPresenceGate = evaluateShadowPresenceGate(shadowReviewRunCount);
+  //     least one completed Shadow Review run exists, or (P-34) an ACTIVE signed
+  //     waiver stands in for it — and then the gate clears as not assessed,
+  //     naming the signature. The waiver never reaches open critical findings:
+  //     those are the structural gate's (§6).
+  const shadowPresence = evaluateShadowPresenceWithWaiver(shadowReviewRunCount, shadowReviewWaiver);
+  const shadowPresenceGate: DispatchGateResult = { cleared: shadowPresence.cleared, blockers: shadowPresence.blockers };
 
   // 6c. Release-signature gate (21 CFR Part 11 §11.70). Until this landed, the
   //     entire dispatch path had no signature awareness at all: a sequence
@@ -581,7 +998,14 @@ export async function assessSequenceDispatchReadiness(
       shadowPresence: shadowPresenceGate,
       releaseSignature: releaseSignatureGate,
     },
-    { external: externalNotAssessed({ ran: externalGate.ran, configured: externalConfigured }) },
+    // P-33: a US IND sequence's verdict does not cover a clinical hold, and says so.
+    // P-34: a presence gate cleared by a waiver says it was not assessed, and by whom.
+    {
+      external: externalNotAssessed(externalGate),
+      ...(indProgram && { structural: indProgram.view.clinicalHold.note }),
+      ...(shadowPresence.notAssessed && { shadowPresence: shadowPresence.notAssessed }),
+    },
+    { assessmentStatus: externalGate.assessmentStatus, assessmentNote: externalGate.assessmentNote },
   );
   readiness.findings = withRules(readiness.findings);
 
@@ -589,20 +1013,16 @@ export async function assessSequenceDispatchReadiness(
     sequenceId,
     region: sequence.region,
     sequenceStatus: sequence.status,
+    validatedStage: validatedStageOf(sequence, readiness.errors),
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
     shadowReviewRunCount,
-    externalValidation: {
-      configured: externalConfigured,
-      ran: externalGate.ran,
-      errorCount: externalGate.externalErrorCount,
-      cleared: externalGate.cleared,
-      blockers: externalGate.blockers,
-    },
-    /** True when no completed Shadow Review has run for this sequence. This now
-     *  also blocks the gate (§6b), so it is informational: it reports WHY the
-     *  gate is blocked when that is the only blocker. */
+    externalValidation: externalValidationView(externalGate),
+    /** True when no completed Shadow Review has run for this sequence. It blocks
+     *  the gate (§6b) unless an active waiver stands in; informational here. */
     shadowReviewMissing: shadowReviewRunCount === 0,
+    shadowReviewWaiver,
+    ...(shadowReviewWaivability ? { shadowReviewWaivable: shadowReviewWaivability } : {}),
     /** Release-signature state (§6c). `required` reports whether this
      *  submission type crosses the §11.70 boundary; `verdict` is the resolved
      *  state. Informational on the response — the blocking happens in `gate`. */
@@ -620,6 +1040,7 @@ export async function assessSequenceDispatchReadiness(
     gates,
     readiness,
     leafCount: leaves.length,
+    ...(indProgram ? { indProgram: indProgram.view } : {}),
   };
 }
 

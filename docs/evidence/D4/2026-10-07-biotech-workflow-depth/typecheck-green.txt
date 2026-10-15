@@ -1,0 +1,10 @@
+Source: 40953b58717622ad95aa3a1559bb9e8bde46cac6
+C2C Validate & Audit run: 37565406425
+Job: 112611847581
+Conclusion: success
+
+2026-10-07T03:09:57.7612261Z ##[group]Run npm run ci:typecheck:no-regression
+2026-10-07T03:09:57.8628741Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T03:12:26.5302000Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T03:12:26.5303329Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+2026-10-07T03:13:57.3243135Z ✖ 6258 problems (0 errors, 6258 warnings)

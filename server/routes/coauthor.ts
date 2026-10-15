@@ -3,18 +3,24 @@
  * eCTD collaborative authoring service
  */
 import { Router, Request, Response } from 'express';
-import { eq, desc, and, count } from 'drizzle-orm';
+import { eq, desc, and, count, ilike, or, type SQL } from 'drizzle-orm';
 import { db, transaction } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { randomUUID } from 'crypto';
 import { queryableFromDrizzle } from '../db/drizzle-queryable.js';
 import { recordDocumentAlias, DocumentAliasConflictError } from '../services/c2c/document-alias-map.js';
-import { applyCoauthorDocumentPut } from '../services/coauthor/coauthor-status-write.js';
+import { applyCoauthorDocumentPut, withCoauthorReadOnly } from '../services/coauthor/coauthor-status-write.js';
 import { takeAuthoringSnapshot } from '../services/coauthor/coauthor-snapshot.js';
-import { coauthorAuditActor, recordCoauthorDocumentEvent } from '../services/coauthor/coauthor-audit.js';
+import {
+  coauthorAuditActor,
+  coauthorDeleteHistoryRefusal,
+  deleteCoauthorDocument,
+} from '../services/coauthor/coauthor-audit.js';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { requireRole } from '../middleware/auth';
+import { requireGovernedReason } from './governed-reason.js';
 
 const logger = createScopedLogger('coauthor');
 
@@ -95,28 +101,41 @@ router.get('/documents', authMiddleware, async (req: any, res: Response) => {
     }
 
     const limit = Math.min(Number(req.query.limit) || 50, 200);
+    // QA 2026-10-08 (j6): the Builder's picker showed 50 of 53 documents and
+    // had no way to the other 3. `offset` pages, `q` searches the title and the
+    // module number (case-insensitive text; % and _ match themselves).
+    const rawOffset = Number(req.query.offset);
+    const offset = Number.isSafeInteger(rawOffset) && rawOffset > 0 ? rawOffset : 0;
+    const q: string = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+    const pattern = `%${q.replace(/[\\%_]/g, (c: string) => `\\${c}`)}%`;
+    const search: SQL | undefined = q
+      ? or(ilike(coauthorDocuments.title, pattern), ilike(coauthorDocuments.moduleNumber, pattern))
+      : undefined;
 
     const documents = await db
       .select()
       .from(coauthorDocuments)
-      .where(eq(coauthorDocuments.organizationId, organizationId))
-      .orderBy(desc(coauthorDocuments.updatedAt))
-      .limit(limit);
+      .where(and(eq(coauthorDocuments.organizationId, organizationId), search))
+      // id breaks ties, so consecutive pages neither repeat nor skip a row.
+      .orderBy(desc(coauthorDocuments.updatedAt), desc(coauthorDocuments.id))
+      .limit(limit)
+      .offset(offset);
 
     // 2026-09-28 (HS-0928-1): `total` was documents.length — the capped page —
     // so EctdCoauthor.tsx's partialRead (serverTotal > total) could never fire
     // and a truncated backbone read as complete, "All documents approved"
     // included. `total` is now the organisation's count(*) under the page's
-    // own predicate; `returned` is the page length.
+    // own predicate (the search included); `returned` is the page length.
     const [{ total }] = await db
       .select({ total: count() })
       .from(coauthorDocuments)
-      .where(eq(coauthorDocuments.organizationId, organizationId));
+      .where(and(eq(coauthorDocuments.organizationId, organizationId), search));
 
     return res.json({
-      documents,
+      documents: documents.map(withCoauthorReadOnly),
       total: Number(total),
       returned: documents.length,
+      offset,
       message:
         documents.length > 0
           ? `Found ${documents.length} document(s)`
@@ -152,14 +171,25 @@ router.get('/documents/:id', authMiddleware, async (req: any, res: Response) => 
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    return res.json({ document });
+    return res.json({ document: withCoauthorReadOnly(document) });
   } catch (error: any) {
     logger.error('Get document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch document', message: 'An unexpected error occurred' });
   }
 });
 
-router.post('/documents', authMiddleware, async (req: any, res: Response) => {
+/* A sourced snapshot is a filing copy: the one copy every leaf that places its
+   document points at, taken or re-taken from the source. It is written by the
+   role the leaf write asks for (submissions.ts, PUT .../leaves:
+   regulatory-author) and only for a stated reason (design review 2026-10-08,
+   Part 11 lens: a viewer could re-take a filing copy, and its ledger reason was
+   a sentence the code composed). A document with no source is the co-author
+   app's own create, not this write, and is left as it was. */
+const FILING_COPY_ROLE = 'regulatory-author';
+const requireAuthorForFilingCopy = (req: any, res: Response, next: () => void) =>
+  req.body?.sourceAuthoringDocId != null ? requireRole(FILING_COPY_ROLE)(req, res, next) : next();
+
+router.post('/documents', authMiddleware, requireAuthorForFilingCopy, async (req: any, res: Response) => {
   try {
     const organizationId = resolveOrganizationId(req);
     if (!organizationId) {
@@ -209,7 +239,15 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
       });
     }
     if (sourceAuthoringDocId) {
+      const stated = requireGovernedReason(req.body?.changeReason);
+      if (!stated.ok) {
+        return res.status(400).json({
+          error: 'REASON_REQUIRED',
+          message: `${stated.error} Taking a filing copy records why, on the copy's audit trail. Nothing was taken or re-taken.`,
+        });
+      }
       const outcome = await takeAuthoringSnapshot({
+        reason: stated.reason,
         organizationId,
         sourceAuthoringDocId,
         moduleNumber: moduleNumber || null,
@@ -224,9 +262,14 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
           migration: 'migrations/20260814d_document_alias_map.sql',
         });
       }
+      /* `written` (2026-10-08, QA walk 2, j4): whether this placement wrote the
+         copy at all. `replaced` only ever meant "not created", so an unchanged
+         re-take and a rewritten copy read alike to the placement dialog. A copy a
+         live leaf files is refused 409 FILING_COPY_PINNED instead of rewritten. */
       return res.status(outcome.created ? 201 : 200).json({
         success: true,
         document: outcome.document,
+        written: outcome.written,
         ...(outcome.created ? {} : { replaced: true }),
       });
     }
@@ -294,7 +337,7 @@ router.put('/documents/:id', authMiddleware, async (req: any, res: Response) => 
       return res.status(400).json({ error: 'Invalid document ID' });
     }
 
-    const { title, content, status } = req.body || {};
+    const { title, content, status, changeReason } = req.body || {};
 
     /* ── A PUT CANNOT AWARD A VERDICT, OR REWRITE A DOCUMENT THAT HAS ONE ──
      * (2026-09-23, W5/D7, round-2 review.) `status` was written verbatim from
@@ -322,22 +365,25 @@ router.put('/documents/:id', authMiddleware, async (req: any, res: Response) => 
      * SQL btrim guard and the JS trim disagreed on 'approved\t'); a status
      * with a control character is a 400, not a Postgres 500; and the 409 names
      * re-placement from the source (POST above), which now works. Callers:
-     * EctdCoauthor.saveContent sends `{ content }` alone and renders a
-     * refusal's message ("Not saved — …"). */
+     * EctdCoauthor.saveContent sends `{ content, changeReason }` and renders
+     * a refusal's message ("Not saved — …"). 2026-10-01 (D5, P11-B-1): the
+     * write states its reason and is versioned and audited in the shared
+     * writer's transaction (rule 4 there). */
     const outcome = await applyCoauthorDocumentPut({
       documentId: docId,
       organizationId,
+      actor: coauthorAuditActor(req),
+      changeReason,
       status,
       governed: { title, content },
     });
     if (!outcome.ok) {
       return res.status(outcome.refusal.httpStatus).json(outcome.refusal.body);
     }
-    const { document } = outcome;
 
     return res.json({
       success: true,
-      document,
+      document: withCoauthorReadOnly(outcome.document),
     });
   } catch (error: any) {
     logger.error('Update document error', { err: error instanceof Error ? error.message : String(error) });
@@ -364,31 +410,30 @@ router.delete('/documents/:id', authMiddleware, async (req: any, res: Response) 
     // TRANSACTION — atomic and fail-closed. 2026-09-23 (W5/D7, round-3 review,
     // repair 2): the INSERT was inline here and, identically, in
     // ectd-documents.ts; both now call the one writer, which the filing-copy
-    // re-take also uses.
-    const deletedRow = await transaction(async (client: any) => {
-      const del = await client.query(
-        'DELETE FROM coauthor_documents WHERE id = $1 AND organization_id = $2 RETURNING id, organization_id',
-        [docId, organizationId],
-      );
-      if (!del.rows.length) return null;
-      const row = del.rows[0];
-
-      await recordCoauthorDocumentEvent(client, {
-        organizationId: row.organization_id,
-        documentId: row.id,
-        eventType: 'coauthor_document.deleted',
+    // re-take also uses. 2026-10-01 (D5, P11-B-1): through deleteCoauthorDocument,
+    // which refuses a document with saved versions (its history), records the
+    // person's stated reason (held to the one rule) or null, and the content
+    // digest it deleted.
+    const outcome = await transaction((client: any) =>
+      deleteCoauthorDocument(client, {
+        documentId: docId,
+        organizationId,
         actor,
-        reason: 'coauthor document deleted',
-      });
+        changeReason: req.body?.changeReason,
+      }),
+    );
 
-      return row;
-    });
-
-    if (!deletedRow) {
+    if (outcome.kind === 'not_found') {
       return res.status(404).json({ error: 'Document not found' });
     }
+    if (outcome.kind === 'has_history') {
+      return res.status(409).json(coauthorDeleteHistoryRefusal(outcome.versions));
+    }
+    if (outcome.kind === 'reason_invalid') {
+      return res.status(400).json({ error: 'REASON_INVALID', message: outcome.message });
+    }
 
-    return res.json({ success: true, deletedId: deletedRow.id });
+    return res.json({ success: true, deletedId: outcome.id });
   } catch (error: any) {
     logger.error('Delete document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to delete document', message: 'An unexpected error occurred' });

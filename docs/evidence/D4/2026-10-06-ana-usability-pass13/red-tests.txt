@@ -1,0 +1,454 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/__tests__/ana-recall-overlap.test.ts
+{
+  "timestamp": "2026-10-06T04:30:08.999Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T04:30:09.000Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-recall-overlap.test.ts
+{
+  "timestamp": "2026-10-06T04:30:09.000Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-recall-overlap.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/ana-recall-overlap.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-recall-overlap.test.ts
+{
+  "timestamp": "2026-10-06T04:30:09.188Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > independent intelligence recall overlaps route prefetch > starts scoped intelligence recall before optional prefetch settles and retains its result 5ms
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > independent intelligence recall overlaps route prefetch > handles an early recall rejection while prefetch is pending 1ms
+ × server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > uses the verified ID for memory and history, with one access check 6ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "verified",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": 42,
++     "query": "Review the project",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > excludes unverified private summary when access is unavailable: null 2ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining {"threadId": ""} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": 42,
++     "query": "Review the project",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > excludes unverified private summary when access is unavailable: Error: access lookup failed 1ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining {"threadId": ""} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": 42,
++     "query": "Review the project",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > waits for access before reading private memory 52ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "limitPerLayer": 4,
+        "maxChars": 3500,
+        "organizationId": 7,
+        "projectId": 42,
+        "query": "Review the project",
+        "threadId": "secret",
+      },
+    ]
+
+
+Number of calls: 1
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T04:30:10.783Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T04:30:10.784Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T04:30:10.784Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true
+[AnA RI] Intelligence prefix failed: recall unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[AnA RI Stream] Thread persistence failed: database unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[AnA RI Stream] Refused caller-supplied thread id: undefined
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 29ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 7ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 8ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "thread-1",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": undefined,
++     "query": "Review this",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 3ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining {"threadId": ""} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": undefined,
++     "query": "Review this",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 3ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "limitPerLayer": 4,
+        "maxChars": 3500,
+        "organizationId": 7,
+        "projectId": undefined,
+        "query": "Review this",
+        "threadId": "secret",
+      },
+    ]
+
+
+Number of calls: 1
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > uses the verified ID for memory and history, with one access check
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "verified",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": 42,
++     "query": "Review the project",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/__tests__/ana-recall-overlap.test.ts:59:22
+     57|   it('uses the verified ID for memory and history, with one access che…
+     58|     await buildChatContext(threaded);
+     59|     expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ th…
+       |                      ^
+     60|     expect(h.history).toHaveBeenCalledWith('verified');
+     61|     expect(h.access).toHaveBeenCalledExactlyOnceWith('secret', 7, 9);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > excludes unverified private summary when access is unavailable: null
+ FAIL  server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > excludes unverified private summary when access is unavailable: Error: access lookup failed
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining {"threadId": ""} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": 42,
++     "query": "Review the project",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/__tests__/ana-recall-overlap.test.ts:67:22
+     65|     else h.access.mockResolvedValue(result);
+     66|     const context = await buildChatContext(threaded);
+     67|     expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ th…
+       |                      ^
+     68|     expect(JSON.stringify(context.messages)).not.toContain('PRIVATE SU…
+     69|     expect(h.history).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > waits for access before reading private memory
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "limitPerLayer": 4,
+        "maxChars": 3500,
+        "organizationId": 7,
+        "projectId": 42,
+        "query": "Review the project",
+        "threadId": "secret",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/__tests__/ana-recall-overlap.test.ts:76:32
+     74|     const pending = buildChatContext(threaded);
+     75|     await vi.waitFor(() => expect(h.relational).toHaveBeenCalled());
+     76|     try { expect(h.memory).not.toHaveBeenCalled(); } finally { release…
+       |                                ^
+     77|   });
+     78| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "thread-1",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": undefined,
++     "query": "Review this",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:386:22
+    384|   it('reads memory only with the resolved thread ID', async () => {
+    385|     await turn('Review this', 'thorough', { thread_id: 'secret' });
+    386|     expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ th…
+       |                      ^
+    387|   });
+    388|   it('does not read caller thread memory after persistence fails', asy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining {"threadId": ""} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "threadId": "",
++   {
++     "limitPerLayer": 4,
++     "maxChars": 3500,
++     "organizationId": 7,
++     "projectId": undefined,
++     "query": "Review this",
++     "threadId": "secret",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:391:22
+    389|     h.thread.mockRejectedValue(new Error('database unavailable'));
+    390|     await turn('Review this', 'thorough', { thread_id: 'secret' });
+    391|     expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ th…
+       |                      ^
+    392|     expect(JSON.stringify(h.state.gatewayCalls)).not.toContain('PRIVAT…
+    393|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "limitPerLayer": 4,
+        "maxChars": 3500,
+        "organizationId": 7,
+        "projectId": undefined,
+        "query": "Review this",
+        "threadId": "secret",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:399:26
+    397|     const frames = await turn('Review this', 'thorough', { thread_id: …
+    398|     expect(frames.some(frame => frame.type === 'error')).toBe(true);
+    399|     expect(h.memory).not.toHaveBeenCalled();
+       |                          ^
+    400|     expect(h.state.gatewayCalls).toHaveLength(0);
+    401|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 11 passed (18)
+   Start at  00:30:07
+   Duration  5.74s (transform 4.20s, setup 143ms, import 8.35s, tests 154ms, environment 0ms)
+

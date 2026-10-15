@@ -1,0 +1,12 @@
+Mutant D11-record-not-parked: the parked generator names no turn record
+
+--- server/routes/authoring.router.ts
+- turnRecordId: drafted?.turnRecord.status === 'recorded' ? drafted.turnRecord.id : null,
++ turnRecordId: null,
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from 91ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

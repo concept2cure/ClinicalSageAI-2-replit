@@ -1,0 +1,12 @@
+Mutant R25-whitespace-unbounded: a long run of spaces costs quadratic time (F10)
+
+--- server/services/ana/answer-check-figures.ts
+- const S = String.raw`[ \t]{0,3}`; // bounded white space
++ const S = String.raw`\s*`; // bounded white space
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > cost and shape (F10) > long whitespace runs in an answer stay linear 2425ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

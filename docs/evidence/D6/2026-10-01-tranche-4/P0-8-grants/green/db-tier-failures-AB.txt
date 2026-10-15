@@ -1,0 +1,173 @@
+# 2026-10-01T06:24:04Z A/B: the five files that failed in the run above, re-run with HEAD's provision-app-role.mjs/readiness-contract.mjs put back and app_service returned to HEAD's posture by HEAD's own step-4 recipe. Then the two that are not pre-existing, re-run alone in the NEW posture.
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 185ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 122ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 45ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 25ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 9ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 32ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 26ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 12ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 45ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 41ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 31ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 24ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 9ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 42ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 42ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 10ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 42ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 22ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 9ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 48ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 40ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 24ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1512ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1506ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1515ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 68ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > posture > the console runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope 30ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > posture > the same router on a non-system path gets the caller-org scope instead 23ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > owned migrations: the file on disk is the deployed object > 20260823: public.provision_org_modules and module_tier_level are byte-identical to the file 6ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > owned migrations: the file on disk is the deployed object > 20260824: the file builds exactly the platform_settings shape the deployed table has 22ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing > under the system scope sees every lane tenant and module, with cross-tenant grant counts 69ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing > under a PER-USER scope the same read narrows to the caller org — why the system prefix is required 95ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > reports enabled-grant, disabled-grant, tier-only and industry verdicts for a tenant 62ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > a subscription row of ANOTHER tenant never leaks into this tenant’s verdict 25ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > 404s an unknown tenant 28ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > refuses without a reason and changes nothing 51ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > refuses an invalid tier, and 404s an unknown module 33ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > re-tiers the module, preserves other metadata, keeps existing grants, and audits 71ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > minTier null makes the module unrestricted 55ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > unaffectedGrants counts ENABLED grants only: a revocation is not a grant the change leaves in place 130ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > refuses a bad tier, a missing reason, and an unknown tenant 58ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > upgrades the plan, audits it under the tenant id, and writes no subscription rows by itself 60ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > provisions what the plan includes, revokes nothing, re-enables nothing, and reports counts that match the table 148ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > a downgrade provisions nothing, revokes nothing, and names every grant now above the plan 87ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > provisioning a tenant whose tier the ladder does not name > never reports a grant this very run made as "retained above tier" 39ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > provisioning a tenant whose industry_mode is NULL > is provisioned as biotech: biotech-listed modules granted, medtech-only not 167ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > malformed tenant ids > 1.5 is a 404 on every tenant route, never a 500 66ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > malformed tenant ids > 99999999999 is a 404 on every tenant route, never a 500 28ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > with nothing stored, the deployment decides and the cache starts cold 25ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > PATCH refuses a missing or short reason and an unknown mode, writing nothing 20ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > PATCH upserts platform_settings, re-reads it, reports source "stored", and audits 126ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > a cold GET reads the stored value from the database, and it outranks the deployment 10ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > the mode-change audit row records the impact the operator could see when deciding 89ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > GET /licensing/enforcement reports the buffer under the mode in force; DELETE needs a reason, clears it, and audits 59ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > under a PER-USER scope a platform-level audit row cannot land — why the system prefix is required 39ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > the audit row records the mode actually REPLACED, not a stale per-process cache 39ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > reset: with the stored row gone and the cache dropped, the deployment decides again 10ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > when the stored mode cannot be read, a cold process never escalates past report 62ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_A (standard, grant + disable): the same answer, module for module, across the whole catalog 223ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_B (professional, grants): the same answer, module for module, across the whole catalog 20ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_C (free after the downgrade, provisioned): the same answer, module for module, across the whole catalog 24ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_E (lapsed trial grant): measured against the rail 36ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_F (unrecognised tier): measured against the rail 24ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_G (NULL industry_mode): measured against the rail 30ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > an expired grant reads as no override on the console, as on the rail 0ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > an unrecognised tier ranks as standard on the console and the rail, and a tier lock is named "tier" 5ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > a NULL industry_mode reads as biotech on the console, as on the rail 0ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 8ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 9ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 185ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 310ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 12ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 11ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 6ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 14ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 14ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 22ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code 210ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code 30ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 29ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 86ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was 2603ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses a check-in against a version that already has a successor, naming the current one 25ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses bytes that are already a version of the document, naming it 36ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > assigns the version: a client-sent version with a check-in is a 400 7ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > invents no version for a head whose version is not a number 61ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything 62ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > a viewer is refused before any byte is stored 12ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head 139ms
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a raw INSERT that names another program's document as its predecessor 29ms
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor 20ms
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third 28ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 2 passed (5)
+      Tests  4 failed | 91 passed | 9 skipped (104)
+## NEW posture, alone:
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 281ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 324ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 77ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 37ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 9ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 54ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 34ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 18ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 74ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 14ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 73ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 84ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 25ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 71ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 33ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 56ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 13ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 49ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 50ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 14ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 64ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1506ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1507ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1548ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 148ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > posture > the console runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope 155ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > posture > the same router on a non-system path gets the caller-org scope instead 49ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > owned migrations: the file on disk is the deployed object > 20260823: public.provision_org_modules and module_tier_level are byte-identical to the file 106ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > owned migrations: the file on disk is the deployed object > 20260824: the file builds exactly the platform_settings shape the deployed table has 28ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing > under the system scope sees every lane tenant and module, with cross-tenant grant counts 91ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing > under a PER-USER scope the same read narrows to the caller org — why the system prefix is required 32ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > reports enabled-grant, disabled-grant, tier-only and industry verdicts for a tenant 21ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > a subscription row of ANOTHER tenant never leaks into this tenant’s verdict 10ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > 404s an unknown tenant 7ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > refuses without a reason and changes nothing 29ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > refuses an invalid tier, and 404s an unknown module 11ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > re-tiers the module, preserves other metadata, keeps existing grants, and audits 92ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > minTier null makes the module unrestricted 61ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > unaffectedGrants counts ENABLED grants only: a revocation is not a grant the change leaves in place 61ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > refuses a bad tier, a missing reason, and an unknown tenant 27ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > upgrades the plan, audits it under the tenant id, and writes no subscription rows by itself 40ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > provisions what the plan includes, revokes nothing, re-enables nothing, and reports counts that match the table 198ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > a downgrade provisions nothing, revokes nothing, and names every grant now above the plan 76ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > provisioning a tenant whose tier the ladder does not name > never reports a grant this very run made as "retained above tier" 92ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > provisioning a tenant whose industry_mode is NULL > is provisioned as biotech: biotech-listed modules granted, medtech-only not 68ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > malformed tenant ids > 1.5 is a 404 on every tenant route, never a 500 13ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > malformed tenant ids > 99999999999 is a 404 on every tenant route, never a 500 7ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > with nothing stored, the deployment decides and the cache starts cold 13ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > PATCH refuses a missing or short reason and an unknown mode, writing nothing 16ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > PATCH upserts platform_settings, re-reads it, reports source "stored", and audits 60ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > a cold GET reads the stored value from the database, and it outranks the deployment 15ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > the mode-change audit row records the impact the operator could see when deciding 88ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > GET /licensing/enforcement reports the buffer under the mode in force; DELETE needs a reason, clears it, and audits 23ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > under a PER-USER scope a platform-level audit row cannot land — why the system prefix is required 23ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > the audit row records the mode actually REPLACED, not a stale per-process cache 42ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > reset: with the stored row gone and the cache dropped, the deployment decides again 5ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > when the stored mode cannot be read, a cold process never escalates past report 39ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_A (standard, grant + disable): the same answer, module for module, across the whole catalog 255ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_B (professional, grants): the same answer, module for module, across the whole catalog 66ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_C (free after the downgrade, provisioned): the same answer, module for module, across the whole catalog 46ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_E (lapsed trial grant): measured against the rail 36ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_F (unrecognised tier): measured against the rail 56ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_G (NULL industry_mode): measured against the rail 56ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > an expired grant reads as no override on the console, as on the rail 1ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > an unrecognised tier ranks as standard on the console and the rail, and a tier lock is named "tier" 0ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > a NULL industry_mode reads as biotech on the console, as on the rail 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 68 passed (70)

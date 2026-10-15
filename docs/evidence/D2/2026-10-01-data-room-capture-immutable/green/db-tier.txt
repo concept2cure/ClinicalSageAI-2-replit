@@ -1,0 +1,145 @@
+## npm run test:db, RLS_ENFORCE=on, runtime role app_service, after deploy-migrate applied the VR-16 guard (2026-10-01)
+ ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > one leaf for the family, the current version, with its version count 87ms
+ ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > counts documents, not versions 44ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > lists the family newest first from any member, with hash, size and uploader 55ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > shows a link the lineage rules refuse as unverified, never as lineage 19ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > 404s another organization's document, from either side 29ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > search hides a superseded version unless asked, and counts the same set 56ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > a document's history spans every version 96ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > downloads an earlier version, hash-verified (control) 24ms
+ ✓ tests/db/vault-versions.dbtest.ts > a check-in agrees with the tree about the current version (VR-09) > refuses a version a legacy row names, says why, and names nothing about that row 59ms
+ ✓ tests/db/vault-versions.dbtest.ts > the data room names the version its file became (VR-16) > a captured file holding v1.0's bytes reads 'filed as 1.0, superseded by 2.0' 71ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter 284ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index 6967ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable 199ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 4625ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 40ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 179ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 723ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 193ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 334ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 228ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 140ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 116ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 67ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 12ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so 10ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document 1319ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document 39ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text 18ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger 22ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches 1ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic 669ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a recorded checksum cannot be changed or cleared; a missing one can be set once 1291ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a revision link, a project scope, the organization and the source type do not change 14ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a superseded capture cannot be made current again 5ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a capture cannot be deleted, and the record cannot be truncated 8ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > createSupersedingSource retires the predecessor and links the revision 23ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > a mutable column still changes 4ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was 3480ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses a check-in against a version that already has a successor, naming the current one 13ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses bytes that are already a version of the document, naming it 15ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > assigns the version: a client-sent version with a check-in is a 400 7ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > invents no version for a head whose version is not a number 17ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything 72ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > a viewer is refused before any byte is stored 24ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head 145ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a raw INSERT that names another program's document as its predecessor 31ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor 33ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third 77ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label 2139ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to 48ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > the filing row records the evidence kind before and after (VR-05) 61ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer 53ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy 31ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist 33ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all 19ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section 76ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document 27ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing 1802ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault 38ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either 31ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides 58ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker 39ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing 36ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a scope that carries no role at all 15ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check 83ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns 73ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent 860ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes 5ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other 6ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind 12ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage 32ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back 37ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage 55ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role 6ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names 36ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded 7ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a scope that carries no role at all 1ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns 16ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing 1716ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a bare module, which is a container with 422, and writes nothing 3ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses an evidence kind outside the list with 422, and writes nothing 6ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > files a decision inside the vocabulary, as before 38ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses a CTD section that is not one with 400, before any byte is stored 216ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses an evidence kind outside the list with 400, before any byte is stored 6ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 52ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07) 1103ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 54ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 32ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > records the extraction tier even with the passage index off 4ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > still lists and reads the document through the tools 1036ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the passage index is absent, and says so > wrote no chunks and left the ledger unclaimed rather than claiming success 3ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the passage index is absent, and says so > search_document_passages reports an empty index, not an absent answer 16ms
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > admits the document with a classification and a retention policy 483ms
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry that omits them changes nothing, writes no audit row, and leaves no second copy 43ms
+ ✓ tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking for another title or type changes nothing, and says what differs 31ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a change to the recorded hash 1174ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a new version label, document code, program or tenant 17ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses re-pointing a stored copy, or rewriting lineage or retention 18ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses TRUNCATE 14ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > still allows what the named writers do 21ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > allows a soft delete, and refuses undoing one 8ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a DELETE by the runtime role 6ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > has no settable bypass: session settings made before the DELETE change nothing 5ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > the purge function refuses an organization that is not pending deletion 10ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses while a legal hold on the organization is active 20ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a caller in a tenant scope, even for its own organization 6ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > deletes that organization's versions, and only those, once pending deletion with no active hold 14ms
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing 1218ms
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > with a reason, changes the fields and records each before and after, with the reason, once 31ms
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > a change to the values already recorded writes nothing 8ms
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a type or classification outside the Vault vocabulary 2ms
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a viewer before anything is read or written 1ms
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > reports another organization's document as absent 6ms
+ ✓ tests/db/vault-coverage.dbtest.ts > Vault coverage on PostgreSQL, as the runtime role (VR-15) > counts one more covered section for a confirmed filing, and none for a suggestion 1216ms
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > the call the script made — no tenant scope — is refused under RLS enforcement 1190ms
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > a scope with the integer id but no UUID sees nothing — and would report nothing to do 23ms
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > backfillVaultChunksForTenant finds the document the tenant owns 10ms
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > refuses an organization that does not exist, rather than sweeping nothing 3ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > both tables have RLS enabled and a policy for every command 9ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > document_catalog: each tenant reads its own row and not the other's 38ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > document_read_receipts: each tenant reads its own row and not the other's 18ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot overwrite B's comprehension record 8ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot forge a catalog row for B's document 11ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot plant a read receipt on B's document — the proof the coverage gate trusts 8ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot delete B's read receipt 10ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > a tenant still writes its OWN catalog row and receipt — the policy is not a blanket deny 28ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > posture: the statements run as app_service, RLS enforcing, with the tenant GUC set 5ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > positive control: each tenant sees exactly its own vault document 17ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > a core.programs row naming B's program does not make A its owner 47ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > an ownership row behind an org-less core.programs row does not either 73ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > A cannot grant itself delegate access to B, and gains nothing by trying 10ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > nor does trying reach the org-policied schemas that trust the same table 14ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > a grant B makes still works, a delegate cannot widen it, and revoking it ends it 20ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > an organization's tenant key cannot be moved, by its own tenant or any other (D3) > A cannot hand B's organization its uuid, and B's vault stays B's 9ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > an organization's tenant key cannot be moved, by its own tenant or any other (D3) > the other writers still write, and none of them, the platform included, can move a key 16ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > positive control: tenant A, handed its own uuid, retrieves its own passage 57ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > tenant A's session, handed tenant B's uuid, never receives B's passage 1ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a uuid that disagrees with the session scope is refused, not quietly answered 3ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > …including when the session scope carries no uuid — exactly when a header fallback fires 21ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a missing uuid keeps its existing refusal (unchanged by this fix) 1ms
+ Test Files  98 passed (98)
+      Tests  972 passed (972)

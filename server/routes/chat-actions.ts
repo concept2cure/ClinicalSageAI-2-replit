@@ -10,8 +10,11 @@
  */
 import { Router, Request, Response } from 'express';
 import { query as dbQuery } from '../db';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('chat-actions');
 
 async function sq(sql: string, params: any[] = []) {
   try {
@@ -177,9 +180,8 @@ router.post('/chat/actions/run', async (req: Request, res: Response) => {
     }
 
     return res.json({ ok: true, ...result });
-  } catch (err: any) {
-    console.error('[chat/actions/run] error:', err?.message);
-    return res.status(500).json({ ok: false, error: 'Action failed', detail: err?.message });
+  } catch (err) {
+    return serverError(res, log, 'running the action', err);
   }
 });
 

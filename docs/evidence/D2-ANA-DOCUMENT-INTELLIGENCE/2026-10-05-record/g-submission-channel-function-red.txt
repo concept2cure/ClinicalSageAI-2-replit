@@ -1,0 +1,432 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/services/regulatory/submission-resolver.test.ts
+{
+  "timestamp": "2026-10-05T02:08:45.609Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:08:45.610Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+{
+  "timestamp": "2026-10-05T02:08:45.610Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T02:08:45.604Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:08:45.606Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T02:08:45.606Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stdout | tests/services/regulatory/submission-resolver.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > resolves a biologic marketing filing: US and JP by gateway, EU build-only 7ms
+   → a centralised MAA must not be routed to CESP: expected { region: 'ema', name: 'cesp' } to be null
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > routes by product class — BLA and NDA pick different US filings 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > honours an explicit region subset 0ms
+ × tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > never tells a client their MAA can be sent through CESP 1ms
+   → expected 'cesp' not to be 'cesp' // Object.is equality
+ × tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > sends an EU clinical trial application to CTIS, not to a dossier gateway 1ms
+   → expected { region: 'ema', name: 'cesp' } to be null
+ × tests/services/regulatory/submission-resolver.test.ts > submission resolver — coverage matrix > US and JP cells support build + submit; EU cells are build-supported, not submit-supported 2ms
+   → clinical_trial/small_molecule/EU: expected true to be false // Object.is equality
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — registry lookups > picks a regional entry by family + product class 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 0ms
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 5ms
+   → a centralised MAA is reported submittable via CESP: expected 'submittable' to be 'no_gateway' // Object.is equality
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 1ms
+   → submissionChannelFor is not a function
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 1ms
+   → submissionChannelFor is not a function
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+   → submissionChannelFor is not a function
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 3ms
+   → expected [] to include 'EU_MAA'
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > resolves a biologic marketing filing: US and JP by gateway, EU build-only
+AssertionError: a centralised MAA must not be routed to CESP: expected { region: 'ema', name: 'cesp' } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "name": "cesp",
+  "region": "ema",
+}
+
+ ❯ tests/services/regulatory/submission-resolver.test.ts:49:72
+     47|     expect(eu.agency).toBe('EMA');
+     48|     expect(eu.filing?.id).toBe('EU_MAA');
+     49|     expect(eu.gateway, 'a centralised MAA must not be routed to CESP')…
+       |                                                                        ^
+     50|     expect(eu.buildSupported).toBe(true);
+     51|     expect(eu.submitSupported).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > never tells a client their MAA can be sent through CESP
+AssertionError: expected 'cesp' not to be 'cesp' // Object.is equality
+ ❯ tests/services/regulatory/submission-resolver.test.ts:83:34
+     81|   it('never tells a client their MAA can be sent through CESP', () => {
+     82|     const eu = resolveSubmissionPlan({ filingType: 'MAA', regions: ['E…
+     83|     expect(eu.gateway?.name).not.toBe('cesp');
+       |                                  ^
+     84|     expect(eu.submitSupported).toBe(false);
+     85|     expect(eu.notes.join(' ')).toMatch(/eSubmission Gateway/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > sends an EU clinical trial application to CTIS, not to a dossier gateway
+AssertionError: expected { region: 'ema', name: 'cesp' } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "name": "cesp",
+  "region": "ema",
+}
+
+ ❯ tests/services/regulatory/submission-resolver.test.ts:97:24
+     95|     }).perRegion[0];
+     96|     expect(eu.filing?.id).toBe('EU_CTA');
+     97|     expect(eu.gateway).toBeNull();
+       |                        ^
+     98|     expect(eu.submitSupported).toBe(false);
+     99|     expect(eu.channel?.kind).toBe('portal');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/services/regulatory/submission-resolver.test.ts > submission resolver — coverage matrix > US and JP cells support build + submit; EU cells are build-supported, not submit-supported
+AssertionError: clinical_trial/small_molecule/EU: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/services/regulatory/submission-resolver.test.ts:114:80
+    112|           // Marketing: centralised MAA, eSubmission Gateway not conne…
+    113|           // Clinical: CTA through the CTIS portal.
+    114|           expect(cell.submitSupported, `${row.family}/${row.productCla…
+       |                                                                                ^
+    115|         } else {
+    116|           expect(cell.submitSupported, `${row.family}/${row.productCla…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP
+AssertionError: a centralised MAA is reported submittable via CESP: expected 'submittable' to be 'no_gateway' // Object.is equality
+
+Expected: "no_gateway"
+Received: "submittable"
+
+ ❯ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts:70:76
+     68|        `no_gateway` — an integration that could be built — naming the …
+     69|     const maa = getSubmittability(getApplicationType('EU_MAA')!);
+     70|     expect(maa.tier, 'a centralised MAA is reported submittable via CE…
+       |                                                                            ^
+     71|     expect(String(maa.channel ?? '')).toMatch(/eSubmission Gateway/);
+     72|     expect(String(maa.channelReason ?? '')).toMatch(/centralised proce…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP
+TypeError: submissionChannelFor is not a function
+ ❯ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts:82:18
+     80|       const entry = getApplicationType(id);
+     81|       expect(entry, `${id} missing from the registry`).toBeTruthy();
+     82|       const ch = submissionChannelFor(entry!);
+       |                  ^
+     83|       expect(ch.kind, `${id} is a centralised-procedure eCTD filing`).…
+     84|       if (ch.kind === 'unconnected') expect(ch.channel).toMatch(/eSubm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control
+TypeError: submissionChannelFor is not a function
+ ❯ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts:94:12
+     92|     const dcp = getApplicationType('EU_GENERIC_DCP')!;
+     93|     expect(dcp.agency, 'the premise: a DCP is filed with NCAs').toBe('…
+     94|     expect(submissionChannelFor(dcp)).toEqual({ kind: 'gateway', regio…
+       |            ^
+     95|     const s = getSubmittability(dcp);
+     96|     expect(s.tier).toBe('submittable');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED
+TypeError: submissionChannelFor is not a function
+ ❯ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts:104:12
+    102|
+    103|   it('is the one channel function: CTIS is a portal, an EMA device fil…
+    104|     expect(submissionChannelFor(getApplicationType('EU_CTA')!).kind).t…
+       |            ^
+    105|     expect(submissionChannelFor(getApplicationType('EU_PER')!)).toEqua…
+    106|       kind: 'gateway', region: 'ema', name: 'eudamed',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog
+AssertionError: expected [] to include 'EU_MAA'
+ ❯ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts:117:42
+    115|     // decision under Rule 2), so these ARE gaps — unlike a portal fil…
+    116|     const report = buildSubmittabilityReport();
+    117|     expect(report.gaps.map((c) => c.id)).toContain('EU_MAA');
+       |                                          ^
+    118|     expect(report.portalOnly.map((c) => c.id)).not.toContain('EU_MAA');
+    119|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 6 passed (15)
+   Start at  02:08:43
+   Duration  2.64s (transform 2.71s, setup 146ms, import 4.33s, tests 32ms, environment 0ms)
+
+
+# ====================================================================
+# FIX ROUND 1 RED (2026-10-05): the two new assertions run against the round-0
+# wording (channel built from the full SUBMISSION_FORMATS.EMA.gateway string,
+# reason lowercase). The centralised channel mentioned CESP; the reason did not
+# start a sentence. 2 failed / 13 passed. The source was restored afterwards.
+# ====================================================================
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T03:14:20.459Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:14:20.460Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T03:14:20.460Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/services/regulatory/submission-resolver.test.ts
+{
+  "timestamp": "2026-10-05T03:14:20.468Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:14:20.469Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+{
+  "timestamp": "2026-10-05T03:14:20.469Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/services/regulatory/submission-resolver.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/services/regulatory/submission-resolver.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 0ms
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 5ms
+   → the centralised channel must not mention CESP: expected 'EMA eSubmission Gateway / Web Client …' not to match /CESP/i
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > resolves a biologic marketing filing: US and JP by gateway, EU build-only 4ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > routes by product class — BLA and NDA pick different US filings 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > honours an explicit region subset 0ms
+ × tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > never tells a client their MAA can be sent through CESP 5ms
+   → expected 'Not connected: EMA eSubmission Gatewa…' to match /Centralised procedure/
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > sends an EU clinical trial application to CTIS, not to a dossier gateway 0ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — coverage matrix > US and JP cells support build + submit; EU cells are build-supported, not submit-supported 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — registry lookups > picks a regional entry by family + product class 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > never tells a client their MAA can be sent through CESP
+AssertionError: expected 'Not connected: EMA eSubmission Gatewa…' to match /Centralised procedure/
+
+- Expected:
+/Centralised procedure/
+
++ Received:
+"Not connected: EMA eSubmission Gateway / Web Client (CESP for national procedures). centralised procedure — the eSubmission Gateway/Web Client is mandatory (EMA, since 2014-03-01); CESP is not an accepted channel, and the platform has no eSubmission Gateway connector. The platform builds and validates the eCTD sequence; the applicant transmits it through that channel."
+
+ ❯ tests/services/regulatory/submission-resolver.test.ts:87:32
+     85|     expect(eu.notes.join(' ')).toMatch(/eSubmission Gateway/);
+     86|     // It says WHY, not just that a gateway is missing.
+     87|     expect(eu.notes.join(' ')).toMatch(/Centralised procedure/);
+       |                                ^
+     88|     // The named channel is the centralised one; CESP appears only as …
+     89|     expect(eu.channel && 'channel' in eu.channel ? eu.channel.channel …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP
+AssertionError: the centralised channel must not mention CESP: expected 'EMA eSubmission Gateway / Web Client …' not to match /CESP/i
+
+- Expected:
+/CESP/i
+
++ Received:
+"EMA eSubmission Gateway / Web Client (CESP for national procedures)"
+
+ ❯ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts:73:92
+     71|     expect(String(maa.channel ?? '')).toMatch(/eSubmission Gateway/);
+     72|     // The channel names the centralised channel only — CESP is the na…
+     73|     expect(String(maa.channel ?? ''), 'the centralised channel must no…
+       |                                                                                            ^
+     74|     expect(String(maa.channelReason ?? '')).toMatch(/^Centralised proc…
+     75|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 13 passed (15)
+   Start at  03:14:18
+   Duration  3.03s (transform 3.09s, setup 171ms, import 5.13s, tests 32ms, environment 0ms)
+
+
+==================================================================
+FIX ROUND 2 RED — 2026-10-05, working tree before the round-2 source change
+New assertions: EMA IRIS filings (EU_ORPHAN, EU_SCIENTIFIC_ADVICE, EU_PIP, EU_PRIME) must not claim
+'Centralised procedure' / eSubmission Gateway; unmodelled EMA-agency entries must not fall to ema:cesp;
+resolver notes for orphan/pediatric/designation must name IRIS.
+Command: npx vitest run tests/services/regulatory/submission-resolver.test.ts server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+==================================================================
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > resolves a biologic marketing filing: US and JP by gateway, EU build-only 5ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > routes by product class — BLA and NDA pick different US filings 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > honours an explicit region subset 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > never tells a client their MAA can be sent through CESP 0ms
+ × tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > does not tell an orphan, PIP or PRIME applicant the centralised procedure applies (fix round 2) 9ms
+   → EU_ORPHAN: expected 'Not connected: EMA eSubmission Gatewa…' to match /IRIS/
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > sends an EU clinical trial application to CTIS, not to a dossier gateway 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — coverage matrix > US and JP cells support build + submit; EU cells are build-supported, not submit-supported 1ms
+ ✓ tests/services/regulatory/submission-resolver.test.ts > submission resolver — registry lookups > picks a regional entry by family + product class 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 8ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 4ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 1ms
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not claim the centralised procedure or the eSubmission Gateway for an EMA IRIS filing 9ms
+   → EU_ORPHAN: expected 'EMA eSubmission Gateway / Web Client' to match /IRIS/
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > fails closed for an EMA filing whose channel is not modelled — never the CESP region default 2ms
+   → EU_EUDRAVIGILANCE_ICSR fell through to the region default: expected 'gateway' to be 'unconnected' // Object.is equality
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/services/regulatory/submission-resolver.test.ts > submission resolver — per-region plan (FDA/EMA/PMDA) > does not tell an orphan, PIP or PRIME applicant the centralised procedure applies (fix round 2)
+AssertionError: EU_ORPHAN: expected 'Not connected: EMA eSubmission Gatewa…' to match /IRIS/
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not claim the centralised procedure or the eSubmission Gateway for an EMA IRIS filing
+AssertionError: EU_ORPHAN: expected 'EMA eSubmission Gateway / Web Client' to match /IRIS/
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > fails closed for an EMA filing whose channel is not modelled — never the CESP region default
+AssertionError: EU_EUDRAVIGILANCE_ICSR fell through to the region default: expected 'gateway' to be 'unconnected' // Object.is equality
+      Tests  3 failed | 15 passed (18)

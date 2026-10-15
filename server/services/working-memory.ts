@@ -17,6 +17,8 @@
  */
 
 import { pool } from '../db.js';
+import { ANSWER_CHECK_VERSION } from './ana/answer-grounding.js';
+import { foundBasis, heldCheck, settleSummary, storedCheck, type CheckedAnswer, type FoundBasis, type WithheldItems } from './ana/memory-fact-check.js';
 import { createScopedLogger } from '../utils/logger';
 import { getEmbeddingService } from './enhancedEmbeddingService.js';
 
@@ -118,6 +120,10 @@ export interface WorkingMemory {
     nextActions: string[];
     createdArtifacts: string[];
     exclusions: string[];
+    /** What the fact check withheld, per field (memory-fact-check.ts): kept for the record, never rendered. */
+    withheld?: WithheldItems;
+    /** The answer engine the items were settled against. */
+    factCheck?: string;
   };
   messageCountAtGeneration: number;
   generatedAt: string;
@@ -500,6 +506,45 @@ export async function storeWorkingMemoryForThread(
   }
 }
 
+/** The summary every later turn reads: the settled fields, each only when it has something. */
+function formatWorkingMemory(structured: WorkingMemory['structured']): string {
+  return [
+    structured.objective ? `**Objective**: ${structured.objective}` : '',
+    structured.lockedFacts.length > 0 ? `**Key Facts**: ${structured.lockedFacts.join('; ')}` : '',
+    structured.decisions.length > 0 ? `**Decisions**: ${structured.decisions.join('; ')}` : '',
+    structured.openQuestions.length > 0 ? `**Open Questions**: ${structured.openQuestions.join('; ')}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+/** The most recent stored answers a summary is settled against. */
+const MAX_SETTLING_ANSWERS = 200;
+
+/**
+ * What the thread's checked answers found: the stored ones (most recent
+ * first, bounded) and the last message, whose check is in hand. Fails closed:
+ * an unreadable thread vouches for nothing.
+ */
+async function threadBasis(threadId: string, messages: Array<{ role: string; content: string }>, answerCheck: unknown): Promise<FoundBasis> {
+  const answers: CheckedAnswer[] = [];
+  try {
+    const { getThreadMessages } = await import('./chat-thread-helpers.js');
+    const rows = await getThreadMessages(threadId);
+    for (const row of rows.slice().reverse()) {
+      if (answers.length >= MAX_SETTLING_ANSWERS) break;
+      const check = row.role === 'assistant' && typeof row.content === 'string' ? storedCheck(row.metadata) : null;
+      if (check) answers.push({ text: row.content, check });
+    }
+  } catch (error) {
+    logger.warn(`working memory: the thread's checks could not be read (${error instanceof Error ? error.message : 'unknown error'}); only items that claim nothing are kept`);
+  }
+  const current = heldCheck(answerCheck);
+  const last = messages[messages.length - 1];
+  if (current && last?.role === 'assistant' && typeof last.content === 'string') answers.push({ text: last.content, check: current });
+  return foundBasis(answers);
+}
+
 /**
  * Summarize a chat thread's recent messages into a structured working-memory
  * record and persist it. Thread-keyed, fire-and-forget, gated by
@@ -520,8 +565,13 @@ export async function summarizeAndStoreWorkingMemoryForThread(params: {
    * promotion (never guessed after the fact).
    */
   projectId?: number | null;
+  /**
+   * The answer check of the last message, which may not be stored yet (the
+   * write-back races its persistence). Absent: the stored checks alone.
+   */
+  answerCheck?: unknown;
 }): Promise<void> {
-  const { threadId, organizationId, messages, projectId } = params;
+  const { threadId, organizationId, messages, projectId, answerCheck } = params;
   if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return;
   if (!Array.isArray(messages) || messages.length === 0) return;
 
@@ -578,18 +628,13 @@ export async function summarizeAndStoreWorkingMemoryForThread(params: {
       };
     }
 
-    const formattedSummary = [
-      `**Objective**: ${structured.objective}`,
-      structured.lockedFacts?.length > 0
-        ? `**Key Facts**: ${structured.lockedFacts.join('; ')}`
-        : '',
-      structured.decisions?.length > 0 ? `**Decisions**: ${structured.decisions.join('; ')}` : '',
-      structured.openQuestions?.length > 0
-        ? `**Open Questions**: ${structured.openQuestions.join('; ')}`
-        : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
+    // Keep only what a checked answer found (FV-missed, AnA reasoning round 8):
+    // every later turn reads this summary as memory not to contradict, and the
+    // consolidation job promotes it into the project's memory.
+    const settled = settleSummary(structured, await threadBasis(threadId, messages, answerCheck));
+    structured = { ...settled.structured, withheld: settled.withheld, factCheck: ANSWER_CHECK_VERSION };
+
+    const formattedSummary = formatWorkingMemory(structured);
 
     await storeWorkingMemoryForThread(
       threadId,

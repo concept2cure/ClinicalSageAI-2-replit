@@ -1,0 +1,8 @@
+ × server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > an artifact of a project being judged cannot be approved underneath the delete 29ms
+ ✓ server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > control: with no read held, the same approval goes through 14ms
+ × server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > no project can join a workspace being judged 20ms
+ ✓ server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > control: with no read held, a project joins the workspace 20ms
+ × server/services/c2c/__tests__/project-retention-locks.dbtest.ts > projectDeletionHolds holds what it judged until the delete commits > a workspace being judged also holds its existing artifacts 19ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)

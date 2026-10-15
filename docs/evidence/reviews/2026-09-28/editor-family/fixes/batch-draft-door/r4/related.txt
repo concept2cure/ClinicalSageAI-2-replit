@@ -1,0 +1,161 @@
+Related suites, final code (round 4). Run with:
+  env -u DATABASE_URL RLS_ENFORCE=off npx vitest run --maxWorkers=2 <files below>
+
+Server: every suite under server/services/clinical-regulatory-evidence/__tests__, and every
+server/shared/tests suite naming acceptedMachineText, the lineage gate, machine attribution,
+the revision ledger, the machine-author vocabulary, the claim verifier, turn records, the
+batch-draft door or the source-mode test.
+ Test Files  1 failed | 99 passed (100)
+      Tests  1 failed | 1237 passed (1238)
+
+Client: the editor suites (client/src/concept2cure/v2/editor/__tests__) and the v2 suites for
+the section editor, its round trip, the batch-draft card and the co-author surface.
+ Test Files  38 passed (38)
+      Tests  435 passed (435)
+
+The one failure is not this change's. server/routes/__tests__/batch-draft-accept.test.ts
+asserts the route text `versionReplacedCoauthorContent(queryableFromDrizzle(rdb), {`; the route
+has called it with `client` since 283fe08c4, and this change does not touch that call:
+  HEAD (f2d3fed2c) route matches the asserted call: false
+  working-tree route matches the asserted call: false
+  HEAD call site: const versionNumber = await versionReplacedCoauthorContent(client, {
+
+Per file (passed / failed / skipped):
+    16  1  0  server/routes/__tests__/batch-draft-accept.test.ts
+    17  0  0  tests/schema-contract/c2c-section-has-content.contract.test.ts
+    13  0  0  tests/schema-contract/c2c-section-lineage-gate.contract.test.ts
+     6  0  0  tests/schema-contract/check-constraint-replay.pglite.test.ts
+     4  0  0  server/services/ana/__tests__/document-spine.pglite.integration.test.ts
+     3  0  0  server/services/clinical-regulatory-evidence/__tests__/program-scope-migration.pglite.integration.test.ts
+    15  0  0  tests/lineage/founder-path-lineage.pglite.test.ts
+    10  0  0  server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+     1  0  0  tests/golden-journeys/cer-eu-mdr.journey.test.ts
+     1  0  0  tests/golden-journeys/device-510k-estar.journey.test.ts
+     7  0  0  server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+     9  0  0  server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+     9  0  0  server/services/ana/__tests__/turn-record-loop.test.ts
+    30  0  0  tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+    13  0  0  server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts
+     4  0  0  server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts
+    10  0  0  server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+     4  0  0  server/services/labeling/__tests__/labeling-pi-service.pglite.integration.test.ts
+     7  0  0  server/services/clinical-regulatory-evidence/__tests__/machine-draft-lineage.pglite.integration.test.ts
+     1  0  0  tests/schema-contract/authoring-section-permissions.contract.test.ts
+     5  0  0  server/services/clinical-regulatory-evidence/__tests__/retrieval-atoms.pglite.integration.test.ts
+     9  0  0  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+     6  0  0  server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts
+     3  0  0  server/services/dmsp/__tests__/dmsp-lineage-gate.pglite.integration.test.ts
+    35  0  0  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+     1  0  0  tests/golden-journeys/ind-authoring.journey.test.ts
+    18  0  0  server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts
+    20  0  0  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+    28  0  0  tests/schema-contract/authoring-section-gate.contract.test.ts
+    36  0  0  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+     3  0  0  server/services/labeling/__tests__/labeling-lineage-gate.pglite.integration.test.ts
+    20  0  0  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+     8  0  0  server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+     4  0  0  server/services/compute/__tests__/artifactWriteback-lineage.pglite.integration.test.ts
+     5  0  0  server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts
+    14  0  0  server/services/ana/__tests__/turn-record.pglite.test.ts
+    11  0  0  server/services/clinical-regulatory-evidence/__tests__/source-and-author-lineage.pglite.integration.test.ts
+    13  0  0  server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+     3  0  0  server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts
+    18  0  0  server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+     4  0  0  server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+    36  0  0  server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts
+    10  0  0  server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts
+     6  0  0  server/services/clinical-regulatory-evidence/__tests__/study-design-evidence.pglite.integration.test.ts
+     4  0  0  server/services/cerv2/__tests__/kit-section-write.pglite.integration.test.ts
+     3  0  0  server/services/biosketch/__tests__/biosketch-lineage-gate.pglite.integration.test.ts
+     3  0  0  server/services/clinical-regulatory-evidence/__tests__/lineage-gate.pglite.integration.test.ts
+     3  0  0  server/services/protocol-templates/__tests__/template-clone-lineage.pglite.integration.test.ts
+     9  0  0  server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts
+    24  0  0  server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts
+     4  0  0  server/services/clinical-regulatory-evidence/__tests__/span-retire-asserter.pglite.integration.test.ts
+     5  0  0  server/routes/__tests__/authoring-ledger.pglite.integration.test.ts
+     8  0  0  server/services/clinical-regulatory-evidence/__tests__/span-lineage-backfill.pglite.integration.test.ts
+     3  0  0  server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts
+     3  0  0  server/services/protocol-consent/__tests__/protocol-consent-lineage-gate.pglite.integration.test.ts
+    13  0  0  tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+     3  0  0  server/services/resolution/__tests__/stage-rewrite-lineage.pglite.integration.test.ts
+    17  0  0  server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts
+     4  0  0  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+    13  0  0  server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+     9  0  0  server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts
+     8  0  0  server/routes/__tests__/authoring-record-export.pglite.test.ts
+    63  0  0  server/routes/__tests__/coauthorPutStatus.test.ts
+     5  0  0  server/services/clinical-regulatory-evidence/__tests__/source-attribution.pglite.integration.test.ts
+     7  0  0  server/routes/__tests__/coauthorSnapshotSeal.test.ts
+     9  0  0  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+     5  0  0  server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+    44  0  0  server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts
+    13  0  0  server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+     4  0  0  server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+     7  0  0  server/services/ana/__tests__/artifactVersionStore-provenance.pglite.integration.test.ts
+     7  0  0  server/services/ana/__tests__/artifact-version-store.pglite.integration.test.ts
+     6  0  0  server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts
+    26  0  0  tests/ci/no-ghost-globals.contract.test.ts
+    22  0  0  server/routes/__tests__/authoring-section-figure-refs.test.ts
+    66  0  0  server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+    12  0  0  shared/authoring/__tests__/looks-like-html.test.ts
+    27  0  0  server/routes/__tests__/authoringTrackedChangeDecisions.test.ts
+     8  0  0  server/routes/__tests__/authoring-atomic-mutations.test.ts
+     9  0  0  server/routes/__tests__/authoringAiDraftAccept.test.ts
+    31  0  0  server/services/audit/__tests__/chain-head-on-demand.test.ts
+    17  0  0  tests/security/batch-draft-xss.test.ts
+    12  0  0  tests/schema-contract/document-span-lineage.contract.test.ts
+     6  0  0  tests/artifact-routes-invalidate-bundles.test.ts
+    43  0  0  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+    19  0  0  server/services/clinical-regulatory-evidence/__tests__/governance.test.ts
+    15  0  0  server/services/clinical-regulatory-evidence/__tests__/retrieval-atoms.projections.test.ts
+    26  0  0  server/services/clinical-regulatory-evidence/__tests__/source-attribution.test.ts
+    11  0  0  server/services/clinical-regulatory-evidence/__tests__/source-version.test.ts
+     6  0  0  tests/rls-scoped-route-mounts.contract.test.ts
+    12  0  0  shared/authoring/__tests__/source-mode.test.ts
+    12  0  0  server/services/authoring/__tests__/accepted-machine-text.test.ts
+     4  0  0  server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+     9  0  0  server/services/clinical-regulatory-evidence/__tests__/coverageService.test.ts
+     6  0  0  server/services/c2c/__tests__/commitSectionToFilingDraftSource.test.ts
+     4  0  0  server/services/ana/__tests__/write-section-source-lineage.test.ts
+    11  0  0  server/middleware/__tests__/redisRateLimiter-category.test.ts
+     6  0  0  tests/rls-scoped-route-mounts-tranche2.contract.test.ts
+     7  0  0  server/services/authoring/__tests__/revision-ledger.test.ts
+     8  0  0  server/services/authoring/__tests__/machine-contributors.test.ts
+    11  0  0  client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx
+    14  0  0  client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx
+     5  0  0  client/src/concept2cure/v2/__tests__/documentAuthoringCommentThreads.test.tsx
+     5  0  0  client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx
+     5  0  0  client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx
+    36  0  0  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx
+    41  0  0  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx
+     8  0  0  client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx
+    14  0  0  client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx
+    18  0  0  client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx
+     9  0  0  client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx
+    11  0  0  client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx
+    13  0  0  client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx
+    18  0  0  client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx
+     8  0  0  client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx
+     4  0  0  client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx
+    18  0  0  client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx
+    44  0  0  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx
+    10  0  0  client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx
+     8  0  0  client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx
+     6  0  0  client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx
+     4  0  0  client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx
+     6  0  0  client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx
+     6  0  0  client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx
+     3  0  0  client/src/concept2cure/v2/__tests__/ectdCoauthorEmptyStateAction.test.tsx
+     3  0  0  client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx
+     1  0  0  client/src/concept2cure/v2/__tests__/ectdCoauthorReadOnly.test.tsx
+     2  0  0  client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx
+     1  0  0  client/src/concept2cure/v2/__tests__/ectdCoauthorFinalizedRefusal.test.tsx
+    16  0  0  client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts
+    13  0  0  client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx
+     5  0  0  client/src/concept2cure/v2/editor/__tests__/anchorClickAndMarkerRoles.test.ts
+    11  0  0  client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts
+     8  0  0  client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts
+    12  0  0  client/src/concept2cure/v2/editor/__tests__/citations.test.ts
+     6  0  0  client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts
+    12  0  0  client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts
+    20  0  0  client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts

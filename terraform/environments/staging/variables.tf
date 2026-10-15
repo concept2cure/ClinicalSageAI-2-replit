@@ -34,13 +34,16 @@ variable "rds_instance_class" {
 }
 
 variable "api_cpu" {
-  type    = number
-  default = 512
+  type = number
+  # Fargate allows at most 4096 MiB at 512 CPU units; the task needs 6144.
+  default = 1024
 }
 
+# The API task also runs the virus scanner (modules/ecs-fargate): 4096 MiB of
+# this is clamd's, 2048 the application's. The stack refuses less.
 variable "api_memory" {
   type    = number
-  default = 1024
+  default = 6144
 }
 
 variable "api_desired_count" {
@@ -107,12 +110,36 @@ variable "audit_hmac_secret" {
   sensitive = true
 }
 
+variable "audit_export_signing_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "audit_attestation_key" {
+  type      = string
+  sensitive = true
+}
+
 variable "connector_encryption_key" {
   type      = string
   sensitive = true
 }
 
+# OpenAI only when a tenant's Order Form elects it (ADR-0014 §1); validated in
+# terraform/stack.
+variable "openai_enabled" {
+  type    = bool
+  default = false
+}
+
 variable "openai_api_key" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+# Regulatory drafting's provider; validated in terraform/stack.
+variable "anthropic_api_key" {
   type      = string
   sensitive = true
 }
@@ -136,7 +163,10 @@ variable "smtp_from" {
   type = string
 }
 
-# D1 brief B4: the founder's compliance decision. No default, no example.
+# No default. Its "local" entry (the in-VPC embedding lane) is decided by
+# ADR-0014 §1.5 (amended 2026-10-01) and shown in terraform.tfvars.example; the
+# stack refuses a value without it. The "anthropic" entry is the founder's
+# compliance decision (D1 brief B4), with no example.
 variable "ai_provider_placement_approvals" {
   type = string
 }
@@ -147,4 +177,20 @@ variable "tags" {
     Project     = "concept2cure"
     Environment = "staging"
   }
+}
+
+variable "sentry_dsn" {
+  type    = string
+  default = ""
+}
+
+variable "platform_owner_emails" {
+  description = "The platform owner(s), by password sign-in address, lower case (the stack's variable says what they are given)."
+  type        = list(string)
+}
+
+variable "db_credentials_rotation" {
+  type        = string
+  default     = "initial"
+  description = "Rotation marker for the database passwords. Change it (e.g. to the date) to rotate both; apply, then deploy at once. See terraform/stack/variables.tf."
 }

@@ -20,7 +20,9 @@ describe('AnA Personality Core', () => {
     expect(ANA_PERSONALITY_CORE).toMatch(/Kind, always/);
     expect(ANA_PERSONALITY_CORE).toMatch(/Deeply empathetic and emotionally aware/);
     expect(ANA_PERSONALITY_CORE).toMatch(/Professional at all times, human in the details/);
-    expect(ANA_PERSONALITY_CORE).toMatch(/Lightly, professionally funny/);
+    expect(ANA_PERSONALITY_CORE).toMatch(/You care about the person, and about what they actually need/);
+    expect(ANA_PERSONALITY_CORE).toMatch(/Playful, with a light touch/);
+    expect(ANA_PERSONALITY_CORE).toMatch(/Serious where it counts/);
     expect(ANA_PERSONALITY_CORE).toMatch(/Self-reflective — you own your mistakes/);
     expect(ANA_PERSONALITY_CORE).toMatch(/distinct relationship with every user and every project/);
   });

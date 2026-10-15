@@ -29,6 +29,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // identity for in-session comment attribution, so a stub user is enough.
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { displayName: 'Test Reviewer', email: 'rev@test.co', roles: ['Reg lead'] } }),
+  useAuthUser: () => ({ displayName: 'Test Reviewer', email: 'rev@test.co', roles: ['Reg lead'] }),
 }));
 
 import { Review } from '../surfaces/Review';
@@ -161,6 +162,81 @@ describe('Review board — real data', () => {
     // no provenance pill, and none of the retired demo content
     expect(screen.queryByText('Sample data')).toBeNull();
     expect(screen.queryByText(new RegExp(RETIRED_FIXTURE_DOC))).toBeNull();
+  });
+});
+
+/* FILING_SPINE F7: the queue's pill said the raw verdict code ("approved",
+   "changes-requested"). "approved" there is the reviewers' verdict while the
+   document is still IN_REVIEW and its sign-off chain is pending — so the pill
+   read "approved" on a document nobody had signed. The pill now says where the
+   document stands, by the same rule as the project's Review tab
+   (surfaces/reviewStanding.ts). */
+describe('Review board — the queue pill says where the document stands', () => {
+  const row = (over: Record<string, unknown>) => {
+    const status = over.state === 'changes-requested' ? 'changes_requested' : over.state;
+    return {
+      ...BOARD.queue[0], ...over,
+      reviews: ['approved', 'changes_requested', 'rejected'].includes(String(status))
+        ? [{ ...BOARD.queue[0].reviews[0], status, standing: 'current' }] : BOARD.queue[0].reviews,
+    };
+  };
+  it.each([
+    [{ docStatus: 'IN_REVIEW', state: 'approved' }, 'Reviewers approved, sign-off pending'],
+    [{ docStatus: 'APPROVED', state: 'approved' }, 'Approved'],
+    [{ docStatus: 'IN_REVIEW', state: 'changes-requested' }, 'Changes requested'],
+    [{ docStatus: 'IN_REVIEW', state: 'rejected' }, 'Declined'],
+    [{ docStatus: 'IN_REVIEW', state: 'in-review' }, 'In review'],
+  ])('%o reads "%s", never the raw code', async (over, words) => {
+    apiRequest.mockImplementation(async () => ok({ ...BOARD, queue: [row(over)] }));
+    render(<Review {...props()} />);
+    await screen.findAllByText('Clinical Overview §2.5');
+    const pill = document.querySelector('.lrow .lrow-top .rd-chip');
+    expect(pill?.textContent).toBe(words);
+  });
+});
+
+/* QA 2026-10-08 (j1, "Project screens show other programs' documents"): with
+   BX-256 open, Review & approval listed BX-204's device items. The board was
+   read org-wide by default and the program filter started OFF, so the screen
+   reached from a program showed every program's queue under it. With a
+   program open the board now reads that program by default; the toggle
+   widens it to every program on purpose. */
+describe('Review board — the open program', () => {
+  const PROGRAM = '099991d1-dac8-43c5-b88a-8baab26194ee';
+  beforeEach(() => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'BX-256' };
+  });
+  afterEach(() => {
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+
+  it('reads only the open program by default', async () => {
+    apiRequest.mockImplementation(async () => ok(BOARD));
+    render(<Review {...props()} />);
+    await waitFor(() => expect(apiRequest).toHaveBeenCalled());
+    expect(String(apiRequest.mock.calls[0][1])).toBe(`/api/review/board?scope=all&programId=${PROGRAM}`);
+    expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=all')).toBe(false);
+  });
+
+  it('widens to every program only when asked', async () => {
+    apiRequest.mockImplementation(async () => ok(BOARD));
+    render(<Review {...props()} />);
+    const toggle = await screen.findByRole('button', { pressed: true, name: /BX-256/ });
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=all')).toBe(true));
+  });
+
+  /* What QA actually saw: the board was empty, and the "Threads & change
+     requests — assigned to you" inbox under it listed BX-204's items. */
+  it('the review-thread inbox follows the same program filter', async () => {
+    apiRequest.mockImplementation(async () => ok(BOARD));
+    render(<Review {...props()} />);
+    const inbox = (u: string) => apiRequest.mock.calls.some((c) => String(c[1]) === u);
+    await waitFor(() => expect(inbox(`/api/concept2cure/reviews/my-queue?programId=${PROGRAM}`)).toBe(true));
+    expect(inbox('/api/concept2cure/reviews/my-queue')).toBe(false);
+    fireEvent.click(await screen.findByRole('button', { pressed: true, name: /BX-256/ }));
+    await waitFor(() => expect(inbox('/api/concept2cure/reviews/my-queue')).toBe(true));
   });
 });
 

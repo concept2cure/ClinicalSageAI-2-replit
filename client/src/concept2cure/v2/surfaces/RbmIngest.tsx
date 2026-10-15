@@ -119,6 +119,11 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<IngestResult | null>(null);
+  // A refusal because this exact extract is already loaded. Held apart from
+  // mut.error so the reprocess path is offered in place, with the operator's
+  // file and cutoff still in the form, instead of reading as a dead end.
+  const [duplicate, setDuplicate] = useState<string | null>(null);
+  const [reprocessReason, setReprocessReason] = useState('');
   const mut = useRbmMutation(onReload);
 
   const readFile = (file: File | undefined) => {
@@ -129,15 +134,32 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
     reader.readAsText(file);
   };
 
-  const submit = () => mut.run(async () => {
-    const data = await rbmWrite<IngestResult>('POST', '/rbm-metric-ingest', {
-      programId,
-      source,
-      sourceRef: fileName,
-      dataCutoff: cutoff || null,
-      csv,
-    });
-    setResult(data);
+  /**
+   * Load the extract. `reprocess` is only ever set by the operator explicitly
+   * accepting the duplicate warning — a retry must never silently become a
+   * second load, because a second load appends KRI readings.
+   */
+  const submit = (reprocess = false) => mut.run(async () => {
+    try {
+      const data = await rbmWrite<IngestResult>('POST', '/rbm-metric-ingest', {
+        programId,
+        source,
+        sourceRef: fileName,
+        dataCutoff: cutoff || null,
+        csv,
+        ...(reprocess ? { reprocess: true, reprocessReason: reprocessReason.trim() } : {}),
+      });
+      setDuplicate(null);
+      setResult(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // The server's 409 names the run that already holds this content.
+      if (/already loaded/i.test(msg)) {
+        setDuplicate(msg);
+        return;
+      }
+      throw err;
+    }
   });
 
   /* Declared the role but had no Escape and never moved focus into the panel
@@ -199,6 +221,26 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
             onDismiss={mut.clearError}
           />
         )}
+        {duplicate && !result && (
+          <div className="rbm-modal-note" role="alert">
+            <b>Already loaded.</b> {duplicate}
+            <label className="rbm-field" style={{ marginTop: 8 }}>
+              <span>Reason for reprocessing</span>
+              <textarea rows={2} value={reprocessReason} disabled={mut.busy}
+                placeholder="e.g. the unit mapping for query_rate was corrected"
+                onChange={e => setReprocessReason(e.target.value)} />
+              <em className="rbm-field-hint">
+                Reprocessing supersedes the earlier run and retracts the readings it appended, so
+                the history is replaced rather than doubled. The earlier run stays on file, with
+                this reason recorded against its replacement.
+              </em>
+            </label>
+            <button className="rbm-btn" disabled={mut.busy || reprocessReason.trim().length < 3}
+              onClick={() => submit(true)}>
+              {mut.busy ? 'Reprocessing…' : 'Reprocess and replace that run'}
+            </button>
+          </div>
+        )}
         {result && <IngestOutcome result={result} />}
 
         <div className="rbm-modal-note">
@@ -208,7 +250,7 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
         </div>
         <div className="rbm-modal-acts">
           <button className="rbm-btn" onClick={onClose} disabled={mut.busy}>{result ? 'Close' : 'Cancel'}</button>
-          <button className="rbm-btn pri" disabled={mut.busy || !csv.trim()} onClick={submit}>
+          <button className="rbm-btn pri" disabled={mut.busy || !csv.trim()} onClick={() => { setDuplicate(null); submit(); }}>
             {mut.busy ? 'Loading…' : result ? 'Load again' : 'Load extract'}
           </button>
         </div>

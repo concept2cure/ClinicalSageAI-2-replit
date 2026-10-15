@@ -166,10 +166,23 @@ export function verifyLedger(rowsOldestFirst: LedgerRow[]): LedgerVerdict {
  * of a governed record.
  */
 export const ANA_MACHINE_AUTHOR_ID = 'ana';
+/** The deterministic compositor of a working copy, not its original author/model. */
+export const WORKFLOW_IMPORT_AUTHOR_ID = 'workflow_import';
 
-export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze({
-  [ANA_MACHINE_AUTHOR_ID]: 'AnA (AI draft)',
-});
+/**
+ * A null-prototype object: every ordinary object inherits "constructor",
+ * "toString", "__proto__" and the rest, and a lookup by truthiness let them
+ * through as machine authors. "constructor" verified and was written to the
+ * lineage as the machine that drafted the words (periodic review 2026-09-28,
+ * editor family, the batch-draft accept, round 4: AUTH). Nothing is inherited
+ * now, so no reader of this vocabulary can be handed a name it does not hold.
+ */
+export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze(
+  Object.assign(Object.create(null) as Record<string, string>, {
+    [ANA_MACHINE_AUTHOR_ID]: 'AnA (AI draft)',
+    [WORKFLOW_IMPORT_AUTHOR_ID]: 'Workflow import (deterministic copy; original authorship retained)',
+  }),
+);
 
 export interface MachineContributor {
   id: string;
@@ -213,7 +226,32 @@ export interface AcceptedMachineTextEntry {
   authorId: string;
   /** The accepted insertion's text, as the editor had it. */
   text: string;
+  /**
+   * The AnA turn record the claim names, or null when it names none
+   * (round 15, SEC-A-7 door 1).
+   *
+   * This is what makes the claim CHECKABLE. Everything else here is the
+   * claim's own shape; this is the only field that can be held against the
+   * record that would prove it — `verifyMachineText` takes exactly this per
+   * claim. Without it every claim is unverifiable by construction, so the save
+   * door could only ever strip the attribution, and the verdict that refuses a
+   * VERIFIED claim from a model RULE 2 does not admit could never fire.
+   *
+   * Null is not a forgery: an older bundle, a plain paste and text typed by
+   * hand all name no turn. Such an entry still reaches the gate, where its
+   * words are recorded as the person's own with the reason — dropping it here
+   * would lose the clause instead of attributing it honestly.
+   *
+   * Bounded and shape-checked here rather than at the store: the column is
+   * uuid, so a malformed value would raise 22P02 and abort the transaction the
+   * save is being written in — the hazard `resolveTurnRecordSources` and
+   * `servedModelsForTurn` both guard the same way.
+   */
+  turnRecordId: string | null;
 }
+
+/** The turn record id a claim may name: a uuid, or nothing believed. */
+const TURN_RECORD_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * The text a reviewer accepted from machine authors in the editing session a
@@ -231,10 +269,14 @@ export function acceptedMachineText(raw: unknown): AcceptedMachineTextEntry[] {
   for (const entry of raw.slice(0, 32)) {
     const authorId = (entry as { authorId?: unknown })?.authorId;
     const text = (entry as { text?: unknown })?.text;
-    if (typeof authorId !== 'string' || !MACHINE_AUTHOR_IDS[authorId]) continue;
+    // Own keys only (round 4, AUTH): the vocabulary is null-prototype as well.
+    if (typeof authorId !== 'string' || !Object.hasOwn(MACHINE_AUTHOR_IDS, authorId)) continue;
     if (typeof text !== 'string' || text.trim().length === 0) continue;
     if (text.length > MAX_ACCEPTED_MACHINE_TEXT_CHARS) continue;
-    out.push({ authorId, text });
+    const claimed = (entry as { turnRecordId?: unknown })?.turnRecordId;
+    const turnRecordId =
+      typeof claimed === 'string' && TURN_RECORD_ID.test(claimed.trim()) ? claimed.trim() : null;
+    out.push({ authorId, text, turnRecordId });
   }
   return out;
 }

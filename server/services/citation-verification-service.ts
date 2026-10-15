@@ -52,6 +52,22 @@ export interface CitationMatch {
   publicationTypes?: string[];
   /** True when the source marks the work as retracted. undefined = unknown. */
   retracted?: boolean;
+  /**
+   * Crossref's structured author list, so a formatter need not re-split
+   * "Pieter De Smet" (whose surname is "De Smet") or drop an organisation that
+   * has only a name. Absent for PubMed, whose `authors` are already "Smith JA".
+   */
+  authorParts?: Array<{ family?: string; given?: string; name?: string }>;
+}
+
+/** Crossref author objects → CitationMatch.authorParts. */
+function crossrefAuthorParts(authors: unknown): CitationMatch['authorParts'] {
+  if (!Array.isArray(authors) || authors.length === 0) return undefined;
+  return authors.map((a: { family?: string; given?: string; name?: string }) => ({
+    family: a.family,
+    given: a.given,
+    name: a.name,
+  }));
 }
 
 export type CitationVerificationStatus = 'verified' | 'not_found' | 'unverifiable' | 'error';
@@ -172,6 +188,7 @@ async function verifyByDoi(doi: string): Promise<CitationMatch | null> {
     source: 'crossref',
     title: Array.isArray(item.title) ? item.title[0] : item.title,
     authors: (item.author || []).map((a: any) => [a.given, a.family].filter(Boolean).join(' ')).join(', ') || undefined,
+    authorParts: crossrefAuthorParts(item.author),
     journal: Array.isArray(item['container-title']) ? item['container-title'][0] : item['container-title'],
     year: item.issued?.['date-parts']?.[0]?.[0],
     doi: item.DOI,
@@ -221,6 +238,7 @@ async function searchCrossRefByTitle(
           source: 'crossref',
           title: itemTitle,
           authors: (item.author || []).map((a: any) => [a.given, a.family].filter(Boolean).join(' ')).join(', ') || undefined,
+          authorParts: crossrefAuthorParts(item.author),
           journal: Array.isArray(item['container-title']) ? item['container-title'][0] : item['container-title'],
           year: item.issued?.['date-parts']?.[0]?.[0],
           doi: item.DOI,

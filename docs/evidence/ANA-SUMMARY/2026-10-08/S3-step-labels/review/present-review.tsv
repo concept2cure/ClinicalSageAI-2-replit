@@ -1,0 +1,615 @@
+agency	analyze_predicate_device	read	look_up	a predicate device	agency	
+agency	assess_regulatory_landscape	read	assess	the regulatory landscape	agency	topic
+agency	assess_trial_feasibility	read	assess	trial feasibility from ClinicalTrials.gov	agency	
+agency	code_drug	read	code	a drug name in RxNorm	agency	
+agency	code_meddra	read	code	a term in MedDRA	agency	term
+agency	code_whodrug	read	code	a drug in WHODrug	agency	
+agency	fetch_fda_guidance_list	read	list	FDA guidance documents	agency	topic
+agency	lookup_icd10_code	read	look_up	ICD-10 codes	agency	term
+agency	lookup_published_label	read	look_up	the published label	agency	
+agency	screen_restricted_party	read	screen	a party against SAM.gov	agency	
+agency	search_clinical_evidence	read	search	ClinicalTrials.gov	agency	query
+agency	search_device_adverse_events	read	search	device adverse events	agency	query
+agency	search_device_recalls	read	search	FDA device recalls	agency	query
+agency	search_drug_adverse_events	read	search	drug adverse events	agency	query
+agency	search_drug_approvals	read	search	FDA drug approvals	agency	query
+agency	search_drug_labels	read	search	FDA drug labels	agency	query
+agency	search_ema_epar	read	search	EMA assessment reports	agency	query
+agency	search_eu_ctis	read	search	EU CTIS	agency	query
+agency	search_eudamed	read	search	EUDAMED	agency	query
+agency	search_grants_gov	read	search	Grants.gov	agency	query
+agency	search_medicare_coverage	read	search	Medicare coverage	agency	
+authoring	amend_fda_form	read	update	an FDA form	authoring	
+authoring	apply_fact_change	confirm	apply	a change to a governed value	authoring	
+authoring	assess_readability	read	score	the text for readability	engine	
+authoring	author_docx_native	self	build	a Word document	authoring	title
+authoring	batch_draft_sections	read	draft	several sections at once	authoring	
+authoring	build_abbreviation_list	read	check	the draft for abbreviations	engine	
+authoring	build_from_template	self	build	a document from your template	authoring	
+authoring	check_grounding	read	check	the draft for ungrounded figures	engine	
+authoring	check_regulatory_compliance	read	check	the text against expected topics	engine	
+authoring	compare_document_versions	read	compare	two versions of the text	engine	
+authoring	convene_drafting_council	self	run	the drafting council	authoring	
+authoring	convert_docx_to_pdf	conditional	convert	the Word document to PDF	authoring	
+authoring	critique_document	read	critique	the document	authoring	
+authoring	critique_draft	read	critique	the draft	authoring	
+authoring	draft_510k_substantial_equivalence	read	draft	the 510(k) substantial-equivalence comparison	authoring	
+authoring	draft_authoring_document	confirm	create	an authoring document	authoring	title
+authoring	draft_clinical_overview_m2_5	read	draft	the Module 2.5 Clinical Overview	authoring	
+authoring	draft_clinical_summary_m2_7	read	draft	the Module 2.7 Clinical Summary	authoring	
+authoring	draft_fda_ir_response	read	draft	the FDA Information Request response	authoring	
+authoring	draft_nonclinical_overview_m2_4	read	draft	the Module 2.4 Nonclinical Overview	authoring	
+authoring	draft_nonclinical_summaries_m2_6	read	draft	the Module 2.6 Nonclinical Summaries	authoring	
+authoring	draft_quality_overall_summary_m2_3	read	draft	the Module 2.3 Quality Overall Summary	authoring	
+authoring	draft_safety_narrative	read	draft	a patient safety narrative	authoring	
+authoring	extract_document_structure	read	extract	the document's structure	engine	
+authoring	fetch_template_and_fill	self	build	a document from the template library	authoring	
+authoring	generate_document	conditional	draft	a regulatory document	authoring	title
+authoring	generate_sop	read	draft	an SOP	authoring	title
+authoring	generate_statistical_document	read	draft	a statistical document	authoring	
+authoring	get_csr_template	read	look_up	the Module 5 report template	authoring	
+authoring	get_document_template	read	look_up	a document template	authoring	
+authoring	get_nonclinical_template	read	look_up	the Module 4 report template	authoring	
+authoring	guidance_change_radar	read	check	the draft against guidance changes	authoring	
+authoring	insert_clause_template	self	add	a clause to the Word document	authoring	
+authoring	insert_document_content	self	edit	the Word document	authoring	
+authoring	list_authoring_outline	read	list	the authoring outline	authoring	
+authoring	list_fda_forms	read	list	the FDA forms	authoring	
+authoring	medical_writing_guidance	read	look_up	medical-writing guidance	authoring	
+authoring	medical_writing_review	read	review	the draft against medical-writing standards	authoring	
+authoring	narrate_statistical_result	read	draft	a statement of the statistical result	authoring	
+authoring	pdf_overlay	read	run	a PDF overlay	authoring	
+authoring	plan_ind_module_authoring	read	plan	the IND module	authoring	
+authoring	plan_labeling_authoring	read	plan	the labeling authoring	authoring	
+authoring	prepare_fda_form	read	draft	an FDA form	authoring	
+authoring	read_authoring_section	read	read	an authoring section	authoring	
+authoring	scan_document_citations	conditional	scan	the document for citations	authoring	
+authoring	screen_promotional_language	read	screen	the text for promotional claims	engine	
+authoring	search_authoring_sections	read	search	the authoring documents	authoring	query
+authoring	search_document	read	search	inside the document	authoring	query
+authoring	surgical_docx_xml_edit	self	edit	the Word document	authoring	
+authoring	validate_docx	read	validate	the Word document	engine	
+authoring	verify_docx_against_source	read	check	the Word document against its source	engine	
+authoring	verify_revision	read	check	that the revision improved the draft	authoring	
+connected	search_connected_repositories	read	search	your connected repositories	connected	query
+data room	approve_import	confirm	finalize	the import	data_room	
+data room	edit_spreadsheet	confirm	edit	an uploaded spreadsheet	data_room	
+data room	inspect_uploaded_document	read	check	an uploaded file before reading it	data_room	
+data room	ocr_document_pages	read	read	scanned pages	data_room	
+data room	override_import_mapping	confirm	update	an imported file's mapping	data_room	
+data room	project_csr_evidence	confirm	add	the study reports to the evidence base	data_room	
+data room	project_knowledge_search	read	search	the project's documents	data_room	query
+data room	project_knowledge_search_multi	read	search	the project's documents	data_room	queries[0]
+data room	rasterize_page	self	render	a page as an image	data_room	
+data room	read_spreadsheet	read	read	an uploaded spreadsheet	data_room	
+data room	read_uploaded_document	read	read	an uploaded file	data_room	
+data room	remember_document_in_project	confirm	save	a document to project memory	data_room	
+data room	search_large_document	read	search	inside a large uploaded file	data_room	queries[0],query
+data room	start_legacy_import	confirm	start	a legacy import	data_room	
+engines	adjust_multiplicity	read	apply	a multiplicity adjustment	engine	
+engines	analyze_external_control_borrow	read	analyze	external-control borrowing	engine	
+engines	analyze_missing_data_impact	read	analyze	the impact of missing data	engine	
+engines	analyze_rmst	read	compute	the restricted mean survival time	engine	
+engines	analyze_safety_signal	read	compute	the disproportionality ratios	engine	
+engines	analyze_win_ratio	read	compute	the win ratio	engine	
+engines	assess_accelerated_stability	read	compute	the shelf life from accelerated data	engine	
+engines	assess_analytical_method_validation	read	assess	the method-validation data	engine	
+engines	assess_analytical_similarity	read	assess	the analytical similarity	engine	
+engines	assess_batch_poolability	read	check	whether batches can be pooled	engine	
+engines	assess_benefit_risk	read	compute	the benefit-risk score	engine	
+engines	assess_benefit_risk_balance	read	assess	the benefit-risk balance	engine	
+engines	assess_biomarker_clinical_validation	read	compute	the biomarker validation figures	engine	
+engines	assess_bla_filing_risk	read	assess	the BLA filing risk	engine	
+engines	assess_comparability	read	assess	the comparability	engine	
+engines	assess_concentration_qtc	read	assess	the concentration-QTc relationship	engine	
+engines	assess_ddi_risk	read	assess	the drug-interaction risk	engine	
+engines	assess_dissolution_similarity	read	compute	the dissolution similarity	engine	
+engines	assess_dose_exposure_response	read	assess	the exposure-response	engine	
+engines	assess_immunogenicity	read	compute	the immunogenicity incidence	engine	
+engines	assess_ivd_analytical_extensions	read	compute	the IVD analytical performance	engine	
+engines	assess_lot_consistency	read	design	the lot-consistency study	engine	
+engines	assess_mdr_reportability	read	check	whether the event is reportable	engine	
+engines	assess_nonclinical_program	read	check	the nonclinical program for gaps	engine	
+engines	assess_nonclinical_safety	read	assemble	the nonclinical safety assessment	engine	
+engines	assess_output_confidence	read	assess	how confident the answer can be	engine	
+engines	assess_protein_binding	read	assess	the protein binding	engine	
+engines	assess_pv_causality	read	assess	the case causality	engine	
+engines	assess_shelf_life_stability	read	compute	the shelf life	engine	
+engines	assess_signal_priority	read	score	the signal priority	engine	
+engines	assess_statistical_defensibility	read	assess	the statistical defensibility	engine	
+engines	assess_substantial_equivalence	read	assess	the substantial equivalence	engine	
+engines	calculate_safety_margin	read	compute	the safety margin	engine	
+engines	calculate_ttc	read	compute	the TTC limit	engine	
+engines	characterize_pk	read	analyze	the pharmacokinetics	engine	
+engines	check_dataset_conformance	read	check	the dataset spec	engine	
+engines	check_guidance_freshness	read	check	that the cited guidance is current	engine	
+engines	classify_atmp	read	classify	the advanced therapy	engine	
+engines	classify_bcs	read	classify	the BCS class	engine	
+engines	classify_biomarker	read	classify	the biomarker	engine	
+engines	classify_combination_product	read	classify	the combination product	engine	
+engines	classify_cyp_phenotype	read	classify	the CYP phenotype	engine	
+engines	classify_ddi_risk	read	classify	the drug-interaction risk	engine	
+engines	classify_device	read	classify	the device	engine	
+engines	classify_expedited_reporting	read	classify	the safety case for reporting	engine	
+engines	classify_gmp_deviation	read	classify	the GMP deviation	engine	
+engines	classify_immunogenicity_clinical_impact	read	classify	the immunogenicity impact	engine	
+engines	classify_impurity	read	classify	the impurity	engine	
+engines	classify_medical_device	read	classify	the medical device	engine	
+engines	classify_mutagenic_impurity	read	classify	the mutagenic impurity	engine	
+engines	classify_pediatric_age	read	classify	the pediatric age band	engine	
+engines	classify_post_approval_change	read	classify	the post-approval change	engine	
+engines	classify_post_submission_change	read	classify	the post-approval change	engine	
+engines	classify_protocol_deviation	read	classify	the protocol deviation	engine	
+engines	classify_samd	read	classify	the software as a medical device	engine	
+engines	classify_tox_findings	read	classify	the toxicology findings	engine	
+engines	compare_statistical_scenarios	read	compare	two study-design scenarios	engine	
+engines	compute_analytical_performance	read	compute	the analytical performance	engine	
+engines	compute_assurance	read	compute	the assurance	engine	
+engines	compute_diagnostic_accuracy	read	compute	the diagnostic accuracy	engine	
+engines	compute_fih_dose	read	compute	the first-in-human dose	engine	
+engines	compute_sample_size	read	compute	the sample size	engine	
+engines	define_estimand	read	build	the estimand	engine	
+engines	design_bayesian_device	read	compute	the Bayesian device study size	engine	
+engines	design_dose_finding	read	compute	the dose-finding boundaries	engine	
+engines	design_group_sequential	read	compute	the group-sequential boundaries	engine	
+engines	design_mmrm	read	compute	the MMRM sample size	engine	
+engines	design_mrmc_reader_study	read	compute	the reader-study power	engine	
+engines	detect_evidence_contradictions	read	check	the evidence for contradictions	engine	
+engines	detect_evidence_gaps	read	check	the evidence for gaps	engine	
+engines	detect_safety_signal	read	check	for a safety signal	engine	
+engines	determine_assay_cutoff	read	determine	the assay cutoff	engine	
+engines	determine_meaningful_change	read	determine	the meaningful-change threshold	engine	
+engines	determine_primary_mode_of_action	read	determine	the primary mode of action	engine	
+engines	estimate_sample_size	read	compute	the sample size	engine	
+engines	estimate_shelf_life	read	estimate	the shelf life	engine	
+engines	forecast_enrollment	read	forecast	enrollment	engine	
+engines	format_references	read	format	the references	engine	
+engines	generate_define_xml	read	generate	the define.xml	engine	
+engines	import_ris_references	read	convert	RIS references	engine	
+engines	lint_references	read	check	the reference list	engine	
+engines	model_budget_impact	read	compute	the budget impact	engine	
+engines	model_budget_impact_mix	read	compute	the budget impact	engine	
+engines	model_cost_effectiveness	read	compute	the cost-effectiveness	engine	
+engines	model_cost_effectiveness_nmb	read	compute	the cost-effectiveness	engine	
+engines	model_markov_cohort	read	simulate	a Markov cohort	engine	
+engines	project_events	read	forecast	event accrual	engine	
+engines	run_cdisc_pipeline	read	check	the dataset against CDISC	engine	
+engines	run_monte_carlo_simulation	read	simulate	the outcome distributions	engine	
+engines	run_probabilistic_sensitivity	read	run	a probabilistic sensitivity analysis	engine	
+engines	score_predicate_adequacy	read	score	the candidate predicates	engine	
+engines	score_rwe_data_source	read	score	the real-world data source	engine	
+engines	screen_compound_liabilities	read	screen	the compound for liabilities	engine	
+engines	screen_signal_panel	read	screen	for safety signals	engine	
+engines	select_exposure_response_dose	read	select	a dose from exposure-response	engine	
+engines	size_diagnostic_study	read	compute	the diagnostic study size	engine	
+engines	validate_adam_dataset	read	validate	the ADaM dataset	engine	
+engines	validate_cdisc_dataset	read	validate	the CDISC dataset	engine	
+engines	validate_sdtm_dataset	read	validate	the SDTM dataset	engine	
+engines	validate_spl	read	validate	the SPL	engine	
+engines	validate_spl_structure	read	validate	the SPL XML	engine	
+engines	validate_udi	read	validate	the UDI	engine	
+literature	benchmark_precedent_trials	read	compute	a benchmark from precedent trials	literature	
+literature	compare_proposed_design_to_precedent	read	compare	the design to precedent	literature	
+literature	explain_design_risk	read	explain	the risk of the design feature	literature	
+literature	explain_resolution_plan	read	explain	the resolution plan	literature	
+literature	generate_citation	read	format	a citation	literature	
+literature	lookup_regulatory_precedents	read	look_up	regulatory precedents	literature	query
+literature	mine_precedents	read	plan	the precedent search	literature	
+literature	search_chembl_compound	read	search	ChEMBL	literature	query
+literature	search_clinical_regulatory_evidence	read	search	the clinical-regulatory evidence	literature	query
+literature	search_literature	read	search	the literature	literature	query
+literature	search_preprints	read	search	preprints	literature	query
+literature	verify_citations	read	check	the references exist	literature	
+mailbox	search_regulatory_correspondence	read	search	the regulatory mailbox	mailbox	query
+plan	update_plan	read	update	the plan	plan	
+project	amend_schedule_of_events	confirm	update	a milestone in the schedule of events	project	
+project	ana_tool_pedigree	read	check	how reliable a tool's output is	project	
+project	assess_claim_evidence_integrity	confirm	check	that claims are backed by evidence	project	
+project	check_deep_investigation	read	check	the background investigation	project	
+project	create_calendar_event	confirm	create	a calendar event	connected	
+project	describe_capabilities	read	check	what AnA can do here	project	
+project	execute_platform_command	command	run	a platform command	project	
+project	fire_notification	confirm	send	a notification	project	title
+project	generate_schedule_of_events	confirm	generate	the schedule of events	project	
+project	get_billing_credits	read	look_up	your usage credits	project	
+project	get_biotech_program_status	read	look_up	the biotech program status	project	
+project	get_client_journey	read	look_up	where you are in your journey	project	
+project	get_org_capabilities	read	look_up	your organization's capabilities	project	
+project	get_plan_usage	read	look_up	your plan usage	project	
+project	get_session_briefing	read	look_up	where your program stands	project	
+project	get_tmf_view	read	open	the Trial Master File	project	
+project	get_usage_and_license_status	read	look_up	your usage and license standing	project	
+project	global_search	read	search	across the platform	project	query
+project	list_intelligence_flows	read	list	the questioning flows	project	
+project	list_platform_commands	read	list	the platform commands	project	query
+project	list_vault_documents	read	list	the Artifacts Center documents	project	query
+project	load_nonclinical_program	read	read	the nonclinical studies for the program	project	
+project	query_rim_patterns_by_domain	read	look_up	learned regulatory patterns	project	
+project	read_vault_document	read	read	an Artifacts Center document	project	
+project	recall_rim_patterns	read	look_up	learned regulatory patterns	project	
+project	recall_session_context	read	recall	where we left off	project	
+project	regulatory_deadline_radar	read	scan	regulatory deadlines	project	
+project	render_signature_manifestation	read	render	a signature manifestation	project	
+project	reset_project_goals	confirm	update	the project's goals	project	
+project	review_schedule_of_events_health	conditional	review	the schedule of events	project	
+project	run_agent	self	run	an agent	project	objective
+project	run_in_container	confirm	run	a script in the sandbox	project	
+project	run_python_script	confirm	run	a script in the sandbox	project	
+project	scan_project_risks	read	scan	open project risks	project	
+project	search_crm	read	search	the CRM	connected	query
+project	seed_tmf	confirm	create	the Trial Master File structure	project	
+project	set_program_metadata	confirm	update	the program's details	project	
+project	start_deep_investigation	confirm	start	a background investigation	project	
+project	start_war_game	self	simulate	an auditor's review	project	
+project	summarize_onboarding_readiness	read	summarize	onboarding readiness	project	
+project	summarize_rim_intelligence	read	summarize	the regulatory intelligence	project	
+project	trace_design_recommendation	read	trace	the evidence behind a recommendation	project	
+project	triage_compliance_attention	confirm	create	review tasks for critical items	project	
+project	verify_memory_atom	confirm	record	a memory item as verified	project	
+protocol authoring	add_amendment_change	confirm	add	a change to the amendment	authoring	
+protocol authoring	add_capa_action	confirm	add	a CAPA action	authoring	
+protocol authoring	add_eligibility_criterion	confirm	add	an eligibility criterion	authoring	
+protocol authoring	add_irb_site	confirm	add	a site to the IRB submission	authoring	
+protocol authoring	add_protocol_budget_item	confirm	add	a budget line to the protocol	authoring	
+protocol authoring	add_protocol_milestone	confirm	add	a protocol milestone	authoring	
+protocol authoring	add_protocol_objective	confirm	add	an objective to the protocol	authoring	
+protocol authoring	add_protocol_review_comment	confirm	add	a review comment	authoring	
+protocol authoring	add_protocol_risk	confirm	add	a risk to the protocol	authoring	
+protocol authoring	add_soa_assessment	confirm	add	an assessment to the schedule	authoring	
+protocol authoring	apply_protocol_design_derivation	confirm	apply	accepted design derivations	authoring	
+protocol authoring	assign_protocol_reviewer	confirm	update	a reviewer assignment	authoring	
+protocol authoring	bind_protocol_to_study_design	confirm	link	the protocol to its study design	authoring	
+protocol authoring	clone_protocol_template	confirm	create	a protocol from a template	authoring	title
+protocol authoring	create_consent_form	confirm	create	a consent form	authoring	title
+protocol authoring	create_irb_submission	confirm	create	an IRB submission	authoring	title
+protocol authoring	create_protocol_amendment	confirm	create	a protocol amendment	authoring	title
+protocol authoring	create_protocol_document	confirm	create	a protocol document	authoring	title
+protocol authoring	create_protocol_template	confirm	create	a protocol template	authoring	
+protocol authoring	derive_ctq_factors	read	derive	the critical-to-quality factors	authoring	
+protocol authoring	export_protocol_document	read	assemble	the protocol document	authoring	
+protocol authoring	export_usdm_projection	read	build	the USDM view of the study design	authoring	
+protocol authoring	finalize_protocol_document	refuse	check	whether the protocol can be finalized	authoring	
+protocol authoring	generate_ctgov_registration_draft	read	generate	a ClinicalTrials.gov registration draft	authoring	
+protocol authoring	link_program_clinical_study	confirm	link	the program to its clinical study	authoring	
+protocol authoring	list_protocol_templates	read	list	the protocol templates	authoring	
+protocol authoring	report_protocol_deviation	conditional	record	a protocol deviation	authoring	
+protocol authoring	review_amendment	read	review	the amendment	authoring	
+protocol authoring	review_biospecimen_profile	read	review	the biospecimen collection	authoring	
+protocol authoring	review_consent_completeness	read	review	the consent form	authoring	
+protocol authoring	review_dct_profile	read	review	the decentralised elements	authoring	
+protocol authoring	review_deviation	read	review	the deviation	authoring	
+protocol authoring	review_deviation_trends	read	review	the deviation trends	authoring	
+protocol authoring	review_dose_escalation_design	read	review	the dose-escalation rules	authoring	
+protocol authoring	review_enrollment_forecast	read	review	the enrollment forecast	authoring	
+protocol authoring	review_external_control_plan	read	review	the external-control plan	authoring	
+protocol authoring	review_informed_consent	read	review	the informed-consent form	authoring	
+protocol authoring	review_interim_operating_characteristics	read	review	the interim-analysis plan	authoring	
+protocol authoring	review_irb_submission	read	review	the IRB submission	authoring	
+protocol authoring	review_master_protocol	read	review	the master-protocol plan	authoring	
+protocol authoring	review_mmrm_sizing	read	review	the MMRM sizing	authoring	
+protocol authoring	review_multiplicity_control	read	review	the multiplicity control	authoring	
+protocol authoring	review_protocol_budget	read	review	the protocol budget	authoring	
+protocol authoring	review_protocol_completeness	read	review	the protocol for completeness	authoring	
+protocol authoring	review_protocol_design_derivation	read	review	the protocol's study design	authoring	
+protocol authoring	review_protocol_design_gates	read	review	the study-design checks	authoring	
+protocol authoring	review_protocol_redline	read	review	two protocol versions	authoring	
+protocol authoring	review_protocol_regulatory_rules	read	review	the protocol against the regulatory rules	authoring	
+protocol authoring	review_protocol_review_status	read	review	the protocol review status	authoring	
+protocol authoring	review_protocol_risk_register	read	review	the protocol risk register	authoring	
+protocol authoring	review_protocol_timeline	read	review	the protocol timeline	authoring	
+protocol authoring	review_soa_matrix	read	review	the schedule of assessments	authoring	
+protocol authoring	review_spirit_conformance	read	review	the protocol against SPIRIT	authoring	
+protocol authoring	review_trial_schema	read	review	the trial schema	authoring	
+protocol authoring	review_who_ictrp_record	read	review	the WHO registration record	authoring	
+protocol authoring	save_document_as_template	confirm	save	the protocol as a template	authoring	
+protocol authoring	set_protocol_budget_params	confirm	update	the protocol's budget settings	authoring	
+protocol authoring	set_protocol_milestone_status	confirm	update	a milestone's status	authoring	
+protocol authoring	set_soa_cell	confirm	update	the schedule of assessments	authoring	
+protocol authoring	stress_test_protocol	read	select	stress scenarios for the protocol	authoring	
+protocol authoring	update_consent_element	confirm	update	a consent element	authoring	
+protocol authoring	update_protocol_section	confirm	update	a protocol section	authoring	
+quality	ack_training	refuse	record	a training acknowledgement	qms	
+quality	approve_qms_document	refuse	explain	how to approve the controlled document	qms	
+quality	create_qms_document	confirm	create	a controlled document	qms	title
+quality	log_nonconforming_product	confirm	record	a nonconforming product	qms	
+quality	qms_change_create	confirm	create	a change request	qms	title
+quality	qms_change_link	confirm	link	a change to a quality record	qms	
+quality	qms_change_transition	conditional	update	a change request's status	qms	
+quality	register_supplier	confirm	add	a supplier	qms	
+quality	retire_qms_document	refuse	explain	how to retire the controlled document	qms	
+quality	revise_qms_document	confirm	create	a controlled revision	qms	
+regulatory knowledge	advise_coa_selection	read	look_up	guidance on COA selection	knowledge	
+regulatory knowledge	advise_ctd_structure	read	look_up	guidance on CTD structure	knowledge	
+regulatory knowledge	advise_data_integrity	read	look_up	guidance on data integrity	knowledge	
+regulatory knowledge	advise_device_readiness	read	assess	eSTAR readiness	knowledge	
+regulatory knowledge	advise_estimand	read	look_up	guidance on estimands	knowledge	
+regulatory knowledge	advise_eu_technical_file_readiness	read	assess	EU technical-file readiness	knowledge	
+regulatory knowledge	advise_gcp	read	look_up	guidance on GCP	knowledge	
+regulatory knowledge	advise_global_market_strategy	read	assess	market-entry options	knowledge	
+regulatory knowledge	advise_global_submission_plan	read	plan	the multi-market device submission	knowledge	
+regulatory knowledge	advise_labeling_structure	read	look_up	guidance on labeling structure	knowledge	
+regulatory knowledge	advise_medical_information	read	look_up	guidance on medical information	knowledge	
+regulatory knowledge	advise_midd	read	look_up	guidance on model-informed development	knowledge	
+regulatory knowledge	advise_pharmacovigilance	read	look_up	guidance on pharmacovigilance	knowledge	
+regulatory knowledge	advise_pma_readiness	read	assess	PMA readiness	knowledge	
+regulatory knowledge	advise_regulatory_pathway	read	look_up	guidance on the regulatory pathway	knowledge	
+regulatory knowledge	advise_reporting_guideline	read	look_up	the reporting guideline	knowledge	
+regulatory knowledge	advise_risk_management	read	look_up	guidance on risk management	knowledge	
+regulatory knowledge	advise_rwe_design	read	look_up	guidance on real-world evidence design	knowledge	
+regulatory knowledge	advise_special_designation	read	look_up	guidance on special designations	knowledge	
+regulatory knowledge	advise_study_design	read	look_up	guidance on study design	knowledge	
+regulatory knowledge	analyze_exposure_response	read	plan	the exposure-response analysis	knowledge	
+regulatory knowledge	assess_abuse_liability	read	assess	the abuse potential	knowledge	
+regulatory knowledge	assess_ai_ml_device	read	assess	the AI/ML device function	knowledge	
+regulatory knowledge	assess_analytical_similarity_biosimilar	read	assess	biosimilar analytical similarity	knowledge	
+regulatory knowledge	assess_api_gmp	read	look_up	API GMP expectations	knowledge	
+regulatory knowledge	assess_atmp_comparability	read	assess	ATMP comparability	knowledge	
+regulatory knowledge	assess_biomarker_analytical_validation	read	assess	the biomarker assay validation	knowledge	
+regulatory knowledge	assess_biosimilar_cmc	read	assess	the biosimilar CMC strategy	knowledge	
+regulatory knowledge	assess_biowaiver	read	check	biowaiver eligibility	knowledge	
+regulatory knowledge	assess_boxed_warning	read	assess	the need for a boxed warning	knowledge	
+regulatory knowledge	assess_br_uncertainty	read	assess	the benefit-risk uncertainty	knowledge	
+regulatory knowledge	assess_carcinogenicity_need	read	assess	the need for carcinogenicity studies	knowledge	
+regulatory knowledge	assess_cardiovascular_safety_pharmacology	read	assess	the cardiovascular safety package	knowledge	
+regulatory knowledge	assess_cart_requirements	read	look_up	CAR-T requirements	knowledge	
+regulatory knowledge	assess_cell_therapy_manufacturing	read	look_up	cell-therapy manufacturing requirements	knowledge	
+regulatory knowledge	assess_cns_safety_pharmacology	read	assess	the CNS safety package	knowledge	
+regulatory knowledge	assess_coa_fit_for_purpose	read	assess	whether the COA fits its use	knowledge	
+regulatory knowledge	assess_coa_validation	read	assess	the COA validation	knowledge	
+regulatory knowledge	assess_combination_product	read	assess	the combination product	knowledge	
+regulatory knowledge	assess_comparability_protocol	read	look_up	the comparability requirements	knowledge	
+regulatory knowledge	assess_computer_system_validation	read	assess	the computer system validation	knowledge	
+regulatory knowledge	assess_correlate_of_protection	read	assess	the correlate of protection	knowledge	
+regulatory knowledge	assess_data_integrity	read	assess	the data integrity	knowledge	
+regulatory knowledge	assess_device_constituent_controls	read	look_up	the device-constituent design controls	knowledge	
+regulatory knowledge	assess_device_cybersecurity	read	assess	the device cybersecurity	knowledge	
+regulatory knowledge	assess_device_evidence_structure	read	check	the device evidence document	knowledge	
+regulatory knowledge	assess_essential_principles	read	build	the essential-principles matrix	knowledge	
+regulatory knowledge	assess_established_conditions	read	assess	the established conditions	knowledge	
+regulatory knowledge	assess_expedited_program	read	assess	expedited-program eligibility	knowledge	
+regulatory knowledge	assess_food_effect	read	assess	the food-effect risk	knowledge	
+regulatory knowledge	assess_gcp_compliance	read	assess	GCP conformance	knowledge	
+regulatory knowledge	assess_gene_therapy_requirements	read	look_up	gene-therapy requirements	knowledge	
+regulatory knowledge	assess_gmlp	read	assess	GMLP conformity	knowledge	
+regulatory knowledge	assess_immunogenicity_comparability	read	assess	immunogenicity comparability	knowledge	
+regulatory knowledge	assess_immunogenicity_risk	read	assess	the immunogenicity risk	knowledge	
+regulatory knowledge	assess_indication_extrapolation	read	assess	indication extrapolation	knowledge	
+regulatory knowledge	assess_inspection_readiness	read	assess	inspection readiness	knowledge	
+regulatory knowledge	assess_interchangeability	read	assess	interchangeability	knowledge	
+regulatory knowledge	assess_intercurrent_event_strategy	read	assess	the intercurrent-event strategies	knowledge	
+regulatory knowledge	assess_iso17511_traceability	read	assess	the traceability chain	knowledge	
+regulatory knowledge	assess_metabolite_safety	read	assess	the metabolite safety	knowledge	
+regulatory knowledge	assess_nitrosamine_risk	read	assess	the nitrosamine risk	knowledge	
+regulatory knowledge	assess_orphan_designation	read	assess	orphan-designation eligibility	knowledge	
+regulatory knowledge	assess_otc_labeling	read	look_up	the OTC labeling requirements	knowledge	
+regulatory knowledge	assess_pathway_eligibility	read	check	designation eligibility	knowledge	
+regulatory knowledge	assess_pediatric_extrapolation	read	assess	pediatric extrapolation	knowledge	
+regulatory knowledge	assess_pediatric_requirements	read	look_up	the pediatric requirements	knowledge	
+regulatory knowledge	assess_plr_structure	read	look_up	the PLR labeling structure	knowledge	
+regulatory knowledge	assess_postapproval_comparability	read	assess	post-approval comparability	knowledge	
+regulatory knowledge	assess_pregnancy_lactation_labeling	read	look_up	the pregnancy and lactation labeling	knowledge	
+regulatory knowledge	assess_process_validation	read	look_up	process-validation guidance	knowledge	
+regulatory knowledge	assess_project_optimus_alignment	read	assess	Project Optimus alignment	knowledge	
+regulatory knowledge	assess_qms	read	check	the QMS against ISO 13485	knowledge	
+regulatory knowledge	assess_qtc_risk	read	assess	the QTc risk	knowledge	
+regulatory knowledge	assess_rare_disease_endpoint	read	assess	rare-disease endpoints	knowledge	
+regulatory knowledge	assess_respiratory_safety_pharmacology	read	assess	the respiratory safety package	knowledge	
+regulatory knowledge	assess_rolling_submission	read	assess	rolling-submission eligibility	knowledge	
+regulatory knowledge	assess_rwe_bias_risk	read	assess	the RWE bias risk	knowledge	
+regulatory knowledge	assess_rwe_regulatory_acceptability	read	assess	the RWE acceptability	knowledge	
+regulatory knowledge	assess_scientific_validity	read	assess	the scientific validity	knowledge	
+regulatory knowledge	assess_small_population_design	read	assess	small-population designs	knowledge	
+regulatory knowledge	assess_structural_alerts	read	assess	the structural alerts	knowledge	
+regulatory knowledge	assess_vaccine_platform	read	assess	the vaccine platform	knowledge	
+regulatory knowledge	build_device_blueprint	read	build	the device submission blueprint	knowledge	
+regulatory knowledge	build_effects_table	read	build	the effects table	knowledge	
+regulatory knowledge	build_global_device_strategy	read	build	the global device strategy	knowledge	
+regulatory knowledge	build_postmarket_report	read	draft	a post-market report	knowledge	
+regulatory knowledge	check_regulatory_currency	read	check	that the rule is still current	knowledge	topic
+regulatory knowledge	compare_global_pathways	read	compare	pathways across markets	knowledge	
+regulatory knowledge	control_mutagenic_impurity	read	design	the mutagenic-impurity control	knowledge	
+regulatory knowledge	cross_region_gap_analysis	read	compare	what another region needs	knowledge	
+regulatory knowledge	design_ada_assay_strategy	read	design	the ADA assay strategy	knowledge	
+regulatory knowledge	design_adaptive_design	read	design	the adaptive design	knowledge	
+regulatory knowledge	design_adme_program	read	design	the ADME program	knowledge	
+regulatory knowledge	design_backfill_strategy	read	design	the backfill strategy	knowledge	
+regulatory knowledge	design_be_study	read	design	the bioequivalence study	knowledge	
+regulatory knowledge	design_bioanalytical_method	read	design	the bioanalytical method	knowledge	
+regulatory knowledge	design_biosimilar_clinical	read	design	the biosimilar clinical program	knowledge	
+regulatory knowledge	design_capa	read	design	a CAPA plan	knowledge	
+regulatory knowledge	design_cdx_codevelopment	read	design	the CDx co-development	knowledge	
+regulatory knowledge	design_core_battery	read	design	the safety pharmacology battery	knowledge	
+regulatory knowledge	design_device_clinical_evidence	read	design	the device clinical evidence	knowledge	
+regulatory knowledge	design_external_control	read	design	the external control	knowledge	
+regulatory knowledge	design_followup_safety_study	read	design	the follow-up safety studies	knowledge	
+regulatory knowledge	design_genotox_battery	read	design	the genotoxicity battery	knowledge	
+regulatory knowledge	design_human_factors_study	read	design	the human factors study	knowledge	
+regulatory knowledge	design_informed_consent	read	design	the informed-consent framework	knowledge	
+regulatory knowledge	design_mass_balance_study	read	design	the mass-balance study	knowledge	
+regulatory knowledge	design_monitoring_plan	read	design	the monitoring plan	knowledge	
+regulatory knowledge	design_nab_assay	read	design	the NAb assay	knowledge	
+regulatory knowledge	design_natural_history_study	read	design	the natural-history study	knowledge	
+regulatory knowledge	design_organ_impairment_study	read	design	the organ-impairment study	knowledge	
+regulatory knowledge	design_pacmp	read	design	the change management protocol	knowledge	
+regulatory knowledge	design_pccp	read	design	the change control plan	knowledge	
+regulatory knowledge	design_pediatric_investigation	read	design	the pediatric plan	knowledge	
+regulatory knowledge	design_popk_study	read	design	the population PK analysis	knowledge	
+regulatory knowledge	design_propensity_analysis	read	design	the propensity analysis	knowledge	
+regulatory knowledge	design_purge_study	read	design	the purge assessment	knowledge	
+regulatory knowledge	design_pv_system	read	design	the pharmacovigilance system	knowledge	
+regulatory knowledge	design_randomized_dose_comparison	read	design	the randomized dose comparison	knowledge	
+regulatory knowledge	design_reaction_phenotyping	read	design	the reaction-phenotyping study	knowledge	
+regulatory knowledge	design_rems	read	design	the REMS	knowledge	
+regulatory knowledge	design_repeat_dose_study	read	design	the repeat-dose study	knowledge	
+regulatory knowledge	design_repro_tox_study	read	design	the reproductive toxicology studies	knowledge	
+regulatory knowledge	design_samd_clinical_validation	read	design	the SaMD clinical validation	knowledge	
+regulatory knowledge	design_stability_study	read	design	the stability study	knowledge	
+regulatory knowledge	design_sterile_controls	read	design	the contamination control strategy	knowledge	
+regulatory knowledge	design_target_trial	read	design	the target trial emulation	knowledge	
+regulatory knowledge	design_toxicokinetics	read	design	the toxicokinetics	knowledge	
+regulatory knowledge	design_vaccine_clinical_program	read	design	the vaccine clinical program	knowledge	
+regulatory knowledge	design_vaccine_cmc	read	design	the vaccine CMC plan	knowledge	
+regulatory knowledge	design_value_tree	read	design	the benefit-risk value tree	knowledge	
+regulatory knowledge	evaluate_pbpk_model	read	assess	the PBPK model	knowledge	
+regulatory knowledge	explain_cmc_topic	read	explain	a CMC topic	knowledge	query
+regulatory knowledge	fetch_ich_guideline_updates	read	look_up	ICH guideline updates	knowledge	
+regulatory knowledge	find_cmc_guidance	read	look_up	the CMC guidance	knowledge	query
+regulatory knowledge	generate_declaration_of_conformity	read	generate	the Declaration of Conformity	knowledge	
+regulatory knowledge	generate_dsur_structure	read	generate	the DSUR structure	knowledge	
+regulatory knowledge	generate_psur_structure	read	generate	the PSUR structure	knowledge	
+regulatory knowledge	generate_spl	read	generate	the SPL document	knowledge	
+regulatory knowledge	generate_spl_xml	read	generate	an SPL skeleton	knowledge	
+regulatory knowledge	get_biocompatibility_endpoints	read	look_up	the biocompatibility endpoints	knowledge	
+regulatory knowledge	get_cmc_requirements	read	look_up	the CMC requirements	knowledge	
+regulatory knowledge	get_device_labeling	read	look_up	the device labeling requirements	knowledge	
+regulatory knowledge	get_document_section_requirements	read	look_up	what the document must contain	knowledge	section
+regulatory knowledge	get_electrical_standards	read	look_up	the electrical-safety standards	knowledge	
+regulatory knowledge	get_regulatory_timeline	read	look_up	the review timeline	knowledge	
+regulatory knowledge	get_sterilization_requirements	read	look_up	the sterilization requirements	knowledge	
+regulatory knowledge	global_ri_advanced_therapy	read	classify	the advanced therapy for a region	knowledge	
+regulatory knowledge	global_ri_bcs_biowaiver	read	look_up	BCS biowaiver eligibility	knowledge	
+regulatory knowledge	global_ri_bioequivalence_criteria	read	look_up	the bioequivalence criteria	knowledge	
+regulatory knowledge	global_ri_cmc_specifications	read	look_up	the specification tests	knowledge	
+regulatory knowledge	global_ri_companion_diagnostic	read	look_up	the companion-diagnostic framework	knowledge	
+regulatory knowledge	global_ri_controlled_substance	read	look_up	the controlled-substance schedule	knowledge	
+regulatory knowledge	global_ri_device_classification	read	look_up	the device market pathway	knowledge	
+regulatory knowledge	global_ri_dossier_classifier	read	classify	the dossier type	knowledge	
+regulatory knowledge	global_ri_establishment_registration	read	look_up	the registration obligations	knowledge	
+regulatory knowledge	global_ri_evidence_standard	read	look_up	the evidence standard	knowledge	
+regulatory knowledge	global_ri_exclusivity	read	compute	regulatory exclusivity	knowledge	
+regulatory knowledge	global_ri_expanded_access	read	look_up	expanded-access options	knowledge	
+regulatory knowledge	global_ri_expedited_programs	read	look_up	expedited programs	knowledge	
+regulatory knowledge	global_ri_fee_estimate	read	estimate	agency fees	knowledge	
+regulatory knowledge	global_ri_import_export	read	look_up	import and export licensing	knowledge	
+regulatory knowledge	global_ri_lifecycle_schedule	read	build	the lifecycle calendar	knowledge	
+regulatory knowledge	global_ri_pediatric_plan	read	look_up	the pediatric plan requirements	knowledge	
+regulatory knowledge	global_ri_post_approval_change	read	classify	the post-approval change	knowledge	
+regulatory knowledge	global_ri_process_validation	read	look_up	the process-validation framework	knowledge	
+regulatory knowledge	global_ri_promotional_compliance	read	look_up	the promotion rules	knowledge	
+regulatory knowledge	global_ri_regulatory_pathway	read	look_up	the regulatory pathway	knowledge	
+regulatory knowledge	global_ri_reliance_pathways	read	look_up	reliance pathways	knowledge	
+regulatory knowledge	global_ri_safety_reporting	read	classify	the safety case for reporting	knowledge	
+regulatory knowledge	global_ri_special_designations	read	look_up	designation eligibility	knowledge	
+regulatory knowledge	global_ri_stability_conditions	read	look_up	the stability conditions	knowledge	
+regulatory knowledge	global_ri_strategy_brief	read	build	the global strategy brief	knowledge	
+regulatory knowledge	guidance_for_anda	read	look_up	guidance for a generic application	knowledge	
+regulatory knowledge	ivd_knowledge_lookup	read	look_up	IVD knowledge	knowledge	query,topic
+regulatory knowledge	list_fda_technical_rules	read	look_up	FDA's technical submission rules	knowledge	
+regulatory knowledge	lookup_fda_guidance	read	look_up	FDA guidance	knowledge	topic
+regulatory knowledge	lookup_ich_guideline	read	look_up	ICH guidelines	knowledge	section,topic
+regulatory knowledge	lookup_regulatory_pathway	read	look_up	expedited pathways	knowledge	query
+regulatory knowledge	plan_aggregate_safety_report	read	plan	the aggregate safety reports	knowledge	
+regulatory knowledge	plan_annual_report	read	plan	the annual report	knowledge	
+regulatory knowledge	plan_bayesian_borrowing	read	plan	Bayesian borrowing	knowledge	
+regulatory knowledge	plan_biomarker_qualification	read	plan	the biomarker qualification	knowledge	
+regulatory knowledge	plan_biosimilar_ip_strategy	read	plan	the biosimilar IP strategy	knowledge	
+regulatory knowledge	plan_br_communication	read	plan	the benefit-risk communication	knowledge	
+regulatory knowledge	plan_coa_development	read	plan	the COA development	knowledge	
+regulatory knowledge	plan_combination_cgmp	read	plan	the combination-product cGMP	knowledge	
+regulatory knowledge	plan_device_submission	read	plan	the device submission	knowledge	
+regulatory knowledge	plan_enrichment_strategy	read	plan	the enrichment strategy	knowledge	
+regulatory knowledge	plan_essential_documents	read	plan	the essential documents	knowledge	
+regulatory knowledge	plan_fda_meeting	read	plan	the FDA meeting	knowledge	
+regulatory knowledge	plan_immunogenicity_sampling	read	plan	the immunogenicity sampling	knowledge	
+regulatory knowledge	plan_lifecycle_management	read	plan	the lifecycle management	knowledge	
+regulatory knowledge	plan_multiplicity_control	read	plan	the multiplicity control	knowledge	
+regulatory knowledge	plan_orphan_drug_designation	read	plan	the orphan-drug designation request	knowledge	
+regulatory knowledge	plan_rare_disease_program	read	plan	the rare-disease program	knowledge	
+regulatory knowledge	plan_submission_from_database_lock	read	look_up	the steps from database lock to filing	knowledge	
+regulatory knowledge	plan_vaccine_special_populations	read	plan	the vaccine special populations	knowledge	
+regulatory knowledge	position_coa_endpoint	read	select	the COA endpoint's position	knowledge	
+regulatory knowledge	run_compliance_checklist	read	look_up	the compliance checklist	knowledge	
+regulatory knowledge	search_ivd_knowledge	read	search	the IVD knowledge base	knowledge	query
+regulatory knowledge	select_505_pathway	read	select	the 505 pathway	knowledge	
+regulatory knowledge	select_atmp_pathway	read	select	the advanced-therapy pathway	knowledge	
+regulatory knowledge	select_coa_type	read	select	the COA type	knowledge	
+regulatory knowledge	select_combination_submission_pathway	read	select	the combination-product pathway	knowledge	
+regulatory knowledge	select_device_pathway	read	select	the device pathway	knowledge	
+regulatory knowledge	select_dose	read	select	the dose framework	knowledge	
+regulatory knowledge	select_dose_finding_design	read	select	the dose-finding design	knowledge	
+regulatory knowledge	select_missing_data_strategy	read	select	the missing-data strategy	knowledge	
+regulatory knowledge	select_pediatric_dose	read	select	the pediatric dose method	knowledge	
+regulatory knowledge	select_pediatric_formulation	read	select	the pediatric formulation	knowledge	
+regulatory knowledge	select_rp2d	read	select	the phase 2 dose	knowledge	
+regulatory knowledge	select_rwe_design	read	select	the RWE design	knowledge	
+regulatory knowledge	select_tox_species	read	select	the toxicology species	knowledge	
+regulatory knowledge	set_specifications	read	look_up	the specification tests	knowledge	
+regulatory knowledge	structure_benefit_risk_framework	read	build	the benefit-risk framework	knowledge	
+regulatory knowledge	structure_smpc	read	build	the SmPC structure	knowledge	
+regulatory knowledge	validate_analytical_method	read	validate	the method-validation parameters	knowledge	
+regulatory knowledge	value_dossier_guidance	read	look_up	value-dossier guidance	knowledge	
+reports	explain_report_blockers	read	explain	what is blocking the report	reports	
+reports	generate_report	read	generate	a report	reports	
+reports	get_portfolio_readiness	read	look_up	portfolio readiness	reports	
+reports	list_report_definitions	read	list	your saved dashboards	reports	
+reports	list_report_types	read	list	the available reports	reports	
+reports	save_report_definition	confirm	save	the dashboard	reports	title
+reports	suggest_reports	read	look_up	reports that fit your programs	reports	
+screen	act_on_screen	self	run	an on-screen action	screen	
+screen	list_app_screens	read	list	the app screens	screen	
+screen	list_demo_scripts	read	list	the product demonstrations	screen	
+screen	list_screen_actions	read	list	the on-screen actions	screen	
+screen	navigate_to	read	open	a screen	screen	
+screen	start_product_demo	read	start	a product demonstration	screen	
+submission	assemble_crl_premortem_artifact	self	assemble	a pre-mortem report	submissions	title
+submission	assemble_device_submission	read	assess	the device submission assembly	submissions	
+submission	assemble_ectd_module_from_artifacts	self	assemble	an eCTD module from the artifacts	submissions	
+submission	assess_dispatch_readiness	read	check	whether the sequence is clear to dispatch	submissions	
+submission	assess_pathway_readiness	read	check	the sequence for its pathway	submissions	
+submission	assess_submission_package	read	assess	the submission package	submissions	
+submission	build_pathway_manifest	read	build	the pathway table of contents	submissions	
+submission	check_consistency	confirm	check	figures across the dossier	submissions	
+submission	check_dossier_consistency	read	check	figures across the dossier	engine	
+submission	check_ectd_cross_references	read	check	the eCTD cross-references	engine	
+submission	check_numerical_integrity	read	check	the draft for conflicting figures	engine	
+submission	check_submission_status	confirm	check	the submission status	submissions	
+submission	classify_submission_document	read	classify	a submission document	submissions	
+submission	compare_submission_against_precedent	read	compare	the submission against precedent	submissions	
+submission	compile_correspondence_response_package	read	assemble	the correspondence response package	submissions	
+submission	compute_lifecycle_operations	read	compute	the eCTD lifecycle operations	engine	
+submission	convert_to_rps_v4	read	convert	the leaves to eCTD v4	engine	
+submission	dispatch_qc_check	read	check	the sequence before dispatch	submissions	
+submission	explain_validation_findings	read	explain	the validation findings	submissions	
+submission	extract_submission_document	confirm	extract	a submission document	submissions	
+submission	gateway_configuration_status	read	check	which gateways are configured	submissions	
+submission	generate_stf	read	generate	the study tagging file	engine	
+submission	get_ctd_module_home	read	look_up	the CTD Module 1 and 2 structure	submissions	
+submission	get_device_reviewer_checklist	read	look_up	the device reviewer checklist	submissions	
+submission	get_market_submission_spec	read	look_up	a market's submission specification	submissions	
+submission	get_submission_ack	read	look_up	the submission acknowledgment	submissions	
+submission	get_submission_requirements	read	look_up	the submission requirements	submissions	
+submission	list_governed_documents	read	list	the governed documents	submissions	
+submission	list_regulatory_capabilities	read	list	the Submission Center's capabilities	submissions	
+submission	list_validation_rules	read	list	the validation rules	submissions	
+submission	lookup_submission_deficiencies	read	look_up	likely submission deficiencies	submissions	
+submission	package_ectd_for_region	confirm	package	the eCTD for a region	submissions	sequence
+submission	place_into_sequence	confirm	place	a document in the sequence	submissions	title
+submission	plan_submission	read	plan	the submission	submissions	
+submission	read_governed_document	read	read	a governed document	submissions	
+submission	reconcile_dossier_numbers	read	check	figures across the dossier	engine	
+submission	reconcile_extracted_figures	read	check	figures across the dossier	engine	
+submission	record_validation_finding	confirm	record	a validation finding	submissions	
+submission	resolve_regulatory_structure	read	look_up	the regulatory structure	submissions	
+submission	resolve_submission_plan	read	plan	the multi-region submission	submissions	
+submission	resolve_validation_finding	confirm	resolve	a validation finding	submissions	
+submission	run_shadow_review	confirm	run	a shadow review	submissions	
+submission	run_submission_premortem	read	run	a submission pre-mortem	submissions	
+submission	scan_regulatory_deficiencies	read	scan	the text for likely deficiencies	engine	
+submission	trace_provenance	read	trace	a section's sources	submissions	
+submission	transmit_submission	refuse	explain	how to transmit the submission	submissions	sequence
+submission	validate_cross_references	read	check	the CTD cross-references	engine	
+submission	validate_ectd_package	read	validate	the eCTD package	engine	
+submission	validate_market_formatting	read	check	a market's formatting rules	engine	
+vault	catalog_project_document	confirm	record	what a Vault document is	vault	@documentTitle
+vault	commit_document_revision	confirm	save	a governed revision of the document	vault	title
+vault	compare_vault_versions	read	compare	two versions of a Vault document	vault	
+vault	file_chat_upload_to_vault	confirm	file	an upload into the Vault	vault	title
+vault	get_document_versions	read	look_up	a Vault document's version history	vault	
+vault	list_project_documents	read	list	the Vault documents	vault	
+vault	place_project_document	conditional	place	a Vault document in its folder	vault	@documentTitle
+vault	read_project_document	self	read	a Vault document	vault	@documentTitle
+vault	save_document_to_vault	confirm	save	a document to the Vault	vault	title
+vault	search_all_documents	read	search	every document store	vault	query
+vault	search_document_passages	read	search	inside the Vault documents	vault	query
+vault	search_project_documents	read	search	the Vault	vault	query
+vault	update_vault_document	confirm	save	a new version of a Vault document	vault	

@@ -1,0 +1,39 @@
+# 2026-10-01T15:06:44Z. ESLint warnings per file, final: HEAD 0812a990 content (via --stdin --stdin-filename, so the same config applies) vs the working file. scripts/** (provision-app-role.mjs, verify-audit-chain.mjs) is outside ESLint's scope by config.
+server/services/audit/chain-anchor.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/services/storage/s3-client.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/jobs/auditChainIntegritySweep.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/routes/c2c/actions.ts
+   HEAD: 5w/0e max-lines-per-function@145,complexity@145,max-params@438,complexity@634,max-lines@727
+   now : 5w/0e max-lines-per-function@146,complexity@146,max-params@439,complexity@635,max-lines@727
+server/routes/part11-compliance.ts
+   HEAD: 6w/0e max-lines-per-function@674,complexity@674,max-lines-per-function@824,complexity@824,max-lines@899,no-useless-assignment@1031
+   now : 6w/0e max-lines-per-function@675,complexity@675,max-lines-per-function@825,complexity@825,max-lines@899,no-useless-assignment@1032
+server/routes/admin/licensing-history.ts
+   HEAD: 3w/0e complexity@336,max-lines-per-function@480,complexity@565
+   now : 3w/0e complexity@352,max-lines-per-function@502,complexity@587
+server/services/audit/tenant-chain-verdict.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/services/audit/__tests__/chain-anchor.test.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/services/audit/__tests__/chain-anchor.dbtest.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/jobs/__tests__/auditChainIntegritySweep.test.ts
+   HEAD: 1w/0e max-lines-per-function@196
+   now : 1w/0e max-lines-per-function@196
+server/db/__tests__/provision-app-role-append-only.test.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+tests/db/append-only-store-grants.dbtest.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/services/audit/__tests__/chain-head-on-demand.test.ts (new)
+   now : 0w/0e 

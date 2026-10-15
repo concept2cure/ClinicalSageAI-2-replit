@@ -12,7 +12,8 @@
  * @module server/services/protocol-development/protocol-signature-manifestation
  */
 import { pool } from '../../db';
-import { GOVERNED_REVOCATION_SIGNATURE_TYPE, isSignatureWithdrawn } from '../part11/signature-persistence';
+import { BINDING_BASIS, GOVERNED_REVOCATION_SIGNATURE_TYPE, deriveGovernedTargetBinding, isSignatureWithdrawn, manifestSignatureHash, type SignatureDbClient } from '../part11/signature-persistence';
+import { setTenantContextTx } from '../tenant/governed-tenant-context';
 
 const str = (v: unknown): string => (v == null ? '' : String(v));
 
@@ -32,13 +33,41 @@ export interface PdevSignature {
   recordedOnBehalfOf: string | null;
 }
 
+/** Separate read facts: a matching digest does not establish signing-time
+ * independence. No assurance schema is recognized in this read-only increment. */
+export type PdevHistoricalSigningPolicyReason =
+  | 'signing-time-independence-evidence-not-recorded'
+  | 'signing-time-authorship-evidence-not-recorded'
+  | 'signing-time-policy-evidence-not-recorded';
+
+export interface PdevSignatureQualification {
+  contentBinding: 'matches' | 'changed' | 'unverified';
+  historicalSigningPolicy: {
+    state: 'unassessed';
+    reason: PdevHistoricalSigningPolicyReason;
+  };
+  currentContentQualification: {
+    state: 'unassessed' | 'held';
+    reason: PdevHistoricalSigningPolicyReason | 'content-changed' | 'binding-unverified' | 'signature-revoked';
+  };
+  signatureReference: {
+    signatureId: number | null;
+    signerId: number | null;
+    signatureHash: string | null;
+    bindingBasis: string | null;
+    signedContentDigest: string | null;
+  };
+}
+
 /**
  * What the signature store says about one signed act. `none` is a read that
  * found no row; `unavailable` is a store that could not be read, which is not
  * the same thing and must never be shown as unsigned.
  */
 export type PdevSignatureFacet =
-  | { state: 'signed' | 'revoked'; signature: PdevSignature }
+  | { state: 'signed' | 'revoked'; signature: PdevSignature; qualification?: PdevSignatureQualification }
+  | { state: 'changed'; signature: PdevSignature; historicalIntegrity: 'verified'; qualification?: PdevSignatureQualification }
+  | { state: 'unverified'; signature: PdevSignature; historicalIntegrity: 'verified' | 'unverified'; qualification?: PdevSignatureQualification }
   | { state: 'none' }
   | { state: 'unavailable' };
 
@@ -56,41 +85,147 @@ export const dispositionTarget = (assignmentId: number | string): string => `pro
  * as revoked. A missing table stays on this facet: reaching the route's 42P01
  * branch would blank the whole workspace.
  */
-export async function readSignatureFacets(orgId: number, targets: string[]): Promise<(target: string) => PdevSignatureFacet> {
-  if (targets.length === 0) return () => ({ state: 'none' });
+/** A coherent read belongs to one transaction. The explicit-executor caller
+ * owns its transaction; standalone workspace/export reads open a restricted,
+ * tenant-scoped repeatable-read snapshot and never mutate retained records. */
+const snapshotBrand = Symbol('protocol-read-snapshot');
+export type ProtocolReadSnapshot = { executor: SignatureDbClient; coherent: boolean; readonly [snapshotBrand]: true };
+
+async function explicitSnapshotIsCoherent(executor: SignatureDbClient): Promise<boolean> {
+  try {
+    const row = (await executor.query(`SELECT current_setting('transaction_isolation') AS transaction_isolation,
+      (SELECT xact_start < query_start FROM pg_stat_activity WHERE pid=pg_backend_pid()) AS active_transaction`)).rows[0];
+    return row?.active_transaction === true
+      && (row.transaction_isolation === 'repeatable read' || row.transaction_isolation === 'serializable');
+  } catch { return false; }
+}
+
+export async function withProtocolReadSnapshot<T>(orgId: number, executor: SignatureDbClient | undefined, read: (client: SignatureDbClient, snapshot: ProtocolReadSnapshot) => Promise<T>): Promise<T> {
+  if (executor) return read(executor, { executor, coherent: await explicitSnapshotIsCoherent(executor), [snapshotBrand]: true });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    await setTenantContextTx(client, orgId);
+    const result = await read(client, { executor: client, coherent: true, [snapshotBrand]: true });
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally { client.release(); }
+}
+
+function historicalSignature(row: Record<string, unknown>): PdevSignature {
+  const at = row.signed_at == null ? NaN : new Date(row.signed_at as string).getTime();
+  const manifest = row.signature_manifest as Record<string, unknown> | null;
+  const act = manifest?.act as Record<string, unknown> | undefined;
+  return {
+    signerName: str(row.signer_name),
+    signedAt: Number.isNaN(at) ? '' : new Date(at).toISOString(),
+    meaning: str(row.signature_meaning),
+    reason: str(row.signature_purpose),
+    recordedOnBehalfOf: act?.recordedOnBehalfOf ? str(act.recordedOnBehalfOf) : null,
+  };
+}
+
+/** Verify the exact persisted manifest with the writer's recipe. A ledger-only
+ * signature, unreadable manifest, contradictory binding or attribution is not
+ * promoted into a protocol-content attestation. No retained field is repaired. */
+function verifiedHistoricalManifest(row: Record<string, unknown>, orgId: number, target: string): boolean {
+  const manifest = row.signature_manifest;
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return false;
+  const m = manifest as Record<string, unknown>;
+  const fieldsMatch = [
+    [m.kind, 'governed-sign'], [m.command, 'sign'], [m.target, target], [m.organizationId, orgId],
+    [m.signerId, row.signer_id], [m.signerName, row.signer_name], [m.signerEmail, row.signer_email],
+    [m.meaning, row.signature_meaning], [m.reason, row.signature_purpose],
+    [m.bindingBasis, BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT], [row.binding_basis, m.bindingBasis],
+    [m.boundPayloadDigest, row.bound_payload_digest], [m.signedAt, historicalSignature(row).signedAt],
+  ].every(([manifestValue, storedValue]) => manifestValue === storedValue);
+  return fieldsMatch
+    && typeof row.bound_payload_digest === 'string' && /^[a-f0-9]{64}$/.test(row.bound_payload_digest)
+    && typeof row.signature_hash === 'string' && manifestSignatureHash(manifest) === row.signature_hash;
+}
+
+/** These are read qualifications, not a retrospective policy verdict. Current
+ * authors, dates, is_valid and arbitrary manifest metadata cannot establish a
+ * past independence check. Keep the original signature/manifest/hash untouched. */
+function historicalPolicyReasonFor(meaning: unknown): PdevHistoricalSigningPolicyReason {
+  if (meaning === 'authorship') return 'signing-time-authorship-evidence-not-recorded';
+  if (meaning === 'approval' || meaning === 'review' || meaning === 'responsibility') {
+    return 'signing-time-independence-evidence-not-recorded';
+  }
+  return 'signing-time-policy-evidence-not-recorded';
+}
+
+function qualificationFor(row: Record<string, unknown>, state: 'signed' | 'changed' | 'unverified' | 'revoked'): PdevSignatureQualification {
+  const id = (value: unknown): number | null => {
+    const n = typeof value === 'number' ? value : typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : NaN;
+    return Number.isSafeInteger(n) && n > 0 ? n : null;
+  };
+  const storedString = (value: unknown): string | null => typeof value === 'string' ? value : null;
+  const historicalReason = historicalPolicyReasonFor(row.signature_meaning);
+  const reason = state === 'signed' ? historicalReason
+    : state === 'changed' ? 'content-changed'
+      : state === 'revoked' ? 'signature-revoked' : 'binding-unverified';
+  return {
+    contentBinding: state === 'signed' ? 'matches' : state === 'changed' ? 'changed' : 'unverified',
+    historicalSigningPolicy: { state: 'unassessed', reason: historicalReason },
+    currentContentQualification: { state: state === 'signed' ? 'unassessed' : 'held', reason },
+    signatureReference: {
+      signatureId: id(row.id), signerId: id(row.signer_id),
+      signatureHash: storedString(row.signature_hash), bindingBasis: storedString(row.binding_basis),
+      signedContentDigest: storedString(row.bound_payload_digest),
+    },
+  };
+}
+
+async function boundFacet(client: SignatureDbClient, orgId: number, target: string, row: Record<string, unknown>, coherent: boolean): Promise<PdevSignatureFacet> {
+  const signature = historicalSignature(row);
+  if (isSignatureWithdrawn(row)) return { state: 'revoked', signature, qualification: qualificationFor(row, 'revoked') };
+  const validHistory = verifiedHistoricalManifest(row, orgId, target);
+  const unverified: PdevSignatureFacet = { state: 'unverified', signature, historicalIntegrity: validHistory ? 'verified' : 'unverified', qualification: qualificationFor(row, 'unverified') };
+  if (!validHistory || !coherent) return unverified;
+  try {
+    const current = await deriveGovernedTargetBinding(client, target, orgId);
+    if (current.basis !== BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT || !current.digest) return unverified;
+    return current.digest === row.bound_payload_digest
+      ? { state: 'signed', signature, qualification: qualificationFor(row, 'signed') }
+      : { state: 'changed', signature, historicalIntegrity: 'verified', qualification: qualificationFor(row, 'changed') };
+  } catch { return unverified; }
+}
+
+async function readFacetsOnSnapshot(orgId: number, targets: string[], executor: SignatureDbClient, coherent: boolean): Promise<(target: string) => PdevSignatureFacet> {
   let rows: Array<Record<string, unknown>>;
   try {
-    rows = (await pool.query(
-      `SELECT signed_target, signer_name, signed_at, signature_meaning, signature_purpose,
-              is_valid, superseded_by, verification_status,
-              signature_manifest->'act'->>'recordedOnBehalfOf' AS recorded_on_behalf_of
+    rows = (await executor.query(
+      `SELECT id, signed_target, signer_id, signer_name, signer_email, signed_at, signature_meaning, signature_purpose,
+              is_valid, superseded_by, verification_status, signature_hash, signature_manifest,
+              binding_basis, bound_payload_digest
          FROM electronic_signatures
         WHERE organization_id = $1 AND signed_target = ANY($2) AND signature_type <> $3
         ORDER BY signed_at DESC, id DESC`,
       [orgId, targets, GOVERNED_REVOCATION_SIGNATURE_TYPE],
-    )).rows as Array<Record<string, unknown>>;
-  } catch (err) {
-    if ((err as { code?: string } | null)?.code === '42P01') return () => ({ state: 'unavailable' });
-    throw err;
-  }
+    )).rows;
+  } catch { return () => ({ state: 'unavailable' }); }
   const byTarget = new Map<string, Record<string, unknown>>();
   for (const row of rows) {
-    const held = byTarget.get(str(row.signed_target));
-    if (!held || (isSignatureWithdrawn(held) && !isSignatureWithdrawn(row))) byTarget.set(str(row.signed_target), row);
+    const target = str(row.signed_target);
+    const held = byTarget.get(target);
+    if (!held || (isSignatureWithdrawn(held) && !isSignatureWithdrawn(row))) byTarget.set(target, row);
   }
-  return (target) => {
-    const row = byTarget.get(target);
-    if (!row) return { state: 'none' };
-    const at = row.signed_at == null ? NaN : new Date(row.signed_at as string).getTime();
-    return {
-      state: isSignatureWithdrawn(row) ? 'revoked' : 'signed',
-      signature: {
-        signerName: str(row.signer_name),
-        signedAt: Number.isNaN(at) ? '' : new Date(at).toISOString(),
-        meaning: str(row.signature_meaning),
-        reason: str(row.signature_purpose),
-        recordedOnBehalfOf: row.recorded_on_behalf_of ? str(row.recorded_on_behalf_of) : null,
-      },
-    };
-  };
+  const facets = new Map<string, PdevSignatureFacet>();
+  // Sequential on the same snapshot client; a failed binding remains unverified.
+  for (const [target, row] of byTarget) facets.set(target, await boundFacet(executor, orgId, target, row, coherent));
+  return (target) => facets.get(target) ?? { state: 'none' };
+}
+
+export async function readSignatureFacets(orgId: number, targets: string[], executor?: SignatureDbClient, snapshot?: ProtocolReadSnapshot): Promise<(target: string) => PdevSignatureFacet> {
+  if (targets.length === 0) return () => ({ state: 'none' });
+  // The private brand can only come from this module's transaction wrapper;
+  // an API body or arbitrary executor cannot assert a coherent snapshot.
+  if (executor && snapshot?.executor === executor && snapshot[snapshotBrand] === true) return readFacetsOnSnapshot(orgId, targets, executor, snapshot.coherent);
+  try {
+    return await withProtocolReadSnapshot(orgId, executor, (client, current) => readFacetsOnSnapshot(orgId, targets, client, current.coherent));
+  } catch { return () => ({ state: 'unavailable' }); }
 }

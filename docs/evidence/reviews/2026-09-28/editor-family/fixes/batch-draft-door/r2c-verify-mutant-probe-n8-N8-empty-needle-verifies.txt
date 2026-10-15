@@ -1,0 +1,81 @@
+# mutant N8-empty-needle-verifies
+# - 'if (!needle || !rec.outputs.some('
+# + 'if (!rec.outputs.some('
+# exit 1
+
+ RUN  v4.1.7 ./
+
+stdout | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:22.878Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:45:22.880Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+[database] Database connection successful
+
+stdout | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts > N8 probe: a claim whose comparable form is empty verifies nothing > claim <p></p> with a real record id, own content: nothing verified, and the wording does not name AnA
+N8 {"reason":"AnA batch draft accepted into document","model":"model-of-record","machineText":{"verified":[{"chars":7,"authorId":"ana","turnRecordId":"0162e266-1059-4c96-bb50-223c0caca13a","turnActorUserId":501}],"unverified":[]},"lastDraftSource":"ana-batch","lastDraftModel":"model-of-record"}
+
+ × ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts > N8 probe: a claim whose comparable form is empty verifies nothing > claim <p></p> with a real record id, own content: nothing verified, and the wording does not name AnA 125ms
+   → expected [ { chars: 7, authorId: 'ana', …(2) } ] to deeply equal []
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  01:45:20
+   Duration  7.62s (transform 1.86s, setup 113ms, import 4.00s, tests 3.12s, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:22.880Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:23.080Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts > N8 probe: a claim whose comparable form is empty verifies nothing > claim <p></p> with a real record id, own content: nothing verified, and the wording does not name AnA
+AssertionError: expected [ { chars: 7, authorId: 'ana', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "ana",
++     "chars": 7,
++     "turnActorUserId": 501,
++     "turnRecordId": "0162e266-1059-4c96-bb50-223c0caca13a",
++   },
++ ]
+
+ ❯ ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts:123:53
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

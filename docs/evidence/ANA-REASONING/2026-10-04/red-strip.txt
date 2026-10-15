@@ -1,0 +1,18 @@
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — the engine's check leads > says how many specific claims were not found in this turn's sources, and quotes them by kind 49ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — the engine's check leads > names what it checked against 8ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — the engine's check leads > earns its check mark only when every specific claim was found 7ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — the engine's check leads > with no source consulted, the claims are not checked — never found, never a pass 6ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — the engine's check leads > nothing to check is not a pass 7ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — the engine's check leads > names a verdict the answer states, and says where verdicts come from 13ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — the engine's check leads > names a source the check could not read 5ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — the engine's check leads > lists three claims and counts the rest 6ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — AnA's labels are hers > reports labels as labelled, never as grounded, and never as sources 7ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — AnA's labels are hers > names the flags by kind and quotes the first 6ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — AnA's labels are hers > a label check that ran and failed shows what failed — it is not "not assessed" 3ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — AnA's labels are hers > clean labels carry no check mark: a label is not verification 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — not assessed is not a clean bill of health > with no check either, says the answer was not assessed and shows no count 9ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — not assessed is not a clean bill of health > with a check, the unassessed labels add nothing to it 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — not assessed is not a clean bill of health > renders nothing when the turn carries no verdict at all 1ms
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx (against HEAD AnaGrounding.tsx) > AnaGrounding — not assessed is not a clean bill of health > never states a verdict in colour alone 9ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  14 failed | 2 passed (16)

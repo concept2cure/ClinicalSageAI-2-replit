@@ -1,0 +1,44 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 137ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > is one row and one header, saying how many versions it has 150ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > lists every version with its SHA-256 prefix and uploader, each downloadable 74ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 84ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > says so when the versions cannot be read 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 34ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > exports the signed history of every version, and says when the role may not 178ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 66ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 45ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code 103ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 86ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end 144ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked 143ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history 154ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > the empty state claims only what the product does 24ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > the next version (FD1: sequential majors) > is the next major, and nothing for a version that is not a number 3ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > refuses bytes the document already holds, naming the version 21ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > names the end of the chain when an older version is named 6ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > does not find another organization's version, nor a malformed id 7ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > assigns the next version to the current head 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 113ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 230ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 302ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > reads this document's rows from the ledger, in a tenant-stamped transaction 31ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > reads its own trail when it has no live family (a deleted version) 6ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > 404s a document that is not this program's or this org's, and reads nothing 5ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > a failed read is an error, never an empty history 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > runs both reads — the count and the rows 28ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > every vault read names the caller organization in its own SQL 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > binds the caller organization, not a value from the request 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > counts over exactly the set it returns rows from 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > does not reach the store at all for an empty query 5ms
+ Test Files  5 passed (5)
+      Tests  42 passed (42)

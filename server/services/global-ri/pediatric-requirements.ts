@@ -11,15 +11,17 @@
  *
  * Markets: FDA (US — PREA initial Pediatric Study Plan / iPSP + BPCA written
  * request), EMA (EU — Paediatric Investigation Plan / PIP agreed with the PDCO,
- * plus PUMA for off-patent products), PMDA (JP — no mandatory plan at the same
- * stage; pediatric development encouraged and discussable with PMDA).
+ * plus PUMA for off-patent products), PMDA (JP — the paediatric development
+ * plan duty of the PMD Act as amended in 2025, read from the one Japanese
+ * programmes record, server/services/ind/ctd/jp-programs.ts).
  *
  * Pure / deterministic — no DB, no IO. The obligation catalog is a readiness
  * aid; the sponsor's regulatory affairs function and the agency remain the
  * authority for scope, exact timing, and waiver/deferral grants
- * (honest-by-construction). Where a market carries no mandatory plan duty the
- * assessor says so plainly rather than inventing one, and it throws rather than
- * guess for an unmodeled market.
+ * (honest-by-construction). Each assessment says which kind of duty applies —
+ * `mandatory` (FDA, EMA), `effort` (PMDA: an effort obligation, never reported
+ * as mandatory) or `none` (not triggered) — and it throws rather than guess for
+ * an unmodeled market.
  *
  * References:
  *  - FDA PREA: 21 USC 355c — pediatric assessment required for an NDA/BLA (or
@@ -38,14 +40,18 @@
  *    the human pharmacokinetic studies in adults (≈ end of Phase 1) and agreed
  *    with the Paediatric Committee (PDCO). PUMA supports off-patent products
  *    developed for children.
- *  - PMDA: PMD Act / MHLW — no mandatory PIP/PSP at the same development stage;
- *    pediatric development is encouraged, may be discussed with PMDA, and can
- *    inform the re-examination period. Confirm local requirements.
+ *  - PMDA: the entry `jp-pediatric-development-plan` of jp-programs.ts, with its
+ *    basis (recall until the MHLW text is read).
  *
  * @module server/services/global-ri/pediatric-requirements
  */
 
+import { getJpProgram, jpProgramBasisLabel, type JpProgram } from '../ind/ctd/jp-programs';
+
 export type PediatricMarket = 'FDA' | 'EMA' | 'PMDA';
+
+/** The Japanese paediatric development plan duty, from the one JP record. */
+const JP_PEDIATRIC_PLAN: JpProgram = getJpProgram('jp-pediatric-development-plan');
 
 /** The set of modeled markets for pediatric plan obligations. */
 export const PEDIATRIC_MARKETS: PediatricMarket[] = ['FDA', 'EMA', 'PMDA'];
@@ -96,16 +102,15 @@ export const PEDIATRIC_REFERENCE: Record<PediatricMarket, PediatricObligation> =
     citation: 'Regulation (EC) No 1901/2006',
   },
   PMDA: {
-    program: 'PMDA / MHLW pediatric development (encouraged; no mandatory plan at the same stage)',
-    instrument: 'No mandatory pediatric study plan (development plan discussable with PMDA)',
-    timing:
-      'No mandatory PIP/PSP at the same development stage; pediatric development is encouraged, may be discussed with PMDA, and can inform the re-examination period. Confirm local requirements.',
-    planName: 'No mandatory plan (voluntary pediatric development plan)',
+    program: `${JP_PEDIATRIC_PLAN.name} (${JP_PEDIATRIC_PLAN.nameJa}), in force from ${JP_PEDIATRIC_PLAN.effectiveFrom}`,
+    instrument: JP_PEDIATRIC_PLAN.name,
+    timing: JP_PEDIATRIC_PLAN.timing ?? JP_PEDIATRIC_PLAN.criteria.join('; '),
+    planName: JP_PEDIATRIC_PLAN.name,
+    // An effort obligation has no waiver or deferral procedure in the record.
     waiverOptions: [],
     deferralAvailable: false,
-    incentive:
-      'Pediatric development is encouraged and can inform/extend the re-examination period; confirm applicable incentives with PMDA.',
-    citation: 'PMD Act; MHLW',
+    incentive: JP_PEDIATRIC_PLAN.benefit,
+    citation: jpProgramBasisLabel(JP_PEDIATRIC_PLAN),
   },
 };
 
@@ -120,10 +125,10 @@ export interface PediatricPlanInput {
   /**
    * Whether the application triggers the pediatric-plan requirement (e.g. a new
    * active ingredient, new indication, new dosage form, new dosing regimen, or
-   * new route of administration). Defaults to true for FDA/EMA.
+   * new route of administration). Defaults to true.
    */
   triggersRequirement?: boolean;
-  /** Whether the pediatric plan (iPSP/PIP) has been submitted/agreed. */
+  /** Whether the pediatric plan (iPSP/PIP, or the PMDA-confirmed JP plan) has been submitted/agreed. */
   planSubmitted?: boolean;
   /** Whether a waiver of pediatric studies has been requested. */
   waiverRequested?: boolean;
@@ -131,9 +136,18 @@ export interface PediatricPlanInput {
   deferralRequested?: boolean;
 }
 
+/**
+ * The kind of duty: `mandatory` (a statutory requirement, FDA PREA / EU PIP),
+ * `effort` (an effort obligation the sponsor is to endeavour to meet; not an
+ * approval prerequisite — PMDA), or `none` (the application does not trigger it).
+ */
+export type PediatricDuty = 'mandatory' | 'effort' | 'none';
+
 export interface PediatricPlanAssessment {
   market: PediatricMarket;
+  /** True only for a mandatory duty that applies. An effort obligation is never reported as required. */
   required: boolean;
+  duty: PediatricDuty;
   planName: string;
   dueTiming: string;
   status: PediatricPlanStatus;
@@ -156,12 +170,12 @@ export function getPediatricObligation(market: PediatricMarket): PediatricObliga
 /**
  * Assess a program's pediatric study-plan posture for a market.
  *
- * PMDA carries no mandatory plan at the same development stage, so it is
- * reported required=false with status 'not_applicable' and an explanatory note.
- * For FDA/EMA the requirement applies unless the application does not trigger it
- * (triggersRequirement === false). When required, a submitted/agreed plan is
- * 'satisfied'; a requested waiver or deferral is 'waiver_or_deferral_pending';
- * otherwise the plan is 'plan_outstanding'.
+ * Every market's duty applies unless the application does not trigger it
+ * (triggersRequirement === false → duty 'none', 'not_applicable'). For FDA/EMA
+ * (duty 'mandatory') a submitted/agreed plan is 'satisfied'; a requested waiver
+ * or deferral is 'waiver_or_deferral_pending'; otherwise the plan is
+ * 'plan_outstanding'. For PMDA (duty 'effort', required=false) a PMDA-confirmed
+ * plan is 'satisfied' and otherwise the plan is 'plan_outstanding'.
  *
  * Pure / deterministic. Actions and notes are sorted for stable output. Throws
  * for an unmodeled market.
@@ -173,32 +187,10 @@ export function assessPediatricPlan(input: PediatricPlanInput): PediatricPlanAss
   const actions: string[] = [];
   const notes: string[] = [];
 
-  // PMDA — no mandatory plan obligation at the same development stage.
-  if (input.market === 'PMDA') {
-    notes.push(
-      'PMDA does not require a mandatory pediatric study plan at the same development stage; pediatric development is encouraged.',
-    );
-    notes.push('Pediatric development may be discussed with PMDA and can inform the re-examination period.');
-    notes.push('Confirm local pediatric data requirements with PMDA.');
-    actions.push('Consider discussing a voluntary pediatric development plan with PMDA.');
-    actions.push(ref.incentive);
-    actions.sort((a, b) => a.localeCompare(b));
-    notes.sort((a, b) => a.localeCompare(b));
-    return {
-      market: input.market,
-      required: false,
-      planName: ref.planName,
-      dueTiming: ref.timing,
-      status: 'not_applicable',
-      actions,
-      notes,
-    };
-  }
+  // Every market's duty applies unless the application does not trigger it.
+  const triggered = input.triggersRequirement !== false;
 
-  // FDA / EMA — required unless the application does not trigger the duty.
-  const required = input.triggersRequirement !== false;
-
-  if (!required) {
+  if (!triggered) {
     notes.push(
       `The application does not trigger the ${ref.program} pediatric-plan requirement (no new active ingredient/indication/dosage form/dosing regimen/route).`,
     );
@@ -209,6 +201,7 @@ export function assessPediatricPlan(input: PediatricPlanInput): PediatricPlanAss
     return {
       market: input.market,
       required: false,
+      duty: 'none',
       planName: ref.planName,
       dueTiming: ref.timing,
       status: 'not_applicable',
@@ -217,6 +210,9 @@ export function assessPediatricPlan(input: PediatricPlanInput): PediatricPlanAss
     };
   }
 
+  if (input.market === 'PMDA') return assessJpEffortObligation(input, ref);
+
+  const required = true;
   notes.push(`Citation: ${ref.citation}.`);
   notes.push(`Incentive: ${ref.incentive}`);
 
@@ -255,6 +251,46 @@ export function assessPediatricPlan(input: PediatricPlanInput): PediatricPlanAss
   return {
     market: input.market,
     required,
+    duty: 'mandatory',
+    planName: ref.planName,
+    dueTiming: ref.timing,
+    status,
+    actions,
+    notes,
+  };
+}
+
+/**
+ * PMDA: the paediatric development plan is an effort obligation (jp-programs.ts
+ * `jp-pediatric-development-plan`). It is reported as `duty: 'effort'` and never
+ * as required; the plan is outstanding until PMDA has confirmed it.
+ */
+function assessJpEffortObligation(input: PediatricPlanInput, ref: PediatricObligation): PediatricPlanAssessment {
+  const p = JP_PEDIATRIC_PLAN;
+  const consultation = getJpProgram('pmda-consultation-pediatric-plan');
+  const actions: string[] = [];
+  const notes: string[] = [
+    `${p.name}: the PMD Act asks the sponsor to endeavour to draw up the plan and have it confirmed by PMDA; it is not an approval prerequisite (in force from ${p.effectiveFrom}).`,
+    `Basis: ${ref.citation}.`,
+  ];
+  let status: PediatricPlanStatus;
+  if (input.planSubmitted) {
+    status = 'satisfied';
+    actions.push(`Develop under the PMDA-confirmed ${p.name.toLowerCase()} without delay, and keep it current.`);
+  } else {
+    status = 'plan_outstanding';
+    actions.push(`Draw up the ${p.name.toLowerCase()}: ${p.criteria.join('; ')}. ${ref.timing}`);
+    actions.push(`Request PMDA confirmation through the ${consultation.name} (${consultation.nameJa}).`);
+  }
+  if (input.waiverRequested || input.deferralRequested) {
+    notes.push('No waiver or deferral procedure is recorded for this effort obligation; discuss the paediatric plan with PMDA instead.');
+  }
+  actions.sort((a, b) => a.localeCompare(b));
+  notes.sort((a, b) => a.localeCompare(b));
+  return {
+    market: input.market,
+    required: false,
+    duty: 'effort',
     planName: ref.planName,
     dueTiming: ref.timing,
     status,

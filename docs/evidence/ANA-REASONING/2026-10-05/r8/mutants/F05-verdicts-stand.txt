@@ -1,0 +1,12 @@
+Mutant F05-verdicts-stand: a stated verdict ("ready to file") stands in memory
+
+--- server/services/ana/memory-fact-check.ts
+- if (own.verdicts.length > 0) return false;
++ 
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a stated verdict 10ms
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

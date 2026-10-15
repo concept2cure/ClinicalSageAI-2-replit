@@ -73,7 +73,7 @@ describe('C2 — lock order: every task-row UPDATE precedes the first ledger wri
     const unblockedB = {
       orgId: 2, userId: 7, command: 'task.transition', taskId: 'TASK-B',
       payload: { from: 'blocked', to: 'in-progress', cause: 'predecessor-completed', predecessor: 'TASK-1' },
-      reason: 'Unblocked: predecessor TASK-1 completed',
+      summary: 'Unblocked: predecessor TASK-1 completed',
     };
     spies.cascadeUnblockOnCompletionInTx.mockImplementation(async (...args: unknown[]) => {
       const { tx } = args[2] as { tx: { update: () => { set: () => { where: () => PromiseLike<unknown> } } } };
@@ -92,7 +92,9 @@ describe('C2 — lock order: every task-row UPDATE precedes the first ledger wri
     expect(spies.notifyTaskEvent).toHaveBeenCalledWith(notice);
     // C11 — the cause before its effect: TASK-1's completion, then B's unblocking.
     expect(h.audits.map((a) => a.target)).toEqual(['task:TASK-1', 'task:TASK-B']);
-    expect(h.audits[1]).toMatchObject({ command: 'task.transition', reason: 'Unblocked: predecessor TASK-1 completed' });
+    // D5: the dependent's move records no reason (nobody gave one); its summary says what happened.
+    expect(h.audits[1]).toMatchObject({ command: 'task.transition', reason: null });
+    expect(h.audits[1].payload.summary).toBe('Unblocked: predecessor TASK-1 completed');
   });
 });
 
@@ -300,5 +302,28 @@ describe('C7 — every dependency edge a batch creates is ledgered with task.lin
     const edges = h.values.filter((v) => 'predecessorTaskId' in v);
     expect(links.map((l) => l.target)).toEqual(edges.map((e) => `task:${e.predecessorTaskId}`));
     expect(h.log.filter((l) => l === 'BEGIN')).toHaveLength(1);
+  });
+});
+
+
+describe('single task creation receipt', () => {
+  it('reports a lost create COMMIT as unknown and sends no assignment notification', async () => {
+    h.failCommit = 1;
+    // The assignee is a member (QA 2026-10-08: a named assignee is resolved among the members first).
+    h.selects = [[{ id: 42, name: 'OQ Signer', email: 'oq@example.test' }]];
+    const res = await request(makeApp()).post(`${BASE}/tasks`).send({ title: 'Review IND overview', moduleType: 'Authoring', assigneeId: 42 });
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('OUTCOME_UNKNOWN');
+    expect(res.body.message).toMatch(/unknown.*reload/i);
+    expect(h.log).toContain('COMMIT-LOST');
+    expect(spies.notifyTaskEvent).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('review task assignee identity', () => {
+  it.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])('rejects invalid assignee %s before task or audit writes', async assigneeId => {
+    const res = await request(makeApp()).post(`${BASE}/tasks`).send({ title: 'Review IND overview', moduleType: 'Authoring', assigneeId });
+    expect(res.status).toBe(400); expect(wrote()).toEqual([]); expect(h.audits).toEqual([]);
   });
 });

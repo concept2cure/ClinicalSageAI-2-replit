@@ -1,0 +1,11 @@
+{
+  "branch": "concept2cure-v2",
+  "head_at_final_checks": "caa39331f29e0c3baeec36c6ccb570920a32223e",
+  "origin_at_final_checks": "3412596c16283567c34b3d900bdbb0ef5eef0497",
+  "source_pin_count": 9,
+  "final_tests": 97,
+  "final_files": 11,
+  "final_skips": 0,
+  "final_lint_errors": 0,
+  "final_existing_lint_warnings": 11
+}

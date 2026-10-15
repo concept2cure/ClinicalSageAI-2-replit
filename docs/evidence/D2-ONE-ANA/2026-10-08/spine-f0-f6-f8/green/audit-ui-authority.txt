@@ -1,0 +1,17 @@
+# $ npm run -s audit:ui-authority
+  [PASS] destination projects → rail target "projects" is on the rail
+  [PASS] destination communication-center: not a rail item; reachable by navigate_to and deep link
+  [PASS] destination apps: account menu carries 1 labelled entries
+  [PASS] destination settings: account menu carries 8 labelled entries
+
+── Poppins Font Reference Check ──
+  [PASS] No Poppins font references found in client/
+
+── Summary ──
+  Passed: 47
+  Failed: 0
+  Total:  47
+
+AUDIT PASSED — all checks green.
+
+# exit: 0

@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > its headings are the M11 front matter and level-1 headings, in order 2ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > cites the M11 basis 0ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > keeps its phase 1 drafting guidance (dose escalation, DLT) on the M11 sections it belongs to 1ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > the medical-writing advisor gives the M11 protocol structure > lists the M11 level-1 headings and names ICH M11 among the governing standards 21ms
+ ✓ tests/regulatory/chat-protocol-m11.test.ts > a draft with every M11 heading is reviewed as having every M11 heading > the long §9 heading is detected (the outline extractor dropped any line over 120 characters) 46ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  17:35:24
+   Duration  1.53s (transform 1.02s, setup 90ms, import 1.06s, tests 76ms, environment 0ms)
+

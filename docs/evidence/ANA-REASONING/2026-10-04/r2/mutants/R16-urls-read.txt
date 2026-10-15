@@ -1,0 +1,12 @@
+Mutant R16-urls-read: a fetched URL or a percent-encoded query confirms the identifiers and figures in it (F3)
+
+--- server/services/ana/answer-check-sources.ts
+- return text.replace(URL_RE, ' ');
++ return text;
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > an identifier in a fetched URL is not found; the page must hold it 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

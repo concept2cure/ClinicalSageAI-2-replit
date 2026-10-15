@@ -1,0 +1,88 @@
+# mutant: signInLimits.secondFactor not mounted on /verify-mfa
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > refuses a locked account before any code is tried (423), and audits it 36ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > counts a wrong authenticator code toward the lockout 7ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > says so when the wrong code locks the account 6ms
+stdout | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:05:11.049Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:11.050Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:05:11.050Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:05:11.085Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > control: a right password clears it for an account whose second factor is the emailed code
+{
+  "timestamp": "2026-10-01T21:05:11.110Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "u***@acme.test"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right 169ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > control: a wrong emailed code keeps its own cap and is not counted here 7ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > a right password does not clear the count of an account with an authenticator 8ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > control: a right password clears it for an account whose second factor is the emailed code 7ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the account key reads the enterprise partial token, verified 2ms
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the eleventh wrong code for one account is refused 429, each from a new address 74ms
+   → expected 401 to be 429 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the eleventh wrong code for one account is refused 429, each from a new address
+AssertionError: expected 401 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 401
+
+ ❯ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts:229:26
+    227|     for (let i = 0; i < 11; i++) statuses.push((await verifyMfa(9)).st…
+    228|     expect(statuses.slice(0, 10).every((s) => s === 401), `first ten: …
+    229|     expect(statuses[10]).toBe(429);
+       |                          ^
+    230|   });
+    231| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  21:05:08
+   Duration  2.63s (transform 1.11s, setup 81ms, import 1.92s, tests 322ms, environment 0ms)
+

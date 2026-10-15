@@ -1,0 +1,93 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × client/src/concept2cure/v2/__tests__/anaRailHistory.test.tsx > AnA rail history recovery > keeps the draft while history loads, then sends it after loading 170ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "Continue our discussion",
+      Array [],
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/anaRailHistory.test.tsx > AnA rail history recovery > shows a failed load with retry and preserves a draft until recovery 33ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "My question",
+      Array [],
+    ]
+
+
+Number of calls: 1
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaRailHistory.test.tsx > AnA rail history recovery > keeps the draft while history loads, then sends it after loading
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "Continue our discussion",
+      Array [],
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/anaRailHistory.test.tsx:27:26
+     25|     fireEvent.change(composer, { target: { value: 'Continue our discus…
+     26|     fireEvent.keyDown(composer, { key: 'Enter' });
+     27|     expect(p.onSend).not.toHaveBeenCalled();
+       |                          ^
+     28|     expect(composer.value).toBe('Continue our discussion');
+     29|     expect((screen.getByRole('button', { name: 'Send' }) as HTMLButton…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaRailHistory.test.tsx > AnA rail history recovery > shows a failed load with retry and preserves a draft until recovery
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "My question",
+      Array [],
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/anaRailHistory.test.tsx:44:26
+     42|     fireEvent.change(composer, { target: { value: 'My question' } });
+     43|     fireEvent.keyDown(composer, { key: 'Enter' });
+     44|     expect(p.onSend).not.toHaveBeenCalled();
+       |                          ^
+     45|     expect(composer.value).toBe('My question');
+     46|     expect(screen.getByRole('alert').textContent).toContain('Could not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  21:47:47
+   Duration  1.84s (transform 733ms, setup 135ms, import 891ms, tests 207ms, environment 452ms)
+

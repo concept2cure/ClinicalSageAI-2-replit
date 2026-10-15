@@ -125,6 +125,8 @@ const SubmissionTypeEnum = z
 // Registry-driven instruction builder replaces hardcoded templates.
 // Works for every application type in the Global Document Registry.
 import { buildInstructionsFromLegacyType } from '../services/regulatory/defaultInstructionBuilder.js';
+import { resolveActorNames } from '../services/tenant/actor-names';
+import { legacyIbTemplate } from './concept2cure-ib-template.js';
 import { clientIpKey } from '../utils/client-ip';
 
 function generateDefaultCustomInstructions(
@@ -1623,19 +1625,11 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
         (member.permission === 'can_use' || member.permission === 'can_edit')
     );
 
-    const memberIds = normalizedTeam.map(member => member.userId);
-    const memberDirectory =
-      memberIds.length > 0
-        ? await db
-            .select({
-              userId: users.id,
-              name: users.name,
-              email: users.email,
-            })
-            .from(users)
-            .where(inArray(users.id, memberIds))
-        : [];
-    const directoryById = new Map(memberDirectory.map(member => [member.userId, member]));
+    // Named through public.actor_name, not a users look-up: since users took
+    // row-level security (D3, 2026-09-28) that found nothing for a collaborator
+    // who had left the organization, so the one entry an administrator most
+    // needs to remove had no name (docs/evidence/D3/2026-09-29-actor-names/).
+    const directoryById = await resolveActorNames(normalizedTeam.map(member => member.userId));
 
     const collaborators = normalizedTeam.map(member => ({
       userId: member.userId,
@@ -2585,36 +2579,7 @@ Sincerely,
 <Insert signatory title>
 <Insert sponsor name>`,
   },
-  {
-    id: 'tpl_ind_investigator_brochure',
-    name: "Investigator's Brochure (IB)",
-    description: 'IND investigator brochure structure aligned to ICH expectations',
-    submissionTypes: ['IND'],
-    category: 'document',
-    ctdSection: '5.3',
-    content: `# Investigator's Brochure
-
-## 1. Summary
-Provide a concise clinical and nonclinical summary of the investigational product, mechanism of action, and development status.
-
-## 2. Introduction
-Describe product background, indication context, and development rationale.
-
-## 3. Physical, Chemical, and Pharmaceutical Properties
-Summarize relevant drug substance and drug product characteristics, including formulation and handling information for investigators.
-
-## 4. Nonclinical Studies
-Summarize pharmacology, pharmacokinetics, and toxicology findings that inform clinical risk management.
-
-## 5. Effects in Humans
-Summarize clinical pharmacology, known efficacy signals, observed safety profile, and important risk considerations.
-
-## 6. Guidance for Investigators
-Provide dosing rationale, monitoring expectations, contraindications, and investigator actions for adverse events.
-
-## 7. References
-List key source reports, publications, and supporting references used in this brochure.`,
-  },
+  legacyIbTemplate(),
   {
     id: 'tpl_ind_pre_ind_briefing',
     name: 'Pre-IND Briefing Package',

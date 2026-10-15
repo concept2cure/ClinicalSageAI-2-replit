@@ -23,6 +23,13 @@ vi.mock('../../services/clinical-regulatory-evidence/csr-adapter.service', () =>
   projectOrgCsrReports: (...a: unknown[]) => projectOrgCsrReports(...a),
 }));
 
+// Platform standing is an active platform_role_grants row, as in production —
+// the request role is the tenant membership role and is not read (D6,
+// docs/evidence/D6/2026-10-05-platform-standing/). Only ADMIN_ID holds one.
+const ADMIN_ID = 41;
+const { query } = vi.hoisted(() => ({ query: vi.fn() }));
+vi.mock('../../db', () => ({ query: (...a: unknown[]) => query(...a), pool: {} }));
+
 import createClinicalRegulatoryEvidenceRoutes from '../clinical-regulatory-evidence-routes';
 
 function appWith(user: Record<string, unknown> | null, org = 7) {
@@ -40,8 +47,10 @@ function appWith(user: Record<string, unknown> | null, org = 7) {
   return app;
 }
 
-const admin = { role: 'platform_admin', email: 'a@x.test' };   // no id → sync platform-role path, no DB
-const nonAdmin = { role: 'user' };
+// Both carry the same membership role: the admin's standing is its grant row
+// alone, and the non-admin's 403 is a grant lookup that finds nothing.
+const admin = { id: ADMIN_ID, role: 'user', email: 'a@x.test' };
+const nonAdmin = { id: 42, role: 'user' };
 
 const ORIGINAL_FLAG = process.env.ENABLE_CLINICAL_REGULATORY_GRAPH;
 beforeEach(() => {
@@ -49,6 +58,12 @@ beforeEach(() => {
   ingestCrl.mockReset();
   extractFindingsFromText.mockReset();
   projectOrgCsrReports.mockReset();
+  query.mockReset();
+  query.mockImplementation(async (sql: string, params?: unknown[]) => ({
+    rows: /FROM platform_role_grants/.test(sql) && params?.[0] === ADMIN_ID
+      && Array.isArray(params[1]) && (params[1] as string[]).includes('platform_admin')
+      ? [{ '?column?': 1 }] : [],
+  }));
 });
 afterEach(() => {
   if (ORIGINAL_FLAG === undefined) delete process.env.ENABLE_CLINICAL_REGULATORY_GRAPH;

@@ -1,0 +1,22 @@
+{
+  "base": "2f5c5129356af05b7d9fb428270d9ea3670ae9b9",
+  "regions": [
+    {
+      "region": "memory-reader",
+      "bytes_unchanged": true,
+      "sha256": "84f0992dc468993eb064ebc2d865c072c5c29cecd3c35c9a415f4a8e0a668a93"
+    },
+    {
+      "region": "deficiency-helper",
+      "bytes_unchanged": true,
+      "sha256": "ab3d1359b363e65e945d8aaaf909ec37fb61c2138e02f4a1228e36062496bb24"
+    },
+    {
+      "region": "deadline-budget",
+      "bytes_unchanged": true,
+      "sha256": "559a344c296cdf1588df5fe7da87cc9f5449676f005a59bad9a775cfa505c0b8"
+    }
+  ],
+  "rewired_consumers": 11,
+  "raw_helper_call_sites": 1
+}

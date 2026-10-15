@@ -38,12 +38,14 @@ describe('trainingStatus', () => {
 });
 
 describe('REQUIRED_TRAINING_BY_ACTIVITY', () => {
+  // 2026-10-15: these two relied on human gene transfer being assumed false; it
+  // is now stated, since an unstated gene-transfer fact leaves biosafety undetermined.
   it('requires CITI human-subjects training for human-subjects research', () => {
-    const req = REQUIRED_TRAINING_BY_ACTIVITY({ involvesHumanSubjects: true, involvesAnimals: false, involvesRecombinantDNA: false, fundingSource: 'nih' });
+    const req = REQUIRED_TRAINING_BY_ACTIVITY({ involvesHumanSubjects: true, involvesAnimals: false, involvesRecombinantDNA: false, involvesHumanGeneTransfer: false, fundingSource: 'nih' });
     expect(req).toContain('citi_human_subjects');
   });
   it('requires CITI animal training for animal research', () => {
-    const req = REQUIRED_TRAINING_BY_ACTIVITY({ involvesHumanSubjects: false, involvesAnimals: true, involvesRecombinantDNA: false, fundingSource: 'internal' });
+    const req = REQUIRED_TRAINING_BY_ACTIVITY({ involvesHumanSubjects: false, involvesAnimals: true, involvesRecombinantDNA: false, involvesHumanGeneTransfer: false, fundingSource: 'internal' });
     expect(req).toContain('citi_animal');
   });
   it('de-duplicates training types', () => {

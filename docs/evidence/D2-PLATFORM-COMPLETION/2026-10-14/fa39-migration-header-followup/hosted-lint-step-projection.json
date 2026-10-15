@@ -1,0 +1,17 @@
+{
+  "jobId": 116064098500,
+  "runId": 38625681016,
+  "completedSteps": 132,
+  "success": 129,
+  "failure": 1,
+  "skipped": 2,
+  "failedSteps": [
+    {
+      "name": "Guardrails \u2014 eCTD migration headers (reg audit)",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 8
+    }
+  ],
+  "qualification": "132 completed step summaries: 129 success, 1 failure, 2 skipped. Entire workflow was still in progress at metadata read; this is not a whole-run verdict."
+}

@@ -17,6 +17,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'node:crypto';
 import { createScopedLogger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth.js';
+import { governedActorId } from '../middleware/orgMembership';
 import { buildContextAwarePrompt } from '../services/ana-context-builder.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
@@ -30,6 +31,7 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from '../middleware/tokenType';
 import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
 import { ai } from '../lib/unified-ai-client';
@@ -123,13 +125,32 @@ const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
 // MIDDLEWARE
 // ══════════════════════════════════════════════════════════════════════════════
 
+/*
+ * The router's tenant context is the session's, extended — never replaced, and
+ * never read from the request.
+ *
+ * This REPLACED req.tenantContext — the verified one the auth boundary publishes
+ * (middleware/establishRequestTenantScope.ts) — with { organizationId,
+ * clientWorkspaceId, module }: the organisation uuid was dropped and the
+ * workspace was the caller's x-client-workspace-id header, unverified. Every
+ * /api/cortex request passes through here, including those that fall through to
+ * /api/cortex/management, mounted after this router. A dropped uuid is exactly
+ * the state in which the `tenantContext?.organizationUuid || x-org-uuid`
+ * fallbacks (b1618c69) keyed tenant data on a header (IAM-15 residual, P1-7;
+ * docs/evidence/D6/2026-10-01-tranche-4/P1-7-P1-27-residuals/).
+ *
+ * The tenant keys stay the boundary's. A route that needs the uuid takes it from
+ * server/db/currentTenant.ts (currentTenantOrgUuid) and answers 403 when there is
+ * none, as /query does. A workspace, when a route needs one, is a claim verified
+ * against the session's organisation (FeatureToggleService.workspaceInOrganization).
+ */
 const extractTenantContext = (req: Request, _res: Response, next: NextFunction) => {
-  const organizationId = String((req as any).user?.organizationId || '') || null;
-  const clientWorkspaceId = (req.headers['x-client-workspace-id'] as string) || null;
-
+  const verified = (req as any).tenantContext ?? {};
+  const sessionOrgId = (req as any).user?.organizationId;
   (req as any).tenantContext = {
-    organizationId,
-    clientWorkspaceId,
+    ...verified,
+    organizationId:
+      verified.organizationId ?? (sessionOrgId != null ? String(sessionOrgId) : null),
     module: 'cortex',
   };
   next();
@@ -996,9 +1017,11 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       context: {
         projectName: context.project?.name || null,
         submissionType: context.project?.submissionType || submission_type || null,
-        progress: context.project?.progress || null,
-        documentsTotal: context.documents?.totalDocuments || 0,
-        documentsCompleted: context.documents?.completedDocuments || 0,
+        // 2026-10-15: `|| null` turned a recorded 0% into null, and `|| 0` reported
+        // a documents read that did not happen as 0 documents. Unread is null.
+        progress: context.project?.progress ?? null,
+        documentsTotal: context.documents?.totalDocuments ?? null,
+        documentsCompleted: context.documents?.completedDocuments ?? null,
         sectionCode: section_code || null,
       },
       intelligence: {
@@ -1049,7 +1072,9 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
     if (!organizationId || organizationId <= 0) {
       return res.status(400).json({ error: 'Organization context required', code: 'MISSING_ORG' });
     }
-    const userId = (req as any).userId || (req as any).user?.id || null;
+    // 2026-10-15: with no user the evaluation's actor was 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ error: 'A signed-in user is required', code: 'AUTH_REQUIRED' });
 
     const numericProjectId = parseInt(String(project_id).replace(/^proj_/, ''), 10);
     if (!numericProjectId) {
@@ -1061,7 +1086,7 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
         context: {
           organizationId: String(organizationId),
           projectId: String(numericProjectId),
-          actorId: String(userId || 'system'),
+          actorId: String(userId),
           intendedAction: 'create',
           documentType: 'cortex_draft',
           sectionCode: section_code,
@@ -1106,6 +1131,8 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
         details: {
           persistenceStatus: execution.persistenceStatus,
           decisionReference: execution.decisionReference,
+          decisionPersisted: execution.decisionPersisted,
+          ...(execution.persistenceRefusal && { refusal: execution.persistenceRefusal }),
         },
       });
     }
@@ -1123,6 +1150,8 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
       isNew: execution.artifactMutation.isNew,
       sectionStatusUpdated: execution.artifactMutation.sectionStatusUpdated,
       decisionReference: execution.decisionReference,
+      // Whether the ledger row behind decisionReference was written (2026-10-15).
+      decisionPersisted: execution.decisionPersisted,
     });
   } catch (error: any) {
     logger.error(`[SaveDraft] Error: ${error.message}`);
@@ -1197,6 +1226,8 @@ function extractUserId(req: Request): number | null {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return null;
     const decoded = verifyJwtWithRotation(token) as any;
+    // IAM-23: only an access token names the thread's owner.
+    if (requireAccessTokenReason(decoded)) return null;
     return decoded?.userId ? Number(decoded.userId) : null;
   } catch {
     return null;

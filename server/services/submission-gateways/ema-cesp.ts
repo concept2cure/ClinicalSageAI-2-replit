@@ -1,7 +1,21 @@
 /**
  * EMA gateways — CESP (Common European Submission Portal) for eCTD
- * submissions to EMA / national competent authorities, and EUDAMED for
- * EU medical device + IVDR registration / vigilance.
+ * submissions to the national competent authorities (national, MRP and DCP
+ * procedures), and EUDAMED for EU medical device + IVDR registration /
+ * vigilance.
+ *
+ * CESP is NOT the channel for a centralised-procedure submission to EMA. EMA
+ * has made the eSubmission Gateway / Web Client mandatory for every
+ * centralised-procedure eCTD submission (MAAs, variations, renewals, PSURs,
+ * ASMFs) since 2014-03-01 (regulator text, ema.europa.eu; basis in
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * g-cesp-centralised-refusal-facts.md), and the platform has no connector for
+ * it. `EmaCespGateway.transmit` therefore refuses — before its transmittal row
+ * and before any request — every filing that `submissionChannelFor`
+ * (regulatory/registry/submittabilityCoverage.ts) does not route to ema:cesp.
+ * 2026-10-05 (D2 record, step g-cesp-centralised-refusal; finding 42): this
+ * header described CESP as the channel for "eCTD submissions to EMA", and the
+ * transmit POSTed an EU_MAA to /baskets.
  *
  * CESP — REST API (production endpoint: https://cesp.hma.eu/api):
  *   - OAuth2 client-credentials with the sponsor's organization id
@@ -33,8 +47,41 @@ import {
   resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
-  requiredAgencyMetadata
+  requiredAgencyMetadata, ValidationError, NOTHING_TRANSMITTED,
 } from './types';
+import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy';
+/* Type-only: submittabilityCoverage imports the gateway registry (index.ts),
+   which constructs this module's gateways at load, so a value import here is a
+   cycle that leaves EmaCespGateway undefined. transmit() loads it lazily. */
+import type { SubmissionChannel } from '../regulatory/registry/submittabilityCoverage';
+
+/* ─── Which filings CESP carries ─────────────────────────────────── */
+
+/**
+ * Why CESP must not carry this filing, or null when it may.
+ *
+ * `channel` is `submissionChannelFor(entry)` — the one channel function — so the
+ * gateway, the transmit router (submission-service `transmitRouteFor`), the
+ * planner and the submittability report cannot disagree. CESP carries a filing
+ * only when that function routes it to ema:cesp (the national, MRP and DCP
+ * filings); a centralised-procedure filing (EMA eSubmission Gateway / Web
+ * Client), a CTIS or IRIS filing, or another region's filing gets a reason
+ * naming where it actually goes.
+ */
+export function cespChannelRefusal(entry: RegulatoryApplicationType, channel: SubmissionChannel): string | null {
+  const filing = `${entry.id} (${entry.displayName})`;
+  switch (channel.kind) {
+    case 'gateway':
+      if (channel.region === 'ema' && channel.name === 'cesp') return null;
+      return `${filing} goes through the ${channel.region}:${channel.name} gateway, not CESP.`;
+    case 'portal':
+      return `${filing} goes to ${channel.channel}, a web portal the applicant uses, not CESP.`;
+    case 'unconnected':
+      return `${filing} goes to ${channel.channel}, not CESP: ${channel.reason}. ${channel.applicantStep}`;
+    case 'none':
+      return `${filing} has no submission channel on record (its region has no gateway identity), so CESP is not assumed.`;
+  }
+}
 
 /* ─── CESP credentials ───────────────────────────────────────────── */
 
@@ -268,6 +315,22 @@ export class EmaCespGateway implements SubmissionGateway {
     const normalizedReq: GatewayTransmitRequest = resolvedEntry
       ? { ...req, submissionType: resolvedEntry.applicationType }
       : req;
+
+    /* A filing CESP does not carry is refused here, before the transmittal row
+       and before any request — defence in depth behind selectGateway. Typed
+       ValidationError + NOTHING_TRANSMITTED, so refusedBeforeWire (index.ts)
+       releases the caller's transmit claim; a GatewayError would read as "may
+       have reached the agency". A type that names no registry filing (e.g. the
+       lifecycle 'original' transmitSequence passes) cannot be judged here; the
+       router decided on the submission's applicationType. */
+    let notCesp: string | null = null;
+    if (resolvedEntry) {
+      const { submissionChannelFor } = await import('../regulatory/registry/submittabilityCoverage');
+      notCesp = cespChannelRefusal(resolvedEntry, submissionChannelFor(resolvedEntry));
+    }
+    if (notCesp) {
+      throw new ValidationError(`CESP refused this transmit: ${notCesp} Nothing was sent.`, [], NOTHING_TRANSMITTED);
+    }
 
     const agency = requiredAgencyMetadata(normalizedReq);
     const transmittalId = await createTransmittalRow(normalizedReq, 'cesp', 'rest');

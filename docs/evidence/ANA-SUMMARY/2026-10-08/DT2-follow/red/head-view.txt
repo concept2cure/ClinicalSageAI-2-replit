@@ -1,0 +1,23 @@
+# head-view: --config vitest.config.ts client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx
+# exit 1
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 1. after its question: the rows, the plan rail and the follower phase line 72ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 4. a Manual hold renders from `hold`, and its answers send controls 14ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 6. a stale owner is said beside the rows, with Stop offered 7ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 3. a sealed run hands over, and its rows read the same before and after 6ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 7. ended without a record: the run’s reason, the saved rows and "Not recorded" 5ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > a gap in the mirror is said once, never in place of the rows 5ms
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 1. after its question: the rows, the plan rail and the follower phase line
+TestingLibraryElementError: Unable to find an element by: [data-testid="record"]
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 4. a Manual hold renders from `hold`, and its answers send controls
+TestingLibraryElementError: Unable to find an element with the text: Waiting for you before the next step. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 6. a stale owner is said beside the rows, with Stop offered
+TestingLibraryElementError: Unable to find an element with the text: AnA hasn't reported for 3 min. The server handling this turn may have stopped.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 3. a sealed run hands over, and its rows read the same before and after
+TestingLibraryElementError: Unable to find an element with the text: Recording…. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 7. ended without a record: the run’s reason, the saved rows and "Not recorded"
+TestingLibraryElementError: Unable to find an element with the text: Recording…. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > a gap in the mirror is said once, never in place of the rows
+TestingLibraryElementError: Unable to find an element with the text: Some steps could not be shown live. The full list appears when the turn is recorded.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.

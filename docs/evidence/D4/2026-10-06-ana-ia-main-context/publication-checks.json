@@ -1,0 +1,17 @@
+[
+  {
+    "gate": "ci:untracked-imports",
+    "exit": 0,
+    "output": "[ci:untracked-imports] OK \u2014 every relative import in 6 file(s) resolves to a tracked file.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-errors",
+    "exit": 0,
+    "output": "[ci:pushed-lint-errors] OK \u2014 no ESLint errors in 6 changed file(s) against origin/concept2cure-v2.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-warnings",
+    "exit": 0,
+    "output": "[ci:eslint-warning-ratchet] --since 64012fae7d165379ee41c5f99a4ea0a49b184c47 (64012fae7) -- 6 lintable file(s) changed; linting both versions of each...\n\n    -1  server/routes/ana-ri/stream.ts  (24 -> 23)\n\n[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since 64012fae7d165379ee41c5f99a4ea0a49b184c47.\n"
+  }
+]

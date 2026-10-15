@@ -18,6 +18,12 @@ import { getGateway } from '../ai-gateway';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
+import {
+  classifyShadowReviewFailure,
+  isWaivableShadowReviewFailure,
+  type ClassifiedShadowReviewFailure,
+  type ShadowReviewFailureErrorCode,
+} from './shadow-review-failure';
 
 const logger = createScopedLogger('shadow-review-service');
 
@@ -34,11 +40,25 @@ export interface ShadowFinding {
   leafRef?: string | null;
 }
 
+/**
+ * What the model returns: findings and a one-line summary. No score. Until
+ * 2026-10-05 it also returned rtf/crl "likelihoods" in [0,1], and the run kept
+ * the higher of those and the severity aggregate; Rule 2 says the model
+ * narrates, so a figure it reports is no longer read (prompt v1.1 stops asking).
+ */
 export interface ShadowReviewOutput {
-  rtfRiskScore: number;
-  crlRiskScore: number;
   summary: string;
   findings: ShadowFinding[];
+}
+
+/** Where a run's RTF/CRL score comes from. v1.0 runs recorded the model's own figure. */
+export type ShadowScoreBasis = 'severity_aggregate' | 'model_reported';
+
+export const SHADOW_REVIEW_PROMPT_VERSION = 'shadow-review@v1.1';
+
+/** The basis of a stored run's score, by the prompt version that produced it. */
+export function scoreBasisOf(promptVersion: string | null | undefined): ShadowScoreBasis {
+  return promptVersion === 'shadow-review@v1.0' ? 'model_reported' : 'severity_aggregate';
 }
 
 const SEVERITIES: ReadonlySet<string> = new Set<FindingSeverity>(['critical', 'major', 'minor', 'info']);
@@ -89,14 +109,19 @@ export function parseShadowReviewOutput(
     output: {
       findings,
       summary: typeof o.summary === 'string' ? o.summary : '',
-      rtfRiskScore: o.rtfRiskScore as number,
-      crlRiskScore: o.crlRiskScore as number,
     },
   };
 }
 
+/**
+ * A run that did not complete. Since 2026-10-15 (P-34) a failure is answered
+ * with the gateway's own classification of it (gateway-error-map.ts) — a
+ * placement or governance refusal is no longer reported as "provider
+ * unavailable" — and INTERNAL for a fault of ours. The run records the closed
+ * failure code either way (shadow-review-failure.ts).
+ */
 export class ShadowReviewError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE', message: string) {
+  constructor(public code: 'NOT_FOUND' | ShadowReviewFailureErrorCode, message: string) {
     super(message);
     this.name = 'ShadowReviewError';
   }
@@ -105,9 +130,10 @@ export class ShadowReviewError extends Error {
 const SEVERITY_WEIGHT: Record<FindingSeverity, number> = { critical: 1, major: 0.6, minor: 0.25, info: 0 };
 
 /**
- * Deterministic fallback risk from findings, used to sanity-bound the model's
- * self-reported scores. Pure. Returns 0..1 per dimension (rtf = administrative
- * gate: format + rtf findings; crl = substantive gate: crl + nb findings).
+ * A run's RTF/CRL gate score, from its findings' severities. Pure, and the only
+ * score a run records (Rule 2): 0..1 per dimension (rtf = administrative gate:
+ * format + rtf findings; crl = substantive gate: crl + nb findings). The
+ * severities are the reviewer model's; the arithmetic is not.
  */
 export function aggregateRisk(findings: ShadowFinding[]): { rtf: number; crl: number } {
   const score = (dims: string[]): number => {
@@ -121,13 +147,24 @@ export function aggregateRisk(findings: ShadowFinding[]): { rtf: number; crl: nu
   return { rtf: score(['rtf', 'format']), crl: score(['crl', 'nb']) };
 }
 
-function clamp01(n: unknown, fallback: number): number {
-  const v = typeof n === 'number' && Number.isFinite(n) ? n : fallback;
-  return Math.max(0, Math.min(1, v));
-}
+/**
+ * A sequence with no leaves cannot be filed. That is a fact about the sequence,
+ * so the server records it as a critical refuse-to-file finding of its own;
+ * it used to rest on the prompt asking the model for scores "near 1.0", and a
+ * model that answered 0 recorded an empty sequence as fileable.
+ */
+export const EMPTY_SEQUENCE_FINDING: ShadowFinding = {
+  dimension: 'rtf',
+  severity: 'critical',
+  title: 'The sequence has no leaves',
+  detail: 'An assembled sequence with no documents cannot be filed. Recorded by the server, not the reviewer model.',
+  basis: null,
+  recommendation: 'Place the sequence\'s documents before running a shadow review or dispatching it.',
+  leafRef: null,
+};
 
 async function loadPrompt(): Promise<string> {
-  return fs.readFile(path.join(PROMPTS_DIR, 'shadow-review', 'v1.0.md'), 'utf8');
+  return fs.readFile(path.join(PROMPTS_DIR, 'shadow-review', 'v1.1.md'), 'utf8');
 }
 
 export interface RunShadowReviewParams {
@@ -143,6 +180,8 @@ export interface RunShadowReviewResult {
   crlRiskScore: number;
   summary: string;
   findingCount: number;
+  /** Always 'severity_aggregate' for a new run (Rule 2). */
+  scoreBasis: ShadowScoreBasis;
   /** Whether the run's §11.10(e) AI_GENERATE row was written. The run stands
    *  either way; the route answers this result verbatim, so the caller sees it. */
   auditTrail: AuditRowOutcome;
@@ -171,14 +210,13 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
       sequenceId,
       region: sequence.region,
       lens,
-      promptVersion: 'shadow-review@v1.0',
+      promptVersion: SHADOW_REVIEW_PROMPT_VERSION,
       status: 'running',
       organizationId,
       createdBy: userId,
     })
-    .returning();
+    .returning({ id: shadowReviewRuns.id });
 
-  const systemPrompt = await loadPrompt();
   const userPayload = JSON.stringify({
     lens,
     region: sequence.region,
@@ -189,6 +227,9 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
   let output: ShadowReviewOutput;
   let model: string | undefined;
   try {
+    // Inside the try (P-34): a prompt that could not be read used to leave the
+    // run 'running' for ever, which also hid it from every "newest run" read.
+    const systemPrompt = await loadPrompt();
     const response = await getGateway().route({
       taskType: 'regulatory_review',
       messages: [
@@ -198,7 +239,7 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
       jsonMode: true,
       temperature: 0.2,
       maxTokens: 4096,
-      promptVersion: 'shadow-review@v1.0',
+      promptVersion: SHADOW_REVIEW_PROMPT_VERSION,
       organizationId,
       userId,
       callerModule: 'shadow-review-service',
@@ -208,22 +249,18 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     const cleaned = response.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
     const parsed = parseShadowReviewOutput(JSON.parse(cleaned));
     if (!parsed.ok) {
-      await db.update(shadowReviewRuns).set({ status: 'failed', updatedAt: new Date() }).where(eq(shadowReviewRuns.id, run.id));
       throw new ShadowReviewError('INVALID_AI_RESPONSE', `Shadow review returned no countable assessment (${parsed.reason}).`);
     }
     output = parsed.output;
   } catch (err) {
-    if (err instanceof ShadowReviewError) throw err;
-    await db.update(shadowReviewRuns).set({ status: 'failed', updatedAt: new Date() }).where(eq(shadowReviewRuns.id, run.id));
-    if (err instanceof SyntaxError) throw new ShadowReviewError('INVALID_AI_RESPONSE', 'Shadow review returned invalid JSON.');
-    throw new ShadowReviewError('PROVIDER_UNAVAILABLE', 'Shadow review could not be completed.');
+    const failure = classifyShadowReviewFailure(err);
+    await recordRunFailure(run.id, failure, { organizationId, userId, lens, sequenceId, model, err });
+    throw new ShadowReviewError(failure.errorCode, failure.message);
   }
 
-  const findings = output.findings;
-  // Bound the model's self-reported risk by the deterministic aggregate (use the higher).
-  const agg = aggregateRisk(findings);
-  const rtfRiskScore = Math.max(clamp01(output.rtfRiskScore, agg.rtf), agg.rtf);
-  const crlRiskScore = Math.max(clamp01(output.crlRiskScore, agg.crl), agg.crl);
+  const findings = leaves.length === 0 ? [EMPTY_SEQUENCE_FINDING, ...output.findings] : output.findings;
+  // The gate score is the severity aggregate and nothing else (Rule 2).
+  const { rtf: rtfRiskScore, crl: crlRiskScore } = aggregateRisk(findings);
 
   if (findings.length > 0) {
     await db.insert(shadowReviewFindings).values(
@@ -254,11 +291,65 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     action: 'AI_GENERATE',
     resourceType: 'shadow_review_run',
     resourceId: run.id,
-    details: { task: 'shadow-review', promptVersion: 'shadow-review@v1.0', lens, sequenceId, findingCount: findings.length, rtfRiskScore, crlRiskScore },
+    details: { task: 'shadow-review', promptVersion: SHADOW_REVIEW_PROMPT_VERSION, lens, sequenceId, findingCount: findings.length, rtfRiskScore, crlRiskScore },
   });
 
   logger.info('Shadow review complete', { runId: run.id, sequenceId, organizationId, findings: findings.length });
-  return { runId: run.id, rtfRiskScore, crlRiskScore, summary: output.summary ?? '', findingCount: findings.length, auditTrail };
+  const summary = output.summary ?? '';
+  return { runId: run.id, rtfRiskScore, crlRiskScore, summary, findingCount: findings.length, scoreBasis: 'severity_aggregate', auditTrail };
+}
+
+/**
+ * Mark a run failed with its closed failure code, and write its §11.10(e) row:
+ * AI_GENERATE_FAILED on the run, naming the code and whether it is waivable
+ * (P-34). Before 2026-10-15 a failed run kept no reason and wrote no row, so
+ * the failed run a waiver relies on was not in the audit chain. Neither write
+ * may replace the failure the caller is about to be told, so each is logged
+ * and passed over if it fails.
+ */
+async function recordRunFailure(
+  runId: number,
+  failure: ClassifiedShadowReviewFailure,
+  at: { organizationId: number; userId: number; lens: ReviewLens; sequenceId: number; model?: string; err: unknown },
+): Promise<void> {
+  const { failureCode } = failure;
+  try {
+    await db
+      .update(shadowReviewRuns)
+      .set({ status: 'failed', failureCode, model: at.model ?? null, updatedAt: new Date() })
+      .where(eq(shadowReviewRuns.id, runId));
+  } catch (writeErr) {
+    logger.error('A failed shadow review could not be recorded as failed', {
+      runId, failureCode, err: writeErr instanceof Error ? writeErr.message : String(writeErr),
+    });
+  }
+  const audit = await recordAuditRow({
+    organizationId: at.organizationId,
+    userId: at.userId,
+    action: 'AI_GENERATE_FAILED',
+    resourceType: 'shadow_review_run',
+    resourceId: runId,
+    details: {
+      task: 'shadow-review',
+      promptVersion: SHADOW_REVIEW_PROMPT_VERSION,
+      lens: at.lens,
+      sequenceId: at.sequenceId,
+      failureCode,
+      waivable: isWaivableShadowReviewFailure(failureCode),
+    },
+  });
+  // A waiver may later rely on this run (P-34): a failure the chain does not
+  // hold is said, loudly, rather than passed over in silence.
+  if (!audit.persisted) {
+    logger.error('A failed shadow review has no §11.10(e) row: AI_GENERATE_FAILED was not persisted', {
+      runId, sequenceId: at.sequenceId, organizationId: at.organizationId, failureCode, reason: audit.message,
+    });
+  }
+  // The cause stays in the log; the caller gets the classified sentence.
+  logger.warn('Shadow review failed', {
+    runId, sequenceId: at.sequenceId, organizationId: at.organizationId, failureCode,
+    err: at.err instanceof Error ? at.err.message : String(at.err),
+  });
 }
 
 export default { runShadowReview, aggregateRisk, parseShadowReviewOutput, ShadowReviewError };

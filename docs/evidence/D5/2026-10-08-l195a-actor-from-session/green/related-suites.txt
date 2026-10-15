@@ -1,0 +1,24 @@
+# Every test file that imports one of the three routers, on the fixed tree (server and client).
+
+ Test Files  18 passed (18)
+      Tests  280 passed (280)
+
+# files:
+server/__tests__/security/audit-trail-contract.test.ts
+server/__tests__/security/tenant-isolation-post-market.contract.test.ts
+server/routes/__tests__/governed-ledger-gap-surfaced.test.ts
+server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+tests/artifact-change-invalidates-bundles.contract.test.ts
+tests/gspr-mapping-actor.test.ts
+tests/post-market-authoring-routes.test.ts
+tests/sentinel-finding-resolver.test.ts
+tests/submission-ops-artifact-mapping-routes.test.ts
+tests/submission-ops-assemble-routes.test.ts
+tests/submission-ops-blocker-resolver.test.ts
+tests/submission-ops-hardening.scaffold.test.ts
+tests/submission-ops-package-project.pglite.test.ts
+tests/submission-ops-preflight-routes.test.ts
+tests/submission-ops-regulatory-identifiers-routes.test.ts
+tests/submission-ops-section-routes.pglite.integration.test.ts
+tests/submission-ops-section-routes.test.ts
+client/src/concept2cure/mdx/hooks/__tests__/useSubmissions.milestoneActor.test.ts

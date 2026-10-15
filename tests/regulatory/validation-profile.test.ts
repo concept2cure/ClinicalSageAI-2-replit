@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolveValidationProfile } from '../../shared/regulatory/validation-profile';
+import { resolveWorkspaceConfig } from '../../shared/regulatory/workspace-config';
 
 describe('validation-profile — grounded in (segment, evidence model)', () => {
   it('NDA → pharma-clinical_efficacy with the efficacy/quality claims', () => {
@@ -41,5 +42,25 @@ describe('validation-profile — grounded in (segment, evidence model)', () => {
     expect(p.grounded).toBe(false);
     expect(p.profileId).toBe('generic-document');
     expect(p.requiredClaims).toHaveLength(0);
+  });
+});
+
+describe('grounding fixes (#940)', () => {
+  it('EU MAA / CTA are segment-grounded, not the generic-document fallback', () => {
+    const maa = resolveValidationProfile('EU_MAA');
+    expect(maa.grounded).toBe(true);
+    expect(maa.profileId).toBe('pharma-clinical_efficacy');
+    const cta = resolveValidationProfile('EU_CTA');
+    expect(cta.grounded).toBe(true);
+    expect(cta.profileId).not.toBe('generic-document');
+  });
+
+  it('analytical_similarity surfaces only for exclusively generic/biosimilar filings', () => {
+    const appIds = (need: string) => resolveWorkspaceConfig(need).apps.map((a) => a.id);
+    // BLA's product-class list *covers* biosimilar but a BLA is not a sameness filing.
+    // (NDA is ['small_molecule'] only, so it cannot catch this bug — assert on BLA.)
+    expect(appIds('US_BLA')).not.toContain('analytical_similarity');
+    expect(appIds('US_IND')).not.toContain('analytical_similarity');
+    expect(appIds('ANDA')).toContain('analytical_similarity');
   });
 });

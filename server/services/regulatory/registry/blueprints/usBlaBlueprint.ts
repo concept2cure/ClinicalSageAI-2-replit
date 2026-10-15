@@ -17,7 +17,7 @@ const BLA_MILESTONES: MilestoneDefinition[] = [
   {
     id: 'ms_pre_bla', title: 'Pre-BLA Preparation', description: 'Pre-BLA meeting and biologics-specific planning', phase: 'pre_submission', order: 0,
     tasks: [
-      { id: 't_pre_bla_meeting', title: 'Pre-BLA Meeting', description: 'FDA Type A meeting for BLA submission strategy', assigneeRole: 'regulatory_lead', estimatedDays: 14 },
+      { id: 't_pre_bla_meeting', title: 'Pre-BLA Meeting (Type B)', description: 'FDA Type B meeting for BLA submission strategy (pre-BLA meetings are Type B; Type A is for a stalled program or an important safety issue)', assigneeRole: 'regulatory_lead', estimatedDays: 14 },
     ],
   },
   {

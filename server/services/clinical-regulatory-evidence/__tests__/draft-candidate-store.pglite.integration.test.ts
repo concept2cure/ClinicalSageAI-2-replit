@@ -152,9 +152,11 @@ describe('draft-candidate store', () => {
     // from "not applicable" without guessing which it is.
     expect(claimed?.generator).toEqual({
       model: 'm', provider: null, promptSha256: null, promptVersion: null,
-      generatedAt: '2026-08-14T10:00:00.000Z',
+      // Round 12 (RT-6): the gateway request and the turn record, null when not given.
+      generatedAt: '2026-08-14T10:00:00.000Z', requestId: null, turnRecordId: null,
     });
   });
+
 
   /* ── Paraphrase assertions (source-attribution Phase 4) ───────────────────
      The model's [{quote, sourceId}] derivation claims are parked with the
@@ -187,5 +189,19 @@ describe('draft-candidate store', () => {
     );
     const claimed = await consumeDraftCandidate(ORG_A, SECTION, messy.id);
     expect(claimed?.assertions).toEqual([{ quote: 'keep me', sourceId: 7 }]);
+  });
+});
+
+describe('draft-candidate store — the turn and the request a draft came from (round 12, RT-6)', () => {
+  it('carries the gateway request id and the turn record id from park to accept', async () => {
+    const { id } = await createDraftCandidate(
+      ORG_A, SECTION, 'body', [], 'user-1', undefined,
+      {
+        model: 'claude-opus-5-5', provider: 'anthropic', promptSha256: 'a'.repeat(64), generatedAt: '2026-10-05T12:00:00.000Z',
+        requestId: 'req-rt6-1', turnRecordId: '6f1c2a4e-9b3d-4e21-8a7f-0c5d1e2b3a41',
+      },
+    );
+    const claimed = await consumeDraftCandidate(ORG_A, SECTION, id);
+    expect(claimed?.generator).toMatchObject({ requestId: 'req-rt6-1', turnRecordId: '6f1c2a4e-9b3d-4e21-8a7f-0c5d1e2b3a41' });
   });
 });

@@ -17,7 +17,9 @@ import { EventEmitter } from 'events';
 import { generateUUID } from '../utils/id-generator';
 import { db } from '../db';
 import { coauthorValidationHistory } from '../../shared/schema';
-import { eq, and, desc, gte } from 'drizzle-orm';
+import type { ValidationFinding } from '../../shared/types/ai-actions';
+import { ai } from '../lib/unified-ai-client';
+import { classifyGatewayError } from './ai-gateway/gateway-error-map';
 
 /**
  * Whether the AI content analysis actually covered the content.
@@ -37,11 +39,17 @@ export interface AiAnalysisCoverage {
   note?: string;
 }
 
-interface ValidationResult {
+export interface ValidationResult {
   isValid: boolean;
   issues: ValidationIssue[];
   suggestions: Suggestion[];
-  complianceScore: number;
+  /**
+   * 0-100 from the findings, or null when the AI analysis did not cover the
+   * whole content. It was 100 whenever no issue was recorded — including when
+   * the analysis never ran or saw only part of the content — and that 100 was
+   * recorded with the run (2026-10-15).
+   */
+  complianceScore: number | null;
   aiAnalysis: AiAnalysisCoverage;
 }
 
@@ -64,11 +72,92 @@ interface Suggestion {
   type: 'content' | 'terminology' | 'compliance' | 'citation';
   text: string;
   replacement?: string;
-  confidence: number;
+  /**
+   * Nothing here computes a confidence, so it is null. It was 0.8 for a
+   * spelling match, 0.9 / 0.85 / 0.8 for canned advice, and 0.7 for a model
+   * suggestion that gave none — and the model was asked for one, a figure no
+   * deterministic engine produced (CLAUDE.md RULE 2) (2026-10-15).
+   */
+  confidence: number | null;
   reasoning: string;
 }
-import { ai } from '../lib/unified-ai-client';
-import { classifyGatewayError } from './ai-gateway/gateway-error-map';
+
+/**
+ * One run of run_validation, as coauthor_validation_history records it.
+ *
+ * The row this replaces said performedBy 'system' with the user known;
+ * agency 'FDA' when none was named, though nothing in these checks is
+ * agency-specific; document_id set to an artifact or unified-document id in
+ * a column that references coauthor_documents; passedRules 0 and failedRules
+ * the issue count, when no rule set is counted; and nothing of the project,
+ * the target or whether the run passed. The readiness engine needs those, so
+ * it read run_validation's audit row instead — which carries no result — and
+ * took every run for a pass with a score of 0 (2026-10-15).
+ */
+export interface ValidationRunRecord {
+  organizationId: number;
+  projectId: number | null;
+  /** What was validated, as the caller names it; null for inline content. */
+  target: { type: string; id: string | number } | null;
+  /** The validated object's title, as the caller read it. */
+  title: string | null;
+  documentType: string;
+  /** The agency the caller named, or null. */
+  agency: string | null;
+  performedByUserId: number;
+  /** The person's name or email, as the request authenticated them. */
+  performedBy: string;
+  content: string;
+  result: ValidationResult;
+  /** The findings as the caller reported them. */
+  findings: ValidationFinding[];
+}
+
+/**
+ * Record one validation run. A failure to write throws: a validation with no
+ * record is not one a reviewer can rely on, so the caller does not apply it.
+ * It used to be logged and the run applied anyway (2026-10-15).
+ */
+export async function recordValidationRun(run: ValidationRunRecord): Promise<void> {
+  const count = (severity: ValidationFinding['severity']) =>
+    run.findings.filter((f) => f.severity === severity).length;
+  await db.insert(coauthorValidationHistory).values({
+    validationId: generateUUID(),
+    organizationId: run.organizationId,
+    // The column references coauthor_documents, and run_validation validates
+    // artifacts and unified documents: the target is named in metadata
+    // rather than linked to a different document that shares its id.
+    documentId: null,
+    module: run.documentType,
+    agency: run.agency,
+    totalIssues: run.findings.length,
+    criticalIssues: count('critical'),
+    majorIssues: count('major'),
+    minorIssues: count('minor'),
+    informationalIssues: count('info'),
+    complianceScore: run.result.complianceScore,
+    // No rule set is counted: the checks are section, terminology and
+    // citation scans and the AI analysis.
+    passedRules: null,
+    failedRules: null,
+    skippedRules: null,
+    validationResults: {
+      isValid: run.result.isValid,
+      aiAnalysis: run.result.aiAnalysis,
+      findings: run.findings,
+    },
+    performedBy: run.performedBy,
+    performedByUserId: run.performedByUserId,
+    performedAt: new Date(),
+    metadata: {
+      validationType: run.documentType,
+      projectId: run.projectId,
+      target: run.target,
+      title: run.title,
+      contentSnapshot: run.content.substring(0, 500),
+    },
+  });
+}
 
 class RealTimeValidationService extends EventEmitter {
   private validationCache: Map<string, ValidationResult>;
@@ -189,16 +278,14 @@ class RealTimeValidationService extends EventEmitter {
   }
 
   /**
-   * Validate content in real-time with debouncing
+   * Validate content in real-time with debouncing. Recording a run is the
+   * caller's, with recordValidationRun: only it knows who asked, on what.
    */
   async validateContent(
     sessionId: string,
     content: string,
     documentType: string,
-    immediateMode: boolean = false,
-    organizationId?: number,
-    documentId?: number,
-    agency?: string
+    immediateMode: boolean = false
   ): Promise<ValidationResult> {
     // Clear existing debounce timer
     if (this.debounceTimers.has(sessionId)) {
@@ -227,41 +314,6 @@ class RealTimeValidationService extends EventEmitter {
     // Perform immediate validation
     const result = await this.performValidation(content, documentType);
     this.validationCache.set(sessionId, result);
-
-    // Persist to database if organization and document info provided
-    if (organizationId && documentId && db) {
-      try {
-        await db.insert(coauthorValidationHistory).values({
-          validationId: generateUUID(),
-          organizationId,
-          documentId,
-          module: documentType,
-          agency: agency || 'FDA',
-          totalIssues: result.issues.length,
-          criticalIssues: result.issues.filter(i => i.severity === 'critical').length,
-          majorIssues: result.issues.filter(i => i.severity === 'major').length,
-          minorIssues: result.issues.filter(i => i.severity === 'minor').length,
-          informationalIssues: result.issues.filter(i => i.type === 'info').length,
-          complianceScore: result.complianceScore,
-          passedRules: 0,
-          failedRules: result.issues.length,
-          skippedRules: 0,
-          validationResults: {
-            issues: result.issues,
-            suggestions: result.suggestions,
-          },
-          performedBy: 'system',
-          performedAt: new Date(),
-          metadata: {
-            validationType: documentType,
-            contentSnapshot: content.substring(0, 500),
-          },
-        });
-      } catch (error) {
-        console.error('Failed to persist validation history:', error);
-        // Don't fail the validation if persistence fails
-      }
-    }
 
     this.emit('validation-complete', { sessionId, result });
     return result;
@@ -370,8 +422,9 @@ class RealTimeValidationService extends EventEmitter {
       }
     }
 
-    // 5. Compliance scoring
-    const complianceScore = this.calculateComplianceScore(issues);
+    // 5. Compliance scoring — over content the analysis covered in full only.
+    const complianceScore =
+      aiAnalysis.status === 'complete' ? this.calculateComplianceScore(issues) : null;
 
     // 6. Generate smart suggestions based on context
     if (issues.length > 0) {
@@ -422,7 +475,7 @@ class RealTimeValidationService extends EventEmitter {
 
             Return a JSON object with:
             - issues: array of {type, message, severity, category}
-            - suggestions: array of {type, text, replacement, confidence, reasoning}`,
+            - suggestions: array of {type, text, replacement, reasoning}`,
             },
             {
               role: 'user',
@@ -453,7 +506,7 @@ class RealTimeValidationService extends EventEmitter {
         type: sug.type || 'content',
         text: sug.text,
         replacement: sug.replacement,
-        confidence: sug.confidence || 0.7,
+        confidence: null,
         reasoning: sug.reasoning || '',
       }));
 
@@ -517,7 +570,7 @@ class RealTimeValidationService extends EventEmitter {
         type: 'terminology',
         text: `Consider using standard terminology: "${similarTerms[0]}"`,
         replacement: similarTerms[0],
-        confidence: 0.8,
+        confidence: null,
         reasoning: 'Standard regulatory terminology improves clarity and compliance',
       };
     }
@@ -653,145 +706,25 @@ class RealTimeValidationService extends EventEmitter {
         suggestions.push({
           type: 'content',
           text: 'Consider using a standard template for this document type',
-          confidence: 0.9,
+          confidence: null,
           reasoning: `Multiple structural issues detected. Using a template ensures compliance with regulatory requirements.`,
         });
       }
 
-      if (category === 'terminology' && categoryIssues.length > 3) {
-        suggestions.push({
-          type: 'terminology',
-          text: 'Enable terminology assistance for real-time suggestions',
-          confidence: 0.85,
-          reasoning: 'Consistent terminology improves document clarity and regulatory acceptance',
-        });
-      }
+      // A terminology suggestion here said "Enable terminology assistance for
+      // real-time suggestions" — there is no such setting (2026-10-15).
 
       if (category === 'citation' && categoryIssues.length > 0) {
         suggestions.push({
           type: 'citation',
           text: 'Use reference management tools to maintain citation consistency',
-          confidence: 0.8,
+          confidence: null,
           reasoning: 'Proper citation management reduces errors and improves document quality',
         });
       }
     }
 
     return suggestions;
-  }
-
-  /**
-   * Get validation statistics for reporting
-   */
-  async getValidationStatistics(organizationId: number, days: number = 30): Promise<any> {
-    if (!db) {
-      return {
-        totalValidations: 0,
-        averageComplianceScore: 0,
-        commonIssues: [],
-        trendsLastWeek: { complianceImprovement: 0, issuesReduced: 0 },
-      };
-    }
-
-    try {
-      const sinceDate = new Date();
-      sinceDate.setDate(sinceDate.getDate() - days);
-
-      // Get all validations for the organization in the timeframe
-      const validations = await db
-        .select()
-        .from(coauthorValidationHistory)
-        .where(
-          and(
-            eq(coauthorValidationHistory.organizationId, organizationId),
-            gte(coauthorValidationHistory.performedAt, sinceDate)
-          )
-        )
-        .orderBy(desc(coauthorValidationHistory.performedAt));
-
-      if (validations.length === 0) {
-        return {
-          totalValidations: 0,
-          averageComplianceScore: 0,
-          commonIssues: [],
-          trendsLastWeek: { complianceImprovement: 0, issuesReduced: 0 },
-        };
-      }
-
-      // Calculate statistics
-      const totalValidations = validations.length;
-      const averageComplianceScore = Math.round(
-        validations.reduce((sum, v) => sum + (v.complianceScore || 0), 0) / totalValidations
-      );
-
-      // Analyze common issues
-      const issueCategories = new Map<string, number>();
-      for (const validation of validations) {
-        const results = validation.validationResults as any;
-        const issues = Array.isArray(results?.issues) ? results.issues : [];
-        for (const issue of issues) {
-          const category = issue.category || 'unknown';
-          issueCategories.set(category, (issueCategories.get(category) || 0) + 1);
-        }
-      }
-
-      const commonIssues = Array.from(issueCategories.entries())
-        .map(([category, count]) => ({ category, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
-
-      // Calculate weekly trends
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-
-      const recentValidations = validations.filter(v => new Date(v.performedAt) >= weekAgo);
-      const olderValidations = validations.filter(v => new Date(v.performedAt) < weekAgo);
-
-      const recentAvgScore =
-        recentValidations.length > 0
-          ? recentValidations.reduce((sum, v) => sum + (v.complianceScore || 0), 0) /
-            recentValidations.length
-          : 0;
-
-      const olderAvgScore =
-        olderValidations.length > 0
-          ? olderValidations.reduce((sum, v) => sum + (v.complianceScore || 0), 0) /
-            olderValidations.length
-          : recentAvgScore;
-
-      const recentAvgIssues =
-        recentValidations.length > 0
-          ? recentValidations.reduce((sum, v) => sum + (v.totalIssues || 0), 0) /
-            recentValidations.length
-          : 0;
-
-      const olderAvgIssues =
-        olderValidations.length > 0
-          ? olderValidations.reduce((sum, v) => sum + (v.totalIssues || 0), 0) /
-            olderValidations.length
-          : recentAvgIssues;
-
-      return {
-        totalValidations,
-        averageComplianceScore,
-        commonIssues,
-        trendsLastWeek: {
-          complianceImprovement: Math.round((recentAvgScore - olderAvgScore) * 10) / 10,
-          issuesReduced: Math.round((olderAvgIssues - recentAvgIssues) * 10) / 10,
-        },
-        recentActivity: recentValidations.length,
-        highestScore: Math.max(...validations.map(v => v.complianceScore || 0)),
-        lowestScore: Math.min(...validations.map(v => v.complianceScore || 0)),
-      };
-    } catch (error) {
-      console.error('Error getting validation statistics:', error);
-      return {
-        totalValidations: 0,
-        averageComplianceScore: 0,
-        commonIssues: [],
-        trendsLastWeek: { complianceImprovement: 0, issuesReduced: 0 },
-      };
-    }
   }
 
   /**

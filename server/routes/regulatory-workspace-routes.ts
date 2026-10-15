@@ -38,6 +38,7 @@ import { z } from 'zod';
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { resolveOrgId } from '../types/auth-request.js';
+import { plural } from '../../shared/utils/plural.js';
 
 const logger = createScopedLogger('regulatory-workspace-routes');
 
@@ -100,8 +101,6 @@ function isUndefinedTable(err: unknown): boolean {
 function sectionNum(code: string): string {
   return code.replace(/^m(?=\d)/i, '');
 }
-
-const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 interface SectionRow {
   section_code: string;

@@ -1,0 +1,158 @@
+{"fixture":"ready","name":"c2c-durable-receipts-fa3a3349-b01","port":32770,"version":"PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"}
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts
+{
+  "timestamp": "2026-10-14T20:58:01.763Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG01 actual installed runtime/purger posture, populated replay and ordinary append-only controls 144ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG02 actual default selected writer commits viewer V2 despite actual legacy INSERT denial 74ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG03 actual FORCE tenant RLS hides foreign metadata and refuses foreign insert 48ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG04 two-session identical and mismatched ID retries wait then preserve one immutable row 155ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG05 actor/private history filters before count/LIMIT and survives source removal 87ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG06 same-length re-extraction committed during advisory wait refuses V2 admission 83ms
+stderr | docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG07 cancellation after actual V2 INSERT rolls back the transaction and accepted count
+{
+  "timestamp": "2026-10-14T20:58:03.528Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "7831ee2a-179b-4130-9d2a-e39554607911",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG07 cancellation after actual V2 INSERT rolls back the transaction and accepted count 38ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG08 actual complete export contains durable hashes/ranges and records final export evidence 75ms
+stderr | docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG09 canonical purge uses actual NOLOGIN/Vault doors and one retained chained audit
+{
+  "timestamp": "2026-10-14T20:58:03.714Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 981009,
+    "purgedByUserId": 981009,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:3a62a2a86807d1c4c7d7b1dc7fa691582f2d235e789cac5d8d9800ed91f704a7",
+    "deletedRows": {
+      "ana_source_read_receipts": 1,
+      "vault.documents": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "sourceReadReceiptErasure": {
+      "receipts": 1
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG09 canonical purge uses actual NOLOGIN/Vault doors and one retained chained audit 113ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG10 audit failure rolls back ledger, Vault deletion and status together 92ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG11 changed final export after source reservation wait refuses all erasure 125ms
+ ✓ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG12 fresh status and retention are rechecked after organization lock waits 222ms
+ × docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG13 active hold committed while purge waits is observed before deletes 47ms
+   → remaining connection slots are reserved for roles with the SUPERUSER attribute
+ × docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG14 source writer barriers precede purge organization locks without an inversion 11ms
+   → remaining connection slots are reserved for roles with the SUPERUSER attribute
+ × docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG15 held status and legal-hold reservations serialize late mutation through COMMIT 8ms
+   → remaining connection slots are reserved for roles with the SUPERUSER attribute
+ × docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG16 zero-row status UPDATE cannot commit source erasure or its audit 9ms
+   → remaining connection slots are reserved for roles with the SUPERUSER attribute
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG13 active hold committed while purge waits is observed before deletes
+error: remaining connection slots are reserved for roles with the SUPERUSER attribute
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ Module.exportTenantFull server/services/tenant-export/tenant-full-export.service.ts:310:21
+    308|   organizationId: number
+    309| ): Promise<TenantFullExport> {
+    310|   const orgResult = await client.query<{
+       |                     ^
+    311|     id: number;
+    312|     slug: string;
+ ❯ finalExport docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:122:52
+ ❯ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:289:56
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 137, severity: 'FATAL', code: '53300', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postinit.c', routine: 'InitPostgres' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG14 source writer barriers precede purge organization locks without an inversion
+error: remaining connection slots are reserved for roles with the SUPERUSER attribute
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ Object.connect docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:73:20
+     71|   handles.push(pool);
+     72|   return { query: (sql: string, params?: any[]) => pool.query(sql, par…
+     73|     const client = await pool.connect(); const pid = (await client.que…
+       |                    ^
+     74|     return { release: () => client.release(), query: async (sql: strin…
+     75|       const result = await client.query(sql, params); await hook?.(sql…
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:297:13
+ ❯ save docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:104:105
+ ❯ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:297:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 137, severity: 'FATAL', code: '53300', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postinit.c', routine: 'InitPostgres' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG15 held status and legal-hold reservations serialize late mutation through COMMIT
+error: remaining connection slots are reserved for roles with the SUPERUSER attribute
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ Object.connect docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:73:20
+     71|   handles.push(pool);
+     72|   return { query: (sql: string, params?: any[]) => pool.query(sql, par…
+     73|     const client = await pool.connect(); const pid = (await client.que…
+       |                    ^
+     74|     return { release: () => client.release(), query: async (sql: strin…
+     75|       const result = await client.query(sql, params); await hook?.(sql…
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:297:13
+ ❯ save docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:104:105
+ ❯ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:307:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 137, severity: 'FATAL', code: '53300', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postinit.c', routine: 'InitPostgres' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG16 zero-row status UPDATE cannot commit source erasure or its audit
+error: remaining connection slots are reserved for roles with the SUPERUSER attribute
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ Object.connect docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:73:20
+     71|   handles.push(pool);
+     72|   return { query: (sql: string, params?: any[]) => pool.query(sql, par…
+     73|     const client = await pool.connect(); const pid = (await client.que…
+       |                    ^
+     74|     return { release: () => client.release(), query: async (sql: strin…
+     75|       const result = await client.query(sql, params); await hook?.(sql…
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:297:13
+ ❯ save docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:104:105
+ ❯ docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/durable-postgres.test.mts:318:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 137, severity: 'FATAL', code: '53300', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'postinit.c', routine: 'InitPostgres' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 passed (16)
+   Start at  20:57:59
+   Duration  4.85s (transform 1.62s, setup 0ms, import 3.09s, tests 1.49s, environment 0ms)
+
+{"fixture":"cleaned","name":"c2c-durable-receipts-fa3a3349-b01","testExitCode":1,"cleanup":"exact owned container removed","cleanupVerified":true}

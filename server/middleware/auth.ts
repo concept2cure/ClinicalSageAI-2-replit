@@ -15,14 +15,15 @@ import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
-  issuedAtOfClaims,
+  organizationIdOfClaims,
   readAccountStandingBeforeTenant,
-  sessionPredatesPasswordChange,
+  sessionEndedByStanding,
   type AccountStanding,
 } from '../services/account-standing';
 import { establishRequestTenantScope } from './establishRequestTenantScope';
 import { enforceTenantLifecycle } from './tenantLifecycleGuard';
 import { enforceStorageQuota } from './storageQuotaGuard';
+import { rolesHeldBy } from '../../shared/constants/org-roles';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -190,11 +191,20 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // Security audit 2026-09-24, IAM-04: and so is the account's last password
     // change, read in the same statement. A reset or change stamps
     // users.password_changed_at; a token issued before the stamp is a session
-    // the holder meant to end, and is answered like a revoked one.
+    // the holder meant to end, and is answered like a revoked one. Plan P0-4b:
+    // so is a session begun before users.sessions_ended_at (a sign-out
+    // everywhere, the account leaving 'active'), measured from the session's
+    // start (account-standing.ts sessionEndedByStanding). And (R1) so is a
+    // session that began before the account's membership in the token's
+    // organisation did, read in the same statement: removing a member and
+    // adding them back does not hand them the session they held before.
     const accountId = parseFiniteInt(subject);
+    const claimedOrganizationId = organizationIdOfClaims(decoded);
     Promise.all([
       isTokenRevoked(token),
-      accountId === null ? Promise.resolve<AccountStanding | null>(null) : readAccountStandingBeforeTenant(accountId),
+      accountId === null
+        ? Promise.resolve<AccountStanding | null>(null)
+        : readAccountStandingBeforeTenant(accountId, claimedOrganizationId),
       sessionInactivityReason(token, decoded),
     ]).then(
       ([revoked, standing, inactivity]) => {
@@ -206,7 +216,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
           res.status(401).json({ error: { code: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE } });
           return;
         }
-        if (standing && sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
+        if (standing && sessionEndedByStanding(decoded, standing)) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
           return;
         }
@@ -292,21 +302,40 @@ function admitLiveSession(
 /**
  * The role a guard reads is the membership row's, read on this request, not
  * the one minted into the token at login (security audit 2026-09-24 IAM-10,
- * plan P1-4). enforceOrgMembership attaches `organizationRole` from the row it
- * just confirmed (cached 60 s; role changes invalidate the cache), and this
- * applies it: `role` and `roles` (expanded through the same functional grants
- * the token path used) now come from the database, so a demotion takes effect
- * on the next request and a promotion needs no new sign-in. server/auth.ts,
- * the other authenticator, has resolved its role from the same row since its
- * membership query was added; this brings authenticateToken level with it.
- * A membership without a role value (never the case: the column is NOT NULL
- * with a default) leaves the token's claims in place.
+ * plan P1-4): `role` and `roles` (expanded through the same functional grants
+ * the token path used) come from the database, so a demotion takes effect on
+ * the next request and a promotion needs no new sign-in.
+ *
+ * Which reading, in order:
+ *   1. The role the global /api gate (server/auth.ts authMiddleware) read from
+ *      organization_users on THIS request, uncached, for the same account and
+ *      organisation (req.identity). Every router gate behind /api has one.
+ *   2. Otherwise `organizationRole`, which enforceOrgMembership attaches from
+ *      its cache (60 s per server task; the role writers invalidate it on the
+ *      task that wrote).
+ * Plan P0-4b fix round, 2026-10-01: until then only (2) was read, so on any
+ * task but the writer's a demoted administrator kept the old role behind a
+ * router gate for up to a minute, and requireRole('admin') admitted them, while
+ * the global gate in front of it already served the new one. A membership
+ * without a role value (never the case: the column is NOT NULL with a
+ * default) leaves the token's claims in place.
  */
 function applyOrganizationRole(req: Request): void {
   const user = req.user as ({ organizationRole?: unknown } & NonNullable<Request['user']>) | undefined;
-  if (!user || typeof user.organizationRole !== 'string' || !user.organizationRole) return;
-  user.role = user.organizationRole;
-  user.roles = expandRoleClaims(user.organizationRole, undefined);
+  if (!user) return;
+  const role = roleReadOnThisRequest(req, user) ?? user.organizationRole;
+  if (typeof role !== 'string' || !role) return;
+  user.role = role;
+  user.roles = expandRoleClaims(role, undefined);
+}
+
+/** The global gate's uncached reading of this account's role in this organisation, on this request; else null. */
+function roleReadOnThisRequest(req: Request, user: NonNullable<Request['user']>): string | null {
+  const identity = (req as { identity?: { legacyUserId?: unknown; organizationId?: unknown; role?: unknown } }).identity;
+  if (!identity || typeof identity.role !== 'string' || !identity.role) return null;
+  const sameAccount = identity.legacyUserId === parseFiniteInt(user.userId);
+  const sameOrganisation = identity.organizationId === parseFiniteInt(user.organizationId);
+  return sameAccount && sameOrganisation ? identity.role : null;
 }
 
 /**
@@ -397,13 +426,33 @@ export function expandRoleClaims(
   roles: readonly string[] | undefined,
 ): string[] {
   const declared = roles?.length ? [...roles] : [role || 'user'];
-  const granted = declared.flatMap(r => ORG_ROLE_FUNCTIONAL_GRANTS.get(String(r).toLowerCase()) ?? []);
+  // P-18: a signing role is granted what the role it extends is granted.
+  const granted = declared.flatMap(r => rolesHeldBy(r).flatMap(held => ORG_ROLE_FUNCTIONAL_GRANTS.get(held) ?? []));
   return [...new Set([...declared, ...granted])];
 }
 
 /**
  * Require specific role(s) for access
  */
+/**
+ * Whether role claims satisfy a requireRole guard: the decision the middleware
+ * below enforces, as a pure function over the claims given, so a screen can
+ * report it before the act (authoring.router.ts callerDocumentAccess) instead
+ * of keeping a second permission model. Extracted unchanged from requireRole
+ * (2026-10-08, filing-spine design review).
+ */
+export function roleClaimsSatisfy(
+  claims: { role?: string; roles?: readonly string[] },
+  allowedRoles: readonly string[],
+): boolean {
+  const userRoles = ((claims.roles as string[] | undefined) || [claims.role as string]).flatMap(r => [r, ...rolesHeldBy(r).slice(1)]);
+  const hasRole = allowedRoles.some(role => userRoles?.includes(role) || role === '*');
+
+  const requiresPlatformRole = allowedRoles.some(role => PLATFORM_SCOPED_ROLES.has(role));
+  const orgAdminStandIn = !requiresPlatformRole && Boolean(userRoles?.includes('admin'));
+  return hasRole || orgAdminStandIn;
+}
+
 export const requireRole = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // SECURITY FIX: Dev-mode role bypass removed. Roles are always enforced.
@@ -443,13 +492,10 @@ export const requireRole = (...allowedRoles: string[]) => {
     // writes it. A route that genuinely wants to admit org admins alongside
     // staff still works by listing 'admin' explicitly — `hasRole` is evaluated
     // before the stand-in, so an explicit grant always wins.
-    const userRoles = req.user.roles || [req.user.role];
-    const hasRole = allowedRoles.some(role => userRoles?.includes(role) || role === '*');
-
-    const requiresPlatformRole = allowedRoles.some(role => PLATFORM_SCOPED_ROLES.has(role));
-    const orgAdminStandIn = !requiresPlatformRole && Boolean(userRoles?.includes('admin'));
-
-    if (!hasRole && !orgAdminStandIn) {
+    // P-18: a signing role satisfies a guard that admits the role it extends
+    // (approver → manager, reviewer → member). Applied here as well as in
+    // expandRoleClaims, so a token's claims cannot be where the rule is lost.
+    if (!roleClaimsSatisfy(req.user, allowedRoles)) {
       return res.status(403).json({
         error: { code: 'AUTH_004', message: 'Insufficient permissions' },
       });

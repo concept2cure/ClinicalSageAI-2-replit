@@ -1,0 +1,14 @@
+Mutant R49-found-earns-check-mark: every claim found earns a check mark again (HS-2)
+
+--- client/src/concept2cure/v2/AnaGrounding.tsx
+- <Row tone="unknown">
+          {found === claims
++ <Row tone={(found === claims ? 'ok' : 'unknown') as Tone}>
+          {found === claims
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says every claim was found, and still earns no check mark: found is not verified (HS-2) 12ms
+      Tests  1 failed | 21 passed (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

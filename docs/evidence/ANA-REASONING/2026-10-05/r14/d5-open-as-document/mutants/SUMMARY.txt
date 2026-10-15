@@ -1,0 +1,19 @@
+Round 14, door 5 (the conversation draft card's "Open as document").
+Test: client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx
+
+baseline: Tests  8 passed (8)
+
+D5-01   KILLED    the governed-write rule is not applied at this door (trunk behaviour)
+        Tests  2 failed | 6 passed (8)
+D5-02   KILLED    the refusal names the insert act, so it claims a thing this control does not do
+        Tests  1 failed | 7 passed (8)
+D5-03   KILLED    the unfinished flag is dropped, so a stopped answer may be filed
+        Tests  1 failed | 7 passed (8)
+D5-04   KILLED    the reason goes back to a title, unreachable by keyboard and invisible on touch
+        Tests  4 failed | 4 passed (8)
+D5-05   KILLED    the drafting turn is not carried onto the card, so no card can ever be admitted
+        Tests  2 failed | 6 passed (8)
+D5-07   SURVIVED  the click guard is dropped, so only the disabled attribute stands between the rule and the post
+        Tests  8 passed (8)
+D5-06   KILLED    the rule is reported ahead of the host’s own refusals, so an empty draft blames the model
+        Tests  1 failed | 7 passed (8)

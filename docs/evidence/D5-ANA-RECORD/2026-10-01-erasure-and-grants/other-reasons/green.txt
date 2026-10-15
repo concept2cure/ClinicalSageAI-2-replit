@@ -1,0 +1,24 @@
+ ✓ tests/routes/realtime-collab-lock-reason.test.ts > section-lock ledger rows > an acquire and a release with no reason record none, not a sentence 62ms
+ ✓ tests/routes/realtime-collab-lock-reason.test.ts > section-lock ledger rows > a takeover records the reason the person gave, trimmed 15ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > writes the signature with the artifact target, meaning, content binding and verified factors 463ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > without a verified sign-off it places nothing and signs nothing 35ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > a failed signature write rolls the placement back 62ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > refuses an artifact outside the caller's organization, writing nothing 35ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > writes the signature over the ledger, claiming no content hash 45ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > another organization's project is refused before anything is written, signature included (PF-03) 29ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > without a verified sign-off creates no package 24ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > a failed signature write rolls the package back 26ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > writes the reverted content as a new version, bound to that content and version 42ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > without a verified sign-off writes no version 17ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > a failed signature write rolls the new version back 33ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > signs first: a self-erasure is signed under the pre-erasure name, bound to the ledger 56ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > records the reason the person stated in the ceremony, not the one AnA wrote 36ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > retains regulated artifact content and reports it with the legal basis 35ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > without a verified sign-off erases nothing 21ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > a failed signature write rolls the whole erasure back 28ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > a failing redaction statement returns failure with nothing committed 34ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > an absent table is reported as not applicable, not as zero, and the erasure completes 37ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > the erasure record is not optional: a missing request table fails the erasure 32ms
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > tagArtifact into a section that already has an artifact > updates that artifact, merging its metadata 20ms
+ Test Files  2 passed (2)
+      Tests  22 passed (22)

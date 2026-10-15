@@ -1,6 +1,8 @@
 # Surface consolidation — the never-3-of-anything pass the UI never got
 
-**Status: awaiting a decision per cluster. Nothing here has been merged or deleted.**
+**Status: superseded on 2026-10-08 by `docs/SURFACE_DECISIONS_2026-10-08.md`, which decides every surface under the founder's delegation of 2026-10-07.** Kept for its history; do not cite it against the newer record.
+
+~~Status: awaiting a decision per cluster. Nothing here has been merged or deleted.~~
 
 The zero-duplication doctrine (D1–D11) was applied hard to services, routes and
 tables. It was never once applied to surfaces. This document is that pass: it

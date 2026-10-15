@@ -1,0 +1,12 @@
+# Fix round gates — 2026-10-01T07:18:21Z, HEAD 0e58e794 + working tree
+## npm run check:security-patterns
+check-security-patterns: 0 violations across 2961 file(s).
+exit=0
+## npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 48 baselined site(s) across 46 file(s); no file gained one.
+[ci:server-error-leaks] 48 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0
+## npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 117 baselined across 51 file(s).
+  3 baselined file(s) now below their count — run --write-baseline to shrink it.
+exit=0

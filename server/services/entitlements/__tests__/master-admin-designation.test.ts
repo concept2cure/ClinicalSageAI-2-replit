@@ -3,11 +3,13 @@
  *
  * ── The defect these pin against ─────────────────────────────────────────────
  *
- * `isMasterAdminIdentity` reads two synchronous signals: the role on the request
- * and an email allowlist. Neither can see a `platform_role_grants` row — the
- * audited, in-app way the owner designates personnel through the Access
- * Management console, which exists precisely so nobody has to edit an env
- * allowlist.
+ * `isMasterAdminIdentity` reads one synchronous signal: an email allowlist (on
+ * the owner's own sign-in). It used to read the role on the request too; that
+ * is the TENANT membership role, so it is no longer read (D6, 2026-10-05,
+ * docs/evidence/D6/2026-10-05-platform-standing/). The allowlist cannot see a
+ * `platform_role_grants` row — the audited, in-app way the owner designates
+ * personnel through the Access Management console, which exists precisely so
+ * nobody has to edit an env allowlist.
  *
  * `requirePlatformAdmin` DOES honour those rows, and does not write the
  * resolved role back onto the request. So the two questions disagreed: somebody
@@ -121,9 +123,17 @@ describe('resolveMasterAdmin — in-app designations', () => {
     process.env.PLATFORM_ADMIN_EMAILS = OWNER;
     process.env.MASTER_ADMIN_EMAILS = OWNER;
     expect(await resolveMasterAdmin(reqOf({ userId: 1, userEmail: OWNER }))).toBe(true);
-    expect(await resolveMasterAdmin(reqOf({ userId: 2, userRole: 'super_admin' }))).toBe(true);
     // The owner path must not gain a database round trip.
     expect(dbQuery).not.toHaveBeenCalled();
+  });
+
+  it('a request role of super_admin is no sync owner signal: without a grant row it is not the owner', async () => {
+    // Inverted 2026-10-05 (D6): the request role is the tenant membership role; standing is a platform grant — docs/evidence/D6/2026-10-05-platform-standing/
+    // (It was the second case above, expecting `userRole: 'super_admin'` alone to be the owner with no query.)
+    noGrant();
+    expect(await resolveMasterAdmin(reqOf({ userId: 2, userRole: 'super_admin' }))).toBe(false);
+    // Not a short-circuit: the decision went to the grant table and found none.
+    expect(dbQuery).toHaveBeenCalled();
   });
 
   it('is not the owner when there is no designation', async () => {
@@ -187,12 +197,14 @@ describe('resolveMasterAdmin — in-app designations', () => {
 
   it('loses the grant at once when the last platform standing is revoked — no window', async () => {
     granted();
-    const req = reqOf({ userId: 77, userRole: 'admin' });
-    expect(await resolveMasterAdmin(req)).toBe(true);
+    expect(await resolveMasterAdmin(reqOf({ userId: 77, userRole: 'admin' }))).toBe(true);
 
-    // The owner designation is cached; platform administration is not.
+    // The owner designation is cached; platform administration is not, beyond
+    // the one request that asked. holdsPlatformRole memoises per request object
+    // (D6, 2026-10-05) so a guard and its handler cost one lookup; the next
+    // request is a new object and asks again. This used one object for both.
     noGrant();
-    expect(await resolveMasterAdmin(req)).toBe(false);
+    expect(await resolveMasterAdmin(reqOf({ userId: 77, userRole: 'admin' }))).toBe(false);
   });
 
   it('caches per user, not globally', async () => {

@@ -1,0 +1,22 @@
+Mutant D3-template-head: template and head open no region.
+Result: KILLED (vitest exit 1, 3 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -281,3 +281,3 @@
+   'textarea', 'xmp', 'plaintext', 'title', 'script', 'style', 'iframe', 'noembed', 'noframes', 'noscript',
+-  'template', 'head', 'svg', 'math',
++  'svg', 'math',
+ ]);
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > outside the region it does not compare, node-html-parser and a browser show the same text, and the comparison drops only what neither shows 79ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <template> in HTML content 7ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds <head> in HTML content 1ms
+
+--- summary ---
+ Test Files  1 failed | 3 passed (4)
+      Tests  3 failed | 144 passed (147)

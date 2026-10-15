@@ -1,0 +1,13 @@
+Mutant R76-hr-was-unread: "The HR for death was 0.49" is not read as a figure
+
+--- server/services/ana/answer-check-figures.ts
+- String.raw`\b(HR|OR|RR|IRR)\b(?:[ \t]{1,2}for[ \t]{1,2}[A-Za-z][A-Za-z ]{0,24}?)?${S}(?:[,:=]|was|of|is)?${S}(${N})`,
++ String.raw`\b(HR|OR|RR|IRR)\b${S}[,:=]?${S}(${N})`,
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure she searched for is still found in a passage the source returns (HS-5 holds) 10ms
+ × tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a hazard ratio needs its name: a dose is not a hazard ratio 2ms
+      Tests  2 failed | 87 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

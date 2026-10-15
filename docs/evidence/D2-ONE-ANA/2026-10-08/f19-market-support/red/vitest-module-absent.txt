@@ -1,0 +1,26 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts [ server/services/regulatory/__tests__/market-support.test.ts ]
+Error: Cannot find module '../market-support' imported from /home/user/ClinicalSageAI-2-replit/server/services/regulatory/__tests__/market-support.test.ts
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:22:1
+     20|  */
+     21| import { describe, expect, it } from 'vitest';
+     22| import {
+       | ^
+     23|   marketSupport,
+     24|   module1ShapeForAgency,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  14:00:07
+   Duration  491ms (transform 101ms, setup 107ms, import 0ms, tests 0ms, environment 0ms)
+

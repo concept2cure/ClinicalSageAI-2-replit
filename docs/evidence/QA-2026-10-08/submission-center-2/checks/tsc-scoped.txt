@@ -1,0 +1,9 @@
+# Scoped tsc (TypeScript 7, tsconfig extending the root, files = the 25 changed files + the repo's ambient .d.ts)
+# Errors located in a changed file: 0.
+# The four below are in untouched middleware, pulled in transitively; their Request augmentation lives in
+# server/middleware/tenantContext.ts (declare global), which the scoped program does not include.
+
+server/middleware/establishRequestTenantScope.ts(163,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(165,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(62,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.

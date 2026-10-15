@@ -1,0 +1,12 @@
+Mutant P01-check-not-handed: the write-back is not handed the turn's check
+
+--- server/routes/ana-ri/post-processing.ts
+- answerCheck: checkOf(verification),
++ 
+
+Tests run: server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts > the write-back is handed the turn's answer check > the same check the message is stored with: what it found and what it did not 43ms
+      Tests  1 failed (1)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

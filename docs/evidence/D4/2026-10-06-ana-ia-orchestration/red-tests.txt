@@ -1,0 +1,121 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T13:58:47.141Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T13:58:47.142Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T13:58:47.142Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+{
+  "timestamp": "2026-10-06T13:58:47.662Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/intelligent-awareness.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > RI receives the shared awareness policy exactly once 2ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > stream orchestration receives the shared awareness policy exactly once 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > compact cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > unified cortex receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > submission buffered receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > submission streaming receives the shared awareness policy exactly once 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > full preserves the practical boundaries 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > brief preserves the practical boundaries 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > does not let the chat register force a verdict before a blocking question 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA across AnA prompt paths > does not let strategy or drafting shortcuts override IA 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > RI carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > stream orchestration carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > compact cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > unified cortex carries scientific and market-specific critical thinking 1ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > submission buffered carries scientific and market-specific critical thinking 0ms
+ ✓ server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA is subject matter judgment > submission streaming carries scientific and market-specific critical thinking 0ms
+ × server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "What does CTD stand for?" 14ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Draft the supplied clinical overview using these confirmed results." 3ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Which market should we target? I have not chosen an intended use yet." 2ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > allows explicit reconsideration without silently rewriting recorded decisions 4ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "What does CTD stand for?"
+ FAIL  server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Draft the supplied clinical overview using these confirmed results."
+ FAIL  server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > does not force a verdict or full intake for "Which market should we target? I have not chosen an intended use yet."
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/intelligent-awareness.test.ts:80:51
+     78|   ])('does not force a verdict or full intake for "%s"', message => {
+     79|     const prompt = orchestrate({ message }).systemPrompt;
+     80|     expect(prompt.includes('still answer first')).toBe(false);
+       |                                                   ^
+     81|     expect(prompt.includes('For a small clarification, ask focused que…
+     82|     expect(prompt.includes('Do not automatically start or restart an i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana-ri/__tests__/intelligent-awareness.test.ts > IA survives orchestration overlays > allows explicit reconsideration without silently rewriting recorded decisions
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/intelligent-awareness.test.ts:108:94
+    106|     }).systemPrompt;
+    107|     expect(prompt.includes('Target the United States')).toBe(true);
+    108|     expect(prompt.includes('Do not repeat recommendations that contrad…
+       |                                                                                              ^
+    109|     expect(prompt.includes('Reconsider prior recommendations when new …
+    110|     expect(prompt.includes('Explain the departure; do not silently ame…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 18 passed (22)
+   Start at  09:58:44
+   Duration  8.16s (transform 4.52s, setup 85ms, import 7.76s, tests 37ms, environment 0ms)
+

@@ -1,0 +1,12 @@
+Mutant D15-draft-unrecorded: the record does not hold the draft
+
+--- server/services/ana/turn-record-draft.ts
+- this.recorder.setOutputs({ drafts: [{ title: d.label, content, authoringDocId: d.authoringDocId }] });
++ 
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > files one record holding the prompt sent, the draft returned, the model and the gateway request 147ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

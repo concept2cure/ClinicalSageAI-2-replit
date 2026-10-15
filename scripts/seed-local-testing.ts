@@ -21,7 +21,13 @@
  *   DATABASE_URL=... npx tsx scripts/seed-local-testing.ts
  */
 import { pool } from '../server/db.js';
+import { getRuntimeDatabaseUrl } from '../server/db/getDatabaseUrl.js';
+// @ts-expect-error — a plain .mjs module, no declarations.
+import { assertLocalDatabase } from './seed/local-only.mjs';
 import { persistStudyDesignTx } from '../server/services/study-design/study-design-repository.js';
+
+// "Laptops and throwaway containers only" was a comment until 2026-10-15.
+assertLocalDatabase(getRuntimeDatabaseUrl() ?? '', 'seed-local-testing');
 
 const ORG = Number(process.env.SEED_ORG_ID ?? 1);
 const USER = Number(process.env.SEED_USER_ID ?? 1);
@@ -122,10 +128,10 @@ async function main(): Promise<void> {
   ] as const;
   for (const [id, question, answer] of threads) {
     await pool.query(
-      `INSERT INTO chat_threads (id, user_id, organization_id, metadata, created_at, updated_at)
+      `INSERT INTO chat_threads (id, user_id, organization_id, program_id, created_at, updated_at)
        VALUES ($1,$2,$3,$4, NOW() - INTERVAL '2 days', NOW())
-       ON CONFLICT (id) DO UPDATE SET metadata = EXCLUDED.metadata`,
-      [id, USER, ORG, JSON.stringify({ programId })],
+       ON CONFLICT (id) DO UPDATE SET program_id = EXCLUDED.program_id`,
+      [id, USER, ORG, programId],
     );
     const had = await pool.query('SELECT 1 FROM chat_messages WHERE thread_id = $1 LIMIT 1', [id]);
     if (had.rowCount === 0) {

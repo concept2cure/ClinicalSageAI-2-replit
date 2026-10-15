@@ -57,6 +57,10 @@ import { I } from '../icons';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import type { FireToast } from '../toast';
 import { AnaActivity } from '../AnaActivity';
+import { AnswerCheckRows } from '../../components/ana/AnswerCheckRows';
+import { readAnswerCheck, type AnswerCheckView } from '../../components/ana/anaAnswerCheck';
+import { readTurnRecord } from '../../components/ana/anaProgress';
+import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
 
 /** `draft.metadata` as POST …/ai/draft returns it. Every field is optional:
  *  the metadata is a report, and a fact the server did not send is rendered
@@ -95,6 +99,12 @@ export interface PendingAiDraft {
    *  recorded for it. */
   draftId: string | null;
   metadata: AiDraftMetadata;
+  /** The engine's check of the draft as generated, against the evidence the
+   *  model was shown (round 12, RT-6). Null when the server sent none: shown
+   *  as not checked, never as a pass. */
+  check: AnswerCheckView | null;
+  /** Whether the draft's turn was filed; absent when the server did not say. */
+  turnRecord?: AnaTurnRecordStatus;
 }
 
 /** The lineage summary POST …/ai/draft/accept returns on success. */
@@ -261,9 +271,44 @@ export function describeAcceptFailure(
 
 const NOTE_TONE: Record<'ok' | 'warn' | 'error', React.CSSProperties> = {
   ok: {},
-  warn: { borderLeftColor: 'var(--warning,#b54708)' },
+  warn: { borderLeftColor: 'var(--warning)' },
   error: { borderLeftColor: 'var(--error)' },
 };
+
+/**
+ * What the engine found in the draft, before the accept (round 12, RT-6): the
+ * check of the draft AS GENERATED against the evidence the model was shown.
+ * A draft with no check says so; edits since are said to be unchecked.
+ */
+function DraftCheck({ check, edited }: { check: AnswerCheckView | null; edited: boolean }) {
+  return (
+    <div className="ana-grounding" data-testid="ai-draft-check" style={{ margin: 0, fontSize: 12 }}>
+      {check ? (
+        <>
+          <div style={{ fontSize: 11, opacity: 0.75 }}>
+            Checked as drafted, against the Data Room sources it was given
+            {edited ? ' — your edits are not checked' : ''}
+          </div>
+          <AnswerCheckRows check={check} />
+        </>
+      ) : (
+        <div>This draft was not checked against its sources.</div>
+      )}
+    </div>
+  );
+}
+
+/** Whether the draft's turn was filed: said when it was not, never implied when unknown. */
+function DraftRecord({ turnRecord }: { turnRecord: AnaTurnRecordStatus | undefined }) {
+  if (turnRecord?.status === 'recorded') return null;
+  return (
+    <div data-testid="ai-draft-record" style={{ fontSize: 11, opacity: 0.75 }}>
+      {turnRecord?.status === 'not_recorded'
+        ? `Not recorded — ${turnRecord.reason}`
+        : 'Whether this draft’s turn was recorded was not reported.'}
+    </div>
+  );
+}
 
 export function AuthoringAiDraft({
   sectionId,
@@ -330,7 +375,7 @@ export function AuthoringAiDraft({
       const json = (await res.json().catch(() => null)) as
         | {
             success?: boolean;
-            draft?: { content?: string; draftId?: string; metadata?: AiDraftMetadata };
+            draft?: { content?: string; draftId?: string; metadata?: AiDraftMetadata; check?: unknown; turnRecord?: unknown };
             error?: unknown;
             message?: string;
           }
@@ -361,6 +406,8 @@ export function AuthoringAiDraft({
         draftId:
           vouched && typeof json?.draft?.draftId === 'string' ? json.draft.draftId : null,
         metadata: json?.draft?.metadata ?? {},
+        check: readAnswerCheck(json?.draft?.check) ?? null,
+        turnRecord: readTurnRecord(json?.draft?.turnRecord),
       };
       setDraft(next);
       setBody(content);
@@ -619,6 +666,9 @@ export function AuthoringAiDraft({
             {' · not saved'}
           </div>
 
+          <DraftCheck check={draft.check} edited={edited} />
+          <DraftRecord turnRecord={draft.turnRecord} />
+
           {/* A model draft the server could not park cannot reach the accept
               endpoint at all. Say what adopting it would actually record. */}
           {!draft.draftId && (
@@ -665,7 +715,7 @@ export function AuthoringAiDraft({
             <div
               role="status"
               data-testid="ai-draft-edited"
-              style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}
+              style={{ fontSize: 11, color: 'var(--warning)' }}
             >
               Edited. The audit record will note that the saved text differs from what the model
               produced, and the citations describe the draft’s origin rather than your wording.
@@ -676,7 +726,7 @@ export function AuthoringAiDraft({
             <div
               role="status"
               data-testid="ai-draft-dirty-warning"
-              style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}
+              style={{ fontSize: 11, color: 'var(--warning)' }}
             >
               The editor has unsaved changes. Accepting replaces the section content, and those
               unsaved edits are not part of this draft.

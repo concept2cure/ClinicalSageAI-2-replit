@@ -1,0 +1,11 @@
+mutant M-model-whatever-credited: server/routes/batch-draft-routes.ts
+- const model = credited ? recordedModel(machineText.verified) : null;
++ const model = recordedModel(machineText.verified);
+
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it verifies, and still credits nothing 76ms
+   → expected 'model-of-record' to be null
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a verified claim of one word credits nothing, and the accept does not say AnA's text was accepted 29ms
+   → expected 'model-of-record' to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 49 passed (51)

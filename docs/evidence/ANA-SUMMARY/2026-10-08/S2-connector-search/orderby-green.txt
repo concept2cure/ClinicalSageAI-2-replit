@@ -1,0 +1,66 @@
+# Delta green: no orderBy on a fullText query. 2026-10-08T09:50:29Z, RLS_ENFORCE=off
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the Drive id > a search with ['google-drive'] reaches Drive 174ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress true) 88ms
+  "message": "[connector:box] Box connector authenticated",
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > with connectors omitted and PubMed configured, PubMed is not called (publicSourceEgress false) 77ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > an organisation with no repository connected sends nothing anywhere 1ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — repository-only > a public source asked for by name is refused and never called 1ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told "Google Drive is not connected for your organisation." 1ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — an organisation without Drive > is told the same when Drive is asked for beside a repository that is connected 4ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the schema > is byte-identical for two tenants with different connectors configured, and lists the five repositories 80ms
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts > search_connected_repositories — the schema > tells the model where public sources are searched instead 8ms
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:box] Box connector authenticated",
+  "message": "[connector:box] Box connector authenticated",
+  "message": "[connector:box] Box connector authenticated",
+  "message": "[connector:box] Box connector authenticated",
+  "message": "[connector:box] Box connector authenticated",
+  "message": "[connector:box] Box connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Google Drive: organization B, right after A, searches with its own token 138ms
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Box: the same, organization by organization 4ms
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > two organizations searching at once each use their own token 4ms
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > an organization with no credentials gets no search, even after another authenticated 37ms
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > escapes a backslash before a quote: O'Brien \ x → fullText contains 'O\'Brien \\ x' 101ms
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > a trailing backslash cannot swallow the closing quote 42ms
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > searches shared drives: supportsAllDrives, includeItemsFromAllDrives and corpora=allDrives 54ms
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > sends no orderBy with a fullText query: Drive refuses sorting on fullText terms 45ms
+ ✓ server/services/connectors/__tests__/google-drive-search.test.ts > GoogleDriveConnector.search — the files.list request > still returns the files Drive found 69ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result 4ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 2ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is skipped by the repository search as not connected, and never listed as searched 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is skipped by the repository search as not connected, and never listed as searched 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 1ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > searches only configured+healthy connectors and reports the rest as skipped 6ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > flags unknown requested connectors and short-circuits when none are usable 2ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > surfaces per-connector errors as skipped and clamps the limit 1ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > does not list a connector whose search failed as searched 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > public APIs are always live; env-gated integrations reflect the env 2ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports env-gated integrations as live when their env is set, for the organisation they belong to 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > resolves org connectors when an organizationId is given (live names listed) 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > counts only document repositories: a credential-free public source is not a connected repository (S2) 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports connectors as unknown without org context, and on catalog failure 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > summarizeStatuses counts live / notConfigured / unknown 1ms
+ Test Files  6 passed (6)
+      Tests  42 passed (42)
+   Start at  09:50:31
+   Duration  17.17s (transform 9.18s, setup 204ms, import 14.48s, tests 996ms, environment 1ms)

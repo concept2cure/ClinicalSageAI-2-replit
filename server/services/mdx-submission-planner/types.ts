@@ -11,9 +11,10 @@
  *   - readiness via global-markets/market-readiness.assessMarketReadiness
  *   - descriptors + capability flags via global-markets/market-registry
  *
- * HONEST BY CONSTRUCTION:
- *   - `canTransmit` mirrors the registry — true for markets with a live gateway,
- *     false for markets without one (TW/SA/ZA/MDSAP).
+ * CAPABILITY FLAGS:
+ *   - `canTransmit` mirrors the registry, which reads it from what
+ *     regulatory/market-support.ts states for the market's device and IVD
+ *     filings: false for every market today.
  *   - `canAssemble` is reported straight from the registry, never invented.
  *   - The planner never claims an assemble/transmit capability that the
  *     underlying registry does not assert.
@@ -88,7 +89,7 @@ export interface MarketPlan {
   canAssemble: boolean;
   /** What the platform can assemble today, or why it cannot. */
   assembleNote: string;
-  /** Whether this market has a live submission gateway. Mirrors the registry. */
+  /** Whether the platform transmits this market's filings. Mirrors the registry (false for every market today). */
   canTransmit: boolean;
   /**
    * Aggregated, de-duplicated blockers for this market: the honest
@@ -133,7 +134,7 @@ export interface GlobalSubmissionPlan {
   assembleCapableMarkets: MarketId[];
   /** Market ids the platform CANNOT assemble a dossier for. */
   assembleIncapableMarkets: MarketId[];
-  /** Market ids the platform CAN transmit to (has a live gateway). */
+  /** Market ids the platform CAN transmit to (canTransmit): none today. */
   transmitCapableMarkets: MarketId[];
   /** De-duplicated rollup of every blocker across all planned markets. */
   globalBlockers: string[];

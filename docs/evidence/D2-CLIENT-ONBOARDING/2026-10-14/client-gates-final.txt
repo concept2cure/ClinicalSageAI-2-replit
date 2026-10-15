@@ -1,0 +1,3 @@
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+✅ ci:unauthenticated-fetch — 86 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).

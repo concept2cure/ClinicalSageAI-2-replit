@@ -17,10 +17,11 @@ import type { AnaTool } from '../ai-gateway/types';
 // Legacy-import tools (migration 20260512).
 // ─────────────────────────────────────────────────────────────────────────────
 
+// 2026-10-15: sent the model to override "any low-confidence rows"; no row carries a confidence, and a filename match is stored 'suggested'.
 export const START_LEGACY_IMPORT: AnaTool = {
   name: 'start_legacy_import',
   description:
-    "Kick off an import of a legacy archive (eCTD zip from FDA/EMA/PMDA, eSTAR bundle, raw 510(k) folder, raw PMA module). The detector sniffs the backbone XML or falls back to filename heuristics and produces a per-file mapping into the kit's canonical sections. Returns the job id; use override_import_mapping for any low-confidence rows and then approve_import to materialize artifacts.",
+    "Kick off an import of a legacy archive (eCTD zip from FDA/EMA/PMDA, eSTAR bundle, raw 510(k) folder, raw PMA module). The detector sniffs the backbone XML or falls back to filename heuristics and produces a per-file mapping into the kit's canonical sections. Returns the job id; use override_import_mapping to confirm (status 'mapped') or correct each 'suggested' row; filename-pattern placements are not imported until confirmed. Then call approve_import to materialize artifacts.",
   input_schema: {
     type: 'object',
     properties: {
@@ -33,10 +34,11 @@ export const START_LEGACY_IMPORT: AnaTool = {
   },
 };
 
+// 2026-10-15: said mapping_source='manual'; the handler stores 'ana' ('manual' is the REST PATCH's).
 export const OVERRIDE_IMPORT_MAPPING: AnaTool = {
   name: 'override_import_mapping',
   description:
-    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='manual' and confidence=1.0.",
+    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='ana' and mapping_confidence=1.00.",
   input_schema: {
     type: 'object',
     properties: {
@@ -472,33 +474,37 @@ export const VALIDATE_DOCX: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Content-fidelity verification — proves a freshly built/edited .docx actually
-// reproduces the supplied source text (and any required caption/boilerplate
-// strings) verbatim, beyond what validate_docx (structural OOXML integrity)
-// checks. Extracts the .docx text via the same extraction path AnA reads
-// uploads with, diffs it against the source, and asserts each required string
-// is present exactly. This is the audited "verify it against your text" step.
-// ─────────────────────────────────────────────────────────────────────────────
-
+// Text fidelity only. A saved target is loaded and rechecked server-side; the
+// tool result does not establish scientific source qualification or permit sealing.
 export const VERIFY_DOCX_AGAINST_SOURCE: AnaTool = {
   name: 'verify_docx_against_source',
   description:
-    "Verify that a built or edited Word (.docx) faithfully reproduces a known source text — the audited \"verify it against your text\" step after rebuilding from a template, applying corrections, or appending paragraphs. Unlike validate_docx (which checks OOXML/ZIP structural integrity only), this extracts the document's text and (1) diffs it against expected_text to surface any content divergence, and (2) confirms each entry in required_strings (e.g. caption block, case/sponsor identifiers, sworn-paragraph or boilerplate anchors) appears verbatim. Returns { ok, missingRequiredStrings, divergenceSummary, additions, deletions } — a pass/fail the user and the Part 11 audit trail can cite. Pair with validate_docx for full (structural + content) verification. Tenant-scoped via ToolContext.",
+    "Compare a tenant-workspace Word (.docx) against a saved current artifact version by supplying artifact_id and version_number together. The server loads the reference text from the owned project, checks exact content hashes and current disposition eligibility, and rechecks the target after extraction. Returns scoped text-fidelity findings with target/version identities and DOCX/text SHA-256 digests. Without saved selectors, expected_text is caller-text fidelity only, and required_strings alone checks substrings only. Source qualification is always unassessed; this result does not authorize sealing or establish regulatory readiness. Pair with validate_docx for separate structural checks.",
   input_schema: {
     type: 'object',
     properties: {
       input_docx_path: {
         type: 'string',
-        description: 'The built/edited .docx to verify, in your organization\'s AnA workspace — a path an earlier document tool returned in this conversation, or one of your organization\'s uploads; other paths are refused (e.g. a docxPath returned by author_docx_native, build_from_template, or surgical_docx_xml_edit).',
+        description: "The built/edited .docx in your organization's AnA workspace, using a path returned by an earlier document tool or an organization upload. Other paths are refused.",
+      },
+      artifact_id: {
+        type: 'string',
+        description: "External artifact ID of the saved current draft in this conversation's project. Requires version_number. Internal numeric IDs are not aliases. Project and tenant come from server context.",
+      },
+      version_number: {
+        type: 'integer',
+        minimum: 1,
+        maximum: 2147483647,
+        description: 'Saved current version number, as returned by the artifact save or get_document_versions. Requires artifact_id; a stale or unavailable version refuses without falling back to caller text.',
       },
       expected_text: {
         type: 'string',
-        description: 'The verbatim source text the document is supposed to contain (e.g. the complete text the user provided). The extracted document text is diffed against this. Optional when only required_strings is supplied.',
+        description: 'Optional caller comparison text. With saved selectors it must exactly equal server-loaded text. Without them it supplies only caller-text fidelity, never persisted-artifact or qualified-source proof.',
       },
       required_strings: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Strings that MUST appear verbatim in the document (e.g. caption strings, case/sponsor numbers, sworn-paragraph anchors). Each is checked for an exact substring match; any missing entry fails verification.',
+        description: 'Strings that must appear verbatim in extracted text. Missing entries fail fidelity. Without a saved target or expected_text, only these exact substrings are checked.',
       },
     },
     required: ['input_docx_path'],
@@ -639,7 +645,7 @@ export const DRAFT_510K_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
 export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
   name: 'draft_clinical_overview_m2_5',
   description:
-    "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. Two modes: (1) when called with csrs[] (the program's clinical studies), it composes the data-driven overview through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.6 narrative, the pivotal-efficacy and benefit-risk tables, completeness, and gaps — the same engine the submission package uses, parity with draft_nonclinical_overview_m2_4 / draft_clinical_summary_m2_7; (2) without csrs[], it returns the six-subsection outline with drafting guidance and (with project_id) the project's artifacts for citation. Prefer mode 1 when clinical study data exists; report completeness and gaps honestly.",
+    "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. When the program has completed clinical study reports, it composes the data-driven overview from those records through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.6 narrative, the pivotal-efficacy and benefit-risk tables, completeness and gaps — the engine the submission package uses. Otherwise it returns the six-subsection outline with drafting guidance and the program's artifacts for citation. Its figures come from the program's records only: do not pass results, counts or rates, and do not add any to the draft. Report completeness and gaps honestly.",
   input_schema: {
     type: 'object',
     properties: {
@@ -651,31 +657,11 @@ export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
         type: 'string',
         description: 'Target indication.',
       },
-      csrs: {
-        type: 'array',
-        description: 'Clinical study summaries — when supplied, the Clinical Overview is composed from them (data-driven mode).',
-        items: {
-          type: 'object',
-          properties: {
-            studyId: { type: 'string' },
-            protocolNumber: { type: 'string' },
-            phase: { type: 'string' },
-            studyDesign: { type: 'string' },
-            primaryEndpoint: { type: 'string' },
-            primaryResult: { type: 'string' },
-            sampleSize: { type: 'number' },
-            ittPopulation: { type: 'number' },
-            saeCount: { type: 'number' },
-            deathCount: { type: 'number' },
-          },
-          required: ['protocolNumber', 'phase'],
-        },
-      },
-      development_rationale: { type: 'string', description: 'Disease background / unmet need for 2.5.1 (optional, data-driven mode).' },
+      development_rationale: { type: 'string', description: 'Disease background / unmet need for 2.5.1 (optional).' },
       project_id: {
         type: 'number',
         description:
-          'Project ID — in outline mode, returns up to 50 existing artifacts so you can pick citations.',
+          "Program (project) id whose completed CSRs the overview is composed from; defaults to the open program. In outline mode, also returns up to 50 of its artifacts for citation.",
       },
     },
     required: ['product_name', 'indication'],
@@ -685,7 +671,7 @@ export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
 export const BATCH_DRAFT_SECTIONS: AnaTool = {
   name: 'batch_draft_sections',
   description:
-    "Draft MANY document sections in ONE parallel batch instead of one section per turn. Use this when the author asks to draft/regenerate several sections at once (e.g. 'draft all the TODO sections in Module 2', 'give me first drafts of 2.4, 2.5 and 2.7'). Each request is a section to draft with its own instructions; they run concurrently (bounded) through the same framework-grade drafting engine used for single sections, so a five-section batch returns in roughly the time of the slowest one rather than five sequential turns. Returns per-section drafted content the author promotes through the governed authoring flow — nothing is auto-saved. Do NOT use it to fabricate quantitative results; where a value is unknown the draft must say so.",
+    "Draft MANY document sections in ONE parallel batch instead of one section per turn. Use this when the author asks to draft/regenerate several sections at once (e.g. 'draft all the TODO sections in Module 2', 'give me first drafts of 2.4, 2.5 and 2.7'). Each request is a section to draft with its own instructions; they run concurrently (bounded) through the same framework-grade drafting engine used for single sections, so a five-section batch returns in roughly the time of the slowest one rather than five sequential turns. Returns every requested slot with its original requestIndex, per-section drafted content or failure, saved:false, savedCount:0, and retryIndices for failed slots. Nothing is auto-saved. For a requested document deliverable, promote successful content through draft_authoring_document and its existing gates; claim saved only after a durable authoringDocId is returned. Retry only failed slots and retain existing saved IDs. Do NOT use it to fabricate quantitative results; where a value is unknown the draft must say so.",
   input_schema: {
     type: 'object',
     properties: {
@@ -698,6 +684,7 @@ export const BATCH_DRAFT_SECTIONS: AnaTool = {
             section_type: { type: 'string', description: 'Document section / CTD type to draft (e.g. "2.5", "nonclinical_overview", "device_description").' },
             instructions: { type: 'string', description: 'What this section must contain / how to draft it.' },
             existing_content: { type: 'string', description: 'Optional existing content to revise rather than draft from scratch.' },
+            source_document_ids: { type: 'array', minItems: 1, maxItems: 8, items: { type: 'string', format: 'uuid' }, description: 'Select existing processed Vault document IDs discovered with list_project_documents/search_project_documents. The backend loads current extracted text from the open project, not pasted/model-supplied evidence. Use these sources before asking the client for facts already in their project. Receipts identify hashes and bounded excerpts; loaded is not qualified or approved. Failed source loading prevents generation for this section. Omit only for an explicitly ungrounded planning draft.' },
           },
           required: ['section_type', 'instructions'],
         },
@@ -706,13 +693,15 @@ export const BATCH_DRAFT_SECTIONS: AnaTool = {
       submission_type: { type: 'string', description: 'Canonical filing type (e.g. "US_IND", "510k", "IVDR-TF") — unlocks framework-grade authoring for all filing types. Shared across the batch.' },
       project_context: {
         type: 'object',
-        description: 'Shared project context applied to every section (device/product name, indication, etc.).',
+        description: 'Shared caller-declared context applied to every section. Labels select advisory context; they do not establish verified project facts, guidance currency or source qualification.',
         properties: {
           deviceName: { type: 'string' },
           deviceType: { type: 'string' },
           indication: { type: 'string' },
           predicateDevice: { type: 'string' },
           classification: { type: 'string' },
+          therapeuticArea: { type: 'string', description: 'Explicit therapeutic-area label from the client or recorded context. Do not infer a disease area from a modality.' },
+          modality: { type: 'string', description: 'Explicit product modality (e.g. small_molecule, mab, gene_therapy, cell_therapy). Broad biologic/mRNA labels remain unresolved; do not infer modality from therapeutic area.' },
         },
       },
     },

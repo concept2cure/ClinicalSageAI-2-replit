@@ -1,0 +1,12 @@
+Mutant R55-reader-drops-person: the client drops the claims that are only the person's
+
+--- client/src/concept2cure/components/ana/anaAnswerCheck.ts
+- const fromPerson = raw.fromPerson === undefined ? [] : claims(raw.fromPerson);
++ const fromPerson: CheckedClaim[] = [];
+
+Tests run: client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts > readAnswerCheck > a check with a field of the wrong type is no check 7ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

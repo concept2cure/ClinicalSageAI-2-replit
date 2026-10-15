@@ -1,0 +1,55 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-04T23:38:16.446Z","pid":2120,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-04T23:38:16.447Z","pid":2120,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-04T23:38:16.447Z","pid":2120,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/pre-auth-narrowing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-10-04T23:38:16.751Z","pid":2120,"hostname":"vm","context":{"userId":834,"tenantId":0,"resourceId":"834"},"msg":"[audit-service] [AUDIT] user_login pre_auth_narrowing_contract"}
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > reads no row by email, by id, or by scanning 6ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > writes no account: B's password hash and reset token stay as they were 2ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > actor_name names nobody in a tenant-less scope, though B acted in tenant 0's trail 2ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a sign-in by email binds the account it names, and reads and writes that row only 10ms
+stdout | tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a verified access token binds its account: the request cannot then read another's row
+[database] Database connection successful
+
+stdout | tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a verified access token binds its account: the request cannot then read another's row
+[database] Database connection successful { timestamp: '2026-10-04T23:38:16.837Z', poolSize: 1 }
+
+ × tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a verified access token binds its account: the request cannot then read another's row 74ms
+   → expected { own: +0, other: +0 } to deeply equal { own: 1, other: +0 }
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a request bound to one account cannot be rebound to another 1ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a reset finds the account holding the token, and only by its hash 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a verified access token binds its account: the request cannot then read another's row
+AssertionError: expected { own: +0, other: +0 } to deeply equal { own: 1, other: +0 }
+
+- Expected
++ Received
+
+  {
+    "other": 0,
+-   "own": 1,
++   "own": 0,
+  }
+
+ ❯ tests/db/pre-auth-narrowing.dbtest.ts:123:15
+    121|       };
+    122|     });
+    123|     expect(r).toEqual({ own: 1, other: 0 });
+       |               ^
+    124|   });
+    125|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  23:38:15
+   Duration  2.02s (transform 788ms, setup 61ms, import 1.38s, tests 323ms, environment 0ms)
+

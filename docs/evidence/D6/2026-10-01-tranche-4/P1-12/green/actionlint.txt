@@ -1,0 +1,33 @@
+actionlint 1.7.7 with shellcheck 0.11.0 (shellcheck-py), 2026-10-01T06:51:22Z
+Pre-existing findings are unchanged; the one semgrep.yml finding (SC2016 on the old "Run Semgrep" step) is gone with that step; the new steps add none.
+
+== .github/workflows/ci.yml: before 10 after 10
+.github/workflows/ci.yml:1169:9: shellcheck reported issue in this script: SC2012:info:1:20: Use find instead of ls to better handle non-alphanumeric filenames [shellcheck]
+.github/workflows/ci.yml:1169:9: shellcheck reported issue in this script: SC2209:warning:3:3: Use var=$(command) to assign output (or quote to assign string) [shellcheck]
+.github/workflows/ci.yml:1237:9: shellcheck reported issue in this script: SC2012:info:1:20: Use find instead of ls to better handle non-alphanumeric filenames [shellcheck]
+.github/workflows/ci.yml:1237:9: shellcheck reported issue in this script: SC2209:warning:3:3: Use var=$(command) to assign output (or quote to assign string) [shellcheck]
+.github/workflows/ci.yml:1383:9: shellcheck reported issue in this script: SC2012:info:1:20: Use find instead of ls to better handle non-alphanumeric filenames [shellcheck]
+.github/workflows/ci.yml:1383:9: shellcheck reported issue in this script: SC2209:warning:3:3: Use var=$(command) to assign output (or quote to assign string) [shellcheck]
+.github/workflows/ci.yml:1399:9: shellcheck reported issue in this script: SC2209:warning:1:1: Use var=$(command) to assign output (or quote to assign string) [shellcheck]
+.github/workflows/ci.yml:1399:9: shellcheck reported issue in this script: SC2209:warning:9:3: Use var=$(command) to assign output (or quote to assign string) [shellcheck]
+.github/workflows/ci.yml:1469:9: shellcheck reported issue in this script: SC2209:warning:2:1: Use var=$(command) to assign output (or quote to assign string) [shellcheck]
+.github/workflows/ci.yml:1794:9: shellcheck reported issue in this script: SC2034:warning:19:1: i appears unused. Verify use (or export if used externally) [shellcheck]
+
+== .github/workflows/semgrep.yml: before 1 after 0
+
+== .github/workflows/pr-checks.yml: before 2 after 2
+.github/workflows/pr-checks.yml:39:9: shellcheck reported issue in this script: SC2086:info:1:43: Double quote to prevent globbing and word splitting [shellcheck]
+.github/workflows/pr-checks.yml:201:9: shellcheck reported issue in this script: SC2086:info:3:14: Double quote to prevent globbing and word splitting [shellcheck]
+
+== .github/workflows/deploy-aws.yml: before 0 after 0
+
+== .github/workflows/db-schema-validation.yml: before 0 after 0
+
+== .github/workflows/neon-preview-db.yml: before 7 after 7
+.github/workflows/neon-preview-db.yml:27:9: shellcheck reported issue in this script: SC2086:info:2:23: Double quote to prevent globbing and word splitting [shellcheck]
+.github/workflows/neon-preview-db.yml:27:9: shellcheck reported issue in this script: SC2086:info:5:24: Double quote to prevent globbing and word splitting [shellcheck]
+.github/workflows/neon-preview-db.yml:38:9: shellcheck reported issue in this script: SC2086:info:1:69: Double quote to prevent globbing and word splitting [shellcheck]
+.github/workflows/neon-preview-db.yml:70:9: shellcheck reported issue in this script: SC2086:info:10:26: Double quote to prevent globbing and word splitting [shellcheck]
+.github/workflows/neon-preview-db.yml:70:9: shellcheck reported issue in this script: SC2086:info:13:27: Double quote to prevent globbing and word splitting [shellcheck]
+.github/workflows/neon-preview-db.yml:70:9: shellcheck reported issue in this script: SC2086:info:14:34: Double quote to prevent globbing and word splitting [shellcheck]
+.github/workflows/neon-preview-db.yml:89:9: shellcheck reported issue in this script: SC2209:warning:36:5: Use var=$(command) to assign output (or quote to assign string) [shellcheck]

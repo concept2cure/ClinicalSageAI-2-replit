@@ -1,0 +1,65 @@
+Regional biotech templates in the existing editor: browser qualification
+
+W1 / D2, docs/design/GLOBAL_BIOTECH_EDITOR_TEMPLATES_2026-10-14.md.
+This tracked evaluation bundle directly imports the existing AuthoringCreateExport
+and its C2CForm Start from picker, then the existing DocumentCanvas/Workbench,
+RichSectionEditor and TemplateGuidance. Existing tokens and editor styles are
+unchanged. No alternate product surface or editor is implemented by this host.
+
+From /workspace/ClinicalSageAI:
+1. Use the installed Node 22 toolchain:
+   export PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH
+2. Regenerate deliberately synthetic records from the canonical builtin projection:
+   node_modules/.bin/tsx docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/generate.ts
+3. Start the directly runnable host on strict isolated port 5178:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/server.mjs
+4. After integration checks and production freeze:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/browser.mjs
+   Verify every relative executable import and tracked production target:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/import-proof.mjs
+5. Stop only the host's known printed PID.
+
+All /api/** traffic is intercepted under a synthetic regulatory-author actor.
+Each fresh case clicks the actual New document control, selects the canonical
+exact UUID in Start from, checks recorded module and the concise empty-working-copy
+notice plus full-guidance/source-originals pointer, and clicks
+Create document. Exactly one intercepted POST /api/authoring/docs is allowed,
+with the exact title, template UUID, nullable module and designated project UUID.
+The response and initial GET show every canonical section with empty authored
+content. This qualifies client request wiring, not database persistence. The
+independent PGlite suite covers atomic actual persistence and CREATE evidence.
+
+After capturing that created-empty editor, an explicit evaluation-only lifecycle
+phase remounts the actual Canvas and supplies a separately labelled synthetic
+saved-reading example through GET. This provides a paragraph for visibility and
+read/handoff checks without typing, disabling autosave or pretending an editor
+save occurred. The phase is recorded in each intercepted request. Its text is
+expressly synthetic and makes no evidence or agency claim.
+
+Six canonical cases: US NDA marketing preparation; Canadian CTA; European CTA
+using CTIS; Japanese CTN; GLOBAL ICH Quality Overall Summary narrative; and the
+EU PIL preparation gap. Whole filings and the PIL retain module:null. QOS alone
+has an explicit M2 section. Every source retains exact filingContext, original
+format, narrative/preparation eligibility and source limitations.
+
+Contexts: 1440x1000 desktop and 390x844 touch, each light and dark. The selected
+Start from control, CTD module and concise source summary must all be visible
+in the drawer body at scrollTop=0. Capture picker,
+created-empty editor, synthetic saved paragraph, existing guidance disclosure with every full recorded limitation and
+restored editor after all four oversight actions. Each read-stage checks one
+native editor, no horizontal page overflow, a visible native editing viewport at
+least 250x100 and full visibility of the actual synthetic paragraph. Each ask
+preserves exact source and filingContext, uses a conversation prefill callback
+and does not automatically send, PATCH, approve, accept or file.
+
+No unconfigured endpoint is tolerated. No live model, gateway, database, RLS,
+authorization, approval, package or transmission service is invoked. The host
+records the real onAsk prefill boundary and has no composer or stream door.
+Automated axe rules cover WCAG 2/2.1/2.2 A/AA tags. Incomplete rules are recorded
+per stage; this is not a complete accessibility audit. Local browser passes do
+not establish deployment, regulatory readiness or agency acceptance.
+
+Playwright core: /opt/codex/cua_node/lib/node_modules/playwright-core/index.mjs.
+Chromium: /usr/bin/chromium. Axe-core:
+/workspace/scratch/editor-ui-tools/node_modules/axe-core/axe.min.js.
+These are existing evaluation tools outside production dependencies.

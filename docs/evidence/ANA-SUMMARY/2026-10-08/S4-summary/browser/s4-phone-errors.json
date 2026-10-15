@@ -1,0 +1,62 @@
+[
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5086/concept2cure/conversation-thread/ana-ri_1791465394750_thc9irtdx?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1791465394750_thc9irtdx/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/c8dbd06e-b14a-43f1-a773-2e0b0fd17b29/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/b698de6b-8615-4653-9820-c642b6197bac/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/6746c530-697e-42cf-aa3e-40b34b32d6f8/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/c92e87f8-afc9-476a-b035-bb6e74bbd4f6/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/65d288ce-96a3-4c23-9619-a0e50618f181/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/5ca50bb7-9f53-4d6e-94eb-662dba432391/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/5ca50bb7-9f53-4d6e-94eb-662dba432391/summary",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5086/concept2cure/conversation-thread/ana-ri_1791465394750_thc9irtdx?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/chat/threads/ana-ri_1791465394750_thc9irtdx/messages?limit=100",
+    "error": "net::ERR_ABORTED"
+  },
+  {
+    "kind": "requestfailed",
+    "url": "/api/ana-ri/turn-records/22679b64-ca46-4f11-9af4-8026830a6dad/summary",
+    "error": "net::ERR_ABORTED"
+  }
+]

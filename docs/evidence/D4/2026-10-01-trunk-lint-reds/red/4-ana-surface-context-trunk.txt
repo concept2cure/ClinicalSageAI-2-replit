@@ -1,0 +1,20 @@
+===== Guardrails — every routable surface publishes screen state to AnA
+$ npm run ci:ana-surface-context
+
+> concept2cure-riai@1.0.0 ci:ana-surface-context
+> node scripts/ci/check-ana-surface-context.mjs
+
+
+
+[ci:ana-surface-context] FAIL — 2 issue(s):
+
+  surface-id coverage ROSE to 116, above the baseline of 115 — raise ID_BASELINE to 116 in this change. A baseline left below reality is not a gate: it silently permits everything back down to the stale number.
+  conversation-thread: declared as needing no context, but it is grounded — its own useAnaChat forwards a moduleContext. Delete the exemption; it describes a decision that was reversed.
+
+A surface that takes the shell conversation and publishes nothing leaves AnA
+answering about a screen she cannot see. Restore the publish call, publish under
+the id the router actually mounts, or — if the surface genuinely needs no context —
+declare its ID in NO_CONTEXT_NEEDED with a reason.
+
+
+

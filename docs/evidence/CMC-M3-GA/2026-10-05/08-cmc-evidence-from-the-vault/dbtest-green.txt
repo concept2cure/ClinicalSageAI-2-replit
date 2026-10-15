@@ -1,0 +1,14 @@
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > links a record to a current version, and the section lists it with who and why 310ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > refuses no reason, an unknown record, another program’s or organisation’s document, and a duplicate 121ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > refuses a viewer, and another organisation’s project before anything is read 15ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a CMC record cites the Vault document it was taken from > holds nothing while the linked version is current 24ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names the record’s version as superseded once a later version is filed 53ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > the export gate refuses the approved section and says which record and document 26ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > refuses a link to the superseded version 9ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > linking the current version moves the link with the same reason, and the hold lifts 153ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > a reissued document holds the sections that read the record > names a withdrawn version as withdrawn 150ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > requires a reason, keeps the row, and cannot be done twice 34ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > each link and unlink is a chained row on the document’s own history 229ms
+ ✓ tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > the table refuses every other change, for every role, and another organisation reads none of it 16ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)

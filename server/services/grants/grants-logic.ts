@@ -102,22 +102,26 @@ export function reportingObligations(periodStart: string | null, periodEnd: stri
   return out;
 }
 
-export type AwardPeriodState = 'pre_start' | 'active' | 'closeout_window' | 'lapsed';
+export type AwardPeriodState = 'pre_start' | 'active' | 'closeout_window' | 'lapsed' | 'undetermined';
 
 /**
  * Where an award sits relative to its period of performance. `closeout_window`
  * is the 120 days after the end date in which final reports are due. Pure.
+ *
+ * `undetermined` when the recorded dates cannot settle it: it answered
+ * 'active' for an award with no dates, a start but no end, or an end but no
+ * start (2026-10-15).
  */
 export function awardPeriodState(periodStart: string | null, periodEnd: string | null, today: string): AwardPeriodState {
   const now = toDays(today);
   const start = toDays(periodStart);
   const end = toDays(periodEnd);
-  if (now == null) return 'active';
+  if (now == null) return 'undetermined';
   if (start != null && now < start) return 'pre_start';
   if (end != null && now > end) {
     return now <= toDays(addDays(periodEnd!, 120))! ? 'closeout_window' : 'lapsed';
   }
-  return 'active';
+  return start != null && end != null ? 'active' : 'undetermined';
 }
 
 // ─── Closeout (2 CFR 200.344) ────────────────────────────────────────────────
@@ -308,12 +312,13 @@ export function budgetVsActual(lines: BudgetLineView[], expenditures: Expenditur
 export interface CostShareContributionView { amount: number }
 
 export interface CostShareStatus {
-  committed: number;
+  /** null when no commitment is recorded — which is not a zero commitment. */
+  committed: number | null;
   contributed: number;
-  remaining: number;
-  metPct: number; // contributed / committed * 100 (0 when nothing committed)
-  met: boolean;
-  shortfall: number; // committed - contributed, floored at 0
+  remaining: number | null;
+  metPct: number | null; // contributed / committed * 100; null when nothing (or nothing recorded) is committed
+  met: boolean | null;
+  shortfall: number | null; // committed - contributed, floored at 0
 }
 
 /**
@@ -322,10 +327,14 @@ export interface CostShareStatus {
  * share (2 CFR 200.306); a shortfall is a closeout risk. Pure.
  */
 export function costShareStatus(committed: number | null, contributions: CostShareContributionView[]): CostShareStatus {
-  const c = committed && committed > 0 ? round2(committed) : 0;
   const contributed = round2(contributions.reduce((s, x) => s + x.amount, 0));
+  // No commitment recorded is not a zero commitment: it read as met (2026-10-15).
+  if (committed == null) {
+    return { committed: null, contributed, remaining: null, metPct: null, met: null, shortfall: null };
+  }
+  const c = committed > 0 ? round2(committed) : 0;
   const remaining = round2(Math.max(0, c - contributed));
-  const metPct = c > 0 ? round2((contributed / c) * 100) : 0;
+  const metPct = c > 0 ? round2((contributed / c) * 100) : null;
   return { committed: c, contributed, remaining, metPct, met: c === 0 || contributed >= c, shortfall: remaining };
 }
 
@@ -365,7 +374,8 @@ export function assembleCloseoutReadiness(i: CloseoutReadinessInputs): CloseoutR
   if (i.closeout.overdue) warnings.push(`Closeout is past its due date${i.closeout.dueDate ? ` (${i.closeout.dueDate})` : ''} — 2 CFR 200.344.`);
   if (i.outstandingMilestones.overdue > 0) blockers.push(`${i.outstandingMilestones.overdue} overdue milestone(s) still open.`);
   else if (i.outstandingMilestones.count > 0) warnings.push(`${i.outstandingMilestones.count} milestone(s) not yet met/submitted.`);
-  if (!i.costShare.met) blockers.push(`Cost-share commitment not met — shortfall ${i.costShare.shortfall} (2 CFR 200.306).`);
+  if (i.costShare.met === null) blockers.push('No cost-share commitment is recorded, so whether it is met cannot be assessed (2 CFR 200.306).');
+  else if (!i.costShare.met) blockers.push(`Cost-share commitment not met — shortfall ${i.costShare.shortfall} (2 CFR 200.306).`);
   if (i.budget.totalActual > i.budget.totalBudgeted && i.budget.totalBudgeted > 0) warnings.push(`Expenditures (${i.budget.totalActual}) exceed budget (${i.budget.totalBudgeted}) — verify allowability (2 CFR 200.403).`);
   if (i.budget.overAllocated) warnings.push('Budget over-allocates the award amount.');
 

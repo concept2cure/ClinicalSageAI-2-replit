@@ -54,6 +54,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -91,8 +92,12 @@ function collect(dir, exts, acc = []) {
   return acc;
 }
 
-/** Prose that mentions DDL is not DDL (see the duplicate-table guard's C-12 note). */
-const stripComments = (sql) => sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+/**
+ * Prose that mentions DDL is not DDL (see the duplicate-table guard's C-12 note).
+ * SQL comments only: for .sql files and for the SQL inside a string literal.
+ * TypeScript comments are stripped by the shared, quote-aware stripComments.
+ */
+const stripSqlComments = (sql) => sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
 
 /**
  * QUOTED IDENTIFIERS COUNT (fixed 2026-09-10, WO-1). The previous pattern
@@ -122,7 +127,7 @@ const created = new Set();
 const addCreated = (name) => created.add(name.toLowerCase());
 
 for (const f of collect(repoRoot, ['.sql']).filter((p) => !isArchived(p))) {
-  const sql = stripComments(fs.readFileSync(path.join(repoRoot, f), 'utf8'));
+  const sql = stripSqlComments(fs.readFileSync(path.join(repoRoot, f), 'utf8'));
   for (const m of sql.matchAll(CREATE_RE)) addCreated(qualified(m));
 }
 
@@ -131,8 +136,15 @@ for (const f of collect(path.join(repoRoot, 'shared'), ['.ts'])) {
   for (const m of src.matchAll(/pg(?:Table|View|MaterializedView)\(\s*['"`]([\w.]+)['"`]/g)) addCreated(m[1]);
 }
 
+/*
+ * TypeScript comments first, with the quote-aware stripper. The SQL stripper on
+ * its own blanked from a `/*` inside a string ('/api/advisory/*') to the next
+ * comment close, and read every `//` comment as code, so a CREATE TABLE named
+ * in a // note counted as creating that table. Then SQL comments, so DDL inside
+ * an embedded SQL string's own comment does not count either.
+ */
 for (const f of collect(path.join(repoRoot, 'server'), ['.ts'])) {
-  const src = stripComments(fs.readFileSync(path.join(repoRoot, f), 'utf8'));
+  const src = stripSqlComments(stripComments(fs.readFileSync(path.join(repoRoot, f), 'utf8')));
   for (const m of src.matchAll(CREATE_RE)) addCreated(qualified(m));
 }
 
@@ -177,9 +189,22 @@ for (const f of collect(path.join(repoRoot, 'server'), ['.ts'])) {
  * DISTINCT, which is never a table-introducing FROM. Adding the column name to
  * NOT_A_TABLE would have been the weaker fix, silencing this one spelling while
  * leaving the next `IS DISTINCT FROM` to fail the same way.
+ *
+ * FIFTH: `EXTRACT(field FROM source)`. The FROM inside EXTRACT separates the
+ * date part from the value it is taken from, so
+ *
+ *     SELECT (extract(epoch FROM last_seen_at) * 1000)::float8 AS seen
+ *
+ * yielded a phantom table `last_seen_at`, a column (session-inactivity.ts,
+ * 2026-10-01). It is the second time: on 2026-09-26 the same misreading was
+ * answered by rewriting the SQL to `date_part('epoch', …)`, which fixed that
+ * statement and left the gate to fail the next author of idiomatic SQL. Same
+ * narrow remedy: suppress only a FROM preceded by `EXTRACT(<field>`, which
+ * never introduces a table. The query's own FROM, after the closing paren, is
+ * still read.
  */
 const REF_RE =
-  /\b(?<!FOR\s)(?<!FOR\s{2})(?<!DISTINCT\s)(?<!DISTINCT\s{2})(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
+  /\b(?<!FOR\s)(?<!FOR\s{2})(?<!DISTINCT\s)(?<!DISTINCT\s{2})(?<!\bEXTRACT\s*\(\s*[a-zA-Z_]+\s+)(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
 
 /** SQL keywords and set-returning functions that follow FROM/JOIN but are not tables. */
 const NOT_A_TABLE = new Set([
@@ -207,13 +232,26 @@ const NOT_A_TABLE = new Set([
  * nobody can ever resolve, and it fails future files for discussing it (the
  * lesson from the duplicate-table guard's `if` entry, ledger C-12).
  */
+// An explicit CTE output-column list defines query-local columns, not storage.
+// Use the same declaration suffix for statement admission and CTE names:
+// otherwise a leading list hides its real storage reads, while a later list
+// makes a recursive CTE appear to be an uncreated persisted table. Match only
+// identifier lists; expressions and column types are not CTE output names.
+const CTE_COLUMN = '(?:[a-zA-Z_][\\w]*|"(?:[^"]|"")+")';
+const CTE_COLUMN_LIST = '\\s*\\(\\s*' + CTE_COLUMN + '(?:\\s*,\\s*' + CTE_COLUMN + ')*\\s*\\)';
+const CTE_DECLARATION_SUFFIX = '(?:' + CTE_COLUMN_LIST + '\\s*|\\s+)AS\\s*\\(';
+const CTE_RE = new RegExp(
+  '(?:WITH|,)\\s+(?:RECURSIVE\\s+)?([a-zA-Z_][\\w]*)' + CTE_DECLARATION_SUFFIX,
+  'gi',
+);
+
 const SQL_SMELL = new RegExp(
   '^\\s*(?:' +
     'SELECT\\b' +
     '|INSERT\\s+INTO\\s+[\\w.]+\\s*[({]' +
     '|UPDATE\\s+[\\w.]+\\s+SET\\b' +
     '|DELETE\\s+FROM\\s+[\\w.]+\\s*(?:$|WHERE\\b|USING\\b|RETURNING\\b|;)' +
-    '|WITH\\s+(?:RECURSIVE\\s+)?[\\w]+\\s+AS\\s*\\(' +
+    '|WITH\\s+(?:RECURSIVE\\s+)?[a-zA-Z_][\\w]*' + CTE_DECLARATION_SUFFIX +
     ')',
   'i',
 );
@@ -230,11 +268,11 @@ for (const f of SCANNED.flatMap((d) => collect(path.join(repoRoot, d), ['.ts']))
     ...(src.match(/"(?:[^"\\\n]|\\.)*"/g) ?? []),
   ];
   for (const lit of literals) {
-    const body = stripComments(lit.slice(1, -1));
+    const body = stripSqlComments(lit.slice(1, -1));
     if (!SQL_SMELL.test(body)) continue;
     // CTE names are defined by the query itself.
     const ctes = new Set(
-      [...body.matchAll(/(?:WITH|,)\s+(?:RECURSIVE\s+)?([a-zA-Z_][\w]*)\s+AS\s*\(/gi)].map((m) =>
+      [...body.matchAll(CTE_RE)].map((m) =>
         m[1].toLowerCase(),
       ),
     );
@@ -279,6 +317,27 @@ const unbacked = [...refs.entries()]
 // ── Baseline ─────────────────────────────────────────────────────────────────
 
 if (WRITE_BASELINE) {
+  // Read the WHOLE prior file. This path used to build a fresh
+  // {$comment, generatedAt, total, entries} and write it, so a regeneration
+  // destroyed every other $-prefixed key — here, $note_on_the_2026_09_10_entries.
+  // Enforcement reads only .entries, so nothing would have reported the loss.
+  // Measured and fixed 2026-10-12 alongside the same defect in
+  // check-duplicate-table-ddl.mjs and check-unkeyed-request-tables.mjs; the
+  // other annotated baselines in scripts/ci were tested and already preserve
+  // theirs (docs/evidence/D6/2026-10-12-baseline-annotation-loss/).
+  let prior = {};
+  if (fs.existsSync(BASELINE_PATH)) {
+    try {
+      prior = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
+    } catch {
+      console.error(
+        `[ci:unbacked-tables] existing baseline unreadable at ${BASELINE_PATH} — ` +
+          'refusing to overwrite it. Fix the JSON, or move it aside deliberately.',
+      );
+      process.exit(1);
+    }
+  }
+  const OWNED = new Set(['$comment', 'generatedAt', 'total', 'entries']);
   const baseline = {
     $comment:
       'Tables referenced by server SQL that NOTHING in the repo creates — no migration, ' +
@@ -293,8 +352,16 @@ if (WRITE_BASELINE) {
     total: unbacked.length,
     entries: Object.fromEntries(unbacked.map((u) => [u.table, u.files])),
   };
+  for (const [key, value] of Object.entries(prior)) {
+    if (!OWNED.has(key)) baseline[key] = value;
+  }
+
   fs.writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + '\n');
   console.log(`[ci:unbacked-tables] baseline written: ${unbacked.length} unbacked tables`);
+  const carried = Object.keys(baseline).filter((k) => k.startsWith('$') && k !== '$comment');
+  if (carried.length > 0) {
+    console.log(`[ci:unbacked-tables] annotations carried over: ${carried.join(', ')}`);
+  }
   process.exit(0);
 }
 

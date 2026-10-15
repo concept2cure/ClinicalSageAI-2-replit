@@ -1,0 +1,69 @@
+Every suite that exercises the draft door, its accept, the candidate store, the batch-draft doors, the turn record and its readers, the answer check, every authoring route suite (authoring.router.ts is the file round 12 edits), the section-gate contract (the door's refusal on a frozen section) and the new helper suite, on the final round-12 tree.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <the 61 files below>
+
+ Test Files  61 passed (61)
+      Tests  627 passed (627)
+related exit=0
+
+Files:
+  client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts
+  server/routes/__tests__/ai-draft-retrieval-honesty.test.ts
+  server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+  server/routes/__tests__/authoring-atomic-mutations.test.ts
+  server/routes/__tests__/authoring-attribution.pglite.integration.test.ts
+  server/routes/__tests__/authoring-decision-source.pglite.test.ts
+  server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+  server/routes/__tests__/authoring-draft-envelope.test.ts
+  server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts
+  server/routes/__tests__/authoring-ledger.pglite.integration.test.ts
+  server/routes/__tests__/authoring-migration.pglite.integration.test.ts
+  server/routes/__tests__/authoring-record-attribution.pglite.test.ts
+  server/routes/__tests__/authoring-record-comments.pglite.test.ts
+  server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+  server/routes/__tests__/authoring-record-export.pglite.test.ts
+  server/routes/__tests__/authoring-schema-contract.test.ts
+  server/routes/__tests__/authoring-section-figure-refs.test.ts
+  server/routes/__tests__/authoring-section-order.pglite.integration.test.ts
+  server/routes/__tests__/authoring-sign-ceremony.test.ts
+  server/routes/__tests__/authoring-signing-authority.test.ts
+  server/routes/__tests__/authoringActionsUnsignedActsRemoved.test.ts
+  server/routes/__tests__/authoringAiDraftAccept.test.ts
+  server/routes/__tests__/authoringAiDraftNoProvider.test.ts
+  server/routes/__tests__/authoringAiDraftStructured.test.ts
+  server/routes/__tests__/authoringApprovalNoWorkflow.test.ts
+  server/routes/__tests__/authoringBindingColumnGuard.test.ts
+  server/routes/__tests__/authoringBindingColumnStates.test.ts
+  server/routes/__tests__/authoringDeficiencyScan.test.ts
+  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+  server/routes/__tests__/authoringDocsStatusFilter.test.ts
+  server/routes/__tests__/authoringExportDocx.test.ts
+  server/routes/__tests__/authoringExportHistory.test.ts
+  server/routes/__tests__/authoringExportPdf.test.ts
+  server/routes/__tests__/authoringExportSignatureManifest.test.ts
+  server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+  server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+  server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+  server/routes/__tests__/authoringSignerPrintedName.test.ts
+  server/routes/__tests__/authoringTemplateStartFrom.test.ts
+  server/routes/__tests__/authoringTrackedChangeDecisions.test.ts
+  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+  server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+  server/routes/__tests__/batch-draft-accept.test.ts
+  server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+  server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+  server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+  server/services/ana/__tests__/batch-draft-sections.test.ts
+  server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+  server/services/ana/__tests__/turn-record-loop.test.ts
+  server/services/ana/__tests__/turn-record-sent.test.ts
+  server/services/ana/__tests__/turn-record-served-by.pglite.test.ts
+  server/services/ana/__tests__/turn-record-served-models.test.ts
+  server/services/ana/__tests__/turn-record.pglite.test.ts
+  tests/security/batch-draft-xss.test.ts
+  tests/services/answer-grounding-regulatory.test.ts
+  tests/services/answer-grounding.test.ts
+  server/services/ana/__tests__/turn-record-draft.pglite.test.ts
+  tests/schema-contract/authoring-section-gate.contract.test.ts

@@ -1,0 +1,68 @@
+Success! The configuration is valid.
+
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... fail
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 174, in run "renders_the_boot_contract":
+ 174:     condition = alltrue([
+ 175:       for n in ["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"] :
+ 176:       one([for e in module.ecs.api_container.environment : e.value if e.name == n]) == "owner@example.com"
+ 177:     ])
+    ├────────────────
+    │ module.ecs.api_container.environment is tuple with 21 elements
+
+The API must name the platform owner in PLATFORM_ADMIN_EMAILS and
+BUSINESS_CENTER_EMAILS.
+
+Error: Invalid index
+
+  on tests/boot_contract.tftest.hcl line 197, in run "renders_the_boot_contract":
+ 197:       one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "SETUP_TOKEN"]) == module.secrets.secret_arns["setup_token"] &&
+    ├────────────────
+    │ module.secrets.secret_arns is object with 15 attributes
+
+The given key does not identify an element in this collection value.
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... skip
+  run "the_site_is_served_with_security_headers"... skip
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... skip
+  run "staging_carries_every_name_the_deploy_preflight_requires"... skip
+  run "staging_is_distinct_from_production"... skip
+  run "provision_workflow_names_are_the_ones_terraform_creates"... skip
+  run "refuses_a_deployment_without_an_owner"... skip
+  run "refuses_an_owner_address_that_could_never_match"... skip
+  run "refuses_an_api_task_too_small_for_the_scanner"... skip
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... skip
+  run "refuses_a_short_audit_chain_secret"... skip
+  run "refuses_placement_approvals_that_are_not_a_json_object"... skip
+  run "refuses_equal_audit_seal_and_chain_keys"... skip
+  run "refuses_a_short_audit_export_key"... skip
+  run "refuses_an_audit_export_key_equal_to_the_jwt_secret"... skip
+  run "refuses_an_audit_export_key_equal_to_an_audit_seal_key"... skip
+  run "refuses_phi_approval_without_zero_retention"... skip
+  run "refuses_an_unknown_data_class"... skip
+  run "refuses_a_non_boolean_zero_retention_flag"... skip
+  run "refuses_a_non_string_intended_use"... skip
+  run "refuses_a_missing_region"... skip
+  run "accepts_the_fail_closed_interim_approvals"... skip
+  run "refuses_an_uppercase_domain_alias"... skip
+  run "refuses_a_domain_alias_with_a_scheme"... skip
+  run "refuses_a_domain_alias_with_a_trailing_dot"... skip
+  run "every_container_can_send_login_codes"... skip
+  run "refuses_an_smtp_port_without_required_tls"... skip
+  run "every_container_can_reach_the_drafting_provider"... skip
+  run "refuses_a_key_that_is_not_anthropics"... skip
+  run "refuses_placement_approvals_that_omit_the_drafting_provider"... skip
+  run "refuses_an_empty_openai_key"... skip
+  run "refuses_an_anthropic_key_as_the_openai_key"... skip
+  run "refuses_a_short_attestation_key"... skip
+  run "refuses_an_attestation_key_equal_to_the_audit_export_key"... skip
+  run "error_reporting_is_absent_unless_configured"... skip
+  run "error_reporting_reaches_both_containers_when_configured"... skip
+  run "refuses_a_sentry_dsn_that_is_not_https"... skip
+  run "refuses_a_pinned_rds_minor_version"... skip
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed, 38 skipped.

@@ -1,0 +1,452 @@
+# Trimmed to the result and assertion lines; the rendered-DOM dumps of the full run are omitted.
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies keep_data eligibility to both local and handed-off pins 1030ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies remove_data eligibility to both local and handed-off pins 498ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > superseded data remains visible as history and cannot be pinned 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > selected Vault upload exposes the preview decision control 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained Vault data has no download promise for unavailable original bytes 244ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained search-only Vault selection preserves its unavailable original and lifecycle state 340ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words 200ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program 498ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again 222ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the project's newest document in that module, not the editor's list 201ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the organisation's protocols as doors 235ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not 195ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor 198ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen 200ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words, and how many the module holds 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest" 175ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit 117ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and its coming-later line names no IND work 113ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a drug project still names IND annual-report tracking as coming later 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 173ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 91ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > searches the whole room on the server, by title and text, and lists its answer 403ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers a way to add sources 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 122ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 66ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 87ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > names the affected sections when a source has changed under them 87ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows no change banner when nothing is stale 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 71ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 86ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click 186ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > shows an honest empty when the program has no threads, and a failure as a failure 145ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer leads the main column and the readiness ring sits in the aside 92ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > shows a screenful, then the older ones a screenful at a time, until there are none 880ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > a screenful exactly offers nothing more 201ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > an older read that fails says so, keeps what is shown, and can be tried again 280ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > is declared by at least one rule 609ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > has exactly one rule declaring font-family, and it is serif 585ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > no sheet other than the owner declares a BARE .pj-title rule 510ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > names only hops from the original six, each once, each with its slice and a reason 4ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > baseline file > every hop in the test has a fixture pair 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: red on the 2026-10-08 dead end 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > review-tab-to-document: green on the shape its slice builds 3ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > outline-node-to-started-section: green on the shape its slice builds 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: red on the 2026-10-08 dead end 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > placed-document-to-sequence: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > dispatched-sequence-to-transmit: green on the shape its slice builds 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > respond-to-response-sequence: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: red on the 2026-10-08 dead end 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green on the shape its slice builds 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > each check fails on the dead end and passes on the slice > author-document-row-to-document: green when the page hands its open handler down as a prop 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > review-tab-to-document: Project page, Review tab → the document under review, open in the editor 404ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > outline-node-to-started-section: Editor outline, a required section not started in this document → that section, created and open 119ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > placed-document-to-sequence: Place into filing, "Open in Submission Center" (and the market row, once F9 builds it) → the Submission Center, on that sequence 16ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > dispatched-sequence-to-transmit: Submission Center, a dispatched sequence → POST /api/submissions/sequences/:seqId/transmit 289ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > respond-to-response-sequence: Project page, Respond tab → the Submission Center, starting a response sequence 138ms
+ ✓ tests/ui/filing-path-reachability.test.ts > filing path reachability (FILING_SPINE.md F0) > the hops on the code > author-document-row-to-document: Project page, Author tab, a document row → that document, open in the editor 439ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 135ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 407ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 133ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > an IND project whose only submission is an MAA is not told it has no submission 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a CER project (no application type is CER) names its submissions instead of denying them 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a submission with no project recorded is not gated by name: no verdict, and the panels agree 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 42ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > "Open in editor" sets the editor target to the document id, then opens the editor 528ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the sign-off button opens the document to sign, not the editor’s list 164ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > a document in another program opens that program first, so the editor can see it 114ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the editor then opens on that document, not on its default first row 587ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > an AI comment’s button is named for what it does: it opens the document, it applies nothing 171ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > reads the review board scoped to this program, and groups the documents by what they need 478ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a document every reviewer approved but nobody has signed is not shown as Approved 119ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open document" opens THAT document, by id, in this program 276ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a failed read is an error with a retry, never an empty list, and the retry reads again 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > an empty board says so in words 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > never says "aren't wired" and never sends the person to the task-board alias 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open the review board" opens the Review surface when it is available, and is not shown when it is not 228ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no module outside v2 renders a rail 81ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no route mounts a second application 1ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface navigates out of the shell to reach a kit 2ms
+ ✓ tests/ui/one-shell.test.ts > one shell > the v2 shell root is the only one that lays out a rail column 321ms
+ ✓ tests/ui/one-shell.test.ts > one shell > every device surface the kit can render is one the shell can route to 4ms
+ ✓ tests/ui/one-shell.test.ts > one shell > only the shell and its named-thread surfaces start a conversation 428ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface takes the AnA rail column and still calls the shell onAsk 305ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface bypasses the ownsConversation union with a cast 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > no tab says "Not in this release" 181ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — five tabs follow the work > what Plan and Lifecycle promised is named on Submit as coming later, with no button 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA can still name the removed tabs > set-stage "plan" opens Submit, and says so 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA can still name the removed tabs > set-stage "lifecycle" opens Submit too 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits above the tabs > a message typed in the start box survives switching tabs 353ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits above the tabs > the start box and the conversations come before the tabs and stay on every tab 133ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id 409ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for sponsor, product or indication the row lacks 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > lists the project's vault from the project-scoped read, on the page 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a file can be opened here; nothing asks for a section or offers to close a rail 329ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a failed read is a failure with a retry, not an empty vault 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > ProjectFilesPanel beside the editor is unchanged > keeps its rail header and asks for a section before citing 43ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > opens the validation tab WITHOUT starting the run the human button would, and says so 396ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > REFUSES to leave the document tab over unsaved edits (the editor unmounts) 149ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane 103ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > SubmissionCenter — select/workspace/sequence via the "submissions" alias > drives the real portfolio: select a submission, open its sequences, select one — with honest misses 57ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with a project open, the stage rail really moves 91ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with no project open, the refusal is honest 5ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > names what it does and speaks in no voice but the page's 309ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > a question typed here starts a new conversation in the project, carrying the words 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > Enter with an empty box goes nowhere 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > shows class, regulatory path, product code, regulation, panel, predicate and flags from the row 350ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > states absence for a device field the row lacks — never a placeholder 114ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > publishes the product type onto the open shell project so the shell can follow it 110ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — drug program is unchanged > renders the drug facts and no device block 137ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > lists the caller’s conversation files and adds one to the project through the adopt route 265ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > a refused adopt says what the server said, and changes nothing 51ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > a failed read says so — it is not an empty list 7ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > with nothing to offer, renders nothing 5ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx > ConversationFilesAdopt > is mounted in ProjectHome’s Data Room for the open project 208ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > every registry surface resolves to a real component (no scaffold fallback) 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "authoring" is fully installed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "biopharma" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "cmc" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "core" is fully installed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "ectd_coauthor" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "home" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "intelligence" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "labeling" is fully installed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "mdx" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "pdev" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "risk" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "submission" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > surface registry ↔ SURFACE_VIEWS coverage > kit "tasking" is fully installed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders access-requests 37ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders admin-console 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders agency-meetings 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ana-command 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ana-memory 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders apps 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders artifacts-center 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders audit-trail 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders authoring-engine 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders batch-draft 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders billing 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders biostat-workbench 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders biostatistics 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders change-assessment 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders client-portal 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders clinical-ops 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders cmc 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders communication-center 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders compliance-reports 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders conversation-thread 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders coverage 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders crl-library 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders cro-portfolio 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders csr-workflow 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders decision-lineage 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders deep-research 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders design-controls 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-510k 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-analytics 12ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-cer 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-clinical-studies 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-diagnostics 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-engineering 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-pma 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-postmarket 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-presub 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-software 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-submission 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-tasks 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-udi 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-validation 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-vault 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders device-workstream 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dispatch-readiness 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders doc-journey 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders document-authoring 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dossier 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders dossier-map 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-coauthor 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-compile 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ectd-publishing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders etmf 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders evidence-search 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders filing-strategy 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders filings-catalog 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders gateway-transmittals 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders global-ri 25ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders haq-manager 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders human-factors 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders identity-console 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders inconsistency 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ind-checklist 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ind-lifecycle 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders insights 12ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders intelligence-catalog 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders investigator-brochure 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders ivd-completeness 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling-pi 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders labeling-smpc 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders licensing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders lifecycle-mgmt 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders maa-cockpit 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders market-access 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders master-licensing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders mission-control 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders nda-cockpit 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders nonclinical 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders onboarding 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders onboarding-ingest 11ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders orchestration 6ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders orphan 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders part11-console 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-clinical 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-cmc 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-contradictions 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-fda-interactions 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-ind-assembly 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-nonclinical 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pdev-regulatory 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pediatric 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pharmacovigilance 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders precedent-intelligence 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders program-journey 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders project-home 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders projects 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders protocol-dev 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pv-cockpit 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders pyramid 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders qmp 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders quality 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders rbm 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders reg-change 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders registrations 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders regulatory-workspace 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders report-engine 9ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders report-governance 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders research-admin 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders review 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders risk 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders safety-narrative 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders setup 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders shadow-review 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders source-tracer 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders submission-center 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders submission-twin 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders task-board 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders tasks 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders template-library 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders training 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders usage 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders vault 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > every SURFACE_VIEWS surface mounts without throwing > renders the home hub 27ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > access-requests renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > admin-console renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > agency-meetings renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ana-command renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ana-memory renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > apps renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > artifacts-center renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > audit-trail renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > authoring-engine renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > batch-draft renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > billing renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > biostat-workbench renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > biostatistics renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > change-assessment renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > client-portal renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > clinical-ops renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > cmc renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > communication-center renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > compliance-reports renders without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > conversation-thread renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > coverage renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > crl-library renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > cro-portfolio renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > csr-workflow renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > decision-lineage renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > deep-research renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > design-controls renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-510k renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-analytics renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-cer renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-clinical-studies renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-diagnostics renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-engineering renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-pma renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-postmarket renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-presub renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-software renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-submission renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-tasks renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-udi renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-validation renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-vault renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > device-workstream renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dispatch-readiness renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > doc-journey renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > document-authoring renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dossier renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > dossier-map renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-coauthor renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-compile renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ectd-publishing renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > etmf renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > evidence-search renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > filing-strategy renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > filings-catalog renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > gateway-transmittals renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > global-ri renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > haq-manager renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > human-factors renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > identity-console renders without a crash-class error 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > inconsistency renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ind-checklist renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ind-lifecycle renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > insights renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > intelligence-catalog renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > investigator-brochure renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > ivd-completeness renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling-pi renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > labeling-smpc renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > licensing renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > lifecycle-mgmt renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > maa-cockpit renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > market-access renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > master-licensing renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > mission-control renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > nda-cockpit renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > nonclinical renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > onboarding renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > onboarding-ingest renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > orchestration renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > orphan renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > part11-console renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-clinical renders without a crash-class error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-cmc renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-contradictions renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-fda-interactions renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-ind-assembly renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-nonclinical renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pdev-regulatory renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pediatric renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pharmacovigilance renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > precedent-intelligence renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > program-journey renders without a crash-class error 5ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > project-home renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > projects renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > protocol-dev renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pv-cockpit renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > pyramid renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > qmp renders without a crash-class error 20ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > quality renders without a crash-class error 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > rbm renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > reg-change renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > registrations renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > regulatory-workspace renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > report-engine renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > report-governance renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > research-admin renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > review renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > risk renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > safety-narrative renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > setup renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > shadow-review renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > source-tracer renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > submission-center renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > submission-twin renders without a crash-class error 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > task-board renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > tasks renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > template-library renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > training renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > usage renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx > no surface logs a crash-class error on first-use render > vault renders without a crash-class error 2ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and names what comes later in words 181ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit stage offers no locked tool, and names what comes later in words 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 221ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 51ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > says in one line that the work is not filtered to this project, and no longer claims readiness is unwired 336ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > "Open My work" opens the task board on the person's own tasks, as the nav does 138ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words 164ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say 270ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a read in flight claims nothing about the market 3ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > says nothing, and reads nothing, without both an application type and a market 1ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > reads the work view by the program UUID and lists its items with their store 156ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > says the counts are a floor when a store could not be read 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > an empty work view is an honest empty, not a failure 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > a program with no project record says so, not "no tasks" and not an error 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > a failed read is an error, never an empty list 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an ACTIVE program still reads green — the good state stays reachable 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a LOW priority is not rendered as a warning 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a CRITICAL priority still warns — the alert stays reachable 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > lists the open project’s records, read from that project 321ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > with no project open, there is no records panel and no records read 7ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the governed readiness, and ignores a stale progress_percent 179ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads 0%, the same as its card 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > readiness that could not be measured is stated as "not measured", never left out or drawn as 0 87ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > marks no stage done on a real project; only the open stage is marked 149ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > opening a later stage does not complete the ones before it 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with no project selected, shows no lifecycle and no placeholder project name 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with a project selected, names it in the crumb and the heading 67ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > renders the paperclip as a real button, not a span 71ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > opens a file picker when clicked 30ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > hands a chosen file to the upload transport 24ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > accepts more than one file, because regulatory sources come in sets 24ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > renders the paperclip as a real button, not a span 57ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > opens a file picker when clicked 44ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > hands a chosen file to the upload transport 26ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > accepts more than one file, because regulatory sources come in sets 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > does not offer project settings anywhere on the screen 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > the block is found 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines 30ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > parses a plausible number of ids out of surfaceViews.ts 3ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > every SURFACE_VIEWS id is registered or explicitly allowlisted 2ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > every allowlisted id is genuinely alias-only, not just unregistered 1ms
+ ✓ tests/ui/surface-registry-coverage.test.ts > SURFACE_VIEWS ↔ ui-surface-registry coverage > no registry id is shadowed by a deep-link alias 6ms
+ Test Files  30 passed (30)
+      Tests  448 passed (448)

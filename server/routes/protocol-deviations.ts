@@ -14,6 +14,8 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { SIGN_OFF_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createDeviationTx,
   addCapaActionTx,
@@ -220,15 +222,24 @@ router.patch('/capa/:id/status', async (req, res) => {
 
 // ─── Closure ─────────────────────────────────────────────────────────────────
 
-router.post('/deviations/:id/close', async (req, res) => {
+// Closing a deviation is an electronic signature (21 CFR 11.50, 11.200): the
+// platform's one signing ceremony (governed-signed-act.ts), behind the
+// deterministic CAPA-closure gate in closeDeviationTx. A request without
+// password, meaning and reason writes nothing. It used to write a 'sign'
+// ledger row with none of them (P0-10b, DP-02).
+router.post('/deviations/:id/close', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId) => {
-    const result = await closeDeviationTx(client, orgId, id);
-    recordDeviationClosed();
-    return { target: `protocol-deviation:${id}`, body: { deviationId: id, ...result } };
+  await signGovernedAct(req, res, {
+    domain: 'protocol_development',
+    target: `protocol-deviation:${id}`,
+    meanings: SIGN_OFF_ACT_MEANINGS,
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId) => {
+      const result = await closeDeviationTx(client, orgId, id);
+      recordDeviationClosed();
+      return { target: `protocol-deviation:${id}`, payload: { ...result }, body: { deviationId: id, ...result } };
+    },
   });
 });
 

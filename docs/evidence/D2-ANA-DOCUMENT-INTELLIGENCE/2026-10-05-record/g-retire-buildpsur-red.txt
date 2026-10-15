@@ -1,0 +1,17 @@
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > buildEmdr > valid when required fields present 14ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > buildEmdr > invalid without becameAwareDate 1ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > buildMir > valid MIR payload 0ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > buildFsn > requires affected lots 0ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > PSUR: one builder > report-authoring no longer exports a parallel PSUR builder 29ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > PSUR: one builder > the AnA build_postmarket_report tool no longer offers psur 32ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > PSUR: one builder > a psur request to build_postmarket_report is pointed at the canonical command, not built 22ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > PSUR: one builder > POST /api/ivd-lifecycle/authoring/psur is no longer mounted 1003ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > computes serious incidents per unit placed on the market 1ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > does not round a small rate to zero (buildPsur rounded to 1e-6) 1ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > returns null, not zero, when no units were placed on the market 0ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > refuses a figure that is not a non-negative integer 2ms
+ × server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > the canonical PSUR carries supplied figures and the computed rate 1ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > without supplied figures the canonical PSUR keeps the factual placeholder and states no rate 1ms
+ Test Files  1 failed (1)
+      Tests  9 failed | 5 passed (14)
+--- (failure detail)

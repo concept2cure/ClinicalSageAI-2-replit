@@ -1,0 +1,18 @@
+{
+  "command": [
+    "sh",
+    ".husky/pre-push",
+    "origin",
+    "https://github.com/concept2cure/ClinicalSageAI-2-replit.git"
+  ],
+  "stdin": "refs/heads/concept2cure-v2 3c7b1620ce6429b05bde14fd1ee261d3c7a220a9 refs/heads/concept2cure-v2 2ad484223e8fc84ae0a627e4038653caf93ba787\n",
+  "source_checkpoint": "3c7b1620ce6429b05bde14fd1ee261d3c7a220a9",
+  "publication_base": "2ad484223e8fc84ae0a627e4038653caf93ba787",
+  "exit": 0,
+  "elapsed_seconds": 55.69,
+  "all_gates_passed": true,
+  "typecheck_heap_mb": 6656,
+  "typecheck_errors": 0,
+  "tsc_exit": 0,
+  "repeat_reason": "Canonical head advanced by two report-only files; source/test/client bytes unchanged."
+}

@@ -1,0 +1,131 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+{
+  "timestamp": "2026-10-05T02:49:42.285Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:49:42.286Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+{
+  "timestamp": "2026-10-05T02:49:42.286Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > a model's timeline, module map and forms are dropped; its gaps and dependencies are labelled narrative
+{
+  "timestamp": "2026-10-05T02:49:42.508Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "submission-plan",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > the model is given the structure to narrate, under prompt v1.1
+{
+  "timestamp": "2026-10-05T02:49:42.516Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "submission-plan",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+ × server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > a model's timeline, module map and forms are dropped; its gaps and dependencies are labelled narrative 11ms
+   → expected '{"moduleMap":[{"sectionCode":"m9.9","…' not to match /FDA-9999|offsetDays|m9\.9|"timeline"|…/
+ × server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > the model is given the structure to narrate, under prompt v1.1 3ms
+   → expected 'submission-plan@v1.0' to be 'submission-plan@v1.1' // Object.is equality
+ × server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > the plan stands when the model call fails (an unreadable reply) 2ms
+   → The AI response was not valid JSON.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > a model's timeline, module map and forms are dropped; its gaps and dependencies are labelled narrative
+AssertionError: expected '{"moduleMap":[{"sectionCode":"m9.9","…' not to match /FDA-9999|offsetDays|m9\.9|"timeline"|…/
+
+- Expected:
+/FDA-9999|offsetDays|m9\.9|"timeline"|"moduleMap"|"forms"/
+
++ Received:
+"{\"moduleMap\":[{\"sectionCode\":\"m9.9\",\"title\":\"Invented\",\"required\":true}],\"forms\":[{\"formId\":\"FDA-9999\",\"region\":\"fda\",\"required\":true}],\"timeline\":[{\"milestone\":\"PDUFA date\",\"offsetDays\":300}],\"gaps\":[{\"sectionCode\":\"m2.5\",\"description\":\"No clinical overview yet.\"}],\"dependencies\":[{\"before\":\"m5.3.5\",\"after\":\"m2.7\"}],\"deterministicStructure\":{\"applicationType\":\"nda\",\"resolver\":\"reasoning-engine\",\"profileVersion\":\"2026-06-01\",\"regions\":[{\"region\":\"fda\",\"requestedRegion\":\"fda\",\"supported\":true,\"requiredSections\":[{\"sectionCode\":\"1.1\",\"title\":\"Forms (FDA 1571 for IND / FDA 356h for NDA/BLA)\",\"module\":1,\"required\":true,\"regional\":true,\"granularityRule\":\"region-form\"},{\"sectionCode\":\"1.2\",\"title\":\"Cover Letter\",\"module\":1,\"required\":true,\"regional\":true,\"granularityRule\":\"one-per-sequence\"},{\"sectionCode\":\"1.3\",\"title\":\"Administrative Information (1.3.1 contact/sponsor; 1.3.4 financial certification)\",\"module\":1,\"required\":true,\"regional\":true,\"granularityRule\":\"region-section\"},{\"sectionCode\":\"1.14\",\"title\":\"Labeling\",\"module\":1,\"required\":false,\"regional\":true,\"granularityRule\":\"region-section\"},{\"sectionCode\":\"2.3\",\"title\":\"Quality Overall Summary (QOS)\",\"module\":2,\"required\":true,\"regional\":false,\"granularityRule\":\"one-per-application\"},{\"sectionCode\":\"2.4\",\"title\":\"Nonclinical Overview\",\"module\":2,\"required\":true,\"regional\":false,\"granularityRule\":\"one-per-application\"},{\"sectionCode\":\"2.5\",\"title\":\"Clinical Overview\",\"module\":2,\"required\":true,\"regional\":false,\"granularityRule\":\"one-per-application\"},{\"sectionCode\":\"2.6\",\"title\":\"Nonclinical Written and Tabulated Summaries\",\"module\":2,\"required\":true,\"regional\":false,\"granularityRule\":\"one-per-study-type\"},{\"sectionCode\":\"2.7\",\"title\":\"Clinical Summary\",\"module\":2,\"required\":true,\"regional\":false,\"granularityRule\":\"one-per-subsection\"},{\"sectionCode\":\"3\",\"title\":\"Module 3 — Quality\",\"module\":3,\"required\":true,\"regional\":false,\"granularityRule\":\"one-per-substance-and-product\"},{\"sectionCode\":\"4\",\"title\":\"Module 4 — Nonclinical Study Reports\",\"module\":4,\"required\":true,\"regional\":false,\"granularityRule\":\"one-per-study\"},{\"sectionCode\":\"5\",\"title\":\"Module 5 — Clinical Study Reports\",\"module\":5,\"required\":true,\"regional\":false,\"granularityRule\":\"one-per-study\"}],\"reviewClock\":{\"region\":\"fda\",\"applicationType\":\"nda\",\"model\":\"PDUFA\",\"nominalDays\":300,\"clockStops\":false,\"basis\":\"PDUFA review goal (10 months standard / 6 months priority from filing)\"}}]}}"
+
+ ❯ server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts:38:38
+     36|     const plan = (await generateSubmissionPlan(INPUT, CTX)) as unknown…
+     37|     expect(plan.deterministicStructure).toEqual(buildSubmissionStructu…
+     38|     expect(JSON.stringify(plan)).not.toMatch(/FDA-9999|offsetDays|m9\.…
+       |                                      ^
+     39|     expect(plan.narrative).toEqual({
+     40|       source: 'model',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > the model is given the structure to narrate, under prompt v1.1
+AssertionError: expected 'submission-plan@v1.0' to be 'submission-plan@v1.1' // Object.is equality
+
+Expected: "submission-plan@v1.1"
+Received: "submission-plan@v1.0"
+
+ ❯ server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts:52:31
+     50|     await generateSubmissionPlan(INPUT, CTX);
+     51|     const req = GW.route.mock.calls[0][0] as { promptVersion: string; …
+     52|     expect(req.promptVersion).toBe('submission-plan@v1.1');
+       |                               ^
+     53|     expect(JSON.parse(req.messages[1].content).deterministicStructure)…
+     54|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > the plan stands when the model call fails (an unreadable reply)
+SubmissionAiError: The AI response was not valid JSON.
+ ❯ parseJson server/services/submission-ai/submission-ai-service.ts:85:11
+     83|     return JSON.parse(cleaned) as T;
+     84|   } catch {
+     85|     throw new SubmissionAiError('INVALID_AI_RESPONSE', 'The AI respons…
+       |           ^
+     86|   }
+     87| }
+ ❯ runJsonTask server/services/submission-ai/submission-ai-service.ts:122:20
+ ❯ Module.generateSubmissionPlan server/services/submission-ai/submission-ai-service.ts:147:21
+ ❯ server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts:58:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'INVALID_AI_RESPONSE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  02:49:40
+   Duration  1.95s (transform 956ms, setup 71ms, import 1.61s, tests 21ms, environment 0ms)
+

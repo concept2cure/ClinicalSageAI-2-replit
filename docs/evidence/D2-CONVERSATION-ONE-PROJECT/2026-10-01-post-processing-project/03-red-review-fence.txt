@@ -1,0 +1,12 @@
+# post-processing-project.test.ts and guidance-executor-no-project.test.ts against HEAD's post-processing.ts and ana-guidance-executor.ts
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program UUID beginning with digits: every step gets its anchor row, never the integer its digits spell
+ × server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program with no anchor row: no step acts on any project
+   → expected { guidance: 'not called', …(5) } to deeply equal { guidance: null, …(5) }
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a legacy integer project is itself, without the anchor
+ × server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a malformed project is no project
+   → expected { guidance: 'not called', …(5) } to match object { guidance: null, …(2) }
+[AnA Executor] 1 signals → 0 executed, 0 prepared, 1 failed
+ × server/services/__tests__/guidance-executor-no-project.test.ts > processResponseActions with no project > strips the block, creates nothing, and says each action was not created and why
+   → expected 'Missing required fields: type, projec…' to match /no project/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)

@@ -1,0 +1,8 @@
+# HEAD c6f2028b, 2026-10-01T06:10:45Z: the deploy's grant audit on app_service while it holds UPDATE/DELETE on 10 stores (red/probe-as-app_service.txt section 1)
+▶ grant audit on c2c_testdb as postgres; auditing role app_service (from --role)
+  role app_service: superuser=false bypassrls=false login=true; 1286 application relations audited
+  denied: 0
+  excess beyond the audit ceiling (non-owned relations): 0
+
+✓ runtime role app_service holds the recipe posture on all 1286 relations.
+exit=0

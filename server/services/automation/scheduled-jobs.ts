@@ -17,7 +17,7 @@ import Queue from 'bull';
 import { createScopedLogger } from '../../utils/logger.js';
 import { runProactiveDigest } from '../digest/proactive-digest.js';
 import { parseDigestPreferences } from '../digest/digest-preferences.js';
-import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore';
+import { runWithOrgJobScope, runWithSystemTenantScope } from '../../db/tenantStore';
 import {
   recordBackgroundJobRun,
   registerBackgroundJob,
@@ -303,14 +303,11 @@ export async function initScheduledJobs(redisUrl?: string): Promise<void> {
       // handler's pooled queries are permitted and correctly filtered under
       // RLS_ENFORCE=on — otherwise the Bull worker context carries no scope and
       // every handler's DB access fails closed.
-      const result = await runWithTenantScope(
-        {
-          tenantId: String(config.organizationId),
-          orgUuid: null,
-          role: null,
-          source: 'job',
-          caller: `scheduled-job:${config.type}`,
-        },
+      // Same scope the digest heartbeat uses for the same work (tenantStore
+      // runWithOrgJobScope) — one definition for both triggers.
+      const result = await runWithOrgJobScope(
+        config.organizationId,
+        `scheduled-job:${config.type}`,
         () => handler(config),
       );
       log.info(

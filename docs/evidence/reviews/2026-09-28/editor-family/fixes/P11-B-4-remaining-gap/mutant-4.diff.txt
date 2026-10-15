@@ -1,0 +1,5 @@
+MUTANT 4 diff:
+630c630
+<     tr.getMeta(DECISION_META) ? undoDepth(oldState) : floor,
+---
+>     tr.getMeta(SUGGESTION_ACTION_META) && tr.getMeta('addToHistory') === false && tr.docChanged ? undoDepth(oldState) : floor, // MUTANT 4: any out-of-history suggestion action

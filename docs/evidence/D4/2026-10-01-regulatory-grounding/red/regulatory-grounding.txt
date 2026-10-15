@@ -1,0 +1,114 @@
+# red at 8bf2a1fa with only the test added
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags a CFR section the evidence does not hold 10ms
+   → expected [] to deeply equal [ { kind: 'cfr', …(1) } ]
+ × tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > grounds a CFR section the evidence holds, whatever the spelling 2ms
+   → expected +0 to be 2 // Object.is equality
+ × tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags an ICH code the evidence does not hold, and grounds one it does 2ms
+   → expected [] to deeply equal [ { kind: 'ich', text: 'ICH E9(R1)' } ]
+ × tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > reads a revisioned code without the ICH prefix, and leaves a bare letter-number alone 1ms
+   → expected [] to deeply equal [ { kind: 'ich', text: 'E9(R1)' } ]
+ ✓ tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > is still a no-op when no tools ran 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags a CFR section the evidence does not hold
+AssertionError: expected [] to deeply equal [ { kind: 'cfr', …(1) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "kind": "cfr",
+-     "text": "21 CFR 820.30(g)",
+-   },
+- ]
++ []
+
+ ❯ tests/services/answer-grounding-regulatory.test.ts:22:27
+     20|   it('flags a CFR section the evidence does not hold', () => {
+     21|     const r = verifyAnswerGrounding('Design controls are in 21 CFR 820…
+     22|     expect(r.unsupported).toEqual([{ kind: 'cfr', text: '21 CFR 820.30…
+       |                           ^
+     23|   });
+     24|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > grounds a CFR section the evidence holds, whatever the spelling
+AssertionError: expected +0 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ tests/services/answer-grounding-regulatory.test.ts:28:23
+     26|     const r = verifyAnswerGrounding('Per 21 CFR 312.23 and 21 CFR Part…
+     27|     expect(r.unsupported).toEqual([]);
+     28|     expect(r.checked).toBe(2);
+       |                       ^
+     29|     expect(r.grounded).toBe(2);
+     30|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > flags an ICH code the evidence does not hold, and grounds one it does
+AssertionError: expected [] to deeply equal [ { kind: 'ich', text: 'ICH E9(R1)' } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "kind": "ich",
+-     "text": "ICH E9(R1)",
+-   },
+- ]
++ []
+
+ ❯ tests/services/answer-grounding-regulatory.test.ts:34:27
+     32|   it('flags an ICH code the evidence does not hold, and grounds one it…
+     33|     const r = verifyAnswerGrounding('Follow ICH E6(R3) and the estiman…
+     34|     expect(r.unsupported).toEqual([{ kind: 'ich', text: 'ICH E9(R1)' }…
+       |                           ^
+     35|     expect(r.grounded).toBe(1);
+     36|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/services/answer-grounding-regulatory.test.ts > verifyAnswerGrounding — regulations > reads a revisioned code without the ICH prefix, and leaves a bare letter-number alone
+AssertionError: expected [] to deeply equal [ { kind: 'ich', text: 'E9(R1)' } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "kind": "ich",
+-     "text": "E9(R1)",
+-   },
+- ]
++ []
+
+ ❯ tests/services/answer-grounding-regulatory.test.ts:40:27
+     38|   it('reads a revisioned code without the ICH prefix, and leaves a bar…
+     39|     const r = verifyAnswerGrounding('E9(R1) applies. Step E2 of the pr…
+     40|     expect(r.unsupported).toEqual([{ kind: 'ich', text: 'E9(R1)' }]);
+       |                           ^
+     41|     expect(r.checked).toBe(1);
+     42|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  01:33:21
+   Duration  485ms (transform 94ms, setup 92ms, import 27ms, tests 26ms, environment 0ms)
+

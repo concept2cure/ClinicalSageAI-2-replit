@@ -1,0 +1,86 @@
+# g-retire-buildpsur green — 2026-10-05 (fix round 1)
+
+## 1. step test + the importers' tests (one run, --maxWorkers 2)
+$ npx vitest run server/services/postmarket/__tests__/report-authoring.test.ts server/services/ana/__tests__/tool-registry-consistency.test.ts server/services/gspr-postmarket/__tests__/post-market-authoring.test.ts server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts --maxWorkers 2
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > buildEmdr > valid when required fields present 2ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > buildEmdr > invalid without becameAwareDate 1ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > buildMir > valid MIR payload 1ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > buildFsn > requires affected lots 1ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > PSUR: one builder > report-authoring no longer exports a parallel PSUR builder 0ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > PSUR: one builder > the AnA build_postmarket_report tool no longer offers psur 1ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > PSUR: one builder > a psur request to build_postmarket_report is pointed at the canonical command, not built 3ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > PSUR: one builder > POST /api/ivd-lifecycle/authoring/psur is no longer mounted 668ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > computes serious incidents per unit placed on the market 1ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > does not round a small rate to zero (buildPsur rounded to 1e-6) 0ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > returns null, not zero, when no units were placed on the market 0ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > refuses a figure that is not a non-negative integer 1ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > the canonical PSUR carries supplied figures and the computed rate 0ms
+ ✓ server/services/postmarket/__tests__/report-authoring.test.ts > canonical PSUR serious-incident rate (moved from buildPsur) > without supplied figures the canonical PSUR keeps the factual placeholder and states no rate 0ms
+ Test Files  7 passed (7)
+      Tests  955 passed (955)
+
+## 2. ivd-lifecycle-tools.test.ts — the importer test this step turns red, and its fix
+The working copy, without the outside patch, fails the one case that pinned the
+retired builder:
+$ npx vitest run server/services/ana/__tests__/ivd-lifecycle-tools.test.ts
+ × ... > build_postmarket_report drafts a PSUR and reports validity 9ms
+ Tests  1 failed | 6 passed (7)
+
+The file is outside this step's files list, so the fix is a patch for the
+orchestrator to apply in the same commit:
+  <scratchpad>/g-retire-buildpsur-outside/outside.patch
+  sha256 7eb448e0312a016409114507ea42567a540e9fc40fd6bf6b2335caf7633d3bcc
+It replaces that case with a live 'fsn' case (the tool still builds emdr/mir/fsn)
+and a comment naming where the PSUR redirect is pinned (report-authoring.test.ts).
+The patched file, run from the scratchpad with the repo's vitest config:
+ ✓ ... > IVD_LIFECYCLE_TOOLS contract > exposes the eight lifecycle tools with object schemas
+ ✓ ... > screen_signal_panel computes disproportionality metrics from a 2x2 table
+ ✓ ... > assess_iso17511_traceability returns a validity assessment
+ ✓ ... > determine_assay_cutoff computes a cutoff from labelled observations
+ ✓ ... > build_postmarket_report drafts an FSN and reports validity
+ ✓ ... > build_postmarket_report rejects an unknown report type as needs_parameters
+ ✓ ... > screen_signal_panel relays a parameter error for a malformed cell
+ Tests  7 passed (7)
+
+## 3. scripts/demo/ivd-lifecycle-walkthrough.ts — the broken reader, and its fix
+Working copy, without the patch:
+$ npx tsx scripts/demo/ivd-lifecycle-walkthrough.ts
+SyntaxError: The requested module '../../server/services/postmarket/report-authoring' does not provide an export named 'buildPsur'
+With the patch (step 9 no longer calls buildPsur; it names the canonical PSUR
+path, which needs the database the walkthrough does not use):
+=== 9. Post-market authoring — PSUR ===
+PSUR: authored as the program post-market document (needs a database); skipped in this walkthrough.
+=== 10. EU market access — IVDR registration ===
+EU registration compliant: true (notified body required: true)
+exit=0
+
+## 4. Other readers in the same patch
+- ivd-platform.openapi.json: 'authoring/psur' removed from the lifecycle-calculator
+  list; the patched file parses as JSON.
+- server/services/ivd-knowledge/links.ts: the dead 'authoring.psur' concept and
+  its map entry removed. Its only importer is server/routes/ivd-lifecycle.ts,
+  which no longer names that concept.
+
+## 5. Fix round 2 — singular wording of the serious-incident count
+Review (minor): a count of one read "1 serious incidents ...". The figure was
+right; the wording was not. A failing case was added first to
+server/services/postmarket/__tests__/report-authoring.test.ts
+('a single serious incident reads in the singular, with and without a rate').
+Red, before the wording change in post-market-authoring.ts buildPsurContent:
+$ npx vitest run server/services/postmarket/__tests__/report-authoring.test.ts
+ × ... > a single serious incident reads in the singular, with and without a rate
+   → expected '1 serious incidents over 1000 units p…' to contain '1 serious incident over 1000 units'
+ Tests  1 failed | 14 passed (15)
+Green, after (count === 1 -> "incident", otherwise "incidents"; 0 stays plural):
+$ npx vitest run --maxWorkers 2 report-authoring.test.ts mdx-agent-audit-contract.test.ts \
+    mdx-command-handlers-phase2-audit-outcome.test.ts mdx-command-handlers-phase2.test.ts \
+    post-market-authoring.test.ts post-market-readiness.test.ts tool-registry-consistency.test.ts
+ Test Files  7 passed (7)
+      Tests  956 passed (956)
+eslint warnings, working copy vs HEAD: post-market-authoring.ts 1 vs 1;
+report-authoring.test.ts 0 vs 0.
+tsc (under the shared lock), filtered to this step's files: no errors in
+post-market-authoring.ts, report-authoring.ts/.test.ts, ivdLifecycleTools.ts or
+routes/ivd-lifecycle.ts. The one AnaToolExecutor.ts error is at line 9557
+(StfLeaf, the eCTD STF lane), not in this step's hunk.
+The outside patch still passes git apply --check (sha256 unchanged, 7eb448e0…3bcc).

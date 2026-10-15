@@ -1,0 +1,13 @@
+Mutant M10-no-verdict-shapes: readiness, compliance and approvability verdicts are not named
+
+--- server/services/ana/answer-grounding.ts
+- const all = [...detectUnsupportedClaims(answer), ...detectVerdictClaims(answer)].sort((a, b) => a.index - b.index);
++ const all = [...detectUnsupportedClaims(answer)].sort((a, b) => a.index - b.index);
+
+Tests run: tests/services/answer-check.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — verdicts > names a readiness, compliance or approval verdict the answer states 12ms
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 4398ms
+      Tests  2 failed | 30 passed (32)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

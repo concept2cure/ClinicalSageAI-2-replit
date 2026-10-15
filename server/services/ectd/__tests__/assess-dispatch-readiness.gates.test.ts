@@ -3,20 +3,29 @@
  * helpers from the DB-bound assessor:
  *   - resolveDispatchEnvironment: an unset/misspelled NODE_ENV must NOT relax
  *     the production eValidator rule.
- *   - evaluateShadowPresenceGate: a never-Shadow-Reviewed sequence (0 completed
- *     runs) is UNASSESSED, not clean, and must block dispatch.
+ *   - evaluateShadowPresenceWithWaiver: a never-Shadow-Reviewed sequence (0
+ *     completed runs) is UNASSESSED, not clean, and must block dispatch — unless
+ *     an ACTIVE signed waiver stands in (P-34), and then it clears as not
+ *     assessed, never as reviewed, and never over an open critical finding.
  */
 import { describe, it, expect } from 'vitest';
 import {
   resolveDispatchEnvironment,
-  evaluateShadowPresenceGate,
   dispatchGateViews,
   withRules,
   composeDispatchGates,
   composeStepVerdicts,
   externalNotAssessed,
+  readinessOptionsForSequence,
+  validatedStageOf,
+  originalIndModule3Headings,
+  isOriginalApplicationSequence,
 } from '../assess-dispatch-readiness';
+import { computeDispatchReadiness, type OriginalModule3Requirement, type ReadinessLeaf } from '../dispatch-readiness';
+import { requiredSectionProfileFor } from '../required-sections';
 import { DISPATCH_GATE_RULE_IDS } from '../validation-rule-corpus';
+import { continuingIndCompletenessFindings } from '../ind-program-findings';
+import { evaluateShadowPresenceWithWaiver, NO_SHADOW_REVIEW_BLOCKER } from '../shadow-review-waiver';
 
 describe('resolveDispatchEnvironment — fails toward production', () => {
   it('treats unset / misspelled NODE_ENV as production (strict)', () => {
@@ -33,17 +42,63 @@ describe('resolveDispatchEnvironment — fails toward production', () => {
   });
 });
 
-describe('evaluateShadowPresenceGate — never-reviewed is not clean', () => {
-  it('blocks when zero Shadow Review runs have completed', () => {
-    const gate = evaluateShadowPresenceGate(0);
+describe('the Shadow Review presence gate — never-reviewed is not clean', () => {
+  it('blocks when zero Shadow Review runs have completed and no waiver was recorded', () => {
+    const gate = evaluateShadowPresenceWithWaiver(0, { state: 'none' });
     expect(gate.cleared).toBe(false);
-    expect(gate.blockers.join(' ')).toMatch(/never-reviewed|Shadow Review/i);
+    expect(gate.blockers).toEqual([NO_SHADOW_REVIEW_BLOCKER]);
+    expect(gate.notAssessed).toBeUndefined();
   });
 
-  it('clears once at least one completed run exists', () => {
-    const gate = evaluateShadowPresenceGate(1);
-    expect(gate.cleared).toBe(true);
-    expect(gate.blockers).toHaveLength(0);
+  it('clears once at least one completed run exists, whatever the waiver says', () => {
+    for (const state of ['none', 'active', 'lapsed', 'revoked', 'undetermined'] as const) {
+      const gate = evaluateShadowPresenceWithWaiver(1, { state });
+      expect(gate).toEqual({ cleared: true, blockers: [] });
+    }
+  });
+});
+
+describe('P-34: an active waiver clears the presence gate as not assessed, and nothing else', () => {
+  const active = {
+    state: 'active' as const, signatureId: 41, signerName: 'Dana Reyes', failedRunId: 7, failureCode: 'provider_unavailable' as const,
+  };
+  const presence = evaluateShadowPresenceWithWaiver(0, active);
+
+  it('the presence gate view says who waived it, under which signature, for which failed run', () => {
+    expect(presence.cleared).toBe(true);
+    const views = dispatchGateViews(
+      {
+        structural: { cleared: true, blockers: [] },
+        external: { cleared: true, blockers: [] },
+        shadowPresence: { cleared: presence.cleared, blockers: presence.blockers },
+        releaseSignature: { cleared: true, blockers: [] },
+      },
+      { shadowPresence: presence.notAssessed },
+    );
+    const view = views.find((v) => v.key === 'shadowPresence');
+    expect(view?.cleared).toBe(true);
+    expect(view?.notAssessed).toMatch(/waived under signature 41 by Dana Reyes/);
+    expect(view?.notAssessed).toMatch(/run #7/);
+    expect(view?.notAssessed).toMatch(/not adversarially reviewed/);
+  });
+
+  it('an open critical finding still blocks: the waiver never reaches the structural gate', () => {
+    const verdict = composeDispatchGates({
+      structural: { cleared: false, blockers: ['1 open critical Shadow Review finding.'] },
+      external: { cleared: true, blockers: [] },
+      shadowPresence: { cleared: presence.cleared, blockers: presence.blockers },
+      releaseSignature: { cleared: true, blockers: [] },
+    });
+    expect(verdict.cleared).toBe(false);
+    expect(verdict.blockers).toEqual(['1 open critical Shadow Review finding.']);
+  });
+
+  it.each(['lapsed', 'revoked', 'undetermined'] as const)('a %s waiver blocks with its own sentence', (state) => {
+    const gate = evaluateShadowPresenceWithWaiver(0, { ...active, state });
+    expect(gate.cleared).toBe(false);
+    expect(gate.notAssessed).toBeUndefined();
+    expect(gate.blockers).toHaveLength(1);
+    expect(gate.blockers[0]).not.toBe(NO_SHADOW_REVIEW_BLOCKER);
   });
 });
 
@@ -215,5 +270,266 @@ describe('an advisory gate that did not run is not assessed, not passed (populat
       { external: 'ignored' },
     );
     expect(views.find((v) => v.key === 'external')!.notAssessed).toBeUndefined();
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 4): "Dispatch blocked, 2 blockers" with the
+   structural gate SATISFIED for a one-leaf original IND missing Form 1571, the
+   IB and the general investigational plan — every missing section was a
+   warning. Requiredness is now decided per sequence from the regional Module 1
+   record, and a section the regulation requires is an error the gate counts. */
+describe('readinessOptionsForSequence — required sections decided per sequence', () => {
+  const AS_OF = '2026-10-08';
+  const original = { region: 'fda', type: 'original', sequenceNumber: '0000' };
+  const amendment = { region: 'fda', type: 'amendment', sequenceNumber: '0001' };
+
+  it('an original FDA IND is held to the record\'s IND requirements, as errors', () => {
+    const opts = readinessOptionsForSequence(original, 'ind', AS_OF);
+    expect(opts.requiredByRegulation?.codes).toEqual(
+      expect.arrayContaining(['1.1', '1.2', '1.12.14', '1.14.4.1', '1.14.4.2', '1.20']),
+    );
+    expect(opts.requiredByRegulation?.codes).not.toContain('1.3.3'); // debarment: marketing applications only
+    expect(opts.requiredSections ?? []).toEqual([]);
+
+    // The cover letter alone (BX-256 sequence 0000 in QA): the IND's own gaps block.
+    const r = computeDispatchReadiness(
+      [{ sectionCode: '1.2', title: 'Cover Letter', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5 }],
+      opts,
+    );
+    const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+    expect(missing.length).toBeGreaterThan(0);
+    expect(missing.every((f) => f.severity === 'error')).toBe(true);
+    expect(missing.map((f) => f.sectionCode)).toEqual(expect.arrayContaining(['1.1', '1.14.4.1', '1.20']));
+    expect(r.errors).toBe(missing.length);
+  });
+
+  it('an original NDA is held to the marketing requirements, not the IND\'s', () => {
+    const codes = readinessOptionsForSequence(original, 'nda', AS_OF).requiredByRegulation?.codes ?? [];
+    expect(codes).toEqual(expect.arrayContaining(['1.3.3', '1.3.4', '1.14.1']));
+    expect(codes).not.toContain('1.20');
+  });
+
+  /* P-33 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-15) reverses the pin that
+     held a continuing IND sequence to "its 1.1 form and nothing else", and the
+     j7 case beside it that let an amendment carrying only its 1571 through.
+     j7's stated reasons were that an amendment does not re-file the
+     Investigator's Brochure or the general investigational plan, and that the
+     regional Module 1 record makes no per-sequence claim. Neither says a
+     continuing sequence needs no cover letter or no content, and no rule cited
+     here exempts any sequence type from 1.2. Both reasons still hold and are
+     still honoured — the application's Module 1 list (1.20, the IB, the plan)
+     is never asked of an amendment. What a continuing IND sequence DOES need is
+     what the IND's own sequence validator says, by type
+     (validateSequenceLeaves: 1.1, 1.2 and the type's content), and since P-33
+     that is what the one verdict holds it to
+     (ind-program-findings.continuingIndCompletenessFindings), as errors.
+     readinessOptionsForSequence no longer decides a continuing IND sequence. */
+  const continuing = (type: string, codes: string[]) =>
+    continuingIndCompletenessFindings({ type }, codes.map((sectionCode) => ({ sectionCode, lifecycleOp: 'new' }))).findings;
+
+  it('a continuing IND sequence is not held to the application\'s Module 1 list (no "1.20 missing" on an amendment)', () => {
+    const opts = readinessOptionsForSequence(amendment, 'ind', AS_OF);
+    expect(opts.requiredSections ?? []).toEqual([]);
+    expect(opts.requiredByRegulation).toBeUndefined(); // decided by the IND sequence validator (P-33)
+    const r = computeDispatchReadiness(
+      [{ sectionCode: '1.1', title: 'Form FDA 1571', lifecycleOp: 'new', documentTable: 'rendered_leaf_files', documentId: 1 }],
+      opts,
+    );
+    expect(r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION')).toEqual([]);
+    // P-33: what the 1571-only amendment is missing is its cover letter and its content — never 1.20.
+    const missing = continuing('amendment', ['1.1']);
+    expect(missing.map((f) => f.sectionCode)).toEqual(['1.2', '5.3.5']);
+    expect(missing.map((f) => f.sectionCode)).not.toContain('1.20');
+  });
+
+  /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): every IND submission
+     carries a Form FDA 1571 (21 CFR 312). d155ef099 exempted continuing
+     sequences from every requirement. P-33: the 1571 is now asked by the IND
+     sequence validator, with the cover letter and the type's content. */
+  it('a continuing IND sequence is held to 1.1 (Form FDA 1571), 1.2 and its type\'s content, as errors (P-33)', () => {
+    // A protocol amendment with its cover letter and no 1571.
+    const noForm = continuing('amendment', ['1.2', '5.3.5.1']);
+    expect(noForm.map((f) => [f.sectionCode, f.severity])).toEqual([['1.1', 'error']]);
+    expect(noForm[0].message).toMatch(/Form FDA 1571/);
+    expect(noForm[0].message).toMatch(/21 CFR 312/);
+    // Each type is held to its own content, after the transmittal pair.
+    expect(continuing('annual', ['1.1', '1.2']).map((f) => f.sectionCode)).toEqual(['1.13']);
+    expect(continuing('response', ['1.1', '1.2']).map((f) => f.sectionCode)).toEqual(['1.11']);
+    expect(continuing('withdrawal', ['1.1', '1.2']).map((f) => f.sectionCode)).toEqual(['1.5']);
+    expect(continuing('amendment', ['1.1.1', '1.2', '5.3.5.1'])).toEqual([]);
+    expect(continuing('amendment', ['1.1.1']).every((f) => f.severity === 'error' && f.code === 'MISSING_REQUIRED_SECTION')).toBe(true);
+    // A sequence numbered past 0000 with no type recorded is continuing too.
+    expect(readinessOptionsForSequence({ region: 'fda', type: null, sequenceNumber: '0003' }, 'ind', AS_OF).isOriginalSequence).toBe(false);
+  });
+
+  /* Follow-up decision (docs/LAUNCH_DEFINITION_OF_DONE.md, "Form 356h"): every
+     submission to an NDA, BLA or ANDA carries a Form FDA 356h, so a continuing
+     sequence of those kinds is held to 1.1 as a continuing IND sequence is to
+     its 1571. aac603a1b left them held to nothing. */
+  it('a continuing NDA, BLA or ANDA sequence is held to its 1.1 form (Form FDA 356h), as an error, and to nothing else', () => {
+    for (const kind of ['nda', 'bla', 'anda']) {
+      const opts = readinessOptionsForSequence(amendment, kind, AS_OF);
+      expect(opts.requiredByRegulation?.codes, kind).toEqual(['1.1']);
+      expect(opts.requiredByRegulation?.basis, kind).toMatch(/Form FDA 356h/);
+      expect(opts.requiredByRegulation?.basis, kind).not.toMatch(/1571/);
+      expect(opts.requiredSections ?? [], kind).toEqual([]);
+      // A labeling supplement with its cover letter and no 356h.
+      const r = computeDispatchReadiness(
+        [
+          { sectionCode: '1.2', title: 'Cover Letter', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5 },
+          { sectionCode: '1.14.1.3', title: 'Draft labeling text', lifecycleOp: 'replace', documentTable: 'coauthor_documents', documentId: 6 },
+        ],
+        opts,
+      );
+      const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
+      expect(missing.map((f) => [f.sectionCode, f.severity]), kind).toEqual([['1.1', 'error']]);
+      expect(missing[0].message, kind).toMatch(/Form FDA 356h/);
+      // With the form filed, nothing of the original's Module 1 list is missing.
+      const withForm = computeDispatchReadiness(
+        [{ sectionCode: '1.1', title: 'Form FDA 356h', lifecycleOp: 'new', documentTable: 'rendered_leaf_files', documentId: 1 }],
+        opts,
+      );
+      expect(withForm.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION'), kind).toEqual([]);
+    }
+    // A sequence numbered past 0000 with no type recorded is continuing too.
+    expect(readinessOptionsForSequence({ region: 'fda', type: null, sequenceNumber: '0004' }, 'bla', AS_OF).requiredByRegulation?.codes).toEqual(['1.1']);
+  });
+
+  it('a continuing sequence outside the US marketing and IND kinds is still not held to a Module 1 list', () => {
+    expect(readinessOptionsForSequence({ region: 'eu', type: 'variation', sequenceNumber: '0001' }, 'maa', AS_OF).requiredByRegulation).toBeUndefined();
+    expect(readinessOptionsForSequence({ region: 'jp', type: 'amendment', sequenceNumber: '0001' }, 'jnda', AS_OF).requiredByRegulation).toBeUndefined();
+  });
+
+  it('a region or kind the record does not model keeps the profile list as warnings, never errors', () => {
+    const device = readinessOptionsForSequence(original, '510k', AS_OF);
+    expect(device.requiredByRegulation).toBeUndefined();
+    expect(device.requiredSections?.length).toBeGreaterThan(0);
+    const china = readinessOptionsForSequence({ region: 'cn', type: 'original', sequenceNumber: '0000' }, 'nda', AS_OF);
+    expect(china.requiredByRegulation).toBeUndefined();
+    const r = computeDispatchReadiness(
+      [{ sectionCode: '3.2.P.1', title: 'Device', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 9 }],
+      device,
+    );
+    expect(r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION').every((f) => f.severity === 'warning')).toBe(true);
+    expect(r.errors).toBe(0);
+  });
+});
+
+/* QA 2026-10-08 (j7, finding 20): "0000 original — VALIDATED" beside a
+   dispatch-blocked gate. Validated means the validation found no error
+   (0e50993c5); a stored stage that no longer meets that says so. */
+describe('validatedStageOf — does a recorded Validated stage still hold?', () => {
+  const seq = (status: string, validationStatus: string | null) => ({ status, validationStatus, sequenceNumber: '0000' });
+
+  it('is null for any stage but Validated', () => {
+    for (const status of ['draft', 'assembling', 'frozen', 'dispatched']) expect(validatedStageOf(seq(status, null), 3)).toBeNull();
+  });
+
+  it('holds when the validation finds no error, and says whether a verdict was recorded', () => {
+    expect(validatedStageOf(seq('validated', 'passed'), 0)).toEqual({ holds: true, verdictRecorded: true });
+    expect(validatedStageOf(seq('validated', null), 0)).toEqual({ holds: true, verdictRecorded: false });
+  });
+
+  it('does not hold when the validation now finds errors, and says what to do', () => {
+    const v = validatedStageOf(seq('validated', null), 8);
+    expect(v).toMatchObject({ holds: false, verdictRecorded: false, errors: 8 });
+    expect(v && !v.holds && v.reason).toBe(
+      'Sequence 0000 is recorded as Validated, but its validation now finds 8 errors, and no validation verdict was recorded when it was marked. ' +
+        'Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then.',
+    );
+    const one = validatedStageOf(seq('validated', 'passed'), 1);
+    expect(one && !one.holds && one.reason).toMatch(/now finds 1 error\. Validated means/);
+  });
+
+  it('an undetermined count does not hold — unknown is not zero', () => {
+    expect(validatedStageOf(seq('validated', 'passed'), Number.NaN)).toMatchObject({ holds: false });
+  });
+});
+
+/**
+ * CMC-M3-GA item 21 (2026-10-05). The dispatch path asked an IND for Module 1
+ * alone, as warnings, and never read the IND profile that names 3.2.S and
+ * 3.2.P — an original IND with no CMC section read dispatch-clear. The DB-bound
+ * half (which sequence is original, the cross-reference register) is pinned in
+ * assess-dispatch-readiness.original-ind-module3.pglite.test.ts.
+ */
+describe('an original IND is asked for the Module 3 its profile names', () => {
+  it('reads the headings from the IND profile, with their ICH M4 titles — not a second list', () => {
+    const headings = originalIndModule3Headings('ind', 'fda');
+    const profileM3 = [...requiredSectionProfileFor('IND', 'fda')!.sections].filter((c) => c.startsWith('3.'));
+    expect(headings?.map((h) => h.code)).toEqual(profileM3);
+    expect(headings).toEqual([
+      { code: '3.2.S', title: 'Drug Substance' },
+      { code: '3.2.P', title: 'Drug Product' },
+    ]);
+  });
+
+  it('asks a US IND only: not an NDA, not an IND outside FDA, not an unknown type', () => {
+    expect(originalIndModule3Headings('nda', 'fda')).toBeNull();
+    expect(originalIndModule3Headings('ind', 'eu')).toBeNull();
+    expect(originalIndModule3Headings(null, 'fda')).toBeNull();
+  });
+
+  it('sequence 0000 is the original; another number only when typed original and first', () => {
+    expect(isOriginalApplicationSequence({ type: 'amendment', sequenceNumber: '0000' }, false)).toBe(true);
+    expect(isOriginalApplicationSequence({ type: 'original', sequenceNumber: '0001' }, false)).toBe(true);
+    // The column default: a later sequence created without a type reads 'original'.
+    expect(isOriginalApplicationSequence({ type: 'original', sequenceNumber: '0003' }, true)).toBe(false);
+    expect(isOriginalApplicationSequence({ type: 'amendment', sequenceNumber: '0001' }, false)).toBe(false);
+  });
+});
+
+describe('IND_MODULE3_REQUIRED — what clears a required heading, and what does not', () => {
+  const leaf = (sectionCode: string, over: Partial<ReadinessLeaf> = {}): ReadinessLeaf => ({
+    sectionCode, title: sectionCode, lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 1, ...over,
+  });
+  const requirement = (crossReferences: OriginalModule3Requirement['crossReferences'] = []): OriginalModule3Requirement => ({
+    label: 'the original IND (sequence 0000)',
+    headings: [{ code: '3.2.S', title: 'Drug Substance' }, { code: '3.2.P', title: 'Drug Product' }],
+    crossReferences,
+  });
+  const missing = (leaves: ReadinessLeaf[], req = requirement()) =>
+    computeDispatchReadiness(leaves, { originalModule3: req }).findings
+      .filter((f) => f.code === 'IND_MODULE3_REQUIRED')
+      .map((f) => f.sectionCode);
+
+  it('Module 1 alone: both headings are blocking errors', () => {
+    const r = computeDispatchReadiness([leaf('m1.1'), leaf('m1.2')], { originalModule3: requirement() });
+    expect(r.errors).toBe(2);
+    expect(r.findings.filter((f) => f.severity === 'error').map((f) => f.sectionCode)).toEqual(['3.2.S', '3.2.P']);
+  });
+
+  it('a leaf at or under the heading clears it, in any spelling; a numerically adjacent code does not', () => {
+    expect(missing([leaf('m3.2.S.4.1'), leaf('3.2.p')])).toEqual([]);
+    expect(missing([leaf('m3-2-s-1'), leaf('3.2.P1')])).toEqual(['3.2.P']);
+  });
+
+  it('a delete leaf places nothing', () => {
+    expect(missing([leaf('m3.2.S.1', { lifecycleOp: 'delete' }), leaf('m3.2.P.1')])).toEqual(['3.2.S']);
+  });
+
+  it('a cross-reference clears only with its LOA on file and the heading named (or a heading that contains it)', () => {
+    const p = [leaf('m3.2.P.1')];
+    const ref = (authorizedSections: string[], loaOnFile: boolean) => [{ fileLabel: 'DMF 1', authorizedSections, loaOnFile }];
+    expect(missing(p, requirement(ref(['3.2.S'], true)))).toEqual([]);
+    expect(missing(p, requirement(ref(['m3.2.S.2'], true)))).toEqual([]);
+    expect(missing(p, requirement(ref(['3.2'], true)))).toEqual([]);
+    expect(missing(p, requirement(ref(['3.2.S'], false)))).toEqual(['3.2.S']);
+    // "The file in its entirety" does not say which part of Module 3 it holds.
+    expect(missing(p, requirement(ref([], true)))).toEqual(['3.2.S']);
+    expect(missing(p, requirement(ref(['3.2.P'], true)))).toEqual(['3.2.S']);
+  });
+
+  it('a register that could not be read is not an empty register: still blocking, with the reason', () => {
+    const r = computeDispatchReadiness([leaf('m3.2.P.1')], {
+      originalModule3: { ...requirement(null), crossReferenceError: 'relation "ind_cross_references" does not exist' },
+    });
+    const f = r.findings.find((x) => x.code === 'IND_MODULE3_REQUIRED');
+    expect(f?.severity).toBe('error');
+    expect(f?.message).toMatch(/register could not be read \(relation "ind_cross_references" does not exist\)/);
+  });
+
+  it('asks nothing when no requirement is given (an amendment, another application)', () => {
+    expect(computeDispatchReadiness([leaf('m1.1')], { originalModule3: null }).errors).toBe(0);
   });
 });

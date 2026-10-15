@@ -102,6 +102,8 @@ export interface PortfolioDrift {
     submissionsWithIssues: number;
     sequencesDrifted: number;
     sequencesNeverVerified: number;
+    /** Sequences last verified under the previous gate (before P-33): re-snapshot under the one verdict. */
+    sequencesRecordedUnderPreviousGate: number;
   };
 }
 
@@ -115,10 +117,12 @@ export function buildPortfolioDrift(
   const submissions: PortfolioDriftEntry[] = [];
   let sequencesDrifted = 0;
   let sequencesNeverVerified = 0;
+  let sequencesRecordedUnderPreviousGate = 0;
 
   for (const { submission, drift } of inputs) {
     sequencesDrifted += drift.summary.drifted;
     sequencesNeverVerified += drift.summary.neverVerified;
+    sequencesRecordedUnderPreviousGate += drift.summary.recordedUnderPreviousGate ?? 0;
     if (drift.summary.total > 0) {
       submissions.push({
         submissionId: submission.id,
@@ -135,6 +139,7 @@ export function buildPortfolioDrift(
       submissionsWithIssues: submissions.length,
       sequencesDrifted,
       sequencesNeverVerified,
+      sequencesRecordedUnderPreviousGate,
     },
   };
 }

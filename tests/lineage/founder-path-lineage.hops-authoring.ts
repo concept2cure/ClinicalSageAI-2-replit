@@ -25,6 +25,9 @@ export async function hopProject(w: World): Promise<void> {
     productType: 'drug',
     primaryAgency: 'FDA',
     indication: 'Moderate-to-severe disease',
+    // The IND number FDA pre-assigned. A package names only the number its
+    // project records, never the program code (package-identity.ts, QA j6).
+    applicationNumber: '123456',
   });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   k.programId = String(res.body.data.id);
@@ -107,11 +110,19 @@ export async function hopCapture(w: World): Promise<void> {
 }
 
 /**
- * The call stream.ts:1731-1744 makes, field for field: the registered (gated)
- * handler, with the stream's ctx. projectId is Number(uuid) || null — null for a
- * UUID program — and the stream passes no threadId, turnId or model
- * (AnaToolExecutor.ts:228-236).
+ * The path draft_authoring_document takes in production, field for field: it is
+ * confirm-class, so the stream holds it with heldToolContext and the
+ * governed-action route runs it, once the person says yes, with
+ * confirmedToolContext (routes/ana-ri/utility.ts runConfirmedTool). Both come
+ * from services/ana/turn-tool-context.ts, the builders the stream uses (PF-10
+ * S5), so the builders cannot drift; what the stream hands the hold is pinned
+ * by stream-run-hold.test.ts. projectId is null for a UUID program; the
+ * conversation, the turn (the run id) and the model are named.
  */
+/** The conversation and the run (its turn) the walk's draft is proposed in. */
+const WALK_THREAD_ID = 'ana-ri_walk_thread';
+const WALK_RUN_ID = 'run_walk_draft';
+
 async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler('draft_authoring_document');
@@ -131,20 +142,48 @@ async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
        LX-06 adds it — if it lands under another name, this input follows it. */
     sources: [{ evidence_source_id: w.k.sourceId, excerpt: QUOTE }],
   };
-  const ctx = {
-    servingModel: SERVED_MODEL,
-    organizationId: ORG_A,
+  /* File the turn record this draft will name, as a real turn does. The model
+     recorded on a drafted document comes from that record and from nowhere
+     else (27211528b, SEC-A-7 door 2) -- `ctx.servingModel` below is what the
+     loop hands a tool, not a channel that can write the field. So a walk that
+     files no record would prove only that an unfiled turn records no model,
+     which is true but is not the founder path. Written through the production
+     writer, so this cannot drift from how a turn is really sealed. */
+  const { openTurnRecorder, writeTurnRecordSafely } = await import('../../server/services/ana/turn-record');
+  const recorder = openTurnRecorder({
+    orgId: ORG_A,
     userId: 3,
-    projectId: streamProjectId ? Number(streamProjectId) || null : null,
-    projectRef: streamProjectId ? String(streamProjectId) : null,
-    liveDrive: false,
-    lockedScreens: [],
-    turnState: {},
-    signal: new AbortController().signal,
-    // draft_authoring_document is a write in the tool register (P1-34): on the
-    // founder path it runs when the person confirms the draft AnA proposed.
-    humanConfirmed: true,
+    runId: WALK_RUN_ID,
+    typed: 'Draft the Module 2.5 clinical overview from the source in the Data Room.',
+  });
+  if (!recorder) throw new Error('the walk could not open a turn recorder');
+  recorder.setAnswer({ streamed: 'Drafting the clinical overview.', stored: 'Drafting the clinical overview.' });
+  recorder.setModel(SERVED_MODEL);
+  recorder.addServed(1, SERVED_MODEL);
+  /* writeTurnRecord opens its own transaction, so it needs a pool it can
+     check a client out of; the walk's PGlite pool answers queries only. One
+     client, because PGlite is a single connection -- which is also why this
+     walk cannot prove the concurrent case, and does not claim to. */
+  const connectable = {
+    connect: async () => ({
+      query: async (t: string, v?: unknown[]) => ({ rows: await w.q(t, v) }),
+      release: () => undefined,
+    }),
   };
+  const filed = await writeTurnRecordSafely(connectable as never, recorder, 'answered');
+  if (filed.status !== 'recorded') {
+    throw new Error(`the walk's turn record was not filed: ${JSON.stringify(filed)}`);
+  }
+
+  const { heldToolContext, confirmedToolContext } = await import('../../server/services/ana/turn-tool-context');
+  const held = heldToolContext('draft_authoring_document', streamProjectId, {
+    threadId: WALK_THREAD_ID,
+    turnId: WALK_RUN_ID,
+    servingModel: SERVED_MODEL,
+  });
+  // As the run row stores it, then as the person's yes runs it (the route
+  // stamps humanConfirmed; utility.ts runConfirmedTool).
+  const ctx = { ...confirmedToolContext(JSON.parse(JSON.stringify(held)), ORG_A, 3), humanConfirmed: true };
   return JSON.parse(await handler!(input, ctx as never));
 }
 
@@ -257,7 +296,10 @@ export async function hopEditSave(w: World): Promise<void> {
 export async function hopSeal(w: World): Promise<void> {
   const { k, q } = w;
   const hop = new Hop('seal');
-  const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({ reason: 'Sealed for the C2C-101 IND original sequence.' });
+  // DP-35 (2026-10-01): the freeze is signed — its meaning and the author's re-verified password.
+  const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({
+    reason: 'Sealed for the C2C-101 IND original sequence.', meaning: 'AUTHOR', password: PASSWORD,
+  });
   expect(fr.status, JSON.stringify(fr.body)).toBe(200);
   k.freezeHash = String(fr.body.contentHash);
   const es = await w.asApprover(request(w.app).post(`/api/authoring/docs/${k.docId}/e-sign`)).send({
@@ -276,10 +318,13 @@ export async function hopSeal(w: World): Promise<void> {
     k.approvedSealHash = approved?.content_hash;
     expect((await q<{ status: string }>('SELECT status FROM authoring_documents WHERE id = $1', [k.docId]))[0].status).toBe('APPROVED');
   });
-  await hop.check('signature-binds-seal', 'the APPROVER signature names the freeze it covered, by version and content hash', async (observe) => {
+  // Since a056eb9ea (QA 2026-10-08, j4) the approval writes its own sealed
+  // snapshot BEFORE the signature and the signature is bound to it: the approval
+  // attests to the snapshot it sealed, not to the earlier freeze.
+  await hop.check('signature-binds-seal', 'the APPROVER signature names the snapshot its approval sealed, by version and content hash', async (observe) => {
     const [sig] = await q('SELECT meaning, covered_freeze_version, covered_content_hash, signature_digest FROM authoring_signatures WHERE id = $1', [es.body.signatureId]);
     observe(sig?.covered_freeze_version);
-    expect(sig).toMatchObject({ meaning: 'APPROVER', covered_freeze_version: 'v1.0.frozen', covered_content_hash: k.freezeHash });
+    expect(sig).toMatchObject({ meaning: 'APPROVER', covered_freeze_version: 'approved', covered_content_hash: k.approvedSealHash });
     expect(String(sig.signature_digest)).toMatch(HEX64);
   });
   await hop.check('seal-binds-revision-and-lineage', 'the seal names each section’s doc_revisions head, and each head carries a lineage digest', async (observe) => {
@@ -304,6 +349,13 @@ export async function hopFileToVault(w: World): Promise<void> {
   const res = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/file-to-vault`)).send({ format: 'pdf' });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   k.vaultDocumentId = String(res.body.data.vaultDocumentId);
+
+  await hop.check('approval-carry-decided', 'approved in Authoring with no independent review, so the approval does not carry, and the filing says why (FD5 (c))', async (observe) => {
+    const approval = res.body.data.approval as { carried?: boolean; reason?: string } | undefined;
+    observe(approval?.carried);
+    expect(approval).toMatchObject({ carried: false });
+    expect(approval?.reason).toMatch(/No review signature covers this content/);
+  });
 
   await hop.check('vault-row-in-project', 'vault.documents holds the filed bytes in the same project, under their content hash', async (observe) => {
     const [v] = await q<{ program_id: string; content_hash: string; storage_version_id: string; deleted_at: unknown }>(
@@ -356,6 +408,16 @@ export async function hopAdopt(w: World): Promise<void> {
     cwd.mockRestore();
   }
   const fileId = String(upload.body?.fileId);
+  // Adoption now proves actual upload bytes. Resolve its relative storage
+  // path against the same isolated root used by this fixture's upload.
+  async function adoptConversationFile() {
+    const adoptCwd = vi.spyOn(process, 'cwd').mockReturnValue(tmp);
+    try {
+      return await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    } finally {
+      adoptCwd.mockRestore();
+    }
+  }
 
   await hop.check('unscoped-upload-is-a-conversation-file', 'an upload with no project open records no Data Room source', async (observe) => {
     const sources = await q(`SELECT id FROM cre_evidence_sources WHERE provenance->>'fileUploadId' = $1`, [fileId]);
@@ -379,7 +441,7 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(ids).not.toContain('colleague-file');
   });
   await hop.check('adopt-makes-it-the-projects-source', 'one audited adopt makes the file a source of the project, keyed to it', async (observe) => {
-    const res = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    const res = await adoptConversationFile();
     const [src] = await q<{ client_program_id: string; organization_id: number; checksum: string }>(
       'SELECT client_program_id, organization_id, checksum FROM cre_evidence_sources WHERE id = $1', [res.body?.sourceId]);
     const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.adopt' AND record_id = $1`, [k.programId]);
@@ -389,7 +451,7 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(audit).toHaveLength(1);
   });
   await hop.check('adopt-is-once', 'adopting the same file again is not a second source and writes no second audit row', async (observe) => {
-    const again = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    const again = await adoptConversationFile();
     const sources = await q(`SELECT id FROM cre_evidence_sources WHERE client_program_id = $1 AND checksum = $2`, [k.programId, sha256(bytes)]);
     const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.adopt' AND record_id = $1`, [k.programId]);
     observe({ status: again.status, sources: sources.length, audited: audit.length });

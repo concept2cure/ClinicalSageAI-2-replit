@@ -1,0 +1,12 @@
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"/api/admin/master/overview","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"/api/admin/master/tenants","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"/api/admin/master/users","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"/api/module-subscriptions/navigation","standing":{"platformAdmin":false,"masterAdmin":false}}
+{"code":"fixed","who":"same account as a plain member, holding an active support platform grant","path":"/api/admin/master/overview","status":200}
+{"code":"fixed","who":"same account as a plain member, holding an active support platform grant","path":"/api/module-subscriptions/navigation","standing":{"platformAdmin":true,"masterAdmin":false}}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"/api/admin/master/overview","status":200}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"/api/admin/master/tenants","status":200}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"/api/admin/master/users","status":200}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"/api/module-subscriptions/navigation","standing":{"platformAdmin":true,"masterAdmin":true}}
+{"code":"head","who":"same account as a plain member, holding an active support platform grant","path":"/api/admin/master/overview","status":200}
+{"code":"head","who":"same account as a plain member, holding an active support platform grant","path":"/api/module-subscriptions/navigation","standing":{"platformAdmin":true,"masterAdmin":false}}

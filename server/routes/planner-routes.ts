@@ -3,8 +3,11 @@ import path from 'path';
 import fs from 'fs';
 import { analyzeText } from '../openai-service';
 import PDFDocument from 'pdfkit';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('planner');
 
 // Create exports directory if it doesn't exist
 const EXPORTS_DIR = path.join(process.cwd(), 'exports');
@@ -85,12 +88,8 @@ ${protocol}`;
       success: true,
       content,
     });
-  } catch (error: any) {
-    console.error('Error generating IND summary:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'An error occurred during IND summary generation',
-    });
+  } catch (error) {
+    return serverError(res, log, 'generating the IND summary', error);
   }
 });
 
@@ -157,12 +156,8 @@ ${protocol}`;
       success: true,
       content,
     });
-  } catch (error: any) {
-    console.error('Error generating SAP:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'An error occurred during SAP generation',
-    });
+  } catch (error) {
+    return serverError(res, log, 'generating the SAP', error);
   }
 });
 
@@ -220,12 +215,8 @@ ${protocol}`;
       success: true,
       content,
     });
-  } catch (error: any) {
-    console.error('Error generating protocol summary:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'An error occurred during protocol summary generation',
-    });
+  } catch (error) {
+    return serverError(res, log, 'generating the protocol summary', error);
   }
 });
 
@@ -362,12 +353,8 @@ async function exportToPDF(req: Request, res: Response, type: string) {
       const fileStream = fs.createReadStream(filePath);
       fileStream.pipe(res);
     });
-  } catch (error: any) {
-    console.error(`Error exporting ${type} to PDF:`, error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || `An error occurred during ${type} PDF export`,
-    });
+  } catch (error) {
+    return serverError(res, log, 'exporting the document to PDF', error, { type });
   }
 }
 

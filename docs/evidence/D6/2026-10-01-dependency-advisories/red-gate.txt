@@ -1,0 +1,3 @@
+## npm run ci:dependency-risk on trunk's lockfile (736ab7c1e), 2026-10-01
+Dependency risk gate: unreviewed Critical/High finding(s): @firebase/firestore, @firebase/firestore-compat, @grpc/grpc-js, axios, brace-expansion, engine.io, firebase, nodemailer, undici
+(The gate exits non-zero on this; CI run 12713, Security Scan, "Run lockfile audit and dependency-risk ledger gate", failed on it.)

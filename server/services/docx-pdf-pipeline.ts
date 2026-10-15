@@ -6,7 +6,12 @@ export interface DocxPdfPipelineOptions {
   outputPdfPath?: string;
   compress?: boolean;
   quality?: 'screen' | 'ebook' | 'printer' | 'prepress' | 'default';
+  /** Wall-clock limit for the conversion. Default DEFAULT_TIMEOUT_MS. */
+  timeoutMs?: number;
 }
+
+/** Two minutes: well past a normal conversion, short of a tool call held for ever. */
+export const DEFAULT_TIMEOUT_MS = 120_000;
 
 export interface DocxPdfPipelineResult {
   ok: boolean;
@@ -36,10 +41,37 @@ export async function runDocxPdfPipeline(
   if (options.compress) args.push('--compress');
   if (options.quality) args.push('--quality', options.quality);
 
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+  /* A LibreOffice that hangs used to hold the calling tool for ever: nothing
+     timed the conversion. It now runs in its own process group (detached),
+     and at the limit the whole group is killed — the python wrapper and the
+     soffice it started. A spawn that fails ('error', e.g. no python3) used to
+     leave the promise unsettled; it now rejects. (2026-10-01) */
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn();
+    };
     const proc = spawn('python3', [scriptPath, ...args], {
       stdio: ['ignore', 'pipe', 'pipe'],
+      detached: true,
     });
+
+    const timer = setTimeout(() => {
+      try {
+        if (proc.pid) process.kill(-proc.pid, 'SIGKILL');
+        else proc.kill('SIGKILL');
+      } catch {
+        // already gone
+      }
+      settle(() =>
+        reject(new Error(`DOCX→PDF conversion stopped after ${Math.round(timeoutMs / 1000)}s: LibreOffice did not finish.`)),
+      );
+    }, timeoutMs);
 
     let stdout = '';
     let stderr = '';
@@ -50,17 +82,22 @@ export async function runDocxPdfPipeline(
       stderr += chunk.toString();
     });
 
+    proc.on('error', err => {
+      settle(() => reject(new Error(`DOCX→PDF conversion could not be started: ${err.message}`)));
+    });
+
     proc.on('close', code => {
-      if (code !== 0) {
-        reject(new Error(stderr || `docx_pdf_pipeline exited with code ${code}`));
-        return;
-      }
-      try {
-        const parsed = JSON.parse(stdout);
-        resolve(parsed as DocxPdfPipelineResult);
-      } catch {
-        reject(new Error(`Failed to parse pipeline output: ${stdout || stderr}`));
-      }
+      settle(() => {
+        if (code !== 0) {
+          reject(new Error(stderr || `docx_pdf_pipeline exited with code ${code}`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(stdout) as DocxPdfPipelineResult);
+        } catch {
+          reject(new Error(`Failed to parse pipeline output: ${stdout || stderr}`));
+        }
+      });
     });
   });
 }

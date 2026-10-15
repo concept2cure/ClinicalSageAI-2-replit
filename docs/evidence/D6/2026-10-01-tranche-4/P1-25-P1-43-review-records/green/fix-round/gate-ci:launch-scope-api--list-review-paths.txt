@@ -1,0 +1,7 @@
+$ npm run -s ci:launch-scope-api -- --list | grep /api/audit
+launch       /api/audit-trail/ledger  [artifacts-center, apps, audit-trail, setup, part11-console]
+never-gated  /api/audit/export/signed  [vault, artifacts-center, apps, audit-trail, setup]
+never-gated  /api/audit/export/verify  [compliance-reports]
+never-gated  /api/audit/reports  [compliance-reports]
+never-gated  /api/audit/reports/:p  [compliance-reports]
+never-gated  /api/audit/reviews  [compliance-reports]

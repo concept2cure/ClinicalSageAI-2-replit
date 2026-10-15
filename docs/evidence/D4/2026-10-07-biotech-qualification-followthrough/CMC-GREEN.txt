@@ -1,0 +1,26 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'too few numeric results' and retains the exact valid Assay estimate 13ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no recorded criterion' and retains the exact valid Assay estimate 3ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no varying times' and retains the exact valid Assay estimate 6ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > keeps the most constraining actual estimate when all recorded attributes qualify 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > keeps separately recorded valid conditions without merging their estimates 4ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "''" 32ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "'   '" 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "undefined" 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "''" 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "'   '" 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "undefined" 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_substance has only an unassigned measurement 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_product has only an unassigned measurement 0ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result null 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result undefined 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result "" 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result " " 1ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  12:12:58
+   Duration  1.47s (transform 622ms, setup 119ms, import 601ms, tests 80ms, environment 0ms)

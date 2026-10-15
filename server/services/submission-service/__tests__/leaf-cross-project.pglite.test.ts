@@ -9,8 +9,11 @@
  * sequence belongs to (submissions.program_id, LX-22) — they must be the same,
  * or the placement is refused 409 CROSS_PROJECT and nothing is written. When the
  * submission records no project (created before submissions carried one), the
- * placement cannot be judged and is allowed, and the ledger records both sides
- * so it can be judged later.
+ * placement of a project's document is refused 409 UNANCHORED_SUBMISSION and
+ * nothing is written (P-14, docs/LAUNCH_DEFINITION_OF_DONE.md: a document is
+ * placed only into a submission anchored to its program; this case used to be
+ * allowed and recorded). The submission is anchored first, in the Submission
+ * Center.
  *
  * The LEAF_CREATED / LEAF_UPDATED ledger rows used to carry the sequence, the
  * section and a reason — not the document placed or the pin it took. They now
@@ -41,6 +44,8 @@ const P_A = '0a000000-0000-4000-8000-00000000000a';
 const P_B = '0b000000-0000-4000-8000-00000000000b';
 const V_A = 'a1000000-0000-4000-8000-0000000000a1';
 const V_B = 'b1000000-0000-4000-8000-0000000000b1';
+/** A second document of project A, so a leaf can be re-pointed inside its project. */
+const V_A2 = 'a2000000-0000-4000-8000-0000000000a2';
 // P_B's, with no organization attribution: vault.documents.organization_id is
 // nullable (20260905 leaves rows it cannot attribute NULL).
 const V_N = 'b2000000-0000-4000-8000-0000000000b2';
@@ -83,7 +88,7 @@ beforeAll(async () => {
       [id, CTX.organizationId, `Program ${code}`, code],
     );
   }
-  for (const [id, programId, hash] of [[V_A, P_A, 'a'.repeat(64)], [V_B, P_B, 'b'.repeat(64)]]) {
+  for (const [id, programId, hash] of [[V_A, P_A, 'a'.repeat(64)], [V_B, P_B, 'b'.repeat(64)], [V_A2, P_A, 'd'.repeat(64)]]) {
     await q(
       `INSERT INTO vault.documents (id, program_id, organization_id, document_code, document_title, document_type, content_hash)
        VALUES ($1, $2, $3, $4, $4, 'PROTOCOL', $5)`,
@@ -216,8 +221,76 @@ describe('upsertLeaf keeps a filing inside its project', () => {
     expect(row.document_uuid).toBe(V_A);
   });
 
-  it('allows a placement it cannot judge (the submission records no project), and records both sides', async () => {
-    await vaultLeaf(SEQ_L, V_B);
-    expect(lastLedgerDetails()).toMatchObject({ documentUuid: V_B, programId: null, documentProgramId: P_B });
+  it('re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11)', async () => {
+    const leaf = await vaultLeaf(SEQ_A, V_A, 'm5.3.7');
+    await upsertLeaf(
+      { leafId: leaf.id, sequenceId: SEQ_A, sectionCode: 'm5.3.7', title: 'Protocol v2', documentTable: 'vault_documents', documentUuid: V_A2, reason: 'Amended protocol' },
+      CTX,
+    );
+    expect(lastLedgerDetails()).toMatchObject({
+      documentUuid: V_A2,
+      documentContentSha256: 'd'.repeat(64),
+      previousDocument: { documentTable: 'vault_documents', documentUuid: V_A, documentContentSha256: 'a'.repeat(64) },
+      documentChanged: true,
+    });
+  });
+
+  it('an update that keeps the same document says so', async () => {
+    const leaf = await vaultLeaf(SEQ_A, V_A, 'm5.3.8');
+    await upsertLeaf({ leafId: leaf.id, sequenceId: SEQ_A, sectionCode: 'm5.3.8', title: 'Protocol (retitled)', documentTable: 'vault_documents', documentUuid: V_A }, CTX);
+    expect(lastLedgerDetails()).toMatchObject({
+      previousDocument: { documentUuid: V_A, documentContentSha256: 'a'.repeat(64) },
+      documentChanged: false,
+    });
+  });
+
+  /* P-14 (founder decision, 2026-10-08): this case was "allows a placement it
+     cannot judge … and records both sides". A placement into a submission that
+     belongs to no program is a placement into an unknown dossier, so a
+     program's document is refused there, by name, and nothing is written. */
+  it('refuses a project document placed into a submission that records no project (P-14), and writes nothing', async () => {
+    const before = await leafCount(SEQ_L);
+    logAction.mockClear();
+    const err = await vaultLeaf(SEQ_L, V_B).catch((e) => e);
+    expect(err).toBeInstanceOf(SubmissionError);
+    expect(err.code).toBe('UNANCHORED_SUBMISSION');
+    expect(err.message).toMatch(/anchored/i);
+    expect(await leafCount(SEQ_L)).toBe(before);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+});
+
+describe('the leaf ledger records the filing copy\u2019s status', () => {
+  /* Filing-spine design review, 2026-10-08 (.design/filing-spine/DESIGN_REVIEW.md,
+     Part 11 lens): "Re-place approved version" rewrites the leaf that already
+     holds a copy, after the copy was approved. When approval leaves the text as
+     it was, the pin does not move and documentChanged is false, so the ledger
+     row said nothing had changed. The row now records the copy's own status at
+     each write: draft when it was placed, approved when it was re-placed. */
+  it('placing and re-placing an authoring copy records the copy\u2019s status at each write (draft, then approved)', async () => {
+    const DOC_A = 'd0c00000-0000-4000-8000-0000000000a0';
+    await q(
+      `INSERT INTO authoring_documents (id, title, created_by, tenant_id, client_program_id) VALUES ($1, 'CO', 'u9', $2, $3)`,
+      [DOC_A, CTX.organizationId, P_A],
+    );
+    const [copy] = await q<{ id: number }>(
+      `INSERT INTO coauthor_documents (organization_id, title, content, status) VALUES ($1, 'CO (filing copy)', 'Clinical overview.', 'draft') RETURNING id`,
+      [CTX.organizationId],
+    );
+    await q(
+      `INSERT INTO c2c_document_aliases (canonical_id, store, native_id, organization_id) VALUES ($1, 'coauthor_documents', $2, $3)`,
+      [DOC_A, String(copy.id), CTX.organizationId],
+    );
+    const place = { sequenceId: SEQ_A, sectionCode: 'm2.5', title: 'Clinical overview', documentTable: 'coauthor_documents', documentId: Number(copy.id) };
+    const leaf = await upsertLeaf({ ...place, reason: 'Clinical overview for this sequence' }, CTX);
+    expect(lastLedgerDetails()).toMatchObject({ documentTable: 'coauthor_documents', documentId: Number(copy.id), documentStatus: 'draft' });
+
+    await q(`UPDATE coauthor_documents SET status = 'approved' WHERE id = $1`, [copy.id]);
+    await upsertLeaf({ ...place, leafId: leaf.id, reason: 'Re-placing the approved version' }, CTX);
+    expect(lastLedgerDetails()).toMatchObject({
+      documentChanged: false,
+      documentStatus: 'approved',
+      reason: 'Re-placing the approved version',
+    });
   });
 });

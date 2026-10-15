@@ -11,6 +11,7 @@
 import { db, getPool } from '../../db';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import { createScopedLogger } from '../../utils/logger';
+import { loadUnifiedWork } from '../unified-work/unified-work-view';
 
 const logger = createScopedLogger('cross-object-resolver');
 import {
@@ -18,7 +19,10 @@ import {
   concept2cureArtifacts,
   concept2cureConversations,
   regulatoryAuditLogs,
+  coauthorValidationHistory,
+  type CoauthorValidationHistory,
 } from '../../../shared/schema';
+import type { ValidationFinding } from '../../../shared/types/ai-actions';
 import type {
   CrossObjectReasoningPayload,
   ProjectSnapshot,
@@ -87,7 +91,7 @@ export async function assembleCrossObjectPayload(
     resolveDocuments(organizationId, projectId, scope.module),
     resolveArtifacts(organizationId, projectId, scope.module),
     resolveValidations(organizationId, projectId),
-    resolveTasks(organizationId, projectId, scope.module),
+    resolveTasks(organizationId, projectId),
     resolveModulePlacements(organizationId, projectId),
     resolveRecentActions(organizationId, projectId),
     resolveEvidence(organizationId, projectId),
@@ -118,7 +122,7 @@ export async function assembleCrossObjectPayload(
     DocumentSnapshot[],
     ArtifactSnapshot[],
     ValidationSnapshot[],
-    TaskSnapshot[],
+    { tasks: TaskSnapshot[]; partial: boolean },
     ModulePlacementSnapshot[],
     ActionHistoryEntry[],
     EvidenceSnapshot[],
@@ -127,11 +131,11 @@ export async function assembleCrossObjectPayload(
   ];
 
   return {
-    project: projectSnap,
+    project: { ...projectSnap, ...taskCounts(tasks.tasks, tasks.partial) },
     documents,
     artifacts,
     validations,
-    tasks,
+    tasks: tasks.tasks,
     moduleMap,
     recentActions,
     evidence,
@@ -187,13 +191,37 @@ async function resolveProjectSnapshot(
       therapeuticArea: (project as any).therapeuticArea,
       targetDate: (project as any).targetDate,
       totalDocuments: artifactCounts?.count ?? 0,
+      // Filled from the task list in assembleCrossObjectPayload: one read of
+      // the work view serves both, so the counts and the list cannot disagree.
       totalTasks: 0,
+      doneTasks: 0,
       blockedTasks: 0,
       overdueTasks: 0,
+      taskCountsPartial: false,
     };
   } catch (err) {
     throw readFailed('project', err);
   }
+}
+
+/**
+ * The project's counts, from its task list. Derived, not read: the list and the
+ * counts come from one read of the work view (resolveTasks), so a review that
+ * says "2 blocked" names the two. Until 2026-10-01 the counts were hardcoded
+ * to 0, and then (7694bcad0) read the view separately while the list still
+ * came from an audit-log query that returned nothing.
+ */
+function taskCounts(
+  tasks: TaskSnapshot[],
+  partial: boolean,
+): Pick<ProjectSnapshot, 'totalTasks' | 'doneTasks' | 'blockedTasks' | 'overdueTasks' | 'taskCountsPartial'> {
+  return {
+    totalTasks: tasks.length,
+    doneTasks: tasks.filter((t) => t.status === 'done').length,
+    blockedTasks: tasks.filter((t) => t.isBlocked).length,
+    overdueTasks: tasks.filter((t) => t.isOverdue).length,
+    taskCountsPartial: partial,
+  };
 }
 
 async function resolveDocuments(
@@ -270,76 +298,104 @@ async function resolveValidations(
   orgId: number,
   projectId: number
 ): Promise<ValidationSnapshot[]> {
-  // Query audit logs for validation actions to reconstruct validation state
+  /* Each document's validation state is its latest recorded run.
+
+     This read run_validation's audit rows, which carry no result: every run
+     came back valid (a missing isValid read as true) with no findings and a
+     score of 0, so the readiness engine scored compliance 100 off runs that
+     may have found critical issues — and lumen-context-builder gave AnA that
+     figure. It also took the organisation's 50 latest runs before keeping
+     this project's, and every run rather than each document's latest, so a
+     critical finding fixed by a later clean run still raised a blocker. It
+     reads the validation record now (2026-10-15). */
   try {
-    const validationLogs = await db
+    const rows = await db
       .select()
-      .from(regulatoryAuditLogs)
+      .from(coauthorValidationHistory)
       .where(
         and(
-          eq(regulatoryAuditLogs.organizationId, orgId),
-          eq(regulatoryAuditLogs.action, 'run_validation'),
-          eq(regulatoryAuditLogs.entityType, 'ai_action')
+          eq(coauthorValidationHistory.organizationId, orgId),
+          sql`${coauthorValidationHistory.metadata}->>'projectId' = ${String(projectId)}`
         )
       )
-      .orderBy(desc(regulatoryAuditLogs.createdAt))
-      .limit(50);
-
-    return validationLogs
-      .filter((log) => {
-        const newVal = log.newValue as any;
-        return newVal?.projectId === projectId && newVal?.success;
-      })
-      .map((log) => {
-        const newVal = log.newValue as any;
-        const result = newVal?.result || {};
-        const findings = result?.findings || [];
-        return {
-          documentId: newVal?.targetId || 0,
-          documentTitle: result?.documentType || 'Document',
-          isValid: result?.isValid ?? true,
-          complianceScore: result?.complianceScore ?? 0,
-          criticalCount: findings.filter((f: any) => f.severity === 'critical').length,
-          majorCount: findings.filter((f: any) => f.severity === 'major').length,
-          minorCount: findings.filter((f: any) => f.severity === 'minor').length,
-          validatedAt: log.createdAt?.toISOString() || new Date().toISOString(),
-          findings,
-        };
-      });
+      .orderBy(desc(coauthorValidationHistory.performedAt));
+    return latestRunPerTarget(rows);
   } catch (err) {
     throw readFailed('validations', err);
   }
 }
 
+/**
+ * The validations line of the AI summary. A run whose analysis did not cover
+ * the content has no score, and is not averaged in as anything.
+ */
+function validationSummaryLine(validations: ValidationSnapshot[]): string {
+  const totalCritical = validations.reduce((s, v) => s + v.criticalCount, 0);
+  const totalMajor = validations.reduce((s, v) => s + v.majorCount, 0);
+  const scores = validations.flatMap((v) => (v.complianceScore === null ? [] : [v.complianceScore]));
+  const partial = scores.length < validations.length ? ` (${scores.length} of ${validations.length} runs scored)` : '';
+  const avg = scores.length === 0
+    ? 'not computed (no run analysed its whole content)'
+    : `${Math.round(scores.reduce((s, n) => s + n, 0) / scores.length)}%${partial}`;
+  return `Avg compliance: ${avg} | Critical findings: ${totalCritical} | Major: ${totalMajor}`;
+}
+
+/** Each validated target's latest run, from rows newest first. */
+function latestRunPerTarget(rows: CoauthorValidationHistory[]): ValidationSnapshot[] {
+  const latest = new Map<number, ValidationSnapshot>();
+  for (const row of rows) {
+    const meta = (row.metadata ?? {}) as { target?: { id?: unknown } | null; title?: unknown };
+    const documentId = Number(meta.target?.id);
+    // Inline content validated no document.
+    if (!Number.isInteger(documentId) || documentId <= 0 || latest.has(documentId)) continue;
+    const results = (row.validationResults ?? {}) as { isValid?: unknown; findings?: unknown };
+    latest.set(documentId, {
+      documentId,
+      documentTitle: typeof meta.title === 'string' && meta.title ? meta.title : row.module,
+      isValid: results.isValid === true,
+      complianceScore: row.complianceScore ?? null,
+      criticalCount: row.criticalIssues ?? 0,
+      majorCount: row.majorIssues ?? 0,
+      minorCount: row.minorIssues ?? 0,
+      validatedAt: row.performedAt.toISOString(),
+      findings: Array.isArray(results.findings) ? (results.findings as ValidationFinding[]) : [],
+    });
+  }
+  return [...latest.values()];
+}
+
 async function resolveTasks(
   orgId: number,
   projectId: number,
-  module?: string
-): Promise<TaskSnapshot[]> {
-  // Tasks come from the unified task service — query if available
+): Promise<{ tasks: TaskSnapshot[]; partial: boolean }> {
+  // The project's tasks from every store the platform keeps — the schedule of
+  // events, the board, agency correspondence and filings — through the one
+  // cross-store view, completed work included.
+  //
+  // Until 2026-10-01 this read regulatory_audit_logs rows tagged 'task': the
+  // whole organisation's, not the project's, from a row no writer produces,
+  // numbered 1, 2, 3. The list was empty, so the readiness review never raised
+  // a blocked task and nothing overdue was ever recommended. A store the view
+  // could not read travels as `partial`: the review says so, rather than
+  // reading a short list as a complete one.
   try {
-    const taskLogs = await db
-      .select()
-      .from(regulatoryAuditLogs)
-      .where(
-        and(
-          eq(regulatoryAuditLogs.organizationId, orgId),
-          eq(regulatoryAuditLogs.entityType, 'task')
-        )
-      )
-      .orderBy(desc(regulatoryAuditLogs.createdAt))
-      .limit(50);
-
-    return taskLogs.map((log, i) => ({
-      id: i + 1,
-      title: (log.newValue as any)?.title || log.action || 'Task',
-      status: (log.newValue as any)?.status || 'pending',
-      priority: (log.newValue as any)?.priority || 'medium',
-      module: (log.newValue as any)?.module,
-      assignee: log.userName || undefined,
-      isBlocked: (log.newValue as any)?.status === 'blocked',
-      isOverdue: false,
-    }));
+    const view = await loadUnifiedWork({ organizationId: orgId, projectId, includeCompleted: true });
+    // No store read at all is a failed read, not a project with no tasks.
+    if (Object.values(view.sources).every((source) => !source.ran)) throw new CrossObjectReadError(['tasks']);
+    const now = Date.now();
+    const tasks = view.items.map(
+      (i): TaskSnapshot => ({
+        id: i.id,
+        title: i.title,
+        status: i.status,
+        priority: i.priority ?? 'unset',
+        assignee: i.ownerName ?? undefined,
+        dueDate: i.dueAt ?? undefined,
+        isBlocked: i.blocking,
+        isOverdue: i.status !== 'done' && i.dueAt !== null && Date.parse(i.dueAt) < now,
+      }),
+    );
+    return { tasks, partial: view.summary.partial };
   } catch (err) {
     throw readFailed('tasks', err);
   }
@@ -512,7 +568,7 @@ async function resolveRecentActions(
           targetId: nv?.targetId || '',
           status: nv?.success ? 'completed' : 'failed',
           timestamp: log.createdAt?.toISOString() || '',
-          userId: log.userId ?? 0,
+          userId: log.userId,
         };
       });
   } catch (err) {
@@ -748,13 +804,8 @@ export function summarizePayloadForAI(payload: CrossObjectReasoningPayload): str
 
   // Validation summary
   if (payload.validations.length > 0) {
-    const totalCritical = payload.validations.reduce((s, v) => s + v.criticalCount, 0);
-    const totalMajor = payload.validations.reduce((s, v) => s + v.majorCount, 0);
-    const avgScore = Math.round(
-      payload.validations.reduce((s, v) => s + v.complianceScore, 0) / payload.validations.length
-    );
-    lines.push(`### Validations (${payload.validations.length} runs)`);
-    lines.push(`Avg compliance: ${avgScore}% | Critical findings: ${totalCritical} | Major: ${totalMajor}`);
+    lines.push(`### Validations (latest run of ${payload.validations.length} documents)`);
+    lines.push(validationSummaryLine(payload.validations));
     lines.push('');
   }
 

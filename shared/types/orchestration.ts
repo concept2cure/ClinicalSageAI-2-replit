@@ -250,9 +250,17 @@ export interface ProjectSnapshot {
   therapeuticArea?: string;
   targetDate?: string;
   totalDocuments: number;
+  /** Every task on the project, from every store the platform keeps (loadUnifiedWork). */
   totalTasks: number;
+  /** Of those, done (closed, in the store's own vocabulary). */
+  doneTasks: number;
   blockedTasks: number;
   overdueTasks: number;
+  /**
+   * True when a task store could not be read: every count above is then a floor,
+   * not a total, and nothing may present it as complete.
+   */
+  taskCountsPartial: boolean;
 }
 
 export interface DocumentSnapshot {
@@ -285,7 +293,8 @@ export interface ValidationSnapshot {
   documentId: number;
   documentTitle: string;
   isValid: boolean;
-  complianceScore: number;
+  /** Null when the run's analysis did not cover the whole content. */
+  complianceScore: number | null;
   criticalCount: number;
   majorCount: number;
   minorCount: number;
@@ -294,7 +303,8 @@ export interface ValidationSnapshot {
 }
 
 export interface TaskSnapshot {
-  id: number;
+  /** The work view's composite id, `${source}:${nativeId}` (unified-work-view.ts). */
+  id: string;
   title: string;
   status: string;
   priority: string;
@@ -528,16 +538,22 @@ export interface ModuleReadinessItem {
   module: string;
   section?: string;
   label: string;
-  score: number;
-  status: ReadinessStatus;
+  /**
+   * Null when the module's completeness was not assessed (it has no
+   * required-section list); otherwise scored on measured completeness and
+   * validation coverage.
+   */
+  score: number | null;
+  /** 'not_assessed' when the module has no required-section list to measure against. */
+  status: ReadinessStatus | 'not_assessed';
   documentCount: number;
   /**
-   * Heuristic default, NOT a submission-type requirement: the engine's own
-   * per-module constant (3/5/4/3/4, 3 for anything else). Present so a reader
-   * can see the denominator behind `score`; do not present it to a user as the
-   * number of documents a submission requires.
+   * What completeness was measured against, e.g. "4 of 16 composed Module 3
+   * sections approved"; null when not assessed. This replaced
+   * expectedDocumentCount (2026-10-15), a per-module constant (3/5/4/3/4)
+   * nothing sourced that was the denominator of `score`.
    */
-  expectedDocumentCount: number;
+  assessedAgainst: string | null;
   validatedCount: number;
   routedCount: number;
   missingItems: string[];
@@ -556,8 +572,8 @@ export interface DocumentReadinessItem {
   isRouted: boolean;
   isApproved: boolean;
   isExportReady: boolean;
-  /** Validation state. */
-  validationScore?: number;
+  /** Validation state; null when the latest run computed no score. */
+  validationScore?: number | null;
   criticalFindings: number;
   /** Staleness. */
   lastModified?: string;
@@ -593,8 +609,8 @@ export interface ProjectContinuitySnapshot {
   activeBlockers: ReadinessBlocker[];
   /** What is newly ready. */
   newlyReady: Array<{ type: string; id: number; title: string }>;
-  /** What still needs attention. */
-  needsAttention: Array<{ type: string; id: number; title: string; reason: string }>;
+  /** What still needs attention. `id` is null when the blocker's target has no numeric id. */
+  needsAttention: Array<{ type: string; id: number | null; title: string; reason: string }>;
   /** Recommended next actions. */
   nextActions: Recommendation[];
   /** Readiness trajectory (improving / declining / stable). */
@@ -607,7 +623,12 @@ export interface ProjectContinuitySnapshot {
     documentCount: number;
     validatedCount: number;
     blockerCount: number;
-    taskCompletionPercent: number;
+    /**
+     * Done over total, from every task store. null when there are no tasks, or a
+     * store could not be read — never a figure for either (until 2026-10-01 a
+     * project with no counted tasks read 100%).
+     */
+    taskCompletionPercent: number | null;
   };
 }
 

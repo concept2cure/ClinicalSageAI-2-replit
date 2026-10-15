@@ -1,0 +1,12 @@
+# Fix round, 2026-10-01T15:26:56Z, INF-35: ci:launch-scope-api's own check (checkLaunchScopeApi, REAL layout) run twice in one process:
+# once on the registry as it is, once with '/api/tenant-config' added to admin-console's apiPrefixes IN MEMORY.
+# shared/constants/ui-surface-registry.ui-v2.ts was not edited. The probe script lived in scripts/ci/ for import resolution and was deleted after the run.
+registry as it is: 1 violation(s)
+  [unmapped] /api/tenant-config/:p/claude-connector called by admin-console
+  verdict /api/tenant-config/900/claude-connector: unmapped
+  verdict /api/tenant-config/900/settings: unmapped
+  verdict /api/tenant-config/900/settings/reset: unmapped
+with '/api/tenant-config' on admin-console: 0 violation(s)
+  verdict /api/tenant-config/900/claude-connector: launch
+  verdict /api/tenant-config/900/settings: launch
+  verdict /api/tenant-config/900/settings/reset: launch

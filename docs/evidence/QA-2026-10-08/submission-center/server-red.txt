@@ -1,0 +1,90 @@
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing 16ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s Vault document that carries no organization attribution 6ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document 6ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map) 5ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project 23ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document 19ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11) 26ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > an update that keeps the same document says so 47ms
+ × server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a project document placed into a submission that records no project (P-14), and writes nothing 23ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes 47ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real 42ms
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is DOCUMENT_NOT_APPROVED beside its section, and blocks the freeze gate 48ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > Validated is reached only through a validation with no errors (finding 2) > refuses Validated while the validation finds an error, names it, and changes nothing 25ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > Validated is reached only through a validation with no errors (finding 2) > marks a sequence Validated when its validation finds no error, and records the verdict 21ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > Validated is reached only through a validation with no errors (finding 2) > an unapproved document blocks Validated by name (FD5, as freeze does) 9ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a leaf change returns a Validated sequence to Assembling (finding 3) > placing a leaf into a Validated sequence reverts it, clears the verdict, and says so 21ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a leaf change returns a Validated sequence to Assembling (finding 3) > placing the same document again changes nothing, so the sequence stays Validated 63ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a leaf change returns a Validated sequence to Assembling (finding 3) > removing a leaf from a Validated sequence reverts it, and the removal records its reason (finding 5) 74ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a governed step is asked before it is signed (finding 1) > the freeze precheck answers the gate refusal without any signature 10ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a governed step is asked before it is signed (finding 1) > a step the state map does not allow is refused by the precheck, not thrown 2ms
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a governed step is asked before it is signed (finding 1) > the transmit precheck refuses a sequence that is not dispatched, before anything is signed 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > has unique ids and required fields on every rule 9ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > gives every dispatch-readiness rule a findingCode equal to its id 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > summary counts are internally consistent 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > scopes rules to a region (shared ich rules + region-specific) 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > looks rules up by id 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > covers the global eCTD-adopting regions (US, EU, JP, CA, AU, CH) 1ms
+ × server/services/ectd/__tests__/validation-rule-corpus.test.ts > corpus ↔ gate cross-reference invariant > catalogs EVERY finding code the dispatch gate can emit 8ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > corpus ↔ source invariant — every finding code written in the assessment > catalogs every code the dispatch-readiness sources can emit 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > maps every enforcement to its statement 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > a rule view carries its title, regions, severity and statement; an unknown code has none 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > names every composed dispatch gate as a corpus rule 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > cites FDA's criteria for the required-Module-1 rule an FDA IND trips most 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports zero errors for a clean, resolvable sequence 3ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an empty sequence as an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > treats a sequence of only deletes as empty (error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a non-delete leaf with no document as UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT flag a delete leaf with no document 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an invalid lifecycle operation 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports missing required sections as non-blocking warnings (not errors) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > matches required sections across module-prefix/format differences 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a true sub-section satisfies a required parent section 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a numerically-adjacent section does NOT satisfy a required section 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > emits an info for duplicate "new" leaves in one section without erroring 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > warnings and infos never inflate the authoritative error count 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags replace/append/delete in an ORIGINAL sequence as errors 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > allows new leaves in an original sequence (no lifecycle error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT apply the original-sequence rule to amendments 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > says a follow-up's declared acts were not bound here, rather than reading clean (2026-09-22 W5/D7) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > accepts a valid 4-digit sequence number 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a malformed sequence number as an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags a leaf whose document_table no resolver can materialize 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does NOT flag the tables the assembler can resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > has no external table today, and the vault leaf it used to flag now reads clear 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags an invented document_table on a DELETE leaf — the completeness exemption is not a pointer exemption 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > still exempts a delete leaf that carries NO pointer — that is the legitimate shape 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does not double-report a delete leaf that points at a table the assembler CAN resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a uuid-keyed vault leaf (documentId null) is a complete pointer — no UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed leaf still resolves 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a vault leaf carrying only an integer names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed table carrying only a uuid names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > hasCompleteDocumentPointer: uuid for the vault, integer elsewhere, either for an unknown table 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a resolved leaf whose pin matches carries no error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > an unpinned leaf says its content was not verified, rather than reading like a match (2026-09-22 W5/D7) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a pinned hash that differs from the stored document is DOCUMENT_CONTENT_MISMATCH — its own code, never silently passed 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a delete whose source changed since it was pinned is not DOCUMENT_CONTENT_MISMATCH; the leaf that ships it still is 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a document the resolver could not find stays UNRESOLVED_DOCUMENT, naming the pointer 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a missing document on a DELETE leaf is not a completeness error (a delete ships no file) 0ms
+ × server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a resolved leaf whose document is not approved is DOCUMENT_NOT_APPROVED, naming the leaf and its section 17ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > an approved document, a delete, and a missing document raise no DOCUMENT_NOT_APPROVED 1ms
+ × server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a document with no content is UNRESOLVED_DOCUMENT, not a pin warning that re-placing cannot clear 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  5 failed (5)
+      Tests  14 failed | 57 passed (71)
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > refuses a removal with no reason, and removes nothing 35ms
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > passes the trimmed reason to the service and answers 204 24ms
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > says on a header when the removal returned a Validated sequence to Assembling 5ms
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > answers the refusal with 200, from the step’s own gates 5ms
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > refuses an unknown step 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+## green (final)
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > hmac posture: seal only, no envelope, and an absent envelope is "unsigned" 3ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: the envelope is written BESIDE the seal and both verify 83ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: a tampered envelope, or one from another org, fails closed 60ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a stored envelope with the posture downgraded to hmac is "failed", never accepted 64ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a malformed posture throws (the boot gate, seen from the seam) 4ms
+ Test Files  112 passed | 1 skipped (113)
+      Tests  1403 passed | 2 skipped (1405)

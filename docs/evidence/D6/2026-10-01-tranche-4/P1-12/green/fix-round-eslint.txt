@@ -1,0 +1,9 @@
+# ESLint (repo config + complexity 15 + max-lines-per-function 100) on the fix round's files
+# npx eslint --rule '{"complexity":["error",15],"max-lines-per-function":["error",100]}' tests/ci/workflow-expression.ts tests/ci/workflow-expression.test.ts tests/ci/workflow-harness.ts tests/ci/ci-honesty.contract.test.ts tests/ci/deploy-refuses-unproven-sha.contract.test.ts
+exit 0
+  220 tests/ci/workflow-expression.ts
+   57 tests/ci/workflow-expression.test.ts
+  339 tests/ci/workflow-harness.ts
+  354 tests/ci/ci-honesty.contract.test.ts
+  260 tests/ci/deploy-refuses-unproven-sha.contract.test.ts
+ 1230 total

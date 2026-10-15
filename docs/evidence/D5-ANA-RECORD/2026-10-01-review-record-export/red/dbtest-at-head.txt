@@ -1,0 +1,22 @@
+$ # HEAD's server/routes/c2c/reviews.ts (no export route, no canExportRecord), this change's test
+ × tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > every thread and comment, a retraction with who and why, each intact against its chained row 27ms
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > the package alone lets an inspector check every comment against its chained row 18ms
+   → Cannot read properties of null (reading 'comments')
+ × tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > the export itself is on the chain: who took which record, and what it said 15ms
+   → expected +0 to be 1 // Object.is equality
+ × tests/db/review-record-export.dbtest.ts > the record says when it does not match > a comment rewritten past the triggers is reported, and only that one 16ms
+   → Cannot read properties of null (reading 'verdicts')
+ × tests/db/review-record-export.dbtest.ts > the record says when it does not match > a comment with no chained row (as before 2026-10-01) is not chained, never intact 16ms
+   → Cannot read properties of null (reading 'verdicts')
+ × tests/db/review-record-export.dbtest.ts > the record says when it does not match > a retraction the row shows but the chain does not is reported 14ms
+   → Cannot read properties of null (reading 'verdicts')
+ × tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > the Review queue offers the export exactly to those the route serves 20ms
+   → expected undefined to be true // Object.is equality
+ × tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > a member is refused (DP-18: the audit trail is read by owners, admins and managers) 14ms
+   → expected 404 to be 403 // Object.is equality
+ ✓ tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > another organisation's administrator does not reach this artifact 17ms
+ × tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > when the export cannot be recorded it is refused, and nothing leaves 22ms
+   → expected 404 to be 503 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 1 passed (10)

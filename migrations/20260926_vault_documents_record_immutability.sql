@@ -57,6 +57,26 @@
 --     reported success. The function deletes as the table's owner, and the
 --     table does not FORCE row security, so it reaches the whole predicate.
 --   - Nothing is dropped. Replays: CREATE OR REPLACE, triggers only when absent.
+--
+-- AMENDED 2026-10-01 (plan critique 13, rows D5/D6,
+-- docs/evidence/D5/2026-10-01-vault-archives/), in place per CLAUDE.md Rule 1:
+-- vault.document_archives, the snapshot the retention job takes before it
+-- disposes of a document (its full record, extracted text included), is held
+-- to the same rules as the versions it preserves.
+--   - Its creating file (migrations/20260608_vault_retention.sql) joins the
+--     deploy set just before this one; until now a database built by
+--     deploy-migrate had no archive to write to.
+--   - vault_document_archives_guard refuses every UPDATE, and
+--     vault_document_archives_delete_guard every DELETE but the table owner's.
+--     vault_document_archives_truncate_guard refuses TRUNCATE.
+--   - Row security mirrors vault.documents: read with core.can_access_program,
+--     insert, update and delete with core.can_write_program (so the guards
+--     answer an update or delete with a refusal), so another organisation
+--     cannot read an archive. Not FORCEd, like vault.documents, so the owner-run purge
+--     reaches it.
+--   - purge_tenant_vault_records also deletes the organisation's archives.
+--   - Nothing is dropped. Replays: CREATE OR REPLACE, triggers and policies
+--     only when absent.
 -- =============================================================================
 
 DO $vr06$
@@ -199,6 +219,12 @@ BEGIN
       RAISE EXCEPTION 'VAULT_PURGE_REFUSED: organization % has % active legal hold(s); records under hold cannot be destroyed.', p_org, v_holds
         USING ERRCODE = 'raise_exception';
     END IF;
+    -- The deletion archive's snapshots of this organisation's documents
+    -- (critique 13, 2026-10-01).
+    IF to_regclass('vault.document_archives') IS NOT NULL THEN
+      DELETE FROM vault.document_archives
+       WHERE program_id IN (SELECT id FROM public.regulatory_programs WHERE organization_id = p_org);
+    END IF;
     DELETE FROM vault.document_chunks
      WHERE document_id IN (
        SELECT id FROM vault.documents
@@ -211,6 +237,84 @@ BEGIN
       RETURNING d.storage_version_id::text, d.storage_provider::text;
   END;
   $fn$;
+
+  -- The deletion archive (critique 13, 2026-10-01): append-only, owner-only
+  -- delete, no TRUNCATE, and row security mirroring vault.documents.
+  IF to_regclass('vault.document_archives') IS NOT NULL THEN
+    CREATE OR REPLACE FUNCTION vault.document_archives_guard()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $fn$
+    BEGIN
+      RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: vault.document_archives snapshot % is a record of a disposal and cannot be changed (21 CFR 11.10(e)).', OLD.id
+        USING ERRCODE = 'raise_exception';
+    END;
+    $fn$;
+
+    CREATE OR REPLACE FUNCTION vault.document_archives_delete_guard()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $fn$
+    BEGIN
+      IF current_user = (SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid = TG_RELID) THEN
+        RETURN OLD;
+      END IF;
+      RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: vault.document_archives snapshot % is a record of a disposal and cannot be deleted (21 CFR 11.10(c)). Only the tenant purge removes it.', OLD.id
+        USING ERRCODE = 'raise_exception';
+    END;
+    $fn$;
+
+    CREATE OR REPLACE FUNCTION vault.document_archives_truncate_guard()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $fn$
+    BEGIN
+      RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: vault.document_archives holds the record of every disposal and cannot be truncated (21 CFR 11.10(c)).'
+        USING ERRCODE = 'raise_exception';
+    END;
+    $fn$;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'vault.document_archives'::regclass AND tgname = 'vault_document_archives_guard') THEN
+      CREATE TRIGGER vault_document_archives_guard
+        BEFORE UPDATE ON vault.document_archives
+        FOR EACH ROW EXECUTE FUNCTION vault.document_archives_guard();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'vault.document_archives'::regclass AND tgname = 'vault_document_archives_delete_guard') THEN
+      CREATE TRIGGER vault_document_archives_delete_guard
+        BEFORE DELETE ON vault.document_archives
+        FOR EACH ROW EXECUTE FUNCTION vault.document_archives_delete_guard();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'vault.document_archives'::regclass AND tgname = 'vault_document_archives_truncate_guard') THEN
+      CREATE TRIGGER vault_document_archives_truncate_guard
+        BEFORE TRUNCATE ON vault.document_archives
+        FOR EACH STATEMENT EXECUTE FUNCTION vault.document_archives_truncate_guard();
+    END IF;
+
+    IF to_regprocedure('core.can_access_program(uuid)') IS NOT NULL
+       AND to_regprocedure('core.can_write_program(uuid)') IS NOT NULL THEN
+      ALTER TABLE vault.document_archives ENABLE ROW LEVEL SECURITY;
+      IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'vault.document_archives'::regclass AND polname = 'vault_document_archives_select_policy') THEN
+        CREATE POLICY vault_document_archives_select_policy ON vault.document_archives
+          FOR SELECT USING (core.can_access_program(program_id));
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'vault.document_archives'::regclass AND polname = 'vault_document_archives_insert_policy') THEN
+        CREATE POLICY vault_document_archives_insert_policy ON vault.document_archives
+          FOR INSERT WITH CHECK (core.can_write_program(program_id));
+      END IF;
+      -- UPDATE and DELETE are admitted here so the guards above answer with an
+      -- explicit refusal, as on vault.documents, rather than a silent no-op.
+      IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'vault.document_archives'::regclass AND polname = 'vault_document_archives_update_policy') THEN
+        CREATE POLICY vault_document_archives_update_policy ON vault.document_archives
+          FOR UPDATE USING (core.can_write_program(program_id));
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'vault.document_archives'::regclass AND polname = 'vault_document_archives_delete_policy') THEN
+        CREATE POLICY vault_document_archives_delete_policy ON vault.document_archives
+          FOR DELETE USING (core.can_write_program(program_id));
+      END IF;
+    ELSE
+      RAISE NOTICE 'core.can_access_program / can_write_program absent: vault.document_archives row security not installed';
+    END IF;
+  END IF;
 
   -- The function deletes as its owner, which the delete guard admits only when
   -- that is the table's owner.

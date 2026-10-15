@@ -27,13 +27,16 @@
 import type {
   AnaChatMessage,
   AnaContextUsed,
-  AnaPlanChange,
   AnaPlanStep,
   AnaProgressPhase,
+  AnaServedModel,
   AnaStoppedReason,
   AnaToolCall,
   AnaTurnRecordStatus,
 } from './useAnaChat.types';
+import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
+import { unknownStepLabel } from '@shared/ana/step-verbs';
+import { diffPlan } from '@shared/ana/plan-diff';
 
 /**
  * Phases the client itself observes (no server `status` event carries them).
@@ -100,22 +103,10 @@ export function closeProgress(
 }
 
 /** "57s", "1m 12s", "2h 05m". Whole seconds; a duration is never fractional here. */
-export function formatElapsed(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
-  if (m > 0) return `${m}m ${String(s).padStart(2, '0')}s`;
-  return `${s}s`;
-}
+export { formatElapsed } from '@shared/ana/turn-timeline';
 
-/** "340 ms" under a second, "2.4s" above it. For a single tool step. */
-export function formatStepDuration(ms: number): string {
-  if (!Number.isFinite(ms) || ms < 0) return '';
-  if (ms < 1000) return `${Math.round(ms)} ms`;
-  return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
-}
+/** "340 ms" under a second, "2.4s" above it. For a single tool step; the server's "Took" fact uses the same one. */
+export { formatStepDuration } from '@shared/ana/step-verbs';
 
 export interface ToolTally {
   total: number;
@@ -153,7 +144,8 @@ export function summarizeToolWork(calls: AnaToolCall[] | undefined): string {
   const seen = new Set<string>();
   const labels: string[] = [];
   for (const c of list) {
-    const raw = (c.label || c.name || '').trim();
+    // The server's label; a step with none is never named by its tool (step-verbs.ts).
+    const raw = (c.label || unknownStepLabel(c.status === 'success' ? 'done' : 'doing')).trim();
     if (!raw) continue;
     // "Searching the literature for X" → "searching the literature for X".
     const l = raw.charAt(0).toLowerCase() + raw.slice(1);
@@ -184,8 +176,8 @@ export function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: Ana
 
 /**
  * Close every step still "running" when the turn ends before they report —
- * a stop, a timeout, a lost connection. A step the turn never heard back
- * from did not complete, and a row that keeps saying "running" beside
+ * a stop, a timeout, a lost connection, or final completion without a result.
+ * A step without a result has no confirmed completion; keeping "running" beside
  * "Stopped after 12s" is a contradiction on screen. `note` is the sentence
  * the row shows for why. Pure; returns the same array when nothing is open.
  */
@@ -193,9 +185,10 @@ export function settleRunningCalls(
   calls: AnaToolCall[] | undefined,
   note: string,
   now: number,
+  status: 'error' | 'unconfirmed' = 'error',
 ): AnaToolCall[] | undefined {
   if (!calls || !calls.some(c => c.status === 'running')) return calls;
-  return calls.map(c => (c.status === 'running' ? { ...c, status: 'error', endedAt: now, message: note } : c));
+  return calls.map(c => (c.status === 'running' ? { ...c, status, endedAt: now, message: note } : c));
 }
 
 /** The step currently in flight, if any — the row the panel highlights. */
@@ -228,34 +221,6 @@ export function readPlanSteps(raw: unknown): AnaPlanStep[] | null {
     steps.push({ title, status: status as AnaPlanStep['status'] });
   }
   return steps;
-}
-
-/**
- * The changes from one plan to the next, keyed by title (the tool asks for the
- * same titles on every call). A first plan is all `added`, marked `initial`,
- * so the transcript can say "Planned 5 steps" once rather than five times.
- */
-export function diffPlan(
-  prev: AnaPlanStep[] | undefined,
-  next: AnaPlanStep[],
-  at: number,
-  round?: number,
-): AnaPlanChange[] {
-  const before = new Map((prev ?? []).map((s) => [s.title.toLowerCase(), s]));
-  const initial = !prev || prev.length === 0;
-  const tag = { at, ...(round ? { round } : {}), ...(initial ? { initial: true } : {}) };
-  const changes: AnaPlanChange[] = [];
-  for (const s of next) {
-    const was = before.get(s.title.toLowerCase());
-    if (!was) changes.push({ kind: 'added', title: s.title, ...tag });
-    if (s.status !== was?.status) {
-      if (s.status === 'in_progress') changes.push({ kind: 'started', title: s.title, ...tag });
-      if (s.status === 'completed') changes.push({ kind: 'completed', title: s.title, ...tag });
-    }
-    before.delete(s.title.toLowerCase());
-  }
-  for (const gone of before.values()) changes.push({ kind: 'removed', title: gone.title, at, ...(round ? { round } : {}) });
-  return changes;
 }
 
 /** Apply a `plan` event to the turn it belongs to. A malformed payload changes nothing. */
@@ -297,6 +262,30 @@ export function readContextUsed(event: Record<string, unknown>): AnaContextUsed 
   };
 }
 
+const PQ_STATUSES: ReadonlySet<unknown> = new Set(['pending', 'passed', 'failed', null]);
+const nameOrNull = (v: unknown): v is string | null => v === null || typeof v === 'string';
+
+/** One served model, whole, or null: a field it cannot read voids it. */
+function readServedModel(raw: unknown): AnaServedModel | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const m = raw as Record<string, unknown>;
+  const approval = m.approvedForHighRisk;
+  if (!nameOrNull(m.provider) || !nameOrNull(m.model) || typeof m.qualified !== 'boolean') return null;
+  if (!(approval === null || typeof approval === 'boolean') || !PQ_STATUSES.has(m.pq)) return null;
+  return { provider: m.provider, model: m.model, qualified: m.qualified, approvedForHighRisk: approval, pq: m.pq as AnaServedModel['pq'] };
+}
+
+/**
+ * The models a filed record names, or undefined when the list cannot be read
+ * whole: one unreadable entry drops it, so it reads as unknown, never as a
+ * shorter list of approved models (round 11).
+ */
+function readServedBy(raw: unknown): AnaServedModel[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const models = raw.map(readServedModel);
+  return models.every((m): m is AnaServedModel => m !== null) ? models : undefined;
+}
+
 /**
  * Read the `turnRecord` a closing event carries. Undefined when it is absent or
  * malformed: a status that cannot be read is not shown, and never as recorded.
@@ -305,7 +294,8 @@ export function readTurnRecord(raw: unknown): AnaTurnRecordStatus | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Record<string, unknown>;
   if (r.status === 'recorded' && typeof r.id === 'string' && typeof r.sha256 === 'string' && /^[0-9a-f]{64}$/.test(r.sha256)) {
-    return { status: 'recorded', id: r.id, sha256: r.sha256 };
+    const servedBy = readServedBy(r.servedBy);
+    return { status: 'recorded', id: r.id, sha256: r.sha256, ...(servedBy ? { servedBy } : {}) };
   }
   if (r.status === 'not_recorded') {
     return { status: 'not_recorded', reason: typeof r.reason === 'string' && r.reason ? r.reason : 'The server did not say why.' };
@@ -314,34 +304,66 @@ export function readTurnRecord(raw: unknown): AnaTurnRecordStatus | undefined {
 }
 
 /**
- * The stop reasons the server produces today. The reserved run-policy names in
- * `AnaStoppedReason` are deliberately absent: nothing writes them yet and no
- * surface has words for them, so one arriving must not reach a surface whose
- * last branch reads "Finished". The change that produces each adds it here
- * together with its copy.
+ * The stop reasons the server produces: the loop's own four (S1) and the run
+ * policy's four (row 74, S4), each of which every surface has words for. A
+ * value outside this set is ignored, so it cannot reach a surface whose last
+ * branch reads "Finished".
  */
 const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
   'no_more_tools',
   'max_rounds',
   'duplicate_thrash',
   'cancelled',
+  'budget_exhausted',
+  'approval_timeout',
+  'hold_expired',
+  'hold_unavailable',
   'answer_cut_off',
+  'client_disconnected',
 ]);
+
+/** Labels that are non-empty strings (shared/ana/run-policy.ts), or undefined when there are none. */
+function readLabels(raw: unknown): string[] | undefined {
+  const labels = stepLabels(raw);
+  return labels.length > 0 ? labels : undefined;
+}
+
+/**
+ * The steps a steer replaced, from the stored holds ('redirected': "Do this
+ * instead"; 'superseded': a steer that was already waiting) — so a reopened
+ * turn still says they did not run. The done frame carries no holds; the live
+ * turn has them from `interjected.replaced`.
+ */
+function readReplacedSteps(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const replaced = raw
+    .filter((h) => h && typeof h === 'object' && (h.outcome === 'redirected' || h.outcome === 'superseded'))
+    .flatMap((h) => stepLabels(h.next));
+  return replaced.length > 0 ? replaced : undefined;
+}
+
+type TurnEnding = Pick<AnaChatMessage, 'stoppedReason' | 'rounds' | 'runPolicy' | 'pendingSteps' | 'replacedSteps'>;
 
 /**
  * How the turn's loop ended, from the `done` frame or a stored message's
  * metadata: the stop reason when it is one the server produces, the rounds
- * when they are a whole, positive count. Anything else is left out rather than
- * guessed, so the result spreads onto a message without inventing a field.
+ * when they are a whole, positive count, the run policy when it is one, and
+ * the steps a stop left unrun. Anything else is left out rather than guessed,
+ * so the result spreads onto a message without inventing a field.
  */
-export function readTurnEnding(raw: unknown): Pick<AnaChatMessage, 'stoppedReason' | 'rounds'> {
+export function readTurnEnding(raw: unknown): TurnEnding {
   if (!raw || typeof raw !== 'object') return {};
-  const r = raw as { stoppedReason?: unknown; rounds?: unknown };
-  const out: Pick<AnaChatMessage, 'stoppedReason' | 'rounds'> = {};
+  const r = raw as { stoppedReason?: unknown; rounds?: unknown; runPolicy?: unknown; pendingSteps?: unknown; policyHolds?: unknown };
+  const out: TurnEnding = {};
   if (typeof r.stoppedReason === 'string' && KNOWN_STOPPED_REASONS.has(r.stoppedReason)) {
     out.stoppedReason = r.stoppedReason as AnaStoppedReason;
   }
   if (typeof r.rounds === 'number' && Number.isInteger(r.rounds) && r.rounds > 0) out.rounds = r.rounds;
+  if (isAnaRunPolicy(r.runPolicy)) out.runPolicy = r.runPolicy;
+  const pending = readLabels(r.pendingSteps);
+  if (pending) out.pendingSteps = pending;
+  const replaced = readReplacedSteps(r.policyHolds);
+  if (replaced) out.replacedSteps = replaced;
   return out;
 }
 

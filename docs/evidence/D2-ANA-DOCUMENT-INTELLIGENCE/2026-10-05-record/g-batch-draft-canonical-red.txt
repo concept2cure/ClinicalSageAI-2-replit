@@ -1,0 +1,286 @@
+# g-batch-draft-canonical — RED (HEAD 8d919b1f code, new test), 2026-10-05
+# npx vitest run server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-05T03:39:38.475Z",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:39:38.476Z",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+{
+  "timestamp": "2026-10-05T03:39:38.476Z",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 2ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 4ms
+   → expected null not to be null
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 3ms
+   → expected 'SECTION REQUIREMENTS (from the Invest…' to contain 'Cover Letter'
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 1ms
+   → expected null not to be null
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+   → expected null not to be null
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+   → expected 'SECTION REQUIREMENTS (from the Market…' not to contain 'Administrative Forms'
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 2ms
+   → the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 1ms
+   → the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 2ms
+   → expected 'SECTION REQUIREMENTS (from the Invest…' to contain '## Drafting: Module 3.2.S — the secti…'
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 0ms
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
+   → expected 'SECTION TO DRAFT: 2.7.4\n\nINSTRUCTIO…' to contain '## Drafting: Module 2.7.4 — Summary o…'
+ × server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 1ms
+   → expected undefined to be 'blueprint' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them)
+AssertionError: expected null not to be null
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:76:22
+     74|   it('briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint…
+     75|     const r274 = resolveSectionRequirements('nda', '2.7.4');
+     76|     expect(r274).not.toBeNull();
+       |                      ^
+     77|     expect(r274).toContain('Summary of Clinical Safety');
+     78|     expect(r274).toContain(firstLine('2.7.4'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms'
+AssertionError: expected 'SECTION REQUIREMENTS (from the Invest…' to contain 'Cover Letter'
+
+- Expected
++ Received
+
+- Cover Letter
++ SECTION REQUIREMENTS (from the Investigational New Drug Application authoring blueprint):
++ - Section: 1.2 — Administrative Forms
++ - Content type: form
++ - REQUIRED section
+
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:90:15
+     88|   it("names a US IND's 1.2 the cover letter, never the blueprint's 'Ad…
+     89|     const r = resolveSectionRequirements('ind', '1.2');
+     90|     expect(r).toContain('Cover Letter');
+       |               ^
+     91|     expect(r).not.toContain('Administrative Forms');
+     92|     expect(r).toContain(firstLine('1.2'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure
+AssertionError: expected null not to be null
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:97:19
+     95|   it("briefs a US IND's 1.14.4.1 as the Investigator's Brochure", () =…
+     96|     const r = resolveSectionRequirements('ind', '1.14.4.1');
+     97|     expect(r).not.toBeNull();
+       |                   ^
+     98|     expect(r).toContain("Investigator's Brochure");
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing
+AssertionError: expected null not to be null
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:103:19
+    101|   it('says a CTD code the record does not index is not indexed, instea…
+    102|     const r = resolveSectionRequirements('nda', '9.9.9');
+    103|     expect(r).not.toBeNull();
+       |                   ^
+    104|     expect(r).toContain('9.9.9');
+    105|     expect(r).toContain('do not supply');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row
+AssertionError: expected 'SECTION REQUIREMENTS (from the Market…' not to contain 'Administrative Forms'
+
+- Expected
++ Received
+
+- Administrative Forms
++ SECTION REQUIREMENTS (from the Marketing Authorisation Application authoring blueprint):
++ - Section: 1.2 — Administrative Forms
++ - Content type: form
++ - REQUIRED section
+
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:113:21
+    111|       expect(r, `EU_MAA / ${sectionType}`).not.toBeNull();
+    112|       expect(r).not.toContain('Cover Letter');
+    113|       expect(r).not.toContain('Administrative Forms');
+       |                     ^
+    114|       expect(r).toContain('Module 1 is regional');
+    115|       expect(r).toContain('EU');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry
+AssertionError: the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:122:15
+    120|   it('briefs Modules 2–5 from the ICH record for a non-US CTD entry', …
+    121|     const r = resolveSectionRequirements('EU_MAA', '2.7.4');
+    122|     expect(r).toContain(firstLine('2.7.4'));
+       |               ^
+    123|   });
+    124|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one
+AssertionError: the given combination of arguments (null and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:126:80
+    124|
+    125|   it('answers a unique canonical title with that section, and lists ev…
+    126|     expect(resolveSectionRequirements('US_NDA', 'summary of clinical s…
+       |                                                                                ^
+    127|
+    128|     const lit = resolveSectionRequirements('US_IND', 'Literature Refer…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S)
+AssertionError: expected 'SECTION REQUIREMENTS (from the Invest…' to contain '## Drafting: Module 3.2.S — the secti…'
+
+- Expected
++ Received
+
+- ## Drafting: Module 3.2.S — the sections it contains
++ SECTION REQUIREMENTS (from the Investigational New Drug Application authoring blueprint):
++ - Section: 3.2.S — Drug Substance
++ - Content type: mixed
++ - REQUIRED section
++ - Governing standard: ICH M4Q(R1) (cite it and draft to its structure)
+
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:137:15
+    135|     const r = resolveSectionRequirements('US_IND', 'Drug Substance');
+    136|     expect(r).toContain('Governing standard: ICH M4Q');
+    137|     expect(r).toContain(renderSectionBrief('3.2.S')!.split('\n')[0]);
+       |               ^
+    138|   });
+    139|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata
+AssertionError: expected 'SECTION TO DRAFT: 2.7.4\n\nINSTRUCTIO…' to contain '## Drafting: Module 2.7.4 — Summary o…'
+
+- Expected
++ Received
+
+- ## Drafting: Module 2.7.4 — Summary of Clinical Safety
++ SECTION TO DRAFT: 2.7.4
++
++ INSTRUCTIONS:
++ Draft it.
+
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:159:18
+    157|     const sent = gatewayRoute.mock.calls[0][0] as { messages: Array<{ …
+    158|     const user = sent.messages.find((m) => m.role === 'user')!.content;
+    159|     expect(user).toContain(renderSectionBrief('2.7.4')!.split('\n')[0]…
+       |                  ^
+    160|     expect(sent.metadata.requirementsSource).toBe('record:ctd-section:…
+    161|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief
+AssertionError: expected undefined to be 'blueprint' // Object.is equality
+
+- Expected:
+"blueprint"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts:170:46
+    168|     const user = sent.messages.find((m) => m.role === 'user')!.content;
+    169|     expect(user).not.toContain('## Drafting');
+    170|     expect(sent.metadata.requirementsSource).toBe('blueprint');
+       |                                              ^
+    171|   });
+    172| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 6 passed (16)
+   Start at  03:39:35
+   Duration  3.94s (transform 2.60s, setup 67ms, import 3.59s, tests 25ms, environment 0ms)
+
+
+################################################################################
+# REVIEW ROUND 1 — RED (round-0 resolver code, round-1 test), 2026-10-05
+# The review found a regression in round 0: a canonical title held by a different
+# section overrode the entry's own same-titled blueprint row (US_DMF/ICH_M3_DS
+# 'Stability' → 3.2.P.8; ICH_QOS 'Introduction' → 2.2; 'Regional Information' → 3.2.R),
+# and '<code> <non-canonical title>' returned null ('2.7.4 Clinical Safety').
+# npx vitest run server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
+ ✓ resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 4ms
+ ✓ resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 0ms
+ ✓ resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 0ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 0ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 0ms
+ × resolveSectionRequirements — CTD entries draft against the canonical record > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 6ms
+ × resolveSectionRequirements — CTD entries draft against the canonical record > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
+ ✓ resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 0ms
+ ✓ draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
+ ✓ draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+Expected: "blueprint+record:ctd-section:3.2.S.7:exact"
+Received: "record:ctd-section:3.2.P.8:exact"
+Expected: "record:ctd-section:2.7.4:exact+title-mismatch"
+Received: "none"
+      Tests  2 failed | 16 passed (18)
+
+# Each failing test stops at its first assertion, so the round-0 answers for every
+# case the round-1 tests pin are listed here (rv-bdc-probe3 / probe6, round-0 code):
+  US_DMF / "Reference Standards or Materials" (row 3.2.S.5) → record:candidates
+  US_DMF / "Stability" (row 3.2.S.7) → record:ctd-section:3.2.P.8:exact
+  ICH_QOS / "Introduction" (row 2.3.I) → record:ctd-section:2.2:exact
+  ICH_QOS / "Regional Information" (row 2.3.R) → record:ctd-section:3.2.R:exact
+  ICH_M3_DS / "Stability" (row 3.2.S.7) → record:ctd-section:3.2.P.8:exact
+  ICH_M3_DP / "Reference Standards or Materials" (row 3.2.P.6) → record:candidates
+  ICH_QOS / "Stability" → record:ctd-section:3.2.P.8:exact   (Drug Product stability briefed into a QOS)
+  US_NDA / "2.7.4 Clinical Safety" → none
+  US_IND / "1.1 Cover Letter" → none

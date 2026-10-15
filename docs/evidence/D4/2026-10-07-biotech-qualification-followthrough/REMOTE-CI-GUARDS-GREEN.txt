@@ -1,0 +1,14 @@
+Exact verified source: a5dc3f3d84ba62a06806f8455897fe0554ae654d
+Exact source tree: 4c20c1c7bb1a5df4b0dd5e8fdcddb80030596174
+Job: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37669994264/job/112958988772
+Job conclusion: success.
+The complete existing Node CI guard command executed 214 controls, including all 13 new parser/binding controls.
+
+2026-10-07T19:01:02.4415246Z 1..214
+2026-10-07T19:01:02.4415444Z # tests 214
+2026-10-07T19:01:02.4415786Z # pass 214
+2026-10-07T19:01:02.4415949Z # fail 0
+2026-10-07T19:01:02.4416122Z # cancelled 0
+2026-10-07T19:01:02.4416261Z # skipped 0
+2026-10-07T19:01:02.4416384Z # todo 0
+2026-10-07T19:01:02.4416511Z # duration_ms 2438.970873

@@ -1,0 +1,21 @@
+server/academic-resource-upload.ts:53 guarded
+server/api/templates/routes.ts:22 guarded
+server/routes/analytics-routes.ts:73 guarded
+server/routes/authoring.router.ts:7193 guarded
+server/routes/authoring.router.ts:7357 guarded
+server/routes/c2c/knowledge-sources.ts:72 guarded
+server/routes/c2c/templates.ts:44 guarded
+server/routes/chat.ts:54 guarded
+server/routes/client-intelligence.ts:97 guarded
+server/routes/ctd-onboarding.ts:45 guarded
+server/routes/evidence-management.routes.ts:49 guarded
+server/routes/ind-forms.routes.ts:1024 guarded
+server/routes/knowledge-base.ts:93 guarded
+server/routes/moduleIntegrationRoutes.ts:338 guarded
+server/routes/onboarding-proposals.ts:66 guarded
+server/routes/preclinical.ts:39 guarded
+server/routes/protocol_routes.ts:336 guarded
+server/routes/vault-ingest.ts:70 lacks assertUploadSafe
+server/services/DocumentDataCenterService.ts:231 guarded
+server/src/routes/stability.router.ts:110 guarded
+exit=0

@@ -139,32 +139,57 @@ describe('test-assembly routes', () => {
     process.env.NODE_ENV = old;
   });
 
+  // The gate admits on the verified session's tenant (req.user.organizationId)
+  // alone. Since 425d44dd3 an x-tenant-id / x-tenant header is never a basis
+  // for admission — it is read only to report a mismatch with the session —
+  // so a request with no session that names an allowlisted tenant is refused.
+  // The auth boundary that sets req.user in the real app is stood in for here
+  // by a one-line middleware in front of the router.
   it('enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set', async () => {
     const old = process.env.ALLOWED_TEST_ASSEMBLY_TENANTS;
-    process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = 'tenant-1,tenant-2';
+    process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = '101,102';
 
-    const app = express();
-    app.use(express.json());
-    app.use('/api/test-assembly', testAssemblyRoutes(createMockDb() as any));
+    const appFor = (user?: { id: number; organizationId: number }) => {
+      const app = express();
+      app.use(express.json());
+      app.use((req, _res, next) => {
+        if (user) (req as any).user = user;
+        next();
+      });
+      app.use('/api/test-assembly', testAssemblyRoutes(createMockDb() as any));
+      return app;
+    };
 
-    // Missing header -> forbidden
-    await request(app).post('/api/test-assembly/start').send({ request: 'x' }).expect(403);
+    try {
+      // No session, no header -> forbidden
+      await request(appFor()).post('/api/test-assembly/start').send({ request: 'x' }).expect(403);
 
-    // Incorrect tenant -> forbidden
-    await request(app)
-      .post('/api/test-assembly/start')
-      .set('x-tenant-id', 'other')
-      .send({ request: 'x' })
-      .expect(403);
+      // No session, header naming an allowlisted tenant -> still forbidden
+      for (const header of ['x-tenant-id', 'x-tenant']) {
+        await request(appFor())
+          .post('/api/test-assembly/start')
+          .set(header, '101')
+          .send({ request: 'x' })
+          .expect(403);
+      }
 
-    // Correct tenant -> allowed
-    await request(app)
-      .post('/api/test-assembly/start')
-      .set('x-tenant-id', 'tenant-1')
-      .send({ request: 'ok' })
-      .expect(200);
+      // Session tenant not allowlisted -> forbidden, whatever the header names
+      await request(appFor({ id: 1, organizationId: 999 }))
+        .post('/api/test-assembly/start')
+        .set('x-tenant-id', '101')
+        .send({ request: 'x' })
+        .expect(403);
 
-    process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = old;
+      // Session tenant allowlisted -> allowed
+      const ok = await request(appFor({ id: 1, organizationId: 101 }))
+        .post('/api/test-assembly/start')
+        .send({ request: 'ok' })
+        .expect(200);
+      expect(ok.body.success).toBe(true);
+    } finally {
+      if (old === undefined) delete process.env.ALLOWED_TEST_ASSEMBLY_TENANTS;
+      else process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = old;
+    }
   });
 
   it('exports a docx file for a docId', async () => {

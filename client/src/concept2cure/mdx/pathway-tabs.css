@@ -626,6 +626,15 @@
   text-align: center; padding: 40px 16px;
   font-size: 12px; color: var(--text-400);
 }
+/* "Try again" inside the history error state: an inline text button (it was
+   rendered with no rule at all, so it showed as the browser's default button). */
+.mdx-shell .dd-act-retry {
+  font: inherit; color: var(--text-100);
+  text-decoration: underline; text-underline-offset: 2px;
+  padding: 0 2px; border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.mdx-shell .dd-act-retry:hover { background: var(--bg-100); }
 .mdx-shell .dd-act-list { display: flex; flex-direction: column; gap: 4px; }
 .mdx-shell .dd-act-row {
   display: flex; align-items: flex-start; gap: 10px;

@@ -45,7 +45,7 @@ function payloadWithModules(moduleMap: ModulePlacementSnapshot[]): CrossObjectRe
   return {
     project: {
       id: 42, name: 'BX-220 IND', status: 'active', progress: 0,
-      totalDocuments: 0, totalTasks: 0, blockedTasks: 0, overdueTasks: 0,
+      totalDocuments: 0, totalTasks: 0, doneTasks: 0, blockedTasks: 0, overdueTasks: 0, taskCountsPartial: false,
     },
     documents: [], artifacts: [], validations: [], tasks: [],
     moduleMap, recentActions: [], evidence: [],

@@ -1,0 +1,91 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /unified: 403, no task, link or ledger row written 64ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /:id/link: 403, no task, link or ledger row written 22ms
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /unified: a failed ledger row takes the task with it — 500 AUDIT_WRITE_FAILED, no row
+{
+  "timestamp": "2026-10-05T05:03:10.319Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "937c9860-4b21-4cef-b766-d7fe5c671bac",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /sync/:module: 403, no task, link or ledger row written 21ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > PATCH /:id/status: 403, no task, link or ledger row written 19ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /unified: the task and its task.create row, on one transaction, as the session actor 37ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /unified: a failed ledger row takes the task with it — 500 AUDIT_WRITE_FAILED, no row 27ms
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: a failed ledger row leaves no link and both arrays as they were
+{
+  "timestamp": "2026-10-05T05:03:10.391Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.link",
+    "taskId": "TASK-X",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: the link, both blocking arrays and the task.link row, on one transaction 37ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: a failed ledger row leaves no link and both arrays as they were 34ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: another organization’s task cannot be linked (404, nothing written) 26ms
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: one failed ledger row rolls back the whole sync
+{
+  "timestamp": "2026-10-05T05:03:10.524Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "ba2802b2-4e66-4bcc-9960-eeabe69f0a85",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: every synced task and its task.create row, on one transaction — this org’s studies only 42ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: another organization’s task for the same source id does not hide this org’s 30ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: one failed ledger row rolls back the whole sync 33ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/Vault is refused (501) without reading another tenant’s approvals — nothing written 26ms
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for B rolls back A’s completion and every unblocking: 500, nothing changed, nobody notified
+{
+  "timestamp": "2026-10-05T05:03:10.636Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-B",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for A itself rolls A back too
+{
+  "timestamp": "2026-10-05T05:03:10.665Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked on X, and records A then B, C, D — all before COMMIT 52ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for B rolls back A’s completion and every unblocking: 500, nothing changed, nobody notified 34ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for A itself rolls A back too 29ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > addressed by its numeric id, the write and its row are keyed on the business key 24ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > another organization’s task is 404 and untouched 19ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a task archived after PATCH read it is not moved: nothing written, no ledger row 26ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a late signature on a completed task approves it with its ledger row, and keeps its completion time 29ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a second signature on a gate another signer cleared meanwhile does not stack: 409, nothing written 24ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  05:03:05
+   Duration  5.48s (transform 988ms, setup 89ms, import 1.66s, tests 3.42s, environment 0ms)
+

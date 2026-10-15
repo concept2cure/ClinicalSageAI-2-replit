@@ -15,9 +15,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const queryMock = vi.fn();
 const logActionMock = vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true }));
 
+// Platform standing is an active platform_role_grants row, as in production —
+// never the request role, which behind server/auth.ts is the TENANT membership
+// role (D6, 2026-10-05, docs/evidence/D6/2026-10-05-platform-standing/). User 1
+// holds a super_admin grant; nobody else holds one. The guard's grant lookup is
+// answered here, apart from queryMock, so it never consumes a test's queued
+// route results.
+const PLATFORM_GRANTS: Record<number, string> = { 1: 'super_admin' };
+function platformGrantLookup(params?: unknown[]) {
+  const role = PLATFORM_GRANTS[Number(params?.[0])];
+  const asked = Array.isArray(params?.[1]) ? (params![1] as string[]) : [];
+  return Promise.resolve({ rows: role && asked.includes(role) ? [{ '?column?': 1 }] : [] });
+}
+
 // db: query() + getPool() used by the router.
 vi.mock('../../../db', () => ({
-  query: (...args: unknown[]) => queryMock(...args),
+  query: (sql: string, params?: unknown[]) =>
+    /FROM platform_role_grants/.test(sql) ? platformGrantLookup(params) : queryMock(sql, params),
   getPool: () => ({ totalCount: 5, idleCount: 4, waitingCount: 0 }),
 }));
 
@@ -52,19 +66,19 @@ function makeApp() {
   return app;
 }
 
+// ADMIN is admitted by its platform_role_grants row (PLATFORM_GRANTS above);
+// its `role` is the tenant membership role and admits nothing on its own.
 const ADMIN = JSON.stringify({ id: 1, role: 'super_admin', email: 'owner@x.io' });
 const MEMBER = JSON.stringify({ id: 2, role: 'member', email: 'user@x.io' });
+// A tenant membership row naming super_admin, with no platform grant.
+const MEMBERSHIP_SUPER_ADMIN = JSON.stringify({ id: 3, role: 'super_admin', email: 'tenant@x.io' });
 
 beforeEach(() => {
   queryMock.mockReset();
   logActionMock.mockReset();
-  // The guard's async grant fallback queries platform_role_grants when the sync
-  // role/email checks fail; return no grant so the 403 cases stay 403. Every
-  // other query gets the generic single-row stub.
-  queryMock.mockImplementation((sql: string) => {
-    if (/platform_role_grants/.test(sql)) return Promise.resolve({ rows: [] });
-    return Promise.resolve({ rows: [{}] });
-  });
+  // Grant lookups never reach queryMock (see platformGrantLookup); every route
+  // query gets the generic single-row stub.
+  queryMock.mockImplementation(() => Promise.resolve({ rows: [{}] }));
 });
 
 describe('access gating', () => {
@@ -77,6 +91,13 @@ describe('access gating', () => {
     const res = await request(makeApp())
       .get('/api/admin/master/overview')
       .set('x-test-user', MEMBER);
+    expect(res.status).toBe(403);
+  });
+
+  it('403s a tenant membership role of super_admin with no platform grant', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/master/overview')
+      .set('x-test-user', MEMBERSHIP_SUPER_ADMIN);
     expect(res.status).toBe(403);
   });
 

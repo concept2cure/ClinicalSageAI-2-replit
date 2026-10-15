@@ -1,0 +1,21 @@
+# 9. AnA's answer reaches the document at any width — GREEN
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 121ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > a turn without a document gets no canvas 31ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > finds the document in a rehydrated turn’s tool trace, and never in prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place 99ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 270ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends 60ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > offers no insert while no document is open 206ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record 790ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > when the editor closes, the offer reopens it: the suggestion still lands where the person sees it 1020ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA knows the document open beside the conversation (2026-10-01) > sends the open document and section with the turn, and nothing once the editor closes 349ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01) > names the frozen document on the turn but offers no insert into it 280ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a section not yet drafted is one ask away (2026-10-01) > opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section 906ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates the document from the draft, split at its headings, and opens it beside the conversation 301ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > opens the document already made from that turn instead of creating a second copy 219ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates nothing when it cannot check for an earlier copy, and says so 155ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed 19ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM 21ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)

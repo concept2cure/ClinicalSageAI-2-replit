@@ -1,0 +1,4 @@
+ × the export files an image only where a browser shows the same one > in a table but in no cell: nothing from the section is filed 17ms
+   → filed an image the canvas does not show as it is: expected [ 'JgAAAA==', 'JgBBBB==' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 39 passed (40)

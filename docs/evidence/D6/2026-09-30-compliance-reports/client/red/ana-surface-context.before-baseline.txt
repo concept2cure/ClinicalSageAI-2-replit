@@ -1,0 +1,10 @@
+
+[ci:ana-surface-context] FAIL — 1 issue(s):
+
+  surface-id coverage ROSE to 115, above the baseline of 114 — raise ID_BASELINE to 115 in this change. A baseline left below reality is not a gate: it silently permits everything back down to the stale number.
+
+A surface that takes the shell conversation and publishes nothing leaves AnA
+answering about a screen she cannot see. Restore the publish call, publish under
+the id the router actually mounts, or — if the surface genuinely needs no context —
+declare its ID in NO_CONTEXT_NEEDED with a reason.
+

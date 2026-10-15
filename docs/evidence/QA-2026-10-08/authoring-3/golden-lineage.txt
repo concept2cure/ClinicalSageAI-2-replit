@@ -1,0 +1,2275 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-08T14:43:17.934Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:43:17.950Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-08T14:43:17.950Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+✅ Template tables initialized
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+[founder-path] project
+  green  program-recorded — regulatory_programs holds the project, owned by org A
+  green  creation-audited-with-its-keys — the chained c2c.project.create row names the project and the submission spine it created
+  green  submission-anchored-to-project — the submission spine intake created carries the project as a column (submissions.program_id), not only in the audit JSON
+  green  filing-scaffolded-in-project — the project’s governed filing (c2c_documents) is keyed to the project
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it 174ms
+(node:8439) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-08T14:43:21.586Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791470601369_8hkaut",
+    "method": "utf8",
+    "chars": 208
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-08T14:43:21.661Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1791470601369_8hkaut",
+    "sourceId": 1,
+    "supersededId": null
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-08T14:43:21.729Z",
+  "level": "warn",
+  "message": "[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet",
+  "context": {
+    "sourceId": "cre_source:1",
+    "atomId": 1,
+    "err": "no embedding provider in the lineage test"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-08T14:43:21.730Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1791470601369_8hkaut",
+    "sourceId": 1,
+    "atomId": 1,
+    "programId": "b2dff574-c5a3-4101-8558-d274a324dab0",
+    "embeddedChars": 208,
+    "extractedChars": 208,
+    "truncated": false
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+[founder-path] capture
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  source-in-project — the source carries the project’s key
+  green  data-room-lists-source — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+{
+  "timestamp": "2026-10-08T14:43:21.976Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9ef0e703-52ec-4e5e-b031-ba1d6e27633e by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+{
+  "timestamp": "2026-10-08T14:43:22.020Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9ef0e703-52ec-4e5e-b031-ba1d6e27633e by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+[founder-path] ana-draft
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  green  document-in-project — the authoring document carries the project’s key
+  green  genesis-revision-per-section — every section has a genesis doc_revisions row hashing its content
+  green  model-recorded — provenance names the model the gateway served
+  green  turn-recorded — provenance names the conversation and turn that drafted it
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 472ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+{
+  "timestamp": "2026-10-08T14:43:22.123Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9ef0e703-52ec-4e5e-b031-ba1d6e27633e by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+[founder-path] edit-save
+  green  save-accepted — the save is accepted
+  green  revision-chained — doc_revisions grows by the edit, chained to the genesis row and hashing the saved text
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 262ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+{
+  "timestamp": "2026-10-08T14:43:22.185Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 9ef0e703-52ec-4e5e-b031-ba1d6e27633e by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+{
+  "timestamp": "2026-10-08T14:43:22.215Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 9ef0e703-52ec-4e5e-b031-ba1d6e27633e by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+[founder-path] seal
+  green  seal-hash-verifies — frozen_documents holds the freeze and the approval seal, each hashing its own content
+  green  signature-binds-seal — the APPROVER signature names the snapshot its approval sealed, by version and content hash
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 106ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 67ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-08T14:43:22.317Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5_Clinical_Overview___C2C_101.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-08T14:43:22.318Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 3958,
+    "wordCount": 594,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-08T14:43:22.331Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a45b27cb-5153-4cbe-a665-022c49030975",
+    "code": "authoring-9ef0e703-52ec-4e5e-b031-ba1d6e27633e",
+    "type": "MODULE_2",
+    "size": 4515,
+    "hasText": true
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-08T14:43:22.378Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 9ef0e703-52ec-4e5e-b031-ba1d6e27633e by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+[founder-path] file-to-vault
+  green  approval-carry-decided — approved in Authoring with no independent review, so the approval does not carry, and the filing says why (FD5 (c))
+  green  vault-row-in-project — vault.documents holds the filed bytes in the same project, under their content hash
+  green  filing-names-document — the chained file_to_vault audit row links the vault row to the authoring document
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 183ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault)
+[founder-path] vault-approval
+  green  vault-copy-approved-for-its-bytes — the Vault copy's lifecycle record is approved, for the bytes the Vault holds
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.660Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.683Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault) 178ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.718Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.766Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.793Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.895Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.930Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.950Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:22.992Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:23.043Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:23.078Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-08T14:43:23.128Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+[founder-path] place
+  green  filing-copy-names-seal — the filing copy is aliased to the authoring document and names the seal it was taken under
+  green  coauthor-leaf-pins-copy — the coauthor leaf pins the filing copy and the sha256 of its text
+  green  vault-leaf-pins-bytes — the vault leaf pins the Vault document and its content hash
+  green  placement-audit-names-document-and-pin — each LEAF_CREATED ledger row names the document it placed and the pin it took
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:23.202Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:23.272Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 605ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:24.267Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:24.279Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:24.287Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 11,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:24.317Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 1,
+    "toStatus": "frozen",
+    "organizationId": 1
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:25.010Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:25.026Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:25.035Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 11,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:25.052Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 1,
+    "toStatus": "dispatched",
+    "organizationId": 1
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-08T14:43:25.118Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+[founder-path] walk-back
+  green  audit-ledger-verifies — the tenant’s chained audit ledger — which several steps below read keys from — verifies
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+[founder-path] walk-forward
+  green  project-to-its-records — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+  green  project-read-lists-its-records — one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys
+  green  project-activity-shows-its-records — the project activity feed shows the governed actions on its own records, not only rows keyed to the project id
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 1976ms
+   → {"error":{"code":"PACKAGE_IDENTITY_MISSING","message":"A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the program code is not one). Nothing was sent. The signature given for this transmit is now void; sign again for a new attempt."}}: expected 409 to be 200 // Object.is equality
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 18ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+    observed 0
+    AssertionError: expected [] to have a length of 1 but got +0
+walk-back/sequence-to-pinned-leaves FAILS and is not baselined — the sequence’s leaves each name a document and pin its digest
+    observed []
+    AssertionError: expected [] to have a length of 2 but got +0
+walk-back/leaves-to-project FAILS and is not baselined — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+    observed []
+    AssertionError: expected [] to deeply equal [ Array(1) ]
+walk-back/sequence-to-project FAILS and is not baselined — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'program_id')
+walk-back/filing-copy-leaf-to-seal FAILS and is not baselined — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'document_id')
+walk-back/vault-leaf-to-seal is baselined, but it did not fail its assertion — it threw TypeError: Cannot read properties of undefined (reading 'document_uuid'). A baseline entry excuses a recorded gap, never a walk that could not run.
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+{
+  "timestamp": "2026-10-08T14:43:25.287Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1791470605280_i3gg37",
+    "method": "utf8",
+    "chars": 56
+  }
+}
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 90ms
+   → walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+    observed {"leaves":2,"sequences":1,"transmittals":0}
+    AssertionError: expected [] to deeply equal [ undefined ]
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+[founder-path] adopt
+  green  unscoped-upload-is-a-conversation-file — an upload with no project open records no Data Room source
+  green  project-offers-the-conversation-file — the project lists the caller's conversation file for adoption, and only the caller's
+  green  adopt-makes-it-the-projects-source — one audited adopt makes the file a source of the project, keyed to it
+  green  adopt-is-once — adopting the same file again is not a second source and writes no second audit row
+  green  adopted-file-is-no-longer-offered — once in a project's Data Room, the file is not offered as a conversation file
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt 134ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+[founder-path] retention
+  green  anchor-row-not-hard-deleted — the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive
+  green  legacy-delete-needs-writing-role — the legacy project delete answers 403 to a viewer, and deletes nothing
+  green  legacy-draft-project-deleted — a legacy project holding only drafts is still deleted by the same route
+  green  filed-project-archived — the same project can be archived, and its records still read from it
+  green  draft-project-deleted — a project that holds only drafts can be deleted, and the deletion is audited
+  green  source-changes-of-a-deleted-or-malformed-project — a deleted project's source changes, and a malformed id's, are not found
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 159ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+    observed {"status":409,"holds":["filed","frozenOrDispatched","sealed"],"deleted":false}
+    AssertionError: expected [ 'frozenOrDispatched', 'filed', …(1) ] to deeply equal { Object ($$typeof, sample, ...) }
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 1ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 3ms
+   → transmit/bytes-retained: no such check ran
+transmit/transmittal-names-sequence: no such check ran
+transmit/transmit-record-names-bundle: no such check ran: expected [ …(3) ] to deeply equal []
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+{
+  "timestamp": "2026-10-08T14:43:32.513Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:43:32.514Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+{
+  "timestamp": "2026-10-08T14:43:32.515Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:33.500Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "d899345b-dac3-4867-ac01-5ef3a446bd38",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:33.664Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SUBMISSION_CREATED submission",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:33.680Z",
+  "level": "info",
+  "message": "[submission-service] Created submission",
+  "context": {
+    "submissionId": 3,
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:33.694Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:33.733Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:34.915Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:34.934Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:34.962Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:34.985Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.007Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.041Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.096Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.231Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.305Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] AI_GENERATE shadow_review_run",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.315Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 1,
+    "sequenceId": 1,
+    "organizationId": 1,
+    "findings": 0
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.370Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.544Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.561Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.604Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:35.625Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 2,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:36.235Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 2,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:36.247Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 2,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:36.253Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 7,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:36.279Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 1,
+    "toStatus": "frozen",
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:36.305Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-08T14:43:36.399Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 2,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/drug-nda-ectd.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/drug-nda-ectd.report.md
+
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 3050ms
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-10-08T14:43:42.928Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:43:42.929Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-10-08T14:43:42.929Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.762Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "f37f2636-b819-44a5-8561-cc0c7525a19f",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "This organization has 2 client workspaces, none of them marked as the organization’s own, and the program names none of them. projects.client_workspace_id decides who can see a project, so it is not defaulted. A program cannot be created without its PM-spine anchor."
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.784Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.812Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.829Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.846Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.863Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.886Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.905Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.924Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.941Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:45.971Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.008Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.051Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.139Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.171Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.199Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.222Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.269Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.301Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.347Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.367Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.386Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.401Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.427Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.445Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:46.473Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:47.579Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] DEVICE_PROFILE_UPDATED regulatory_program",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "bd9b1d46-522e-42fb-9e5c-671891d40e85"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:47.615Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_CREATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "40be8b93-f1b5-48b1-8dba-f902c0be6862"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:47.624Z",
+  "level": "info",
+  "message": "[estar-registration-service] Created eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:47.757Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_UPDATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "40be8b93-f1b5-48b1-8dba-f902c0be6862"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-08T14:43:47.768Z",
+  "level": "info",
+  "message": "[estar-registration-service] Updated eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.report.md
+
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 3105ms
+stderr | tests/golden-journeys/ind-authoring.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts
+✅ Template tables initialized
+
+stderr | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.460Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "973fd2fa-27d9-4eba-b26e-6025aee70e55",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.508Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:43:56.509Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "3",
+    "tenantId": 1,
+    "resourceId": "2eb1219b-43d2-4416-ba30-76d948637bec"
+  }
+}
+
+stderr | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.604Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.660Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.710Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.741Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.781Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_resolved on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.833Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.843Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:43:56.844Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document",
+  "context": {
+    "userId": "3",
+    "tenantId": 1,
+    "resourceId": "973fd2fa-27d9-4eba-b26e-6025aee70e55"
+  }
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.892Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.918Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-10-08T14:43:56.962Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 973fd2fa-27d9-4eba-b26e-6025aee70e55 by a***@journey.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:43:56.962Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "3",
+    "tenantId": 1,
+    "resourceId": "973fd2fa-27d9-4eba-b26e-6025aee70e55"
+  }
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/ind-authoring.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/ind-authoring.report.md
+
+ ✓ tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine 620ms
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+{
+  "timestamp": "2026-10-08T14:44:04.012Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:44:04.018Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+{
+  "timestamp": "2026-10-08T14:44:04.018Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-08T14:44:06.578Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-08T14:44:06.613Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-08T14:44:06.635Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-08T14:44:06.652Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-08T14:44:06.668Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-08T14:44:06.687Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-08T14:44:06.702Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/cer-eu-mdr.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/cer-eu-mdr.report.md
+
+ ✓ tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 970ms
+stderr | tests/golden-journeys/submission-release-signature.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate
+{
+  "timestamp": "2026-10-08T14:44:14.193Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ELECTRONIC_SIGNATURE_CREATED submission-release",
+  "context": {
+    "userId": 11,
+    "resourceId": "unknown"
+  }
+}
+
+stdout | tests/golden-journeys/submission-release-signature.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/submission-release-signature.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/submission-release-signature.report.md
+
+ ✓ tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate 234ms
+stderr | tests/golden-journeys/haq-correction.journey.test.ts
+{
+  "timestamp": "2026-10-08T14:44:15.962Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.560Z",
+  "level": "info",
+  "message": "[assumption-registry] Creating assumption",
+  "context": {
+    "code": "ASM-EFF-001",
+    "project": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.567Z",
+  "level": "info",
+  "message": "[assumption-registry] Creating assumption",
+  "context": {
+    "code": "ASM-EFF-002",
+    "project": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.568Z",
+  "level": "info",
+  "message": "[contradiction-engine] Detecting assumption drift",
+  "context": {
+    "projectId": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.581Z",
+  "level": "info",
+  "message": "[contradiction-engine] Detecting assumption drift",
+  "context": {
+    "projectId": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.585Z",
+  "level": "info",
+  "message": "[contradiction-engine] Detecting assumption drift",
+  "context": {
+    "projectId": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.647Z",
+  "level": "info",
+  "message": "[reactive-dependency] Auto-triggered consequence",
+  "context": {
+    "findingId": "4d9fa244-75a1-4c72-b976-9f64bd0b345e",
+    "action": "auto_superseded_assumption"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.648Z",
+  "level": "info",
+  "message": "[reactive-dependency] Propagating change",
+  "context": {
+    "trigger": "contradiction_created",
+    "source": "contradiction:4d9fa244-75a1-4c72-b976-9f64bd0b345e"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.652Z",
+  "level": "info",
+  "message": "[reactive-dependency] Auto-triggered consequence",
+  "context": {
+    "findingId": "35bb875d-affb-40a6-96da-f420f4a2711b",
+    "action": "auto_superseded_assumption"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.652Z",
+  "level": "info",
+  "message": "[reactive-dependency] Propagating change",
+  "context": {
+    "trigger": "contradiction_created",
+    "source": "contradiction:35bb875d-affb-40a6-96da-f420f4a2711b"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.659Z",
+  "level": "info",
+  "message": "[reactive-dependency] Auto-triggered consequence",
+  "context": {
+    "findingId": "0a49ea21-5366-4174-8fb4-38ab0339832a",
+    "action": "auto_superseded_assumption"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.659Z",
+  "level": "info",
+  "message": "[reactive-dependency] Propagating change",
+  "context": {
+    "trigger": "contradiction_created",
+    "source": "contradiction:0a49ea21-5366-4174-8fb4-38ab0339832a"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.666Z",
+  "level": "info",
+  "message": "[assumption-registry] Assumption drift detected",
+  "context": {
+    "projectId": 1,
+    "count": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.669Z",
+  "level": "info",
+  "message": "[decision-record] Creating decision record",
+  "context": {
+    "code": "DEC-EFF-001",
+    "project": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:20.671Z",
+  "level": "info",
+  "message": "[assumption-registry] Assumption drift detected",
+  "context": {
+    "projectId": 1,
+    "count": 1
+  }
+}
+
+stderr | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+[bundle-executor] Plan 9f3962a3-c140-45b5-9582-90265e7b0eeb state transition failed: Invalid state transition: unresolved → resolved_pending_review. Valid transitions from "unresolved": proposed_resolution, cancelled
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:21.076Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T14:44:21.078Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:21.078Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:21.277Z",
+  "level": "info",
+  "message": "[decision-record] Transitioning decision",
+  "context": {
+    "id": "706737ed-c2fc-469a-959c-fde6a3a6514b",
+    "newState": "executed"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:21.282Z",
+  "level": "info",
+  "message": "[reactive-dependency] Propagating change",
+  "context": {
+    "trigger": "decision_executed",
+    "source": "decision:706737ed-c2fc-469a-959c-fde6a3a6514b"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:21.387Z",
+  "level": "info",
+  "message": "[decision-record] Creating decision record",
+  "context": {
+    "code": "governed-fabric:2e9a15bd-3907-4703-a26b-1157ca4594a6",
+    "project": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:21.391Z",
+  "level": "info",
+  "message": "[decision-record] Creating decision record",
+  "context": {
+    "code": "governed-fabric:6ec24514-7a8d-4781-a125-5f75528812af",
+    "project": 1
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine
+{
+  "timestamp": "2026-10-08T14:44:21.493Z",
+  "level": "info",
+  "message": "[decision-record] Transitioning decision",
+  "context": {
+    "id": "2e9a15bd-3907-4703-a26b-1157ca4594a6",
+    "newState": "under_review"
+  }
+}
+
+stdout | tests/golden-journeys/haq-correction.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/haq-correction.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/haq-correction.report.md
+
+ ✓ tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine 2674ms
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.576Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.580Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.580Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.785Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.790Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.790Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.879Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 3,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.880Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 3,
+    "organizationId": 1,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 300,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.881Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 3,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.881Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 3,
+    "organizationId": 1,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.950Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 3,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.950Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 3,
+    "organizationId": 1,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 300,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.951Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 3,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+{
+  "timestamp": "2026-10-08T14:44:31.951Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 3,
+    "organizationId": 1,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package 648ms
+stderr | tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally
+{
+  "timestamp": "2026-10-08T14:44:40.501Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally
+{
+  "timestamp": "2026-10-08T14:44:40.503Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 42,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 300,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stderr | tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally
+{
+  "timestamp": "2026-10-08T14:44:40.504Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stdout | tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally
+{
+  "timestamp": "2026-10-08T14:44:40.504Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 42,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally 457ms
+stderr | tests/golden-journeys/marketing-application.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/marketing-application.journey.test.ts > Journey B — marketing application spine (canonical DDL) > runs the submission spine
+[eCTD Compile] Project 101: failed | 0/5 modules complete | 15 errors, 4 warnings
+
+stdout | tests/golden-journeys/marketing-application.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/marketing-application.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/marketing-application.report.md
+
+ ✓ tests/golden-journeys/marketing-application.journey.test.ts > Journey B — marketing application spine (canonical DDL) > runs the submission spine 129ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > finds the journeys (guards the scanner itself) 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > cer-eu-mdr.journey.test.ts 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > device-510k-estar.journey.test.ts 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > drug-nda-ectd.journey.test.ts 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > haq-correction.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > ind-authoring.journey.test.ts 3ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > marketing-application.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-export-package.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-export-validation.journey.test.ts 1ms
+ ✓ tests/golden-journeys/__tests__/journey-schema-gaps.test.ts > golden journeys — the schema-gap check is not optional > submission-release-signature.journey.test.ts 0ms
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > records a thrown non-assertion error as the block (service-level semantics) 2ms
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > rethrows an assertion failure inside the step and files the step as failed 2ms
+ ✓ tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts > JourneyRecorder.expectBlocked > rejects a step that returns blocked: false 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+AssertionError: {"error":{"code":"PACKAGE_IDENTITY_MISSING","message":"A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the program code is not one). Nothing was sent. The signature given for this transmit is now void; sign again for a new attempt."}}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ Module.hopTransmit tests/lineage/founder-path-lineage.hops-filing.ts:227:46
+    225|   configureStubEsg(w);
+    226|   const tr = await freezeDispatchTransmit(w);
+    227|   expect(tr.status, JSON.stringify(tr.body)).toBe(200);
+       |                                              ^
+    228|   k.transmittalId = Number(tr.body.transmittalId);
+    229|   const [tx] = await q('SELECT * FROM submission_transmittals WHERE id…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+Error: walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+    observed 0
+    AssertionError: expected [] to have a length of 1 but got +0
+walk-back/sequence-to-pinned-leaves FAILS and is not baselined — the sequence’s leaves each name a document and pin its digest
+    observed []
+    AssertionError: expected [] to have a length of 2 but got +0
+walk-back/leaves-to-project FAILS and is not baselined — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+    observed []
+    AssertionError: expected [] to deeply equal [ Array(1) ]
+walk-back/sequence-to-project FAILS and is not baselined — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'program_id')
+walk-back/filing-copy-leaf-to-seal FAILS and is not baselined — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'document_id')
+walk-back/vault-leaf-to-seal is baselined, but it did not fail its assertion — it threw TypeError: Cannot read properties of undefined (reading 'document_uuid'). A baseline entry excuses a recorded gap, never a walk that could not run.
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.walkBack tests/lineage/founder-path-lineage.hops-filing.ts:355:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+Error: walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+    observed {"leaves":2,"sequences":1,"transmittals":0}
+    AssertionError: expected [] to deeply equal [ undefined ]
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.walkForward tests/lineage/founder-path-lineage.hops-filing.ts:436:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+Error: retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+    observed {"status":409,"holds":["filed","frozenOrDispatched","sealed"],"deleted":false}
+    AssertionError: expected [ 'frozenOrDispatched', 'filed', …(1) ] to deeply equal { Object ($$typeof, sample, ...) }
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.hopRetention tests/lineage/founder-path-lineage.hops-filing.ts:538:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+AssertionError: transmit/bytes-retained: no such check ran
+transmit/transmittal-names-sequence: no such check ran
+transmit/transmit-record-names-bundle: no such check ran: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "transmit/bytes-retained: no such check ran",
++   "transmit/transmittal-names-sequence: no such check ran",
++   "transmit/transmit-record-names-bundle: no such check ran",
++ ]
+
+ ❯ tests/lineage/founder-path-lineage.pglite.test.ts:298:43
+    296|   it('the baseline names only real checks, each with its verified find…
+    297|     const problems = baselineProblems();
+    298|     expect(problems, problems.join('\n')).toEqual([]);
+       |                                           ^
+    299|   });
+    300| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  5 failed | 32 passed (37)
+   Start at  14:42:57
+   Duration  110.64s (transform 14.83s, setup 304ms, import 23.83s, tests 83.43s, environment 1ms)
+

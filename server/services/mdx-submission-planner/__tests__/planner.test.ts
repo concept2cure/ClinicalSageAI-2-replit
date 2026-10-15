@@ -204,22 +204,16 @@ describe('planGlobalSubmission — readiness reflects availableArtifacts', () =>
 });
 
 describe('planGlobalSubmission — honest capability flags & blockers', () => {
-  it('reports canTransmit matching the registry and cannot-transmit blocker only for gateway-less markets', () => {
+  it('reports canTransmit matching the registry, and the cannot-transmit blocker exactly where it is false', () => {
     const plan = planGlobalSubmission(emptyProfile(), [...MARKET_IDS]);
     expect(plan.marketPlans).toHaveLength(MARKET_IDS.length);
-    const transmitCapable = plan.marketPlans.filter((mp) => mp.canTransmit);
-    const transmitIncapable = plan.marketPlans.filter((mp) => !mp.canTransmit);
-    // 12 markets have live gateways; 4 (TW/SA/ZA/MDSAP) do not.
-    expect(transmitCapable.length).toBe(12);
-    expect(transmitIncapable.length).toBe(4);
-    for (const mp of transmitIncapable) {
-      const hasTransmitBlocker = mp.blockers.some((b) => b.includes('cannot transmit'));
-      expect(hasTransmitBlocker).toBe(true);
+    for (const mp of plan.marketPlans) {
+      expect(mp.canTransmit).toBe(getMarket(mp.marketId)!.canTransmit);
+      expect(mp.blockers.some((b) => b.includes('cannot transmit'))).toBe(!mp.canTransmit);
     }
-    for (const mp of transmitCapable) {
-      const hasTransmitBlocker = mp.blockers.some((b) => b.includes('cannot transmit'));
-      expect(hasTransmitBlocker).toBe(false);
-    }
+    // 2026-10-15: pinned 11 markets "with live gateways", a hand-set claim;
+    // regulatory/market-support.ts states that the platform transmits to none.
+    expect(plan.marketPlans.filter((mp) => mp.canTransmit)).toHaveLength(0);
   });
 
   it('reports canAssemble straight from the registry', () => {
@@ -322,9 +316,9 @@ describe('planGlobalSubmission — aggregate rollup', () => {
     expect(union).toEqual(plan.marketPlans.map((p) => p.marketId).sort());
   });
 
-  it('reports transmit-capable markets matching the registry (12 with gateways)', () => {
+  it('reports transmit-capable markets matching the registry (none today)', () => {
     const plan = planGlobalSubmission(emptyProfile(), [...MARKET_IDS]);
-    expect(plan.transmitCapableMarkets).toHaveLength(12);
+    expect(plan.transmitCapableMarkets).toEqual([]);
   });
 
   it('rolls up a de-duplicated set of all per-market blockers', () => {
@@ -339,9 +333,9 @@ describe('planGlobalSubmission — aggregate rollup', () => {
     );
     expect(new Set(plan.globalBlockers)).toEqual(expectedUnion);
 
-    // us-fda and eu-mdr-ivdr both have gateways, so no cannot-transmit in global blockers
-    // for this subset. The blocker only appears when gateway-less markets are planned.
-    const hasTransmitBlocker = plan.globalBlockers.some((b) => b.includes('cannot transmit'));
-    expect(hasTransmitBlocker).toBe(false);
+    // The platform transmits to neither market, so the rollup names both
+    // (2026-10-15: pinned their absence, on the claim that both had gateways).
+    expect(plan.globalBlockers).toContain('platform cannot transmit to FDA');
+    expect(plan.globalBlockers).toContain('platform cannot transmit to EU-NB');
   });
 });

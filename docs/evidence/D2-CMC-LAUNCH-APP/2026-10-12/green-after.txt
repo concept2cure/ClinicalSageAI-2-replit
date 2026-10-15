@@ -1,0 +1,80 @@
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > cmc is a launch surface 2ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > answer_intelligence_question is in scope 1ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > assess_recorded_batch_poolability is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > assess_recorded_process_capability is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > assess_recorded_stability_trend is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > commit_intelligence_flow is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > compare_recorded_dissolution is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > estimate_recorded_shelf_life is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > list_cmc_registers is in scope 1ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > resume_intelligence_flow is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > start_intelligence_flow is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > cmc_status is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > control_strategy is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > ich_compliance is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > module3_contradictions is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > module3_lineage is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > module3_readiness is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > they would be withheld again if the surface left the catalog 1ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > the inventory no longer calls a launch surface hidden 6ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > only the CMC specification flow commits 1ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > refuses a protocol interview, and says where to author it instead 1272ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > refuses a csr interview, and says where to author it instead 1ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > refuses a 510k interview, and says where to author it instead 0ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > refuses a cer interview, and says where to author it instead 1ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > refuses a sop interview, and says where to author it instead 0ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > refuses a nda interview, and says where to author it instead 1ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > refuses a bla interview, and says where to author it instead 1ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > offers the CMC interview — it is the one that commits 169ms
+ ✓ cmc-launch-scope-flip.test.ts > an interview whose answers reach no record is not offered in production > start_intelligence_flow > offers every flow on a development server 11ms
+ ✓ launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere 2ms
+ ✓ launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment 1ms
+ ✓ launch-scope.test.ts > readLaunchScopeMode > an explicit off in production is said once, as an error; off elsewhere and on are quiet 3ms
+ ✓ launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere 2ms
+ ✓ launch-scope.test.ts > the scope list itself > has eight apps and every app surface is in the id set 2ms
+ ✓ launch-scope.test.ts > the scope list itself > CMC / Module 3 is a launch app — decision P-28, 2026-10-12 2ms
+ ✓ launch-scope.test.ts > the scope list itself > CMC grants NO module, so the professional band still decides who sees it 1ms
+ ✓ launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26 1ms
+ ✓ launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21 1ms
+ ✓ launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development 1ms
+ ✓ launch-scope.test.ts > the scope list itself > keeps the two Part 11 surfaces the catalog may never gate 0ms
+ ✓ launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates 1ms
+ ✓ launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — explainer: its Start drops the choice; the New project wizard keeps it 1ms
+ ✓ launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be 1ms
+ ✓ launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document 1ms
+ ✓ launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure 0ms
+ ✓ launch-scope.test.ts > the scope list itself > dossier-map is out of the submission-center app — reads a store no program writes: always empty 0ms
+ ✓ launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing 0ms
+ ✓ launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them 0ms
+ ✓ launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not 0ms
+ ✓ launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads 0ms
+ ✓ launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists 0ms
+ ✓ launch-scope.test.ts > the scope list itself > every app keeps a screen a client can work in 3ms
+ ✓ launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said 1ms
+ ✓ launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens 0ms
+ ✓ launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row 6ms
+ ✓ launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface 1ms
+ ✓ demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step naming an unknown screen fails 2ms
+ ✓ demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step naming an unknown action fails 1ms
+ ✓ demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a step with illegal pinned params fails 1ms
+ ✓ demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > a silent step and a double-move step fail 1ms
+ ✓ demo-scripts.test.ts > the validator catches broken scripts (shown failing first) > an empty script fails 0ms
+ ✓ demo-scripts.test.ts > the registered scripts (the totality gate) > every registered script validates clean 1ms
+ ✓ demo-scripts.test.ts > the registered scripts (the totality gate) > ships one training walkthrough and one sales demonstration 0ms
+ ✓ demo-scripts.test.ts > the registered scripts (the totality gate) > script ids are unique and findable 1ms
+ ✓ demo-scripts.test.ts > the registered scripts (the totality gate) > the picker listing carries honest metadata and no steps payload 1ms
+ ✓ demo-scripts.test.ts > the registered scripts (the totality gate) > every script fits the demo drive budgets (a plan the budget cuts off is a defect here, not at runtime) 9ms
+ ✓ demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the three scripts exist 1ms
+ ✓ demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every navigate stop lands on a launch surface (never "Not in this release") 1ms
+ ✓ demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every act operates a registered action whose screen is a launch surface 0ms
+ ✓ demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all seven launch apps and ends at the audit trail 1ms
+ ✓ demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > submission day runs Vault → Authoring → Submission Center → Readiness → Part 11 0ms
+ ✓ ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 3ms
+ ✓ ana-launch-scope.test.ts > the inventory > classifies every platform command 1ms
+ ✓ ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 12ms
+ ✓ ana-launch-scope.test.ts > the inventory > brings a tool back when its surface joins the launch catalog, without editing the inventory 1ms
+ ✓ ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 3ms
+ ✓ ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too 1ms
+ ✓ ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything 2ms
+ Test Files  4 passed (4)
+      Tests  78 passed (78)

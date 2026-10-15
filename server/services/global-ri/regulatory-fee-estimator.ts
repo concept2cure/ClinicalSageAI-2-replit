@@ -2,8 +2,10 @@
  * Regulatory fee estimator — indicative agency fees across major markets.
  *
  * Budgeting a submission is a real RA/finance need. This service encodes an
- * INDICATIVE fee schedule per market and computes an estimate with the common
- * waivers/exemptions applied (orphan, small business). Agency fees are reset
+ * INDICATIVE fee schedule per market and computes an estimate with the orphan /
+ * small-business waivers it holds applied (FDA's); where a status's fee effect
+ * is not modelled for a market, the fee is charged in full and the estimate
+ * says so. Agency fees are reset
  * annually by statute/notice, so the figures are indicative defaults (FY2025
  * order-of-magnitude) and are overridable via the input — the calculator logic
  * (which fees apply, which waivers zero them out) is the durable part.
@@ -43,9 +45,20 @@ export interface FeeEstimateInput {
   market: FeeMarket;
   /** Whether the application requires clinical data (drives which application fee applies). */
   requiresClinicalData?: boolean;
-  /** Orphan designation — exempts the marketing-application fee in FDA/EMA (and others). */
+  /**
+   * Orphan designation held. FDA: the application fee is waived and the program fee
+   * exempt. Elsewhere the fee effect is not modelled (EMA grants reductions, not a waiver).
+   */
   orphan?: boolean;
-  /** Small-business / SME status — FDA small-business waiver; EMA SME fee reductions. */
+  /**
+   * The orphan screen is met but no designation is recorded: the lines an orphan
+   * designation would waive are charged in full and labelled so. Ignored when `orphan` is true.
+   */
+  orphanScreenMet?: boolean;
+  /**
+   * Small-business / SME status. FDA: the application fee is waived. Elsewhere the fee
+   * effect is not modelled (EMA grants SME reductions, not a waiver).
+   */
   smallBusiness?: boolean;
   /** Number of years of the annual program/maintenance fee to include (default 1). */
   programYears?: number;
@@ -69,9 +82,30 @@ export interface FeeEstimate {
   caveats: string[];
 }
 
+type FeeLine = 'application' | 'annual';
+
+/**
+ * The fee lines a status waives in a market, as far as this reference holds it;
+ * null where its fee effect is not modelled. FDA: an orphan designation waives the
+ * application fee and exempts the program fee; a qualifying small business has the
+ * application fee waived (not the program fee). EMA grants orphan medicinal
+ * products and SMEs fee reductions, not waivers, whose amounts are not held here;
+ * nothing here holds a PMDA or Health Canada rule.
+ */
+const ORPHAN_WAIVES: Record<FeeMarket, readonly FeeLine[] | null> = { FDA: ['application', 'annual'], EMA: null, PMDA: null, HEALTH_CANADA: null };
+const SMALL_BUSINESS_WAIVES: Record<FeeMarket, readonly FeeLine[] | null> = { FDA: ['application'], EMA: null, PMDA: null, HEALTH_CANADA: null };
+
+const MARKET_NAME: Record<FeeMarket, string> = { FDA: 'FDA', EMA: 'EMA', PMDA: 'PMDA', HEALTH_CANADA: 'Health Canada' };
+
+/** The label of a status whose fee effect is not modelled for the market (the fee is charged in full). */
+function notModelled(status: 'orphan' | 'small-business / SME', market: FeeMarket): string {
+  const held = market === 'EMA' ? ' (EMA grants fee reductions, not a waiver; their amounts are not held here)' : '';
+  return `Fee effect of ${status} status not modelled for ${MARKET_NAME[market]}${held}: charged in full.`;
+}
+
 /**
  * Estimate the agency fees for a marketing application in a market, applying
- * orphan / small-business waivers. Pure / deterministic.
+ * the orphan / small-business waivers held for it. Pure / deterministic.
  */
 export function estimateFees(input: FeeEstimateInput): FeeEstimate {
   const base = FEE_SCHEDULE[input.market];
@@ -83,21 +117,35 @@ export function estimateFees(input: FeeEstimateInput): FeeEstimate {
 
   const appFeeAmount = input.requiresClinicalData === false ? sched.applicationNoClinicalData : sched.applicationWithClinicalData;
 
-  // The marketing-application fee is waived for an orphan product (FDA/EMA) or a
-  // qualifying small business (FDA first application).
-  const appWaived = Boolean(input.orphan) || Boolean(input.smallBusiness);
-  const appNote = input.orphan
-    ? 'Waived — orphan-designated product (application fee exemption).'
-    : input.smallBusiness
-      ? 'Waived — small-business / SME waiver.'
-      : undefined;
+  // 2026-10-15: orphan status waived the application and annual fees, and small
+  // business the application fee, in EVERY market (EMA/PMDA/Health Canada total 0),
+  // though EMA grants reductions, not waivers, and nothing here holds a PMDA or
+  // Health Canada rule. Only a held waiver applies; otherwise the fee is charged in
+  // full and labelled not modelled. A met orphan screen is not a designation: those
+  // lines stay charged and say what would waive them.
+  const orphanWaives = ORPHAN_WAIVES[input.market];
+  const smallBusinessWaives = SMALL_BUSINESS_WAIVES[input.market];
+  const unmodelled = [
+    ...((input.orphan || input.orphanScreenMet) && !orphanWaives ? [notModelled('orphan', input.market)] : []),
+    ...(input.smallBusiness && !smallBusinessWaives ? [notModelled('small-business / SME', input.market)] : []),
+  ];
+  const effect = (line: FeeLine, orphanWaivedNote: string): Pick<FeeLineItem, 'waived' | 'note'> => {
+    if (input.orphan && orphanWaives?.includes(line)) return { waived: true, note: orphanWaivedNote };
+    if (input.smallBusiness && smallBusinessWaives?.includes(line)) return { waived: true, note: 'Waived — small-business / SME waiver.' };
+    const notes = [
+      ...(!input.orphan && input.orphanScreenMet && orphanWaives?.includes(line)
+        ? ['Would be waived if orphan-designated: the orphan screen is met, but no designation is recorded, so it is charged here.']
+        : []),
+      ...unmodelled,
+    ];
+    return { waived: false, note: notes.length > 0 ? notes.join(' ') : undefined };
+  };
 
   const lineItems: FeeLineItem[] = [
     {
       name: `Marketing-application fee (${input.requiresClinicalData === false ? 'no clinical data' : 'with clinical data'})`,
       amount: appFeeAmount,
-      waived: appWaived,
-      note: appNote,
+      ...effect('application', 'Waived — orphan-designated product (application fee exemption).'),
     },
   ];
 
@@ -105,9 +153,7 @@ export function estimateFees(input: FeeEstimateInput): FeeEstimate {
     lineItems.push({
       name: `Annual program/maintenance fee × ${programYears} year(s)`,
       amount: sched.annualProgramFee * programYears,
-      // Orphan products are exempt from the FDA program fee; small business is not.
-      waived: Boolean(input.orphan),
-      note: input.orphan ? 'Waived — orphan exemption from the program fee.' : undefined,
+      ...effect('annual', 'Waived — orphan exemption from the program fee.'),
     });
   }
 
@@ -121,6 +167,7 @@ export function estimateFees(input: FeeEstimateInput): FeeEstimate {
     caveats: [
       'Figures are INDICATIVE (FY2025 order-of-magnitude); confirm against the current-year agency fee notice.',
       'Waiver eligibility (orphan, small business/SME) must be confirmed with the agency; criteria and scope vary.',
+      ...unmodelled,
     ],
   };
 }

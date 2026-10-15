@@ -1,0 +1,20 @@
+# The F0 gate after its owner removed author-row-to-document from the baseline (BASELINE_CEILING 5). Final state. 2026-10-08T07:59:12Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > every hop can be located in the source 4ms
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > the baseline names only known hops, each with its slice and reason 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > the baseline only falls 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > no hop outside the baseline is red 1ms
+ ✓ tests/ui/filing-path-reachability.test.ts > the filing path is reachable, hop by hop (FILING_SPINE F0) > no baselined hop is green 0ms
+ ✓ tests/ui/filing-path-reachability.test.ts > how a hop is read (the gate on its own fixtures) > stays red: a row whose own handler opens no document, beside a same-named one that does 4ms
+ ✓ tests/ui/filing-path-reachability.test.ts > how a hop is read (the gate on its own fixtures) > stays red: a name the row never binds, though the page binds it 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > how a hop is read (the gate on its own fixtures) > stays red: data passed to a row is not a control 2ms
+ ✓ tests/ui/filing-path-reachability.test.ts > how a hop is read (the gate on its own fixtures) > green: the page passes its document-opening handler to the row 3ms
+ ✓ tests/ui/filing-path-reachability.test.ts > how a hop is read (the gate on its own fixtures) > green: the row's own handler opens the document 2ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  07:59:14
+   Duration  2.75s (transform 432ms, setup 152ms, import 2.01s, tests 29ms, environment 0ms)
+

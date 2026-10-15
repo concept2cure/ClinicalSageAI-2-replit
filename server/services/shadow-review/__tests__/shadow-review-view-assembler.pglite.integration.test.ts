@@ -31,7 +31,7 @@ const ORG = 7;
 const OTHER = 9;
 
 const DDL = `
-CREATE TABLE shadow_review_runs (id serial PRIMARY KEY, organization_id int, lens text, status text, rtf_risk_score real, crl_risk_score real, created_at timestamptz DEFAULT now(), deleted_at timestamptz);
+CREATE TABLE shadow_review_runs (id serial PRIMARY KEY, organization_id int, lens text, status text, rtf_risk_score real, crl_risk_score real, prompt_version text, created_at timestamptz DEFAULT now(), deleted_at timestamptz);
 CREATE TABLE shadow_review_findings (id serial PRIMARY KEY, run_id int, organization_id int, dimension text, severity text, title text, detail text, basis text, recommendation text, leaf_ref text, deleted_at timestamptz);
 `;
 
@@ -140,5 +140,19 @@ describe('assembleOrgShadowReview', () => {
 
     await pglite.query(`UPDATE shadow_review_runs SET deleted_at = now() WHERE id = $1`, [r]);
     expect(await assembleOrgShadowReview(ORG)).toEqual([]);            // deleted run excluded
+  });
+
+  // 2026-10-05 (Rule 2): v1.0 runs recorded the model's own estimate when it was
+  // higher; later runs record the severity aggregate only. Each row says which.
+  it('labels each run with the basis of its score, by the prompt that produced it', async () => {
+    const legacy = await run(ORG, 'fda_filing', 'complete', { rtf: 0.9, crl: 0.9 });
+    await pglite.query(`UPDATE shadow_review_runs SET prompt_version = 'shadow-review@v1.0' WHERE id = $1`, [legacy]);
+    const current = await run(ORG, 'ema_d120', 'complete', { rtf: 0.275, crl: 0 });
+    await pglite.query(`UPDATE shadow_review_runs SET prompt_version = 'shadow-review@v1.1' WHERE id = $1`, [current]);
+    const rows = (await assembleOrgShadowReview(ORG)) as any[];
+    expect(rows.map((r) => [r.lens, r.scoreBasis])).toEqual([
+      ['fda_filing', 'model_reported'],
+      ['ema_d120', 'severity_aggregate'],
+    ]);
   });
 });

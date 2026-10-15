@@ -1,0 +1,120 @@
+# command: npx vitest run server/__tests__/routes/ana-platform-control.test.ts
+# tree: this item's changes applied; run 2026-10-01T13:57:53Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+{
+  "timestamp": "2026-10-01T13:57:56.352Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:57:56.355Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+{
+  "timestamp": "2026-10-01T13:57:56.356Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T13:57:56.625Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform update_settings failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T13:57:56.629Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform toggle_module failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T13:57:56.632Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform configure_ai failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T13:57:56.634Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform set_compliance_defaults failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T13:57:56.637Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform onboard failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T13:57:56.640Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform execute failed",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing 1861ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > returns entitlements when tenant context provides organization id 7ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /settings is refused before the controller runs 10ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /modules/toggle is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /projects is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /projects/7 is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /ai-config is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /compliance is refused before the controller runs 2ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /onboard is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /execute is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > an admin may still change settings 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member may still read settings 2ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: the request reaches the controller 10ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: the request reaches the controller 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: the request reaches the controller 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: a refused write is a 500 with no detail, never a success 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: a refused write is a 500 with no detail, never a success 3ms
+
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+   Start at  13:57:54
+   Duration  2.54s (transform 1.08s, setup 99ms, import 185ms, tests 1.96s, environment 0ms)
+

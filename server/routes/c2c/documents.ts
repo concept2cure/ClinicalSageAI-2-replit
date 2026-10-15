@@ -34,11 +34,13 @@ import { pool } from '../../db.js';
 import { writeMutation, recordGovernedAction, verifyReauth, separationOfDutiesRefusal } from './actions.js';
 import { assertSignerIsNotAuthor } from '../../services/governance/separation-of-duties.js';
 import { detectSpans } from '../../services/sentenceTraceabilityService.js';
-import { sectionHasContentSql, sectionPlainText } from '../../services/c2c/section-content.js';
+import { sectionPlainText } from '../../services/c2c/section-content.js';
 import {
   replaceAuthorSpans,
   assertLineageCoversContent,
 } from '../../services/clinical-regulatory-evidence/span-lineage.service.js';
+import { readDocumentOutline } from '../../services/c2c/document-outline.js';
+import { checkFilingWritable } from '../../services/authoring/document-lock.js';
 import {
   normalizeRulePackProvenance,
   rulePackProvenanceSelectSql,
@@ -134,7 +136,13 @@ router.get('/', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
-  const { projectId, docType, agency } = req.query as Record<string, string | undefined>;
+  const { projectId, docType, agency, scope } = req.query as Record<string, string | undefined>;
+  // `scope` (FILING_SPINE F22): 'home' is the project's filing, 'market' an
+  // added market's regional modules (c2c_documents.filing_scope). Absent, every
+  // document is listed, as before.
+  if (scope !== undefined && scope !== 'home' && scope !== 'market') {
+    return res.status(400).json({ error: 'BAD_SCOPE', message: "scope is 'home' or 'market'." });
+  }
 
   try {
     const conditions: string[] = ['d.org_id = $1'];
@@ -151,6 +159,10 @@ router.get('/', async (req: Request, res: Response) => {
     if (agency) {
       params.push(agency);
       conditions.push(`d.agency = $${params.length}`);
+    }
+    if (scope) {
+      params.push(scope);
+      conditions.push(`d.filing_scope = $${params.length}`);
     }
 
     const { rows } = await pool.query(
@@ -284,87 +296,19 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // ── GET /api/c2c/documents/:id/outline ───────────────────────────────────────
 //
-// Returns the rule pack's required_sections list merged with live section
-// status, content metadata, and readiness from c2c_document_sections.
-// Sections not yet created in c2c_document_sections are returned with
-// status='todo' and empty content so the authoring UI can render them.
+// The rule pack's sections merged with live section status; a market's
+// document is its own part of the pack, with its gaps (document-outline.ts).
+// Sections not yet created are returned with status='todo' and empty content
+// so the authoring UI can render them.
 
 router.get('/:id/outline', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
-    const docRes = await pool.query(
-      `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
-              d.status, d.readiness, rp.required_sections,
-              ${rulePackProvenanceSelectSql('rp')}
-       FROM c2c_documents d
-       JOIN c2c_rule_packs rp
-         ON rp.doc_type = d.doc_type AND rp.agency = d.agency
-            AND rp.version = d.rule_pack_version
-       WHERE d.id = $1 AND d.org_id = $2
-       LIMIT 1`,
-      [req.params.id, orgId],
-    );
-
-    if (docRes.rows.length === 0) return send404(res);
-    const doc = docRes.rows[0] as any;
-
-    // Fetch all live sections for this document.
-    const secRes = await pool.query(
-      `SELECT section_key, status, owner_id, draft_source,
-              drafted_at, accepted_at, version,
-              ${sectionHasContentSql('content')} AS has_content
-       FROM c2c_document_sections
-       WHERE document_id = $1`,
-      [req.params.id],
-    );
-
-    const liveSections = new Map<string, any>();
-    for (const row of secRes.rows) {
-      liveSections.set(row.section_key, row);
-    }
-
-    // Merge rule pack outline with live section statuses.
-    const outline = (doc.required_sections as any[]).map(spec => ({
-      key:         spec.key,
-      parent_key:  spec.parent_key,
-      label:       spec.label,
-      mandatory:   spec.mandatory,
-      path_order:  spec.path_order,
-      // Overlay live data when section exists.
-      ...(liveSections.has(spec.key) ? {
-        status:      liveSections.get(spec.key).status,
-        draft_source: liveSections.get(spec.key).draft_source,
-        drafted_at:  liveSections.get(spec.key).drafted_at,
-        accepted_at: liveSections.get(spec.key).accepted_at,
-        version:     liveSections.get(spec.key).version,
-        has_content: liveSections.get(spec.key).has_content,
-      } : {
-        status:      'todo',
-        draft_source: null,
-        drafted_at:  null,
-        accepted_at: null,
-        version:     1,
-        has_content: false,
-      }),
-    }));
-
-    return res.json({
-      document: {
-        id:       doc.id,
-        title:    doc.title,
-        doc_type: doc.doc_type,
-        agency:   doc.agency,
-        status:   doc.status,
-        readiness: doc.readiness,
-        // What the tree below was built FROM. The editor navigates by this
-        // outline, so this is the one place a filer is guaranteed to be
-        // looking when the answer matters.
-        provenance: normalizeRulePackProvenance(doc),
-      },
-      outline,
-    });
+    const outline = await readDocumentOutline(pool, orgId, String(req.params.id));
+    if (!outline) return send404(res);
+    return res.json(outline);
   } catch (err: unknown) {
     console.error('[c2c/documents] GET /:id/outline', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -429,7 +373,10 @@ router.get('/:id/sections/:key/versions', async (req: Request, res: Response) =>
          FROM c2c_document_section_versions v
          JOIN c2c_document_sections s ON s.id = v.section_id
          JOIN c2c_documents d ON d.id = s.document_id AND d.org_id = $3
-         LEFT JOIN users u ON u.id = v.author_id
+         -- Named through public.actor_name, not users: since users took row-level
+         -- security (D3, 2026-09-28) a join on users found no one who had left
+         -- the organization (docs/evidence/D3/2026-09-29-actor-names/).
+         LEFT JOIN LATERAL public.actor_name(v.author_id) u ON TRUE
         WHERE s.document_id = $1 AND s.section_key = $2
         ORDER BY v.version DESC
         LIMIT 200`,
@@ -485,6 +432,29 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   if (content === undefined && status === undefined) {
     return send400(res, 'content or status required');
   }
+  /* Spine F1 (2026-10-08): approval and lock are signed acts, not field edits.
+     This route accepted status 'approved' (and 'locked') with only a reason, so
+     a section could read approved — and count toward readiness and the
+     dispatch gate — with no electronic signature behind it (21 CFR Part 11
+     §11.50/§11.70). A section is approved by the approver's signature on the
+     bound authoring document (POST /api/authoring/docs/:docId/e-sign or /sign,
+     which move the bound sections whose text is the text signed, in the
+     signature's own transaction). Nothing sets a section 'locked'; the document
+     lock (POST /api/c2c/documents/:id/lock) sets c2c_documents.status only.
+     Refused before anything is read or written. No client sends either value
+     here today (useSectionSave sends content only). An approved section whose
+     text changes is withdrawn to 'drafted' below, and a locked section is not
+     edited at all. */
+  if (status === 'approved' || status === 'locked') {
+    return res.status(409).json({
+      code: 'APPROVAL_REQUIRES_SIGNATURE',
+      error: 'APPROVAL_REQUIRES_SIGNATURE',
+      message:
+        status === 'approved'
+          ? 'A section is approved only by an electronic signature with the meaning Approval on the authoring document bound to this filing, and only when its text is the text signed. Nothing was changed.'
+          : 'A section cannot be locked here. Lock the document (POST /api/c2c/documents/:id/lock). Nothing was changed.',
+    });
+  }
   if (!reason || typeof reason !== 'string' || reason.trim() === '') {
     return send400(res, 'reason required for Part-11 attribution');
   }
@@ -538,6 +508,29 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
     try {
       await client.query('BEGIN');
 
+      /* ── A SEALED DOCUMENT'S FILED TEXT IS SEALED TOO ────────────────────
+       * The authoring freeze sets `authoring_documents.status = 'FROZEN'` and
+       * writes `frozen_documents`; it does not touch `c2c_documents`, and the
+       * lifecycle check above reads only that. So this route — the MDx editor's
+       * save, and the writer of the store an eCTD leaf is materialized from —
+       * was the one content path that could change a FROZEN or APPROVED
+       * document's text while its seal, and every signature over it, covered
+       * the editing layer only. §11.10(e) requires the record a signature is
+       * applied to be protected from alteration.
+       *
+       * Through the ONE canonical guard, which is that module's own stated
+       * rule ("one guard, called by every writer"), and on the TRANSACTION
+       * client, so a concurrent freeze cannot commit between the check and the
+       * write. A filing with no bound authoring document is unaffected. */
+      const seal = await checkFilingWritable(client, String(id), orgId);
+      if (!seal.writable) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res
+          .status(seal.code === 'SEAL_CHECK_UNAVAILABLE' ? 503 : 403)
+          .json({ code: seal.code, error: seal.code, message: seal.reason });
+      }
+
       // Set GUCs for Part-11 trigger attribution.
       //
       // `set_config(..., true)`, NOT `SET LOCAL ... = $1`. `SET` is a utility
@@ -572,11 +565,26 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         typeof anaActionId === 'string' ? anaActionId.trim() : '',
       ]);
 
-      // Check if section already exists.
+      // Check if section already exists. Its status is read on this
+      // transaction (FOR UPDATE) for spine F1: a locked section is not edited,
+      // and an approved one whose text changes no longer reads approved.
       const existing = await client.query(
-        `SELECT id FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2`,
+        `SELECT id FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2 FOR UPDATE`,
         [id, key],
       );
+      const existingId = (existing.rows[0] as { id?: unknown } | undefined)?.id;
+      const previousStatus: string | null = existingId === undefined
+        ? null
+        : ((await client.query(`SELECT status FROM c2c_document_sections WHERE id = $1`, [existingId]))
+            .rows[0] as { status?: string } | undefined)?.status ?? null;
+      if (previousStatus === 'locked') {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          code: 'SECTION_LOCKED',
+          error: 'SECTION_LOCKED',
+          message: 'This section is locked, so it is not edited in place. Nothing was changed.',
+        });
+      }
 
       let row: any;
       if (existing.rows.length === 0) {
@@ -626,6 +634,14 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         if (status !== undefined) {
           params.push(status);
           setClauses.push(`status = $${params.length}`);
+        } else if (content !== undefined && previousStatus === 'approved') {
+          // Spine F1: 'approved' means the approver's signature covers this
+          // text. New text is not signed text, so the section is withdrawn to
+          // 'drafted' in this same UPDATE (an identical body keeps it). The
+          // governed-action row below records the withdrawal.
+          setClauses.push(
+            `status = CASE WHEN content IS DISTINCT FROM $3::jsonb THEN 'drafted' ELSE status END`,
+          );
         }
         // Rewritten on every content change, including to NULL. New text has a
         // new origin, so carrying the previous one forward would attribute
@@ -657,7 +673,11 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         command: 'transition',
         target: `section:${id}:${key}`,
         reason: reason.trim(),
-        payload: { status },
+        // Spine F1: an approval this change withdrew is named in the record.
+        payload:
+          previousStatus === 'approved' && row?.status !== 'approved'
+            ? { status, from: 'approved', to: row?.status ?? null, approvalWithdrawn: true }
+            : { status },
         domain: 'documents',
         surface: 'api',
       });

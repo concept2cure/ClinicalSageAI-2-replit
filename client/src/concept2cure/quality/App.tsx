@@ -23,18 +23,16 @@ import { SopRegister, STATUS_FILTERS, type StatusFilter } from './SopRegister';
 import { ChangeControl } from './ChangeControl';
 import { useChangeRegister } from './changeHooks';
 import {
-  FIXTURE_CHANGES,
   STATE_LABEL,
   type ChangeState,
   /* The row type shares the pane component's name; the alias keeps both usable. */
   type ChangeControl as ChangeControlRow,
 } from './changeData';
-/* The canonical sample-mode guard, shared with the MDX lane — one definition
-   of "may a fixture reach the screen", applied here because the register read
-   is lifted (its marker still renders in the ChangeControl pane). */
-import { useSampleRows, useShowingSample } from '../mdx/lib/useSampleRows';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../v2/surfaceActions';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
+
+/** Stable identity for an unread register, so memo deps do not churn. */
+const NO_CHANGES: ChangeControlRow[] = [];
 
 export interface QualityAppProps {
   /** Forward an AnA prompt to the host conversation surface. */
@@ -60,7 +58,7 @@ const HERE: Record<QualityTab, string> = {
 const ASK_STARTER: Record<QualityTab, string> = {
   sop:
     'Give me a read-out on the quality system — what is overdue for review, what is awaiting approval, ' +
-    'and where read-and-understood training is short.',
+    'and where current-release personal acknowledgements are missing.',
   change:
     'Give me a read-out on change control — what is awaiting approval, what is overdue for implementation, ' +
     'and which linked deviations or CAPAs are still open.',
@@ -92,13 +90,11 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
 
   /* The change-control read, lifted out of the ChangeControl pane: the
      open-change handler resolves free-text names against the register, and a
-     handler can only read state its own component holds. Same sample-mode
-     boundary as before the lift — the fixture substitutes only under explicit
-     sample mode (impossible in a production build), and the pane still
-     renders the standing marker from the flag threaded down. */
+     handler can only read state its own component holds. The tenant's rows or
+     none — the example change log (FIXTURE_CHANGES) and the sample mode that
+     could show it were removed on 2026-10-14. */
   const changeReg = useChangeRegister();
-  const changes: ChangeControlRow[] = useSampleRows(changeReg.changes, FIXTURE_CHANGES);
-  const showingSampleChanges = useShowingSample(changeReg.changes);
+  const changes: ChangeControlRow[] = changeReg.changes ?? NO_CHANGES;
 
   const onAsk = React.useCallback(
     (q: string) => {
@@ -117,9 +113,9 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
      state the panes' own controls drive (setTab / setSopFilter / setStage /
      setOpenId) — no second path; misses are honest refusals, never guesses.
      Approving, revising or retiring a document, raising or advancing a
-     change, and recording training are governed acts with no handlers here —
-     structurally excluded; they stay in conversation, where AnA proposes and
-     the Part 11 ceremony runs. */
+     change, and acknowledging a released revision are governed acts with no
+     handlers here. People personally acknowledge in the register reader;
+     approval and retirement use the native signature ceremony. */
   useSurfaceActionHandlers('quality', {
     'quality.open-tab': (params) => {
       const target: QualityTab = params.tab === 'change' ? 'change' : 'sop';
@@ -249,26 +245,24 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
     }
     return {
       summary:
-        `${base} The change log holds ${changes.length} change record${changes.length === 1 ? '' : 's'}` +
-        (showingSampleChanges ? ' (sample data mode — not tenant records)' : '') +
-        '.',
+        `${base} The change log holds ${changes.length} change record${changes.length === 1 ? '' : 's'}.`,
       facts: {
         tab,
         sopFilter,
         changeStage: stage,
         openChange: openRow?.changeNumber ?? null,
         changeCount: changes.length,
-        sampleChangeData: showingSampleChanges,
       },
       availableActions: [
         'Switch between the SOP register and change control tabs',
         'Filter the controlled-document register by status',
         'Filter the change log by lifecycle stage',
         'Expand a change to its linked deviations, CAPAs and validation records',
-        'Approving, revising or retiring documents, raising or advancing changes, and recording training are governed — AnA proposes them in conversation, never through screen controls',
+        'People read controlled text and record their own personal acknowledgement in the SOP register; AnA cannot acknowledge for them',
+        'Document approval and retirement use native electronic signatures; other governed changes require their authorized workflow',
       ],
     };
-  }, [tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error, showingSampleChanges]);
+  }, [tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error]);
   usePublishSurfaceContext('quality', anaContext);
 
   /* The bus's ready signal: a not-ready open-change (retry: true) held across
@@ -323,7 +317,6 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
               onOpenIdChange={setOpenId}
               changes={changes}
               loading={changeReg.loading}
-              showingSample={showingSampleChanges}
               error={changeReg.error}
               onRetry={changeReg.refresh}
             />

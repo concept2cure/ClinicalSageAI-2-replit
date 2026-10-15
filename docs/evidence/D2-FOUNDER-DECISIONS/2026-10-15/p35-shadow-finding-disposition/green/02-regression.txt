@@ -1,0 +1,18 @@
+# Regression: submission-service, shadow-review, ectd, submissions routes, AnA sign/submission/waiver/disposition guards, migration manifest — 2026-10-15
+# npx vitest run server/services/submission-service/__tests__/ server/services/shadow-review/__tests__/ server/services/ectd/__tests__/ server/routes/__tests__/submission server/routes/__tests__/shadow-review-read.test.ts server/services/ana/__tests__/{ana-cannot-sign,submission-center-tools,ana-cannot-waive-shadow-review,ana-cannot-disposition-shadow-finding}.test.ts tests/ops/apply-c2c-migrations-manifest.test.mjs
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > passes the trimmed reason to the service and answers 204
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > answers the refusal with 200, from the step’s own gates
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > passes the trimmed reason and the membership row’s role to the service
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > answers the projects of the submission’s filing type, from the service
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 133 passed | 1 skipped (136)
+      Tests  4 failed | 1579 passed | 2 skipped (1585)
+
+# The 4 failures are exact-match ctx assertions that predate this change (ctxOf adds ipAddress since f2f656eed).
+# submissions-leaf-remove-and-precheck (2) was then fixed as part of P-35 at the coordinator's request: ipAddress asserted, and the precheck options asserted key for key with toStrictEqual (findingId/disposition included); a new case pins the disposition passthrough. Re-run:
+# npx vitest run server/routes/__tests__/submission
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > passes the trimmed reason and the membership row’s role to the service
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > answers the projects of the submission’s filing type, from the service
+ Test Files  1 failed | 14 passed (15)
+      Tests  2 failed | 82 passed (84)
+# The 2 left (submissions-program-anchor) are the same pre-existing ipAddress assertions; not in P-35's files, not touched.

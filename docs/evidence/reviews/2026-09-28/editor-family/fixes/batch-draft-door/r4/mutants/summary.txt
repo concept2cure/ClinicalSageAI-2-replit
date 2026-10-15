@@ -1,0 +1,39 @@
+Round 4 mutants, run against the final code. One file per mutant: what it reverts, the diff,
+the tests that failed. Each source file was restored after its run and its sha256 checked.
+
+22 of 22 killed.
+
+D2-loose-tag           KILLED    2 failing  A tag is whatever a browser opens: any `<name` up to `>`, as the old strip read it.
+LEAF-MARK-quadratic    KILLED    1 failing  The leaf-mark pattern tries every split of a run of white space again.
+D2-no-region           KILLED    6 failing  A `<` the two parsers may read differently opens no region.
+D3-template-head       KILLED    3 failing  template and head open no region.
+D3-comment             KILLED    4 failing  A comment (or any `<!`) opens no region.
+D4-allowlist           KILLED    3 failing  Any attribute is stripped with its tag, as round 3 did.
+D4-source-mode         KILLED    1 failing  Content that opens in source mode is read as HTML only.
+D4-editor-copy         KILLED    1 failing  The editor keeps its own copy of the source-mode test.
+D5-image               KILLED    1 failing  An image is not a printing element.
+D6-attributes          KILLED    2 failing  No attribute is a printed one.
+D6-extent              KILLED    2 failing  A printing element covers only its start tag, not the words it holds.
+D7-inline-space        KILLED    3 failing  An inline tag reads as a space, as round 3 read every tag.
+D8-every-asterisk      KILLED    3 failing  The markdown reading drops every `*`, as round 3 did.
+C2a-no-mask            KILLED    2 failing  The gate splits the content unmasked: a style's ": " cuts its tag.
+C2b-plain-region       KILLED    7 failing  The not-compared region applies to plain text too.
+AUTH-definition        KILLED    1 failing  MACHINE_AUTHOR_IDS is an ordinary object again (its check stays Object.hasOwn).
+AUTH-both              KILLED    8 failing  An ordinary object, read by truthiness: the defect as found.
+AUTH-verifier          KILLED    1 failing  A verified claim keeps the author the request named.
+DUP-no-cap             KILLED    4 failing  The records' count bounds nothing.
+DUP-reaccept           KILLED    1 failing  A clause carried forward and accepted again does not count against the records.
+DUP-route              KILLED    3 failing  The route does not pass the records' count to the lineage.
+DUP-sum-readings       KILLED    3 failing  A record's count sums its texts (each draft read twice) instead of taking the most any one holds.
+
+History:
+- D5-image survived the first run (D5-image-survived-first.txt): the test of an image the
+  record also holds used an image with an alt, which the printed-attribute rule catches on
+  its own. The test now also holds an image with no alt, for which the leaf prints a label;
+  D5-image.txt is the same mutant killed by it.
+- LEAF-MARK-quadratic reverts a defect found in this round's own code: the `< sup` pattern
+  was quadratic in a run of white space (red-linear-time.txt).
+
+Not run, as equivalent: Object.hasOwn alone back to a truthiness read. With the vocabulary
+null-prototype nothing is inherited, so no input tells the two reads apart. Both are kept
+(defence in depth); AUTH-definition and AUTH-both show each change is pinned where it can be.

@@ -1,11 +1,21 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { pool } from '../db';
+import { pool, transaction } from '../db';
 import { inVerifiedOrgScope } from '../services/tenant/verified-org-scope';
+import {
+  ADMINISTRATOR_ROLES, changeMemberRole, memberChangeReason, LAST_ADMINISTRATOR_REFUSAL, removeMember,
+  wouldLeaveNoAdministrator, type MembershipActor,
+} from '../services/tenant/membership-change';
+import { clientIpOf } from '../utils/client-ip';
+import { declineOwnInvitation, listOwnPendingInvitations } from '../services/tenant/invitation-consent';
+import { ASSIGNABLE_ORG_ROLES } from '../../shared/constants/org-roles';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 import {
   issueInvitation,
+  reissueForUnredeemedInvitee,
   type InvitationDelivery,
 } from '../services/tenant/invitation-delivery';
 import {
@@ -21,7 +31,8 @@ const router = Router();
 const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(2).max(100),
-  role: z.enum(['admin', 'manager', 'member', 'viewer']),
+  // P-18: approver and reviewer are assignable (shared/constants/org-roles.ts).
+  role: z.enum(ASSIGNABLE_ORG_ROLES),
   title: z.string().optional(),
   department: z.string().optional(),
   organizationId: z
@@ -35,8 +46,28 @@ const createUserSchema = z.object({
 
 // Schema for user role update
 const updateUserRoleSchema = z.object({
-  role: z.enum(['admin', 'manager', 'member', 'viewer']),
+  role: z.enum(ASSIGNABLE_ORG_ROLES),
+  reason: memberChangeReason,
 });
+
+const removeMemberSchema = z.object({ reason: memberChangeReason });
+
+/** 400 before anything is written: a membership change states its reason (21 CFR 11.10(e)). */
+function reasonRequired(res: any, change: string) {
+  return res.status(400).json({
+    error: 'REASON_REQUIRED',
+    message: `A reason is required to ${change}. Nothing was changed.`,
+  });
+}
+
+/** Who is making a membership change, from where — for its audit row. */
+function membershipActor(req: any): MembershipActor {
+  return {
+    userId: getCallerId(req),
+    ipAddress: clientIpOf(req),
+    userAgent: typeof req.get === 'function' ? req.get('user-agent') : undefined,
+  };
+}
 
 /**
  * Authorize the caller against the *target* organization (the org named in the
@@ -54,12 +85,16 @@ async function authorizeOrgAccess(
   opts: { requireAdmin: boolean }
 ): Promise<string | false> {
   const callerId = Number(req.user?.id ?? req.userId);
-  const callerRole = req.userRole ?? req.user?.role;
   if (!callerId || Number.isNaN(callerId)) {
     res.status(401).json({ error: 'Authentication required' });
     return false;
   }
-  if (callerRole === 'super_admin') return 'super_admin';
+  // Platform staff: platform standing for super_admin (holdsPlatformRole),
+  // never the request role. That is the tenant membership role behind
+  // server/auth.ts, so until 2026-10-05 a membership row naming super_admin
+  // administered every organization's users (D6,
+  // docs/evidence/D6/2026-10-05-cross-tenant-staff/).
+  if (await holdsPlatformRole(req, ['super_admin'])) return 'super_admin';
   const membership = await pool.query(
     'SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2 LIMIT 1',
     [callerId, targetOrgId]
@@ -69,7 +104,7 @@ async function authorizeOrgAccess(
     res.status(403).json({ error: 'You do not have access to this organization' });
     return false;
   }
-  if (opts.requireAdmin && role !== 'admin' && role !== 'owner') {
+  if (opts.requireAdmin && !ADMINISTRATOR_ROLES.includes(role)) {
     res.status(403).json({ error: 'Admin of the target organization required' });
     return false;
   }
@@ -137,22 +172,7 @@ router.get('/invitations/mine', async (req, res) => {
     // rows, which this scope's tenant policy hides; invitations_for_member
     // reads them for a member of this scope's organization and nobody else
     // (migrations/20260928_invitations_for_member.sql).
-    const result = await pool.query(
-      `SELECT
-         id,
-         organization_id as "organizationId",
-         email,
-         role,
-         status,
-         invited_by_id as "invitedById",
-         created_at as "createdAt"
-       FROM public.invitations_for_member($1)
-       WHERE status = 'pending'
-       ORDER BY created_at DESC`,
-      [callerId]
-    );
-
-    res.json(result.rows);
+    res.json(await listOwnPendingInvitations(req, callerId));
   } catch (error) {
     log.error('Error retrieving pending invitations', error);
     res.status(500).json({ error: 'Failed to retrieve pending invitations' });
@@ -188,12 +208,14 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
       atomicAcceptInvitation: (
         invitationId: number,
         callerUserId: number,
+        auditContext?: { ipAddress?: string; userAgent?: string },
       ) => Promise<{
         success: boolean;
         error?: string;
         message?: string;
         details?: unknown;
         data?: unknown;
+        auditTrail?: { persisted: true; chained: true };
       }>;
     };
 
@@ -205,7 +227,10 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
       return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Invitation not found' });
     }
     const result = await inVerifiedOrgScope(req, own.organizationId, 'member', () =>
-      atomicQuotaService.atomicAcceptInvitation(invitationId, callerId)
+      atomicQuotaService.atomicAcceptInvitation(invitationId, callerId, {
+        ipAddress: clientIpOf(req) ?? undefined,
+        userAgent: req.get('user-agent'),
+      })
     );
 
     if (!result.success) {
@@ -215,6 +240,7 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
         NOT_PENDING: 409,
         QUOTA_EXCEEDED: 403,
         ORGANIZATION_NOT_FOUND: 404,
+        DATABASE_ERROR: 500,
       };
       return res.status(statusByError[result.error ?? ''] ?? 400).json({
         success: false,
@@ -225,7 +251,7 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
     }
 
     log.debug('Invitation accepted:', result.data);
-    res.json({ success: true, message: 'Invitation accepted', data: result.data });
+    res.json({ success: true, message: 'Invitation accepted', data: result.data, auditTrail: result.auditTrail });
   } catch (error) {
     log.error('Error accepting invitation', error);
     res.status(500).json({ error: 'Failed to accept invitation' });
@@ -265,20 +291,13 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
       return res.status(409).json({ error: `Invitation has already been ${invitation.status}` });
     }
 
-    const declined = await inVerifiedOrgScope(req, invitation.organizationId, 'member', () =>
-      pool.query(
-        `UPDATE organization_invitations
-         SET status = 'declined', responded_at = NOW()
-         WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'pending'`,
-        [invitationId, invitation.organizationId, callerId]
-      )
-    );
-    if (declined.rowCount !== 1) {
+    const declined = await declineOwnInvitation(req, callerId, invitationId, invitation.organizationId);
+    if (!declined) {
       return res.status(409).json({ error: 'Invitation is no longer pending' });
     }
 
     log.debug(`Invitation ${invitationId} declined by user ${callerId}`);
-    res.json({ success: true, message: 'Invitation declined' });
+    res.json({ success: true, message: 'Invitation declined', auditTrail: { persisted: true, chained: true } });
   } catch (error) {
     log.error('Error declining invitation', error);
     res.status(500).json({ error: 'Failed to decline invitation' });
@@ -287,7 +306,11 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
 
 /**
  * GET /api/tenant-users/:tenantId
- * Get users for a specific tenant
+ * Get users for a specific tenant. Each row says whether the member may apply
+ * an electronic signature (`canSign`), read from the signing policy itself
+ * (isSigningAuthorized on the membership role), so a picker that must offer
+ * only signers (the protocol reviewer picker; a review is assigned only to
+ * someone who can sign its disposition) does not keep its own role list.
  */
 router.get('/:tenantId', async (req, res) => {
   try {
@@ -332,7 +355,7 @@ router.get('/:tenantId', async (req, res) => {
       pool.query(query, [tenantId])
     );
     log.debug(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
-    res.json(result.rows);
+    res.json(result.rows.map((row: { role?: string | null }) => ({ ...row, canSign: isSigningAuthorized(row.role) })));
   } catch (error) {
     log.error('Error retrieving tenant users', error);
     res.status(500).json({ error: 'Failed to retrieve tenant users' });
@@ -381,6 +404,18 @@ router.post('/', async (req, res) => {
         message: 'Members cannot be added: this deployment has no public address configured (APP_URL), so no activation link can be sent.',
       });
     }
+
+    // Inviting a member who never set a password again re-issues their setup
+    // link (QA 2026-10-08, j9 finding 5): it was handed over once, and lost
+    // with the clipboard. Before the seat gate: it adds no member and no seat.
+    const reissued = await reissueForUnredeemedInvitee(req, {
+      email: validatedData.email,
+      organizationId,
+      verifiedRole,
+      callerId: getCallerId(req),
+      appBaseUrl,
+    });
+    if (reissued) return res.status(reissued.status).json(reissued.body);
 
     // Seat-licensing gate: a new member/invitation consumes a purchased seat.
     // Report-only by default; blocks only when SEAT_LIMIT_ENFORCEMENT=enforce.
@@ -518,7 +553,9 @@ router.post('/', async (req, res) => {
 
 /**
  * PATCH /api/tenant-users/:organizationId/:userId
- * Update user role in organization
+ * Update user role in organization. Body: { role, reason } — the reason is
+ * required (400 REASON_REQUIRED otherwise) and recorded with the role before
+ * and after in a chained audit row written in the change's transaction.
  */
 router.patch('/:organizationId/:userId', async (req, res) => {
   try {
@@ -536,35 +573,57 @@ router.patch('/:organizationId/:userId', async (req, res) => {
 
     const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
-    const validatedData = updateUserRoleSchema.parse(req.body);
+    // PR #973 port: an admin re-roling THEMSELVES can leave an organization
+    // with no administrator and no one able to undo it. Checked after authZ so
+    // a non-member still gets 403, not a disclosure.
+    if (getCallerId(req) === userId) {
+      return res.status(400).json({ error: 'You cannot change your own role', code: 'SELF_ROLE_CHANGE' });
+    }
 
-    const updateQuery = `
-      UPDATE organization_users
-      SET role = $1, updated_at = NOW()
-      WHERE organization_id = $2 AND user_id = $3
-      RETURNING *
-    `;
+    const parsed = updateUserRoleSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      if (parsed.error.issues.every(i => i.path[0] === 'reason')) {
+        return reasonRequired(res, "change a member's role");
+      }
+      return res.status(400).json({ error: 'Invalid role data', details: parsed.error.errors });
+    }
+    const { role, reason } = parsed.data;
 
-    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () => pool.query(updateQuery, [validatedData.role, organizationId, userId]));
+    // The organization's administrators (locked), the role before (locked), the
+    // change and its audit row: one transaction.
+    const outcome = await inVerifiedOrgScope(req, organizationId, verifiedRole, () =>
+      transaction(async client =>
+        (await wouldLeaveNoAdministrator(client, { organizationId, userId, newRole: role }))
+          ? ('last_admin' as const)
+          : changeMemberRole(client, membershipActor(req), { organizationId, userId, role, reason })
+      )
+    );
 
-    if (result.rows.length === 0) {
+    if (outcome === 'last_admin') return res.status(409).json(LAST_ADMINISTRATOR_REFUSAL);
+    if (outcome === 'not_found') {
       return res.status(404).json({ error: 'User not found in organization' });
     }
+    if (outcome === 'unchanged') {
+      return res.json({ message: 'User role unchanged', unchanged: true });
+    }
 
-    log.debug('Updated user role:', result.rows[0]);
+    // The role is cached for up to a minute per instance (orgMembership.ts);
+    // a demotion must not outlive its audited change time by that minute.
+    invalidateOrgMembershipCache(userId, organizationId);
+    log.debug(`Updated role of user ${userId} in organization ${organizationId}`);
     res.json({ message: 'User role updated successfully' });
   } catch (error) {
+    // Includes a refused audit row: the transaction rolled the change back.
     log.error('Error updating user role:', error);
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid role data', details: error.errors });
-    }
     res.status(500).json({ error: 'Failed to update user role' });
   }
 });
 
 /**
  * DELETE /api/tenant-users/:organizationId/:userId
- * Remove user from organization
+ * Remove user from organization. Body: { reason } — required (400
+ * REASON_REQUIRED otherwise) and recorded with the role the member held in a
+ * chained audit row written in the removal's transaction.
  */
 router.delete('/:organizationId/:userId', async (req, res) => {
   try {
@@ -582,15 +641,27 @@ router.delete('/:organizationId/:userId', async (req, res) => {
 
     const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
-    const deleteQuery = `
-      DELETE FROM organization_users
-      WHERE organization_id = $1 AND user_id = $2
-      RETURNING *
-    `;
+    // PR #973 port: self-removal — same lockout as a self re-role above.
+    if (getCallerId(req) === userId) {
+      return res.status(400).json({ error: 'You cannot remove yourself from an organization', code: 'SELF_REMOVAL' });
+    }
 
-    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () => pool.query(deleteQuery, [organizationId, userId]));
+    const parsed = removeMemberSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return reasonRequired(res, 'remove a member');
+    const { reason } = parsed.data;
 
-    if (result.rows.length === 0) {
+    // The organization's administrators (locked), the removal and its audit
+    // row: one transaction.
+    const removed = await inVerifiedOrgScope(req, organizationId, verifiedRole, () =>
+      transaction(async client =>
+        (await wouldLeaveNoAdministrator(client, { organizationId, userId, newRole: null }))
+          ? ('last_admin' as const)
+          : removeMember(client, membershipActor(req), { organizationId, userId, reason })
+      )
+    );
+
+    if (removed === 'last_admin') return res.status(409).json(LAST_ADMINISTRATOR_REFUSAL);
+    if (!removed) {
       return res.status(404).json({ error: 'User not found in organization' });
     }
 
@@ -598,9 +669,10 @@ router.delete('/:organizationId/:userId', async (req, res) => {
     // middleware's membership-cache TTL.
     invalidateOrgMembershipCache(userId, organizationId);
 
-    log.debug('Removed user from organization:', result.rows[0]);
+    log.debug(`Removed user ${userId} from organization ${organizationId}`);
     res.json({ message: 'User removed from organization successfully' });
   } catch (error) {
+    // Includes a refused audit row: the transaction rolled the removal back.
     log.error('Error removing user from organization:', error);
     res.status(500).json({ error: 'Failed to remove user from organization' });
   }

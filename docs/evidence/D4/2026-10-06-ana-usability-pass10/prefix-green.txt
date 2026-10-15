@@ -1,0 +1,142 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when client stalls 5ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when project stalls 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > retains healthy context when wisdom stalls 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > starts client recall before a stalled program resolution and never starts late project reads 2ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > bounded intelligence prefix recall > shares one deadline across program resolution and dependent recall 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > keeps healthy wisdom when another source fails 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not allow a late timed-out result to fill the cache 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not cache degraded recall, allowing the next turn to recover 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > caches healthy empty recall and honors TTL and invalidation 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts > prefix cache after recall failure > does not query without an organization or share healthy recall between organizations 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program UUID beginning with digits loads its anchor row's intelligence, never the integer its digits spell 40ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program with no anchor row loads no project intelligence 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a legacy integer project loads its own intelligence 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a malformed project id loads none 1ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > a program and the integer its digits spell are different cache entries 5ms
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > invalidating a program by its UUID clears its entry 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts tenant-scoped client and project searches before recency resolves 12ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 3ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 0ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 4ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T02:56:12.739Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T02:56:12.740Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T02:56:12.740Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+{
+  "timestamp": "2026-10-06T02:56:12.742Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T02:56:12.744Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+{
+  "timestamp": "2026-10-06T02:56:12.744Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+{
+  "timestamp": "2026-10-06T02:56:12.742Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T02:56:12.743Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+{
+  "timestamp": "2026-10-06T02:56:12.744Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step
+[AnA RI Stream] Context enriched with: claim-grounding
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not
+[AnA RI Stream] Context enriched with: claim-grounding
+
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 43ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 46ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > and how the turn was routed, and why 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 42ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 6ms
+
+ Test Files  6 passed (6)
+      Tests  45 passed (45)
+   Start at  22:56:09
+   Duration  6.61s (transform 11.06s, setup 438ms, import 19.00s, tests 317ms, environment 1ms)

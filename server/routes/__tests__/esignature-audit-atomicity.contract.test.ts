@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   old_values   JSON,
   new_values   JSON,
   ip_address   TEXT,
-  user_agent   TEXT
+  user_agent   TEXT,
+  reason       TEXT
 );
 `;
 

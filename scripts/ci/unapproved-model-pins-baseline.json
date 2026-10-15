@@ -9,10 +9,6 @@
       "count": 7,
       "reason": "Regulatory digital twin: a CLAUDE.md Rule 2 surface that gets no sessions. Not classified or changed; recorded so a new pin elsewhere cannot hide behind it."
     },
-    "server/routes/agent-swarm.ts": {
-      "count": 7,
-      "reason": "Display metadata on the agent definitions (GET /agents). The model that serves a swarm task is chosen by the gateway from the mapped task type, and drafting and QC tasks map to document_drafting and regulatory_review."
-    },
     "server/routes/c2c/context-intelligence.ts": {
       "count": 2,
       "reason": "/summarize and /extract-decisions write conversation working memory, not a governed document; the governed path in this file (/promote) routes as document_drafting with no pin."
@@ -36,18 +32,6 @@
     "server/services/ai/openai-orchestrator.ts": {
       "count": 1,
       "reason": "Unreachable: no importer is reachable from server/index.ts since its route was deleted in 3cc8547d2. Listed for deletion by an owner; if revived it must route as document_drafting / regulatory_review."
-    },
-    "server/api/cmc/audit-risk-monitor.js": {
-      "count": 10,
-      "reason": "Every POST handler throws after its first model call (it reads .choices from a response that has none), so no output is stored or returned (classified 2026-09-23). The first calls still send user documents to the pinned model: listed for retirement by an owner; if kept, drop the pins and route as regulatory_review."
-    },
-    "server/api/cmc/cmc-copilot.js": {
-      "count": 5,
-      "reason": "Chat answers appended to a local conversation log file; nothing is written to a governed record or presented as a draft or verdict (classified 2026-09-23)."
-    },
-    "server/api/cmc/manufacturing-tuner.js": {
-      "count": 5,
-      "reason": "Process-optimisation suggestions written to a local output file and returned; no governed record is written and nothing reaches a submission (classified 2026-09-23)."
     },
     "server/services/keywordExtractionService.ts": {
       "count": 1,

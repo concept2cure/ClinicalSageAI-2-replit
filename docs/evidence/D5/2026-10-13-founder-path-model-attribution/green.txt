@@ -1,0 +1,24 @@
+### The walk
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+
+### Regression: tests/lineage/ and tests/golden-journeys/
+ Test Files  12 passed (12)
+      Tests  37 passed (37)
+
+### Shown still to bite -- the anti-tautology check
+# The walk supplies SERVED_MODEL as BOTH the tool ctx and the filed record, so
+# the assertion could have become a tautology. File the record naming a
+# different model (claude-sonnet-5), leave the ctx on claude-opus-5:
+   → ana-draft/model-recorded FAILS and is not baselined
+     observed "claude-sonnet-5"
+# The gate reads the RECORD, not the ctx. Which also confirms 27211528b's
+# invariant end to end: the model on a governed document is the one the turn
+# record names, and a caller cannot put another there.
+
+### Gates
+eslint tests/lineage/founder-path-lineage.{hops-authoring,pglite.test}.ts   exit 0
+tsc --noEmit                                                               no error in either file
+
+### Scope
+# Two test files. No production file touched.

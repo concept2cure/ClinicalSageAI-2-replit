@@ -1,0 +1,61 @@
+[
+ {
+  "request": 51,
+  "label": "proposes-create_task",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": {
+   "type": "adaptive",
+   "display": "summarized"
+  },
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 1,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Create a review task for the BX-512 stability protocol (control run: I will confirm it)."
+   }
+  ]
+ },
+ {
+  "request": 52,
+  "label": "after-the-person-confirmed",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 3,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Create a review task for the BX-512 stability protocol (control run: I will confirm it)."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "I will propose the task; it needs your approval."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for execute_platform_command (toolu_fake_51)]:\n{\"data\":{\"name\":\"E2E stand-in: review the stability protocol\",\"status\":\"todo\",\"taskId\":1,\"priority\":\"medium\",\"onTaskBoard\":true},\"action\":\"create_task\",\"message\":\"Created task \\\"E2E stand-in: review the stability protocol\\\" — ID: 1.\",\"success\":true}"
+   }
+  ]
+ }
+]

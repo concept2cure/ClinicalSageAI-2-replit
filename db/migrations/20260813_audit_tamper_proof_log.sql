@@ -56,6 +56,43 @@
 --
 -- Idempotent: every statement is IF NOT EXISTS / OR REPLACE, and the trigger is
 -- dropped before it is recreated. Safe to re-run on every deploy.
+--
+-- ── AMENDED 2026-10-01: organization_id (DP-28, plan P1-27) ─────────────────
+-- What changed: the table gains `organization_id INTEGER NULL`, an index on
+-- (organization_id, sequence_number), and a column comment. ADDITIVE ONLY —
+-- nothing is dropped, rewritten or re-chained. Amended in place rather than in
+-- a new file (CLAUDE.md Rule 1 permits it: the set re-runs this file on every
+-- deploy) because nine test harnesses provision this store from THIS file alone
+-- (the pglite authoring suites, tests/lineage, tests/golden-journeys/harness.ts);
+-- a separate file would leave them a table without the column, and every
+-- tenant-attributed write there would fail into the caller's non-fatal catch.
+-- Changed by: docs/evidence/D6/2026-10-01-tranche-4/P1-7-P1-27-residuals/.
+--
+-- Why: the store was one global chain with no tenant column (security audit
+-- 2026-09-24 DP-28). A Part 11 record could not say whose it was, its reads
+-- (TamperProofAuditLog.search / getRecentEntries) answered with every tenant's
+-- rows, and the one per-tenant reader had to refuse outright.
+--
+-- Semantics: the tenant the row was written for. NULL means a platform row
+-- (boot, shutdown, the chain verifier's own row) or a row written before this
+-- column existed. Every writer names its tenant through
+-- server/lib/tamper-proof-audit.ts (resolveAuditOrganization), which refuses a
+-- tenant other than the session's; the value is covered by the row's
+-- content_hash when non-NULL, and a NULL hashes exactly as before, so existing
+-- rows verify unchanged.
+--
+-- Still ONE chain, still no RLS policy, deliberately: the writer links each row
+-- to the previous row of the WHOLE table, and a FORCEd tenant policy would hide
+-- other tenants' tail rows from it and fork the chain. Tenancy is enforced by
+-- the per-tenant reads filtering on this column.
+--
+-- CUT-OVER: rows are not re-chained and existing rows are not back-filled (the
+-- immutability trigger refuses UPDATE, and a back-filled value would sit outside
+-- the hash its row was sealed with). The first run on each database records the
+-- highest sequence_number that existed when the column was added in the
+-- column's comment ("cut-over after sequence N"); rows at or below N predate
+-- the column. During a rolling deploy an instance still on the old code can
+-- append NULL-tenant rows after N until it is replaced.
 
 BEGIN;
 
@@ -130,7 +167,32 @@ BEGIN
 END
 $$;
 
+-- 2026-10-01 amendment (header): the tenant column, its cut-over recorded once.
+DO $$
+DECLARE
+  cut_over bigint;
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'audit' AND table_name = 'tamper_proof_log'
+       AND column_name = 'organization_id'
+  ) THEN
+    ALTER TABLE audit.tamper_proof_log ADD COLUMN organization_id INTEGER;
+    SELECT COALESCE(MAX(sequence_number), 0) INTO cut_over FROM audit.tamper_proof_log;
+    EXECUTE format(
+      'COMMENT ON COLUMN audit.tamper_proof_log.organization_id IS %L',
+      'Tenant the row was written for; NULL = platform row or written before the column existed. '
+        || 'Cut-over after sequence ' || cut_over || ' (added '
+        || to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        || ', DP-28). Not re-chained; covered by content_hash when non-NULL.'
+    );
+    RAISE NOTICE '[audit] tamper_proof_log.organization_id added; cut-over after sequence %', cut_over;
+  END IF;
+END
+$$;
+
 CREATE INDEX IF NOT EXISTS idx_audit_sequence    ON audit.tamper_proof_log(sequence_number);
+CREATE INDEX IF NOT EXISTS idx_audit_org_sequence ON audit.tamper_proof_log(organization_id, sequence_number);
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp   ON audit.tamper_proof_log(event_timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_user        ON audit.tamper_proof_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_resource    ON audit.tamper_proof_log(resource_type, resource_id);

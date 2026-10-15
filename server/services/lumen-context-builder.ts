@@ -48,12 +48,19 @@ export interface ProjectContext {
   name: string;
   description: string | null;
   status: string;
-  submissionType: string;
+  /**
+   * The recorded submission type (display name when the bridge knows it);
+   * undefined when none is recorded, never assumed. Undefined rather than null
+   * because cortex-unified passes it to orchestrate()'s optional
+   * `projectContext.submissionType`.
+   */
+  submissionType: string | undefined;
   therapeuticArea: string | null;
   phase: string | null;
-  progress: number;
-  priority: string;
-  riskLevel: string;
+  /** projects.progress as recorded; null when the column is NULL. */
+  progress: number | null;
+  priority: string | null;
+  riskLevel: string | null;
   tags: string[];
   depth: number;
   parentProjectId: number | null;
@@ -106,6 +113,12 @@ export interface AnAContext {
   clientIntelligence: string | null;
   projectIntelligence: string | null;
   anaIntelligenceContext: string | null; // AnA CLAUDE.md layers: User.md + Capabilities + Wisdom + Scoped Rules
+  /**
+   * Context sources this turn asked for but could not read (the query or
+   * service failed). A source that was read and found empty is never listed:
+   * absent and unread are different facts, and the prompt names these.
+   */
+  unreadContext: string[];
   timestamp: string;
 }
 
@@ -123,50 +136,52 @@ import { BASE_SYSTEM_PROMPT } from './lumen-context/base-system-prompt.js';
 /**
  * Load project context from the database.
  * Uses the same data source as the advisory route for consistency.
+ * Null when the project is not found; a failed read throws, and
+ * buildAnAContext names it.
  */
 async function loadProjectContext(
   projectId: number,
   organizationId: number
 ): Promise<ProjectContext | null> {
-  try {
-    const result = await pool.query(
-      `SELECT id, name, description, status, type, progress, priority,
-              risk_level, tags, depth, parent_project_id, metadata
-       FROM projects
-       WHERE id = $1 AND organization_id = $2`,
-      [projectId, organizationId]
-    );
+  const result = await pool.query(
+    `SELECT id, name, description, status, type, progress, priority,
+            risk_level, tags, depth, parent_project_id, metadata
+     FROM projects
+     WHERE id = $1 AND organization_id = $2`,
+    [projectId, organizationId]
+  );
 
-    if (result.rows.length === 0) return null;
+  if (result.rows.length === 0) return null;
 
-    const p = result.rows[0];
-    const meta = p.metadata || {};
+  const p = result.rows[0];
+  const meta = p.metadata || {};
 
-    const rawSubmissionType = meta.submissionType || meta.submission_type || 'IND';
-    // Resolve through the canonical bridge — enriches with display name, agency, region, etc.
-    const stContext = getSubmissionTypeContext(rawSubmissionType);
+  // 2026-10-15: an unrecorded submission type used to become 'IND' here (so
+  // AnA got IND guidance and orchestrate() IND framing for it), and NULL
+  // progress / risk level or an empty priority read 0% / 'medium' / 'medium'.
+  // None of those was recorded; each now stays unset and prints "not recorded".
+  const rawSubmissionType: string | undefined =
+    meta.submissionType || meta.submission_type || undefined;
+  // Resolve through the canonical bridge — enriches with display name, agency, region, etc.
+  const stContext = rawSubmissionType ? getSubmissionTypeContext(rawSubmissionType) : null;
 
-    return {
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      status: p.status,
-      // Use canonical display-friendly label when available, fall back to raw value
-      submissionType: stContext?.displayName ?? rawSubmissionType,
-      therapeuticArea: meta.therapeuticArea || meta.therapeutic_area || null,
-      phase: meta.phase || meta.clinicalPhase || null,
-      progress: p.progress || 0,
-      priority: p.priority || 'medium',
-      riskLevel: p.risk_level || 'medium',
-      tags: p.tags || [],
-      depth: p.depth || 0,
-      parentProjectId: p.parent_project_id,
-      submissionTypeContext: stContext,
-    };
-  } catch (error) {
-    console.warn('[AnA RI] Failed to load project context:', error);
-    return null;
-  }
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    status: p.status,
+    // Use canonical display-friendly label when available, fall back to raw value
+    submissionType: stContext?.displayName ?? rawSubmissionType,
+    therapeuticArea: meta.therapeuticArea || meta.therapeutic_area || null,
+    phase: meta.phase || meta.clinicalPhase || null,
+    progress: p.progress ?? null,
+    priority: p.priority || null,
+    riskLevel: p.risk_level || null,
+    tags: p.tags || [],
+    depth: p.depth || 0,
+    parentProjectId: p.parent_project_id,
+    submissionTypeContext: stContext,
+  };
 }
 
 /**
@@ -175,183 +190,227 @@ async function loadProjectContext(
  * Queries concept2cure_artifacts for authored submission documents and also
  * loads the project's knowledge documents from project settings, filtering
  * out any where isActive === false so deactivated documents are excluded
- * from the AI context window.
+ * from the AI context window. A failed read throws; buildAnAContext names it.
  */
 async function loadDocumentContext(
   projectId: number,
   organizationId: number
-): Promise<DocumentContext | null> {
-  try {
-    // Load artifact counts and project knowledge documents in parallel
-    const [countResult, recentResult, projectResult] = await Promise.all([
-      // Get document counts from concept2cure_artifacts
-      pool.query(
-        `SELECT
-           COUNT(*) as total,
-           COUNT(*) FILTER (WHERE status IN ('published', 'approved', 'locked')) as completed,
-           COUNT(*) FILTER (WHERE status IN ('draft', 'in_progress', 'review')) as in_progress
-         FROM concept2cure_artifacts
-         WHERE project_id = $1 AND organization_id = $2`,
-        [projectId, organizationId]
-      ),
-      // Get recent documents
-      pool.query(
-        `SELECT title, status, metadata, updated_at
-         FROM concept2cure_artifacts
-         WHERE project_id = $1 AND organization_id = $2
-         ORDER BY updated_at DESC
-         LIMIT 5`,
-        [projectId, organizationId]
-      ),
-      // Load project settings to get knowledge documents with isActive state
-      pool.query(`SELECT settings FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`, [
-        projectId,
-        organizationId,
-      ]),
-    ]);
+): Promise<DocumentContext> {
+  // Load artifact counts and project knowledge documents in parallel
+  const [countResult, recentResult, projectResult] = await Promise.all([
+    // Get document counts from concept2cure_artifacts
+    pool.query(
+      `SELECT
+         COUNT(*) as total,
+         COUNT(*) FILTER (WHERE status IN ('published', 'approved', 'locked')) as completed,
+         COUNT(*) FILTER (WHERE status IN ('draft', 'in_progress', 'review')) as in_progress
+       FROM concept2cure_artifacts
+       WHERE project_id = $1 AND organization_id = $2`,
+      [projectId, organizationId]
+    ),
+    // Get recent documents
+    pool.query(
+      `SELECT title, status, metadata, updated_at
+       FROM concept2cure_artifacts
+       WHERE project_id = $1 AND organization_id = $2
+       ORDER BY updated_at DESC
+       LIMIT 5`,
+      [projectId, organizationId]
+    ),
+    // Load project settings to get knowledge documents with isActive state
+    pool.query(`SELECT settings FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`, [
+      projectId,
+      organizationId,
+    ]),
+  ]);
 
-    const counts = countResult.rows[0] || { total: 0, completed: 0, in_progress: 0 };
+  const counts = countResult.rows[0] || { total: 0, completed: 0, in_progress: 0 };
 
-    // Extract knowledge documents from project settings and filter by isActive
-    const projectSettings = projectResult.rows[0]?.settings;
-    const knowledgeObj =
-      projectSettings && typeof projectSettings === 'object'
-        ? (projectSettings as Record<string, unknown>).knowledge
-        : null;
-    const knowledgeDocs: Array<{ id?: string; isActive?: boolean }> =
-      knowledgeObj &&
-      typeof knowledgeObj === 'object' &&
-      Array.isArray((knowledgeObj as any).documents)
-        ? (knowledgeObj as any).documents
-        : [];
-    const totalKnowledgeDocs = knowledgeDocs.length;
-    const activeKnowledgeDocs = knowledgeDocs.filter(doc => doc.isActive !== false);
-    const deactivatedDocIds = new Set(
-      knowledgeDocs
-        .filter(doc => doc.isActive === false)
-        .map(doc => doc.id)
-        .filter(Boolean)
-    );
+  // Extract knowledge documents from project settings and filter by isActive
+  const projectSettings = projectResult.rows[0]?.settings;
+  const knowledgeObj =
+    projectSettings && typeof projectSettings === 'object'
+      ? (projectSettings as Record<string, unknown>).knowledge
+      : null;
+  const knowledgeDocs: Array<{ id?: string; isActive?: boolean }> =
+    knowledgeObj &&
+    typeof knowledgeObj === 'object' &&
+    Array.isArray((knowledgeObj as any).documents)
+      ? (knowledgeObj as any).documents
+      : [];
+  const totalKnowledgeDocs = knowledgeDocs.length;
+  const activeKnowledgeDocs = knowledgeDocs.filter(doc => doc.isActive !== false);
+  const deactivatedDocIds = new Set(
+    knowledgeDocs
+      .filter(doc => doc.isActive === false)
+      .map(doc => doc.id)
+      .filter(Boolean)
+  );
 
-    // Filter recent artifacts — exclude any linked to a deactivated knowledge document
-    const recentDocuments = recentResult.rows
-      .filter((r: any) => {
-        const linkedDocId = r.metadata?.knowledgeDocumentId || r.metadata?.sourceDocumentId;
-        return !linkedDocId || !deactivatedDocIds.has(linkedDocId);
-      })
-      .map((r: any) => ({
-        title: r.title,
-        status: r.status,
-        sectionCode: r.metadata?.sectionCode || r.metadata?.ectd_section || null,
-        updatedAt: r.updated_at?.toISOString() || '',
-      }));
+  // Filter recent artifacts — exclude any linked to a deactivated knowledge document
+  const recentDocuments = recentResult.rows
+    .filter((r: any) => {
+      const linkedDocId = r.metadata?.knowledgeDocumentId || r.metadata?.sourceDocumentId;
+      return !linkedDocId || !deactivatedDocIds.has(linkedDocId);
+    })
+    .map((r: any) => ({
+      title: r.title,
+      status: r.status,
+      sectionCode: r.metadata?.sectionCode || r.metadata?.ectd_section || null,
+      updatedAt: r.updated_at?.toISOString() || '',
+    }));
 
-    return {
-      totalDocuments: parseInt(counts.total, 10) || 0,
-      completedDocuments: parseInt(counts.completed, 10) || 0,
-      inProgressDocuments: parseInt(counts.in_progress, 10) || 0,
-      recentDocuments,
-      totalKnowledgeDocuments: totalKnowledgeDocs,
-      activeKnowledgeDocuments: activeKnowledgeDocs.length,
-    };
-  } catch (error) {
-    console.warn('[AnA RI] Failed to load document context:', error);
-    return null;
-  }
+  return {
+    totalDocuments: parseInt(counts.total, 10) || 0,
+    completedDocuments: parseInt(counts.completed, 10) || 0,
+    inProgressDocuments: parseInt(counts.in_progress, 10) || 0,
+    recentDocuments,
+    totalKnowledgeDocuments: totalKnowledgeDocs,
+    activeKnowledgeDocuments: activeKnowledgeDocs.length,
+  };
 }
 
 /**
  * Load conversation context for recent history.
+ * A failed read throws; buildAnAContext names it.
  */
 async function loadConversationContext(
   projectId: number,
   organizationId: number
-): Promise<ConversationContext | null> {
-  try {
-    // Count messages and artifacts in recent conversations for this project
-    const convResult = await pool.query(
-      `SELECT
-         COUNT(DISTINCT cm.id) as message_count,
-         COUNT(DISTINCT ca.id) as artifact_count
-       FROM concept2cure_conversations cc
-       LEFT JOIN concept2cure_messages cm ON cm.conversation_id = cc.id
-       LEFT JOIN concept2cure_artifacts ca ON ca.project_id = cc.project_id AND ca.organization_id = cc.organization_id
-       WHERE cc.project_id = $1 AND cc.organization_id = $2`,
-      [projectId, organizationId]
-    );
+): Promise<ConversationContext> {
+  // Count messages and artifacts in recent conversations for this project
+  const convResult = await pool.query(
+    `SELECT
+       COUNT(DISTINCT cm.id) as message_count,
+       COUNT(DISTINCT ca.id) as artifact_count
+     FROM concept2cure_conversations cc
+     LEFT JOIN concept2cure_messages cm ON cm.conversation_id = cc.id
+     LEFT JOIN concept2cure_artifacts ca ON ca.project_id = cc.project_id AND ca.organization_id = cc.organization_id
+     WHERE cc.project_id = $1 AND cc.organization_id = $2`,
+    [projectId, organizationId]
+  );
 
-    // Extract recent topics from message titles/first lines
-    const topicResult = await pool.query(
-      `SELECT DISTINCT LEFT(cm.content, 80) as topic
-       FROM concept2cure_messages cm
-       JOIN concept2cure_conversations cc ON cm.conversation_id = cc.id
-       WHERE cc.project_id = $1 AND cc.organization_id = $2
-         AND cm.role = 'user'
-       ORDER BY topic
-       LIMIT 5`,
-      [projectId, organizationId]
-    );
+  // Extract recent topics from message titles/first lines
+  const topicResult = await pool.query(
+    `SELECT DISTINCT LEFT(cm.content, 80) as topic
+     FROM concept2cure_messages cm
+     JOIN concept2cure_conversations cc ON cm.conversation_id = cc.id
+     WHERE cc.project_id = $1 AND cc.organization_id = $2
+       AND cm.role = 'user'
+     ORDER BY topic
+     LIMIT 5`,
+    [projectId, organizationId]
+  );
 
-    const counts = convResult.rows[0] || { message_count: 0, artifact_count: 0 };
+  const counts = convResult.rows[0] || { message_count: 0, artifact_count: 0 };
 
-    return {
-      recentTopics: topicResult.rows.map((r: any) => r.topic),
-      artifactCount: parseInt(counts.artifact_count, 10) || 0,
-      messageCount: parseInt(counts.message_count, 10) || 0,
-    };
-  } catch (error) {
-    console.warn('[AnA RI] Failed to load conversation context:', error);
-    return null;
-  }
+  return {
+    recentTopics: topicResult.rows.map((r: any) => r.topic),
+    artifactCount: parseInt(counts.artifact_count, 10) || 0,
+    messageCount: parseInt(counts.message_count, 10) || 0,
+  };
 }
 
 /**
  * Load user information.
+ * A failed read throws; buildAnAContext names it.
  */
 async function loadUserContext(
   userId: number | null,
   organizationId?: number
 ): Promise<{ role: string | null; name: string | null }> {
   if (!userId) return { role: null, name: null };
-  try {
-    // users table has 'name' (not full_name/username)
-    // role lives on organization_users, not users
-    const result = await pool.query(
-      `SELECT u.name,
-              COALESCE(ou.role, 'member') as role
-       FROM users u
-       LEFT JOIN organization_users ou ON ou.user_id = u.id
-         ${organizationId ? 'AND ou.organization_id = $2' : ''}
-       WHERE u.id = $1
-       LIMIT 1`,
-      organizationId ? [userId, organizationId] : [userId]
-    );
-    if (result.rows.length === 0) return { role: null, name: null };
-    return {
-      role: result.rows[0].role || null,
-      name: result.rows[0].name || null,
-    };
-  } catch {
-    return { role: null, name: null };
-  }
+  // users table has 'name' (not full_name/username)
+  // role lives on organization_users, not users
+  const result = await pool.query(
+    `SELECT u.name,
+            ou.role
+     FROM users u
+     LEFT JOIN organization_users ou ON ou.user_id = u.id
+       ${organizationId ? 'AND ou.organization_id = $2' : ''}
+     WHERE u.id = $1
+     LIMIT 1`,
+    organizationId ? [userId, organizationId] : [userId]
+  );
+  if (result.rows.length === 0) return { role: null, name: null };
+  return {
+    /* 2026-10-15: COALESCE(ou.role, 'member') reported a user with no
+       membership row as a member, and with no organization the join returned
+       whichever membership came first. A role is recorded per organization,
+       so none is reported without one. */
+    role: organizationId ? result.rows[0].role || null : null,
+    name: result.rows[0].name || null,
+  };
 }
 
 /**
  * Load organization name.
+ * A failed read throws; buildAnAContext names it.
  */
 async function loadOrganizationName(orgId: number | null): Promise<string | null> {
   if (!orgId) return null;
-  try {
-    const result = await pool.query(`SELECT name FROM organizations WHERE id = $1`, [orgId]);
-    return result.rows[0]?.name || null;
-  } catch {
-    return null;
-  }
+  const result = await pool.query(`SELECT name FROM organizations WHERE id = $1`, [orgId]);
+  return result.rows[0]?.name || null;
+}
+
+/**
+ * Load the AnA intelligence layers (CLAUDE.md Memory Compression Model).
+ * A failed read throws; buildAnAContext names it.
+ */
+async function loadAnaIntelligenceLayers(
+  organizationId: number,
+  projectId: number | null,
+  userId: number
+): Promise<string | null> {
+  const { buildMergedContext } = await import('./ana-context-router');
+  const result = await buildMergedContext({
+    organizationId,
+    projectId: projectId || undefined,
+    userId,
+  });
+  return result.contextBlock || null;
+}
+
+/**
+ * Load the account canon resolved for this work context; null when nothing
+ * resolves. A failed read throws; buildAnAContext names it.
+ */
+async function loadAccountCanon(
+  organizationId: number,
+  submissionType: string | undefined,
+  projectId: number | null
+): Promise<string | null> {
+  const resolved = await resolveAccountContext({
+    organizationId,
+    submissionType: submissionType || undefined,
+    projectId: projectId || undefined,
+  });
+  return resolved.canonItems.length > 0 ||
+    resolved.terms.length > 0 ||
+    resolved.bundles.length > 0
+    ? formatResolvedContextForPrompt(resolved)
+    : null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONTEXT ASSEMBLY
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * A module-intelligence effort figure exactly as that module returns it. A null
+ * one is printed as not estimated (it used to interpolate as "nullh est.").
+ */
+function effortFigure(value: number | null | undefined, unit: string): string {
+  return value == null ? 'not estimated' : `${value}${unit}`;
+}
+
+/** Names the context that could not be read, so the model says so instead of assuming it is absent. */
+function unreadContextNotice(sources: string[]): string {
+  return `
+## Context Not Read
+These could not be read for this turn: ${sources.join('; ')}.
+Do not infer that they are empty or do not exist. If one bears on the answer, say that it could not be read; do not substitute an assumption for it.`;
+}
 
 /**
  * Build complete AnA 1.0 RI context for a chat request.
@@ -370,6 +429,18 @@ export async function buildAnAContext(params: {
   const { organizationId, userId } = params;
   const projectId = params.projectId ? parseInt(String(params.projectId), 10) : null;
 
+  // 2026-10-15: each read below used to catch its own error and return null, so
+  // a failed read looked exactly like an absent source — its prompt block just
+  // vanished and AnA answered as though no project, canon or locked terminology
+  // existed. A failed read is now named in `unreadContext`, and the prompt says so.
+  const unread = new Set<string>();
+  const read = <T, A>(source: string, load: Promise<T>, absent: A): Promise<T | A> =>
+    load.catch((error: unknown) => {
+      console.warn(`[AnA RI] Could not read ${source}:`, error instanceof Error ? error.message : error);
+      unread.add(source);
+      return absent;
+    });
+
   // Load all context in parallel for speed — including full user intelligence, client intelligence, & account canon
   const [
     project,
@@ -384,62 +455,58 @@ export async function buildAnAContext(params: {
     accountCanonResolved,
   ] = await Promise.all([
     projectId && organizationId
-      ? loadProjectContext(projectId, organizationId)
+      ? read('project record', loadProjectContext(projectId, organizationId), null)
       : Promise.resolve(null),
     projectId && organizationId
-      ? loadDocumentContext(projectId, organizationId)
+      ? read('project documents', loadDocumentContext(projectId, organizationId), null)
       : Promise.resolve(null),
     projectId && organizationId
-      ? loadConversationContext(projectId, organizationId)
+      ? read('project conversation history', loadConversationContext(projectId, organizationId), null)
       : Promise.resolve(null),
-    loadUserContext(userId || null, organizationId || undefined),
-    loadOrganizationName(organizationId || null),
+    read('user name and role', loadUserContext(userId || null, organizationId || undefined), {
+      role: null,
+      name: null,
+    }),
+    read('organization name', loadOrganizationName(organizationId || null), null),
     userId && organizationId
-      ? loadUserIntelligence({
-          userId,
-          organizationId,
-          activeProjectId: projectId || undefined,
-        })
+      ? read(
+          'user intelligence',
+          loadUserIntelligence({
+            userId,
+            organizationId,
+            activeProjectId: projectId || undefined,
+          }),
+          null
+        )
       : Promise.resolve(null),
     // Client Intelligence Memory — deep knowledge of the client organization
     organizationId
-      ? buildClientIntelligenceContext(organizationId).catch(() => null)
+      ? read('client intelligence', buildClientIntelligenceContext(organizationId), null)
       : Promise.resolve(null),
     // Project Intelligence Memory — deep knowledge specific to the active project
     projectId && organizationId
-      ? buildProjectIntelligenceContext(projectId, organizationId).catch(() => null)
+      ? read('project intelligence', buildProjectIntelligenceContext(projectId, organizationId), null)
       : Promise.resolve(null),
     // AnA Intelligence Context (CLAUDE.md Memory Compression Model)
     // User.md (personal overrides) + Capabilities + Wisdom + Scoped Rules
     userId && organizationId
-      ? import('./ana-context-router')
-          .then(({ buildMergedContext }) =>
-            buildMergedContext({
-              organizationId,
-              projectId: projectId || undefined,
-              userId,
-            })
-          )
-          .then(result => result.contextBlock || null)
-          .catch(() => null)
+      ? read(
+          'AnA intelligence layers (personal instructions, capabilities, wisdom, scoped rules)',
+          loadAnaIntelligenceLayers(organizationId, projectId, userId),
+          null
+        )
       : Promise.resolve(null),
     // Account Canon — selectively resolved governed memory (canon items, terms, bundles)
     organizationId
-      ? resolveAccountContext({
-          organizationId,
-          submissionType: params.submissionType || undefined,
-          projectId: projectId || undefined,
-        })
-          .then(resolved =>
-            resolved.canonItems.length > 0 ||
-            resolved.terms.length > 0 ||
-            resolved.bundles.length > 0
-              ? formatResolvedContextForPrompt(resolved)
-              : null
-          )
-          .catch(() => null)
+      ? read(
+          'account canon (governed decisions and locked terminology)',
+          loadAccountCanon(organizationId, params.submissionType, projectId),
+          null
+        )
       : Promise.resolve(null),
   ]);
+  // The facets user-intelligence could not read (organization profile, projects, …).
+  for (const facet of userIntelligence?.unread ?? []) unread.add(facet);
 
   // Touch the work session so we track what the user is currently doing
   if (userId && organizationId) {
@@ -464,6 +531,8 @@ export async function buildAnAContext(params: {
     clientIntelligence,
     projectIntelligence,
     anaIntelligenceContext,
+    // Sorted so the prompt is the same whichever read failed first.
+    unreadContext: [...unread].sort(),
     timestamp: new Date().toISOString(),
   };
 }
@@ -481,22 +550,29 @@ export async function assembleSystemPrompt(
 
   const parts: string[] = [BASE_SYSTEM_PROMPT];
   const intel = context.userIntelligence;
-  const organizationId = intel?.organization?.id;
+  // The request's organization, read or not: the profile is null when its read failed.
+  const organizationId = intel?.organizationId ?? intel?.organization?.id;
+  // Named to the model below. `?? []` covers a context built by hand rather
+  // than by buildAnAContext.
+  const unread = [...(context.unreadContext ?? [])];
 
   // ── Deep User Identity ───────────────────────────────────────────────────
   if (intel?.identity) {
     const u = intel.identity;
-    const style = u.communicationStyle || 'professional';
-    const expertise = u.expertiseLevel || 'intermediate';
+    // 2026-10-15: unrecorded values arrived as 'member' / 'intermediate' /
+    // 'professional' (and were defaulted again here), so AnA was told the user
+    // "understand[s] regulatory basics" on the strength of nothing.
+    const style = u.communicationStyle;
+    const expertise = u.expertiseLevel;
     parts.push(`
 ## User Identity — You Know This Person
 - **Name**: ${u.greetingName} (${u.name})
 - **Email**: ${u.email}${u.title ? `\n- **Title**: ${u.title}` : ''}${
       u.department ? `\n- **Department**: ${u.department}` : ''
     }
-- **Role**: ${u.role}
-- **Expertise Level**: ${expertise}
-- **Communication Preference**: ${style}${
+- **Role**: ${u.role ?? 'not recorded'}
+- **Expertise Level**: ${expertise ?? 'not recorded'}
+- **Communication Preference**: ${style ?? 'not recorded'}${
       u.focusAreas.length ? `\n- **Focus Areas**: ${u.focusAreas.join(', ')}` : ''
     }
 
@@ -507,19 +583,23 @@ export async function assembleSystemPrompt(
         ? 'Skip basic explanations — they know regulatory science deeply. Focus on nuanced analysis and strategic implications.'
         : expertise === 'novice'
         ? 'Provide clear explanations of regulatory concepts. Define technical terms on first use. Use examples.'
-        : 'Balance depth with clarity. They understand regulatory basics but may need context for specialized topics.'
+        : expertise
+        ? 'Balance depth with clarity. They understand regulatory basics but may need context for specialized topics.'
+        : 'Their expertise level is not recorded; do not assume one. Take the depth they need from how they ask.'
     }
 - ${
       style === 'concise'
         ? 'Keep responses focused and brief. Skip preambles.'
         : style === 'academic'
         ? 'Be thorough and cite sources. Use formal regulatory language. Include guideline references in-line.'
-        : 'Use a professional yet approachable tone.'
+        : style
+        ? 'Use a professional yet approachable tone.'
+        : 'No communication preference is recorded; use a professional yet approachable tone.'
     }`);
   } else if (context.userName || context.userRole) {
     parts.push(`
 ## User Context
-- **User**: ${context.userName || 'Unknown'}${context.userRole ? ` (${context.userRole})` : ''}${
+- **User**: ${context.userName || 'Unknown'} (${context.userRole || 'role not recorded'})${
       context.organizationName ? `\n- **Organization**: ${context.organizationName}` : ''
     }`);
   }
@@ -530,8 +610,8 @@ export async function assembleSystemPrompt(
     parts.push(`
 ## Organization Profile
 - **Organization**: ${org.name}
-- **Industry**: ${org.industryMode}
-- **Tier**: ${org.tier}
+- **Industry**: ${org.industryMode ?? 'not recorded'}
+- **Tier**: ${org.tier ?? 'not recorded'}
 - **Enabled Modules**: ${
       org.enabledModules.length > 0 ? org.enabledModules.join(', ') : 'None configured'
     }
@@ -556,7 +636,9 @@ ${
       .slice(0, 6)
       .map(
         p =>
-          `  - **${p.name}** (${getSubmissionTypeLabel(p.submissionType)}, ${p.status}, ${p.progress}% complete)${
+          `  - **${p.name}** (${
+            p.submissionType ? getSubmissionTypeLabel(p.submissionType) : 'submission type not recorded'
+          }, ${p.status}, ${p.progress == null ? 'progress not recorded' : `${p.progress}% complete`})${
             p.phase ? ` — ${p.phase}` : ''
           }${p.therapeuticArea ? ` [${p.therapeuticArea}]` : ''}`
       )
@@ -576,7 +658,7 @@ ${projectList}${
     parts.push(`
 ## Active Project Context (Currently Working On)
 - **Project**: ${p.name} (ID: ${p.id})
-- **Submission Type**: ${p.submissionType}${stc ? ` (${stc.registryId})` : ''}${
+- **Submission Type**: ${p.submissionType ?? 'not recorded — do not assume one'}${stc ? ` (${stc.registryId})` : ''}${
       stc ? `\n- **Agency**: ${stc.agency} | **Region**: ${stc.region}` : ''
     }${stc?.segment ? `\n- **Segment**: ${stc.segment.replace(/_/g, ' ')}` : ''}${
       stc?.category ? ` | **Category**: ${stc.category.replace(/_/g, ' ')}` : ''
@@ -585,8 +667,8 @@ ${projectList}${
     }${p.therapeuticArea ? `\n- **Therapeutic Area**: ${p.therapeuticArea}` : ''}${
       p.phase ? `\n- **Phase**: ${p.phase}` : ''
     }
-- **Status**: ${p.status} | **Progress**: ${p.progress}%
-- **Priority**: ${p.priority} | **Risk Level**: ${p.riskLevel}${
+- **Status**: ${p.status} | **Progress**: ${p.progress === null ? 'not recorded' : `${p.progress}%`}
+- **Priority**: ${p.priority ?? 'not recorded'} | **Risk Level**: ${p.riskLevel ?? 'not recorded'}${
       p.description ? `\n- **Description**: ${p.description}` : ''
     }${p.tags?.length ? `\n- **Tags**: ${p.tags.join(', ')}` : ''}`);
   }
@@ -744,7 +826,7 @@ Use conversation history to avoid re-asking for information the user has already
 ### AI-Draftable Document Types in This Module
 ${draftable
   .slice(0, 8)
-  .map(d => `- **${d.name}**: ${d.description} (${d.estimatedHours}h est.)`)
+  .map(d => `- **${d.name}**: ${d.description} (${effortFigure(d.estimatedHours, 'h est.')})`)
   .join('\n')}
 
 When the user asks to draft any of these document types, you can generate a complete first draft with proper regulatory formatting.`);
@@ -756,20 +838,24 @@ When the user asks to draft any of these document types, you can generate a comp
           parts.push(`
 ### Standard Workflow Stages
 ${moduleIntel.workflowStages
-  .map((s, i) => `${i + 1}. **${s.name}** (${s.estimatedDays}d) — ${s.description}`)
+  .map((s, i) => `${i + 1}. **${s.name}** (${effortFigure(s.estimatedDays, 'd')}) — ${s.description}`)
   .join('\n')}`);
         }
       }
     }
 
+    // An unread organization profile (named in the notice) leaves its modules
+    // unknown: only the module-agnostic blocks below are selected.
+    const enabledModules = intel.organization?.enabledModules ?? [];
+
     // Cross-cutting intelligence (evidence, safety)
-    const crossCutting = getCrossCuttingIntelligence(intel.organization.enabledModules);
+    const crossCutting = getCrossCuttingIntelligence(enabledModules);
     if (crossCutting) {
       parts.push(crossCutting);
     }
 
     // Instruction Engine — 5-step workflow, Data Room, Dossier Manager, Editor, Narrative
-    const instructionPrompt = assembleInstructionEnginePrompt(intel.organization.enabledModules);
+    const instructionPrompt = assembleInstructionEnginePrompt(enabledModules);
     if (instructionPrompt) {
       parts.push(instructionPrompt);
     }
@@ -828,11 +914,13 @@ ${recSet.recommendations
 When the user asks about readiness, blockers, gaps, or what to do next, reference this data.
 You can suggest running orchestration workflows: submission_readiness_review, draft_validate_route, project_blocker_scan.`);
     } catch (err) {
-      // Non-blocking — readiness intelligence is best-effort
+      // Non-blocking, but named to the model: until 2026-10-15 this was a log
+      // line only, so AnA could not tell "not computed" from "nothing to report".
       console.warn(
         '[AnA RI] Phase 3 readiness intelligence unavailable:',
         err instanceof Error ? err.message : err
       );
+      unread.push('submission readiness assessment');
     }
   }
 
@@ -850,7 +938,7 @@ You can suggest running orchestration workflows: submission_readiness_review, dr
 You are currently assisting with an IND (Investigational New Drug) application per 21 CFR 312.23.
 - Guide the user through CTD Modules 1-5 systematically
 - Prioritize: Module 1 (forms, cover letter), Module 2 (summaries), Module 3 (CMC), Module 4 (nonclinical), Module 5 (clinical protocol)
-- For initial IND: Phase 1 protocol is critical path — ensure it's ICH E6(R2) compliant
+- For initial IND: Phase 1 protocol is critical path — ensure it's ICH E6(R3) compliant (Appendix B protocol)
 - Flag any missing ICH M4 sections and suggest next authoring steps
 - Reference eCTD 4.0 formatting requirements per ICH M8
 - Consider IND Safety Reporting requirements (21 CFR 312.32)`);
@@ -1028,6 +1116,10 @@ You have access to tools. Use them proactively when appropriate:
   // reasoning quality. The BASE_SYSTEM_PROMPT (parts[0]) is always included.
   // Dynamic sections are trimmed from lowest-priority first.
   const MAX_PROMPT_CHARS = 12_000;
+  // The notice joins parts[0] because the trim below keeps only parts[0] and
+  // the last two parts; anywhere else it would be cut and AnA would again take
+  // an unread source for an absent one.
+  if (unread.length > 0) parts[0] = `${parts[0]}\n${unreadContextNotice(unread)}`;
   let assembled = parts.join('\n');
   if (assembled.length > MAX_PROMPT_CHARS && parts.length > 1) {
     // Trim from the end (lowest-priority dynamic sections) until under budget.

@@ -24,10 +24,8 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { and, eq } from 'drizzle-orm';
 
-import { requestDb } from '../db/requestDb';
-import { regulatoryPrograms } from '../../shared/schema/programs';
+import { requestPgClient } from '../db/requestDb';
 import { authenticateToken } from '../middleware/auth';
 import {
   applyFactChange,
@@ -49,6 +47,7 @@ import {
 import type { ProposedFactValue } from '../services/living-record/fact-change';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 
@@ -125,12 +124,7 @@ async function requireUuidProgramAccess(
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await requestDb(req)
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, orgId)))
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(requestPgClient(req), programId, orgId))) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }

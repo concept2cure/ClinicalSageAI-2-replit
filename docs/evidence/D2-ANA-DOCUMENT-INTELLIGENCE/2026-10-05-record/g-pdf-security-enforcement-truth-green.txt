@@ -1,0 +1,114 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > has unique ids and required fields on every rule 7ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > gives every dispatch-readiness rule a findingCode equal to its id 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > summary counts are internally consistent 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > scopes rules to a region (shared ich rules + region-specific) 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > looks rules up by id 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > validation rule corpus — internal consistency > covers the global eCTD-adopting regions (US, EU, JP, CA, AU, CH) 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > corpus ↔ gate cross-reference invariant > catalogs EVERY finding code the dispatch gate can emit 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > corpus ↔ source invariant — every finding code written in the assessment > catalogs every code the dispatch-readiness sources can emit 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > maps every enforcement to its statement 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > a rule view carries its title, regions, severity and statement; an unknown code has none 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > names every composed dispatch gate as a corpus rule 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus.test.ts > each rule says where it is enforced — the work order's three statements > cites FDA's criteria for the required-Module-1 rule an FDA IND trips most 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > every FDA rule the platform enforces maps to a corpus rule that is not "external" 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > no corpus rule claims a check the FDA registry says nothing runs 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY is answered as checked by the platform, not by the agency validator 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY names each enforcement point, and each one refuses a secured leaf 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > has unique ids scoped to their market and required fields 5ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > summary counts are internally consistent 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > covers the formats the Submission Center operates 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — eCTD invariants > every eCTD family spec has an index.xml backbone, regional XML, 4-digit sequencing, and lifecycle ops 3ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — eCTD invariants > device/portal families correctly carry no eCTD backbone 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > an eCTD spec ruleCorpusRegion resolves to corpus rules 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > region-coded specs map to the system region codes (fda|eu|jp) 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > scopes by market 0ms
+stderr | server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > answers a corpus failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-05T02:06:12.222Z",
+  "level": "error",
+  "message": "[knowledge] loading the validation-rule corpus failed",
+  "context": {
+    "err": "SENTINEL-FS-DETAIL: Cannot find module '/app/server/services/ectd/validation-rule-corpus.js'",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > answers a corpus failure with INTERNAL_ERROR and the request id, never the thrown text 24ms
+ ✓ server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > leaves the unknown-region 422 exactly as it was 3ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > shows the rule’s title and id, its regions, its corpus severity and where it is enforced 70ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > a finding whose code no rule names says so, instead of passing for a rule 19ms
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-05T02:06:12.318Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:06:12.319Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-05T02:06:12.319Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > renders every gate the server composed, the release signature included, with its own blockers 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > no gate is a bare pass or fail: each states its outcome in words, beside its rule 20ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > never says dispatch is permitted while the server blocks it, and shows no percentage 20ms
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict) 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > clears once at least one completed run exists 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > P11-28b: an otherwise-clear sequence awaiting only its own signature is open to dispatch-on-signing, not to dispatch now 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a structural error blocks all three — signing never clears a content defect 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a missing Shadow Review blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an external-validator failure blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an orchestrator run awaiting its signer blocks dispatch-on-signing — the sequence signature would never be read 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an invalid signature blocks all three, including freeze — tamper evidence is never signed over 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an undetermined lookup blocks dispatch-now and dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a signature already on record: all three clear, and nothing is "resolved by signing" 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a type that requires no signature: all three clear on an otherwise-clear sequence 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > says why the external gate cleared without a report 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > carries the sentence on the external gate view only when it cleared 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > a gate that blocks keeps its blockers and no not-assessed note 0ms
+
+ Test Files  6 passed (6)
+      Tests  50 passed (50)
+   Start at  02:06:10
+   Duration  3.76s (transform 2.97s, setup 387ms, import 4.83s, tests 243ms, environment 472ms)
+
+
+ Test Files  1 passed (1)
+      Tests  67 passed (67)
+   Start at  02:06:22
+   Duration  6.93s (transform 4.38s, setup 82ms, import 6.01s, tests 572ms, environment 0ms)
+

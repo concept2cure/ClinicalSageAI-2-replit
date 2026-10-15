@@ -1,0 +1,13 @@
+Mutant R01-first-call-unrecorded: the first call's request is not recorded
+
+--- server/routes/ana-ri/stream.ts
+- turnRecorder?.addServed(1, lastServedModel, callSent({ apiEffort, thinking: streamThinkingConfig, tools: streamTools }));
++ turnRecorder?.addServed(1, lastServedModel);
+
+Tests run: server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 51ms
+ × server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 10ms
+      Tests  2 failed | 1 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

@@ -9,6 +9,8 @@
  *   POST   /api/mdx/gateways/:region/:gateway/transmit    transmit a package
  *   GET    /api/mdx/gateways/transmittals/:id/status      poll latest status
  *   GET    /api/mdx/gateways/transmittals/:id/ack         download ack as text/plain
+ *   POST   /api/mdx/gateways/transmittals/:id/technical-rejection
+ *                                                         record the agency's technical rejection (governed sign)
  *   POST   /api/mdx/gateways/transmittals/:id/findings    record validator finding
  *   PATCH  /api/mdx/gateways/findings/:findingId/resolve  resolve a finding
  *
@@ -40,7 +42,13 @@ import {
   BUNDLE_FORMAT_SET,
 } from '../services/submission-gateways/governed-transmit';
 import { transmitOutcomeNotices } from '../services/submission-gateways/transmit-notices';
+import { transmitIndependenceOf } from '../services/submission-gateways/governed-transmit-checks';
+import {
+  recordFiledSequenceRejection,
+  FiledSequenceRejectionRefusal,
+} from '../services/ectd/filed-sequence-rejection';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
+import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
 /* Re-authentication proves WHO is acting; it does not prove they MAY. Every
    mutating route below ran the §11.50 re-auth gate and then transmitted, with no
    check on the caller's organization role — so a read-only `viewer`, who knows
@@ -69,6 +77,42 @@ function getUserId(req: Request): number | null {
 const REGION_SET   = ['fda', 'ema', 'pmda', 'ca'] as const;
 const GATEWAY_SET  = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] as const;
 const UUID_RE      = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** §11.50: the meanings a signer may declare on this router's governed signs
+ *  (transmit, technical rejection) — one list, so the two cannot drift. */
+const SIGN_MEANINGS = ['authorship', 'review', 'approval', 'responsibility', 'release'] as const;
+/** The §11 re-authentication envelope every governed write here carries. */
+const reauthEnvelope = z
+  .object({
+    password: z.string().optional(),
+    totp: z.string().optional(),
+  })
+  .optional();
+
+/** Only the factors verifyReauth actually verified for this envelope — what the
+ *  signature records about how its signer authenticated. */
+function verifiedFactors(reauth: z.infer<typeof reauthEnvelope>): { authenticationMethod: string; secondFactorVerified: boolean } {
+  return {
+    authenticationMethod: reauth?.password ? (reauth?.totp ? 'password+totp' : 'password') : 'session',
+    secondFactorVerified: Boolean(reauth?.totp),
+  };
+}
+
+/**
+ * §11.10(g), before the password: a transmit and a technical rejection are
+ * electronic signatures, so the signer's role must carry signing authority under
+ * the platform's one policy (checkSigningAuthority — the check the governed
+ * ceremony and POST /api/c2c/actions/sign apply). requireEditorAccess decides
+ * who may WRITE here; it never decided who may SIGN. QA 2026-10-08 (j6): a
+ * manager (P-18: managers do not sign) signed a transmit as "Release", passed
+ * re-authentication, and was refused only because the package did not exist.
+ * A rollback is not a signature (transmittal_rollback, like the canonical route's
+ * lock, writes no signature row), so it keeps the editor gate and re-auth only.
+ */
+function signingAuthorityRefused(res: Response, refusal: SigningAuthorityRefusal): Response {
+  // clientError's statuses stop at 4xx and 502; the unverified lookup is a 503.
+  if (refusal.status === 503) return res.status(503).json({ error: refusal.message, details: { code: refusal.code } });
+  return clientError(res, refusal.status, refusal.message, { code: refusal.code });
+}
 
 /* ─── GET /api/mdx/gateways ──────────────────────────────────────── */
 
@@ -79,21 +123,65 @@ router.get('/gateways', async (req: Request, res: Response) => {
   try {
     const config = await gatewayConfigurationStatus(orgId, environment);
     const all = listGateways();
-    return ok(res, all.map((g) => ({
-      ...g,
-      configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
-      environment,
-    })));
+    // Whether this person may sign a transmit, from the check the transmit
+    // applies, so the screen does not offer a signature the server refuses.
+    // Unknown (the lookup failed) is null: not "you cannot", and the server decides.
+    const userId = getUserId(req);
+    const authority = userId === null ? null : await checkSigningAuthority(userId, orgId);
+    const canSign = userId === null ? false : authority === null ? true : authority.status === 403 ? false : null;
+    return ok(
+      res,
+      all.map((g) => ({
+        ...g,
+        configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
+        environment,
+      })),
+      { signing: { canSign } },
+    );
   } catch (err) {
     return serverError(res, log, 'list-gateways', err);
   }
 });
 
+/* ─── GET /api/mdx/gateways/transmit-independence?packageIds=1,2 ──── */
+/**
+ * For each named package: would THIS user's transmission of it pass separation
+ * of duties? Asked of the enforcing check (transmitIndependenceOf), so the
+ * Transmit form can mark a package the user created when it is chosen, instead
+ * of the user learning it after re-authenticating. Informational only — the
+ * transmit route still decides. The lookup is scoped to the caller's
+ * organization, so another tenant's id reads as 'no-creator', exactly like an
+ * id that does not exist: nothing about it is disclosed.
+ */
+const MAX_INDEPENDENCE_IDS = 100;
+router.get('/gateways/transmit-independence', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  if (userId === null) return orgRequired(res);
+  const raw = typeof req.query.packageIds === 'string' ? req.query.packageIds : '';
+  const ids = [...new Set(raw.split(',').map((x) => x.trim()).filter(Boolean))];
+  if (ids.length === 0 || ids.length > MAX_INDEPENDENCE_IDS || !ids.every((x) => /^\d{1,9}$/.test(x))) {
+    return clientError(res, 422, `packageIds must be 1–${MAX_INDEPENDENCE_IDS} comma-separated package ids`);
+  }
+  try {
+    const verdicts: Record<string, string> = {};
+    for (const id of ids) verdicts[id] = await transmitIndependenceOf(Number(id), orgId, userId);
+    return ok(res, verdicts);
+  } catch (err) {
+    return serverError(res, log, 'transmit-independence', err);
+  }
+});
+
 /* ─── GET /api/mdx/gateways/transmittals ─────────────────────────── */
 
+/* The list filters by any region a registered gateway serves, not only the
+   four the package-transmit route above takes: transmitSequence routes to every
+   registered gateway and records its region on the row, and the Dispatch tab
+   lists a market's transmittals by that region (FILING_SPINE F13). */
 const listQuery = z.object({
   program_id: z.string().regex(UUID_RE).optional(),
-  region:     z.enum(REGION_SET).optional(),
+  region:     z.string().refine((r) => listGateways().some((g) => g.region === r), { message: 'region is not one a registered gateway serves' }).optional(),
   status:     z.string().optional(),
   limit:      z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(500)).optional(),
 });
@@ -183,13 +271,8 @@ const transmitBody = z.object({
   metadata: z.record(z.unknown()).optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
   /** §11.50: the meaning the signer declares for this transmission. */
-  meaning: z.enum(['authorship', 'review', 'approval', 'responsibility', 'release']),
-  reauth: z
-    .object({
-      password: z.string().optional(),
-      totp: z.string().optional(),
-    })
-    .optional(),
+  meaning: z.enum(SIGN_MEANINGS),
+  reauth: reauthEnvelope,
 });
 
 router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (req: Request, res: Response) => {
@@ -210,8 +293,13 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
   }
   const p = parsed.data;
 
-  // Re-auth gate FIRST (high-risk sign).
   if (userId === null) return orgRequired(res);
+  // Signing authority before the password (see signingAuthorityRefused;
+  // SEC-1008-1): a role that may not sign spends no password attempt.
+  // executeGovernedTransmit asks again, for its other callers.
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return signingAuthorityRefused(res, authority);
+  // Then the re-auth gate (high-risk sign).
   const reauthResult = await verifyReauth(userId, p.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -236,9 +324,7 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
       metadata:       p.metadata,
       reason:         p.reason,
       meaning:        p.meaning,
-      // Only the factors verifyReauth actually verified for this envelope.
-      authenticationMethod: p.reauth?.password ? (p.reauth?.totp ? 'password+totp' : 'password') : 'session',
-      secondFactorVerified: Boolean(p.reauth?.totp),
+      ...verifiedFactors(p.reauth),
       ipAddress:      req.ip ?? null,
       reauthVerifiedAt,
       clientBundle:   p.bundle ?? null,
@@ -268,6 +354,9 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
       // the baseline the NEXT sequence diffs against, so it is said, not implied.
       filedSequenceRecorded: outcome.filedSequenceRecorded,
       filedSequenceReason: outcome.filedSequenceReason,
+      // The bundle the history holds under this sequence when another one was
+      // recorded during the send ('sequence-conflict'); null otherwise.
+      filedSequenceConflict: outcome.filedSequenceConflict,
       // filedSequenceWarning / contentWarning / ledgerWriteFailed + ledgerWarning,
       // each only when it applies (shared with AnA's k510 transmit).
       ...transmitOutcomeNotices(outcome),
@@ -276,7 +365,9 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
     // Honest pre-transmit refusals: nothing left the platform, so there is no
     // transmittal, no acknowledgement and no agency identifier to report.
     if (err instanceof GovernedTransmitRefusal) {
-      return clientError(res, err.httpStatus, err.message, err.details);
+      // The code rides in `details` so a surface can tell two 409s apart
+      // (ACTIVE_TRANSMITTAL from SEQUENCE_ALREADY_FILED) without parsing words.
+      return clientError(res, err.httpStatus, err.message, { code: err.code, ...err.details });
     }
     if (err instanceof GovernedTransmitInternalError) {
       return serverError(res, log, err.stage, err.cause);
@@ -356,12 +447,7 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
 
 const rollbackBody = z.object({
   reason: z.string().min(8, 'A rollback reason of at least 8 characters is required.'),
-  reauth: z
-    .object({
-      password: z.string().optional(),
-      totp: z.string().optional(),
-    })
-    .optional(),
+  reauth: reauthEnvelope,
 });
 
 router.post('/gateways/transmittals/:id/rollback', requireEditorAccess, async (req: Request, res: Response) => {
@@ -423,6 +509,71 @@ router.post('/gateways/transmittals/:id/rollback', requireEditorAccess, async (r
       return clientError(res, err.httpStatus === 404 ? 404 : 502, err.message);
     }
     return serverError(res, log, 'transmit-rollback', err);
+  }
+});
+
+/* ─── POST /api/mdx/gateways/transmittals/:id/technical-rejection ── */
+
+/* The agency did not load the sequence this transmittal filed (a technical
+   rejection — for FDA, a failed Ack3). The one act that takes a sequence off a
+   package's filed history (services/ectd/filed-sequence-rejection), so it is a
+   governed sign behind the transmit route's re-authentication, carrying the
+   agency's notice as a Vault document. A rollback is not this: it never
+   un-files, because the agency still holds rolled-back bytes. */
+const technicalRejectionBody = z.object({
+  reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
+  /** §11.50: the meaning the signer declares for this record. */
+  meaning: z.enum(SIGN_MEANINGS),
+  /** The Vault document holding the agency's notice (uploaded through Vault ingest). */
+  evidenceDocumentId: z.string().regex(UUID_RE, 'Name the Vault document that holds the agency’s notice.'),
+  reauth: reauthEnvelope,
+});
+
+router.post('/gateways/transmittals/:id/technical-rejection', requireEditorAccess, async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  if (userId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 422, 'id must be numeric');
+  const parsed = technicalRejectionBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  }
+  const p = parsed.data;
+
+  // Signing authority before the password, as transmit asks it.
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return signingAuthorityRefused(res, authority);
+  // Then the same high-risk re-auth gate as transmit and rollback.
+  const reauthResult = await verifyReauth(userId, p.reauth);
+  if (!reauthResult.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+  }
+  // The proof the service requires: captured when the human re-authenticated.
+  const reauthVerifiedAt = new Date();
+
+  try {
+    const outcome = await recordFiledSequenceRejection({
+      orgId,
+      transmittalId:      id,
+      actorUserId:        userId,
+      reason:             p.reason,
+      meaning:            p.meaning,
+      evidenceDocumentId: p.evidenceDocumentId,
+      ...verifiedFactors(p.reauth),
+      ipAddress:          req.ip ?? null,
+      reauthVerifiedAt,
+    });
+    return ok(res, outcome);
+  } catch (err: unknown) {
+    // Every refusal is decided before anything is written; the code rides in
+    // `details` so a surface can act on it without parsing words.
+    if (err instanceof FiledSequenceRejectionRefusal) {
+      return clientError(res, err.httpStatus, err.message, { code: err.code, ...err.details });
+    }
+    return serverError(res, log, 'transmit-technical-rejection', err);
   }
 });
 

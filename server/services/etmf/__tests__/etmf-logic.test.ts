@@ -24,10 +24,12 @@ describe('classifyArtifact', () => {
   it('routes a monitoring visit report to Zone 5', () => {
     expect(classifyArtifact('Monitoring Visit Report - Site 101').zone).toBe(5);
   });
-  it('defaults unknown artifacts to Zone 2', () => {
+  /* 2026-10-15: this read "defaults unknown artifacts to Zone 2" and pinned a
+     zone nobody chose, which addArtifactTx then stored as the artifact's zone. */
+  it('leaves an unmatched artifact unclassified, with no zone', () => {
     const c = classifyArtifact('Miscellaneous note');
-    expect(c.zone).toBe(2);
-    expect(c.confidence).toBe('default');
+    expect(c.zone).toBeNull();
+    expect(c.confidence).toBe('unclassified');
   });
 });
 

@@ -11,6 +11,10 @@ import { and, desc, eq, ilike, or } from 'drizzle-orm';
 import { db } from '../db.js';
 import { csrReports } from '../../shared/schema.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
+import { e3ParentNumber } from './ind/ctd/csr-e3-guidance.js';
+import { resolveRequirements } from './ind/ctd/requirements-resolver.js';
+import { acceptModelDraft } from './csr/unsupplied-statistics.js';
+import { resolveCsrBuildContext } from './csr/project-scope';
 
 // AI-powered drafting via the unified AI client (Claude primary)
 let ai: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
@@ -100,6 +104,11 @@ function isSectionDataComplete(section: CSRSection): boolean {
   return section.status === 'drafted' || section.status === 'reviewed' || section.status === 'approved';
 }
 
+// Numbers and titles are ICH E3's, as the overlay states them
+// (server/services/ind/ctd/csr-e3-guidance.ts); tests/regulatory/
+// csr-e3-overlay.test.ts holds every heading here to it. The synopsis (§2) and
+// objectives (§8) children are this builder's own decomposition, which E3 does
+// not number. Twelve titles were the builder's paraphrases until 2026-10-04.
 export const ICH_E3_STRUCTURE: CSRSection[] = [
   { number: '1', title: 'Title Page', required: true, status: 'empty', description: 'Study title, protocol number, sponsor, investigators' },
   {
@@ -117,8 +126,8 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
       { number: '2.10', title: 'Conclusions', required: true, status: 'empty', description: 'Key study conclusions' },
     ],
   },
-  { number: '3', title: 'Table of Contents', required: true, status: 'empty', description: 'Auto-generated table of contents' },
-  { number: '4', title: 'List of Abbreviations', required: true, status: 'empty', description: 'Abbreviations and special terms' },
+  { number: '3', title: 'Table of Contents for the Individual Clinical Study Report', required: true, status: 'empty', description: 'Auto-generated table of contents' },
+  { number: '4', title: 'List of Abbreviations and Definitions of Terms', required: true, status: 'empty', description: 'Abbreviations and special terms' },
   { number: '5', title: 'Ethics', required: true, status: 'empty', description: 'IRB/IEC review, informed consent, compliance with GCP' },
   { number: '6', title: 'Investigators and Study Administrative Structure', required: true, status: 'empty', description: 'List of investigators, study sites, CRO involvement' },
   { number: '7', title: 'Introduction', required: true, status: 'empty', description: 'Background, rationale, study objectives' },
@@ -132,13 +141,13 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
   {
     number: '9', title: 'Investigational Plan', required: true, status: 'empty', description: 'Study design and methodology',
     childSections: [
-      { number: '9.1', title: 'Overall Study Design', required: true, status: 'empty', description: 'Study design, randomization, blinding' },
-      { number: '9.2', title: 'Discussion of Study Design', required: true, status: 'empty', description: 'Design rationale and considerations' },
+      { number: '9.1', title: 'Overall Study Design and Plan — Description', required: true, status: 'empty', description: 'Study design, randomization, blinding' },
+      { number: '9.2', title: 'Discussion of Study Design, Including the Choice of Control Groups', required: true, status: 'empty', description: 'Design rationale and considerations' },
       { number: '9.3', title: 'Selection of Study Population', required: true, status: 'empty', description: 'Inclusion/exclusion criteria' },
       { number: '9.4', title: 'Treatments', required: true, status: 'empty', description: 'Study treatments, dosing, drug accountability' },
       { number: '9.5', title: 'Efficacy and Safety Variables', required: true, status: 'empty', description: 'Endpoint definitions and assessment schedule' },
       { number: '9.6', title: 'Data Quality Assurance', required: true, status: 'empty', description: 'Monitoring, data management, quality control' },
-      { number: '9.7', title: 'Statistical Methods', required: true, status: 'empty', description: 'Analysis populations, statistical methods, sample size' },
+      { number: '9.7', title: 'Statistical Methods Planned in the Protocol and Determination of Sample Size', required: true, status: 'empty', description: 'Analysis populations, statistical methods, sample size' },
       { number: '9.8', title: 'Changes in the Conduct of the Study or Planned Analyses', required: true, status: 'empty', description: 'Protocol amendments, SAP changes and other departures from the planned conduct or analyses, with timing (before/after unblinding) and rationale' },
     ],
   },
@@ -152,25 +161,25 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
   {
     number: '11', title: 'Efficacy Evaluation', required: true, status: 'empty', description: 'Efficacy data and analysis',
     childSections: [
-      { number: '11.1', title: 'Data Sets Analyzed', required: true, status: 'empty', description: 'ITT, mITT, PP populations' },
-      { number: '11.2', title: 'Demographics and Baseline', required: true, status: 'empty', description: 'Baseline characteristics' },
+      { number: '11.1', title: 'Data Sets Analysed', required: true, status: 'empty', description: 'ITT, mITT, PP populations' },
+      { number: '11.2', title: 'Demographic and Other Baseline Characteristics', required: true, status: 'empty', description: 'Baseline characteristics' },
       { number: '11.3', title: 'Measurements of Treatment Compliance', required: true, status: 'empty', description: 'Drug exposure, compliance' },
-      { number: '11.4', title: 'Efficacy Results and Tabulations', required: true, status: 'empty', description: 'Primary and secondary endpoint results' },
+      { number: '11.4', title: 'Efficacy Results and Tabulations of Individual Patient Data', required: true, status: 'empty', description: 'Primary and secondary endpoint results' },
     ],
   },
   {
     number: '12', title: 'Safety Evaluation', required: true, status: 'empty', description: 'Safety data and analysis',
     childSections: [
       { number: '12.1', title: 'Extent of Exposure', required: true, status: 'empty', description: 'Drug exposure duration and dose' },
-      { number: '12.2', title: 'Adverse Events', required: true, status: 'empty', description: 'AE incidence, preferred terms, by SOC' },
-      { number: '12.3', title: 'Deaths, SAEs, Other Significant AEs', required: true, status: 'empty', description: 'Narratives for deaths, SAEs' },
+      { number: '12.2', title: 'Adverse Events (AEs)', required: true, status: 'empty', description: 'AE incidence, preferred terms, by SOC' },
+      { number: '12.3', title: 'Deaths, Other Serious Adverse Events, and Other Significant Adverse Events', required: true, status: 'empty', description: 'Narratives for deaths, SAEs' },
       { number: '12.4', title: 'Clinical Laboratory Evaluation', required: true, status: 'empty', description: 'Lab results, shifts, clinically significant values' },
-      { number: '12.5', title: 'Vital Signs, Physical Findings, Other Safety', required: true, status: 'empty', description: 'Vital signs, ECG, other safety data' },
+      { number: '12.5', title: 'Vital Signs, Physical Findings and Other Observations Related to Safety', required: true, status: 'empty', description: 'Vital signs, ECG, other safety data' },
       { number: '12.6', title: 'Safety Conclusions', required: true, status: 'empty', description: 'Overall safety evaluation integrating exposure, adverse events, deaths and SAEs, laboratory and vital-sign findings' },
     ],
   },
   { number: '13', title: 'Discussion and Overall Conclusions', required: true, status: 'empty', description: 'Efficacy discussion, safety discussion, benefit-risk assessment' },
-  { number: '14', title: 'Tables, Figures, and Graphs Referred to But Not Included in the Text', required: false, status: 'empty', description: 'Supplementary tables and figures' },
+  { number: '14', title: 'Tables, Figures and Graphs Referred to But Not Included in the Text', required: false, status: 'empty', description: 'Supplementary tables and figures' },
   { number: '15', title: 'Reference List', required: false, status: 'empty', description: 'Literature references cited in the report' },
   { number: '16', title: 'Appendices', required: false, status: 'empty', description: 'Study protocol, SAP, CRFs, individual patient data, technical reports' },
 ];
@@ -289,6 +298,7 @@ async function reserveCSRBuilderQuota(request: CSRBuildRequest): Promise<void> {
  * Launch a CSR build job.
  */
 export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuildJob> {
+  await resolveCsrBuildContext(db, request, { organizationId: request.organizationId, projectId: request.projectId, requestedBy: request.userId });
   await reserveCSRBuilderQuota(request);
 
   // Initialize section structure
@@ -329,8 +339,9 @@ export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuild
  */
 export async function launchCSRBuildAsync(
   request: CSRBuildRequest,
-  ctx: { organizationId: number; projectId?: number; requestedBy?: number }
+  ctx: { organizationId: number; projectId?: number; programId?: string; clientWorkspaceId?: number; requestedBy?: number }
 ): Promise<{ jobId: number; status: 'queued' }> {
+  const scope = await resolveCsrBuildContext(db, request, ctx);
   // Quota + usage are reserved BEFORE enqueue so the async path can't bypass
   // billing. Throws the same upgrade-required error as launchCSRBuild on
   // quota failure — the HTTP response shape is identical at the route layer.
@@ -340,7 +351,7 @@ export async function launchCSRBuildAsync(
     './csr/csr-job-runner.js'
   );
 
-  const enqueued = await enqueueCSRBuildJob(request, ctx);
+  const enqueued = await enqueueCSRBuildJob({ ...request, projectId: scope.projectId }, scope);
 
   // Fire-and-forget worker. Errors are persisted on the job row by
   // runCSRBuildJob's own catch block; we still attach a .catch handler
@@ -483,7 +494,7 @@ export async function draftCSRSectionWithProvenance(
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Draft ICH E3 Section ${section.number}: ${section.title}\n\nDescription: ${section.description}\n\nWrite a complete, submission-ready draft for this section. Include all required elements per ICH E3 guidelines.`,
+            content: buildSectionUserMessage(section),
           },
         ],
         {
@@ -497,7 +508,10 @@ export async function draftCSRSectionWithProvenance(
         }
       );
 
-      if (content && content.length > 0) {
+      // Rule 2: a statistical or results section drafted from metadata alone
+      // may not state a figure nobody supplied (csr/unsupplied-statistics.ts);
+      // a refused draft records why on the lineage and falls to the template.
+      if (acceptModelDraft(section.number, content, info, baseLineage)) {
         return {
           number: section.number,
           content,
@@ -507,7 +521,7 @@ export async function draftCSRSectionWithProvenance(
           lineage: Object.keys(baseLineage).length > 0 ? baseLineage : null,
         };
       }
-      // Empty content — fall through to template
+      // Empty, or refused above — fall through to the template.
     } catch (err) {
       console.warn(
         `[CSR Builder] AI drafting failed for section ${section.number}, using template:`,
@@ -526,6 +540,50 @@ export async function draftCSRSectionWithProvenance(
     tokenCost: 0,
     lineage: Object.keys(baseLineage).length > 0 ? baseLineage : null,
   };
+}
+
+/**
+ * What ICH E3 says the heading `number` must contain, from the platform's one
+ * resolver (server/services/ind/ctd/requirements-resolver.ts), never from the
+ * model's memory of E3. `heading` is the E3 number that answered.
+ *
+ * The builder's synopsis (§2.x) and objectives (§8.x) children are its own
+ * decomposition, which E3 does not number, so they are answered by the
+ * nearest E3 heading above them (§2, §8). Null when no heading at any level
+ * resolves; the caller then says so rather than briefing from recall.
+ */
+export function e3RequirementsFor(number: string): { requirements: string; heading: string } | null {
+  for (let n: string | null = String(number ?? '').trim(); n; n = e3ParentNumber(n)) {
+    const answer = resolveRequirements({ document: 'csr', section: n });
+    if (answer.kind === 'answer') return { requirements: answer.requirements, heading: n };
+  }
+  return null;
+}
+
+/**
+ * The one user message both drafting paths send: the section, then what E3
+ * says it must contain (or that the platform has nothing indexed for it).
+ */
+function buildSectionUserMessage(section: CSRSection): string {
+  const e3 = e3RequirementsFor(section.number);
+  const requirements = !e3
+    ? `The platform has no ICH E3 requirements indexed for §${section.number}. Do not supply them from memory; draft from the description above and mark what it does not cover with [DATA TO BE INSERTED].`
+    : [
+        e3.heading === section.number
+          ? `What ICH E3 §${section.number} must contain, from the platform's ICH E3 record:`
+          : `ICH E3 does not number §${section.number}; it is this report's part of E3 §${e3.heading}. What §${e3.heading} must contain, from the platform's ICH E3 record — draft only the part this section's title and description cover:`,
+        '',
+        e3.requirements,
+      ].join('\n');
+  return [
+    `Draft ICH E3 Section ${section.number}: ${section.title}`,
+    '',
+    `Description: ${section.description}`,
+    '',
+    requirements,
+    '',
+    'Write a complete, submission-ready draft for this section. Cover what the record above lists; do not add requirements from memory.',
+  ].join('\n');
 }
 
 /**
@@ -552,7 +610,8 @@ ${info.treatmentDuration ? `- Treatment Duration: ${info.treatmentDuration}` : '
 
 Write professional regulatory prose suitable for FDA/EMA submission. Use precise clinical language.
 Do NOT use markdown. Write in plain text with section headers in CAPS.
-Include placeholders like [DATA TO BE INSERTED] where actual study data would go.`;
+Include placeholders like [DATA TO BE INSERTED] where actual study data would go.
+Never state a statistic that is not given above: no p-value, confidence interval, percentage, ratio, count or significance level. Write [DATA TO BE INSERTED] instead.`;
 }
 
 /**
@@ -589,7 +648,7 @@ async function generateSectionWithAI(
     const content = await ai.complete(
       [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Draft ICH E3 Section ${section.number}: ${section.title}\n\nDescription: ${section.description}\n\nWrite a complete, submission-ready draft for this section. Include all required elements per ICH E3 guidelines.` },
+        { role: 'user', content: buildSectionUserMessage(section) },
       ],
       {
         taskType: 'document_drafting',
@@ -601,6 +660,11 @@ async function generateSectionWithAI(
         userId: aiContext?.userId,
       }
     );
+    // Same guard as the provenance path: a statistical section that states a
+    // figure the study information does not contain is not used.
+    if (content && !acceptModelDraft(section.number, content, info)) {
+      return generateSectionTemplate(section, info);
+    }
     return content;
   } catch (err) {
     console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
@@ -811,7 +875,10 @@ function generateSectionTemplate(
 
     '9.3': `Patients eligible for this study were adults with a confirmed diagnosis of ${info.indication}.\n\n[Inclusion and exclusion criteria to be populated from protocol]`,
 
-    '9.7': `The statistical analysis plan (SAP) was finalized prior to database lock. The primary analysis population was the intent-to-treat (ITT) population, defined as all randomized patients who received at least one dose of study treatment. The primary endpoint of ${info.primaryEndpoint} was analyzed using [statistical method to be specified]. A two-sided significance level of 0.05 was used for the primary analysis.${info.sampleSize ? `\n\nSample size: ${info.sampleSize} patients were planned to provide [X]% power to detect a clinically meaningful difference.` : ''}`,
+    // Until 2026-10-05 this stated that the SAP was finalised before database
+    // lock, that the primary population was ITT and that a two-sided 0.05 level
+    // was used — facts nobody supplied. Each is now a placeholder for the SAP.
+    '9.7': `[DATA TO BE INSERTED FROM THE SAP]\n\nThe statistical analysis plan (SAP) was finalized on [date, relative to database lock]. The primary analysis population was [population and its definition]. The primary endpoint of ${info.primaryEndpoint} was analyzed using [statistical method]. A [one- or two-sided] significance level of [alpha] was used for the primary analysis.${info.sampleSize ? `\n\nSample size: ${info.sampleSize} patients were planned to provide [X]% power to detect [the planned difference].` : ''}`,
 
     '9.8': `[DATA TO BE INSERTED]\n\nChanges to the conduct of the study after it began: [list each protocol amendment with its number, date and rationale, or state that there were none]. Changes to the planned analyses: [describe each departure from the protocol- or SAP-specified analyses, when it was decided and whether before or after unblinding, or state that there were none].`,
 

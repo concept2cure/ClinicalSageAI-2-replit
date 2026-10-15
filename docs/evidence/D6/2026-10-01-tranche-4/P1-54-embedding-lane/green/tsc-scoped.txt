@@ -1,0 +1,29 @@
+# Scoped tsc (no full-project tsc: out of memory). Roots: the readiness module, its test, the probe. Final files.
+# 2026-10-01T15:02:00Z
+{
+  "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+  "compilerOptions": { "noEmit": true, "skipLibCheck": true, "incremental": false },
+  "include": [
+    "/home/user/ClinicalSageAI-2-replit/server/startup/ana-readiness-state.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/startup/__tests__/ana-readiness.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/**/*.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/shared/**/*.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/types/**/*.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/*.d.ts"
+  ]
+}
+--- output (exit 2):
+server/middleware/establishRequestTenantScope.ts(163,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(165,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(58,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+
+# CONTROL: the same config with an UNCHANGED root (server/startup/inline-endpoints.ts) and none of mine:
+--- output (exit 2):
+server/middleware/establishRequestTenantScope.ts(163,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(165,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(58,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+
+# The same four errors, none in a changed file: the Express Request augmentation is outside the scoped include set.

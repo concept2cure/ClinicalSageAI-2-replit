@@ -1,0 +1,83 @@
+{
+  "sourceHead": "31ec977a619ebb380f8e06737b8692ab852e7d15",
+  "qualification": "Current uncommitted owned sources plus merged Claude work, identified by full10497 stable source inventories. Canonical compiler0,build0,actual globalESLint0errors6088warnings and unchangedratchet0. Native38 and livebrowser have their own phase manifests. ESLint publication JSON is derived only by removing optional embedded source text; full raw private bytes/hash are preserved. No compiler/lint/policy baseline changed.",
+  "records": [
+    {
+      "path": "typecheck-final-boundary-repairs-and-regional-templates-result.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 500,
+      "decodedHexDigest": "0303a42be9ebb0f590ef191e6c883e1db5db039285b9e92e307c3b099ff48a4b",
+      "archivedHexDigest": "a3831375d6590bc884bf07b497c4d5b52fec396e6c3a862f50ba5e64903d3a31"
+    },
+    {
+      "path": "typecheck-final-boundary-repairs-and-regional-templates-source-inputs-after.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 1682242,
+      "decodedHexDigest": "c7ebab8d4c5109fde16a0ef06f980582a31c2cc80de77167634f6da125896b81",
+      "archivedHexDigest": "72b0085fbdd96e4795a46afb7e9a238aa43d6882357f95a7aff3e9cf28e4f6ed"
+    },
+    {
+      "path": "typecheck-final-boundary-repairs-and-regional-templates-source-inputs-before.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 1682242,
+      "decodedHexDigest": "c7ebab8d4c5109fde16a0ef06f980582a31c2cc80de77167634f6da125896b81",
+      "archivedHexDigest": "72b0085fbdd96e4795a46afb7e9a238aa43d6882357f95a7aff3e9cf28e4f6ed"
+    },
+    {
+      "path": "typecheck-final-boundary-repairs-and-regional-templates-typecheck.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 190,
+      "decodedHexDigest": "88280664dabf1fafb5def9e258b8903e421f6bff2b3c98305e66864d3f4053c7",
+      "archivedHexDigest": "fc152290c17258808e4a8a4633d4e0632649e762aee3071dcf3755af7197dc0c"
+    },
+    {
+      "path": "final-build-raw.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 14493,
+      "decodedHexDigest": "f6366209246324d8cc0ac84f635d975ee09034b6fe198f4d9806f139082916cf",
+      "archivedHexDigest": "04d0c70e8f49fcddd453eddc08e8b5fb045c4f2d9fd705b4bcdb7de5b8790e05"
+    },
+    {
+      "path": "final-build-result.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 275,
+      "decodedHexDigest": "913533a6c628cce811bbed0720002e3b537ed8ba2d3a54a4d9e04be50d124daf",
+      "archivedHexDigest": "1b9ab181329346f60d26a76ff869212f8bbbd9245d5e8bba5d12fc26e793f8b7"
+    },
+    {
+      "path": "final-lint-ratchet.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 352,
+      "decodedHexDigest": "4f87fb9fad6e6cfb02f0d2b9e31c553c1fec3630a14e9e1231c58d3a195a1aa1",
+      "archivedHexDigest": "1b862caaf719f8344bc4dbed8f95a1d320b0dfb610ffe89f47e72f0d5b8b79a7"
+    },
+    {
+      "path": "final-lint-raw.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 0,
+      "decodedHexDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archivedHexDigest": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "final-lint-report-derivation.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 414,
+      "decodedHexDigest": "b58e769def31e4eccfe860f292e16ebcde9c0763e5e771b08623a5e7200db8f9",
+      "archivedHexDigest": "cc614944a90704c1bf32740bd1be1b1fa0d674b154b5b1a49a20a0626a96b147"
+    },
+    {
+      "path": "final-lint-report-without-embedded-source.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 5139994,
+      "decodedHexDigest": "b536a4da3601a3e98474c2b7f23fe644f94c63f020a334804634144077ce32ae",
+      "archivedHexDigest": "d9912196b3ba97a5d4101c1a641cdcccb83cdbe86c52dc77bed3c2bcf6683151"
+    },
+    {
+      "path": "final-lint-result.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 1220,
+      "decodedHexDigest": "bd52dc0f48572543c02f5cd9b94c4ec96588477f36fa964be44f1294e403797e",
+      "archivedHexDigest": "41c12ba67e5496b7ba6d37c0b4aed39d65dbdb78a4c0d225dd5bfd2815cfbf56"
+    }
+  ]
+}

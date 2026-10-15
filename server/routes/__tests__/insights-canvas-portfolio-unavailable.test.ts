@@ -1,0 +1,121 @@
+/**
+ * GET /api/insights-canvas/overview — a failed portfolio read is an error, not
+ * an empty organisation (review round 1, honest-state M5).
+ *
+ * The route swallowed a rejection of fetchOrgPortfolioSummary and answered 200
+ * with leadProgram null, so the Reporting canvas said "No program readiness
+ * yet" for a read that failed. Now: 503 PORTFOLIO_UNAVAILABLE with a static
+ * sentence (the detail goes to the log only). An organisation that genuinely
+ * has no program still gets the 200 empty.
+ *
+ * The router's own imports are real; the entitlement gate, the segment
+ * derivation and the portfolio fetch are replaced, because the contract under
+ * test is what the handler does with each outcome of the portfolio read.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import express from 'express';
+import request from 'supertest';
+
+const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), segments: vi.fn(), anchor: vi.fn(), scope: vi.fn(), scopeRecheck: vi.fn(), actualAnchor: vi.fn() }));
+
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
+vi.mock('../../db', () => ({ db: {}, pool: {}, getPool: () => ({}), getDb: () => ({}), query: vi.fn(), transaction: vi.fn() }));
+vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../utils/authedOrgId')>()),
+  authedOrgId: () => 7,
+}));
+vi.mock('../../services/report-os/entitlement-map', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/entitlement-map')>()),
+  requireReportEntitlement: h.gate,
+}));
+vi.mock('../../services/report-os/segment', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/segment')>()),
+  deriveOrgSegments: h.segments,
+  deriveProjectSegments: async () => null,
+}));
+vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor, readProgramAnchorRow: h.actualAnchor }));
+// Consumer fixtures retain their original auth/portfolio assumptions; canonical
+// sharing and RLS are qualified separately by native current-program tests.
+vi.mock('../../services/c2c/current-program-access', async importOriginal => ({ ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()), getCurrentAccessibleProgramScope: h.scope, requireProgramScopeStillCurrent: h.scopeRecheck }));
+vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/portfolio/fetch')>()),
+  fetchOrgPortfolioSummary: h.summary,
+}));
+
+import createInsightsCanvasRoutes from '../insights-canvas-routes';
+
+const app = express();
+// The request-scoped client the production mount's authenticateToken installs
+// (establishRequestTenantScope); the open program's anchor is read on it.
+app.use((req, _res, next) => {
+  (req as unknown as { user: { id: number; role: string; organizationId: number } }).user = { id: 5, role: 'manager', organizationId: 7 };
+  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async (sql: string, values?: unknown[]) => ({ rows: /SELECT id FROM regulatory_programs/.test(sql) ? [{ id: values?.[0] }] : /SELECT metadata FROM projects/.test(sql) ? [{ metadata: {} }] : [] })) };
+  next();
+});
+app.use('/api/insights-canvas', createInsightsCanvasRoutes());
+const overview = (q = '') => request(app).get('/api/insights-canvas/overview' + q);
+/* The canvas leads with the program the shell has open (QA 2026-10-08, j8: with
+   none open it no longer stands the flagship in). */
+const OPEN = '?programId=d979e567-4622-46f1-8cb7-8bf434227f25';
+
+const PROGRAM = {
+  projectId: 12, name: 'ABC-101', code: 'ABC-101', indication: null, readinessScore: 64, confidence: 70,
+  status: 'partial', riskLevel: 'medium', criticalBlockerCount: 1,
+};
+
+beforeEach(() => {
+  h.scope.mockReset().mockImplementation(async (_q, input) => ({ scope: 'verified-accessible-programs', actor: { userId: 5, role: 'manager' }, programIds: [input.programId], reconciliationRequired: false }));
+  h.scopeRecheck.mockReset().mockResolvedValue(undefined);
+  h.actualAnchor.mockReset().mockResolvedValue({ id: 12 });
+  h.gate.mockReset().mockResolvedValue({ entitled: false, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'standard', tierResolved: true });
+  h.segments.mockReset().mockResolvedValue(['pharma']);
+  h.summary.mockReset();
+  h.anchor.mockReset().mockResolvedValue(12);
+});
+
+describe('GET /overview and the portfolio read', () => {
+  it('answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer', async () => {
+    h.summary.mockRejectedValue(new Error('connection reset by peer at 10.0.3.7:5432'));
+    const res = await overview();
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({
+      success: false,
+      error: { code: 'PORTFOLIO_UNAVAILABLE', message: expect.any(String) },
+    });
+    expect(res.body.error.message).not.toMatch(/connection reset|10\.0\.3\.7/);
+    expect(res.body).not.toHaveProperty('data');
+  });
+
+  it('still answers 200 with leadProgram null for an organisation that has no program', async () => {
+    h.summary.mockResolvedValue(null);
+    const res = await overview();
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.leadProgram).toBeNull();
+    expect(res.body.data.reportTypes.length).toBeGreaterThan(0);
+  });
+
+  it('answers 200 with the open program when there are programs', async () => {
+    h.summary.mockResolvedValue({ memberCount: 1, attentionRanked: [PROGRAM], truncated: false });
+    const res = await overview(OPEN);
+    expect(res.status).toBe(200);
+    expect(res.body.data.leadProgram).toMatchObject({ projectId: 12, readiness: 64 });
+  });
+
+  /* L189 (reporting review 2026-10-01): the lead said scope 'program' with a
+     project id, and the canvas runs its reports over the scope it is given, so
+     POST /runs computed them over the report program group whose serial id
+     equalled the project id. */
+  it('names the lead program as the project its readiness was computed for', async () => {
+    h.summary.mockResolvedValue({ memberCount: 1, attentionRanked: [PROGRAM], truncated: false });
+    const res = await overview(OPEN);
+    expect(res.body.data.leadProgram).toMatchObject({ scope: 'project', scopeId: '12', projectId: 12 });
+  });
+});

@@ -1,0 +1,39 @@
+R2C: the second reviewer's probe2.test.ts, unchanged, on the final suggestions.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stdout | ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > control: short session, typing after the decision is undoable
+pre=5 post=1 depthAtDecision=6 depthBeforeUndo=7 undoWorked=true
+
+stdout | ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > long session: floor at 120, one event after the decision overflows history
+pre=119 post=1 depthAtDecision=120 depthBeforeUndo=100 undoWorked=true
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > control: short session, typing after the decision is undoable 120ms
+stdout | ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > long session: floor at 105, 16 events after the decision
+pre=104 post=16 depthAtDecision=105 depthBeforeUndo=100 undoWorked=true
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > long session: floor at 120, one event after the decision overflows history 183ms
+stdout | ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > long session: floor at 120, 20 more events after the decision (still stuck?)
+pre=119 post=20 depthAtDecision=120 depthBeforeUndo=119 undoWorked=true
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > long session: floor at 105, 16 events after the decision 202ms
+stdout | ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > long session: floor at 120, 40 events after the decision
+pre=119 post=40 depthAtDecision=120 depthBeforeUndo=118 undoWorked=true
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > long session: floor at 120, 20 more events after the decision (still stuck?) 269ms
+stdout | ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > other doors > tracking off: accepting a pending draft freezes undo of the reviewer's own unrelated typing (behaviour change)
+tracking off, after undo: "Base. Draft.Other. mine"
+
+stdout | ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > other doors > redo floor across two decisions
+after 2 undos: "Base. Draft one. Draft two." redo 2
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > history overflow after a decision > long session: floor at 120, 40 events after the decision 357ms
+ ✓ ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > other doors > tracking off: accepting a pending draft freezes undo of the reviewer's own unrelated typing (behaviour change) 16ms
+ ✓ ../../..<scratch>/fixes2/undo-floor/review2-probe/probe2.test.ts > other doors > redo floor across two decisions 19ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  00:24:15
+   Duration  2.14s (transform 147ms, setup 155ms, import 141ms, tests 1.17s, environment 506ms)
+

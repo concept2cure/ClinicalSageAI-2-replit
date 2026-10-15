@@ -1,0 +1,67 @@
+## M1 the connector verifier skips the live-token check (finding #6, P0-2c)
+   file: server/mcp/auth/platform-token.ts
+   [dbtest] exit 1; Tests  8 failed | 6 passed (14)
+      × mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 9ms
+      × mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the cons
+      × mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 6m
+      × mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the 
+      × mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 10ms
+      × mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 19ms
+      × mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unre
+      × mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an 
+   [unit] exit 1; Tests  2 failed | 28 passed (30)
+      × mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 15ms
+      × mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 6ms
+   => RED (the tests catch it)
+
+## M2 the /token exchanges skip the account standing (finding #6, P0-2c)
+   file: server/mcp/auth/provider.ts
+   [dbtest] exit 1; Tests  2 failed | 12 passed (14)
+      × mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unre
+      × mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an 
+   [unit] exit 1; Tests  2 failed | 28 passed (30)
+      × mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 10ms
+      × mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 2ms
+   => RED (the tests catch it)
+
+## M3 fail-open: an unreadable standing at /mcp admits the session
+   file: server/mcp/auth/platform-token.ts
+   [unit] exit 1; Tests  2 failed | 28 passed (30)
+      × mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 14ms
+      × mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 6ms
+   => RED (the tests catch it)
+
+## M4 fail-open: an unreadable standing at /token admits the grant
+   file: server/mcp/auth/provider.ts
+   [unit] exit 1; Tests  2 failed | 28 passed (30)
+      × mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 8ms
+      × mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 2ms
+   => RED (the tests catch it)
+
+## M5 the token-class rule ignores token_use (P0-2a)
+   file: server/middleware/tokenType.ts
+   [dbtest] exit 1; Tests  1 failed | 13 passed (14)
+      × mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 43ms
+   [unit] exit 1; Tests  3 failed | 27 passed (30)
+      × security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > every first-party authenticator refuses it, on either ent
+      × security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > refuses any delegated use, known or unknown, and whatever
+      × security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > the connector, and only a caller naming that use, accepts
+   => RED (the tests catch it)
+
+## M6 consent reports an unreadable standing as a bad sign-in
+   file: server/mcp/auth/consent.ts
+   [unit] exit 1; Tests  1 failed | 29 passed (30)
+      × mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 12ms
+   => RED (the tests catch it)
+
+## M7 the grant store runs in the pre-auth scope again (grant store under RLS)
+   file: server/mcp/auth/store.ts
+   [dbtest] exit 1; Tests  5 failed | 9 passed (14)
+      × mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant
+      × mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the ha
+      × mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unre
+      × mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an 
+      × mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 27ms
+   => RED (the tests catch it)
+
+ALL MUTATIONS CAUGHT

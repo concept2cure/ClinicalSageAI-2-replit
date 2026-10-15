@@ -17,7 +17,8 @@ export const ORG = 7, USER = 3;
 /** The tables the harness does not create, and every submission and document the cases file. */
 export const FREEZE_GATE_SEED_SQL = `
     CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
-    CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT);
+    -- verification_date and updated_at: the real table's, which a void of a refused step's signature sets (P-23).
+    CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT, verification_date TIMESTAMP, updated_at TIMESTAMP);
     CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'race', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
@@ -67,8 +68,9 @@ export const FREEZE_GATE_SEED_SQL = `
 export function freezeGateHelpers(db: () => IndPgliteDb) {
   let sigN = 0;
 
-  /** A governed `sign` action bound to the sequence's CURRENT leaf-manifest digest. */
-  async function sign(seqId: number, intent: string): Promise<string> {
+  /** A governed `sign` action bound to the sequence's CURRENT leaf-manifest digest.
+   *  `meaning` is the §11.50 meaning the signer chose; omitted, none is recorded. */
+  async function sign(seqId: number, intent: string, meaning?: string): Promise<string> {
     const h = db();
     const id = `sig-${++sigN}`;
     const binding = await deriveGovernedTargetBinding(
@@ -78,7 +80,7 @@ export function freezeGateHelpers(db: () => IndPgliteDb) {
     );
     await h.pglite.query(
       `INSERT INTO c2c_ana_actions (id, org_id, command, target, state, proposed_by, payload) VALUES ($1,$2,'sign',$3,'executed',$4,$5)`,
-      [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify({ intent })],
+      [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify(meaning === undefined ? { intent } : { intent, meaning })],
     );
     await h.pglite.query(
       `INSERT INTO electronic_signatures (organization_id, signed_target, signature_manifest, bound_payload_digest, binding_basis, is_valid, verification_status)

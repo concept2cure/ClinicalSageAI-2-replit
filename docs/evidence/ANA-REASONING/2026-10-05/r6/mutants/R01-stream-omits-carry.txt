@@ -1,0 +1,13 @@
+Mutant R01-stream-omits-carry: the stream does not pass what the thread carried
+
+--- server/routes/ana-ri/stream.ts
+- deprioritize: new Set(getUnhealthyTools(3, orgId ?? undefined).map(t => t.tool)),
+          carriedTools,
++ deprioritize: new Set(getUnhealthyTools(3, orgId ?? undefined).map(t => t.tool)),
+
+Tests run: server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 53ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,61 @@
+--- a/tests/db/tenant-proof-routes.ts	2026-09-25 02:26:45.824188261 +0000
++++ b/tests/db/tenant-proof-routes.ts	2026-10-01 06:23:26.205321156 +0000
+@@ -205,6 +205,17 @@
+     ),
+ };
+ 
++/** Runs `run`; a privilege refusal (42501) answers 404 and returns null, anything else propagates. */
++async function mutateOr404<T>(res: express.Response, run: () => Promise<T>): Promise<T | null> {
++  try {
++    return await run();
++  } catch (error) {
++    if ((error as { code?: string }).code !== '42501') throw error;
++    res.sendStatus(404);
++    return null;
++  }
++}
++
+ /** Mounts /proof/:domain on `app`, behind the production authenticateToken. */
+ export function mountTenantProofRoutes(app: express.Express, fixture: ProofFixture): void {
+   app.use('/proof', authenticateToken);
+@@ -258,23 +269,31 @@
+       return res.status(500).json({ error: { code: 'INTERNAL_ERROR' } });
+     }
+   });
++  // audit_logs and signatures are append-only stores: since P0-8 (2026-10-01)
++  // the runtime role holds no UPDATE/DELETE on them at all, so the statement is
++  // refused with 42501 before RLS or the trigger is reached. That refusal
++  // answers the same opaque 404 as the POST probe's WITH CHECK denial.
+   app.patch('/proof/:domain/:id', async (req, res) => {
+     const domain = safeDomain(req.params.domain);
+     if (!domain) return res.sendStatus(404);
+-    const result = await requestPgClient(req).query(
+-      `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
+-         WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
+-      ['TAMPERED', req.params.id]
++    const result = await mutateOr404(res, () =>
++      requestPgClient(req).query(
++        `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
++           WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
++        ['TAMPERED', req.params.id]
++      )
+     );
+-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
++    if (result) res.sendStatus(result.rows.length ? 204 : 404);
+   });
+   app.delete('/proof/:domain/:id', async (req, res) => {
+     const domain = safeDomain(req.params.domain);
+     if (!domain) return res.sendStatus(404);
+-    const result = await requestPgClient(req).query(
+-      `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
+-      [req.params.id]
++    const result = await mutateOr404(res, () =>
++      requestPgClient(req).query(
++        `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
++        [req.params.id]
++      )
+     );
+-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
++    if (result) res.sendStatus(result.rows.length ? 204 : 404);
+   });
+ }

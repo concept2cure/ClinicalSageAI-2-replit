@@ -1,0 +1,12 @@
+Mutant G17-end-of-turn-check-unread: the client drops the check an end-of-turn proposal carries
+
+--- client/src/concept2cure/components/ana/useGovernedAction.ts
+- const check = readAnswerCheck(r.check);
++ const check = undefined as AnswerCheckView | undefined;
+
+Tests run: client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > an end-of-turn proposal carries the check too > reads the check from a HUMAN_CONFIRMATION_REQUIRED envelope in post_done, and drops a malformed one 6ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

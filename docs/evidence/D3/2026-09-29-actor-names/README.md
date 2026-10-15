@@ -115,6 +115,11 @@ Where the join was INNER the record itself disappeared, not only the name:
 | Sentinel over-allocation, CRO lead, project home | `red/vanishing-before.txt`: finding missing, next assignee promoted to lead | `actor-vanishing` |
 | RBM board | `red/rbm-before.txt`: approver `null` | `actor-vanishing` |
 | Task analytics | `red/task-analytics-before.txt`: leaver's work gone from productivity | `actor-vanishing` |
+| Artifact review record (`c2c/artifacts.ts`) | `red/collaborators-reviewers-history-before.txt`: the leaver's assignment **and approval** gone from the record; status read "Unknown" for both reviewers | `actor-vanishing` |
+| Project collaborators (`concept2cure.ts`) | same file: the leaver on the ownership team had no name | `actor-displays` |
+| Section revision history (`authoring.router.ts`) | same file: the leaver's revision unnamed | `actor-displays` |
+| Dossier section versions (`c2c/documents.ts`) | `red/dossier-journey-before.txt`: author `null` | `actor-displays` |
+| Document journey (`doc-journey-view-assembler.ts`) | same file: creator and reviser unnamed | `actor-displays` |
 
 Also converted, display-only and covered by their route suites:
 `audit-trail-ledger.routes.ts`, `project-hierarchy.ts`, `project-rollup-service.ts`,
@@ -126,10 +131,36 @@ these paths now apply the real migration rather than a stub.
 `green/batch2-after.txt`: `actor-displays`, `actor-vanishing`, `actor-names`
 and `users-rls`, 30/30, as `app_service` with RLS enforcing.
 
-## Still open on this row
+## The last three sites (2026-10-04)
 
-Three sites sit in files another lane changed in the last 24 hours and are
-handed on rather than raced: `server/routes/concept2cure.ts` (one display
-join), `server/routes/artifacts.ts` (an inner join that drops a leaver's
-artifacts, and an "Unknown" fallback) and `authoring.router.ts` (a text
-`created_by`, which needs a guarded numeric cast).
+`concept2cure.ts`, `c2c/artifacts.ts` and `authoring.router.ts` were held back
+on 2026-09-29 because other lanes had changed them within 24 hours. Converted
+once those windows had closed, after merging trunk; red was re-recorded
+against a database provisioned at that head (`c2c_d3x`), with exactly the four
+new cases failing and the other 15 passing.
+
+- The review record had dropped a former member's assignment, and with it
+  their approval decision: a review record that loses an approval is not an
+  attribution defect but a Part 11 record defect.
+- `doc_revisions.created_by` is text. The name is looked up through a guarded
+  cast (`CASE WHEN created_by ~ '^[0-9]{1,9}$' …`), so a non-numeric author
+  names nobody instead of failing. `red/M3-unguarded-cast.txt`: with a bare
+  `::int` the history answers 500.
+- A sweep of every remaining join on `users` at that head found two more
+  actor-of-record displays that arrived after the triage or were missed by it:
+  `c2c/documents.ts` (dossier section versions) and
+  `doc-journey-view-assembler.ts` (document creator and revision authors).
+  Both converted, each with its red case (`red/dossier-journey-before.txt`).
+- `green/batch3-after.txt`: `actor-displays`, `actor-vanishing`,
+  `actor-names` and `users-rls`, 36/36, as `app_service` with RLS enforcing.
+  The mocked collaborator test, the document-journey PGlite suite and the IND
+  authoring journey now go through the resolver and the real migration.
+
+What stays on `users`, by the same sweep: membership listings
+(`access-review.ts`, `mdx-admin.ts` members, the `c2c/artifacts.ts` team
+picker, `business-center.ts`), authorization look-ups (`mcp/auth/store.ts`,
+`taskManagement.routes.ts`), platform-administration reads that run in the
+system scope and see every account (`master-admin.ts`, `licensing-history.ts`,
+`access-management.ts`), and `mdx-engineering.ts`'s risk owner, which by its
+own written rule is shown only while the assignee is a member. None of these
+should answer for someone who has left.

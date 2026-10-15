@@ -1,0 +1,23 @@
+$ NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/report-os/__tests__/report-type-registry-seed.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > is byte-identical to what the generator writes from the in-code report types 3ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > seeds every in-code report type, base, global and prediction, once each 4ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refreshes every descriptive column on conflict and never touches enabled 2ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > writes each json column as the JSON text drizzle sends for it 2ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > raises on a missing table and on a short registry 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > a copy with one label changed does not match 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refuses a duplicated type id and a missing column instead of writing a file that fails on deploy 1ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  00:22:33
+   Duration  535ms (transform 152ms, setup 80ms, import 106ms, tests 18ms, environment 0ms)
+
+exit=0
+
+$ npx tsx scripts/db/generate-report-type-registry-seed.ts --check
+migrations/20260930_report_type_registry_seed.sql matches the 61 in-code report types.
+exit=0

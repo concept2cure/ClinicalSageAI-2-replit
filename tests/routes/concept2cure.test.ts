@@ -255,6 +255,14 @@ vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
   loadPasswordHash: async () => 'stored-hash',
 }));
 
+/* §11.10(g): the signing route asks the platform's one policy
+   (checkSigningAuthority, P-27), which reads the signer's role from the
+   membership row. User 1 is an admin of org 1, as the session says. */
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (userId: number, organizationId: number) =>
+    userId === 1 && organizationId === 1 ? 'admin' : null,
+}));
+
 vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
@@ -574,7 +582,8 @@ describe('Concept2Cure API', () => {
       documentId: 10,
       versionId: 1,
       signaturePurpose: 'Approved for submission',
-      signatureMeaning: 'I approve this version for submission',
+      // §11.50(a)(3): from the closed vocabulary; free text is refused (P1-42).
+      signatureMeaning: 'approval',
       action: 'approved',
       password: 'correct-horse-battery',
       // Claims about HOW identity was established, asserted by the party being
@@ -607,6 +616,9 @@ describe('Concept2Cure API', () => {
       documentId: 10,
       versionId: 1,
       signaturePurpose: 'Approved for submission',
+      // A valid meaning, so the refusal under test is the password's (a
+      // missing meaning is refused first, before any password is checked).
+      signatureMeaning: 'approval',
       action: 'approved',
       password: 'wrong',
     });

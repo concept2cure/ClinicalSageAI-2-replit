@@ -11,6 +11,7 @@
  * this proves it is wired correctly at the boundary that feeds source-attribution.
  */
 
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -51,6 +52,7 @@ let evidenceSourceId: number;
 
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'org');`);
   // Minimal lumen_data_atoms — enrich only reads id/source_type/source_id/metadata.
@@ -62,6 +64,8 @@ beforeAll(async () => {
       metadata jsonb
     );`);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
+  await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
+  await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
 
   await pool.query(
     `INSERT INTO lumen_data_atoms (id, source_type, source_id, metadata) VALUES

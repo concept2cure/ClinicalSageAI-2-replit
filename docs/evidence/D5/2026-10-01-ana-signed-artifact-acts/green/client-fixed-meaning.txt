@@ -1,0 +1,39 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > end of turn: extractPendingSignoffs keeps it 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > live: pendingSignoffFromApproval keeps it 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > a value that is not a meaning the dialog has is dropped, not offered 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > pulls only well-formed PART11 blocks and reads the tier flag 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > returns [] for missing / non-array input 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > surfaces an agent's proposal (HUMAN_CONFIRMATION_REQUIRED) with its tier — the confirm tier asks for no reason 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > asks for neither a reason nor credentials, and says what AnA proposed 82ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > offers that meaning only, already chosen 206ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > signs with it: the reason and the password are all that is asked for 62ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > an act that fixes none still offers the three, and no Release 64ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > shows the statement of intent the server records with the signature 11ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > confirming posts { confirm: true } with the command and params, and no reason or password 219ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > the reason tier still needs its reason before the button enables 51ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > reason-only tier shows no password field 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier requires a password field 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier presents the §11.50 meaning enum (AUTHOR/REVIEWER/APPROVER) 30ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier states the 11.100(b) attestation and re-auth-at-signing 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > renders as a modal dialog naming the action and consequence 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > Escape cancels the dialog 12ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > associates the reason error via aria-invalid + aria-describedby when too short 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > submits the reason + command to the governed-action route and reports outcome 22ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact submit requires reason + re-auth + meaning and forwards them 39ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > keeps Confirm disabled until the reason is long enough 17ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > shows what AnA proposed and its reason whole, but leaves the reason field empty 18ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > adopting AnA's wording is an act of the person, and that is what is sent 31ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > the person's own words are sent when they write them 24ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > on a live prompt, Cancel tells the waiting run 65ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > Escape on a live prompt declines too 60ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > on a finished turn there is nothing waiting, and nothing is sent 13ms
+
+ Test Files  2 passed (2)
+      Tests  29 passed (29)
+   Start at  13:56:51
+   Duration  2.01s (transform 514ms, setup 282ms, import 635ms, tests 1.09s, environment 1.24s)
+

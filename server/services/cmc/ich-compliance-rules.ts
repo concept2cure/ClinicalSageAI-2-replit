@@ -6,23 +6,28 @@
  * `IchCheckFinding[]` with the guideline citation, rule ID, status, and
  * evidence array.
  *
- * Covers: Q1A(R2), Q2(R1), Q3A(R2)/Q3B(R2), Q3D(R2), Q6A/Q6B, Q8(R2),
- * Q9, Q10.
+ * Covers: Q1A(R2), Q2(R2), Q3A(R2)/Q3B(R2), Q3D(R2), Q6A/Q6B, Q8(R2),
+ * Q9(R1), Q10. The Q2 rule, which depends on the program's stage, is
+ * ich-compliance-q2.ts.
+ *
+ * The list is the revision each guideline is in force at, as the CMC
+ * regulatory record (services/cmc/knowledge) holds it: the engine reported
+ * against Q2(R1) and Q9 after Q2(R2) (2023-11-01) and Q9(R1) (2023-01-18)
+ * replaced them, and __tests__/ich-compliance-currency.test.ts now refuses a
+ * code the record does not hold as final.
  *
  * @module server/services/cmc/ich-compliance-rules
  */
+import type { ProgramStage } from './program-stage';
 
-export type IchGuideline =
-  | 'Q1A(R2)'
-  | 'Q2(R1)'
-  | 'Q3A(R2)'
-  | 'Q3B(R2)'
-  | 'Q3D(R2)'
-  | 'Q6A'
-  | 'Q6B'
-  | 'Q8(R2)'
-  | 'Q9'
-  | 'Q10';
+export type { ProgramStage } from './program-stage';
+
+/** The guidelines the engine reports against, at the revision in force. */
+export const ICH_GUIDELINES_CHECKED = [
+  'Q1A(R2)', 'Q2(R2)', 'Q3A(R2)', 'Q3B(R2)', 'Q3D(R2)', 'Q6A', 'Q6B', 'Q8(R2)', 'Q9(R1)', 'Q10',
+] as const;
+
+export type IchGuideline = (typeof ICH_GUIDELINES_CHECKED)[number];
 
 /**
  * Outcome of a single rule.
@@ -49,7 +54,7 @@ export interface IchCheckFinding {
 /** The named inputs a rule may depend on. */
 export type ProjectInputKey =
   | 'specs' | 'methods' | 'stability' | 'drugSubs'
-  | 'processes' | 'sourceObjects' | 'sections';
+  | 'processes' | 'sourceObjects' | 'sections' | 'stage';
 
 export interface ProjectInputs {
   specs: Array<Record<string, unknown>>;
@@ -59,6 +64,12 @@ export interface ProjectInputs {
   processes: Array<Record<string, unknown>>;
   sourceObjects: Array<Record<string, unknown>>;
   sections: Array<Record<string, unknown>>;
+  /**
+   * What the program files and its recorded clinical phase (program-stage.ts).
+   * Absent or null: not a program, or no application type recorded — a rule
+   * that depends on the stage says so rather than assuming one.
+   */
+  stage?: ProgramStage | null;
   /**
    * Inputs that could NOT be read, mapped to the reason.
    *
@@ -208,102 +219,7 @@ export function checkQ1A(inp: ProjectInputs): IchCheckFinding[] {
   return findings;
 }
 
-// ─── Q2(R1) — Analytical method validation ───────────────────────────────────
-
-export function checkQ2(inp: ProjectInputs): IchCheckFinding[] {
-  const findings: IchCheckFinding[] = [];
-
-  const blocked = blockedInputs(inp, ['methods']);
-  if (blocked.length > 0) {
-    return [notEvaluatedFinding(
-      'Q2(R1)',
-      'Q2_NOT_EVALUATED',
-      blocked,
-      'ICH Q2(R1) §1 — Validation of analytical procedures.',
-    )];
-  }
-
-  if (inp.methods.length === 0) {
-    findings.push({
-      guideline: 'Q2(R1)',
-      ruleId: 'Q2_NO_METHODS',
-      status: 'fail',
-      message: 'No analytical methods recorded for the project.',
-      evidence: ['analytical_methods row count: 0'],
-      citation: 'ICH Q2(R1) §1 — Validation of analytical procedures.',
-    });
-    return findings;
-  }
-
-  /* A method whose validation status was never RECORDED has not been shown to
-     fail validation. Reporting it as unvalidated is a finding against the
-     project for a fact nobody entered — the same class of defect as rendering
-     a failed read as an empty result. The two are separated: a recorded
-     non-validated status is a fail; an absent one is not evaluated. */
-  const statusOf = (m: (typeof inp.methods)[number]) =>
-    String(m.validationStatus ?? '').trim().toLowerCase();
-  const withStatus = inp.methods.filter(m => statusOf(m) !== '');
-  const withoutStatus = inp.methods.filter(m => statusOf(m) === '');
-
-  const unvalidated = withStatus.filter(m => {
-    const s = statusOf(m);
-    return s !== 'validated' && s !== 'verified' && s !== 'transferred';
-  });
-  if (unvalidated.length > 0) {
-    findings.push({
-      guideline: 'Q2(R1)',
-      ruleId: 'Q2_UNVALIDATED_METHODS',
-      status: 'fail',
-      message: `${unvalidated.length} method(s) lack validated / verified status.`,
-      evidence: unvalidated.slice(0, 5).map(m => `${m.methodName}: ${m.validationStatus ?? 'unknown'}`),
-      citation: 'ICH Q2(R1) §1 — Methods used for release and stability must be validated.',
-    });
-  }
-  if (withoutStatus.length > 0) {
-    findings.push({
-      guideline: 'Q2(R1)',
-      ruleId: 'Q2_VALIDATION_STATUS_NOT_RECORDED',
-      status: 'not_evaluated',
-      message: `${withoutStatus.length} method(s) record no validation status, so their validation could not be evaluated.`,
-      evidence: withoutStatus.slice(0, 5).map(m => `${m.methodName}: no validation status recorded`),
-      citation: 'ICH Q2(R1) §1 — Validation of analytical procedures.',
-    });
-  }
-
-  for (const m of inp.methods) {
-    const purpose = String(m.purpose ?? '').toLowerCase();
-    if (purpose.includes('identity')) continue;
-
-    const missing: string[] = [];
-    if (m.specificityData == null) missing.push('specificity');
-    if (m.linearityData == null && (purpose.includes('assay') || purpose.includes('quant') || purpose.includes('impur'))) missing.push('linearity');
-    if (m.accuracyData == null && (purpose.includes('assay') || purpose.includes('impur'))) missing.push('accuracy');
-    if (m.precisionData == null) missing.push('precision');
-    if (missing.length > 0) {
-      findings.push({
-        guideline: 'Q2(R1)',
-        ruleId: 'Q2_INCOMPLETE_VALIDATION',
-        status: 'warning',
-        message: `Method "${m.methodName}" is missing validation evidence: ${missing.join(', ')}.`,
-        evidence: [`Method type: ${m.methodType}`, `Purpose: ${m.purpose}`],
-        citation: `ICH Q2(R1) Table — Required validation characteristics for "${m.purpose}".`,
-      });
-    }
-  }
-
-  if (findings.length === 0) {
-    findings.push({
-      guideline: 'Q2(R1)',
-      ruleId: 'Q2_OK',
-      status: 'pass',
-      message: `${inp.methods.length} analytical method(s) validated with complete Q2(R1) evidence.`,
-      evidence: [`method_count: ${inp.methods.length}`],
-      citation: 'ICH Q2(R1) §1.',
-    });
-  }
-
-  return findings;
-}
+// ─── Q2(R2) — Analytical procedure validation: ich-compliance-q2.ts ─────────
 
 // ─── Q3A(R2) / Q3B(R2) — Impurities ──────────────────────────────────────────
 
@@ -607,7 +523,7 @@ export function checkQ8(inp: ProjectInputs): IchCheckFinding[] {
   return findings;
 }
 
-// ─── Q9 — Quality risk management ────────────────────────────────────────────
+// ─── Q9(R1) — Quality risk management ────────────────────────────────────────
 
 export function checkQ9(inp: ProjectInputs): IchCheckFinding[] {
   const findings: IchCheckFinding[] = [];
@@ -625,25 +541,25 @@ export function checkQ9(inp: ProjectInputs): IchCheckFinding[] {
   const blockedQ9 = blockedInputs(inp, ['sourceObjects', 'sections']);
   if (!hasRiskSource && !hasRiskNarrative && blockedQ9.length > 0) {
     return [notEvaluatedFinding(
-      'Q9',
+      'Q9(R1)',
       'Q9_NOT_EVALUATED',
       blockedQ9,
-      'ICH Q9 §4 — Quality risk management process.',
+      'ICH Q9(R1) §4 — Quality risk management process.',
     )];
   }
 
   if (!hasRiskSource && !hasRiskNarrative) {
     findings.push({
-      guideline: 'Q9',
+      guideline: 'Q9(R1)',
       ruleId: 'Q9_NO_RISK_ASSESSMENT',
       status: 'warning',
       message: 'No quality risk management evidence (FMEA, HAZOP, or risk_assessment source object).',
       evidence: ['No source object keyed to risk', 'No Module 3 section narrative referencing risk assessment'],
-      citation: 'ICH Q9 §4 — Quality risk management process.',
+      citation: 'ICH Q9(R1) §4 — Quality risk management process.',
     });
   } else {
     findings.push({
-      guideline: 'Q9',
+      guideline: 'Q9(R1)',
       ruleId: 'Q9_OK',
       status: 'pass',
       message: 'Quality risk management evidence present.',
@@ -651,7 +567,7 @@ export function checkQ9(inp: ProjectInputs): IchCheckFinding[] {
         hasRiskSource ? 'risk source object present' : '',
         hasRiskNarrative ? 'Module 3 section narrative references risk assessment' : '',
       ].filter(Boolean),
-      citation: 'ICH Q9.',
+      citation: 'ICH Q9(R1).',
     });
   }
 

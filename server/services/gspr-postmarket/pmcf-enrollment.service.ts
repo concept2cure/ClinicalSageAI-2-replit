@@ -54,7 +54,7 @@
 
 import { and, asc, eq, sql } from 'drizzle-orm';
 
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
   pmcfEnrollmentRecords,
@@ -64,6 +64,7 @@ import {
   type PmcfActivityStatus,
   type PmcfEnrollmentRecord,
 } from '../../../shared/schema/gspr-postmarket';
+import { programInOrganization } from '../c2c/program-access';
 
 export { PMCF_ACTIVITY_KINDS, PMCF_ACTIVITY_STATUSES };
 export type { PmcfActivityKind, PmcfActivityStatus, PmcfEnrollmentRecord };
@@ -130,17 +131,7 @@ function rethrow(err: unknown): never {
  * function calls this first; nothing below trusts a programId from a payload.
  */
 async function assertProgramInOrg(organizationId: number, programId: string): Promise<void> {
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(
-        eq(regulatoryPrograms.id, programId),
-        eq(regulatoryPrograms.organizationId, organizationId),
-      ),
-    )
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, programId, organizationId))) {
     throw new PmcfEnrollmentRefusal('PMCF_PROGRAM_NOT_IN_ORG', PROGRAM_NOT_IN_ORG, 404);
   }
 }

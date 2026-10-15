@@ -1,0 +1,69 @@
+# gates and ESLint, P1-49, run 2026-10-01T13:57:17Z; tree: this item's changes applied, nothing committed
+
+## npm run -s check:security-patterns
+check-security-patterns: 0 violations across 2973 file(s).
+
+## npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+
+## npm run -s ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+
+## npm run -s ci:launch-scope-api
+ci:launch-scope-api: 282 API paths named by launch and shell screens; none refused. {"launch":236,"never-gated":44,"infrastructure":2}
+
+## npm run -s ci:unreferenced-modules
+Unreferenced modules: 82 (baseline 82)
+
+OK: no new unreachable modules.
+
+## npm run -s ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+
+## node scripts/ci/check-untracked-imports.mjs --all  (exit 1: expected until the new module is committed; see README)
+
+[ci:untracked-imports] FAIL — 3 import(s) resolve to a file that is on disk but NOT in git:
+  server/__tests__/security/auth-invalid-expired-jwt.test.ts:22  →  ../../middleware/
+  server/routes/tenant-config.ts:22  →  ../services/tenant/tenant-settings-writer
+  server/services/ana-platform-controller.ts:40  →  ./tenant/tenant-settings-writer
+
+  This builds for you and for nobody else. The usual cause is a .gitignore
+  pattern matching a source directory — check `git check-ignore -v <path>`,
+
+## focused type-check: npx tsc -p <scratch tsconfig extending tsconfig.json, files = the six changed server modules>
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+
+real	0m27.432s
+user	0m37.154s
+sys	0m1.497s
+
+## ESLint, changed files (errors / warnings), working tree
+server/__tests__/routes/ana-platform-control.test.ts errors 0 warnings 0
+server/__tests__/security/scim-group-role-cache.test.ts errors 0 warnings 0
+server/__tests__/security/scim-provisioning.contract.test.ts errors 0 warnings 0
+server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts errors 0 warnings 0
+server/routes/ana-platform-control.ts errors 0 warnings 0
+server/routes/scim.ts errors 0 warnings 5
+server/routes/tenant-config.ts errors 0 warnings 0
+server/services/ana-platform-controller.ts errors 0 warnings 0
+server/services/tenant/membership-change.ts errors 0 warnings 0
+server/services/tenant/tenant-settings-writer.ts errors 0 warnings 0
+tests/db/role-config-change-audit.dbtest.ts errors 0 warnings 0
+
+## server/routes/scim.ts after the removeMembership change (working tree)
+    98:11 warn max-depth Blocks are nested too deeply (5). Maximum allowed is 4.
+    222:1 warn complexity Async function 'scimAuth' has a complexity of 17. Maximum allowed is 15.
+    301:1 warn max-params Async function 'auditScim' has too many parameters (7). Maximum allowed is 5.
+    740:1 warn max-lines File has too many lines (818). Maximum allowed is 500.
+    796:74 warn complexity Async arrow function has a complexity of 41. Maximum allowed is 15.
+
+## server/routes/scim.ts at HEAD (git show HEAD:… | eslint --stdin)
+    93:11 warn max-depth Blocks are nested too deeply (5). Maximum allowed is 4.
+    217:1 warn complexity Async function 'scimAuth' has a complexity of 17. Maximum allowed is 15.
+    290:1 warn max-params Async function 'auditScim' has too many parameters (6). Maximum allowed is 5.
+    696:72 warn complexity Async arrow function has a complexity of 17. Maximum allowed is 15.
+    731:1 warn max-lines File has too many lines (785). Maximum allowed is 500.
+    775:74 warn complexity Async arrow function has a complexity of 43. Maximum allowed is 15.

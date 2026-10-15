@@ -1,0 +1,31 @@
+# integer-project-same-org-keys.pglite.test.ts (PF-13 cases) against the HEAD migrations
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > a replay adds nothing: one NOT VALID key per table, each with its existing key's delete action
+   → expected [ { …(4) }, { …(4) }, { …(4) }, …(1) ] to deeply equal [ { …(4) }, { …(4) }, { …(4) }, …(1) ]
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > 20260820's own key on working memory is SET NULL too, and only one of it
+   → expected { n: 1, confdeltype: 'a' } to deeply equal { n: 1, confdeltype: 'n' }
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > conversation_working_memory: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > conversation_working_memory: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project delete still cascades its own artifacts, packages and conversations, as before
+   → update or delete on table "projects" violates foreign key constraint "conversation_working_memory_project_id_fkey" on table "conversation_working_memory"
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > and detaches the working memory of its conversations: kept, with its organization, under no project
+   → expected [ { project_id: 40, …(1) } ] to deeply equal [ { project_id: null, …(1) } ]
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > a database that deployed the NO ACTION working-memory keys (PF-13 follow-up) > both keys are SET NULL, under their own names, one of each
+   → expected [ { …(2) }, { …(2) } ] to deeply equal [ { …(2) }, { …(2) } ]
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > a database that deployed the NO ACTION working-memory keys (PF-13 follow-up) > the project its conversation was summarized in can now be deleted, and the summary stays
+   → expected '23503' to be 'ok' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 13 passed (19)
+
+# the two mocked route suites (PF-13 cases) against the HEAD routes
+ × server/routes/__tests__/clients-delete-retention.test.ts > DELETE /api/clients/:id — a store keeps a record under one of its projects (PF-13 follow-up) > the database refusing the delete is 409 PROJECT_HOLDS_RECORDS, archive instead, not a 500
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/device-projects-delete-ownership.test.ts > DELETE /api/device-projects/:id — a store keeps a record under it (PF-13 follow-up) > the database refusing the delete is 409 PROJECT_HOLDS_RECORDS, archive instead, not a 500
+   → expected 500 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 8 passed (10)

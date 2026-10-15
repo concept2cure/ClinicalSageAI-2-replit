@@ -1,0 +1,243 @@
+[
+ {
+  "t0": 1790620440935,
+  "body": {
+   "message": "Check two readiness sources for BX-256.",
+   "language": "en",
+   "context": {
+    "screen": "conversation-thread",
+    "screenName": "conversation-thread"
+   },
+   "conversation_history": [],
+   "effort_level": "balanced",
+   "run_policy": "manual",
+   "live_drive": true,
+   "drive_acks": true
+  },
+  "frames": [
+   {
+    "ms": 12,
+    "type": "status",
+    "phase": "orchestrating",
+    "message": "Planning response…"
+   },
+   {
+    "ms": 12,
+    "type": "status",
+    "phase": "loading_context",
+    "message": "Loading project memory…"
+   },
+   {
+    "ms": 12,
+    "type": "drive_state",
+    "enabled": true,
+    "mode": "assist"
+   },
+   {
+    "ms": 54,
+    "type": "context_used",
+    "uploads": [],
+    "unresolvedUploads": 0,
+    "memory": [],
+    "memoryStatus": "unavailable"
+   },
+   {
+    "ms": 54,
+    "type": "status",
+    "phase": "generating",
+    "message": "Generating response…"
+   },
+   {
+    "ms": 54,
+    "type": "thread_id",
+    "thread_id": "ana-ri_1790620440944_wmodbm8id"
+   },
+   {
+    "ms": 54,
+    "type": "orchestration",
+    "orchestration": {
+     "detectedIntent": {
+      "lens": "audit",
+      "confidence": 0.2,
+      "signals": [
+       "Check"
+      ]
+     },
+     "detectedSubmissionType": null,
+     "detectedDocumentTemplate": null,
+     "appliedRole": "general",
+     "activeWorkstream": {
+      "stream": "evidence_development",
+      "phase": "triage",
+      "objective": "Check two readiness sources for BX-256.",
+      "currentFocus": "Evidence chain and support gaps",
+      "blockers": [],
+      "nextStep": "Build an evidence inventory, mark critical gaps, and decide what can be defended now versus what needs new support.",
+      "collaborationMode": "advise"
+     },
+     "workstreamHandoff": null,
+     "suggestedActions": [
+      "Create Evidence Memo",
+      "Create Deficiency Preemption Memo",
+      "Create Risk Memo",
+      "Create Reviewer Question Brief"
+     ]
+    }
+   },
+   {
+    "ms": 254,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Running 1 step…"
+   },
+   {
+    "ms": 254,
+    "type": "step",
+    "round": 1,
+    "tools": [
+     "global_search"
+    ],
+    "plan": [
+     {
+      "tool": "global_search",
+      "label": "Global search"
+     }
+    ]
+   },
+   {
+    "ms": 254,
+    "type": "tool_use",
+    "round": 1,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_27",
+    "label": "Global search",
+    "input": {
+     "q": "unavailable probe 1 of 2"
+    }
+   },
+   {
+    "ms": 254,
+    "type": "tool_result",
+    "round": 1,
+    "name": "global_search",
+    "toolUseId": "toolu_fake_27",
+    "label": "Global search",
+    "status": "success",
+    "latencyMs": 4,
+    "result": "{\"ok\":true,\"query\":\"unavailable probe 1 of 2\",\"hits\":[],\"count\":0,\"message\":\"Found 0 hits across programs + artifacts. Use the kit's search overlay for full coverage across all 12 types.\"}"
+   },
+   {
+    "ms": 254,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 384,
+    "type": "warning",
+    "code": "MANUAL_UNAVAILABLE",
+    "message": "Manual needs run control, which was not available for this turn, so AnA stopped where she would have asked you."
+   },
+   {
+    "ms": 384,
+    "type": "done",
+    "model": "claude-opus-5-5",
+    "provider": "anthropic",
+    "modelTier": "flagship",
+    "effortUsed": "balanced",
+    "usage": {
+     "inputTokens": 100,
+     "outputTokens": 20,
+     "totalTokens": 120,
+     "estimatedCostUsd": 0.0008
+    },
+    "latencyMs": 153,
+    "response": "Source 1 of 2.Source 2 of 2.",
+    "telemetry": {
+     "phases": {
+      "orchestrationMs": 12,
+      "contextMs": 16,
+      "gatewayMs": 170,
+      "firstTokenMs": 213
+     },
+     "memory": {
+      "layerOutcomes": {
+       "workingMemory": "empty",
+       "clientMemory": "error",
+       "projectMemory": "skipped"
+      },
+      "workingMemoryMode": "none",
+      "semanticSearchMs": 15
+     }
+    },
+    "stoppedReason": "hold_unavailable",
+    "rounds": 1,
+    "runPolicy": "manual",
+    "pendingSteps": [
+     "Global search"
+    ]
+   },
+   {
+    "ms": 426,
+    "type": "grounding_strip",
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "trust_summary": "Evidence check not run for this response — verify any regulatory claims before relying on them."
+   },
+   {
+    "ms": 426,
+    "type": "post_done",
+    "cleanedResponse": "Source 1 of 2.Source 2 of 2.",
+    "enrichmentMeta": {
+     "sourcesAttempted": 0,
+     "sourcesSucceeded": [],
+     "sourcesFailed": [],
+     "triggerType": "none",
+     "hasProjectContext": false
+    },
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "evidenceDiscipline": {
+     "compliant": true,
+     "labels": 0,
+     "hasOverclaims": false
+    },
+    "structure": {
+     "valid": false,
+     "score": 0,
+     "maxScore": 6
+    },
+    "queueMeta": {
+     "thread_id": "ana-ri_1790620440944_wmodbm8id",
+     "handoff_ready": true,
+     "turn_status": "completed",
+     "can_process_next": true,
+     "blocked_reason": null
+    },
+    "turnRecord": {
+     "status": "recorded",
+     "id": "8485c2bd-a642-46b7-8d43-508cf160ce0d",
+     "sha256": "a308dfd2c719359793f86f1d34d51f6711fb85d212e69e1c7e5bad1bc3ad55fe"
+    }
+   }
+  ],
+  "deltas": 5,
+  "ended": 426
+ }
+]

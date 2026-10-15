@@ -64,14 +64,30 @@ locals {
   db_name = "concept2cure_ri"
 }
 
+# The two database passwords rotate by changing var.db_credentials_rotation
+# (P1-11, INF-18): a new value replaces both on the next apply, and the deploy
+# that follows re-aligns app_service (deploy-migrate) and rolls every task onto
+# the new secrets.
 resource "random_password" "db_master" {
   length  = 40
+  special = false
+  keepers = { rotation = var.db_credentials_rotation }
+}
+
+# First-run setup's secret (server/routes/setup.ts): in production
+# POST /api/setup/initialize creates the first administrator only for a request
+# carrying it in X-Setup-Token. Read it from Secrets Manager once, for that one
+# call (outputs.tf, first_run_setup); the route closes itself once any account
+# exists.
+resource "random_password" "setup_token" {
+  length  = 48
   special = false
 }
 
 resource "random_password" "db_app_service" {
   length  = 40
   special = false
+  keepers = { rotation = var.db_credentials_rotation }
 }
 
 locals {
@@ -82,17 +98,33 @@ locals {
 
 # ── Secrets Manager ─────────────────────────────────────────────────────────
 
+# OpenAI's key is stored only when a tenant elected OpenAI (var.openai_enabled;
+# P0-11, ADR-0014 §1); otherwise the secret does not exist and no task is given
+# OPENAI_API_KEY. The secret and the container entry read the same map, so they
+# cannot disagree.
+locals {
+  openai_secret = {
+    for k, v in {
+      openai_api_key = {
+        description = "OpenAI API key (a tenant's Order Form elects OpenAI)"
+        value       = var.openai_api_key
+      }
+    } : k => v if var.openai_enabled
+  }
+}
+
 module "secrets" {
-  source = "../modules/secrets"
-  prefix = "c2c/${var.environment}"
-  secrets = {
+  source     = "../modules/secrets"
+  prefix     = "c2c/${var.environment}"
+  kms_key_id = aws_kms_key.secrets.arn
+  secrets = merge(local.openai_secret, {
     jwt_secret = {
       description = "JWT signing secret"
       value       = var.jwt_secret
     }
-    openai_api_key = {
-      description = "OpenAI API key"
-      value       = var.openai_api_key
+    anthropic_api_key = {
+      description = "Anthropic API key (regulatory drafting: the approved high-risk models)"
+      value       = var.anthropic_api_key
     }
     database_url = {
       description = "Owner-role connection URL (migrations)"
@@ -101,6 +133,10 @@ module "secrets" {
     app_database_url = {
       description = "app_service connection URL (runtime, RLS enforced)"
       value       = local.app_database_url
+    }
+    setup_token = {
+      description = "First-run setup token: POST /api/setup/initialize requires it in X-Setup-Token in production"
+      value       = random_password.setup_token.result
     }
     app_service_db_password = {
       description = "app_service password, for deploy-migrate to mint the role"
@@ -122,6 +158,14 @@ module "secrets" {
       description = "Tamper-proof audit HMAC secret"
       value       = var.audit_hmac_secret
     }
+    audit_export_signing_key = {
+      description = "Seals the signed audit export an inspector re-verifies"
+      value       = var.audit_export_signing_key
+    }
+    audit_attestation_key = {
+      description = "Signs tenant-export attestation reports"
+      value       = var.audit_attestation_key
+    }
     connector_encryption_key = {
       description = "Encrypts stored connector credentials"
       value       = var.connector_encryption_key
@@ -134,7 +178,7 @@ module "secrets" {
       description = "SMTP password (login OTP delivery)"
       value       = var.smtp_pass
     }
-  }
+  })
   tags = var.tags
 }
 
@@ -143,12 +187,52 @@ module "secrets" {
 resource "terraform_data" "boot_contract" {
   lifecycle {
     precondition {
+      # The drafting provider must be one the placement approvals name, or a
+      # draft that carries PII/PHI is refused per request on a "ready" deployment.
+      condition     = contains(try(keys(jsondecode(var.ai_provider_placement_approvals)), []), "anthropic")
+      error_message = "ai_provider_placement_approvals must name \"anthropic\", the provider regulatory drafting runs on (anthropic_api_key)."
+    }
+    # OpenAI is provisioned exactly when a tenant elected it (P0-11): a key with no
+    # election would be held for nobody; an election with no key leaves the
+    # gateway's OpenAI provider off while the Order Form says it is on.
+    precondition {
+      condition     = var.openai_enabled == (length(trimspace(var.openai_api_key)) > 0)
+      error_message = "openai_enabled and openai_api_key go together: set both when a tenant's Order Form elects OpenAI (DPA Annex III), and neither otherwise."
+    }
+    precondition {
       condition     = var.refresh_token_secret != var.jwt_secret
       error_message = "refresh_token_secret must differ from jwt_secret: the app refuses to boot when they are equal (server/config/environment.ts)."
     }
     precondition {
       condition     = var.audit_hmac_key != var.audit_hmac_secret
       error_message = "audit_hmac_key and audit_hmac_secret must be different values: one seals the audit chain, the other signs tamper-proof audit rows."
+    }
+    precondition {
+      condition     = var.audit_export_signing_key != var.jwt_secret
+      error_message = "audit_export_signing_key must differ from jwt_secret: the app refuses to boot when the audit export would be sealed under the session-token key (server/services/audit/auditExportKeyPosture.ts)."
+    }
+    precondition {
+      condition     = var.audit_export_signing_key != var.audit_hmac_key && var.audit_export_signing_key != var.audit_hmac_secret
+      error_message = "audit_export_signing_key must differ from audit_hmac_key and audit_hmac_secret: each seals a different record."
+    }
+    precondition {
+      condition     = !contains([var.jwt_secret, var.audit_hmac_key, var.audit_hmac_secret, var.audit_export_signing_key], var.audit_attestation_key)
+      error_message = "audit_attestation_key must differ from jwt_secret, both audit HMAC keys and audit_export_signing_key: each signs a different record."
+    }
+    # The API task carries the virus scanner (modules/ecs-fargate), whose hard
+    # memory limit comes out of the task's. What is left is the application's,
+    # which ran in 2048 MiB before the scanner was added.
+    precondition {
+      condition     = var.api_memory - module.ecs.scanner_memory >= 2048
+      error_message = "api_memory must leave the application 2048 MiB beside the virus scanner's ${module.ecs.scanner_memory} MiB: at least ${module.ecs.scanner_memory + 2048}."
+    }
+    # The self-hosted embedding lane embeds PII and PHI only under an approval
+    # naming it for that use (ADR-0014 §1.5, amended 2026-10-01). Without one,
+    # every chunk carrying a name or an address is refused per request, on a
+    # deployment whose readiness probe (non-sensitive text) reports it ready.
+    precondition {
+      condition     = local.embedding_provider != "local" || contains(try(jsondecode(var.ai_provider_placement_approvals)["local"].approvedIntendedUses, []), "embedding")
+      error_message = "ai_provider_placement_approvals must name \"local\" with intended use \"embedding\" while the embedding lane is the self-hosted one. ADR-0014 §1.5 records the value: \"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]} (terraform.tfvars.example)."
     }
   }
 }
@@ -166,6 +250,12 @@ locals {
     { name = "AUDIT_TRAIL_ENABLED", value = "true" },
     { name = "AUDIT_REQUIRE_ENFORCE", value = "true" },
     { name = "AI_SENSITIVE_DATA_POLICY_MODE", value = "enforce" },
+    # Database-level audit must be recording: deploy-migrate (a task derived
+    # from this definition) refuses to roll services otherwise. It records what
+    # the application's own trail cannot: statements that never went through
+    # the application (scripts/db/database-audit.mjs; the RDS module preloads
+    # pgaudit).
+    { name = "DB_AUDIT_REQUIRED", value = "pgaudit" },
     { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
     # Reset and invitation links are built on APP_URL and never on the Host
     # header. The public origin is the CloudFront custom domain.
@@ -176,6 +266,15 @@ locals {
     # deployment on any other domain boots, reports ready, and nobody can sign
     # in. domain_aliases are validated to be lowercase hostnames (variables.tf).
     { name = "ALLOWED_ORIGINS", value = local.app_origin },
+    # The connector for Claude (D8, decision P-2 in docs/LAUNCH_DEFINITION_OF_DONE.md):
+    # on, at the deployment's own origin (the OAuth issuer and the resource the
+    # tokens are bound to), registering clients from Claude's origins only. It
+    # is mounted only when MCP_ENABLED is `true` (server/index.ts), and with no
+    # allowlist production refuses every registration (server/mcp/index.ts).
+    # CloudFront already routes its paths here (modules/cloudfront).
+    { name = "MCP_ENABLED", value = "true" },
+    { name = "MCP_PUBLIC_URL", value = local.app_origin },
+    { name = "MCP_CLIENT_REDIRECT_ALLOWLIST", value = "https://claude.ai,https://claude.com" },
     # Vault documents go to this stack's bucket (vault_storage.tf). Without a
     # named store production refuses to boot (storage-posture.ts); the preflight
     # requires both names and accepts only `s3` here. AWS_REGION: the provider
@@ -187,6 +286,24 @@ locals {
     { name = "SMTP_HOST", value = var.smtp_host },
     { name = "SMTP_PORT", value = tostring(var.smtp_port) },
     { name = "SMTP_FROM", value = var.smtp_from },
+    # The audit chain's head, anchored outside the database (security plan P0-8,
+    # DP-04): the daily integrity sweep verifies every organisation's chain
+    # against the latest anchor in the object-locked evidence bucket, then
+    # writes the next one under anchors/. Unset, the sweep reports the anchor
+    # "not configured" and never verified. The grant is the evidence module's.
+    { name = "AUDIT_ANCHOR_BUCKET", value = module.evidence.evidence_bucket },
+  ]
+
+  # The platform owner, by the address of their own password sign-in. The
+  # documented bootstrap (server/middleware/requirePlatformAdmin.ts,
+  # requireBusinessAdmin.ts): Master Administration, and the Business Center,
+  # whose holder can designate a super_admin in the audited Access Management
+  # console, after which these lists can shrink. A federated (SAML) session
+  # gets nothing from either. MASTER_ADMIN_EMAILS is left unset: that grant
+  # follows a designation (services/entitlements/master-admin.ts). API only.
+  owner_environment = [
+    { name = "PLATFORM_ADMIN_EMAILS", value = join(",", var.platform_owner_emails) },
+    { name = "BUSINESS_CENTER_EMAILS", value = join(",", var.platform_owner_emails) },
   ]
 
   # The deployment's public origin: the first CloudFront alias. One input, so
@@ -195,7 +312,7 @@ locals {
 
   # What every container of this image needs to boot. The API and the worker
   # run the same image and the same import-time refusals, so they share it.
-  boot_secrets = [
+  boot_secrets = concat([
     { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
     { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
     { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
@@ -203,11 +320,22 @@ locals {
     { name = "MFA_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["mfa_encryption_key"] },
     { name = "AUDIT_HMAC_KEY", value_from = module.secrets.secret_arns["audit_hmac_key"] },
     { name = "AUDIT_HMAC_SECRET", value_from = module.secrets.secret_arns["audit_hmac_secret"] },
+    { name = "AUDIT_EXPORT_SIGNING_KEY", value_from = module.secrets.secret_arns["audit_export_signing_key"] },
+    { name = "AUDIT_ATTESTATION_KEY", value_from = module.secrets.secret_arns["audit_attestation_key"] },
     { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
-    { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
+    { name = "ANTHROPIC_API_KEY", value_from = module.secrets.secret_arns["anthropic_api_key"] },
     { name = "SMTP_USER", value_from = module.secrets.secret_arns["smtp_user"] },
     { name = "SMTP_PASS", value_from = module.secrets.secret_arns["smtp_pass"] },
-  ]
+    ], [
+    # Present exactly when the secret is: only when a tenant elected OpenAI.
+    for k in keys(local.openai_secret) : { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns[k] }
+  ])
+}
+
+# Optional error reporting (server/utils/sentry.ts): absent rather than empty
+# when not configured, so the server's own "recommended" warning still fires.
+locals {
+  observability_environment = var.sentry_dsn == "" ? [] : [{ name = "SENTRY_DSN", value = var.sentry_dsn }]
 }
 
 # ── Database ─────────────────────────────────────────────────────────────────
@@ -226,6 +354,7 @@ module "rds" {
   multi_az              = var.rds_multi_az
   backup_retention_days = var.rds_backup_retention_days
   deletion_protection   = var.rds_deletion_protection
+  kms_key_id            = aws_kms_key.database.arn
   tags                  = var.tags
 }
 
@@ -271,6 +400,8 @@ module "ecs" {
   # than a tag once the deploy pipeline resolves the pushed image digest.
   api_image    = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
   worker_image = "${module.ecr.repository_urls["worker"]}:${var.image_tag}"
+  # The virus scanner the API task carries (variables.tf says how it is pinned).
+  scanner_image = var.scanner_image
 
   api_cpu              = var.api_cpu
   api_memory           = var.api_memory
@@ -278,12 +409,17 @@ module "ecs" {
   worker_desired_count = var.worker_desired_count
 
   secret_arns = module.secrets.secret_arns_list
+  # database_keys.tf: the execution role decrypts the secrets through this key.
+  secrets_kms_key_arn = aws_kms_key.secrets.arn
   # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
   # role publishes it. A task that could write it could rewrite the site every
   # user loads (security plan P0-15, INF-03; tests/boot_contract.tftest.hcl).
-  # Vault documents have their own grant (vault_storage.tf).
+  # Vault documents have their own grant (vault_storage.tf). In the evidence
+  # bucket the task needs the audit-chain anchors and nothing else (P0-8). This
+  # was the bucket's ARN: object actions there matched no object, and
+  # s3:ListBucket listed every key, CloudTrail's deliveries included.
   s3_bucket_arns = [
-    module.evidence.evidence_bucket_arn,
+    "${module.evidence.evidence_bucket_arn}/${module.evidence.anchor_prefix}*",
   ]
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this
@@ -294,6 +430,8 @@ module "ecs" {
   # verifier). The API never mints; APP_DATABASE_URL already holds the password.
   api_secrets = concat(local.boot_secrets, [
     { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
+    # First-run setup (setup_token above). Only the API serves the route.
+    { name = "SETUP_TOKEN", value_from = module.secrets.secret_arns["setup_token"] },
   ])
 
   # The worker runs the same image, so the same import-time refusals: with less
@@ -302,10 +440,69 @@ module "ecs" {
   worker_secrets = local.boot_secrets
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
-  api_environment    = concat(local.signer_environment, local.boot_environment)
-  worker_environment = concat(local.signer_environment, local.boot_environment)
+  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment, local.embedding_environment)
+  worker_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.embedding_environment)
 
   tags = var.tags
+}
+
+# ── Embeddings: the self-hosted lane (P1-54, ADR-0014 §1.5) ──────────────────
+#
+# Vault and knowledge-base search embed every document and every query. Since
+# P1-45 the gateway refuses OpenAI embeddings for every organisation that has
+# not elected OpenAI, and since P0-11 this stack provisions no OpenAI key unless
+# one has; with EMBEDDING_PROVIDER unset (OpenAI) a deployment searched nothing
+# for an ordinary tenant. This lane is inside the VPC and serves every tenant
+# the placement decision admits. tests/boot_contract.tftest.hcl holds the wiring.
+#
+# One lane for every tenant (ADR-0014 §1.5, amended 2026-10-01): the lane does
+# not follow an OpenAI election, which covers generation and fallback only; a
+# corpus searched with one model must be written with that model. bge-m3 emits
+# 1024 values and the corpora are 1536 and 3072 wide: the application asks the
+# server for 1024 and zero-pads (server/services/ai-gateway/embeddings/
+# embedding-provider.ts), and /readyz is not ready until it has embedded one
+# text that way (server/startup/ana-readiness-state.ts).
+
+module "embeddings" {
+  source = "../modules/embedding-service"
+
+  name                      = local.long
+  region                    = var.region
+  cluster_id                = module.ecs.cluster_id
+  vpc_id                    = module.vpc.vpc_id
+  private_subnet_ids        = module.vpc.private_subnet_ids
+  client_security_group_ids = [module.ecs.ecs_tasks_security_group_id]
+
+  image          = var.embedding_image
+  model_revision = var.embedding_model_revision
+  cpu            = var.embedding_cpu
+  memory         = var.embedding_memory
+  desired_count  = var.embedding_desired_count
+
+  tags = var.tags
+}
+
+locals {
+  # Unconditional: no variable moves it (INF-36, resolved by the decision above).
+  embedding_provider = "local"
+
+  # The API and the worker both run the embedding runtime. With local and no
+  # address, resolveEmbeddingProvider refuses rather than falling back to OpenAI.
+  # EMBEDDING_LOCAL_MODEL is the model the server loads, so the ledger names
+  # what served each call; the readiness probe refuses a server that answers as
+  # any model but the corpus policy's (SELF_HOSTED_EMBEDDING_MODEL).
+  embedding_environment = [
+    { name = "EMBEDDING_PROVIDER", value = local.embedding_provider },
+    { name = "EMBEDDING_LOCAL_BASE_URL", value = module.embeddings.base_url },
+    { name = "EMBEDDING_LOCAL_MODEL", value = module.embeddings.model_id },
+  ]
+}
+
+check "embedding_model_is_pinned" {
+  assert {
+    condition     = var.embedding_model_revision != null
+    error_message = "embedding_model_revision is unset, so the embedding server loads BAAI/bge-m3 from the hub's main branch. Pin the commit (variables.tf says how): a model that changes under a corpus mixes two vector spaces."
+  }
 }
 
 # ── Compliance Evidence (S3 + CloudTrail) ────────────────────────────────────
@@ -316,7 +513,9 @@ module "evidence" {
   name_prefix      = local.short
   object_lock_mode = var.evidence_object_lock_mode
   retention_days   = var.evidence_retention_days
-  tags             = var.tags
+  # The task role writes and reads the audit-chain anchors (P0-8).
+  anchor_writer_role_arn = module.ecs.task_role_arn
+  tags                   = var.tags
 }
 
 # ── CDN (CloudFront + S3) ───────────────────────────────────────────────────

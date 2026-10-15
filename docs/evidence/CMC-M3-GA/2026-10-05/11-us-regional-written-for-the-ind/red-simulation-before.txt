@@ -1,0 +1,4 @@
+── 11h. §3.2.R.1.US is written for the IND this program files — 21 CFR 312.23(a)(7), not an NDA's 314.50
+   ✗ §3.2.R.1.US (200) is not the IND's: Per ICH M4Q, Section 3.2.R.1 (Regional Information) — United States contains FDA-specific information required to support a US marketing application (NDA, AND | cells mention NDA items: 314.50(d)(1)(ii) 356h 
+
+════ RESULT: 129 passed, 1 failed ════

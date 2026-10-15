@@ -10,6 +10,8 @@ declare module 'pdfkit' {
     pipe(destination: NodeJS.WritableStream): NodeJS.WritableStream;
     fontSize(size: number): this;
     font(font: string): this;
+    registerFont(name: string, src: string | Uint8Array, family?: string): this;
+    widthOfString(text: string, options?: TextOptions): number;
     text(text: string, options?: TextOptions): this;
     text(text: string, x?: number, y?: number, options?: TextOptions): this;
     moveDown(lines?: number): this;
@@ -17,6 +19,17 @@ declare module 'pdfkit' {
     save(): this;
     restore(): this;
     rotate(angle: number, options?: { origin?: [number, number] }): this;
+    translate(x: number, y: number): this;
+    lineWidth(width: number): this;
+    strokeColor(color: string): this;
+    moveTo(x: number, y: number): this;
+    lineTo(x: number, y: number): this;
+    circle(x: number, y: number, radius: number): this;
+    rect(x: number, y: number, width: number, height: number): this;
+    fill(color?: string): this;
+    stroke(color?: string): this;
+    markContent(tag: string, options?: { actual?: string; alt?: string; lang?: string; expanded?: string }): this;
+    endMarkedContent(): this;
     fillColor(color: string, opacity?: number): this;
     opacity(opacity: number): this;
     end(): void;
@@ -33,6 +46,8 @@ declare module 'pdfkit' {
   }
 
   interface PDFDocumentOptions {
+    margin?: number;
+    autoFirstPage?: boolean;
     margins?: {
       top?: number;
       bottom?: number;
@@ -47,6 +62,7 @@ declare module 'pdfkit' {
       Creator?: string;
       Producer?: string;
       CreationDate?: Date;
+      ModDate?: Date;
     };
     bufferPages?: boolean;
     layout?: 'portrait' | 'landscape';
@@ -54,6 +70,7 @@ declare module 'pdfkit' {
   }
 
   interface TextOptions {
+    features?: string[] | Record<string, boolean>;
     align?: 'left' | 'center' | 'right' | 'justify';
     width?: number;
     height?: number;

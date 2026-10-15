@@ -1,0 +1,23 @@
+-- local Postgres c2c_ui_screens (psql -h /tmp -U postgres), 2026-10-08
+-- before (HEAD):
+ERROR:  column "project_id" does not exist
+LINE 1: ...m_id IN (SELECT id FROM regulatory_programs WHERE project_id...
+                                                             ^
+-- after:
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=16.48..24.52 rows=1 width=88)
+   ->  HashAggregate  (cost=16.34..16.35 rows=1 width=32)
+         Group Key: rp.id
+         ->  Nested Loop  (cost=0.28..16.33 rows=1 width=32)
+               Join Filter: (rp.id = p.regulatory_program_id)
+               ->  Index Scan using idx_projects_org_owner on projects p  (cost=0.14..8.16 rows=1 width=16)
+                     Index Cond: (organization_id = 1)
+                     Filter: (id = 1)
+               ->  Index Scan using reg_programs_code_idx on regulatory_programs rp  (cost=0.14..8.16 rows=1 width=16)
+                     Index Cond: (organization_id = 1)
+                     Filter: (deleted_at IS NULL)
+   ->  Index Scan using program_milestones_program_idx on program_milestones  (cost=0.14..8.16 rows=1 width=104)
+         Index Cond: (program_id = rp.id)
+(13 rows)
+

@@ -75,6 +75,10 @@ function ok(body: unknown) {
 async function advanceToCreate() {
   fireEvent.click(screen.getByRole('button', { name: /pick 510/i }));
   fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
+  // The project name is required since QA 2026-10-08 (newProjectWizardName.test.tsx).
+  fireEvent.change(await screen.findByRole('textbox', { name: /project name/i }), {
+    target: { value: 'Aurora CGM — 510(k)' },
+  });
   fireEvent.click(await screen.findByRole('button', { name: /continue/i }));
   return screen.findByRole('button', { name: /create project/i });
 }

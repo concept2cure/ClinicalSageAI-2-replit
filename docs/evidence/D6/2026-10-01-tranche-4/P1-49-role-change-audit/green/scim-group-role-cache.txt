@@ -1,0 +1,27 @@
+# command: npx vitest run server/__tests__/security/scim-group-role-cache.test.ts
+# tree: this item's changes applied; run 2026-10-01T13:57:51Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a refused audit row rolls the whole request back: 500, nothing dropped, no detail leaked
+{
+  "timestamp": "2026-10-01T13:57:53.214Z",
+  "level": "error",
+  "message": "[scim] SCIM patch group failed",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > add: each change and its audit row in one transaction; each changed member dropped after COMMIT 179ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > replace: each change and its audit row in one transaction; each changed member dropped after COMMIT 6ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > remove: a member holding the group role is demoted to member, recorded, and dropped after COMMIT 4ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a member already holding the role, or not holding the removed one, changes nothing and drops nothing 7ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a user who is not a member of this organisation is not given the role 4ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a refused audit row rolls the whole request back: 500, nothing dropped, no detail leaked 5ms
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a group that names no member changes no role and drops nothing 4ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  13:57:52
+   Duration  855ms (transform 199ms, setup 105ms, import 157ms, tests 214ms, environment 0ms)
+

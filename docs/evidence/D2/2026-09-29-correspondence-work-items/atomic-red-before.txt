@@ -1,0 +1,81 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-30T23:15:17.855Z","pid":1181,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-30T23:15:17.857Z","pid":1181,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-30T23:15:17.857Z","pid":1181,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-30T23:15:18.129Z', poolSize: 1 }
+
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/correspondence-work-items.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-30T23:15:18.795Z","pid":1181,"hostname":"vm","context":{"userId":18,"tenantId":91860,"resourceId":"a4301298-0b08-4b11-9bbe-73ded76cb22d"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each 299ms
+{"level":30,"time":"2026-09-30T23:15:18.862Z","pid":1181,"hostname":"vm","context":{"userId":18,"tenantId":91860,"resourceId":"0ec2936e-5298-42e7-b6a2-c56689d16385"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+{"level":50,"time":"2026-09-30T23:15:18.938Z","pid":1181,"hostname":"vm","context":{"correspondenceId":"dfd87674-4af2-4576-8aa0-f828e23c5658","projectId":8,"submissionId":"bf241a7e-488d-4030-9e73-8f3962bb8ee2","err":"permission denied for table c2c_project_work_items","correlationId":null,"code":"42501"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too 64ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > two work items for the same integer-keyed source in one organisation are refused 6ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > the same correspondence issue cannot be written twice 10ms
+{"level":30,"time":"2026-09-30T23:15:19.001Z","pid":1181,"hostname":"vm","context":{"userId":18,"tenantId":91860,"resourceId":"cbd843ab-7556-4245-a17a-2fe60644c1e6"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+{"level":50,"time":"2026-09-30T23:15:19.026Z","pid":1181,"hostname":"vm","context":{"correspondenceId":"3ffd3f85-bb8d-47e6-a0db-d4306dc3c8fb","projectId":8,"submissionId":"bf241a7e-488d-4030-9e73-8f3962bb8ee2","err":"permission denied for table c2c_correspondence_issues","correlationId":null,"code":"42501"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
+ × tests/db/correspondence-work-items.dbtest.ts > an intake that cannot be stored whole leaves nothing behind > a failure on a later issue rolls back the letter and every earlier write 51ms
+   → expected { letters: 1, issues: 1, events: +0 } to deeply equal { letters: +0, issues: +0, events: +0 }
+ × tests/db/correspondence-work-items.dbtest.ts > an intake that cannot be stored whole leaves nothing behind > the same letter, sent again once the store is writable, is recorded once and whole 54ms
+   → expected [ …(2) ] to have a length of 1 but got 2
+ ✓ tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/correspondence-work-items.dbtest.ts > an intake that cannot be stored whole leaves nothing behind > a failure on a later issue rolls back the letter and every earlier write
+AssertionError: expected { letters: 1, issues: 1, events: +0 } to deeply equal { letters: +0, issues: +0, events: +0 }
+
+- Expected
++ Received
+
+  {
+    "events": 0,
+-   "issues": 0,
+-   "letters": 0,
++   "issues": 1,
++   "letters": 1,
+  }
+
+ ❯ tests/db/correspondence-work-items.dbtest.ts:276:26
+    274|       [ORG, subject],
+    275|     );
+    276|     expect(left.rows[0]).toEqual({ letters: 0, issues: 0, events: 0 });
+       |                          ^
+    277|   });
+    278|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/correspondence-work-items.dbtest.ts > an intake that cannot be stored whole leaves nothing behind > the same letter, sent again once the store is writable, is recorded once and whole
+AssertionError: expected [ …(2) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/db/correspondence-work-items.dbtest.ts:287:26
+    285|       [ORG, subject],
+    286|     );
+    287|     expect(letters.rows).toHaveLength(1);
+       |                          ^
+    288|     const issues = await owner.query(
+    289|       `SELECT count(*)::int AS n FROM c2c_correspondence_issues WHERE …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  23:15:08
+   Duration  12.23s (transform 1.74s, setup 101ms, import 941ms, tests 6.02s, environment 0ms)
+

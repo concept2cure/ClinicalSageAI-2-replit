@@ -1,0 +1,90 @@
+## an annotation outlives its filing: RED
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the positions are the registry’s own filings > annotates no filing the registry does not hold 16ms
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the distinctions a programme turns on > says plainly where a position is not a route to market 2ms
+ × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > offers the device and IVD routes the platform already files 3ms
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > no longer offers the 510(k) flavours as if they were pathways 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: an annotation whose filing does not exist: expected [ 'US_513G_RENAMED' ] to deeply equal []
+TypeError: Cannot read properties of null (reading 'marketingRoute')
+AssertionError: expected [ 'US_510K', 'US_DE_NOVO', …(5) ] to include 'US_513G'
+AssertionError: expected [ 'US_510K', 'US_DE_NOVO', …(5) ] to include 'US_513G'
+      Tests  4 failed | 20 passed (24)
+
+## a route to market is left unannotated: RED
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the positions are the registry’s own filings > annotates no filing the registry does not hold 11ms
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the positions are the registry’s own filings > covers every US and EU route to market in the segments it claims 3ms
+ × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > offers the device and IVD routes the platform already files 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: an annotation whose filing does not exist: expected [ 'US_HDE_DISABLED' ] to deeply equal []
+AssertionError: a route to market with no position: it would reach a person as a bare label: expected [ Array(1) ] to deeply equal []
+AssertionError: expected [ 'US_510K', 'US_DE_NOVO', …(5) ] to include 'US_HDE'
+      Tests  3 failed | 21 passed (24)
+
+## a frame pathway loses its registry filing: RED
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > every pathway the frame holds resolves to a registry filing 14ms
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > offers a modality only what the frame allows it, in the frame’s order 3ms
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > every modality in the frame resolves to as many positions as the frame holds 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a frame pathway with no registry filing behind it: expected [ 'BLA 351(k)' ] to deeply equal []
+AssertionError: expected [] to deeply equal [ 'US_351K' ]
+AssertionError: biosimilar: expected +0 to be 1 // Object.is equality
+      Tests  3 failed | 21 passed (24)
+
+## the frame no longer decides what a modality may take: RED
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > every pathway the frame holds resolves to a registry filing 15ms
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > offers a modality only what the frame allows it, in the frame’s order 3ms
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > every modality in the frame resolves to as many positions as the frame holds 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a frame pathway with no registry filing behind it: expected [ 'NDA 505(b)(1)', …(4) ] to deeply equal []
+AssertionError: expected [ Array(7) ] to deeply equal [ 'US_351K' ]
+AssertionError: small_molecule: expected 7 to be 3 // Object.is equality
+      Tests  3 failed | 21 passed (24)
+
+## a position travels without its authority: RED
+ × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > never travels without the authority that makes it one 13ms
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > says what each position commits the programme to, and its authority 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'US_513G' ] to deeply equal []
+AssertionError: US_513G: expected '' to be truthy
+      Tests  2 failed | 22 passed (24)
+
+## the option label stops saying it is not a route: RED
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the distinctions a programme turns on > says plainly where a position is not a route to market 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'CLIA Waiver Application' to match /not a route to market/
+      Tests  1 failed | 23 passed (24)
+
+## the question writes its own list again: RED
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers exactly the catalogue’s positions for a device programme 21ms
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers a diagnostics programme the IVD positions instead 4ms
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > says what each position commits the programme to, and its authority 2ms
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > no longer offers the 510(k) flavours as if they were pathways 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { value: '510k_traditional', …(1) } ] to deeply equal [ { value: 'US_510K', …(3) }, …(7) ]
+AssertionError: expected [ '510k_traditional' ] to deeply equal [ 'US_510K_IVD', …(7) ]
+AssertionError: 510k_traditional: expected undefined to be truthy
+AssertionError: expected [ '510k_traditional' ] to include 'US_513G'
+      Tests  4 failed | 20 passed (24)
+
+## the question stops asking the client’s own domain: RED
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers a diagnostics programme the IVD positions instead 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'US_510K', 'US_DE_NOVO', …(6) ] to deeply equal [ 'US_510K_IVD', …(7) ]
+      Tests  1 failed | 23 passed (24)
+
+## the predicate is asked on the wrong answer: RED
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > asks for the predicate on any 510(k), which is what names one 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+      Tests  1 failed | 23 passed (24)
+
+## the escape hatch is removed from the pathway question: RED
+ × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > still lets the person take a position the list does not hold 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be defined
+      Tests  1 failed | 23 passed (24)
+
+## a non-route is presented as a route (re-run with the right anchor): RED
+ × shared/regulatory/__tests__/pathway-positions.test.ts > the distinctions a programme turns on > says plainly where a position is not a route to market 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)

@@ -1,0 +1,43 @@
+semgrep 1.177.0; B=b727d50f H=9cf2e96f
+
+## new step at H, baseline B (H adds the finding)
+  exit 1
+    ::error::Semgrep found what b727d50fc25ddd50a7641dfdfb237d493ad3cfb0 did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason.
+     • Parsed lines: ~100.0%
+     • Scan was limited to files changed since baseline commit.
+     • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+    Ran 1 rule on 1 file: 1 finding.
+
+## new step at B, baseline B (nothing added)
+  exit 0
+     • Parsed lines: an unknown percentage
+     • Scan was limited to files changed since baseline commit.
+     • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+    Ran 1 rule on 0 files: 0 findings.
+
+## new step at L, baseline B = last green (the finding stays red)
+  exit 1
+    ::error::Semgrep found what b727d50fc25ddd50a7641dfdfb237d493ad3cfb0 did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason.
+     • Parsed lines: ~100.0%
+     • Scan was limited to files changed since baseline commit.
+     • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+    Ran 1 rule on 2 files: 1 finding.
+
+## new step at L, baseline H = previous push (why the baseline is the last GREEN commit)
+  exit 0
+     • Parsed lines: ~100.0%
+     • Scan was limited to files changed since baseline commit.
+     • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+    Ran 1 rule on 1 file: 0 findings.
+
+## new step, baseline not in history (fails closed)
+  exit 2
+    ::error::Semgrep did not finish (exit 2). An unfinished scan is not a pass. Exit 2 also means the baseline commit is not in this checkout's history.
+    - the current working directory is not marked as safe
+        (fix with `git config --global --add safe.directory $(pwd)`)
+    
+    Try running the command yourself to debug the issue.
+
+## new step, no baseline resolved (fails closed)
+  exit 1
+    ::error::No baseline commit was resolved. A scan with nothing to compare against is not a pass.

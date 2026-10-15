@@ -1,0 +1,71 @@
+Records in this project
+Submissions 1
+Vorelinib · KIT-mutant GIST (IND)
+ind · fda · active
+Data Room sources 17
+rl-small-09.txt
+client_document
+rl-small-10.txt
+client_document
+rl-small-08.txt
+client_document
+rl-small-07.txt
+client_document
+rl-small-05.txt
+client_document
+rl-small-03.txt
+client_document
+rl-small-06.txt
+client_document
+rl-small-01.txt
+client_document
+rl-small-04.txt
+client_document
+rl-small-02.txt
+client_document
+Protocol-Stability.pdf
+client_document
+Protocol-Stability.pdf
+client_document
+Vorelinib-Stability-Protocol-STB-0042.pdf
+client_document
+Vorelinib-Investigator-Brochure-Ed3.docx
+client_document
+Vorelinib-Stability-Protocol-STB-0042.pdf
+client_document
+Vorelinib-Meeting-Minutes-Pre-IND.txt
+client_document
+Vorelinib-Batch-Analysis-DS.csv
+client_document
+Authoring documents 2
+QA J4 2.5 Clinical Overview - Vorelinib
+draft
+Control of Drug Substance (CTD 3.2.S.4)
+APPROVED
+Vault documents 11
+Protocol-Stability
+Protocol-Stability · v1.0
+Protocol-Stability
+Protocol-Stability.pdf · v1.0
+Vorelinib-DS-Specification-J3-r2
+Vorelinib-DS-Specification-J3-r2.pdf · v1.0
+Vorelinib-DS-Specification-J3
+Vorelinib-DS-Specification-J3.pdf · v1.0
+Vorelinib-Stability-Protocol-STB-0042
+Vorelinib-Stability-Protocol-STB-0042.pdf · v2.0
+Vorelinib-Stability-Protocol-STB-0042
+Vorelinib-Stability-Protocol-STB-0042.pdf · v1.0
+Vorelinib DS Stability Protocol STB-0042
+Vorelinib-Stability-Protocol-STB-0042 · v2.0
+Vorelinib-Batch-Analysis-DS
+Vorelinib-Batch-Analysis-DS · v1.0
+Vorelinib-Meeting-Minutes-Pre-IND
+Vorelinib-Meeting-Minutes-Pre-IND · v1.0
+Vorelinib-Stability-Protocol-STB-0042
+Vorelinib-Stability-Protocol-STB-0042 · v1.0
+Vorelinib-Investigator-Brochure-Ed3
+Vorelinib-Investigator-Brochure-Ed3 · v1.0
+Study designs 0
+None in this project yet.
+Filing documents 0
+None in this project yet.

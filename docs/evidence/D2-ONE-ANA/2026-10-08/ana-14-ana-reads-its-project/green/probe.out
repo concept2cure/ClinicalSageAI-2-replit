@@ -1,0 +1,20 @@
+# The investigator's probe (scratchpad/context-warning/probe.ts), unchanged, re-run after the review fixes (npx tsx probe.ts, 2026-10-08). Full log: probe.full.out.
+# [direct ...] lines call getProjectIntelligence(Number(uuid)) directly, outside enrichment: the probe's own control, unchanged by design.
+# [enrich ... uuid]: no projects row is linked to this program in the local database, so nothing project-scoped is read and nothing is unavailable. 'ectd' is in 'failed' (sourcesFailed: attempted, contributed no block) because the block no longer says "No eCTD data found for this project yet" about a project nobody read; the model gets the '## Project records' notice instead (probe2.out).
+# [memory ...] lines call buildMemoryContextForChat directly with the UUID; the stream route passes the resolved integer instead. clientMemory/projectMemory 'error' is the missing OPENAI_API_KEY in this dev environment (embedding call), not this defect.
+[direct getProjectIntelligence(Number("d6160c9f-33d2-4be9-b779-eb27375f6e49"))] THREW in 23ms: code=22P02 cause=invalid input syntax for type integer: "NaN"
+[direct getProjectIntelligence(Number(1))] ok in 16ms -> profile 1
+[enrich turn1 uuid cold] 37ms unavailable=[] failed=[] sources=[]
+[enrich turn1 uuid warm] 29ms unavailable=[] failed=[] sources=[]
+[enrich turn2 uuid cold] 7ms unavailable=[] failed=["ectd"] sources=["doc-ctd_section"]
+[enrich turn2 uuid warm] 4ms unavailable=[] failed=["ectd"] sources=["doc-ctd_section"]
+[enrich turn2 int=1 cold] 14ms unavailable=[] failed=[] sources=["project-profile","ectd","doc-ctd_section"]
+[enrich turn2 int=1 warm] 4ms unavailable=[] failed=[] sources=["project-profile","ectd","doc-ctd_section"]
+[enrich greeting int=1 cold] 3ms unavailable=[] failed=[] sources=["project-profile"]
+[enrich greeting int=1 warm] 3ms unavailable=[] failed=[] sources=["project-profile"]
+[enrichment] Live recommendations failed, falling back to memory: Failed query: 
+[enrich /assess int=1 cold] 51ms unavailable=[] failed=["assess"] sources=["project-profile"]
+[enrichment] Live recommendations failed, falling back to memory: Failed query: 
+[enrich /assess int=1 warm] 23ms unavailable=[] failed=["assess"] sources=["project-profile"]
+[memory projectId="d6160c9f-33d2-4be9-b779-eb27375f6e49"] 1418ms outcomes={"workingMemory":"empty","clientMemory":"error","projectMemory":"error"} mode=none semanticMs=1417 read=0
+[memory projectId=1] 1290ms outcomes={"workingMemory":"empty","clientMemory":"error","projectMemory":"error"} mode=none semanticMs=1290 read=0

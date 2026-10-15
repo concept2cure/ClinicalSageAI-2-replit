@@ -1,0 +1,12 @@
+Mutant B15-no-text-guard: a decision with no words is checked as if it had some
+
+--- server/services/authoring/authoring-record.ts
+- else if (!c.text) out[at] = { verified: false, claimed: id, why: 'no text was decided' };
++ 
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: a decision that names a turn and no words is not vouched for 42ms
+      Tests  1 failed | 19 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

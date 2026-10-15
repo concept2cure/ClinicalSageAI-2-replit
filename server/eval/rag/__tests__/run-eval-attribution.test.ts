@@ -15,6 +15,12 @@
 import { describe, it, expect } from 'vitest';
 import { pqAttributionGaps, buildQueryParams, buildJudgeRequest } from '../run-eval';
 
+const scope = {
+  organizationId: 1,
+  organizationUuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  programId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+};
+
 describe('pqAttributionGaps', () => {
   it('reports no gaps when the generator and a different judge are both pinned', () => {
     expect(pqAttributionGaps({ model: 'claude-opus-4', judgeModel: 'claude-sonnet-4-5' })).toEqual(
@@ -64,6 +70,7 @@ describe('the pinned model reaches the call it is supposed to pin', () => {
     const params = buildQueryParams('what does ICH E3 section 10 require?', {
       model: 'claude-opus-4',
       k: 5,
+      ...scope,
     });
     expect(params.model).toBe('claude-opus-4');
     expect(params.query).toBe('what does ICH E3 section 10 require?');
@@ -72,7 +79,7 @@ describe('the pinned model reaches the call it is supposed to pin', () => {
   it('omits model entirely when unpinned, rather than sending undefined', () => {
     // An explicit `model: undefined` key is not the same as no key: it can
     // override a default further down. Existing callers must be untouched.
-    const params = buildQueryParams('q', { model: null, k: 5 });
+    const params = buildQueryParams('q', { model: null, k: 5, ...scope });
     expect('model' in params).toBe(false);
   });
 
@@ -84,5 +91,32 @@ describe('the pinned model reaches the call it is supposed to pin', () => {
 
   it('omits model from the judge call when unpinned', () => {
     expect('model' in buildJudgeRequest('grade this', { judgeModel: null })).toBe(false);
+  });
+});
+
+describe('evaluation reads the explicitly named evaluation tenant and programme', () => {
+  it('refuses missing tenant before retrieval can be invoked', () => {
+    expect(() => buildQueryParams('q', { model: 'model', k: 5, organizationId: scope.organizationId, programId: scope.programId })).toThrow(/organization/i);
+  });
+
+  it('refuses missing programme instead of reading another programme in the tenant', () => {
+    expect(() => buildQueryParams('q', { model: 'model', k: 5, organizationId: scope.organizationId, organizationUuid: scope.organizationUuid })).toThrow(/program/i);
+  });
+
+  it('threads both scopes into the existing vault router and program filter', () => {
+    const params = buildQueryParams('q', { model: 'model', k: 5, ...scope });
+    expect(params.organizationUuid).toBe(scope.organizationUuid);
+    expect(params.corpus).toBe('vault');
+    expect(params.filters).toEqual({ programId: scope.programId });
+  });
+
+  it('uses reviewed basic retrieval without auxiliary model calls', () => {
+    const params = buildQueryParams('q', { model: 'model', k: 5, ...scope });
+    expect(params.strategy).toBe('basic');
+    expect(params.useReranking).toBe(false);
+    expect(params.useMmr).toBe(false);
+    expect(params.useSelfQuery).toBe(false);
+    expect(params.useCompression).toBe(false);
+    expect(params.useCorrectiveLoop).toBe(false);
   });
 });

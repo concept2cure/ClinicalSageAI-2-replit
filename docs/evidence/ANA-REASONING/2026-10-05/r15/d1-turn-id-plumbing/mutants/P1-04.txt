@@ -1,0 +1,8 @@
+mutant P1-04: a malformed id is passed through to a uuid column (22P02 inside the save transaction)
+verdict: KILLED
+Tests  2 failed | 67 passed (69)
+
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > drops a malformed id to null instead of passing it to a uuid column 8ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > bounds the id before it is believed, so a long string cannot ride in on it 1ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 67 passed (69)

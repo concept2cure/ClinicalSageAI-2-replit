@@ -1,0 +1,41 @@
+# Same MUTANT. Run 2026-10-01T13:58:36Z
+  "context": {
+    "userId": 7,
+    "organizationId": 42
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a token still claiming admin for a user the row now says is member: requireRole(admin) refuses 1921ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a token minted as member for a user the row now says is admin: requireRole(admin) admits without a new sign-in 4ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > req.user.roles is expanded from the database role, so a functional grant of that role is honoured 4ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a revoked membership is still refused before any role is read 4ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a platform administrator granted through platform_role_grants still passes requirePlatformAdmin with an org role of member 3ms
+ × server/middleware/__tests__/auth-role-from-database.test.ts > behind the global gate, the role is that gate's uncached reading on this request > a demotion the global gate read is the role requireRole sees, though the cached row still says admin 10ms
+   → expected 'admin' to be 'member' // Object.is equality
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > behind the global gate, the role is that gate's uncached reading on this request > another organisation's reading is not taken: the membership row's role is 5ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > behind the global gate, the role is that gate's uncached reading on this request > another account's reading is not taken: the membership row's role is 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/auth-role-from-database.test.ts > behind the global gate, the role is that gate's uncached reading on this request > a demotion the global gate read is the role requireRole sees, though the cached row still says admin
+AssertionError: expected 'admin' to be 'member' // Object.is equality
+
+Expected: "member"
+Received: "admin"
+
+ ❯ server/middleware/__tests__/auth-role-from-database.test.ts:209:30
+    207|     const r = await admit(tokenWithRole('admin'), gateRead('member'));
+    208|     expect(r.reachedHandler).toBe(true);
+    209|     expect(r.req.user?.role).toBe('member');
+       |                              ^
+    210|     expect(r.req.user?.roles).not.toContain('admin');
+    211|     const { res, next } = await guard(r.req, 'admin');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  13:58:37
+   Duration  2.67s (transform 1.20s, setup 104ms, import 222ms, tests 1.96s, environment 0ms)
+

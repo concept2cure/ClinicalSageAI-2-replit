@@ -1,0 +1,115 @@
+{
+  "variant": "mobile",
+  "rowTitle": "Preview saved output for this ICH E3 section",
+  "docId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+  "sectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+  "sourceJobId": 31,
+  "reused": true,
+  "themeContrast": {
+    "heading": {
+      "color": "rgb(20, 20, 19)",
+      "background": "rgb(250, 249, 245)",
+      "ratio": 17.497722780575504
+    },
+    "tableHeader": {
+      "color": "rgb(20, 20, 19)",
+      "background": "rgb(245, 244, 238)",
+      "ratio": 16.728586802902356
+    }
+  },
+  "beforeKinds": {
+    "fromSources": 0,
+    "authorAsserted": 91,
+    "machineDrafted": 0,
+    "machineDraftedUnaccepted": 614
+  },
+  "tableCells": [
+    [
+      "Field",
+      "Stored value"
+    ],
+    [
+      "Purpose",
+      "UI verification only"
+    ],
+    [
+      "Source",
+      "Saved CSR output"
+    ]
+  ],
+  "initialBodyWidth": 390,
+  "figureWidth": 240,
+  "afterKinds": {
+    "fromSources": 0,
+    "authorAsserted": 91,
+    "machineDrafted": 0,
+    "machineDraftedUnaccepted": 614
+  },
+  "bodyWidth": 390,
+  "sourceReceiptText": "Original source and import limits\n\nSaved CSR output \u00b7 version not recorded \u00b7 project scope\n\nImported as an unbound draft; source approval and signatures were not copied.\n\nSnapshot fingerprint: 77d6fbf8f26866a8574d67b3748b629ca1f7dfa54c6c24cda29c3dedb5c460cb\n\nThis identity does not establish scientific source support. This copy has its own review and signature controls.\n\n1 \u00b7 template origin \u00b7 model not recorded\n\nReason: Verify isolated synthetic saved CSR output in the governed editor.\n\nThis is an unbound working draft. Source completion, approval and signatures are not transferred.\nOriginal authorship and model qualification are not established by a workflow fingerprint.\nVerified generation document/hash/span support was not recorded by this materializer.\n\nReview against the original before approval or filing.",
+  "docx": {
+    "bytes": 12124,
+    "sha256": "82f9bd71ec0d1a9a8a8c6de222b9533a014916689d6abb1f7b40befb4ceed63b",
+    "uncontrolledBanner": true,
+    "table": true,
+    "embeddedFigure": true
+  },
+  "conversationBodyWidth": 390,
+  "canonicalConversation": {
+    "prefilled": true,
+    "sendOnArrival": false,
+    "savedDocId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+    "savedSectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+    "unboundFilingContext": true
+  },
+  "passed": true,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "imageRequests": [
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    }
+  ],
+  "aiTurnRequests": [],
+  "imageTransport": {
+    "requests": 6,
+    "authenticatedFetchOnly": true,
+    "nativeImageRequests": 0,
+    "liveApiImageSrcWrites": 0,
+    "inertApiReferences": 2
+  }
+}

@@ -1,0 +1,2 @@
+check-security-patterns: 0 violations across 2977 file(s).
+exit 0

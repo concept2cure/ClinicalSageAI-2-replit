@@ -18,7 +18,7 @@ import {
   type ContentBlock,
   type InlineRun,
 } from './authoring-section-content.js';
-import type { ResolvedImage } from './authoring-images.js';
+import { unfiledFigureLabel, type ResolvedImage } from './authoring-images.js';
 import {
   crossReferenceBookmarkId,
   normalizeCrossReferenceDisplay,
@@ -548,7 +548,7 @@ function figureParagraphs(
       new D.Paragraph({
         children: [
           new D.TextRun({
-            text: `[Figure not exported: ${fig.alt || fig.src || 'unresolved image reference'}]`,
+            text: `[Figure not exported: ${unfiledFigureLabel(fig)}]`,
             italics: true,
             color: '8A8F98',
           }),

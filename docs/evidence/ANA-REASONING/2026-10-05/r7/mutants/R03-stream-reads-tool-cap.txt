@@ -1,0 +1,15 @@
+Mutant R03-stream-reads-tool-cap: the route starts reading a tool cap the tier derives (one call on a high turn)
+
+--- server/routes/ana-ri/stream.ts
+- openSectionCode: sectionCode,
+      });
++ openSectionCode: sectionCode,
+      });
+      void routingPlan.maxToolCalls;
+
+Tests run: server/services/__tests__/kernel-router-open-section.test.ts
+Result: KILLED
+
+ × server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > the stream reads no tool cap the tier derives: a high-stakes section must not cost a turn its steps 7ms
+      Tests  1 failed | 20 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

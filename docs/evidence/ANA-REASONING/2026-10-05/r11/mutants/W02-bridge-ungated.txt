@@ -1,0 +1,12 @@
+Mutant W02-bridge-ungated: a direct call to the bridge puts any answer in
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record)) return false;
++ 
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > refuses an AnA answer the rule does not admit, or whose models are not given, and changes nothing 365ms
+      Tests  1 failed | 42 passed (43)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

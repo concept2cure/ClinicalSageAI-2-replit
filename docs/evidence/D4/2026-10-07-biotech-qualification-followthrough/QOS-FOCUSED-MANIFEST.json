@@ -1,0 +1,22 @@
+{
+  "source": "d46fca15 plus frozen QOS propagation diff",
+  "source_blobs": {
+    "server/services/m2-summary-builders.ts": "110c4067916dc2bfc3bda7670c7e3f201384b5a7",
+    "server/services/__tests__/m2-summary-builders.test.ts": "42da6314637ee4ab1be055d9c8159c57745ad391"
+  },
+  "physical_files": 6,
+  "registered_cases": 93,
+  "actual_assertion_statuses": {
+    "passed": 93
+  },
+  "success": true,
+  "agent_reported_exit": 0,
+  "files": [
+    "server/services/__tests__/m2-summary-builders.test.ts",
+    "server/services/__tests__/module3Composer.stability-filed.test.ts",
+    "server/services/__tests__/module3Composer.stability-honesty.test.ts",
+    "server/services/__tests__/module3Composer.stability-trending.test.ts",
+    "server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts",
+    "server/services/cmc/__tests__/recorded-series-qualification.test.ts"
+  ]
+}

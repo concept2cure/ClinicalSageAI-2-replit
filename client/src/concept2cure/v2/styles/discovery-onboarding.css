@@ -1,0 +1,23 @@
+/* Extends the existing onboarding and project-wizard forms using canonical tokens. */
+.c2c-v2 .ob-discovery .npw-grid { margin-top: var(--space-4); gap: var(--space-4); }
+.c2c-v2 .ob-discovery .ob-in { font-size: inherit; }
+.c2c-v2 .ob-discovery textarea { resize: vertical; }
+.c2c-v2 .ob-discovery-choices { margin: 0; }
+.c2c-v2 .ob-discovery-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+.c2c-v2 .ob-discovery-note { color: var(--text-300); margin: var(--space-3) 0; }
+.c2c-v2 .ob-discovery-error { color: var(--error); }
+.c2c-v2 .ob-discovery-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.c2c-v2 .ob-discovery .npw-flag { align-items: start; }
+.c2c-v2 .ob-discovery .npw-flag input { margin-top: var(--space-0-5); }
+.c2c-v2 .ob-discovery-summary { text-align: left; margin-top: var(--space-4); }
+.c2c-v2 .ob-discovery-summary .ob-rev-row { gap: var(--space-4); }
+.c2c-v2 .ob-discovery-summary .v { max-width: 70%; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .c2c-v2 .ob-discovery .npw-grid { grid-template-columns: 1fr; }
+  .c2c-v2 .ob-discovery .npw-flag-grid { grid-template-columns: 1fr; }
+  .c2c-v2 .ob-invite { flex-wrap: wrap; }
+  .c2c-v2 .ob-nav { flex-wrap: wrap; gap: var(--space-2); }
+  .c2c-v2 .ob-nav-c { order: -1; flex-basis: 100%; text-align: center; }
+  .c2c-v2 .ob-discovery-summary .ob-rev-row { flex-direction: column; gap: var(--space-1); }
+  .c2c-v2 .ob-discovery-summary .v { max-width: 100%; }
+}

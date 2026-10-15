@@ -1,0 +1,4 @@
+# 1w. The authoring read tools are wired — GREEN, with the registry suites
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native) 0ms
+ Test Files  6 passed (6)
+      Tests  940 passed (940)

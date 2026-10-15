@@ -1,0 +1,5 @@
+Isolated exact-original SQL predicate proof; canonical source 40697292af6b813dcfcaba8881e12c250dab69ef. Added after production edits; not represented as the initial pre-edit RED.
+{"case":"named parent namespace traversal","expected_available":false,"original_available":true,"current_available":false}
+{"case":"recorded cycle","expected_available":false,"original_available":true,"current_available":false}
+{"case":"depth exhaustion","expected_available":false,"original_available":true,"current_available":false}
+Original refusal assertions failed: 3/3; current control assertions passed: 3/3.

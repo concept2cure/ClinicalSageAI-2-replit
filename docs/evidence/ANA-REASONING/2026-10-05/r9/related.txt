@@ -1,0 +1,17 @@
+Every suite of the modules rounds 1-9 touch, on the round-9 tree (merged with trunk ddd5a0fd2).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <round 8's related set, plus round 9's two suites>
+
+ Test Files  1 failed | 485 passed | 1 skipped (487)
+      Tests  6759 passed | 3 skipped (6762)
+
+One failing file, not this round's: server/services/ana/__tests__/deepening-tools.test.ts fails at load (trunk 8d919b1f8, board item 25).
+It is fixed on trunk by e5cf44624 (another session, 2026-10-05 11:05), which this round then merged: it passes in green.txt, on trunk f7973d225.
+Rounds 6-8's other two failing files pass here: mdx-esg-transmit-gateway (environmental) and governed-reason-not-invented (board item 24).
+
+ FAIL  server/services/ana/__tests__/deepening-tools.test.ts [ server/services/ana/__tests__/deepening-tools.test.ts ]
+TypeError: mockPool.connect.mockResolvedValue is not a function
+ ❯ server/services/ana/__tests__/deepening-tools.test.ts:11:39
+      9|    so it is given the pool's own empty result here — captured before t…
+     10|    executor's import graph instruments the pool and replaces connect. …
+     11| (mockPool.connect as unknown as Mock).mockResolvedValue({
+       |                                       ^

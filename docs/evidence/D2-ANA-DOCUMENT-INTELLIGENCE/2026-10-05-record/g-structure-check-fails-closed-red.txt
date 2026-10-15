@@ -1,0 +1,302 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+{
+  "timestamp": "2026-10-05T03:18:57.911Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:18:57.912Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+{
+  "timestamp": "2026-10-05T03:18:57.912Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > the clean text passes when no documentType is asked for, and says structure was not applicable 29ms
+   → expected undefined to deeply equal { status: 'not-applicable', …(1) }
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > clinical_study_report → not-checked, a located notice, verdict revise 9ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > 2.7.4 → not-checked, a located notice, verdict revise 1ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > iss → not-checked, a located notice, verdict revise 1ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > an indexed type with text is checked 2ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > an indexed type with no text is not checked, and does not pass 1ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > verifyRevision never reports passesNow over an unchecked structure 3ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > critiqueDocument puts the notice in crossSectionFindings and does not pass 2ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > critiqueDocument without a documentType reports not-applicable and still passes a clean document 1ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > critique_draft returns structureChecked false, the finding, a revise verdict and the notice in the brief 3ms
+   → expected 'pass' to be 'revise' // Object.is equality
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > verify_revision returns the status in result 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > critique_document returns the notice in crossSectionFindings 1ms
+   → expected 'pass' to be 'revise' // Object.is equality
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_draft: the type is checked as a whole document; a single section omits it 1ms
+   → expected 'Optional document type (e.g. \'clinic…' to match /whole document/i
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_draft lists every indexed type and says an unindexed one is reported not checked 1ms
+   → expected 'Optional document type (e.g. \'clinic…' to contain 'protocol'
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > verify_revision lists every indexed type and says an unindexed one is reported not checked 1ms
+   → expected 'Optional document type for section-co…' to contain 'protocol'
+ × server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_document lists every indexed type and says an unindexed one is reported not checked 1ms
+   → expected 'Optional document type for required-s…' to contain 'protocol'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > the clean text passes when no documentType is asked for, and says structure was not applicable
+AssertionError: expected undefined to deeply equal { status: 'not-applicable', …(1) }
+
+- Expected:
+{
+  "reason": StringMatching /no documentType/i,
+  "status": "not-applicable",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:34:25
+     32|     const r = critiqueDraft({ text: CLEAN });
+     33|     expect(r.verdict).toBe('pass');
+     34|     expect(r.structure).toEqual({ status: 'not-applicable', reason: ex…
+       |                         ^
+     35|     expect(r.metrics.structureChecked).toBe(false);
+     36|     expect(r.metrics.missingSections).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > clinical_study_report → not-checked, a located notice, verdict revise
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > 2.7.4 → not-checked, a located notice, verdict revise
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > iss → not-checked, a located notice, verdict revise
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:42:24
+     40|   it.each(['clinical_study_report', '2.7.4', 'iss'])('%s → not-checked…
+     41|     const r = critiqueDraft({ text: CLEAN, documentType: type });
+     42|     expect(r.structure.status).toBe('not-checked');
+       |                        ^
+     43|     expect(r.structure.reason).toMatch(notice(type));
+     44|     expect(r.metrics.structureChecked).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > an indexed type with text is checked
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:59:24
+     57|   it('an indexed type with text is checked', () => {
+     58|     const r = critiqueDraft({ text: CLEAN, documentType: 'csr' });
+     59|     expect(r.structure.status).toBe('checked');
+       |                        ^
+     60|     expect(r.metrics.structureChecked).toBe(true);
+     61|     expect(typeof r.metrics.missingSections).toBe('number');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > an indexed type with no text is not checked, and does not pass
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:67:24
+     65|   it('an indexed type with no text is not checked, and does not pass',…
+     66|     const r = critiqueDraft({ text: '   ', documentType: 'csr' });
+     67|     expect(r.structure.status).toBe('not-checked');
+       |                        ^
+     68|     expect(r.structure.reason).toMatch(/no text/i);
+     69|     expect(r.metrics.structureChecked).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > verifyRevision never reports passesNow over an unchecked structure
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:77:25
+     75|   it('verifyRevision never reports passesNow over an unchecked structu…
+     76|     const v = verifyRevision({ text: CLEAN, documentType: 'iss' }, { t…
+     77|     expect(v.passesNow).toBe(false);
+       |                         ^
+     78|     expect(v.structure.status).toBe('not-checked');
+     79|     expect(v.structure.reason).toMatch(notice('iss'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > critiqueDocument puts the notice in crossSectionFindings and does not pass
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:90:26
+     88|       { documentType: 'clinical_study_report' },
+     89|     );
+     90|     expect(doc.structure.status).toBe('not-checked');
+       |                          ^
+     91|     expect(doc.crossSectionFindings.some(f => f.category === 'structur…
+     92|     expect(doc.verdict).toBe('revise');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > critiqueDocument without a documentType reports not-applicable and still passes a clean document
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:97:26
+     95|   it('critiqueDocument without a documentType reports not-applicable a…
+     96|     const doc = critiqueDocument([{ title: 'Results', text: CLEAN }]);
+     97|     expect(doc.structure.status).toBe('not-applicable');
+       |                          ^
+     98|     expect(doc.verdict).toBe('pass');
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > critique_draft returns structureChecked false, the finding, a revise verdict and the notice in the brief
+AssertionError: expected 'pass' to be 'revise' // Object.is equality
+
+Expected: "revise"
+Received: "pass"
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:105:25
+    103|   it('critique_draft returns structureChecked false, the finding, a re…
+    104|     const out = JSON.parse(await getToolHandler('critique_draft')!({ t…
+    105|     expect(out.verdict).toBe('revise');
+       |                         ^
+    106|     expect(out.metrics.structureChecked).toBe(false);
+    107|     expect(out.findings.some((f: { message: string }) => notice('2.7.4…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > verify_revision returns the status in result
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:115:34
+    113|       await getToolHandler('verify_revision')!({ originalText: CLEAN, …
+    114|     );
+    115|     expect(out.result.passesNow).toBe(false);
+       |                                  ^
+    116|     expect(out.result.structure.reason).toMatch(notice('iss'));
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > critique_document returns the notice in crossSectionFindings
+AssertionError: expected 'pass' to be 'revise' // Object.is equality
+
+Expected: "revise"
+Received: "pass"
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:126:25
+    124|       ),
+    125|     );
+    126|     expect(out.verdict).toBe('revise');
+       |                         ^
+    127|     expect(
+    128|       out.crossSectionFindings.some((f: { message: string }) => notice…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_draft: the type is checked as a whole document; a single section omits it
+AssertionError: expected 'Optional document type (e.g. \'clinic…' to match /whole document/i
+
+- Expected:
+/whole document/i
+
++ Received:
+"Optional document type (e.g. 'clinical_overview', 'csr', 'cer') to also check required-section coverage against its standard."
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:140:15
+    138|   it('critique_draft: the type is checked as a whole document; a singl…
+    139|     const d = describeType(CRITIQUE_DRAFT);
+    140|     expect(d).toMatch(/whole document/i);
+       |               ^
+    141|     expect(d).toMatch(/single section/i);
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_draft lists every indexed type and says an unindexed one is reported not checked
+AssertionError: expected 'Optional document type (e.g. \'clinic…' to contain 'protocol'
+
+Expected: "protocol"
+Received: "Optional document type (e.g. 'clinical_overview', 'csr', 'cer') to also check required-section coverage against its standard."
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:150:37
+    148|   ] as const)('%s lists every indexed type and says an unindexed one i…
+    149|     const d = describeType(tool);
+    150|     for (const id of ids) expect(d).toContain(id);
+       |                                     ^
+    151|     expect(d).toMatch(/not checked/i);
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > verify_revision lists every indexed type and says an unindexed one is reported not checked
+AssertionError: expected 'Optional document type for section-co…' to contain 'protocol'
+
+Expected: "protocol"
+Received: "Optional document type for section-coverage checks (applied to both)."
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:150:37
+    148|   ] as const)('%s lists every indexed type and says an unindexed one i…
+    149|     const d = describeType(tool);
+    150|     for (const id of ids) expect(d).toContain(id);
+       |                                     ^
+    151|     expect(d).toMatch(/not checked/i);
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_document lists every indexed type and says an unindexed one is reported not checked
+AssertionError: expected 'Optional document type for required-s…' to contain 'protocol'
+
+Expected: "protocol"
+Received: "Optional document type for required-section coverage."
+
+ ❯ server/services/ana/__tests__/writing-gate-structure-status.test.ts:150:37
+    148|   ] as const)('%s lists every indexed type and says an unindexed one i…
+    149|     const d = describeType(tool);
+    150|     for (const id of ids) expect(d).toContain(id);
+       |                                     ^
+    151|     expect(d).toMatch(/not checked/i);
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed (16)
+   Start at  03:18:55
+   Duration  7.79s (transform 5.12s, setup 85ms, import 7.35s, tests 62ms, environment 0ms)
+

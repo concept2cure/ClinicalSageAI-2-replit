@@ -1,0 +1,6 @@
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 122ms
+   → retention/legacy-delete-needs-writing-role FAILS and is not baselined — the legacy project delete answers 403 to a viewer, and deletes nothing
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Error: retention/legacy-delete-needs-writing-role FAILS and is not baselined — the legacy project delete answers 403 to a viewer, and deletes nothing
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)

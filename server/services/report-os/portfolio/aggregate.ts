@@ -30,6 +30,12 @@ export function worstRisk(levels: RiskLevel[]): RiskLevel {
   return RISK_LEVELS[worstIndex];
 }
 
+/** Mean over the members that have a value; null when none does. */
+function roundedMeanOrNull(values: Array<number | null>): number | null {
+  const known = values.filter((v): v is number => v != null);
+  return known.length === 0 ? null : roundedMean(known);
+}
+
 function roundedMean(values: number[]): number {
   if (values.length === 0) return 0;
   const sum = values.reduce((acc, value) => acc + value, 0);
@@ -39,7 +45,9 @@ function roundedMean(values: number[]): number {
 /**
  * Aggregates per-program-member insights into a portfolio summary. Pure.
  *
- * - avgReadiness / avgConfidence are simple rounded means (0 when empty).
+ * - avgReadiness / avgConfidence are rounded means over the members that
+ *   have one; null when none does (no member's readiness run measures a
+ *   confidence, so the board pack no longer prints one).
  * - readyCount / partialCount / missingCount count members by status.
  * - totalCriticalBlockers sums member criticalBlockerCount.
  * - worstRisk uses worstRisk() over member risk levels.
@@ -56,7 +64,10 @@ export function summarizeMembers(members: ProgramMemberInsight[]): PortfolioAggr
   const totalCriticalBlockers = members.reduce((acc, m) => acc + m.criticalBlockerCount, 0);
 
   const attentionRanked = [...members].sort((a, b) => {
-    if (a.readinessScore !== b.readinessScore) return a.readinessScore - b.readinessScore;
+    // Not computed ranks first: it needs attention before any computed score.
+    const ar = a.readinessScore ?? -1;
+    const br = b.readinessScore ?? -1;
+    if (ar !== br) return ar - br;
     return b.criticalBlockerCount - a.criticalBlockerCount;
   });
 
@@ -73,8 +84,8 @@ export function summarizeMembers(members: ProgramMemberInsight[]): PortfolioAggr
 
   return {
     memberCount: members.length,
-    avgReadiness: roundedMean(members.map(m => m.readinessScore)),
-    avgConfidence: roundedMean(members.map(m => m.confidence)),
+    avgReadiness: roundedMeanOrNull(members.map(m => m.readinessScore)),
+    avgConfidence: roundedMeanOrNull(members.map(m => m.confidence)),
     worstRisk: worstRisk(members.map(m => m.riskLevel)),
     readyCount,
     partialCount,
@@ -133,7 +144,6 @@ export function renderPortfolioReport(
     { kind: 'summary', text: `${meta.reportTypeLabel} across ${summary.memberCount} programs.` },
     { kind: 'metric', label: 'Programs', value: summary.memberCount },
     { kind: 'metric', label: 'Avg readiness', value: summary.avgReadiness, unit: '%' },
-    { kind: 'metric', label: 'Avg confidence', value: summary.avgConfidence, unit: '%' },
     { kind: 'metric', label: 'Worst risk', value: summary.worstRisk },
     { kind: 'metric', label: 'Programs ready', value: summary.readyCount, status: 'ready' },
     { kind: 'metric', label: 'Programs partial', value: summary.partialCount, status: 'partial' },

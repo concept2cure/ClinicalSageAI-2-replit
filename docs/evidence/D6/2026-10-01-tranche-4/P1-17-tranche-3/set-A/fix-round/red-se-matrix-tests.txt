@@ -1,0 +1,70 @@
+2026-10-01T08:24:39Z
+# se-matrix.ts at working-tree content BEFORE the fix-round edit (sha256 below)
+2b1253dde98715ad04a4689d372d25097b789e8ec9a78fa79b70c5cecff84d82  server/routes/se-matrix.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a failed program-access read answers 500 with the envelope 56ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > an unreachable shadow service answers 502 with its sentence and no detail 9ms
+ × server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a shadow service answering >= 500 with 'a JSON 500 body' answers 502 with no detail 14ms
+   → expected { …(2) } to deeply equal { error: 'Shadow service unavailable' }
+ × server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a shadow service answering >= 500 with 'a plain-text 503 body' answers 502 with no detail 6ms
+   → expected { …(2) } to deeply equal { error: 'Shadow service unavailable' }
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > still relays a shadow 4xx validation body with its status (intended behaviour) 6ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > leaves the 403 and 422 answers unchanged 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a shadow service answering >= 500 with 'a JSON 500 body' answers 502 with no detail
+AssertionError: expected { …(2) } to deeply equal { error: 'Shadow service unavailable' }
+
+- Expected
++ Received
+
+  {
+-   "error": "Shadow service unavailable",
++   "detail": {
++     "detail": "SENTINEL-SHADOW psycopg2.errors.UndefinedTable: relation \"predicate_devices\" does not exist File \"/srv/shadow/app.py\", line 88",
++   },
++   "error": "SE matrix payload generation failed",
+  }
+
+ ❯ server/routes/__tests__/se-matrix-5xx-containment.test.ts:119:22
+    117|     const res = await request(app()).post(RENDER).send({ selectedPredi…
+    118|     expect(res.status).toBe(502);
+    119|     expect(res.body).toEqual({ error: 'Shadow service unavailable' });
+       |                      ^
+    120|     expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-SHADOW|psyc…
+    121|     // The shadow body goes to the log against the program, not to the…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a shadow service answering >= 500 with 'a plain-text 503 body' answers 502 with no detail
+AssertionError: expected { …(2) } to deeply equal { error: 'Shadow service unavailable' }
+
+- Expected
++ Received
+
+  {
+-   "error": "Shadow service unavailable",
++   "detail": "Traceback (most recent call last): SENTINEL-SHADOW psycopg2.errors.UndefinedTable: relation \"predicate_devices\" does not exist File \"/srv/shadow/app.py\", line 88",
++   "error": "SE matrix payload generation failed",
+  }
+
+ ❯ server/routes/__tests__/se-matrix-5xx-containment.test.ts:119:22
+    117|     const res = await request(app()).post(RENDER).send({ selectedPredi…
+    118|     expect(res.status).toBe(502);
+    119|     expect(res.body).toEqual({ error: 'Shadow service unavailable' });
+       |                      ^
+    120|     expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-SHADOW|psyc…
+    121|     // The shadow body goes to the log against the program, not to the…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  08:24:40
+   Duration  2.51s (transform 379ms, setup 226ms, import 1.51s, tests 110ms, environment 0ms)
+

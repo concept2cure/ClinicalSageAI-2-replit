@@ -15,6 +15,8 @@
  *     document is not left reported as 'pending'.
  */
 
+import { seedSourceReadParents } from './source-read-fixture';
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -24,14 +26,30 @@ import { fileURLToPath } from 'node:url';
 let pglite: PGlite;
 const pool = {
   query: async (sql: string, params?: unknown[]) => {
-    const r = await pglite.query(sql, params as unknown[]);
+    const r = await pglite.query<Record<string, unknown>>(sql, params);
     return {
-      rows: r.rows as unknown[],
-      rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length,
+      rows: r.rows,
+      rowCount: (r as { affectedRows?: number }).affectedRows ?? r.rows.length,
     };
   },
 };
-vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) } }));
+// `connect` too: a data-room capture's INSERT and its chained row run in one transaction (VR-16b).
+vi.mock('../../../db', () => ({
+  pool: {
+    query: (s: string, p?: unknown[]) => pool.query(s, p),
+    connect: async () => ({ query: (s: string, p?: unknown[]) => pool.query(s, p), release: () => {} }),
+  },
+}));
+
+// A data-room capture writes its chained audit row in the same transaction
+// (VR-16b). The chain itself is exercised on PostgreSQL
+// (tests/db/data-room-capture-provenance.dbtest.ts); here the writer is
+// captured, so the spine-only schema needs no audit_logs table.
+const chained = vi.hoisted(() => [] as Array<{ action: string; resourceId?: string }>);
+vi.mock('../../auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../auditService')>()),
+  writeChainedAuditRow: async (_q: unknown, e: { action: string; resourceId?: string }) => { chained.push(e); },
+}));
 
 import * as svc from '../evidence-spine.service';
 
@@ -64,6 +82,8 @@ const PROGRAM_B = '22222222-2222-4222-8222-222222222222';
 // these hooks went red purely because another pglite suite joined the directory.
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
+  await seedSourceReadParents(pglite, [ORG_A, ORG_B], [PROGRAM_A, PROGRAM_B]);
   const here = path.dirname(fileURLToPath(import.meta.url));
   const spine = path.resolve(
     here,
@@ -76,6 +96,11 @@ beforeAll(async () => {
     '../../../../migrations/20260726_cre_source_program_scope.sql',
   );
   await pglite.exec(fs.readFileSync(programScope, 'utf8'));
+  // Revision columns (is_current, previous_version_id): resolveSourceUploadIds
+  // reads them through readSourceUploads, as every deployed database has them.
+  const versioning = path.resolve(here, '../../../../migrations/20260829_cre_source_versioning.sql');
+  await pglite.exec(fs.readFileSync(versioning, 'utf8'));
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20261006_document_data_dispositions.sql'), 'utf8'));
 }, 90_000);
 afterAll(async () => {
   await pglite.close();
@@ -83,7 +108,10 @@ afterAll(async () => {
 
 describe('canonical source identity (real Postgres)', () => {
   it('creates a client_document source carrying its upload provenance', async () => {
+    chained.length = 0;
     const src = await svc.createSource(ORG_A, upload('sha-aaa'));
+    // A data-room capture writes one chained capture row (VR-16b).
+    expect(chained.map((e) => [e.action, e.resourceId])).toEqual([['data_room.capture', String(src.id)]]);
 
     expect(src.id).toBeGreaterThan(0);
     expect(src.sourceType).toBe('client_document');
@@ -217,7 +245,7 @@ describe('data room listing (real Postgres)', () => {
       upload('dr-other', { clientProgramId: PROGRAM_B, clientWorkspaceId: null, title: 'other.pdf' }),
     );
 
-    const rows = await svc.listClientDocuments(ORG_A, { programId: PROGRAM_A });
+    const rows = await svc.listClientDocuments(pool, ORG_A, { userId: 1, programId: PROGRAM_A });
     const ids = rows.map(r => r.id);
     expect(ids).toContain(mine.id);
     expect(rows.every(r => r.clientProgramId === PROGRAM_A)).toBe(true);
@@ -229,17 +257,16 @@ describe('data room listing (real Postgres)', () => {
       ORG_B,
       upload('dr-tenantb', { clientProgramId: PROGRAM_A, clientWorkspaceId: null, title: 'theirs.pdf' }),
     );
-    const rows = await svc.listClientDocuments(ORG_A, { programId: PROGRAM_A });
+    const rows = await svc.listClientDocuments(pool, ORG_A, { userId: 1, programId: PROGRAM_A });
     expect(rows.map(r => r.title)).not.toContain('theirs.pdf');
   });
 
   it('does not widen to the whole tenant when a scope matches nothing', async () => {
     // A project showing another project's documents because a filter silently
     // widened is the failure a data room cannot have.
-    const rows = await svc.listClientDocuments(ORG_A, {
+    await expect(svc.listClientDocuments(pool, ORG_A, { userId: 1,
       programId: '33333333-3333-4333-8333-333333333333',
-    });
-    expect(rows).toEqual([]);
+    })).rejects.toMatchObject({ status: 404, code: 'PROJECT_NOT_FOUND' });
   });
 
   it('returns ownerless documents only when asked, and never mixes them in', async () => {
@@ -250,24 +277,27 @@ describe('data room listing (real Postgres)', () => {
         clientWorkspaceId: null,
         visibilityClass: 'tenant_private' as const,
         title: 'unassigned.pdf',
+        provenance: { origin: 'chat_upload', fileUploadId: 'file_dr-unscoped' },
       }),
     );
+    await pool.query(`INSERT INTO file_uploads(id,organization_id,user_id,checksum_sha256,status)
+      VALUES('file_dr-unscoped',$1,1,'dr-unscoped','uploaded')`, [ORG_A]);
 
-    const scoped = await svc.listClientDocuments(ORG_A, { programId: PROGRAM_A });
+    const scoped = await svc.listClientDocuments(pool, ORG_A, { userId: 1, programId: PROGRAM_A });
     expect(scoped.map(r => r.title)).not.toContain('unassigned.pdf');
 
-    const unscoped = await svc.listClientDocuments(ORG_A, { includeUnscoped: true });
+    const unscoped = await svc.listClientDocuments(pool, ORG_A, { userId: 1, includeUnscoped: true });
     expect(unscoped.map(r => r.title)).toContain('unassigned.pdf');
     expect(unscoped.every(r => !r.clientProgramId && !r.clientWorkspaceId)).toBe(true);
   });
 
-  it('still supports the numeric workspace id-space', async () => {
+  it('refuses a numeric workspace without an authoritative programme', async () => {
     await svc.createSource(
       ORG_A,
       upload('dr-ws', { clientProgramId: null, clientWorkspaceId: 4242, title: 'legacy.pdf' }),
     );
-    const rows = await svc.listClientDocuments(ORG_A, { workspaceId: 4242 });
-    expect(rows.map(r => r.title)).toContain('legacy.pdf');
+    await expect(svc.listClientDocuments(pool, ORG_A, { userId: 1, workspaceId: 4242 }))
+      .rejects.toMatchObject({ status: 409, code: 'SOURCE_WORKSPACE_ACCESS_UNRESOLVED' });
   });
 
   it('lists only client documents, not CSRs or letters', async () => {
@@ -278,7 +308,7 @@ describe('data room listing (real Postgres)', () => {
       title: 'a-letter',
       checksum: 'dr-crl',
     });
-    const rows = await svc.listClientDocuments(ORG_A, { programId: PROGRAM_A });
+    const rows = await svc.listClientDocuments(pool, ORG_A, { userId: 1, programId: PROGRAM_A });
     expect(rows.every(r => r.sourceType === 'client_document')).toBe(true);
   });
 });

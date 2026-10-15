@@ -11,9 +11,11 @@
    # then open http://localhost:8080/api/health
 {{- end }}
 
-3. First-run admin (private install, no demo user):
+3. First-run admin (private install, no demo user). Needs the SETUP_TOKEN you
+   set in the Secret (production closes setup without one):
    curl -X POST http://<host>/api/setup/initialize \
      -H 'content-type: application/json' \
+     -H 'X-Setup-Token: <your SETUP_TOKEN>' \
      -d '{"email":"admin@your-org.com","password":"<strong-password>","organizationName":"Your Org"}'
    # This endpoint self-closes once the first user exists.
 

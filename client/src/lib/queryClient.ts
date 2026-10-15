@@ -211,7 +211,7 @@ export function serverMessage(payload: unknown): string | null {
   const usable = (v: unknown): string | null =>
     typeof v === 'string' && v.trim() && !isErrorCode(v) && !looksInternal(v) ? v : null;
 
-  return (
+  const message =
     usable(err?.message) ??
     usable(p.message) ??
     // `{ error: CODE, detail: '<sentence>' }` is the c2c actions envelope — the
@@ -221,9 +221,34 @@ export function serverMessage(payload: unknown): string | null {
     // one thing a reviewer must NOT be told when the real answer is "you may
     // not sign your own work".
     usable(p.detail) ??
+    // `{ error: CODE, details: { message: '<sentence>' } }` is the
+    // api-response `clientError(res, status, code, details)` envelope. The
+    // biostatistics bridge refuses with `{ error: 'CANNOT_SIZE', details: {
+    // message: "<the engine's own sentence>" } }`; because CANNOT_SIZE IS
+    // enum-shaped, `usable(err)` below rejects it and the refusal degraded to
+    // "Couldn't complete that request. Try again." — generic copy, and
+    // "try again" is the wrong advice for a design the engine will refuse
+    // every time until an input changes.
+    usable((p.details as Record<string, unknown> | undefined)?.message) ??
     // A bare `error` string is copy only when it passes the same two filters.
-    usable(err)
-  );
+    usable(err);
+  return message === null ? null : withQuotedReference(message, p.correlationId ?? err?.correlationId);
+}
+
+/** A correlation id as the server issues one (X-Request-Id): letters, digits, dashes. */
+const REFERENCE_ID = /^[A-Za-z0-9][A-Za-z0-9-]{5,79}$/;
+
+/**
+ * The server's 500 sentence ends "Quote the reference below if you contact
+ * support" and sends the reference as `correlationId` beside the message
+ * (server/lib/api-response.ts). Every surface rendered the sentence and no
+ * reference (QA 2026-10-08, j4), so the reference is printed where the sentence
+ * says it is. Only for a message that points at it, and only an id-shaped value.
+ */
+function withQuotedReference(message: string, correlationId: unknown): string {
+  if (!/reference below/i.test(message)) return message;
+  if (typeof correlationId !== 'string' || !REFERENCE_ID.test(correlationId)) return message;
+  return `${message} Reference: ${correlationId}.`;
 }
 
 interface GetQueryFnOptions {

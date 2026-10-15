@@ -25,7 +25,7 @@
  *   - a retry that changes nothing writes no audit row, and the fresh copy it
  *     stored is removed through the ingest's one discard path.
  */
-import type { PoolClient } from 'pg';
+import type { CheckInQueryable } from './vault-version-checkin';
 
 /** The recorded fields a re-upload is judged against. */
 export interface RecordedVersion {
@@ -71,7 +71,7 @@ export interface ReuploadChange {
  * row. Null when nothing is recorded there.
  */
 export async function readRecordedVersion(
-  client: Pick<PoolClient, 'query'>,
+  client: CheckInQueryable,
   programId: string,
   documentCode: string,
   version: string,

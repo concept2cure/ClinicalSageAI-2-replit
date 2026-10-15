@@ -10,21 +10,30 @@ import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
+import { CONNECTOR_NOT_A_GENERAL_SETTING, ConnectorSettingRefusedError, namesClaudeConnector } from '../mcp/auth/connector-enablement';
+import { DISCOVERY_NOT_A_GENERAL_SETTING, DiscoverySettingRefusedError, asSettings, namesOnboardingDiscovery, overlaySettings, writeTenantSettings, type Settings } from '../services/tenant/tenant-settings-writer';
 
 const router = Router();
 
 router.use(authMiddleware);
 
 /**
- * PLATFORM-STAFF roles only. Deliberately excludes the org-membership role
- * 'admin' (every tenant's own admin carries JWT role 'admin'), which must
- * NOT bypass tenant scoping — that would let any customer admin read and
- * write every other organization. Matches the posture of clients-routes.ts
- * / tenant-users.ts (super_admin only).
+ * PLATFORM STAFF: platform standing for platform_admin or super_admin
+ * (holdsPlatformRole: the owner's own sign-in on the allowlist, or an active
+ * platform_role_grants row). Never the org-membership role. Every tenant's own
+ * admin carries 'admin', which must NOT bypass tenant scoping: that would let
+ * any customer admin read and write every other organization.
+ *
+ * Until 2026-10-05 this read the request role, which behind server/auth.ts IS
+ * the membership role (organization_users.role, no CHECK). So a membership row
+ * naming platform_admin or super_admin listed and wrote every organization,
+ * while a real grant holder was treated as a member (D6,
+ * docs/evidence/D6/2026-10-05-cross-tenant-staff/). The legacy 'superadmin'
+ * spelling is not a grant role, so it is gone with the read.
  */
-function isPlatformStaff(role: unknown): boolean {
-  return role === 'platform_admin' || role === 'superadmin' || role === 'super_admin';
-}
+const ORG_STAFF_ROLES = ['platform_admin', 'super_admin'] as const;
+const isPlatformStaff = (req: any): Promise<boolean> => holdsPlatformRole(req, ORG_STAFF_ROLES);
 
 /**
  * Staff may name any organization here (validateOrgOwnership, requireOrgAdmin).
@@ -34,22 +43,25 @@ function isPlatformStaff(role: unknown): boolean {
  */
 const staffAcrossOrgs = staffCrossOrgScope({
   param: 'id',
-  isStaff: (req: any) => isPlatformStaff(req.userRole ?? req.user?.role),
+  isStaff: (req: any) => isPlatformStaff(req),
 });
 
 /**
  * Validate that the requesting user belongs to the organization in :id param.
  * Platform admins / superadmins bypass the check.
  */
-function validateOrgOwnership(req: any, res: any, next: any) {
+async function validateOrgOwnership(req: any, res: any, next: any) {
   const paramId = parseInt(req.params.id, 10);
   const userOrgId = req.user?.organizationId
     ? parseInt(String(req.user.organizationId))
     : null;
-  const userRole = req.user?.role || req.userRole;
 
-  if (isPlatformStaff(userRole)) {
-    return next();
+  // Own organization first: it needs no standing lookup.
+  if (userOrgId && userOrgId === paramId) return next();
+  try {
+    if (await isPlatformStaff(req)) return next();
+  } catch (err) {
+    return next(err);
   }
 
   if (!userOrgId || userOrgId !== paramId) {
@@ -67,10 +79,15 @@ function validateOrgOwnership(req: any, res: any, next: any) {
  * validateOrgOwnership pinned :id to that org for non-staff — so an org-role
  * check here is a check against the *target* org. Platform staff pass.
  */
-function requireOrgAdmin(req: any, res: any, next: any) {
+async function requireOrgAdmin(req: any, res: any, next: any) {
   const role = req.userRole ?? req.user?.role;
-  if (isPlatformStaff(role) || role === 'admin' || role === 'owner') {
+  if (role === 'admin' || role === 'owner') {
     return next();
+  }
+  try {
+    if (await isPlatformStaff(req)) return next();
+  } catch (err) {
+    return next(err);
   }
   return res.status(403).json({
     success: false,
@@ -87,11 +104,18 @@ function requireOrgAdmin(req: any, res: any, next: any) {
  */
 router.get('/', async (req, res) => {
   try {
+    // The account workspace switcher needs actual memberships, including for
+    // platform staff whose ordinary directory contains every organization.
+    // Keep the existing directory behavior unless this validated filter opts in.
+    const filters = z.object({ membershipOnly: z.enum(['true', 'false']).optional() }).safeParse(req.query);
+    if (!filters.success) {
+      return res.status(400).json({ success: false, error: 'membershipOnly must be true or false' });
+    }
+    const membershipOnly = filters.data.membershipOnly === 'true';
     const userId = req.user?.id ? parseInt(String(req.user.id)) : null;
-    const userRole = req.user?.role || req.userRole;
     // Only platform staff may list ALL organizations; a tenant 'admin' sees
     // just their own memberships like any other user (no tenant enumeration).
-    const isAdmin = isPlatformStaff(userRole);
+    const isAdmin = membershipOnly ? false : await isPlatformStaff(req);
 
     let orgRows;
 
@@ -462,6 +486,23 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
  * Update organization settings
  * API: PATCH /api/organizations/:id/settings
  */
+function isGovernedSettingsBody(body: unknown): boolean {
+  const record = asSettings(body);
+  return typeof body === 'object' && body !== null && !Array.isArray(body)
+    && typeof record.settings === 'object' && record.settings !== null
+    && Object.keys(record).every(key => key === 'settings' || key === 'reason');
+}
+
+function settingsMutationRefusal(error: unknown): string | null {
+  if (error instanceof ConnectorSettingRefusedError) return CONNECTOR_NOT_A_GENERAL_SETTING;
+  if (error instanceof DiscoverySettingRefusedError) return DISCOVERY_NOT_A_GENERAL_SETTING;
+  return null;
+}
+
+function isNonEmptySettings(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length > 0;
+}
+
 router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcrossOrgs, async (req, res) => {
   try {
     const { id } = req.params;
@@ -471,12 +512,7 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     // the contract predates this hardening); a governed call must carry a
     // reason of at least 3 chars. Both forms audit the changed section keys.
     const body = req.body ?? {};
-    const isGoverned =
-      typeof body === 'object' &&
-      !Array.isArray(body) &&
-      typeof body.settings === 'object' &&
-      body.settings !== null &&
-      Object.keys(body).every(k => k === 'settings' || k === 'reason');
+    const isGoverned = isGovernedSettingsBody(body);
     const settingsUpdate = isGoverned ? body.settings : body;
     const reason = isGoverned && typeof body.reason === 'string' ? body.reason.trim() : null;
 
@@ -486,77 +522,55 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
         error: 'A reason (min 3 chars) is required for this action',
       });
     }
-    if (
-      typeof settingsUpdate !== 'object' ||
-      settingsUpdate === null ||
-      Array.isArray(settingsUpdate) ||
-      Object.keys(settingsUpdate).length === 0
-    ) {
+    if (!isNonEmptySettings(settingsUpdate)) {
       return res.status(400).json({
         success: false,
         error: 'Settings update must be a non-empty object',
       });
     }
-
-    const [organization] = await db
-      .select()
-      .from(organizations)
-      .where(eq(organizations.id, parseInt(id)));
-
-    if (!organization) {
-      return res.status(404).json({
-        success: false,
-        error: 'Organization not found',
-      });
+    // The connector for Claude is the owner's setting, with its own door
+    // (PUT /api/tenant-config/:id/claude-connector; P1-47, ADR-0014 §10).
+    // requireOrgAdmin admits an administrator, so a body naming it is refused
+    // whole, before anything is read (P1-49 fix round); the writer below
+    // refuses any change to it from this door as well.
+    if (namesClaudeConnector(settingsUpdate)) {
+      return res.status(403).json({ success: false, error: CONNECTOR_NOT_A_GENERAL_SETTING });
+    }
+    if (namesOnboardingDiscovery(settingsUpdate)) {
+      return res.status(403).json({ success: false, error: DISCOVERY_NOT_A_GENERAL_SETTING });
     }
 
-    const currentSettings = organization.settings || {};
-    const updatedSettings = { ...currentSettings, ...settingsUpdate };
-
-    // Checked: this used to answer success without looking, so a write that
-    // matched nothing (the own-org write policy, for staff in their own scope)
-    // was reported and audited as a change (D3, 2026-09-26).
-    const written = await db
-      .update(organizations)
-      .set({
-        settings: updatedSettings,
-        updatedAt: new Date(),
-      })
-      .where(eq(organizations.id, parseInt(id)))
-      .returning({ id: organizations.id });
-    if (written.length === 0) {
+    // DP-73 (2026-10-01): through the one settings writer. The stored
+    // settings are read under a row lock, the update laid over them (a
+    // section the body names keeps the keys it does not name, DP-62), and the
+    // change's chained row, with its sections, changed fields and reason,
+    // written in the same transaction: a refused row means no change. This
+    // door used to replace whole sections and record section names after the
+    // change had committed (WO-16C's "the change stands"); the profile door,
+    // above, still does.
+    const stored = await writeTenantSettings(req, parseInt(id), {
+      action: 'tenant_settings_changed',
+      next: (current: Settings) => overlaySettings(current, settingsUpdate as Settings),
+      sections: () => Object.keys(settingsUpdate),
+      reason,
+    });
+    if (!stored) {
       return res.status(404).json({ success: false, error: 'Organization not found' });
     }
-
-    // Audit the changed section keys, not the values — settings sections can
-    // carry integration credentials that must not be duplicated into the log.
-    // WO-16C: the outcome is carried, not discarded (see the profile route).
-    const auditTrail = await recordAuditRow({
-      tenantId: parseInt(id),
-      userId: req.userId ?? (req as any).user?.id,
-      action: 'data_modify',
-      resourceType: 'organization_settings',
-      resourceId: parseInt(id),
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string,
-      details: {
-        orgAdminAction: 'organization.settings_update',
-        sections: Object.keys(settingsUpdate),
-        reason,
-      },
-    });
 
     res.json({
       success: true,
       message: 'Organization settings updated successfully',
       settings: settingsUpdate,
-      auditTrail,
+      auditTrail: { persisted: true, chained: true },
     });
   } catch (error) {
-    console.error('Error updating organization settings:', error);
+    const refusal = settingsMutationRefusal(error);
+    if (refusal) return res.status(403).json({ success: false, error: refusal });
+    console.error('Error updating organization settings:', (error as Error)?.message);
     res.status(500).json({
       success: false,
-      error: 'Failed to update organization settings',
+      error: 'Failed to update organization settings. Nothing was changed.',
     });
   }
 });

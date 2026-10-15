@@ -77,6 +77,7 @@ describe('the server configuration fires it on import', () => {
       MFA_ENCRYPTION_KEY: 'probe-mfa-encryption-key-min-32-chars-ccc',
       AUDIT_HMAC_KEY: 'probe-audit-hmac-key-min-32-chars-ddddddd',
       AUDIT_HMAC_SECRET: 'probe-audit-hmac-secret-min-32-chars-eeeee',
+      AUDIT_EXPORT_SIGNING_KEY: 'probe-audit-export-signing-key-min-32-chars',
       AI_SENSITIVE_DATA_POLICY_MODE: 'enforce',
       AI_PROVIDER_PLACEMENT_APPROVALS:
         '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}',

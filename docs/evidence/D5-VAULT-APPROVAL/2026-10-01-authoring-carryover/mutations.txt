@@ -1,0 +1,32 @@
+== M1 no status check
+ × a working draft: nothing carries, the editor is told why, and the version is not reviewed 250ms
+ × frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed 161ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 8 passed (10)
+== M2 review may follow the approval
+ × reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed 198ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)
+== M3 approver may review
+      Tests  10 passed (10)
+== M4 author may sign
+ × approved by its author: nothing carries, the editor is told why, and the version is not reviewed 229ms
+ × reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed 211ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 8 passed (10)
+== M5 approval of any content
+ × an approval of other content: nothing carries, the editor is told why, and the version is not reviewed 215ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)
+== M6 membership not checked
+ × a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed 248ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)
+== M3 approver may review (the selection) — unit test
+ × chooseCarriedSignOffs > passes over the approver's own review for an independent one, even when the approver's is later 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+== M3b approver may review (the selection and the identity check both removed) — integration
+ × reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed 213ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)

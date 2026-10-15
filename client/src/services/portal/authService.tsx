@@ -14,6 +14,7 @@
 
 import { authLogger } from './logger';
 import { purgeDeviceDrafts } from '@/lib/deviceDraftCache';
+import { releaseSessionChange } from '@/lib/sessionChangeGuard';
 import {
   SESSION_ENDED_EVENT,
   rememberSignOutReason,
@@ -43,25 +44,29 @@ export interface AuthUser {
   roles: string[];
   permissions: string[];
   organizationId: string;
-  organizationName: string;
+  /** The organisation's recorded name, or null when the session names none (GET /session, P-25). */
+  organizationName: string | null;
   lastLoginAt?: Date;
   mfaEnabled: boolean;
   mfaMethods: MfaMethod[];
   passwordExpiresAt?: Date;
   mustChangePassword: boolean;
+  /**
+   * Whether this account needs an authenticator to sign, and has one, as the
+   * server states it (GET /session, P-25 follow-up). Absent on a user stored
+   * before the server said so.
+   */
+  signing?: { authenticatorRequired: boolean; authenticatorEnrolled: boolean };
   profileImageUrl?: string;
 }
 
-export interface AuthSession {
-  id: string;
-  userId: string;
-  createdAt: Date;
-  lastActivityAt: Date;
-  expiresAt: Date;
-  deviceInfo: DeviceInfo;
-  ipAddress: string;
-  location?: string;
-  isCurrent: boolean;
+/** What a sign-out ended. This browser's session ends either way. */
+export interface LogoutResult {
+  /**
+   * Whether the server ended every session of the account: true or false when
+   * they were asked for (`logout(true)`), null when only this browser's was.
+   */
+  everySessionEnded: boolean | null;
 }
 
 export interface DeviceInfo {
@@ -105,10 +110,25 @@ export interface PasswordResetConfirm {
   mfaCode?: string;
 }
 
+/**
+ * The two fields POST /password/change reads. `terminateOtherSessions` was
+ * declared here too; the route does not read it and offers no opt-out — a
+ * change ends every session that began before it (server/routes/auth.ts,
+ * IAM-04) — so it was removed (P-25, 2026-10-08).
+ */
 export interface PasswordChangeRequest {
   currentPassword: string;
   newPassword: string;
-  terminateOtherSessions: boolean;
+}
+
+/** What POST /mfa/setup answers (mfaService.generateSecret). */
+export interface MfaSetup {
+  /** The base32 key, for entering by hand. */
+  secret: string;
+  /** The otpauth:// URI the QR code encodes. */
+  otpauthUrl: string;
+  /** The QR code as a data: URL, drawn on the server. */
+  qrCode: string;
 }
 
 export interface AuthError {
@@ -204,7 +224,7 @@ class SecureStorage {
     }
   }
 
-  static clear(): void {
+  static clear(preserveDraftOwnerId?: string): void {
     Object.values(AUTH_STORAGE_KEYS).forEach(key => {
       this.removeItem(key);
     });
@@ -219,7 +239,7 @@ class SecureStorage {
     });
     // Unsaved section text the editor cached on this device is the signed-out
     // person's, not the next one's (SEC-A-5; see lib/deviceDraftCache).
-    purgeDeviceDrafts();
+    purgeDeviceDrafts(preserveDraftOwnerId);
   }
 }
 
@@ -374,6 +394,27 @@ interface ApiRequestOptions {
  * its generic sentence instead of the server's (security audit IAM-18 (8) /
  * P1-3 follow-up). PURE.
  */
+/**
+ * The server's refusal of the credential a request asked it to check — a
+ * password (AUTH_001: sign-in, "current password") or a verification code
+ * (AUTH_004: second factor, authenticator enrolment). Such a 401 says nothing
+ * about the session, so it is never answered with a refresh or "Session
+ * expired" (QA 2026-10-08, j9 finding 2).
+ */
+const CREDENTIAL_REFUSAL_CODES = new Set(['AUTH_001', 'AUTH_004']);
+
+/**
+ * True when a 401 may mean the session is over and a refresh could help: the
+ * request presented a session, and the server did not refuse the credential
+ * it was asked to check. A request that carried no session (sign-in, the
+ * second-factor step, a password reset) cannot have an expired one. PURE.
+ */
+export function unauthorizedMeansSession(presentedSession: boolean, body: unknown): boolean {
+  if (!presentedSession) return false;
+  const code = apiErrorOfResponse(401, '', body).code;
+  return !CREDENTIAL_REFUSAL_CODES.has(code);
+}
+
 export function apiErrorOfResponse(
   status: number,
   statusText: string,
@@ -389,6 +430,11 @@ export function apiErrorOfResponse(
     message: message ?? (statusText || `Request failed (${status})`),
     details: body && typeof body === 'object' ? top : undefined,
   };
+}
+
+function changedSessionResult<T>(): AuthResult<T> {
+  return { success: false, error: { code: AUTH_ERROR_CODES.TOKEN_INVALID,
+    message: 'Your session changed while this request was pending. Try again in the current session.' } };
 }
 
 class ApiClient {
@@ -416,10 +462,14 @@ class ApiClient {
         ...headers,
       };
 
+      let presentedSession = false;
+      let sessionGuard: ReturnType<AuthService['captureSessionReadGuard']> | null = null;
       if (!skipAuth) {
         const token = await this.authService.getValidAccessToken();
         if (token) {
           requestHeaders['Authorization'] = `Bearer ${token}`;
+          presentedSession = true;
+          sessionGuard = this.authService.captureSessionReadGuard(token);
         }
       }
 
@@ -430,12 +480,26 @@ class ApiClient {
         credentials: 'include',
       });
 
+      // A 401 that refuses what was presented — a wrong password, a wrong code,
+      // or any request that carried no session — is the server's answer, in
+      // its words. It was read as an expired session: the sign-in page said
+      // "Session expired" for a mistyped password (QA 2026-10-08, j9).
+      if (
+        response.status === 401 &&
+        !unauthorizedMeansSession(presentedSession, await response.clone().json().catch(() => null))
+      ) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: apiErrorOfResponse(response.status, response.statusText, errorData) };
+      }
+
       // Handle 401 Unauthorized
       if (response.status === 401 && retryOnUnauthorized) {
+        if (!sessionGuard?.current()) return changedSessionResult<T>();
         // P1-1: a session the server ended for inactivity or age will not
         // refresh (the refresh refuses with the same code), so it ends here:
         // storage cleared, the reason kept for the sign-in page, no retry.
         const ended = await sessionEndReasonOfResponse(response as Response);
+        if (!sessionGuard.current()) return changedSessionResult<T>();
         if (ended) {
           this.authService.endSession(ended);
           return {
@@ -445,6 +509,7 @@ class ApiClient {
         }
         const refreshed = await this.authService.refreshToken();
         if (refreshed) {
+          if (!sessionGuard.sameRevision()) return changedSessionResult<T>();
           // Retry request with new token
           return this.request(endpoint, { ...options, retryOnUnauthorized: false });
         }
@@ -523,9 +588,14 @@ export interface SessionPolicy {
   lifetimeHours: number;
   /** When the lifetime ends (ISO), or null when the probe has not said. */
   expiresAt: string | null;
+  /**
+   * The server's id for this session, or null when the probe has not said.
+   * The idle clock is kept under it across reloads and tabs (idleSession.ts).
+   */
+  sessionId?: string | null;
 }
 
-const DEFAULT_SESSION_POLICY: SessionPolicy = { idleMinutes: 15, lifetimeHours: 12, expiresAt: null };
+const DEFAULT_SESSION_POLICY: SessionPolicy = { idleMinutes: 15, lifetimeHours: 12, expiresAt: null, sessionId: null };
 
 export class AuthService {
   private tokens: AuthTokens | null = null;
@@ -533,6 +603,10 @@ export class AuthService {
   private sessionPolicy: SessionPolicy = DEFAULT_SESSION_POLICY;
   private refreshPromise: Promise<boolean> | null = null;
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Ignore refresh requests that complete after a different session was adopted or ended. */
+  private authRevision = 0;
+  /** A session probe must settle before the previous account can be refreshed. */
+  private pendingAdoptionRevision: number | null = null;
   private events: AuthEventEmitter = new AuthEventEmitter();
   public api: ApiClient;
 
@@ -550,6 +624,15 @@ export class AuthService {
 
   on(event: AuthEventType, handler: AuthEventHandler): () => void {
     return this.events.on(event, handler);
+  }
+
+  /** A response owns only the revision, bearer and account snapshot it actually read. */
+  captureSessionReadGuard(presentedBearer = this.tokens?.accessToken) {
+    const revision = this.authRevision;
+    const account = this.user;
+    const sameRevision = () => revision === this.authRevision && this.pendingAdoptionRevision === null;
+    const credentialsCurrent = () => sameRevision() && this.tokens?.accessToken === presentedBearer;
+    return { sameRevision, credentialsCurrent, current: () => credentialsCurrent() && this.user === account };
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -665,7 +748,11 @@ export class AuthService {
     return { success: true, data: result.data!.user };
   }
 
-  async logout(terminateAllSessions: boolean = false): Promise<void> {
+  async logout(terminateAllSessions: boolean = false): Promise<LogoutResult> {
+    // Cancel an older hand-off without making an already-running refresh lose
+    // its rotated pair; that pair must be settled and revoked below.
+    this.pendingAdoptionRevision = null;
+    const signingOut = this.captureSessionReadGuard();
     // The refresh token outlives the access token by days, and the server
     // revokes only what it is handed (POST /logout: the bearer and
     // body.refreshToken). A logout that did not name it left it able to mint
@@ -675,17 +762,35 @@ export class AuthService {
     // Then the bearer is settled, so a refresh that is due rotates before the
     // body is built rather than out from under it; if that refresh fails and
     // clears storage, the value read first still names the live token.
-    const storedRefreshToken = SecureStorage.getItem(AUTH_STORAGE_KEYS.refreshToken);
-    await this.getValidAccessToken();
-    const refreshToken = this.tokens?.refreshToken ?? storedRefreshToken ?? undefined;
-    try {
-      await this.api.post(`${this.baseUrl}/logout`, { terminateAllSessions, refreshToken }, { retryOnUnauthorized: false });
-    } catch {
-      // Ignore errors during logout
-    }
+    const original = this.logoutCredentials();
+    if (this.refreshPromise) await this.refreshPromise;
+    if (signingOut.sameRevision()) await this.getValidAccessToken();
+    const sameSession = signingOut.sameRevision();
+    const { accessToken, refreshToken } = sameSession ? this.logoutCredentials(original) : original;
+    if (sameSession) ++this.authRevision;
+    const clearing = this.captureSessionReadGuard();
+    const answer = await this.api.post<{ success?: boolean }>(
+      `${this.baseUrl}/logout`,
+      { terminateAllSessions, refreshToken: refreshToken ?? undefined },
+      { skipAuth: true, retryOnUnauthorized: false, headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {} }
+    );
 
-    this.clearAuth();
-    this.events.emit('logout');
+    // This browser's session ends whatever the server answered. The other
+    // sessions end only when the server says so: it ends them for a live access
+    // token alone and answers 401 otherwise (plan P0-4b R4), so a refusal is
+    // reported, never read as success.
+    if (sameSession && clearing.credentialsCurrent()) {
+      this.clearAuth();
+      this.events.emit('logout');
+    }
+    return { everySessionEnded: terminateAllSessions ? answer.success && answer.data?.success === true : null };
+  }
+
+  private logoutCredentials(original?: { accessToken: string | null; refreshToken: string | null }) {
+    return {
+      accessToken: this.tokens?.accessToken ?? original?.accessToken ?? SecureStorage.getItem(AUTH_STORAGE_KEYS.accessToken),
+      refreshToken: this.tokens?.refreshToken ?? original?.refreshToken ?? SecureStorage.getItem(AUTH_STORAGE_KEYS.refreshToken),
+    };
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -726,6 +831,8 @@ export class AuthService {
   }
 
   private async _doRefreshToken(): Promise<boolean> {
+    if (this.pendingAdoptionRevision !== null) return false;
+    const revision = this.authRevision;
     try {
       const result = await this.api.post<{
         accessToken: string;
@@ -736,6 +843,8 @@ export class AuthService {
         { refreshToken: this.tokens?.refreshToken },
         { skipAuth: true, retryOnUnauthorized: false }
       );
+
+      if (revision !== this.authRevision) return false;
 
       if (!result.success || !result.data) {
         // P1-1: the refresh names why a session is over (idle, lifetime); the
@@ -758,6 +867,7 @@ export class AuthService {
 
       return true;
     } catch {
+      if (revision !== this.authRevision) return false;
       this.endSession(null);
       return false;
     }
@@ -768,8 +878,8 @@ export class AuthService {
    * SESSION_LIFETIME, or a refresh it refused): storage cleared, the reason
    * kept for the sign-in page, `session_expired` raised with it (P1-1).
    */
-  endSession(reason: SessionEndReason | null): void {
-    this.clearAuth();
+  endSession(reason: SessionEndReason | null, preserveCurrentAccountDrafts = false): void {
+    this.clearAuth(preserveCurrentAccountDrafts);
     if (reason) rememberSignOutReason(reason);
     this.events.emit('session_expired', reason ? { reason } : undefined);
   }
@@ -784,11 +894,12 @@ export class AuthService {
 
   /** Keep what GET /session reported under `session`. Unknown or absent fields keep their defaults. */
   rememberSessionPolicy(session: unknown): SessionPolicy {
-    const s = (session ?? {}) as { idleMinutes?: unknown; lifetimeHours?: unknown; expiresAt?: unknown };
+    const s = (session ?? {}) as { idleMinutes?: unknown; lifetimeHours?: unknown; expiresAt?: unknown; id?: unknown };
     const minutes = typeof s.idleMinutes === 'number' && s.idleMinutes > 0 ? s.idleMinutes : DEFAULT_SESSION_POLICY.idleMinutes;
     const hours = typeof s.lifetimeHours === 'number' && s.lifetimeHours > 0 ? s.lifetimeHours : DEFAULT_SESSION_POLICY.lifetimeHours;
     const expiresAt = typeof s.expiresAt === 'string' && !Number.isNaN(Date.parse(s.expiresAt)) ? s.expiresAt : null;
-    this.sessionPolicy = { idleMinutes: minutes, lifetimeHours: hours, expiresAt };
+    const sessionId = typeof s.id === 'string' && s.id ? s.id : null;
+    this.sessionPolicy = { idleMinutes: minutes, lifetimeHours: hours, expiresAt, sessionId };
     return this.sessionPolicy;
   }
 
@@ -798,7 +909,10 @@ export class AuthService {
    * works without other API traffic (keepAlive).
    */
   async refreshSessionPolicy(): Promise<SessionPolicy> {
+    if (this.pendingAdoptionRevision !== null) return this.sessionPolicy;
+    const revision = this.authRevision;
     const result = await this.api.get<{ session?: unknown }>(`${this.baseUrl}/session`, { retryOnUnauthorized: false });
+    if (revision !== this.authRevision || this.pendingAdoptionRevision !== null) return this.sessionPolicy;
     if (result.success && result.data) return this.rememberSessionPolicy(result.data.session);
     return this.sessionPolicy;
   }
@@ -814,18 +928,30 @@ export class AuthService {
    * expired hand-off signs nobody in. It carries no refresh token: the session
    * lives as long as its access token and its idle window.
    */
-  async adoptSession(accessToken: string, persistent: boolean = false): Promise<AuthUser | null> {
-    const probe = await this.api.get<{ authenticated?: boolean; user?: AuthUser; session?: unknown }>(`${this.baseUrl}/session`, {
-      skipAuth: true,
-      retryOnUnauthorized: false,
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!probe.success || !probe.data?.authenticated || !probe.data.user) return null;
-    const policy = this.rememberSessionPolicy(probe.data.session);
-    const expiresAt = policy.expiresAt ? new Date(policy.expiresAt) : new Date(Date.now() + policy.lifetimeHours * 60 * 60 * 1000);
-    this.setAuth({ accessToken, refreshToken: '', expiresAt, tokenType: 'Bearer' }, probe.data.user, persistent);
-    this.events.emit('login', { user: probe.data.user });
-    return probe.data.user;
+  async adoptSession(accessToken: string, persistent: boolean = false, expected?: { userId: string; organizationId: string }, beforeCommit?: () => boolean): Promise<AuthUser | null> {
+    const revision = ++this.authRevision;
+    this.pendingAdoptionRevision = revision;
+    try {
+      const probe = await this.api.get<{ authenticated?: boolean; user?: AuthUser; session?: unknown }>(`${this.baseUrl}/session`, {
+        skipAuth: true,
+        retryOnUnauthorized: false,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (revision !== this.authRevision || this.pendingAdoptionRevision !== revision || !probe.success || !probe.data?.authenticated || !probe.data.user) return null;
+      if (expected && (String(probe.data.user.id) !== expected.userId || String(probe.data.user.organizationId) !== expected.organizationId)) return null;
+      if (beforeCommit && !beforeCommit()) return null;
+      // A workspace switch rotates the old access token. Its refresh token and
+      // credentials in the opposite persistence tier must not resurrect that
+      // workspace on reload; keep nothing from the predecessor after the probe.
+      SecureStorage.clear();
+      const policy = this.rememberSessionPolicy(probe.data.session);
+      const expiresAt = policy.expiresAt ? new Date(policy.expiresAt) : new Date(Date.now() + policy.lifetimeHours * 60 * 60 * 1000);
+      this.setAuth({ accessToken, refreshToken: '', expiresAt, tokenType: 'Bearer' }, probe.data.user, persistent);
+      this.events.emit('login', { user: probe.data.user });
+      return probe.data.user;
+    } finally {
+      if (this.pendingAdoptionRevision === revision) this.pendingAdoptionRevision = null;
+    }
   }
 
   private setupTokenRefresh(): void {
@@ -846,22 +972,6 @@ export class AuthService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Session Management
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async getSessions(): Promise<AuthResult<AuthSession[]>> {
-    return this.api.get<AuthSession[]>(`${this.baseUrl}/sessions`);
-  }
-
-  async terminateSession(sessionId: string): Promise<AuthResult<void>> {
-    return this.api.delete(`${this.baseUrl}/sessions/${sessionId}`);
-  }
-
-  async terminateAllOtherSessions(): Promise<AuthResult<void>> {
-    return this.api.delete(`${this.baseUrl}/sessions/others`);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Password Management
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -873,6 +983,12 @@ export class AuthService {
     return this.api.post(`${this.baseUrl}/password/reset-confirm`, confirm, { skipAuth: true });
   }
 
+  /**
+   * POST /password/change. A wrong current password is a 401 AUTH_001 that
+   * ApiClient returns as the server's refusal, not as an expiry (QA 2026-10-08,
+   * j9). On success the server has ended every session that began before the
+   * change, this one included: the caller signs in again.
+   */
   async changePassword(request: PasswordChangeRequest): Promise<AuthResult<void>> {
     return this.api.post(`${this.baseUrl}/password/change`, request);
   }
@@ -886,24 +1002,41 @@ export class AuthService {
     return this.api.post(`${this.baseUrl}/mfa/resend`, { challengeId }, { skipAuth: true });
   }
 
-  async getMfaMethods(): Promise<AuthResult<MfaMethod[]>> {
-    return this.api.get<MfaMethod[]>(`${this.baseUrl}/mfa/methods`);
+  /*
+   * The signed-in person's authenticator app, through the three routes the
+   * server has (server/routes/auth.ts). Until P-25 (2026-10-08) this block held
+   * getMfaMethods, setupTotp, verifyTotpSetup, disableMfaMethod and
+   * generateBackupCodes, which addressed /mfa/methods, /mfa/totp/setup,
+   * /mfa/totp/verify, DELETE /mfa/:method and /mfa/backup-codes — none of which
+   * exists — and had no caller. These replace them; the account panel
+   * (concept2cure/v2/AccountPanel.tsx) is the caller.
+   */
+
+  /**
+   * POST /mfa/setup: a new secret, not yet on. Refused 409 MFA_ALREADY_ENABLED
+   * while an authenticator is enrolled; restarting an unconfirmed enrolment is
+   * allowed. The QR code is drawn on the server as a data: URL.
+   */
+  async setupMfa(): Promise<AuthResult<MfaSetup>> {
+    return this.api.post<MfaSetup>(`${this.baseUrl}/mfa/setup`);
   }
 
-  async setupTotp(): Promise<AuthResult<{ secret: string; qrCode: string }>> {
-    return this.api.post(`${this.baseUrl}/mfa/totp/setup`);
+  /**
+   * POST /mfa/enable with a 6-digit code from the new secret. Answers the
+   * recovery codes, which the server keeps only as hashes: this answer is the
+   * one time they can be shown. A wrong code is a 401 AUTH_004 refusal.
+   */
+  async enableMfa(code: string): Promise<AuthResult<{ success?: boolean; message?: string; backupCodes?: string[] }>> {
+    return this.api.post(`${this.baseUrl}/mfa/enable`, { code });
   }
 
-  async verifyTotpSetup(code: string): Promise<AuthResult<{ backupCodes: string[] }>> {
-    return this.api.post(`${this.baseUrl}/mfa/totp/verify`, { code });
-  }
-
-  async disableMfaMethod(method: MfaMethod['type']): Promise<AuthResult<void>> {
-    return this.api.delete(`${this.baseUrl}/mfa/${method}`);
-  }
-
-  async generateBackupCodes(): Promise<AuthResult<{ codes: string[] }>> {
-    return this.api.post(`${this.baseUrl}/mfa/backup-codes`);
+  /**
+   * POST /mfa/disable with a current 6-digit authenticator code (a recovery
+   * code is a sign-in factor only and is refused here). A wrong code is a 401
+   * AUTH_004 refusal.
+   */
+  async disableMfa(code: string): Promise<AuthResult<{ success?: boolean; message?: string }>> {
+    return this.api.post(`${this.baseUrl}/mfa/disable`, { code });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -926,16 +1059,36 @@ export class AuthService {
     return this.user?.roles.includes(role) || false;
   }
 
-  async updateProfile(
-    updates: Partial<Pick<AuthUser, 'firstName' | 'lastName'>>
-  ): Promise<AuthResult<AuthUser>> {
-    const result = await this.api.patch<AuthUser>(`${this.baseUrl}/profile`, updates);
-    if (result.success && result.data) {
-      this.user = result.data;
-      this.storeUser();
-      this.events.emit('user_updated', { user: result.data });
+  /**
+   * The account as the server states it now (GET /session): name, e-mail, the
+   * organisation and membership role of this session, and whether an
+   * authenticator is enrolled. Kept, and announced to the provider, so the
+   * shell's account menu and the account panel read one answer. A refusal is
+   * returned, never replaced by the stored copy.
+   */
+  async refreshUser(): Promise<AuthResult<AuthUser>> {
+    const changed = (): AuthResult<AuthUser> => ({ success: false, error: {
+      code: AUTH_ERROR_CODES.TOKEN_INVALID,
+      message: 'Your session has changed. Read the account again after the session change completes.',
+    } });
+    if (this.pendingAdoptionRevision !== null) return changed();
+    const revision = this.authRevision;
+    const result = await this.api.get<{ authenticated?: boolean; user?: AuthUser; session?: unknown }>(
+      `${this.baseUrl}/session`, { retryOnUnauthorized: false }
+    );
+    if (revision !== this.authRevision || this.pendingAdoptionRevision !== null) return changed();
+    if (!result.success) return { success: false, error: result.error };
+    if (!result.data?.authenticated || !result.data.user) {
+      return {
+        success: false,
+        error: { code: AUTH_ERROR_CODES.TOKEN_INVALID, message: 'The server did not return an account for this session.' },
+      };
     }
-    return result;
+    this.user = result.data.user;
+    this.storeUser();
+    this.rememberSessionPolicy(result.data.session);
+    this.events.emit('user_updated', { user: this.user });
+    return { success: true, data: this.user };
   }
 
   setToken(
@@ -944,6 +1097,8 @@ export class AuthService {
     refreshToken?: string,
     expiresInSeconds: number = 3600
   ): void {
+    ++this.authRevision;
+    this.pendingAdoptionRevision = null;
     this.tokens = {
       accessToken,
       refreshToken: refreshToken || accessToken,
@@ -966,6 +1121,8 @@ export class AuthService {
   // ─────────────────────────────────────────────────────────────────────────
 
   private setAuth(tokens: AuthTokens, user: AuthUser, persistent: boolean = false): void {
+    ++this.authRevision;
+    this.pendingAdoptionRevision = null;
     this.tokens = tokens;
     this.user = user;
     this.storeTokens(persistent);
@@ -984,10 +1141,16 @@ export class AuthService {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
       localStorage.setItem('activeOrgSlug', slug);
+    } else {
+      localStorage.removeItem('currentOrganizationName');
+      localStorage.removeItem('activeOrgSlug');
     }
   }
 
-  private clearAuth(): void {
+  private clearAuth(preserveCurrentAccountDrafts = false): void {
+    const preservedOwner = preserveCurrentAccountDrafts ? this.user?.id : undefined;
+    ++this.authRevision;
+    this.pendingAdoptionRevision = null;
     this.tokens = null;
     this.user = null;
     this.sessionPolicy = DEFAULT_SESSION_POLICY;
@@ -995,7 +1158,8 @@ export class AuthService {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
     }
-    SecureStorage.clear();
+    SecureStorage.clear(preservedOwner);
+    releaseSessionChange();
   }
 
   private storeTokens(persistent: boolean): void {
@@ -1021,12 +1185,16 @@ export class AuthService {
       const expiryStr = SecureStorage.getItem(AUTH_STORAGE_KEYS.tokenExpiry);
       const userStr = SecureStorage.getItem(AUTH_STORAGE_KEYS.user);
 
-      if (accessToken && refreshToken && expiryStr && userStr) {
+      // A session adopted from a hand-off (sign-up, single sign-on) has no
+      // refresh token; it is still the session, and the provider re-validates
+      // it with the server on load. Requiring one signed a new user out on
+      // their first reload (QA 2026-10-08, j9 finding 3).
+      if (accessToken && expiryStr && userStr) {
         const expiresAt = new Date(expiryStr);
         if (expiresAt > new Date()) {
           this.tokens = {
             accessToken,
-            refreshToken,
+            refreshToken: refreshToken ?? '',
             expiresAt,
             tokenType: 'Bearer',
           };
@@ -1074,86 +1242,90 @@ interface AuthContextValue {
     credentials: LoginCredentials
   ) => Promise<AuthResult<{ mfaRequired: boolean; methods?: MfaMethod[]; maskedEmail?: string }>>;
   verifyMfa: (verification: MfaVerification) => Promise<AuthResult<AuthUser>>;
-  logout: (terminateAll?: boolean) => Promise<void>;
+  logout: (terminateAll?: boolean) => Promise<LogoutResult>;
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+async function reconcileBootstrapResponse(
+  res: Response, storedUser: AuthUser, current: () => boolean, setUser: (user: AuthUser | null) => void,
+): Promise<void> {
+  if (!current()) return;
+  if (res.ok) {
+    const data = await res.json();
+    if (!current()) return;
+    if (data.authenticated && data.user) {
+      setUser(data.user as AuthUser);
+      authService.rememberSessionPolicy(data.session);
+    } else {
+      setUser(null);
+      void authService.logout();
+    }
+  } else if (res.status === 401 || res.status === 403) {
+    const ended = await sessionEndReasonOfResponse(res);
+    if (!current()) return;
+    if (ended) rememberSignOutReason(ended);
+    setUser(null);
+    void authService.logout();
+  } else {
+    setUser(storedUser);
+  }
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
 
   useEffect(() => {
-    // Validate stored auth against server before trusting it
+    let alive = true;
+    // A bootstrap probe owns the same auth revision and bearer it presented.
     const validateSession = async () => {
       const storedUser = authService.getUser();
-      if (!storedUser || !authService.isAuthenticated()) {
-        setUser(null);
-        setIsBootstrapping(false);
-        return;
-      }
-
+      const guard = authService.captureSessionReadGuard();
+      const current = () => alive && guard.current();
       try {
-        const token =
-          sessionStorage.getItem('trialsage_access_token') ||
-          localStorage.getItem('trialsage_access_token');
-        if (!token) {
-          authService.logout();
-          setUser(null);
-          setIsBootstrapping(false);
+        if (!storedUser || !authService.isAuthenticated()) {
+          if (current()) setUser(null);
           return;
         }
-
-        const res = await fetch('/api/v1/auth/session', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated && data.user) {
-            setUser(data.user as AuthUser);
-            authService.rememberSessionPolicy(data.session);
-          } else {
-            authService.logout();
-            setUser(null);
-          }
-        } else if (res.status === 401 || res.status === 403) {
-          // Token invalid/expired server-side — clear stale auth. A session the
-          // server ended for inactivity or age says so; the sign-in page shows it (P1-1).
-          const ended = await sessionEndReasonOfResponse(res);
-          if (ended) rememberSignOutReason(ended);
-          authService.logout();
-          setUser(null);
-        } else {
-          // Preserve the stored session during transient server failures.
-          setUser(storedUser);
+        const token = SecureStorage.getItem(AUTH_STORAGE_KEYS.accessToken);
+        if (!token) {
+          if (current()) { setUser(null); void authService.logout(); }
+          return;
         }
+        if (!authService.captureSessionReadGuard(token).current() || !current()) return;
+        const res = await fetch('/api/v1/auth/session', { headers: { Authorization: `Bearer ${token}` } });
+        if (!current()) return;
+        await reconcileBootstrapResponse(res, storedUser, current, setUser);
       } catch {
-        // Preserve the stored session during transient network failures.
-        setUser(storedUser);
+        if (current()) setUser(storedUser);
+      } finally {
+        if (alive) setIsBootstrapping(false);
       }
-
-      setIsBootstrapping(false);
     };
 
-    validateSession();
+    void validateSession();
 
     // Subscribe to auth events
     const unsubLogin = authService.on('login', event => {
+      setIsBootstrapping(false);
       setUser((event.data as { user: AuthUser })?.user || authService.getUser());
     });
 
     const unsubLogout = authService.on('logout', () => {
+      setIsBootstrapping(false);
       setUser(null);
     });
 
     const unsubExpired = authService.on('session_expired', () => {
+      setIsBootstrapping(false);
       setUser(null);
     });
 
     const unsubUpdated = authService.on('user_updated', event => {
+      setIsBootstrapping(false);
       setUser((event.data as { user: AuthUser })?.user || null);
     });
 
@@ -1165,6 +1337,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.addEventListener(SESSION_ENDED_EVENT, onSessionEnded);
 
     return () => {
+      alive = false;
       unsubLogin();
       unsubLogout();
       unsubExpired();
@@ -1181,9 +1354,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return authService.verifyMfa(verification);
   }, []);
 
-  const logout = useCallback(async (terminateAll?: boolean) => {
-    await authService.logout(terminateAll);
-  }, []);
+  const logout = useCallback((terminateAll?: boolean) => authService.logout(terminateAll), []);
 
   const hasPermission = useCallback((permission: string) => {
     return authService.hasPermission(permission);

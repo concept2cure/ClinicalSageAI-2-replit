@@ -51,14 +51,24 @@ export interface ArtifactInput {
   documentDate?: string | null;
 }
 
-/** Add an artifact. When no zone is given, auto-classify by name (DIA RM). */
-export async function addArtifactTx(client: Queryable, orgId: number, userId: number, tmfFileId: number, input: ArtifactInput): Promise<{ id: number; zone: number; classification: 'matched' | 'default' | 'explicit' }> {
+/**
+ * Add an artifact. When no zone is given, auto-classify by name (DIA RM); a name
+ * that matches no rule is refused, naming the zone it needs. (Until 2026-10-15 it
+ * was stored in Zone 2, unmarked, and counted in Zone 2's completeness.)
+ */
+export async function addArtifactTx(client: Queryable, orgId: number, userId: number, tmfFileId: number, input: ArtifactInput): Promise<{ id: number; zone: number; classification: 'matched' | 'explicit' }> {
   await getTmf(client, orgId, tmfFileId);
   let zone = input.zone ?? null;
   let section = input.section ?? null;
-  let classification: 'matched' | 'default' | 'explicit' = 'explicit';
+  let classification: 'matched' | 'explicit' = 'explicit';
   if (zone == null) {
     const c = classifyArtifact(input.artifactName);
+    if (c.confidence === 'unclassified') {
+      throw new EtmfError(
+        'BAD_INPUT',
+        `"${input.artifactName}" matches no DIA TMF Reference Model zone keyword, so its zone is unknown. State the zone (1-11).`,
+      );
+    }
     zone = c.zone;
     section = section ?? c.section;
     classification = c.confidence;

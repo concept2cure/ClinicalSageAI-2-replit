@@ -1,0 +1,98 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":20,"time":"2026-10-01T06:40:26.752Z","pid":9176,"hostname":"vm","context":{"table":"purge_audit_probe_no_such_table"},"msg":"[tenant-offboarding] Purge skipped a table not present in this schema"}
+{"level":40,"time":"2026-10-01T06:40:26.757Z","pid":9176,"hostname":"vm","context":{"organizationId":90623,"purgedByUserId":4242,"retentionOverride":null,"finalExportDigest":"p123_9176_mup60b45-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":30,"time":"2026-10-01T06:40:28.399Z","pid":9176,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:40:28.400Z","pid":9176,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:40:28.401Z","pid":9176,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":40,"time":"2026-10-01T06:40:28.558Z","pid":9176,"hostname":"vm","context":{"organizationId":90623,"purgedByUserId":4242,"retentionOverride":null,"finalExportDigest":"p123_9176_mup60b45-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+ × tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted 46ms
+   → the purge must leave exactly one audit row naming itself: expected [] to have a length of 1 but got +0
+{"level":40,"time":"2026-10-01T06:40:28.579Z","pid":9176,"hostname":"vm","context":{"organizationId":90623,"purgedByUserId":4242,"retentionOverride":null,"finalExportDigest":"p123_9176_mup60b45-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+ × tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it 1793ms
+   → the record of the deletion must survive the deletion: expected [] to have a length of 1 but got +0
+ × tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects 20ms
+   → promise resolved "{ organizationId: 90623, …(9) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted
+AssertionError: the purge must leave exactly one audit row naming itself: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/tenant-purge-audit.dbtest.ts:136:78
+    134|
+    135|     const rows = await purgeAuditRows();
+    136|     expect(rows, 'the purge must leave exactly one audit row naming it…
+       |                                                                              ^
+    137|     const [row] = rows;
+    138|     const org = await organization();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it
+AssertionError: the record of the deletion must survive the deletion: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/tenant-purge-audit.dbtest.ts:183:74
+    181|     expect((await organization()).status).toBe('purged');
+    182|     const rows = await purgeAuditRows();
+    183|     expect(rows, 'the record of the deletion must survive the deletion…
+       |                                                                          ^
+    184|     expect(rows[0].tenant_id).toBe(ORG);
+    185|     expect(rows[0].new_values.exportManifest.digest).toBe(DIGEST);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects
+AssertionError: promise resolved "{ organizationId: 90623, …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "deletionReason": "p123_9176_mup60b45 contract ended",
++   "deletionRequestedAt": 2026-08-22T06:40:26.732Z,
++   "deletionRequestedBy": 1,
++   "finalExportDigest": "p123_9176_mup60b45-digest",
++   "name": "p123_9176_mup60b45",
++   "organizationId": 90623,
++   "purgeEligibleAt": 2026-09-30T06:40:28.567Z,
++   "purgedAt": 2026-10-01T06:40:28.575Z,
++   "status": "purged",
++   "storageErasure": {
++     "deleted": 0,
++     "notDeleted": [],
++     "objects": 0,
++   },
+  }
+
+ ❯ tests/db/tenant-purge-audit.dbtest.ts:200:5
+    198|         childTables: [ROWS],
+    199|       }),
+    200|     ).rejects.toThrow(/audit store refused/);
+       |     ^
+    201|
+    202|     expect(await rowsLeft(), 'an unrecorded purge must destroy nothing…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  06:40:25
+   Duration  2.98s (transform 1.14s, setup 96ms, import 423ms, tests 2.10s, environment 0ms)
+

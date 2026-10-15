@@ -194,3 +194,119 @@ describe('audit rows name people and events, not ids', () => {
     expect(res.body.data.audit[0].action).toBe('User Logout');
   });
 });
+
+/**
+ * QA 2026-10-08 (j9, finding 1): the member drawer changes a role and removes a
+ * member through PATCH/DELETE /api/tenant-users/:organizationId/:userId. The
+ * surface needs the ids those routes take — not parsed out of the display id
+ * "u-1" — and must know which row is the signed-in administrator's own, whose
+ * role and membership the route refuses to change (SELF_ROLE_CHANGE /
+ * SELF_REMOVAL).
+ */
+describe('member rows carry what the membership routes take', () => {
+  it('names the organization, each member by user id, and marks only the caller as self', async () => {
+    const asCaller = express();
+    asCaller.use((req: any, _res, next) => {
+      req.user = { id: 2, organizationId: 1, role: 'admin' };
+      next();
+    });
+    asCaller.use('/api/mdx', (await import('../mdx-admin')).default);
+    dispatch();
+    const res = await request(asCaller).get('/api/mdx/admin');
+    expect(res.status).toBe(200);
+    expect(res.body.data.organizationId).toBe(1);
+    const members = res.body.data.members as any[];
+    expect(members.map((m) => [m.userId, m.self])).toEqual([[1, false], [2, true]]);
+  });
+
+  it('marks no row as self when the session names no user', async () => {
+    dispatch();
+    const res = await request(app).get('/api/mdx/admin');
+    expect((res.body.data.members as any[]).every((m) => m.self === false)).toBe(true);
+  });
+});
+
+/**
+ * QA 2026-10-08 (j9, finding 4): an invitee who never set a password was shown
+ * and counted as "Active" — the users row is created 'active' with an unusable
+ * `invite:` password hash — and the Invited and Disabled filters could never
+ * match. The state now says what the account can do: `invited` until the setup
+ * link is redeemed, `disabled` for any status other than 'active'.
+ */
+describe('member state says whether the account can sign in', () => {
+  const row = (over: Record<string, unknown>) => ({
+    user_id: 9, name: 'X', email: 'x@c2c.io', role: 'member', status: 'active', mfa_enabled: false, mfa_method: null,
+    last_login: null, permissions: null, invite_pending: false, ...over,
+  });
+
+  it('invited (setup link not redeemed), active, disabled — and the KPI counts only active', async () => {
+    dispatch({
+      members: () => ({
+        rows: [
+          row({ user_id: 1, name: 'Ann Active' }),
+          row({ user_id: 2, name: 'Ivy Invited', invite_pending: true }),
+          row({ user_id: 3, name: 'Sam Suspended', status: 'suspended' }),
+          row({ user_id: 4, name: 'Dee Deprovisioned', status: 'inactive' }),
+        ],
+      }),
+    });
+    const res = await request(app).get('/api/mdx/admin');
+    const states = Object.fromEntries((res.body.data.members as any[]).map((m) => [m.name, m.state]));
+    expect(states).toEqual({ 'Ann Active': 'active', 'Ivy Invited': 'invited', 'Sam Suspended': 'disabled', 'Dee Deprovisioned': 'disabled' });
+    expect(res.body.data.kpis.find((k: any) => k.label === 'Members').meta).toBe('1 active · 1 invited');
+  });
+
+  it('reads the invitation from the hash prefix in SQL and never returns the hash', async () => {
+    dispatch();
+    const res = await request(app).get('/api/mdx/admin');
+    const call = queryMock.mock.calls.find(([sql]) => /FROM organization_users/.test(String(sql)));
+    expect(String(call?.[0])).toMatch(/password_hash LIKE \$2/);
+    expect(call?.[1]).toEqual([1, 'invite:%']);
+    expect(JSON.stringify(res.body)).not.toMatch(/password_hash|invite:/);
+  });
+});
+
+/**
+ * QA 2026-10-08 (j9, finding 6): every role card read "Org-level role derived
+ * from live membership." with no scopes, and the drawer's "Role scopes" was
+ * empty — the route sent desc '' and scopes [] for every role. An access review
+ * (21 CFR 11.10(d)) needs to read what each role may do. The scopes are derived
+ * from the checks the server enforces (signing policy, governed-write set,
+ * program management, audit readers, report finalize, member administration),
+ * so the page cannot say a manager signs while the signing policy refuses one.
+ */
+describe('roles say what they may do, from the checks the server enforces', () => {
+  const memberRow = (user_id: number, role: string) => ({
+    user_id, name: `U${user_id}`, email: `u${user_id}@c2c.io`, role, status: 'active', mfa_enabled: false, mfa_method: null,
+    last_login: null, permissions: null, invite_pending: false,
+  });
+
+  it('describes each live role and lists its scopes', async () => {
+    dispatch({
+      members: () => ({
+        rows: [memberRow(1, 'admin'), memberRow(2, 'manager'), memberRow(3, 'member'), memberRow(4, 'viewer'), memberRow(5, 'approver'), memberRow(6, 'reviewer')],
+      }),
+    });
+    const res = await request(app).get('/api/mdx/admin');
+    const roles = Object.fromEntries((res.body.data.roles as any[]).map((r) => [r.id, r]));
+
+    for (const r of Object.values(roles) as any[]) expect(r.desc, r.id).toMatch(/\w/);
+    expect(roles.admin.scopes).toEqual(expect.arrayContaining(['members:administer', 'records:sign', 'records:write', 'audit:read']));
+    expect(roles.manager.scopes).toEqual(expect.arrayContaining(['programs:manage', 'records:write', 'audit:read']));
+    expect(roles.manager.scopes).not.toContain('records:sign');
+    expect(roles.member.scopes).toEqual(expect.arrayContaining(['records:write']));
+    expect(roles.member.scopes).not.toContain('programs:manage');
+    expect(roles.viewer.scopes).toEqual(['records:read']);
+    expect(roles.approver.scopes).toEqual(expect.arrayContaining(['programs:manage', 'records:write', 'records:sign', 'reports:finalize']));
+    expect(roles.reviewer.scopes).toEqual(expect.arrayContaining(['records:write', 'records:sign']));
+    expect(roles.reviewer.scopes).not.toContain('programs:manage');
+  });
+
+  it('a role the product does not describe says so, and lists only what the checks grant it', async () => {
+    dispatch({ members: () => ({ rows: [memberRow(1, 'admin'), memberRow(7, 'regulatory_lead')] }) });
+    const res = await request(app).get('/api/mdx/admin');
+    const custom = (res.body.data.roles as any[]).find((r) => r.id === 'regulatory_lead');
+    expect(custom.desc).toMatch(/not one this product assigns/);
+    expect(custom.scopes).not.toContain('records:sign');
+  });
+});

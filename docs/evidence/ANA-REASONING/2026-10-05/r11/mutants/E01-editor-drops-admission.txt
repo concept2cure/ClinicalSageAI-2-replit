@@ -1,0 +1,12 @@
+Mutant E01-editor-drops-admission: the editor does not hand the host’s admission to the paste door
+
+--- client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+- admitsAnaSource: (id: string | null) => admitsAnaSourceRef.current?.(id) ?? false,
++ 
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > a paste of the suggestion it admitted keeps AnA’s name; one from a turn it did not admit is the person’s 608ms
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

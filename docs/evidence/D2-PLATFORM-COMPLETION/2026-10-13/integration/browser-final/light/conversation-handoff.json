@@ -1,0 +1,100 @@
+{
+  "id": "current",
+  "seed": null,
+  "prefill": "Review the section open in the editor for completeness, scientific writing, citations, unsupported claims and contradictions. Run critique_draft on the text you actually read and identify remedies by severity and location.\n\nWork on the saved records in the open project; unsaved editor changes are not included. Use list_authoring_outline and read_authoring_section to read the relevant saved text, following every nextCursor and nextOffset needed. Distinguish pending tracked suggestions from accepted document text. Read project Vault and data catalogue evidence with list_project_documents, search_project_documents and read_project_document; follow paging and report anything missing, unread, unavailable or unsupported. Never describe unread evidence as verified.\n\nFor each actionable fix, first read that saved section with read_authoring_section. Return at most six separate fenced blocks labelled authoring-remedy, each containing one JSON object with sectionId (the actual UUID), baseSha256 (the stored sha256 returned by the reader) and/or baseUpdatedAt (its updatedAt), quote (an exact passage in one paragraph or table cell), replacement (the proposed text, or an empty string to delete), and reason. Include prefix and suffix if needed to distinguish repeated quotes. Do not invent a base version, quote, number or source. Explain evidence gaps separately instead of inventing replacements. These are proposals for tracked changes: do not save, accept, approve or file them.",
+  "sendOnArrival": false,
+  "origin": {
+    "surfaceId": "document-authoring",
+    "label": "Authoring",
+    "moduleContext": {
+      "surface": "document-authoring",
+      "documentId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+      "documentTitle": "QA merged saved CSR 20261013T235337Z-c0cf0f3c",
+      "sectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+      "sectionCode": "1",
+      "sectionTitle": "Title Page",
+      "sectionUpdatedAt": "2026-10-13T23:53:56.562Z",
+      "savedRecordOnly": true,
+      "evidenceSourceIds": [],
+      "evidenceSourcesRead": "ready",
+      "importSource": {
+        "kind": "csr",
+        "id": "31",
+        "programId": "1ce70472-d356-47de-8c10-820ed974771b",
+        "fingerprint": "77d6fbf8f26866a8574d67b3748b629ca1f7dfa54c6c24cda29c3dedb5c460cb",
+        "selection": {
+          "kind": "csr",
+          "jobId": 31,
+          "sectionNumbers": [
+            "1"
+          ]
+        },
+        "sectionOrigins": [
+          {
+            "code": "1",
+            "model": null,
+            "sourceRowId": "csr_section_outputs:31",
+            "contentSha256": "12f0dbdc0b14d9a7d3a2cf26d19e41b8c1f8bd3a4a87a97951187fd1b79d79e0",
+            "modelEvidence": "unrecorded",
+            "originalAuthorship": "template"
+          }
+        ],
+        "gaps": [],
+        "conversion": "ich-e3-sections",
+        "warnings": [
+          "This is an unbound working draft. Source completion, approval and signatures are not transferred.",
+          "Original authorship and model qualification are not established by a workflow fingerprint.",
+          "Verified generation document/hash/span support was not recorded by this materializer."
+        ]
+      },
+      "screen_actions": [
+        {
+          "id": "authoring.open-document",
+          "label": "Open a document for authoring",
+          "params": [
+            {
+              "name": "title",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "authoring.open-section",
+          "label": "Open a section of the open document",
+          "params": [
+            {
+              "name": "sectionCode",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "authoring.find",
+          "label": "Find text in the open section",
+          "params": [
+            {
+              "name": "query",
+              "required": false
+            }
+          ]
+        }
+      ]
+    },
+    "authoringContext": {
+      "projectId": "1ce70472-d356-47de-8c10-820ed974771b",
+      "workflowStage": "section-workspace",
+      "artifactId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+      "artifactStatus": "draft",
+      "sectionCode": "1",
+      "sectionTitle": "Title Page",
+      "sectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+      "sectionUpdatedAt": "2026-10-13T23:53:56.562Z",
+      "linkedSectionCodes": []
+    },
+    "authoringDocument": {
+      "docId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+      "programId": "1ce70472-d356-47de-8c10-820ed974771b",
+      "sectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104"
+    }
+  }
+}

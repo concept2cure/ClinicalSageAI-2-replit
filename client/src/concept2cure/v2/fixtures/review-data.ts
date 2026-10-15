@@ -15,6 +15,8 @@
  * verdicts, its approval chain, and the thread of its comments.
  */
 
+import type { AuthoringReviewStanding } from '@shared/authoring/peer-review';
+
 /* ---- Types ---- */
 
 /** One review request on a document (an `authoring_reviews` row). */
@@ -25,6 +27,8 @@ export interface ReviewRequest {
   reviewerEmail: string | null;
   /** pending | approved | changes_requested | rejected */
   status: string;
+  /** Missing legacy bindings remain earlier facts, never current verdicts. */
+  standing?: AuthoringReviewStanding;
   comments: string | null;
   requestedBy: string | null;
   requestedAt: string | null;
@@ -50,6 +54,7 @@ export interface ReviewItem {
   reviews?: ReviewRequest[];
   myReviewId: string | null;
   myReviewStatus: string | null;
+  myReviewStanding?: AuthoringReviewStanding | null;
   /** Server-decided ownership, per row. */
   awaitingMyReview: boolean;
   requestedByMe: boolean;

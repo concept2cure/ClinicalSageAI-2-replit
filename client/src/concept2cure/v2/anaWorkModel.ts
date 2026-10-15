@@ -11,7 +11,9 @@
  */
 
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
-import type { AnaProgressPhase, AnaStoppedReason } from '../components/ana/useAnaChat.types';
+import type { AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
+import { AUTO_TIME_WORDS, MANUAL_UNAVAILABLE_TEXT, PAUSE_WORDS, stepLabels } from '@shared/ana/run-policy';
+import { unknownStepLabel, type StepFact } from '@shared/ana/step-verbs';
 import {
   formatElapsed,
   formatStepDuration,
@@ -32,19 +34,97 @@ export interface AnaWorkContext {
   pinnedTools?: string[];
 }
 
+/**
+ * The stops a turn's loop or its run policy made, in the panel's words. Each
+ * says the stop and then its cause, so none can be read as good news; none is
+ * "Finished". `cancelled` (a Stop) is said by its own branch.
+ */
+const STOP_LINES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string>([
+  ['max_rounds', 'Stopped at the round limit'],
+  ['duplicate_thrash', 'Stopped: repeating a step'],
+  // The answer she was writing was cut off (the length limit, or a stream that
+  // stalled mid-answer; D2, a6d82f624).
+  ['answer_cut_off', 'Stopped: answer cut off'],
+  // The run policy's (row 74, S4).
+  ['budget_exhausted', 'Stopped at the time limit'],
+  ['approval_timeout', 'Stopped: an approval was not answered'],
+  ['hold_expired', 'Stopped waiting for you'],
+  ['hold_unavailable', 'Stopped: Manual was unavailable'],
+  // A locked phone or a closed tab ended the run (ANA-SUMMARY S4).
+  ['client_disconnected', 'Stopped: this page lost its connection'],
+  // The run row's reasons (AnA detach §2.10, §5.3). A follower reads them off
+  // the run when a turn ended without a record; the server writes the first
+  // four from DT3.
+  ['unattended_limit', 'Stopped: nobody was watching for 15 minutes'],
+  ['session_ended', 'Stopped: the session that started this turn ended'],
+  ['server_shutdown', 'Stopped: the server restarted for an update'],
+  ['orphaned', 'Stopped: the server handling this turn stopped responding'],
+  ['error', 'Stopped: the turn ended with an error'],
+  // The admin-cancel variant of `cancelled` (§2.5). The run read carries no
+  // one's identity (controlsOf drops who took a control), so nothing produces
+  // this reason yet: DT3, which accepts an admin's cancel, must say on the
+  // run which kind of cancel it was. The line is here so it has one home.
+  ['admin_cancelled', 'Stopped by an administrator'],
+]);
+
+/**
+ * The stop line for a reason, as a sentence: the Summary's closing row
+ * ("Stopped: this page lost its connection."). Null for a reason with none —
+ * she finished, or the person's own Stop, which its own branch says.
+ */
+export function stopLineText(reason: AnaStoppedReason | string | null | undefined): string | null {
+  const line = reason ? STOP_LINES.get(reason) : undefined;
+  return line ? `${line}.` : null;
+}
+
+/** A live turn's state line: working, paused, waiting for you, or stopping. */
+/**
+ * Whether a live turn is held for a person, and why: 'manual' when the run
+ * policy stopped before her next step, 'approval' when an action she asked for
+ * waits on someone's decision, null otherwise. The one rule every surface that
+ * says what AnA is doing reads (row 74, end-to-end finding F2): the run is
+ * held and the person is the one who has to act, so nothing may say "working"
+ * or "driving" then.
+ */
+export function waitingForPerson(
+  turn: AnaChatMessage | null | undefined,
+  runStatus: RunControlStatus,
+  runHold: AnaRunHold | null | undefined,
+): 'manual' | 'approval' | null {
+  if (!turn?.streaming) return null;
+  if (runStatus === 'paused' && runHold?.reason === 'manual') return 'manual';
+  return (turn.pendingSignoffs?.length ?? 0) > 0 ? 'approval' : null;
+}
+
+function liveStateLine(
+  turn: AnaChatMessage,
+  runStatus: RunControlStatus,
+  runHold: AnaRunHold | null | undefined,
+  elapsed: string,
+): string {
+  const waiting = waitingForPerson(turn, runStatus, runHold);
+  // Under Manual AnA stopped herself: nobody pressed Pause, so it is not
+  // "Paused" — she is waiting for the person to say what comes next.
+  if (waiting === 'manual') return `Waiting for you · ${elapsed}`;
+  // An action she asked for waits on a person's decision: she is not working.
+  if (waiting === 'approval') return `Waiting for your approval · ${elapsed}`;
+  if (runStatus === 'paused') return `Paused · ${elapsed}`;
+  // Between hold_expired and the stream's close: the turn has ended.
+  if (runHold?.reason === 'expired') return `Stopped waiting for you · ${elapsed}`;
+  if (runStatus === 'cancelled') return `Stopping · ${elapsed}`;
+  return `Still working · ${elapsed}`;
+}
+
 /** The header's one-line state: in flight, paused, stopped or finished, with its clock. */
 export function stateLineFor(
   turn: AnaChatMessage | null,
   live: boolean,
   runStatus: RunControlStatus,
   elapsed: string,
+  runHold?: AnaRunHold | null,
 ): string {
   if (!turn) return '';
-  if (live) {
-    if (runStatus === 'paused') return `Paused · ${elapsed}`;
-    if (runStatus === 'cancelled') return `Stopping · ${elapsed}`;
-    return `Still working · ${elapsed}`;
-  }
+  if (live) return liveStateLine(turn, runStatus, runHold, elapsed);
   if (turn.stopped) return `Stopped after ${elapsed}`;
   // A timeout or a lost connection never sets `stopped` (that flag is the
   // person's own stop). Both are turns that did not finish, and neither may
@@ -59,17 +139,89 @@ export function stateLineFor(
   // `cancelled` from the server is the same Stop: when its done and post_done
   // land before this client's own abort, `stopped` is never set.
   if (turn.stoppedReason === 'cancelled') return elapsed ? `Stopped after ${elapsed}` : 'Stopped';
-  // The loop ended the turn, not AnA: the round limit forced the answer, or
-  // she was repeating a step. The stream closed cleanly and every phase
-  // completed, so nothing above can see it — and a capped turn must never
-  // read "Finished". Each says the stop and then its cause, so neither can be
-  // read as good news ("stopped repeating" would say she quit repeating and
-  // carried on).
-  if (turn.stoppedReason === 'max_rounds') return clocked('Stopped at the round limit');
-  if (turn.stoppedReason === 'duplicate_thrash') return clocked('Stopped: repeating a step');
-  if (turn.stoppedReason === 'answer_cut_off') return clocked('Stopped: answer cut off');
+  // The loop or the run policy ended the turn, not AnA: the round limit or
+  // the time limit forced the answer, she was repeating a step, an approval
+  // went unanswered, or Manual's hold ran out or could not be made. The stream
+  // closed cleanly and every phase completed, so nothing above can see it —
+  // and a stopped turn must never read "Finished" ("stopped repeating" would
+  // say she quit repeating and carried on, hence the colon).
+  const stopLine = turn.stoppedReason ? STOP_LINES.get(turn.stoppedReason) : undefined;
+  if (stopLine) return clocked(stopLine);
   if (typeof turn.completedAt === 'number') return `Finished in ${elapsed}`;
   return '';
+}
+
+/** The steps a stop left unrun, as the note lists them ('' when there are none). */
+function stepList(pendingSteps: readonly string[] | undefined): string {
+  return stepLabels(pendingSteps).join('; ');
+}
+
+/** What the transcript says of the steps a steer replaced (null when none). */
+export function replacedNoteText(replacedSteps: readonly string[] | undefined): string | null {
+  const steps = stepList(replacedSteps);
+  return steps ? `Not run — your steer replaced it: ${steps}.` : null;
+}
+
+function partialResponseNote(interruptedWithPartialResponse?: boolean): string | null {
+  return interruptedWithPartialResponse
+    ? "AnA's response was interrupted before this turn finished. The text shown may be incomplete."
+    : null;
+}
+
+/** The stop notes that are one fixed sentence, whatever the turn's numbers or steps. */
+const FIXED_STOP_NOTES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string>([
+  ['duplicate_thrash', 'AnA stopped because she was repeating the same step. Tell her what to change.'],
+  ['answer_cut_off', "AnA's answer was cut off before she finished it. It ends where it stopped."],
+  ['client_disconnected', 'This page lost its connection, so the run was stopped before AnA finished. Continue picks it up.'],
+]);
+
+/**
+ * What the transcript says under a turn the loop or the run policy stopped
+ * before she was done, or null when there is nothing to say: she finished
+ * (`no_more_tools`), or the person pressed Stop (`cancelled`) with nothing
+ * held — they know. The numbers are the shared ceilings and the turn's own
+ * rounds; the steps are the ones a Manual stop left unrun.
+ */
+export function stoppedNoteText(
+  reason: AnaStoppedReason | undefined,
+  rounds?: number,
+  pendingSteps?: readonly string[],
+  interruptedWithPartialResponse?: boolean,
+): string | null {
+  const steps = stepList(pendingSteps);
+  const fixed = reason ? FIXED_STOP_NOTES.get(reason) : undefined;
+  if (fixed) return fixed;
+  // A limit, the session, a restart or a dead server ended work that was
+  // going somewhere; none was a person's decision (§5.3). A `cancelled`,
+  // by the person or an administrator, stays not continuable.
+  switch (reason) {
+    case 'max_rounds':
+      return typeof rounds === 'number' && rounds > 0
+        ? `AnA reached this turn's round limit (${rounds} ${rounds === 1 ? 'round' : 'rounds'}) before she said she was done.`
+        : "AnA reached this turn's round limit before she said she was done.";
+    case 'budget_exhausted':
+      return `AnA reached this turn's time limit (${AUTO_TIME_WORDS}) before she said she was done.`;
+    case 'approval_timeout':
+      return `Nobody answered AnA's request within ${PAUSE_WORDS}, so that change was not made and she stopped.`;
+    case 'hold_expired':
+      return `AnA waited ${PAUSE_WORDS} for you, then stopped before her next step${steps ? `: ${steps}` : ''}.`;
+    case 'hold_unavailable':
+      // Continue under Manual fails the same way when the cause is lasting
+      // (a run with no owner), so the way on is Auto, then Continue.
+      return `${MANUAL_UNAVAILABLE_TEXT} ${steps ? `Next step: ${steps}. ` : ''}To let her go on, switch to Auto, then Continue.`;
+    case 'cancelled':
+      // One that ended a Manual hold — or a page closed during it — names
+      // what did not run, so a reopened turn does not read as a plain Stop.
+      // A plain Stop says so too. It used to carry no note ("the person
+      // pressed it"), so a turn stopped before AnA wrote anything was her
+      // mark and nothing else, the same as one still thinking, and a reload
+      // showed the question alone (QA 2026-10-08, j5).
+      return steps
+        ? `The run was stopped while AnA waited for you before her next step, so it did not run: ${steps}.`
+        : 'The run was stopped before AnA finished.';
+    default:
+      return partialResponseNote(interruptedWithPartialResponse);
+  }
 }
 
 /**
@@ -79,7 +231,7 @@ export function stateLineFor(
  * chosen. A repeated step would only be repeated again — the person has to say
  * what to change — and a Stop was the person's decision.
  */
-export function isContinuable(reason: AnaStoppedReason | undefined): boolean {
+export function isContinuable(reason: AnaStoppedReason | undefined, interruptedWithPartialResponse = false): boolean {
   switch (reason) {
     case 'max_rounds':
     case 'answer_cut_off':
@@ -87,9 +239,14 @@ export function isContinuable(reason: AnaStoppedReason | undefined): boolean {
     case 'approval_timeout':
     case 'hold_expired':
     case 'hold_unavailable':
+    case 'client_disconnected':
+    case 'unattended_limit':
+    case 'session_ended':
+    case 'server_shutdown':
+    case 'orphaned':
       return true;
     default:
-      return false;
+      return interruptedWithPartialResponse && (reason === undefined || reason === 'no_more_tools');
   }
 }
 
@@ -98,7 +255,7 @@ export function isContinuable(reason: AnaStoppedReason | undefined): boolean {
  * over — there is nothing to resume — and the next turn is told its
  * predecessor did not finish (server: formatStoppedTurnNote).
  */
-export const CONTINUE_PROMPT = 'Continue from where you stopped.';
+export { CONTINUE_PROMPT } from '@shared/ana/continuation-context';
 
 /**
  * The one turn a host may offer Continue on: the last message, when it is an
@@ -158,6 +315,27 @@ export function stepDuration(c: AnaToolCall, now: number): string {
   return c.status === 'running' ? formatStepDuration(now - c.startedAt) : '';
 }
 
+/**
+ * The engine glyph: a step the register claims is computed deterministically,
+ * that succeeded, and whose generation capture saw no model call. A step whose
+ * handler made a model generation never shows it, whatever the register says;
+ * an unknown capture (null) is not "none".
+ */
+export function showsEngineGlyph(c: AnaToolCall): boolean {
+  return c.source === 'engine' && c.usedModel === false && c.status === 'success';
+}
+
+/**
+ * What a step's chevron opens: the server's facts, built from allow-listed
+ * fields only, and the row's own measured duration when the server sent none.
+ * Never the inputs she passed and never the result: both carry ids and
+ * internals (ANA-SUMMARY S3; the inputs were rendered raw until then).
+ */
+export function stepFacts(c: AnaToolCall, took: string): StepFact[] {
+  const facts = c.facts ?? [];
+  return took && !facts.some((f) => f.name === 'Took') ? [...facts, { name: 'Took', value: took }] : facts;
+}
+
 export function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
@@ -191,7 +369,8 @@ export function conversationTools(messages: AnaChatMessage[]): string[] {
   for (const m of messages) {
     for (const c of m.toolCalls ?? []) {
       if (c.name === PLAN_TOOL) continue;
-      if (!seen.has(c.name)) seen.set(c.name, c.label || c.name);
+      // The server's label; a step with none is never listed by its tool name.
+      if (!seen.has(c.name)) seen.set(c.name, c.label || unknownStepLabel('done'));
     }
   }
   return [...seen.values()];
@@ -210,13 +389,30 @@ export interface ProgressChip {
  * total, so the chip says what is true — she is working, or here is the
  * record — and counts nothing.
  */
-export function progressChip(turn: AnaChatMessage | null, live: boolean): ProgressChip {
+export function progressChip(
+  turn: AnaChatMessage | null,
+  live: boolean,
+  runStatus: RunControlStatus = null,
+  runHold: AnaRunHold | null = null,
+): ProgressChip {
+  // With the panel closed this is all there is to see: a hold is said, not
+  // counted as work ("Working" while she waits for you would be untrue).
+  const held = live ? heldChipText(runStatus, runHold) : null;
+  if (held) return { text: held };
   const pos = planPosition(turn?.plan);
   if (pos) {
     if (live) return { text: `Step ${pos.current} of ${pos.total}` };
     return { text: `${pos.completed} of ${pos.total} done` };
   }
   return { text: live ? 'Working' : 'Progress' };
+}
+
+/** The chip's words while the run is held, or null when it is not. */
+function heldChipText(runStatus: RunControlStatus, runHold: AnaRunHold | null): string | null {
+  // Short: the strip beside it says why ("Stopped waiting for you").
+  if (runHold?.reason === 'expired') return 'Stopped';
+  if (runStatus !== 'paused') return null;
+  return runHold?.reason === 'manual' ? 'Waiting for you' : 'Paused';
 }
 
 /* ── Used in this session ─────────────────────────────────────────────────── */
@@ -347,4 +543,76 @@ function contextRow(messages: AnaChatMessage[], context: AnaWorkContext | undefi
   );
   if (parts.length === 0) return null;
   return { key: 'context', icon: 'folder', label: context?.project ? 'Project' : 'Context', detail: parts.join(' · ') };
+}
+
+/* ── Following a turn from another device (AnA detach DT2, §5.1) ──────────── */
+
+/**
+ * The lines a followed turn says about itself, beside its rows. Fixed words;
+ * nothing here is a model's, an estimate or a reassurance.
+ */
+export const FOLLOW_LINES = {
+  /** This reader's own network is failing. The last known state stays on screen. */
+  unreachable: "Can't reach the server. Retrying.",
+  /** Stop was pressed and the server has not confirmed it (§5.2). */
+  stopUnconfirmed: 'Stop not confirmed. Retrying.',
+  /** An admin watching a run held for the person who asked. */
+  waitingForAsker: 'Waiting for the person who asked.',
+  /** An admin watching a run that waits on the asker's approval. */
+  approvalForAsker: 'Waiting for the person who asked to approve a step.',
+  /** An admin's composer. */
+  adminCannotSteer: 'Only the person who asked can steer AnA.',
+} as const;
+
+/** The owner is stale after this long without a heartbeat: four missed 15 s beats (§5.1). */
+export const OWNER_STALE_MS = 60_000;
+
+/** "AnA hasn't reported for 2 min. …", read from the run's last beat against the server's clock. */
+export function staleOwnerLine(lastBeatAt: number | null, serverNow: number): string | null {
+  if (lastBeatAt === null) return null;
+  const silent = serverNow - lastBeatAt;
+  if (!(silent > OWNER_STALE_MS)) return null;
+  const minutes = Math.max(1, Math.floor(silent / 60_000));
+  return `AnA hasn't reported for ${minutes} min. The server handling this turn may have stopped.`;
+}
+
+/** The steps a followed turn has announced: each step once, her plan updates aside (they are the plan). */
+export function announcedSteps(timeline: AnaChatMessage['timeline']): number {
+  const steps = new Set<string>();
+  for (const e of timeline ?? []) if (e.kind === 'step' && e.source !== 'plan') steps.add(e.step);
+  return steps.size;
+}
+
+/**
+ * The follower's phase line: "Working · step 7 · 4m 12s". The step is the
+ * count of steps announced; the time is the run's start against the server's
+ * clock (`skewMs`), never this device's. No live prose: a follower has none.
+ * Held, it says who is being waited on. Null once the run has ended.
+ */
+export function followPhaseLine(m: Pick<AnaChatMessage, 'follow' | 'timeline'>, now: number): string | null {
+  const f = m.follow;
+  if (!f || f.forbidden || !['running', 'paused', 'awaiting_approval'].includes(f.status)) return null;
+  const admin = f.scope === 'cancel';
+  if (admin && f.approvalWaiting) return FOLLOW_LINES.approvalForAsker;
+  if (admin && f.status === 'paused') return FOLLOW_LINES.waitingForAsker;
+  const steps = announcedSteps(m.timeline);
+  const parts = [f.status === 'paused' ? 'Paused' : 'Working', steps > 0 ? `step ${steps}` : null];
+  if (f.startedAt !== null) parts.push(formatElapsed(Math.max(0, now + f.skewMs - f.startedAt)));
+  return parts.filter(Boolean).join(' · ');
+}
+
+/**
+ * The one alert a live turn carries, when it has one, most urgent first: the
+ * server refused this reader; a Stop not yet confirmed; this reader's network;
+ * an owner that stopped beating. Each is the reader's own state, shown beside
+ * the last known rows, which stay.
+ */
+export function liveAlertLine(m: Pick<AnaChatMessage, 'follow' | 'stopUnconfirmed'>, now: number): string | null {
+  const f = m.follow;
+  if (f?.forbidden) return f.forbidden;
+  if (m.stopUnconfirmed) return FOLLOW_LINES.stopUnconfirmed;
+  if (!f) return null;
+  if (f.unreachable) return FOLLOW_LINES.unreachable;
+  if (!['running', 'paused', 'awaiting_approval'].includes(f.status)) return null;
+  return staleOwnerLine(f.lastBeatAt, now + f.skewMs);
 }

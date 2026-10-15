@@ -86,6 +86,9 @@ export interface ProvenanceRecord {
   citation: Citation;
   confidence: ConfidenceLevel | null;
   confidenceBasis: ConfidenceBasis;
+  /** The tool's raw 0..1 retrieval/relevance score, when it has one (RAG). A
+   * relevance, not a confidence; absent on records that carry none. */
+  retrievalScore?: number;
   caveats: string[];
   /** data_lineage_records.sourceObjectType value for this source. */
   lineageObjectType: string;
@@ -99,6 +102,11 @@ const WEB_CAVEAT = 'Open-web source — verify against an authoritative primary 
  * The platform's evidence sources. Keys are the stable ids tools pass to
  * `buildProvenance`. Adding a source here is how a new connector becomes
  * citable/auditable through the unified envelope.
+ *
+ * `confidenceBasis` says what the level a tool attaches is. 2026-10-15: twelve
+ * sources said 'validation_based' (a validation engine's finding) and none is
+ * validated: the RAG level is a bucket of retrieval relevance ('ai_inferred'),
+ * and the others carry a level the calling tool fixes ('rules_based').
  */
 export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
   ivd_corpus: {
@@ -120,7 +128,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'curated',
     authority: 'secondary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'ai_inferred',
     lineageObjectType: 'retrieval_chunk',
   },
   c2c_cheminformatics: {
@@ -143,7 +151,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: true,
     freshness: 'live',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'external_evidence',
   },
   biorxiv_medrxiv: {
@@ -177,7 +185,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'live',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'external_evidence',
   },
   openfda: {
@@ -188,7 +196,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'live',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'external_evidence',
   },
   cms_coverage: {
@@ -199,7 +207,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'live',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'external_evidence',
   },
   eudamed: {
@@ -210,7 +218,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'live',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'external_evidence',
   },
   ema_epar: {
@@ -221,7 +229,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'live',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'external_evidence',
   },
   eu_ctis: {
@@ -232,7 +240,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'live',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'external_evidence',
   },
   icd10: {
@@ -243,7 +251,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'live',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'external_evidence',
   },
   firecrawl: {
@@ -266,7 +274,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'live',
     authority: 'secondary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'document',
   },
   fda_crl: {
@@ -277,7 +285,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'curated',
     authority: 'primary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'regulatory_finding',
     defaultCaveat:
       'FDA Complete Response Letter — a record of deficiencies at a point in time. It is precedent, not a prediction of any future decision.',
@@ -290,7 +298,7 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     peerReviewed: null,
     freshness: 'curated',
     authority: 'secondary',
-    confidenceBasis: 'validation_based',
+    confidenceBasis: 'rules_based',
     lineageObjectType: 'atom',
     defaultCaveat:
       'Derived from prior regulatory evidence — precedent-based guidance, not a prediction of acceptance.',
@@ -307,6 +315,8 @@ export interface BuildProvenanceArgs {
   citation: Citation;
   query?: string | null;
   confidence?: ConfidenceLevel | null;
+  /** Raw 0..1 retrieval/relevance score (RAG tools); kept under its own name. */
+  retrievalScore?: number | null;
   /** Caveats to add on top of the source's default caveat (deduped). */
   extraCaveats?: string[];
   /** Injectable clock for deterministic tests. */
@@ -342,6 +352,9 @@ export function buildProvenance(args: BuildProvenanceArgs): ProvenanceRecord {
     citation: args.citation,
     confidence: args.confidence ?? null,
     confidenceBasis: source.confidenceBasis,
+    ...(typeof args.retrievalScore === 'number' && Number.isFinite(args.retrievalScore)
+      ? { retrievalScore: args.retrievalScore }
+      : {}),
     caveats,
     lineageObjectType: source.lineageObjectType,
   };
@@ -367,15 +380,19 @@ export interface LineageSourceInput {
   sourceObjectId: string;
   sourceTitle: string;
   confidenceBasis: ConfidenceBasis;
+  /** data_lineage_records.confidence_score (0-100). No provenance record
+   * carries a measured confidence, so this is null: not measured. */
   confidenceScore: number | null;
 }
-
-const CONFIDENCE_SCORE: Record<ConfidenceLevel, number> = { high: 90, moderate: 60, low: 30 };
 
 /**
  * Project a provenance record onto the SOURCE columns of data_lineage_records,
  * so persisting a citation is a field copy. `sourceObjectId` falls back to the
  * citation url when no stable identifier is present.
+ *
+ * 2026-10-15: `confidenceScore` was a lookup of the level (high 90, moderate
+ * 60, low 30), so a RAG hit of relevance 0.81 was recorded as a measured 90.
+ * The level is a level; persist-provenance keeps it in the row's metadata.
  */
 export function toLineageSource(record: ProvenanceRecord): LineageSourceInput {
   return {
@@ -383,7 +400,7 @@ export function toLineageSource(record: ProvenanceRecord): LineageSourceInput {
     sourceObjectId: record.citation.identifier ?? record.citation.url ?? record.sourceId,
     sourceTitle: record.citation.title,
     confidenceBasis: record.confidenceBasis,
-    confidenceScore: record.confidence ? CONFIDENCE_SCORE[record.confidence] : null,
+    confidenceScore: null,
   };
 }
 
@@ -394,7 +411,9 @@ function dedupe(items: string[]): string[] {
 /**
  * Map a 0..1 retrieval/relevance score to a confidence level for provenance.
  * Used by RAG-backed tools where the score is a relevance judgement, not a
- * validated probability. Returns null when no score is available.
+ * validated probability — hence the RAG source's 'ai_inferred' basis. The
+ * level is never persisted as a figure; pass the score itself as
+ * `retrievalScore`. Returns null when no score is available.
  */
 export function confidenceFromScore(score: number | null | undefined): ConfidenceLevel | null {
   if (score == null || !Number.isFinite(score)) return null;

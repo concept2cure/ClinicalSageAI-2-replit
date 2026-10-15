@@ -62,6 +62,7 @@ import {
   planEstarAttachments,
   type EstarAttachmentPlan,
   type EstarAttachmentRequest,
+  type EstarAttachmentSource,
   type EstarAttachmentResolver,
   type PlannedAttachment,
 } from './estar-attachment-plan';
@@ -160,6 +161,12 @@ export interface EstarAttachmentRecord {
   byteLength: number;
   sha256: string;
   token: string;
+  /**
+   * Which document it was: the Vault version, or the authored section rendered
+   * for it. The hash proves the bytes; this names the record a reviewer opens
+   * and what the Vault's where-used reads (plan critique 15).
+   */
+  source: EstarAttachmentSource;
 }
 
 export interface EstarAttachmentReport {
@@ -182,6 +189,7 @@ function toRecord(a: PlannedAttachment): EstarAttachmentRecord {
     byteLength: a.byteLength,
     sha256: a.sha256,
     token: a.token,
+    source: a.source,
   };
 }
 

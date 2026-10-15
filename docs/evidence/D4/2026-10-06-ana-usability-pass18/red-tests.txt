@@ -1,0 +1,40 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > does not stop a newer reply after the earlier turn is complete 30ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > does not stop a newer reply after the earlier turn is reset 5ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > still stops its active stream when a run ID is available: false 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > still stops its active stream when a run ID is available: true 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > does not stop a newer reply after the earlier turn is complete
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > does not stop a newer reply after the earlier turn is reset
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts:53:82
+     51|     try {
+     52|       await act(async () => { oldControls.stop(); }); await flush();
+     53|       expect(h.fetchMock.mock.calls.filter(([url]) => url.endsWith('/c…
+       |                                                                                  ^
+     54|       expect(h.signals[1].aborted).toBe(false);
+     55|       expect(h.result.current.isStreaming).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  03:07:28
+   Duration  1.02s (transform 251ms, setup 139ms, import 291ms, tests 44ms, environment 422ms)
+

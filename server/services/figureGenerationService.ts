@@ -34,7 +34,9 @@ export interface FigureSpec {
   generatedContent: string; // Mermaid/SVG/ChartJS spec
   generatedFormat: 'mermaid' | 'chartjs' | 'svg' | 'html-table' | 'text-description';
   metadata: FigureMetadata;
-  confidence: number; // 0-1 confidence in data accuracy
+  // 2026-10-15: `confidence` ("0-1 confidence in data accuracy") is gone. It was
+  // scored from the output's syntax; nothing checked a datum. Each source now
+  // records how many of its rows the model was given (FigureDataSource).
   auditTrail: FigureAuditEntry[];
 }
 
@@ -64,6 +66,10 @@ export interface FigureDataSource {
   sourceId?: string;
   sourceName: string;
   dataPoints?: Record<string, unknown>[];
+  /** Rows this source supplied. */
+  rowsSupplied: number;
+  /** Whole rows of it the drafting model was given (the prompt has a size budget). */
+  rowsSentToModel: number;
   extractedAt?: string;
 }
 
@@ -139,12 +145,12 @@ const FIGURE_TYPE_CONFIG: Record<
     preferredFormat: 'chartjs',
     promptTemplate: 'Generate a line chart specification',
     regulatoryGuidance:
-      'Include confidence intervals. Mark significant time points. Show visit numbers per ICH.',
+      'Plot confidence intervals only when the source data carries them. Show visit numbers per ICH.',
   },
   scatter_plot: {
     preferredFormat: 'chartjs',
     promptTemplate: 'Generate a scatter plot specification',
-    regulatoryGuidance: 'Include regression line if applicable. Show correlation coefficient.',
+    regulatoryGuidance: 'Plot the points as supplied. Show a regression line or correlation coefficient only when the source data carries it.',
   },
   kaplan_meier: {
     preferredFormat: 'chartjs',
@@ -178,7 +184,7 @@ const FIGURE_TYPE_CONFIG: Record<
   org_chart: {
     preferredFormat: 'mermaid',
     promptTemplate: 'Generate an organizational chart',
-    regulatoryGuidance: 'Include reporting lines, key roles per ICH E6(R2).',
+    regulatoryGuidance: 'Include reporting lines, key roles per ICH E6(R3) Principle 10 (roles, tasks and responsibilities clear and documented).',
   },
   gantt_chart: {
     preferredFormat: 'mermaid',
@@ -247,6 +253,22 @@ const FIGURE_TYPE_CONFIG: Record<
  * artifact that document export includes. A linked document with no extracted
  * data points is no data either.
  */
+/**
+ * Figure types whose content is a statistical estimate — Kaplan-Meier survival
+ * probabilities, hazard ratios, pooled effects with confidence intervals — and
+ * so cannot be drawn by a model from raw rows without the model computing
+ * them (CLAUDE.md Rule 2; until 2026-10-05 the prompt asked it to "Show HR
+ * and 95% CI"). They are drawn from engine output, not generated here.
+ */
+const STATISTICAL_ESTIMATE_FIGURES: ReadonlySet<FigureType> = new Set<FigureType>(['kaplan_meier', 'forest_plot']);
+
+const ESTIMATE_FIGURE_REFUSED: FigureGenerationResult = {
+  success: false,
+  error:
+    'Kaplan-Meier curves and forest plots show statistical estimates, which come from the statistics engine, not from a model. ' +
+    'No figure was generated.',
+};
+
 const NO_SOURCE_DATA: FigureGenerationResult = {
   success: false,
   error: 'No source data was supplied, so no figure was generated. Link the data the figure should show.',
@@ -254,6 +276,31 @@ const NO_SOURCE_DATA: FigureGenerationResult = {
 
 function hasDataPoints(sources: Array<{ data: Record<string, unknown>[] }>): boolean {
   return sources.some(src => Array.isArray(src.data) && src.data.length > 0);
+}
+
+/** Characters of serialized rows each source may put in the drafting prompt. */
+const PROMPT_ROWS_CHAR_BUDGET = 3000;
+
+const NO_ROW_FITS: FigureGenerationResult = {
+  success: false,
+  error: `No source row fits in the drafting prompt (${PROMPT_ROWS_CHAR_BUDGET} characters per source), so no figure was generated.`,
+};
+
+/**
+ * The whole rows of one source that fit the prompt budget, in order. 2026-10-15:
+ * the serialized rows were cut at 3000 characters, so the model could see a
+ * fragment of a row and nothing recorded how many rows it saw.
+ */
+function rowsThatFit(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  const fit: Record<string, unknown>[] = [];
+  let used = 2; // the enclosing []
+  for (const row of rows) {
+    const cost = JSON.stringify(row).length + (fit.length > 0 ? 1 : 0);
+    if (used + cost > PROMPT_ROWS_CHAR_BUDGET) break;
+    fit.push(row);
+    used += cost;
+  }
+  return fit;
 }
 
 /**
@@ -265,6 +312,8 @@ export async function generateFigure(
   const startTime = Date.now();
   const figureId = `fig-${crypto.randomUUID().slice(0, 8)}`;
 
+  if (STATISTICAL_ESTIMATE_FIGURES.has(request.figureType)) return ESTIMATE_FIGURE_REFUSED;
+
   try {
     // 1. Resolve source data from Data Room if references provided
     const sourceData = await resolveSourceData(
@@ -275,6 +324,10 @@ export async function generateFigure(
     );
 
     if (!hasDataPoints(sourceData)) return NO_SOURCE_DATA;
+
+    // The rows the model is given: whole rows within the budget, per source.
+    const promptRows = sourceData.map(s => rowsThatFit(s.data));
+    if (!promptRows.some(rows => rows.length > 0)) return NO_ROW_FITS;
 
     // 2. Get figure type config
     const typeConfig = FIGURE_TYPE_CONFIG[request.figureType] || FIGURE_TYPE_CONFIG.custom;
@@ -288,7 +341,7 @@ export async function generateFigure(
 
     // 4. Build the prompt
     const systemPrompt = buildFigureSystemPrompt(format, request.figureType);
-    const userPrompt = buildFigureUserPrompt(request, typeConfig, sourceData, format, figureNumber);
+    const userPrompt = buildFigureUserPrompt(request, sourceData, promptRows, format, figureNumber);
 
     // 5. Draft the figure. document_drafting: only a model approved for
     // high-risk regulatory drafting serves it. It defaulted to gpt-4o as a
@@ -321,11 +374,13 @@ export async function generateFigure(
       title: request.title,
       figureType: request.figureType,
       description: request.description,
-      sourceData: sourceData.map(s => ({
+      sourceData: sourceData.map((s, i) => ({
         sourceType: s.type as FigureDataSource['sourceType'],
         sourceId: s.id,
         sourceName: s.name,
         dataPoints: s.data,
+        rowsSupplied: s.data.length,
+        rowsSentToModel: promptRows[i].length,
         extractedAt: new Date().toISOString(),
       })),
       regulatoryContext: request.targetSection,
@@ -340,7 +395,6 @@ export async function generateFigure(
         modelUsed: model,
         tokensUsed,
       },
-      confidence: computeFigureConfidence(sourceData, content),
       auditTrail: [
         {
           action: 'generated',
@@ -388,74 +442,75 @@ export async function autoInsertFigures(params: {
 }): Promise<FigureGenerationResult[]> {
   const results: FigureGenerationResult[] = [];
 
-  try {
-    // Where figures belong in a section: suggestions only. Each one still goes
-    // through generateFigure, which drafts only from source data and only with
-    // an approved model.
-    const analysis = await ai.chat({
-      taskType: 'document_analysis',
-      callerModule: 'figureGeneration.autoInsertFigures',
-      temperature: 0.1,
-      max_tokens: 2000,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory document analyst. Analyze the given section content and identify where figures/charts should be inserted to strengthen the submission. Return JSON:
+  // A failed or unreadable analysis is an error, never [] — which read as
+  // "no figures to insert" for an analysis that did not run (2026-10-15).
+  // Where figures belong in a section: suggestions only. Each one still goes
+  // through generateFigure, which drafts only from source data and only with
+  // an approved model.
+  const analysis = await ai.chat({
+    taskType: 'document_analysis',
+    callerModule: 'figureGeneration.autoInsertFigures',
+    temperature: 0.1,
+    max_tokens: 2000,
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: `You are a regulatory document analyst. Analyze the given section content and identify where figures/charts should be inserted to strengthen the submission. Return JSON:
 {
   "figures": [
-    {
-      "figureType": "bar_chart|line_chart|kaplan_meier|consort_flow|process_flow|stability_trend|pk_concentration|comparison_table|forest_plot|waterfall_plot|box_plot|pie_chart|dose_response|custom",
-      "title": "Figure title",
-      "description": "What this figure should show",
-      "insertAfterText": "First 50 chars of the paragraph this should follow",
-      "dataNeeded": "What data is needed to generate this figure",
-      "regulatoryJustification": "Why this figure strengthens the submission"
-    }
+  {
+    "figureType": "bar_chart|line_chart|kaplan_meier|consort_flow|process_flow|stability_trend|pk_concentration|comparison_table|forest_plot|waterfall_plot|box_plot|pie_chart|dose_response|custom",
+    "title": "Figure title",
+    "description": "What this figure should show",
+    "insertAfterText": "First 50 chars of the paragraph this should follow",
+    "dataNeeded": "What data is needed to generate this figure",
+    "regulatoryJustification": "Why this figure strengthens the submission"
+  }
   ]
 }
 Only suggest figures that are standard for this section type in regulatory submissions.`,
-        },
-        {
-          role: 'user',
-          content: `Section ${params.sectionCode}:\n\n${params.sectionContent.slice(0, 8000)}`,
-        },
-      ],
+      },
+      {
+        role: 'user',
+        content: `Section ${params.sectionCode}:\n\n${params.sectionContent.slice(0, 8000)}`,
+      },
+    ],
+  });
+
+  const analysisContent = analysis.content || '{}';
+  let suggestions: {
+    figures: Array<{
+      figureType: string;
+      title: string;
+      description: string;
+      insertAfterText: string;
+      dataNeeded: string;
+      regulatoryJustification: string;
+    }>;
+  };
+
+  try {
+    suggestions = JSON.parse(analysisContent);
+  } catch {
+    throw new Error('The figure analysis returned no readable suggestions.');
+  }
+  if (!suggestions || typeof suggestions !== 'object' || (suggestions.figures !== undefined && !Array.isArray(suggestions.figures))) {
+    throw new Error('The figure analysis returned no readable suggestions.');
+  }
+
+  // Generate each suggested figure
+  for (const suggestion of (suggestions.figures || []).slice(0, 5)) {
+    const result = await generateFigure({
+      projectId: params.projectId,
+      organizationId: params.organizationId,
+      userId: params.userId,
+      figureType: (suggestion.figureType || 'custom') as FigureType,
+      title: suggestion.title,
+      description: `${suggestion.description}\n\nData needed: ${suggestion.dataNeeded}\nRegulatory justification: ${suggestion.regulatoryJustification}`,
+      targetSection: params.sectionCode,
     });
-
-    const analysisContent = analysis.content || '{}';
-    let suggestions: {
-      figures: Array<{
-        figureType: string;
-        title: string;
-        description: string;
-        insertAfterText: string;
-        dataNeeded: string;
-        regulatoryJustification: string;
-      }>;
-    };
-
-    try {
-      suggestions = JSON.parse(analysisContent);
-    } catch {
-      suggestions = { figures: [] };
-    }
-
-    // Generate each suggested figure
-    for (const suggestion of (suggestions.figures || []).slice(0, 5)) {
-      const result = await generateFigure({
-        projectId: params.projectId,
-        organizationId: params.organizationId,
-        userId: params.userId,
-        figureType: (suggestion.figureType || 'custom') as FigureType,
-        title: suggestion.title,
-        description: `${suggestion.description}\n\nData needed: ${suggestion.dataNeeded}\nRegulatory justification: ${suggestion.regulatoryJustification}`,
-        targetSection: params.sectionCode,
-      });
-      results.push(result);
-    }
-  } catch (error) {
-    console.error('[FigureService] Auto-insert analysis failed:', error);
+    results.push(result);
   }
 
   return results;
@@ -478,25 +533,28 @@ async function resolveSourceData(
     data: Record<string, unknown>[];
   }> = [];
 
-  // Resolve Data Room references
+  // Resolve Data Room references. 2026-10-15: a failed read was logged and the
+  // figure refused as "No source data was supplied" — data was supplied; the
+  // read failed, and that is what the caller is told now.
   if (dataRoomRefs.length > 0) {
-    try {
-      const result = await pool.query(
+    const result = await pool
+      .query(
         `SELECT id, title, metadata, content_type
          FROM concept2cure_artifacts
          WHERE id = ANY($1::int[]) AND project_id = $2 AND organization_id = $3`,
         [dataRoomRefs.map(Number).filter(Boolean), projectId, organizationId]
-      );
-      for (const row of result.rows) {
-        sources.push({
-          id: String(row.id),
-          name: row.title,
-          type: 'data_room',
-          data: row.metadata?.extractedData || [],
-        });
-      }
-    } catch (error) {
-      console.warn('[FigureService] Failed to resolve Data Room refs:', error);
+      )
+      .catch((error: unknown) => {
+        console.error('[FigureService] Could not read the linked Data Room documents:', error);
+        throw new Error('The linked Data Room documents could not be read, so no figure was generated.', { cause: error });
+      });
+    for (const row of result.rows) {
+      sources.push({
+        id: String(row.id),
+        name: row.title,
+        type: 'data_room',
+        data: row.metadata?.extractedData || [],
+      });
     }
   }
 
@@ -515,16 +573,21 @@ async function resolveSourceData(
 
 async function getNextFigureNumber(projectId: number, sectionCode: string): Promise<string> {
   try {
+    // An untargeted figure is stored with no sectionCode and numbered under
+    // 'general'. 2026-10-15: the count matched 'general' only, so it was always
+    // 0 and every untargeted figure was "Figure general-1".
     const result = await pool.query(
       `SELECT COUNT(*) as count FROM concept2cure_artifacts
        WHERE project_id = $1 AND metadata->>'artifactType' = 'figure'
-         AND metadata->>'sectionCode' = $2`,
+         AND COALESCE(metadata->>'sectionCode', 'general') = $2`,
       [projectId, sectionCode]
     );
     const count = parseInt(result.rows[0]?.count || '0', 10) + 1;
     return `Figure ${sectionCode}-${count}`;
-  } catch {
-    return `Figure ${sectionCode}-1`;
+  } catch (error) {
+    // 2026-10-15: answered `Figure ${sectionCode}-1`, a number nobody assigned.
+    console.error('[FigureService] Could not count existing figures:', error);
+    throw new Error('The figure number could not be assigned because the existing figures could not be read, so no figure was generated.', { cause: error });
   }
 }
 
@@ -552,7 +615,7 @@ ${typeConfig.regulatoryGuidance}
 
 Rules:
 1. Output ONLY the figure specification — no explanatory text, no markdown fences
-2. All data must be accurately represented — no fabrication
+2. All data must be accurately represented — no fabrication. Plot only values present in the source data; compute no statistic (no mean, interval, ratio, p-value or coefficient) that is not in it
 3. Include proper labels, legends, and units
 4. Follow regulatory conventions for this figure type
 5. Use professional color schemes suitable for regulatory submissions
@@ -561,15 +624,20 @@ Rules:
 
 function buildFigureUserPrompt(
   request: FigureGenerationRequest,
-  typeConfig: (typeof FIGURE_TYPE_CONFIG)[FigureType],
   sourceData: Array<{ id: string; name: string; type: string; data: Record<string, unknown>[] }>,
+  promptRows: Record<string, unknown>[][],
   format: string,
   figureNumber: string
 ): string {
-  const dataSection =
-    sourceData.length > 0
-      ? `\n\nSource Data:\n${sourceData.map(s => `- ${s.name} (${s.type}): ${JSON.stringify(s.data).slice(0, 3000)}`).join('\n')}`
-      : '\n\nNo source data provided — generate a representative template with clear [DATA PLACEHOLDER] markers.';
+  // Whole rows only, and the model is told when it sees a subset. The
+  // no-source-data "representative template" branch is gone: generateFigure
+  // refuses before reaching here without data.
+  const dataSection = `\n\nSource Data:\n${sourceData
+    .map((s, i) => {
+      const subset = promptRows[i].length < s.data.length ? ` (first ${promptRows[i].length} of ${s.data.length} rows)` : '';
+      return `- ${s.name} (${s.type})${subset}: ${JSON.stringify(promptRows[i])}`;
+    })
+    .join('\n')}`;
 
   return `Generate: ${figureNumber} — ${request.title}
 Type: ${request.figureType}
@@ -577,27 +645,18 @@ Format: ${format}
 Description: ${request.description}${request.targetSection ? `\nTarget Section: ${request.targetSection}` : ''}${dataSection}`;
 }
 
-function computeFigureConfidence(
-  sourceData: Array<{ id: string; name: string; type: string; data: Record<string, unknown>[] }>,
-  content: string
-): number {
-  let confidence = 0.5; // Base confidence
-
-  // Higher confidence with actual source data
-  if (sourceData.length > 0) confidence += 0.2;
-  if (sourceData.some(s => s.data && s.data.length > 0)) confidence += 0.15;
-
-  // Lower confidence for placeholders
-  if (content.includes('PLACEHOLDER') || content.includes('DATA NEEDED')) confidence -= 0.2;
-
-  // Higher confidence for structured output
-  if (content.includes('{') || content.includes('graph') || content.includes('<svg'))
-    confidence += 0.1;
-
-  return Math.max(0, Math.min(1, confidence));
+/** Rows supplied and rows sent to the model, summed over the figure's sources. */
+function rowCounts(figure: FigureSpec): { rowsSupplied: number; rowsSentToModel: number } {
+  return figure.sourceData.reduce(
+    (n, s) => ({ rowsSupplied: n.rowsSupplied + s.rowsSupplied, rowsSentToModel: n.rowsSentToModel + s.rowsSentToModel }),
+    { rowsSupplied: 0, rowsSentToModel: 0 }
+  );
 }
 
 async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest): Promise<void> {
+  // 2026-10-15: a failed INSERT was logged and swallowed here, and generateFigure
+  // then audited and returned as generated a figure that was never stored.
+  let artifactPk: number;
   try {
     const figRes = await pool.query<{ id: number }>(
       // Named `user_id` and `content_type`, neither of which this table has —
@@ -630,15 +689,27 @@ async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest)
           figureType: figure.figureType,
           generatedFormat: figure.generatedFormat,
           sectionCode: figure.regulatoryContext,
-          confidence: figure.confidence,
-          sourceData: figure.sourceData.map(s => ({ id: s.sourceId, name: s.sourceName })),
+          sourceData: figure.sourceData.map(s => ({
+            id: s.sourceId,
+            name: s.sourceName,
+            rowsSupplied: s.rowsSupplied,
+            rowsSentToModel: s.rowsSentToModel,
+          })),
           ...figure.metadata,
         }),
       ]
     );
-    // Uniform provenance: a generated figure is a 'generation' event.
+    artifactPk = figRes.rows[0].id;
+  } catch (error) {
+    console.error('[FigureService] Could not store the figure:', error);
+    throw new Error('The drafted figure could not be stored, so no figure was generated.', { cause: error });
+  }
+  // Uniform provenance: a generated figure is a 'generation' event. Best-effort
+  // beside an already-committed row, as for the other pool-level producers; a
+  // failure is logged, not hidden.
+  try {
     await recordArtifactProvenance(pool, {
-      artifactId: figRes.rows[0].id,
+      artifactId: artifactPk,
       organizationId: request.organizationId,
       eventType: 'generation',
       eventAction: 'figure_generate',
@@ -646,13 +717,13 @@ async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest)
       details: {
         figureId: figure.id,
         figureType: figure.figureType,
-        confidence: figure.confidence,
+        ...rowCounts(figure),
         sourceIds: figure.sourceData.map(s => s.sourceId),
       },
       backendService: 'figureGenerationService',
     });
   } catch (error) {
-    console.warn('[FigureService] Failed to store figure:', error);
+    console.error(`[FigureService] Figure artifact ${artifactPk} is stored but its provenance event was not recorded:`, error);
   }
 }
 
@@ -674,7 +745,7 @@ async function logFigureGeneration(
       figureType: figure.figureType,
       generatedFormat: figure.generatedFormat,
       sectionCode: figure.regulatoryContext,
-      confidence: figure.confidence,
+      ...rowCounts(figure),
       durationMs,
       model: figure.metadata.modelUsed,
     },

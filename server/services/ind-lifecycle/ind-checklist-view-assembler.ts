@@ -12,8 +12,8 @@
  *
  * The surface renders one IND (rows[0]) with its Module-1 forms (1571 / 1572 / 3674)
  * and the eCTD sections the team is actually authoring, each with its real status; it
- * recomputes filing readiness itself (indlReadiness) from what we return. So this
- * assembler maps identity + forms + sections only — no blob, no fabricated field. An
+ * renders the existing server evaluator's full-required-set readiness report.
+ * Placed sections remain an inventory, not the denominator for completeness. An
  * org with no IND submission returns [] and the surface shows its honest empty state.
  *
  * Section status is sourced from coauthor_documents.status, whose 5-value authoring
@@ -28,9 +28,11 @@
  * filing, not the full 108-section blueprint and not an org-wide document dump.
  */
 import { pool } from '../../db';
-import { getSectionByCode } from '../../../services/regulatory/ind-ectd-sections.js';
+import { getSectionByCode, type SectionStatus } from '../../../services/regulatory/ind-ectd-sections.js';
+import { evaluateIndReadiness, type IndReadinessReport } from './ind-readiness-service';
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { IND_FORM_REQUIREMENTS, indFormForDocumentType } from '../ectd/section-to-ctd';
+import { leafSourceKey } from '../ectd/leaf-source-resolver';
 
 const MAX_DOCS = 10;
 
@@ -47,7 +49,9 @@ const FORM_PRESENTATION: Record<string, { title: string; label: string; ref: str
 
 /** Module-1 forms the surface renders separately from sections, keyed by the
  *  requirement's code. A form is "done" when its requirement is authored to a
- *  complete status, or a sponsor-completed copy of it is filed. */
+ *  complete status, or a sponsor-attached copy is filed that its uploader
+ *  attested is the completed, signed form and the forms engine checked
+ *  complete (resolveAttachedForms). */
 const FORM_SECTIONS: Array<{ code: string; id: string; title: string; label: string; ref: string }> =
   IND_FORM_REQUIREMENTS.map((f) => ({
     code: `m${f.requirement}`,
@@ -55,6 +59,18 @@ const FORM_SECTIONS: Array<{ code: string; id: string; title: string; label: str
     ...(FORM_PRESENTATION[f.formId] ?? { title: f.formId, label: '', ref: '' }),
   }));
 const FORM_CODES = new Set(FORM_SECTIONS.map((f) => f.code));
+
+/**
+ * The FDA Module 1 forms heading. For an IND it is satisfied by the forms an
+ * IND requires (IND_FORM_REQUIREMENTS: 1571, 1572, 3674) and by nothing else:
+ * whatever document sits at the heading itself is not one of them. QA
+ * 2026-10-08 (j7, finding 9): the only approved document at Vorelinib's 1.1
+ * was a placed Form FDA 356h — an NDA / ANDA / BLA form — and the checklist
+ * counted it as the IND's "FDA Forms" approved. The heading's status is now
+ * derived from the IND's own forms, and a document at the bare heading is not
+ * listed as that section.
+ */
+const FORMS_HEADING = 'm1.1';
 
 /** The blueprint's spelling of a placed section code. upsertLeaf stores a code
  *  exactly as its writer spelled it and the writers do not agree — the Vault
@@ -75,8 +91,11 @@ const sectionKey = (code: string): string => {
    'signed' said a Form 1571 had been signed when nobody signed it. 'locked' is
    the surface's own complete-but-unsigned state: the content is sealed and
    locked, and nothing more is claimed. 'signed' is kept only for a stored
-   'signed'. Whether an unsigned freeze should count as complete at all is a
-   founder decision and is unchanged here: 'locked' is still COMPLETE. */
+   'signed'. Whether an unsigned freeze should count as complete at all was
+   left as a founder decision; it was decided 2026-10-01 (DP-35): it does
+   not. 'finalized' now maps to 'frozen', ranked with a bare lock and never
+   COMPLETE: sealed, not approved. The eCTD resolver refuses to transmit it
+   for the same reason (ectd/leaf-source-resolver.ts). */
 /** coauthor_documents.status (real, coarse) → the surface's SectionStatus vocabulary. */
 const STATUS_MAP: Record<string, string> = {
   draft: 'drafting',
@@ -84,22 +103,18 @@ const STATUS_MAP: Record<string, string> = {
   in_progress: 'drafting',
   review: 'qa_review',
   approved: 'approved',
-  finalized: 'locked',
+  finalized: 'frozen',
   signed: 'signed',
   locked: 'locked',
 };
 /** A document exists, so the floor is "drafting" — never not_started (that means no doc). */
 const mapStatus = (raw: unknown): string => STATUS_MAP[str(raw).toLowerCase()] ?? 'drafting';
 
-/** Ordering used to keep the most-advanced status when two docs land on one section.
- *  2026-09-23 (W5/D7, co-author final pass): among the complete states, a bare
- *  lock ranks BELOW the ones that record a sign-off — every 'locked' here comes
- *  from coauthor_documents, where it (and 'finalized', now mapped to it)
- *  records no signature — so a section holding an approved or signed copy and
- *  a frozen one shows the approval, never less than the truth. */
+/** A section with several current documents is only as complete as its least
+ * advanced document. One approval must not conceal another document's draft. */
 const RANK: Record<string, number> = {
   not_started: 0, data_gathering: 1, drafting: 2, revision: 3, internal_review: 3,
-  qa_review: 4, locked: 5, approved: 6, signed: 7,
+  qa_review: 4, frozen: 5, locked: 5, approved: 6, signed: 7,
 };
 const COMPLETE = new Set(['approved', 'signed', 'locked']);
 
@@ -123,6 +138,7 @@ function enrichSection(code: string, status: string, name: string) {
 interface CoauthorDoc { id: number; module_number: string | null; status: string; module_name: string | null }
 
 interface ProgramTargetRow {
+  id: string;
   name: string | null;
   code: string | null;
   product_name: string | null;
@@ -139,7 +155,7 @@ interface ProgramTargetRow {
 async function readIndProgramTargets(orgId: number): Promise<ProgramTargetRow[]> {
   try {
     const res = await pool.query(
-      `SELECT name, code, product_name, target_submission_date
+      `SELECT id, name, code, product_name, target_submission_date
          FROM regulatory_programs
         WHERE organization_id = $1 AND upper(program_type) = 'IND' AND deleted_at IS NULL
         ORDER BY updated_at DESC NULLS LAST`,
@@ -180,14 +196,75 @@ async function readAuthoredDocuments(orgId: number): Promise<CoauthorDoc[]> {
 
 const norm = (v: unknown): string => str(v).trim().toLowerCase();
 
-/** Shared empty set — a submission with no sponsor-completed form allocates none. */
-const EMPTY_FORM_IDS: ReadonlySet<string> = new Set<string>();
-
-/** `form_1571` → `FDA_1571`; null for a document type that names no FDA form. */
+/** An absent table (42P01) or column (42703, before 20261008e or the 2026-10-15
+ *  attestation columns): nothing is known complete. */
+function isUnprovisioned(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  return code === '42P01' || code === '42703';
+}
 
 /**
- * Which FDA forms each submission has a sponsor-completed, retained document
- * for — keyed by submission id, valued by canonical form id.
+ * What the sponsor-attached file at a form's place amounts to, as the checklist
+ * reports it. The surface says "attached — not attested" for an unattested one.
+ */
+export interface FormAttachment {
+  /** The uploader stated, when attaching, that the file IS the completed, signed form. */
+  attested: boolean;
+  /** The forms engine's recorded check: [] nothing required missing; a list; null never checked. */
+  requiredFieldsMissing: string[] | null;
+}
+
+/** An attachment completes its form only when attested AND checked with nothing missing. */
+const attachmentCounts = (a: FormAttachment): boolean =>
+  a.attested && a.requiredFieldsMissing !== null && a.requiredFieldsMissing.length === 0;
+
+/** Of one form's several current attachments, the most complete is reported. */
+const attachmentRank = (a: FormAttachment): number => (attachmentCounts(a) ? 2 : a.attested ? 1 : 0);
+
+interface AttachedFileRow {
+  id: number | string;
+  required_fields_missing: unknown;
+  completed_signed_attested_by: number | null;
+  completed_signed_attested_at: Date | string | null;
+}
+
+/** A retained file, as the attachment it is: attested only when both who and when are recorded. */
+function attachmentOf(row: AttachedFileRow): FormAttachment {
+  return {
+    attested: row.completed_signed_attested_by != null && row.completed_signed_attested_at != null,
+    requiredFieldsMissing: Array.isArray(row.required_fields_missing) ? row.required_fields_missing.map(String) : null,
+  };
+}
+
+/** Keep the most complete of a form's attachments. */
+function keepMostComplete(forms: Map<string, FormAttachment>, formId: string, attachment: FormAttachment): void {
+  const prev = forms.get(formId);
+  if (!prev || attachmentRank(attachment) > attachmentRank(prev)) forms.set(formId, attachment);
+}
+
+/** Shared empty map — a submission with no attached form allocates none. */
+const NO_ATTACHMENTS: ReadonlyMap<string, FormAttachment> = new Map<string, FormAttachment>();
+
+/**
+ * The sponsor-attached, retained document each submission has for each FDA
+ * form — keyed by submission id, then canonical form id.
+ *
+ * COMPLETED, not merely attached (QA 2026-10-08, second walk, j7). Any attached
+ * file used to count: the product's own unedited 1571 and 1572 were marked
+ * COMPLETE while Build & check reported required fields missing on each, and
+ * readiness rose 0% → 8%. A file counts only when the forms engine's check
+ * recorded with it (`rendered_leaf_files.required_fields_missing`, written by
+ * the upload through services/ind-forms/attached-form-check.ts) found nothing
+ * missing. A file with fields missing, or with no check recorded (a server
+ * render, an attachment from before the check), is not a completed form; nor
+ * is anything when a column is absent here (42703).
+ *
+ * ATTESTED, too (2026-10-15, report_ind_ivd_irb #15). That check alone used to
+ * count, and it reads the program record, not the file: an edited, unsigned
+ * PDF counted as the signed form and raised readiness. A file now counts only
+ * when its uploader also stated it is the completed, signed form
+ * (`completed_signed_attested_by/_at`, recorded by official-upload); otherwise
+ * it is reported, and does not count.
  *
  * The tenant gate is the `rendered_leaf_files` row's own organization_id, read
  * here rather than inferred from the leaf: `submission_leaves.document_table` is
@@ -199,11 +276,11 @@ const EMPTY_FORM_IDS: ReadonlySet<string> = new Set<string>();
  * the target-date read does: a missing table means no sponsor-completed form is
  * known, never a failed checklist.
  */
-async function resolveSponsorCompletedForms(
+async function resolveAttachedForms(
   leaves: Array<{ sequence_id: number; document_table: string | null; document_id: number | null; document_type: string | null }>,
   seqToSub: Map<number, number>,
   orgId: number,
-): Promise<Map<number, Set<string>>> {
+): Promise<Map<number, Map<string, FormAttachment>>> {
   const byId = new Map<number, Array<{ subId: number; formId: string }>>();
   for (const l of leaves) {
     if (l.document_table !== 'rendered_leaf_files' || l.document_id == null) continue;
@@ -216,33 +293,37 @@ async function resolveSponsorCompletedForms(
     list.push({ subId, formId: form.formId });
     byId.set(docId, list);
   }
-  const out = new Map<number, Set<string>>();
+  const out = new Map<number, Map<string, FormAttachment>>();
   if (byId.size === 0) return out;
 
-  let ownedIds: number[];
+  let owned: AttachedFileRow[];
   try {
     const res = await pool.query(
-      `SELECT id FROM rendered_leaf_files WHERE id = ANY($1) AND organization_id = $2`,
+      `SELECT id, required_fields_missing, completed_signed_attested_by, completed_signed_attested_at
+         FROM rendered_leaf_files
+        WHERE id = ANY($1) AND organization_id = $2`,
       [[...byId.keys()], orgId],
     );
-    ownedIds = (res.rows as Array<{ id: number | string }>).map((r) => Number(r.id));
+    owned = res.rows as AttachedFileRow[];
   } catch (err) {
-    if ((err as { code?: string })?.code === '42P01') return out;
+    if (isUnprovisioned(err)) return out;
     throw err;
   }
 
-  for (const id of ownedIds) {
-    for (const { subId, formId } of byId.get(id) ?? []) {
-      const set = out.get(subId) ?? new Set<string>();
-      set.add(formId);
-      out.set(subId, set);
+  for (const row of owned) {
+    const attachment = attachmentOf(row);
+    for (const { subId, formId } of byId.get(Number(row.id)) ?? []) {
+      const forms = out.get(subId) ?? new Map<string, FormAttachment>();
+      keepMostComplete(forms, formId, attachment);
+      out.set(subId, forms);
     }
   }
   return out;
 }
 
 /**
- * Resolve the submission's regulatory program by identity match (program
+ * Resolve an anchored submission by program ID. Only unlinked legacy rows use
+ * identity match (program
  * product_name / name / code vs the submission's product_name / title,
  * case-insensitive) and return its recorded target_submission_date as an ISO
  * string. Null when no program matches or no matching program records a date —
@@ -253,23 +334,94 @@ function resolveTargetReceiptDate(
   programs: ProgramTargetRow[],
   sub: Record<string, unknown>,
 ): string | null {
+  if (sub.program_id != null) {
+    const linked = programs.find((p) => String(p.id) === String(sub.program_id));
+    if (linked?.target_submission_date == null) return null;
+    const date = new Date(linked.target_submission_date);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
   const keys = new Set([norm(sub.product_name), norm(sub.title)].filter((k) => k !== ''));
   if (keys.size === 0) return null;
-  const match = programs.find(
+  const matches = programs.filter(
     (p) =>
-      p.target_submission_date != null &&
       (keys.has(norm(p.product_name)) || keys.has(norm(p.name)) || keys.has(norm(p.code))),
   );
+  const match = matches.length === 1 ? matches[0] : null;
   if (!match || match.target_submission_date == null) return null;
   const d = new Date(match.target_submission_date as string | Date);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-/** Merge a (code → {status,name}) entry, keeping the more-advanced status. */
+/** Merge CURRENT documents, keeping the least-advanced status. */
 function put(map: Map<string, { status: string; name: string }>, code: string, status: string, name: string): void {
   if (!code) return;
   const prev = map.get(code);
-  if (!prev || (RANK[status] ?? 0) > (RANK[prev.status] ?? 0)) map.set(code, { status, name });
+  if (!prev || (RANK[status] ?? 0) < (RANK[prev.status] ?? 0)) map.set(code, { status, name });
+}
+
+interface ChecklistLeaf {
+  id: number;
+  sequence_id: number;
+  section_code: string;
+  lifecycle_op: string;
+  document_table: string | null;
+  document_id: number | null;
+  document_uuid: string | null;
+  document_type: string | null;
+}
+
+/** Fold working placements in sequence order, using the publisher's source
+ * identity. This is current authoring inventory, not a claim of agency receipt.
+ * An untouched document carries forward. A named delete acts only on that
+ * document; an unnamed delete binds only to a unique current leaf in its
+ * section, matching package-from-core's refusal to guess. No history is written.
+ */
+function currentLeaves(
+  leaves: ChecklistLeaf[], seqToSub: Map<number, number>,
+): { leaves: ChecklistLeaf[]; issues: Map<number, string[]> } {
+  const bySub = new Map<number, Map<string, ChecklistLeaf>>();
+  const issues = new Map<number, string[]>();
+  for (const leaf of leaves) {
+    const sub = seqToSub.get(Number(leaf.sequence_id));
+    if (sub == null) continue;
+    const current = bySub.get(sub) ?? new Map<string, ChecklistLeaf>();
+    bySub.set(sub, current);
+    const code = sectionKey(str(leaf.section_code));
+    const named = !!leaf.document_table && (leaf.document_id != null || leaf.document_uuid != null);
+    const key = `${code}/${named ? leafSourceKey(leaf.document_table, leaf.document_id, leaf.document_uuid) : `unresolved:${leaf.id}`}`;
+    const op = norm(leaf.lifecycle_op);
+    const issue = (message: string) => {
+      const list = issues.get(sub) ?? [];
+      list.push(`${code}: ${message}`);
+      issues.set(sub, list);
+    };
+    if (op === 'delete') {
+      if (named) {
+        if (!current.delete(key)) issue('withdrawal names no current document');
+      } else {
+        const matches = [...current].filter(([, l]) => sectionKey(str(l.section_code)) === code);
+        if (matches.length === 1) current.delete(matches[0][0]);
+        else issue('withdrawal needs one unambiguous current document');
+      }
+      continue;
+    }
+    if (!['new', 'replace', 'append'].includes(op)) {
+      issue('unrecognised lifecycle operation');
+      continue;
+    }
+    if ((op === 'replace' || op === 'append') && !current.has(key)) {
+      issue(`${op} names no current document`);
+    }
+    current.set(key, leaf);
+  }
+  return { leaves: [...bySub.values()].flatMap((m) => [...m.values()]), issues };
+}
+
+function applyLifecycleIssues(readiness: IndReadinessReport, messages: string[]): void {
+  for (const message of messages) {
+    readiness.blockers.push({ kind: 'lifecycle', code: 'unresolved_lifecycle', message });
+  }
+  if (messages.length > 0) readiness.ready = false;
 }
 
 /**
@@ -278,7 +430,7 @@ function put(map: Map<string, { status: string; name: string }>, code: string, s
  */
 export async function assembleOrgIndChecklists(orgId: number): Promise<Record<string, unknown>[]> {
   const subsRes = await pool.query(
-    `SELECT s.id, s.title, s.product_name, s.application_type, s.updated_at, o.name AS org_name
+    `SELECT s.id, s.program_id, s.title, s.product_name, s.application_type, s.updated_at, o.name AS org_name
        FROM submissions s
        JOIN organizations o ON o.id = s.organization_id
       WHERE s.organization_id = $1 AND lower(s.application_type) = 'ind' AND s.deleted_at IS NULL
@@ -297,7 +449,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
   // closed to [] when unprovisioned.
   const [seqRes, coauthorRes, programTargets] = await Promise.all([
     pool.query(
-      `SELECT id, submission_id FROM ectd_sequences
+      `SELECT id, submission_id, sequence_number FROM ectd_sequences
         WHERE submission_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL`,
       [subIds, orgId],
     ),
@@ -311,20 +463,19 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
   const seqIds = seqRows.map((r) => Number(r.id));
   const leavesRes = seqIds.length
     ? await pool.query(
-        `SELECT sequence_id, section_code, document_table, document_id, document_type FROM submission_leaves
-          WHERE sequence_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL`,
+        `SELECT l.id, l.sequence_id, l.section_code, l.lifecycle_op,
+                l.document_table, l.document_id, l.document_uuid, l.document_type
+           FROM submission_leaves l
+           JOIN ectd_sequences s ON s.id = l.sequence_id AND s.organization_id = l.organization_id
+          WHERE l.sequence_id = ANY($1) AND l.organization_id = $2 AND l.deleted_at IS NULL
+          ORDER BY s.sequence_number ASC, s.id ASC, l.id ASC`,
         [seqIds, orgId],
       )
     : { rows: [] as Array<Record<string, unknown>> };
-  const leaves = leavesRes.rows as Array<{
-    sequence_id: number;
-    section_code: string;
-    document_table: string | null;
-    document_id: number | null;
-    document_type: string | null;
-  }>;
+  const allLeaves = leavesRes.rows as ChecklistLeaf[];
 
   const seqToSub = new Map<number, number>(seqRows.map((r) => [Number(r.id), Number(r.submission_id)]));
+  const { leaves, issues } = currentLeaves(allLeaves, seqToSub);
 
   /* Forms completed by the SPONSOR rather than by authoring.
      1571/1572/3674 are signed FDA forms: a sponsor completes and signs the
@@ -332,8 +483,10 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
      Module 1 leaf typed `form_<number>` backed by the retained bytes
      (rendered_leaf_files). Read only through those retained bytes, verified to
      be THIS org's: a leaf pointing at nothing, or at another tenant's file, is
-     a placement with no form behind it and must not read as a completed one. */
-  const uploadedFormsBySub = await resolveSponsorCompletedForms(leaves, seqToSub, orgId);
+     a placement with no form behind it and must not read as a completed one.
+     An attached file counts only when its uploader attested it is the
+     completed, signed form (2026-10-15). */
+  const attachedFormsBySub = await resolveAttachedForms(leaves, seqToSub, orgId);
 
   // Placed sections per submission: leaf.section_code (authoritative) → the referenced
   // coauthor doc's mapped status.
@@ -357,15 +510,37 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
     const statusByCode = placedBySub.get(subId) ?? new Map<string, { status: string; name: string }>();
 
     const sections = [...statusByCode.entries()]
-      .filter(([code]) => !FORM_CODES.has(code))
+      .filter(([code]) => !FORM_CODES.has(code) && code !== FORMS_HEADING)
       .map(([code, v]) => enrichSection(code, v.status, v.name))
       .sort((a, b) => compareSectionCode(a.code, b.code));
 
-    const sponsorCompleted = uploadedFormsBySub.get(subId) ?? EMPTY_FORM_IDS;
-    const forms = FORM_SECTIONS.map((f) => ({
-      id: f.id, title: f.title, label: f.label, ref: f.ref,
-      done: COMPLETE.has(statusByCode.get(f.code)?.status ?? '') || sponsorCompleted.has(f.id),
-    }));
+    const attachments = attachedFormsBySub.get(subId) ?? NO_ATTACHMENTS;
+    const forms = FORM_SECTIONS.map((f) => {
+      // The attached file's state; null when none is placed for the form.
+      const attachment = attachments.get(f.id) ?? null;
+      return {
+        id: f.id, title: f.title, label: f.label, ref: f.ref,
+        done: COMPLETE.has(statusByCode.get(f.code)?.status ?? '') || (attachment !== null && attachmentCounts(attachment)),
+        attachment,
+      };
+    });
+
+    // Evaluate the full existing required set, not only placed sections. The
+    // displayed section list remains an inventory; its length is not readiness.
+    const sectionStatus = Object.fromEntries(
+      [...statusByCode].map(([code, value]) => [code, value.status]),
+    ) as Record<string, SectionStatus>;
+    for (const form of FORM_SECTIONS) {
+      if (forms.some((f) => f.id === form.id && f.done)) sectionStatus[form.code] = 'approved';
+    }
+    // The forms heading is complete exactly when the IND's own forms are.
+    delete sectionStatus[FORMS_HEADING];
+    if (forms.every((f) => f.done)) sectionStatus[FORMS_HEADING] = 'approved';
+    const readiness = evaluateIndReadiness({
+      filingType: 'initial', sectionStatus,
+      completedForms: forms.filter((f) => f.done).map((f) => f.id),
+    });
+    applyLifecycleIssues(readiness, issues.get(subId) ?? []);
 
     const productName = s.product_name != null && str(s.product_name).trim() !== '' ? str(s.product_name) : null;
     const title = str(s.title).trim() !== '' ? str(s.title) : null;
@@ -375,6 +550,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       // /amendment/file) need to create an ectd_sequences row. Real data, not an
       // invented handle: every checklist row IS a submissions row.
       submissionId: subId,
+      programId: s.program_id == null ? null : String(s.program_id),
       // `code` is the surface's stable key and the drugName fallback; prefer the real
       // product/title, else a stable per-submission code.
       code: productName ?? title ?? `IND-${subId}`,
@@ -388,6 +564,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       targetReceiptDate: resolveTargetReceiptDate(programTargets, s),
       forms,
       sections,
+      readiness,
     };
   });
 }

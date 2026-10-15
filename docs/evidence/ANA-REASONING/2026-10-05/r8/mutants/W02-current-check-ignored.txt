@@ -1,0 +1,12 @@
+Mutant W02-current-check-ignored: the current answer's check, not yet stored, is ignored
+
+--- server/services/working-memory.ts
+- const current = heldCheck(answerCheck);
++ const current = heldCheck(null);
+
+Tests run: server/services/__tests__/working-memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 10ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

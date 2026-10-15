@@ -1,0 +1,1069 @@
+{
+  "label": "touch-light",
+  "width": 390,
+  "height": 844,
+  "theme": "light",
+  "cases": [
+    {
+      "kind": "document",
+      "label": "touch-light-unknown",
+      "status": "pass",
+      "stages": [
+        {
+          "name": "pending",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 15
+          },
+          "notices": []
+        },
+        {
+          "name": "unconfirmed",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 15
+          },
+          "notices": [
+            {
+              "text": "Could not confirm whether the document was created. Check working documents before creating another.Check working documents",
+              "x": 0,
+              "y": 75,
+              "width": 390,
+              "height": 102.28125,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        },
+        {
+          "name": "failed-scoped-read",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 15
+          },
+          "notices": [
+            {
+              "text": "Could not check working documents. Creation is still unconfirmed; another document has not been requested.Check working documents",
+              "x": 0,
+              "y": 75,
+              "width": 390,
+              "height": 102.28125,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        },
+        {
+          "name": "successful-scoped-read",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 15
+          },
+          "notices": [
+            {
+              "text": "Check the refreshed working documents before starting another document. This read does not identify which request created a record.",
+              "x": 0,
+              "y": 75,
+              "width": 390,
+              "height": 90.421875,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        },
+        {
+          "method": "POST",
+          "path": "/api/authoring/docs",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs",
+          "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs",
+          "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000093"
+        }
+      ],
+      "mutations": [
+        {
+          "method": "POST",
+          "path": "/api/authoring/docs",
+          "body": {
+            "title": "Synthetic created document",
+            "module": "M3",
+            "client_program_id": "bbbbbbbb-0000-4000-8000-000000000093"
+          }
+        }
+      ],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [
+          "document"
+        ],
+        "receipts": [],
+        "navigation": [],
+        "toasts": [
+          {
+            "message": "Could not confirm whether the document was created. Check working documents before creating another.",
+            "tone": "error"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "section",
+      "label": "touch-light-unknown",
+      "status": "pass",
+      "stages": [
+        {
+          "name": "pending",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    ".de-h-eye"
+                  ]
+                ]
+              }
+            ],
+            "passes": 15
+          },
+          "notices": []
+        },
+        {
+          "name": "unconfirmed",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 15
+          },
+          "notices": [
+            {
+              "text": "Could not confirm whether the section was created. Check document sections before creating another.Check document sections",
+              "x": 0,
+              "y": 75,
+              "width": 390,
+              "height": 102.28125,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        },
+        {
+          "name": "failed-scoped-read",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 15
+          },
+          "notices": [
+            {
+              "text": "Could not check document sections. Creation is still unconfirmed; another section has not been requested.Check document sections",
+              "x": 0,
+              "y": 75,
+              "width": 390,
+              "height": 102.28125,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        },
+        {
+          "name": "successful-scoped-read",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 15
+          },
+          "notices": [
+            {
+              "text": "Check the refreshed document sections before starting another section. This read does not identify which request created a record.",
+              "x": 0,
+              "y": 75,
+              "width": 390,
+              "height": 90.421875,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        },
+        {
+          "method": "POST",
+          "path": "/api/authoring/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        }
+      ],
+      "mutations": [
+        {
+          "method": "POST",
+          "path": "/api/authoring/sections",
+          "body": {
+            "code": "3.2.S.2",
+            "title": "Synthetic created section",
+            "doc_id": "dddddddd-0000-4000-8000-000000000093",
+            "content": ""
+          }
+        }
+      ],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [
+          "section"
+        ],
+        "receipts": [],
+        "navigation": [],
+        "toasts": [
+          {
+            "message": "Could not confirm whether the section was created. Check document sections before creating another.",
+            "tone": "error"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "document",
+      "label": "touch-light-native",
+      "status": "pass",
+      "stages": [
+        {
+          "name": "created-leave-held",
+          "metrics": {
+            "visibleEditableViewport": {
+              "x": 45,
+              "y": 897.796875,
+              "width": 300,
+              "height": 0
+            },
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": {
+              "x": 45,
+              "y": 897.796875,
+              "width": 300,
+              "height": 320,
+              "clientWidth": 300,
+              "scrollWidth": 300,
+              "clientHeight": 320,
+              "scrollHeight": 320
+            },
+            "documentScroll": {
+              "x": 0,
+              "y": 601,
+              "width": 390,
+              "height": 243,
+              "clientWidth": 390,
+              "scrollWidth": 390,
+              "clientHeight": 243,
+              "scrollHeight": 1114
+            },
+            "editorScroll": null,
+            "sectionHeading": {
+              "x": 44,
+              "y": 437,
+              "width": 302,
+              "height": 154.796875,
+              "clientWidth": 302,
+              "scrollWidth": 302,
+              "clientHeight": 154,
+              "scrollHeight": 154
+            },
+            "editorCount": 1
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "aria-prohibited-attr",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "div[data-state=\"closed\"] > div"
+                  ]
+                ]
+              },
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "aside > .scaf-note"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+                  ],
+                  [
+                    ".rd-chip"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+                  ],
+                  [
+                    "#ed-guard-t"
+                  ],
+                  [
+                    "#ed-guard-d"
+                  ],
+                  [
+                    ".ed-guard-d:nth-child(3)"
+                  ]
+                ]
+              },
+              {
+                "id": "label-content-name-mismatch",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "button[title=\"Bold (⌘B)\"]"
+                  ],
+                  [
+                    "button[title=\"Italic (⌘I)\"]"
+                  ],
+                  [
+                    "button[title=\"Underline (⌘U)\"]"
+                  ]
+                ]
+              }
+            ],
+            "passes": 24
+          },
+          "notices": [
+            {
+              "text": "This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.",
+              "x": 0,
+              "y": 132,
+              "width": 390,
+              "height": 77.78125,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            },
+            {
+              "text": "Document created.Open created document",
+              "x": 0,
+              "y": 424,
+              "width": 390,
+              "height": 62,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        },
+        {
+          "name": "exact-document-handoff",
+          "metrics": {
+            "visibleEditableViewport": {
+              "x": 45,
+              "y": 565,
+              "width": 300,
+              "height": 279
+            },
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": {
+              "x": 45,
+              "y": 544.796875,
+              "width": 300,
+              "height": 320,
+              "clientWidth": 300,
+              "scrollWidth": 300,
+              "clientHeight": 320,
+              "scrollHeight": 320
+            },
+            "documentScroll": {
+              "x": 0,
+              "y": 565,
+              "width": 390,
+              "height": 279,
+              "clientWidth": 390,
+              "scrollWidth": 390,
+              "clientHeight": 279,
+              "scrollHeight": 1114
+            },
+            "editorScroll": null,
+            "sectionHeading": {
+              "x": 44,
+              "y": 84,
+              "width": 302,
+              "height": 154.796875,
+              "clientWidth": 302,
+              "scrollWidth": 302,
+              "clientHeight": 154,
+              "scrollHeight": 154
+            },
+            "editorCount": 1
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "aria-prohibited-attr",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "div[data-state=\"closed\"] > div"
+                  ]
+                ]
+              },
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "aside > .scaf-note"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+                  ],
+                  [
+                    ".rd-chip"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-mast-num"
+                  ],
+                  [
+                    "h1"
+                  ],
+                  [
+                    ".nda-open:nth-child(3)"
+                  ],
+                  [
+                    ".nda-open:nth-child(4)"
+                  ]
+                ]
+              },
+              {
+                "id": "label-content-name-mismatch",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "button[title=\"Bold (⌘B)\"]"
+                  ],
+                  [
+                    "button[title=\"Italic (⌘I)\"]"
+                  ],
+                  [
+                    "button[title=\"Underline (⌘U)\"]"
+                  ]
+                ]
+              }
+            ],
+            "passes": 24
+          },
+          "notices": [
+            {
+              "text": "This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.",
+              "x": 0,
+              "y": 132,
+              "width": 390,
+              "height": 77.78125,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            },
+            {
+              "text": "Document created.Open created document",
+              "x": 0,
+              "y": 388,
+              "width": 390,
+              "height": 62,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/documents",
+          "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000093",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000093/sources",
+          "query": "?limit=200&offset=0"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/citations",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/data-origins/document",
+          "query": "?documentTable=authoring_sections&documentId=eeeeeeee-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/sections/eeeeeeee-0000-4000-8000-000000000093/sources",
+          "query": ""
+        },
+        {
+          "method": "POST",
+          "path": "/api/authoring/docs",
+          "query": ""
+        }
+      ],
+      "mutations": [
+        {
+          "method": "POST",
+          "path": "/api/authoring/docs",
+          "body": {
+            "title": "Synthetic created document",
+            "module": "M3",
+            "client_program_id": "bbbbbbbb-0000-4000-8000-000000000093"
+          }
+        }
+      ],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [],
+        "receipts": [],
+        "navigation": [
+          {
+            "route": "document-authoring",
+            "target": {
+              "docType": null,
+              "docId": "dddddddd-0000-4000-8000-000000000094",
+              "sectionCode": null,
+              "sectionLabel": null,
+              "programId": "bbbbbbbb-0000-4000-8000-000000000093",
+              "programTitle": null,
+              "returnTo": null,
+              "setAt": 1792015156360
+            }
+          }
+        ],
+        "bridge": {
+          "docId": "dddddddd-0000-4000-8000-000000000093",
+          "sectionId": "eeeeeeee-0000-4000-8000-000000000093",
+          "editable": true
+        },
+        "toasts": []
+      }
+    },
+    {
+      "kind": "section",
+      "label": "touch-light-native",
+      "status": "fail",
+      "stages": [
+        {
+          "name": "created-leave-held",
+          "metrics": {
+            "visibleEditableViewport": {
+              "x": 45,
+              "y": 897.796875,
+              "width": 300,
+              "height": 0
+            },
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": {
+              "x": 45,
+              "y": 897.796875,
+              "width": 300,
+              "height": 320,
+              "clientWidth": 300,
+              "scrollWidth": 300,
+              "clientHeight": 320,
+              "scrollHeight": 320
+            },
+            "documentScroll": {
+              "x": 0,
+              "y": 601,
+              "width": 390,
+              "height": 243,
+              "clientWidth": 390,
+              "scrollWidth": 390,
+              "clientHeight": 243,
+              "scrollHeight": 1114
+            },
+            "editorScroll": null,
+            "sectionHeading": {
+              "x": 44,
+              "y": 437,
+              "width": 302,
+              "height": 154.796875,
+              "clientWidth": 302,
+              "scrollWidth": 302,
+              "clientHeight": 154,
+              "scrollHeight": 154
+            },
+            "editorCount": 1
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [
+              {
+                "id": "aria-prohibited-attr",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "div[data-state=\"closed\"] > div"
+                  ]
+                ]
+              },
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "aside > .scaf-note"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+                  ],
+                  [
+                    ".rd-chip"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-num"
+                  ],
+                  [
+                    ".ed-tree-row:nth-child(3) > .ed-lbl"
+                  ],
+                  [
+                    "#ed-guard-t"
+                  ],
+                  [
+                    "#ed-guard-d"
+                  ],
+                  [
+                    ".ed-guard-d:nth-child(3)"
+                  ]
+                ]
+              },
+              {
+                "id": "label-content-name-mismatch",
+                "impact": "serious",
+                "targets": [
+                  [
+                    "button[title=\"Bold (⌘B)\"]"
+                  ],
+                  [
+                    "button[title=\"Italic (⌘I)\"]"
+                  ],
+                  [
+                    "button[title=\"Underline (⌘U)\"]"
+                  ]
+                ]
+              }
+            ],
+            "passes": 24
+          },
+          "notices": [
+            {
+              "text": "This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.",
+              "x": 0,
+              "y": 132,
+              "width": 390,
+              "height": 77.78125,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            },
+            {
+              "text": "Section created.Open created section",
+              "x": 0,
+              "y": 424,
+              "width": 390,
+              "height": 62,
+              "scrollWidth": 386,
+              "clientWidth": 386
+            }
+          ]
+        }
+      ],
+      "error": "Error: Created section did not open with its empty recorded content\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at assertOpened (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:36:5)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:49:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:69:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:41:58)\n    at async Promise.all (index 2)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19",
+      "body": "Synthetic existing working document\n1 document · all\nall\ndraft\nin review\napproved\nfrozen\nThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.\nM3\nSynthetic existing working document\n1\n3.2.S.1\nSynthetic saved section\n3.2.S.2\nSynthetic created section\nSynthetic creation recovery project\n›\nM3\n›\nSynthetic existing working document\n›\n3.2.S.2\nSaved\nFreeze\nE-sign\nPlace into filing\nNew document\nNew section\nDownload\nSection\nDocument\nComments\nHistory 1\nSources\nSignatures\nAudit\nExports\nProject files\nTasks\nAccess\nSend for review\nFile to vault\nDraft with AnA\nDraft from sources\nSection created.Open created section\nReview with AnA\n\nAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review.\n\n3.2.S.2\nSynthetic created section\nRename\nCheck\nSynthetic existing working document · 1 revisions · saved 11 h ago\nParagraph\nHeading 1\nHeading 2\nHeading 3\nHeading 4\nHeading 5\nB\nI\nU\nx2\nx2\nab\n§ Ref\nCite\nTable\nCaption\nΩ…\n±\n°\nµ\n≤\n≥\n×\n≈\n½\nα\nβ\nγ\nΔ\nAsk for a source\nComment\nTrack changes\nDraft with AnA\n\n\n\n\nThis document has no text yet.\nAll changes saved\n·\n0 words",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/documents",
+          "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000093",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000093/sources",
+          "query": "?limit=200&offset=0"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/citations",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/data-origins/document",
+          "query": "?documentTable=authoring_sections&documentId=eeeeeeee-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/sections/eeeeeeee-0000-4000-8000-000000000093/sources",
+          "query": ""
+        },
+        {
+          "method": "POST",
+          "path": "/api/authoring/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/data-origins/document",
+          "query": "?documentTable=authoring_sections&documentId=eeeeeeee-0000-4000-8000-000000000094"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/sections/eeeeeeee-0000-4000-8000-000000000094/sources",
+          "query": ""
+        }
+      ],
+      "mutations": [
+        {
+          "method": "POST",
+          "path": "/api/authoring/sections",
+          "body": {
+            "code": "3.2.S.2",
+            "title": "Synthetic created section",
+            "doc_id": "dddddddd-0000-4000-8000-000000000093",
+            "content": ""
+          }
+        }
+      ],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [],
+        "receipts": [],
+        "navigation": [],
+        "bridge": {
+          "docId": "dddddddd-0000-4000-8000-000000000093",
+          "sectionId": "eeeeeeee-0000-4000-8000-000000000094",
+          "editable": true
+        },
+        "toasts": []
+      }
+    },
+    {
+      "kind": "document",
+      "label": "touch-light-held",
+      "status": "pass",
+      "stages": [
+        {
+          "name": "held-project",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 12
+          },
+          "notices": []
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        }
+      ],
+      "mutations": [],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [],
+        "receipts": [],
+        "navigation": [],
+        "toasts": []
+      }
+    }
+  ],
+  "status": "fail"
+}

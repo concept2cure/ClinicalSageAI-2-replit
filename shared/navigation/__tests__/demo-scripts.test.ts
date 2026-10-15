@@ -173,7 +173,7 @@ describe('the Live Drive scripts stay inside the launch catalog', () => {
     expect(outside, outside.join('\n')).toEqual([]);
   });
 
-  it('the orientation walks all six launch apps and ends at the audit trail', () => {
+  it('the orientation walks all seven launch apps and ends at the audit trail', () => {
     const script = findDemoScript('training-orientation')!;
     const surfaces = script.steps.map((s) => (s.navigate ? surfaceFor(s.navigate.target) : null));
     for (const app of LAUNCH_APPS) {

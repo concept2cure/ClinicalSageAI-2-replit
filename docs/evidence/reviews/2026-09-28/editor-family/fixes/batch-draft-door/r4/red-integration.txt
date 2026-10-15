@@ -1,0 +1,411 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:00:51.932Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:00:51.934Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:00:51.935Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:00:51.938Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:00:51.940Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:00:51.940Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:00:52.103Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-04T20:00:52.103Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 140ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > textarea, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 41ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > plaintext after an earlier paragraph: the clause holding the shown words is the accepter's, though the draft verified 44ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1: a tag inside <pre>: the clause is the accepter's, and the accept does not name AnA 129ms
+   → a word AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b"…">, which the leaf and the export print: the clause is the accepter's, and the accept does not name AnA 39ms
+   → a word AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b/…>: the clause is the accepter's, and the accept does not name AnA 32ms
+   → a word AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp on one line, split at " and " (the splitter keeps " and" on the clause): the clause holding the shown words is the accepter's, though the draft verified 36ms
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it does not verify (round 4), and credits nothing 53ms
+   → the record never held the token's words: expected [ { chars: 117, …(3) } ] to deeply equal []
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <xmp class="q"> the record does not have is not AnA's text, and is disclosed 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <textarea rows="2"> the record does not have is not AnA's text, and is disclosed 27ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > content read as plain text shows every `<…>` > a tag-shaped token typed into AnA's sentence, in content with no known tag, is not AnA's 51ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > a clause accepted as AnA's, carried into a raw-text region by a later save > loses AnA's name: the words the region now shows were never compared 55ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > an HTML draft (control): verifies, and its words are AnA's 35ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > markdown bold: verifies, and its words are AnA's 28ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown bullet list: verifies, and its words are AnA's 30ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > HTML with a footnote asterisk: verifies, and its words are AnA's 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown table with an escaped pipe: verifies, and its words are AnA's 28ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a verified claim of one word credits nothing, and the accept does not say AnA's text was accepted 28ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the editor opens in source mode: the clause is the accepter's, and the accept does not name AnA 53ms
+   → a word AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the fidelity gate may send to source mode: the clause is the accepter's, and the accept does not name AnA 40ms
+   → a word AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > N8: a claim with no comparable text (`<p></p>`) verifies nothing 27ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > accepting the same draft again names AnA: its clauses are AnA's, carried forward and accepted again 46ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a later accept that verifies nothing does not name AnA, though AnA's earlier clauses carry forward 57ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D5: an image alt the leaf prints: the clause is the accepter's, and the accept does not name AnA 393ms
+   → a word AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D6: a footnote the export prints: the clause is the accepter's, and the accept does not name AnA 29ms
+   → a word AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1 is also closed in the readers since 737c4e67c: the leaf reads <pre> as markup 2ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words of the record a reader is not shown are not AnA's either (D3) > <template> hides "not" from the eCTD leaf: the clause is the accepter's 42ms
+   → expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the verifier reads the record as markdown shows it (D8) > record "5*10 mg/kg", claim and content "510 mg/kg": does not verify, nothing is AnA's 34ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > an inline style: the split does not cut inside the tag: every clause is AnA's, and the accept names AnA 31ms
+   → a clause of an honest draft was credited to the accepter: expected Set{ 'author_assertion' } to deeply equal Set{ 'accepted_machine_draft:ana' }
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > "<LLOQ" and a later ">3×ULN" in plain text: every clause is AnA's, and the accept names AnA 30ms
+   → a clause of an honest draft was credited to the accepter: expected Set{ 'author_assertion' } to deeply equal Set{ 'accepted_machine_draft:ana' }
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > a markdown draft with an XML example holding <title>: every clause is AnA's, and the accept names AnA 33ms
+   → a clause of an honest draft was credited to the accepter: expected Set{ …(2) } to deeply equal Set{ 'accepted_machine_draft:ana' }
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > the inline-style draft is one clause, not two cut at the ": " inside its tag 28ms
+   → expected [ { start: +0, end: 21, …(1) }, …(1) ] to deeply equal [ { start: +0, end: 66, …(1) } ]
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > authorId "constructor" is not a machine author: it is dropped, and nothing is credited to it 27ms
+   → expected { …(2) } to deeply equal { verified: [], unverified: [] }
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > a verified claim names the record's author, whatever the claim said 14ms
+   → expected [ 'constructor' ] to deeply equal [ 'ana' ]
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > the record holds the sentence once; the same claim sent three times credits one of three 29ms
+   → expected [ 'accepted_machine_draft:ana', …(2) ] to deeply equal [ 'accepted_machine_draft:ana', …(2) ]
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor do overlapping claims: three claims each holding the sentence credit one of three 35ms
+   → expected [ { start: +0, end: 56, …(1) }, …(2) ] to have a length of 1 but got 3
+ ✓ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the figure rule reads <template> as a browser does (FIG, closed at HEAD by 737c4e67c) > an external <img> inside <template> is refused, and nothing is written 12ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D1: a tag inside <pre>: the clause is the accepter's, and the accept does not name AnA
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b"…">, which the leaf and the export print: the clause is the accepter's, and the accept does not name AnA
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D2: <b/…>: the clause is the accepter's, and the accept does not name AnA
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the editor opens in source mode: the clause is the accepter's, and the accept does not name AnA
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D4: attribute words, in content the fidelity gate may send to source mode: the clause is the accepter's, and the accept does not name AnA
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D5: an image alt the leaf prints: the clause is the accepter's, and the accept does not name AnA
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words a reader is shown that the record does not hold are the accepter's (D1, D2, D4, D5, D6) > D6: a footnote the export prints: the clause is the accepter's, and the accept does not name AnA
+AssertionError: a word AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+
+- Expected
++ Received
+
+  [
+-   "author_assertion",
++   "accepted_machine_draft:ana",
+  ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:166:101
+    164|     const r = await record(id);
+    165|     expect(r.audit.machineText.verified, 'the honest claim verifies').…
+    166|     expect(await whoseAt(id, content.indexOf(SHOWN)), 'a word AnA neve…
+       |                                                                                                     ^
+    167|     expect(r.metadata.lastDraftSource).toBe('batch-not-ana');
+    168|     expect(r.audit.model).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > words of the record a reader is not shown are not AnA's either (D3) > <template> hides "not" from the eCTD leaf: the clause is the accepter's
+AssertionError: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+
+- Expected
++ Received
+
+  [
+-   "author_assertion",
++   "accepted_machine_draft:ana",
+  ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:182:61
+    180|     const { id } = await acceptInto(content, { draft });
+    181|     expect(htmlToPlainText(content)).toBe('The study drug was effectiv…
+    182|     expect(await whoseAt(id, content.indexOf('effective'))).toEqual(['…
+       |                                                             ^
+    183|   });
+    184| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the verifier reads the record as markdown shows it (D8) > record "5*10 mg/kg", claim and content "510 mg/kg": does not verify, nothing is AnA's
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "ana",
++     "chars": 75,
++     "turnActorUserId": 501,
++     "turnRecordId": "c5c2fd68-fbe5-4185-a701-85fa66a601a6",
++   },
++ ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:192:42
+    190|     const { id, turnRecordId } = await acceptInto(forged, { draft, cla…
+    191|     const r = await record(id);
+    192|     expect(r.audit.machineText.verified).toEqual([]);
+       |                                          ^
+    193|     expect(r.audit.machineText.unverified).toEqual([expect.objectConta…
+    194|     expect((await spansOf(id)).map((s) => s.whose)).toEqual(['author_a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > an inline style: the split does not cut inside the tag: every clause is AnA's, and the accept names AnA
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > "<LLOQ" and a later ">3×ULN" in plain text: every clause is AnA's, and the accept names AnA
+AssertionError: a clause of an honest draft was credited to the accepter: expected Set{ 'author_assertion' } to deeply equal Set{ 'accepted_machine_draft:ana' }
+
+- Expected
++ Received
+
+  Set {
+-   "accepted_machine_draft:ana",
++   "author_assertion",
+  }
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:208:88
+    206|     const whose = (await spansOf(id)).map((s) => s.whose);
+    207|     expect(whose.length).toBeGreaterThan(0);
+    208|     expect(new Set(whose), 'a clause of an honest draft was credited t…
+       |                                                                                        ^
+    209|     expect(r.metadata.lastDraftSource).toBe('ana-batch');
+    210|     expect(r.audit.model).toBe('model-of-record');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > a markdown draft with an XML example holding <title>: every clause is AnA's, and the accept names AnA
+AssertionError: a clause of an honest draft was credited to the accepter: expected Set{ …(2) } to deeply equal Set{ 'accepted_machine_draft:ana' }
+
+- Expected
++ Received
+
+  Set {
+    "accepted_machine_draft:ana",
++   "author_assertion",
+  }
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:208:88
+    206|     const whose = (await spansOf(id)).map((s) => s.whose);
+    207|     expect(whose.length).toBeGreaterThan(0);
+    208|     expect(new Set(whose), 'a clause of an honest draft was credited t…
+       |                                                                                        ^
+    209|     expect(r.metadata.lastDraftSource).toBe('ana-batch');
+    210|     expect(r.audit.model).toBe('model-of-record');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > the inline-style draft is one clause, not two cut at the ": " inside its tag
+AssertionError: expected [ { start: +0, end: 21, …(1) }, …(1) ] to deeply equal [ { start: +0, end: 66, …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
++     "end": 21,
++     "start": 0,
++     "whose": "author_assertion",
++   },
++   {
+      "end": 66,
+-     "start": 0,
+-     "whose": "accepted_machine_draft:ana",
++     "start": 22,
++     "whose": "author_assertion",
+    },
+  ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:216:31
+    214|     const draft = '<p style="text-align: justify">Not applicable to th…
+    215|     const { id } = await acceptInto(draft, { draft });
+    216|     expect(await spansOf(id)).toEqual([{ start: 0, end: draft.length, …
+       |                               ^
+    217|   });
+    218| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > authorId "constructor" is not a machine author: it is dropped, and nothing is credited to it
+AssertionError: expected { …(2) } to deeply equal { verified: [], unverified: [] }
+
+- Expected
++ Received
+
+  {
+    "unverified": [],
+-   "verified": [],
++   "verified": [
++     {
++       "authorId": "constructor",
++       "chars": 56,
++       "turnActorUserId": 501,
++       "turnRecordId": "b7114b6f-e3e0-4913-820a-60b12ce35aa8",
++     },
++   ],
+  }
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:224:33
+    222|     const { id } = await acceptInto(RECORD, { claims: [{ authorId: 'co…
+    223|     const r = await record(id);
+    224|     expect(r.audit.machineText).toEqual({ verified: [], unverified: []…
+       |                                 ^
+    225|     expect((await spansOf(id)).map((s) => s.whose)).toEqual(['author_a…
+    226|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > a verified claim names the record's author, whatever the claim said
+AssertionError: expected [ 'constructor' ] to deeply equal [ 'ana' ]
+
+- Expected
++ Received
+
+  [
+-   "ana",
++   "constructor",
+  ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:232:53
+    230|     const q = { query: (text: string, params?: unknown[]) => pg.query(…
+    231|     const verdict = await verifyMachineText(q, ORG, [{ authorId: 'cons…
+    232|     expect(verdict.verified.map((v) => v.authorId)).toEqual(['ana']);
+       |                                                     ^
+    233|   });
+    234| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > the record holds the sentence once; the same claim sent three times credits one of three
+AssertionError: expected [ 'accepted_machine_draft:ana', …(2) ] to deeply equal [ 'accepted_machine_draft:ana', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "accepted_machine_draft:ana",
+-   "author_assertion",
+-   "author_assertion",
++   "accepted_machine_draft:ana",
++   "accepted_machine_draft:ana",
+  ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:240:53
+    238|     const content = `${RECORD}\n\n${RECORD}\n\n${RECORD}`;
+    239|     const { id } = await acceptInto(content, { claims: [1, 2, 3].map((…
+    240|     expect((await spansOf(id)).map((s) => s.whose)).toEqual(['accepted…
+       |                                                     ^
+    241|   });
+    242|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor do overlapping claims: three claims each holding the sentence credit one of three
+AssertionError: expected [ { start: +0, end: 56, …(1) }, …(2) ] to have a length of 1 but got 3
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts:249:89
+    247|     const { id } = await acceptInto(content, { draft, claims });
+    248|     expect((await record(id)).audit.machineText.verified).toHaveLength…
+    249|     expect((await spansOf(id)).filter((s) => s.whose === 'accepted_mac…
+       |                                                                                         ^
+    250|   });
+    251| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it does not verify (round 4), and credits nothing
+AssertionError: the record never held the token's words: expected [ { chars: 117, …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "authorId": "ana",
++     "chars": 117,
++     "turnActorUserId": 501,
++     "turnRecordId": "ed504869-613b-4aa1-bd14-0788b97133c9",
++   },
++ ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts:197:86
+    195|
+    196|     const r = await record(id);
+    197|     expect(r.audit.machineText.verified, 'the record never held the to…
+       |                                                                                      ^
+    198|     expect(r.audit.machineText.unverified.map((u: { reason: string }) …
+    199|     expect(await whoseAt(id, content.indexOf(SHOWN))).toEqual(['author…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  18 failed | 19 passed (37)
+   Start at  20:00:49
+   Duration  8.67s (transform 3.47s, setup 178ms, import 7.89s, tests 8.66s, environment 0ms)
+

@@ -4,8 +4,11 @@
  *
  * AnaActivity draws Continue only when its host passes `onContinue`, so the
  * component suite cannot see whether a host passes it, to which turn, or what
- * it sends. That is the seam pinned here, on both hosts that render the
- * transcript with a send path: the shell's rail and the conversation screen.
+ * it sends. That is the seam pinned here, on the one host that renders the
+ * shell's transcript with a send path: the conversation screen. (The right
+ * rail rendered it too. It was deleted with the second half of slice 9 of
+ * docs/design/ONE_ANA_ONE_CANVAS.md; its three cases here were the
+ * conversation's three, one for one.)
  *
  *   · only the LATEST settled assistant turn offers Continue — an earlier
  *     capped turn keeps its note and has no button;
@@ -46,7 +49,6 @@ vi.mock('../../components/ana/useAnaChat', () => ({
   }),
 }));
 
-import { AnaRail, type AnaMessage } from '../Shell';
 import { ConversationThread } from '../surfaces/ConversationThread';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { CONTINUE_PROMPT, continueTurnIndex, isContinuable } from '../anaWorkModel';
@@ -77,8 +79,6 @@ describe('which turn, and which stops', () => {
     expect(continueTurnIndex([...turns.slice(0, 3), { role: 'assistant', streaming: true }], false)).toBe(-1);
     expect(continueTurnIndex([...turns, { role: 'user' }], false)).toBe(-1);
     expect(continueTurnIndex([], false)).toBe(-1);
-    // The rail's own role name.
-    expect(continueTurnIndex([{ role: 'user' }, { role: 'ana', streaming: false }], false)).toBe(1);
   });
 
   it('isContinuable follows the table, and Continue sends one fixed sentence', () => {
@@ -95,88 +95,6 @@ describe('which turn, and which stops', () => {
     expect(isContinuable('hold_expired')).toBe(true);
     expect(isContinuable('hold_unavailable')).toBe(true);
     expect(CONTINUE_PROMPT).toBe('Continue from where you stopped.');
-  });
-});
-
-describe('the rail', () => {
-  const railTurns = (latestStreaming = false): AnaMessage[] => [
-    { role: 'user', body: 'Compare every endpoint' },
-    { role: 'ana', body: 'Partial comparison.', activity: { ...capped } },
-    { role: 'user', body: 'Go on' },
-    { role: 'ana', body: 'Still partial.', activity: { ...capped, streaming: latestStreaming } },
-  ];
-
-  function renderRail(messages: AnaMessage[], streaming: boolean, onSend = vi.fn()) {
-    render(
-      <AnaRail
-        open
-        setOpen={() => {}}
-        surface={{ id: 'cmc', label: 'CMC' }}
-        segment="biotech"
-        mode="standard"
-        setMode={() => {}}
-        messages={messages}
-        onSend={onSend}
-        onAct={vi.fn()}
-        projectId={42}
-        streaming={streaming}
-      />,
-    );
-    return onSend;
-  }
-
-  it('offers Continue on the latest settled turn only, and sends the fixed sentence', () => {
-    const onSend = renderRail(railTurns(), false);
-    // Both capped turns say so; only the latest can be continued.
-    expect(notes()).toHaveLength(2);
-    const buttons = continueButtons();
-    expect(buttons).toHaveLength(1);
-    expect(notes()[1].contains(buttons[0])).toBe(true);
-    fireEvent.click(buttons[0]);
-    expect(onSend).toHaveBeenCalledTimes(1);
-    expect(onSend).toHaveBeenCalledWith(CONTINUE_PROMPT);
-  });
-
-  it('offers nothing while a turn is in flight', () => {
-    renderRail(railTurns(true), true);
-    expect(continueButtons()).toHaveLength(0);
-  });
-
-  it('keeps keyboard focus in the transcript when the send withdraws Continue', () => {
-    // The send makes a new turn the latest, so Continue unmounts in the render
-    // that follows the click. Focus must not fall to <body> (WCAG 2.4.3).
-    const rail = (messages: AnaMessage[], streaming: boolean) => (
-      <AnaRail
-        open
-        setOpen={() => {}}
-        surface={{ id: 'cmc', label: 'CMC' }}
-        segment="biotech"
-        mode="standard"
-        setMode={() => {}}
-        messages={messages}
-        onSend={vi.fn()}
-        onAct={vi.fn()}
-        projectId={42}
-        streaming={streaming}
-      />
-    );
-    const { rerender } = render(rail(railTurns(), false));
-    const [button] = continueButtons();
-    button.focus();
-    fireEvent.click(button);
-    rerender(
-      rail(
-        [
-          ...railTurns(),
-          { role: 'user', body: CONTINUE_PROMPT },
-          { role: 'ana', body: '', activity: { streaming: true, phase: 'Planning response…' } },
-        ],
-        true,
-      ),
-    );
-    expect(continueButtons()).toHaveLength(0);
-    expect(document.activeElement).not.toBe(document.body);
-    expect(document.activeElement).toBe(notes()[1]);
   });
 });
 

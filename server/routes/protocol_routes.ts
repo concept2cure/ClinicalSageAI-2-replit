@@ -9,12 +9,21 @@ import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { huggingFaceService } from '../huggingface-service';
 import { createScopedLogger } from '../utils/logger.js';
 import {
-  getSimilarCsrs,
-  calculateMatchScore,
   generateSuggestions,
   enrichCsrsWithDetailedInsights,
 } from './protocol_csr_insights.js';
 import { serverError } from '../lib/api-response';
+import {
+  precedentBenchmarkReader,
+  type ComparableTrial,
+} from '../services/corpus/precedent-benchmark-reader';
+import {
+  buildSectionAnalysis,
+  describeForNarration,
+  frequencyLines,
+  riskFactorsFrom,
+  toCorpusPhase,
+} from '../services/corpus/protocol-precedent-comparison';
 
 // The CSR matching and insight-enrichment helpers were extracted verbatim to
 // ./protocol_csr_insights.ts. Re-export the public names so the import surface
@@ -31,308 +40,171 @@ const log = createScopedLogger('protocol-routes');
 const router = express.Router();
 
 /**
- * Extracts key suggestions from the tailored recommendation text
+ * The headings of the model's recommendation, as written. [] when there is no
+ * recommendation or it has no headings.
+ *
+ * This used to fall back to five generic suggestions ("Optimize sample size
+ * based on statistical power calculations…") presented as if they had been
+ * extracted from the recommendation.
  */
-function extractKeySuggestions(recommendation: string) {
-  // Extract specific recommendations from the AI-generated text
-  // by parsing key headings and other structured content
-
-  // Extract headings from markdown ** format
+function extractKeySuggestions(recommendation: string | null): string[] {
+  if (!recommendation) return [];
   const headings = recommendation.match(/\*\*([^*]+)\*\*/g) || [];
-  const cleanHeadings = headings.map(h => h.replace(/\*\*/g, '').trim());
-
-  // If we found headings, return them as key suggestions
-  if (cleanHeadings.length > 0) {
-    return cleanHeadings.slice(0, 5);
-  }
-
-  // Fallback to some generic suggestions
-  return [
-    'Optimize sample size based on statistical power calculations for primary endpoint',
-    'Consider adding objective and validated secondary endpoints',
-    'Review inclusion/exclusion criteria for appropriate study population',
-    'Ensure safety monitoring procedures align with regulatory guidance',
-    'Consider implementing strategies to minimize dropout rate',
-  ];
+  return headings
+    .map(h => h.replace(/\*\*/g, '').trim())
+    .filter(Boolean)
+    .slice(0, 5);
 }
 
-/**
- * Generates risk factors based on indication and phase
- */
-function generateRiskFactors(indication: string, phase: string) {
-  // Common risk factors for clinical trials
-  const commonRisks = [
-    'Potential for higher than expected dropout rates',
-    'Possible challenges in patient recruitment',
-    'Risk of unblinding due to recognizable treatment effects',
-  ];
+/* ── 2026-10-01: what the optimize routes returned, and what they return now ──
+   Both routes answered with a fixed analysis wearing the protocol's indication
+   as a variable:
+     - generateSectionAnalysis: five paragraphs ("standard randomization and
+       blinding procedures", "Successful Phase 3 trials have utilized central
+       randomization…", "Recent regulatory approvals … included comprehensive
+       endpoint packages") with "alignment" scores of 85, 78, 82, 75 and 80 —
+       the same for every protocol, read from neither the protocol nor a trial.
+     - generateRiskFactors / generateEndpointSuggestions / generateArmSuggestions:
+       keyword-keyed lists ("Risk of cardiovascular adverse events based on
+       similar trials") citing trials nobody looked at.
+     - four "alignment" scores: base constants (65, 65, 70) plus counts, so a
+       protocol with no evidence at all scored 67 overall.
+     - matched CSRs and academic references: read from a `reports` table that
+       no migration creates, through `req.app.locals.db`, which nothing sets,
+       then from relative-URL fetches to /api/reports, /api/academic-knowledge
+       and /api/protocol-knowledge, which Node cannot issue and the last two of
+       which do not exist. Every failure returned [], so every response said
+       "no comparable trials" and the scores above were all that was left.
+     - POST /upload-and-optimize defaulted a missing indication to 'Obesity'
+       ("Default to obesity for demo"), so an upload that stated none was
+       analysed as an obesity trial.
 
-  // Add indication-specific risks
-  const indicationLower = indication.toLowerCase();
-  if (indicationLower.includes('obesity') || indicationLower.includes('diabetes')) {
-    commonRisks.push('Risk of cardiovascular adverse events based on similar trials');
-    commonRisks.push('Potential for participant weight fluctuations impacting assessments');
-  } else if (indicationLower.includes('cancer') || indicationLower.includes('oncology')) {
-    commonRisks.push('Risk of disease progression affecting study completion');
-    commonRisks.push('Potential complications from concomitant medications');
-  } else if (indicationLower.includes('neuro') || indicationLower.includes('alzheimer')) {
-    commonRisks.push('Higher risk of cognitive adverse events requiring monitoring');
-    commonRisks.push('Potential challenges in accurate endpoint assessments');
-  }
+   Now: the protocol's own stated values (protocolAnalyzerService — fields the
+   text does not state stay absent), the comparable trials and their benchmark
+   from the trial corpus (precedentBenchmarkReader, one read), and a
+   deterministic comparison of the two (protocol-precedent-comparison). A failed
+   read is a 500, never "no comparable trials". The model, when one is
+   configured, narrates that evidence and is told to add none; when none is, the
+   response says so instead of returning a template. */
 
-  // Add phase-specific risks
-  if (phase.includes('1')) {
-    commonRisks.push('First-in-human risks requiring careful safety monitoring');
-    commonRisks.push('Potential for unexpected adverse events not seen in preclinical studies');
-  } else if (phase.includes('3')) {
-    commonRisks.push('Risk of not meeting the primary endpoint due to variability');
-    commonRisks.push(
-      'Potential regulatory concerns about study design alignment with precedent trials'
-    );
-  }
+const str = (v: unknown): string | undefined =>
+  typeof v === 'string' && v.trim() ? v.trim() : undefined;
 
-  return commonRisks;
-}
-
-/**
- * Generates endpoint suggestions for the indication and phase
- */
-function generateEndpointSuggestions(indication: string, phase: string) {
-  const indicationLower = indication.toLowerCase();
-  const endpoints = [];
-
-  // Indication-specific endpoints
-  if (indicationLower.includes('obesity')) {
-    endpoints.push('Percent change in body weight from baseline');
-    endpoints.push('Proportion of participants achieving ≥5% weight loss');
-    endpoints.push('Change in waist circumference');
-    endpoints.push('Changes in cardiometabolic risk factors');
-  } else if (indicationLower.includes('diabetes')) {
-    endpoints.push('Change in HbA1c from baseline');
-    endpoints.push('Proportion of patients achieving HbA1c <7.0%');
-    endpoints.push('Change in fasting plasma glucose');
-    endpoints.push('Time in glycemic range measured by CGM');
-  } else if (indicationLower.includes('cancer') || indicationLower.includes('oncology')) {
-    endpoints.push('Overall Survival (OS)');
-    endpoints.push('Progression-Free Survival (PFS)');
-    endpoints.push('Objective Response Rate (ORR)');
-    endpoints.push('Duration of Response (DoR)');
-  } else {
-    // Generic endpoints for other indications
-    endpoints.push('Change from baseline in disease activity score');
-    endpoints.push('Time to clinical improvement');
-    endpoints.push('Proportion of patients achieving disease remission');
-    endpoints.push('Quality of life improvement using validated instruments');
-  }
-
-  return endpoints;
-}
-
-/**
- * Generates suggested treatment arms based on indication, phase and study type
- */
-function generateArmSuggestions(indication: string, phase: string, studyType: string) {
-  const arms = [];
-
-  if (studyType === 'rct') {
-    arms.push('Test treatment - active drug at optimal dose');
-    arms.push('Control arm - placebo or standard of care');
-
-    if (phase.includes('2')) {
-      arms.push('Multiple dose arms to establish dose-response relationship');
-      arms.push('Consider adaptive design with interim analysis for dose selection');
-    } else if (phase.includes('3')) {
-      arms.push('Consider active comparator arm with current standard of care');
-      arms.push('Potential sub-study for specific patient populations');
-    }
-  } else {
-    arms.push('Primary treatment arm with active intervention');
-    arms.push('Consider historical control comparison if randomization is not feasible');
-    arms.push('Open-label extension for long-term safety data');
-  }
-
-  return arms;
-}
-
-/**
- * Generates section-by-section analysis of the protocol
- */
-function generateSectionAnalysis(indication: string, phase: string, protocolSummary: string) {
+/** A corpus trial in the record shape the CSR-insight helpers read. The corpus
+ *  records a registry status, not an efficacy outcome, so `outcome` is null —
+ *  the helpers then say the outcome is not available instead of inferring one
+ *  from "terminated" or "completed". */
+function toCsrRecord(t: ComparableTrial) {
   return {
-    studyDesign: {
-      current: `The current study design for this ${indication} trial includes standard randomization and blinding procedures.`,
-      suggestions: [
-        `Consider implementing adaptive design elements to optimize the ${indication} study efficiency`,
-        `Review blinding procedures to ensure they're appropriate for ${indication} trials where treatment effects may be noticeable`,
-      ],
-      alignment: 85,
-      academicGuidance: `Recent academic literature supports the use of adaptive designs for ${indication} studies to improve efficiency.`,
-      csrLearnings: [
-        `Successful ${phase.replace('phase', 'Phase ')} ${indication} trials have utilized central randomization with stratification by key prognostic factors`,
-        `Studies with similar endpoints demonstrated improved outcomes with stringent blinding procedures`,
-      ],
-    },
-    eligibilityCriteria: {
-      current: `Current inclusion/exclusion criteria appear standard for ${indication} trials in ${phase.replace('phase', 'Phase ')}.`,
-      suggestions: [
-        `Consider narrowing eligibility criteria to focus on a more homogeneous patient population`,
-        `Add specific biomarker criteria based on recent ${indication} research findings`,
-      ],
-      alignment: 78,
-      academicGuidance: `Emerging research supports patient selection based on biomarker profiles in ${indication}.`,
-      csrLearnings: [
-        `Recent successful trials in ${indication} used more targeted eligibility criteria`,
-        `Stricter exclusion criteria for comorbidities reduced confounding factors in analysis`,
-      ],
-    },
-    endpoints: {
-      current: `The primary endpoint focuses on clinical improvement in ${indication}-related symptoms and outcomes.`,
-      suggestions: [
-        `Consider adding validated patient-reported outcomes specific to ${indication}`,
-        `Include digital biomarker measurements for more objective data collection`,
-      ],
-      alignment: 82,
-      academicGuidance: `Latest research supports inclusion of both clinician-reported and patient-reported outcomes in ${indication} trials.`,
-      csrLearnings: [
-        `Recent regulatory approvals for ${indication} therapies included comprehensive endpoint packages`,
-        `Digital assessment tools have strengthened endpoint data in similar trials`,
-      ],
-    },
-    statisticalAnalysis: {
-      current: `Standard statistical approach with primary analysis on intent-to-treat population.`,
-      suggestions: [
-        `Consider more robust handling of missing data with multiple imputation methods`,
-        `Add sensitivity analyses to test assumption violations`,
-      ],
-      alignment: 75,
-      academicGuidance: `Current statistical best practices for ${indication} trials emphasize transparent handling of missing data.`,
-      csrLearnings: [
-        `Successful ${indication} trials included pre-specified subgroup analyses`,
-        `Regulators have increasingly focused on robust statistical methodologies in ${phase.replace('phase', 'Phase ')} submissions`,
-      ],
-    },
-    safetyMonitoring: {
-      current: `Standard adverse event collection with periodic safety reviews.`,
-      suggestions: [
-        `Implement more frequent safety monitoring based on known risks for ${indication} population`,
-        `Add specific monitoring for events of special interest`,
-      ],
-      alignment: 80,
-      academicGuidance: `Recent safety findings in ${indication} trials suggest enhanced monitoring for specific organ systems.`,
-      csrLearnings: [
-        `Enhanced safety monitoring protocols were implemented in similar ${indication} trials`,
-        `Proactive safety monitoring reduced serious adverse event rates in comparable studies`,
-      ],
+    id: t.id,
+    title: t.title,
+    sponsor: t.sponsor,
+    nct_id: t.nctId,
+    indication: t.indication,
+    phase: t.phase,
+    registry_status: t.registryStatus,
+    design: t.studyDesign,
+    sample_size: t.sampleSize,
+    duration_weeks: t.durationWeeks,
+    primary_endpoint: t.primaryEndpoint,
+    outcome: null,
+    efficacy_data: t.efficacyResults,
+    safety_data: t.safetyResults,
+    insight: null,
+  };
+}
+
+type AnalysisResult = { status: 200 | 400; body: Record<string, unknown> };
+
+/**
+ * The shared body of POST /optimize and POST /upload-and-optimize. Throws on a
+ * failed read; the routes turn that into a 500.
+ */
+async function analyseAgainstPrecedent(input: {
+  text: string;
+  indication?: unknown;
+  phase?: unknown;
+  studyType?: unknown;
+  title?: unknown;
+}): Promise<AnalysisResult> {
+  const stated = input.text.trim() ? await protocolAnalyzerService.analyzeProtocol(input.text) : {};
+  const indication = str(input.indication) ?? (stated as ProtocolData).indication;
+  const phaseStated = str(input.phase) ?? (stated as ProtocolData).phase;
+  const phase = toCorpusPhase(phaseStated);
+
+  if (!indication || !phase) {
+    return {
+      status: 400,
+      body: {
+        success: false,
+        error: {
+          code: 'INDICATION_AND_PHASE_REQUIRED',
+          message:
+            'State the indication and the phase, in the request or in the protocol text. ' +
+            'Comparable trials are matched on both, and the analysis is not run against an assumed one.',
+        },
+        stated: { indication: indication ?? null, phase: phaseStated ?? null },
+      },
+    };
+  }
+
+  const { benchmark, trials } = await precedentBenchmarkReader.compare(indication, phase);
+  const enriched = await enrichCsrsWithDetailedInsights(trials.map(toCsrRecord), indication, phase);
+  const comparableTrials = enriched.map(csr => ({
+    ...csr,
+    suggestions: generateSuggestions(csr, indication, phase),
+  }));
+  const sectionAnalysis = buildSectionAnalysis(stated as ProtocolData, benchmark);
+
+  let recommendation: string | null = null;
+  let recommendationUnavailable: string | undefined;
+  try {
+    recommendation = await protocolOptimizerService.generateTailoredRecommendations(
+      input.text,
+      { indication, phase, studyType: str(input.studyType), title: str(input.title) },
+      comparableTrials,
+      describeForNarration(benchmark, sectionAnalysis)
+    );
+    if (recommendation === null) {
+      recommendationUnavailable =
+        'No AI model is configured, so no narrative recommendation was written. ' +
+        'The section analysis and comparable trials are computed without one.';
+    }
+  } catch (err) {
+    log.error('Tailored protocol recommendation failed:', err);
+    recommendationUnavailable =
+      'The model call failed, so no narrative recommendation was written. ' +
+      'The section analysis and comparable trials are computed without one.';
+  }
+
+  const s = stated as ProtocolData;
+  return {
+    status: 200,
+    body: {
+      success: true,
+      indication,
+      phase,
+      stated: {
+        design: s.design ?? null,
+        arms: s.arms ?? null,
+        sampleSize: s.sample_size ?? null,
+        durationWeeks: s.duration_weeks ?? null,
+        primaryEndpoint: s.primary_endpoint ?? null,
+        fieldsNotStated: s.fields_not_stated ?? [],
+      },
+      recommendation,
+      ...(recommendationUnavailable ? { recommendationUnavailable } : {}),
+      keySuggestions: extractKeySuggestions(recommendation),
+      sectionAnalysis,
+      riskFactors: riskFactorsFrom(sectionAnalysis),
+      suggestedEndpoints: frequencyLines(benchmark.commonEndpoints, benchmark.totalTrials),
+      commonDesigns: frequencyLines(benchmark.commonDesigns, benchmark.totalTrials),
+      precedentBenchmark: benchmark,
+      matchedCsrInsights: comparableTrials,
     },
   };
 }
 
-/**
- * Retrieves academic references from knowledge databases
- */
-/**
- * Retrieves academic references from the academic knowledge system
- */
-async function generateAcademicReferences(indication: string, phase: string) {
-  try {
-    // Try to fetch from Academic Knowledge Service
-    const academicServiceResponse = await fetch(
-      `/api/academic-knowledge/search?query=${encodeURIComponent(`${indication} clinical trial ${phase}`)}&limit=10`
-    );
-
-    if (academicServiceResponse.ok) {
-      const academicData = await academicServiceResponse.json();
-      log.debug(
-        `Found ${academicData.length || 0} academic references from Academic Knowledge Service`
-      );
-
-      if (academicData && academicData.length > 0) {
-        return academicData.map((ref: any) => ({
-          id: ref.id,
-          title: ref.title,
-          author: ref.authors || ref.author,
-          publication: ref.journal || ref.publication,
-          year: ref.year,
-          relevance: ref.key_finding || ref.abstract || ref.relevance,
-        }));
-      }
-    }
-
-    // If Academic Knowledge Service failed, try Protocol Knowledge Service
-    const protocolKnowledgeResponse = await fetch('/api/protocol-knowledge', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        indication,
-        phase: phase.replace('phase', '').trim(),
-        count: 10,
-      }),
-    });
-
-    if (protocolKnowledgeResponse.ok) {
-      const protocolKnowledge = await protocolKnowledgeResponse.json();
-
-      if (
-        protocolKnowledge &&
-        protocolKnowledge.academic_sources &&
-        protocolKnowledge.academic_sources.length > 0
-      ) {
-        log.debug(
-          `Found ${protocolKnowledge.academic_sources.length} academic sources from Protocol Knowledge Service`
-        );
-        return protocolKnowledge.academic_sources;
-      }
-    }
-
-    log.debug('No academic references found from knowledge services');
-    return [];
-  } catch (error) {
-    log.error('Error retrieving academic references:', error);
-    return [];
-  }
-}
-
-/**
- * Regulatory alignment heuristic — deterministic function of the real
- * supporting evidence retrieved (matched CSR precedents + academic
- * references). Previously `Math.floor(70 + Math.random() * 25)`, a random
- * value that ignored its inputs and varied per request. There is no
- * trained regulatory-scoring model, so this is an explicit
- * evidence-coverage heuristic, not a model prediction.
- */
-function calculateRegScore(matchedCsrCount: number, academicCount: number) {
-  return Math.min(95, 65 + matchedCsrCount * 4 + academicCount * 2);
-}
-
-/**
- * Calculates CSR alignment score
- */
-function calculateCsrScore(csrInsights: any[]) {
-  if (csrInsights.length === 0) return 65;
-
-  // Base score plus bonus for number of insights
-  return Math.min(95, 70 + csrInsights.length * 5);
-}
-
-/**
- * Calculates academic alignment score
- */
-function calculateAcademicScore(academicReferences: any[]) {
-  if (academicReferences.length === 0) return 70;
-
-  // Base score plus bonus for number of references
-  return Math.min(95, 75 + academicReferences.length * 4);
-}
-
-/**
- * Overall quality score — deterministic mean of the three evidence-based
- * alignment heuristics. Previously added `Math.random() * 10 - 5` jitter.
- */
-function calculateOverallScore(regScore: number, csrScore: number, academicScore: number) {
-  return Math.round((regScore + csrScore + academicScore) / 3);
-}
 const upload = multer({
   dest: 'uploads/',
   limits: {
@@ -622,68 +494,14 @@ router.post('/optimize', express.json(), async (req, res) => {
       });
     }
 
-    // Fetch similar CSRs from database matching therapeutic area and phase
-    const { indication, phase, protocolSummary, studyType } = protocolData;
-
-    // Query database for matching CSRs
-    const db = req.app.locals.db;
-    const matchedCsrs = await getSimilarCsrs(db, indication, phase);
-
-    // Get academic references from the knowledge services
-    const academicReferences = await generateAcademicReferences(indication, phase);
-
-    // Enrich CSRs with detailed learnings and insights
-    const enrichedCsrs = await enrichCsrsWithDetailedInsights(matchedCsrs, indication, phase);
-
-    // Generate tailored recommendations with comprehensive insights
-    const tailoredRecommendation = await protocolOptimizerService.generateTailoredRecommendations(
-      protocolSummary,
-      { indication, phase, studyType, title: protocolData.title },
-      enrichedCsrs,
-      academicReferences
-    );
-
-    // Get basic optimization recommendations for structured improvements
-    const optimizationResult = await protocolOptimizerService.optimizeProtocol(protocolData);
-
-    // Enhanced CSR insights with more detailed information
-    const enhancedCsrInsights = enrichedCsrs.map(csr => {
-      return {
-        ...csr,
-        match_score: calculateMatchScore(csr, indication, phase, studyType),
-        suggestions: generateSuggestions(csr, indication, phase),
-      };
+    const result = await analyseAgainstPrecedent({
+      text: typeof protocolData.protocolSummary === 'string' ? protocolData.protocolSummary : '',
+      indication: protocolData.indication,
+      phase: protocolData.phase,
+      studyType: protocolData.studyType,
+      title: protocolData.title,
     });
-
-    return res.json({
-      success: true,
-      recommendation: tailoredRecommendation,
-      keySuggestions: extractKeySuggestions(tailoredRecommendation),
-      riskFactors: generateRiskFactors(indication, phase),
-      matchedCsrInsights: enhancedCsrInsights,
-      suggestedEndpoints: generateEndpointSuggestions(indication, phase),
-      suggestedArms: generateArmSuggestions(indication, phase, studyType),
-      sectionAnalysis: generateSectionAnalysis(indication, phase, protocolSummary),
-      academicReferences,
-      ...(() => {
-        const regulatoryAlignmentScore = calculateRegScore(
-          enhancedCsrInsights.length,
-          academicReferences.length
-        );
-        const csrAlignmentScore = calculateCsrScore(enhancedCsrInsights);
-        const academicAlignmentScore = calculateAcademicScore(academicReferences);
-        return {
-          regulatoryAlignmentScore,
-          csrAlignmentScore,
-          academicAlignmentScore,
-          overallQualityScore: calculateOverallScore(
-            regulatoryAlignmentScore,
-            csrAlignmentScore,
-            academicAlignmentScore
-          ),
-        };
-      })(),
-    });
+    return res.status(result.status).json(result.body);
   } catch (error: any) {
     log.error('Error optimizing protocol:', error);
     return serverError(res, log, 'optimising', error);
@@ -749,90 +567,31 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
       });
     }
 
-    // Get protocol data from the request body
-    const protocolMeta = {
-      indication: req.body.indication || 'Obesity', // Default to obesity for demo
-      phase: req.body.phase || 'phase3',
-      studyType: req.body.studyType || 'rct',
-      title: req.body.title || `${req.body.indication || 'Clinical'} Protocol`,
-    };
-
-    // Query database for matching CSRs
-    const db = req.app.locals.db;
-    const matchedCsrs = await getSimilarCsrs(db, protocolMeta.indication, protocolMeta.phase);
-
-    // Get academic references from knowledge services
-    const academicReferences = await generateAcademicReferences(
-      protocolMeta.indication,
-      protocolMeta.phase
-    );
-
-    // Enrich CSRs with detailed learnings and insights
-    const enrichedCsrs = await enrichCsrsWithDetailedInsights(
-      matchedCsrs,
-      protocolMeta.indication,
-      protocolMeta.phase
-    );
-
-    // Generate tailored recommendations using the uploaded protocol text
-    const tailoredRecommendation = await protocolOptimizerService.generateTailoredRecommendations(
-      text,
-      protocolMeta,
-      enrichedCsrs,
-      academicReferences
-    );
-
-    // Use the enriched CSRs for insights
-    const enhancedCsrInsights = enrichedCsrs.map(csr => {
-      return {
-        ...csr,
-        match_score: calculateMatchScore(
-          csr,
-          protocolMeta.indication,
-          protocolMeta.phase,
-          protocolMeta.studyType
-        ),
-        suggestions: generateSuggestions(csr, protocolMeta.indication, protocolMeta.phase),
-      };
-    });
-
     // Clean up uploaded file
-    fs.unlinkSync(filePath);
+    try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
 
-    return res.json({
-      success: true,
-      extractedSummary: text,
-      recommendation: tailoredRecommendation,
-      keySuggestions: extractKeySuggestions(tailoredRecommendation),
-      riskFactors: generateRiskFactors(protocolMeta.indication, protocolMeta.phase),
-      matchedCsrInsights: enhancedCsrInsights,
-      suggestedEndpoints: generateEndpointSuggestions(protocolMeta.indication, protocolMeta.phase),
-      suggestedArms: generateArmSuggestions(
-        protocolMeta.indication,
-        protocolMeta.phase,
-        protocolMeta.studyType
-      ),
-      sectionAnalysis: generateSectionAnalysis(protocolMeta.indication, protocolMeta.phase, text),
-      academicReferences,
-      ...(() => {
-        const regulatoryAlignmentScore = calculateRegScore(
-          enhancedCsrInsights.length,
-          academicReferences.length
-        );
-        const csrAlignmentScore = calculateCsrScore(enhancedCsrInsights);
-        const academicAlignmentScore = calculateAcademicScore(academicReferences);
-        return {
-          regulatoryAlignmentScore,
-          csrAlignmentScore,
-          academicAlignmentScore,
-          overallQualityScore: calculateOverallScore(
-            regulatoryAlignmentScore,
-            csrAlignmentScore,
-            academicAlignmentScore
-          ),
-        };
-      })(),
+    if (!text.trim()) {
+      return res.status(422).json({
+        success: false,
+        error: {
+          code: 'NO_TEXT_EXTRACTED',
+          message:
+            `No text could be extracted from ${req.file.originalname}. No analysis was performed — ` +
+            `this is not a finding about the protocol.`,
+        },
+      });
+    }
+
+    const result = await analyseAgainstPrecedent({
+      text,
+      indication: req.body.indication,
+      phase: req.body.phase,
+      studyType: req.body.studyType,
+      title: req.body.title,
     });
+    return res
+      .status(result.status)
+      .json(result.status === 200 ? { ...result.body, extractedSummary: text } : result.body);
   } catch (error: any) {
     log.error('Error processing and optimizing protocol file:', error);
     return serverError(res, log, 'saving upload and optimize', error);

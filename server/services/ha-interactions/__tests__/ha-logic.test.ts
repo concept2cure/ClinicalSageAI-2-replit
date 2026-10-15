@@ -60,14 +60,22 @@ describe('evaluateMeetingReadiness', () => {
     expect(r.ready).toBe(false);
     expect(r.findings.some((f) => /briefing book/i.test(f.message))).toBe(true);
   });
-  it('flags a held meeting with no questions (major, still ready if briefing present)', () => {
+  // Both cases below read ready: true until 2026-10-15 — a meeting with no
+  // question list, and a planned meeting nothing had been assessed for.
+  it('a held meeting with no questions is not ready: a major gap is a gap', () => {
     const r = evaluateMeetingReadiness({ interactionType: 'eop2', status: 'held', hasBriefingBook: true, questionCount: 0 });
-    expect(r.ready).toBe(true);
+    expect(r.ready).toBe(false);
     expect(r.findings.some((f) => /questions/i.test(f.message))).toBe(true);
   });
-  it('does not demand a package for a planned meeting', () => {
-    const r = evaluateMeetingReadiness({ interactionType: 'pre_ind', status: 'planned', hasBriefingBook: false, questionCount: 0 });
-    expect(r.ready).toBe(true);
+  it.each(['planned', 'requested'] as const)('a %s meeting is not assessed yet, not "ready"', (status) => {
+    const r = evaluateMeetingReadiness({ interactionType: 'pre_ind', status, hasBriefingBook: false, questionCount: 0 });
+    expect(r.ready).toBeNull();
     expect(r.findings).toHaveLength(0);
+    expect(r.note).toMatch(/assessed once the meeting is scheduled/);
+  });
+  it.each(['closed', 'cancelled'] as const)('a %s interaction has no meeting to be ready for', (status) => {
+    const r = evaluateMeetingReadiness({ interactionType: 'pre_ind', status, hasBriefingBook: false, questionCount: 0 });
+    expect(r.ready).toBeNull();
+    expect(r.note).toMatch(new RegExp(status));
   });
 });

@@ -98,7 +98,11 @@ describe('an agent mutation’s audit row names the model call', () => {
     // Agent write commands are propose-only: they run only through
     // POST /governed-action, from the held row (governedActionConfirmTier.test.ts).
     expect(read('server/routes/ana-ri/stream.ts')).toMatch(/requestApproval\(getPool\(\), runId, \{[\s\S]{0,800}?proposedBy: lastServedModel,/);
-    expect(read('server/routes/ana-ri/utility.ts')).toMatch(/servingModel: pendingForRun\?\.proposedBy \?\? null,/);
+    // The held row first; a run-less proposal's own server seal second (D5,
+    // MC-RL-4, 2026-10-05; proposal-provenance.test.ts runs it over HTTP).
+    const utility = read('server/routes/ana-ri/utility.ts');
+    expect(read('server/routes/ana-ri/proposal-as-confirmed.ts')).toMatch(/const proposer = pendingForRun\?\.proposedBy \?\? opened\.proposer;/);
+    expect(utility).toMatch(/servingModel: proposer,/);
   });
 
   it('both AnA dispatches carry the run id to the ledger', () => {

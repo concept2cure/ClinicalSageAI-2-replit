@@ -1,0 +1,68 @@
+FIX-UP MUTANT 13: the author's alt text is ignored
+file: server/export/authoring-images.ts
+--- mutation (diff vs the fix) ---
+--- <scratch>/fixes2/figure-writers/mutant-tmp-authoring-images.ts	2026-09-28 19:28:00.270218284 +0000
++++ ./server/export/authoring-images.ts	2026-09-28 19:28:00.270457321 +0000
+@@ -217,7 +217,6 @@
+  * length, and it says which upload is missing.
+  */
+ export function unfiledFigureLabel(fig: { src?: string; alt?: string }): string {
+-  if (fig.alt) return fig.alt;
+   if (!fig.src) return 'unresolved image reference';
+   return isGovernedImageRef(fig.src) ? fig.src : refusedKind(fig.src);
+ }
+
+--- test run ---
+
+ RUN  v4.1.7 ./
+
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a dot segment after a real id: the loader is not called and nothing resolves 9ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a query after a real id: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > an id the store never minted: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > percent-encoded dot segments: the loader is not called and nothing resolves 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a reference padded with spaces: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline an upper-case type: not decoded, not filed 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline WebP, which Word cannot hold: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline SVG, a script container: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline TIFF: not decoded, not filed 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline a PNG whose payload holds a newline: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > the PDF of a section holding an inline WebP states it instead of embedding it 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > reads srcs the way the export parser does: character references, unquoted and upper-case 4ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > still files a governed reference and an inline PNG (guard) 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > files an inline JPEG and GIF under their own types (guard) 1ms
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > the author's alt text, as written 6ms
+   → expected 'inline image/webp data' to be 'Figure 2' // Object.is equality
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline WebP, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upper-case PNG type, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline PNG whose bytes did not decode, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an external address, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > a path out of the image route, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upload that did not resolve, by its reference 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > no src at all 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > never carries a data: payload, whatever its length 0ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+   Start at  19:28:01
+   Duration  1.17s (transform 209ms, setup 99ms, import 882ms, tests 35ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > the author's alt text, as written
+AssertionError: expected 'inline image/webp data' to be 'Figure 2' // Object.is equality
+
+Expected: "Figure 2"
+Received: "inline image/webp data"
+
+ ❯ server/export/__tests__/authoring-images-figure-rule.test.ts:135:37
+    133|     ['no src at all', {}, 'unresolved image reference'],
+    134|   ])('%s', (_label, fig, label) => {
+    135|     expect(unfiledFigureLabel(fig)).toBe(label);
+       |                                     ^
+    136|   });
+    137|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

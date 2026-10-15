@@ -9,7 +9,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -18,12 +18,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
-import { useActiveSurfaceContext } from '../surfaceContext';
+import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 import { PID, ok, vaultPayload, props, mockVaultApi } from './_vault-surface-fixtures';
 
 const mockApi = (vaultResponse: () => Response) => mockVaultApi(apiRequest, vaultResponse);
 
-function ContextProbe({ onContext }: { onContext: (c: unknown) => void }) {
+function ContextProbe({ onContext }: { onContext: (c: SurfaceContext | null) => void }) {
   onContext(useActiveSurfaceContext('vault'));
   return null;
 }
@@ -31,6 +31,87 @@ function ContextProbe({ onContext }: { onContext: (c: unknown) => void }) {
 afterEach(() => {
   cleanup();
   delete (window as any).C2C_PROJECT;
+});
+
+describe('Vault — only a completed search can establish matches', () => {
+  function setupSearch(search: () => Response | Promise<Response>) {
+    mockApi(() => ok(vaultPayload()));
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string) => {
+      if (url.startsWith(`/api/c2c/project-vault/${PID}/search`)) return search();
+      if (url.startsWith('/api/c2c/project-vault/search')) {
+        return ok({ success: true, data: {
+          scope: 'verified-accessible-programs', query: 'stability', total: 0, limit: 50, results: [],
+        } });
+      }
+      return base(method, url);
+    });
+    const seen: { context: SurfaceContext | null } = { context: null };
+    render(<><Vault {...props()} /><ContextProbe onContext={c => { seen.context = c; }} /></>);
+    return seen;
+  }
+
+  async function search() {
+    await screen.findByTestId('vault-filing-block');
+    fireEvent.change(screen.getByLabelText('Search this vault'), { target: { value: 'stability' } });
+  }
+
+  it('a failed search publishes failure without an empty finding or an unrelated selection', async () => {
+    const seen = setupSearch(() => ({ ok: false, status: 503, json: async () => ({ message: 'Search unavailable' }) } as Response));
+    await search();
+    await screen.findByRole('alert');
+    await waitFor(() => expect(seen.context?.summary).toMatch(/search.*could not be verified/i));
+    expect(seen.context?.facts).not.toHaveProperty('shownInList');
+    expect(seen.context?.facts).not.toHaveProperty('selected');
+    expect(screen.queryByText('No documents match your search.')).toBeNull();
+    expect(seen.context?.summary).not.toContain('filtered to 0');
+  });
+
+  it('a pending search does not publish a zero or stale selection', async () => {
+    let resolve!: (response: Response) => void;
+    const pending = new Promise<Response>(r => { resolve = r; });
+    const seen = setupSearch(() => pending);
+    await search();
+    await screen.findByText('Searching…');
+    await waitFor(() => expect(seen.context?.summary).toMatch(/search is still loading/i));
+    expect(seen.context?.facts).not.toHaveProperty('shownInList');
+    expect(seen.context?.facts).not.toHaveProperty('selected');
+    expect(screen.queryByText('No documents match your search.')).toBeNull();
+    resolve(ok({ query: 'stability', total: 0, limit: 100, offset: 0, results: [] }));
+    await screen.findByText('No documents match your search.');
+  });
+
+  it.each([
+    { results: [], total: null },
+    { results: {}, total: 0 },
+    { results: [{ id: 'one', title: 'One' }], total: 0 },
+  ])('a malformed search reply is unavailable, not zero matches: %j', async response => {
+    const seen = setupSearch(() => ok(response));
+    await search();
+    await screen.findByRole('alert');
+    expect(seen.context?.facts).not.toHaveProperty('shownInList');
+    expect(screen.queryByText('No documents match your search.')).toBeNull();
+  });
+
+  it('an accessible-project library panel does not reuse the disabled project reader as a zero finding', async () => {
+    const seen = setupSearch(() => ok({ query: 'stability', total: 0, limit: 100, offset: 0, results: [] }));
+    await screen.findByTestId('vault-filing-block');
+    fireEvent.click(screen.getByLabelText('Accessible projects'));
+    fireEvent.change(screen.getByLabelText('Search this vault'), { target: { value: 'stability' } });
+    await screen.findByTestId('vault-library-results');
+    await screen.findByText(/0 documents in projects you can access match/);
+    await waitFor(() => expect(seen.context?.facts).toMatchObject({ requestedSearchScope: 'accessible-projects', searchQuery: 'stability' }));
+    expect(seen.context?.summary).not.toContain('filtered to 0');
+    expect(seen.context?.facts).not.toHaveProperty('shownInList');
+    expect(seen.context?.facts).not.toHaveProperty('selected');
+  });
+
+  it('a verified empty project search can publish its returned zero', async () => {
+    const seen = setupSearch(() => ok({ query: 'stability', total: 0, limit: 100, offset: 0, results: [] }));
+    await search();
+    await screen.findByText('No documents match your search.');
+    await waitFor(() => expect(seen.context?.facts).toMatchObject({ shownInList: 0, searchQuery: 'stability', selected: null }));
+  });
 });
 beforeEach(() => {
   (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' };
@@ -88,8 +169,10 @@ describe('Vault — "N documents" counts documents, not tree entries', () => {
     );
     await screen.findAllByText('Clinical overview');
     const header = container.querySelector('.vd-sub-x')?.textContent ?? '';
-    expect(header).toMatch(/\b1 document\b/);
-    expect(header).not.toMatch(/3 documents/);
+    // Named by its parts since QA 2026-10-08 (vaultHeaderHonesty.test.tsx):
+    // the one document is an authored one, and there are no uploads.
+    expect(header).toMatch(/\b1 authored document\b/);
+    expect(header).not.toMatch(/\b3 (authored )?documents/);
     await waitFor(() => expect(latest?.facts?.totalDocuments).toBe(1));
     expect(latest.summary).toMatch(/Document vault: 1 document/);
     expect(latest.facts.documentCounts).toEqual({ authored: 1, cmcArtifacts: 0, uploads: 0 });

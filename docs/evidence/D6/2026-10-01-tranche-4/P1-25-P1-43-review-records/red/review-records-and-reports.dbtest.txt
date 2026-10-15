@@ -1,0 +1,374 @@
+# red: the two new real-PostgreSQL suites at HEAD 0812a990, before any change (no table, no route, no report section)
+# TEST_DATABASE_URL=postgres@c2c_testdb APP_DATABASE_URL=app_service@c2c_testdb RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts tests/db/compliance-review-records.dbtest.ts tests/db/compliance-review-reports.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T13:58:02.671Z","pid":11150,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:02.673Z","pid":11150,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:02.673Z","pid":11150,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-review-records.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > drafts, then signs: record, signature and ledger pair in one transaction, bound to the content hash
+[database] Database connection successful
+
+stdout | tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > drafts, then signs: record, signature and ledger pair in one transaction, bound to the content hash
+[database] Database connection successful { timestamp: '2026-10-01T13:58:03.284Z', poolSize: 1 }
+
+ × tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > drafts, then signs: record, signature and ledger pair in one transaction, bound to the content hash 173ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > an audit-trail review is the same record, of the other kind 18ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > no password, no meaning: 400, the record stays a draft, nothing is signed 15ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a meaning other than review is refused before the password is checked 10ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a wrong password is refused, and nothing is written 12ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > only the reviewer who drafted it signs it 20ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > an access review that leaves a privileged account without a decision is refused 18ms
+   → {}: expected 404 to be 409 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a member who is not an audit reader cannot draft one 20ms
+   → expected 404 to be 403 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare UPDATE to signed is refused at COMMIT 11ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare INSERT of a signed row is refused at COMMIT 8ms
+   → expected [Function] to throw error matching /COMPLIANCE_REVIEW_SIGNATURE_REQUIRED/ but got 'relation "compliance_review_records" …'
+ ↓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its outcome is refused
+ ↓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its decisions is refused
+ ↓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its signature is refused
+ ↓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: back to draft is refused
+ ↓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: a delete is refused
+ ↓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the table owner: an update, a delete and a truncate are refused
+ ↓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > a second signature on the same record is refused
+{"level":30,"time":"2026-10-01T13:58:04.869Z","pid":11271,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:04.875Z","pid":11271,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:04.875Z","pid":11271,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded"
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded"
+[database] Database connection successful
+
+stdout | tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded"
+[database] Database connection successful { timestamp: '2026-10-01T13:58:05.049Z', poolSize: 1 }
+
+stdout | tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded"
+[database] Database connection successful { timestamp: '2026-10-01T13:58:05.052Z', poolSize: 2 }
+
+ × tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded" 887ms
+   → the report has no review section: expected undefined to be truthy
+ × tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the audit trail integrity attestation: "No audit trail review recorded" 40ms
+   → the report has no review section: expected undefined to be truthy
+ × tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the review list says none for each kind 12ms
+   → {}: expected 404 to be 200 // Object.is equality
+ ↓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the user access review as of today names the review signed today, current
+ ↓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > as of yesterday the latest is the one signed four months ago, and it is overdue
+ ↓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the audit trail integrity attestation names the audit-trail review, not the access review
+ ↓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > organisation B's reports and list see none of A's reviews
+ ↓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the review list names A's records and the status of each kind
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ newDraft tests/db/compliance-review-records.dbtest.ts:111:48
+    109| async function newDraft(body = accessDraft()): Promise<number> {
+    110|   const res = await draft(body);
+    111|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    112|   return Number(res.body.review.id);
+    113| }
+ ❯ tests/db/compliance-review-records.dbtest.ts:226:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one
+error: relation "compliance_review_records" does not exist
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ historicAccessReview tests/db/compliance-review-reports.dbtest.ts:72:22
+     70|   try {
+     71|     await c.query('BEGIN');
+     72|     const { rows } = await c.query(
+       |                      ^
+     73|       `INSERT INTO compliance_review_records (organization_id, kind, p…
+     74|        VALUES ($1, 'access', DATE '2026-04-01', DATE '2026-05-31', $2:…
+ ❯ tests/db/compliance-review-reports.dbtest.ts:134:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 124, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '13', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > drafts, then signs: record, signature and ledger pair in one transaction, bound to the content hash
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ newDraft tests/db/compliance-review-records.dbtest.ts:111:48
+    109| async function newDraft(body = accessDraft()): Promise<number> {
+    110|   const res = await draft(body);
+    111|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    112|   return Number(res.body.review.id);
+    113| }
+ ❯ tests/db/compliance-review-records.dbtest.ts:117:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > an audit-trail review is the same record, of the other kind
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ newDraft tests/db/compliance-review-records.dbtest.ts:111:48
+    109| async function newDraft(body = accessDraft()): Promise<number> {
+    110|   const res = await draft(body);
+    111|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    112|   return Number(res.body.review.id);
+    113| }
+ ❯ tests/db/compliance-review-records.dbtest.ts:137:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > no password, no meaning: 400, the record stays a draft, nothing is signed
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ newDraft tests/db/compliance-review-records.dbtest.ts:111:48
+    109| async function newDraft(body = accessDraft()): Promise<number> {
+    110|   const res = await draft(body);
+    111|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    112|   return Number(res.body.review.id);
+    113| }
+ ❯ tests/db/compliance-review-records.dbtest.ts:148:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a meaning other than review is refused before the password is checked
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ newDraft tests/db/compliance-review-records.dbtest.ts:111:48
+    109| async function newDraft(body = accessDraft()): Promise<number> {
+    110|   const res = await draft(body);
+    111|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    112|   return Number(res.body.review.id);
+    113| }
+ ❯ tests/db/compliance-review-records.dbtest.ts:158:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a wrong password is refused, and nothing is written
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ newDraft tests/db/compliance-review-records.dbtest.ts:111:48
+    109| async function newDraft(body = accessDraft()): Promise<number> {
+    110|   const res = await draft(body);
+    111|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    112|   return Number(res.body.review.id);
+    113| }
+ ❯ tests/db/compliance-review-records.dbtest.ts:168:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > only the reviewer who drafted it signs it
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ newDraft tests/db/compliance-review-records.dbtest.ts:111:48
+    109| async function newDraft(body = accessDraft()): Promise<number> {
+    110|   const res = await draft(body);
+    111|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    112|   return Number(res.body.review.id);
+    113| }
+ ❯ tests/db/compliance-review-records.dbtest.ts:176:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > an access review that leaves a privileged account without a decision is refused
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ tests/db/compliance-review-records.dbtest.ts:186:50
+    184|   it('an access review that leaves a privileged account without a deci…
+    185|     const res = await draft(accessDraft({ decisions: [{ userId: people…
+    186|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    187|     expect(res.body.error?.code).toBe('REVIEW_INCOMPLETE');
+    188|     expect(res.body.error?.missingUserIds).toEqual([people.admin2.id]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a member who is not an audit reader cannot draft one
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ tests/db/compliance-review-records.dbtest.ts:193:24
+    191|   it('a member who is not an audit reader cannot draft one', async () …
+    192|     const res = await draft(accessDraft(), people.viewer);
+    193|     expect(res.status).toBe(403);
+       |                        ^
+    194|   });
+    195|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare UPDATE to signed is refused at COMMIT
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ newDraft tests/db/compliance-review-records.dbtest.ts:111:48
+    109| async function newDraft(body = accessDraft()): Promise<number> {
+    110|   const res = await draft(body);
+    111|   expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                ^
+    112|   return Number(res.body.review.id);
+    113| }
+ ❯ tests/db/compliance-review-records.dbtest.ts:197:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare INSERT of a signed row is refused at COMMIT
+AssertionError: expected [Function] to throw error matching /COMPLIANCE_REVIEW_SIGNATURE_REQUIRED/ but got 'relation "compliance_review_records" …'
+
+- Expected:
+/COMPLIANCE_REVIEW_SIGNATURE_REQUIRED/
+
++ Received:
+"relation \"compliance_review_records\" does not exist"
+
+ ❯ tests/db/compliance-review-records.dbtest.ts:216:5
+    214|         ),
+    215|       ),
+    216|     ).rejects.toThrow(/COMPLIANCE_REVIEW_SIGNATURE_REQUIRED/);
+       |     ^
+    217|     const { rows } = await owner.query(`SELECT count(*)::int AS n FROM…
+    218|     expect(rows[0].n).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded"
+AssertionError: the report has no review section: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ reviewRow tests/db/compliance-review-reports.dbtest.ts:50:49
+     48| function reviewRow(data: Report): Record<string, unknown> {
+     49|   const s = data.sections.find((x) => x.key === 'review');
+     50|   expect(s, 'the report has no review section').toBeTruthy();
+       |                                                 ^
+     51|   expect(s!.rows).toHaveLength(1);
+     52|   return s!.rows[0];
+ ❯ tests/db/compliance-review-reports.dbtest.ts:106:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the audit trail integrity attestation: "No audit trail review recorded"
+AssertionError: the report has no review section: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ reviewRow tests/db/compliance-review-reports.dbtest.ts:50:49
+     48| function reviewRow(data: Report): Record<string, unknown> {
+     49|   const s = data.sections.find((x) => x.key === 'review');
+     50|   expect(s, 'the report has no review section').toBeTruthy();
+       |                                                 ^
+     51|   expect(s!.rows).toHaveLength(1);
+     52|   return s!.rows[0];
+ ❯ tests/db/compliance-review-reports.dbtest.ts:114:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the review list says none for each kind
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/compliance-review-reports.dbtest.ts:122:50
+    120|   it('the review list says none for each kind', async () => {
+    121|     const res = await request(await stack()).get('/api/audit/reviews')…
+    122|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    123|     expect(res.body.reviews).toEqual([]);
+    124|     expect(res.body.status.access).toMatchObject({ state: 'none', late…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  13 failed | 12 skipped (25)
+   Start at  13:57:59
+   Duration  5.75s (transform 2.00s, setup 158ms, import 1.02s, tests 3.87s, environment 0ms)
+

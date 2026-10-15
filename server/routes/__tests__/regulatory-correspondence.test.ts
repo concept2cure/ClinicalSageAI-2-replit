@@ -43,6 +43,7 @@ vi.mock('../../db', () => {
     pool,
     getPool: () => pool,
     getDb: () => ({}),
+    transaction: async (cb: (client: typeof pool) => unknown) => cb(pool),
   };
 });
 

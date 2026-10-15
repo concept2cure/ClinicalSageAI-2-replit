@@ -1,0 +1,20 @@
+Mutant AUTH-verifier: A verified claim keeps the author the request named.
+Result: KILLED (vitest exit 1, 1 failing tests)
+Tests run: server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/authoring/machine-claim-verify.ts
++++ b/server/services/authoring/machine-claim-verify.ts
+@@ -218,3 +218,3 @@
+     verdict.verified.push({
+-      authorId: ANA_MACHINE_AUTHOR_ID,
++      authorId: claim.authorId,
+       text: claim.text,
+
+--- failing tests ---
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > the machine author is the record's (AUTH) > a verified claim names the record's author, whatever the claim said 22ms
+
+--- summary ---
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 37 passed (38)

@@ -47,7 +47,7 @@ export const normalizeConclusion = value => (SCHEMA_CONCLUSIONS.has(value) ? val
 /** The blank-DB job's steps that constitute the upgrade (deploy-migrate) proof. */
 export const UPGRADE_STEPS = [
   'Deploy migration succeeds on the provisioned database',
-  'Deploy migration is idempotent (every release re-runs it)',
+  'Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)',
 ];
 
 /** Evidence keys backed by a whole-job execution record. Workflow/job names must
@@ -204,8 +204,11 @@ export async function assembleInput(options) {
   // upgrade: the deploy-migrate success + idempotency steps of the blank-DB job.
   const blankDb = records.get(`${JOB_RECORD_EVIDENCE.blankDatabase.workflow}/${JOB_RECORD_EVIDENCE.blankDatabase.job}`);
   const upgradeSteps = UPGRADE_STEPS.map(stepName => {
-    const step = (blankDb.record.steps || []).find(candidate => candidate.name === stepName);
-    if (!step) throw new AssemblyError(`upgrade evidence step "${stepName}" was not found in job "${blankDb.job}" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`);
+    const matches = (blankDb.record.steps || []).filter(candidate => candidate.name === stepName);
+    if (matches.length === 0) throw new AssemblyError(`upgrade evidence step "${stepName}" was not found in job "${blankDb.job}" — the job's step list changed; realign scripts/release-evidence/assemble-input.mjs`);
+    if (matches.length > 1) throw new AssemblyError(`more than one upgrade evidence step "${stepName}" in job "${blankDb.job}"`);
+    const step = matches[0];
+    if (step.status !== 'completed') throw new AssemblyError(`upgrade evidence step "${stepName}" has not completed (status: ${step.status || 'unknown'})`);
     return step;
   });
   const upgradeConclusions = upgradeSteps.map(step => normalizeConclusion(step.conclusion));

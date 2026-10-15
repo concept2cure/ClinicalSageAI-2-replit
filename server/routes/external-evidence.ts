@@ -8,8 +8,10 @@ import { evaluateFirecrawlPolicy } from '../integrations/firecrawl/policy';
 import { isFirecrawlEnabled } from '../integrations/firecrawl/guards';
 import { sourceSelectionDecision } from '../services/research-intelligence/sourceSelectionPolicy';
 import { buildRegulatoryEvidenceBriefPackage } from '../services/research-intelligence/buildRegulatoryEvidenceBrief';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('external-evidence');
 router.use(authMiddleware);
 
 router.get('/uat-scenarios', async (_req, res) => {
@@ -49,8 +51,16 @@ router.post('/route', async (req, res) => {
   try {
     const result = await routeEvidenceRequest(message, Boolean(useFirecrawl));
     return res.json({ success: true, data: result });
-  } catch (error: any) {
-    return res.status(502).json(firecrawlError('provider_error', error?.message));
+  } catch (error) {
+    /* The 502 keeps its status and its provider_error code (serverError()
+       answers only 500) and says the code's own static sentence. The thrown
+       text is the provider's status and body, or the missing-key message, so
+       it goes to the log against the request id, not into the body. */
+    log.error('evidence routing failed', {
+      err: error instanceof Error ? error.message : String(error),
+      correlationId: res.getHeader('X-Request-Id') ?? null,
+    });
+    return res.status(502).json(firecrawlError('provider_error'));
   }
 });
 

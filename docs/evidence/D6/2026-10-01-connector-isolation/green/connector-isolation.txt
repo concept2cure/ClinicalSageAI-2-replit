@@ -1,0 +1,159 @@
+# green at 55d5b8f2 + the registry change
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > serverFilterFragment > narrows to bioRxiv / medRxiv, or nothing for any 2ms
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > buildSearchUrl > restricts to preprints and clamps page size 1ms
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > buildSearchUrl > adds the server filter when requested and honors base-URL override 1ms
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > deriveServer > identifies bioRxiv / medRxiv from journal or DOI prefix 0ms
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > normalizePreprint > builds a citeable DOI URL and flags non-peer-review 0ms
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > normalizePreprint > falls back to a Europe PMC URL when no DOI 1ms
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > searchPreprints > returns normalized preprints and total count 71ms
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > searchPreprints > returns empty for a blank query without calling the network 1ms
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > searchPreprints > throws on HTTP error so the caller can degrade 9ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > maxPhaseLabel > maps numeric phases to labels 2ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > buildMoleculeSearchUrl > uses pref_name__icontains and clamps the limit 1ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > buildMoleculeSearchUrl > honors CHEMBL_API_BASE_URL override 0ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > buildMechanismUrl > filters by molecule_chembl_id 0ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > normalizeMolecule > extracts descriptors, SMILES, phase, and a citeable URL 1ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > normalizeMolecule > tolerates missing properties/structures 0ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > searchChemblCompounds > returns normalized molecules and total count 65ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > searchChemblCompounds > returns empty for a blank query without calling the network 1ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > searchChemblCompounds > throws on HTTP error so the caller can degrade 15ms
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > getChemblMechanisms > normalizes mechanism + target with a citeable target URL 5ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > builds a keyword query and clamps page size to [1,50] 2ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > maps a fixture device into the citeable shape 1ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > is defensive against missing fields 0ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > returns status ok with mapped devices on success and honors base-URL override 2ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > degrades to status unavailable on a network error (never throws) 4ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > degrades to status unavailable on a non-2xx response (never throws) 3ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > treats a 404 (zero matches) as an empty OK result 1ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > ema-epar-client > builds a searchTerm query 1ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > ema-epar-client > maps a fixture medicine and derives an EPAR url when none is provided 1ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > ema-epar-client > returns status ok with mapped medicines on success 1ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > ema-epar-client > degrades to status unavailable on a network error (never throws) 4ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eu-ctis-client > builds a POST search body with criteria and clamped page size 2ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eu-ctis-client > maps a fixture trial into the citeable shape 1ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eu-ctis-client > returns status ok with mapped trials and POSTs the request 1ms
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eu-ctis-client > degrades to status unavailable on a network error (never throws) 3ms
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > buildStudiesQuery > maps structured filters to v2 params 2ms
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > buildStudiesQuery > supports free-text query and multiple statuses 1ms
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > buildStudiesQuery > clamps pageSize to [1, 50] 1ms
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > normalizeStudy > flattens a v2 study into a citeable trial 1ms
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > normalizeStudy > is defensive against missing fields 1ms
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > searchTrials > returns normalized trials + totalCount on success 5ms
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > searchTrials > honors CTGOV_API_BASE_URL override 1ms
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > searchTrials > throws on a non-2xx response (caller degrades gracefully) 4ms
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > returns immediately on success (one call) 3ms
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > retries a transient 503 then succeeds 3ms
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > returns the last retryable response after exhausting retries (not throw) 3ms
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > does not retry a non-retryable status (404) 1ms
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > retries network errors, then throws if persistent 4ms
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > recovers when a network error is followed by success 3ms
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > studyTypeFilter > maps known study types to publication-type fragments 2ms
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > parseDateRange > parses ranges and single years 1ms
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > buildEsearchParams > composes term with study-type filter and date range 1ms
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > buildEsearchParams > clamps retmax and omits filters when not provided 0ms
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > buildEsearchParams > always identifies the caller per NCBI usage policy (tool), email/api_key when set 0ms
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > searchPubmed > returns normalized, citeable articles + totalCount 4ms
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > searchPubmed > returns empty (no esummary call) when no ids match 1ms
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > searchPubmed > honors PUBMED_EUTILS_BASE_URL and throws on HTTP error 3ms
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Google Drive: organization B, right after A, searches with its own token 213ms
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Box: the same, organization by organization 4ms
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > two organizations searching at once each use their own token 5ms
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > an organization with no credentials gets no search, even after another authenticated 46ms
+ ✓ server/services/integrations/__tests__/icd10-client.test.ts > parseClinicalTables > parses the [total, codes, _, display] shape 2ms
+ ✓ server/services/integrations/__tests__/icd10-client.test.ts > parseClinicalTables > falls back to the code list when display is empty, and is defensive on junk 1ms
+ ✓ server/services/integrations/__tests__/icd10-client.test.ts > lookupIcd10 > queries the search endpoint and returns normalized codes 2ms
+ ✓ server/services/integrations/__tests__/icd10-client.test.ts > lookupIcd10 > honors ICD10_API_BASE_URL override and throws on HTTP error 4ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > shapes a Search2 POST and maps oppHits to results 6ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > throws on a non-ok Search2 response 3ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > requires no credentials (authenticate is a no-op) 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > refuses to authenticate without an API key 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > refuses to screen before authentication 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > requires a party name to screen 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > a clean screen returns no matches (empty exclusion list) 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > maps an exclusion hit to an EXCLUSION MATCH result and passes the key 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > requires baseUrl and apiKey 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > exchanges the API key for a token then reads the resource (persons by default) 3ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > routes grant/award keywords to the grants resource 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > surfaces an auth failure 1ms
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > buildDrugApprovalSearch > uses application number, then brand/query, then generic 2ms
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > normalizeApproval > summarizes submissions (AP count, latest date) and names 2ms
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > searchDrugApprovals > queries drugsfda.json and normalizes results + total 1ms
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > searchDrugApprovals > treats 404 as empty and honors base-URL override 1ms
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > searchDrugApprovals > short-circuits with no term and throws on non-404 HTTP error 5ms
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > extractItems > finds items across envelope shapes 5ms
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > buildViewerUrl > builds NCD and LCD viewer URLs, and falls back without an id 1ms
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > normalizeDoc > flattens a report item to a citeable doc 1ms
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > searchMedicareCoverage > hits the NCD endpoint and filters by keyword client-side 3ms
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > searchMedicareCoverage > uses the final-LCD endpoint for type=lcd and honors base-URL override 1ms
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > searchMedicareCoverage > throws on a non-2xx response (caller degrades gracefully) 5ms
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > buildDrugLabelSearch > prefers brand/query, else generic, else empty 2ms
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > normalizeLabel > flattens openFDA SPL arrays and caps long sections 1ms
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > searchDrugLabels > queries drug/label.json and normalizes results + total 3ms
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > searchDrugLabels > treats a 404 as empty (zero matches), honors base-URL override 1ms
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > searchDrugLabels > short-circuits with no term, and throws on non-404 HTTP error 4ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > escapeVqlLiteral > doubles single quotes 2ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > escapeVqlLiteral > leaves quote-free values untouched 1ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > escapes an indication containing an apostrophe (no broken/injected VQL) 1ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > neutralizes an injection attempt by escaping the closing quote 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > ANDs indication and therapeutic area 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > builds an escaped OR group for keywords and drops blanks 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > omits WHERE when there are no conditions 1ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > coerces the limit to a positive integer (default 20) 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result 4ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 2ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is skipped by the repository search as not connected, and never listed as searched 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is skipped by the repository search as not connected, and never listed as searched 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 0ms
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > recordTitle > derives a sensible title per object 3ms
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > buildRecordUrl > builds a record URL only when the portal id is set 2ms
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > isHubSpotConfigured > reflects the access token presence 1ms
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > searchHubSpotCrm > returns a not-configured note (no fetch) when the token is missing 2ms
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > searchHubSpotCrm > POSTs the search and normalizes results 4ms
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > searchHubSpotCrm > defaults to contacts, honors base-URL override, and throws on HTTP error 2ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > percent-encodes spaces in a value (no raw space in the URL) 3ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > encodes an ampersand so it cannot inject a new query parameter 1ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > strips embedded double quotes that would break the phrase 1ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > joins indication and sponsor with +AND+ 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > builds an AND-joined keyword group and drops blanks 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > returns match-all when no terms are supplied 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > FDADrugsConnector.fetch — application_number encoding > percent-encodes a space/&/# in the resource id (no raw chars that break or inject the query) 2ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > FDADrugsConnector.fetch — application_number encoding > strips an embedded double quote so the phrase cannot be broken out of 1ms
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > device domain queries trials + literature + coverage + device recalls only 7ms
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > drug domain queries trials + literature + coverage + drug labels + approvals only 2ms
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > auto domain includes both device and drug sources 2ms
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > isolates a failing source as an error without dropping the others 2ms
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > clamps max_per_source and passes it to each source 3ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > public APIs are always live; env-gated integrations reflect the env 3ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports env-gated integrations as live when their env is set 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > resolves org connectors when an organizationId is given (live names listed) 3ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports connectors as unknown without org context, and on catalog failure 1ms
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > summarizeStatuses counts live / notConfigured / unknown 1ms
+ ✓ server/services/integrations/__tests__/correspondence-search.test.ts > searchRegulatoryCorrespondence > returns a not-configured note (without calling Gmail) when unconfigured 4ms
+ ✓ server/services/integrations/__tests__/correspondence-search.test.ts > searchRegulatoryCorrespondence > filters by keyword across subject/sender/snippet/body and normalizes dates 1ms
+ ✓ server/services/integrations/__tests__/correspondence-search.test.ts > searchRegulatoryCorrespondence > returns the most recent (up to limit) when no keyword is given 2ms
+ ✓ server/services/integrations/__tests__/correspondence-search.test.ts > searchRegulatoryCorrespondence > widens the fetch window when filtering, then caps to limit 1ms
+ ✓ server/services/integrations/__tests__/calendar-event.test.ts > createCalendarEvent > rejects a missing summary and a malformed date without calling the calendar 2ms
+ ✓ server/services/integrations/__tests__/calendar-event.test.ts > createCalendarEvent > returns a not-connected note when the calendar is disabled 1ms
+ ✓ server/services/integrations/__tests__/calendar-event.test.ts > createCalendarEvent > creates the event and returns id + url on the happy path 2ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > ClinicalTrialsGovConnector.fetch — path id encoding > encodes a resource id so it cannot escape the /studies/ path segment 4ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > ClinicalTrialsGovConnector.fetch — path id encoding > leaves a clean NCT id unchanged 1ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > PubMedConnector.fetch — query id encoding > encodes the pmid so a raw & cannot inject query params 1ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > PubMedConnector.fetch — query id encoding > leaves a clean pmid unchanged 1ms
+ ✓ server/services/integrations/__tests__/device-recalls.test.ts > device-recalls > buildDeviceRecallSearch > prefers device name / query (product_description), else firm 2ms
+ ✓ server/services/integrations/__tests__/device-recalls.test.ts > device-recalls > searchDeviceRecalls > fetches, normalizes, and summarizes recalls by classification 2ms
+ ✓ server/services/integrations/__tests__/device-recalls.test.ts > device-recalls > searchDeviceRecalls > short-circuits (no fetch) when no usable term is given 1ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > searches only configured+healthy connectors and reports the rest as skipped 5ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > flags unknown requested connectors and short-circuits when none are usable 1ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > surfaces per-connector errors as skipped and clamps the limit 1ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > does not list a connector whose search failed as searched 1ms
+ Test Files  23 passed (23)
+      Tests  156 passed (156)

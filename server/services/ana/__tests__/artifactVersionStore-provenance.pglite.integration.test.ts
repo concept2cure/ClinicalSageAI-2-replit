@@ -49,6 +49,8 @@ beforeAll(async () => {
   h.holder.pg = pglite;
   await pglite.exec(`
     CREATE TABLE organizations (id serial PRIMARY KEY, name text);
+    -- The drafts' project, a projects row of their organization (PF-03): the store checks it first.
+    CREATE TABLE IF NOT EXISTS regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL, deleted_at timestamp); CREATE TABLE IF NOT EXISTS projects (id integer PRIMARY KEY, organization_id integer NOT NULL); INSERT INTO projects (id, organization_id) VALUES (1, 7) ON CONFLICT DO NOTHING;
     CREATE TABLE concept2cure_artifacts (
       id serial PRIMARY KEY, artifact_id text, project_id int, organization_id int,
       type text, category text, title text, content text, content_hash text, version int,

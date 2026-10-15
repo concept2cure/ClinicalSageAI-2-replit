@@ -10,8 +10,8 @@ import request from 'supertest';
 const queryFn = vi.fn();
 
 /* QMS approve is a Part 11 electronic signature (VSR-001 F-3): it re-verifies
-   the signer and runs the approval on a transaction client from
-   pool.connect(). These stand in for the credential check, the signer's org
+   the signer and runs the approval on the request-owned connection
+   (req.dbClient, since fa39bd5d8). These stand in for the credential check, the signer's org
    role and the two in-transaction ledger/signature writes, so the approve
    cases below exercise the route's state transition itself. The signature
    semantics (refusals, digest binding, rollback) are pinned in
@@ -68,12 +68,16 @@ import labelingRouter from '../server/routes/mdx-labeling';
 import searchRouter from '../server/routes/mdx-search';
 import analyticsRouter from '../server/routes/mdx-analytics';
 
-function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
+function makeApp(opts: { withAuth?: boolean; requestDb?: boolean; signingTx?: boolean } = { withAuth: true }) {
   const app = express();
   app.use(express.json());
   if (opts.withAuth) {
     app.use((req, _res, next) => {
       (req as any).user = { id: 777, organizationId: 99 };
+      if (opts.requestDb) (req as any).dbClient = { query: (...args: unknown[]) => queryFn(...args) };
+      // Since fa39bd5d8 the approval runs on the request-owned connection (no
+      // pooled fallback), so the scripted transaction is that connection.
+      if (opts.signingTx) (req as any).dbClient = { query: (...args: unknown[]) => S.txQuery(...args) };
       next();
     });
   }
@@ -106,14 +110,15 @@ const SIGNED_APPROVAL = {
 };
 
 /** The approval transaction: the FOR UPDATE read sees `current`; the UPDATE
- *  flips it to effective only when it was draft/in_review (the route's WHERE). */
+ *  flips it to effective only when it was in_review (the route's WHERE; a
+ *  draft is sent for review first — QA walk 2026-10-08, J8). */
 function scriptApprovalTx(current: Record<string, unknown> | null) {
   S.txQuery.mockImplementation(async (sql: unknown) => {
     const text = String(sql).trim();
     if (/^(BEGIN|COMMIT|ROLLBACK)/.test(text)) return { rows: [] };
     if (text.includes('FOR UPDATE')) return { rows: current ? [current] : [] };
     if (text.startsWith('UPDATE qms_documents')) {
-      const approvable = current && ['draft', 'in_review'].includes(String(current.status));
+      const approvable = current && String(current.status) === 'in_review';
       return { rows: approvable ? [{ ...current, status: 'effective', effective_date: '2026-05-19' }] : [] };
     }
     throw new Error(`unexpected transaction query: ${text.slice(0, 60)}`);
@@ -179,9 +184,9 @@ describe('QMS routes', () => {
      send `{}` and mock one pool.query; they now send the signature the route
      legitimately requires and script its transaction, and still assert the
      same two transitions. */
-  it('approve flips draft → effective', async () => {
-    scriptApprovalTx({ ...QMS_DOC, status: 'draft' });
-    const res = await request(makeApp())
+  it('approve flips in_review → effective', async () => {
+    scriptApprovalTx({ ...QMS_DOC, status: 'in_review' });
+    const res = await request(makeApp({ withAuth: true, signingTx: true }))
       .post('/api/mdx/qms/documents/1/approve')
       .send(SIGNED_APPROVAL);
     expect(res.status).toBe(200);
@@ -189,9 +194,9 @@ describe('QMS routes', () => {
     expect(S.txQuery.mock.calls.map((c) => String(c[0]).trim().split(/\s+/)[0])).toContain('COMMIT');
   });
 
-  it('approve 409 when not in draft/in_review', async () => {
+  it('approve 409 when not in_review', async () => {
     scriptApprovalTx({ ...QMS_DOC, status: 'retired' });
-    const res = await request(makeApp())
+    const res = await request(makeApp({ withAuth: true, signingTx: true }))
       .post('/api/mdx/qms/documents/1/approve')
       .send(SIGNED_APPROVAL);
     expect(res.status).toBe(409);
@@ -199,11 +204,20 @@ describe('QMS routes', () => {
   });
 
   it('training-ack requires document in tenant', async () => {
-    queryFn.mockResolvedValueOnce({ rows: [] }); // tenant gate empty
-    const res = await request(makeApp())
+    queryFn.mockImplementation(async (sql: string) => {
+      if (/^(BEGIN|ROLLBACK)/.test(sql)) return { rows: [], rowCount: 0 };
+      if (sql.includes('FROM organization_users ou')) return { rows: [{
+        account_status: 'active', organization_status: 'active', payment_status: 'paid', membership_role: 'member',
+      }], rowCount: 1 };
+      if (sql.includes('FROM qms_documents')) return { rows: [], rowCount: 0 };
+      throw new Error('Unexpected query in foreign-document acknowledgement test');
+    });
+    const res = await request(makeApp({ withAuth: true, requestDb: true }))
       .post('/api/mdx/qms/documents/999/training-ack')
-      .send({});
+      .send({ documentVersion: '1.0', contentDigest: 'a'.repeat(64), understood: true, method: 'attestation' });
     expect(res.status).toBe(404);
+    expect(queryFn.mock.calls.find(([sql]) => String(sql).includes('FROM qms_documents'))?.[1]).toEqual([999, 99]);
+    expect(queryFn.mock.calls.some(([sql]) => /^\s*(INSERT|UPDATE|DELETE)\b/.test(String(sql)))).toBe(false);
   });
 
   it('supplier criticality required', async () => {

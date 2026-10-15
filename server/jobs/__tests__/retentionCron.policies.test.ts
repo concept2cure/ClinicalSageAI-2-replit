@@ -15,6 +15,8 @@ let selectCall = 0;
 const tx = vi.hoisted(() => ({
   statements: [] as string[],
   archiveFailFor: new Set<string>(),
+  /** Documents another process already soft-deleted: the UPDATE matches no row. */
+  alreadyGone: new Set<string>(),
   audit: vi.fn(async (_client: unknown, _entry: unknown, _tenant?: unknown, _resource?: unknown) => undefined),
 }));
 // Typed loosely on purpose: the call ARGUMENTS are what the cases read, and a
@@ -47,7 +49,10 @@ vi.mock('../../db', () => {
         archived.push(String(params[0]));
       }
       if (/DELETE FROM vault\.documents/i.test(s)) deleted.push(String(params[0]));
-      if (/UPDATE vault\.documents SET deleted_at/i.test(s)) softDeleted.push(String(params[0]));
+      if (/UPDATE vault\.documents SET deleted_at/i.test(s)) {
+        if (tx.alreadyGone.has(String(params[0]))) return { rows: [], rowCount: 0 };
+        softDeleted.push(String(params[0]));
+      }
       if (/FROM regulatory_programs/i.test(s)) return { rows: [{ organization_id: 7 }], rowCount: 1 };
       return { rows: [], rowCount: 1 };
     }),
@@ -92,12 +97,16 @@ function arrange(opts: { docs?: unknown[]; policies?: unknown[]; holds?: unknown
 }
 const auditEntries = () => tx.audit.mock.calls.map(c => c[1] as { action: string; resourceId: string; details: Record<string, unknown> });
 
-const SMTP_ENV = ['RETENTION_ADMIN_EMAILS', 'SMTP_USER', 'SMTP_PASSWORD'] as const;
+// The names terraform/stack renders (SMTP_HOST, SMTP_USER, SMTP_PASS). The
+// sweep once read SMTP_PASSWORD, which nothing sets, so production never sent
+// this email; SMTP_PASSWORD stays in the list to prove it is not what is read.
+const SMTP_ENV = ['RETENTION_ADMIN_EMAILS', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'SMTP_PASSWORD'] as const;
 const savedEnv: Record<string, string | undefined> = {};
 
 beforeEach(() => {
   tx.statements = [];
   tx.archiveFailFor = new Set();
+  tx.alreadyGone = new Set();
   tx.audit.mockClear();
   mail.sendMail.mockClear();
   mail.sendMail.mockResolvedValue(undefined);
@@ -119,10 +128,24 @@ afterEach(() => {
 });
 
 describe('runRetentionSweep — per-policy processing', () => {
+  /* U19: three server processes start the nightly sweep. One that reaches a
+     document another has just disposed of must not archive it again or write
+     a second retention_soft_delete audit row for a deletion it did not make. */
+  it('a document another process already disposed of gets no second archive and no second audit row', async () => {
+    arrange({ docs: [doc('doc-raced'), doc('doc-fresh')] });
+    tx.alreadyGone.add('doc-raced');
+    const summary = await runRetentionSweep();
+    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 1, errors: 0 });
+    // Its archive insert ran inside the transaction and was rolled back with it.
+    expect(tx.statements.filter(t => t === 'ROLLBACK')).toHaveLength(1);
+    expect(tx.statements.filter(t => t === 'COMMIT')).toHaveLength(1);
+    expect(auditEntries().map(e => e.resourceId)).toEqual(['doc-fresh']);
+  });
+
   it('falls back to archive + soft-delete for a document with no policy, and never hard-deletes it', async () => {
     arrange({ docs: [doc('doc-nopolicy')] });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
     expect(archived).toEqual(['doc-nopolicy']);
     expect(softDeleted).toEqual(['doc-nopolicy']);
     expect(deleted).toEqual([]);
@@ -133,7 +156,7 @@ describe('runRetentionSweep — per-policy processing', () => {
   it('uses the default (archive + soft-delete) when the named policy is unknown or inactive', async () => {
     arrange({ docs: [doc('doc-ghost', { retentionPolicy: 'no-such-policy' })], policies: [policy('something-else', true, true)] });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
     expect(deleted).toEqual([]);
     expect(auditEntries()[0].details).toMatchObject({ policyMatched: false, retentionPolicy: 'no-such-policy' });
   });
@@ -149,7 +172,7 @@ describe('runRetentionSweep — per-policy processing', () => {
       policies: [policy('purge', true, true), policy('keep-row', true, false), policy('no-archive', false, false)],
     });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
     expect(deleted).toEqual([]);
     expect(archived).toEqual(['doc-keep']);
     expect(softDeleted).toEqual(['doc-keep', 'doc-noarch']);
@@ -166,7 +189,7 @@ describe('runRetentionSweep — failure semantics', () => {
     arrange({ docs: [doc('doc-bad'), doc('doc-good')] });
     tx.archiveFailFor = new Set(['doc-bad']);
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 1 });
+    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 1 });
     expect(archived).toEqual(['doc-good']);
     expect(softDeleted).toEqual(['doc-good']);
     expect(auditEntries().map(e => e.resourceId)).toEqual(['doc-good']);
@@ -197,8 +220,9 @@ describe('runRetentionJob — orchestration', () => {
 
   it('an enumeration-level failure aborts: returns false, raises the security alert, and skips notification', async () => {
     process.env.RETENTION_ADMIN_EMAILS = 'admin@example.com';
+    process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_USER = 'mailer';
-    process.env.SMTP_PASSWORD = 'secret';
+    process.env.SMTP_PASS = 'secret';
     arrange({ enumerationFails: true });
     await expect(runRetentionJob()).resolves.toBe(false);
     expect(mail.reportSecurityAlert).toHaveBeenCalledWith(expect.objectContaining({ kind: 'retention_sweep_failed' }));
@@ -209,8 +233,9 @@ describe('runRetentionJob — orchestration', () => {
 
 describe('admin notification', () => {
   it('is skipped when recipients or SMTP credentials are unconfigured', async () => {
+    process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_USER = 'mailer';
-    process.env.SMTP_PASSWORD = 'secret';
+    process.env.SMTP_PASS = 'secret';
     arrange({ docs: [doc('doc-1')] });
     await expect(runRetentionJob()).resolves.toBe(true);
     expect(mail.createTransport).not.toHaveBeenCalled();
@@ -223,8 +248,9 @@ describe('admin notification', () => {
 
   it('emails every configured recipient with the sweep summary', async () => {
     process.env.RETENTION_ADMIN_EMAILS = 'admin@example.com, qa@example.com';
+    process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_USER = 'mailer';
-    process.env.SMTP_PASSWORD = 'secret';
+    process.env.SMTP_PASS = 'secret';
     arrange({ docs: [doc('doc-1')] });
     await expect(runRetentionJob()).resolves.toBe(true);
     expect(mail.sendMail).toHaveBeenCalledTimes(1);
@@ -234,10 +260,20 @@ describe('admin notification', () => {
     expect(sent.html).toContain('Soft-deleted: 1');
   });
 
+  it('recipients configured but SMTP not: nothing is sent, and the alert says the summary was not delivered', async () => {
+    process.env.RETENTION_ADMIN_EMAILS = 'admin@example.com';
+    process.env.SMTP_PASSWORD = 'not-the-name-the-stack-renders';
+    arrange({ docs: [doc('doc-1')] });
+    await expect(runRetentionJob()).resolves.toBe(true);
+    expect(mail.sendMail).not.toHaveBeenCalled();
+    expect(mail.reportSecurityAlert).toHaveBeenCalledWith(expect.objectContaining({ kind: 'retention_notify_failed' }));
+  });
+
   it('a notify failure raises the security alert and never makes the job fail', async () => {
     process.env.RETENTION_ADMIN_EMAILS = 'admin@example.com';
+    process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_USER = 'mailer';
-    process.env.SMTP_PASSWORD = 'secret';
+    process.env.SMTP_PASS = 'secret';
     mail.sendMail.mockRejectedValueOnce(new Error('smtp down'));
     arrange({ docs: [doc('doc-1')] });
     await expect(runRetentionJob()).resolves.toBe(true);

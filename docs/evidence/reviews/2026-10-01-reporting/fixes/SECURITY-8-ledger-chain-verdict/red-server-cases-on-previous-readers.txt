@@ -1,0 +1,136 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+{
+  "timestamp": "2026-10-01T15:17:07.067Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > shows a governed write the moment it is chained (audit_logs), labelled by source 77ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > never shows another tenant's governed writes (organisation from the verified JWT) 26ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > merges audit_events (SCIM / projects-management / IVDR) newest-first with their own chain values 24ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > applies limit across both stores 38ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the organisation 6ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses without tenant context (403) rather than reading anything 17ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > fails closed (503, not an empty ledger) when the chained schema is missing 2767ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy links > verifies a legacy row that linked to ANOTHER tenant's head (the pre-fix global recipe) 36ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > tells apart two accounts that share a display name 27ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > names the account on an audit_events entry too, and names none for the system 13ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row 39ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a document e-sign: signed, by the signature the row records — for that document only 36ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > claims nothing it cannot link: no signature row, or another organisation’s, leaves the row unsigned 53ms
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger names nothing of another organisation's in a break 22ms
+   → expected { Object (store, ok, ...) } to match object { ok: false, brokenAt: { …(3) } }
+(8 matching properties omitted from actual)
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history names nothing of another organisation's in a break 5ms
+   → expected { Object (store, ok, ...) } to match object { ok: false, brokenAt: { …(3) } }
+(8 matching properties omitted from actual)
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger still names this organisation's own broken row 5ms
+   → expected { id: 'ours-row', …(5) } to deeply equal { segment: 'sequenced', …(4) }
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history still names this organisation's own broken row 3ms
+   → expected { id: 'ours-row', …(5) } to deeply equal { segment: 'sequenced', …(4) }
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger states a walk over no chained rows as not verified, never ok 5ms
+   → expected { store: 'audit_logs', ok: true, …(3) } to match object { store: 'audit_logs', ok: null, …(2) }
+(2 matching properties omitted from actual)
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history states a walk over no chained rows as not verified, never ok 3ms
+   → expected { store: 'audit_logs', ok: true, …(3) } to match object { store: 'audit_logs', ok: null, …(2) }
+(2 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger names nothing of another organisation's in a break
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history names nothing of another organisation's in a break
+AssertionError: expected { Object (store, ok, ...) } to match object { ok: false, brokenAt: { …(3) } }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "brokenAt": {
+-     "commitsTo": "another organization",
+-     "row": "another organization",
++     "commitsTo": {
++       "id": "theirs-prev",
++       "tenantId": 8,
++     },
+      "segment": "legacy",
+    },
+    "ok": false,
+  }
+
+ ❯ server/routes/__tests__/audit-trail-ledger.routes.test.ts:414:24
+    412|     const brokenAt = { id: 'theirs-row', expected: 'e'.repeat(64), sto…
+    413|     const { meta } = await read(walk({ ok: false, brokenAt }));
+    414|     expect(meta.chain).toMatchObject({ ok: false, brokenAt: { segment:…
+       |                        ^
+    415|     expect(JSON.stringify(meta.chain)).not.toMatch(/theirs|eeee|ffff|"…
+    416|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger still names this organisation's own broken row
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history still names this organisation's own broken row
+AssertionError: expected { id: 'ours-row', …(5) } to deeply equal { segment: 'sequenced', …(4) }
+
+- Expected
++ Received
+
+@@ -2,6 +2,7 @@
+    "commitsTo": null,
+    "expected": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "id": "ours-row",
+    "segment": "sequenced",
+    "stored": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
++   "tenantId": 7,
+  }
+
+ ❯ server/routes/__tests__/audit-trail-ledger.routes.test.ts:420:77
+    418|   it.each(readers)('%s still names this organisation\'s own broken row…
+    419|     const brokenAt = { id: 'ours-row', expected: 'e'.repeat(64), store…
+    420|     expect((await read(walk({ ok: false, brokenAt }))).meta.chain.brok…
+       |                                                                             ^
+    421|   });
+    422|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger states a walk over no chained rows as not verified, never ok
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history states a walk over no chained rows as not verified, never ok
+AssertionError: expected { store: 'audit_logs', ok: true, …(3) } to match object { store: 'audit_logs', ok: null, …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": null,
+-   "reason": StringMatching /no chain to verify/,
++   "ok": true,
+    "rowsChecked": 0,
+    "store": "audit_logs",
+  }
+
+ ❯ server/routes/__tests__/audit-trail-ledger.routes.test.ts:425:24
+    423|   it.each(readers)('%s states a walk over no chained rows as not verif…
+    424|     const { meta } = await read(walk({ rowsChecked: 0, legacyRows: 0 }…
+    425|     expect(meta.chain).toMatchObject({ store: 'audit_logs', ok: null, …
+       |                        ^
+    426|   });
+    427| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 13 passed (19)
+   Start at  15:17:04
+   Duration  10.37s (transform 1.40s, setup 203ms, import 2.37s, tests 7.19s, environment 0ms)
+

@@ -1,0 +1,663 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+{
+  "timestamp": "2026-10-05T03:20:08.391Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:08.392Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+{
+  "timestamp": "2026-10-05T03:20:08.392Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+{
+  "timestamp": "2026-10-05T03:20:10.236Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:10.237Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+{
+  "timestamp": "2026-10-05T03:20:10.237Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/tool-selection-tokenize.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/tool-selection-routing.test.ts
+{
+  "timestamp": "2026-10-05T03:20:10.496Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:10.501Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+{
+  "timestamp": "2026-10-05T03:20:10.501Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/tool-selection-routing.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the always-on bridge + core are always offered 14ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the surface is genuinely over the cap (filtering actually engages) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_fda_form'" for: "'prepare FDA form 1571 as an editable …'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'amend_fda_form'" for: "'amend this FDA form with a reason for…'" 22ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_forms'" for: "'list all FDA forms available in the c…'" 20ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_effort_certification'" for: "'open a time and effort certification …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_coi_disclosure'" for: "'file a foreign appointment conflict o…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'search_grants_gov'" for: "'search grants.gov for posted cancer f…'" 16ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps dotted section codes and annex keys (it used to return only ["see"]) 18ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps eSTAR CH tokens whole, without a stray "05.06" fragment 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a code at the end of a sentence or in brackets without the punctuation 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > never emits the region acronyms eu, us or jp 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > is additive: the word tokens it produced before are unchanged 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > "2.5" reaches a tool describing 2.5, and never one describing only 12.5 or 2.5.1 9ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the description (+2) outranks one matching word (+1) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the name (+3) outranks a code in the description (+2) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > an annex key does not match inside a longer one ("ii.6.1" is not "iii.6.1") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 23ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 41ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > every expected tool is in the launch-scoped pool (so the cases cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'screen_restricted_party'" for: "'screen this vendor against the SAM.go…'" 13ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'research_compliance_briefing'" for: "'what needs my attention across resear…'" 10ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'open_grant_closeout'" for: "'open the grant closeout and track the…'" 16ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'request_no_cost_extension'" for: "'request a no cost extension to extend…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_grant_budget'" for: "'reconcile the budget versus actual ex…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_expenditure'" for: "'record an actual expenditure booked a…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_subaward'" for: "'record a subaward to a subrecipient u…'" 13ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'register_controlled_substance'" for: "'register a schedule II controlled sub…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'fulfill_regulatory_commitment'" for: "'mark this PMR regulatory commitment f…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_ha_interaction'" for: "'is this FDA formal meeting interactio…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_cost_share_contribution'" for: "'record an institutional cost share co…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_training_gate'" for: "'review the training gate, is the PI c…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_opportunity'" for: "'record this grants.gov funding opport…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'assess_study_onboarding'" for: "'what approvals and training do we nee…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_award_closeout'" for: "'can we close out this grant award yet…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_meeting_package'" for: "'are we ready for the FDA meeting, do …'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'triage_compliance_attention'" for: "'triage the critical compliance attent…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what has to go in section 12.2 advers…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what should the summary of clinical e…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'we just locked the database, what hap…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'what is blocking the clinical overvie…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'will our dossier pass FDA technical v…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'why would the FDA gateway reject our …'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > each record tool is in the launch-scoped pool (so the cases below cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the ISS'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should I write the clinical overv…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what does FDA want in 2.7.4'" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how do I structure a CSR'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'help me write the quality overall sum…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should the investigator brochure …'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'review my clinical overview'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'list_fda_technical_rules'" for: "'will my submission be rejected'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'plan_submission_from_database_lock'" for: "'what do I do after database lock'" 2ms
+stdout | server/services/ana/__tests__/arithmetic-followups.test.ts
+{
+  "timestamp": "2026-10-05T03:20:12.902Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:12.903Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+{
+  "timestamp": "2026-10-05T03:20:12.903Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/arithmetic-followups.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/arithmetic-followups.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Subjects enrolled under protocol amendment 3/4 (10%) were re-consented. 5ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Sites still on protocol version 2/3 (25%) were retrained. 1ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Sites on v2/3 (25%) were retrained. 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > Deviations under Amendment No. 3/4 (10%) were reviewed. 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > still recomputes the same figures when no version word precedes them 3ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a version or amendment slash is not n/N > still checks a pair after "v" meaning versus, and after "release" naming a formulation 1ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads "4,9 %" as 4.9%, which 15/305 (4.92%) supports 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads "4,6 %" as 4.6%, not 6%, when it is wrong 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > reads the n/N (x,y %) order 1ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — a decimal comma is a decimal point > keeps an English list separated by commas intact 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 612 subjects were randomized but only those who took study drug are shown (300 to Drug X and 298 to placebo). 1ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: A total of 612 subjects were randomized of whom those with a baseline scan are summarised (300 in Drug X and 298 in placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 612 patients were enrolled and the subset with genotype data is tabulated below (300 to Drug X and 298 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 150 subjects were randomized to each arm (Drug X (n=150) and placebo (n=150)). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > does not sum a list after a bridge to another population: 150 subjects were randomized in each group (150 to Drug X and 150 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: A total of 612 subjects were randomized (306 to Drug X and 305 to placebo). 1ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized in the study (306 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized equally to the two treatment groups (306 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: 612 subjects were randomized and included in the full analysis set (306 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > checkFigureArithmetic — an arm list is summed only when it names the total > still sums a list whose bridge keeps the same population: The study randomized a total of 612 subjects (Drug X (n=306) and placebo (n=305)). 0ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > critiqueDraft — an arithmetic finding says what is wrong > states the percentage and what its own n/N gives 14ms
+ ✓ server/services/ana/__tests__/arithmetic-followups.test.ts > critiqueDraft — an arithmetic finding says what is wrong > states the arm sum against the stated total 7ms
+stdout | server/services/ana/__tests__/governed-write-gate.test.ts
+{
+  "timestamp": "2026-10-05T03:20:13.097Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:13.098Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/governed-write-gate.test.ts
+{
+  "timestamp": "2026-10-05T03:20:13.099Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/governed-write-gate.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/governed-write-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/governed-write-gate.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/writing-precision-gate.test.ts
+{
+  "timestamp": "2026-10-05T03:20:14.477Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:14.478Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+{
+  "timestamp": "2026-10-05T03:20:14.478Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/writing-precision-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/writing-precision-gate.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A1 ICH E3 §5.3 consent statement gives no claims finding 24ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A2 statutory designation gives no claims finding 7ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A3 superiority hypothesis gives no claims finding 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A4 antibacterial endpoint gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A5 PK elimination gives no claims finding 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A6 AE outcome gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A7 dose optimization gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > best supportive care gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > BCVA endpoint gives no claims finding 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > RECIST best overall response gives no claims finding 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > eligibility term gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > microbiological eradication gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > follow-up census gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > site-qualified consent gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > renal elimination gives no claims finding 2ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > tested superiority hypothesis gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > powered superiority hypothesis gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > disposition census gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > AE outcome with a time point gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > AE outcome at clause end gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > reports the register and the basis of each exemption it applied 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > exempts only the term of art, not another over-claim in the same sentence 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > flags a predicted approval and trial success as high regulatory_outcome findings 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the standard protocol statement about IRB approval 2ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: Any protocol amendment will be approved by the sponsor before implementation. 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: Dose escalation will be approved by the Safety Review Committee. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The protocol will be approved by the local ethics committee before enrolment. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The protocol will be approved by each site IRB before enrolment. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The Medical Monitor will approve each dose escalation decision. 3ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The protocol will be approved by the IRB and submitted to FDA with the IND. 7ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: Each amendment will be approved by the sponsor and the IEC before implementation. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved for this indication. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by FDA in 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The sponsor expects that FDA will approve drug X. 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The marketing authorisation application is likely to be approved by the European Commission. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the end of 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by Q3 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: We expect that drug X will be approved by year-end. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Food and Drug Administration in 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by MHLW in Japan. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Ministry of Health, Labour and Welfare. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by CDER. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by Swissmedic. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The Food and Drug Administration will approve drug X. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: MHLW will approve drug X next year. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The protocol and drug X will be approved by the IRB and FDA. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor and the European Medicines Agency. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: FDA and the sponsor will approve the label. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the IRB, then by FDA. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Steering Committee and then by FDA. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor's target date of 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor-requested action date. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor (FDA) next year. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > the promotional register does not add the governance lexicon 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients responded to treatment. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The drug works in all patients. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The treatment cures the disease and eliminates recurrence. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X is the best option. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Our breakthrough therapy is the most effective option. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The objective response rate with drug X was superior to that with docetaxel. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Our objective is simple: drug X is superior to every competitor. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients responded to treatment and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients achieved complete remission and received follow-up. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Every patient treated with drug X was cured and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients in Arm A responded and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X eliminated tumour recurrence in patients with renal impairment. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X eliminates the disease and has low hepatic clearance. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X is a clinical cure for hepatitis C. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Bacterial infections are eradicated by drug X. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: These results continue to demonstrate that drug X is superior to standard of care. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients completed treatment without relapse. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients in the study were treated successfully. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients completed treatment with no relapse. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and improved. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and benefited. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and none relapsed. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X completely resolved the disease. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Treatment with drug X completely resolved the infection. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X resolved completely the symptoms of psoriasis. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X completely resolved psoriasis in the majority of patients. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The infection was completely resolved by drug X. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients responded to treatment. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The drug works in all patients. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The treatment cures the disease and eliminates recurrence. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X is the best option. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Our breakthrough therapy is the most effective option. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The objective response rate with drug X was superior to that with docetaxel. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Our objective is simple: drug X is superior to every competitor. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients responded to treatment and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients achieved complete remission and received follow-up. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Every patient treated with drug X was cured and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients in Arm A responded and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X eliminated tumour recurrence in patients with renal impairment. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X eliminates the disease and has low hepatic clearance. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X is a clinical cure for hepatitis C. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Bacterial infections are eradicated by drug X. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: These results continue to demonstrate that drug X is superior to standard of care. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients completed treatment without relapse. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients in the study were treated successfully. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients completed treatment with no relapse. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and improved. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and benefited. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and none relapsed. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X completely resolved the disease. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Treatment with drug X completely resolved the infection. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X resolved completely the symptoms of psoriasis. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X completely resolved psoriasis in the majority of patients. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The infection was completely resolved by drug X. keeps a high claims finding 8ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > promotional register (screen_promotional_language default) is unchanged > still flags "All patients" in the consent statement 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > verifyRevision and critiqueDocument use the submission register by default 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > each tool declares the register input 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > critique_draft reports the register it applied and honours an explicit one 23ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > verify_revision and critique_document report the register 2ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > the submission register stays linear on a CSR-sized text > screens 300 KB in well under a second, with the same verdicts 18ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every tool with a free-text input is classified — a new one cannot ship unclassified 7ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > no tool is in both maps 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every classified name is a real tool — no stale entries 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every entry says why 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > the scan still finds the tools the defect was found through 3ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > author_docx_native: refused when Sonnet produced the call 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > commit_document_revision: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > draft_authoring_document: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > generate_document: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > insert_document_content: refused when Sonnet produced the call 6ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > save_document_to_vault: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_biosketch_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_consent_element: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_dms_plan_element: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_protocol_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_vault_document: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_kit_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_q_sub_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused when the serving model is unknown — absent means refused 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused for GPT-4o, which the registry caps below high-risk 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > an approved model is not refused by the gate 5ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool that only analyses free text is not gated 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native) 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Sonnet is refused and nothing is stored 2ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Opus clears the model gate — and, being a write, is put to a person, not run (P1-34) 5ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > and on a person's yes, the Opus-written content reaches the handler 24ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > the caller cannot vouch for the model: a servingModel in the toolContext is overwritten by the one in the response 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a confirm-tier tool is proposed on this door, even from an approved model — nothing is stored 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > hands every tool call the model that produced it 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > sets the served model from the first response and updates it after every round 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Draft the clinical overview for this project as an authoring document 6ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: please write section 2.5.4 for me 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Prepare a response to the FDA information request 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: compose the cover letter for the submission 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: take me to CMC 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: what does section 2.5 require? 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: summarise this thread 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: is the submission ready? 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > a drafting request on Balanced is scored high-risk and routed to the flagship tier 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > both routes compute the hint from the message (source pin) 1ms
+stdout | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+{
+  "timestamp": "2026-10-05T03:20:16.700Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:16.705Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+{
+  "timestamp": "2026-10-05T03:20:16.705Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/writing-gate-structure-status.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags the same document-level quantity stated with two different values 12ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag legitimately multi-valued quantities (n per arm, p per endpoint, week per visit) 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag a value that is stated consistently 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not treat a leading qualifier as a second expansion 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags an acronym expanded two different ways 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > flags US/UK spelling drift and mixed interchangeable terms 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > does not flag a single consistent spelling 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > terminology consistency > combined report reports ok when clean 5ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > claims dimension (composes promotional-screening, no second lexicon) > flags absolute safety, guarantees, and causal overreach as claims findings 37ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > claims dimension (composes promotional-screening, no second lexicon) > does not flag appropriately hedged scientific prose 8ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > penalizes an ungrounded number and a self-contradiction, verdict revise 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > a grounded, consistent regulator paragraph passes 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDraft > buildRevisionBrief lists findings most-severe first, or empty on pass 6ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > is well-formed and requires text 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > runs live and returns a score, verdict, and revision brief 2ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critique_draft tool > rejects an empty draft as needs_parameters 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > confirms a revision that fixes the finding improved and now passes 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > detects a non-improving revision 0ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > verifyRevision + verify_revision tool > tool contract requires both texts and runs live 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > catches a value stated inconsistently ACROSS sections 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > passes a coherent two-section document 1ms
+ ✓ server/services/ana/__tests__/writing-precision-gate.test.ts > critiqueDocument + critique_document tool > tool requires sections and runs live 1ms
+stdout | server/services/ana/__tests__/tool-record-scope.test.ts
+{
+  "timestamp": "2026-10-05T03:20:17.639Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:17.641Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+{
+  "timestamp": "2026-10-05T03:20:17.641Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/tool-record-scope.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > the clean text passes when no documentType is asked for, and says structure was not applicable 39ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > clinical_study_report → not-checked, a located notice, verdict revise 35ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > 2.7.4 → not-checked, a located notice, verdict revise 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > iss → not-checked, a located notice, verdict revise 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > an indexed type with text is checked 9ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > critiqueDraft — an unindexed documentType is never a silent pass > an indexed type with no text is not checked, and does not pass 0ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > verifyRevision never reports passesNow over an unchecked structure 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > critiqueDocument puts the notice in crossSectionFindings and does not pass 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > verifyRevision and critiqueDocument carry the structure status > critiqueDocument without a documentType reports not-applicable and still passes a clean document 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > critique_draft returns structureChecked false, the finding, a revise verdict and the notice in the brief 10ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > verify_revision returns the status in result 10ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the three tools surface the notice > critique_document returns the notice in crossSectionFindings 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_draft: the type is checked as a whole document; a single section omits it 0ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_draft lists every indexed type and says an unindexed one is reported not checked 1ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > verify_revision lists every indexed type and says an unindexed one is reported not checked 0ms
+ ✓ server/services/ana/__tests__/writing-gate-structure-status.test.ts > the tool contracts say what documentType checks > critique_document lists every indexed type and says an unindexed one is reported not checked 0ms
+stdout | server/services/ana/__tests__/server-tools-gating.test.ts
+{
+  "timestamp": "2026-10-05T03:20:19.386Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:20:19.387Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/server-tools-gating.test.ts
+{
+  "timestamp": "2026-10-05T03:20:19.387Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/server-tools-gating.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/server-tools-gating.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/server-tools-gating.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > lets through a call that names no program, without asking 3ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > lets through the caller's own program 1ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in program_id, without echoing it 1ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in programId, without echoing it 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in device_program_id, without echoing it 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > checks every program a call names 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses without an organization rather than guessing 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses when ownership cannot be checked, rather than passing 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > never runs a handler for another tenant's program 2ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > runs it for the caller's own 2ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > does not run it when ownership cannot be checked 1ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > covers the real tools too: a read for another tenant is refused before it reads 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > asks the ownership query for the named record, with the caller as organization 1ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > refuses another tenant's record 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > checks an assessment through the package that owns it 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > ignores an absent id and a tool with no scopes 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > refuses when the check cannot run 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > every scoped tool is registered and still declares the field it scopes 1ms
+stderr | server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > refuses the standalone sandbox alongside web search
+{
+  "timestamp": "2026-10-05T03:20:19.525Z",
+  "level": "warn",
+  "message": "[ana-tools] [ana-tools] ANA_ENABLE_CODE_EXECUTION is set alongside a web tool. The current web search/fetch tools run code execution internally, and declaring a second execution environment confuses the model — so the standalone code_execution tool is NOT offered this turn. Turn the web tools off if the sandbox is what you need.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > refuses it alongside web fetch too
+{
+  "timestamp": "2026-10-05T03:20:19.526Z",
+  "level": "warn",
+  "message": "[ana-tools] [ana-tools] ANA_ENABLE_CODE_EXECUTION is set alongside a web tool. The current web search/fetch tools run code execution internally, and declaring a second execution environment confuses the model — so the standalone code_execution tool is NOT offered this turn. Turn the web tools off if the sandbox is what you need.",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > offers nothing by default 2ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > offers web search on its own 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > offers the standalone sandbox when no web tool is on 0ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > refuses the standalone sandbox alongside web search 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > refuses it alongside web fetch too 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > says why, rather than silently dropping a flag someone set 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > uses the current web search variant, not the 2025 one 0ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > keeps the agency allowlist that makes this the currency path 3ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > never searches off the allowlist 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > pairs web fetch on the matching variant 0ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > still declares a standalone sandbox for the case where it is allowed 0ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > web fetch is bounded like web search (D6, WS2) > reaches only the agency domains web search may search 0ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > web fetch is bounded like web search (D6, WS2) > is capped per turn 0ms
+
+ Test Files  9 passed (9)
+      Tests  313 passed (313)
+   Start at  03:20:05
+   Duration  14.52s (transform 13.59s, setup 713ms, import 38.62s, tests 952ms, environment 1ms)
+

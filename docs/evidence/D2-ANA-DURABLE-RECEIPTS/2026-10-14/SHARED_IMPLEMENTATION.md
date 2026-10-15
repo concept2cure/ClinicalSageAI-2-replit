@@ -1,0 +1,20 @@
+# Shared immutable receipt descriptor
+
+Implemented on `concept2cure-v2` on 14 October 2026 under CONTRACT.md. This owner changed only the new `shared/ana/source-admission-receipts.ts`, its focused pure test file, and owned evidence. Existing application/schema/provider/host files and previous dirty work were preserved.
+
+The frozen API exports `SourceAdmissionReceiptV2`, `SourceAdmissionRangeV2`, `SourceAdmissionReceiptValidationError`, synchronous `validateSourceAdmissionReceiptV2`, `canonicalSourceAdmissionReceiptV2`, and asynchronous `fingerprintSourceAdmissionReceiptV2`. The validator takes a private primitive/range snapshot and returns frozen values. Strict own data-descriptor inspection refuses unknown/missing/inherited/symbol/nonenumerable/accessor properties and sparse/extra array fields without invoking supplied getters. Unexpected reflection errors become a safe named error, with no supplied content in the message.
+
+Positive int32 actor/tenant/length identities, exact UUID/SHA formats, one to eight nonempty sorted nonoverlapping UTF-16 intervals, Unicode Cc/lone-surrogate refusal, canonical role and opaque context bounds are enforced. UUID/SHA are lowercase. Role trims/lowercases and has at most 128 Unicode code points, including any lowercase expansion; this shape validator does not create role authority. Nullable context retains exact supplied spelling and is nonblank with at most 2,000 code points. Disjoint late and adjacent intervals stay separate. IDs are validated, never generated.
+
+Canonical JSON reuses `shared/canonical-json.ts`. Native Web Crypto hashes a validated private snapshot and UTF-8 bytes fixed before the first await. The SHA binds every immutable descriptor field including receipt ID, range hashes, actor, role and serving context. Database acceptance time is projection-only: an unexpected acceptance-time field refuses rather than silently disappearing. No source text, filename, model output or provider-delivery flag is accepted.
+
+`SHARED_ADVERSARIES.md` and the focused corpus were published before implementation. `SHARED_PREIMPLEMENTATION_RED.json` reports the genuinely absent module and **zero executed assertions**; it is not a behavioral security failure. The initial implementation passed its 109 cases (`SHARED_INITIAL_GREEN.json`). Additional line-terminator UUID/SHA/range controls also passed (`SHARED_ID_TERMINATOR_CONTROL.json`); no behavioral defect was observed in that check. The only subsequent implementation change extracted interval validation to remove a lint complexity warning.
+
+Final verification:
+
+- `SHARED_GREEN.json`: **110/110** pure cases pass in one file, including mutation after fingerprinting starts, exact private freezing, fixed independently computed canonical/SHA golden vector, all immutable identity components, Unicode limits and metadata-only shape.
+- `SHARED_TYPECHECK.txt`: both owned pure roots plus their imported/ambient dependency graph using repository compiler options, **0 diagnostics**, 447 loaded sources. This is not a whole-repository typecheck.
+- `SHARED_ESLINT.json`: both owned files, **0 errors and 0 warnings**, checked with `--max-warnings=0`.
+- `SHARED_SOURCE_MANIFEST.json`: hashes/bytes of the exact final module/test and canonical serializer/contract/expectations. Module SHA256 `62710ab0555de812b41c60f2ec31b705508f9358bbce75d6a7bfde3766de6391`; test SHA256 `41fc750ceb018d72d6f068651cebc4182dea4201e521065c22862754e7712e15`.
+
+Commands used supported Node 22 at `/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node`, the installed repository Vitest, TypeScript and ESLint. No new dependency, external provider request, client database operation, branch, commit or deployment was involved. This pure evidence establishes descriptor/fingerprint behavior only; canonical current access, actual stored extraction/slice correctness, persistence/COMMIT, lifecycle and independent PostgreSQL proofs belong to their respective owners. Provider delivery, whole-document coverage, scientific validation and government acceptance remain unestablished by this descriptor.

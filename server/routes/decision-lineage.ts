@@ -13,7 +13,7 @@
  *   GET  /api/decision-lineage/compliance-report            — Compliance summary
  *
  * @module server/routes/decision-lineage
- * @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2), PMDA ERES
+ * @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6(R3) Annex 1 §4.3, PMDA ERES
  */
 
 import { Router, Request, Response } from 'express';
@@ -21,6 +21,9 @@ import { decisionLineageService, type ExportFormat } from '../services/workflow/
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
 import { authedOrgId, requireAuthedOrgId } from '../utils/authedOrgId';
+import { resolvePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
+import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
+import { breakForTenant } from '../services/audit/audited-export.js';
 
 // SECURITY: decision lineage exposes the regulatory decision graph
 // (who decided what, when, with what evidence). Pre-fix the
@@ -164,15 +167,71 @@ router.post('/record', async (req: Request, res: Response) => {
   }
 });
 
-// ── GET /api/decision-lineage/verify-chain ──────────────────────────────────
-// Verify the integrity of the tamper-proof audit hash chain.
-router.get('/verify-chain', async (_req: Request, res: Response) => {
+/** The chain verdict a request is given, and whose chain it is. */
+type ChainVerdict =
+  | { scope: 'estate' | 'organization'; ran: true; valid: boolean; entriesVerified: number; firstInvalidEntry?: unknown; invalidReason?: string; verifiedAt: string }
+  | { scope: 'estate' | 'organization'; ran: false; reason: string };
+
+/**
+ * WHO SEES WHAT (DP-77, security review 2026-10-01; the rule IAM-26 set for
+ * GET /api/c2c/actions/verify-chain). The estate verifier of the Part 11 store
+ * (auditService.verifyChain) reads every organisation's rows and, on a valid
+ * chain, appends a platform row to the one global chain. Until 2026-10-01 any
+ * signed-in member ran it here: the whole store loaded into the API process,
+ * a row written, and a break anywhere reported with its sequence number to
+ * every organisation. A platform administrator still gets that verdict,
+ * `scope: 'estate'`. Everyone else gets their own organisation's chain
+ * verdict (tenant-chain-verdict.ts), another organisation's break unnamed
+ * (breakForTenant), and nothing written; null when the caller has no
+ * organisation, which the routes refuse.
+ */
+async function chainVerdictFor(req: Request): Promise<ChainVerdict | null> {
+  if (await resolvePlatformAdmin(req)) {
+    const r = await auditService.verifyChain();
+    if (!r.ran) return { scope: 'estate', ran: false, reason: r.reason };
+    return {
+      scope: 'estate',
+      ran: true,
+      valid: r.valid,
+      entriesVerified: r.entriesVerified,
+      firstInvalidEntry: r.firstInvalidEntry,
+      invalidReason: r.invalidReason,
+      verifiedAt: r.verifiedAt,
+    };
+  }
+  const orgId = authedOrgId(req);
+  if (!orgId) return null;
+  let v: Awaited<ReturnType<typeof verifyTenantChainOnAdminScope>>;
   try {
-    const result = await auditService.verifyChain();
+    v = await verifyTenantChainOnAdminScope(orgId);
+  } catch (err) {
+    // The store could not be walked: nothing was verified and nothing failed
+    // verification. Said so, as the estate branch and walkTenantChain
+    // (audited-export.ts) do, rather than a 500 that also hides every
+    // verdict the compliance report could still give.
+    return { scope: 'organization', ran: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+  if (v.ok === null) return { scope: 'organization', ran: false, reason: v.head?.reason ?? 'the chain head could not be checked' };
+  return {
+    scope: 'organization',
+    ran: true,
+    valid: v.ok,
+    entriesVerified: v.rowsChecked,
+    ...(v.brokenAt ? { firstInvalidEntry: breakForTenant(orgId, v.brokenAt), invalidReason: "This organisation's audit chain does not verify." } : {}),
+    verifiedAt: new Date().toISOString(),
+  };
+}
+
+// ── GET /api/decision-lineage/verify-chain ──────────────────────────────────
+// Verify the integrity of the audit hash chain the caller may see (chainVerdictFor).
+router.get('/verify-chain', async (req: Request, res: Response) => {
+  try {
+    const result = await chainVerdictFor(req);
+    if (!result) return res.status(403).json({ error: 'ORG_REQUIRED', message: 'An organisation is required to verify its audit chain.' });
     const frameworks = [
       'FDA 21 CFR Part 11 §11.10(e)',
       'EU Annex 11 §9',
-      'ICH E6(R2) §5.5.3',
+      'ICH E6(R3) Annex 1 §4.3',
       'PMDA ERES Guidelines',
     ];
     if (!result.ran) {
@@ -181,8 +240,9 @@ router.get('/verify-chain', async (_req: Request, res: Response) => {
       // it is not compliance; it is an answer nobody has yet. 503, the same
       // status innovation-routes gives an ownership check that could not run.
       // The reason goes to the log, not the body (ci:server-error-leaks).
-      logger.error('chain verification could not run', { reason: result.reason });
+      logger.error('chain verification could not run', { scope: result.scope, reason: result.reason });
       return res.status(503).json({
+        scope: result.scope,
         chainIntegrity: 'UNVERIFIABLE',
         entriesVerified: 0,
         verifiedAt: new Date().toISOString(),
@@ -192,6 +252,7 @@ router.get('/verify-chain', async (_req: Request, res: Response) => {
       });
     }
     res.json({
+      scope: result.scope,
       chainIntegrity: result.valid ? 'VERIFIED' : 'INTEGRITY_FAILURE',
       entriesVerified: result.entriesVerified,
       firstInvalidEntry: result.firstInvalidEntry,
@@ -213,6 +274,11 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
     const orgId = authedOrgId(req) ?? undefined;
     const fromDate = req.query.fromDate ? new Date(req.query.fromDate as string) : undefined;
     const toDate = req.query.toDate ? new Date(req.query.toDate as string) : undefined;
+    // The chain this caller may see (DP-77). A caller with no organisation and
+    // no platform role gets no report: the query below would otherwise count
+    // every organisation's decisions.
+    const chainResult = await chainVerdictFor(req);
+    if (!chainResult) return res.status(403).json({ error: 'ORG_REQUIRED', message: 'An organisation is required for its compliance report.' });
 
     // Gather overall statistics
     const allDecisions = await decisionLineageService.queryDecisions({
@@ -222,13 +288,13 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
       limit: 1000,
     });
 
-    const chainResult = await auditService.verifyChain();
     if (!chainResult.ran) {
-      logger.error('compliance report: chain verification could not run', { reason: chainResult.reason });
+      logger.error('compliance report: chain verification could not run', { scope: chainResult.scope, reason: chainResult.reason });
     }
     // WO-16B finding 13. Every verdict below that depends on the chain takes
     // one of THREE values. The two frameworks this report never evaluates
-    // (ICH E6(R2), GAMP 5) were hardcoded COMPLIANT; a verdict nothing computed
+    // (ICH E6(R3) GCP —
+    // and GAMP 5) were hardcoded COMPLIANT; a verdict nothing computed
     // is invented, so they say NOT_ASSESSED. The attestation asserts a
     // "cryptographically-verified audit trail" and is emitted only when one was.
     const chainStatus: 'VERIFIED' | 'INTEGRITY_FAILURE' | 'UNVERIFIABLE' = !chainResult.ran
@@ -274,6 +340,7 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
         to: toDate?.toISOString() || 'present',
       },
       chainIntegrity: {
+        scope: chainResult.scope,
         status: chainStatus,
         entriesVerified: chainResult.ran ? chainResult.entriesVerified : 0,
         note: !chainResult.ran
@@ -305,8 +372,13 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
           status: chainDependent(),
         },
         {
-          framework: 'ICH E6(R2) GCP',
-          sections: ['§5.5.3 Data integrity', '§5.5.4 Essential documents'],
+          /* Join key: must equal the label DecisionLineageService and the
+             client catalogue use; change all three together. */
+          framework: 'ICH E6(R3) GCP',
+          sections: [
+            'ICH E6(R3) Annex 1 §4.3 Computerised systems (data integrity)',
+            'ICH E6(R3) Appendix C Essential records',
+          ],
           status: 'NOT_ASSESSED',
           note: 'No check in this report evaluates this framework.',
         },

@@ -146,6 +146,7 @@ export async function validateFdaCriteria(args: ValidateArgs): Promise<ExternalV
 
 export class FdaCriteriaValidatorAdapter implements ExternalValidator {
   readonly name = 'fda-criteria-subset';
+  readonly kind = 'internal_subset' as const;
 
   async isConfigured(): Promise<boolean> {
     return fdaCriteriaFallbackEnabled();

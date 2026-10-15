@@ -1,0 +1,3 @@
+# npm run ci:server-error-leaks  (2026-10-01T14:59:56Z)
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit=0

@@ -1,0 +1,165 @@
+# Green: after the change (HEAD a9ac124a + working tree), 2026-10-05
+# Red (g-chain-vault-evidence-red.txt): 14 failed / 19 passed in the step's two test files.
+# Green: the same two files 34/34, plus every test file that imports submission-chain / regulatory-knowledge-tools: 12 files, 155 tests.
+# Two tests were added after the red run: protocol/SAP file names ('ABC-301_Protocol_v3.pdf', 'ABC-301_SAP_final.pdf'), in the protocol case, and 'fits the result budget with many misfiled, unspecific and noted documents'. At HEAD the budget test fails because standing.misfiled is undefined. The file names produce 'filed' at HEAD (same defect as case (a)).
+# One earlier run of basis-constants-one-home.test.ts failed 4 tests. The cause was another agent's transient server/services/ind/ctd/__eslint_ratchet_prev__.* temp files (ENOENT on them), not this change. The rerun below passes.
+ ✓ tests/schema-contract/one-normalize-ctd-code.contract.test.ts > normalizeCtdCode has one definition > is defined only in the shared section-code module 456ms
+ ✓ tests/schema-contract/one-normalize-ctd-code.contract.test.ts > normalizeCtdCode has one definition > is re-exported only where it was imported from the shared module 250ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no regulator URL is bound to two top-level declarations 431ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > each shared constant is declared only in regulatory-basis.ts, and the retired duplicate names nowhere 86ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no file in ind/ctd keeps a local recall()/practice() helper 79ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and e3SectionBasis 1ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > exports every shared basis constant, well formed under the shared rules 16ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > cfr201_57, recall and practice build well-formed bases of the stated confidence 1ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > FDA_E3 is ICH E3 itself, not FDA’s E3 Q&A (R1) 0ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > nothing in ind/ctd binds the E3 Q&A URL to a basis that is not the Q&A 105ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > readers hold the one object, not a copy > the submission chain, the technical rules and the E3 overlay cite the exported constants 43ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 87ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively 0ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > answers a CSR heading, a CTD section and a document type from the canonical record 5ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > says what it does not index, and lists what it does 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > fits the result budget for every section, document type and E3 heading it knows 44ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > without a project, gives the plan and says there is no standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > with an organization but no open project, says so rather than reading another project 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the open project’s Vault, scoped by organization and program, and decides the standing 6ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a step the Vault cannot hold is never reported missing, and never as what a step waits on 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a read cut short says so, and claims nothing is missing 51ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > gives one step in full, with its checked sources 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > fits the result budget, with and without a standing 5ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > reads the folder and kind the Vault records, sees a CSR filed in Module 5 without a section, and reports misfiling 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > says in its description and step detail that it matches by kind and reports misfiling 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > fits the result budget with many misfiled, unspecific and noted documents 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > lists every rule in brief with what the platform checks, and what FDA has said about Elsa 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the pdf rules in full, each with its source 3ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the ectd rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the study-data rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the content rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > refuses an area it does not have 0ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a final SAP at 5.3.5.1 is the SAP, not the CSR, and the ISS is not next 5ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a protocol at 5.3.5.1 is not a CSR; a CSR named by its protocol number is 2ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > an integrated summary or a Module 2 summary filed under 5.3 is not a CSR 1ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a real CSR at a study-type leaf is still filed, by its title or by the kind the Vault recorded 1ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a document the Vault recorded as a CSR is not the final SAP 0ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a confirmed CSR at the heading 5.3.5 is suggested-level with the placement to fix 1ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a CSR in Module 5 with no section is seen, at suggested level 1ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a properly filed CSR outranks one filed at the heading 1ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > a Summary of Clinical Efficacy in Module 5 is misfiled, expected at 2.7.3 (ICH M4E) 1ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > a Summary of Clinical Safety in Module 5 with no section is misfiled, expected at 2.7.4 2ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > an ISS outside 5.3.5.3, 2.7.3 and 2.7.4 is misfiled on FDA’s placement page 1ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > an ISS whose narrative is placed at 2.7.4 is not misfiled, and the 5.3.5.3 leaf it needs is named 0ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > documents filed where they belong report nothing 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the always-on bridge + core are always offered 24ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > the surface is genuinely over the cap (filtering actually engages) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_fda_form'" for: "'prepare FDA form 1571 as an editable …'" 24ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'amend_fda_form'" for: "'amend this FDA form with a reason for…'" 123ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_forms'" for: "'list all FDA forms available in the c…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_effort_certification'" for: "'open a time and effort certification …'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'create_coi_disclosure'" for: "'file a foreign appointment conflict o…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'search_grants_gov'" for: "'search grants.gov for posted cancer f…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'screen_restricted_party'" for: "'screen this vendor against the SAM.go…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'research_compliance_briefing'" for: "'what needs my attention across resear…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'open_grant_closeout'" for: "'open the grant closeout and track the…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'request_no_cost_extension'" for: "'request a no cost extension to extend…'" 9ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_grant_budget'" for: "'reconcile the budget versus actual ex…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_expenditure'" for: "'record an actual expenditure booked a…'" 13ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_subaward'" for: "'record a subaward to a subrecipient u…'" 16ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'register_controlled_substance'" for: "'register a schedule II controlled sub…'" 19ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'fulfill_regulatory_commitment'" for: "'mark this PMR regulatory commitment f…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_ha_interaction'" for: "'is this FDA formal meeting interactio…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_cost_share_contribution'" for: "'record an institutional cost share co…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'review_training_gate'" for: "'review the training gate, is the PI c…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'record_grant_opportunity'" for: "'record this grants.gov funding opport…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'assess_study_onboarding'" for: "'what approvals and training do we nee…'" 21ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_award_closeout'" for: "'can we close out this grant award yet…'" 17ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > an object never adds the word "object" 24ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > the selector reads a context field only as the string it is declared to be > hints that are not a list do not throw, and a list keeps only its strings 30ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > the tools that succeeded, most recent first, each once 0ms
+ ✓ server/services/ana/__tests__/tool-selection-context.test.ts > what a conversation carries into the next turn > never a step a person declined (recorded as an error), and nothing from no steps 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'prepare_meeting_package'" for: "'are we ready for the FDA meeting, do …'" 16ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'review my clinical overview'" 59ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'triage_compliance_attention'" for: "'triage the critical compliance attent…'" 6ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'list_fda_technical_rules'" for: "'will my submission be rejected'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what has to go in section 12.2 advers…'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 15ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'plan_submission_from_database_lock'" for: "'what do I do after database lock'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_document_section_requirements'" for: "'what should the summary of clinical e…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 10ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'we just locked the database, what hap…'" 27ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'plan_submission_from_database_lock'" for: "'what is blocking the clinical overvie…'" 14ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > each record tool is in the launch-scoped pool (so the cases below cannot pass vacuously) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'will our dossier pass FDA technical v…'" 15ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the ISS'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'list_fda_technical_rules'" for: "'why would the FDA gateway reject our …'" 15ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should I write the clinical overv…'" 11ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what does FDA want in 2.7.4'" 18ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how do I structure a CSR'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'help me write the quality overall sum…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-routing.test.ts > AnA routing — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'how should the investigator brochure …'" 2ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > an IND block states the IB at 1.14.4.1, required unless the sponsor is a sponsor-investigator 4ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > an IND block sends drafting through the canonical tools, not the retired ones 1ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > an IND block carries the canonical initial-IND brief, not a second hand list 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > a NDA block is headed as a New Drug Application (NDA), never as an IND 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > a BLA block is headed as a Biologics License Application (BLA), never as an IND 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > every tool the IND block names is a classified, in-scope AnA tool 1ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > every tool the NDA block names is a classified, in-scope AnA tool 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > every tool the BLA block names is a classified, in-scope AnA tool 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > names the open project when the client sends one 1ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > an explicit submissionType is read when the context carries none 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for MAA: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for CTA: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for JNDA: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for 510K: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for ANDA: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for : no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/submission-context-block.test.ts > submissionContextBlockFor > fails closed for undefined: no US block borrowed for another application 0ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > renders the labeling area in at most 4500 of the 5000-character budget 1ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > still prints every PLR rule with its paragraph, eCFR source and platform note 1ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > keeps each verbatim statement inside the rule that requires it 1ms
+ ✓ server/services/ana/__tests__/fda-rules-labeling-budget.test.ts > list_fda_technical_rules labeling area leaves headroom under RESULT_BUDGET > keeps the limits the rules exist to state 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > lists each step after every step it is written from 4ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > csr is written from tlf 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > tlf is written from adam 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > adam is written from sdtm 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > sdtm is written from database_lock 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > database_lock is written from sap_final 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > iss is written from csr 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > ise is written from csr 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > iss is written from integrated_data 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_7_3 is written from ise 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_7_4 is written from iss 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_5 is written from m2_7_3 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_5 is written from m2_7_4 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > labeling is written from m2_5 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > ectd_assembly is written from sdtm 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > transmission is written from technical_validation 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > every step rests on a basis, and every checked source names its URL and date 2ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > a step the platform cannot see is never treated as missing or as done 2ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > a classifier’s proposal is not a filing 1ms
+ ✓ tests/regulatory/submission-chain.test.ts > the NDA workflow AnA is given follows the chain > every chain edge between two workflow steps is an edge of the workflow 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are offered to the model 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a handler 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are classed read, so a read never asks the person to confirm 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are in launch scope 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a plan label of their own, not a humanised tool name 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > report deterministic pedigree: the registry lookups as registry, the Vault read as a query 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are named in the prompt AnA drafts and audits under, and Elsa is never promised 1ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > have no handler — the one they had could only ever get 401 AUTH_001 3ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are not offered to the model 1ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are absent from the authorization register 3ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > are absent from the launch-scope inventory 1ms
+ ✓ server/services/ana/__tests__/ind-tools-retired.test.ts > the IND loopback tools are retired > the IND flow offers drafting through draft_authoring_document, a registered tool 2ms
+ Test Files  12 passed (12)
+      Tests  155 passed (155)
+
+# Typecheck: flock tsc.lock npx tsc --noEmit -p . | grep -E 'submission-chain|regulatory-knowledge-tools|chain-vault-evidence|ind/ctd/index' -> no lines (grep exit 1).
+# Lint: npx eslint on the working copy vs HEAD via --stdin: submission-chain.ts 0/0 -> 0/0, regulatory-knowledge-tools.ts 0/0 -> 0/0, regulatory-knowledge-tools.test.ts 0 -> 0 (after the new tests moved into their own describe), chain-vault-evidence.test.ts 0.

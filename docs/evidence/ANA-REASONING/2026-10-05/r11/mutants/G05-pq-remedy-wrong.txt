@@ -1,0 +1,12 @@
+Mutant G05-pq-remedy-wrong: a PQ-pending approved model is told to ask again on an approved model, which cannot help
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- if (m.approvedForHighRisk === true) {
++ if (false) {
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an approved model whose PQ has not passed, without offering a remedy that cannot work 8ms
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

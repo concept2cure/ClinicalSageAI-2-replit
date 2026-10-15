@@ -46,6 +46,27 @@
 --     never be modified again; DELETE stays refused.
 -- Pinned by server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts.
 --
+-- AMENDED IN PLACE 2026-10-15 (row D5; CLAUDE.md Rule 1, as above). P-23
+-- (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08) takes a signature out of
+-- force when the governed act it was given for is refused: voidSignatureForRefusedAct
+-- (server/services/part11/signature-persistence.ts) sets is_valid = false,
+-- verification_status = 'voided' and verification_date, with no successor row
+-- (nobody signed the void). This function refused that statement — it is not a
+-- supersession, so only updated_at could differ — and the caller, by design,
+-- logged the refusal and recorded the void on the audit chain alone. So in every
+-- deployment a voided signature's row still read is_valid = true: Gate 1 refused
+-- it (it reads the chain), but every reader of the row, the revocation
+-- candidates and the Shadow Review waiver and finding-closure reads among them,
+-- saw a live signature. Found by the revocation-by-intent change, reproduced
+-- against this file (docs/evidence/D5/2026-10-15-p23-void-on-the-row/). The rule
+-- gains one write-once transition beside the supersession:
+--   * the void: superseded_by stays NULL; the verification column group may
+--     move once, to is_valid = false and verification_status = 'voided' (with
+--     verification_date); the attested columns stay byte-identical;
+--   * a voided row can never be modified again — not re-validated, not
+--     superseded, not touched;
+--   * 'revoked' still happens only with a supersession, as above.
+--
 -- Idempotent: CREATE OR REPLACE for functions, conditional CREATE TRIGGER.
 -- Tables are guarded with to_regclass so lineages that don't carry a table
 -- skip its trigger instead of failing the whole migration run.
@@ -64,10 +85,16 @@ BEGIN
       USING ERRCODE = 'raise_exception';
   END IF;
 
-  -- UPDATE: permit ONLY the write-once supersession transition.
+  -- UPDATE: permit ONLY the write-once supersession transition, and the
+  -- write-once void (P-23, amended 2026-10-15).
   IF OLD.superseded_by IS NOT NULL THEN
     RAISE EXCEPTION
       'IMMUTABILITY_VIOLATION: signature % is already superseded and can never be modified again (§11.70).', OLD.id
+      USING ERRCODE = 'raise_exception';
+  END IF;
+  IF OLD.verification_status = 'voided' THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY_VIOLATION: signature % was voided for a refused act and can never be modified again (§11.70).', OLD.id
       USING ERRCODE = 'raise_exception';
   END IF;
 
@@ -100,7 +127,25 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Not a supersession: only the bookkeeping timestamp may differ (a no-op
+  -- The write-once void (P-23): no successor; the verification column group
+  -- only, and only to the invalid, voided state.
+  IF NEW.verification_status = 'voided' THEN
+    IF (to_jsonb(NEW) - 'updated_at' - 'is_valid' - 'verification_status' - 'verification_date')
+       IS DISTINCT FROM
+       (to_jsonb(OLD) - 'updated_at' - 'is_valid' - 'verification_status' - 'verification_date') THEN
+      RAISE EXCEPTION
+        'IMMUTABILITY_VIOLATION: a void may set the verification column group of row % and nothing else (§11.70).', OLD.id
+        USING ERRCODE = 'raise_exception';
+    END IF;
+    IF NEW.is_valid IS DISTINCT FROM false THEN
+      RAISE EXCEPTION
+        'IMMUTABILITY_VIOLATION: a voided signature (row %) is never valid (§11.70).', OLD.id
+        USING ERRCODE = 'raise_exception';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  -- Neither: only the bookkeeping timestamp may differ (a no-op
   -- write-through). Anything else is a mutation of history.
   IF (to_jsonb(NEW) - 'updated_at') IS DISTINCT FROM (to_jsonb(OLD) - 'updated_at') THEN
     RAISE EXCEPTION

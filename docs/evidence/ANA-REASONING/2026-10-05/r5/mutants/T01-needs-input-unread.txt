@@ -1,0 +1,13 @@
+Mutant T01-needs-input-unread: a tool that needs input it was not given reads as a success
+
+--- server/services/ana/tool-outcome.ts
+- if (NEEDS_INPUT.has(s)) return 'needs_input';
++ 
+
+Tests run: tests/services/tool-outcome.test.ts
+Result: KILLED
+
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a tool that needs input it was not given 7ms
+ × tests/services/tool-outcome.test.ts > the note the model reads after the round > names each step that returned nothing usable, and says what to do instead of presenting it as found 4ms
+      Tests  2 failed | 9 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

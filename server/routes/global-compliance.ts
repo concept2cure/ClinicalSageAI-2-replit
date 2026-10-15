@@ -21,6 +21,7 @@ import { pool } from '../db';
 import { authenticateToken } from '../middleware/auth.js';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { withExtendingRoles } from '../../shared/constants/org-roles';
 
 const router = Router();
 
@@ -45,14 +46,11 @@ function isGlobalComplianceAdmin(role: string): boolean {
   return ['super_admin', 'platform_admin'].includes(role);
 }
 
+// P-18: an approver holds everything a manager may.
+const ELEVATED_PRIVACY_ROLES: readonly string[] = withExtendingRoles(['admin', 'manager', 'owner', 'dpo', 'privacy_officer']);
+
 function hasElevatedPrivacyAccess(role: string): boolean {
-  return [
-    'admin',
-    'manager',
-    'owner',
-    'dpo',
-    'privacy_officer',
-  ].includes(role);
+  return ELEVATED_PRIVACY_ROLES.includes(role);
 }
 
 function enforceOrgScope(req: Request, res: Response, routeOrgId: number): boolean {

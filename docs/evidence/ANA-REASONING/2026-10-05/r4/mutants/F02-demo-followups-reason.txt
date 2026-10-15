@@ -1,0 +1,12 @@
+Mutant F02-demo-followups-reason: a demonstration's talking points move into the reasoning panel
+
+--- server/routes/ana-ri/stream.ts
+- const followUpThinking = () => (driveState.enabled && driveState.mode === 'demo' ? undefined : streamThinkingConfig);
++ const followUpThinking = () => streamThinkingConfig;
+
+Tests run: server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a demonstration keeps its follow-up rounds as narration: no reasoning display there 14ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

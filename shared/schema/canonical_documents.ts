@@ -49,6 +49,12 @@ export const canonicalDocuments = pgTable('canonical_documents', {
   audit: jsonb('audit').notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  /**
+   * The user who created the record (VR-12). Write-once: the separation-of-
+   * duties check reads it, so the append-only guard refuses a reassignment.
+   * NULL on records created before it was kept.
+   */
+  createdBy: integer('created_by'),
 });
 
 export type CanonicalDocumentRow = typeof canonicalDocuments.$inferSelect;

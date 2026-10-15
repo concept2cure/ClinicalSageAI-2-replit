@@ -11,8 +11,8 @@
  * HONEST BY CONSTRUCTION:
  *   - No LLM calls, no fabrication. Every finding is derived from the registries /
  *     readiness scorers above.
- *   - `canTransmit` is carried from the registry — true for 12 markets with a
- *     live gateway, false for TW/SA/ZA/MDSAP.
+ *   - `canTransmit` is carried from the registry, which reads it from
+ *     regulatory/market-support.ts: false for every market today.
  *   - When a submission is not producible, the advisory says so and why.
  *
  * PURE + DETERMINISTIC: static composition + pure shaping. No DB, no network.
@@ -151,7 +151,7 @@ export interface RankedMarketAdvice {
   complete: boolean;
   /** HONEST: whether the platform can assemble a dossier for this market. */
   canAssemble: boolean;
-  /** Whether this market has a live submission gateway. */
+  /** Whether the platform transmits to this market (registry; false for every market today). */
   canTransmit: boolean;
   /** Whether a local in-country representative is required. */
   localRepresentativeRequired: boolean;
@@ -176,8 +176,8 @@ export interface GlobalMarketAdvice {
   /** Markets that require a local in-country representative. */
   marketsNeedingLocalRep: MarketId[];
   /**
-   * HONEST INVARIANT: always empty. The platform has no transmission capability
-   * to any authority.
+   * Markets the registry says the platform transmits to; empty today
+   * (market-support.ts states no channel the platform sends a device filing through).
    */
   transmitCapableMarkets: MarketId[];
   /** Candidate ids that were not recognised as markets. */

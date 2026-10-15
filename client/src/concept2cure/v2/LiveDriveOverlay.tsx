@@ -11,7 +11,10 @@
  * {enabled:true}` turn is live, and the step it shows is the last move that
  * actually happened — a navigation or a performed screen operation —
  * there is no simulated progress and no idle placeholder. When AnA is not
- * driving there is nothing here at all.
+ * driving there is nothing here at all — except one notice: a reply of the
+ * shell's conversation that finished while another screen was showing, with
+ * the way back to it (`replyElsewhere`), until the person goes back or
+ * dismisses it.
  *
  * Interactive by design: the strip carries a steer field — a question or a
  * course-correction typed here lands mid-run through the run-control
@@ -19,6 +22,7 @@
  * without taking the wheel away from her.
  */
 import React from 'react';
+import { readableReplyText } from './anaReplyText';
 import type { LiveDriveState } from './liveDrive';
 import { I } from './icons';
 
@@ -29,8 +33,34 @@ export function LiveDriveOverlay({
   onTakeOver,
   onStop,
   onSteer,
+  waiting,
+  onBackToConversation,
+  replyElsewhere,
+  onDismissReply,
 }: {
   state: LiveDriveState;
+  /**
+   * Opens the conversation in progress. Passed while the shell's chat is
+   * answering and the conversation is not the screen showing — AnA's drive
+   * took the person away from it (design record ONE_ANA_ONE_CANVAS.md, slice 4
+   * and risk 13: the strip keeps Stop, Take over and "Back to conversation").
+   */
+  onBackToConversation?: () => void;
+  /**
+   * The end of a reply that finished while the conversation was not on
+   * screen, or null. With no right rail, nothing else on that screen shows it:
+   * the strip stays, after the drive, to say the reply is there and to offer
+   * the way back (QA 2026-10-08, j5). `''` when the turn ended with no words.
+   */
+  replyElsewhere?: string | null;
+  /** Closes the reply notice; the reply stays in the conversation. */
+  onDismissReply?: () => void;
+  /**
+   * AnA is held for a person (anaWorkModel.waitingForPerson): a Manual hold or
+   * an approval she asked for. She is not driving then, and the strip says so
+   * (row 74, end-to-end finding F2).
+   */
+  waiting?: 'manual' | 'approval' | null;
   /**
    * What AnA is doing RIGHT NOW — the running tool's label (or the turn's
    * status phase) from the live stream. Only ever a label the turn genuinely
@@ -82,7 +112,29 @@ export function LiveDriveOverlay({
      a warning. */
   const [steerRefused, setSteerRefused] = React.useState(false);
 
-  if (!active) return null;
+  if (!active) {
+    if (replyElsewhere == null) return null;
+    return (
+      <div className="ana-drive-strip" role="status" aria-live="polite" data-mode="reply">
+        <div className="ana-drive-row">
+          <span className="ana-drive-title">AnA&rsquo;s reply is in the conversation</span>
+          <div className="ana-drive-actions">
+            {onBackToConversation && (
+              <button type="button" className="ana-drive-btn" onClick={onBackToConversation}>
+                Back to conversation
+              </button>
+            )}
+            {onDismissReply && (
+              <button type="button" className="ana-drive-btn" onClick={onDismissReply}>
+                Dismiss
+              </button>
+            )}
+          </div>
+        </div>
+        {replyElsewhere && <div className="ana-drive-narration">{readableReplyText(replyElsewhere)}</div>}
+      </div>
+    );
+  }
   const last = steps.length > 0 ? steps[steps.length - 1] : null;
   const demo = mode === 'demo';
   /* Moves that LANDED this turn — real counts from the reducer, never a script
@@ -117,7 +169,7 @@ export function LiveDriveOverlay({
     <div className="ana-drive-strip" role="status" aria-live="polite" data-mode={mode}>
       <div className="ana-drive-row">
         <span className="ana-drive-dot" aria-hidden="true" />
-        <span className="ana-drive-title">{demo ? 'AnA is demonstrating' : 'AnA is driving'}</span>
+        <span className="ana-drive-title">{waiting ? 'AnA is waiting for you' : demo ? 'AnA is demonstrating' : 'AnA is driving'}</span>
         {demo && moves > 0 && (
           <span className="ana-drive-count">{moves} {moves === 1 ? 'stop' : 'stops'}</span>
         )}
@@ -176,6 +228,11 @@ export function LiveDriveOverlay({
           </span>
         )}
         <div className="ana-drive-actions">
+          {onBackToConversation && (
+            <button type="button" className="ana-drive-btn" onClick={onBackToConversation}>
+              Back to conversation
+            </button>
+          )}
           <button type="button" className="ana-drive-btn" onClick={onTakeOver}>
             Take over
             <kbd className="ana-drive-kbd" aria-hidden="true">

@@ -1,0 +1,51 @@
+[
+ {
+  "request": 45,
+  "label": "deep-research-pill",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 8192,
+  "output_config": {
+   "effort": "high"
+  },
+  "thinking": {
+   "type": "adaptive",
+   "display": "summarized"
+  },
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 1,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Summarise the Vorelinib IND strategy in depth, please."
+   }
+  ]
+ },
+ {
+  "request": 30,
+  "label": "standard-pill-for-contrast",
+  "refusedByContract": null,
+  "model": "claude-sonnet-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 1,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Work through twelve checks on the Vorelinib program."
+   }
+  ]
+ }
+]

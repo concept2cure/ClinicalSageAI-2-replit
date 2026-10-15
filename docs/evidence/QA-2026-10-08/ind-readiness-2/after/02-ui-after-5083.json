@@ -1,0 +1,105 @@
+{
+  "bx301": "Skip to content | CLIENT CATEGORIES | WORKSPACE | SCIENCE & INTELLIGENCE | EXPLORE | QUICK ACCESS | RP | Concept2Cure.RI | › | Biotech & Pharma | › | IND lifecycle | Biotech & Pharma | CT | Concept2Cure Therapeutics | Search, jump, or run a command | ⌘K | Task | 2 | IND LIFECYCLE — 21 CFR 312 | IND lifecycle | No IND checklist yet | BX-301 · paroxysmal nocturnal hemoglobinuria (BLA) is a BLA program, and the IND lifecycle covers IND programs. An IND submission is shown for a program only when its record names that program — it is never matched to a program by name.",
+  "formsSelects": [
+    {
+      "label": "IND type",
+      "value": "",
+      "shown": "Not stated — choose"
+    },
+    {
+      "label": "Phase",
+      "value": "",
+      "shown": "Not stated — choose"
+    },
+    {
+      "label": "Meeting type",
+      "value": "",
+      "shown": "Not stated — choose"
+    },
+    {
+      "label": "Referenced file type",
+      "value": "",
+      "shown": "Not stated — choose"
+    },
+    {
+      "label": "Referenced file type",
+      "value": "",
+      "shown": "Not stated — choose"
+    }
+  ],
+  "formsInputs": [
+    "Sponsor address",
+    "IND type\nNot stated — choose\nCommercial IND\nResearch IND\nEmergency Use IND\nTreatment IND",
+    "Phase\nNot stated — choose\nPhase 1\nPhase 2\nPhase 3\nPhase 4",
+    "Serial number"
+  ],
+  "lifecycle:IND Safety Report": {
+    "selects": [
+      {
+        "label": "Event type",
+        "value": "",
+        "shown": "Not stated — choose"
+      },
+      {
+        "label": "Seriousness criterion (ICH E2A)",
+        "value": "",
+        "shown": "Not stated — choose"
+      },
+      {
+        "label": "Causality (WHO-UMC)",
+        "value": "",
+        "shown": "Not stated — choose"
+      },
+      {
+        "label": "Outcome",
+        "value": "",
+        "shown": "Not stated — choose"
+      },
+      {
+        "label": "Expectedness vs RSI",
+        "value": "",
+        "shown": "Not assessed — the expedited verdict is not determined"
+      }
+    ],
+    "onsetUnknown": 1
+  },
+  "lifecycle:Protocol / Information Amendment": {
+    "selects": [
+      {
+        "label": "Content category",
+        "value": "",
+        "shown": "Not stated — choose"
+      },
+      {
+        "label": "Change kind",
+        "value": "",
+        "shown": "Not stated — choose"
+      }
+    ],
+    "onsetUnknown": 0
+  },
+  "file:Pre-IND Briefing Book": {
+    "selects": []
+  },
+  "file:Letter of Authorization": {
+    "selects": []
+  },
+  "file:Statement of Right of Reference": {
+    "selects": []
+  },
+  "sequencesTab": "0000 | Original Sequence | FDA (US) | VALIDATED | no validation recorded | Frozen | Assembling | 0001 | Amendment Sequence | FDA (US) | DRAFT | Assembling",
+  "workingSequenceOptions": [
+    "0000 · original · Validated (no validation recorded)",
+    "0001 · amendment · Draft"
+  ],
+  "validationStale": [
+    "Sequence 0000 is recorded as Validated, but its validation now finds 8 errors, and no validation verdict was recorded when it was marked. Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then."
+  ],
+  "validationHead": "Validation · sequence 0000 | dispatch readiness · validation | Sequence 0000 is recorded as Validated, but its validation now finds 8 errors, and no validation verdict was recorded when it was marked. Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then. | Sequence 0000 · 6 leaves · 8 errors · 3 warnings · 2 info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of. | WARNING | DOCUMENT_NOT_APPROVED | 3.2.S.4.1 | Every leaf’s source document is approved for transmission · ICH · high · Enforced here — this assessment checks it every time it runs. | Leaf \"Vorelinib-DS-Specification-J3\" (3.2.S.4.1) points at vault_documents 805b9144-9227-45c2-8c0e-34d6b05210c7, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved. | WARNING | DOCUMENT_NOT_APPROVED | 3.2.S.4.1 | Every leaf’s source document is approved for transmission · ICH · high · Enforced here — this assessment checks it every time it runs. | Leaf \"Vorelinib-DS-Specification-J3-r2\" (3.2.S.4.1) points at vault_documents 45224282-30b0-4f3f-b30c-0d4c2cb859f6, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved. | WARNING | DOCUMENT_NOT_APPROVED | 3.2.P.8 | Every leaf’s source document is approved for transmission · ICH · high · Enforced here — this assessment checks it every time it runs. | Leaf \"Vorelinib DS Stability Protocol STB-0042\" (3.2.P.8) points at vault_documents 3551f13",
+  "dispatchStale": [
+    "Sequence 0000 is recorded as Validated, but its validation now finds 8 errors, and no validation verdict was recorded when it was marked. Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then."
+  ],
+  "dispatchGate": "Dispatch blocked — 4 blockers | 8 open error-severity validation finding(s) must be resolved before dispatch.\n3 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.\nNo completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.\nDispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:6).",
+  "dispatchReadiness": "Skip to content | CLIENT CATEGORIES | WORKSPACE | SCIENCE & INTELLIGENCE | EXPLORE | QUICK ACCESS | RP | Concept2Cure.RI | › | Dispatch readiness | Biotech & Pharma | CT | Concept2Cure Therapeutics | Search, jump, or run a command | ⌘K | Task | 2 | ANA · DISPATCH GATE · PROVEN, NOT GENERATED | Cleared to dispatch? | Vorelinib · KIT-mutant GIST (IND) · Sequence 0001 (id 7) · region FDA · 4 leaves · status draft | Dispatch blocked | 4 blockers stand between you and dispatch. | This is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check. | No open error-severity finding, no leaf awaiting approval, and no unacknowledged Shadow Review critical | Blocks dispatch: | 1 open error-severity validation finding(s) must be resolved before dispatch. | 1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved. | STRUCTURAL_GATE_CLEAR · Enforced here — this assessment checks it every time it runs. | The agency-grade validator’s report for this package carries no errors | Not assessed. No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it. | EXTERNAL_VALIDATION_CLEAN · Requires the agency validator — its report decides this; the product records the verdict, it does not reproduce the check. | At least one Shadow Review has completed for this sequence | Blocks dispatch: | No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting. | SHADOW_REVIEW_COMPLETED · Enforced here — this assessment checks it every time it runs. | A valid release signature binds this sequence’s package (21 CFR 11.70) | Blocks dispatch: | Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:7). | RELEASE_SIGNATURE_VALID · Enforced here — this assessment checks it every time it runs. | Structural validation | 1 error | 2 warnings | 1 info | ERROR | 1.1 | Every non-delete leaf resolves to a file UNRESOLVED_DOCUMENT · ICH · high · Enforced here — this assessment checks it every time it runs. | Leaf \"Form FDA 356h (Applicatio",
+  "httpErrors": []
+}

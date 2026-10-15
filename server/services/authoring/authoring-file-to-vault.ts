@@ -25,6 +25,14 @@
  *     Part 11 filing-artifact gate stays where it is; the project vault holds
  *     working files as well as sealed ones, and lying about which is which is
  *     the only thing refused.
+ *   • no PDF engine      503 PDF_RENDERER_UNAVAILABLE — 2026-10-08 (QA walk 2,
+ *                          j4): where Puppeteer is absent the PDF renderer falls
+ *                          back to a plain-text stand-in whose first line says
+ *                          not to file it, and this filed it as the governed
+ *                          Vault copy, silently. No decision allows filing it
+ *                          with an acknowledgement (docs/LAUNCH_DEFINITION_OF_DONE.md,
+ *                          docs/design), so it fails closed before ingest. DOCX
+ *                          does not use that engine and is unaffected.
  *
  * ── Never a partial write ───────────────────────────────────────────────────
  * Rendering writes nothing. Ingest is atomic in itself. If the filing or the
@@ -39,12 +47,21 @@ import { writeChainedAuditRow } from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import { columnState, writeAuthoringAuditTrail, type AuthoringAuditContext } from './authoring-evidence';
-import { renderAuthoringExport, logExport, computeDocHash, type RenderedExport } from './authoring-export';
+import { renderAuthoringExport, logExport, sectionsDigest, type RenderedExport, type ExportSectionRow } from './authoring-export';
+import { SavedDraftSourceError, reserveSavedDraftSourceReferences, withSavedDraftSourceReservation } from './draft-source-references';
+import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from './workflow-import-governance';
+import { savedImportSource } from './import-source-references';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
 import { ingestVaultDocument } from '../vault/vault-ingest.service';
 import { placeVaultDocument, type VaultFilingRecord } from '../vault/vault-placement.service';
 import { resolveVaultView, isFolderInView, folderLabel } from '../vault/vault-filing.service';
 import { VAULT_INGEST_DOCUMENT_TYPES } from '../../../shared/constants/domain/vault-taxonomy';
+import {
+  carryAuthoringApproval,
+  readAuthoringSignatures,
+  type CarryOutcome,
+} from '../regulatory/authoring-approval-carryover';
+import type { CanonicalStoreDb } from '../regulatory/canonicalDocumentStore';
 
 const logger = createScopedLogger('authoring-file-to-vault');
 
@@ -64,6 +81,8 @@ export interface FileToVaultArgs {
   documentType?: string | null;
   ipAddress?: string;
   userAgent?: string;
+  /** The Drizzle handle the Vault lifecycle record is written on. Defaults to the runtime db. */
+  lifecycleDb?: CanonicalStoreDb;
 }
 
 export type FileToVaultOutcome =
@@ -77,6 +96,8 @@ export type FileToVaultOutcome =
       fileName: string;
       programId: string;
       sealed: boolean;
+      /** Whether the Authoring approval carried to the Vault version (FD5 (c)), and why not when it did not. */
+      approval: CarryOutcome;
     };
 
 interface DocRow {
@@ -87,13 +108,27 @@ interface DocRow {
   locked_at: string | Date | null;
   client_program_id: string | null;
   version: string | null;
+  created_by: string | null;
   created_at: unknown;
+  provenance?: unknown;
 }
 
 const refuse = (status: number, code: string, error: string): FileToVaultOutcome => ({ kind: 'refused', status, code, error });
 
+/** The refusal of a plain-text PDF fallback (see the header). */
+const PDF_FALLBACK_REFUSAL =
+  'The PDF renderer is not available here; this would file a plain-text rendering. Nothing was filed. ' +
+  'Word (.docx) is filed with its formatting.';
+
 /** Postgres: lock_not_available — another transaction holds the row FOR UPDATE. */
 const LOCK_NOT_AVAILABLE = '55P03';
+const DOCUMENT_CHANGED_DURING_FILING = 'DOCUMENT_CHANGED_DURING_FILING';
+
+/** Compare every rendered field and its order; the canonical section digest
+ * deliberately omits titles, which can also change the delivered file. */
+function sectionRenderState(sections: ReadonlyArray<ExportSectionRow>): string {
+  return JSON.stringify(sections.map(({ id, code, title, content }) => [id, code, title, content]));
+}
 
 /**
  * The document row, taken FOR UPDATE NOWAIT in its own short transaction: a
@@ -116,7 +151,9 @@ async function readDocumentForFiling(
     // rather than chosen; read it only where the column exists.
     const hasProvenance = (await columnState(pool, 'provenance')) === 'present';
     const r = await client.query(
-      `SELECT id, title, module, status, locked_at, client_program_id, version, created_at${hasProvenance ? ', provenance' : ''}
+      `SELECT id, title, module, to_jsonb(authoring_documents)->>'locale' AS locale,
+         to_jsonb(authoring_documents)->>'product_code' AS product_code,
+         status, locked_at, client_program_id, version, created_by, created_at${hasProvenance ? ', provenance' : ''}
          FROM authoring_documents WHERE id = $1 AND tenant_id = $2
          FOR UPDATE NOWAIT`,
       [docId, tenantId],
@@ -208,13 +245,16 @@ async function revertIngest(args: RevertIngestArgs): Promise<void> {
 async function recordFiling(
   args: FileToVaultArgs,
   doc: DocRow,
-  rendered: RenderedExport,
+  snapshot: { rendered: RenderedExport; sections: ExportSectionRow[] },
   vault: { id: string; folder: VaultFilingRecord; exportId: string },
 ): Promise<void> {
   const { pool, tenantId, actor, docId } = args;
+  const { rendered, sections } = snapshot;
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+    // Same order as withdrawal and source-linked save: program before row locks.
+    await reserveSavedDraftSourceReferences(doc, client, tenantId, actor);
     const again = await client.query(
       `SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE NOWAIT`,
       [docId, tenantId],
@@ -222,6 +262,20 @@ async function recordFiling(
     if (String(again.rows[0]?.status ?? '') !== String(doc.status ?? '')) {
       throw Object.assign(new Error('document changed state during filing'), { code: LOCK_NOT_AVAILABLE });
     }
+    // Admission can take time, and working drafts remain editable. Reserve
+    // inserts as well as updates before comparing the exact rendered snapshot.
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    await client.query('LOCK TABLE authoring_sections IN SHARE MODE');
+    const currentSections = await client.query(
+      `SELECT id, code, title, content FROM authoring_sections
+        WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`,
+      [docId, tenantId],
+    );
+    if (sectionRenderState(currentSections.rows) !== sectionRenderState(sections)) {
+      throw Object.assign(new Error('document sections changed during filing'), { code: DOCUMENT_CHANGED_DURING_FILING });
+    }
+    await assertWorkflowImportRelease(client, { organizationId: tenantId, doc,
+      sections: currentSections.rows, actor });
     const details = {
       format: args.format,
       exportId: vault.exportId,
@@ -232,11 +286,14 @@ async function recordFiling(
       folderId: vault.folder.folderId,
       placementStatus: vault.folder.placementStatus,
       documentStatus: doc.status,
+      // The exact original dependency survives the new bytes' identity. This
+      // receipt is how withdrawal finds a source-derived Vault rendition.
+      ...(savedImportSource(doc) ? { importSource: savedImportSource(doc) } : {}),
     };
     await logExport(client, {
       docId,
       format: args.format,
-      docSha256: await computeDocHash(client, docId, tenantId),
+      docSha256: sectionsDigest(sections),
       exportedBy: actor.email ?? actor.id,
       fileName: rendered.fileName,
       fileSize: rendered.fileContent.length,
@@ -372,6 +429,33 @@ async function ingestAndFile(
   return { id: ingested.document.id, folder: placed.filing };
 }
 
+async function renderForVaultFiling(args: FileToVaultArgs, doc: DocRow, sections: ExportSectionRow[]): Promise<RenderedExport | FileToVaultOutcome> {
+  const sealed = LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase());
+  try {
+    return await withSavedDraftSourceReservation(doc, args.pool, args.tenantId, executor => renderAuthoringExport({
+      executor, tenantId: args.tenantId, doc, sections, format: args.format, actor: args.actor,
+      notice: sealed ? null
+        : `WORKING DRAFT — not a sealed 21 CFR Part 11 record (status: ${doc.status ?? 'unknown'}). ` +
+          'No frozen snapshot or signature manifest certifies this content.',
+    }), args.actor);
+  } catch (err) {
+    if (err instanceof SavedDraftSourceError) return refuse(409, err.code, err.message);
+    if (err instanceof WorkflowImportGovernanceError) return refuse(err.status, err.code, err.message);
+    throw err;
+  }
+}
+
+function recordingFailure(err: unknown): FileToVaultOutcome {
+  if (err instanceof SavedDraftSourceError) return refuse(409, err.code, err.message);
+  if ((err as { code?: string })?.code === DOCUMENT_CHANGED_DURING_FILING) {
+    return refuse(409, DOCUMENT_CHANGED_DURING_FILING,
+      'The document content changed while it was being filed. Nothing was filed — review the current draft and try again.');
+  }
+  return (err as { code?: string })?.code === LOCK_NOT_AVAILABLE
+    ? refuse(409, 'DOCUMENT_MID_FREEZE', 'The document changed state while it was being filed. Nothing was filed — try again.')
+    : refuse(500, 'FILE_TO_VAULT_FAILED', 'The filing could not be recorded, so the document was not filed. Nothing was kept in the vault.');
+}
+
 /** File one authoring document into its project's vault. */
 export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promise<FileToVaultOutcome> {
   const { pool, tenantId, docId } = args;
@@ -396,35 +480,27 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
 
   const sectionsRes = await pool.query(
     `SELECT id, code, title, content FROM authoring_sections
-      WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index`,
+      WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`,
     [docId, tenantId],
   );
-  const rendered = await renderAuthoringExport({
-    executor: pool,
-    tenantId,
-    doc,
-    sections: sectionsRes.rows,
-    format: args.format,
-    notice: sealed
-      ? null
-      : `WORKING DRAFT — not a sealed 21 CFR Part 11 record (status: ${doc.status ?? 'unknown'}). ` +
-        'No frozen snapshot or signature manifest certifies this content.',
-  });
+  const rendered = await renderForVaultFiling(args, doc, sectionsRes.rows);
+  if ('kind' in rendered) return rendered;
+  if (rendered.rendering === 'plain-text-fallback') return refuse(503, 'PDF_RENDERER_UNAVAILABLE', PDF_FALLBACK_REFUSAL);
 
   const admitted = await ingestAndFile(args, doc, rendered, programId);
   if ('kind' in admitted) return admitted;
 
   const exportId = crypto.randomUUID();
   try {
-    await recordFiling(args, doc, rendered, { id: admitted.id, folder: admitted.folder, exportId });
+    await recordFiling(args, doc, { rendered, sections: sectionsRes.rows }, { id: admitted.id, folder: admitted.folder, exportId });
   } catch (err) {
     const why = err instanceof Error ? err.message : String(err);
     logger.error('file-to-vault record transaction failed; reverting the ingested vault row', { docId, why });
     await revertIngest({ pool, tenantId, actorId: args.actor.id, vaultDocumentId: admitted.id, programId, why: `record failed: ${why}` });
-    return (err as { code?: string })?.code === LOCK_NOT_AVAILABLE
-      ? refuse(409, 'DOCUMENT_MID_FREEZE', 'The document changed state while it was being filed. Nothing was filed — try again.')
-      : refuse(500, 'FILE_TO_VAULT_FAILED', 'The filing could not be recorded, so the document was not filed. Nothing was kept in the vault.');
+    return recordingFailure(err);
   }
+
+  const approval = await carryApprovalToVault(args, doc, sectionsRes.rows, admitted.id, rendered.artifactSha256);
 
   return {
     kind: 'filed',
@@ -435,7 +511,49 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
     fileName: rendered.fileName,
     programId,
     sealed,
+    approval,
   };
+}
+
+/**
+ * Step 5, after the filing has committed: carry the Authoring approval to the
+ * Vault version when it is bound to these bytes (FD5 (c),
+ * authoring-approval-carryover.ts). Its own transaction; a failure leaves the
+ * version filed and unapproved, and says so.
+ */
+async function carryApprovalToVault(
+  args: FileToVaultArgs,
+  doc: DocRow,
+  renderedSections: Array<{ code: string; content: string | null }>,
+  vaultDocumentId: string,
+  artifactSha256: string,
+): Promise<CarryOutcome> {
+  const filerId = /^\d+$/.test(args.actor.id) ? Number(args.actor.id) : null;
+  if (filerId === null) {
+    return { carried: false, reason: 'The filer is not a user on record, so nothing can be recorded on their behalf.' };
+  }
+  try {
+    const db = args.lifecycleDb ?? ((await import('../../db')) as unknown as { db: CanonicalStoreDb }).db;
+    return await carryAuthoringApproval(db, {
+      organizationId: args.tenantId,
+      filerId,
+      vaultDocumentId,
+      artifactSha256,
+      authoringDocumentId: doc.id,
+      authoringAuthor: doc.created_by,
+      status: doc.status,
+      renderedDigest: sectionsDigest(renderedSections),
+      signatures: await readAuthoringSignatures(args.pool, doc.id, args.tenantId),
+    });
+  } catch (err) {
+    logger.error('the Authoring approval could not be carried to the Vault version; it stays unapproved', {
+      docId: doc.id, vaultDocumentId, err: err instanceof Error ? err.message : String(err),
+    });
+    return {
+      carried: false,
+      reason: 'The approval could not be recorded in the Vault, so this version needs its review and approval there.',
+    };
+  }
 }
 
 /** Exposed for the route: a well-formed folder id is a short slug, never a path. */

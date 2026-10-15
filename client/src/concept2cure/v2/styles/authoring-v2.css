@@ -8,12 +8,12 @@
      Document authoring editor + CMC/IND/Dossier surface styles
      ═════════════════════════════════════════════════════════════════ */
 
-  /* Editor mode: suppress the global AnA assist column so the editor's own 3 columns get full width. */
+  /* Editor mode: the shell is nav | page (the AnA column went with the rail, ana-2a). */
   .shell[data-editor='true'] {
-    grid-template-columns: var(--rail) 1fr 0 !important;
+    grid-template-columns: var(--rail) 1fr !important;
   }
   .shell[data-editor='true'][data-collapsed='true'] {
-    grid-template-columns: var(--rail-collapsed) 1fr 0 !important;
+    grid-template-columns: var(--rail-collapsed) 1fr !important;
   }
   .shell[data-editor='true'] .page {
     padding: 0;
@@ -221,9 +221,11 @@
     --ed-crumbs-floor: 180px;
     --ed-doc-h-gap: 12px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--ed-doc-h-gap);
+    row-gap: 8px;
     padding: 10px 18px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
@@ -260,14 +262,29 @@
     color: var(--text-400);
     flex-shrink: 0;
   }
+  /* The header (.ed-doc-h wraps) has two parts (QA 2026-10-08, walk 2, j5):
+     the trail and the governed acts, then the panels and tools. Nothing in it
+     is clipped.
+     Until then one nowrap scroller held twenty-three controls, and Save,
+     E-sign and Place into filing sat past its edge at 1440px (x 2362–3269 in
+     a box ending at 1076) and at 390px. */
+  .ed-doc-commit {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
   .ed-doc-actions {
     display: flex;
     align-items: center;
     gap: 6px;
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
-    max-width: calc(100% - var(--ed-crumbs-floor) - var(--ed-doc-h-gap));
-    overflow-x: auto;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    max-width: 100%;
   }
   .ed-doc-scroll {
     flex: 1;
@@ -288,7 +305,7 @@
     gap: 2px;
     padding: 2px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg, 10px);
+    border-radius: var(--radius-lg);
     background: var(--bg-050);
   }
   .ed-viewtoggle .btn {
@@ -308,12 +325,12 @@
   .ed-full-sec {
     padding: 0 0 30px;
     margin-bottom: 30px;
-    border-bottom: 1px solid var(--bg-200, #eaecf0);
+    border-bottom: 1px solid var(--bg-200);
     scroll-margin-top: 24px;
   }
   .ed-full-sec:last-child { border-bottom: none; }
   .ed-full-sec[data-active] {
-    box-shadow: -14px 0 0 -12px var(--accent-100, #2563eb);
+    box-shadow: -14px 0 0 -12px var(--accent-100);
   }
   .ed-full-sec-h {
     display: flex;
@@ -567,6 +584,15 @@
   .ed-comments-h {
     font-size: 12px;
     font-weight: 600;
+  }
+  /* AnA's work card in the editor's pane: a share of the pane, scrolled on
+     its own, so the conversation under it keeps room for the answer (QA
+     2026-10-08, walk 2, j5: at full height only the chips were visible). */
+  .ed-comments > .ed-ana-work {
+    flex: 0 1 auto;
+    max-height: 38%;
+    overflow-y: auto;
+    padding: 0;
   }
   .ed-comments-h-row {
     display: flex;
@@ -971,11 +997,74 @@
     background: var(--bg-300);
   }
 
+  /* Keep the shared signature meaning pills intact under the V2 button reset. */
+  .es-meaning-opt {
+    padding: 5px 11px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-000);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-300);
+  }
+  .es-meaning-opt:hover {
+    background: var(--bg-050);
+    color: var(--text-100);
+  }
+  .es-meaning-opt[data-active='true'] {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    color: var(--accent-on-strong);
+  }
+  .es-meaning-opt:focus-visible {
+    outline: 2px solid var(--accent-main-200);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  @media (max-width: 760px) {
+    .es-meaning-opt {
+      min-height: 44px;
+    }
+  }
+
+  /* Workflow review consent uses a checkbox, separate from the shared
+     signing dialog's full-width password and reason fields. */
+  .ed-workflow-adoption {
+    margin-bottom: 14px;
+  }
+  .ed-workflow-adoption-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-height: 44px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-200);
+    cursor: pointer;
+  }
+  .ed-workflow-adoption-label input[type='checkbox'] {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 0;
+    accent-color: var(--accent-strong);
+  }
+  .ed-workflow-adoption-label input[type='checkbox']:focus-visible {
+    outline: 2px solid var(--accent-main-200);
+    outline-offset: 2px;
+  }
+  .ed-workflow-adoption-hint {
+    margin: 5px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-300);
+  }
+
   /* E-signature modal (21 CFR 11.50 manifestation) */
   .esign-bd {
     position: fixed;
     inset: 0;
-    background: rgba(20, 20, 19, 0.4);
+    background: color-mix(in srgb, var(--black) 40%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1141,7 +1230,7 @@
   .ed-guard-bd {
     position: fixed;
     inset: 0;
-    background: rgb(20 20 19 / 0.38);
+    background: color-mix(in srgb, var(--black) 38%, transparent);
     backdrop-filter: blur(3px);
     z-index: 140;
     display: flex;
@@ -1153,7 +1242,7 @@
     width: min(460px, 100%);
     background: var(--bg-000);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg, 12px);
+    border-radius: var(--radius-lg);
     box-shadow: var(--v2-shadow-lg);
     padding: 20px 22px 18px;
     outline: none;
@@ -1238,7 +1327,7 @@
   .ana-md pre {
     background: var(--bg-100);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md, 6px);
+    border-radius: var(--radius-md);
     padding: 9px 11px;
     margin: 0 0 8px;
     overflow-x: auto;
@@ -1298,7 +1387,7 @@
   }
   .dcv-card {
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg, 12px);
+    border-radius: var(--radius-lg);
     background: var(--bg-000);
     padding: 16px 18px 14px;
     display: grid;
@@ -1369,6 +1458,9 @@
     display: grid;
     gap: 14px;
   }
+  .dcv-body[hidden] {
+    display: none;
+  }
   .dcv-sec {
     display: grid;
     gap: 2px;
@@ -1417,6 +1509,12 @@
     font-style: italic;
     margin: 0;
   }
+  /* "Ask AnA to draft <code>" beside a section's empty state (2026-10-01):
+     the action, not the italic note, so it reads upright. */
+  .dcv-sec-empty .nda-open {
+    margin-left: 8px;
+    font-style: normal;
+  }
   .dcv-showall {
     justify-self: start;
   }
@@ -1441,7 +1539,7 @@
   /* ── The card, expanded into the editor ── */
   .dcv-expanded {
     border: 1px solid var(--accent-muted);
-    border-radius: var(--radius-lg, 12px);
+    border-radius: var(--radius-lg);
     background: var(--bg-000);
     overflow: hidden;
     display: flex;
@@ -1508,6 +1606,431 @@
     padding: 1px 5px;
     flex-shrink: 0;
   }
+  /* ── The outline and the refresh line (2026-10-01) ──
+     Every section, drafted or not, so the card says how far along the
+     document is; choosing one shows it below. */
+  .dcv-outline {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+  }
+  .dcv-outline > li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .dcv-outline-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-100);
+    font: inherit;
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .dcv-outline-item:hover,
+  .dcv-outline-item[aria-current] {
+    background: var(--bg-050);
+  }
+  .dcv-outline-code {
+    font-family: var(--font-mono);
+    color: var(--text-300);
+    flex-shrink: 0;
+  }
+  .dcv-outline-t {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dcv-outline-state {
+    flex-shrink: 0;
+    font-size: 11.5px;
+    color: var(--text-300);
+    padding-right: 6px;
+  }
+  .dcv-outline > li[data-drafted='false'] .dcv-outline-t {
+    color: var(--text-300);
+  }
+  .dcv-outline > li[data-updated] .dcv-outline-state {
+    color: var(--accent-strong);
+    font-weight: 600;
+  }
+  .dcv-updated {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-200);
+  }
+  .dcv-updated[data-tone='err'] {
+    color: var(--error);
+  }
+  /* ── Beside the conversation (2026-10-01) ──
+     The founder's ask: AnA builds the document while she and the client keep
+     talking, as one builds with Claude. The thread portals the expanded editor
+     into `.ct-canvas-pane`, after its conversation column: the conversation
+     keeps a reading column with its answers and composer, and the document
+     takes the rest. Too narrow for two columns, the document takes the screen
+     and "Back to conversation" is the way out, as before. */
+  .ct-main[data-canvas-open] > .ct-conv {
+    flex: 0 0 clamp(340px, 34%, 520px);
+    border-right: 1px solid var(--border);
+  }
+  .ct-canvas-pane {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: var(--bg-050);
+  }
+  .ct-canvas-pane[hidden] {
+    display: none;
+  }
+  .ct-canvas-pane > .dcv-expanded {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+  /* The card that opened the editor stays in the thread, marked, so the
+     conversation still says which document is open beside it. */
+  .dcv-card[data-open-beside] {
+    border-color: var(--accent-muted);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .dcv-open-note {
+    align-self: center;
+    font-size: 12px;
+    color: var(--text-300);
+  }
+  /* A document AnA built while another is open beside the conversation, or
+     at a width with no room beside it: offered here, never forced open
+     (docs/design/ONE_ANA_ONE_CANVAS.md, slice 1). Empty, it takes no space. */
+  .ct-ready-doc:empty {
+    display: none;
+  }
+  .ct-ready-doc {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 8px;
+    width: 100%;
+    max-width: 760px;
+    padding: 6px 8px 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-100);
+    font-size: 13px;
+    color: var(--text-200);
+  }
+  .ct-ready-doc-t {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Where a handed-over question was asked (ONE_ANA_ONE_CANVAS.md, slice 8). */
+  .ct-ask-origin {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 8px;
+    width: 100%;
+    max-width: 760px;
+    font-size: 13px;
+    color: var(--text-200);
+  }
+  .ct-ask-origin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px 2px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+  .ct-ready-doc-x {
+    border: 0;
+    background: none;
+    color: var(--text-300);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+  /* ── The canvas's Documents list (ONE_ANA_ONE_CANVAS.md §4.3) ──
+     The list state of the right-hand column, portalled into
+     `.ct-canvas-pane` like the editor. It scrolls inside itself. */
+  .ct-canvas-pane > .cdl {
+    flex: 1;
+    min-height: 0;
+  }
+  .cdl {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-000);
+    padding: 14px 16px 16px;
+  }
+  .cdl-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .cdl-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-100);
+  }
+  .cdl-title:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .cdl-scope {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .cdl-scope-btn {
+    border: 0;
+    background: none;
+    padding: 5px 10px;
+    font-size: 12.5px;
+    color: var(--text-200);
+    cursor: pointer;
+  }
+  .cdl-scope-btn + .cdl-scope-btn {
+    border-left: 1px solid var(--border);
+  }
+  .cdl-scope-btn[aria-pressed='true'] {
+    background: var(--accent-000);
+    color: var(--accent-200);
+    font-weight: 600;
+  }
+  .cdl-close {
+    margin-left: auto;
+    border: 0;
+    background: none;
+    color: var(--text-300);
+    padding: 4px 6px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: inline-flex;
+  }
+  .cdl-close:hover {
+    background: var(--bg-100);
+    color: var(--text-100);
+  }
+  .cdl-sub {
+    margin: 6px 0 10px;
+    font-size: 12.5px;
+    color: var(--text-300);
+  }
+  .cdl-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .cdl-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+  }
+  .cdl-row-main {
+    flex: 1 1 220px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cdl-row-t {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-100);
+    overflow-wrap: anywhere;
+  }
+  .cdl-row-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    font-size: 12px;
+    color: var(--text-300);
+  }
+  /* The status in words; colour only repeats what the word says. */
+  .cdl-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-100);
+    color: var(--text-200);
+    font-weight: 600;
+  }
+  .cdl-pill[data-status='IN_REVIEW'] {
+    border-color: var(--warning);
+    color: var(--text-100);
+  }
+  .cdl-pill[data-status='APPROVED'],
+  .cdl-pill[data-status='FROZEN'] {
+    border-color: var(--success);
+    color: var(--text-100);
+  }
+  .cdl-row-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cdl-note,
+  .cdl-empty {
+    margin: 4px 0 8px;
+    font-size: 12.5px;
+    color: var(--text-200);
+  }
+  .cdl-note[data-tone='err'] {
+    color: var(--error);
+  }
+  /* A document the list opened, while its record is read. */
+  .cdl-reading {
+    padding: 12px 0;
+  }
+  /* The status pill in an open document's bar, beside its title. */
+  .dcv-bar .cdl-pill {
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  /* ── The Download menu (editor/DownloadMenu.tsx, §4.5) ──
+     A working copy, marked as one, and the controlled export, offered only
+     for a sealed document. Never wider than the screen.
+     The menu is NOT laid out inside its button's box: the editor's toolbar
+     (`.ed-doc-actions`, overflow-x:auto) is a scroll box on both axes and cut
+     an absolutely placed menu off at its own height, so no item could be seen.
+     It opens in the top layer (a manual popover) where the browser has one,
+     fixed either way, placed from its button by menuPlacement.ts (through
+     DownloadMenu.tsx's `placeMenu`). `inset`, `margin` and `color` undo the
+     browser's own popover box. */
+  .dlm {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .dlm-menu {
+    position: fixed;
+    inset: auto;
+    top: 0;
+    left: 0;
+    margin: 0;
+    z-index: 130;
+    width: max-content;
+    min-width: 240px;
+    max-width: min(320px, calc(100vw - 32px));
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-000);
+    color: var(--text-100);
+    box-shadow: 0 8px 24px color-mix(in oklab, var(--black) 14%, transparent);
+  }
+  .dlm-group + .dlm-group {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+  }
+  .dlm-sec {
+    padding: 6px 8px 2px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-300);
+  }
+  .dlm-reason {
+    display: block;
+    padding: 0 8px 4px;
+    font-size: 12px;
+    color: var(--text-200);
+  }
+  .dlm-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    width: 100%;
+    border: 0;
+    background: none;
+    text-align: left;
+    padding: 7px 8px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .dlm-item:hover,
+  .dlm-item:focus-visible {
+    background: var(--bg-100);
+  }
+  .dlm-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .dlm-item[aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+  .dlm-item[aria-disabled='true'] .dlm-item-t {
+    color: var(--text-300);
+  }
+  .dlm-item-t {
+    font-size: 13px;
+    color: var(--text-100);
+  }
+  .dlm-item-d {
+    font-size: 12px;
+    color: var(--text-300);
+  }
+  .dlm-err {
+    flex-basis: 100%;
+    font-size: 12px;
+    color: var(--error);
+  }
+  @media (max-width: 1100px) {
+    .ct-main[data-canvas-open] > .ct-conv {
+      display: none;
+    }
+    .ct-canvas-pane {
+      padding: 0;
+    }
+  }
   .dcv-workbench {
     flex: 1;
     min-height: 0;
@@ -1572,6 +2095,13 @@
     .ct-side {
       flex: 0 0 auto;
       max-height: 38%;
+    }
+    /* The Summary sheet replaces the stacked work dock here (ANA-SUMMARY S4):
+       a third region at 38% of 844px was a strip too short to read a turn in.
+       The header chip and each turn's Summary button open the sheet
+       (TurnSummarySheet); a drafted artifact list, when there is one, stays. */
+    .ct-side-work {
+      display: none;
     }
     .ct-side-work,
     .ct-artifacts {
@@ -1644,17 +2174,22 @@
       /* The keyboard hint is for a keyboard. There is not one here. */
       display: none;
     }
-    .dcv-workbench > .ed,
-    .dcv-workbench > .ed[data-comments='true'] {
+    /* One column at phone width, wherever the editor is mounted. Scoped to
+       the canvas only, the Authoring surface kept its 220px outline beside
+       the page, and the page column was 114px wide at 390px (QA 2026-10-08,
+       walk 2, j5). */
+    .ed,
+    .ed[data-comments='true'],
+    .ed[data-no-comments] {
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
     }
-    .dcv-workbench > .ed > .ed-tree {
+    .ed > .ed-tree {
       max-height: 180px;
       border-right: 0;
       border-bottom: 1px solid var(--border);
     }
-    .dcv-workbench > .ed[data-comments='true'] > .ed-comments {
+    .ed[data-comments='true'] > .ed-comments {
       width: 100%;
     }
     /* ── The editor's own chrome at phone width ──
@@ -1663,14 +2198,23 @@
        inside the canvas at 390px because that is the state this change was
        asked to prove, and they hold wherever `.ed` is mounted.
 
-       The header's action row stays the horizontal scroller it is on the
-       desktop. Wrapping it was tried and measured: eighteen controls became a
-       ten-row header 470px tall, which pushed the document off the screen and
-       left the rail overlaying the rows below it. A scroller keeps the
-       document where it is, and every control in it is still reached by Tab. */
+       The header's panel and tool row is a horizontal scroller here. Wrapping
+       it was tried and measured: eighteen controls became a ten-row header
+       470px tall, which pushed the document off the screen and left the rail
+       overlaying the rows below it. A scroller keeps the document where it
+       is, and every control in it is still reached by Tab. The governed acts
+       (.ed-doc-commit) are not in it: they wrap above it and stay on screen
+       (QA 2026-10-08, walk 2, j5). */
     .ed-doc-h {
       --ed-crumbs-floor: 0px;
       padding: 8px 12px;
+    }
+    .ed-doc-actions {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .ed-doc-commit {
+      justify-content: flex-start;
     }
     .ed-doc-actions .btn,
     .ed-doc-h .btn,
@@ -1878,6 +2422,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .pf-row[data-active] .pf-row-m {
+    color: var(--text-200);
+  }
   .pf-sel {
     border-top: 1px solid var(--border);
     padding: 10px 12px;
@@ -1902,6 +2449,208 @@
     flex-wrap: wrap;
     gap: 6px;
     padding-top: 4px;
+  }
+  /* The library uses the existing files rail, scope switch and source details.
+     Keep search available while the compact entries scroll beneath it. */
+  .pf-library {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .pf-library-head {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .pf-library-head p,
+  .pf-library-detail p {
+    margin: 0;
+  }
+  .pf-library-head .c2c-input {
+    width: 100%;
+    min-width: 0;
+  }
+  .pf-library-entry {
+    display: block;
+    background: transparent;
+  }
+  .pf-library-entry[open] {
+    background: var(--bg-050);
+  }
+  .pf-library-entry > summary {
+    cursor: pointer;
+    font-size: inherit;
+  }
+  .pf-library-entry > summary .pf-sel-m {
+    font-weight: normal;
+  }
+  .pf-library-entry > summary:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: var(--space-1);
+    border-radius: var(--radius-sm);
+  }
+  .pf-library-detail {
+    display: grid;
+    gap: var(--space-2);
+    padding-top: var(--space-2);
+  }
+  .pf-search .cdl-scope-btn:focus-visible {
+    outline-offset: -2px;
+  }
+  .pf-search .cdl-scope-btn:disabled,
+  .pf-actions .btn:disabled {
+    opacity: .5;
+    pointer-events: none;
+  }
+  .de-source-intro,
+  .ed-source-detail {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .de-source-intro {
+    margin-bottom: var(--space-4);
+  }
+  .de-source-import .de-h-eye {
+    text-transform: none;
+    color: var(--text-300);
+  }
+  .de-source-import .de-gov {
+    border-left-color: var(--border);
+  }
+  .de-source-import .de-gov .ico {
+    color: var(--text-300);
+  }
+  .source-import-hash {
+    font-family: var(--font-mono);
+    font-size: inherit;
+    color: inherit;
+    overflow-wrap: anywhere;
+  }
+  .source-import-warnings {
+    margin: 0;
+    padding-left: var(--space-4);
+    display: grid;
+    gap: var(--space-1);
+    font-size: inherit;
+    color: inherit;
+  }
+  .ed-source-notice > summary {
+    cursor: pointer;
+  }
+  .ed-source-detail {
+    margin-top: var(--space-2);
+  }
+  .ed-source-detail .de-desc {
+    margin-bottom: 0;
+  }
+  .source-work-action {
+    display: grid;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+  .source-work-action .sec-sub {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .source-work-action .sp-primary {
+    padding: var(--space-2) var(--space-3);
+  }
+  /* AnA offers remain contextual; the saved-record caveat and every refusal
+     stay visible while longer options and passages use native disclosures. */
+  .authoring-remedies {
+    min-width: 0;
+  }
+  .authoring-oversight-options,
+  .authoring-remedy-changes {
+    min-width: 0;
+  }
+  .authoring-oversight,
+  .authoring-remedy {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+  .authoring-remedy {
+    margin-top: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+  }
+  .authoring-oversight-actions,
+  .authoring-remedy-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding-top: var(--space-2);
+  }
+  .authoring-oversight-toggle,
+  .authoring-remedy-toggle {
+    cursor: pointer;
+    color: var(--text-200);
+    font-size: inherit;
+    font-family: var(--font-sans);
+  }
+  .authoring-oversight-toggle:focus-visible,
+  .authoring-remedy-toggle:focus-visible,
+  .ed-source-notice > summary:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: var(--space-1);
+    border-radius: var(--radius-sm);
+  }
+  .authoring-remedy-heading,
+  .authoring-remedy-label {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: inherit;
+    color: var(--text-100);
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .authoring-remedy-actions,
+  .authoring-oversight-actions,
+  .authoring-remedy-errors {
+    font-family: var(--font-sans);
+  }
+  .authoring-remedy-action,
+  .authoring-oversight-action {
+    white-space: normal;
+    height: auto;
+    max-width: 100%;
+    min-height: var(--space-8);
+  }
+  .authoring-remedy-reason,
+  .authoring-remedy-passage {
+    font-family: var(--font-serif);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    margin: 0;
+  }
+  .authoring-remedy-passages {
+    display: grid;
+    gap: var(--space-2);
+    padding-top: var(--space-2);
+  }
+  .authoring-remedy-passage {
+    white-space: pre-wrap;
+  }
+  .authoring-oversight-note,
+  .authoring-remedy-note {
+    margin: 0;
+    color: var(--text-300);
+    font-size: inherit;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    font-family: var(--font-sans);
+  }
+  .authoring-remedy-note[role='alert'],
+  .authoring-remedy-errors {
+    color: var(--error);
+  }
+  .authoring-oversight-action:disabled,
+  .authoring-remedy-action:disabled {
+    opacity: .5;
+    pointer-events: none;
   }
   .pf-viewer {
     flex: 1;
@@ -1969,7 +2718,7 @@
   }
   .rt-row {
     border: 1px solid var(--border);
-    border-radius: var(--radius-md, 8px);
+    border-radius: var(--radius-md);
     padding: 9px 11px;
     display: grid;
     gap: 4px;
@@ -2027,6 +2776,27 @@
      rather than the page. Measured at 390×844: the rails' rows were 10.5px
      and 26px tall, and the dialogs' close control 30×30. */
   @media (max-width: 760px) {
+    .pf-search .cdl-scope-btn,
+    .pf-library-entry > summary,
+    .authoring-oversight-toggle,
+    .authoring-remedy-toggle,
+    .ed-source-notice > summary,
+    .authoring-oversight-action,
+    .authoring-remedy-action {
+      min-height: 44px;
+    }
+    .de-source-import .de-x {
+      width: 44px;
+      height: 44px;
+    }
+    .de-source-import .de-btn {
+      min-height: 44px;
+    }
+    .de-source-import .de-h-eye,
+    .de-source-import .de-desc,
+    .de-source-import .de-gov-t {
+      font-size: 12px;
+    }
     .pf-count,
     .pf-folder-n,
     .pf-folder-empty,

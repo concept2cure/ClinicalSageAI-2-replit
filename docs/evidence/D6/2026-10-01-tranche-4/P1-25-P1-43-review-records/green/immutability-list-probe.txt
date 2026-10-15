@@ -1,0 +1,44 @@
+# probe (not kept): the two guard triggers added to EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS for this run only, then the file restored byte-for-byte
+# npx vitest run server/services/audit/__tests__/audit-immutability-triggers.test.ts server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts server/db/__tests__/provision-app-role-append-only.test.ts
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > names every append-only audit store, and the one governed UPDATE (revocation) by its columns 2ms
+ × server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > covers every store whose immutability trigger the production boot requires, or says why not 7ms
+   → expected [ 'public.compliance_review_records' ] to deeply equal []
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > after the blanket grants, from PUBLIC and the role, giving the revocation its columns back 2ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > asks for every store with its carve-out, and withholds nothing on a store this edition lacks 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > UPDATE, DELETE and TRUNCATE on a public store are EXCESS, not required 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > a store the role cannot append to is denied (from the grant-half commit 06152498) 0ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > TRUNCATE on an audit-schema relation is EXCESS too 0ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > a public store the runtime role OWNS is a failure (ownership confers every privilege) 0ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > electronic_signatures: the supersession columns are required, any other updatable column is EXCESS 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > names the immutability triggers of every audit store the sweep verifies 2ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > is created by a migration on a deploy applier, under exactly that name (drift guard) 6ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports ok when every expected trigger is present and enabled 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > issues one read-only catalog probe over pg_trigger, pg_class and pg_namespace, parameterised 2ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > names a trigger the catalog does not have (trg_audit_logs_no_delete dropped) 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > treats a disabled trigger (ALTER TABLE … DISABLE TRIGGER) as not protecting the table 0ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports a table that does not exist yet as missing every trigger on it 0ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > fails closed when the probe returns no row for an expected trigger 0ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > propagates a probe failure rather than reporting ok (caller decides the posture) 2ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > describeAuditImmutabilityGap > names every missing and disabled trigger, the absent tables and the migration to run 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > security-health panel exposure > runs as a critical check that fails when a trigger is missing 151ms
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names every authoring trigger file the registry names, literally 2648ms
+   → relation "public.organizations" does not exist
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied 144ms
+   → relation "public.organizations" does not exist
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1) 111ms
+   → relation "public.organizations" does not exist
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger 140ms
+   → relation "public.organizations" does not exist
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not 120ms
+   → relation "public.organizations" does not exist
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again 104ms
+   → relation "public.organizations" does not exist
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers 163ms
+   → relation "public.organizations" does not exist
+ × server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table 154ms
+   → relation "public.organizations" does not exist
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'public.compliance_review_records' ] to deeply equal []
+error: relation "public.organizations" does not exist
+ Test Files  2 failed | 1 passed (3)
+      Tests  9 failed | 19 passed (28)

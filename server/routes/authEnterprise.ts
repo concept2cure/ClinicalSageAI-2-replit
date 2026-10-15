@@ -29,17 +29,32 @@ import {
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { revokeToken, verifyLiveToken } from '../services/token-revocation';
+import { bindAccountByEmail, bindPreAuthAccount } from '../services/auth/pre-auth-account';
 import { continuedSessionClaims, idleWindowSecondsOf, openSession } from '../services/session-inactivity';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
-import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus, isPendingVerificationStatus } from '../services/account-standing';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  isActiveAccountStatus,
+  isPendingVerificationStatus,
+  organizationIdOfClaims,
+  readAccountStanding,
+  sessionEndedByStanding,
+} from '../services/account-standing';
 import { EMAIL_UNVERIFIED_MESSAGE } from '../services/email-verification';
 import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
+import {
+  canDeliverLoginCode,
+  LOGIN_CODE_UNDELIVERABLE_CODE,
+  LOGIN_CODE_UNDELIVERABLE_MESSAGE,
+  LOGIN_CODE_UNDELIVERABLE_REASON,
+} from '../services/auth/login-code-delivery';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
+import { signInLimits } from '../middleware/sign-in-limits';
 import { padUnknownEmailTiming } from '../services/login-timing-pad';
 import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 
@@ -80,15 +95,6 @@ const verifyMfaSchema = z.object({
   email: emailSchema.optional(),
   code: mfaCodeSchema,
   partialToken: z.string().min(1),
-});
-
-const mfaEnableSchema = z.object({
-  code: mfaCodeSchema,
-});
-
-const mfaDisableSchema = z.object({
-  password: z.string().min(1).max(1024),
-  code: mfaCodeSchema,
 });
 
 const selectOrganizationSchema = z.object({
@@ -135,36 +141,6 @@ const enterpriseAuthLimiter = rateLimit({
     },
   },
 });
-
-/**
- * Helper: extract and verify JWT from Authorization header. A signed-out
- * session (AUTH-03) is no identity, the same as a bad token.
- */
-async function extractJwtUser(
-  req: Request
-): Promise<{ userId: string; email: string; organizationId?: string } | null> {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
-  if (!token) return null;
-  try {
-    const decoded = (await verifyLiveToken(token)) as {
-      userId: string;
-      email: string;
-      organizationId?: string;
-      type?: string;
-      role?: string | null;
-      mfaPending?: boolean;
-    };
-    // SECURITY: reject non-access token classes (mfa-partial / mfa_challenge /
-    // refresh). Pre-MFA tokens are signed with the same secret as access tokens,
-    // so a password-only session must not be treated as a full identity for
-    // access-privileged actions (MFA setup/enable/disable).
-    if (requireAccessTokenReason(decoded)) return null;
-    return decoded;
-  } catch {
-    return null;
-  }
-}
 
 /** Helper: look up user's actual role in an organization */
 /**
@@ -264,12 +240,11 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
 
     // SECURITY FIX: Dev-mode any-password bypass removed. Always validate against database.
 
-    // Look up user in database
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, normalizedEmail))
-      .limit(1);
+    // The account this address names, bound to the request: from here the
+    // sign-in reads and writes that row and no other (D3, 2026-10-04).
+    const accountId = await bindAccountByEmail(normalizedEmail);
+    const userResult =
+      accountId === null ? [] : await db.select().from(users).where(eq(users.id, accountId)).limit(1);
 
     if (!userResult.length) {
       // The same bcrypt cost a wrong password pays, so the response time does
@@ -384,8 +359,12 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       });
     }
 
-    // Reset failed login counter on success
-    await resetFailedLogins(user.id);
+    // A right password clears the lockout count only for an account whose
+    // second factor is the emailed code. For an account with an authenticator
+    // it is cleared once the code is right (/verify-mfa): clearing it here gave
+    // anyone holding the password a fresh allowance of code guesses with every
+    // sign-in (IAM-30; routes/auth.ts has done this since P1-2).
+    if (mfaEnrolmentOf(user).signInFactor !== 'totp') await resetFailedLogins(user.id);
 
     // Check if password has expired
     const passwordExpired = await isPasswordExpired(user.id);
@@ -435,6 +414,12 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     const hasTotpSetup = mfaEnrolmentOf(user).signInFactor === 'totp';
     let maskedEmail: string | undefined;
 
+    /* The same refusal /api/auth/login makes, for the same reason: with no way
+       to send the emailed code, answering `success: true` with a masked address
+       tells the person a code is on its way to them. See
+       services/auth/login-code-delivery.ts. */
+    const emailOtpUndeliverable = !hasTotpSetup && !canDeliverLoginCode();
+
     // Password verified, second factor requested: the same event /api/auth/login records.
     // Against the organisation the partial token names, which verify-mfa
     // records its events against too: one sign-in, one ledger.
@@ -443,11 +428,23 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       userId: user.id,
       tenantId: organizationId,
       email: user.email,
-      outcome: 'success',
-      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      outcome: emailOtpUndeliverable ? 'failure' : 'success',
+      reason: emailOtpUndeliverable
+        ? LOGIN_CODE_UNDELIVERABLE_REASON
+        : hasTotpSetup
+          ? 'mfa_challenge_totp'
+          : 'mfa_challenge_email',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
     });
+
+    if (emailOtpUndeliverable) {
+      console.error('[enterprise-auth] Sign-in refused: e-mail is not configured, so the code cannot be sent');
+      return res.status(503).json({
+        error: LOGIN_CODE_UNDELIVERABLE_CODE,
+        message: LOGIN_CODE_UNDELIVERABLE_MESSAGE,
+      });
+    }
 
     if (!hasTotpSetup) {
       // Email OTP — generate and send
@@ -491,7 +488,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
  * POST /verify-mfa
  * Step 3: Verify MFA code (TOTP or backup code)
  */
-router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Response) => {
+router.post('/verify-mfa', enterpriseAuthLimiter, signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const parsed = verifyMfaSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -540,12 +537,31 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
 
     // Verify the MFA code using the same canonical MFA service as /api/auth/*
     const userId = parseInt(decoded.userId);
+    // The partial token is server-signed: its subject is the account (D3, 2026-10-04).
+    if (Number.isInteger(userId) && userId > 0) bindPreAuthAccount(userId);
 
     // A challenge issued before the account was suspended or deprovisioned does
     // not become a session after it (the rule routes/auth.ts's /mfa/verify
-    // applies; audit IAM-18 item 5). Checked before the code, so an account out
-    // of use spends none.
-    if (!(await isAccountActive(userId))) {
+    // applies; audit IAM-18 item 5). Nor does one issued before the account's
+    // sessions were ended: a password change, a sign-out everywhere or a removal
+    // from the organisation after the first factor (plan P0-4b R3, the question
+    // every door asks; this door did not until 2026-10-01). One reading of the
+    // standing, before the code, so a refused sign-in spends none.
+    const standing = await readAccountStanding(userId, organizationIdOfClaims(decoded));
+    if (standing.active && sessionEndedByStanding(decoded, standing)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'sign_in_begun_before_sessions_ended',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(401).json({ error: 'SIGN_IN_ENDED', message: 'This sign-in has ended. Sign in again.' });
+    }
+    if (!standing.active) {
       await recordAuthEvent({
         action: 'user_login',
         userId,
@@ -557,6 +573,24 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         userAgent: req.headers['user-agent'],
       });
       return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
+    // A locked account tries no code (IAM-30; routes/auth.ts asks the same at
+    // its challenge). Wrong codes below count toward this lock.
+    if ((await isAccountLocked(userId)).locked) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'account_locked',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(423).json({
+        error: 'ACCOUNT_LOCKED',
+        message: 'Account is temporarily locked due to too many failed attempts. Try again later.',
+      });
     }
 
     // The factor this account signs in with (mfa-enrolment.ts), read before any
@@ -587,14 +621,18 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     }
 
     if (!isValid) {
-      // The organisation comes from the partial token this server signed.
+      // A wrong authenticator or recovery code counts toward the password
+      // step's lockout (IAM-30), as at routes/auth.ts; an emailed code keeps its
+      // own cap (emailOtpService). The organisation comes from the partial token
+      // this server signed.
+      const locked = authenticatorAccount && (await recordFailedLogin(userId)).locked;
       await recordAuthEvent({
         action: 'user_login_mfa_failed',
         userId,
         tenantId: decoded.organizationId,
         email: decoded.email,
         outcome: 'failure',
-        reason: 'invalid_code',
+        reason: locked ? 'invalid_code_threshold_exceeded' : 'invalid_code',
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });
@@ -604,7 +642,9 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       });
     }
 
-    // MFA verified — issue full token with actual role
+    // MFA verified: the lockout count is cleared now, not at the password step
+    // (IAM-30), then the full token with the actual role.
+    await resetFailedLogins(userId);
     const mfaOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
 
     // Parallel: fetch role and org name concurrently (the user row was read above).
@@ -688,131 +728,13 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
   }
 });
 
-/**
- * POST /mfa/setup
- * Generate MFA secret and QR code for initial setup.
- * SECURITY: Requires valid JWT — userId derived from token, not request body.
+/*
+ * Authenticator enrolment is not served here. This router had its own
+ * POST /mfa/setup, /mfa/enable and /mfa/disable, a second implementation of
+ * POST /api/auth/mfa/{setup,enable,disable} (routes/auth.ts) that no client,
+ * script or test harness called. They were removed on 2026-10-08 (P-25
+ * follow-up): one implementation, the one the account panel uses.
  */
-router.post('/mfa/setup', async (req: Request, res: Response) => {
-  try {
-    const decoded = await extractJwtUser(req);
-    if (!decoded) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
-
-    res.json({
-      success: true,
-      qrCodeDataUrl: result.qrCodeDataUrl,
-      secret: result.secret,
-      otpauthUrl: result.otpauthUrl,
-    });
-  } catch (error) {
-    // Refused by mfaService.generateSecret while a factor is enrolled (F-26);
-    // the enterprise router answered that refusal with this 500.
-    if (error instanceof mfaService.MfaAlreadyEnabledError) {
-      return res.status(409).json({ error: 'MFA_ALREADY_ENABLED', message: error.message });
-    }
-    console.error('[Enterprise Auth] mfa/setup error:', error);
-    res.status(500).json({ error: 'Failed to setup MFA' });
-  }
-});
-
-/**
- * POST /mfa/enable
- * Enable MFA after user verifies their first TOTP code.
- * SECURITY: Requires valid JWT — userId derived from token.
- */
-router.post('/mfa/enable', async (req: Request, res: Response) => {
-  try {
-    const decoded = await extractJwtUser(req);
-    if (!decoded) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const parsed = mfaEnableSchema.safeParse(req.body);
-    if (!parsed.success) {
-      console.warn('[Enterprise Auth] mfa/enable validation failed:', {
-        issues: parsed.error.errors.map(e => ({ path: e.path.join('.'), message: e.message })),
-      });
-      return res.status(400).json({ error: 'Verification code is required' });
-    }
-    const { code } = parsed.data;
-
-    const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
-
-    if (!result.success) {
-      return res.status(400).json({
-        error: 'INVALID_CODE',
-        message: 'Invalid verification code. MFA not enabled. Each code works once; if you just used it, wait for the next.',
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'MFA enabled successfully',
-      backupCodes: result.backupCodes || [],
-    });
-  } catch (error) {
-    console.error('[Enterprise Auth] mfa/enable error:', error);
-    res.status(500).json({ error: 'Failed to enable MFA' });
-  }
-});
-
-/**
- * POST /mfa/disable
- * Disable MFA (requires JWT + password re-authentication).
- * SECURITY: Requires valid JWT — userId derived from token.
- */
-router.post('/mfa/disable', async (req: Request, res: Response) => {
-  try {
-    const decoded = await extractJwtUser(req);
-    if (!decoded) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const parsed = mfaDisableSchema.safeParse(req.body);
-    if (!parsed.success) {
-      const hasPasswordIssue = parsed.error.errors.some(e => e.path[0] === 'password');
-      const message = hasPasswordIssue
-        ? 'Password is required to disable MFA'
-        : 'Current MFA verification code is required to disable MFA';
-      return res.status(400).json({ error: message });
-    }
-    const { password, code } = parsed.data;
-
-    // Re-authenticate before disabling MFA
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, parseInt(decoded.userId)))
-      .limit(1);
-
-    if (!userResult.length) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const bcrypt = await import('bcryptjs');
-    const valid = await bcrypt.compare(password, userResult[0].passwordHash || '');
-    if (!valid) {
-      return res.status(401).json({ error: 'Invalid password' });
-    }
-
-    const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
-    if (!disabled) {
-      return res.status(400).json({
-        error: 'INVALID_CODE',
-        message: 'Unable to disable MFA with the current verification state.',
-      });
-    }
-
-    res.json({ success: true, message: 'MFA disabled' });
-  } catch (error) {
-    console.error('[Enterprise Auth] mfa/disable error:', error);
-    res.status(500).json({ error: 'Failed to disable MFA' });
-  }
-});
 
 /**
  * POST /electronic-signature — REMOVED (Gone).

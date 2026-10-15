@@ -94,7 +94,9 @@ export async function handleTransition(input: {
       executedArtifactId: input.executedArtifactId,
       supersededByDecisionId: input.supersededByDecisionId,
     });
-    governanceMetrics.recordTransitionExecuted(input.action);
+    // Counted only when it happened: a refused transition, or one whose event
+    // was not written, was counted as executed until 2026-10-15.
+    if (result.success) governanceMetrics.recordTransitionExecuted(input.action);
     return result;
   } catch (error) {
     governanceMetrics.recordQueryFailure('transition', error);

@@ -72,6 +72,12 @@ export interface ValidationRule {
   enforcement: RuleEnforcement;
   /** Finding code emitted when `enforcement === 'dispatch-readiness'`. */
   findingCode?: string;
+  /**
+   * For a date-effective rule: the id of the dated fact in
+   * server/services/regulatory-currency/currency-registry.ts whose effective
+   * date the check reads. The date lives there only — never copied here.
+   */
+  currencyFactId?: string;
 }
 
 const ICH_SPEC = 'ICH eCTD Specification (v3.2.2 / v4.0)';
@@ -266,6 +272,20 @@ export const RULE_CORPUS: ValidationRule[] = [
     findingCode: 'DOCUMENT_CONTENT_MISMATCH',
   },
   {
+    // 2026-10-08 (QA j6). FD5, founder decision 2026-10-01: nothing is grandfathered.
+    id: 'DOCUMENT_NOT_APPROVED',
+    title: 'Every leaf’s source document is approved for transmission',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'Only approved documents leave for an agency: a Vault version must be approved on its lifecycle record, current, and approved for the bytes staged (vaultVersionNotTransmittable); an authored document must be at an approved status (notFinalizedStatus). The assembler already refused such a leaf at freeze, dispatch and transmit, but only after the e-signature was taken. Readiness reports it beside the leaf so the refusal is seen before anyone signs. ' +
+      'P-22 (2026-10-08): it is a warning at validation ("not yet approved") — publishers validate while final approvals are collected — and the freeze, dispatch and transmit verdicts block on it.',
+    source: PRODUCT_POLICY,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'DOCUMENT_NOT_APPROVED',
+  },
+  {
     id: 'UNPLACEABLE_DOCUMENT_TABLE',
     title: 'Every non-delete leaf points at a document table the assembler can materialize',
     category: 'integrity',
@@ -327,9 +347,16 @@ export const RULE_CORPUS: ValidationRule[] = [
     category: 'format',
     regions: ['fda', 'eu', 'jp', 'ca', 'au', 'ch'],
     severity: 'high',
-    rationale: 'Encrypted or permission-restricted PDFs cannot be processed by the agency review tools.',
+    rationale:
+      'Encrypted or permission-restricted PDFs cannot be processed by the agency review tools. ' +
+      'The platform refuses a secured PDF leaf, judged from its bytes by ectd/leaf-pdf-security.ts, at three points: ' +
+      'eCTD v3.2.2 packaging (submission-gateways/regional-packager.ts), eCTD v4.0 packaging (ectd/ectd4/rps-packager.ts) ' +
+      'and transmit, re-reading the signed bundle (submission-gateways/bundle-leaf-security.ts). ' +
+      'The one exception: for an FDA sequence, an FDA form shipped with the security settings FDA issued it with.',
     source: FDA_CRIT,
-    enforcement: 'external',
+    // 2026-10-05 (g-pdf-security-enforcement-truth): was 'external', which told
+    // list_validation_rules the agency validator decides; the packagers refuse it.
+    enforcement: 'packager',
   },
   {
     id: 'ACCEPTED_FILE_TYPES',
@@ -371,13 +398,95 @@ export const RULE_CORPUS: ValidationRule[] = [
     category: 'content',
     regions: ['fda', 'eu', 'jp', 'ca', 'au', 'ch'],
     severity: 'medium',
-    rationale: 'Each region’s Module 1 mandates specific administrative documents; absence is surfaced (advisory at dispatch, decisive at agency intake).',
+    rationale:
+      'Each region’s Module 1 mandates specific administrative documents. In an original sequence of an application kind the regional Module 1 record models (US IND/NDA/BLA/ANDA, EU MAA, JP J-NDA), a heading the record requires of that kind is an error — the application is not one the agency would receive without it. A continuing US IND sequence is held to its Module 1 transmittal pair (the Form FDA 1571 at 1.1, the cover letter at 1.2) and the content its type requires, by the IND sequence validator, as errors (P-33, 2026-10-15). Elsewhere the region profile’s list is advisory at dispatch and decisive at agency intake (QA 2026-10-08, j7).',
     // FDA's criteria as well as the EU's: an FDA IND is the sequence that trips
     // this most, and a finding that cited only the EU family read as the wrong
     // agency's rule.
     source: `${FDA_CRIT}; ${EU_CRIT}`,
     enforcement: 'dispatch-readiness',
     findingCode: 'MISSING_REQUIRED_SECTION',
+  },
+  {
+    // 2026-10-05 (CMC-M3-GA item 21). Until then the dispatch path checked
+    // Module 1 alone, as warnings, and an original IND with no CMC section read
+    // dispatch-clear.
+    id: 'IND_MODULE3_REQUIRED',
+    title: 'The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'high',
+    rationale:
+      'An initial IND contains chemistry, manufacturing and controls information on the drug substance and the drug product ' +
+      '(21 CFR 312.23(a)(7)); information in a file another person holds may be incorporated by reference with that person’s ' +
+      'written authorization (21 CFR 312.23(b) — the Letter of Authorization, Module 1.4.1). The required Module 3 headings are ' +
+      'read from the IND required-section profile. A heading with no leaf at or under it in the original sequence, and no ' +
+      'recorded cross-reference naming it with a Letter of Authorization on file, blocks dispatch. An IND amendment is not asked.',
+    source: `21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); ${FDA_CRIT}`,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'IND_MODULE3_REQUIRED',
+  },
+  {
+    id: 'IND_MODULE3_BY_REFERENCE',
+    title: 'A required Module 3 heading of the original IND stands on a cross-reference rather than a placed leaf',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'low',
+    rationale:
+      'Reported as information when the original IND carries no leaf for a required Module 3 heading and a recorded ' +
+      'cross-reference names that heading with a Letter of Authorization on file, so a clear verdict says what it rests on.',
+    source: '21 CFR 312.23(b)',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'IND_MODULE3_BY_REFERENCE',
+  },
+  // ── The IND program (decision P-33, 2026-10-15) ──────────────────────────────
+  // What the deleted IND gate (ind-lifecycle/ind-dispatch-gate.ts) checked and
+  // this assessment did not; emitted by ind-program-findings.ts.
+  {
+    id: 'CROSS_REFERENCE_LOA_MISSING',
+    title: 'Every file the IND relies on has its Letter of Authorization on file',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'high',
+    rationale:
+      'Information in a file another person holds — a Drug Master File, another IND, an NDA or BLA — may support an IND only with ' +
+      'that person’s written authorization (21 CFR 312.23(b); for a Drug Master File, 21 CFR 314.420(b)), filed as the Letter of ' +
+      'Authorization in Module 1.4.1. Each reference in the IND’s cross-reference register with no LOA on file is an error on EVERY ' +
+      'sequence of the IND, as the IND gate held it; a register that cannot be read is an error too, and says so.',
+    source: `21 CFR 312.23(b); 21 CFR 314.420(b); ${FDA_CRIT}`,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'CROSS_REFERENCE_LOA_MISSING',
+  },
+  {
+    id: 'IND_SAFETY_REPORT_OVERDUE',
+    title: 'An unfiled IND safety report is past its deadline',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'medium',
+    rationale:
+      'An IND safety report recorded in the register, not filed, whose 7- or 15-day deadline (21 CFR 312.32(c)) has passed, is ' +
+      'reported as a warning on the IND’s other sequences. It never blocks: FDA does not refuse an amendment for a late safety ' +
+      'report, and a sequence that carries the safety report itself (a 312.32 filing, or a leaf at 1.12.4) is not warned for its ' +
+      'own lateness. A register that cannot be read is reported as a warning that says so.',
+    source: '21 CFR 312.32(c)',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'IND_SAFETY_REPORT_OVERDUE',
+  },
+  {
+    id: 'CLINICAL_HOLD_NOT_ASSESSED',
+    title: 'A US IND sequence states that a clinical hold is not assessed',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'low',
+    rationale:
+      'Nothing on the platform records whether FDA has placed an IND on clinical hold (21 CFR 312.42), so every US IND sequence ' +
+      'states, as information, that its verdict neither clears nor blocks it on that ground — in its findings and on the ' +
+      'structural gate. What is enforced is the statement; the hold itself is not assessed. A hold is never read from a request ' +
+      'body: the IND gate did, and blocked every sequence whose caller did not describe one, including the complete response ' +
+      'that lifts a hold (312.42(e)). When a hold register exists, an active hold blocks dispatch of every sequence but a response.',
+    source: '21 CFR 312.42',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'CLINICAL_HOLD_NOT_ASSESSED',
   },
   {
     id: 'STF_FOR_STUDIES',
@@ -388,6 +497,31 @@ export const RULE_CORPUS: ValidationRule[] = [
     rationale: 'Clinical and nonclinical study reports must be accompanied by an STF so the agency can index the study; missing STFs are flagged.',
     source: ICH_SPEC,
     enforcement: 'ectd-validator',
+  },
+
+  // ── Regional format acceptance — Japan/PMDA (jp) ────────────────────────────
+  {
+    // 2026-10-05 (g-jp-ectd-v4-dispatch-blocker).
+    id: 'JP_ECTD_V4_REQUIRED',
+    title: 'A new Japanese application is not built in eCTD v3.2.2 once PMDA accepts only v4.0',
+    category: 'format',
+    regions: ['jp'],
+    severity: 'high',
+    rationale:
+      'PMDA accepts only eCTD v4.0 for new approval applications from the effective date of currency fact ' +
+      '"pmda-ectd-v4-mandatory" (the check reads that date from the registry; it is not restated here). ' +
+      'An application first filed in v3.2.2 before then may continue its lifecycle in v3.2.2. This platform builds ' +
+      'Japan packages in v3.2.2 only and has no JP v4.0 packager, so an original sequence for a Japanese application ' +
+      'on or after that date is blocked at dispatch; a continuing sequence is not. With no usable as-of date, or ' +
+      'with the fact missing from the registry, the check blocks rather than passes.',
+    source:
+      `${JP_SPEC}: MHLW 薬生薬審発0218第4号 (2022-02-18, https://www.mhlw.go.jp/web/t_doc?dataId=00tc6467&dataType=1&pageNo=1) ` +
+      'set the eCTD v3.2.2 transition to end 2026-03-31; MHLW 医薬薬審発0310第3号 (2025-03-10, ' +
+      'https://www.mhlw.go.jp/hourei//doc/tsuchi/T250310I0040.pdf) is the current amendment. ' +
+      'Dated through currency fact pmda-ectd-v4-mandatory.',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'JP_ECTD_V4_REQUIRED',
+    currencyFactId: 'pmda-ectd-v4-mandatory',
   },
 
   // ── Regional Module 1 — Health Canada (ca) ──────────────────────────────────
@@ -467,12 +601,14 @@ export const RULE_CORPUS: ValidationRule[] = [
   },
   {
     id: 'STRUCTURAL_GATE_CLEAR',
-    title: 'No open error-severity finding, and no unacknowledged Shadow Review critical',
+    title: 'No open error-severity finding, no leaf awaiting approval, and no unacknowledged Shadow Review critical',
     category: 'integrity',
     regions: ['ich'],
     severity: 'high',
     rationale:
-      'The deterministic floor: an error-severity structural finding, or a critical Shadow Review finding nobody has acknowledged, stops dispatch. A count that could not be determined blocks as well — it is not a count of zero.',
+      'The deterministic floor: an error-severity structural finding, or a critical Shadow Review finding nobody has acknowledged, stops dispatch. ' +
+      'A leaf whose document is not yet approved stops freeze, dispatch and transmit by its own blocker; at validation it is a warning (P-22, 2026-10-08: approval gates the release, not the technical validation). ' +
+      'A count that could not be determined blocks as well — it is not a count of zero.',
     source: `${ICH_SPEC} (error findings); ${PRODUCT_POLICY} (Shadow Review criticals)`,
     enforcement: 'dispatch-readiness',
     findingCode: 'STRUCTURAL_GATE_CLEAR',
@@ -491,12 +627,12 @@ export const RULE_CORPUS: ValidationRule[] = [
   },
   {
     id: 'EXTERNAL_VALIDATION_CLEAN',
-    title: 'The agency-grade validator’s report for this package carries no errors',
+    title: 'External validation result and dispatch policy are assessed',
     category: 'integrity',
     regions: ['ich'],
     severity: 'high',
     rationale:
-      'Only the agency’s own validator (or a licensed equivalent) proves a package will pass intake. When its report is on file, an error in it blocks dispatch; when it is required and absent, that blocks too.',
+      'Required production external validation blocks on an unavailable, invalid or errored matched external report. Advisory outcomes remain visible without claiming an external pass. Tool/profile/package qualification and actual agency acceptance require separate evidence.',
     source: FDA_CRIT,
     enforcement: 'external',
   },

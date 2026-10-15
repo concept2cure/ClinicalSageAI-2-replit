@@ -1,0 +1,104 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > buildM23QualityOverallSummary (QOS via Module 3 composition) > composes the 2.3.S / 2.3.P QOS from CMC source objects 8ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > keeps the drug_substance hold and row reason after a recorded monthly schedule 24ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > keeps the drug_product hold and row reason after a recorded monthly schedule 10ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > retains the complete drug_substance source/row reason when a short hold already fits 5ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > retains the complete drug_product source/row reason when a short hold already fits 2ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > retains the existing drug_substance criterion-conflict reason 2ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > retains the existing drug_product criterion-conflict reason 4ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > retains a named unestimable drug_substance trend without changing its assessment 2ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > retains a named unestimable drug_product trend without changing its assessment 2ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > retains a later drug_substance study’s source and row refusal 5ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > retains a later drug_product study’s source and row refusal 5ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > keeps a valid drug_substance monthly series and its trend without inventing a hold 4ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > keeps a valid drug_product monthly series and its trend without inventing a hold 7ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > keeps headline tables, input keys, gaps and completeness for the supplied stability sections 9ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > QOS preserves the upstream stability qualification > keeps missing-section placeholders and absence metadata 1ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > buildM25ClinicalOverview > composes the 2.5.1–2.5.6 critical assessment and leaves the benefit-risk conclusion to the sponsor 1ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > buildM25ClinicalOverview > never calls a high-mortality program favorable either 0ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > buildM25ClinicalOverview > declines to conclude benefit-risk when there is no pivotal efficacy study 0ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > buildM25ClinicalOverview > flags every gap for an empty clinical program 1ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > buildM24NonclinicalOverview — the conclusion is only drawn when nothing is open > does not say the safety profile supports the plan while it lists the missing study categories 1ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > buildM24NonclinicalOverview — the conclusion is only drawn when nothing is open > draws the conclusion when every category the overview requires is present 0ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > SAE and death counts that were never extracted are not "0 reported" > 2.7 says the counts were not extracted, records the gap, and prints the gaps in the narrative 1ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > SAE and death counts that were never extracted are not "0 reported" > 2.7 states extracted zeros as zeros 0ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > SAE and death counts that were never extracted are not "0 reported" > 2.7 does not claim efficacy was evaluated when there is no controlled study 0ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > SAE and death counts that were never extracted are not "0 reported" > 2.5 carries the same distinction into the safety overview and the benefit-risk data 0ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > a sample size that was never recorded is not "n=0" > 2.5 prints the study as not recorded and qualifies the exposure total 1ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > a sample size that was never recorded is not "n=0" > 2.7 prints the study as not recorded and records the gap 0ms
+ ✓ server/services/__tests__/m2-summary-builders.test.ts > a sample size that was never recorded is not "n=0" > a recorded size still prints as the number 0ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names unreadable selected evidence even when no labelled series can be fitted 3ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > names an unreadable selected payload while retaining the valid contributor assessment 29ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no results' 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'two numeric results' 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the full selection claim for a selected batch with 'no usable criterion' 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > withholds the programme claim if one independent attribute lacks full selected-batch coverage 3ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > retains a fully covered valid attribute if another recorded attribute cannot be assessed 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability preserves the selected evidence scope > preserves a complete valid three-batch claim and its actual contributor IDs 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'mixed conditions' instead of pooling it 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'a different explicit condition' instead of pooling it 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > refuses an affected parameter with 'conflicting condition aliases' instead of pooling it 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > retains the valid independent parameter when another has mixed conditions 4ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > allows matching explicit and inherited conditions in the same selected batch 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > recorded poolability respects explicit pull-point conditions > keeps LT plus a physical label conservatively unassessed without inventing equivalence 0ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different ordinary lower bound' in shelf life, trending and pooling 3ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'a different criterion direction' in shelf life, trending and pooling 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > refuses 'an uninterpretable later criterion' in shelf life, trending and pooling 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > checks the upper bound of every two-sided criterion within a recorded series 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > preserves equivalent supported criterion spellings and blanks that inherit the series criterion 3ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > keeps valid independent attribute estimates while withholding the incomplete programme claim 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > one fitted recorded series has one consistent recorded criterion > withholds the aggregate for cross-batch criterion conflict while retaining another assessed parameter 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > Module 3 propagates recorded-series criterion refusals > preserves the existing raw table and names the series refusal 12ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > Module 3 propagates recorded-series criterion refusals > withholds Module 3 stability support for conflicting criteria in one results field while retaining passing point comparisons 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > Module 3 propagates recorded-series criterion refusals > withholds Module 3 stability support for conflicting criteria in split existing results fields while retaining passing point comparisons 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > Module 3 propagates recorded-series criterion refusals > keeps different valid criteria at separate conditions assessable in Module 3 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "" 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point "   " 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > retains the valid labelled series and names the unassigned point undefined 2ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result null 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result undefined 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result "" 1ms
+ ✓ server/services/cmc/__tests__/recorded-series-qualification.test.ts > present measured observations need an assigned parameter before an aggregate claim > does not create an unassigned measured-point hold for missing result " " 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'too few numeric results' and retains the exact valid Assay estimate 8ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no recorded criterion' and retains the exact valid Assay estimate 3ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no varying times' and retains the exact valid Assay estimate 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > keeps the most constraining actual estimate when all recorded attributes qualify 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > keeps separately recorded valid conditions without merging their estimates 3ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "''" 24ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "'   '" 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "undefined" 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "''" 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "'   '" 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "undefined" 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_substance has only an unassigned measurement 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_product has only an unassigned measurement 0ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result null 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result undefined 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result "" 1ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result " " 1ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > reports no out-of-trend points and the projected crossing on a clean, trending series 17ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > names the out-of-trend time point 2ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > says the trend was not assessed, and why, on too short a series 2ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > says the trend was not assessed when no criterion is recorded 1ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > is never silent — a study with no recorded results says trend was not assessed 1ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > the stability narrative states the trend assessment > §3.2.P.8 carries the same assessment for the drug product 1ms
+ ✓ server/services/__tests__/module3Composer.stability-trending.test.ts > review: a study placed at two conditions is refused, not fitted as one line > refuses through the composer when the mapper carried the condition array, and when only the legacy joined string is stored 2ms
+ ✓ server/services/__tests__/module3Composer.stability-honesty.test.ts > module3Composer — stability conclusions are not fabricated > 3.2.S.7 does NOT assert "is stable" when the data shows OOS/degradation 6ms
+ ✓ server/services/__tests__/module3Composer.stability-honesty.test.ts > module3Composer — stability conclusions are not fabricated > 3.2.S.7 defers (does not assert stability) when no results are present 1ms
+ ✓ server/services/__tests__/module3Composer.stability-honesty.test.ts > module3Composer — stability conclusions are not fabricated > 3.2.P.8 does NOT claim stability studies/shelf-life when only comparability is present 2ms
+ ✓ server/services/__tests__/module3Composer.stability-honesty.test.ts > module3Composer — stability conclusions are not fabricated > spec tables do not fabricate a "Per monograph" compendial basis when no method is recorded 2ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > §3.2.P.8 states the drug product study, not the drug substance one > files the product study’s condition, time points and shelf life 2ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > the recorded stability results are filed with the section that cites them > §3.2.P.8 tabulates every product pull point, and none of the substance’s 1ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > the recorded stability results are filed with the section that cites them > §3.2.S.7 tabulates the substance’s pull points 1ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > the recorded stability results are filed with the section that cites them > does not render a list of test names as a data matrix of one-cell rows 1ms
+ ✓ server/services/__tests__/module3Composer.stability-filed.test.ts > the recorded stability results are filed with the section that cites them > never cites data "summarized above" that the section does not carry 0ms
+
+ Test Files  6 passed (6)
+      Tests  93 passed (93)
+   Start at  15:31:21
+   Duration  3.39s (transform 1.04s, setup 353ms, import 1.24s, tests 309ms, environment 2ms)
+
+JSON report written to /workspace/scratch/c2099bdce0e4/cmc-readiness-audit/QOS-FOCUSED-FINAL.json
+Actual process exit: 0; elapsed seconds: 12.026

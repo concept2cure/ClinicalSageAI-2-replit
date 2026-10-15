@@ -1,0 +1,11 @@
+server/routes/irb.ts:217  governed-helper  no signer re-verification, no signature row
+server/routes/iacuc.ts:150  governed-helper  no signer re-verification, no signature row
+server/routes/ibc.ts:165  governed-helper  no signer re-verification, no signature row
+server/routes/rim.ts:182  governed-helper  no signer re-verification, no signature row
+server/routes/protocol-consent.ts:160  governed-helper  no signer re-verification, no signature row
+server/routes/protocol-deviations.ts:228  governed-helper  no signer re-verification, no signature row
+server/routes/biopharma/bla-workbench.ts:317  recordGovernedAction  no signer re-verification, no signature row
+server/api/cmc/batchRecordRoutes.ts:431  recordGovernedAction  no signature row
+server/api/cmc/routes.ts:900  recordGovernedAction  no signature row
+server/api/cmc/specificationRoutes.ts:356  recordGovernedAction  no signature row
+HEAD: 10 unceremonied sign site(s) in the P0-10b files

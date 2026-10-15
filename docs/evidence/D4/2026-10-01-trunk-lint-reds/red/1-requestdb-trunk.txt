@@ -1,0 +1,10 @@
+[ci:requestdb-coverage] RLS request-scoped DB adoption
+  route files touching the DB : 268
+  using requestDb(req)        : 38
+  still on the shared pool    : 229 (migration backlog)
+    JWT boundary auto-scoped  : 227
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+[ci:requestdb-coverage] FAIL — 1 NEW route(s) on the shared pool above baseline of 228. New tenant-facing routes must use requestDb(req):
+  server/routes/governed-signed-act.ts
+exit 1

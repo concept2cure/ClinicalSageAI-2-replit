@@ -1,0 +1,84 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > passes a structurally clean FDA package (with a subset-notice info finding) 14ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > errors on a missing backbone, MD5 index, and regional backbone 6ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > errors on an empty (0-byte) leaf file 4ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > errors on file/folder names that violate FDA naming (uppercase / spaces) 3ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > validateFdaCriteria > checks the correct regional backbone per region 2ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > FdaCriteriaValidatorAdapter + resolver > is configured only when the opt-in flag is set 0ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > FdaCriteriaValidatorAdapter + resolver > resolver picks the FDA-criteria subset when enabled and LORENZ is absent 0ms
+ ✓ server/services/ectd/external-validator/__tests__/fda-criteria-adapter.test.ts > FdaCriteriaValidatorAdapter + resolver > resolver falls back to no-op when neither LORENZ nor the subset is enabled 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > refuses a real clean subset despite configured=true, retaining its scoped diagnostics 14ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > classifies an unavailable resolver without inventing a run 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > classifies the external adapter path while expressly making no licence/provider claim 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 validator classification — actual resolver and subset > preserves the unrun operational failure envelope without fabricating content errors 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > clears a coherent matching external report only for this control contract 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > retains warnings on a coherent external pass 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > records an actual coherent failed external run and refuses clearance 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses missing classification even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses explicit unknown even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses runtime unknown class even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses missing adapter name even if configured=true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses a selected external path whose configuration is not established 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > does not accept truthy configuration string false 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > does not accept truthy configuration string true 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses no report without confusing configuration with execution 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity fda-criteria-subset when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity noop when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity unknown when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity LORENZ-EVALIDATOR when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses report identity lorenz-evalidator  when the selected adapter is LORENZ 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with truthy ran 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with truthy passed 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with false passed with no errors 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with negative count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with fractional count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with NaN count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with infinite count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with unsafe count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with bad warning count 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with finding/count disagreement 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with warning/count disagreement 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with count with no findings 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with passed true with coherent error findings 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with unknown severity 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with missing findings 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with invalid date 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with serialized date without caller parsing 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 required production controls > refuses executed report with missing profile 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps an external failure visible while nonblocking: { environment: 'staging', requireEvalidator: true } 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps an external failure visible while nonblocking: { environment: 'production', requireEvalidator: false } 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > keeps mismatched advisory evidence invalid rather than passed/not_assessed 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > marks a zero compatibility placeholder as unknown rather than a clean advisory tally 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts > D7 advisory policy is separate from factual assessment > retains raw executed subset diagnostics without an external assessment or blocker 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > normalizeSeverity > maps engine tokens to error/warning/info 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport > parses the native findings shape 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport > parses a bare array + alternate field names 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses an envelope it does not know, naming what it found 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a "findings" member that is not an array 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a finding whose severity it cannot map, instead of counting it as info 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a finding with no severity at all 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a row that is not an object 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > still reads an empty findings list as no findings — a clean report is a clean report 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > reads the agency severity words: High is an error, Medium and Low are warnings, Pass is info 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorXmlReport > parses a LORENZ-style XML report (attrs + child message) 2ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorReport (sniff) > routes XML vs JSON by leading character 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > adapter configuration + fail-closed helper > is not configured without EVALIDATOR_BINARY/ENDPOINT 0ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > adapter configuration + fail-closed helper > runExternalValidation returns a fail-closed un-run report when no engine is configured 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > tallyFindings > counts only error/warning severities 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > NoopExternalValidator > is not configured and returns an honest un-run report (not a pass) 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > LorenzEValidatorAdapter > is not configured without EVALIDATOR_BINARY and fails closed when validated 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > resolveExternalValidator > falls back to the no-op when no engine is configured 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > staging is advisory: surfaces error count but adds no blocker 1ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + not configured ⇒ fail closed (could not run) 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + ran with errors ⇒ blocks on the agency errors 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > production + required + ran clean ⇒ cleared 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > not required ⇒ never blocks even in production with no engine 0ms
+ ✓ server/services/ectd/external-validator/__tests__/external-validator.test.ts > evaluateExternalValidationGate > reads the opt-in enforcement flag from the environment 0ms
+
+ Test Files  4 passed (4)
+      Tests  75 passed (75)
+   Start at  03:36:15
+   Duration  965ms (transform 191ms, setup 130ms, import 203ms, tests 78ms, environment 0ms)
+

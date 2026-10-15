@@ -1,0 +1,12 @@
+Mutant F09-objective-unsettled: the objective carries an invented figure unchecked
+
+--- server/services/ana/memory-fact-check.ts
+- const objectiveStands = !objective.trim() || settleItem(objective, basis);
++ const objectiveStands = true;
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 13ms
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

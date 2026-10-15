@@ -23,6 +23,8 @@ vi.hoisted(() => {
   // FDA ESG production credentials, incl. SFTP transport.
   process.env.FDA_ESG_URL = 'https://esg.fda.gov';
   process.env.FDA_ESG_AS2_FROM = 'SPONSOR-AS2';
+  // FDA's AS2 identifier has no default (2026-10-01, W5/D7, sweep F16).
+  process.env.FDA_ESG_AS2_TO = 'FDA-AS2-ID-TEST';
   process.env.FDA_ESG_CERT_PATH = '/tmp/fda-cert.pem';
   process.env.FDA_ESG_KEY_PATH = '/tmp/fda-key.pem';
   process.env.FDA_ESG_FDA_CERT_PATH = '/tmp/fda-pub.pem';

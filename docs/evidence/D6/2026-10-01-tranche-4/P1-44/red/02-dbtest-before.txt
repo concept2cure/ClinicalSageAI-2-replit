@@ -1,0 +1,108 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:24:29.947Z","pid":24279,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:24:29.953Z","pid":24279,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:24:29.953Z","pid":24279,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-delivery-recording.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T03:24:30.124Z', poolSize: 1 }
+
+stdout | tests/db/report-os-delivery-recording.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-delivery-recording.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > platform_send as app_service under RLS: 'sent', with the letter, the record and one chained row 135ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused correspondence write is not sent: 503, and no record or chain row claims it 37ms
+   → {"data":{"deliveryId":"59203628-8aea-49aa-a8ed-dee77b1bfe53","organizationId":90302,"projectId":141,"runId":30,"submissionId":"9e86756e-929c-409b-8dcb-0a227c860ef9","channel":"platform_send","recipients":["agency-contact"],"subject":"wo03_24279_muoz0c8v letter refused","status":"sent","requestedBy":401,"createdAt":"2026-10-01T03:24:31.074Z"}}: expected 201 to be 503 // Object.is equality
+ × tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused chain row is not sent: the letter and the record roll back with it 33ms
+   → {"data":{"deliveryId":"338aabab-bfad-48e1-ba7a-92922c603e32","organizationId":90302,"projectId":141,"runId":30,"submissionId":"9e86756e-929c-409b-8dcb-0a227c860ef9","channel":"platform_send","recipients":["agency-contact"],"subject":"wo03_24279_muoz0c8v chain refused","status":"sent","requestedBy":401,"createdAt":"2026-10-01T03:24:31.109Z","correspondenceId":"ef39a5e2-1c99-4a38-97c4-1f6684a4046b"}}: expected 201 to be 503 // Object.is equality
+ × tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > external_pdf_export of a final report needs an e-signature: 409, nothing recorded 19ms
+   → {"data":{"deliveryId":"a27cd41d-1189-441a-aa9b-11ebdbef6dd5","organizationId":90302,"projectId":141,"runId":31,"channel":"external_pdf_export","recipients":["partner"],"subject":"wo03_24279_muoz0c8v final external","status":"exported","requestedBy":401,"createdAt":"2026-10-01T03:24:31.130Z"}}: expected 201 to be 409 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > platform_send as app_service under RLS: 'sent', with the letter, the record and one chained row
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/report-os-delivery-recording.dbtest.ts:141:21
+    139|     expect(t.letters).toEqual([{ id: correspondenceId, direction: 'out…
+    140|     expect(t.records).toEqual([{ title: `delivery:${deliveryId}` }]);
+    141|     expect(t.chain).toHaveLength(1);
+       |                     ^
+    142|     expect(t.chain[0]).toMatchObject({
+    143|       action: 'report_os.delivery_sent',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused correspondence write is not sent: 503, and no record or chain row claims it
+AssertionError: {"data":{"deliveryId":"59203628-8aea-49aa-a8ed-dee77b1bfe53","organizationId":90302,"projectId":141,"runId":30,"submissionId":"9e86756e-929c-409b-8dcb-0a227c860ef9","channel":"platform_send","recipients":["agency-contact"],"subject":"wo03_24279_muoz0c8v letter refused","status":"sent","requestedBy":401,"createdAt":"2026-10-01T03:24:31.074Z"}}: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ tests/db/report-os-delivery-recording.dbtest.ts:157:50
+    155|       res = await send(subject);
+    156|     });
+    157|     expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                  ^
+    158|     expect(res.body.error.code).toBe('REPORT_DELIVERY_NOT_RECORDED');
+    159|     expect(JSON.stringify(res.body)).not.toContain('refused by the P1-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused chain row is not sent: the letter and the record roll back with it
+AssertionError: {"data":{"deliveryId":"338aabab-bfad-48e1-ba7a-92922c603e32","organizationId":90302,"projectId":141,"runId":30,"submissionId":"9e86756e-929c-409b-8dcb-0a227c860ef9","channel":"platform_send","recipients":["agency-contact"],"subject":"wo03_24279_muoz0c8v chain refused","status":"sent","requestedBy":401,"createdAt":"2026-10-01T03:24:31.109Z","correspondenceId":"ef39a5e2-1c99-4a38-97c4-1f6684a4046b"}}: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ tests/db/report-os-delivery-recording.dbtest.ts:169:50
+    167|       res = await send(subject);
+    168|     });
+    169|     expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                  ^
+    170|     expect(await traces(subject)).toEqual({ letters: [], records: [], …
+    171|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > external_pdf_export of a final report needs an e-signature: 409, nothing recorded
+AssertionError: {"data":{"deliveryId":"a27cd41d-1189-441a-aa9b-11ebdbef6dd5","organizationId":90302,"projectId":141,"runId":31,"channel":"external_pdf_export","recipients":["partner"],"subject":"wo03_24279_muoz0c8v final external","status":"exported","requestedBy":401,"createdAt":"2026-10-01T03:24:31.130Z"}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ tests/db/report-os-delivery-recording.dbtest.ts:179:50
+    177|       .set(auth(tokenB))
+    178|       .send({ runId: finalRun, channel: 'external_pdf_export', subject…
+    179|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    180|     expect(res.body.error.code).toBe('E_SIGNATURE_REQUIRED');
+    181|     expect(await traces(subject)).toEqual({ letters: [], records: [], …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  03:24:27
+   Duration  3.62s (transform 1.51s, setup 78ms, import 2.72s, tests 524ms, environment 0ms)
+

@@ -1,0 +1,156 @@
+# The review-round-1 dbtest run with server/routes/report-os.ts replaced, for the run only, by its HEAD (a5baf5b0) version
+# (git show HEAD:server/routes/report-os.ts > server/routes/report-os.ts; restored afterwards, cmp identical).
+# The round-0 version of the route was not kept separately; the mocked red (01) is against it.
+
+$ TEST_DATABASE_URL='postgresql://postgres@127.0.0.1:5432/c2c_testdb?sslmode=disable' APP_DATABASE_URL='postgresql://app_service:local-testdb-app-service-password@127.0.0.1:5432/c2c_testdb?sslmode=disable' RLS_ENFORCE=on NODE_OPTIONS=--max-old-space-size=3072 npx vitest run --config vitest.db.config.ts tests/db/report-os-registry-seed.dbtest.ts   # server/routes/report-os.ts at HEAD a5baf5b0 (before REPORT-OS), the rest of the tree as now
+# run at 2026-10-01T01:47:56Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T01:47:59.166Z","pid":9183,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T01:47:59.168Z","pid":9183,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T01:47:59.168Z","pid":9183,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T01:47:59.384Z', poolSize: 1 }
+
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 19ms
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 14ms
+ × tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 140ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > refuses a member: nothing is sealed and nothing is recorded 20ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed) 24ms
+   → {"data":{"runId":19,"status":"final","seal":{"algorithm":"sha256","canonVersion":2,"contentHash":"4c1d3e4cee01394b27ac1d122ad3e37af41f0889f17cea79cc11fb46a7abf081","atoms":[],"atomCount":0,"aiDisclosed":false,"sealedAt":"2026-10-01T01:48:00.323Z"}}}: expected 200 to be 503 // Object.is equality
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > an admin finalizes: status, seal and one chained row, together 20ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > a second finalize is refused: the seal stands and nothing more is recorded 22ms
+   → expected 200 to be 409 // Object.is equality
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > a bundle export is recorded on the chain with the hash of the bytes sent 87ms
+   → expected [] to have a length of 1 but got +0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:178:24
+    176|       [ORG_B, String(runId)]
+    177|     );
+    178|     expect(audit.rows).toHaveLength(1);
+       |                        ^
+    179|     expect(audit.rows[0]).toMatchObject({ table_name: 'report_run', ac…
+    180|     expect(audit.rows[0].details).toMatchObject({ reportTypeId: RUN_TY…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > refuses a member: nothing is sealed and nothing is recorded
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:236:24
+    234|   it('refuses a member: nothing is sealed and nothing is recorded', as…
+    235|     const res = await request(ro).post(`/api/report-os/runs/${runId}/f…
+    236|     expect(res.status).toBe(403);
+       |                        ^
+    237|     expect(await runState()).toEqual({ status: 'completed', seal_hash:…
+    238|     expect(await finalizedRows()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed)
+AssertionError: {"data":{"runId":19,"status":"final","seal":{"algorithm":"sha256","canonVersion":2,"contentHash":"4c1d3e4cee01394b27ac1d122ad3e37af41f0889f17cea79cc11fb46a7abf081","atoms":[],"atomCount":0,"aiDisclosed":false,"sealedAt":"2026-10-01T01:48:00.323Z"}}}: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:253:52
+    251|     try {
+    252|       const res = await request(ro).post(`/api/report-os/runs/${runId}…
+    253|       expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                    ^
+    254|       expect(res.body.error.code).toBe('REPORT_FINALIZE_NOT_RECORDED');
+    255|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > an admin finalizes: status, seal and one chained row, together
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:269:18
+    267|     expect(await runState()).toEqual({ status: 'final', seal_hash: sea…
+    268|     const rows = await finalizedRows();
+    269|     expect(rows).toHaveLength(1);
+       |                  ^
+    270|     expect(rows[0]).toMatchObject({ chained: true, details: { sealHash…
+    271|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > a second finalize is refused: the seal stands and nothing more is recorded
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:276:24
+    274|     const before = await runState();
+    275|     const res = await request(ro).post(`/api/report-os/runs/${runId}/f…
+    276|     expect(res.status).toBe(409);
+       |                        ^
+    277|     expect(res.body.error.code).toBe('RUN_ALREADY_FINAL');
+    278|     expect(await runState()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize and exports on the record (review round 1) > a bundle export is recorded on the chain with the hash of the bytes sent
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:309:18
+    307|       )
+    308|     ).rows;
+    309|     expect(rows).toHaveLength(1);
+       |                  ^
+    310|     expect(rows[0]).toMatchObject({
+    311|       table_name: 'report_bundle',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  01:47:57
+   Duration  3.58s (transform 1.48s, setup 76ms, import 2.53s, tests 661ms, environment 0ms)
+
+exit=1

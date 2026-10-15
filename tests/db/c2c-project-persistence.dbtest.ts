@@ -31,23 +31,38 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
+import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
+import { activeJwtSecret } from '../../server/utils/jwtVerify';
 import { databaseUrl } from '../setup.db';
+import type { RequestDb } from '../../server/db/requestDb';
 
-/** Marks every row this suite creates, so cleanup never touches anything else. */
-const PROBE_PREFIX = 'dbtest-w01 ';
+const RUN_ID = randomUUID();
+/** Every run owns fresh QA rows; history is retained. */
+const PROBE_PREFIX = `dbtest-w01 ${RUN_ID} `;
 
 let owner: Pool;
 let orgId: number;
+let orgUuid: string;
+let ambiguousOrgUuid: string;
+/** An organisation with two workspaces, neither its own: P-19's refusal case. */
+let ambiguousOrgId: number;
+/** The organization of the explicit authenticated actor for this request. */
+let actingOrgId: number;
 let userId: number;
 let app: express.Express;
+/** The first program this suite creates, and its project record. */
+let createdProgramId = '';
+let createdAnchorId = 0;
 
 /**
- * The router under test, mounted behind a stub that supplies exactly the
- * request fields the real `authMiddleware` populates
+ * The router under test, mounted behind canonical requireTenantContext with
+ * a signed token for the explicit real fixture actor
  * (server/bootstrap/register-inline-routes.ts:829). Authentication is not what
  * is being tested; persistence is.
  *
- * `establishRequestTenantScope` is the REAL middleware, not a stub, and that is
+ * `requireTenantContext` verifies actual organization membership and attaches
+ * the real request SQL client. That boundary is
  * deliberate: this project runs with `RLS_ENFORCE=on` (tests/setup.db.ts), so
  * every `pool.query` fails closed without an active tenant scope. Faking the
  * scope would test the handler against a permission model production does not
@@ -56,57 +71,39 @@ let app: express.Express;
  */
 async function buildApp(): Promise<express.Express> {
   const router = (await import('../../server/routes/c2c/projects')).default;
-  const { establishRequestTenantScope } = await import(
-    '../../server/middleware/establishRequestTenantScope'
-  );
+  const { requireTenantContext } = await import('../../server/middleware/tenantContext');
   const a = express();
   a.use(express.json());
-  a.use((req, _res, next) => {
-    const r = req as unknown as Record<string, unknown>;
-    r.userId = userId;
-    r.tenantId = orgId;
-    r.userRole = 'admin';
-    r.user = { id: userId, organizationId: orgId, role: 'admin' };
-    next();
-  });
-  a.use(establishRequestTenantScope);
+  a.use(requireTenantContext);
   a.use('/api/c2c/projects', router);
   return a;
 }
 
-async function cleanupProbeRows(): Promise<void> {
-  await owner.query(
-    `DELETE FROM c2c_document_sections WHERE document_id IN (
-       SELECT d.id FROM c2c_documents d
-        JOIN regulatory_programs p ON p.id = d.project_id
-       WHERE p.name LIKE $1)`,
-    [`${PROBE_PREFIX}%`],
+/** Explicit current fixture actor; the canonical middleware reads its real OU. */
+function actingRequest() {
+  const token = jwt.sign({ type: 'access', userId: String(userId), organizationId: String(actingOrgId),
+    organizationUuid: actingOrgId === orgId ? orgUuid : ambiguousOrgUuid }, activeJwtSecret(), { expiresIn: '15m' });
+  const authorization = `Bearer ${token}`;
+  return { post: (url: string) => request(app).post(url).set('Authorization', authorization),
+    get: (url: string) => request(app).get(url).set('Authorization', authorization) };
+}
+
+/**
+ * Give an organisation its own workspace through the writer every organisation
+ * creator calls (signup, first-run setup, the boot seed), on an owner
+ * connection, as they do. This fixture inserts its organisation directly, the
+ * one shape no in-product path produces: before P-19 the program was created
+ * here with no project record (NO_CLIENT_WORKSPACE), and this suite passed on
+ * exactly the state the QA walk of 2026-10-08 found broken.
+ */
+async function giveOrganizationItsWorkspace(id: number, name: string, slug: string): Promise<void> {
+  const { ensureOrganizationDefaultWorkspace, poolClientWorkspaceStore } = await import(
+    '../../server/services/c2c/organization-default-workspace'
   );
-  await owner.query(
-    `DELETE FROM c2c_documents WHERE project_id IN (
-       SELECT id FROM regulatory_programs WHERE name LIKE $1)`,
-    [`${PROBE_PREFIX}%`],
-  );
-  // audit_logs is append-only at the database level
-  // (db/migrations/20260617_audit_logs_immutability.sql). A bare DELETE is
-  // refused with IMMUTABILITY_VIOLATION / P0A02 — correctly, and this cleanup
-  // used to hit it on every run after the first, because the first run leaves
-  // rows behind for the second to find. The trigger has one authorized escape:
-  // the one DELETE door, audit_logs_archive_delete() (P0-8a), refuses rows
-  // inside the 24-month hot window, which every probe row is. A test tearing
-  // down its own probe rows does so as the table owner with the DELETE trigger
-  // disabled for this transaction only; DDL is transactional, so nothing else
-  // in the suite can delete audit history.
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action = 'c2c.project.create'
-         AND record_id IN (SELECT id::text FROM regulatory_programs WHERE name LIKE $1)`,
-      [`${PROBE_PREFIX}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
+    await ensureOrganizationDefaultWorkspace(poolClientWorkspaceStore(client), { orgId: id, orgName: name, orgSlug: slug });
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
@@ -114,43 +111,55 @@ async function cleanupProbeRows(): Promise<void> {
   } finally {
     client.release();
   }
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
 }
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
 
-  // A tenant and an actor to create under. Both are upserted rather than
+  // A tenant and an actor to create under. Both are fresh and explicitly recorded rather than
   // assumed: this suite provisions its own fixture so it does not depend on
   // whatever seed the surrounding CI job happened to run.
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
-     RETURNING id`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-w01-tenant'],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id,uuid`,
+    [`${PROBE_PREFIX}tenant`, `dbtest-w01-${RUN_ID}-tenant`],
   );
   orgId = Number(org.rows[0].id);
+  orgUuid = String(org.rows[0].uuid);
+  actingOrgId = orgId;
+  await giveOrganizationItsWorkspace(orgId, `${PROBE_PREFIX}tenant`, `dbtest-w01-${RUN_ID}-tenant`);
+
+  // Two client workspaces and neither the organisation's own: intake cannot
+  // choose where the program's project record belongs, so it must refuse.
+  const ambiguous = await owner.query(
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id,uuid`,
+    [`${PROBE_PREFIX}two-workspace tenant`, `dbtest-w01-${RUN_ID}-two-ws`],
+  );
+  ambiguousOrgId = Number(ambiguous.rows[0].id);
+  ambiguousOrgUuid = String(ambiguous.rows[0].uuid);
+  await owner.query(
+    `INSERT INTO client_workspaces (organization_id, name, slug, status) VALUES
+       ($1, 'Client A', 'dbtest-w01-a', 'active'), ($1, 'Client B', 'dbtest-w01-b', 'active')
+     ON CONFLICT (organization_id, slug) DO NOTHING`,
+    [ambiguousOrgId],
+  );
 
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
-     RETURNING id`,
-    ['dbtest-w01@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
+    [`dbtest-w01-${RUN_ID}@example.invalid`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
 
-  await cleanupProbeRows();
+  await owner.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$3,'admin'),($2,$3,'admin')", [orgId, ambiguousOrgId, userId]);
   app = await buildApp();
 });
 
 afterAll(async () => {
-  await cleanupProbeRows().catch(() => {});
   await owner.end().catch(() => {});
 });
 
 describe('POST /api/c2c/projects — persistence against real PostgreSQL', () => {
   it('creates a 510(k) device program and returns 201 with the portfolio shape', async () => {
-    const res = await request(app).post('/api/c2c/projects').send({
+    const res = await actingRequest().post('/api/c2c/projects').send({
       name: `${PROBE_PREFIX}AeroFlow Smart Peak Flow Meter`,
       productName: 'AeroFlow AF-1000',
       programType: '510k',
@@ -169,6 +178,53 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
     expect(res.body.meta.created).toBe(true);
+    createdProgramId = String(res.body.data.id);
+    createdAnchorId = Number(res.body.meta.projectAnchorId);
+  });
+
+  it('gives the program its project record in the same creation, and it resolves strict (P-19)', async () => {
+    const { rows } = await owner.query(
+      `SELECT p.id, p.organization_id, p.type, w.organization_id AS workspace_org,
+              (w.metadata::jsonb ->> 'defaultForOrganization') AS own_workspace
+         FROM projects p JOIN client_workspaces w ON w.id = p.client_workspace_id
+        WHERE p.regulatory_program_id = $1`,
+      [createdProgramId],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ organization_id: orgId, workspace_org: orgId, type: 'regulatory', own_workspace: 'true' });
+    expect(Number(rows[0].id)).toBe(createdAnchorId);
+
+    const { drizzle } = await import('drizzle-orm/node-postgres');
+    const { resolveProgramProjectAnchor } = await import('../../server/services/c2c/program-project-anchor');
+    const resolved = await resolveProgramProjectAnchor(drizzle(owner) as unknown as RequestDb, {
+      programId: createdProgramId, orgId, context: 'dbtest-w01', strict: true,
+    });
+    expect(resolved).toBe(createdAnchorId);
+  });
+
+  it('refuses a program whose project record has no workspace to go in, and writes nothing (P-19)', async () => {
+    const held = async () => (await owner.query(
+      `SELECT (SELECT count(*)::int FROM regulatory_programs WHERE organization_id = $1) AS programs,
+              (SELECT count(*)::int FROM projects WHERE organization_id = $1) AS projects,
+              (SELECT count(*)::int FROM audit_logs WHERE action = 'c2c.project.create' AND tenant_id = $1) AS audit_rows`,
+      [ambiguousOrgId],
+    )).rows[0];
+    const before = await held();
+    actingOrgId = ambiguousOrgId;
+    try {
+      const res = await actingRequest().post('/api/c2c/projects').send({
+        name: `${PROBE_PREFIX}No Workspace To Choose`,
+        programType: '510k',
+        primaryAgency: 'FDA',
+      });
+      expect(res.status).toBe(409);
+      expect(res.body).toMatchObject({ error: 'PROJECT_RECORD_UNAVAILABLE', reason: 'AMBIGUOUS_CLIENT_WORKSPACE' });
+      expect(res.body.correlationId).toEqual(expect.any(String));
+      expect(JSON.stringify(res.body)).not.toMatch(/client_workspace_id|regulatory_program_id|projects\./);
+    } finally {
+      actingOrgId = orgId;
+    }
+    expect(await held()).toEqual(before);
   });
 
   it('persists the device program as a device, never as a biologic', async () => {
@@ -186,7 +242,7 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
   });
 
   it('makes the created program retrievable through the list projection', async () => {
-    const res = await request(app).get('/api/c2c/projects');
+    const res = await actingRequest().get('/api/c2c/projects');
     expect(res.status).toBe(200);
     const titles = (res.body.data as Array<{ title: string }>).map((r) => r.title);
     expect(titles).toContain(`${PROBE_PREFIX}AeroFlow Smart Peak Flow Meter`);
@@ -215,7 +271,7 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
     // conformity assessment — persisted as a drug programme. It was also absent
     // from the workstream bucketing, so it listed under a "Mdr" workstream that
     // matches none of the portfolio's filter tabs and was invisible in MDX.
-    const res = await request(app).post('/api/c2c/projects').send({
+    const res = await actingRequest().post('/api/c2c/projects').send({
       name: `${PROBE_PREFIX}AeroFlow EU Technical File`,
       programType: 'mdr',
       primaryAgency: 'EMA',
@@ -234,7 +290,7 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
   });
 
   it('creates an EU IVDR technical file as an IVD', async () => {
-    const res = await request(app).post('/api/c2c/projects').send({
+    const res = await actingRequest().post('/api/c2c/projects').send({
       name: `${PROBE_PREFIX}Companion Assay EU`,
       programType: 'ivdr',
       primaryAgency: 'EMA',
@@ -254,7 +310,7 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
     // class read off the UI segment. The server accepted it and stored
     // `510K · biologic`. A filing type is a regulatory fact; a client may not
     // contradict it, so this is now a 400 rather than a persisted mistake.
-    const res = await request(app).post('/api/c2c/projects').send({
+    const res = await actingRequest().post('/api/c2c/projects').send({
       name: `${PROBE_PREFIX}Should Not Persist`,
       programType: '510k',
       productType: 'biologic',
@@ -272,7 +328,7 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
 
   it('accepts the new device-family classes', async () => {
     for (const [suffix, productType] of [['SaMD', 'samd'], ['CDx', 'cdx']] as const) {
-      const res = await request(app).post('/api/c2c/projects').send({
+      const res = await actingRequest().post('/api/c2c/projects').send({
         name: `${PROBE_PREFIX}Class ${suffix}`,
         programType: '510k',
         productType,
@@ -284,7 +340,7 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
   });
 
   it('creates an IVD 510(k) as an IVD', async () => {
-    const res = await request(app).post('/api/c2c/projects').send({
+    const res = await actingRequest().post('/api/c2c/projects').send({
       name: `${PROBE_PREFIX}Companion Assay`,
       programType: '510k',
       productType: 'ivd',
@@ -311,13 +367,14 @@ describe('the fail-closed 503 discloses no schema object', () => {
    * operator fact and belongs in the server log, keyed by the correlation id
    * the response carries.
    *
-   * Driven against a program type whose quota probe hits a table that does not
-   * exist, so the 42P01 is real rather than simulated.
+   * The admitted actor remains verifiable while the quota count’s program store
+   * is temporarily absent. This real DDL fault requires an exclusive disposable
+   * native target; it is not executed during preparation.
    */
   it('returns a human message and a correlation id, and names no relation', async () => {
-    await owner.query('ALTER TABLE organizations RENAME TO organizations__w01_probe');
+    await owner.query('ALTER TABLE regulatory_programs RENAME TO regulatory_programs__w01_probe');
     try {
-      const res = await request(app).post('/api/c2c/projects').send({
+      const res = await actingRequest().post('/api/c2c/projects').send({
         name: `${PROBE_PREFIX}Unprovisioned`,
         programType: '510k',
         primaryAgency: 'FDA',
@@ -343,7 +400,7 @@ describe('the fail-closed 503 discloses no schema object', () => {
       expect(body).not.toMatch(/\/api\//);
       expect(body).not.toMatch(/DATABASE_URL|process\.env/);
     } finally {
-      await owner.query('ALTER TABLE organizations__w01_probe RENAME TO organizations');
+      await owner.query('ALTER TABLE regulatory_programs__w01_probe RENAME TO regulatory_programs');
     }
   });
 });

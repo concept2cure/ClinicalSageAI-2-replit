@@ -15,8 +15,18 @@
  * protocol assistance (Reg (EC) 726/2004; SAWP); PMDA consultation framework;
  * Health Canada pre-submission/pre-CTA consultations.
  *
+ * PMDA rows are built from the consultation entries of the Japanese programmes
+ * record, server/services/ind/ctd/jp-programs.ts: name, purpose and basis come
+ * from there, and only the code and the milestones it serves are set here.
+ * Until 2026-10-05 the catalogue had two generic PMDA rows with no basis; their
+ * codes (`pmda_clinical_trial_consultation`, `pmda_pre_nda_consultation`) are
+ * kept.
+ *
  * @module server/services/global-ri/ha-meetings
  */
+
+import type { RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
+import { JP_PROGRAMS, getJpProgram } from '../ind/ctd/jp-programs';
 
 export type MeetingMarket = 'FDA' | 'EMA' | 'PMDA' | 'HEALTH_CANADA';
 
@@ -40,6 +50,41 @@ export interface MeetingType {
   schedulingTargetDays: number | null;
   /** Milestones this meeting is the right vehicle for. */
   milestones: DevelopmentMilestone[];
+  /** The jp-programs.ts entry a PMDA row is built from. */
+  programId?: string;
+  /** Where the row's content comes from (PMDA rows: the record entry's basis). */
+  basis?: readonly RegulatoryBasis[];
+}
+
+/** PMDA row code and milestones, per jp-programs.ts consultation entry. */
+const PMDA_CONSULTATION_ROWS: ReadonlyArray<{ programId: string; code: string; milestones: DevelopmentMilestone[] }> = [
+  { programId: 'pmda-consultation-pre-meeting', code: 'pmda_pre_consultation_meeting', milestones: ['general'] },
+  { programId: 'pmda-consultation-rs-strategy', code: 'pmda_rs_strategy_consultation', milestones: ['pre_ind'] },
+  { programId: 'pmda-consultation-clinical-trial', code: 'pmda_clinical_trial_consultation', milestones: ['pre_ind', 'end_of_phase_1'] },
+  { programId: 'pmda-consultation-end-of-phase-2', code: 'pmda_end_of_phase_2_consultation', milestones: ['end_of_phase_2'] },
+  { programId: 'pmda-consultation-pediatric-plan', code: 'pmda_pediatric_plan_consultation', milestones: ['pre_nda', 'pre_bla'] },
+  { programId: 'pmda-consultation-pre-application', code: 'pmda_pre_nda_consultation', milestones: ['pre_nda', 'pre_bla'] },
+  { programId: 'pmda-consultation-electronic-data', code: 'pmda_electronic_data_consultation', milestones: ['pre_nda', 'pre_bla'] },
+];
+
+/** Every consultation the record holds has a row; a new record entry without one fails loudly here. */
+function pmdaMeetingRows(): MeetingType[] {
+  const mapped = new Set(PMDA_CONSULTATION_ROWS.map((r) => r.programId));
+  const unmapped = JP_PROGRAMS.filter((p) => p.kind === 'consultation' && !mapped.has(p.id)).map((p) => p.id);
+  if (unmapped.length > 0) throw new Error(`ha-meetings: PMDA consultation(s) with no catalogue row: ${unmapped.join(', ')}`);
+  return PMDA_CONSULTATION_ROWS.map((r) => {
+    const p = getJpProgram(r.programId);
+    return {
+      code: r.code,
+      market: 'PMDA',
+      name: `PMDA ${p.name} (${p.nameJa})`,
+      purpose: p.description,
+      schedulingTargetDays: null,
+      milestones: r.milestones,
+      programId: p.id,
+      basis: p.basis,
+    };
+  });
 }
 
 /** The modeled formal HA meeting catalog. */
@@ -142,23 +187,8 @@ export const MEETING_CATALOG: MeetingType[] = [
     schedulingTargetDays: null,
     milestones: ['pre_ind'],
   },
-  // ── PMDA ─────────────────────────────────────────────────────────────────
-  {
-    code: 'pmda_clinical_trial_consultation',
-    market: 'PMDA',
-    name: 'PMDA clinical trial consultation',
-    purpose: 'Consultation on the Japanese clinical development strategy and trial protocols.',
-    schedulingTargetDays: null,
-    milestones: ['pre_ind', 'end_of_phase_1', 'end_of_phase_2'],
-  },
-  {
-    code: 'pmda_pre_nda_consultation',
-    market: 'PMDA',
-    name: 'PMDA pre-NDA (pre-application) consultation',
-    purpose: 'Align on the J-NDA package and review issues before application.',
-    schedulingTargetDays: null,
-    milestones: ['pre_nda', 'pre_bla'],
-  },
+  // ── PMDA (from server/services/ind/ctd/jp-programs.ts) ───────────────────
+  ...pmdaMeetingRows(),
   // ── Health Canada ─────────────────────────────────────────────────────────
   {
     code: 'hc_pre_cta',

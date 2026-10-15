@@ -1,0 +1,13 @@
+Mutant R61-summary-no-warning: a claim not found carries no warning in the summary line
+
+--- server/services/ana-ri/response-contract.ts
+- return `${check.notFound.length > 0 ? '⚠ ' : ''}Of ${claimsWord(check.claims)}: ${parts.join('; ')}.`;
++ return `Of ${claimsWord(check.claims)}: ${parts.join('; ')}.`;
+
+Tests run: server/services/__tests__/ana-trust-summary.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > leads with the engine's check when there is one 5ms
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 3072ms
+      Tests  2 failed | 8 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

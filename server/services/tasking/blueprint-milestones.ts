@@ -89,7 +89,8 @@ export async function seedBlueprintMilestones(input: SeedBlueprintMilestonesInpu
             sourceEntityType: 'registry_blueprint',
             sourceEntityId,
           },
-          reason: `Milestone seeded from the ${registryId} blueprint when the project was created`,
+          // The system's act, which nobody gave a reason for: a summary, and no reason (D5).
+          summary: `Milestone seeded from the ${registryId} blueprint when the project was created`,
         },
         client,
       );

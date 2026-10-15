@@ -1,0 +1,12 @@
+Mutant R24-ci-takes-outer-bracket: an interval takes a closing bracket it did not open (F8)
+
+--- server/services/ana/answer-check-figures.ts
+- String.raw`\b(?:95|90|99)${S}%${S}(?:CI|confidence interval)${S}[:,]?${S}(?:\[${S}(${N})${S}${DASH}${S}(${N})${S}\]|\(${S}(${N})${S}${DASH}${S}(${N})${S}\)|(${N})${S}${DASH}${S}(${N}))`,
++ String.raw`\b(?:95|90|99)${S}%${S}(?:CI|confidence interval)${S}[:,]?${S}[\[(]?${S}(${N})${S}${DASH}${S}(${N})${S}[\])]?`,
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — figures > needs both bounds of a confidence interval, and does not read "95% CI" as a result 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -78,14 +78,25 @@ describe('the turn record status over a real stream', () => {
 });
 
 describe('a turn that ended here before the server spoke for it', () => {
-  it('after Stop, asks for the record by run id and shows what the server filed', async () => {
+  /* Since AnA detach DT2 the ask is the run's own read (GET /runs/:id/events,
+     §4.3): "what became of run X" has one path. It names the record, which is
+     read through its Summary for the hash. */
+  it('after Stop, asks the run for its record and shows what the server filed', async () => {
     let ctl!: ReadableStreamDefaultController<Uint8Array>;
     const body = new ReadableStream<Uint8Array>({ start(c) { ctl = c; } });
     const lookups: string[] = [];
     fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
-      if (String(url).includes('/api/ana-ri/turn-records')) {
+      if (String(url).includes('/api/ana-ri/runs/run_42/events')) {
         lookups.push(String(url));
-        return { ok: true, status: 200, json: async () => ({ success: true, data: { records: [{ id: 'rec-stopped', recordSha256: SHA }] } }) };
+        const sealed = { recordId: 'rec-stopped', assistantMessageId: null };
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ runId: 'run_42', status: 'cancelled', serverNow: new Date().toISOString(), events: [], controls: [], sealed, releasedAt: null }),
+        };
+      }
+      if (String(url).includes('/api/ana-ri/turn-records/rec-stopped/summary')) {
+        return { ok: true, status: 200, json: async () => ({ success: true, data: { recordSha256: SHA } }) };
       }
       if (String(url).includes('/control')) return { ok: true, status: 200, json: async () => ({ ok: true }) };
       const signal = init?.signal;
@@ -115,10 +126,11 @@ describe('a turn that ended here before the server spoke for it', () => {
     const turn = () => [...result.current.messages].reverse().find((m) => m.role === 'assistant')!;
     // Nothing is claimed while the server has not said.
     expect(turn().turnRecord).toEqual({ status: 'unconfirmed' });
+    expect(turn().recordConfirming).toBe(true);
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 1_700));
+      await new Promise((r) => setTimeout(r, 2_150));
     });
-    expect(lookups[0]).toContain('run_id=run_42');
+    expect(lookups[0]).toContain('/runs/run_42/events');
     expect(turn().turnRecord).toEqual({ status: 'recorded', id: 'rec-stopped', sha256: SHA });
   });
 });
@@ -133,5 +145,44 @@ describe('readTurnRecord', () => {
 
   it('keeps an unexplained refusal as a refusal', () => {
     expect(readTurnRecord({ status: 'not_recorded' })).toEqual({ status: 'not_recorded', reason: 'The server did not say why.' });
+  });
+});
+
+describe('readTurnRecord: the models that wrote the turn (AnA reasoning round 11)', () => {
+  /* The insert of an answer into a document is refused unless every model that
+     wrote it may write governed content (anaInsertGate.ts). That rule reads
+     only what this keeps, so a list it cannot read whole is not kept. */
+  const OPUS = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' };
+  const SONNET = { provider: 'anthropic', model: 'claude-sonnet-5', qualified: false, approvedForHighRisk: false, pq: 'pending' };
+  const recorded = (servedBy: unknown) => ({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy });
+
+  it('keeps a well-formed list, in order, and the status as before', () => {
+    expect(readTurnRecord(recorded([OPUS, SONNET]))).toEqual({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [OPUS, SONNET] });
+    // An entry the registry does not know: nulls, kept as unknown.
+    const unknown = { provider: 'anthropic', model: null, qualified: false, approvedForHighRisk: null, pq: null };
+    expect(readTurnRecord(recorded([unknown]))).toEqual({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [unknown] });
+  });
+
+  it('drops the whole list when any entry cannot be read, so it reads as unknown, never as approved', () => {
+    for (const bad of [
+      [{ ...OPUS, qualified: 'yes' }],
+      [OPUS, { ...SONNET, approvedForHighRisk: 'no' }],
+      [{ ...OPUS, pq: 'maybe' }],
+      [{ ...OPUS, model: 42 }],
+      [null],
+      'claude-opus-5-5',
+    ]) {
+      const read = readTurnRecord(recorded(bad));
+      expect(read, JSON.stringify(bad)).toEqual({ status: 'recorded', id: 'rec-1', sha256: SHA });
+    }
+  });
+
+  it('carries the list from post_done onto the turn', async () => {
+    const turn = await turnWith([
+      { type: 'text', content: 'PFS.' },
+      { type: 'done' },
+      { type: 'post_done', cleanedResponse: 'PFS.', turnRecord: recorded([SONNET]) },
+    ]);
+    expect(turn.turnRecord).toEqual({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [SONNET] });
   });
 });

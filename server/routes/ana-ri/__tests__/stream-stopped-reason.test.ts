@@ -28,11 +28,12 @@ import { fileURLToPath } from 'node:url';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const saved = vi.hoisted(() => ({ metadata: [] as unknown[] }));
+const saved = vi.hoisted(() => ({ metadata: [] as unknown[], rows: [] as Array<{ role: unknown; content: unknown }> }));
 vi.mock('../../../services/chat-thread-helpers.js', () => ({
   // (threadId, role, content, _, _, metadata) — the metadata is the sixth.
   saveChatMessage: async (...args: unknown[]) => {
     saved.metadata.push(args[5]);
+    saved.rows.push({ role: args[1], content: args[2] });
     return 41;
   },
 }));
@@ -44,7 +45,7 @@ vi.mock('../../../services/ana-guidance-executor.js', () => ({ processResponseAc
 vi.mock('../../../services/ana/artifactVersionStore.js', () => ({ upsertDocumentArtifactVersion: async () => ({ saved: false }) }));
 vi.mock('../../../db.js', () => ({ getPool: () => ({}), pool: {} }));
 
-import { runStreamPostProcessing, type StreamPostProcessingContext } from '../post-processing';
+import { persistStoppedAnswer, runStreamPostProcessing, type StreamPostProcessingContext } from '../post-processing';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -74,13 +75,32 @@ function ctx(over: Partial<StreamPostProcessingContext> = {}): StreamPostProcess
 
 beforeEach(() => {
   saved.metadata = [];
+  saved.rows = [];
 });
 
 describe('post-processing stores how the turn ended — behavioural', () => {
+  // The first call pays post-processing's cold imports (about 5 s alone, past
+  // the 10 s default on a loaded machine). Timed out, it went on to save into
+  // the NEXT case's capture and turned that one red too (S4 evidence, review
+  // objection 35), so it gets room rather than a warm-up that hides the cost.
   it('a round-limit stop and its rounds reach the saved assistant message', async () => {
     await runStreamPostProcessing(ctx({ stoppedReason: 'max_rounds', rounds: 12 }));
     expect(saved.metadata).toHaveLength(1);
     expect(saved.metadata[0]).toMatchObject({ stoppedReason: 'max_rounds', rounds: 12 });
+  }, 60_000);
+
+  it('a run-policy turn stores its policy, the steps it did not run and her own holds (S4)', async () => {
+    const hold = { round: 2, reason: 'manual' as const, next: ['Searching the literature'], outcome: 'expired' as const, at: '2026-09-28T10:00:00.000Z' };
+    await runStreamPostProcessing(
+      ctx({ stoppedReason: 'hold_expired', rounds: 1, runPolicy: 'manual', pendingSteps: ['Searching the literature'], policyHolds: [hold] }),
+    );
+    expect(saved.metadata[0]).toMatchObject({
+      stoppedReason: 'hold_expired',
+      rounds: 1,
+      runPolicy: 'manual',
+      pendingSteps: ['Searching the literature'],
+      policyHolds: [hold],
+    });
   });
 
   it('an answer that was cut off is stored as one', async () => {
@@ -94,6 +114,34 @@ describe('post-processing stores how the turn ended — behavioural', () => {
     expect(meta.rounds).toBe(2);
     expect('stoppedReason' in meta).toBe(false);
   });
+
+  /* QA 2026-10-08 (j5, "Stop leaves the question with no answer"): an answer
+     was saved only when there was text, so a turn stopped before AnA wrote a
+     word left the question alone in the conversation, and a reload showed it
+     with nothing after it. The stop is saved as what it is: an empty answer
+     that says it was stopped. */
+  it('a turn the person stopped before any text is saved as a stopped, empty answer', async () => {
+    await runStreamPostProcessing(ctx({ fullContent: '', toolTrace: [], stopped: true, stoppedReason: 'cancelled', rounds: 1 }));
+    expect(saved.rows).toEqual([{ role: 'assistant', content: '' }]);
+    expect(saved.metadata[0]).toMatchObject({ stoppedReason: 'cancelled' });
+  });
+
+  it('a stopped turn whose loop reported no reason is still saved as stopped', async () => {
+    await runStreamPostProcessing(ctx({ fullContent: 'Three risks stand out.', stopped: true, stoppedReason: 'no_more_tools' }));
+    expect(saved.rows).toEqual([{ role: 'assistant', content: 'Three risks stand out.' }]);
+    expect(saved.metadata[0]).toMatchObject({ stoppedReason: 'cancelled' });
+  });
+
+  it('a turn with no text that was not stopped still saves nothing', async () => {
+    await runStreamPostProcessing(ctx({ fullContent: '', toolTrace: [], stopped: false }));
+    expect(saved.rows).toEqual([]);
+  });
+
+  it('a stop that ended the turn in the error path saves what was streamed, as stopped', async () => {
+    await expect(persistStoppedAnswer('th_1', 'Three risks stand out. First,')).resolves.toBe(41);
+    expect(saved.rows).toEqual([{ role: 'assistant', content: 'Three risks stand out. First,' }]);
+    expect(saved.metadata[0]).toEqual({ stoppedReason: 'cancelled' });
+  });
 });
 
 describe('stream.ts carries the loop outcome — carriage', () => {
@@ -104,14 +152,16 @@ describe('stream.ts carries the loop outcome — carriage', () => {
     expect(src).toMatch(/loopRounds = loopResult\.rounds;/);
   });
 
-  it("the turn's done frame carries stoppedReason, rounds and a null runPolicy", () => {
+  it("the turn's done frame carries stoppedReason, rounds and the run policy", () => {
     // The main done frame — the one that carries the model — not the
     // intelligence fast path's, which runs no loop.
     const m = src.match(/type: 'done',\s*\n\s*model: gwResponse\.model,[\s\S]{0,2500}?\}\)\}\\n\\n`/);
     expect(m, 'main done frame not found').not.toBeNull();
     expect(m![0]).toMatch(/stoppedReason: loopStoppedReason,/);
     expect(m![0]).toMatch(/rounds: loopRounds,/);
-    expect(m![0]).toMatch(/runPolicy: null,/);
+    // S4 (row 74) fills the policy: the parsed run_policy, null when none was
+    // sent (stream-run-policy.test.ts drives both through the route).
+    expect(m![0]).toMatch(/runPolicy,/);
   });
 
   it('hands both to post-processing', () => {
@@ -121,12 +171,23 @@ describe('stream.ts carries the loop outcome — carriage', () => {
     expect(body).toMatch(/rounds: loopRounds,/);
   });
 
+  it('a Stop that aborts the model call saves the stopped answer before the record is filed', () => {
+    const at = src.indexOf('const stopped = Boolean(runHandle?.cancelSignal.aborted);');
+    expect(at, 'the error path no longer tells a stop from a failure').toBeGreaterThan(-1);
+    const path = src.slice(at, src.indexOf("await fileTurnRecord(stopped ? 'stopped' : 'failed')", at));
+    expect(path).toMatch(/if \(stopped && stoppedTurnThreadId\) \{/);
+    // With the turn's own reason: a page that lost its connection is not a person's Stop (S4).
+    expect(path).toMatch(/await persistStoppedAnswer\(stoppedTurnThreadId, turnRecorder\?\.streamedText \?\? '', turnPolicyOf\?\.stoppedReason\('cancelled'\)\)/);
+    // The thread it saves into is the one the turn resolved and saved its question in.
+    expect(src).toMatch(/turnRecorder\?\.setMessageIds\(\{ user: userMessageId \}\);\s*\n\s*stoppedTurnThreadId = threadId;/);
+  });
+
   it('records a warning on the turn record when the loop did not end by her choice', () => {
     expect(src).toMatch(/if \(loopStoppedReason !== 'no_more_tools'\) \{\s*\n\s*turnRecorder\?\.warn\(/);
   });
 
   it('adds the stopped-turn note beside the trace note, from the same history', () => {
-    const at = src.indexOf('const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));');
+    const at = src.indexOf('const traceNote = formatTraceForContext(traces);');
     expect(at).toBeGreaterThan(-1);
     const near = src.slice(at, at + 800);
     expect(near).toMatch(/const stoppedNote = formatStoppedTurnNote\(previousMsgs\);/);

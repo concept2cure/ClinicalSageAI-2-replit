@@ -1,0 +1,25 @@
+=== build with trunk's production COPY lines
+#5 DONE 6.6s
+#7 DONE 1.9s
+#9 [production 4/4] RUN ls /app/templates/forms/acroforms && cd /app/templates/forms/acroforms && sha256sum *.pdf
+#9 0.188 ls: /app/templates/forms/acroforms: No such file or directory
+#9 ERROR: process "/bin/sh -c ls /app/templates/forms/acroforms && cd /app/templates/forms/acroforms && sha256sum *.pdf" did not complete successfully: exit code: 1
+ > [production 4/4] RUN ls /app/templates/forms/acroforms && cd /app/templates/forms/acroforms && sha256sum *.pdf:
+0.188 ls: /app/templates/forms/acroforms: No such file or directory
+   7 | >>> RUN ls /app/templates/forms/acroforms && cd /app/templates/forms/acroforms && sha256sum *.pdf
+ERROR: failed to build: failed to solve: process "/bin/sh -c ls /app/templates/forms/acroforms && cd /app/templates/forms/acroforms && sha256sum *.pdf" did not complete successfully: exit code: 1
+=== build with now's production COPY lines
+#10 0.200 FDA_1572.pdf
+#10 0.200 FDA_1572.pdf.manifest.json
+#10 0.200 FDA_3454.pdf
+#10 0.200 FDA_3454.pdf.manifest.json
+#10 0.200 FDA_356H.pdf
+#10 0.200 FDA_356H.pdf.manifest.json
+#10 0.200 FDA_3674.pdf
+#10 0.200 FDA_3674.pdf.manifest.json
+#10 0.269 24adbff94268d02b4d23a85a0dc8b3f0f214326bdff11942d810d59755aeba4b  FDA_1571.pdf
+#10 0.269 44e7562b9abd152b53bbac029c6ff59b1e4517479dc6fe34521a1281e1a526a0  FDA_1572.pdf
+#10 0.269 2be1c63bdef3c4465fc0ba2210855937ab3370beecdcc25f35b3a4d4515b66e5  FDA_3454.pdf
+#10 0.269 ddd72f781e3a089b67c8f25d9f1c4018c696c974e2de49e554c059fe94bc15dc  FDA_356H.pdf
+#10 0.269 1ebcaeb1db0475f9d91cdb601347e94119d6ec2060f6e5b24543ecaab6425044  FDA_3674.pdf
+#11 naming to docker.io/library/c2c-forms-proof:now done

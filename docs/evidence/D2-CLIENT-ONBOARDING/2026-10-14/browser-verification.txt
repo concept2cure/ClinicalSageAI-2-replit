@@ -1,0 +1,5 @@
+Headless Chromium, real Vite-rendered Onboarding components and canonical styles. Synthetic API replies only; no deployment/database claim.
+Desktop light: client discovery rendered.
+390px mobile: no horizontal overflow.
+Desktop dark: conditional project discovery rendered.
+No browser runtime exceptions.

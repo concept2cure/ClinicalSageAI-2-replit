@@ -1,0 +1,12 @@
+Mutant R52-strip-hides-person: the strip does not say which claims are only in the person's message
+
+--- client/src/concept2cure/v2/AnaGrounding.tsx
+- {fromPerson.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a claim found only in the person's message is theirs, never found (HS-3) 19ms
+      Tests  1 failed | 21 passed (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

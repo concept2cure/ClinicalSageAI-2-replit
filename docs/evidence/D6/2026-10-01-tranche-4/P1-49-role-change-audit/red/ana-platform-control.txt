@@ -1,0 +1,309 @@
+# command: npx vitest run server/__tests__/routes/ana-platform-control.test.ts
+# tree: routes/ana-platform-control.ts and services/ana-platform-controller.ts unchanged from HEAD; run 2026-10-01T13:49:39Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+{
+  "timestamp": "2026-10-01T13:49:42.471Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:49:42.473Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+{
+  "timestamp": "2026-10-01T13:49:42.473Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing 1793ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > returns entitlements when tenant context provides organization id 7ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /settings is refused before the controller runs 14ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /modules/toggle is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /projects is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /projects/7 is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /ai-config is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /compliance is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /onboard is refused before the controller runs 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /execute is refused before the controller runs 3ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > an admin may still change settings 12ms
+   → expected "vi.fn()" to be called with arguments: [ 42, { theme: 'x' }, …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    42,
+    {
+      "theme": "x",
+    },
+-   ObjectContaining {
+-     "method": "PATCH",
+-     "userId": 7,
+-   },
++   7,
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member may still read settings 3ms
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: the request reaches the controller 10ms
+   → the request is the last argument: expected 7 to deeply equal ObjectContaining{…}
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: the request reaches the controller 4ms
+   → the request is the last argument: expected true to deeply equal ObjectContaining{…}
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: the request reaches the controller 4ms
+   → the request is the last argument: expected { defaultModel: 'm' } to deeply equal ObjectContaining{…}
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: the request reaches the controller 4ms
+   → the request is the last argument: expected { frameworks: [ 'FDA' ] } to deeply equal ObjectContaining{…}
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: the request reaches the controller 3ms
+   → the request is the last argument: expected { therapeuticArea: 'a', …(3) } to deeply equal ObjectContaining{…}
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: the request reaches the controller 3ms
+   → the request is the last argument: expected { category: 'settings', …(2) } to deeply equal ObjectContaining{…}
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: a refused write is a 500 with no detail, never a success 5ms
+   → expected {} to match object { success: false }
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: a refused write is a 500 with no detail, never a success 3ms
+   → expected {} to match object { success: false }
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: a refused write is a 500 with no detail, never a success 4ms
+   → expected {} to match object { success: false }
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: a refused write is a 500 with no detail, never a success 3ms
+   → expected {} to match object { success: false }
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: a refused write is a 500 with no detail, never a success 4ms
+   → expected {} to match object { success: false }
+ × server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: a refused write is a 500 with no detail, never a success 4ms
+   → expected {} to match object { success: false }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > an admin may still change settings
+AssertionError: expected "vi.fn()" to be called with arguments: [ 42, { theme: 'x' }, …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    42,
+    {
+      "theme": "x",
+    },
+-   ObjectContaining {
+-     "method": "PATCH",
+-     "userId": 7,
+-   },
++   7,
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/__tests__/routes/ana-platform-control.test.ts:125:43
+    123|     // The request itself, so the settings writer uses its connection,…
+    124|     // tenant scope and its actor (P1-49): not a bare user id.
+    125|     expect(mockController.updateSettings).toHaveBeenCalledWith(
+       |                                           ^
+    126|       42,
+    127|       { theme: 'x' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: the request reaches the controller
+AssertionError: the request is the last argument: expected 7 to deeply equal ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "method": "PATCH",
+  "userId": 7,
+}
+
++ Received:
+7
+
+ ❯ server/__tests__/routes/ana-platform-control.test.ts:182:71
+    180|     expect(res.status).toBe(200);
+    181|     const call = mockController[controller].mock.calls[0];
+    182|     expect(call[call.length - 1], 'the request is the last argument').…
+       |                                                                       ^
+    183|       expect.objectContaining({ userId: 7, method: method.toUpperCase(…
+    184|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: the request reaches the controller
+AssertionError: the request is the last argument: expected true to deeply equal ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "method": "POST",
+  "userId": 7,
+}
+
++ Received:
+true
+
+ ❯ server/__tests__/routes/ana-platform-control.test.ts:182:71
+    180|     expect(res.status).toBe(200);
+    181|     const call = mockController[controller].mock.calls[0];
+    182|     expect(call[call.length - 1], 'the request is the last argument').…
+       |                                                                       ^
+    183|       expect.objectContaining({ userId: 7, method: method.toUpperCase(…
+    184|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: the request reaches the controller
+AssertionError: the request is the last argument: expected { defaultModel: 'm' } to deeply equal ObjectContaining{…}
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "method": "PATCH",
+-   "userId": 7,
++ {
++   "defaultModel": "m",
+  }
+
+ ❯ server/__tests__/routes/ana-platform-control.test.ts:182:71
+    180|     expect(res.status).toBe(200);
+    181|     const call = mockController[controller].mock.calls[0];
+    182|     expect(call[call.length - 1], 'the request is the last argument').…
+       |                                                                       ^
+    183|       expect.objectContaining({ userId: 7, method: method.toUpperCase(…
+    184|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: the request reaches the controller
+AssertionError: the request is the last argument: expected { frameworks: [ 'FDA' ] } to deeply equal ObjectContaining{…}
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "method": "PATCH",
+-   "userId": 7,
++ {
++   "frameworks": [
++     "FDA",
++   ],
+  }
+
+ ❯ server/__tests__/routes/ana-platform-control.test.ts:182:71
+    180|     expect(res.status).toBe(200);
+    181|     const call = mockController[controller].mock.calls[0];
+    182|     expect(call[call.length - 1], 'the request is the last argument').…
+       |                                                                       ^
+    183|       expect.objectContaining({ userId: 7, method: method.toUpperCase(…
+    184|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: the request reaches the controller
+AssertionError: the request is the last argument: expected { therapeuticArea: 'a', …(3) } to deeply equal ObjectContaining{…}
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "method": "POST",
+-   "userId": 7,
++ {
++   "companySize": undefined,
++   "primaryAgency": "FDA",
++   "submissionType": "NDA",
++   "therapeuticArea": "a",
+  }
+
+ ❯ server/__tests__/routes/ana-platform-control.test.ts:182:71
+    180|     expect(res.status).toBe(200);
+    181|     const call = mockController[controller].mock.calls[0];
+    182|     expect(call[call.length - 1], 'the request is the last argument').…
+       |                                                                       ^
+    183|       expect.objectContaining({ userId: 7, method: method.toUpperCase(…
+    184|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: the request reaches the controller
+AssertionError: the request is the last argument: expected { category: 'settings', …(2) } to deeply equal ObjectContaining{…}
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "method": "POST",
+-   "userId": 7,
++ {
++   "action": "x",
++   "category": "settings",
++   "parameters": {},
+  }
+
+ ❯ server/__tests__/routes/ana-platform-control.test.ts:182:71
+    180|     expect(res.status).toBe(200);
+    181|     const call = mockController[controller].mock.calls[0];
+    182|     expect(call[call.length - 1], 'the request is the last argument').…
+       |                                                                       ^
+    183|       expect.objectContaining({ userId: 7, method: method.toUpperCase(…
+    184|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: a refused write is a 500 with no detail, never a success
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: a refused write is a 500 with no detail, never a success
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: a refused write is a 500 with no detail, never a success
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: a refused write is a 500 with no detail, never a success
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: a refused write is a 500 with no detail, never a success
+ FAIL  server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: a refused write is a 500 with no detail, never a success
+AssertionError: expected {} to match object { success: false }
+
+- Expected
++ Received
+
+- {
+-   "success": false,
+- }
++ {}
+
+ ❯ server/__tests__/routes/ana-platform-control.test.ts:192:22
+    190|     const res = await request(app)[method](`/api/ana/platform${path}`)…
+    191|     expect(res.status).toBe(500);
+    192|     expect(res.body).toMatchObject({ success: false });
+       |                      ^
+    193|     expect(typeof res.body.error).toBe('string');
+    194|     expect(res.text).not.toContain('probe');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 11 passed (24)
+   Start at  13:49:40
+   Duration  2.49s (transform 1.04s, setup 95ms, import 136ms, tests 1.91s, environment 0ms)
+

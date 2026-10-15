@@ -1,0 +1,105 @@
+FIX-UP HANDON GREEN: lane fix-up in the tree + the handOn edit (handon.patch) applied to scratch copies of the two renderers, swapped in by vitest.handon.config.ts. The shared tree's renderers are untouched.
+handon.patch:
+--- a/server/export/authoring-blocks-to-html.ts	2026-09-28 19:25:35.215017626 +0000
++++ b/server/export/authoring-blocks-to-html.ts	2026-09-28 19:25:35.228607891 +0000
+@@ -21,7 +21,7 @@
+   type ContentBlock,
+   type InlineRun,
+ } from './authoring-section-content.js';
+-import type { ResolvedImage } from './authoring-images.js';
++import { unfiledFigureLabel, type ResolvedImage } from './authoring-images.js';
+ import {
+   crossReferenceAnchorId,
+   normalizeCrossReferenceDisplay,
+@@ -215,9 +215,7 @@
+ ): string {
+   const resolved = fig.src ? images?.get(fig.src) : undefined;
+   if (!resolved) {
+-    return `<p class="img-missing">[Figure not exported: ${escapeHtml(
+-      fig.alt || fig.src || 'unresolved image reference',
+-    )}]</p>`;
++    return `<p class="img-missing">[Figure not exported: ${escapeHtml(unfiledFigureLabel(fig))}]</p>`;
+   }
+   /* `alt` stays the author's words. It is what a screen reader announces and
+      what a text extraction reads; prefixing it with "Figure 3" would put a
+--- a/server/export/authoring-blocks-to-docx.ts	2026-09-28 19:25:35.215069462 +0000
++++ b/server/export/authoring-blocks-to-docx.ts	2026-09-28 19:25:35.228863236 +0000
+@@ -18,7 +18,7 @@
+   type ContentBlock,
+   type InlineRun,
+ } from './authoring-section-content.js';
+-import type { ResolvedImage } from './authoring-images.js';
++import { unfiledFigureLabel, type ResolvedImage } from './authoring-images.js';
+ import {
+   crossReferenceBookmarkId,
+   normalizeCrossReferenceDisplay,
+@@ -548,7 +548,7 @@
+       new D.Paragraph({
+         children: [
+           new D.TextRun({
+-            text: `[Figure not exported: ${fig.alt || fig.src || 'unresolved image reference'}]`,
++            text: `[Figure not exported: ${unfiledFigureLabel(fig)}]`,
+             italics: true,
+             color: '8A8F98',
+           }),
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a dot segment after a real id: the loader is not called and nothing resolves 11ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a query after a real id: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > an id the store never minted: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > percent-encoded dot segments: the loader is not called and nothing resolves 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a reference padded with spaces: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline an upper-case type: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline WebP, which Word cannot hold: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline SVG, a script container: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline TIFF: not decoded, not filed 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline a PNG whose payload holds a newline: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > the PDF of a section holding an inline WebP states it instead of embedding it 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > reads srcs the way the export parser does: character references, unquoted and upper-case 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > still files a governed reference and an inline PNG (guard) 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > files an inline JPEG and GIF under their own types (guard) 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > the author's alt text, as written 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline WebP, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upper-case PNG type, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline PNG whose bytes did not decode, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an external address, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > a path out of the image route, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upload that did not resolve, by its reference 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > no src at all 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > never carries a data: payload, whatever its length 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > an <img> becomes an image block instead of vanishing (the old failure) 7ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > image-only content is not dropped by the whitespace filter (the trap) 5ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > collectImageSrcs > finds and deduplicates refs across sections 2ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > sniffImageDimensions > reads PNG, GIF and JPEG headers; refuses garbage 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > embeds the resolved figure as a data URI with its caption 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > states an unresolved figure instead of dropping it 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > the figure is REALLY in the filed .docx — a drawing plus its media part 64ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > an unresolved figure files a stated placeholder, never silence 20ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > WebP: the PDF names its kind and prints no base64 14ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > an upper-case PNG type: the PDF names its kind and prints no base64 4ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > SVG: the PDF names its kind and prints no base64 4ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > WebP: the Word file names its kind and prints no base64 70ms
+stderr | server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > an upload that did not resolve, by its reference, which the rule keeps short
+{
+  "timestamp": "2026-09-28T19:26:05.843Z",
+  "level": "warn",
+  "message": "[authoring-images] export image ref did not resolve",
+  "context": {
+    "fileId": "file_1727500000000_k3v9qa",
+    "reason": "not in this test"
+  }
+}
+
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > an upper-case PNG type: the Word file names its kind and prints no base64 19ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > a figure in a table cell is named the same way 6ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > the author's alt text, when there is one 9ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > an upload that did not resolve, by its reference, which the rule keeps short 12ms
+
+ Test Files  3 passed (3)
+      Tests  39 passed (39)
+   Start at  19:26:04
+   Duration  1.65s (transform 610ms, setup 270ms, import 3.46s, tests 277ms, environment 0ms)
+

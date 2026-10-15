@@ -23,12 +23,19 @@ import { enforceAuthorLineage } from '../../services/clinical-regulatory-evidenc
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService';
 import { createTraceId, emitTraceEvent } from '../../services/generation-guard.js';
 import { markPackagesContentChangedForArtifact } from '../../services/ectd/package-content-change';
-import { artifactApproval } from '../../services/ectd/package-content-fingerprint';
-import { ARTIFACT_ACT_MEANING, reviewQuorumVerdict } from '../../services/artifact-approval-act';
-import { ArtifactActConflictError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
+import {
+  ARTIFACT_ACT_MEANING,
+  allowedArtifactTransitions,
+  artifactStatusUpdate,
+  refuseArtifactTransition,
+  refuseSignedArtifactAct,
+} from '../../services/artifact-approval-act';
+import { ArtifactActConflictError, ArtifactActContractError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
 import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
+import { actorLabel, resolveActorNames } from '../../services/tenant/actor-names';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
+import { governedDecisionPersisted } from '../../services/governed-decision-ledger';
 import * as crypto from 'crypto';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
@@ -52,6 +59,8 @@ import {
 } from './shared';
 import { authorizedProjectId, loadProjectArtifact } from './artifact-project-scope';
 import { verifyReauth } from './actions';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
+import { isSigningAuthorized } from '../../services/part11/signing-authority';
 import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
@@ -768,7 +777,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     const { content, title, ctdSection } = req.body;
 
     // Find artifact in database
-    const dbArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+    const dbArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
     if (!dbArtifact) {
       return sendError(res, 404, 'Artifact not found');
@@ -1126,7 +1135,7 @@ router.put(
       }
 
       // Find the artifact
-      const dbArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const dbArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!dbArtifact) {
         return sendError(res, 404, 'Artifact not found');
@@ -1295,6 +1304,9 @@ router.put(
         });
         governedFabric = {
           decisionId: fabricResult.decisionReference.decisionId,
+          // The id is handed out before its queued ledger insert runs, and the
+          // insert can fail; this response did not say so until 2026-10-15.
+          decisionPersisted: await governedDecisionPersisted(fabricResult.decisionReference),
           outcome: fabricResult.decisionReference.outcome,
           readiness: fabricResult.evaluation.readiness.level,
           readinessScore: fabricResult.evaluation.readiness.score,
@@ -1505,7 +1517,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -1551,7 +1563,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -1619,7 +1631,7 @@ router.get(
       }
 
       // 1. Get artifact
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) {
         return sendError(res, 404, 'Artifact not found');
@@ -1836,7 +1848,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -1886,7 +1898,7 @@ router.get(
 
       const mode = (req.query.mode as string) === 'detailed' ? 'detailed' : 'summary';
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -2087,7 +2099,7 @@ router.post(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -2383,28 +2395,8 @@ router.post(
  */
 
 // ── Role-based permission map for status transitions ───────────────────
-const ROLE_PERMISSIONS: Record<string, string[]> = {
-  admin: [
-    'draft→review',
-    'review→approved',
-    'review→draft',
-    'approved→locked',
-    'approved→review',
-    'locked→draft',
-  ],
-  approver: [
-    'draft→review',
-    'review→approved',
-    'review→draft',
-    'approved→locked',
-    'approved→review',
-    'locked→draft',
-  ],
-  reviewer: ['draft→review', 'review→approved', 'review→draft', 'approved→review'],
-  author: ['draft→review'],
-  user: ['draft→review'],
-  viewer: [],
-};
+// In server/services/artifact-approval-act.ts (ARTIFACT_STATUS_ROLE_PERMISSIONS)
+// since 2026-10-01: AnA's signed approve and lock apply the same table.
 
 const ROLLBACK_ROLES = ['admin', 'approver', 'reviewer'];
 
@@ -2415,9 +2407,11 @@ const ROLLBACK_ROLES = ['admin', 'approver', 'reviewer'];
 router.get('/user/permissions', async (req: Request, res: Response) => {
   try {
     const userRole = (req.userRole || 'user').toLowerCase();
-    const allowedTransitions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS['user'];
+    const allowedTransitions = allowedArtifactTransitions(userRole);
     const canRollback = ROLLBACK_ROLES.includes(userRole);
-    const canSign = ['admin', 'approver', 'reviewer'].includes(userRole);
+    // What the client offers, from the signing policy itself rather than a copy
+    // of its role list (P-27): approve and lock refuse through checkSigningAuthority.
+    const canSign = isSigningAuthorized(userRole);
     const canExport = ['admin', 'approver', 'reviewer', 'author', 'user'].includes(userRole);
 
     return sendSuccess(res, {
@@ -2491,38 +2485,15 @@ router.put(
       }
 
       // Another project's artifact is not found through this project's URL.
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
       const previousStatus = artifact.status || 'draft';
 
-      // ── Role-based permission check ──────────────────────────────────
-      const transitionKey = `${previousStatus}→${status}`;
-      const allowedTransitions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS['user'];
-      if (!allowedTransitions.includes(transitionKey)) {
-        return sendError(
-          res,
-          403,
-          `Role "${userRole}" is not permitted to perform transition: ${transitionKey}. ` +
-            `Allowed transitions for your role: ${allowedTransitions.join(', ') || 'none'}`
-        );
-      }
-
-      // ── Transition validation ────────────────────────────────────────
-      const VALID_TRANSITIONS: Record<string, string[]> = {
-        draft: ['review'],
-        review: ['approved', 'draft'],
-        approved: ['locked', 'review'],
-        locked: ['draft'],
-      };
-
-      const allowed = VALID_TRANSITIONS[previousStatus] || [];
-      if (!allowed.includes(status)) {
-        return sendError(
-          res,
-          400,
-          `Invalid transition: ${previousStatus} → ${status}. Allowed: ${allowed.join(', ')}`
-        );
+      // ── Role, then transition (server/services/artifact-approval-act.ts) ──
+      const transitionRefusal = refuseArtifactTransition(previousStatus, status, userRole);
+      if (transitionRefusal) {
+        return sendError(res, transitionRefusal.httpStatus, transitionRefusal.message);
       }
 
       // ── Regression requires reason ───────────────────────────────────
@@ -2542,116 +2513,36 @@ router.put(
         }
       }
 
-      // ── A lock must cover the approval ───────────────────────────────
-      // 2026-09-23 (W5/D7, residual repair): approved → locked used to check
-      // status alone and stamp published_version_id = the CURRENT version, so
-      // approved v1 → PUT edit to v2 (status stays 'approved') → lock recorded
-      // "locked at v2" over content no one reviewed. The filing rule already
-      // refuses that artifact; the lock is now refused too, so an unreviewed
-      // edit is never recorded as locked. The verdict is artifactApproval's —
-      // the one filing rule, imported, not restated: an approved artifact may
-      // be locked only when it is filable as approved (version =
-      // approved_version_id, and an approval that recorded no version fails
-      // closed). Its remedy names the re-approval (approved → review → approved).
-      if (previousStatus === 'approved' && status === 'locked') {
-        const approval = artifactApproval({
-          status: previousStatus,
-          version: artifact.version,
-          approvedVersionId: artifact.approvedVersionId,
-          publishedVersionId: artifact.publishedVersionId,
+      // ── Before a signed act: a lock covers the approval, no blocking
+      // contradiction, the review quorum ───────────────────────────────
+      // 2026-09-23 (W5/D7): a lock is lockable only when filable as approved
+      // (artifactApproval, the one filing rule); the P12 quorum blocks
+      // review → approved while assigned reviewers have not approved, and a
+      // quorum that cannot be read throws (the catch below answers 500 before
+      // anything is written). Since 2026-10-01 these live in
+      // server/services/artifact-approval-act.ts (refuseSignedArtifactAct),
+      // applied here and by AnA's signed approve and lock.
+      if (status === 'approved' || status === 'locked') {
+        const signedActRefusal = await refuseSignedArtifactAct({
+          q: pool,
+          organizationId,
+          projectId,
+          artifact,
+          previousStatus,
+          status,
         });
-        if (!approval.filable) {
+        if (signedActRefusal) {
           return sendError(
             res,
-            409,
-            `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
-            { reason: approval.reason },
-            'LOCK_NOT_COVERED_BY_APPROVAL'
+            signedActRefusal.httpStatus,
+            signedActRefusal.message,
+            signedActRefusal.details,
+            signedActRefusal.code
           );
         }
       }
 
-      // ── Contradiction governance gate ───────────────────────────────
-      // Hard block promotion if unresolved contradictions with blocks_promotion authority
-      if (status === 'approved' || status === 'locked') {
-        try {
-          const { contradictionEngineService } = await import(
-            '../../services/contradiction-engine-service'
-          );
-          const { blocked, blockingFindings, warningFindings } =
-            await contradictionEngineService.checkPromotionBlocked(
-              organizationId,
-              projectId,
-              artifact.id
-            );
-          if (blocked) {
-            return sendError(
-              res,
-              409,
-              `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`,
-              {
-                blockingFindings: blockingFindings.map(f => ({
-                  id: f.id,
-                  title: f.title,
-                  severity: f.severity,
-                  contradictionType: f.contradictionType,
-                  authorityState: f.authorityState,
-                })),
-                warningFindings: warningFindings.map(f => ({
-                  id: f.id,
-                  title: f.title,
-                  severity: f.severity,
-                })),
-              }
-            );
-          }
-        } catch (contradictionError) {
-          // Log but don't block on contradiction check failure (table may not exist yet)
-          console.warn(
-            'Contradiction check skipped:',
-            contradictionError instanceof Error ? contradictionError.message : contradictionError
-          );
-        }
-      }
-
-      // ── P12: Review quorum gate ─────────────────────────────────────
-      // Block review → approved if reviewers are assigned but not all approved.
-      // Withdrawn assignments are excluded from the quorum check.
-      // 2026-09-23 (W5/D7, residual repair, round 3; amended final pass): the
-      // gate moved, unchanged, to server/services/artifact-approval-act.ts
-      // (reviewQuorumVerdict), the one implementation this route and
-      // authoring-actions approve-artifact — the two governed approval acts —
-      // apply. A quorum that cannot be read throws, and the catch below
-      // answers 500 before anything is written: an unread quorum is not met.
-      if (previousStatus === 'review' && status === 'approved') {
-        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId, artifact.version);
-        if (!quorum.met) {
-          return sendError(res, 400, quorum.message);
-        }
-      }
-
-      const updateData: Record<string, any> = {
-        status,
-        updatedAt: new Date(),
-      };
-      // Leaving approved/locked (approved → review, locked → draft) clears
-      // approvedVersionId and publishedVersionId in this same write: the
-      // concept2cure_artifacts trigger does it for every writer
-      // (migrations/20260923b_artifact_approval_follows_status.sql, 2026-09-23
-      // W5/D7 final pass), so a revoked approval cannot be resurrected.
-      if (status === 'approved') {
-        updateData.approvedVersionId = artifact.version;
-      }
-      if (status === 'locked') {
-        updateData.lockedAt = new Date();
-        updateData.lockedById = userId;
-        updateData.publishedVersionId = artifact.version;
-        updateData.publishedAt = new Date();
-      }
-      if (previousStatus === 'locked' && status === 'draft') {
-        updateData.lockedAt = null;
-        updateData.lockedById = null;
-      }
+      const updateData: Record<string, any> = artifactStatusUpdate(artifact, previousStatus, status, userId);
       const statusGovernedResolution = resolveGovernedContext({
         req,
         projectId: artifact.projectId,
@@ -2694,7 +2585,11 @@ router.put(
         existingMetadata.harness && typeof existingMetadata.harness === 'object'
           ? (existingMetadata.harness as Record<string, unknown>)
           : {};
-      updateData.metadata = {
+      /* The harness block this status change republishes. It is passed to the
+         signed act as its own `metadata` input, NOT on `updateData`: that set is
+         validated against the canonical approval/lock columns, and an extra key
+         there made every approve and lock answer 409 (2026-10-11). */
+      const statusMetadata = {
         ...existingMetadata,
         harness: {
           ...existingHarness,
@@ -2766,6 +2661,15 @@ router.put(
       });
 
       if (actMeaning) {
+        // §11.10(g), before the password: approve and lock write a signature, so
+        // the signer's role on the MEMBERSHIP row must carry signing authority
+        // under the platform's one policy. The status table above reads the
+        // session's role (req.userRole) and decides who may move an artifact;
+        // it never decided who may sign. QA 2026-10-08 (j6 sweep).
+        const authority = await checkSigningAuthority(userId, organizationId);
+        if (authority) {
+          return sendError(res, authority.status, authority.message, undefined, authority.code);
+        }
         const reauth = await verifyReauth(userId, req.body?.reauth);
         if (!reauth.ok) {
           return sendError(
@@ -2794,6 +2698,7 @@ router.put(
               status: status as 'approved' | 'locked',
               previousStatus,
               updateData,
+              metadata: statusMetadata,
               organizationId,
               userId,
               userRole,
@@ -2813,11 +2718,33 @@ router.put(
           .catch((err: unknown) => {
             // A stale read and an unnamed signer are answered as such; anything
             // else is the 500 below. Nothing was written in any of them.
-            if (err instanceof ArtifactActConflictError || err instanceof SignerNotAttributableError) {
+            if (
+              err instanceof ArtifactActConflictError ||
+              err instanceof ArtifactActContractError ||
+              err instanceof SignerNotAttributableError
+            ) {
               return err;
             }
             throw err;
           });
+        if (signed instanceof ArtifactActContractError) {
+          /* Ours, not the signer's: the detail stays in the log (this router
+             forwards its results to a tenant client — ci:server-error-leaks)
+             and the answer never claims the document changed. */
+          logger.error('status route handed the signed act a non-canonical column set', {
+            artifactId: artifact.artifactId,
+            previousStatus,
+            status,
+            detail: signed.detail,
+          });
+          return sendError(
+            res,
+            500,
+            'This document could not be signed because of a problem on our side. Nothing was signed, and the problem has been logged.',
+            undefined,
+            signed.code,
+          );
+        }
         if (signed instanceof ArtifactActConflictError) {
           return sendError(res, 409, signed.message, undefined, signed.code);
         }
@@ -2948,7 +2875,7 @@ router.put(
         return sendError(res, 400, 'ctdSection is required');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3085,7 +3012,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3164,7 +3091,7 @@ router.post(
         return sendError(res, 400, 'targetVersion is required and must be a positive integer');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3385,7 +3312,7 @@ router.post(
         return sendError(res, 400, 'comment is required');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3457,7 +3384,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3508,7 +3435,7 @@ router.put(
       // The comment is resolved only on the URL's artifact, in its project: it
       // was found by id and organization alone, so any project's comment could
       // be resolved through this project's URL.
-      const commentArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const commentArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
       if (!commentArtifact) return sendError(res, 404, 'Artifact not found');
 
       const [comment] = await db
@@ -3600,7 +3527,7 @@ router.post(
         return sendError(res, 400, 'All reviewer IDs must be valid numbers');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -3737,17 +3664,19 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
-      const assignments = await db
+      // No join on users: since users took row-level security (D3, 2026-09-28)
+      // an inner join dropped every assignment, and its decision, whose reviewer
+      // had left the organization. Names come from public.actor_name
+      // (docs/evidence/D3/2026-09-29-actor-names/).
+      const assignmentRows = await db
         .select({
           id: concept2cureReviewAssignments.id,
           assignmentId: concept2cureReviewAssignments.assignmentId,
           reviewerId: concept2cureReviewAssignments.reviewerId,
-          reviewerName: users.name,
-          reviewerEmail: users.email,
           reviewRound: concept2cureReviewAssignments.reviewRound,
           status: concept2cureReviewAssignments.status,
           dueDate: concept2cureReviewAssignments.dueDate,
@@ -3755,7 +3684,6 @@ router.get(
           createdAt: concept2cureReviewAssignments.createdAt,
         })
         .from(concept2cureReviewAssignments)
-        .innerJoin(users, eq(users.id, concept2cureReviewAssignments.reviewerId))
         .where(
           and(
             eq(concept2cureReviewAssignments.artifactId, artifact.id),
@@ -3766,6 +3694,12 @@ router.get(
           desc(concept2cureReviewAssignments.reviewRound),
           concept2cureReviewAssignments.createdAt
         );
+      const reviewerNames = await resolveActorNames(assignmentRows.map(a => a.reviewerId));
+      const assignments = assignmentRows.map(a => ({
+        ...a,
+        reviewerName: reviewerNames.get(a.reviewerId)?.name ?? null,
+        reviewerEmail: reviewerNames.get(a.reviewerId)?.email ?? null,
+      }));
 
       // Load decisions for each assignment
       const assignmentIds = assignments.map(a => a.id);
@@ -3845,7 +3779,7 @@ router.delete(
       if (!assignment) return sendError(res, 404, 'Assignment not found');
 
       // Validate the assignment belongs to the artifact in the URL, in its project
-      const withdrawArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const withdrawArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!withdrawArtifact || assignment.artifactId !== withdrawArtifact.id) {
         return sendError(res, 404, 'Assignment not found for this artifact');
@@ -3962,7 +3896,7 @@ router.post(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
       // The assignment is reminded only on the URL's artifact, in its project.
-      const remindArtifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const remindArtifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
       if (!remindArtifact) return sendError(res, 404, 'Artifact not found');
 
       // Get the assignment
@@ -4054,7 +3988,7 @@ router.post(
         return sendError(res, 403, 'Only reviewer, approver, or admin can submit review decisions');
       }
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
       if (artifact.status !== 'review') {
@@ -4220,7 +4154,7 @@ router.get(
       const projectId = await authorizedProjectId(req, organizationId);
       if (projectId === null) return sendError(res, 404, 'Project not found');
 
-      const artifact = await loadProjectArtifact(organizationId, projectId, paramStr(req.params.artifactId));
+      const artifact = await loadProjectArtifact(db, organizationId, projectId, paramStr(req.params.artifactId));
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
@@ -4265,16 +4199,9 @@ router.get(
 
       const decisionMap = new Map(decisions.map(d => [d.reviewerId, d]));
 
-      // Get reviewer details
-      const reviewerIds = roundAssignments.map(a => a.reviewerId);
-      const reviewerDetails =
-        reviewerIds.length > 0
-          ? await db
-              .select({ id: users.id, name: users.name, email: users.email })
-              .from(users)
-              .where(inArray(users.id, reviewerIds))
-          : [];
-      const reviewerMap = new Map(reviewerDetails.map(u => [u.id, u]));
+      // Reviewer names through public.actor_name (D3): a users look-up found
+      // no one who had left, and rendered them "Unknown".
+      const reviewerMap = await resolveActorNames(roundAssignments.map(a => a.reviewerId));
 
       const totalAssigned = activeAssignments.length;
       const completedCount = activeAssignments.filter(a => a.status === 'completed').length;
@@ -4303,7 +4230,7 @@ router.get(
           return {
             assignmentId: a.assignmentId,
             reviewerId: a.reviewerId,
-            reviewerName: reviewer?.name || 'Unknown',
+            reviewerName: actorLabel(reviewerMap, a.reviewerId),
             reviewerEmail: reviewer?.email || '',
             status: a.status,
             dueDate: a.dueDate,

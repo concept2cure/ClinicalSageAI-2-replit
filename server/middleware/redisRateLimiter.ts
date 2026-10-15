@@ -310,6 +310,7 @@ const DEFAULT_RULES: Record<string, RateLimitRule> = {
   api: { ...RATE_LIMITS.api },
   ai: { ...RATE_LIMITS.ai, skipRoles: [...RATE_LIMITS.ai.skipRoles] },
   documents: { ...RATE_LIMITS.documents },
+  vault_metadata: { ...RATE_LIMITS.vault_metadata },
   concept2cure: { ...RATE_LIMITS.concept2cure },
   validation: { ...RATE_LIMITS.validation },
   upload: { ...RATE_LIMITS.upload },
@@ -368,6 +369,26 @@ function isAnaRiNonModelRequest(path: string, method?: string): boolean {
   return m === 'POST' && /(^|\/)ana-ri\/stream\/[^/]+\/control\/?$/.test(path);
 }
 
+/**
+ * The Vault's document-scoped METADATA reads: a document's versions, history,
+ * annotations and related documents (server/routes/c2c/project-vault.ts). Their
+ * path carries a `documents` segment, which put them in the 20-a-minute
+ * `documents` bucket meant for generation, export and download. One document
+ * open makes four of these reads (eight in the development build, where StrictMode
+ * mounts each panel twice), so about five opens in a minute exhausted the bucket
+ * and the reads were refused "Too many document requests" (QA 2026-10-08). They
+ * are counted as 'vault_metadata': its own bucket, 600 a minute per identity,
+ * still FAIL-CLOSED (annotations carry quoted document text). The download, the
+ * text read, the compare and every write stay in `documents`: those move content
+ * or change it. Matched on a segment boundary, so it holds with or without /api.
+ */
+const VAULT_DOCUMENT_METADATA_READ =
+  /(^|\/)c2c\/project-vault\/[^/]+\/documents\/[^/]+\/(versions|history|annotations|relationships)\/?$/;
+
+function isVaultDocumentMetadataRead(path: string, method?: string): boolean {
+  return (method ?? '').toUpperCase() === 'GET' && VAULT_DOCUMENT_METADATA_READ.test(path);
+}
+
 export function getCategory(path: string, method?: string): string {
   if (hasSegment(path, 'login', 'register', 'auth')) {
     return 'auth';
@@ -385,6 +406,9 @@ export function getCategory(path: string, method?: string): string {
   }
   if (hasSegment(path, 'concept2cure')) {
     return 'concept2cure';
+  }
+  if (isVaultDocumentMetadataRead(path, method)) {
+    return 'vault_metadata';
   }
   if (hasSegment(path, 'document', 'documents', 'export', 'pdf')) {
     return 'documents';

@@ -1,0 +1,71 @@
+$ # signedAuditExport.ts changed + new auditExportKeyPosture.ts; the two new suites and the four suites the item must keep green
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/audit/__tests__/signed-audit-export-key-id.test.ts server/services/audit/__tests__/auditExportKeyPosture.test.ts server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts server/routes/__tests__/audit-export-tenant-scope.test.ts
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > a new export names its signing key > carries signingKeyId — AUDIT_EXPORT_SIGNING_KEY_ID, 'k1' when unset 6ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > a new export names its signing key > puts the key id under the signature: changing it invalidates the manifest 2ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > an export signed before the rotation verifies through the _PREV slot, and the verdict names that key 3ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > a wrong key fails 2ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > a manifest naming a key that is no longer configured is refused, and the refusal names the id 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a v2 manifest with no signingKeyId verifies under AUDIT_EXPORT_SIGNING_KEY, as before 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a v1 manifest signed under the JWT secret alone verifies, as before 3ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a legacy manifest signed under the JWT secret does not verify once a dedicated key is set — the chain is unchanged 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the JWT_SECRET fallback > is visible in the manifest outside production, and verifies by that name 2ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the JWT_SECRET fallback > is refused in production before the export is recorded 3ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the comparison > refuses a signature of the wrong length or shape without throwing 2ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: chainIntegrity is a verdict only when something was verified > an all-unhashed table is "unverified", not "intact" — and the manifest says how many rows had no hash 6ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: chainIntegrity is a verdict only when something was verified > an empty result set is "unverified" with a reason, not "intact" 2ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: chainIntegrity is a verdict only when something was verified > a snapshot query that fails is still "unavailable" — the honest branch is unchanged 2ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: the export must record itself, or refuse > records the export BEFORE sealing, with an integer entity id, and carries the row id in the signed manifest 2ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: the export must record itself, or refuse > refuses to produce an export whose audit record could not be written (the pre-fix 22P02) 4ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: the export must record itself, or refuse > refuses without an organisation — the record must be attributable to a tenant 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > non-production (no-op) > never throws when NODE_ENV=development and no key is set 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > non-production (no-op) > never throws when NODE_ENV=staging and no key is set 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > non-production (no-op) > never throws when NODE_ENV=test and no key is set 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > non-production (no-op) > never throws when NODE_ENV=unset and no key is set 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > admits a dedicated key of sufficient length that differs from the JWT secret, and names its id 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > refuses to boot when the key is missing 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > refuses to boot when the key is empty or whitespace-only 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > refuses to boot when the key is too short, without echoing it 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > refuses to boot when the key equals JWT_SECRET or JWT_SECRET_PROD 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > has no accept flag: the seal key's accept flag does not apply here 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > is case-insensitive on NODE_ENV 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > the previous-key slot > admits a complete, distinct previous pair 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > the previous-key slot > refuses a previous key without its id, and an id without its key 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > the previous-key slot > refuses a previous key that is too short, equals the JWT secret, or equals the current key 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > assertAuditExportKeyPostureForProduction > production > the previous-key slot > refuses a previous id equal to the current id 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveExportSigningKey — the key for a new export (no id asked) > returns the dedicated key under AUDIT_EXPORT_SIGNING_KEY_ID, 'k1' by default 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveExportSigningKey — the key for a new export (no id asked) > falls back to the JWT secret outside production, and says so in the key id 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveExportSigningKey — the key for a new export (no id asked) > refuses the fallback in production — the boot posture applies at the point of signing too 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveExportSigningKey — the key for a new export (no id asked) > refuses to sign when no key of any kind is configured 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveExportSigningKey — the key a manifest names > resolves the current id, the previous id, and the fallback id 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveExportSigningKey — the key a manifest names > returns null for an id nothing is configured under — never a guess 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveExportSigningKey — the key a manifest names > names the configured ids for the verifier's refusal 1ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveLegacyExportSigningKey — the pre-key-id chain, frozen for manifests with no id > is AUDIT_EXPORT_SIGNING_KEY, else JWT_SECRET_PROD, else JWT_SECRET 0ms
+ ✓ server/services/audit/__tests__/auditExportKeyPosture.test.ts > resolveLegacyExportSigningKey — the pre-key-id chain, frozen for manifests with no id > throws when none of the three is set, as it always did 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > includes the nested fields that version 1 signed as {} 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > distinguishes a broken chain from an intact one 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > distinguishes exports covering different date ranges 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > is insensitive to key order, which is the point of canonicalizing 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > emits valid JSON 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > reproduces the original expression byte for byte 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > still carries the defect, deliberately, because the signature did 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > routes by the manifest's own declaration, not by a global switch 0ms
+Failed to export audit logs: Error: boom
+Failed to generate signed audit export: Error: boom
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier 22ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails 7ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails 4ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > contains the Vault events, each with its chain hash, sequence and source 42ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > never carries another tenant's rows 21ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > still carries the audit_events rows it always did 20ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > narrows to one document when asked, and the manifest says so 20ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > verifies, and refuses after a one-byte change to a row 16ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > states the audit_logs chain verdict it was given — and never "intact" without one 22ms
+ Test Files  6 passed (6)
+      Tests  63 passed (63)
+   Duration  7.04s (transform 2.54s, setup 417ms, import 5.06s, tests 4.42s, environment 1ms)
+exit=0

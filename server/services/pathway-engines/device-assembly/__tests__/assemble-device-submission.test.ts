@@ -171,7 +171,8 @@ describe('assembleDeviceSubmission (B5)', () => {
 // ── PMA (21 CFR 814) through the same assembly contract ──────────────────────
 //
 // A PMA authored in the governed editor is scaffolded from the pma:fda rule
-// pack (fda-pma-21cfr814-20-v1.0). Before this, `pathway` admitted only
+// pack (fda-pma-21cfr814-20-v1.0; live since 2026-10-05 as v1.1, which differs
+// only in C.4's label, a leaf no fixture below uses). Before this, `pathway` admitted only
 // '510k' | 'de_novo': a PMA forced through was scored against the 510(k)
 // eSTAR slots ("substantial-equivalence missing" on a Class III application).
 // These leaves are shaped exactly like that pack's labels and keys.

@@ -22,6 +22,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { seen, connectMock } = vi.hoisted(() => ({ seen: [] as any[], connectMock: vi.fn() }));
 
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'approver' }));
 vi.mock('../../../db', () => ({ pool: { connect: connectMock, query: vi.fn() } }));
 // The guard getGateway wraps every gateway in, reduced to the part under test:
 // evaluatePreTransmit over the bundle the caller hands the gateway, refusing on

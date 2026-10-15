@@ -1,0 +1,31 @@
+mutant M-region-off: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- (rawFrom !== -1 && c.charEnd > rawFrom) ||
++ false ||
+
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp, paragraph breaks: the clause holding the shown words is not the machine's 11ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext, a paragraph break: the clause holding the shown words is not the machine's 2ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea, a comma clause break: the clause holding the shown words is not the machine's 1ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > CDATA in SVG, paragraph breaks: the clause holding the shown words is not the machine's 1ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext with an attribute (N1): the clause holding the shown words is not the machine's 1ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp with a class, and a space in its end tag (N1): the clause holding the shown words is not the machine's 1ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea with rows, and a space in its end tag (N1): the clause holding the shown words is not the machine's 1ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region > an accepted clause a later save put inside one is not carried: its words were matched with tags removed 1ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 128ms
+   → words a reader is shown, typed into AnA's sentence, were credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > textarea, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 39ms
+   → words a reader is shown, typed into AnA's sentence, were credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > plaintext after an earlier paragraph: the clause holding the shown words is the accepter's, though the draft verified 40ms
+   → words a reader is shown, typed into AnA's sentence, were credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it verifies, and still credits nothing 59ms
+   → expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  12 failed | 47 passed (59)

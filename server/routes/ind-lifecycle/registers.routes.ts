@@ -259,7 +259,7 @@ router.post('/submission/:id/safety-reports', limiter, requireRole(AUTHOR), asyn
     );
     res.status(201).json(row);
   } catch (err) {
-    if (err instanceof SafetyReportError && err.code === 'NOT_REPORTABLE') {
+    if (err instanceof SafetyReportError && (err.code === 'NOT_REPORTABLE' || err.code === 'NOT_DETERMINED')) {
       return res.status(422).json({ error: { code: err.code, message: err.message } });
     }
     fail(res, err);

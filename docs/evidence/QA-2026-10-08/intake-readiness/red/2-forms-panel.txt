@@ -1,0 +1,11 @@
+ × client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > shows a form already filed in each sequence, with the digest of the bytes the sponsor signed 36ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > sends what the person stated with the attachment, and nothing the record holds 192ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > a filed attachment the engine finds incomplete is reported as filed and NOT complete, naming what is missing 98ms
+ × client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx > IndFormsPanel — an attachment is not a completion > each placement says whether it completes the form: complete, not complete (what is missing), or not checked 5024ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ …(1) ] to have a length of 2 but got 1
+AssertionError: expected null to be 'Phase 1' // Object.is equality
+AssertionError: expected 'Completed FDA 1571 filed at m1.1 in s…' to match /not counted as complete/i
+TestingLibraryElementError: Unable to find an element with the text: attached · not complete. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  2 failed (2)
+      Tests  4 failed | 27 passed (31)

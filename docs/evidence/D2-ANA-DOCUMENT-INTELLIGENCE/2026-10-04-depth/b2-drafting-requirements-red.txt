@@ -1,0 +1,60 @@
+    112|     expect(request.promptVersion).toBe('section-generation@v1.1');
+       |                                   ^
+    113|     expect(request.metadata.requirementsSource).toBe('exact');
+    114|     expect(authoring.promptVersion).toBe('section-generation@v1.1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > the system prompt asks for the impersonal register, labelled platform convention, not second person
+AssertionError: expected '# section-generation — v1.0\n\nVersio…' not to match /second person/i
+
+- Expected:
+/second person/i
+
++ Received:
+"# section-generation — v1.0
+
+Versioned prompt for the Authoring task (spec §6.3). Streamed to the user; the
+draft is persisted as a governed artifact, never loose chat text. (Streaming
+wiring is added when the authoring route lands; template is pinned now.)
+
+## System Context
+You draft regulatory summary/overview content (2.3 QOS, 2.4 Nonclinical Overview, 2.5 Clinical Overview, 2.7 Clinical Summary, device CER/PER, cover letters) from source evidence. Every claim is grounded in the provided evidence with a citation; if no grounding exists for a claim, you say so rather than invent it.
+
+## Input Variables
+- `sectionCode` — the CTD section to draft.
+- `evidence` — array of `{ id, source, text }` grounding passages.
+- `productContext` — product/indication context.
+
+## Instructions
+1. Draft the section in regulatory register, sentence case, second person where addressing the reader.
+2. Ground every substantive claim in an evidence id; attach `citations` mapping claim → evidence id.
+3. Flag any required sub-point you could not ground in `ungrounded`.
+
+## Output Format
+Streamed markdown body, followed by a JSON trailer:
+```json
+{ \"citations\": [{ \"claim\": \"string\", \"evidenceId\": \"string\" }], \"ungrounded\": [\"string\"] }
+```
+
+## Guardrails
+- Never invent a citation or a clinical result. If evidence is missing, list it in `ungrounded`.
+- No marketing language. Numbers over adjectives.
+"
+
+ ❯ server/services/authoring/__tests__/section-generation-requirements.test.ts:122:24
+    120|   it('the system prompt asks for the impersonal register, labelled pla…
+    121|     const { system } = await generate('2.7.3');
+    122|     expect(system).not.toMatch(/second person/i);
+       |                        ^
+    123|     expect(system).toMatch(/impersonal third person/i);
+    124|     expect(system).toMatch(/platform convention/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  20:38:52
+   Duration  1.83s (transform 869ms, setup 104ms, import 1.38s, tests 28ms, environment 0ms)
+

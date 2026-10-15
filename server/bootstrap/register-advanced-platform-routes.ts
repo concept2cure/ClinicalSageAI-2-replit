@@ -22,7 +22,6 @@ import realtimeCollab from '../routes/realtime-collab.js';
 import graphrag from '../routes/graphrag.js';
 import anaCortexFt from '../routes/ana-cortex-ft.js';
 import globalCompliance from '../routes/global-compliance.js';
-import agentSwarm from '../routes/agent-swarm.js';
 import realWorldEvidence from '../routes/real-world-evidence.js';
 import regulatoryDigitalTwin from '../routes/regulatory-digital-twin.js';
 import submissionTwin from '../routes/submission-twin.js';
@@ -42,8 +41,8 @@ const log = createScopedLogger('workspace-projects');
 
 // SECURITY: nearly every router mounted here is tenant-scoped — task
 // management, approvals, branding, lineage, workspace projects. The
-// few exceptions (integration-test, notifications-as-function-app) are
-// either dev-only or perform their own auth via app.METHOD handlers,
+// one exception (integration-test) is
+// dev-only and performs its own auth via app.METHOD handlers,
 // where authenticateToken would not be the right gate. Bulk-apply
 // authenticateToken to every config-driven mount below.
 
@@ -68,7 +67,12 @@ export async function registerAdvancedPlatformRoutes({
 }: AdvancedPlatformBootstrapContext) {
   // ── Innovation + Notifications ──
   try {
-    /* NOT MOUNTED — deliberately, and the router file is kept.
+    /* NOT MOUNTED, and since 2026-10-15 DELETED: the router
+       (server/routes/innovation-routes.ts) and the seven services only it
+       imported were removed because each fabricated its results and nothing
+       could reach them; only the submission-readiness twin service remains
+       (read by AnA). Recover them from git history if Innovation is ever
+       scheduled. The note below is why they were never mounted.
        All 61 routes dereference eight service handles that
        `initializeInnovationRoutes(pool)` assigns, and that function has ZERO
        callers repo-wide including tests. So every endpoint threw a TypeError
@@ -79,8 +83,9 @@ export async function registerAdvancedPlatformRoutes({
        a capability it does not have. Calling the initializer to turn the 500s
        into 200s would be worse — it would make an unused feature LOOK live to
        anyone reading migration state.
-       Whether Innovation ships is a roadmap decision, so the code stays. When
-       it does, mount it here WITH the initializer and a client. */
+       Whether Innovation ships is a roadmap decision. When it does, restore
+       the code, make it honest, and mount it here WITH the initializer and a
+       client. */
     void 0;
   } catch (error) {
     console.error('Failed to mount innovation routes:', error);
@@ -109,21 +114,6 @@ export async function registerAdvancedPlatformRoutes({
     console.error('Failed to mount External Intelligence routes:', error);
   }
 
-  try {
-    const notificationRoutes = await import('../routes/notification_routes');
-    // notification_routes exports a function(app) that registers routes directly
-    if (
-      typeof notificationRoutes.default === 'function' &&
-      notificationRoutes.default.length >= 1
-    ) {
-      notificationRoutes.default(app);
-    } else {
-      app.use('/api/notifications', authenticateToken, notificationRoutes.default);
-    }
-    console.log('✅ Notification routes mounted at /api/notifications');
-  } catch (error) {
-    console.error('Failed to mount notification routes:', error);
-  }
 
   // ── Audit, Testing, Device/IVD lifecycle ──
   //
@@ -174,7 +164,6 @@ export async function registerAdvancedPlatformRoutes({
       { path: '/api/graphrag', router: graphrag, name: 'GraphRAG' },
       { path: '/api/ana-cortex-ft', router: anaCortexFt, name: 'AnA Intelligence Fine-Tuning' },
       { path: '/api/compliance', router: globalCompliance, name: 'Global Regulatory Compliance' },
-      { path: '/api/agent-swarm', router: agentSwarm, name: 'Agent Swarm' },
       { path: '/api/real-world-evidence', router: realWorldEvidence, name: 'Real-World Evidence' },
       { path: '/api/regulatory-digital-twin', router: regulatoryDigitalTwin, name: 'Regulatory Digital Twin' },
       { path: '/api/submission-twin', router: submissionTwin, name: 'Submission Twin' },

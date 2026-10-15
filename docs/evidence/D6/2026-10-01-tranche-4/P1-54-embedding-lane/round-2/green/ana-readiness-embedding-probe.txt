@@ -1,0 +1,346 @@
+# GREEN, 2026-10-01T16:24:56Z: npx vitest run server/startup/__tests__/ana-readiness-embedding-probe.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > configuration alone is not a verdict: with the server unreachable the lane is NOT serving, and says why
+[database] Database connection test failed { error: 'p.on is not a function' }
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > configuration alone is not a verdict: with the server unreachable the lane is NOT serving, and says why
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > configuration alone is not a verdict: with the server unreachable the lane is NOT serving, and says why
+[database] Initial connection test failed: p.on is not a function
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > configuration alone is not a verdict: with the server unreachable the lane is NOT serving, and says why
+{
+  "timestamp": "2026-10-01T16:25:00.576Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > configuration alone is not a verdict: with the server unreachable the lane is NOT serving, and says why
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > configuration alone is not a verdict: with the server unreachable the lane is NOT serving, and says why
+{
+  "timestamp": "2026-10-01T16:25:00.579Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "local",
+    "width": 1536,
+    "error": "APIConnectionError: connect ECONNREFUSED 10.10.1.xxx:8080"
+  }
+}
+
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > the server bge-m3 runs on (TEI: never more than 1024) serves, because the lane asks for 1024 and pads
+{
+  "timestamp": "2026-10-01T16:25:00.589Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > the server bge-m3 runs on (TEI: never more than 1024) serves, because the lane asks for 1024 and pads
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > the server bge-m3 runs on (TEI: never more than 1024) serves, because the lane asks for 1024 and pads
+{
+  "timestamp": "2026-10-01T16:25:00.591Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a server that refuses is NOT serving, naming the HTTP status
+{
+  "timestamp": "2026-10-01T16:25:00.600Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a server that refuses is NOT serving, naming the HTTP status
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a server that refuses is NOT serving, naming the HTTP status
+{
+  "timestamp": "2026-10-01T16:25:00.601Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "local",
+    "width": 1536,
+    "error": "Error: Payload too large"
+  }
+}
+
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a server that serves another model is NOT serving: one corpus column holds one model
+{
+  "timestamp": "2026-10-01T16:25:00.608Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a server that serves another model is NOT serving: one corpus column holds one model
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus holding vectors another model wrote is NOT serving until it is re-embedded
+{
+  "timestamp": "2026-10-01T16:25:00.615Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus holding vectors another model wrote is NOT serving until it is re-embedded
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus holding vectors another model wrote is NOT serving until it is re-embedded
+{
+  "timestamp": "2026-10-01T16:25:00.617Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus check that cannot run is NOT serving: unchecked is not clean
+{
+  "timestamp": "2026-10-01T16:25:00.623Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus check that cannot run is NOT serving: unchecked is not clean
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus check that cannot run is NOT serving: unchecked is not clean
+{
+  "timestamp": "2026-10-01T16:25:00.624Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus check that cannot run is NOT serving: unchecked is not clean
+[ana-readiness] the embedding corpora could not be checked: permission denied for table rag_chunks
+
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > outside production the probe runs too: an OpenAI lane that does not answer is NOT serving
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 0ms org=- user=- caller=embedding-provider req=81681c2c-9a8c-45f0-86a1-292514ccd780
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > outside production the probe runs too: an OpenAI lane that does not answer is NOT serving
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > outside production the probe runs too: an OpenAI lane that does not answer is NOT serving
+{
+  "timestamp": "2026-10-01T16:25:00.633Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "openai",
+    "width": 1536,
+    "error": "Error: Incorrect API key provided"
+  }
+}
+
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > configuration alone is not a verdict: with the server unreachable the lane is NOT serving, and says why 2169ms
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > the server bge-m3 runs on (TEI: never more than 1024) serves, because the lane asks for 1024 and pads 12ms
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a server that refuses is NOT serving, naming the HTTP status 8ms
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a server that serves another model is NOT serving: one corpus column holds one model 7ms
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus holding vectors another model wrote is NOT serving until it is re-embedded 8ms
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > a corpus check that cannot run is NOT serving: unchecked is not clean 9ms
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > a lane that comes up after boot is re-probed, and readiness turns ready without a restart
+{
+  "timestamp": "2026-10-01T16:25:00.642Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > a lane that comes up after boot is re-probed, and readiness turns ready without a restart
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > a lane that comes up after boot is re-probed, and readiness turns ready without a restart
+{
+  "timestamp": "2026-10-01T16:25:00.643Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "local",
+    "width": 1536,
+    "error": "APIConnectionError: connect ECONNREFUSED"
+  }
+}
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > a lane that comes up after boot is re-probed, and readiness turns ready without a restart
+{
+  "timestamp": "2026-10-01T16:25:00.644Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > a lane that comes up after boot is re-probed, and readiness turns ready without a restart
+{
+  "timestamp": "2026-10-01T16:25:00.645Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > a lane that comes up after boot is re-probed, and readiness turns ready without a restart
+✅ AnA's embedding lane answered on a re-probe — AnA has 1 provider(s): anthropic; regulatory drafting and review served by claude-opus-4, claude-opus-5, claude-opus-4-legacy; embeddings: local — embedded one text through local: BAAI/bge-m3 (1024 values, zero-padded) at 1536 and 3072
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > /readyz answers 503 while the lane has not answered, and 200 once it has
+{
+  "timestamp": "2026-10-01T16:25:00.655Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > /readyz answers 503 while the lane has not answered, and 200 once it has
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > /readyz answers 503 while the lane has not answered, and 200 once it has
+{
+  "timestamp": "2026-10-01T16:25:00.655Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "local",
+    "width": 1536,
+    "error": "APIConnectionError: connect ECONNREFUSED"
+  }
+}
+
+(node:11501) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > /readyz answers 503 while the lane has not answered, and 200 once it has
+{
+  "timestamp": "2026-10-01T16:25:00.676Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stdout | server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > /readyz answers 503 while the lane has not answered, and 200 once it has
+{
+  "timestamp": "2026-10-01T16:25:00.677Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — the embedding lane is ready only once it has embedded at the corpus width (DP-71) > outside production the probe runs too: an OpenAI lane that does not answer is NOT serving 8ms
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > a lane that comes up after boot is re-probed, and readiness turns ready without a restart 12ms
+ ✓ server/startup/__tests__/ana-readiness-embedding-probe.test.ts > evaluateAnaReadiness — a lane that has not answered is probed again, and /readyz follows (DP-71) > /readyz answers 503 while the lane has not answered, and 200 once it has 37ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  16:24:57
+   Duration  3.35s (transform 1.66s, setup 106ms, import 639ms, tests 2.28s, environment 0ms)
+

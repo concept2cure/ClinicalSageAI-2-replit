@@ -1,0 +1,11 @@
+## RED: the selftest with the surface lookup unanchored (trunk's regex)
+  ✓ flags a launch screen calling a prefix only an out-of-scope surface claims
+  ✓ names the surface and the file
+  ✓ does not flag the launch prefix, or a never-gated shell call
+  ✓ passes once the launch surface declares the prefix it calls
+  ✓ flags a launch call no surface claims (unmapped)
+  ✓ resolves every registration it was given
+  ✗ reads the surface's own registration, not a longer id ending in it
+  ✗ flags a launch screen that computes the /api namespace
+
+selftest FAILED (2)

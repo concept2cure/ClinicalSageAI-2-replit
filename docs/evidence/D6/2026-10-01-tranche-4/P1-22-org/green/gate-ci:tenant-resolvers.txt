@@ -1,0 +1,10 @@
+Local tenant resolvers: 184 (baseline 189)
+
+5 baselined module(s) no longer define one — regenerate the baseline:
+  - server/api/cmc/module3AutoDraftRoutes.ts
+  - server/api/cmc/module3BuildStateRoutes.ts
+  - server/api/cmc/module3ConvergenceRoutes.ts
+  - server/api/cmc/module3OperatingSystemRoutes.ts
+  - server/routes/qms.ts
+
+OK: no new local tenant resolvers.

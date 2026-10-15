@@ -1,0 +1,322 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure/docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14
+
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 01: a live claimed attempt makes a second caller busy without a second extraction 32ms
+   → Cannot read properties of undefined (reading 'attemptId')
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 02: expired A cannot overwrite B completed text with a late successful result 6ms
+   → Cannot read properties of undefined (reading 'attemptId')
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 03: expired A late extraction failure cannot replace B completion or reintroduce an error 5ms
+   → Fixture expected a real claimed stage before expiry injection
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 04: an expired token is refused even before a replacement claims 4ms
+   → Fixture expected a real claimed stage before expiry injection
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 05: supersession while extraction runs refuses predecessor completion and preserves successor 8ms
+   → expected undefined to be 'stale_source' // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 06: actual same-program keep_data withdrawal fences new processing and retains prior text 144ms
+   → expected false to be true // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 07: another program withdrawing the same upload makes in-flight original processing unavailable 64ms
+   → expected true to be false // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 08: a null-program capture still refuses organization-wide original withdrawal 61ms
+   → expected true to be false // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 09: nullable scope and mutable recorded file association cannot change during an attempt 8ms
+   → expected undefined to be 'stale_source' // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 10: source/upload hash split, missing upload digest, and caller Buffer mutation fail safely 5ms
+   → expected true to be false // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 11: correct duplicate input cannot bypass missing canonical original loading 5ms
+   → expected true to be false // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 12: failed final persistence and failed journaling retain an expired-lease recovery signal 3ms
+   → expected undefined to be 'retryable_failure' // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 13: lost completion reply is resolved from persisted state without repeating extraction 5ms
+   → expected undefined to be 'already_complete' // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 14: future/malformed metadata and timestamps cannot reset budget or crash a sweep 3ms
+   → expected undefined to be 'already_complete' // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 15: blockers do not consume runnable limit; dry run has no load, extraction or writes 23ms
+   → expected null to be 'Clinical study protocol version 2.0. …' // Object.is equality
+ × independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 16: persisted extraction failure is not completion, explicit retry clears stale prose, lineage changes fence a result 4ms
+   → expected undefined to be 'extraction_failed' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 01: a live claimed attempt makes a second caller busy without a second extraction
+TypeError: Cannot read properties of undefined (reading 'attemptId')
+ ❯ independent-adversaries.test.mts:177:38
+    175|     const a = await paused(c);
+    176|     try {
+    177|       const token = (await stage(c)).attemptId;
+       |                                      ^
+    178|       const b = await run(c);
+    179|       expect(b.status).toBe('busy');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 02: expired A cannot overwrite B completed text with a late successful result
+TypeError: Cannot read properties of undefined (reading 'attemptId')
+ ❯ independent-adversaries.test.mts:191:41
+    189|     const a = await paused(c);
+    190|     try {
+    191|       const oldToken = (await stage(c)).attemptId;
+       |                                         ^
+    192|       await expire(c);
+    193|       const b = await run(c);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 03: expired A late extraction failure cannot replace B completion or reintroduce an error
+Error: Fixture expected a real claimed stage before expiry injection
+ ❯ expire independent-adversaries.test.mts:94:24
+     92| async function expire(c: Capture) {
+     93|   const existing = await stage(c);
+     94|   if (!existing) throw new Error('Fixture expected a real claimed stag…
+       |                        ^
+     95|   await updateStage(c, { ...existing, claimedAt: new Date(Date.now() -…
+     96| }
+ ❯ independent-adversaries.test.mts:207:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 04: an expired token is refused even before a replacement claims
+Error: Fixture expected a real claimed stage before expiry injection
+ ❯ expire independent-adversaries.test.mts:94:24
+     92| async function expire(c: Capture) {
+     93|   const existing = await stage(c);
+     94|   if (!existing) throw new Error('Fixture expected a real claimed stag…
+       |                        ^
+     95|   await updateStage(c, { ...existing, claimedAt: new Date(Date.now() -…
+     96| }
+ ❯ independent-adversaries.test.mts:221:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 05: supersession while extraction runs refuses predecessor completion and preserves successor
+AssertionError: expected undefined to be 'stale_source' // Object.is equality
+
+- Expected:
+"stale_source"
+
++ Received:
+undefined
+
+ ❯ independent-adversaries.test.mts:238:40
+    236|       const before = await row(successor);
+    237|       a.finish();
+    238|       expect((await a.pending).status).toBe('stale_source');
+       |                                        ^
+    239|       expect((await row(c)).is_current).toBe(false);
+    240|       expect((await row(c)).extracted_text).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 06: actual same-program keep_data withdrawal fences new processing and retains prior text
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ independent-adversaries.test.mts:256:25
+    254|       await disposition(retained);
+    255|       const result = await run(retained);
+    256|       expect(result.ok).toBe(true);
+       |                         ^
+    257|       expect(result.status).toBe('already_complete');
+    258|       expect((await row(retained)).extracted_text).toBe(NEXT_BODY);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 07: another program withdrawing the same upload makes in-flight original processing unavailable
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ independent-adversaries.test.mts:269:36
+    267|       await disposition(target);
+    268|       a.finish();
+    269|       expect((await a.pending).ok).toBe(false);
+       |                                    ^
+    270|       expect((await row(c)).extracted_text).toBeNull();
+    271|       expect(capturedSql.some(sql => /LOCK TABLE public\.cre_evidence_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 08: a null-program capture still refuses organization-wide original withdrawal
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ independent-adversaries.test.mts:282:36
+    280|       await disposition(target);
+    281|       a.finish();
+    282|       expect((await a.pending).ok).toBe(false);
+       |                                    ^
+    283|       expect((await row(c)).extracted_text).toBeNull();
+    284|     } finally { a.finish(); await a.pending; }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 09: nullable scope and mutable recorded file association cannot change during an attempt
+AssertionError: expected undefined to be 'stale_source' // Object.is equality
+
+- Expected:
+"stale_source"
+
++ Received:
+undefined
+
+ ❯ independent-adversaries.test.mts:300:42
+    298|         }
+    299|         a.finish();
+    300|         expect((await a.pending).status).toBe('stale_source');
+       |                                          ^
+    301|         expect((await row(c)).extracted_text).toBeNull();
+    302|       } finally { a.finish(); await a.pending; }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 10: source/upload hash split, missing upload digest, and caller Buffer mutation fail safely
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ independent-adversaries.test.mts:310:33
+    308|       const c = await seed(options);
+    309|       const count = seam.extract.mock.calls.length;
+    310|       expect((await run(c)).ok).toBe(false);
+       |                                 ^
+    311|       expect((await row(c)).extracted_text).toBeNull();
+    312|       expect(seam.extract.mock.calls.length).toBe(count);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 11: correct duplicate input cannot bypass missing canonical original loading
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ independent-adversaries.test.mts:330:23
+    328|     seam.load.mockRejectedValueOnce(new Error('controlled missing orig…
+    329|     const result = await run(c);
+    330|     expect(result.ok).toBe(false);
+       |                       ^
+    331|     expect(result.status).toBe('blocked');
+    332|     expect(seam.load).toHaveBeenCalledWith(c.fileId, c.org);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 12: failed final persistence and failed journaling retain an expired-lease recovery signal
+AssertionError: expected undefined to be 'retryable_failure' // Object.is equality
+
+- Expected:
+"retryable_failure"
+
++ Received:
+undefined
+
+ ❯ independent-adversaries.test.mts:344:27
+    342|     const failed = await run(c);
+    343|     expect(failed.ok).toBe(false);
+    344|     expect(failed.status).toBe('retryable_failure');
+       |                           ^
+    345|     expect((await row(c)).extracted_text).toBeNull();
+    346|     queryFault = undefined;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 13: lost completion reply is resolved from persisted state without repeating extraction
+AssertionError: expected undefined to be 'already_complete' // Object.is equality
+
+- Expected:
+"already_complete"
+
++ Received:
+undefined
+
+ ❯ independent-adversaries.test.mts:369:26
+    367|     const count = seam.extract.mock.calls.length;
+    368|     const again = await run(c);
+    369|     expect(again.status).toBe('already_complete');
+       |                          ^
+    370|     expect(again.ok).toBe(true);
+    371|     expect(seam.extract.mock.calls.length).toBe(count);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 14: future/malformed metadata and timestamps cannot reset budget or crash a sweep
+AssertionError: expected undefined to be 'already_complete' // Object.is equality
+
+- Expected:
+"already_complete"
+
++ Received:
+undefined
+
+ ❯ independent-adversaries.test.mts:377:41
+    375|   it('14: future/malformed metadata and timestamps cannot reset budget…
+    376|     const healthy = await seed({ status: 'extracted', text: BODY });
+    377|     expect((await run(healthy)).status).toBe('already_complete');
+       |                                         ^
+    378|     expect(await stage(healthy)).toBeUndefined();
+    379|     const template = await seed();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 15: blockers do not consume runnable limit; dry run has no load, extraction or writes
+AssertionError: expected null to be 'Clinical study protocol version 2.0. …' // Object.is equality
+
+- Expected:
+"Clinical study protocol version 2.0. Cardiotoxicity monitoring is required."
+
++ Received:
+null
+
+ ❯ independent-adversaries.test.mts:415:50
+    413|     const applied = await processPendingSources(activeOrg, { db, limit…
+    414|     expect(applied.processed).toBe(1);
+    415|     expect((await row(runnable)).extracted_text).toBe(BODY);
+       |                                                  ^
+    416|     for (const c of bad) expect((await row(c)).extracted_text).toBeNul…
+    417|     await expect(processPendingSources(activeOrg, { db, limit: Number.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+ FAIL  independent-adversaries.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 16: persisted extraction failure is not completion, explicit retry clears stale prose, lineage changes fence a result
+AssertionError: expected undefined to be 'extraction_failed' // Object.is equality
+
+- Expected:
+"extraction_failed"
+
++ Received:
+undefined
+
+ ❯ independent-adversaries.test.mts:425:27
+    423|     seam.extract.mockResolvedValueOnce({ text: '', method: 'plain-text…
+    424|     const failed = await run(c);
+    425|     expect(failed.status).toBe('extraction_failed');
+       |                           ^
+    426|     expect(failed.ok).toBe(false);
+    427|     expect(failed.processed).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed (16)
+   Start at  04:08:29
+   Duration  2.58s (transform 198ms, setup 0ms, import 255ms, tests 2.12s, environment 0ms)
+

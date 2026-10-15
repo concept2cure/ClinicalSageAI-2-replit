@@ -1,0 +1,44 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > the task create is POST /api/tasks/tasks linked to the document, and the Tasks rail lists it with its state 617ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > Start and Complete go through the tasking path’s own PATCH transition 325ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a 428 ESIGN_REQUIRED completion opens the §11.50 ceremony on the document, not swallowed and not on the Task board 494ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a failed task read is an error, never "no tasks" 217ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > tasksForDocument keeps only rows whose recorded origin is this document 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a transition whose COMMIT was lost is reported as unknown, never as unchanged, and the list is re-read 259ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a gateway error on a transition is an unknown outcome too 225ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity -1 1ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 1.5 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 9007199254740992 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > refuses invalid integer reviewer identity 1e2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > reports a lost response as unknown and keeps what was typed for reconciliation 74ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > does not confirm a task receipt for a different document 36ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > resets the reviewers, the reason and the instructions when the document changes 41ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > review assignment confirmation and context (moved from the deleted task-only form onto Send for review) > ignores a delayed answer after changing documents 62ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > workbench reconciles an unconfirmed review assignment > opens the task list after a lost task response and shows the task that actually committed 405ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > known assignment refusal > keeps a confirmed audit rollback distinct from an unknown commit 41ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer 672ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task 308ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent 217ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again 204ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > the object gate’s refusal is said as what it means for this act, not as “the authoring object” 183ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check 221ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one 174ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task that failed after the request is reported as not created; the request still stands 207ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task whose creation could not be confirmed offers the task list, not a retry 236ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment 191ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task whose answer was lost is unknown, not absent > says the outcome is unknown in the receipt and the toast, never "no task" and never "not created" 42ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a member whose review is pending cannot be chosen; one whose verdict is recorded can be asked again, and is told the verdict stays in the record 42ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested 28ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made 23ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers 40ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does 41ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board and completes the task, not the other way round 25ms
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  07:36:42
+   Duration  10.85s (transform 2.14s, setup 321ms, import 3.29s, tests 5.67s, environment 1.21s)
+

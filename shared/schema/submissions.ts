@@ -160,6 +160,17 @@ export const submissionLeaves = pgTable(
      *  and docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md, which rejects widening. */
     documentUuid: uuid('document_uuid'),
     documentType: text('document_type'), // classifier hint for pathway leaf→slot matching (e.g. 'protocol', 'cer')
+    /** The sponsor study this leaf belongs to, as the Study Tagging File will
+     *  carry it ("DPL-301"). FDA validation 1789 refuses a Module 4/5 study
+     *  file that is referenced by no STF, and the packager refuses the sequence
+     *  rather than ship one FDA will technically reject. NULL means the leaf
+     *  names no study — never a stand-in, and never the lifecycle operator,
+     *  which an earlier reader took for one. The exempt sections are 4.3, 5.2,
+     *  5.3.6 and 5.4. See migrations/20261012_submission_leaf_stf_study_tagging.sql. */
+    studyId: text('study_id'),
+    /** The FDA STF file-tag this leaf is referenced under ("study-report-body").
+     *  A leaf with a study id and no tag is in no STF, so 1789 still fires. */
+    stfFileTag: text('stf_file_tag'),
     leafGuid: text('leaf_guid'),
     parentLeafId: integer('parent_leaf_id'),
     /** MD5 of the leaf's RENDERED bytes — the eCTD index-md5 contract. */
@@ -300,6 +311,22 @@ export const renderedLeafFiles = pgTable(
     renderedFrom: text('rendered_from').notNull(),
     /** The CTD section the bytes were rendered for, when known. */
     sectionCode: text('section_code'),
+    /**
+     * The forms engine's check of a sponsor-attached Module 1 form: the
+     * required fields it found missing when the file was attached. `[]` =
+     * checked, complete; non-empty = an attachment, not a completion; NULL = no
+     * check recorded (a server render, or an attachment from before the check)
+     * and never complete. migrations/20261008e (QA 2026-10-08, j7).
+     */
+    requiredFieldsMissing: text('required_fields_missing').array(),
+    /**
+     * The uploader's statement, on attaching a sponsor-completed form, that the
+     * file IS the completed, signed form: who (the session's user) and when.
+     * NULL = nobody stated it, and the IND checklist does not count the file.
+     * migrations/20260903 (amended 2026-10-15, report_ind_ivd_irb #15).
+     */
+    completedSignedAttestedBy: integer('completed_signed_attested_by'),
+    completedSignedAttestedAt: timestamp('completed_signed_attested_at', { withTimezone: true }),
     createdBy: integer('created_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

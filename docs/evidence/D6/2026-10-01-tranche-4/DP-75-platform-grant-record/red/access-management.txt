@@ -1,0 +1,180 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > access boundary > 403s a non-platform user
+{
+  "timestamp": "2026-10-01T19:02:54.796Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 5,
+    "role": "member",
+    "email": "m***@x.io",
+    "path": "/api/admin/access/grants"
+  }
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > a failed grant write is a 500, and no row claims it
+{
+  "timestamp": "2026-10-01T19:02:54.862Z",
+  "level": "error",
+  "message": "[admin-access-management] Grant create failed",
+  "context": {}
+}
+
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > 401s an unauthenticated request 22ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > 403s a non-platform user 8ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > lists grants for a platform admin 5ms
+ × server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > lets a super_admin grant support (and audits it) 16ms
+   → expected "vi.fn()" to be called once, but got 0 times
+ ✓ server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > 400s a grant without a reason 6ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > 404s an unknown email 6ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 403s when a support user tries to grant business_admin 4ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 403s when a platform_admin (not business) tries to grant business_admin 3ms
+ × server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 200s when a super_admin (platform + business) grants business_admin 5ms
+   → expected "vi.fn()" to be called once, but got 0 times
+ × server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 200s when a business_admin holding an active platform grant grants business_admin 4ms
+   → expected "vi.fn()" to be called once, but got 0 times
+ × server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > writes the grant and its chained row on one transaction, row after the grant, then commits 6ms
+   → expected undefined to be 'BEGIN' // Object.is equality
+ × server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > when the row cannot be written nothing is granted: 503 GRANT_NOT_RECORDED, rolled back 5ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > a failed grant write is a 500, and no row claims it 4ms
+ × server/routes/admin/__tests__/access-management.test.ts > revoke > revokes a grant and audits it, and says the row was written 6ms
+   → expected undefined to deeply equal { persisted: true, chained: true }
+ × server/routes/admin/__tests__/access-management.test.ts > revoke > a revocation stands when its row is lost, and says so (DP-75) 5ms
+   → expected { id: 9, user_id: 42, …(3) } to match object { id: 9, auditTrail: { …(2) } }
+(4 matching properties omitted from actual)
+ ✓ server/routes/admin/__tests__/access-management.test.ts > revoke > 404s revoking a non-existent / already-revoked grant 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > lets a super_admin grant support (and audits it)
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ server/routes/admin/__tests__/access-management.test.ts:133:28
+    131|       .send({ email: 'newhire@x.io', role: 'support', reason: 'onboard…
+    132|     expect(res.status).toBe(200);
+    133|     expect(chainedRowMock).toHaveBeenCalledOnce();
+       |                            ^
+    134|     expect(chainedRowMock.mock.calls[0][1]).toMatchObject({
+    135|       tenantId: 0,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 200s when a super_admin (platform + business) grants business_admin
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ server/routes/admin/__tests__/access-management.test.ts:192:28
+    190|       .send({ email: 'finance2@x.io', role: 'business_admin', reason: …
+    191|     expect(res.status).toBe(200);
+    192|     expect(chainedRowMock).toHaveBeenCalledOnce();
+       |                            ^
+    193|     expect(chainedRowMock.mock.calls[0][1].details).toMatchObject({ ro…
+    194|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 200s when a business_admin holding an active platform grant grants business_admin
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ server/routes/admin/__tests__/access-management.test.ts:213:28
+    211|       .send({ email: 'finance2@x.io', role: 'business_admin', reason: …
+    212|     expect(res.status).toBe(200);
+    213|     expect(chainedRowMock).toHaveBeenCalledOnce();
+       |                            ^
+    214|     expect(chainedRowMock.mock.calls[0][1].details).toMatchObject({ ro…
+    215|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > writes the grant and its chained row on one transaction, row after the grant, then commits
+AssertionError: expected undefined to be 'BEGIN' // Object.is equality
+
+- Expected:
+"BEGIN"
+
++ Received:
+undefined
+
+ ❯ server/routes/admin/__tests__/access-management.test.ts:236:22
+    234|     const res = await grant();
+    235|     expect(res.status).toBe(200);
+    236|     expect(steps[0]).toBe('BEGIN');
+       |                      ^
+    237|     expect(steps.findIndex((x) => /^INSERT INTO platform_role_grants/.…
+    238|     expect(steps.indexOf('<chained row>')).toBeGreaterThan(steps.findI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > when the row cannot be written nothing is granted: 503 GRANT_NOT_RECORDED, rolled back
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/admin/__tests__/access-management.test.ts:245:24
+    243|     chainedRowMock.mockRejectedValue(new Error('audit_logs refused the…
+    244|     const res = await grant();
+    245|     expect(res.status).toBe(503);
+       |                        ^
+    246|     expect(res.body).toMatchObject({ code: 'GRANT_NOT_RECORDED' });
+    247|     expect(res.body.error).toMatch(/not granted/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/routes/admin/__tests__/access-management.test.ts > revoke > revokes a grant and audits it, and says the row was written
+AssertionError: expected undefined to deeply equal { persisted: true, chained: true }
+
+- Expected:
+{
+  "chained": true,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/admin/__tests__/access-management.test.ts:275:33
+    273|     expect(logActionMock).toHaveBeenCalledOnce();
+    274|     expect(logActionMock.mock.calls[0][0].details).toMatchObject({ acc…
+    275|     expect(res.body.auditTrail).toEqual({ persisted: true, chained: tr…
+       |                                 ^
+    276|   });
+    277|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/routes/admin/__tests__/access-management.test.ts > revoke > a revocation stands when its row is lost, and says so (DP-75)
+AssertionError: expected { id: 9, user_id: 42, …(3) } to match object { id: 9, auditTrail: { …(2) } }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "auditTrail": {
+-     "code": "AUDIT_ROW_NOT_PERSISTED",
+-     "persisted": false,
+-   },
+    "id": 9,
+  }
+
+ ❯ server/routes/admin/__tests__/access-management.test.ts:285:22
+    283|       .send({ reason: 'offboarding' });
+    284|     expect(res.status).toBe(200);
+    285|     expect(res.body).toMatchObject({ id: 9, auditTrail: { persisted: f…
+       |                      ^
+    286|     expect(JSON.stringify(res.body)).not.toContain('store down');
+    287|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 9 passed (16)
+   Start at  19:02:54
+   Duration  820ms (transform 165ms, setup 101ms, import 231ms, tests 112ms, environment 0ms)
+
+exit 1

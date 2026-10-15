@@ -1,0 +1,9 @@
+# mutation: no-cap
+# test: server/services/ana/__tests__/run-events.pglite.test.ts -t "5. the cap"
+ × server/services/ana/__tests__/run-events.pglite.test.ts > 5. the cap > 2,050 events give rows 1–1,999 and the marker; 2,001 is refused; the record keeps all 2,050 1699ms
+   → expected { n: +0, max: null } to deeply equal { n: 2000, max: 2000 }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts > 5. the cap > 2,050 events give rows 1–1,999 and the marker; 2,001 is refused; the record keeps all 2,050
+AssertionError: expected { n: +0, max: null } to deeply equal { n: 2000, max: 2000 }
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)

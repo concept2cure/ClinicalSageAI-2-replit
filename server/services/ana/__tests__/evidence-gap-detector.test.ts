@@ -48,9 +48,9 @@ describe('detectEvidenceGaps — population', () => {
     expect(report.gaps[0].severity).toBe('major');
   });
 
-  it('matches population case-insensitively via substring', () => {
+  it('matches an exact population label case-insensitively', () => {
     const query: GapQuery = { population: 'Pediatric' };
-    const evidence = [ev({ population: 'PEDIATRIC oncology cohort' })];
+    const evidence = [ev({ population: ' PEDIATRIC ' })];
     const report = detectEvidenceGaps(query, evidence);
     expect(report.complete).toBe(true);
   });
@@ -130,7 +130,8 @@ describe('detectEvidenceGaps — empty evidence', () => {
 
   it('reports no gaps for an empty query regardless of evidence', () => {
     const report = detectEvidenceGaps({}, []);
-    expect(report.complete).toBe(true);
+    expect(report.complete).toBe(false);
+    expect(report.assessed).toBe(false);
     expect(report.gaps).toEqual([]);
   });
 });
@@ -161,5 +162,42 @@ describe('detectEvidenceGaps — ordering and determinism', () => {
     const a = JSON.stringify(detectEvidenceGaps(query, evidence));
     const b = JSON.stringify(detectEvidenceGaps(query, evidence));
     expect(a).toBe(b);
+  });
+});
+
+describe('IA: missing or incomparable coverage is not a complete evidence review', () => {
+  it('does not treat negated pediatric coverage as pediatric evidence', () => {
+    const report = detectEvidenceGaps({ population: 'pediatric' }, [{ population: 'not pediatric' }]);
+    expect(report.complete).toBe(false);
+    expect(report.gaps[0].type).toBe('population');
+    expect(report.gaps[0].description).toMatch(/structured.*not confirm/i);
+  });
+  it('a broader cohort label requires applicability confirmation instead of a substring pass', () => {
+    const report = detectEvidenceGaps({ population: 'pediatric' }, [{ population: 'pediatric oncology cohort' }]);
+    expect(report.complete).toBe(false);
+    expect(report.notes.join(' ')).toMatch(/population.*exact/i);
+  });
+  it('future-dated evidence does not clear the requested recency window', () => {
+    const report = detectEvidenceGaps({ recencyYears: 2, asOfYear: 2026 }, [{ year: 2040 }]);
+    expect(report.complete).toBe(false);
+    expect(report.gaps[0].type).toBe('temporal');
+  });
+  it('an empty query is unassessed rather than complete', () => {
+    const report = detectEvidenceGaps({}, []);
+    expect(report.complete).toBe(false);
+    expect(report.assessed).toBe(false);
+    expect(report.notes.join(' ')).toMatch(/no coverage dimensions/i);
+  });
+  it('recency with no reference year remains unassessed', () => {
+    const report = detectEvidenceGaps({ recencyYears: 2 }, [{ year: 2026 }]);
+    expect(report.complete).toBe(false);
+    expect(report.assessed).toBe(false);
+    expect(report.notes.join(' ')).toMatch(/reference year/i);
+  });
+  it('a geographic gap describes metadata coverage, not proof that evidence does not exist', () => {
+    const report = detectEvidenceGaps({ regions: ['US', 'EU', 'JP', 'CA', 'CN'] }, [{ region: 'US' }]);
+    expect(report.gaps[0].missing).toEqual(['EU', 'JP', 'CA', 'CN']);
+    expect(report.gaps[0].description).toMatch(/structured.*not confirm/i);
+    expect(report.notes.join(' ')).toMatch(/independently/);
   });
 });

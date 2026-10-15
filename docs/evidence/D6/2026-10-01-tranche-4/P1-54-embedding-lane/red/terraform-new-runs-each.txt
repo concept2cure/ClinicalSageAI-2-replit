@@ -1,0 +1,409 @@
+# Each new run alone (one file per run: the boot contract's mock provider and variables + the run),
+# against a copy of the UNCHANGED tree (git archive HEAD terraform). terraform 1.9.8, 2026-10-01T14:41:30Z
+
+tests/p154_refuses_a_model_revision_that_is_not_a_commit.tftest.hcl... in progress
+  run "refuses_a_model_revision_that_is_not_a_commit"... fail
+
+Warning: Value for undeclared variable
+
+  on tests/p154_refuses_a_model_revision_that_is_not_a_commit.tftest.hcl line 127, in run "refuses_a_model_revision_that_is_not_a_commit":
+ 127:     embedding_model_revision = "main"
+
+The module under test does not declare a variable named
+"embedding_model_revision", but it is declared in run block
+"refuses_a_model_revision_that_is_not_a_commit".
+
+Error: Missing expected failure
+
+  on tests/p154_refuses_a_model_revision_that_is_not_a_commit.tftest.hcl line 129, in run "refuses_a_model_revision_that_is_not_a_commit":
+ 129:   expect_failures = [var.embedding_model_revision]
+
+The checkable object, var.embedding_model_revision, was expected to report an
+error but did not.
+
+tests/p154_refuses_a_model_revision_that_is_not_a_commit.tftest.hcl... tearing down
+tests/p154_refuses_a_model_revision_that_is_not_a_commit.tftest.hcl... fail
+tests/p154_refuses_an_embedding_image_by_tag.tftest.hcl... in progress
+  run "refuses_an_embedding_image_by_tag"... fail
+
+Warning: Value for undeclared variable
+
+  on tests/p154_refuses_an_embedding_image_by_tag.tftest.hcl line 127, in run "refuses_an_embedding_image_by_tag":
+ 127:     embedding_image = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4"
+
+The module under test does not declare a variable named "embedding_image",
+but it is declared in run block "refuses_an_embedding_image_by_tag".
+
+Error: Missing expected failure
+
+  on tests/p154_refuses_an_embedding_image_by_tag.tftest.hcl line 129, in run "refuses_an_embedding_image_by_tag":
+ 129:   expect_failures = [var.embedding_image]
+
+The checkable object, var.embedding_image, was expected to report an error
+but did not.
+
+tests/p154_refuses_an_embedding_image_by_tag.tftest.hcl... tearing down
+tests/p154_refuses_an_embedding_image_by_tag.tftest.hcl... fail
+tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... in progress
+  run "the_api_and_worker_embed_through_the_self_hosted_lane"... fail
+
+Error: Test assertion failed
+
+  on tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 129, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 129:     condition = alltrue([
+ 130:       for defs in [module.ecs.api_container, module.ecs.worker_container] :
+ 131:       one([for e in defs.environment : e.value if e.name == "EMBEDDING_PROVIDER"]) == "local" &&
+ 132:       can(regex("^http://[a-z0-9.-]+\\.internal:[0-9]+/v1$", one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"])))
+ 133:     ])
+    ├────────────────
+    │ module.ecs.api_container is object with 9 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+
+The API and the worker must carry EMBEDDING_PROVIDER=local and
+EMBEDDING_LOCAL_BASE_URL=http://<host>.internal:<port>/v1 (the self-hosted
+lane in the VPC).
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 141, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 141:       one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"]) == module.embeddings.base_url
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 142, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 142:     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 142, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 142:     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 142, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 142:     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 142, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 142:     ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+
+No module call named "embeddings" is declared in the root module.
+tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... tearing down
+tests/p154_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... fail
+tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl... in progress
+  run "the_embedding_logs_are_kept_as_the_application_logs_are"... fail
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl line 129, in run "the_embedding_logs_are_kept_as_the_application_logs_are":
+ 129:       module.embeddings.container.logConfiguration.logDriver == "awslogs" &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl line 130, in run "the_embedding_logs_are_kept_as_the_application_logs_are":
+ 130:       module.embeddings.container.logConfiguration.options["awslogs-group"] == module.embeddings.log_group.name &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl line 130, in run "the_embedding_logs_are_kept_as_the_application_logs_are":
+ 130:       module.embeddings.container.logConfiguration.options["awslogs-group"] == module.embeddings.log_group.name &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl line 131, in run "the_embedding_logs_are_kept_as_the_application_logs_are":
+ 131:       module.embeddings.container.logConfiguration.options["awslogs-region"] == var.region
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl line 138, in run "the_embedding_logs_are_kept_as_the_application_logs_are":
+ 138:     condition     = module.embeddings.log_group.retention_in_days == tonumber(one(regex("variable \"log_retention_days\" \\{[^}]*default = ([0-9]+)", file("../modules/ecs-fargate/variables.tf"))))
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl line 145, in run "the_embedding_logs_are_kept_as_the_application_logs_are":
+ 145:     condition     = module.embeddings.log_group.kms_key_id == null && !strcontains(file("../modules/ecs-fargate/main.tf"), "kms_key_id")
+
+No module call named "embeddings" is declared in the root module.
+tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl... tearing down
+tests/p154_the_embedding_logs_are_kept_as_the_application_logs_are.tftest.hcl... fail
+tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl... in progress
+  run "the_embedding_server_is_pinned_and_serves_bge_m3"... fail
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 128, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 128:     condition     = can(regex("@sha256:[0-9a-f]{64}$", module.embeddings.container.image))
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 129, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 129:     error_message = "The embedding image must be pinned by digest: ${module.embeddings.container.image}"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 134, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 134:       one([for e in module.embeddings.container.environment : e.value if e.name == "MODEL_ID"]) == "BAAI/bge-m3" &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 135, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 135:       one([for e in module.embeddings.container.environment : e.value if e.name == "PORT"]) == tostring(module.embeddings.port) &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 135, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 135:       one([for e in module.embeddings.container.environment : e.value if e.name == "PORT"]) == tostring(module.embeddings.port) &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 136, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 136:       one([for p in module.embeddings.container.portMappings : p.containerPort]) == module.embeddings.port
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 136, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 136:       one([for p in module.embeddings.container.portMappings : p.containerPort]) == module.embeddings.port
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 144, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 144:     condition = tonumber(one([for e in module.embeddings.container.environment : e.value if e.name == "MAX_CLIENT_BATCH_SIZE"])) >= max([
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 152, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 152:       module.embeddings.container.essential &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 153, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 153:       module.embeddings.container.healthCheck.command == ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:${module.embeddings.port}/health"]
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl line 153, in run "the_embedding_server_is_pinned_and_serves_bge_m3":
+ 153:       module.embeddings.container.healthCheck.command == ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:${module.embeddings.port}/health"]
+
+No module call named "embeddings" is declared in the root module.
+tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl... tearing down
+tests/p154_the_embedding_server_is_pinned_and_serves_bge_m3.tftest.hcl... fail
+tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl... in progress
+  run "the_embedding_service_admits_the_application_tasks_alone"... fail
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 129, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 129:     condition = length(module.embeddings.ingress) == 1 && alltrue([
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 130, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 130:       for r in module.embeddings.ingress :
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 131, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 131:       r.protocol == "tcp" && r.from_port == module.embeddings.port && r.to_port == module.embeddings.port &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 131, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 131:       r.protocol == "tcp" && r.from_port == module.embeddings.port && r.to_port == module.embeddings.port &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 135, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 135:     error_message = "The embedding service must admit its port from the application tasks' security group and nothing else: ${jsonencode(module.embeddings.ingress)}"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 139, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 139:     condition     = module.embeddings.service.security_groups == toset([module.embeddings.security_group_id])
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 139, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 139:     condition     = module.embeddings.service.security_groups == toset([module.embeddings.security_group_id])
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 145, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 145:     condition = length(module.embeddings.egress) > 0 && alltrue([
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl line 146, in run "the_embedding_service_admits_the_application_tasks_alone":
+ 146:       for r in module.embeddings.egress : r.protocol == "tcp" && r.from_port == 443 && r.to_port == 443
+
+No module call named "embeddings" is declared in the root module.
+tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl... tearing down
+tests/p154_the_embedding_service_admits_the_application_tasks_alone.tftest.hcl... fail
+tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl... in progress
+  run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address"... fail
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 129, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 129:       length(module.embeddings.service.subnets) > 0 &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 130, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 130:       length(setsubtract(module.embeddings.service.subnets, module.vpc.private_subnet_ids)) == 0 &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 131, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 131:       length(setintersection(module.embeddings.service.subnets, module.vpc.public_subnet_ids)) == 0
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 137, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 137:     condition     = module.embeddings.service.assign_public_ip == false
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 145, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 145:     condition     = module.embeddings.service.load_balancers == 0
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 151, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 151:       module.embeddings.discovery.namespace_vpc == module.vpc.vpc_id &&
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 152, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 152:       module.embeddings.service.registries == [module.embeddings.discovery.service_arn]
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 152, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 152:       module.embeddings.service.registries == [module.embeddings.discovery.service_arn]
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 158, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 158:     condition     = module.embeddings.service.cluster == module.ecs.cluster_id && module.embeddings.service.launch_type == "FARGATE"
+
+No module call named "embeddings" is declared in the root module.
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl line 158, in run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address":
+ 158:     condition     = module.embeddings.service.cluster == module.ecs.cluster_id && module.embeddings.service.launch_type == "FARGATE"
+
+No module call named "embeddings" is declared in the root module.
+tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl... tearing down
+tests/p154_the_embedding_service_runs_in_the_private_subnets_with_no_public_address.tftest.hcl... fail
+
+Failure! 0 passed, 7 failed.
+
+# ── The two runs added with the model-revision check (pinned commit; unpinned warns), same method, 2026-10-01T14:52:18Z ──
+
+tests/p154_the_embedding_server_loads_the_pinned_commit.tftest.hcl... in progress
+  run "the_embedding_server_loads_the_pinned_commit"... fail
+
+Error: Reference to undeclared module
+
+  on tests/p154_the_embedding_server_loads_the_pinned_commit.tftest.hcl line 134, in run "the_embedding_server_loads_the_pinned_commit":
+ 134:     condition     = one([for e in module.embeddings.container.environment : e.value if e.name == "REVISION"]) == var.embedding_model_revision
+
+No module call named "embeddings" is declared in the root module.
+tests/p154_the_embedding_server_loads_the_pinned_commit.tftest.hcl... tearing down
+tests/p154_the_embedding_server_loads_the_pinned_commit.tftest.hcl... fail
+tests/p154_warns_while_the_embedding_model_is_unpinned.tftest.hcl... in progress
+  run "warns_while_the_embedding_model_is_unpinned"... fail
+
+Warning: Value for undeclared variable
+
+  on tests/p154_warns_while_the_embedding_model_is_unpinned.tftest.hcl line 134, in run "warns_while_the_embedding_model_is_unpinned":
+ 134:     embedding_model_revision = null
+
+The module under test does not declare a variable named
+"embedding_model_revision", but it is declared in run block
+"warns_while_the_embedding_model_is_unpinned".
+
+Error: Missing expected failure
+
+  on tests/p154_warns_while_the_embedding_model_is_unpinned.tftest.hcl line 136, in run "warns_while_the_embedding_model_is_unpinned":
+ 136:   expect_failures = [check.embedding_model_is_pinned]
+
+The checkable object, check.embedding_model_is_pinned, was expected to report
+an error but did not.
+
+tests/p154_warns_while_the_embedding_model_is_unpinned.tftest.hcl... tearing down
+tests/p154_warns_while_the_embedding_model_is_unpinned.tftest.hcl... fail
+
+Failure! 0 passed, 2 failed.

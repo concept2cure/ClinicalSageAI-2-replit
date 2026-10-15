@@ -1,0 +1,12 @@
+Mutant S02-server-first-model: the status names the first call’s model only
+
+--- server/services/ana/turn-record.ts
+- return { status: 'recorded', id, sha256, servedBy: qualifyServedModels(servedModelsOf(sealed.body.model)) };
++ return { status: 'recorded', id, sha256, servedBy: qualifyServedModels(sealed.body.model.model ? [{ provider: sealed.body.model.provider, model: sealed.body.model.model }] : []) };
+
+Tests run: server/services/ana/__tests__/turn-record-served-by.pglite.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-served-by.pglite.test.ts > the filed status names the models that wrote the turn > every model that served a call, each with RULE 2’s verdict and the facts it rests on 38ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

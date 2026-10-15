@@ -1,0 +1,84 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keep_data withdraws captured and vault binaries while preserving extracted data 158ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > remove_data excludes current data and binaries without deleting historical identities 76ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > supersede excludes the predecessor and keeps the named successor eligible 68ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > projects the later terminal decision by sequence when chained decisions share a timestamp 144ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keeps matching bytes eligible in another organization or another program 66ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > consumer disposition projections > keeps unrelated upload binaries available while excluding linked originals 78ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > keep_data cannot resurrect binary access through a fresh upload ID holding the same bytes 54ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > remove_data cannot resurrect binary access through a fresh upload ID holding the same bytes 54ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > uses the programme tenant for a legacy NULL-org Vault version and refuses contradictory tenant metadata 59ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > keep_data freezes both RAG metadata and late RAG chunks while projecting retained binary availability 77ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > remove_data freezes both RAG metadata and late RAG chunks while projecting retained binary availability 72ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > binary scope and late RAG writes > recognizes every supported atom alias and tolerates malformed numeric source IDs 79ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > refuses reparenting a disposed atom, chunk, catalog row or citation into an eligible identity 77ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > replays with one trigger of each kind and blocks update, delete and truncate 58ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > enforces source identity and a monotonic disposition chain at the database door 58ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > keep_data freezes linked OCR, atoms, chunks and catalog writes and refuses same-byte resurrection 94ms
+ ✓ server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts > append-only disposition migration > remove_data freezes linked OCR, atoms, chunks and catalog writes and refuses same-byte resurrection 71ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > maps artifact ids to their canonical cre_evidence_sources.id 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > resolves an artifact with no canonical source to NOTHING (honest — no invented id) 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > is tenant-scoped: org A never resolves org B's source 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > mixes resolvable + unresolvable ids in one batch, returning only the real ones 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link > returns empty for invalid inputs without querying 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > resolves cre_source:<id> to that id when it exists and is org-owned 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > does NOT resolve cre_source:<id> for a missing source (honest — id never trusted blind) 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > is tenant-scoped: org A cannot resolve org B's source via cre_source:<id> 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > ignores a malformed cre_source:<non-numeric> (never resolved) 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > resolves a mixed batch of BOTH link forms in one call 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > resolves the inclusive SERIAL maximum only for its owning organization 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > keeps valid citations when an unavailable direct source ID exceeds SERIAL: 2147483648 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > keeps valid citations when an unavailable direct source ID exceeds SERIAL: 9007199254740992 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > keeps valid citations when an unavailable direct source ID exceeds SERIAL: 999999999999999999999999999999 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > drops and names an out-of-range drafting source without aborting the valid sources: {"evidence_source_id":2147483648} 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts > resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c) > drops and names an out-of-range drafting source without aborting the valid sources: {"artifact_id":"cre_source:2147483648"} 4ms
+stdout | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T01:57:28.862Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:57:28.863Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T01:57:28.864Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T01:57:29.010Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > resolves an evidence_source_id only when it exists in the tenant, and an artifact_id through the same resolver 24ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > is empty, not an error, when the tool call carried no sources 0ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > drives the same gate as the human accept: the verbatim clause lands on the source, the rest on the author 20ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > says so when sources were cited but nothing quotes them 9ms
+
+ Test Files  3 passed (3)
+      Tests  37 passed (37)
+   Start at  09:57:22
+   Duration  9.09s (transform 1.18s, setup 100ms, import 2.01s, tests 6.46s, environment 0ms)
+

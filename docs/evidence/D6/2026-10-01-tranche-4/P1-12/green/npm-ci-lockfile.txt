@@ -1,0 +1,12 @@
+# npm 10.9.7, node v22.22.2; package.json, package-lock.json and .npmrc from HEAD c6f2028b, in a scratch directory
+
+$ npm ci --dry-run --ignore-scripts   (lockfile as committed)
+added 2597 packages in 4s
+exit=0
+
+$ npm ci --dry-run --ignore-scripts   (package.json gains left-pad@1.3.0, the lock does not)
+npm error code EUSAGE
+npm error
+npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+npm error
+exit=1

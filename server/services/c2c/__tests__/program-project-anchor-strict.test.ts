@@ -18,6 +18,7 @@ function dbFailingWith(err: unknown): RequestDb {
     select: () => chain,
     from: () => chain,
     where: () => chain,
+    orderBy: () => chain,
     limit: () => Promise.reject(err),
   });
   return chain as unknown as RequestDb;

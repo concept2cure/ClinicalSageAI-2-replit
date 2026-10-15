@@ -116,6 +116,16 @@ describe('finding 111 — an empty audit-event chain is not a valid one', () => 
     expect(screen.queryByText('Integrity valid')).toBeNull();
   });
 
+  it('the server\'s "not verified" over no chained rows is "nothing to verify", not a failed read (SECURITY-8)', async () => {
+    serve({
+      [LEDGER]: () => body({ success: true, data: [], sources: {}, meta: { chain: { store: 'audit_logs', ok: null, rowsChecked: 0, legacyRows: 0, sequencedRows: 0, reason: 'No chained rows exist for this organisation, so there is no chain to verify.' } } }),
+    });
+    render(<Part11Console {...props()} />);
+    expect(await screen.findByText('No ledger entries yet')).toBeTruthy();
+    expect(screen.queryByText('Couldn’t verify the audit trail ledger')).toBeNull();
+    expect(screen.queryByText('intact')).toBeNull();
+  });
+
   it('a broken ledger chain says broken and where', async () => {
     serve({
       [LEDGER]: () => body({ success: true, data: [], sources: {}, meta: { chain: { store: 'audit_logs', ok: false, rowsChecked: 5, legacyRows: 0, sequencedRows: 5, brokenAt: { id: 'AUD-9', segment: 'sequenced' } } } }),

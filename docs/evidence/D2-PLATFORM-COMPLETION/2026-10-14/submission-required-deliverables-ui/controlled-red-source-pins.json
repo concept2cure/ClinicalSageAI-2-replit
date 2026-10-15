@@ -1,0 +1,59 @@
+{
+  "description": "Pre-red inspected production bytes: existing SubmissionCenter/selectors/workspace map unchanged by UI owner. Shared ABI independently landed by backend owner. New UI sibling and local scoped hook not yet present.",
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+      "bytes": 92681,
+      "digestAlgorithm": "sha256",
+      "digest": "f7a872733fc29d36ce14d0461fc5a5accdcadf770d7a8e1bcb50af7a650de556"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "bytes": 97921,
+      "digestAlgorithm": "sha256",
+      "digest": "feca57d4b6615f86e3afa617fc579d5a88189c720fecca74bf2f613a9c5506c8"
+    },
+    {
+      "path": "shared/types/submission-ui.ts",
+      "bytes": 4367,
+      "digestAlgorithm": "sha256",
+      "digest": "769eea12374745a242c05cbd893dd9fddf04d8c82bbd5f9bc06c11437e15d887"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editorTarget.ts",
+      "bytes": 13420,
+      "digestAlgorithm": "sha256",
+      "digest": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "bytes": 300630,
+      "digestAlgorithm": "sha256",
+      "digest": "1a63108864e65d4c1109e9d7dff714854ca095b8a04529f1116551a3a1084116"
+    },
+    {
+      "path": "client/src/concept2cure/v2/dataConnect.tsx",
+      "bytes": 30506,
+      "digestAlgorithm": "sha256",
+      "digest": "257bf43ce5a2b3e025916f332c047071fd1310d8ebab94591b91f0f1171d1674"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "bytes": 55868,
+      "digestAlgorithm": "sha256",
+      "digest": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "bytes": 13205,
+      "digestAlgorithm": "sha256",
+      "digest": "9611bd38bfe113d6d95d26f2982a19a55630ecf72cc8c1eafd694745202b5f30"
+    },
+    {
+      "path": "shared/types/submission-api.ts",
+      "bytes": 27992,
+      "digestAlgorithm": "sha256",
+      "digest": "d63a66d2a16934594629cf4cc0f7d0b5459aa08f9838f882a7ec809a87bc06fd"
+    }
+  ]
+}

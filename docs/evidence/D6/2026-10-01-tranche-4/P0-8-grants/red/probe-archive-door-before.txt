@@ -1,0 +1,27 @@
+# HEAD c6f2028b, 2026-10-01T06:07:08Z, as app_service, BEFORE any change
+Pager usage is off.
+BEGIN
+SET
+SET
+  acting_as  | holds_delete | may_call_door 
+-------------+--------------+---------------
+ app_service | t            | t
+(1 row)
+
+INSERT 0 1
+ deleted_by_door 
+-----------------
+               1
+(1 row)
+
+ probe_rows_left 
+-----------------
+               0
+(1 row)
+
+ row_count |      locator       | performed_by 
+-----------+--------------------+--------------
+         1 | dbtest-p08://probe | app_service
+(1 row)
+
+ROLLBACK

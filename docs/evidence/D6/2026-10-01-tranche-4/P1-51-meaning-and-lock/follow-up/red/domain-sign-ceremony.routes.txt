@@ -1,0 +1,219 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+{
+  "timestamp": "2026-10-01T21:13:27.172Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T21:13:28.599Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T21:13:28.626Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 36ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 6ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 3ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T21:13:28.649Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T21:13:28.674Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T21:13:28.700Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T21:13:28.720Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'update', with no password asked 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 6ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T21:13:28.737Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA assessment sign-off: one spelling of the assessment > an upper-case spelling signs under the lower-case target 10ms
+   → expected [ 'BEGIN', 'DOMAIN', …(3) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA assessment sign-off: one spelling of the assessment > an id that is not a uuid is not an assessment: 404 before the ceremony, nothing written 3ms
+   → expected 201 to be 404 // Object.is equality
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'modifications_required', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA assessment sign-off: one spelling of the assessment > an upper-case spelling signs under the lower-case target
+AssertionError: expected [ 'BEGIN', 'DOMAIN', …(3) ] to deeply equal [ 'BEGIN', 'DOMAIN', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "BEGIN",
+    "DOMAIN",
+-   "LEDGER:sign:bla_assessment:5e1f0c2a-7b3d-4e8f-9a1b-2c3d4e5f6a7b",
+-   "SIGNATURE:bla_assessment:5e1f0c2a-7b3d-4e8f-9a1b-2c3d4e5f6a7b",
++   "LEDGER:sign:bla_assessment:5E1F0C2A-7B3D-4E8F-9A1B-2C3D4E5F6A7B",
++   "SIGNATURE:bla_assessment:5E1F0C2A-7B3D-4E8F-9A1B-2C3D4E5F6A7B",
+    "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:316:19
+    314|     const res = await sign(BLA_ID.toUpperCase());
+    315|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    316|     expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:bla_assessm…
+       |                   ^
+    317|   });
+    318|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA assessment sign-off: one spelling of the assessment > an id that is not a uuid is not an assessment: 404 before the ceremony, nothing written
+AssertionError: expected 201 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:321:24
+    319|   it('an id that is not a uuid is not an assessment: 404 before the ce…
+    320|     const res = await sign('5');
+    321|     expect(res.status).toBe(404);
+       |                        ^
+    322|     expect(codeOf(res.body)).toBe('NOT_FOUND');
+    323|     expect(reverifySigner).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 62 passed (64)
+   Start at  21:13:24
+   Duration  3.87s (transform 2.18s, setup 111ms, import 3.20s, tests 242ms, environment 0ms)
+

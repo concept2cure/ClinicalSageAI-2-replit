@@ -98,6 +98,9 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // every governed act. Read-only screens; nothing here signs or changes.
   { id: 'audit-trail', label: 'Audit trail', description: 'The tenant audit trail — the hash-chained record of every governed act, with the server verdict on the chain.', scope: 'global', group: 'global' },
   { id: 'part11-console', label: 'Part 11 console', description: 'How 21 CFR Part 11 compliance is evidenced: signer modes, signature manifestations and the audit-chain verifier.', scope: 'global', group: 'global' },
+  // Reporting & analytics, a launch app since 2026-09-30 (founder decision of 2026-09-26).
+  { id: 'insights', label: 'Reporting & analytics', description: 'The Reporting canvas: governed reports over the program records, each with its confidence, gaps and blockers stated.', scope: 'global', group: 'global' },
+  { id: 'compliance-reports', label: 'Audit & compliance reports', description: 'Reports an auditor or inspector asks for — user access review, sign-in events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, controlled documents — each sealed and recorded on the audit trail when run.', scope: 'global', group: 'global' },
   {
     id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global',
     // Declared because it is already CONSUMED (the surface focuses/scrolls to
@@ -130,6 +133,9 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'shadow-review', label: 'Shadow review', description: 'The simulated-reviewer surface — predicts Refuse-to-File / Complete-Response risk under a chosen regulator lens (FDA, EMA, PMDA, MDR/IVDR notified body) before filing.', scope: 'project', group: 'module' },
   { id: 'tasking', label: 'Tasking', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
+  // A launch-catalog Submission Center screen that no target reached, so AnA
+  // could not get to it at all; its compile controls are wave 7 actions.
+  { id: 'ectd-compile', label: 'eCTD Compile', description: 'The eCTD compile and publishing workspace for the project.', scope: 'project', group: 'module' },
   {
     id: 'intelligence', label: 'Intelligence', description: 'The intelligence surface (protocol, CMC, biostat, reports tabs).', scope: 'project', group: 'module',
     params: [{

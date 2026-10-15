@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T00:26:35.426Z","pid":18003,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T00:26:35.428Z","pid":18003,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T00:26:35.428Z","pid":18003,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/compliance-reports.dbtest.ts [ tests/db/compliance-reports.dbtest.ts ]
+Error: Cannot find module '../../server/routes/audit-compliance-reports' imported from /home/user/ClinicalSageAI-2-replit/tests/db/compliance-reports.dbtest.ts
+ ❯ tests/db/compliance-reports.dbtest.ts:27:1
+     25|
+     26| import { createAuthBoundary } from '../../server/middleware/authBounda…
+     27| import { createComplianceReportRoutes } from '../../server/routes/audi…
+       | ^
+     28| import { getPool } from '../../server/db/runtime';
+     29| import { verifySignedAuditExport } from '../../server/services/audit/s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  00:26:33
+   Duration  2.19s (transform 941ms, setup 72ms, import 0ms, tests 0ms, environment 0ms)
+

@@ -15,8 +15,10 @@
  * both substrates or in neither. Its reverse counterpart `revoke-signature`
  * closes the §11.70 supersession chain in that same transaction: it marks the
  * revoked signature superseded and records the revocation as its own
- * attributable row, or — when no live signature is anchored to the target —
- * refuses (409 REVOCATION_TARGET_UNRESOLVED) and writes nothing at all.
+ * attributable row, or — when no live signature answers to what the payload
+ * names (`signatureId`, `signatureActionId`, `intent`) — refuses (409
+ * REVOCATION_TARGET_UNRESOLVED), or when more than one does, refuses (409
+ * REVOCATION_TARGET_AMBIGUOUS, with the candidates), and writes nothing at all.
  *
  * Legacy redirect (handled here):
  *   POST /api/cerv2-sections/:id/accept-ana-draft → delegate to accept-ai-suggestion
@@ -42,6 +44,10 @@ import {
   AuditChainPartialViewError,
   AuditChainSchemaMissingError,
 } from '../../services/audit/chain.js';
+import { verifyChainHead } from '../../services/audit/chain-anchor.js';
+import { verifyTenantChainOnAdminScope } from '../../services/audit/tenant-chain-verdict.js';
+import { breakForTenant } from '../../services/audit/audited-export.js';
+import { resolvePlatformAdmin } from '../../middleware/requirePlatformAdmin.js';
 import { withTenantConnection } from '../../db/withTenantConnection.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import {
@@ -50,6 +56,7 @@ import {
   type SignerRefused,
 } from '../../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
   assertSignerIsNotAuthor,
@@ -62,10 +69,11 @@ import {
   persistGovernedSignSignature,
   persistGovernedSignatureRevocation,
   SignatureMeaningError,
-  SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
+import { revocationRefusal, revocationSelectorRefusal } from '../../services/part11/revocation-selection.js';
 import { signMeaningRefusal } from '../../services/part11/signature-meanings.js';
 import { clientIpOf } from '../../utils/client-ip';
+import { programInOrganization } from '../../services/c2c/program-access';
 
 const router = Router();
 
@@ -103,6 +111,8 @@ type Command =
   | 'transmittal_rollback';
 
 const HIGH_RISK_COMMANDS: Set<Command> = new Set(['sign', 'lock', 'revoke-signature', 'transmittal_rollback']);
+/** The commands that write an electronic_signatures row (writeMutation), so carry the §11.10(g) authority gate. */
+const SIGNATURE_COMMANDS: ReadonlySet<Command> = new Set<Command>(['sign', 'revoke-signature']);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -154,11 +164,9 @@ async function resolveTarget(
   try {
     switch (prefix) {
       case 'program': {
-        const r = await pool.query(
-          `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-          [rest, orgId],
-        );
-        return r.rows.length > 0 ? { exists: true, table: 'regulatory_programs', id: rest, rowBacked: true } : null;
+        return (await programInOrganization(pool, rest, orgId))
+          ? { exists: true, table: 'regulatory_programs', id: rest, rowBacked: true }
+          : null;
       }
       case 'document': {
         const r = await pool.query(
@@ -269,6 +277,8 @@ const REAUTH_ERROR: Record<SignerRefused['code'], string> = {
   MFA_TOKEN_REQUIRED: 'REAUTH_TOTP_REQUIRED',
   MFA_VERIFICATION_FAILED: 'REAUTH_TOTP_INVALID',
   MFA_STATE_UNKNOWN: 'REAUTH_MFA_STATE_UNKNOWN',
+  // In production, a signer with no authenticator (ADR-0014 P1-2b).
+  AUTHENTICATOR_REQUIRED: 'REAUTH_AUTHENTICATOR_REQUIRED',
   ACCOUNT_INACTIVE: 'REAUTH_ACCOUNT_INACTIVE',
   ACCOUNT_LOCKED: 'REAUTH_ACCOUNT_LOCKED',
   ACCOUNT_STATE_UNKNOWN: 'REAUTH_ACCOUNT_STATE_UNKNOWN',
@@ -324,7 +334,8 @@ export interface RecordGovernedActionParams {
   userId:   number;
   command:  string;
   target:   string;
-  reason:   string;
+  /** The person's stated reason (audit_logs.reason), or null when none was stated — never one the code made up. */
+  reason:   string | null;
   payload?: Record<string, unknown>;
   domain?:  string;
   surface?: string;
@@ -624,9 +635,17 @@ export function separationOfDutiesRefusal(
  * route refuses a missing or unknown one before re-authentication, so a signer
  * is not asked for a password for a request the writer would refuse anyway
  * (the writer, persistGovernedActionSignature, enforces the same rule for every
- * caller). Other commands carry no signer-declared meaning here.
+ * caller). A `revoke-signature` is refused the same way when the signature it
+ * names is malformed (persistGovernedSignatureRevocation applies that rule
+ * too). Other commands carry no signer-declared meaning here.
  */
 function commandMeaningRefusal(command: Command, body: ActionEnvelope) {
+  if (command === 'revoke-signature') {
+    // A revocation names the signature it withdraws (signatureId,
+    // signatureActionId or intent); a malformed name is refused here, before
+    // re-authentication, by the rule the writer applies too.
+    return revocationSelectorRefusal(body.payload);
+  }
   return command === 'sign' ? signMeaningRefusal(body.payload?.meaning) : null;
 }
 
@@ -648,6 +667,17 @@ function makeHandler(command: Command) {
     }
     const meaningRefusal = commandMeaningRefusal(command, body);
     if (meaningRefusal) return res.status(400).json(meaningRefusal);
+
+    // §11.10(g): identity is not authority. A command that writes an
+    // electronic_signatures row is refused, before the credential, unless the
+    // signer's membership role carries signing authority — the platform's one
+    // policy (checkSigningAuthority). QA walk 2026-10-08 (J8) found a manager's
+    // 'approval' persisted here; P-27 (same day) deleted this file's own copy of
+    // the check (signingAuthorityRefusal), whose failed lookup answered 500.
+    if (SIGNATURE_COMMANDS.has(command)) {
+      const authority = await checkSigningAuthority(userId, orgId);
+      if (authority) return res.status(authority.status).json({ error: authority.code, detail: authority.message });
+    }
 
     // Re-auth gate for high-risk commands.
     if (HIGH_RISK_COMMANDS.has(command)) {
@@ -731,16 +761,17 @@ function makeHandler(command: Command) {
       }
       const sod = separationOfDutiesRefusal(err, `c2c/actions/${command}`);
       if (sod) return res.status(sod.status).json(sod.body);
-      if (err instanceof SignatureRevocationUnresolvedError) {
-        // Nothing was written (the transaction rolled back). Say so plainly
-        // rather than returning an opaque 500 that reads as "maybe it worked".
-        return res.status(409).json({ error: err.code, detail: err.message });
-      }
+      // A revocation that resolved nothing, more than one signature, or a
+      // malformed name: nothing was written (the transaction rolled back). Say
+      // so plainly rather than returning an opaque 500 that reads as "maybe it
+      // worked"; an ambiguous one names the candidates.
+      const revocation = revocationRefusal(err);
+      if (revocation) return res.status(revocation.status).json(revocation.body);
       if (err instanceof SignatureMeaningError) {
         // Refused ahead of the signer lookup; nothing was written.
         return res.status(400).json({ error: err.code, detail: err.message });
       }
-      console.error(`[c2c/actions/${command}]`, err?.message);
+      console.error('[c2c/actions/%s]', command, err?.message);
       return res.status(500).json({ error: 'INTERNAL_ERROR' });
     }
   };
@@ -758,6 +789,23 @@ function makeHandler(command: Command) {
 // carries no tenant and would see no rows — a false pass — so the walk runs
 // on a super-admin-scoped connection (the pattern system jobs use), and the
 // verifier itself refuses a tenant-scoped view (AuditChainPartialViewError).
+//
+// The walk cannot see the newest rows removed: what is left still derives
+// (security plan P0-8). So the head is checked against the latest anchor in
+// the evidence bucket (chain-anchor.ts verifyChainHead); a missing or changed
+// anchored head is a break (409). Without an anchor bucket, `head` says the
+// verdict is the walk only. An anchor that cannot be read is an error, never ok.
+//
+// WHO SEES WHAT (fix round IAM-26, 2026-10-01). The router is mounted behind
+// authMiddleware only, so every signed-in user of every organisation reached
+// the estate-wide walk, its first break, and every organisation's broken
+// anchored head. Now only a platform administrator (requirePlatformAdmin.ts
+// resolvePlatformAdmin, the guard's own answer) gets the estate-wide verdict,
+// `scope: 'estate'`. Everyone else gets their own organisation's verdict, the
+// one the ledger states (tenant-chain-verdict.ts), `scope: 'organization'`:
+// the head scoped to that organisation, the walk's break redacted as every
+// export redacts it (audited-export.ts breakForTenant), and no estate tenant
+// count. Its anchor-unreadable case (`ok: null`) is a 503 here, not a verdict.
 
 router.get('/verify-chain', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -767,9 +815,31 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
   }
 
   try {
+    if (!(await resolvePlatformAdmin(req))) {
+      const v = await verifyTenantChainOnAdminScope(orgId);
+      if (v.ok === null) {
+        return res.status(503).json({
+          error: 'AUDIT_ANCHOR_UNREADABLE',
+          detail: 'The audit chain could not be verified, so no result is given.',
+        });
+      }
+      return res.status(v.ok ? 200 : 409).json({
+        scope: 'organization',
+        ok: v.ok,
+        rowsChecked: v.rowsChecked,
+        legacyRows: v.legacyRows,
+        sequencedRows: v.sequencedRows,
+        ...(v.brokenAt ? { brokenAt: breakForTenant(orgId, v.brokenAt) } : {}),
+        head: v.head,
+      });
+    }
     const result = await withTenantConnection(
       { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'c2c/actions/verify-chain' },
-      (client) => verifyAuditChain(client),
+      async (client) => {
+        const walk = await verifyAuditChain(client);
+        const head = await verifyChainHead(client);
+        return { scope: 'estate' as const, ...walk, ok: walk.ok && head.status !== 'broken', head };
+      },
     );
     return res.status(result.ok ? 200 : 409).json(result);
   } catch (err: any) {

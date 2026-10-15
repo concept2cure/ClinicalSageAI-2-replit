@@ -1,0 +1,61 @@
+[
+ {
+  "request": 49,
+  "label": "proposes-create_task",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": {
+   "type": "adaptive",
+   "display": "summarized"
+  },
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 1,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Create a review task for the BX-512 stability protocol."
+   }
+  ]
+ },
+ {
+  "request": 50,
+  "label": "after-the-person-declined",
+  "refusedByContract": null,
+  "model": "claude-opus-5-5",
+  "max_tokens": 6144,
+  "output_config": {
+   "effort": "medium"
+  },
+  "thinking": null,
+  "tool_choice": null,
+  "tools": 50,
+  "messages": 3,
+  "stoppedTurnNoteIn": null,
+  "stoppedTurnNote": null,
+  "fromTheAsk": [
+   {
+    "index": 0,
+    "role": "user",
+    "content": "Create a review task for the BX-512 stability protocol."
+   },
+   {
+    "index": 1,
+    "role": "assistant",
+    "content": "I will propose the task; it needs your approval."
+   },
+   {
+    "index": 2,
+    "role": "user",
+    "content": "[Tool Result for execute_platform_command (toolu_fake_49)]:\n{\"error\":\"HUMAN_CONFIRMATION_DECLINED\",\"action\":\"create_task\",\"message\":\"A person reviewed this and declined it, so it did not run.\",\"retry\":false}\n\n[Adaptation note] 1 of 1 tool call failed this round: Executing platform command: create_task — declined. Do not repeat a failed call verbatim — adapt: narrow or vary the input, try an alternative tool, or continue and state plainly what could not be verified."
+   }
+  ]
+ }
+]

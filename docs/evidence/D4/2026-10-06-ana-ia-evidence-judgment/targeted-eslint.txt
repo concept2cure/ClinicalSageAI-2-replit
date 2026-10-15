@@ -1,0 +1,6 @@
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana/AnaToolDefinitions.ts
+  591:1  warning  File has too many lines (2341). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+

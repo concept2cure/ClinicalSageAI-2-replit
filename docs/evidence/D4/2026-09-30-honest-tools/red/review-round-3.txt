@@ -1,0 +1,272 @@
+# red, review round 3: figure-consistency.ts as in e2c37f32
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: Primary endpoint p<0.001; key secondary endpoint p=0.03. 15ms
+   → expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: PFS HR 0.62; OS HR 0.81. 3ms
+   → expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: 312 primary events were observed; 3 deaths occurred. 2ms
+   → expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > reads "p<0.001" as a bound: consistent with 0.0004, in conflict with 0.03, never a match 2ms
+   → expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > compares at the coarser precision of the two 3ms
+   → expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on an alpha that may differ only by sidedness 2ms
+   → expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > does not compare one arm's size with a total 1ms
+   → expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > names each figure of the claim a source does not state 2ms
+   → expected [] to deeply equal [ { rightRef: 'CSR', …(2) } ]
+ × server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > names a source that states none of the claim's figures 2ms
+   → expected [ 'CSR' ] to deeply equal [ { rightRef: 'CSR', …(2) } ]
+ ✓ server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > records a plain disagreement as a conflict with each side's own value 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: Primary endpoint p<0.001; key secondary endpoint p=0.03.
+AssertionError: expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": "primary_p_value: M2.7.3 gives 0.001, 0.03; CSR gives 0.001, 0.03.",
++     "label": "primary_p_value",
++     "leftRef": "M2.7.3",
++     "rightRef": "CSR",
++     "status": "conflict",
++   },
++ ]
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:25:63
+     23|   ])('gives no verdict on a figure a text states more than once: %s', …
+     24|     const r = one(left, right);
+     25|     expect(r.findings.filter((f) => f.status === 'conflict')).toEqual(…
+       |                                                               ^
+     26|     expect(r.notCompared.some((n) => /more than one value/.test(n.reas…
+     27|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: PFS HR 0.62; OS HR 0.81.
+AssertionError: expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": "hazard_ratio: M2.7.3 gives 0.62, 0.81; CSR gives 0.62.",
++     "label": "hazard_ratio",
++     "leftRef": "M2.7.3",
++     "rightRef": "CSR",
++     "status": "conflict",
++   },
++ ]
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:25:63
+     23|   ])('gives no verdict on a figure a text states more than once: %s', …
+     24|     const r = one(left, right);
+     25|     expect(r.findings.filter((f) => f.status === 'conflict')).toEqual(…
+       |                                                               ^
+     26|     expect(r.notCompared.some((n) => /more than one value/.test(n.reas…
+     27|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on a figure a text states more than once: 312 primary events were observed; 3 deaths occurred.
+AssertionError: expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": "events: M2.7.3 gives 3, 312; CSR gives 312.",
++     "label": "events",
++     "leftRef": "M2.7.3",
++     "rightRef": "CSR",
++     "status": "conflict",
++   },
++ ]
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:25:63
+     23|   ])('gives no verdict on a figure a text states more than once: %s', …
+     24|     const r = one(left, right);
+     25|     expect(r.findings.filter((f) => f.status === 'conflict')).toEqual(…
+       |                                                               ^
+     26|     expect(r.notCompared.some((n) => /more than one value/.test(n.reas…
+     27|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > reads "p<0.001" as a bound: consistent with 0.0004, in conflict with 0.03, never a match
+AssertionError: expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": "primary_p_value: M2.7.3 gives 0.001; CSR gives 0.0004.",
++     "label": "primary_p_value",
++     "leftRef": "M2.7.3",
++     "rightRef": "CSR",
++     "status": "conflict",
++   },
++ ]
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:30:87
+     28|
+     29|   it('reads "p<0.001" as a bound: consistent with 0.0004, in conflict …
+     30|     expect(one('Primary endpoint p<0.001.', 'Primary endpoint p = 0.00…
+       |                                                                                       ^
+     31|     const c = one('Primary endpoint p<0.001.', 'Primary endpoint p = 0…
+     32|     expect(c).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > compares at the coarser precision of the two
+AssertionError: expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+      "detail": "hazard_ratio: M2.7.3 gives 0.71; CSR gives 0.712.",
+-     "status": "match",
++     "label": "hazard_ratio",
++     "leftRef": "M2.7.3",
++     "rightRef": "CSR",
++     "status": "conflict",
+    },
+  ]
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:38:87
+     36|
+     37|   it('compares at the coarser precision of the two', () => {
+     38|     expect(one('The hazard ratio was 0.71.', 'The hazard ratio was 0.7…
+       |                                                                                       ^
+     39|       expect.objectContaining({ status: 'match', detail: 'hazard_ratio…
+     40|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > gives no verdict on an alpha that may differ only by sidedness
+AssertionError: expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": "alpha: M2.7.3 gives 0.025; CSR gives 0.05.",
++     "label": "alpha",
++     "leftRef": "M2.7.3",
++     "rightRef": "CSR",
++     "status": "conflict",
++   },
++ ]
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:46:24
+     44|   it('gives no verdict on an alpha that may differ only by sidedness',…
+     45|     const r = one('An alpha of 0.025 was used.', 'An alpha of 0.05 was…
+     46|     expect(r.findings).toEqual([]);
+       |                        ^
+     47|     expect(r.notCompared[0].reason).toMatch(/sided/);
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > does not compare one arm's size with a total
+AssertionError: expected [ { leftRef: 'M2.7.3', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": "enrolled_n: both give 120.",
++     "label": "enrolled_n",
++     "leftRef": "M2.7.3",
++     "rightRef": "CSR",
++     "status": "match",
++   },
++ ]
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:52:24
+     50|   it('does not compare one arm\'s size with a total', () => {
+     51|     const r = one('The study randomized 120 patients to drug and 118 t…
+     52|     expect(r.findings).toEqual([]);
+       |                        ^
+     53|     expect(r.notCompared[0]).toMatchObject({ rightRef: 'CSR', label: '…
+     54|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > names each figure of the claim a source does not state
+AssertionError: expected [] to deeply equal [ { rightRef: 'CSR', …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "label": "hazard_ratio",
+-     "reason": "not stated in the source",
+-     "rightRef": "CSR",
+-   },
+- ]
++ []
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:59:27
+     57|     const r = one('The study randomized 186 subjects; the hazard ratio…
+     58|     expect(r.findings).toEqual([expect.objectContaining({ status: 'mat…
+     59|     expect(r.notCompared).toEqual([{ rightRef: 'CSR', label: 'hazard_r…
+       |                           ^
+     60|   });
+     61|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/truth-engine/__tests__/figure-consistency.test.ts > compareLabelledFigures > names a source that states none of the claim's figures
+AssertionError: expected [ 'CSR' ] to deeply equal [ { rightRef: 'CSR', …(2) } ]
+
+- Expected
++ Received
+
+  [
+-   {
+-     "label": "enrolled_n",
+-     "reason": "not stated in the source",
+-     "rightRef": "CSR",
+-   },
++   "CSR",
+  ]
+
+ ❯ server/services/truth-engine/__tests__/figure-consistency.test.ts:65:27
+     63|     const r = one('The study randomized 186 subjects.', 'Hepatotoxicit…
+     64|     expect(r.findings).toEqual([]);
+     65|     expect(r.notCompared).toEqual([{ rightRef: 'CSR', label: 'enrolled…
+       |                           ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 1 passed (10)
+   Start at  01:03:08
+   Duration  551ms (transform 122ms, setup 103ms, import 51ms, tests 36ms, environment 0ms)
+

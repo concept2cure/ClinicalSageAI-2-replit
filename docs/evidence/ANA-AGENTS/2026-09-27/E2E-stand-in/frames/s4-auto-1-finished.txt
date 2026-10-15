@@ -1,0 +1,164 @@
+Concept2Cure.RI
+›
+Conversation
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+Project
+Work through twelve checks on the Vorelinib program.
+Conversation
+AnA
+New conversation
+Progress
+· AnA's progress
+Work through twelve checks on the Vorelinib program.
+✻
+12 steps completed · in 2s
+
+Check 1 of 12.Check 2 of 12.Check 3 of 12.Check 4 of 12.Check 5 of 12.Check 6 of 12.Check 7 of 12.Check 8 of 12.Check 9 of 12.Check 10 of 12.Check 11 of 12.Check 12 of 12.Stand-in answer: all 12 checks are done.
+
+AnA drives: on
+Demos
+Between steps
+Manual
+AnA takes one step, then waits for you to run the next, change it or stop. If nobody answers within 10 minutes, or the page is closed, she stops there. A demonstration you start runs through without stopping.
+Auto
+AnA keeps going, step after step, until she judges the task done — for up to 20 rounds whichever engine you chose, 15 minutes of work or 40 minutes in all. Anything that changes a record waits for you; if nobody answers within 10 minutes, it does not happen and she stops.
+She keeps going: up to 20 rounds, 15 minutes of work.
+Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.
+Progress
+Finished in 2s
+Planning response…
+— done
+0 ms
+Loading project memory…
+— done
+45 ms
+Generating response…
+— done
+108 ms
+Composing the answer…
+— done
+46 ms
+Running 1 step…
+— done
+0 ms
+Reading the results…
+— done
+95 ms
+Composing the answer…
+— done
+42 ms
+Round 2 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+107 ms
+Composing the answer…
+— done
+58 ms
+Round 3 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+99 ms
+Composing the answer…
+— done
+31 ms
+Round 4 — running 1 more step…
+— done
+32 ms
+Reading the results…
+— done
+82 ms
+Composing the answer…
+— done
+45 ms
+Round 5 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+100 ms
+Composing the answer…
+— done
+44 ms
+Round 6 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+100 ms
+Composing the answer…
+— done
+33 ms
+Round 7 — running 1 more step…
+— done
+13 ms
+Reading the results…
+— done
+97 ms
+Composing the answer…
+— done
+28 ms
+Round 8 — running 1 more step…
+— done
+10 ms
+Reading the results…
+— done
+108 ms
+Composing the answer…
+— done
+26 ms
+Round 9 — running 1 more step…
+— done
+15 ms
+Reading the results…
+— done
+106 ms
+Composing the answer…
+— done
+26 ms
+Round 10 — running 1 more step…
+— done
+14 ms
+Reading the results…
+— done
+108 ms
+Composing the answer…
+— done
+47 ms
+Round 11 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+95 ms
+Composing the answer…
+— done
+35 ms
+Round 12 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+105 ms
+Composing the answer…
+— done
+39 ms
+Checking evidence and recording the turn…
+— done
+50 ms
+Used in this session
+Memory
+Could not be read
+Tools
+Global search
+Context
+balanced effort

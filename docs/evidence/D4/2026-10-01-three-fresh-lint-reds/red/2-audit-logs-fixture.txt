@@ -1,0 +1,16 @@
+[ci:audit-logs-fixture] audit_logs fixtures vs writeChainedAuditRow
+  columns the writer writes : 17
+  fixtures found            : 18
+
+❌ 1 fixture(s) the audit writer cannot write into:
+
+  scripts/ci/check-purge-coverage.selftest.mjs:222
+      missing: tenant_id, user_id, table_name, record_id, actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal, old_values, new_values, ip_address, user_agent, reason
+
+  The chained audit write is fail-closed — the audit row and the mutation
+  commit together or neither does. A fixture missing one of these columns
+  does not merely skip the log: it ROLLS THE MUTATION BACK, so the suite can
+  only stay green by never reaching a governed write. Add the missing
+  columns, or import AUDIT_LOGS_PGLITE_DDL from server/db/pglite-harness.ts,
+  which carries the full set.
+exit 1

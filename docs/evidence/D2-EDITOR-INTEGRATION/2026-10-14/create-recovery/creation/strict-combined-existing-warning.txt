@@ -1,0 +1,7 @@
+
+/workspace/ClinicalSageAI/client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx
+  224:57  warning  Arrow function has too many lines (147). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)
+
+ESLint found too many warnings (maximum: 0).

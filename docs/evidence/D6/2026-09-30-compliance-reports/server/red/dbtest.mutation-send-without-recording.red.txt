@@ -1,0 +1,80 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T00:27:30.849Z","pid":18552,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T00:27:30.851Z","pid":18552,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T00:27:30.851Z","pid":18552,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-01T00:27:31.347Z', poolSize: 1 }
+
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 74ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 31ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 15ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 14ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 19ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 23ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 24ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 13ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access review: A members only, with the last sign-in read from the sign-in audit row 13ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > sign-in events and administrative changes: A rows are there, B rows are not 30ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > signature register: the A fixture signature, never the B one 10ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention and holds: the vault is reached under its own policy, A hold and disposition only 13ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 5ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled documents: the A document only 11ms
+ × tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 23ms
+   → expected 11 to be 10 // Object.is equality
+ × tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > each run writes exactly one compliance.report_run row on A's chain, and none on B's 14ms
+   → expected +0 to be 1 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict
+AssertionError: expected 11 to be 10 // Object.is equality
+
+- Expected
++ Received
+
+- 10
++ 11
+
+ ❯ tests/db/compliance-reports.dbtest.ts:294:37
+    292|     const logs = section(data, 'stores').rows.find((r) => r.store === …
+    293|     // The count is read before this run's own record is written.
+    294|     expect(Number(logs.rows_total)).toBe(owned.rows[0].n - 1);
+       |                                     ^
+    295|     for (const v of section(data, 'verdicts').rows) expect(['intact', …
+    296|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > each run writes exactly one compliance.report_run row on A's chain, and none on B's
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/compliance-reports.dbtest.ts:309:32
+    307|     const res = await run('access-review', `?to=${today}`);
+    308|     expect(res.status).toBe(200);
+    309|     expect(await count(ORG_A)).toBe(a0 + 1);
+       |                                ^
+    310|     expect(await count(ORG_B)).toBe(b0);
+    311|     const row = await owner.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  00:27:28
+   Duration  3.11s (transform 1.21s, setup 73ms, import 2.07s, tests 677ms, environment 0ms)
+

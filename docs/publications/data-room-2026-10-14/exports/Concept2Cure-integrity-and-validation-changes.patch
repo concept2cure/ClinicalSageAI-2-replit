@@ -1,0 +1,2615 @@
+diff --git a/client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx b/client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx
+index 0c2fa926..7e6f4256 100644
+--- a/client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx
++++ b/client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx
+@@ -20,22 +20,28 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
+ }));
+ 
+ import { DispatchReadiness } from '../surfaces/DispatchReadiness';
++import { useActiveSurfaceContext, toModuleContext } from '../surfaceContext';
++
++function AnaContextProbe() {
++  const context = useActiveSurfaceContext('dispatch-readiness');
++  return <pre data-testid="ana-wire-context">{JSON.stringify(toModuleContext(context))}</pre>;
++}
+ 
+ const PROGRAM_UUID = '5b1c2d3e-0000-4000-8000-000000000009';
+ const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => ({ success: true, data: payload }) }) as Response;
+ const rule = (id: string, title: string) => ({ id, title, category: 'integrity', regions: ['ich'], severity: 'high', source: 's', enforcement: 'dispatch-readiness', enforcementStatement: 'e' });
+ const NOTE = 'No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.';
+ 
+-const assessment = (external: Record<string, unknown>) => ({
++const assessment = (external: Record<string, unknown>, validation: Record<string, unknown> = {}) => ({
+   sequenceId: 12, region: 'fda', sequenceStatus: 'validated', validationErrors: 0, unacknowledgedShadowCriticals: 0,
+   shadowReviewRunCount: 1, shadowReviewMissing: false, leafCount: 6,
+-  externalValidation: { configured: false, ran: false, errorCount: 0, cleared: true, blockers: [] },
++  externalValidation: { configured: false, ran: false, errorCount: 0, cleared: true, blockers: [], ...validation },
+   releaseSignature: { required: false, verdict: 'not-required', cleared: true },
+   readiness: { errors: 0, warnings: 0, infos: 0, findings: [] },
+   gate: { cleared: true, blockers: [] },
+   gates: [
+     { key: 'structural', cleared: true, blockers: [], rule: rule('STRUCTURAL_GATE_CLEAR', 'No open error-severity finding') },
+-    { key: 'external', cleared: true, blockers: [], rule: rule('EXTERNAL_VALIDATION_CLEAN', 'The agency-grade validator’s report for this package carries no errors'), ...external },
++    { key: 'external', cleared: true, blockers: [], rule: rule('EXTERNAL_VALIDATION_CLEAN', 'External validation result and dispatch policy are assessed'), ...external },
+     { key: 'shadowPresence', cleared: true, blockers: [], rule: rule('SHADOW_REVIEW_COMPLETED', 'At least one Shadow Review has completed') },
+     { key: 'releaseSignature', cleared: true, blockers: [], rule: rule('RELEASE_SIGNATURE_VALID', 'A valid release signature') },
+   ],
+@@ -86,4 +92,48 @@ describe('the external validator gate', () => {
+     await screen.findByText('At least one Shadow Review has completed');
+     expect(document.querySelector('[data-gate="external"]')!.textContent).toContain('Satisfied.');
+   });
++
++  it.each([
++    ['failed', 'External validation failed.', 'The external validator found 1 error. Dispatch policy is advisory.'],
++    ['invalid', 'External validation report invalid.', 'The supplied report names a different engine. Dispatch policy is advisory.'],
++  ])('shows advisory %s validation without converting clearance into a pass', async (assessmentStatus, label, assessmentNote) => {
++    serve(assessment({ assessmentStatus, assessmentNote }, { configured: true, ran: true, errorCount: assessmentStatus === 'failed' ? 1 : 0, assessmentStatus, assessmentNote, qualifyingRun: assessmentStatus === 'failed' }));
++    render(<DispatchReadiness {...props()} />);
++    await screen.findByText('At least one Shadow Review has completed');
++    const card = document.querySelector('[data-gate="external"]')!;
++    expect(card.textContent).toContain(label);
++    expect(card.textContent).toContain(assessmentNote);
++    expect(card.textContent).not.toMatch(/Satisfied|Not assessed/);
++    expect(card.className).toContain('warn');
++    expect(document.body.textContent).toContain('Cleared to dispatch');
++    expect(document.body.textContent).not.toContain('external validator clean');
++  });
++
++  it('publishes an invalid zero placeholder with its status and engine provenance to AnA', async () => {
++    const assessmentNote = 'The external report is invalid; its numeric placeholder does not establish a clean assessment.';
++    serve(assessment({ assessmentStatus: 'invalid', assessmentNote }, { configured: true, ran: true, errorCount: 0, errorCountKnown: false, qualifyingRun: false, assessmentStatus: 'invalid', assessmentNote, validatorKind: 'external_engine', selectedValidatorName: 'LORENZ', reportedValidatorName: 'other-engine' }));
++    render(<><DispatchReadiness {...props()} /><AnaContextProbe /></>);
++    await screen.findByText('At least one Shadow Review has completed');
++    const wire = JSON.parse(screen.getByTestId('ana-wire-context').textContent!);
++    expect(wire.facts).toMatchObject({ externalValidationCleared: true, externalValidationStatus: 'invalid', externalQualifyingRun: false, externalErrorCountKnown: false, externalSelectedValidator: 'LORENZ', externalReportedValidator: 'other-engine', externalValidationNote: assessmentNote });
++    expect(document.body.textContent).not.toContain('external validator clean');
++  });
++
++  it('shows a raw executed subset as not externally assessed', async () => {
++    const assessmentNote = 'Only the internal FDA criteria subset ran; no external assessment is established.';
++    serve(assessment({ assessmentStatus: 'not_assessed', assessmentNote, notAssessed: assessmentNote }, { configured: false, ran: true, qualifyingRun: false, assessmentStatus: 'not_assessed', assessmentNote }));
++    render(<DispatchReadiness {...props()} />);
++    await screen.findByText('At least one Shadow Review has completed');
++    expect(document.querySelector('[data-gate="external"]')!.textContent).toContain('Not assessed.');
++    expect(document.body.textContent).not.toContain('external validator clean');
++  });
++
++  it('does not call a legacy advisory report clean when its observed error count is positive', async () => {
++    serve(assessment({}, { configured: true, ran: true, errorCount: 1 }));
++    render(<DispatchReadiness {...props()} />);
++    await screen.findByText('At least one Shadow Review has completed');
++    expect(document.querySelector('[data-gate="external"]')!.textContent).toContain('External validation failed.');
++    expect(document.body.textContent).not.toContain('external validator clean');
++    expect(document.body.textContent).toContain('Cleared to dispatch');
++  });
+ });
+diff --git a/client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx b/client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx
+index 07c02ca0..33ada687 100644
+--- a/client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx
++++ b/client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx
+@@ -78,7 +78,7 @@ const ALL_APPROVED = {
+   queue: Array.from({ length: 10 }, (_, i) => ({ id: `a${i}`, doc: `Approved ${i}`, state: 'approved', docStatus: 'APPROVED', comments: 0 })),
+ };
+ 
+-type Opts = { subs?: unknown[]; verdictFailures?: number; failList?: boolean | number; sequencesNoBody?: boolean; board?: unknown };
++type Opts = { subs?: unknown[]; verdictFailures?: number; failList?: boolean | number; sequencesNoBody?: boolean; board?: unknown; assessment?: unknown };
+ /** The server, as a table of paths; each answer is a function so it can fail. */
+ function routes(opts: Opts, nextVerdict: () => Response): Record<string, () => Response> {
+   const indSequences = [{ id: 905, sequenceNumber: '0000', status: 'assembling', type: 'original', region: 'fda' }];
+@@ -101,7 +101,7 @@ function serve(opts: Opts = {}) {
+   let verdictFailures = opts.verdictFailures ?? 0;
+   const table = routes(opts, () => {
+     if (verdictFailures > 0) { verdictFailures -= 1; throw fail(); }
+-    return ok(BLOCKED);
++    return ok(opts.assessment ?? BLOCKED);
+   });
+   apiRequest.mockReset();
+   apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
+@@ -142,6 +142,21 @@ afterEach(() => {
+ });
+ 
+ describe('Submit — one row per market, each with its own server verdict', () => {
++  it.each([['failed', true], ['invalid', true], ['failed', false], ['invalid', false]] as const)('retains advisory clearance while displaying the external %s outcome (gate breakdown=%s)', async (assessmentStatus, breakdown) => {
++    const assessmentNote = assessmentStatus === 'failed' ? 'External validator found 1 error; dispatch policy is advisory.' : 'Report names another engine; dispatch policy is advisory.';
++    serve({ assessment: {
++      ...BLOCKED, gate: { cleared: true, blockers: [] },
++      externalValidation: { ...BLOCKED.externalValidation, ran: assessmentStatus === 'failed', assessmentStatus, assessmentNote },
++      ...(breakdown ? { gates: [{ key: 'external', rule: { id: 'EXTERNAL_VALIDATION_CLEAN', title: 'External validation result and dispatch policy are assessed' }, cleared: true, blockers: [], assessmentStatus, assessmentNote }] } : {}),
++    } });
++    await openSubmit();
++    const row = await marketRow('IND · FDA');
++    await waitFor(() => expect(row.textContent).toContain('Cleared to dispatch'));
++    expect(row.textContent).toContain(assessmentStatus === 'failed' ? 'External validation failed' : 'External validation report invalid');
++    expect(row.textContent).toContain(assessmentNote);
++    expect(row.textContent).not.toMatch(/not assessed|validator not run|Satisfied/);
++    expect(within(row).getByTestId('pj-market-validation-status')).toBeTruthy();
++  });
+   it('an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row', async () => {
+     serve();
+     await openSubmit();
+diff --git a/client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx b/client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx
+index 2516bb9e..9049980d 100644
+--- a/client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx
++++ b/client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx
+@@ -13,6 +13,7 @@ import {
+   type Discovery,
+   type GateState,
+   type GateView,
++  type ExternalValidation,
+   type ReadinessFinding,
+   type RuleView,
+ } from './programSequence';
+@@ -80,11 +81,58 @@ function RuleLine({ rule, code }: { rule: RuleView | null; code: string }) {
+ }
+ 
+ /** One composed gate: the rule it enforces, its outcome in words, its own blockers. */
+-function GateCard({ gate }: { gate: GateView }) {
++function GateOutcome({ gate }: { gate: GateView }) {
++  if (gate.key === 'external' && gate.assessmentStatus) {
++    const labels = {
++      passed: 'External validation passed.', failed: 'External validation failed.',
++      invalid: 'External validation report invalid.', not_assessed: 'Not assessed.',
++    };
++    return <>{labels[gate.assessmentStatus]} {gate.assessmentNote ?? gate.notAssessed} {!gate.cleared && 'Blocks dispatch:'}</>;
++  }
++  return <>{gate.cleared && gate.notAssessed ? <>Not assessed. {gate.notAssessed}</> : gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}</>;
++}
++
++function externalValidationSummary(ev: ExternalValidation): string {
++  switch (ev.assessmentStatus) {
++    case 'passed': return 'external validation passed';
++    case 'failed': return 'external validation failed (advisory)';
++    case 'invalid': return 'external validation report invalid (advisory)';
++    case 'not_assessed': return 'external validation not assessed';
++    default:
++      if (ev.qualifyingRun === false || ev.errorCountKnown === false) return 'external validation not assessed';
++      if (ev.ran && ev.errorCount > 0) return 'external validation failed (advisory)';
++      return ev.ran ? 'external validator clean' : 'external validator not run';
++  }
++}
++
++function externalValidationFacts(ev: ExternalValidation): Record<string, unknown> {
++  return {
++    externalValidationCleared: ev.cleared,
++    externalValidationStatus: ev.assessmentStatus ?? null,
++    externalValidationNote: ev.assessmentNote ?? null,
++    externalValidatorKind: ev.validatorKind ?? null,
++    externalSelectedValidator: ev.selectedValidatorName ?? null,
++    externalReportedValidator: ev.reportedValidatorName ?? null,
++    externalValidationRan: ev.ran,
++    externalQualifyingRun: ev.qualifyingRun ?? null,
++    externalErrorCountKnown: ev.errorCountKnown ?? null,
++  };
++}
++
++function gateWithLegacyErrors(suppliedGate: GateView, externalValidation: ExternalValidation): GateView {
++  // Older responses have no factual status, but their positive observed count
++  // still cannot be displayed as a successful external validation.
++  return suppliedGate.key === 'external' && suppliedGate.assessmentStatus == null && externalValidation.ran && externalValidation.errorCount > 0
++    ? { ...suppliedGate, assessmentStatus: 'failed', assessmentNote: `The supplied report carries ${externalValidation.errorCount} error-severity finding(s). The gate's blocking policy is shown separately.` }
++    : suppliedGate;
++}
++
++function GateCard({ gate: suppliedGate, externalValidation }: { gate: GateView; externalValidation: ExternalValidation }) {
++  const gate = gateWithLegacyErrors(suppliedGate, externalValidation);
+   /* A gate that does not block because its check never ran is not "Satisfied".
+      The external validator's card read "…report for this package carries no
+      errors — Satisfied." over a package no validator had seen. */
+-  const unassessed = gate.cleared && Boolean(gate.notAssessed);
++  const unassessed = gate.cleared && (Boolean(gate.notAssessed) || (gate.key === 'external' && gate.assessmentStatus != null && gate.assessmentStatus !== 'passed'));
+   return (
+     <div data-gate={gate.key} className={'dr2-gate ' + (unassessed ? 'warn' : gate.cleared ? 'ok' : 'block')}>
+       <div className="dr2-gate-top">
+@@ -92,7 +140,7 @@ function GateCard({ gate }: { gate: GateView }) {
+         <span className="dr2-gate-label">{gate.rule?.title ?? `The ${gate.key} gate — not in the rule corpus`}</span>
+       </div>
+       <div className="dr2-gate-detail">
+-        {unassessed ? <>Not assessed. {gate.notAssessed}</> : gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}
++        <GateOutcome gate={gate} />
+         {!gate.cleared && (
+           <ul style={{ margin: '2px 0 0', paddingLeft: 16 }}>
+             {gate.blockers.map((b, i) => <li key={i}>{b}</li>)}
+@@ -158,7 +206,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
+               unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
+               shadowReviewRunCount: a.shadowReviewRunCount,
+               shadowReviewMissing: a.shadowReviewMissing,
+-              externalValidationCleared: a.externalValidation?.cleared ?? null,
++              ...externalValidationFacts(a.externalValidation),
+               leafCount: a.leafCount,
+             }
+           : {}),
+@@ -277,7 +325,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
+     ? {
+           tone: 'good',
+           h: <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
+-          b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals{ev.ran ? ', external validator clean' : ', external validator not run'}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
++          b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals, {externalValidationSummary(ev)}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
+       }
+     : {
+         tone: 'urgent',
+@@ -319,7 +367,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
+       {/* the composed gates — each the rule it enforces, its outcome in words */}
+       {gateViews.length > 0 && (
+         <div className="dr2-gates">
+-          {gateViews.map((g) => <GateCard key={g.key} gate={g} />)}
++          {gateViews.map((g) => <GateCard key={g.key} gate={g} externalValidation={ev} />)}
+         </div>
+       )}
+ 
+diff --git a/client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx b/client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+index a087ce42..c3ccafdf 100644
+--- a/client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
++++ b/client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+@@ -62,7 +62,13 @@ function sequenceLine(q: LatestSequence, a: DispatchReadinessAssessment | null):
+ 
+ /** The server's gates it cleared without assessing (GateView.notAssessed). */
+ function unassessedGates(a: DispatchReadinessAssessment | null) {
+-  return (Array.isArray(a?.gates) ? a.gates : []).filter((g) => g.cleared && Boolean(g.notAssessed));
++  return (Array.isArray(a?.gates) ? a.gates : []).filter((g) => g.cleared && (g.assessmentStatus === 'not_assessed' || (g.assessmentStatus == null && Boolean(g.notAssessed))));
++}
++
++/** Factual external result: policy clearance alone never supplies a pass. */
++function externalIssue(a: DispatchReadinessAssessment | null) {
++  const source = Array.isArray(a?.gates) ? a.gates.find((g) => g.key === 'external') : a?.externalValidation;
++  return source?.assessmentStatus === 'failed' || source?.assessmentStatus === 'invalid' ? source : null;
+ }
+ 
+ export type VerdictTone = 'ok' | 'blocked' | 'warn' | 'idle';
+@@ -85,9 +91,12 @@ const NO_VERDICT_WORDS: Record<Exclude<MarketRead['state'], 'verdict'>, VerdictW
+ 
+ /** What a cleared verdict did not assess, counted from the server's gates. */
+ function clearedCaveat(a: DispatchReadinessAssessment | null): string {
++  const issue = externalIssue(a);
++  if (issue) return issue.assessmentStatus === 'failed' ? ' · external validation failed (advisory)' : ' · external validation report invalid (advisory)';
+   const unassessed = unassessedGates(a).length;
+   if (unassessed > 0) return ` · ${unassessed} gate${unassessed === 1 ? '' : 's'} not assessed`;
+   const noBreakdown = !Array.isArray(a?.gates);
++  if (noBreakdown && a?.externalValidation?.assessmentStatus === 'not_assessed') return ' · external validation not assessed';
+   return noBreakdown && a?.externalValidation?.ran === false ? ' · external validator not run' : '';
+ }
+ 
+@@ -97,7 +106,7 @@ export function marketVerdict(read: MarketRead): VerdictWords {
+   if (read.state !== 'verdict') return NO_VERDICT_WORDS[read.state];
+   const { gate, assessment } = read;
+   if (!gate) return { text: 'No verdict from the server', tone: 'warn', icon: I.alertTriangle, failed: false };
+-  if (gate.cleared) return { text: `Cleared to dispatch${clearedCaveat(assessment)}`, tone: 'ok', icon: I.shieldCheck, failed: false };
++  if (gate.cleared) return { text: `Cleared to dispatch${clearedCaveat(assessment)}`, tone: externalIssue(assessment) ? 'warn' : 'ok', icon: I.shieldCheck, failed: false };
+   const n = gate.blockers.length;
+   const text = n > 0 ? `Dispatch blocked · ${n} blocker${n === 1 ? '' : 's'}` : 'Dispatch blocked';
+   return { text, tone: 'blocked', icon: I.lock, failed: false };
+@@ -107,24 +116,32 @@ export function marketVerdict(read: MarketRead): VerdictWords {
+  *  clears a gate whose check did not run and is not required here; a bare
+  *  "Cleared to dispatch" would overclaim (slice 24 review). */
+ function NotAssessedLines({ a }: { a: DispatchReadinessAssessment | null }) {
++  const issue = externalIssue(a);
+   const unassessed = unassessedGates(a);
+-  if (unassessed.length > 0) {
++  if (issue || unassessed.length > 0) {
+     return (
+       <>
++        {issue && (
++          <p className="pj-mkt-note" data-testid="pj-market-validation-status" data-gate="external">
++            <span aria-hidden="true">{I.alertTriangle}</span>{' '}
++            <b>{issue.assessmentStatus === 'failed' ? 'External validation failed' : 'External validation report invalid'}</b>. {issue.assessmentNote}
++          </p>
++        )}
+         {unassessed.map((g) => (
+           <p key={g.key} className="pj-mkt-note" data-testid="pj-market-not-assessed" data-gate={g.key}>
+             <span aria-hidden="true">{I.alertTriangle}</span>{' '}
+-            <b>{g.rule?.title ?? `The ${g.key} gate`}</b>: not assessed. {g.notAssessed}
++            <b>{g.rule?.title ?? `The ${g.key} gate`}</b>: not assessed. {g.assessmentNote ?? g.notAssessed}
+           </p>
+         ))}
+       </>
+     );
+   }
+   // A response with no gate breakdown still says whether the validator ran.
+-  if (a?.externalValidation && a.externalValidation.ran === false) {
++  if (!Array.isArray(a?.gates) && a?.externalValidation && (a.externalValidation.assessmentStatus === 'not_assessed' || a.externalValidation.ran === false)) {
+     return (
+       <p className="pj-mkt-note" data-testid="pj-market-not-assessed" data-gate="external">
+-        <span aria-hidden="true">{I.alertTriangle}</span> External validator not run: the package has not been checked against it.
++        <span aria-hidden="true">{I.alertTriangle}</span>{' '}
++        {a.externalValidation.assessmentStatus === 'not_assessed' ? <>External validation not assessed. {a.externalValidation.assessmentNote}</> : 'External validator not run: the package has not been checked against it.'}
+       </p>
+     );
+   }
+diff --git a/client/src/concept2cure/v2/surfaces/programSequence.ts b/client/src/concept2cure/v2/surfaces/programSequence.ts
+index ec4f15fb..15ea16b1 100644
+--- a/client/src/concept2cure/v2/surfaces/programSequence.ts
++++ b/client/src/concept2cure/v2/surfaces/programSequence.ts
+@@ -86,9 +86,11 @@ export interface GateView {
+   rule: RuleView | null;
+   cleared: boolean;
+   blockers: string[];
+-  /** The server's sentence when the gate cleared only because its check did
+-   *  not run and is not required here. Not blocking, and not passed. */
++  /** The server's sentence when an external assessment did not qualify and
++   *  is not required here. Not blocking, and not passed. */
+   notAssessed?: string;
++  assessmentStatus?: 'passed' | 'failed' | 'not_assessed' | 'invalid';
++  assessmentNote?: string;
+ }
+ 
+ export interface ReadinessSummary {
+@@ -102,8 +104,16 @@ export interface ExternalValidation {
+   configured: boolean;
+   ran: boolean;
+   errorCount: number;
++  errorCountKnown?: boolean;
+   cleared: boolean;
+   blockers: string[];
++  validatorKind?: 'external_engine' | 'internal_subset' | 'unavailable' | 'unknown';
++  selectedValidatorName?: string | null;
++  reportedValidatorName?: string | null;
++  qualifyingRun?: boolean;
++  assessmentStatus?: GateView['assessmentStatus'];
++  assessmentNote?: string;
++  enforced?: boolean;
+ }
+ 
+ /** The server's composed dispatch verdict. Authoritative — see `gate` below. */
+diff --git a/server/mcp/tools/validation.ts b/server/mcp/tools/validation.ts
+index 8fcbeb7d..58f6ce48 100644
+--- a/server/mcp/tools/validation.ts
++++ b/server/mcp/tools/validation.ts
+@@ -5,6 +5,7 @@
+ import { z } from 'zod';
+ import { defineTool, ok, refused, errorMessage, callAnaHandler } from './runtime';
+ import { MCP_SCOPES } from '../config';
++import type { ExternalValidatorKind } from '../../services/ectd/external-validator/types';
+ 
+ const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
+ 
+@@ -20,15 +21,55 @@ const leafInput = z.object({
+   file_size: z.number().int().min(0).default(0),
+ });
+ 
++/** Adapter discovery metadata only; never executes the selected validator. */
++async function validationAdapterDiscovery() {
++  const { resolveExternalValidator } = await import('../../services/ectd/external-validator');
++  let selection: { name: string; kind: ExternalValidatorKind; adapterAvailable: boolean | null };
++  try {
++    const v = await resolveExternalValidator();
++    const kind = ['external_engine', 'internal_subset', 'unavailable', 'unknown'].includes(v.kind) ? v.kind : 'unknown';
++    const available = await v.isConfigured();
++    selection = {
++      name: v.name,
++      kind: typeof available === 'boolean' ? kind : 'unknown',
++      adapterAvailable: typeof available === 'boolean' ? available : null,
++    };
++  } catch (err) {
++    selection = { name: `unresolved (${errorMessage(err)})`, kind: 'unknown', adapterAvailable: null };
++  }
++  // Keep `configured` for existing consumers, with external-only semantics.
++  const configuredExternal = selection.kind === 'external_engine' && selection.adapterAvailable === true;
++  const external = {
++    ...selection,
++    configuredExternal,
++    configured: configuredExternal,
++    execution: 'not_run' as const,
++    ran: false,
++    qualification: 'not_assessed' as const,
++  };
++  const adapterState = selection.kind === 'internal_subset'
++    ? `internal subset; not an external validator; subset ${selection.adapterAvailable ? 'available' : 'not available'}`
++    : selection.kind === 'external_engine'
++      ? `external adapter path/endpoint ${configuredExternal ? 'configured' : 'not configured'}; licence and qualification not verified`
++      : selection.kind === 'unavailable'
++        ? 'no validation adapter available'
++        : 'adapter discovery unresolved';
++  return {
++    external,
++    summary: `Validation adapter: ${external.name} (${adapterState}; validation has not run for this package).`,
++  };
++}
++
+ export const validateEctdStructure = defineTool({
+   name: 'c2c_validate_ectd_structure',
+   title: 'Validate eCTD structure',
+   description:
+     'Deterministic eCTD structure validation (required sections, section codes, lifecycle operators, ' +
+     'naming, checksums) by the platform’s eCTD validator. Pass sequence_id to validate a stored sequence’s ' +
+-    'real leaves, or leaves[] to validate a proposed structure. Also reports which external agency-grade ' +
+-    'validator this deployment has configured (Lorenz eValidator, the FDA-criteria fallback subset, or none): ' +
+-    'passing the built-in check is NOT equivalent to passing the agency validator.',
++    'real leaves, or leaves[] to validate a proposed structure. Also reports the selected validation adapter ' +
++    'and its availability, without executing it. The FDA-criteria fallback is an internal subset, not an ' +
++    'external validator. An external adapter’s configured path/endpoint does not establish its licence, ' +
++    'qualified coverage, a completed validation run or agency acceptance.',
+   inputSchema: {
+     sequence_id: z.number().int().positive().optional(),
+     leaves: z.array(leafInput).max(500).optional(),
+@@ -77,18 +118,11 @@ export const validateEctdStructure = defineTool({
+       source = `${leaves.length} supplied leaves`;
+     }
+     const result = validatePackage(leaves, input.submission_type, input.region ? { region: input.region } : undefined);
+-    const { resolveExternalValidator } = await import('../../services/ectd/external-validator');
+-    let external: { name: string; configured: boolean };
+-    try {
+-      const v = await resolveExternalValidator();
+-      external = { name: v.name, configured: await v.isConfigured() };
+-    } catch (err) {
+-      external = { name: `unresolved (${errorMessage(err)})`, configured: false };
+-    }
++    const { external, summary: adapterSummary } = await validationAdapterDiscovery();
+     return ok(
+       `${source}: ${result.valid ? 'VALID' : 'INVALID'} (score ${result.score}); ${result.summary.errors} error(s), ` +
+         `${result.summary.warnings} warning(s); ${result.summary.sectionsPresent}/${result.summary.sectionsRequired} required sections present. ` +
+-        `External validator: ${external.name}${external.configured ? ' (configured)' : ' (NOT configured — agency-grade validation has not run)'}.`,
++        adapterSummary,
+       { source, submissionType: input.submission_type, region: input.region ?? null, result, externalValidator: external },
+     );
+   },
+diff --git a/server/routes/ivdr-binder-routes.ts b/server/routes/ivdr-binder-routes.ts
+index 75abd0ea..238b5441 100644
+--- a/server/routes/ivdr-binder-routes.ts
++++ b/server/routes/ivdr-binder-routes.ts
+@@ -19,6 +19,14 @@
+ import { Router, Request, Response } from 'express';
+ import { Pool } from 'pg';
+ import { getStorageProvider } from '../services/storage/index.js';
++import { assertStoredContentIntegrity, computeSha256, StorageIntegrityError, type StorageGetResult } from '../services/storage/storage-provider.js';
++import { stableStringify } from '../../shared/canonical-json.js';
++
++// PostgreSQL BIGINT defaults to a decimal string. Normalize only its canonical
++// integer form; malformed/unsafe values are refused by the integrity checker.
++function normalizePackArtifactSize(size: unknown): unknown {
++  return typeof size === 'string' && /^(0|[1-9]\d*)$/.test(size) ? Number(size) : size;
++}
+ 
+ export default function createIVDRBinderRoutes(pool: Pool): Router {
+   const router = Router();
+@@ -44,6 +52,12 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+ 
+   // ── Safe error response ────────────────────────────────────────────────────
+   function safeError(res: Response, error: any, code: string, label: string): Response {
++    if (error instanceof StorageIntegrityError) {
++      return res.status(409).json({
++        error: 'This pack artifact failed its integrity check. No file was served.',
++        code: 'PACK_ARTIFACT_INTEGRITY_FAILED',
++      });
++    }
+     if (error?.code === '42P01') {
+       console.warn(`[IVDR-Binder] ${label}: table not found — denying until migrated`);
+       return res.status(503).json({
+@@ -919,7 +933,11 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+       const orgId = getServerOrgId(req);
+       const userId = getUserId(req);
+       const { packId } = req.params;
+-      const format = (req.query.format as string) || 'manifest';
++      const requestedFormat = req.query.format ?? 'manifest';
++      if (typeof requestedFormat !== 'string' || !['pdf', 'docx', 'zip', 'manifest'].includes(requestedFormat)) {
++        return res.status(400).json({ error: 'Choose pdf, docx, zip or manifest.', code: 'PACK_DOWNLOAD_FORMAT_INVALID' });
++      }
++      const format = requestedFormat as 'pdf' | 'docx' | 'zip' | 'manifest';
+ 
+       const packResult = await pool.query(
+         `SELECT id, project_id, pack_type, pack_version, status,
+@@ -927,7 +945,11 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+                 manifest_vault_version_id,
+                 pdf_vault_version_id,
+                 docx_vault_version_id,
+-                zip_vault_version_id
++                zip_vault_version_id,
++                manifest_sha256, manifest_size_bytes,
++                pdf_sha256, pdf_size_bytes,
++                docx_sha256, docx_size_bytes,
++                zip_sha256, zip_size_bytes
+          FROM ivdr_packs
+          WHERE id = $1 AND organization_id = $2`,
+         [packId, orgId]
+@@ -939,30 +961,40 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+ 
+       const pack = packResult.rows[0];
+ 
+-      // Log download event
+-      await emitAuditEvent(req, orgId, pack.project_id, userId, 'PACK_DOWNLOADED', {
+-        packId,
+-        packVersion: pack.pack_version,
+-        format,
++      // Storage self-consistency is not the approved pack identity: a sidecar
++      // and its file can change together. Bind loaded bytes to this pack's
++      // recorded format receipt, and never audit a refused read as downloaded.
++      const recordDownload = () => emitAuditEvent(req, orgId, pack.project_id, userId, 'PACK_DOWNLOADED', {
++        packId, packVersion: pack.pack_version, format,
+       });
++      const serveStored = async (artifact: StorageGetResult) => {
++        const sizeBytes = normalizePackArtifactSize(pack[`${format}_size_bytes`]);
++        assertStoredContentIntegrity(artifact.bytes, { sha256: pack[`${format}_sha256`], sizeBytes });
++        await recordDownload();
++        res.setHeader('Content-Type', artifact.mime);
++        res.setHeader('Content-Length', String(artifact.bytes.length));
++        res.setHeader('Content-Disposition', `attachment; filename="${artifact.filename}"`);
++        res.setHeader('X-Content-SHA256', computeSha256(artifact.bytes));
++        return res.send(artifact.bytes);
++      };
+ 
+       // For now, return the manifest JSON from the snapshot
+       if (format === 'manifest') {
+-        // Try vault first, fall back to snapshot table
++        // A recorded original must be served as itself; a missing original
++        // must never be replaced by a different snapshot rendering.
+         if (pack.manifest_vault_version_id) {
+           const vaultResult = await getStorageProvider().get(pack.manifest_vault_version_id, orgId);
+           if (vaultResult) {
+-            res.setHeader('Content-Type', vaultResult.mime);
+-            res.setHeader('Content-Length', String(vaultResult.sizeBytes));
+-            res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
+-            res.setHeader('X-Content-SHA256', vaultResult.sha256);
+-            return res.send(vaultResult.bytes);
++            return await serveStored(vaultResult);
+           }
++          return res.status(404).json({ error: 'The recorded manifest file is missing.', code: 'PACK_ARTIFACT_MISSING' });
+         }
+ 
++        // Legacy packs with no original manifest retain their snapshot view,
++        // after its canonical content is checked against both recorded hashes.
+         const snapResult = await pool.query(
+-          `SELECT snapshot_json FROM ivdr_pack_snapshots WHERE pack_id = $1`,
+-          [packId]
++          `SELECT snapshot_json, snapshot_hash_sha256 FROM ivdr_pack_snapshots WHERE pack_id = $1 AND organization_id = $2`,
++          [packId, orgId]
+         );
+ 
+         if (snapResult.rows.length === 0) {
+@@ -971,12 +1003,21 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+             .json({ error: 'Manifest not available', code: 'PACK_NO_MANIFEST' });
+         }
+ 
++        const snapshot = snapResult.rows[0];
++        const canonicalBytes = Buffer.from(stableStringify(snapshot.snapshot_json), 'utf8');
++        for (const digest of [snapshot.snapshot_hash_sha256, pack.snapshot_hash_sha256]) {
++          assertStoredContentIntegrity(canonicalBytes, { sha256: digest, sizeBytes: canonicalBytes.length });
++        }
++        const rendered = Buffer.from(JSON.stringify(snapshot.snapshot_json, null, 2), 'utf8');
++        await recordDownload();
+         res.setHeader('Content-Type', 'application/json');
++        res.setHeader('Content-Length', String(rendered.length));
++        res.setHeader('X-Content-SHA256', computeSha256(rendered));
+         res.setHeader(
+           'Content-Disposition',
+           `attachment; filename="IVDR_Pack_v${pack.pack_version}_manifest.json"`
+         );
+-        return res.send(JSON.stringify(snapResult.rows[0].snapshot_json, null, 2));
++        return res.send(rendered);
+       }
+ 
+       // PDF / DOCX / ZIP — stream from vault
+@@ -1006,11 +1047,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
+         });
+       }
+ 
+-      res.setHeader('Content-Type', vaultResult.mime);
+-      res.setHeader('Content-Length', String(vaultResult.sizeBytes));
+-      res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
+-      res.setHeader('X-Content-SHA256', vaultResult.sha256);
+-      return res.send(vaultResult.bytes);
++      return await serveStored(vaultResult);
+     } catch (error) {
+       return safeError(res, error, 'PACK_DOWNLOAD_FAILED', 'Download pack');
+     }
+diff --git a/server/services/ectd/assess-dispatch-readiness.ts b/server/services/ectd/assess-dispatch-readiness.ts
+index d87b7ce9..46bfda28 100644
+--- a/server/services/ectd/assess-dispatch-readiness.ts
++++ b/server/services/ectd/assess-dispatch-readiness.ts
+@@ -67,6 +67,9 @@ import {
+   evaluateExternalValidationGate,
+   evalidatorRequiredFromEnv,
+   type ExternalValidationReport,
++  type ExternalValidationGateResult,
++  type ExternalValidator,
++  type ExternalValidatorKind,
+ } from './external-validator';
+ 
+ export interface AssessDispatchReadinessParams {
+@@ -182,11 +185,14 @@ export interface DispatchGateView {
+   rule: RuleView | null;
+   cleared: boolean;
+   blockers: string[];
+-  /** Set when the gate adds no blocker only because its check did not run and
++  /** Set when the gate adds no blocker although no external assessment qualified and
+    *  is not required on this installation — the external validator with
+    *  ECTD_REQUIRE_EVALIDATOR off. Cleared is still true (it does not block);
+    *  this says the check was not made, so no surface reads it as passed. */
+   notAssessed?: string;
++  /** Actual external assessment, separately from the gate's enforcement policy. */
++  assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
++  assessmentNote?: string;
+ }
+ 
+ /** composeDispatchGates' merge order — the gate views follow it, so the list
+@@ -202,6 +208,7 @@ const GATE_ORDER: DispatchGateKey[] = ['structural', 'external', 'shadowPresence
+ export function dispatchGateViews(
+   gates: Record<DispatchGateKey, DispatchGateResult>,
+   notAssessed: Partial<Record<DispatchGateKey, string>> = {},
++  externalAssessment?: Pick<DispatchGateView, 'assessmentStatus' | 'assessmentNote'>,
+ ): DispatchGateView[] {
+   return GATE_ORDER.map((key) => ({
+     key,
+@@ -209,20 +216,86 @@ export function dispatchGateViews(
+     cleared: gates[key].cleared,
+     blockers: [...gates[key].blockers],
+     ...(gates[key].cleared && notAssessed[key] ? { notAssessed: notAssessed[key] } : {}),
++    ...(key === 'external' && externalAssessment ? externalAssessment : {}),
+   }));
+ }
+ 
+-/** Why the external gate cleared without a report, when it did. The dispatch
++/** Why the external gate cleared without a qualifying assessment. The dispatch
+  *  screen printed "The agency-grade validator's report for this package
+  *  carries no errors — Satisfied." over a sequence no validator had run on
+  *  (populated-org sweep, 2026-09-28): advisory is not passed. */
+-export function externalNotAssessed(ext: { ran: boolean; configured: boolean }): string | undefined {
+-  if (ext.ran) return undefined;
++export function externalNotAssessed(ext: {
++  ran: boolean;
++  configured: boolean;
++  qualifyingRun?: boolean;
++  validatorKind?: ExternalValidatorKind;
++  assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
++}): string | undefined {
++  if (ext.assessmentStatus === 'failed' || ext.assessmentStatus === 'invalid') return undefined;
++  if (ext.qualifyingRun ?? ext.ran) return undefined;
++  if (ext.validatorKind === 'internal_subset') {
++    return 'The selected adapter is the internal FDA criteria subset; it does not establish an external-engine assessment. External validation is advisory here, so this gate does not block dispatch.';
++  }
+   return ext.configured
+     ? 'The agency-grade validator is configured but did not run for this package, so no report exists. It is not required on this installation, so it does not block dispatch — but the package has not been checked against it.'
+     : 'No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.';
+ }
+ 
++/** Bind the DB assessor's supplied report to server-selected configuration.
++ * This inspects a report; it does not run or qualify a vendor engine. */
++export async function assessExternalValidationReport(
++  validator: ExternalValidator,
++  report: ExternalValidationReport | null,
++  requireEvalidator: boolean,
++  environment: 'staging' | 'production',
++): Promise<ExternalValidationGateResult & { assessmentNote: string }> {
++  const result = evaluateExternalValidationGate({
++    report,
++    selectedValidator: { name: validator.name, kind: validator.kind },
++    configured: await validator.isConfigured(),
++    requireEvalidator,
++    environment,
++  });
++  return { ...result, assessmentNote: externalAssessmentNote(result, report) };
++}
++
++function externalAssessmentNote(result: ExternalValidationGateResult, report: ExternalValidationReport | null): string {
++  const policy = result.enforced
++    ? 'External validation is required for production dispatch.'
++    : 'External validation is advisory here, so this gate does not block dispatch.';
++  const selected = result.selectedValidatorName ?? 'none';
++  switch (result.assessmentStatus) {
++    case 'passed':
++      return `The selected external validator "${selected}" returned a coherent, matching report with no error-severity findings. ${policy} Engine/profile qualification and binding to exact package bytes are separate controls.`;
++    case 'failed':
++      return `The selected external validator "${selected}" reported ${result.externalErrorCount} error-severity finding(s). ${policy}`;
++    case 'invalid':
++      return `The supplied external validation report is malformed or does not match the selected engine (selected="${selected}", reported="${result.reportedValidatorName ?? 'none'}"). Its counts do not establish a clean external assessment. ${policy}`;
++    case 'not_assessed': {
++      const scope = result.validatorKind === 'internal_subset'
++        ? `The selected adapter is the internal FDA criteria subset. The supplied report declares ${result.ran ? 'execution' : 'no execution'} from "${result.reportedValidatorName ?? 'none'}"; it does not establish an external-engine assessment.`
++        : result.configured ? 'The configured external validator did not supply a qualifying execution.' : 'No configured external-engine assessment is established.';
++      const diagnostics = unrunExternalDiagnostics(report);
++      return `${scope} ${policy}${diagnostics ? ` Execution diagnostic: ${diagnostics}` : ''}`;
++    }
++  }
++}
++
++function unrunExternalDiagnostics(report: ExternalValidationReport | null): string {
++  if (report?.ran !== false || !Array.isArray(report.findings)) return '';
++  return report.findings.filter((f) => f && typeof f === 'object' && typeof f.message === 'string').map((f) => f.message).join(' ');
++}
++
++function externalValidationView(result: ExternalValidationGateResult & { assessmentNote: string }): DispatchReadinessAssessment['externalValidation'] {
++  return {
++    configured: result.configured, ran: result.ran, errorCount: result.externalErrorCount,
++    errorCountKnown: result.errorCountKnown, cleared: result.cleared, blockers: result.blockers,
++    validatorKind: result.validatorKind, selectedValidatorName: result.selectedValidatorName,
++    reportedValidatorName: result.reportedValidatorName, qualifyingRun: result.qualifyingRun,
++    assessmentStatus: result.assessmentStatus, assessmentNote: result.assessmentNote, enforced: result.enforced,
++  };
++}
++
+ /** Each finding with the corpus rule it is an instance of (null when the corpus names none). */
+ export function withRules<F extends ReadinessFinding>(findings: F[]): Array<F & { rule: RuleView | null }> {
+   return findings.map((f) => ({ ...f, rule: ruleView(f.code) }));
+@@ -281,15 +354,24 @@ export interface DispatchReadinessAssessment {
+   shadowReviewMissing: boolean;
+   /** External agency-grade (eValidator) gate contribution (P0-4). */
+   externalValidation: {
+-    /** A licensed engine is configured. */
++    /** A selected external-engine path is configured; licence/qualification are separate. */
+     configured: boolean;
+-    /** An external validation actually ran (report supplied). */
++    /** The supplied report declares execution, including internal subsets. */
+     ran: boolean;
+-    /** Error-severity findings from the external (agency-grade) validator. */
++    /** Reported error tally, including subset diagnostics; consult errorCountKnown/status. */
+     errorCount: number;
++    /** Whether errorCount is a coherent executed tally rather than a numeric placeholder. */
++    errorCountKnown?: boolean;
+     /** This gate adds no blocker. */
+     cleared: boolean;
+     blockers: string[];
++    validatorKind?: ExternalValidatorKind;
++    selectedValidatorName?: string | null;
++    reportedValidatorName?: string | null;
++    qualifyingRun?: boolean;
++    assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
++    assessmentNote?: string;
++    enforced?: boolean;
+   };
+   /** Release-signature state (21 CFR Part 11 §11.70, §6c). */
+   releaseSignature: {
+@@ -764,13 +846,12 @@ export async function assessSequenceDispatchReadiness(
+   //    caller that already ran it passes the report in; otherwise the fail-closed
+   //    "could not run" rule blocks a required production dispatch.
+   const externalValidator = await resolveExternalValidator();
+-  const externalConfigured = externalValidator.name !== 'noop';
+-  const externalGate = evaluateExternalValidationGate({
+-    report: params.externalValidationReport ?? null,
+-    configured: externalConfigured,
+-    requireEvalidator: evalidatorRequiredFromEnv(),
+-    environment: resolveDispatchEnvironment(process.env.NODE_ENV),
+-  });
++  const externalGate = await assessExternalValidationReport(
++    externalValidator,
++    params.externalValidationReport ?? null,
++    evalidatorRequiredFromEnv(),
++    resolveDispatchEnvironment(process.env.NODE_ENV),
++  );
+ 
+   // 6. Hard gate over the server-computed inputs, composed with the external
+   //    gate. P-22 (2026-10-08): a leaf whose document is not yet approved is a
+@@ -857,7 +938,8 @@ export async function assessSequenceDispatchReadiness(
+       shadowPresence: shadowPresenceGate,
+       releaseSignature: releaseSignatureGate,
+     },
+-    { external: externalNotAssessed({ ran: externalGate.ran, configured: externalConfigured }) },
++    { external: externalNotAssessed(externalGate) },
++    { assessmentStatus: externalGate.assessmentStatus, assessmentNote: externalGate.assessmentNote },
+   );
+   readiness.findings = withRules(readiness.findings);
+ 
+@@ -869,13 +951,7 @@ export async function assessSequenceDispatchReadiness(
+     validationErrors: readiness.errors,
+     unacknowledgedShadowCriticals,
+     shadowReviewRunCount,
+-    externalValidation: {
+-      configured: externalConfigured,
+-      ran: externalGate.ran,
+-      errorCount: externalGate.externalErrorCount,
+-      cleared: externalGate.cleared,
+-      blockers: externalGate.blockers,
+-    },
++    externalValidation: externalValidationView(externalGate),
+     /** True when no completed Shadow Review has run for this sequence. This now
+      *  also blocks the gate (§6b), so it is informational: it reports WHY the
+      *  gate is blocked when that is the only blocker. */
+diff --git a/server/services/ectd/external-validator/__tests__/external-validator.test.ts b/server/services/ectd/external-validator/__tests__/external-validator.test.ts
+index acc386a3..de1efa54 100644
+--- a/server/services/ectd/external-validator/__tests__/external-validator.test.ts
++++ b/server/services/ectd/external-validator/__tests__/external-validator.test.ts
+@@ -11,19 +11,32 @@ import {
+ } from '..';
+ 
+ function report(over: Partial<ExternalValidationReport> = {}): ExternalValidationReport {
++  const errorCount = over.errorCount ?? 0;
++  const warningCount = over.warningCount ?? 0;
++  const ran = over.ran ?? true;
+   return {
+-    validator: 'stub',
++    validator: 'lorenz-evalidator',
+     profile: 'FDA eCTD 3.2.2',
+     ranAt: new Date(),
+-    ran: true,
+-    findings: [],
+-    errorCount: 0,
+-    warningCount: 0,
+-    passed: true,
++    ran,
++    findings: [
++      ...Array.from({ length: errorCount }, (_, i) => ({ ruleId: `E${i}`, severity: 'error' as const, message: 'Synthetic error.' })),
++      ...Array.from({ length: warningCount }, (_, i) => ({ ruleId: `W${i}`, severity: 'warning' as const, message: 'Synthetic warning.' })),
++    ],
++    errorCount,
++    warningCount,
++    passed: ran && errorCount === 0,
+     ...over,
+   };
+ }
+ 
++function externalGate(input: Parameters<typeof evaluateExternalValidationGate>[0]) {
++  return evaluateExternalValidationGate({
++    selectedValidator: { name: 'lorenz-evalidator', kind: 'external_engine' },
++    ...input,
++  });
++}
++
+ describe('tallyFindings', () => {
+   it('counts only error/warning severities', () => {
+     const findings: ExternalValidationFinding[] = [
+@@ -80,19 +93,20 @@ describe('resolveExternalValidator', () => {
+ 
+ describe('evaluateExternalValidationGate', () => {
+   it('staging is advisory: surfaces error count but adds no blocker', () => {
+-    const r = evaluateExternalValidationGate({
+-      report: report({ errorCount: 3, findings: [{ ruleId: 'F', severity: 'error', message: 'm' }] }),
++    const r = externalGate({
++      report: report({ errorCount: 3 }),
+       configured: true,
+       requireEvalidator: true,
+       environment: 'staging',
+     });
+     expect(r.externalErrorCount).toBe(3);
++    expect(r.assessmentStatus).toBe('failed');
+     expect(r.cleared).toBe(true);
+     expect(r.blockers).toHaveLength(0);
+   });
+ 
+   it('production + required + not configured ⇒ fail closed (could not run)', () => {
+-    const r = evaluateExternalValidationGate({
++    const r = externalGate({
+       report: null,
+       configured: false,
+       requireEvalidator: true,
+@@ -104,7 +118,7 @@ describe('evaluateExternalValidationGate', () => {
+   });
+ 
+   it('production + required + ran with errors ⇒ blocks on the agency errors', () => {
+-    const r = evaluateExternalValidationGate({
++    const r = externalGate({
+       report: report({ ran: true, errorCount: 2, passed: false }),
+       configured: true,
+       requireEvalidator: true,
+@@ -116,7 +130,7 @@ describe('evaluateExternalValidationGate', () => {
+   });
+ 
+   it('production + required + ran clean ⇒ cleared', () => {
+-    const r = evaluateExternalValidationGate({
++    const r = externalGate({
+       report: report({ ran: true, errorCount: 0, passed: true }),
+       configured: true,
+       requireEvalidator: true,
+@@ -127,7 +141,7 @@ describe('evaluateExternalValidationGate', () => {
+   });
+ 
+   it('not required ⇒ never blocks even in production with no engine', () => {
+-    const r = evaluateExternalValidationGate({
++    const r = externalGate({
+       report: null,
+       configured: false,
+       requireEvalidator: false,
+diff --git a/server/services/ectd/external-validator/fda-criteria-adapter.ts b/server/services/ectd/external-validator/fda-criteria-adapter.ts
+index 91c9e4e6..729782a2 100644
+--- a/server/services/ectd/external-validator/fda-criteria-adapter.ts
++++ b/server/services/ectd/external-validator/fda-criteria-adapter.ts
+@@ -146,6 +146,7 @@ export async function validateFdaCriteria(args: ValidateArgs): Promise<ExternalV
+ 
+ export class FdaCriteriaValidatorAdapter implements ExternalValidator {
+   readonly name = 'fda-criteria-subset';
++  readonly kind = 'internal_subset' as const;
+ 
+   async isConfigured(): Promise<boolean> {
+     return fdaCriteriaFallbackEnabled();
+diff --git a/server/services/ectd/external-validator/gate.ts b/server/services/ectd/external-validator/gate.ts
+index 482aa337..fdde9c1f 100644
+--- a/server/services/ectd/external-validator/gate.ts
++++ b/server/services/ectd/external-validator/gate.ts
+@@ -1,27 +1,26 @@
+ /**
+  * External-validation dispatch gate (pure) — the fail-closed decision logic.
+  *
+- * Folds an external (agency-grade) validation report into the dispatch decision,
+- * mirroring the PDF/A and DTD gates. Two effects:
+- *   1. `externalErrorCount` is the number the caller adds to the existing
+- *      `evaluateDispatchGate` `validationErrors` total (error ⇒ hard block, the
+- *      agency model).
+- *   2. A `requireEvalidator` production build whose validation could NOT run
+- *      (engine unconfigured, or it threw) is itself a blocker — you cannot prove
+- *      the package passes the agency validator, so you must not transmit.
++ * Required production clearance needs a configured, explicitly external adapter
++ * and its identity-matched, coherent, clean report. A subset, missing selection,
++ * invalid report or failed execution cannot supply that clearance. Classification
++ * comes from the server's selected adapter, not from submitted report metadata.
+  *
+- * Staging / flag-unset is advisory: errors are surfaced for visibility but this
+- * gate adds no blocker (consistent with PDF/A and DTD defaults).
++ * Staging / flag-unset remains advisory. `cleared` expresses blocking policy;
++ * `assessmentStatus` expresses the external assessment's actual outcome. Neither
++ * a configured URL nor a matched report proves qualified coverage or acceptance.
+  *
+  * @module server/services/ectd/external-validator/gate
+  */
+ 
+-import type { ExternalValidationReport } from './types';
++import { tallyFindings, type ExternalValidationFinding, type ExternalValidationReport, type ExternalValidatorKind } from './types';
+ 
+ export interface ExternalValidationGateInput {
+   /** The report, or null when validation was not attempted / the engine threw. */
+   report: ExternalValidationReport | null;
+-  /** Whether a licensed engine is configured (isConfigured()). */
++  /** Server-selected identity/classification; missing or invalid is unknown. */
++  selectedValidator?: { name: string; kind: ExternalValidatorKind };
++  /** Configuration discovery (isConfigured()), not licence/provider qualification. */
+   configured: boolean;
+   /** Wired from ECTD_REQUIRE_EVALIDATOR. */
+   requireEvalidator: boolean;
+@@ -29,47 +28,123 @@ export interface ExternalValidationGateInput {
+ }
+ 
+ export interface ExternalValidationGateResult {
+-  /** Error count to fold into the dispatch gate's `validationErrors`. */
++  /** Coherent supplied report's errors; zero is a compatibility placeholder when unknown. */
+   externalErrorCount: number;
+-  /** True when the external engine actually executed. */
++  /** False means the numeric placeholder is not an observed clean content count. */
++  errorCountKnown: boolean;
++  /** Whether the supplied report strictly declares execution, including a subset. */
+   ran: boolean;
+-  /** True when a licensed engine is configured. */
++  /** True only for an explicitly external adapter with configuration established. */
+   configured: boolean;
++  validatorKind: ExternalValidatorKind;
++  selectedValidatorName: string | null;
++  reportedValidatorName: string | null;
++  /** Matching coherent external execution, including one that found errors. */
++  qualifyingRun: boolean;
++  assessmentStatus: 'passed' | 'failed' | 'not_assessed' | 'invalid';
++  /** Required production policy is active; distinct from the assessment outcome. */
++  enforced: boolean;
+   blockers: string[];
+   /** True when this gate adds no blocker. */
+   cleared: boolean;
+ }
+ 
+-export function evaluateExternalValidationGate(
+-  input: ExternalValidationGateInput,
+-): ExternalValidationGateResult {
+-  const ran = !!input.report?.ran;
+-  const externalErrorCount = input.report?.errorCount ?? 0;
+-  const blockers: string[] = [];
+-
+-  const enforced = input.requireEvalidator && input.environment === 'production';
++function identityName(value: unknown): string | null {
++  // Keep exact identity: never trim/case-fold a report into the selected engine.
++  return typeof value === 'string' && value.trim().length > 0 ? value : null;
++}
+ 
+-  if (enforced && (!input.configured || !ran)) {
+-    blockers.push(
+-      'External agency-grade eValidator is required for a production dispatch but did not run ' +
+-        `(configured=${input.configured}, ran=${ran}). Configure EVALIDATOR_BINARY/EVALIDATOR_ENDPOINT ` +
+-        'and a region profile, or clear ECTD_REQUIRE_EVALIDATOR for non-production builds. ' +
+-        'See EVALIDATOR_INTEGRATION_SPEC.md.',
+-    );
++function selectedKind(value: unknown, name: string | null): ExternalValidatorKind {
++  if (!name) return 'unknown';
++  switch (value) {
++    case 'external_engine':
++    case 'internal_subset':
++    case 'unavailable':
++    case 'unknown':
++      return value;
++    default:
++      return 'unknown';
+   }
++}
++
++function validCount(value: unknown): value is number {
++  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
++}
++
++function knownFindings(value: unknown): value is ExternalValidationFinding[] {
++  return Array.isArray(value) && value.every(finding =>
++    finding !== null && typeof finding === 'object' &&
++    ['error', 'warning', 'info'].includes(finding.severity),
++  );
++}
++
++/** Inspect executed content counts only; an unrun operational failure is not content. */
++function coherentExecution(report: ExternalValidationReport): boolean {
++  if (report.ran !== true || typeof report.passed !== 'boolean') return false;
++  if (!(report.ranAt instanceof Date) || !Number.isFinite(report.ranAt.getTime())) return false;
++  if (!identityName(report.profile) || !knownFindings(report.findings)) return false;
++  if (!validCount(report.errorCount) || !validCount(report.warningCount)) return false;
++  const counts = tallyFindings(report.findings);
++  return counts.errorCount === report.errorCount && counts.warningCount === report.warningCount && report.passed === (counts.errorCount === 0);
++}
++
++function assessReport(
++  report: ExternalValidationReport | null,
++  facts: Pick<ExternalValidationGateResult, 'configured' | 'reportedValidatorName' | 'selectedValidatorName' | 'errorCountKnown'>,
++): ExternalValidationGateResult['assessmentStatus'] {
++  if (!facts.configured || report == null) return 'not_assessed';
++  if (!facts.reportedValidatorName || facts.reportedValidatorName !== facts.selectedValidatorName) return 'invalid';
++  // Preserve an unrun operational error with zero content errors: it never
++  // supplies a qualifying assessment, and its diagnostic stays in the report.
++  if (report.ran === false) return 'not_assessed';
++  if (!facts.errorCountKnown) return 'invalid';
++  return report.passed ? 'passed' : 'failed';
++}
+ 
+-  if (enforced && ran && externalErrorCount > 0) {
+-    blockers.push(
+-      `External eValidator reported ${externalErrorCount} error-severity finding(s); ` +
+-        'the agency would reject this package. Resolve them before dispatch.',
+-    );
++function requiredBlockers(facts: Omit<ExternalValidationGateResult, 'blockers' | 'cleared'>): string[] {
++  if (facts.validatorKind === 'internal_subset') {
++    return ['The internal FDA criteria subset cannot satisfy the required external-validator assessment. Configure and run an external engine for this production dispatch.'];
++  }
++  if (facts.validatorKind !== 'external_engine') {
++    return [`External validation is required for production but the selected adapter is ${facts.validatorKind}; no qualifying external run is established.`];
++  }
++  if (!facts.configured || facts.assessmentStatus === 'not_assessed') {
++    return [`External validation is required for production but did not run (configured=${facts.configured}, ran=${facts.ran}). Configure EVALIDATOR_BINARY/EVALIDATOR_ENDPOINT and the intended profile, then run the validator.`];
++  }
++  if (facts.assessmentStatus === 'invalid') {
++    return [`External validation is required for production but the report is invalid or does not match the selected engine (${facts.selectedValidatorName}; reported=${facts.reportedValidatorName}).`];
+   }
++  if (facts.assessmentStatus === 'failed') {
++    return [`External eValidator reported ${facts.externalErrorCount} error-severity finding(s). Resolve them before required production dispatch.`];
++  }
++  return [];
++}
+ 
+-  return {
++export function evaluateExternalValidationGate(
++  input: ExternalValidationGateInput,
++): ExternalValidationGateResult {
++  const selectedValidatorName = identityName(input.selectedValidator?.name);
++  const reportedValidatorName = identityName(input.report?.validator);
++  const validatorKind = selectedKind(input.selectedValidator?.kind, selectedValidatorName);
++  const configured = validatorKind === 'external_engine' && input.configured === true;
++  const ran = input.report?.ran === true;
++  const errorCountKnown = input.report != null && coherentExecution(input.report);
++  const externalErrorCount = errorCountKnown ? input.report!.errorCount : 0;
++  const enforced = input.requireEvalidator === true && input.environment === 'production';
++  const assessmentStatus = assessReport(input.report, { configured, reportedValidatorName, selectedValidatorName, errorCountKnown });
++  const qualifyingRun = configured && (assessmentStatus === 'passed' || assessmentStatus === 'failed');
++  const facts = {
+     externalErrorCount,
++    errorCountKnown,
+     ran,
+-    configured: input.configured,
+-    blockers,
+-    cleared: blockers.length === 0,
++    configured,
++    validatorKind,
++    selectedValidatorName,
++    reportedValidatorName,
++    qualifyingRun,
++    assessmentStatus,
++    enforced,
+   };
++  const blockers = enforced ? requiredBlockers(facts) : [];
++  return { ...facts, blockers, cleared: blockers.length === 0 };
+ }
+diff --git a/server/services/ectd/external-validator/index.ts b/server/services/ectd/external-validator/index.ts
+index 76aa1ff0..893951cd 100644
+--- a/server/services/ectd/external-validator/index.ts
++++ b/server/services/ectd/external-validator/index.ts
+@@ -1,8 +1,8 @@
+ /**
+  * External eCTD validator seam — barrel + resolver.
+  *
+- * Resolves the active validator: the licensed LORENZ adapter when configured,
+- * else the fail-closed no-op. The dispatch-readiness wrapper calls
++ * Resolves an external LORENZ adapter, opted-in internal subset or unavailable
++ * no-op, retaining the selected kind. The dispatch-readiness wrapper calls
+  * `resolveExternalValidator()`, runs `validate()` on the unzipped package, and
+  * feeds the result through `evaluateExternalValidationGate` (see gate.ts).
+  *
+@@ -23,9 +23,10 @@ import { FdaCriteriaValidatorAdapter } from './fda-criteria-adapter';
+ 
+ /**
+  * The active external validator, in preference order:
+- *   1. licensed LORENZ engine when configured (the real agency-grade validator);
++ *   1. LORENZ external adapter when its path/endpoint is configured (configuration
++ *      is not proof of licence, actual provider identity or qualified coverage);
+  *   2. the opt-in, license-free FDA-criteria subset (EVALIDATOR_USE_FDA_CRITERIA_FALLBACK)
+- *      — raises the floor but is explicitly NOT a substitute for the agency validator;
++ *      — raises the floor but never satisfies the external-engine requirement;
+  *   3. the fail-closed no-op (honest about not having run; keeps the dispatch gate
+  *      fail-closed under ECTD_REQUIRE_EVALIDATOR).
+  */
+diff --git a/server/services/ectd/external-validator/lorenz-adapter.ts b/server/services/ectd/external-validator/lorenz-adapter.ts
+index 75c47e6e..2dc276c4 100644
+--- a/server/services/ectd/external-validator/lorenz-adapter.ts
++++ b/server/services/ectd/external-validator/lorenz-adapter.ts
+@@ -1,8 +1,9 @@
+ /**
+- * LORENZ eValidator adapter — the licensed, agency-grade engine target.
++ * LORENZ eValidator adapter — the external-engine integration target.
+  *
+  * `isConfigured()` is true only when `EVALIDATOR_BINARY`/`EVALIDATOR_ENDPOINT`
+- * points at an existing engine. When configured, `validate()`:
++ * names an accessible path or an HTTP(S) URL. That is configuration discovery,
++ * not evidence of a licence, provider identity or qualified profile. `validate()`:
+  *   - CLI mode  (a filesystem path): spawns the engine with a configurable arg
+  *     template (`EVALIDATOR_ARGS`, placeholders {packageDir} {profile} {report}),
+  *     then reads + parses the report it writes;
+@@ -15,7 +16,8 @@
+  * no-op is used instead). A configured engine that fails to run or whose report
+  * cannot be parsed THROWS — never a fabricated pass. The dispatch gate treats a
+  * throw / un-run validation as "not passed", so this can never silently clear a
+- * package the agency validator hasn't actually approved.
++ * required gate with an unrun report. A parsed engine pass is not agency
++ * acceptance or proof that the engine/profile was independently qualified.
+  *
+  * @module server/services/ectd/external-validator/lorenz-adapter
+  */
+@@ -164,6 +166,7 @@ function runCli(bin: string, args: string[], timeoutMs = 120000): Promise<void>
+ 
+ export class LorenzEValidatorAdapter implements ExternalValidator {
+   readonly name = 'lorenz-evalidator';
++  readonly kind = 'external_engine' as const;
+ 
+   async isConfigured(): Promise<boolean> {
+     const bin = evalidatorBinary();
+diff --git a/server/services/ectd/external-validator/noop-validator.ts b/server/services/ectd/external-validator/noop-validator.ts
+index 0eb31732..b5613f66 100644
+--- a/server/services/ectd/external-validator/noop-validator.ts
++++ b/server/services/ectd/external-validator/noop-validator.ts
+@@ -1,5 +1,5 @@
+ /**
+- * No-op external validator — the default when no licensed engine is configured.
++ * No-op validator — selected when neither an external path nor subset is configured.
+  *
+  * Honest by construction: `isConfigured()` is false and `validate()` returns a
+  * report with `ran: false` and `passed: false` (an un-run external validation is
+@@ -13,6 +13,7 @@ import type { ExternalValidator, ExternalValidationReport, ValidateArgs } from '
+ 
+ export class NoopExternalValidator implements ExternalValidator {
+   readonly name = 'noop';
++  readonly kind = 'unavailable' as const;
+ 
+   async isConfigured(): Promise<boolean> {
+     return false;
+diff --git a/server/services/ectd/external-validator/types.ts b/server/services/ectd/external-validator/types.ts
+index 15800706..fed47b39 100644
+--- a/server/services/ectd/external-validator/types.ts
++++ b/server/services/ectd/external-validator/types.ts
+@@ -1,16 +1,19 @@
+ /**
+  * External eCTD validator — seam types (P0-4: external eValidator dry-run gate).
+  *
+- * Agencies validate eCTD packages with LORENZ eValidator (FDA's published
+- * criteria), not our internal validators. This is the stable interface an external
+- * validator engine drops in behind — mirroring the fail-closed pattern of the
+- * PDF/A and DTD gates. See EVALIDATOR_INTEGRATION_SPEC.md.
++ * This seam can run a configured external adapter, an internal criteria subset,
++ * or no validator. These have different coverage: a subset never satisfies the
++ * external-engine requirement. An external report is not agency acceptance or
++ * proof of licensed/qualified coverage. See EVALIDATOR_INTEGRATION_SPEC.md.
+  *
+  * @module server/services/ectd/external-validator/types
+  */
+ 
+ export type ValidationSeverity = 'error' | 'warning' | 'info';
+ 
++/** Server-selected adapter classification, never authority supplied by a report. */
++export type ExternalValidatorKind = 'external_engine' | 'internal_subset' | 'unavailable' | 'unknown';
++
+ export type EctdRegion = 'fda' | 'ema' | 'pmda';
+ 
+ export interface ExternalValidationFinding {
+@@ -25,7 +28,7 @@ export interface ExternalValidationFinding {
+ }
+ 
+ export interface ExternalValidationReport {
+-  /** Engine id, e.g. 'lorenz-evalidator' | 'noop' | 'fda-criteria'. */
++  /** Reported id, e.g. 'lorenz-evalidator' | 'noop' | 'fda-criteria-subset'; not authority. */
+   validator: string;
+   /** Validation profile / region, e.g. 'FDA eCTD 3.2.2'. */
+   profile: string;
+@@ -36,7 +39,7 @@ export interface ExternalValidationReport {
+   /** Findings with severity 'error'. */
+   errorCount: number;
+   warningCount: number;
+-  /** errorCount === 0 AND the engine actually ran. */
++  /** Declared run result: errorCount === 0 AND ran; not qualified coverage or acceptance. */
+   passed: boolean;
+ }
+ 
+@@ -50,7 +53,8 @@ export interface ValidateArgs {
+ 
+ export interface ExternalValidator {
+   readonly name: string;
+-  /** True when the engine binary/endpoint + license are configured. */
++  readonly kind: ExternalValidatorKind;
++  /** A path/endpoint or subset option is available; not proof of licence or qualification. */
+   isConfigured(): Promise<boolean>;
+   /** Validate an unzipped package directory against a region profile. */
+   validate(args: ValidateArgs): Promise<ExternalValidationReport>;
+diff --git a/server/services/ectd/validation-rule-corpus.ts b/server/services/ectd/validation-rule-corpus.ts
+index 6cb95557..7629f7fc 100644
+--- a/server/services/ectd/validation-rule-corpus.ts
++++ b/server/services/ectd/validation-rule-corpus.ts
+@@ -578,12 +578,12 @@ export const RULE_CORPUS: ValidationRule[] = [
+   },
+   {
+     id: 'EXTERNAL_VALIDATION_CLEAN',
+-    title: 'The agency-grade validator’s report for this package carries no errors',
++    title: 'External validation result and dispatch policy are assessed',
+     category: 'integrity',
+     regions: ['ich'],
+     severity: 'high',
+     rationale:
+-      'Only the agency’s own validator (or a licensed equivalent) proves a package will pass intake. When its report is on file, an error in it blocks dispatch; when it is required and absent, that blocks too.',
++      'Required production external validation blocks on an unavailable, invalid or errored matched external report. Advisory outcomes remain visible without claiming an external pass. Tool/profile/package qualification and actual agency acceptance require separate evidence.',
+     source: FDA_CRIT,
+     enforcement: 'external',
+   },
+diff --git a/server/services/storage/local-provider.ts b/server/services/storage/local-provider.ts
+index a9caa479..c3c623bc 100644
+--- a/server/services/storage/local-provider.ts
++++ b/server/services/storage/local-provider.ts
+@@ -24,6 +24,7 @@ import {
+   StorageGetResult,
+   StorageSignedUrlResult,
+   computeSha256,
++  assertStoredContentIntegrity,
+   generateVersionId,
+   sanitizeProjectId,
+   buildVaultFileId,
+@@ -142,6 +143,7 @@ export class LocalStorageProvider implements IStorageProvider {
+     if (!fs.existsSync(filePath)) return null;
+ 
+     const bytes = fs.readFileSync(filePath);
++    assertStoredContentIntegrity(bytes, meta);
+     return {
+       bytes,
+       sizeBytes: bytes.length,
+diff --git a/server/services/storage/s3-provider.ts b/server/services/storage/s3-provider.ts
+index 4386d16c..90e5201c 100644
+--- a/server/services/storage/s3-provider.ts
++++ b/server/services/storage/s3-provider.ts
+@@ -20,6 +20,7 @@ import {
+   StorageGetResult,
+   StorageSignedUrlResult,
+   computeSha256,
++  assertStoredContentIntegrity,
+   generateVersionId,
+   sanitizeProjectId,
+   buildVaultFileId,
+@@ -167,6 +168,7 @@ export class S3StorageProvider implements IStorageProvider {
+         this.bucket,
+         this.keyPath(orgId, projectId, vaultVersionId, meta.filename),
+       );
++      assertStoredContentIntegrity(bytes, meta);
+ 
+       return {
+         bytes,
+diff --git a/server/services/storage/storage-provider.ts b/server/services/storage/storage-provider.ts
+index 1ff1de07..a83c81b9 100644
+--- a/server/services/storage/storage-provider.ts
++++ b/server/services/storage/storage-provider.ts
+@@ -76,6 +76,13 @@ export interface IStorageProvider {
+    * A file belonging to another organization must be reported as MISSING (null),
+    * never as forbidden — "403" on a foreign id confirms the id exists, which is
+    * an enumeration oracle. Matches `ana/uploaded-file-access.ts`.
++   *
++   * A successful read verifies loaded bytes against the owned storage record's
++   * SHA-256 and byte length. Parsed metadata with no valid identity, or bytes
++   * that differ from it, throws StorageIntegrityError rather than returning a
++   * missing result or the original digest beside changed content. This verifies
++   * storage identity; a governed caller must also bind it to its authoritative
++   * approved artifact identity before export.
+    */
+   get(vaultVersionId: string, orgId: number): Promise<StorageGetResult | null>;
+ 
+@@ -116,6 +123,40 @@ export function computeSha256(data: Buffer): string {
+   return createHash('sha256').update(data).digest('hex');
+ }
+ 
++export type StorageIntegrityFailureReason = 'invalid_metadata' | 'size_mismatch' | 'digest_mismatch';
++
++/** Storage corruption is distinct from a missing or foreign version. */
++export class StorageIntegrityError extends Error {
++  readonly code = 'STORAGE_INTEGRITY_FAILED';
++
++  constructor(readonly reason: StorageIntegrityFailureReason) {
++    const messages: Record<StorageIntegrityFailureReason, string> = {
++      invalid_metadata: 'The stored file has no valid recorded SHA-256 or byte length. No content was returned.',
++      size_mismatch: 'The stored file byte length differs from its recorded identity. No content was returned.',
++      digest_mismatch: 'The stored file SHA-256 differs from its recorded identity. No content was returned.',
++    };
++    super(messages[reason]);
++    this.name = 'StorageIntegrityError';
++  }
++}
++
++/**
++ * Check the bytes actually loaded, after ownership/path checks. Never replace a
++ * missing recorded identity with a hash of the current bytes: that would call
++ * an unverified or altered version its own original. Empty files are valid.
++ */
++export function assertStoredContentIntegrity(
++  bytes: Buffer,
++  recorded: { sha256: unknown; sizeBytes: unknown },
++): void {
++  if (typeof recorded.sha256 !== 'string' || !/^[0-9a-f]{64}$/i.test(recorded.sha256)
++      || typeof recorded.sizeBytes !== 'number' || !Number.isSafeInteger(recorded.sizeBytes) || recorded.sizeBytes < 0) {
++    throw new StorageIntegrityError('invalid_metadata');
++  }
++  if (bytes.length !== recorded.sizeBytes) throw new StorageIntegrityError('size_mismatch');
++  if (computeSha256(bytes) !== recorded.sha256.toLowerCase()) throw new StorageIntegrityError('digest_mismatch');
++}
++
+ export function generateVersionId(): string {
+   return randomUUID();
+ }
+diff --git a/server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts b/server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+index d56f115a..0297b88c 100644
+--- a/server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
++++ b/server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+@@ -153,6 +153,35 @@ describe('runDispatchQc — deterministic verdict, model narrates', () => {
+ });
+ 
+ describe('computeDispatchQcVerdict', () => {
++  it.each([
++    ['not_assessed', 'Internal subset checks ran; no qualifying external validation is established.'],
++    ['failed', 'External validation reported errors; advisory policy does not block dispatch.'],
++    ['invalid', 'The supplied external report cannot be assessed; advisory policy does not block dispatch.'],
++  ])('retains the external %s evidence caveat even when the policy gate clears', (status, note) => {
++    const assessment = {
++      validationErrors: 0, unacknowledgedShadowCriticals: 0, shadowReviewRunCount: 1,
++      externalValidation: { cleared: true }, releaseSignature: { cleared: true },
++      gate: { cleared: true, blockers: [] },
++      gates: [{ key: 'external', cleared: true, blockers: [], assessmentStatus: status, assessmentNote: note }],
++      readiness: { findings: [{ severity: 'warning', message: 'Existing scoped warning.' }] },
++    } as unknown as DispatchReadinessAssessment;
++    const result = computeDispatchQcVerdict(CLEAR_INPUT, assessment);
++    expect(result.clearedToDispatch).toBe(true);
++    expect(result.blockers).toEqual([]);
++    expect(result.warnings).toEqual(['Existing scoped warning.', note]);
++  });
++
++  it('does not turn a matching passed external report into an advisory warning', () => {
++    const assessment = {
++      validationErrors: 0, unacknowledgedShadowCriticals: 0, shadowReviewRunCount: 1,
++      externalValidation: { cleared: true }, releaseSignature: { cleared: true },
++      gate: { cleared: true, blockers: [] },
++      gates: [{ key: 'external', cleared: true, blockers: [], assessmentStatus: 'passed', assessmentNote: 'External report passed.' }],
++      readiness: { findings: [] },
++    } as unknown as DispatchReadinessAssessment;
++    expect(computeDispatchQcVerdict(CLEAR_INPUT, assessment).warnings).toEqual([]);
++  });
++
+   it('without an assessment: the hard gate over the counts, and a warning naming what was not checked', () => {
+     const v = computeDispatchQcVerdict(CLEAR_INPUT);
+     expect(v.clearedToDispatch).toBe(true);
+diff --git a/server/services/submission-ai/submission-ai-service.ts b/server/services/submission-ai/submission-ai-service.ts
+index b341f931..371a0761 100644
+--- a/server/services/submission-ai/submission-ai-service.ts
++++ b/server/services/submission-ai/submission-ai-service.ts
+@@ -370,6 +370,14 @@ function hasFinding(a: DispatchReadinessAssessment, ...codes: string[]): boolean
+   return a.readiness.findings.some((f) => codes.includes(f.code));
+ }
+ 
++/** Policy clearance and an external validation pass are separate facts. */
++function externalValidationCaveat(assessment: DispatchReadinessAssessment): string[] {
++  const view = assessment.gates?.find((gate) => gate.key === 'external');
++  if (!view || view.assessmentStatus === 'passed') return [];
++  const note = view.assessmentNote ?? view.notAssessed;
++  return note ? [note] : [];
++}
++
+ /**
+  * The deterministic dispatch-QC verdict. PURE: no DB, no network, no model.
+  *
+@@ -396,7 +404,10 @@ export function computeDispatchQcVerdict(
+     return {
+       clearedToDispatch: assessment.gate.cleared,
+       blockers: [...assessment.gate.blockers],
+-      warnings: assessment.readiness.findings.filter((f) => f.severity === 'warning').map((f) => f.message),
++      warnings: [
++        ...assessment.readiness.findings.filter((f) => f.severity === 'warning').map((f) => f.message),
++        ...externalValidationCaveat(assessment),
++      ],
+       checklist,
+       verdictSource: 'assess-dispatch-readiness',
+     };
+diff --git a/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts b/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+index 38c40144..32ca0160 100644
+--- a/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
++++ b/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+@@ -8,6 +8,12 @@ import { promises as fsp } from 'fs';
+ import * as os from 'os';
+ import * as path from 'path';
+ import { evaluatePreTransmit } from '../pre-transmit-check';
++import type { PreTransmitInput } from '../pre-transmit-check';
++import {
++  FdaCriteriaValidatorAdapter,
++  LorenzEValidatorAdapter,
++  type ExternalValidationReport,
++} from '../../ectd/external-validator';
+ import { packageEctdSubmission } from '../regional-packager';
+ import { getGateway } from '../index';
+ import type { SubmissionBundle } from '../types';
+@@ -18,6 +24,45 @@ import {
+ 
+ const GB = 1024 ** 3;
+ 
++const selectedExternalValidator = new LorenzEValidatorAdapter();
++const selectedSubsetValidator = new FdaCriteriaValidatorAdapter();
++
++/** Coherent report fixtures; constructing the descriptor does not run an engine. */
++function externalReport(over: Partial<ExternalValidationReport> = {}): ExternalValidationReport {
++  return {
++    validator: selectedExternalValidator.name,
++    profile: 'FDA eCTD 3.2.2',
++    ranAt: new Date('2026-10-14T00:00:00Z'),
++    ran: true,
++    findings: [],
++    errorCount: 0,
++    warningCount: 0,
++    passed: true,
++    ...over,
++  };
++}
++
++function externalInput(over: Partial<PreTransmitInput> = {}): PreTransmitInput {
++  return {
++    region: 'fda',
++    bundle: bundle({ builtRegion: 'fda' }),
++    environment: 'production',
++    selectedExternalValidator,
++    externalConfigured: true,
++    externalReport: externalReport(),
++    env: { ECTD_REQUIRE_EVALIDATOR: 'true' },
++    ...over,
++  };
++}
++
++function failedExternalReport(): ExternalValidationReport {
++  return externalReport({
++    findings: [{ ruleId: 'TEST-ERROR', severity: 'error', message: 'Synthetic error finding' }],
++    errorCount: 1,
++    passed: false,
++  });
++}
++
+ function bundle(over: Partial<SubmissionBundle> = {}): SubmissionBundle {
+   return {
+     path: '/tmp/x.zip',
+@@ -213,7 +258,124 @@ describe('evaluatePreTransmit', () => {
+       env: { ECTD_REQUIRE_EVALIDATOR: 'true' },
+     });
+     expect(r.cleared).toBe(false); // required + could not run ⇒ block
+-    expect(r.blockers.join(' ')).toMatch(/eValidator/);
++    expect(r.blockers.join(' ')).toMatch(/External validation/);
++  });
++});
++
++describe('pre-transmit external assessment classification', () => {
++  it('forwards the selected external descriptor so a matching clean report can pass the required gate', () => {
++    const result = evaluatePreTransmit(externalInput());
++    expect(result.cleared).toBe(true);
++    expect(result.checks.find(check => check.name === 'external-evalidator')).toMatchObject({
++      passed: true,
++      detail: expect.stringContaining('status=passed'),
++    });
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('kind=external_engine');
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('errorCountKnown=true');
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('errors=0');
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('enforced=true');
++    expect(result.warnings).toEqual([]);
++  });
++
++  it('reports a matching external error as a failed assessment and blocks required production', () => {
++    const result = evaluatePreTransmit(externalInput({ externalReport: failedExternalReport() }));
++    expect(result.cleared).toBe(false);
++    expect(result.blockers.join(' ')).toContain('1 error-severity finding');
++    const check = result.checks.find(item => item.name === 'external-evalidator');
++    expect(check?.passed).toBe(false);
++    expect(check?.detail).toContain('status=failed');
++    expect(check?.detail).toContain('errors=1');
++    expect(check?.detail).toContain('errorCountKnown=true');
++  });
++
++  it('keeps a clean selected subset from satisfying the required external assessment', () => {
++    const result = evaluatePreTransmit(externalInput({
++      selectedExternalValidator: selectedSubsetValidator,
++      externalReport: externalReport({ validator: selectedSubsetValidator.name }),
++    }));
++    expect(result.cleared).toBe(false);
++    expect(result.blockers.join(' ')).toContain('internal FDA criteria subset');
++    const check = result.checks.find(item => item.name === 'external-evalidator');
++    expect(check?.passed).toBe(false);
++    expect(check?.detail).toContain('status=not_assessed');
++    expect(check?.detail).toContain('kind=internal_subset');
++    expect(check?.detail).toContain('errorCountKnown=true');
++  });
++
++  it('refuses required external clearance without a trusted descriptor despite a clean engine-named report', () => {
++    const result = evaluatePreTransmit(externalInput({ selectedExternalValidator: undefined }));
++    expect(result.cleared).toBe(false);
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.passed).toBe(false);
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('kind=unknown');
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('status=not_assessed');
++  });
++});
++
++describe('pre-transmit advisory assessment visibility', () => {
++  it.each(['production', 'staging'] as const)('keeps an advisory failed assessment visible without adding blockers in %s', environment => {
++    const result = evaluatePreTransmit(externalInput({
++      environment,
++      externalReport: failedExternalReport(),
++      env: environment === 'staging' ? { ECTD_REQUIRE_EVALIDATOR: 'true' } : {},
++    }));
++    expect(result.cleared).toBe(true);
++    expect(result.blockers).toEqual([]);
++    const check = result.checks.find(item => item.name === 'external-evalidator');
++    expect(check?.passed).toBe(false);
++    expect(check?.detail).toContain('status=failed');
++    expect(check?.detail).toContain('kind=external_engine');
++    expect(check?.detail).toContain('errors=1');
++    expect(check?.detail).toContain('enforced=false');
++    expect(result.warnings.join(' ')).toContain('status=failed');
++  });
++
++  it('keeps advisory unassessed execution distinct from a clean zero-error assessment', () => {
++    const result = evaluatePreTransmit(externalInput({ externalReport: null, env: {} }));
++    expect(result.cleared).toBe(true);
++    const check = result.checks.find(item => item.name === 'external-evalidator');
++    expect(check?.passed).toBe(false);
++    expect(check?.detail).toContain('status=not_assessed');
++    expect(check?.detail).toContain('errors=unknown');
++    expect(check?.detail).toContain('errorCountKnown=false');
++    expect(result.warnings.join(' ')).toContain('status=not_assessed');
++  });
++
++  it('surfaces an advisory mismatched report as invalid rather than passed', () => {
++    const result = evaluatePreTransmit(externalInput({
++      externalReport: externalReport({ validator: selectedSubsetValidator.name }),
++      env: {},
++    }));
++    expect(result.cleared).toBe(true);
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.passed).toBe(false);
++    expect(result.checks.find(check => check.name === 'external-evalidator')?.detail).toContain('status=invalid');
++    expect(result.warnings.join(' ')).toContain('status=invalid');
++  });
++
++  it('retains valid internal subset error diagnostics without calling them an external assessment', () => {
++    const result = evaluatePreTransmit(externalInput({
++      selectedExternalValidator: selectedSubsetValidator,
++      externalReport: { ...failedExternalReport(), validator: selectedSubsetValidator.name },
++      env: {},
++    }));
++    expect(result.cleared).toBe(true);
++    const check = result.checks.find(item => item.name === 'external-evalidator');
++    expect(check?.passed).toBe(false);
++    expect(check?.detail).toContain('kind=internal_subset');
++    expect(check?.detail).toContain('status=not_assessed');
++    expect(check?.detail).toContain('errors=1');
++    expect(check?.detail).toContain('errorCountKnown=true');
++    expect(result.warnings.join(' ')).toContain('kind=internal_subset');
++  });
++
++  it('preserves low-level enforceExternal=false even when required with no descriptor', () => {
++    const result = evaluatePreTransmit(externalInput({
++      selectedExternalValidator: undefined,
++      externalReport: null,
++      enforceExternal: false,
++    }));
++    expect(result.cleared).toBe(true);
++    expect(result.checks.some(check => check.name === 'external-evalidator')).toBe(false);
++    expect(result.warnings).toEqual([]);
+   });
+ });
+ 
+diff --git a/server/services/submission-gateways/pre-transmit-check.ts b/server/services/submission-gateways/pre-transmit-check.ts
+index 4d411777..107bc7c8 100644
+--- a/server/services/submission-gateways/pre-transmit-check.ts
++++ b/server/services/submission-gateways/pre-transmit-check.ts
+@@ -16,13 +16,14 @@
+  *      the bundle shows unconverted PDF leaves.
+  *   3. DTD self-containment — blocks in production when ECTD_REQUIRE_DTD and the
+  *      bundle is not DTD self-contained.
+- *   4. External agency-grade validation — folds evaluateExternalValidationGate
++ *   4. External validation — folds evaluateExternalValidationGate
+  *      when a report is supplied / required (ECTD_REQUIRE_EVALIDATOR).
+  *
+  * Flag-gated checks are report-only by default (identical to today's behavior);
+  * they only block a production send when the operator has opted in. Missing
+- * evidence never blocks (we warn rather than halt a legitimate send we cannot
+- * disprove) — demonstrated non-compliance blocks.
++ * PDF/A or DTD evidence warns when absent. Required production external
++ * validation fails closed when no qualifying assessment is established.
++ * Advisory policy clearance never means the external assessment passed.
+  *
+  * PURE (no I/O): callers pass the bundle + an optional external report.
+  *
+@@ -35,6 +36,7 @@ import {
+   evaluateExternalValidationGate,
+   evalidatorRequiredFromEnv,
+   type ExternalValidationReport,
++  type ExternalValidator,
+ } from '../ectd/external-validator';
+ import { pdfaRequirementFrom, pdfaRequirementWho, type PdfARequirement } from '../ectd/pdfa-requirement';
+ import { dtdRequiredFromEnv } from '../ectd/dtd-bundler';
+@@ -87,12 +89,14 @@ export interface PreTransmitInput {
+   region: Region;
+   bundle: SubmissionBundle;
+   environment: 'staging' | 'production';
+-  /** An already-run external (agency-grade) validation report, if available. */
++  /** A supplied validation report; it does not establish its own authority. */
+   externalReport?: ExternalValidationReport | null;
+-  /** Whether a licensed external engine is configured (default false). */
++  /** Trusted server-selected adapter identity/classification, never inferred from the report. */
++  selectedExternalValidator?: Pick<ExternalValidator, 'name' | 'kind'>;
++  /** Configuration discovery, not proof of licence or qualified coverage (default false). */
+   externalConfigured?: boolean;
+   /**
+-   * Fold the external agency-grade validation gate into the decision. Default
++   * Fold the external validation gate into the decision. Default
+    * true (the route layer, which has run the validator + holds the report).
+    * The low-level gateway guard sets this false — it cannot run/receive a
+    * report, and external enforcement already lives in assess-dispatch-readiness.
+@@ -375,20 +379,29 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult
+   blockers.push(...m3RegionalGate.blockers);
+   warnings.push(...m3RegionalGate.warnings);
+ 
+-  // 4. External agency-grade validation gate (route layer only — see enforceExternal).
++  // 4. External validation gate (route layer only — see enforceExternal).
+   if (input.enforceExternal !== false) {
+     const extGate = evaluateExternalValidationGate({
+       report: input.externalReport ?? null,
++      selectedValidator: input.selectedExternalValidator,
+       configured: input.externalConfigured ?? false,
+       requireEvalidator: evalidatorRequiredFromEnv(env),
+       environment: input.environment,
+     });
++    const externalDetail =
++      `status=${extGate.assessmentStatus}; kind=${extGate.validatorKind}; ` +
++      `errorCountKnown=${extGate.errorCountKnown}; ` +
++      `errors=${extGate.errorCountKnown ? extGate.externalErrorCount : 'unknown'}; ` +
++      `ran=${extGate.ran}; enforced=${extGate.enforced}`;
+     checks.push({
+       name: 'external-evalidator',
+-      passed: extGate.cleared,
+-      detail: extGate.ran ? `${extGate.externalErrorCount} agency error(s)` : 'did not run',
++      passed: extGate.assessmentStatus === 'passed',
++      detail: externalDetail,
+     });
+     blockers.push(...extGate.blockers);
++    if (!extGate.enforced && extGate.assessmentStatus !== 'passed') {
++      warnings.push(`External validation is advisory: ${externalDetail}. No qualifying passed external assessment is established.`);
++    }
+   }
+ 
+   return { cleared: blockers.length === 0, blockers, checks, warnings };
+diff --git a/server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts b/server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts
+new file mode 100644
+index 00000000..ce9aac8a
+--- /dev/null
++++ b/server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts
+@@ -0,0 +1,143 @@
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { z } from 'zod';
++import type { ExternalValidatorKind } from '../../services/ectd/external-validator/types';
++import type { ToolSpec } from '../tools/runtime';
++
++const { resolveExternalValidator, executeValidator } = vi.hoisted(() => ({
++  resolveExternalValidator: vi.fn(),
++  executeValidator: vi.fn(),
++}));
++vi.mock('../../services/ectd/external-validator', () => ({ resolveExternalValidator }));
++vi.mock('../../services/auditService', () => ({
++  default: { logAction: vi.fn(async () => ({ persisted: true })) },
++}));
++
++import { validateEctdStructure } from '../tools/validation';
++import { registerTool } from '../tools/runtime';
++import { validatePackage } from '../../services/ectd/ectd4-validator';
++
++type Handler = (input: Record<string, unknown>, extra: { authInfo?: unknown }) => Promise<{
++  isError?: boolean;
++  content: Array<{ type: string; text?: string }>;
++  structuredContent?: Record<string, unknown>;
++}>;
++
++function capture() {
++  let handler: Handler | undefined;
++  const server = { registerTool: (_name: string, _meta: unknown, fn: Handler) => { handler = fn; } };
++  registerTool(server as Parameters<typeof registerTool>[0], validateEctdStructure as ToolSpec<z.ZodRawShape>, {} as Parameters<typeof registerTool>[2]);
++  return handler!;
++}
++
++const principal = {
++  userId: 42, organizationId: 7, organizationUuid: null, role: 'viewer',
++  email: 'reviewer@tenant.example', clientId: 'first-party', scopes: ['c2c:read'], tokenUse: 'platform',
++};
++const authInfo = { token: 'fixture', clientId: 'first-party', scopes: principal.scopes, extra: { principal } };
++const input = z.object(validateEctdStructure.inputSchema).parse({
++  leaves: [{ section_code: 'm1.1', title: 'Cover letter', file_path: 'm1/us/cover-letter.pdf', file_size: 128 }],
++  region: 'US',
++});
++
++function selected(name: string, kind: ExternalValidatorKind, available: boolean) {
++  return { name, kind, isConfigured: vi.fn(async () => available), validate: executeValidator };
++}
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  resolveExternalValidator.mockResolvedValue(selected('noop', 'unavailable', false));
++});
++
++describe('MCP structural validation reports adapter discovery without implying execution', () => {
++  it.each([
++    { name: 'fda-criteria-subset', kind: 'internal_subset' as const, available: true, configuredExternal: false, wording: 'internal subset; not an external validator' },
++    { name: 'lorenz-evalidator', kind: 'external_engine' as const, available: true, configuredExternal: true, wording: 'external adapter path/endpoint configured' },
++    { name: 'noop', kind: 'unavailable' as const, available: false, configuredExternal: false, wording: 'no validation adapter available' },
++  ])('$kind retains its classification and explicitly has not run', async ({ name, kind, available, configuredExternal, wording }) => {
++    resolveExternalValidator.mockResolvedValue(selected(name, kind, available));
++    const out = await capture()(input, { authInfo });
++    expect(out.isError).not.toBe(true);
++    expect(out.structuredContent?.externalValidator).toMatchObject({
++      name, kind, adapterAvailable: available,
++      configuredExternal, configured: configuredExternal,
++      execution: 'not_run', ran: false, qualification: 'not_assessed',
++    });
++    const summary = out.content[0]?.text ?? '';
++    expect(summary).toContain('Validation adapter:');
++    expect(summary).toContain(wording);
++    expect(summary).toContain('validation has not run for this package');
++    expect(summary).not.toContain('External validator:');
++    if (kind === 'external_engine') expect(summary).toContain('licence and qualification not verified');
++    expect(executeValidator).not.toHaveBeenCalled();
++  });
++
++  it('uses the selected kind rather than inferring authority from the adapter name', async () => {
++    resolveExternalValidator.mockResolvedValue(selected('lorenz-evalidator', 'internal_subset', true));
++    const out = await capture()(input, { authInfo });
++    expect(out.structuredContent?.externalValidator).toMatchObject({ kind: 'internal_subset', adapterAvailable: true, configured: false, configuredExternal: false, ran: false });
++    expect(out.content[0]?.text).toContain('internal subset; not an external validator');
++    expect(executeValidator).not.toHaveBeenCalled();
++  });
++
++  it('does not label an unavailable external adapter as configured', async () => {
++    resolveExternalValidator.mockResolvedValue(selected('lorenz-evalidator', 'external_engine', false));
++    const out = await capture()(input, { authInfo });
++    expect(out.structuredContent?.externalValidator).toMatchObject({ kind: 'external_engine', adapterAvailable: false, configuredExternal: false, configured: false, ran: false });
++    expect(out.content[0]?.text).toContain('external adapter path/endpoint not configured');
++  });
++
++  it.each(['resolver', 'configuration'])('%s discovery failure is unknown, never a claim of no engine', async (stage) => {
++    const failure = new Error(`${stage} discovery unavailable`);
++    if (stage === 'resolver') resolveExternalValidator.mockRejectedValue(failure);
++    else resolveExternalValidator.mockResolvedValue({ ...selected('lorenz-evalidator', 'external_engine', true), isConfigured: vi.fn(async () => { throw failure; }) });
++    const out = await capture()(input, { authInfo });
++    expect(out.isError).not.toBe(true); // the existing structural result remains available
++    expect(out.structuredContent?.externalValidator).toMatchObject({
++      kind: 'unknown', adapterAvailable: null, configured: false, configuredExternal: false,
++      execution: 'not_run', ran: false, qualification: 'not_assessed',
++    });
++    expect(out.content[0]?.text).toContain(`${stage} discovery unavailable`);
++    expect(out.content[0]?.text).toContain('adapter discovery unresolved');
++    expect(out.content[0]?.text).not.toContain('no validation adapter available');
++    expect(executeValidator).not.toHaveBeenCalled();
++  });
++
++  it.each([
++    { kind: 'vendor_pass', available: true, expectedAvailability: true },
++    { kind: 'internal_subset', available: 'false', expectedAvailability: null },
++  ])('unexpected discovery values remain unknown: $kind / $available', async ({ kind, available, expectedAvailability }) => {
++    resolveExternalValidator.mockResolvedValue({
++      name: 'fda-criteria-subset', kind, isConfigured: vi.fn(async () => available), validate: executeValidator,
++    });
++    const out = await capture()(input, { authInfo });
++    expect(out.structuredContent?.externalValidator).toMatchObject({
++      kind: 'unknown', adapterAvailable: expectedAvailability, configured: false, configuredExternal: false,
++      execution: 'not_run', ran: false, qualification: 'not_assessed',
++    });
++    expect(out.content[0]?.text).toContain('adapter discovery unresolved');
++    expect(out.content[0]?.text).not.toContain('subset available');
++    expect(executeValidator).not.toHaveBeenCalled();
++  });
++
++  it('preserves the actual structural validation result and read-only access contract', async () => {
++    const out = await capture()(input, { authInfo });
++    const expected = validatePackage([{
++      sectionCode: 'm1.1', title: 'Cover letter', filePath: 'm1/us/cover-letter.pdf',
++      checksum: '', checksumType: 'md5', operation: 'new', mimeType: 'application/pdf', fileSize: 128,
++    }], 'IND', { region: 'US' });
++    expect(out.structuredContent).toMatchObject({ source: '1 supplied leaves', submissionType: 'IND', region: 'US' });
++    expect(out.structuredContent?.result).toMatchObject({ valid: expected.valid, score: expected.score, findings: expected.findings, summary: expected.summary });
++    expect(validateEctdStructure.scope).toBe('c2c:read');
++    expect(validateEctdStructure.governed).toBe(false);
++    expect(validateEctdStructure.annotations).toEqual({ readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
++  });
++
++  it('retains scope denial before discovery or validation executes', async () => {
++    const noReadScope = { ...authInfo, scopes: [], extra: { principal: { ...principal, scopes: [] } } };
++    const out = await capture()(input, { authInfo: noReadScope });
++    expect(out.isError).toBe(true);
++    expect(out.content[0]?.text).toContain('requires c2c:read');
++    expect(resolveExternalValidator).not.toHaveBeenCalled();
++    expect(executeValidator).not.toHaveBeenCalled();
++  });
++});
+diff --git a/server/routes/__tests__/ivdr-pack-download-integrity.test.ts b/server/routes/__tests__/ivdr-pack-download-integrity.test.ts
+new file mode 100644
+index 00000000..9487a07a
+--- /dev/null
++++ b/server/routes/__tests__/ivdr-pack-download-integrity.test.ts
+@@ -0,0 +1,225 @@
++/** The actual download route must bind storage bytes to its recorded pack,
++ * not just trust an internally consistent storage sidecar. No live DB or S3. */
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import express, { type Request, type Response, type NextFunction } from 'express';
++import request from 'supertest';
++import { computeSha256, StorageIntegrityError } from '../../services/storage/storage-provider';
++import { stableStringify } from '../../../shared/canonical-json';
++
++const storage = vi.hoisted(() => ({ get: vi.fn() }));
++vi.mock('../../services/storage/index.js', () => ({ getStorageProvider: () => storage }));
++import createIVDRBinderRoutes from '../ivdr-binder-routes';
++
++const ORG = 7;
++const PACK = '11111111-1111-4111-8111-111111111111';
++const GOOD = Buffer.from('{"approved":"artifact"}');
++const CHANGED = Buffer.from('{"modified":"artifact"}');
++const FORMATS = ['pdf', 'docx', 'zip', 'manifest'] as const;
++const versions = Object.fromEntries(FORMATS.map((f, i) => [f, `00000000-0000-4000-8000-00000000000${i}`]));
++let pack: Record<string, unknown>;
++let packExists = true;
++const query = vi.fn(async (sql: string, _params?: unknown[]) => {
++  if (sql.includes('FROM ivdr_packs')) return { rows: packExists ? [pack] : [] };
++  return { rows: [] };
++});
++const pool = { query } as unknown as import('pg').Pool;
++
++function app() {
++  const a = express();
++  a.use((req: Request, _res: Response, next: NextFunction) => {
++    (req as any).tenantId = ORG;
++    (req as any).userId = 42;
++    (req as any).ivdrPermissions = new Set(['*']);
++    next();
++  });
++  a.use('/api/ivdr', createIVDRBinderRoutes(pool));
++  return a;
++}
++
++function stored(bytes = GOOD) {
++  return { bytes, sha256: computeSha256(bytes), sizeBytes: bytes.length,
++    mime: 'application/octet-stream', filename: 'artifact.bin' };
++}
++
++function downloaded() {
++  return query.mock.calls.filter(([, params]) => params?.[1] === 'PACK_DOWNLOADED');
++}
++
++beforeEach(() => {
++  query.mockClear();
++  storage.get.mockReset();
++  packExists = true;
++  pack = { id: PACK, project_id: 'programme-a', pack_version: 1, status: 'SUCCEEDED' };
++  for (const f of FORMATS) {
++    pack[`${f}_vault_version_id`] = versions[f];
++    pack[`${f}_sha256`] = computeSha256(GOOD);
++    pack[`${f}_size_bytes`] = GOOD.length;
++  }
++  storage.get.mockResolvedValue(stored());
++});
++
++describe('IVDR stored artifact identity', () => {
++  it.each(FORMATS)('serves an intact recorded %s artifact with its actual digest', async (format) => {
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(200);
++    expect(res.headers['x-content-sha256']).toBe(computeSha256(GOOD));
++    expect(storage.get).toHaveBeenCalledWith(versions[format], ORG);
++    expect(downloaded()).toHaveLength(1);
++  });
++
++  it.each(FORMATS)('refuses an internally consistent replacement %s from the wrong pack identity', async (format) => {
++    // Both file and sidecar changed together: provider self-consistency alone
++    // passes, but the immutable filing identity in ivdr_packs is still GOOD.
++    storage.get.mockResolvedValue(stored(CHANGED));
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(res.headers['x-content-sha256']).toBeUndefined();
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it.each(FORMATS)('refuses %s whose recorded pack byte length was changed', async (format) => {
++    pack[`${format}_size_bytes`] = GOOD.length + 1;
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it.each(FORMATS)('refuses %s with no recorded artifact digest', async (format) => {
++    pack[`${format}_sha256`] = null;
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(downloaded()).toHaveLength(0);
++  });
++
++});
++
++describe('IVDR download control flow', () => {
++
++  it('requests authoritative artifact hashes and sizes from the scoped pack row', async () => {
++    await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    const call = query.mock.calls.find(([sql]) => sql.includes('FROM ivdr_packs'));
++    expect(call).toBeDefined();
++    for (const format of FORMATS) {
++      expect(call![0]).toContain(`${format}_sha256`);
++      expect(call![0]).toContain(`${format}_size_bytes`);
++    }
++    expect(call![1]).toEqual([PACK, ORG]);
++  });
++
++  it.each(FORMATS)('accepts the PostgreSQL BIGINT decimal byte length for %s', async (format) => {
++    pack[`${format}_size_bytes`] = String(GOOD.length);
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=${format}`);
++    expect(res.status).toBe(200);
++    expect(res.headers['x-content-sha256']).toBe(computeSha256(GOOD));
++  });
++
++  it.each([null, '', ' ', '-1', '1.5', '2e1', '9007199254740993'])('refuses an invalid BIGINT receipt %j', async (value) => {
++    pack.pdf_size_bytes = value;
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it('reports a provider integrity refusal and records no successful download', async () => {
++    storage.get.mockRejectedValue(new StorageIntegrityError('digest_mismatch'));
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(409);
++    expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it('keeps missing/foreign pack identity absent without reaching storage', async () => {
++    packExists = false;
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(404);
++    expect(storage.get).not.toHaveBeenCalled();
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it('does not record a successful download when the stored version is missing', async () => {
++    storage.get.mockResolvedValue(null);
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(404);
++    expect(downloaded()).toHaveLength(0);
++  });
++
++  it('does not emit a provider-supplied digest unrelated to the verified bytes', async () => {
++    storage.get.mockResolvedValue({ ...stored(), sha256: computeSha256(CHANGED) });
++    const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=pdf`);
++    expect(res.status).toBe(200);
++    expect(res.headers['x-content-sha256']).toBe(computeSha256(GOOD));
++  });
++
++  it('refuses to substitute a snapshot when the recorded original manifest is missing', async () => {
++    storage.get.mockResolvedValue(null);
++    const snapshot = { source: 'a different rendering' };
++    query.mockImplementation(async (sql: string) => {
++      if (sql.includes('FROM ivdr_packs')) return { rows: [pack] };
++      if (sql.includes('FROM ivdr_pack_snapshots')) return { rows: [{ snapshot_json: snapshot }] };
++      return { rows: [] };
++    });
++    try {
++      const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=manifest`);
++      expect(res.status).toBe(404);
++      expect(res.body.code).toBe('PACK_ARTIFACT_MISSING');
++      expect(downloaded()).toHaveLength(0);
++    } finally {
++      query.mockImplementation(async (sql: string) => {
++        if (sql.includes('FROM ivdr_packs')) return { rows: packExists ? [pack] : [] };
++        return { rows: [] };
++      });
++    }
++  });
++
++});
++
++describe('legacy snapshot fallback remains an integrity-checked view', () => {
++    const snapshot = { nested: { z: 1, a: 2 }, observations: [3, 4] };
++    const snapshotDigest = computeSha256(Buffer.from(stableStringify(snapshot)));
++    const installSnapshot = (rowHash: unknown = snapshotDigest) => {
++      pack.manifest_vault_version_id = null;
++      pack.snapshot_hash_sha256 = snapshotDigest;
++      query.mockImplementation(async (sql: string) => {
++        if (sql.includes('FROM ivdr_packs')) return { rows: [pack] };
++        if (sql.includes('FROM ivdr_pack_snapshots')) return { rows: [{ snapshot_json: snapshot, snapshot_hash_sha256: rowHash }] };
++        return { rows: [] };
++      });
++    };
++
++    it('verifies canonical nested content and hashes the actual rendered JSON', async () => {
++      installSnapshot();
++      try {
++        const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=manifest`);
++        expect(res.status).toBe(200);
++        expect(res.body).toEqual(snapshot);
++        expect(res.headers['x-content-sha256']).toBe(computeSha256(Buffer.from(JSON.stringify(snapshot, null, 2))));
++        expect(storage.get).not.toHaveBeenCalled();
++        expect(downloaded()).toHaveLength(1);
++        const call = query.mock.calls.find(([sql]) => sql.includes('FROM ivdr_pack_snapshots'));
++        expect(call![1]).toEqual([PACK, ORG]);
++        expect(call![0]).toContain('organization_id = $2');
++      } finally { resetQuery(); }
++    });
++
++    it.each(['row', 'pack', 'missing'] as const)('refuses the snapshot when its %s hash does not establish identity', async (which) => {
++      installSnapshot(which === 'row' ? computeSha256(CHANGED) : which === 'missing' ? null : snapshotDigest);
++      if (which === 'pack') pack.snapshot_hash_sha256 = computeSha256(CHANGED);
++      try {
++        const res = await request(app()).get(`/api/ivdr/packs/${PACK}/download?format=manifest`);
++        expect(res.status).toBe(409);
++        expect(res.body.code).toBe('PACK_ARTIFACT_INTEGRITY_FAILED');
++        expect(downloaded()).toHaveLength(0);
++      } finally { resetQuery(); }
++    });
++});
++
++function resetQuery() {
++  query.mockImplementation(async (sql: string) => {
++    if (sql.includes('FROM ivdr_packs')) return { rows: packExists ? [pack] : [] };
++    return { rows: [] };
++  });
++}
+diff --git a/server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts b/server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts
+new file mode 100644
+index 00000000..bf5c18ef
+--- /dev/null
++++ b/server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts
+@@ -0,0 +1,130 @@
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++
++const fixture = vi.hoisted(() => ({
++  rows: [] as unknown[][],
++  adapter: { name: 'FDA-internal-subset', kind: 'internal_subset', isConfigured: vi.fn() },
++  required: true,
++}));
++
++vi.mock('../../../db', () => ({
++  db: { select: () => {
++    const rows = fixture.rows.shift() ?? [];
++    const query = {
++      from: () => query, where: () => query, innerJoin: () => query,
++      limit: async () => rows,
++      then: (resolve: (value: unknown[]) => unknown) => Promise.resolve(rows).then(resolve),
++    };
++    return query;
++  } },
++}));
++vi.mock('../leaf-document-resolver', () => ({ resolveLeafDocuments: async () => [] }));
++vi.mock('../dispatch-readiness', () => ({
++  computeDispatchReadiness: () => ({ errors: 0, warnings: 0, infos: 0, findings: [], releaseBlockers: 0 }),
++}));
++vi.mock('../release-signature-status', () => ({
++  resolveReleaseSignatureStatus: async () => ({ verdict: 'unsigned' }),
++  isReleaseSignatureRequired: () => false,
++  signingNowResolvesRelease: () => false,
++}));
++vi.mock('../external-validator', async (importOriginal) => ({
++  ...(await importOriginal<typeof import('../external-validator')>()),
++  resolveExternalValidator: async () => fixture.adapter,
++  evalidatorRequiredFromEnv: () => fixture.required,
++}));
++
++import { assessSequenceDispatchReadiness } from '../assess-dispatch-readiness';
++import type { ExternalValidationReport } from '../external-validator';
++
++function report(validator: string, failed = false): ExternalValidationReport {
++  return {
++    validator, profile: 'fda-ectd-4.0', ran: true, ranAt: new Date('2026-10-14T10:00:00Z'),
++    passed: !failed, errorCount: failed ? 1 : 0, warningCount: 0,
++    findings: failed ? [{ severity: 'error', ruleId: 'BROKEN_LINK', message: 'Unresolved leaf link.' }] : [],
++  };
++}
++
++beforeEach(() => {
++  vi.stubEnv('NODE_ENV', 'production');
++  fixture.rows = [
++    [{ id: 12, organizationId: 7, submissionId: 4, region: 'fda', type: 'amendment', sequenceNumber: '0001', status: 'assembling', validationStatus: null }],
++    [{ applicationType: 'other' }], [], [{ value: 0 }], [{ value: 1 }],
++  ];
++  fixture.adapter.name = 'FDA-internal-subset';
++  fixture.adapter.kind = 'internal_subset';
++  fixture.adapter.isConfigured.mockReset().mockResolvedValue(true);
++  fixture.required = true;
++});
++afterEach(() => vi.unstubAllEnvs());
++
++describe('assessor binds external validation to the selected adapter', () => {
++  it('retains a clean subset execution without treating it as configured external validation', async () => {
++    const a = await assessSequenceDispatchReadiness({ sequenceId: 12, organizationId: 7, externalValidationReport: report(fixture.adapter.name) });
++    expect(a.externalValidation.configured).toBe(false);
++    expect(a.externalValidation).toMatchObject({ ran: true, qualifyingRun: false, assessmentStatus: 'not_assessed', validatorKind: 'internal_subset', selectedValidatorName: fixture.adapter.name, reportedValidatorName: fixture.adapter.name });
++    expect(a.gates.find((g) => g.key === 'external')?.cleared).toBe(false);
++    expect([a.gate.cleared, a.freezeGate.cleared, a.dispatchGateOnSigning.cleared]).toEqual([false, false, false]);
++    expect(fixture.adapter.isConfigured).toHaveBeenCalledOnce();
++  });
++
++  it('clears the composed verdict for a configured matching clean external report', async () => {
++    fixture.adapter.name = 'LORENZ'; fixture.adapter.kind = 'external_engine';
++    const a = await assessSequenceDispatchReadiness({ sequenceId: 12, organizationId: 7, externalValidationReport: report('LORENZ') });
++    expect(a.externalValidation).toMatchObject({ configured: true, ran: true, qualifyingRun: true, assessmentStatus: 'passed', selectedValidatorName: 'LORENZ', reportedValidatorName: 'LORENZ' });
++    expect([a.gate.cleared, a.freezeGate.cleared, a.dispatchGateOnSigning.cleared]).toEqual([true, true, true]);
++  });
++
++  it('uses configuration discovery, rather than an adapter name, to enforce readiness', async () => {
++    fixture.adapter.name = 'LORENZ'; fixture.adapter.kind = 'external_engine';
++    fixture.adapter.isConfigured.mockResolvedValue(false);
++    const a = await assessSequenceDispatchReadiness({ sequenceId: 12, organizationId: 7, externalValidationReport: report('LORENZ') });
++    expect(a.externalValidation.configured).toBe(false);
++    expect(a.gate.cleared).toBe(false);
++  });
++
++  it.each([
++    ['failed', 'LORENZ', true],
++    ['invalid', 'different-engine', false],
++  ] as const)('shows an advisory %s report as its actual outcome, preserving policy clearance', async (status, validator, failed) => {
++    fixture.adapter.name = 'LORENZ'; fixture.adapter.kind = 'external_engine'; fixture.required = false;
++    const a = await assessSequenceDispatchReadiness({ sequenceId: 12, organizationId: 7, externalValidationReport: report(validator, failed) });
++    expect(a.gate.cleared).toBe(true);
++    const external = a.gates.find((g) => g.key === 'external');
++    expect(external).toMatchObject({ cleared: true, assessmentStatus: status });
++    expect(external?.notAssessed).toBeUndefined();
++    expect(external?.assessmentNote).toMatch(status === 'failed' ? /1 error/ : /different-engine/);
++  });
++
++  it('serializes an invalid numeric tally as an unknown count with factual status and identities', async () => {
++    fixture.adapter.name = 'LORENZ'; fixture.adapter.kind = 'external_engine'; fixture.required = false;
++    const supplied = { ...report('LORENZ'), errorCount: NaN };
++    const a = await assessSequenceDispatchReadiness({ sequenceId: 12, organizationId: 7, externalValidationReport: supplied });
++    const wire = JSON.parse(JSON.stringify(a));
++    expect(wire.externalValidation).toMatchObject({ errorCount: 0, errorCountKnown: false, qualifyingRun: false, assessmentStatus: 'invalid', selectedValidatorName: 'LORENZ', reportedValidatorName: 'LORENZ' });
++    expect(wire.gates.find((g: { key: string }) => g.key === 'external')).toMatchObject({ assessmentStatus: 'invalid', cleared: true });
++    expect(wire.externalValidation.assessmentNote).toContain('counts do not establish a clean');
++  });
++
++  it('explains an advisory subset execution as not externally assessed even when raw ran is true', async () => {
++    fixture.required = false;
++    const a = await assessSequenceDispatchReadiness({ sequenceId: 12, organizationId: 7, externalValidationReport: report(fixture.adapter.name) });
++    expect(a.externalValidation).toMatchObject({ ran: true, qualifyingRun: false, configured: false, assessmentStatus: 'not_assessed' });
++    expect(a.gates.find((g) => g.key === 'external')?.notAssessed).toContain('internal FDA criteria subset');
++    expect(a.gate.cleared).toBe(true);
++  });
++
++  it('does not attribute another engine report to the selected internal subset', async () => {
++    fixture.required = false;
++    const a = await assessSequenceDispatchReadiness({ sequenceId: 12, organizationId: 7, externalValidationReport: report('different-engine') });
++    expect(a.externalValidation.assessmentNote).toContain('declares execution from "different-engine"');
++    expect(a.externalValidation.assessmentNote).not.toContain('subset ran');
++  });
++
++  it('retains unrun operational diagnostics and tolerates a malformed diagnostic row', async () => {
++    fixture.adapter.name = 'LORENZ'; fixture.adapter.kind = 'external_engine'; fixture.required = false;
++    const supplied = { ...report('LORENZ'), ran: false, passed: false, findings: [null, { ruleId: 'EVALIDATOR-RUN-FAILED', severity: 'error', message: 'Tool execution failed.' }] } as unknown as ExternalValidationReport;
++    const a = await assessSequenceDispatchReadiness({ sequenceId: 12, organizationId: 7, externalValidationReport: supplied });
++    expect(a.externalValidation).toMatchObject({ ran: false, qualifyingRun: false, assessmentStatus: 'not_assessed', errorCount: 0, errorCountKnown: false });
++    expect(a.externalValidation.assessmentNote).toContain('Tool execution failed.');
++    expect(a.gate.cleared).toBe(true);
++  });
++});
+diff --git a/server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts b/server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts
+new file mode 100644
+index 00000000..7a40673c
+--- /dev/null
++++ b/server/services/ectd/external-validator/__tests__/external-validator-classification.test.ts
+@@ -0,0 +1,246 @@
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { promises as fs } from 'node:fs';
++import os from 'node:os';
++import path from 'node:path';
++import {
++  evaluateExternalValidationGate,
++  resolveExternalValidator,
++  runExternalValidation,
++  type ExternalValidationReport,
++} from '..';
++
++const selectedExternal = { name: 'lorenz-evalidator', kind: 'external_engine' as const };
++const directories: string[] = [];
++
++afterEach(async () => {
++  vi.unstubAllEnvs();
++  vi.unstubAllGlobals();
++  while (directories.length) await fs.rm(directories.pop()!, { recursive: true, force: true });
++});
++
++function report(over: Partial<ExternalValidationReport> = {}): ExternalValidationReport {
++  return {
++    validator: 'lorenz-evalidator',
++    profile: 'FDA eCTD 3.2.2 — synthetic control, not a qualified engine execution',
++    ranAt: new Date('2026-10-14T00:00:00Z'),
++    ran: true,
++    findings: [],
++    errorCount: 0,
++    warningCount: 0,
++    passed: true,
++    ...over,
++  };
++}
++
++function gate(over: Partial<Parameters<typeof evaluateExternalValidationGate>[0]> = {}) {
++  return evaluateExternalValidationGate({
++    selectedValidator: selectedExternal,
++    configured: true,
++    report: report(),
++    requireEvalidator: true,
++    environment: 'production',
++    ...over,
++  });
++}
++
++function withoutExternalEndpoint() {
++  vi.stubEnv('EVALIDATOR_BINARY', '');
++  vi.stubEnv('EVALIDATOR_ENDPOINT', '');
++  vi.stubGlobal('fetch', vi.fn(() => { throw new Error('Network is forbidden in this test.'); }));
++}
++
++describe('D7 validator classification — actual resolver and subset', () => {
++  it('refuses a real clean subset despite configured=true, retaining its scoped diagnostics', async () => {
++    withoutExternalEndpoint();
++    vi.stubEnv('EVALIDATOR_USE_FDA_CRITERIA_FALLBACK', 'true');
++    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'c2c-subset-classification-'));
++    directories.push(directory);
++    await fs.mkdir(path.join(directory, 'util'), { recursive: true });
++    await fs.mkdir(path.join(directory, 'm1', 'us'), { recursive: true });
++    await fs.writeFile(path.join(directory, 'index.xml'), '<synthetic-backbone/>');
++    await fs.writeFile(path.join(directory, 'util', 'index-md5.txt'), 'synthetic nonempty placeholder');
++    await fs.writeFile(path.join(directory, 'm1', 'us', 'us-regional.xml'), '<synthetic-regional/>');
++    const validator = await resolveExternalValidator();
++    const scopedReport = await validator.validate({ packageDir: directory, region: 'fda' });
++    expect(scopedReport).toMatchObject({ ran: true, passed: true, errorCount: 0 });
++    expect(scopedReport.findings).toContainEqual(expect.objectContaining({ ruleId: 'C2C-SUBSET-NOTICE' }));
++    const result = gate({ selectedValidator: validator, report: scopedReport, configured: true });
++    expect(result.cleared).toBe(false);
++    expect(validator.kind).toBe('internal_subset');
++    expect(result).toMatchObject({
++      validatorKind: 'internal_subset',
++      selectedValidatorName: 'fda-criteria-subset',
++      reportedValidatorName: 'fda-criteria-subset',
++      configured: false,
++      ran: true,
++      errorCountKnown: true,
++      qualifyingRun: false,
++      assessmentStatus: 'not_assessed',
++      enforced: true,
++    });
++    expect(result.blockers.join(' ')).toMatch(/subset/i);
++    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
++  });
++
++  it('classifies an unavailable resolver without inventing a run', async () => {
++    withoutExternalEndpoint();
++    vi.stubEnv('EVALIDATOR_USE_FDA_CRITERIA_FALLBACK', '');
++    const validator = await resolveExternalValidator();
++    const unavailableReport = await validator.validate({ packageDir: '/unused', region: 'fda' });
++    expect(validator).toMatchObject({ name: 'noop', kind: 'unavailable' });
++    expect(gate({ selectedValidator: validator, report: unavailableReport, configured: true })).toMatchObject({
++      validatorKind: 'unavailable', configured: false, ran: false, qualifyingRun: false,
++      assessmentStatus: 'not_assessed', errorCountKnown: false, cleared: false,
++    });
++  });
++
++  it('classifies the external adapter path while expressly making no licence/provider claim', async () => {
++    withoutExternalEndpoint();
++    vi.stubEnv('EVALIDATOR_ENDPOINT', 'https://synthetic-validator.invalid');
++    vi.stubEnv('EVALIDATOR_USE_FDA_CRITERIA_FALLBACK', 'true');
++    const validator = await resolveExternalValidator();
++    expect(validator).toMatchObject({ name: 'lorenz-evalidator', kind: 'external_engine' });
++    expect(await validator.isConfigured()).toBe(true);
++    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
++  });
++
++  it('preserves the unrun operational failure envelope without fabricating content errors', async () => {
++    withoutExternalEndpoint();
++    vi.stubEnv('EVALIDATOR_ENDPOINT', 'https://synthetic-validator.invalid');
++    const failedRun = await runExternalValidation({ packageDir: '/unused', region: 'fda' });
++    expect(failedRun).toMatchObject({ validator: 'lorenz-evalidator', ran: false, passed: false, errorCount: 0 });
++    expect(failedRun.findings).toContainEqual(expect.objectContaining({ ruleId: 'EVALIDATOR-RUN-FAILED', severity: 'error' }));
++    expect(gate({ report: failedRun })).toMatchObject({
++      ran: false, qualifyingRun: false, assessmentStatus: 'not_assessed', errorCountKnown: false, cleared: false,
++    });
++  });
++});
++
++describe('D7 required production controls', () => {
++  it('clears a coherent matching external report only for this control contract', () => {
++    expect(gate()).toMatchObject({
++      configured: true, ran: true, validatorKind: 'external_engine',
++      qualifyingRun: true, assessmentStatus: 'passed', errorCountKnown: true, enforced: true, cleared: true, blockers: [],
++    });
++  });
++
++  it('retains warnings on a coherent external pass', () => {
++    expect(gate({ report: report({
++      findings: [{ ruleId: 'SYNTHETIC-WARNING', severity: 'warning', message: 'Synthetic warning.' }],
++      warningCount: 1,
++    }) })).toMatchObject({ qualifyingRun: true, assessmentStatus: 'passed', cleared: true });
++  });
++
++  it('records an actual coherent failed external run and refuses clearance', () => {
++    const result = gate({ report: report({
++      findings: [{ ruleId: 'SYNTHETIC-ERROR', severity: 'error', message: 'Synthetic error.' }],
++      errorCount: 1, passed: false,
++    }) });
++    expect(result).toMatchObject({ qualifyingRun: true, assessmentStatus: 'failed', errorCountKnown: true, externalErrorCount: 1, cleared: false });
++    expect(result.blockers.join(' ')).toMatch(/1 error/i);
++  });
++
++  it.each([
++    ['missing classification', undefined],
++    ['explicit unknown', { name: 'unregistered-validator', kind: 'unknown' as const }],
++    ['runtime unknown class', { name: 'lorenz-evalidator', kind: 'fabricated' } as any],
++    ['missing adapter name', { name: '', kind: 'external_engine' as const }],
++  ])('refuses %s even if configured=true', (_label, selectedValidator) => {
++    expect(gate({ selectedValidator })).toMatchObject({
++      configured: false, qualifyingRun: false, assessmentStatus: 'not_assessed', cleared: false,
++    });
++  });
++
++  it('refuses a selected external path whose configuration is not established', () => {
++    expect(gate({ configured: false })).toMatchObject({
++      configured: false, qualifyingRun: false, assessmentStatus: 'not_assessed', cleared: false,
++    });
++  });
++
++  it.each(['false', 'true'])('does not accept truthy configuration string %s', configured => {
++    expect(gate({ configured: configured as any })).toMatchObject({
++      configured: false, qualifyingRun: false, assessmentStatus: 'not_assessed', cleared: false,
++    });
++  });
++
++  it('refuses no report without confusing configuration with execution', () => {
++    expect(gate({ report: null })).toMatchObject({
++      configured: true, ran: false, qualifyingRun: false, assessmentStatus: 'not_assessed', errorCountKnown: false, cleared: false,
++    });
++  });
++
++  it.each(['fda-criteria-subset', 'noop', 'unknown', 'LORENZ-EVALIDATOR', 'lorenz-evalidator '])(
++    'refuses report identity %s when the selected adapter is LORENZ', validator => {
++      expect(gate({ report: report({ validator }) })).toMatchObject({
++        reportedValidatorName: validator, qualifyingRun: false, assessmentStatus: 'invalid', cleared: false,
++      });
++    },
++  );
++
++  it.each([
++    ['truthy ran', { ran: 'true' }],
++    ['truthy passed', { passed: 1 }],
++    ['false passed with no errors', { passed: false }],
++    ['negative count', { errorCount: -1 }],
++    ['fractional count', { errorCount: 0.5 }],
++    ['NaN count', { errorCount: NaN }],
++    ['infinite count', { errorCount: Infinity }],
++    ['unsafe count', { errorCount: Number.MAX_SAFE_INTEGER + 1 }],
++    ['bad warning count', { warningCount: -1 }],
++    ['finding/count disagreement', { findings: [{ ruleId: 'E', severity: 'error', message: 'x' }] }],
++    ['warning/count disagreement', { findings: [{ ruleId: 'W', severity: 'warning', message: 'x' }] }],
++    ['count with no findings', { errorCount: 1, passed: false }],
++    ['passed true with coherent error findings', { errorCount: 1, findings: [{ ruleId: 'E', severity: 'error', message: 'x' }], passed: true }],
++    ['unknown severity', { findings: [{ ruleId: 'X', severity: 'fatal', message: 'x' }] }],
++    ['missing findings', { findings: null }],
++    ['invalid date', { ranAt: new Date(NaN) }],
++    ['serialized date without caller parsing', { ranAt: '2026-10-14T00:00:00Z' }],
++    ['missing profile', { profile: '  ' }],
++  ])('refuses executed report with %s', (_label, mutation) => {
++    expect(gate({ report: report(mutation as any) })).toMatchObject({
++      qualifyingRun: false, assessmentStatus: 'invalid', errorCountKnown: false, externalErrorCount: 0, cleared: false,
++    });
++  });
++});
++
++describe('D7 advisory policy is separate from factual assessment', () => {
++  const failedReport = () => report({
++    findings: [{ ruleId: 'SYNTHETIC-ERROR', severity: 'error', message: 'Synthetic error.' }],
++    errorCount: 1, passed: false,
++  });
++
++  it.each([
++    { environment: 'staging' as const, requireEvalidator: true },
++    { environment: 'production' as const, requireEvalidator: false },
++  ])('keeps an external failure visible while nonblocking: %o', policy => {
++    expect(gate({ ...policy, report: failedReport() })).toMatchObject({
++      qualifyingRun: true, assessmentStatus: 'failed', errorCountKnown: true, externalErrorCount: 1,
++      enforced: false, cleared: true, blockers: [],
++    });
++  });
++
++  it('keeps mismatched advisory evidence invalid rather than passed/not_assessed', () => {
++    expect(gate({ requireEvalidator: false, report: report({ validator: 'fda-criteria-subset' }) })).toMatchObject({
++      assessmentStatus: 'invalid', qualifyingRun: false, cleared: true, blockers: [],
++    });
++  });
++
++  it('marks a zero compatibility placeholder as unknown rather than a clean advisory tally', () => {
++    const supplied = report({ errorCount: NaN });
++    expect(gate({ requireEvalidator: false, report: supplied })).toMatchObject({
++      assessmentStatus: 'invalid', errorCountKnown: false, externalErrorCount: 0, cleared: true,
++    });
++    expect(Number.isNaN(supplied.errorCount)).toBe(true);
++  });
++
++  it('retains raw executed subset diagnostics without an external assessment or blocker', () => {
++    expect(gate({
++      requireEvalidator: false,
++      selectedValidator: { name: 'fda-criteria-subset', kind: 'internal_subset' },
++      report: report({ validator: 'fda-criteria-subset' }),
++    })).toMatchObject({
++      ran: true, configured: false, qualifyingRun: false,
++      assessmentStatus: 'not_assessed', enforced: false, cleared: true, blockers: [],
++    });
++  });
++});
+diff --git a/server/services/storage/__tests__/storage-read-integrity.test.ts b/server/services/storage/__tests__/storage-read-integrity.test.ts
+new file mode 100644
+index 00000000..0edbcbd5
+--- /dev/null
++++ b/server/services/storage/__tests__/storage-read-integrity.test.ts
+@@ -0,0 +1,153 @@
++/**
++ * D2: a successful storage read must be the bytes whose identity was recorded.
++ * Same-size corruption defeats a size-only check; metadata defects must not
++ * become an apparently verified read or an ordinary missing-object result.
++ */
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import * as fs from 'node:fs';
++import * as path from 'node:path';
++import { computeSha256, type IStorageProvider, type StoragePutResult } from '../storage-provider';
++
++const s3 = vi.hoisted(() => ({ objects: new Map<string, Buffer>() }));
++vi.mock('../s3-client', () => ({
++  createS3Client: () => ({
++    send: async (command: { input: { Key: string; Body: Buffer } }) => {
++      s3.objects.set(command.input.Key, Buffer.from(command.input.Body));
++      return {};
++    },
++  }),
++  readS3Object: async (_client: unknown, _bucket: string, key: string) => {
++    const bytes = s3.objects.get(key);
++    if (!bytes) throw Object.assign(new Error('Missing object'), { name: 'NoSuchKey' });
++    return Buffer.from(bytes);
++  },
++  listS3Keys: async (_client: unknown, _bucket: string, prefix: string) =>
++    [...s3.objects.keys()].filter(key => key.startsWith(prefix)),
++}));
++
++import { LocalStorageProvider } from '../local-provider';
++import { S3StorageProvider } from '../s3-provider';
++
++const ORG = 901031;
++const PROJECT = 'storage-integrity-test';
++const FILE = 'record.txt';
++const ROOT = path.resolve(process.cwd(), 'storage', 'vault', String(ORG));
++
++interface StoredFixture {
++  result: StoragePutResult;
++  replaceBytes: (bytes: Buffer) => void;
++  replaceMetadata: (meta: Record<string, unknown>) => void;
++  corruptMetadataJson: () => void;
++  metadata: Record<string, unknown>;
++}
++
++async function stored(provider: IStorageProvider, body = Buffer.from('ORIGINAL')): Promise<StoredFixture> {
++  const result = await provider.put({ orgId: ORG, projectId: PROJECT, filename: FILE, bytes: body, mime: 'text/plain' });
++  const localDir = path.join(ROOT, PROJECT, 'versions', result.vaultVersionId);
++  const s3Dir = `${ORG}/${PROJECT}/versions/${result.vaultVersionId}`;
++  const index = `${ORG}/_index/versions/${result.vaultVersionId}.json`;
++  const readMeta = () => provider.name === 'local'
++    ? fs.readFileSync(path.join(localDir, '_meta.json'), 'utf8')
++    : s3.objects.get(index)!.toString('utf8');
++  const replaceRawMetadata = (raw: string) => {
++    if (provider.name === 'local') fs.writeFileSync(path.join(localDir, '_meta.json'), raw);
++    else {
++      s3.objects.set(index, Buffer.from(raw));
++      s3.objects.set(`${s3Dir}/_meta.json`, Buffer.from(raw));
++    }
++  };
++  return {
++    result,
++    metadata: JSON.parse(readMeta()),
++    replaceBytes: bytes => {
++      if (provider.name === 'local') fs.writeFileSync(path.join(localDir, FILE), bytes);
++      else s3.objects.set(`${s3Dir}/${FILE}`, bytes);
++    },
++    replaceMetadata: meta => replaceRawMetadata(JSON.stringify(meta)),
++    corruptMetadataJson: () => replaceRawMetadata('{ not json'),
++  };
++}
++
++for (const backend of ['local', 's3'] as const) {
++  describe(`${backend} storage read integrity`, () => {
++    let provider: IStorageProvider;
++    beforeEach(() => {
++      s3.objects.clear();
++      vi.stubEnv('AWS_S3_BUCKET', 'storage-read-integrity-test');
++      provider = backend === 'local' ? new LocalStorageProvider() : new S3StorageProvider();
++    });
++    afterEach(() => {
++      fs.rmSync(ROOT, { recursive: true, force: true });
++      s3.objects.clear();
++      vi.unstubAllEnvs();
++    });
++
++    it.each([Buffer.from('ORIGINAL'), Buffer.alloc(0)])('reads unchanged bytes, including an empty file', async bytes => {
++      const f = await stored(provider, bytes);
++      await expect(provider.get(f.result.vaultVersionId, ORG)).resolves.toMatchObject({
++        bytes, sizeBytes: bytes.length, sha256: computeSha256(bytes), filename: FILE, mime: 'text/plain',
++      });
++    });
++
++    it('refuses changed bytes even when their size is unchanged', async () => {
++      const f = await stored(provider);
++      f.replaceBytes(Buffer.from('CORRUPT!'));
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'digest_mismatch',
++      });
++    });
++
++    it('refuses bytes whose size no longer matches the record', async () => {
++      const f = await stored(provider);
++      f.replaceBytes(Buffer.from('ORIGINAL with trailing corruption'));
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'size_mismatch',
++      });
++    });
++
++    it('refuses a changed recorded size even when the content digest matches', async () => {
++      const f = await stored(provider);
++      f.replaceMetadata({ ...f.metadata, sizeBytes: 9 });
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'size_mismatch',
++      });
++    });
++
++    it('refuses a different recorded digest even when the size matches', async () => {
++      const f = await stored(provider);
++      f.replaceMetadata({ ...f.metadata, sha256: '0'.repeat(64) });
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'digest_mismatch',
++      });
++    });
++
++    it.each([
++      ['missing digest', 'sha256', undefined],
++      ['malformed digest', 'sha256', 'sha256:wrong'],
++      ['missing size', 'sizeBytes', undefined],
++      ['string size', 'sizeBytes', '8'],
++      ['negative size', 'sizeBytes', -1],
++      ['fractional size', 'sizeBytes', 8.5],
++      ['unsafe integer size', 'sizeBytes', Number.MAX_SAFE_INTEGER + 1],
++    ])('refuses %s rather than claiming integrity', async (_label, key, value) => {
++      const f = await stored(provider);
++      f.replaceMetadata({ ...f.metadata, [key as string]: value });
++      await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toMatchObject({
++        name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED', reason: 'invalid_metadata',
++      });
++    });
++
++    it('preserves the existing malformed-JSON outcome without returning bytes', async () => {
++      const f = await stored(provider);
++      f.corruptMetadataJson();
++      if (backend === 'local') await expect(provider.get(f.result.vaultVersionId, ORG)).resolves.toBeNull();
++      else await expect(provider.get(f.result.vaultVersionId, ORG)).rejects.toBeInstanceOf(SyntaxError);
++    });
++
++    it('keeps foreign version IDs indistinguishable from genuinely absent ones', async () => {
++      const f = await stored(provider);
++      expect(await provider.get(f.result.vaultVersionId, ORG + 1)).toBeNull();
++      expect(await provider.get('00000000-0000-4000-8000-000000000000', ORG)).toBeNull();
++    });
++  });
++}

@@ -1,0 +1,16 @@
+ × server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Re-issuing an invitation (POST / for a member who never activated) > replaces the setup token, returns the new link, keeps the stored role, creates nothing (200) 5ms
+   → expected 200 "OK", got 201 "Created"
+ × server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Re-issuing an invitation (POST / for a member who never activated) > looks only in the target organization, and only at an unredeemed invitation hash 6ms
+   → expected [] to have a length of 1 but got +0
+ × server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Re-issuing an invitation (POST / for a member who never activated) > with SMTP configured the new link is emailed and not echoed back 4ms
+   → expected 200 "OK", got 201 "Created"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 32 passed (35)
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > is offered for an invited member only, behind a confirmation that says the old link stops working 70ms
+   → Unable to find an element by: [data-testid="member-reissue"]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > says "on your clipboard" when the copy succeeded 48ms
+   → Unable to find an element by: [data-testid="member-reissue"]
+ × client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > inviting an invited address again through the form says a new link was issued and the role is unchanged 5111ms
+   → expected 'Pat Pending invited as admin. This se…' to match /new setup link/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 7 passed (10)

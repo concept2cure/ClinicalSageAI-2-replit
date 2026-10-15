@@ -1,0 +1,1 @@
+[ci:db-test-isolation] OK — 123 real-database test file(s) run unmocked, and every mocked vitest config excludes them.

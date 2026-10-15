@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:46:16.466Z","pid":21329,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:46:16.468Z","pid":21329,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:46:16.468Z","pid":21329,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":20,"time":"2026-10-01T06:46:16.597Z","pid":21329,"hostname":"vm","context":{"table":"purge_audit_probe_no_such_table"},"msg":"[tenant-offboarding] Purge skipped a table not present in this schema"}
+{"level":40,"time":"2026-10-01T06:46:16.617Z","pid":21329,"hostname":"vm","context":{"organizationId":90623,"purgedByUserId":4242,"retentionOverride":null,"finalExportDigest":"p123_21329_mup67su7-digest","deletedRows":{"purge_audit_probe_rows":2}},"msg":"[tenant-offboarding] Tenant purged"}
+stderr | tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted 280ms
+{"level":40,"time":"2026-10-01T06:46:16.772Z","pid":21329,"hostname":"vm","context":{"organizationId":90623,"purgedByUserId":4242,"retentionOverride":null,"finalExportDigest":"p123_21329_mup67su7-digest","deletedRows":{"module_access_requests":0,"ana_runs":0,"project_workflows":0,"organization_users":0,"client_workspaces":0,"projects":0,"documents":0,"vault.document_chunks":0,"vault.documents":0,"regulatory_programs":0,"file_uploads":0,"regulatory_twin_simulations":0,"cmc_container_closures":0,"cmc_reference_standards":0,"cmc_impurity_profiles":0,"cmc_dissolution_profiles":0,"cmc_material_specs":0,"cmc_formulation_records":0,"cmc_characterization_studies":0,"manufacturing_processes":0,"cmc_interview_sessions":"[REDACTED]","rendered_leaf_files":0,"assumption_records":0,"decision_records":0,"governed_decision_transitions":0,"cmc_workflow_tasks":0,"cmc_workflow_instances":0,"cmc_checklist_instances":0,"cmc_ai_tool_executions":0,"cmc_workflows":0,"purge_audit_probe_rows":2}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it 142ms
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects 33ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  06:46:12
+   Duration  4.79s (transform 2.06s, setup 94ms, import 3.25s, tests 815ms, environment 0ms)
+

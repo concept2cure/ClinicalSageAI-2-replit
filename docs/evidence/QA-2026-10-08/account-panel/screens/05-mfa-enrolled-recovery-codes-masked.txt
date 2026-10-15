@@ -1,0 +1,77 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+QO
+Account
+Your profile, password and authenticator app. Your organisation’s administrators manage membership and role.
+PROFILE
+Name
+E-mail
+Organisation
+Role
+PASSWORD
+Current password
+New password
+Confirm new password
+A change ends every session of this account, this one included, and is recorded in the audit trail.
+Change password
+AUTHENTICATOR APP
+
+Set up. Sign-in and electronic signatures ask for a code from the app.
+
+Authenticator app set up.
+Recovery codes
+Shown this once. Each code completes one sign-in if the app is lost. A recovery code does not sign records or remove the authenticator. Store them outside this product.
+[redacted]
+[redacted]
+[redacted]
+[redacted]
+[redacted]
+[redacted]
+[redacted]
+[redacted]
+[redacted]
+[redacted]
+Done
+Remove authenticator
+Each change to the authenticator is recorded in the audit trail.
+Concept2Cure.RI
+›
+Home
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+✻
+Good morning, QA
+Biotech & Pharma
+HLV-334 — HLV-334 — Investigational New Drug Application (QA-FIX j1)
++18 more
+Start a new Biotech & Pharma project
+AnA drives: on
+Demos
+Between steps
+Manual
+AnA takes one step, then waits for you to run the next, change it or stop. If nobody answers within 10 minutes, or the page is closed, she stops there. A demonstration you start runs through without stopping.
+Auto
+AnA keeps going, step after step, until she judges the task done — for up to 20 rounds whichever engine you chose, 15 minutes of work or 40 minutes in all. Anything that changes a record waits for you; if nobody answers within 10 minutes, it does not happen and she stops.
+She keeps going: up to 20 rounds, 15 minutes of work.
+AnA
+Balanced
+Standard
+I can help you organize your program toward an NDA/BLA and keep the dossier consistent.
+Set up a submission program
+Draft product labeling
+Upload a document to start
+Dismiss
+Program journey
+Draft Clinical Overview
+CMC Module 3
+Submission readiness
+Browse all capabilities

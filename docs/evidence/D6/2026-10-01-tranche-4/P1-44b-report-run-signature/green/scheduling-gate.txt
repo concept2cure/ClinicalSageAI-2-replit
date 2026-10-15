@@ -1,0 +1,33 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > returns today at the scheduled time when still ahead 2ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > rolls to tomorrow when the time has already passed 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > rolls forward when exactly at the scheduled time (strictly after) 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > lands on the correct dayOfWeek at the correct hour 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > can land today when the scheduled time is still ahead 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > rolls a full week when same weekday but time has passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > uses this month when the day is still ahead 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > rolls to next month when the day has passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > clamps dayOfMonth 31 to 28 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > DEFAULT_WEEKLY_SCHEDULE yields a Monday 07:00 UTC 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is true when now is at or past the next run after lastRunAt 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is false just before the next run 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is due when there has been no prior run 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final with the signature it was finalized under is allowed, not watermarked, and names that signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final without a signature is refused: the e-signature rule is the gate, not advice to the caller 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > a null signature is no signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + partial is watermarked and does not require e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + draft is watermarked and does not require e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > sealed flag forces e-signature on external even when not final 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > platform + final has no watermark and no e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > platform + non-final is watermarked but needs no e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > returns the expected normalized keys 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > defaults subscriptionId and reason to null when absent 0ms
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  14:03:50
+   Duration  512ms (transform 139ms, setup 110ms, import 64ms, tests 14ms, environment 0ms)
+

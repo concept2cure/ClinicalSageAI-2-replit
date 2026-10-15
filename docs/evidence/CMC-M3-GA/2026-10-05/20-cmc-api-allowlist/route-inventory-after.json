@@ -1,0 +1,93 @@
+{
+ "note": "The REAL mounted app walked route by route (scripts/ci/launch-scope-route-inventory.ts), with the launch-scope verdict for each. Trimmed to the CMC namespaces and the launch-called unmapped ones.",
+ "counts": {
+  "infrastructure": 49,
+  "never-gated": 192,
+  "launch": 1036,
+  "unmapped": 1378,
+  "out-of-scope": 1089
+ },
+ "cmcUnmapped": [
+  {
+   "namespace": "/api/cmc-changes",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/BiopharmaSpecialty.tsx"
+   ],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cmc-changes/",
+    "POST /api/cmc-changes/"
+   ]
+  },
+  {
+   "namespace": "/api/cmc/variations",
+   "routes": 1,
+   "writes": 1,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "POST /api/cmc/variations/classify"
+   ]
+  },
+  {
+   "namespace": "/api/cmc/projects",
+   "routes": 1,
+   "writes": 0,
+   "clientCallers": [],
+   "launchCallers": [],
+   "sample": [
+    "GET /api/cmc/projects/:projectId/process-capability"
+   ]
+  }
+ ],
+ "unmappedCalledByLaunch": [
+  {
+   "namespace": "/api/c2c/actions",
+   "routes": 12,
+   "writes": 11,
+   "clientCallers": [
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx"
+   ],
+   "launchCallers": [
+    {
+     "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+     "surfaces": [
+      "submission-center"
+     ]
+    }
+   ],
+   "sample": [
+    "GET /api/c2c/actions/verify-chain",
+    "POST /api/c2c/actions/claim",
+    "POST /api/c2c/actions/transition"
+   ]
+  },
+  {
+   "namespace": "/api/510k",
+   "routes": 2,
+   "writes": 1,
+   "clientCallers": [
+    "client/src/concept2cure/mdx/hooks/useDeviceProfile.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarExport.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarFiling.ts",
+    "client/src/concept2cure/mdx/hooks/useEstarOfficialFields.ts",
+    "client/src/concept2cure/mdx/hooks/useK510.ts",
+    "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx"
+   ],
+   "launchCallers": [
+    {
+     "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+     "surfaces": [
+      "submission-center"
+     ]
+    }
+   ],
+   "sample": [
+    "POST /api/510k/:projectId/generate-documents",
+    "GET /api/510k/:projectId/documents"
+   ]
+  }
+ ]
+}

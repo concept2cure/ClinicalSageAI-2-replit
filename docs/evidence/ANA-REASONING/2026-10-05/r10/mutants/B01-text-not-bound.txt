@@ -1,0 +1,13 @@
+Mutant B01-text-not-bound: a decision is verified against a turn whatever words it decides
+
+--- server/services/authoring/machine-claim-verify.ts
+- if (!needle || !rec.outputs.some((o) => o.includes(needle))) {
++ if (false) {
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: words the turn never wrote → unverified, and AnA is not the verified proposer 110ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > bulk: each change is held to its own words — the turn’s are verified, others are not 44ms
+      Tests  2 failed | 18 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

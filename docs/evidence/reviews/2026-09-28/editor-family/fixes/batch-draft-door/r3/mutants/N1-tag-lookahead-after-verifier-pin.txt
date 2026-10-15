@@ -1,0 +1,4 @@
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the verifier keeps a raw-text element's own tags > a claim holding an <xmp class="q"> the record does not have is not AnA's text, and is disclosed 41ms
+   → AnA never wrote the <xmp>: expected [ { chars: 100, …(3) } ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)

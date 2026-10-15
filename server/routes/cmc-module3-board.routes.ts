@@ -12,8 +12,10 @@
  *                    reg_questions (status IN OPEN/DRAFTED/IN_REVIEW, due_date < now)
  *                  + the Regulatory Preparedness Index from the real RPI engine
  *                    (server/src/services/reg/rpi.ts::computeRPI). These are the
- *                    same queries + engine the existing GET overview
- *                    (server/api/cmc/portfolio.ts) already runs.
+ *                    queries + engine GET /api/cmc/blueprint/portfolio/overview
+ *                    (server/api/cmc/portfolio.ts) ran; that router was retired
+ *                    on 2026-10-05 with no caller, and this board is the one
+ *                    portfolio read.
  *   • sections   ← cmc_module3_sections (section_key, section_path,
  *                  approval_state) for one project — the governed Module 3
  *                  store the operating-system routes read/write. Only populated

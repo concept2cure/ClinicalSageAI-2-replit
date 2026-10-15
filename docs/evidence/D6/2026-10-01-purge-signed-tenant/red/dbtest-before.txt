@@ -1,0 +1,9 @@
+# tests/db/tenant-purge-artifact-records.dbtest.ts — the reproduction before the fix (tenant-offboarding.ts at HEAD; migration not yet amended: the door absent)
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 97ms
+   → update or delete on table "client_workspaces" violates foreign key constraint "projects_client_workspace_id_client_workspaces_id_fk" on table "projects"
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner 105ms
+   → expected 2 to be 1 // Object.is equality
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing 21ms
+   → expected [Function] to throw error matching /not pending deletion/ but got 'function public.purge_tenant_artifact…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)

@@ -1,0 +1,13 @@
+# Fix round 2 ESLint. 2026-10-01T15:47:45Z
+## working tree: the three files this round changed
+exit=0
+## HEAD version of server/services/account-standing.ts (stdin)
+exit=0
+## proposed/faked-clock-membership-start.patch: each patched file (stdin) against the file as it is in the tree, warning counts
+tests/db/account-standing.dbtest.ts tree=0w/0e patched=0w/0e
+tests/db/one-time-credentials.dbtest.ts tree=0w/0e patched=0w/0e
+tests/db/second-factor-binding.dbtest.ts tree=0w/0e patched=0w/0e
+tests/db/sign-in-posture.dbtest.ts tree=1w/0e patched=1w/0e
+tests/db/signing-lockout.dbtest.ts tree=0w/0e patched=0w/0e
+## proposed/shared-schema-sessions-ended-at.patch
+shared/schema.ts tree=2w/0e patched=2w/0e

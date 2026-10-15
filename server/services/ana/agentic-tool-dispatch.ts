@@ -15,8 +15,12 @@
  *                     tool tries to send to a model is refused before it is
  *                     sent.
  *
- * Every option is optional. With none set, {@link dispatchLoopCall} is exactly
- * the dispatch the adapter always made.
+ * Always, whatever the options: a call whose arguments were lost in transport
+ * (`inputParseError`) is answered with lostToolInputResult and nothing runs,
+ * as the stream has done since S1 (row 74, S5).
+ *
+ * Every option is optional. With none set, {@link dispatchLoopCall} is the
+ * dispatch the adapter always made, except for the lost-input refusal above.
  *
  * An observer (onToolEvent, and the adapter's onModelResponse) is told, never
  * obeyed: one that throws is logged and the loop goes on, because by then the
@@ -31,7 +35,7 @@
 
 import { createScopedLogger } from '../../utils/logger';
 import { runRefusingModelCalls } from '../ai-gateway/model-call-scope.js';
-import type { ToolCall } from './agentic-loop.js';
+import { lostToolInputResult, type ToolCall } from './agentic-loop.js';
 
 const log = createScopedLogger('ana-agentic-dispatch');
 
@@ -134,6 +138,11 @@ function dispatchOnce(call: ToolCall, options: LoopDispatchOptions, run: () => P
       errorMessage: 'not offered',
     });
   }
+  // Arguments lost in transport: the handler would run on `{}` as though the
+  // model had asked for nothing (row 74, S5). After the allowlist, so a tool
+  // that was not offered is still answered as one.
+  const lost = lostToolInputResult(call);
+  if (lost) return Promise.resolve({ call, result: JSON.stringify(lost), errorMessage: call.inputParseError });
   if (options.toolModelCalls !== 'refuse') return run();
   return runRefusingModelCalls(
     { runId: options.runId ?? '', parentRunId: options.parentRunId ?? '', tool: call.name },

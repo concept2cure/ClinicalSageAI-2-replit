@@ -1,0 +1,12 @@
+# DERIVED, not logged and not observed: the round budget the stream computes (stream.ts:2812 calls resolveRoundBudget(effortUsed, runPolicy, resolveMaxRounds(effortUsed)) outside demo mode), from the snapshot's own pure functions. effortUsed is what the done frame reported. No captured turn exercised a base: the Deep research turn (#45) ran 0 tool rounds, and no Standard turn under Auto stopped at its base of 6 (S1 ran to the cap of 20, s4-auto stopped by itself at 12).
+# Re-run 2026-09-28 (review correction) with the filed script; output identical to the capture-time run, whose ad-hoc script (.e2e-budget.mts) was not kept.
+$ cd $SNAP && SNAP=$SNAP npx tsx <this folder>/harness/round-budget.mts
+{"effortUsed":"balanced","runPolicy":"auto","maxRounds":6,"progressExtension":14,"roundCap":20,"mostRoundsIfEachIsNew":20}
+{"effortUsed":"balanced","runPolicy":"manual","maxRounds":6,"progressExtension":2,"mostRoundsIfEachIsNew":8}
+{"effortUsed":"balanced","runPolicy":null,"maxRounds":6,"progressExtension":2,"mostRoundsIfEachIsNew":8}
+{"effortUsed":"thorough","runPolicy":"auto","maxRounds":10,"progressExtension":10,"roundCap":20,"mostRoundsIfEachIsNew":20}
+{"effortUsed":"thorough","runPolicy":"manual","maxRounds":10,"progressExtension":4,"mostRoundsIfEachIsNew":14}
+{"effortUsed":"thorough","runPolicy":null,"maxRounds":10,"progressExtension":4,"mostRoundsIfEachIsNew":14}
+{"effortUsed":"fast","runPolicy":"auto","maxRounds":4,"progressExtension":16,"roundCap":20,"mostRoundsIfEachIsNew":20}
+{"effortUsed":"fast","runPolicy":"manual","maxRounds":4,"progressExtension":0,"mostRoundsIfEachIsNew":4}
+{"effortUsed":"fast","runPolicy":null,"maxRounds":4,"progressExtension":0,"mostRoundsIfEachIsNew":4}

@@ -1,0 +1,290 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts
+{
+  "timestamp": "2026-10-09T08:03:36.144Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > needs no caller text and binds every resolved identity and exact file/text digest 102ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > accepts identical optional caller text without upgrading source qualification 33ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > rejects forged caller text even when it exactly matches the DOCX extraction 25ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > cannot pass substantive divergence just because headings are present 29ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > reports a missing required string despite exact persisted text fidelity 27ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > detects a changed dose even when the dose heading and units remain present 28ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > passes exact repeated headings despite the heuristic summary reporting a modified section 26ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses an omitted duplicate line despite matching unordered line sets 25ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses an reordered duplicate line despite matching unordered line sets 26ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses a newline-heavy mismatch above the line-product budget before allocating LCS 20ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > permits an exact newline-heavy match without allocating a quadratic mismatch diff 25ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > blank id cannot silently request the legacy caller-text path 16ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > spaces id cannot silently request the legacy caller-text path 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > null id cannot silently request the legacy caller-text path 14ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > number id cannot silently request the legacy caller-text path 17ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > object id cannot silently request the legacy caller-text path 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > missing id cannot silently request the legacy caller-text path 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > missing version cannot silently request the legacy caller-text path 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > null version cannot silently request the legacy caller-text path 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > string version cannot silently request the legacy caller-text path 14ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > zero version cannot silently request the legacy caller-text path 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > negative version cannot silently request the legacy caller-text path 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > fraction version cannot silently request the legacy caller-text path 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > overflow version cannot silently request the legacy caller-text path 16ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > NaN version cannot silently request the legacy caller-text path 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > infinite version cannot silently request the legacy caller-text path 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses missing project honestly 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses missing project reference honestly 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses string project honestly 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses zero project honestly 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses fraction project honestly 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses overflow project honestly 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses negative organization honestly 11ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses fraction organization honestly 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses overflow organization honestly 12ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses string organization honestly 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > compares persisted text in an existing tenant-owned UUID program anchor 25ms
+stderr | server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > refuses ambiguous UUID anchors rather than selecting whichever appears first
+{
+  "timestamp": "2026-10-09T08:03:38.991Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "verify_docx_against_source",
+    "programId": "fdd44853-022d-4493-9266-99a4e4e161ab",
+    "projectIds": [
+      43,
+      44
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > refuses a missing UUID program 14ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > refuses a UUID program belonging to another organization 20ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > refuses a deleted UUID program even while its artifact and anchor persist 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > refuses a UUID program with no anchor rather than creating one 14ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > refuses ambiguous UUID anchors rather than selecting whichever appears first 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > refuses an anchor owned by another organization 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > refuses a populated integer context that conflicts with the UUID anchor 13ms
+stderr | server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > rechecks a ambiguous UUID anchor after extraction
+{
+  "timestamp": "2026-10-09T08:03:39.072Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "verify_docx_against_source",
+    "programId": "f6e2b9b4-29ce-41ed-9199-2018535060f7",
+    "projectIds": [
+      51,
+      52
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > reports an anchor-read outage without treating the program as absent 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > rechecks a replaced UUID anchor after extraction 23ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > rechecks a ambiguous UUID anchor after extraction 16ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > canonical v2 programs resolve only through their existing unique owned anchor > rechecks a deleted_program UUID anchor after extraction 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses another organization artifact 24ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an artifact in another project of the same organization 21ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > ignores input project_id as authority and cannot override the context project 19ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses conflicting integer projectId and numeric projectRef context 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a project owned by another organization 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an unavailable project even if artifact rows still name it 14ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing external artifact ID 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > does not treat an internal numeric ID string as the selected external ID 20ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a selected version that exists only under a different artifact 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a selected version belonging to another organization 19ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing selected version 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an older version even when the old and new text hashes coincide 19ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses head content different from the selected persisted version 20ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt artifact hashes rather than trusting equal stored digests 19ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt version hashes rather than trusting equal stored digests 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt both hashes rather than trusting equal stored digests 20ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing artifact hash 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing version hash 23ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a rendition excluded by a real remove_data disposition 75ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a rendition excluded by a real supersede disposition 70ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > can compare retained current text after keep_data without claiming scientific verification 60ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the projects read fails 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the concept2cure_artifact_versions read fails 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the document_data_dispositions read fails 15ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a head change made during extraction 20ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a version change made during extraction 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a version_number change made during extraction 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a removed_version change made during extraction 18ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a replacement_version change made during extraction 19ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a removed_project change made during extraction 13ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a withdrawal change made during extraction 62ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > reports a failed extractor rather than inventing fidelity 16ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed if the recheck database read fails after successful extraction 14ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > marks caller_text_fidelity explicitly unbound, even with forged positive qualifiers 9ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > marks required_strings_only explicitly unbound, even with forged positive qualifiers 8ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied persisted report become seal proof 20ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied caller_text report become seal proof 8ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied required_strings report become seal proof 8ms
+ ✓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > retains workspace isolation even when persisted selectors are valid 16ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > is the caller's own uploads and scratch areas, and nothing else 2ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts a builder output path 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an eCTD packager path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an upload of its own 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an absolute path that genuinely lives in its workspace 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute path to a secrets file 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute system path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a traversal out of the workspace 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a bare traversal segment 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a windows-style traversal 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute sibling directory sharing the root prefix 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an embedded NUL truncation trick 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an empty string 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a non-string 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects null 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects undefined 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > throws a correctable, non-echoing error 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > returns the RESOLVED absolute path, not the caller's string 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's upload 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's builder output 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's eCTD package 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a tenant whose id merely starts with ours 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a scratch file that belongs to nobody (the old layout) 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses the whole uploads tree 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a tmp area AnA does not write to 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with no organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with organization 0 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with a non-numeric organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with a negative organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > names every scratch directory inside the tenant's own area 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > a symlink cannot carry a checked path out > to another tenant's files, or to the host 2ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > builds file names that cannot leave a directory 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects the production server bundle reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects the package manifest reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects a secrets file reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects application source reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects a nested source path reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > still accepts the paths the document tools actually produce 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > the guard and the consumer now agree on which file is meant 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > 'query_rim_patterns_by_domain' declares no orgId parameter 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > 'summarize_rim_intelligence' declares no orgId parameter 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > does not invite the model to name an organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > still asks for the domain filter, which is genuinely the model's to choose 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > every AnA tool that takes a path runs it through the workspace guard > finds the handlers it checks 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > every AnA tool that takes a path runs it through the workspace guard > has no unguarded path argument 2ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > every AnA tool that takes a path runs it through the workspace guard > lists only handlers that still take a path argument 0ms
+stdout | server/services/ana/__tests__/verify-docx-claim-scope.test.ts
+{
+  "timestamp": "2026-10-09T08:03:41.022Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T08:03:41.024Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/verify-docx-claim-scope.test.ts
+{
+  "timestamp": "2026-10-09T08:03:41.024Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/verify-docx-claim-scope.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/verify-docx-claim-scope.test.ts > verify_docx_against_source — claim scope > does NOT claim the document reproduces a source when none was supplied 7ms
+ ✓ server/services/ana/__tests__/verify-docx-claim-scope.test.ts > verify_docx_against_source — claim scope > still reports the required-string result honestly when one is missing 1ms
+ ✓ server/services/ana/__tests__/verify-docx-claim-scope.test.ts > verify_docx_against_source — claim scope > reports caller-text fidelity when supplied text matches without qualifying a persisted artifact or source 1ms
+ ✓ server/services/ana/__tests__/verify-docx-claim-scope.test.ts > verify_docx_against_source — claim scope > reports real divergence when the document departs from the source 3ms
+stdout | server/services/ana/__tests__/verify-docx-against-source.test.ts
+{
+  "timestamp": "2026-10-09T08:03:42.996Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-09T08:03:42.998Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/verify-docx-against-source.test.ts
+{
+  "timestamp": "2026-10-09T08:03:42.998Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/verify-docx-against-source.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — registration & schema > registers a handler 1ms
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — registration & schema > is exposed to AnA in ALL_ANA_TOOLS with input_docx_path required 2ms
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — input guards > errors without input_docx_path 4ms
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — input guards > errors without tenant context 0ms
+ ✓ server/services/ana/__tests__/verify-docx-against-source.test.ts > verify_docx_against_source — input guards > errors when neither expected_text nor required_strings is supplied 1ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > accepts the root itself and real descendants 1ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > REJECTS a sibling that merely shares the prefix 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > normalises traversal before comparing 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses a path inside another organization’s vault 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses the vault root and the caller’s OWN vault path too 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses a vault path reached by traversal from an allowed root 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > keeps the vault out of the allowlist itself 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under csrs 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under ectd 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > accepts a relative path and returns it resolved 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects absolute system path 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects traversal out of a root 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects empty 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects whitespace only 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a NUL byte, which truncates the path in some syscalls 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: null 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: undefined 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: a number 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: an object 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: an array 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under exports 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > is containment, not a string prefix: org-77 is not inside org-7 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a traversal out of the caller’s prefix into another tenant’s 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: zero 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: negative 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: NaN 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: empty string 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: non-numeric string 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > leaves the reference corpus csrs readable with an organization given 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > leaves the reference corpus ectd readable with an organization given 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > keeps the no-organization form for internal callers 0ms
+
+ Test Files  5 passed (5)
+      Tests  184 passed (184)
+   Start at  04:03:29
+   Duration  14.62s (transform 4.55s, setup 105ms, import 10.03s, tests 3.74s, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-docx-target-fidelity/focused-green.json

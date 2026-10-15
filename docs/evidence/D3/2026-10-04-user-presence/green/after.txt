@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-04T23:41:25.159Z","pid":4404,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-04T23:41:25.160Z","pid":4404,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-04T23:41:25.160Z","pid":4404,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > A's member sees a colleague's presence (positive control) 4ms
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > A's scope does not see B's member, by id or by scanning 3ms
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > A's member cannot rewrite a colleague's presence, nor B's 3ms
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > an unbound pre-auth scope reads none 1ms
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > the person, bound, writes their own presence 3ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  23:41:23
+   Duration  1.90s (transform 735ms, setup 65ms, import 1.33s, tests 230ms, environment 0ms)
+

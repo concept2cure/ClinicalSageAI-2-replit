@@ -1,0 +1,4 @@
+# C-33 with the registry seed in the migration set and the fixture unchanged
+ FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated
+Error: pass 1: migrations/20260930_report_type_registry_seed.sql failed — report_type_registry does not exist. drizzle-kit push creates it from shared/schema/report-os.ts when the database is provisioned (scripts/db/install-fresh.mjs); this database was not provisioned completely, and this migration does not create the table.
+      Tests  16 passed | 3 skipped (19)

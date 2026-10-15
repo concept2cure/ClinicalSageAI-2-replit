@@ -1,0 +1,13 @@
+Mutant E01-no-high-stakes-floor: a high-stakes turn runs at the effort chosen: the floor does not reach an adaptive model (MC-RL-5)
+
+--- server/services/ai-gateway/effort.ts
+- if (input.riskTier !== 'high' || input.effort === 'fast') return chosen;
++ return chosen;
+
+Tests run: server/services/ai-gateway/__tests__/turn-api-effort.test.ts server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+Result: KILLED
+
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > a high-stakes turn runs at high or above, pinned strategy or not: the floor reaches an adaptive model 6ms
+ × server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 11ms
+      Tests  2 failed | 8 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

@@ -27,6 +27,7 @@ import {
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
+  exportReviewAttestation,
   type ExportGovernance,
 } from '../../services/export/exportReviewGate';
 import { createScopedLogger } from '../../utils/logger';
@@ -89,12 +90,21 @@ function validateExportGovernance(req: Request, res: Response): ExportGovernance
  * routes produce gets an EXPORT_GENERATED audit row carrying the SHA-256 of the
  * exact bytes delivered, and is not delivered when that row does not persist.
  * Until then they returned the file and recorded nothing
- * (docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/).
+ * (docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/). 2026-10-15: the row also
+ * records the review assertion that passed the gate, which was recorded
+ * nowhere — as an assertion, with the user who made it.
  */
 async function deliverRecordedExport(
   req: Request,
   res: Response,
-  file: { buffer: Buffer; mimeType: string; filename: string; sourceType: ExportSourceType; title: string },
+  file: {
+    buffer: Buffer;
+    mimeType: string;
+    filename: string;
+    sourceType: ExportSourceType;
+    title: string;
+    governance: ExportGovernance;
+  },
 ): Promise<void> {
   const organizationId = getOrganizationId(req);
   const userId = getUserId(req);
@@ -110,7 +120,7 @@ async function deliverRecordedExport(
       filename: file.filename,
       mimeType: file.mimeType,
       buffer: file.buffer,
-      metadata: { title: file.title },
+      metadata: { title: file.title, reviewAttestation: exportReviewAttestation(file.governance, userId) },
     });
   } catch (err) {
     if (isUnauditedExportRefusal(err)) {
@@ -148,6 +158,7 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
       filename: `${safeFilename}.docx`,
       sourceType: 'export_docx',
       title,
+      governance,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -389,6 +400,7 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
       filename: `${safeTitle}.pdf`,
       sourceType: 'export_pdf',
       title: String(title),
+      governance,
     });
   } catch (error: any) {
     logger.error('Failed to export PDF', { error: error.message });
@@ -410,40 +422,28 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     const schema = z.object({
       title: z.string().min(1).max(500),
       content: z.string().min(1).max(1000000),
-      nanoBanana: z.boolean().optional(), // opt-in to Nano Banana cover image
+      nanoBanana: z.boolean().optional(), // refused below
     });
     const { title, content, nanoBanana } = schema.parse(req.body);
+    // Refused (2026-10-15). With Nano Banana configured, this flag replaced the
+    // export with generatePresentation({ topic: title }): a deck the model wrote
+    // from the title alone, without this content or EXPORT_REVIEW_NOTICE, its
+    // cover image never put in the file. It was delivered and recorded as this
+    // artifact's export. A generated deck is POST /api/nano-banana/presentation.
+    if (nanoBanana) {
+      return sendError(
+        res,
+        422,
+        'nanoBanana is not available on an export: Nano Banana writes its own slides from the title, ' +
+          'so the file would not be this content. Send the export without it; a generated deck is ' +
+          'POST /api/nano-banana/presentation.',
+        undefined,
+        'NANO_BANANA_NOT_AN_EXPORT'
+      );
+    }
     const governance = validateExportGovernance(req, res);
     if (!governance) return;
     const exportBody = `${EXPORT_REVIEW_NOTICE}\n\n${content}`;
-
-    // If Nano Banana is enabled and configured, generate the full presentation with cover
-    if (nanoBanana) {
-      try {
-        const { isConfigured, generatePresentation } = await import(
-          '../../services/nanoBananaService'
-        );
-        if (isConfigured()) {
-          const result = await generatePresentation({
-            topic: title,
-            slideCount: Math.min(exportBody.split(/\n---\n/).length || 6, 12),
-            audience: 'scientific',
-            generateImages: true,
-          });
-          const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-          return await deliverRecordedExport(req, res, {
-            buffer: result.pptxBuffer,
-            mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            filename: `${safeFilename}.pptx`,
-            sourceType: 'export_pptx',
-            title,
-          });
-        }
-      } catch (nbErr: any) {
-        // Fall through to standard PPTX generation
-        console.warn('[pptx-export] Nano Banana enhancement failed, falling back:', nbErr.message);
-      }
-    }
 
     const { generatePptxBuffer } = await import('../../services/pptxGenerator');
     const buffer = await generatePptxBuffer(title, exportBody);
@@ -455,6 +455,7 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
       filename: `${safeFilename}.pptx`,
       sourceType: 'export_pptx',
       title,
+      governance,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

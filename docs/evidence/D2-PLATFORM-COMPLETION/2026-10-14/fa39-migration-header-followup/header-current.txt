@@ -1,0 +1,6 @@
+🔍 Checking migrations for eCTD regulatory audit headers...
+   (Scope: 2026+ date-prefixed migrations + vault prerequisite, in db/migrations migrations)
+
+   (Base: HEAD~1)
+
+✅ Migration header check passed (3 in-scope migration(s) checked).

@@ -141,7 +141,7 @@ const QUALITY: IchGuideline[] = [
     keywords: ['impurities', 'degradation products', 'drug product'],
   },
   {
-    code: 'Q3C(R8)',
+    code: 'Q3C(R9)',
     category: 'quality',
     title: 'Impurities: Guideline for Residual Solvents',
     topic: 'Residual solvents',
@@ -757,7 +757,7 @@ const MULTIDISCIPLINARY: IchGuideline[] = [
     keywords: ['nonclinical', 'first-in-human', 'phase timing', 'duration of dosing'],
   },
   {
-    code: 'M4',
+    code: 'M4(R4)',
     category: 'multidisciplinary',
     title: 'Common Technical Document (CTD) — Organisation (M4Q, M4S, M4E)',
     topic: 'CTD structure',
@@ -881,8 +881,15 @@ export const ICH_GUIDELINES: IchGuideline[] = [
 ];
 
 const BY_CODE = new Map(ICH_GUIDELINES.map(g => [g.code.toUpperCase(), g]));
+/* A family cited without its revision ("ICH M4", "Q3C") is the revision in
+   force: the code above carries the suffix, and the citation is still that
+   guideline. A bare code that is itself an entry keeps its own entry. */
+for (const g of ICH_GUIDELINES) {
+  const bare = g.code.replace(/\(R\d+\)$/i, '').toUpperCase();
+  if (bare !== g.code.toUpperCase() && !BY_CODE.has(bare)) BY_CODE.set(bare, g);
+}
 
-/** Exact lookup by ICH code (case-insensitive; full code form). */
+/** Lookup by ICH code (case-insensitive): the full code, or the family without its revision suffix. */
 export function getGuideline(code: string): IchGuideline | undefined {
   return BY_CODE.get(code.trim().toUpperCase());
 }

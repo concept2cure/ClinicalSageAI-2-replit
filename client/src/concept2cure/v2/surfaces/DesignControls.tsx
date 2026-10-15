@@ -3,10 +3,13 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState, isPendingStore } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor, mayReassure } from '../assessmentState';
-/* One definition of the 820.30 traceability rule and of the pass value, shared
+/* One definition of the design-control traceability rule and of the pass value, shared
    with server/routes/mdx-engineering.ts — the other reader of this store, which
    had its own copy and disagreed with this one over identical rows. */
 import { DESIGN_CONTROL_PASS, isFullyTraced } from '@shared/regulatory/design-controls-trace';
+/* The design-control element ids, order, and citations have one home, the QMSR
+   crosswalk, shared with design-controls.ts and combination-products-knowledge.ts. */
+import { QMSR_CROSSWALK, citeQms, type QmsrCrosswalkId } from '@shared/regulatory/qmsr-crosswalk';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
@@ -18,10 +21,10 @@ import { C2CToast, useToast } from '../toast';
 /* ════ Design Controls -- DHF surface ════
 
    Fixture-free by construction (real-data standard). The traceability matrix is
-   the org's REAL 21 CFR 820.30(c) design inputs from the c2c_design_controls
+   the org's REAL design inputs (ISO 13485:2016 §7.3.3) from the c2c_design_controls
    store (GET /api/design-controls, written via POST /api/design-controls). The
    surface renders real rows, an honest empty state, or an honest error state —
-   never a fabricated fixture. The traceability roll-up and the 820.30
+   never a fabricated fixture. The traceability roll-up and the design-control
    completeness checklist are derived from those real rows; checklist elements
    the design-input store cannot evidence are shown as an honest "not tracked
    here", never a fabricated present/absent claim. */
@@ -46,13 +49,13 @@ interface DcInput {
   _new?: boolean;
 }
 
-/** A 21 CFR 820.30 subsection and how (or whether) the design-input store
- *  evidences it. `derive` returns the element's state from the REAL rows:
+/** A design-control element (crosswalk row) and how (or whether) the
+ *  design-input store evidences it. `derive` returns the element's state from the REAL rows:
  *  'present' / 'absent' where the store carries the evidence, or 'untracked'
  *  where no store backs the element (never a fabricated have/have-not). */
 type ElState = 'present' | 'absent' | 'untracked';
-interface Dc82030Def {
-  el: string;
+interface DcElementDef {
+  el: QmsrCrosswalkId;
   label: string;
   ref: string;
   derive: (rows: DcInput[]) => ElState;
@@ -60,7 +63,7 @@ interface Dc82030Def {
 
 /* ── Presentation vocabulary (controlled UI config, not data fixtures) ── */
 
-/** 820.30(c) input categories — the controlled vocabulary the "new design
+/** Design-input (ISO 13485:2016 §7.3.3) categories — the controlled vocabulary the "new design
  *  input" form offers and the matrix labels from (not fabricated org data). */
 const DC_INPUT_CATS: [string, string][] = [
   ['intended_use', 'Intended use'], ['user_need', 'User need'], ['functional', 'Functional'],
@@ -71,46 +74,81 @@ const DC_INPUT_CATS: [string, string][] = [
 /** V&V result → cell tone (presentation map, not data). */
 const DC_RESULT: Record<string, string> = { pass: 'ok', fail: 'err', pending: 'warn', null: 'idle' };
 
+/** The design-control element ids: the crosswalk's ISO 13485:2016 §7.3.x rows. */
+type DcElementId = Extract<
+  QmsrCrosswalkId,
+  | 'designPlan' | 'designInputs' | 'designOutputs' | 'designReviews' | 'designVerification'
+  | 'designValidation' | 'designTransfer' | 'designChanges' | 'traceability'
+>;
+
 /**
- * The nine design-control elements, dual-cited.
+ * How this surface labels each design-control element and whether the
+ * design-input store evidences it. The ids, their order and their citations
+ * are not here: they come from shared/regulatory/qmsr-crosswalk.ts through
+ * `citeQms(id, asOf)`.
  *
  * QMSR took effect 2 February 2026 and incorporates ISO 13485:2016 by
- * reference: design controls now live at ISO 13485 §7.3, and 21 CFR 820.30 is
- * the legacy citation. This surface cited 820.30 alone in thirty-one places
- * with no mention of 13485 anywhere in the file — so a device team reading it
- * after February was being pointed at the superseded clause for every element
- * of their design history file.
+ * reference: design controls are ISO 13485 §7.3 through 21 CFR 820.10(c), and
+ * 21 CFR 820.30 is removed. On and after that date each ref leads with the
+ * QMSR basis and keeps the QSR section as "formerly … (QSR, until
+ * 2026-02-01)": a DHF assembled before the changeover is indexed to 820.30 and
+ * its reviewers still search on it, so the old citation stays findable without
+ * being presented as the requirement.
  *
- * BOTH are shown during the transition rather than a swap. A DHF assembled
- * before the changeover is indexed to 820.30 and its reviewers still search on
- * it; dropping the old citation would make the existing record unfindable, and
- * dropping the new one leaves the product a year behind the rule it claims to
- * enforce.
+ * 2026-10-05 (g-design-control-lists-one-home): this surface kept its own list
+ * of nine refs ('820.30(c) · ISO 13485 §7.3.3', …) that led with the removed
+ * section, and labelled design review "(independent)" — a QSR 820.30(e)
+ * requirement the QMSR does not carry (ISO 13485:2016 §7.3.5).
  *
  * The derivation is unchanged: only the five elements the c2c_design_controls
  * store actually evidences are derivable. Design plan / reviews / transfer /
  * changes have no backing store here and are reported 'untracked' rather than
  * asserted present or absent.
  */
-const DC_820_30: Dc82030Def[] = [
-  { el: 'designPlan', label: 'Design & development plan', ref: '820.30(b) · ISO 13485 §7.3.2', derive: () => 'untracked' },
-  { el: 'designInputs', label: 'Design inputs', ref: '820.30(c) · ISO 13485 §7.3.3', derive: (r) => (r.length ? 'present' : 'absent') },
-  { el: 'designOutputs', label: 'Design outputs', ref: '820.30(d) · ISO 13485 §7.3.4', derive: (r) => (r.some(i => i.outputs && i.outputs.length) ? 'present' : 'absent') },
-  { el: 'designReviews', label: 'Design reviews (independent)', ref: '820.30(e) · ISO 13485 §7.3.5', derive: () => 'untracked' },
-  { el: 'designVerification', label: 'Design verification', ref: '820.30(f) · ISO 13485 §7.3.6', derive: (r) => (r.some(i => i.ver === 'pass') ? 'present' : 'absent') },
-  { el: 'designValidation', label: 'Design validation', ref: '820.30(g) · ISO 13485 §7.3.7', derive: (r) => (r.some(i => i.val === 'pass') ? 'present' : 'absent') },
-  { el: 'designTransfer', label: 'Design transfer documented', ref: '820.30(h) · ISO 13485 §7.3.8', derive: () => 'untracked' },
-  { el: 'designChanges', label: 'Design changes reviewed/verified', ref: '820.30(i) · ISO 13485 §7.3.9', derive: () => 'untracked' },
-  { el: 'traceability', label: 'Full requirements<->V&V traceability', ref: '820.30(j) · ISO 13485 §7.3.10',
+const DC_ELEMENT_VIEW: Record<DcElementId, Pick<DcElementDef, 'label' | 'derive'>> = {
+  designPlan: { label: 'Design & development plan', derive: () => 'untracked' },
+  designInputs: { label: 'Design inputs', derive: (r) => (r.length ? 'present' : 'absent') },
+  designOutputs: { label: 'Design outputs', derive: (r) => (r.some(i => i.outputs && i.outputs.length) ? 'present' : 'absent') },
+  designReviews: { label: 'Design reviews', derive: () => 'untracked' },
+  designVerification: { label: 'Design verification', derive: (r) => (r.some(i => i.ver === 'pass') ? 'present' : 'absent') },
+  designValidation: { label: 'Design validation', derive: (r) => (r.some(i => i.val === 'pass') ? 'present' : 'absent') },
+  designTransfer: { label: 'Design transfer documented', derive: () => 'untracked' },
+  designChanges: { label: 'Design changes reviewed/verified', derive: () => 'untracked' },
+  traceability: { label: 'Full requirements<->V&V traceability',
     derive: (r) => {
       if (!r.length) return 'absent';
       const traced = r.filter(i => isFullyTraced({ ver: i.ver, val: i.val, outputCount: i.outputs?.length ?? 0 })).length;
       return traced === r.length ? 'present' : 'absent';
     } },
-];
+};
+
+/**
+ * The design-control checklist as at `asOf` (YYYY-MM-DD), in crosswalk order,
+ * each ref `citeQms(id, asOf)`. Pure; the component supplies today's date.
+ */
+export function designControlChecklistDefs(asOf: string): DcElementDef[] {
+  return QMSR_CROSSWALK
+    .filter(r => /^7\.3\.\d+$/.test(r.iso13485Clause))
+    .map((r): DcElementDef => {
+      const view = DC_ELEMENT_VIEW[r.id as DcElementId];
+      if (!view) throw new Error(`DesignControls: no view for design-control element "${r.id}"`);
+      return { el: r.id, ref: citeQms(r.id, asOf), ...view };
+    });
+}
+
+/** Today's UTC date, YYYY-MM-DD. */
+const utcToday = (): string => new Date().toISOString().slice(0, 10);
 
 export function DesignControls({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
+
+  /* The date every citation on this screen is resolved against, and the
+     citations themselves — all from the QMSR crosswalk. */
+  const asOf = useMemo(utcToday, []);
+  const dcBasis = citeQms('design_controls', asOf);
+  const inputsRef = citeQms('designInputs', asOf);
+  const traceRef = citeQms('traceability', asOf);
+  const elementDefs = useMemo(() => designControlChecklistDefs(asOf), [asOf]);
 
   /* Fixture-free: read the org's REAL design inputs. `rows` is a fresh [] while
      loading / on error, so the derivations below are null-safe. */
@@ -179,12 +217,12 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     return { total, noOutput, noVer, noVal, fullyTraced, pct };
   }, [inputs]);
 
-  /* 820.30 completeness — derived from the REAL rows. `untracked` elements are
+  /* Design-control completeness — derived from the REAL rows. `untracked` elements are
      excluded from the completeness fraction (we don't score what no store
      evidences); they're surfaced separately as honestly not-tracked. */
   const checklist = useMemo(
-    () => DC_820_30.map(e => ({ ...e, state: e.derive(inputs) })),
-    [inputs],
+    () => elementDefs.map(e => ({ ...e, state: e.derive(inputs) })),
+    [elementDefs, inputs],
   );
   const assessable = checklist.filter(e => e.state !== 'untracked');
   const present = assessable.filter(e => e.state === 'present').length;
@@ -221,10 +259,10 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const traceClear = dcState === 'assessed-clear';
 
   const FORM: C2CFormConfig = {
-    eyebrow: 'DHF — 820.30(c) · ISO 13485 §7.3.3',
+    eyebrow: 'Design input — ' + inputsRef,
     title: 'New design input',
     sub: 'A design input is a requirement the device must meet. It enters the traceability matrix untraced until an output, verification and validation are linked.',
-    governed: 'Design inputs are controlled records; adding one is audit-logged per 21 CFR 820.30 and ISO 13485 §7.3.',
+    governed: 'Design inputs are controlled records; adding one is audit-logged (' + dcBasis + ').',
     submitLabel: 'Add design input',
     fields: [
       { key: 'req', label: 'Requirement', type: 'text', placeholder: 'e.g. Battery lasts a full 14-day wear period', required: true },
@@ -255,7 +293,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
       setAdded(is => is.filter(i => i.id !== tempId));
       /* Tone, not just text. `fire` defaults to 'ok', which draws
          `I.checkCircle` in `var(--success)` and announces `role="status"` — so
-         a REFUSED write into a 21 CFR 820.30 controlled record wore the green
+         a REFUSED write into a design-control controlled record wore the green
          tick. That is precisely the defect toast.tsx's own header says the
          two-argument signature exists to make unrepresentable; it was
          re-created here by omitting the argument. */
@@ -277,7 +315,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const isLive = !live.loading && !live.error && !pendingStore;
 
   /* What AnA can see of this screen. A DHF question is always about a specific
-     gap — "what is untraced?", "does 820.30(g) hold?" — and until now she had
+     gap — "what is untraced?", "does design validation hold?" — and until now she had
      the surface name and none of the matrix.
 
      A FAILED read publishes the failure. `inputs` is [] on error as well as on
@@ -296,17 +334,17 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
       };
     }
     /* No store, so no completeness claim. The derived summary below reports
-       "820.30 completeness 0% over 5 assessable element(s)" with designInputs,
+       "completeness 0% over 5 assessable element(s)" with designInputs,
        designOutputs, designVerification, designValidation and traceability each
        `absent` — five positive have-not claims about a device maker's design
        history file, computed from a table that does not exist. This context
        rides every AnA turn as `module_context` (V2App.tsx), so she would answer
-       "is 820.30(g) satisfied?" with a confident no. */
+       "is design validation satisfied?" with a confident no. */
     if (pendingStore) {
       return {
         summary:
           'The design-controls store is not provisioned in this environment, so nothing on this screen ' +
-          'is a statement about the organization\u2019s design history file. No 820.30 completeness or ' +
+          'is a statement about the organization\u2019s design history file. No design-control completeness or ' +
           'traceability figure can be computed, and none should be quoted.',
         facts: { storeProvisioned: false },
         availableActions: ['Explain that the design-controls store is not provisioned here'],
@@ -314,9 +352,9 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     }
     return {
       summary:
-        `Design controls (DHF — 21 CFR 820.30 · ISO 13485 §7.3): ${trace.total} design input(s), ${trace.fullyTraced} fully traced ` +
+        `Design controls (${dcBasis}): ${trace.total} design input(s), ${trace.fullyTraced} fully traced ` +
         `(${trace.pct}%). ${trace.noOutput} have no linked output, ${trace.noVer} are unverified, ` +
-        `${trace.noVal} unvalidated. 820.30 completeness ${elPct}% over ${assessable.length} assessable ` +
+        `${trace.noVal} unvalidated. Design-control completeness ${elPct}% over ${assessable.length} assessable ` +
         `element(s), ${untracked} element(s) not tracked by any store.`,
       facts: {
         totalInputs: trace.total,
@@ -325,7 +363,8 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
         missingOutput: trace.noOutput,
         unverified: trace.noVer,
         unvalidated: trace.noVal,
-        completeness820_30: {
+        citationsAsOf: asOf,
+        designControlCompleteness: {
           percent: elPct,
           assessableElements: assessable.length,
           presentElements: present,
@@ -341,12 +380,12 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
           : null,
       },
       availableActions: [
-        'Add a design input (a controlled record; the write is audit-logged under 21 CFR 820.30 / ISO 13485 §7.3)',
+        'Add a design input (a controlled record; the write is audit-logged under ' + dcBasis + ')',
         'Read the traceability matrix — inputs to outputs to verification to validation',
-        'Read the 820.30 completeness checklist, including the elements no store evidences',
+        'Read the design-control completeness checklist, including the elements no store evidences',
       ],
     };
-  }, [live.loading, live.error, pendingStore, trace, checklist, assessable.length, present, untracked, elPct, firstGap]);
+  }, [live.loading, live.error, pendingStore, trace, checklist, assessable.length, present, untracked, elPct, firstGap, asOf, dcBasis]);
   usePublishSurfaceContext('design-controls', anaContext);
 
   return (
@@ -355,7 +394,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {isLive ? <> {I.dot} live</> : ''}</div>
           <h1 className="sp-title">Design controls {I.dot} DHF</h1>
-          <p className="sp-state">Design history file — 21 CFR 820.30 · ISO 13485 §7.3 (QMSR, in force 2 Feb 2026) — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
+          <p className="sp-state">Design and development — {dcBasis} — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>
         <button
           className="sp-primary"
@@ -372,7 +411,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the design history file"
-          hint="The design-controls store didn't respond. These are your organization's 820.30(c) design inputs — sign in and retry, or check the service is reachable."
+          hint="The design-controls store didn't respond. These are your organization's design inputs — sign in and retry, or check the service is reachable."
         />
       ) : pendingStore && !hasRows ? (
         <EmptyState
@@ -383,12 +422,12 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
               This environment has no <span className="mono">c2c_design_controls</span>{' '}
               table, so the design history file could not be read at all — this
               is not a finding that your organization has recorded no design
-              inputs. No 820.30 completeness or traceability figure is shown,
+              inputs. No design-control completeness or traceability figure is shown,
               because none can be computed. Adding an input would fail;
               provision the store first.
             </>
           }
-          regulation="Serves the design history file (21 CFR 820.30 · ISO 13485 §7.3)"
+          regulation={'Serves the design and development file (' + dcBasis + ')'}
         />
       ) : !hasRows ? (
         <EmptyState
@@ -396,7 +435,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
           title="No design inputs defined yet"
           hint={
             <>
-              A design input is a requirement the device must meet (820.30(c)).
+              A design input is a requirement the device must meet ({inputsRef}).
               Add your first with <b>New design input</b> above — it persists via{' '}
               <span className="mono">Record a design input</span> and it enters
               the traceability matrix untraced until an output, verification and
@@ -418,7 +457,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
             headline={traceClear
               ? <>Every design input traces cleanly to output {'->'} verification {'->'} validation. The DHF is audit-ready on traceability.</>
               : <><b>{trace.total - trace.fullyTraced}</b> of {trace.total} design inputs {trace.total - trace.fullyTraced === 1 ? 'is' : 'are'} not yet fully traced to output, verification and validation.</>}
-            body={<>Design-control completeness is <b>{elPct}%</b> across the {assessable.length} 820.30 elements this store can evidence{untracked > 0 && <> ({untracked} more not tracked here)</>}; traceability (820.30(j)) is <b>{trace.pct}%</b>. {trace.noVal > 0 && <>{trace.noVal} input{trace.noVal === 1 ? '' : 's'} still lack{trace.noVal === 1 ? 's' : ''} passing validation.</>}</>}
+            body={<>Design-control completeness is <b>{elPct}%</b> across the {assessable.length} design-control elements this store can evidence{untracked > 0 && <> ({untracked} more not tracked here)</>}; traceability is <b>{trace.pct}%</b>. {trace.noVal > 0 && <>{trace.noVal} input{trace.noVal === 1 ? '' : 's'} still lack{trace.noVal === 1 ? 's' : ''} passing validation.</>}</>}
             /* The offer to draft what is missing is kept verbatim for the state
                it was written for — untraced inputs on file — and withheld from
                the state it contradicted. Reassurance is gated by mayReassure,
@@ -433,11 +472,11 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
             action={firstGap
               ? { label: 'Close the ' + firstGap.id + ' gap', onClick: () => ask('What is missing to fully trace ' + firstGap.id + ' (' + firstGap.req + ')?') }
               : { label: 'Draft the design review minutes', onClick: () => ask('Draft the design review minutes confirming full traceability') }}
-            secondary="Or work the traceability matrix and 820.30 checklist below."
+            secondary="Or work the traceability matrix and design-control checklist below."
           />
 
           {/* Traceability matrix -- the hero */}
-          <div className="pj-seclbl">Design traceability matrix <span className="s">{I.dot} 820.30(j) {I.dot} input {'->'} output {'->'} verification {'->'} validation</span></div>
+          <div className="pj-seclbl">Design traceability matrix <span className="s">{I.dot} {traceRef} {I.dot} input {'->'} output {'->'} verification {'->'} validation</span></div>
           <div className="dc-matrix">
             <div className="dc-mhead">
               <div className="dc-mh dc-mh-in">Design input</div>
@@ -469,8 +508,8 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
             })}
           </div>
 
-          {/* 820.30 completeness checklist -- derived from the real rows */}
-          <div className="pj-seclbl">21 CFR 820.30 completeness <span className="s">{I.dot} {present}/{assessable.length} evidenced by design inputs{untracked > 0 && <> {I.dot} {untracked} not tracked here</>}</span></div>
+          {/* Design-control completeness checklist -- derived from the real rows */}
+          <div className="pj-seclbl">Design-control completeness <span className="s">{I.dot} {present}/{assessable.length} evidenced by design inputs{untracked > 0 && <> {I.dot} {untracked} not tracked here</>}</span></div>
           <div className="dc-820">
             {checklist.map(e => (
               <div key={e.el} className="dc-820-row" data-have={e.state === 'present' || undefined} data-untracked={e.state === 'untracked' || undefined}>

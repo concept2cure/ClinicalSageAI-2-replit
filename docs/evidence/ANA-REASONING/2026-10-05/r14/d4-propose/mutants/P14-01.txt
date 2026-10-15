@@ -1,0 +1,9 @@
+mutant P14-01: the gate is not applied at all (trunk behaviour)
+verdict: KILLED
+Tests  3 failed | 3 passed (6)
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx > EditorBridge.propose — the governed-write rule, as insert applies it (round 14, SEC-A-7) > refuses a redline whose turn the rule does not admit, and names the model as the reason 320ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx > EditorBridge.propose — the governed-write rule, as insert applies it (round 14, SEC-A-7) > fails closed when the models are not given at all, or the answer did not finish 122ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx > EditorBridge.propose — the governed-write rule, as insert applies it (round 14, SEC-A-7) > gives the model as the reason even when the section and the base are wrong too 95ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)

@@ -1,0 +1,436 @@
+# D2 step 4 (anchored proposals) — fixes from the adversarial review, 2026-10-01
+# Task B-fix. RED: the tightened/new tests run against the code as it stood before the fixes.
+# Command: npx vitest run --config vitest.config.ts client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx
+
+## RED 2026-10-01T19:32:43Z
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the selected text as the person’s deletion, then inserts AnA’s text 116ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the text of every paragraph a selection spans, joining none of them 21ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > withdraws a pending insertion inside the selection, as a hand deletion does 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > a collapsed caret still inserts with nothing struck (the shipped behaviour) 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > strikes the single match and inserts the replacement after it, both AnA’s 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > reads the replacement as the markdown subset insertSuggestedContent reads 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > refuses not-found when the quote is not in the section, and changes nothing 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > refuses ambiguous when the quote occurs twice, and changes nothing 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > lets a suffix pick the occurrence it follows 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > lets a prefix pick the occurrence it precedes, across a paragraph break 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > an empty replacement is a deletion proposal only 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > refuses rather than restrike text that is already a pending suggestion 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > refuses not-editable on an editor that is not editable 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a phrase replaced inside a sentence 31ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by two paragraphs 34ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by a list: accepting takes the struck paragraph with it 37ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > the tail of a paragraph replaced by two paragraphs 27ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > refuses structural, changing nothing, when paragraphs would go inside a sentence 11ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > keeps the whitespace a replacement carries (no trimming of an inline edit) 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a phrase 27ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > paragraphs drafted over words mid-sentence go after that paragraph, never into it 29ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a list drafted over a whole paragraph 44ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > one paragraph at the end of a paragraph 36ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > two paragraphs at the end of the section 24ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a paragraph with the caret mid-sentence goes after that paragraph 24ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs at the start of a paragraph go before it 20ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs into an empty paragraph fill it, and rejecting leaves it empty again 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a table at the end of a paragraph 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a person typing inside a drafted paragraph keeps it standing when the draft is rejected 10ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > treats a non-breaking space and any whitespace run as one space 6ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads list markers in a prefix as the reader writes them 8ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads heading markers and numbered items in a prefix and a suffix 10ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads table cell separators in a prefix 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > a quote across a paragraph break is not found — it names no one place to redline 5ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > does not count an occurrence inside a pending suggestion toward ambiguity 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses overlaps-suggestion when the only occurrence is inside a pending suggestion 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses overlaps-suggestion when the quote runs into a pending deletion 6ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when a given prefix or suffix contradicts the one occurrence 11ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when the context fits none of several occurrences 6ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > does not move the caret, and does not scroll 6ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > a caret after the quote is carried past the proposal, still at the same words 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > redlines an editable rich section 115ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable on a frozen section 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable in source mode, where the editor is not the document 26ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines the open section when the base hash is the section as loaded 345ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines when the base updated_at is the section as loaded, in either serialization 129ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the hash AnA read is not the stored content, and changes nothing 124ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the section was saved after AnA read it, and changes nothing 130ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when either of two bases differs 107ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses no-base when the proposal names no version of the section 130ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses wrong-section when the proposal is for a section that is not open 134ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > passes the editor’s own refusal through, and keeps the existing fields 92ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — after a save > a base read before the save is stale after it, through the old bridge and the new one 109ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses not-editable on a frozen document 84ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses for the seal itself, even where the editor would take the proposal 74ms
+
+### Each failure, first lines
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines the open section when the base hash is the section as loaded
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:200:80
+    198|   it('redlines the open section when the base hash is the section as l…
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines when the base updated_at is the section as loaded, in either serialization
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:213:5
+    211|     await expect(
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the hash AnA read is not the stored content, and changes nothing
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:221:5
+    219|     await expect(
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the section was saved after AnA read it, and changes nothing
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:229:5
+    227|     await expect(
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when either of two bases differs
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:237:5
+    235|     await expect(
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses no-base when the proposal names no version of the section
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:246:56
+    244|   it('refuses no-base when the proposal names no version of the sectio…
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses wrong-section when the proposal is for a section that is not open
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:257:5
+    255|     await expect(
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > passes the editor’s own refusal through, and keeps the existing fields
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:265:5
+    263|     await expect(
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — after a save > a base read before the save is stale after it, through the old bridge and the new one
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:275:78
+    273|     const bridge = await openBridge();
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses not-editable on a frozen document
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:315:80
+    313|     const bridge = await openBridge();
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses for the seal itself, even where the editor would take the proposal
+TypeError: You must provide a Promise to expect() when using .resolves, not 'object'.
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:326:78
+    324|     // The control: an open document reaches the (always-editable) edi…
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the selected text as the person’s deletion, then inserts AnA’s text
+AssertionError: expected { authorId: 'ana', …(3) } to match object { authorId: 'user-7', …(2) }
+(1 matching property omitted from actual)
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the text of every paragraph a selection spans, joining none of them
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > withdraws a pending insertion inside the selection, as a hand deletion does
+AssertionError: expected [ …(2) ] to deeply equal [ Array(2) ]
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by two paragraphs
+AssertionError: Reject all did not restore the section: expected '<p>Intro.</p><p>Old claim text.</p><p…' to be '<p>Intro.</p><p>Old claim text.</p><p…' // Object.is equality
+
+Expected: "<p>Intro.</p><p>Old claim text.</p><p>Closing.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by a list: accepting takes the struck paragraph with it
+AssertionError: Accept all is not what was proposed: expected '<p>Intro.</p><p></p><ul><li><p>first …' to be '<p>Intro.</p><ul><li><p>first control…' // Object.is equality
+
+Expected: "<p>Intro.</p><ul><li><p>first control</p></li><li><p>second control</p></li></ul><p>Closing.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > the tail of a paragraph replaced by two paragraphs
+AssertionError: Reject all did not restore the section: expected '<p>Intro. Old tail.</p><p></p><p></p>…' to be '<p>Intro. Old tail.</p><p>Closing.</p>' // Object.is equality
+
+Expected: "<p>Intro. Old tail.</p><p>Closing.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > refuses structural, changing nothing, when paragraphs would go inside a sentence
+AssertionError: Line one
+
+Line two: expected { ok: true } to deeply equal { ok: false, reason: 'structural' }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > keeps the whitespace a replacement carries (no trimming of an inline edit)
+AssertionError: expected [ '30 C' ] to deeply equal [ '30 C ' ]
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > paragraphs drafted over words mid-sentence go after that paragraph, never into it
+AssertionError: Reject all did not restore the section: expected '<p>Stable for 18 months</p><p></p><p>…' to be '<p>Stable for 18 months at 25 °C.</p>…' // Object.is equality
+
+Expected: "<p>Stable for 18 months at 25 °C.</p><p>Closing.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a list drafted over a whole paragraph
+AssertionError: Accept all is not what was proposed: expected '<p>Intro.</p><p></p><ul><li><p>first …' to be '<p>Intro.</p><ul><li><p>first control…' // Object.is equality
+
+Expected: "<p>Intro.</p><ul><li><p>first control</p></li><li><p>second control</p></li></ul><p>Closing.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > one paragraph at the end of a paragraph
+AssertionError: Reject all did not restore the section: expected '<p>Stability summary.</p><p></p><p>Cl…' to be '<p>Stability summary.</p><p>Closing.<…' // Object.is equality
+
+Expected: "<p>Stability summary.</p><p>Closing.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > two paragraphs at the end of the section
+AssertionError: Reject all did not restore the section: expected '<p>Stability summary.</p><p></p><p></…' to be '<p>Stability summary.</p>' // Object.is equality
+
+Expected: "<p>Stability summary.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a paragraph with the caret mid-sentence goes after that paragraph
+AssertionError: Reject all did not restore the section: expected '<p>Stability</p><p></p><p> summary.</…' to be '<p>Stability summary.</p>' // Object.is equality
+
+Expected: "<p>Stability summary.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs at the start of a paragraph go before it
+AssertionError: Reject all did not restore the section: expected '<p></p><p></p><p>Stability summary.</…' to be '<p>Stability summary.</p>' // Object.is equality
+
+Expected: "<p>Stability summary.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs into an empty paragraph fill it, and rejecting leaves it empty again
+AssertionError: Reject all did not restore the section: expected '<p>Stability summary.</p><p></p><p></…' to be '<p>Stability summary.</p><p></p><p>Cl…' // Object.is equality
+
+Expected: "<p>Stability summary.</p><p></p><p>Closing.</p>"
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > treats a non-breaking space and any whitespace run as one space
+AssertionError: expected { ok: false, reason: 'not-found' } to deeply equal { ok: true }
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads list markers in a prefix as the reader writes them
+AssertionError: expected { ok: false, reason: 'ambiguous' } to deeply equal { ok: true }
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads heading markers and numbered items in a prefix and a suffix
+AssertionError: expected { ok: false, reason: 'ambiguous' } to deeply equal { ok: true }
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads table cell separators in a prefix
+AssertionError: expected { ok: false, reason: 'ambiguous' } to deeply equal { ok: true }
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > does not count an occurrence inside a pending suggestion toward ambiguity
+AssertionError: expected { ok: false, reason: 'ambiguous' } to deeply equal { ok: true }
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when a given prefix or suffix contradicts the one occurrence
+AssertionError: expected { ok: true } to deeply equal { ok: false, reason: 'not-found' }
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when the context fits none of several occurrences
+AssertionError: expected { ok: false, reason: 'ambiguous' } to deeply equal { ok: false, reason: 'not-found' }
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > does not move the caret, and does not scroll
+AssertionError: expected [ 67, 67 ] to deeply equal [ 2, 7 ]
+
+- Expected
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > a caret after the quote is carried past the proposal, still at the same words
+AssertionError: expected '. Closi' to be 'Closing' // Object.is equality
+
+Expected: "Closing"
+ Test Files  2 failed (2)
+      Tests  35 failed | 20 passed (55)
+
+
+## GREEN 2026-10-01T20:36:14Z — the same two files after the fixes
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the selected text as the person’s deletion, then inserts AnA’s text 132ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the text of every paragraph a selection spans, joining none of them 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > withdraws a pending insertion inside the selection, as a hand deletion does 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > a collapsed caret still inserts with nothing struck (the shipped behaviour) 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > strikes the single match and inserts the replacement after it, both AnA’s 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > reads the replacement as the markdown subset insertSuggestedContent reads 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > refuses not-found when the quote is not in the section, and changes nothing 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > refuses ambiguous when the quote occurs twice, and changes nothing 15ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > lets a suffix pick the occurrence it follows 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > lets a prefix pick the occurrence it precedes, across a paragraph break 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > an empty replacement is a deletion proposal only 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > refuses rather than restrike text that is already a pending suggestion 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > refuses not-editable on an editor that is not editable 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a phrase replaced inside a sentence 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by two paragraphs 30ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by a list: accepting takes the struck paragraph with it 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > the tail of a paragraph replaced by two paragraphs 34ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > refuses structural, changing nothing, when paragraphs would go inside a sentence 23ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > keeps the whitespace a replacement carries (no trimming of an inline edit) 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a phrase 33ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > paragraphs drafted over words mid-sentence go after that paragraph, never into it 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a list drafted over a whole paragraph 50ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > one paragraph at the end of a paragraph 36ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > two paragraphs at the end of the section 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a paragraph with the caret mid-sentence goes after that paragraph 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs at the start of a paragraph go before it 33ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs into an empty paragraph fill it, and rejecting leaves it empty again 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a table at the end of a paragraph 70ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a person typing inside a drafted paragraph keeps it standing when the draft is rejected 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > treats a non-breaking space and any whitespace run as one space 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads list markers in a prefix as the reader writes them 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads heading markers and numbered items in a prefix and a suffix 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads table cell separators in a prefix 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > a quote across a paragraph break is not found — it names no one place to redline 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > does not count an occurrence inside a pending suggestion toward ambiguity 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses overlaps-suggestion when the only occurrence is inside a pending suggestion 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses overlaps-suggestion when the quote runs into a pending deletion 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when a given prefix or suffix contradicts the one occurrence 26ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when the context fits none of several occurrences 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > does not move the caret, and does not scroll 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > a caret after the quote is carried past the proposal, still at the same words 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines the open section when the base hash is the section as loaded 375ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > redlines an editable rich section 143ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable on a frozen section 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable in source mode, where the editor is not the document 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines when the base updated_at is the section as loaded, in either serialization 228ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the hash AnA read is not the stored content, and changes nothing 127ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the section was saved after AnA read it, and changes nothing 118ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when either of two bases differs 122ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses no-base when the proposal names no version of the section 83ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses wrong-section when the proposal is for a section that is not open 95ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > passes the editor’s own refusal through, and keeps the existing fields 97ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — after a save > a base read before the save is stale after it, through the old bridge and the new one 214ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses not-editable on a frozen document 74ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses for the seal itself, even where the editor would take the proposal 184ms
+ Test Files  2 passed (2)
+      Tests  55 passed (55)
+
+## What changed (by review finding)
+
+1  Reversible redlines. Drafted blocks never split a paragraph: they go between
+   blocks (after the paragraph; before it when a caret is at its start), and
+   their text carries `ownsBlock` (data-owns-block on <ins>/<del>), so the
+   decision that removes the text removes the paragraph it made (rejecting a
+   drafted paragraph) or wholly replaced (accepting the strike of a paragraph
+   the quote/selection covered entirely) — checked at decision time
+   (deleteDecided: whole content, every node owned, container can lose it).
+   A replacement continuing its paragraph (quote/selection ending it, or a
+   caret in an empty paragraph) puts its first paragraph inline, unowned.
+   proposeReplacement refuses `structural` for blocks after a quote that ends
+   mid-sentence; insert-over-selection puts them after that paragraph; a caret
+   mid-sentence puts them after the paragraph. Contract tests: reject-all ==
+   original HTML exactly (live, and after reload from saved HTML), accept-all
+   == intended HTML, for proposeReplacement, insert over a selection and the
+   caret insert.
+2  insert-over-selection: the struck selection is the person's (storage.author,
+   no turn record); the insertion stays AnA's.
+3  Inline replacements/insertions keep their leading/trailing whitespace
+   (only blank lines at the edges are dropped).
+4  EditorBridgeProposal requires sectionId (wrong-section otherwise); takes
+   baseSha256 (hex SHA-256 of the STORED section content as loaded, via
+   crypto.subtle — the value authoring-read computes in SQL) and/or
+   baseUpdatedAt; neither -> no-base; either differing -> stale; a bridge whose
+   effect was cleaned up (save, revert, section switch) -> stale, checked again
+   after the async hash. propose returns a Promise.
+5  Quote matching: every whitespace run, NBSP included, is one space, and the
+   match strikes the whole run it read; prefix/suffix drop the reader's
+   line-start markers (#, -, *, +, N., N), "Table:") and read " | " as
+   whitespace on both sides. A quote across a paragraph/cell break stays
+   not-found; the ProposeRefusal doc says so.
+6  Occurrences touching a pending suggestion are not counted toward ambiguity;
+   if they are the only ones -> overlaps-suggestion.
+8  proposeReplacement no longer sets the selection or scrolls; the person's
+   selection is mapped through the change.
+9  Given prefix/suffix must fit: a single occurrence they contradict, or none
+   of several -> not-found (the old "context fitting none of several" case was
+   'ambiguous'; that test now pins not-found, and 'ambiguous' is pinned with
+   context both occurrences carry).
+10 Tests added: quote running into a pending <del>, the sealed branch isolated
+   (RichSectionEditor stubbed always-editable; the control reaches it, the
+   sealed document does not), trailing/leading whitespace, structural reject
+   round-trips, bridge after a real Save (old bridge and new bridge refuse the
+   pre-save hash and updated_at; the post-save bases are taken).
+   conversationThreadCanvas.test.tsx: jsdom rect polyfill only. (Not
+   reproducible red at this point: with proposeReplacement no longer scrolling
+   the file ran clean before the polyfill too — 18/18, no unhandled error.)
+
+## Not fixed, and why
+
+- A draft that ENDS the section with a table/list gets StarterKit TrailingNode's
+  empty paragraph after it; that paragraph carries no mark and survives a
+  rejection. Indistinguishable from an empty last paragraph the author kept, so
+  removing it would be the wrong guess half the time. Documented in
+  suggestions.ts ("KNOWN LIMIT"); the contract tests place blocks before a
+  following paragraph.
+- Accepting the strike of a whole paragraph is only paragraph-removing for the
+  proposal/selection doors (ownsBlock); a person's own hand strike of a whole
+  paragraph still leaves the empty paragraph on accept, as it always has.
+- Hard breaks: collectSuggestions counts text nodes only, so a struck <br>
+  inside a selection is left behind on accept (pre-existing; probe S8). Quotes
+  never match across a hard break.
+- Prefix/suffix that run through a pending suggestion do not fit (the reader
+  labels suggestions; the editor's text does not) and are refused not-found
+  rather than re-rendered in the reader's label format, which lives in the
+  server module and would be a second copy of it.
+
+## Mutation reds (each gate shown failing on the case it exists for)
+### MUTATION M1 bridge: sealed check removed
+#    client/src/concept2cure/v2/editor/DocumentWorkbench.tsx : if (docSealed) return { ok: false, reason: 'not-editable' }; -> 
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses for the seal itself, even where the editor would take the proposal 162ms
+      Tests  1 failed | 10 passed (11)
+### MUTATION M2 bridge: both post-cleanup (live) checks removed
+#    client/src/concept2cure/v2/editor/DocumentWorkbench.tsx : if (!live) return { ok: false, reason: 'stale' }; -> 
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — after a save > a base read before the save is stale after it, through the old bridge and the new one 249ms
+      Tests  1 failed | 10 passed (11)
+### MUTATION M14 table cell separators not read as whitespace
+#    client/src/concept2cure/v2/editor/suggestions.ts : const comparable = (s: string): string => s.replace(/\|/g, ' ').replace(/\s+/g, ' '); -> const comparable = (s: string): string => s.replace(/\s+/g, ' ');
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads table cell separators in a prefix 18ms
+      Tests  1 failed | 43 passed (44)
+### MUTATION M3 bridge: hash base ignored
+#    client/src/concept2cure/v2/editor/DocumentWorkbench.tsx : if (baseSha && (await loaded.sha256()) !== baseSha) return 'stale'; -> if (baseSha) await loaded.sha256();
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the hash AnA read is not the stored content, and changes nothing 145ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when either of two bases differs 124ms
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — after a save > a base read before the save is stale after it, through the old bridge and the new one 222ms
+      Tests  3 failed | 8 passed (11)
+### MUTATION M15 bridge: no base accepted
+#    client/src/concept2cure/v2/editor/DocumentWorkbench.tsx : if (!baseSha && !baseAt) return 'no-base'; -> 
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses no-base when the proposal names no version of the section 120ms
+      Tests  1 failed | 10 passed (11)
+### MUTATION M16 bridge: section id not checked
+#    client/src/concept2cure/v2/editor/DocumentWorkbench.tsx : if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' }; -> 
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses wrong-section when the proposal is for a section that is not open 99ms
+      Tests  1 failed | 10 passed (11)
+### MUTATION M4 decisions: owned paragraphs never removed
+#    client/src/concept2cure/v2/editor/suggestions.ts : if (container.canReplace(index, index + 1)) { -> if (false) {
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by two paragraphs 29ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by a list: accepting takes the struck paragraph with it 37ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > the tail of a paragraph replaced by two paragraphs 35ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > paragraphs drafted over words mid-sentence go after that paragraph, never into it 27ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a list drafted over a whole paragraph 29ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > one paragraph at the end of a paragraph 20ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > two paragraphs at the end of the section 28ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a paragraph with the caret mid-sentence goes after that paragraph 23ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs at the start of a paragraph go before it 29ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs into an empty paragraph fill it, and rejecting leaves it empty again 25ms
+      Tests  10 failed | 34 passed (44)
+### MUTATION M5 drafts: caret blocks split the paragraph again (placed at the caret)
+#    client/src/concept2cure/v2/editor/suggestions.ts : const boundary = before ? $at.before() : $at.after(); -> const boundary = at;
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > a collapsed caret still inserts with nothing struck (the shipped behaviour) 29ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by two paragraphs 10ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by a list: accepting takes the struck paragraph with it 31ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > the tail of a paragraph replaced by two paragraphs 8ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > paragraphs drafted over words mid-sentence go after that paragraph, never into it 11ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a list drafted over a whole paragraph 30ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > one paragraph at the end of a paragraph 9ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > two paragraphs at the end of the section 9ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a paragraph with the caret mid-sentence goes after that paragraph 13ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs at the start of a paragraph go before it 8ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs into an empty paragraph fill it, and rejecting leaves it empty again 10ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a table at the end of a paragraph 9ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a person typing inside a drafted paragraph keeps it standing when the draft is rejected 13ms
+      Tests  13 failed | 31 passed (44)
+### MUTATION M6 selection strike attributed to AnA again
+#    client/src/concept2cure/v2/editor/suggestions.ts : const at = strikeRanges(t, ranges, state.schema.marks.deletion, person); -> const at = strikeRanges(t, ranges, state.schema.marks.deletion, drafted);
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the selected text as the person’s deletion, then inserts AnA’s text 114ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the text of every paragraph a selection spans, joining none of them 34ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > withdraws a pending insertion inside the selection, as a hand deletion does 15ms
+      Tests  3 failed | 41 passed (44)
+### MUTATION M7 inline replacement trimmed again
+#    client/src/concept2cure/v2/editor/suggestions.ts : const body = withoutBlankEdges(text ?? ''); -> const body = (text ?? '').trim();
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > keeps the whitespace a replacement carries (no trimming of an inline edit) 53ms
+      Tests  1 failed | 43 passed (44)
+### MUTATION M8 quote whitespace not normalised
+#    client/src/concept2cure/v2/editor/suggestions.ts : const space = /\s/.test(chars[i]); -> const space = false;
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > treats a non-breaking space and any whitespace run as one space 16ms
+      Tests  1 failed | 43 passed (44)
+### MUTATION M9 reader markers not stripped
+#    client/src/concept2cure/v2/editor/suggestions.ts : .map((line, i) => (i === 0 && firstLineIsContent ? line : line.replace(READER_MARKER, ''))) -> .map((line) => line)
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads list markers in a prefix as the reader writes them 19ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads heading markers and numbered items in a prefix and a suffix 9ms
+      Tests  2 failed | 42 passed (44)
+### MUTATION M10 ambiguity counts suggestions again
+#    client/src/concept2cure/v2/editor/suggestions.ts : const live = matches.filter((m) => !touchesSuggestion(doc, m)); -> const live = matches.some((m) => touchesSuggestion(doc, m)) && matches.length === 1 ? [] : matches;
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > does not count an occurrence inside a pending suggestion toward ambiguity 12ms
+      Tests  1 failed | 43 passed (44)
+### MUTATION M11 contradicting context ignored for a single match
+#    client/src/concept2cure/v2/editor/suggestions.ts : const fitting = anchored ? live.filter((m) => contextFits(doc, m, proposal.prefix, proposal.suffix)) : live; -> const fitting = anchored && live.length > 1 ? live.filter((m) => contextFits(doc, m, proposal.prefix, proposal
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when a given prefix or suffix contradicts the one occurrence 18ms
+      Tests  1 failed | 43 passed (44)
+### MUTATION M12 caret moved and scrolled again
+#    client/src/concept2cure/v2/editor/suggestions.ts : tr.setMeta('addToHistory', false); -> tr.setMeta('addToHistory', false);
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > does not move the caret, and does not scroll 19ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > a caret after the quote is carried past the proposal, still at the same words 11ms
+      Tests  2 failed | 42 passed (44)
+### MUTATION M13 structural refusal removed (blocks placed mid-sentence)
+#    client/src/concept2cure/v2/editor/suggestions.ts : if (placing === 'quote' && !atEnd) return null; -> 
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > refuses structural, changing nothing, when paragraphs would go inside a sentence 18ms
+      Tests  1 failed | 43 passed (44)
+
+## Neighbours: every client test that imports suggestions / TrackChanges / RichSectionEditor / DocumentWorkbench / DocumentCanvas / findReplace, plus conversationThreadCanvas
+ Test Files  39 passed (39)
+      Tests  426 passed (426)
+
+## eslint (changed files): 0 errors; ratchet:
+[ci:eslint-warning-ratchet] --since HEAD (213c9c7df) -- 4 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+## eslint on the untracked test files:
+clean (0 problems)
+## tsc: NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json -> exit 0, 0 errors

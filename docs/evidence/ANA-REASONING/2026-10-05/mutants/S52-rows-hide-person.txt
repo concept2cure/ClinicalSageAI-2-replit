@@ -1,0 +1,12 @@
+Mutant S52-rows-hide-person: the rows do not say which claims are only in the person's message
+
+--- client/src/concept2cure/components/ana/AnswerCheckRows.tsx
+- {fromPerson.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — the engine's check leads > says a claim found only in the person's message is theirs, never found (HS-3) 22ms
+      Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,9 @@
+── 21b. A batch record cites the Vault certificate it was taken from; a reissued certificate holds the sections that read it until a person re-verifies
+   ✓ the program's records list, batch record batch:af1cd8c0-0c5b-4363-9eb7-4d560c149bf8 among them
+   ✓ batch:af1cd8c0-0c5b-4363-9eb7-4d560c149bf8 linked to the certificate it was taken from
+   ✓ the Vault names the use: evidence for batch:af1cd8c0-0c5b-4363-9eb7-4d560c149bf8, read by Module 3 §3.2.P.3, 3.2.R.1.US
+   ✓ the reissued certificate holds 2 approved section(s): 2 approved section(s) read CMC records taken from a Vault document that has since been superseded or withdrawn. Verify each record against t
+   ✓ re-verified: the link moved to the reissued certificate with the person's reason, and the hold lifted
+
+
+════ RESULT: 126 passed, 0 failed ════

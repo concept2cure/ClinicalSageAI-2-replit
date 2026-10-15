@@ -1,0 +1,6 @@
+server/routes/authoring.router.ts:6940 lacks assertUploadSafe
+server/routes/authoring.router.ts:7091 lacks assertUploadSafe
+server/routes/chat.ts:53 lacks assertUploadSafe
+server/routes/vault-ingest.ts:70 lacks assertUploadSafe
+[ci:upload-guards] OK — 4 unguarded multer site(s) across 3 file(s), none new; 19 file(s) build uploads.
+exit=0

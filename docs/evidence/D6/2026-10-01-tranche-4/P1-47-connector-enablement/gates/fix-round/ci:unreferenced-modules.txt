@@ -1,0 +1,9 @@
+# Fix round, 2026-10-01T15:29:48Z: npm run ci:unreferenced-modules
+
+> concept2cure-riai@1.0.0 ci:unreferenced-modules
+> node scripts/ci/check-unreferenced-modules.mjs
+
+Unreferenced modules: 82 (baseline 82)
+
+OK: no new unreachable modules.
+exit=0

@@ -394,7 +394,7 @@ describe("the writers that ran outside their membership's organization now run i
       const res = await request(app)
         .patch(`/api/tenant-users/${ORG_B}/${userB}`)
         .set(auth(accessToken(multiAdmin, ORG_A, 'admin')))
-        .send({ role: 'viewer' });
+        .send({ role: 'viewer', reason: `${TAG} cross-organization role change` });
       expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
       expect(await roleOf(ORG_B, userB)).toBe('viewer');
     } finally {

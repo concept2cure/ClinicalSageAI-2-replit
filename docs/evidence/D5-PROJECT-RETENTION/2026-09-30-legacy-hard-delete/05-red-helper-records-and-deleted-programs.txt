@@ -1,0 +1,6 @@
+ × server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > a deleted program's anchor is an ordinary project: drafts only, nothing held 9ms
+ × server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > a draft that carries a signature, or a lock snapshot, is a record 3ms
+ × server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionRefusal > governed work is refused with its count, and the remedy is archive 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 passed (11)

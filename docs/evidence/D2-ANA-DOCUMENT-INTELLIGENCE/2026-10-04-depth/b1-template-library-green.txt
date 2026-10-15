@@ -1,0 +1,35 @@
+# Re-run 2026-10-04: new test + every test importing the changed file or its dependents (6 files)
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 11ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16 2ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > every section says what it is for, and §14 is the displays NOT in the text 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > carries every numbered section in order 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > §12–§19 carry the E2C(R2) headings 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > is not served for CTD 1.1 (FDA Forms) 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > carries no single CTD code, and its basis names FDA 1.2 and EU 1.0 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — unaffected lookups (guard) > Clinical Overview stays at 2.5 and the QOS still resolves by 2.3 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > has unique types, required fields, and at least one required document each 2ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > every referenced templateId resolves in the document template library 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > covers the major submission types 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports ready when all required documents and forms are present 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports the specific missing required documents and forms 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > does not let optional documents block readiness 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > returns undefined for an unknown submission type 0ms
+ Test Files  6 passed (6)
+      Tests  142 passed (142)
+(per-test lines for submission-center-tools, csr-e3-overlay and concept2cure-project-bootstrap omitted; all passed, counted above)
+
+# eslint server/services/market-specs/document-template-library.ts tests/regulatory/template-library-truth.test.ts: no output (0 errors, 0 warnings)
+
+# Earlier run (5 files, before the bootstrap route test was added):
+      Tests  110 passed (110)
+   Start at  20:28:04
+   Duration  12.12s (transform 13.16s, setup 523ms, import 17.82s, tests 1.19s, environment 1ms)
+

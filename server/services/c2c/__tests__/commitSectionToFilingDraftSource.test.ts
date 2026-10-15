@@ -35,8 +35,16 @@ function makeClient() {
       if (/to_regclass\('public\.c2c_document_sections'\)/.test(sql)) {
         return { rows: [{ ok: true }] };
       }
-      if (/FROM authoring_sections s/.test(sql)) {
+      if (/FROM authoring_sections s\s+JOIN authoring_documents/.test(sql)) {
         return { rows: [{ code: '3.2.S.3', c2c_document_id: 'doc-1' }] };
+      }
+      // The filing's outline (2026-10-08: the section files into its own key).
+      if (/SELECT ds\.section_key FROM c2c_document_sections/.test(sql)) {
+        return { rows: [{ section_key: '3.2.S.3' }] };
+      }
+      // The document's sections under that key: only this one.
+      if (/FROM authoring_sections s\s+WHERE s\.tenant_id/.test(sql)) {
+        return { rows: [{ id: 'sec-1', code: '3.2.S.3', title: 'Impurities', content: '' }] };
       }
       if (/UPDATE c2c_document_sections/.test(sql)) {
         return { rows: [{ section_key: '3.2.S.3' }] };

@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+
+// Copy this file to scratch, then pass the evidence directory, checkout,
+// downloaded dependency-audit-results.json, and optional historical assembler.
+const [evidence, repo, auditFile, assemblerFile] = process.argv.slice(2);
+assert.ok(evidence && repo && auditFile);
+const snapshot = JSON.parse(await readFile(path.join(evidence, 'API-SNAPSHOT.json'), 'utf8'));
+const policy = JSON.parse(await readFile(path.join(repo, 'config/release-evidence-policy.v1.json'), 'utf8'));
+const modulePath = assemblerFile || path.join(repo, 'scripts/release-evidence/assemble-input.mjs');
+const { assembleInput } = await import(pathToFileURL(modulePath).href);
+const fetchJson = async url => {
+  const parsed = new URL(url);
+  if (parsed.pathname.endsWith('/actions/runs')) return snapshot.runs;
+  const match = parsed.pathname.match(/\/actions\/runs\/(\d+)\/jobs$/);
+  assert.ok(match && snapshot.jobsByRun[match[1]], 'every request has a captured API record');
+  return snapshot.jobsByRun[match[1]];
+};
+const audit = await readFile(auditFile);
+try {
+  const { input, files } = await assembleInput({
+    env: { GITHUB_REPOSITORY: 'concept2cure/ClinicalSageAI-2-replit', GITHUB_RUN_ID: '37697288645',
+      GITHUB_SHA: snapshot.commit.sha, GITHUB_TOKEN: 'unused',
+      GITHUB_WORKFLOW: 'CI', RELEASE_EVIDENCE_NPM_AUDIT: auditFile, RELEASE_EVIDENCE_WAIT_SECONDS: '0' },
+    policy, repo: { commit: snapshot.commit.sha, tree: snapshot.commit.tree }, fetchJson,
+    readFileFn: file => { assert.equal(file, auditFile); return audit; },
+  });
+  assert.equal(input.automatedEvidence.upgrade.status, 'passed');
+  assert.deepEqual(input.automatedEvidence.upgrade.summary, { total: 2, passed: 2, failed: 0, skipped: 0, unknown: 0 });
+  const upgrade = JSON.parse(files.find(f => f.path.endsWith('ci-upgrade-step-records.json')).contents);
+  const actual = snapshot.jobsByRun[37697288645].jobs.find(j => j.name === 'Blank DB Provisioning + Deploy Migration');
+  assert.equal(upgrade.workflowRunId, 37697288645);
+  assert.equal(upgrade.headSha, snapshot.commit.sha);
+  for (const step of upgrade.steps) assert.deepEqual(step, actual.steps.find(s => s.name === step.name));
+  assert.deepEqual(files.find(f => f.path.endsWith('dependency-audit-results.json')).contents, audit);
+  console.log(JSON.stringify({ success: true, source: snapshot.commit.sha, run: 37697288645,
+    apiRecordSubset: true, localReplayOfActualRecords: true, remoteCandidateReleasePassed: false,
+    primaryFiles: files.length, workflowJobs: input.workflowJobs.length,
+    upgrade: input.automatedEvidence.upgrade,
+    stepRecordsEqualActualAPI: true, auditBytesPreserved: true,
+    auditSha256: createHash('sha256').update(audit).digest('hex') }, null, 2));
+} catch (error) {
+  console.log(JSON.stringify({ success: false, reason: error.message }));
+  process.exitCode = 1;
+}

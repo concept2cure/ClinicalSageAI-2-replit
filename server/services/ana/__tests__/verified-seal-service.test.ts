@@ -5,6 +5,7 @@
  * written inside ONE BEGIN/COMMIT.
  */
 import { describe, it, expect, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 
 import {
   sealVerifiedVersion,
@@ -35,6 +36,22 @@ function signerLookup(sql: string, signer: typeof MEMBER_SIGNER | null) {
   return null;
 }
 
+/** The canonical project-membership query is scoped to this fixture's tenant. */
+function ownedProjectLookup(sql: string, params?: unknown[]) {
+  if (/FROM projects\b/.test(sql)) {
+    return { rows: params?.[0] === '7' && params?.[1] === 1 ? [{ present: 1 }] : [] };
+  }
+  return null;
+}
+
+const ARTIFACT_LOOKUP_SQL = /SELECT id,\s*artifact_id,\s*content FROM concept2cure_artifacts/;
+const VERSION_LOOKUP_SQL = /SELECT id,\s*version,\s*content,\s*content_hash FROM concept2cure_artifact_versions/;
+
+function matchingVersion(id: number, version: number) {
+  const content = baseInput().content;
+  return { id, version, content, content_hash: createHash('sha256').update(content).digest('hex') };
+}
+
 /**
  * The span-lineage gate sealVerifiedVersion now enlists (ledger L177). Every
  * mock in this file has to answer it or the seal dies on `rows[0].id` inside
@@ -58,15 +75,24 @@ function lineageStub(sql: string) {
 }
 
 /** A fake PoolClient that records queries and returns canned RETURNING rows. */
-function makePool(signer: typeof MEMBER_SIGNER | null = MEMBER_SIGNER) {
+function makePool(
+  signer: typeof MEMBER_SIGNER | null = MEMBER_SIGNER,
+  persisted?: { artifact: { id: number; artifact_id: string }; version?: { id: number; version: number } },
+) {
   const queries: { sql: string; params?: unknown[] }[] = [];
   const client = {
     query: vi.fn(async (sql: string, params?: unknown[]) => {
       queries.push({ sql, params });
+      const project = ownedProjectLookup(sql, params);
+      if (project) return project;
       const who = signerLookup(sql, signer);
       if (who) return who;
       const lineage = lineageStub(sql);
       if (lineage) return lineage;
+      if (ARTIFACT_LOOKUP_SQL.test(sql)) return { rows: persisted ? [{ ...persisted.artifact, content: baseInput().content }] : [] };
+      if (VERSION_LOOKUP_SQL.test(sql)) return {
+        rows: persisted?.version ? [matchingVersion(persisted.version.id, persisted.version.version)] : [],
+      };
       if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
       if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
       return { rows: [] };
@@ -127,7 +153,9 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
   });
 
   it('consumes Build-1 references without re-inserting artifact/version', async () => {
-    const { pool, queries } = makePool();
+    const { pool, queries } = makePool(MEMBER_SIGNER, {
+      artifact: { id: 900, artifact_id: 'artifact_b1' }, version: { id: 950, version: 3 },
+    });
     const result = await sealVerifiedVersion(
       baseInput({ artifactPk: 900, artifactExternalId: 'artifact_b1', existingVersionId: 950, existingVersionNumber: 3 }),
       pool,
@@ -155,14 +183,16 @@ describe('sealVerifiedVersion — resolving the row the seal binds to', () => {
     const client = {
       query: vi.fn(async (sql: string, params?: unknown[]) => {
         queries.push({ sql, params });
+        const project = ownedProjectLookup(sql, params);
+        if (project) return project;
         const who = signerLookup(sql, MEMBER_SIGNER);
         if (who) return who;
         const lineage = lineageStub(sql);
         if (lineage) return lineage;
         // External-id → artifact PK resolution (org-scoped SELECT).
-        if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [{ id: 777 }] };
+        if (ARTIFACT_LOOKUP_SQL.test(sql)) return { rows: [{ id: 777, artifact_id: 'artifact_persisted_e11', content: baseInput().content }] };
         // version number → version-row PK resolution (org-scoped SELECT).
-        if (/SELECT id, version FROM concept2cure_artifact_versions/.test(sql)) return { rows: [{ id: 888, version: 4 }] };
+        if (VERSION_LOOKUP_SQL.test(sql)) return { rows: [matchingVersion(888, 4)] };
         return { rows: [] };
       }),
       release: vi.fn(),
@@ -176,8 +206,8 @@ describe('sealVerifiedVersion — resolving the row the seal binds to', () => {
 
     const sqls = queries.map((q) => q.sql);
     // The persisted rows were RESOLVED, not re-inserted.
-    expect(sqls.some((s) => /SELECT id FROM concept2cure_artifacts/.test(s))).toBe(true);
-    expect(sqls.some((s) => /SELECT id, version FROM concept2cure_artifact_versions/.test(s))).toBe(true);
+    expect(sqls.some((s) => ARTIFACT_LOOKUP_SQL.test(s))).toBe(true);
+    expect(sqls.some((s) => VERSION_LOOKUP_SQL.test(s))).toBe(true);
     expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(false);
     expect(sqls.some((s) => /INSERT INTO concept2cure_artifact_versions\b/.test(s))).toBe(false);
 
@@ -194,16 +224,18 @@ describe('sealVerifiedVersion — resolving the row the seal binds to', () => {
     expect(audit?.params).toContain(String(888));
   });
 
-  it('E11: falls back to a fresh insert when the external id resolves to nothing (foreign/unknown id)', async () => {
+  it('refuses an explicit foreign/unknown external id without creating a fallback', async () => {
     const queries: { sql: string; params?: unknown[] }[] = [];
     const client = {
       query: vi.fn(async (sql: string, params?: unknown[]) => {
         queries.push({ sql, params });
+        const project = ownedProjectLookup(sql, params);
+        if (project) return project;
         const who = signerLookup(sql, MEMBER_SIGNER);
         if (who) return who;
         const lineage = lineageStub(sql);
         if (lineage) return lineage;
-        if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [] }; // not found / wrong org
+        if (ARTIFACT_LOOKUP_SQL.test(sql)) return { rows: [] }; // not found / wrong org
         if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
         if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
         return { rows: [] };
@@ -211,13 +243,15 @@ describe('sealVerifiedVersion — resolving the row the seal binds to', () => {
       release: vi.fn(),
     };
     const pool: SealPool = { connect: vi.fn(async () => client) };
-    const result = await sealVerifiedVersion(
+    await expect(sealVerifiedVersion(
       baseInput({ artifactExternalId: 'artifact_unknown', existingVersionNumber: 9 }),
       pool,
-    );
+    )).rejects.toMatchObject({ code: 'SEAL_TARGET_NOT_FOUND', status: 404 });
     const sqls = queries.map((q) => q.sql);
-    expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(true);
-    expect(result.versionId).toBe(202);
+    expect(sqls.some((s) => /INSERT INTO/i.test(s))).toBe(false);
+    expect(sqls).toContain('ROLLBACK');
+    expect(sqls).not.toContain('COMMIT');
+    expect(client.release).toHaveBeenCalled();
   });
 });
 
@@ -248,6 +282,8 @@ describe('sealVerifiedVersion — fail-closed gates (no DB work)', () => {
     const { pool, client, queries } = makePool();
     client.query.mockImplementation(async (sql: string, params?: unknown[]) => {
       queries.push({ sql, params });
+      const project = ownedProjectLookup(sql, params);
+      if (project) return project;
       const who = signerLookup(sql, MEMBER_SIGNER);
       if (who) return who;
       const lineage = lineageStub(sql);
@@ -315,5 +351,76 @@ describe('sealVerifiedVersion — §11.100 signer attribution', () => {
     const params = JSON.stringify(sig!.params ?? []);
     expect(params).toContain('jane@example.com');
     expect(params).not.toContain('attacker@example.com');
+  });
+});
+
+/**
+ * Ported from abandoned PR #973 (hunk a), re-implemented against v2.
+ *
+ * 1. §11.50(a)(3): `signature_meaning` is the column an inspector (and every
+ *    reader — audit-trail-ledger, docx-ledger-collector, the protocol
+ *    manifestation) reads as the MEANING of the signature. It used to receive
+ *    the free-text reason-for-change, so the row asserted "Verified clean
+ *    against source." as the meaning and the real meaning lived only in JSON.
+ * 2. A caller that names the persisted artifact by PK alone (seal-verified.ts
+ *    admits `artifactPk` without `artifactExternalId`) used to fall through to
+ *    the fallback INSERT, sealing a DUPLICATE artifact rather than the one it
+ *    named. The PK is now resolved org-scoped to its external id.
+ */
+describe('sealVerifiedVersion — #973 port', () => {
+  it('writes the §11.50 meaning, not the reason-for-change, into signature_meaning', async () => {
+    const { pool, queries } = makePool();
+    await sealVerifiedVersion(baseInput(), pool);
+    const sig = queries.find((q) => /INSERT INTO concept2cure_signatures/.test(q.sql))!;
+    const cols = sig.sql
+      .slice(sig.sql.indexOf('(') + 1, sig.sql.indexOf(')'))
+      .split(',')
+      .map((c) => c.trim());
+    const meaningIdx = cols.indexOf('signature_meaning');
+    expect(meaningIdx).toBeGreaterThan(-1);
+    expect(sig.params![meaningIdx]).toBe('APPROVER');
+    expect(sig.params![meaningIdx]).not.toBe('Verified clean against source.');
+  });
+
+  it('binds to the EXISTING artifact when only artifactPk is supplied (no duplicate insert)', async () => {
+    const queries: { sql: string; params?: unknown[] }[] = [];
+    const client = {
+      query: vi.fn(async (sql: string, params?: unknown[]) => {
+        queries.push({ sql, params });
+        const project = ownedProjectLookup(sql, params);
+        if (project) return project;
+        const who = signerLookup(sql, MEMBER_SIGNER);
+        if (who) return who;
+        const lineage = lineageStub(sql);
+        if (lineage) return lineage;
+        if (ARTIFACT_LOOKUP_SQL.test(sql)) return { rows: [{ id: 900, artifact_id: 'artifact_by_pk', content: baseInput().content }] };
+        if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
+        if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
+        return { rows: [] };
+      }),
+      release: vi.fn(),
+    };
+    const pool: SealPool = { connect: vi.fn(async () => client) };
+    const result = await sealVerifiedVersion(baseInput({ artifactPk: 900 }), pool);
+
+    const sqls = queries.map((q) => q.sql);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(false);
+    const lookup = queries.find((q) => ARTIFACT_LOOKUP_SQL.test(q.sql))!;
+    expect(lookup.sql).toMatch(/organization_id = \$1 AND project_id = \$2/);
+    expect(lookup.params).toEqual([baseInput().organizationId, baseInput().projectId, 900, null]);
+    expect(result.artifactPk).toBe(900);
+    expect(result.artifactId).toBe('artifact_by_pk');
+  });
+
+  it('refuses a foreign-org artifact PK without creating or sealing a fallback', async () => {
+    const { pool, client, queries } = makePool(); // no artifact resolves in the owned project
+    await expect(sealVerifiedVersion(baseInput({ artifactPk: 900 }), pool)).rejects.toMatchObject({
+      code: 'SEAL_TARGET_NOT_FOUND', status: 404,
+    });
+    const sqls = queries.map((q) => q.sql);
+    expect(sqls.some((s) => /INSERT INTO/i.test(s))).toBe(false);
+    expect(sqls).toContain('ROLLBACK');
+    expect(sqls).not.toContain('COMMIT');
+    expect(client.release).toHaveBeenCalled();
   });
 });

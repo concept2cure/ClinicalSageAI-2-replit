@@ -1,0 +1,104 @@
+# g-eu-postmarket-obligations — GREEN, 2026-10-05T03:47:58Z
+# step test + every test file importing the changed modules (18 files)
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > reports the six MDR types, flagging required ones for a non-implantable Class IIb device 4ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > marks absent required documents as missing and not approved 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > uses the latest version per type and runs the real validation gate 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > an approved-but-incomplete document does NOT count as gate-passing 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > Class I owes a PMS plan and PMS report, and PMCF plan + evaluation unless justified 10ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > allRequiredApproved is true only when every required doc is approved AND passes the gate 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > MDR Is is a Class I device and owes a PMS report under Art 85 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > MDR Im is a Class I device and owes a PMS report under Art 85 4ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > MDR Ir is a Class I device and owes a PMS report under Art 85 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > MDR Class Is is a Class I device and owes a PMS report under Art 85 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > MDR class im is a Class I device and owes a PMS report under Art 85 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > requires an SSCP for an implantable Class IIa device (Art 32 covers every implantable) 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > requires an SSCP for Class III and none for a custom-made Class III device 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > does not read "implantable" out of the class string 2ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR class I variants, SSCP and implantable > leaves the SSCP undetermined, and the set not approved, when implantable is not stated 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > reports the six IVDR types: PMPF and SSP, not PMCF and SSCP 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class A owes a PMS report under Art 80 and no PSUR 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class B owes a PMS report under Art 80 and no PSUR 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class Class B owes a PMS report under Art 80 and no PSUR 5ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class C owes a PSUR (Art 81) and an SSP (Art 29), PMPF under Annex XIII Part B 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class D owes a PSUR (Art 81) and an SSP (Art 29), PMPF under Annex XIII Part B 3ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class D PSURs go to the notified body through EUDAMED; Class C PSURs are made available 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "X" under MDR → class_unrecognised, no required set, never approved 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "B" under MDR → class_unrecognised, no required set, never approved 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "IIa" under IVDR → class_unrecognised, no required set, never approved 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class null under MDR → class_unrecognised, no required set, never approved 6ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "" under IVDR → class_unrecognised, no required set, never approved 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > normalises the class vocabulary per regulation 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > every row carries a well-formed basis, an article, a cadence and a recipient 6ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > at most one row decides each document type for any class and implantable state 3ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > the type vocabulary and the authoring registry include ssp, pmpf_plan and pmpf_evaluation 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > ssp: an empty document fails the gate 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > ssp: raw DRAFT scaffold fails the gate, the specialised document passes 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_plan: an empty document fails the gate 6ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_plan: raw DRAFT scaffold fails the gate, the specialised document passes 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation: an empty document fails the gate 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation: raw DRAFT scaffold fails the gate, the specialised document passes 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation must declare a reporting period 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > passes implantable through: an implantable Class IIa device owes an SSCP 74ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > an unstated implantable fact stays unknown, not false 12ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > customMade=true removes the SSCP for Class III 35ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > answers IVDR Class B with a PMS report and no PSUR 12ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses implantable=yes with 422 7ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses customMade=1 with 422 2ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses regulation=FDA with 422 2ms
+ Test Files  18 passed (18)
+      Tests  232 passed (232)
+
+# Mutation of the route tests: route passes {} instead of {implantable, customMade} and accepts any regulation value
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > passes implantable through: an implantable Class IIa device owes an SSCP 114ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > an unstated implantable fact stays unknown, not false 4ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > customMade=true removes the SSCP for Class III 4ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > answers IVDR Class B with a PMS report and no PSUR 3ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses implantable=yes with 422 3ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses customMade=1 with 422 2ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses regulation=FDA with 422 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 4 passed | 38 skipped (45)
+
+# ── FIX ROUND 1 — GREEN, 2026-10-05T04:49:39Z ──
+# step test + every importer test file (19 files incl. the new client query test)
+ Test Files  19 passed (19)
+      Tests  253 passed (253)
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "X" under MDR → class_unrecognised, class-dependent rows undetermined, never approved 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "B" under MDR → class_unrecognised, class-dependent rows undetermined, never approved 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "IIa" under IVDR → class_unrecognised, class-dependent rows undetermined, never approved 2ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class null under MDR → class_unrecognised, class-dependent rows undetermined, never approved 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "" under IVDR → class_unrecognised, class-dependent rows undetermined, never approved 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > a US class under MDR keeps the class-independent obligations and leaves the rest undetermined 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > an unset class under IVDR still owes the PMS plan and the PMPF plan/evaluation 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > an unrecognised class is never all-approved, even with every class-independent document approved 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class I does not owe an SSCP and is not left undetermined 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Is does not owe an SSCP and is not left undetermined 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Im does not owe an SSCP and is not left undetermined 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Ir does not owe an SSCP and is not left undetermined 5ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > validateDocument fails closed on a type with no validator > an unknown document type does not pass the gate and carries PM-098 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > sscp with {"regulation":"IVDR"} is refused with PM_BAD_TYPE 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > pmcf_plan with {"regulation":"IVDR"} is refused with PM_BAD_TYPE 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > pmcf_evaluation with {"regulation":"IVDR"} is refused with PM_BAD_TYPE 5ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > ssp with {"regulation":"MDR"} is refused with PM_BAD_TYPE 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > pmpf_plan with {"regulation":"MDR"} is refused with PM_BAD_TYPE 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > pmpf_evaluation with {"regulation":"MDR"} is refused with PM_BAD_TYPE 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > pmcf_plan with {"deviceClass":"IVD Class C"} is refused with PM_BAD_TYPE 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > sscp with {"deviceClass":"IVD Class D"} is refused with PM_BAD_TYPE 0ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > POST /api/post-market/programs/:id/documents/:type/generate > refuses a PMCF plan for an IVD class with 422 naming the PMPF plan 42ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses implantable=yes with 422 6ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses customMade=1 with 422 6ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > GET /api/post-market/programs/:id/documentation-status > refuses regulation=FDA with 422 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > sends no implantable or customMade when no fact is stated 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > sends a stated false as false 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > sends nothing for a null fact 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > sends the regulation, and omits an unset class rather than inventing one 2ms
+
+# ── FIX ROUND 1 MUTATION ──
+## MUTATION: validateDocument returns [] for a type with no validator; postMarketStatusQuery sends implantable=false when unstated
+      Tests  3 failed | 63 passed (66)
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > sends no implantable or customMade when no fact is stated
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > sends nothing for a null fact
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > validateDocument fails closed on a type with no validator > an unknown document type does not pass the gate and carries PM-098
+ Test Files  2 failed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+# (files restored from backup; cmp confirmed identical)

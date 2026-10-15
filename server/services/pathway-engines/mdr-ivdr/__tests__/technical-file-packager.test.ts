@@ -508,8 +508,11 @@ describe('buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-nam
     const cer = plan.manifest.entries.find((e) => e.id === 'clinical-evaluation')!;
     expect(cer.matchedByTitleOnly).toEqual(['5.3.5.4']);
     expect(plan.manifest.matchedByTitleOnly).toContainEqual({ sectionId: 'clinical-evaluation', source: '5.3.5.4' });
-    // The bench report at 4.2.1 is matched by its '4' code prefix too: not title-only.
-    expect(plan.manifest.entries.find((e) => e.id === 'preclinical-clinical')!.matchedByTitleOnly).toBeUndefined();
+    // 2026-10-05 (g-shonin-and-techdoc-fail-closed): no CTD code-prefix match any more. The bench
+    // report at 4.2.1 is placed by its title alone; the CER at 5.3.5.4 and the PMS plan at 5.3.6
+    // are no longer V&V evidence.
+    expect(plan.manifest.entries.find((e) => e.id === 'preclinical-clinical')!.matchedByTitleOnly).toEqual(['4.2.1']);
+    expect(inSlot(plan, 'preclinical-clinical')).toEqual(['doc-6.pdf']);
     // A CER at its outline key is not title-only.
     const keyed = planOf([...vaultBase.filter((l) => l.documentId !== 7), V('II.6.1.g', 'Clinical_Evaluation_Report_v2', 7), V('1.3.1', 'IFU_EN_rev3', 2), V('3.2.R', 'GSPR_Checklist_v2', 4)]);
     expect(keyed.manifest.entries.find((e) => e.id === 'clinical-evaluation')!.matchedByTitleOnly).toBeUndefined();

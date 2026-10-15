@@ -1,0 +1,145 @@
+# vitest run server/eval/pq/ server/eval/rag/ --maxWorkers=2 --reporter=verbose   (final tree; filtered: runPq's console output removed)
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — not run > control — the copy with rag NOT executable is INCOMPLETE only because rag cannot run (today's rule)
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — not run > E6 — flipped executable with no rag results in the record → INCOMPLETE naming rag, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — not run > the runner recorded that rag was not run → INCOMPLETE, and the reason carries the runner's words
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — ran, but scored nothing it can be judged on > rag ran and scored zero items → INCOMPLETE naming rag
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — ran, but scored nothing it can be judged on > every item errored → INCOMPLETE, and the errors are named
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — ran, but scored nothing it can be judged on > a record whose itemsScored is 0 while 3 items carry a score is inconsistent → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — ran, but scored nothing it can be judged on > a record whose itemsScored overstates its items → INCOMPLETE (an inconsistent record is not evidence)
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — ran, but scored nothing it can be judged on > E4 — positive items that name no resolved expected source → INCOMPLETE naming each item
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — ran, but scored nothing it can be judged on > E4 — hit rate measured on 0 items (only controls were judged) → INCOMPLETE naming hit rate
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — ran, but scored nothing it can be judged on > E5 — positive items retrieved but never judged for faithfulness, with no error → INCOMPLETE naming each item
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > ONE verified item against a floor of 3 → INCOMPLETE naming the floor, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > the floor counts DISTINCT items: the same item three times is an inconsistent record → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > the floor applies to each criterion: enough judged items, too few keyed ones → INCOMPLETE naming hit rate
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > the protocol sets no rag sample floor while rag is executable → INCOMPLETE, whatever the run scored
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > a floor of 0 is not a positive whole number → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > a floor of -1 is not a positive whole number → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > a floor of 2.5 is not a positive whole number → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > a floor of NaN is not a positive whole number → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > a floor of 30 is not a positive whole number → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the sample floor and item identity > control — a run that reaches the floor on every criterion PASSes
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — negative controls are declared, not inferred > a declared control with nothing to judge does not count as scored, and does not block
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — negative controls are declared, not inferred > an UNDECLARED item with no hit and no faithfulness is not a control → INCOMPLETE naming it, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — negative controls are declared, not inferred > a declared control that carries a hit is an inconsistent record → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — negative controls are declared, not inferred > an item that does not say whether it is a control → INCOMPLETE naming it
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — negative controls are declared, not inferred > a judged control counts toward faithfulness, as run-eval scores it
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > hit NaN → INCOMPLETE naming the item, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > faithfulness NaN → INCOMPLETE naming the item, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > hit above 1 → INCOMPLETE naming the item, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > faithfulness above 1 → INCOMPLETE naming the item, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > hit negative → INCOMPLETE naming the item, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > faithfulness negative → INCOMPLETE naming the item, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > hit Infinity → INCOMPLETE naming the item, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > faithfulness a string → INCOMPLETE naming the item, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > an out-of-range hit cannot lift a failing mean: {hit:5} beside two misses is not a pass
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > ran: "false" (a string) is a malformed record, not a run → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > servedModelVerified: "false" (a string) is not verification → INCOMPLETE naming the item
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — a score that is not a number between 0 and 1 is not a score > items that are not an array → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the protocol's rag criteria must be ones this verdict measures > no criteria at all → INCOMPLETE, never PASS on any scored item
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the protocol's rag criteria must be ones this verdict measures > minimums given as strings → INCOMPLETE naming them (a run that scored zero on both used to PASS)
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the protocol's rag criteria must be ones this verdict measures > minFaithfulness missing → INCOMPLETE naming it
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the protocol's rag criteria must be ones this verdict measures > a criterion above 1 → INCOMPLETE naming it
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — the protocol's rag criteria must be ones this verdict measures > a criterion this verdict does not measure (misspelt floor) → INCOMPLETE naming the key
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — attribution and criteria > an item that errored among scored ones → INCOMPLETE, naming it
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — attribution and criteria > an item answered by another model → INCOMPLETE, and its low score does not turn the run into a FAIL
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — attribution and criteria > an unverified item's high score does not lift the pinned model over the criterion
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — attribution and criteria > no item on the pinned model → INCOMPLETE: nothing measured the model under qualification
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — attribution and criteria > faithfulness below the criterion → FAIL
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — attribution and criteria > control — rag ran on the pinned model and met both criteria → PASS (the guard is not "rag can never pass")
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag required AND executable — attribution and criteria > a draft protocol still cannot PASS on a perfect rag run
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > required, not executable, no rag results → INCOMPLETE for exactly the one reason it is today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > required, not executable, rag not run → INCOMPLETE for exactly the one reason it is today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > required, not executable, rag scored nothing → INCOMPLETE for exactly the one reason it is today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > required, not executable, rag failing every criterion → INCOMPLETE for exactly the one reason it is today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > required, not executable, rag perfect → INCOMPLETE for exactly the one reason it is today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > required, not executable, rag malformed (NaN scores, string ran) → INCOMPLETE for exactly the one reason it is today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > not required (executable), no rag results → PASS, as today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > not required (executable), rag not run → PASS, as today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > not required (executable), rag scored nothing → PASS, as today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > not required (executable), rag failing every criterion → PASS, as today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > not required (executable), rag perfect → PASS, as today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > not required (executable), rag malformed (NaN scores, string ran) → PASS, as today
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > rag not (required and executable) — exactly today's verdict, whatever the record carries > the real protocol as shipped (draft, rag not executable) is unaffected by rag results
+ ✓ server/eval/pq/__tests__/pq-verdict-rag.test.ts > a required, executable component the verdict has no step for > → INCOMPLETE naming it: a component nobody measures cannot drop silently out of a PASS
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > control — approved protocol, enough tasks, every criterion met, every task on the pinned model → PASS
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > nothing scorable → NOT_EXECUTED, never a pass
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > an empty run → NOT_EXECUTED
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > a required component that cannot run → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > fewer tasks than the sample floor → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > a task answered by a different model → INCOMPLETE, and it does not count toward the scores
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > a task that errored → INCOMPLETE, even if the rest pass
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > coverage below the criterion → FAIL
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > a single overclaim phrase → FAIL
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > criteria met against a DRAFT protocol → INCOMPLETE, never PASS
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > "approved" with no approver named → INCOMPLETE
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > computeVerdict > a failure under a draft protocol is still reported as FAIL, not hidden as pending
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > servedModelMatches > the exact pinned version matches
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > servedModelMatches > a dated snapshot of the pinned version matches
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > servedModelMatches > a different model sharing a prefix does NOT match — gpt-4o-mini is not gpt-4o
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > servedModelMatches > the previous generation does not match — Opus 4.8 is not Opus 5
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > servedModelMatches > an unreported model does not match
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > control — a passed claim citing a PASS record for this id and version, on an approved protocol
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > control — pending with no reference
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > passed with nothing to point at
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > a reference that cannot be read
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > a record for a different model
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > the registry bumped the pinned version after the PQ — the claim no longer holds
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > a record that says INCOMPLETE cannot support "passed"
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > a PASS against a draft protocol cannot support "passed"
+ ✓ server/eval/pq/__tests__/pq-verdict.test.ts > verifyPqClaim > a file that is not a PQ record
+ ✓ server/eval/pq/__tests__/gold-bank-floor.test.ts > gold bank meets the PQ protocol sample floor > the protocol states a sample floor
+ ✓ server/eval/pq/__tests__/gold-bank-floor.test.ts > gold bank meets the PQ protocol sample floor > every document type reaches the floor, counted as run-pq counts
+ ✓ server/eval/pq/__tests__/gold-bank-floor.test.ts > gold tasks are well formed > task ids are unique
+ ✓ server/eval/pq/__tests__/gold-bank-floor.test.ts > gold tasks are well formed > every generation task carries the ground truth it is scored against
+ ✓ server/eval/pq/__tests__/gold-bank-floor.test.ts > gold tasks are well formed > no forbidden pattern can match inside an unrelated word
+ ✓ server/eval/pq/__tests__/gold-bank-floor.test.ts > gold tasks are well formed > a captured candidate, where present, is a string the offline runner can score
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > sends every task to exactly the model under qualification
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > scores the model output — never the captured candidate stored in the gold bank
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > a task answered by a different model is flagged, and the run cannot pass
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > a provider that does not say which model answered is not verified
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > on the current draft protocol, a perfect model is INCOMPLETE — and the reasons say why
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > the sample floor is no longer one of those reasons — the bank reaches it
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > the extraction component runs, and every task goes to the pinned model
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > scores the model's extraction — never the captured candidateExtraction
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > an extraction task answered by a different model is flagged, and the run cannot pass
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > a reply with no JSON is NOT EXECUTED, not a score of zero
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > reads JSON the model wrapped in a fenced block or prose
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > an overclaim is a FAIL even on the draft protocol
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > the record carries its provenance and is what verifyPqClaim reads
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq live path > an unknown model id is refused before anything runs
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq rag component > the record says rag was not run, and why
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq rag component > control — the redirect works: an approved copy with rag not required lets a perfect model PASS
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq rag component > E6 — an approved copy with rag flipped executable: a perfect model is NOT a PASS; it is INCOMPLETE naming rag
+ ✓ server/eval/pq/__tests__/run-pq.test.ts > run-pq rag component > a caller cannot hand run-pq another protocol: a protocolPath is ignored, and the record hashes the real file
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports no gaps when the generator and a different judge are both pinned
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned generator — the answer is unattributable
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned judge — an unpinned model graded it
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses self-grading: the same model cannot answer and judge
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports BOTH gaps for a bare run — the default invocation
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > does not treat an empty string as a pin
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --model to the retrieval/generation call
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model entirely when unpinned, rather than sending undefined
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --judge-model to the judge call
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model from the judge call when unpinned
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > returns 0 for an empty list
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > averages values
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 1 when an expected id is within top-k
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when the expected id is below the cutoff
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when there are no expected ids
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > is the fraction of expected ids found in top-k
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > respects the k cutoff
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is the fraction of top-k that are relevant
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is 0 for k <= 0
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1 when the first result is relevant
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1/rank of the first relevant result
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 0 when nothing relevant is retrieved
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > scores the fraction of expected substrings present, case-insensitively
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > is 0 when no expected substrings are given
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > detects the pipeline refusal phrasing
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > is false for a substantive answer
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > parses a bare numeric judge response and clamps to [0,1]
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > returns 0 when the judge emits no number
+ Test Files  6 passed (6)
+      Tests  141 passed (141)

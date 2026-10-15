@@ -1,0 +1,40 @@
+# 2026-10-01T06:14:52Z working tree. A hand GRANT widens app_service on two stores; the deploy's step-5 verdict and the CLI must refuse by name; then REVOKE and both pass.
+## GRANT DELETE ON public.audit_logs, TRUNCATE ON public.audit_events TO app_service
+GRANT
+GRANT
+## step 5 verdict (verifyReadinessContract, runtimeRole app_service)
+  role postgres on c2c_testdb (superuser=true, bypassrls=true)
+  schemas: 3/3 present
+  extensions: 1/1 installed
+  critical tables: 2/2 present
+  security-critical tables: 5/5 present
+  Part 11 audit store: 1/1 present
+  SELECT reach: 8/8 contract tables readable by app_service
+  grant audit: 1286/1286 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 2
+READINESS: REFUSED
+    runtime role app_service holds privileges beyond the append-only ceiling on: public.audit_events (TRUNCATE), public.audit_logs (DELETE) — REVOKE them (re-running deploy-migrate step 4 does); the recipe withholds UPDATE/DELETE/TRUNCATE on the audit schema and on every append-only store (provision-app-role.mjs APPEND_ONLY_TABLES), and a widened audit store is not a deployable state
+exit=1
+## node scripts/db/audit-runtime-grants.mjs --role app_service
+▶ grant audit on c2c_testdb as postgres; auditing role app_service (from --role)
+  role app_service: superuser=false bypassrls=false login=true; 1286 application relations audited
+  denied: 0
+  excess beyond the audit ceiling (non-owned relations): 2
+    - public.audit_events: holds TRUNCATE
+    - public.audit_logs: holds DELETE
+
+✗ runtime role app_service does not hold the recipe posture. Re-run deploy-migrate as the owner (step 4 refreshes grants for an identified runtime role); excess privileges on the audit store must be REVOKEd by the operator — the recipe never grants them.
+exit=1
+## REVOKE
+REVOKE
+REVOKE
+## step 5 verdict again
+  role postgres on c2c_testdb (superuser=true, bypassrls=true)
+  schemas: 3/3 present
+  extensions: 1/1 installed
+  critical tables: 2/2 present
+  security-critical tables: 5/5 present
+  Part 11 audit store: 1/1 present
+  SELECT reach: 8/8 contract tables readable by app_service
+  grant audit: 1286/1286 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+READINESS: ok
+exit=0

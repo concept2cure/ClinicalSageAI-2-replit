@@ -1,0 +1,9 @@
+mutant M-srcset-unread: server/services/authoring/authoring-html-sanitizer.ts
+-     if (srcset !== null) refused.push({ position: i + 1, src: srcset });
++ 
+
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: a srcset on an image with no src 9ms
+   → expected [] to deeply equal [ 'https://a.example/p.png 1x' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 36 passed (37)

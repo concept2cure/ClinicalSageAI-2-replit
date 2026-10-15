@@ -53,6 +53,7 @@ import {
 import { evaluateFinalExportGate, type FinalExportGateVerdict } from './final-export-gate';
 import { getSectionLabels } from '../module3-convergence-service';
 import { renderComposedSectionMarkdown, type GeneratedTable } from '../module3Composer';
+import { MODULE3_PLACED_FROM } from './module3-placement-marker';
 
 /**
  * Wording for the one refusal this seam adds: a section whose stored
@@ -66,11 +67,85 @@ export const LEGACY_NO_TABLES_SKIP_REASON =
      for the second reason — not approved. */
   'Compiled before section tables were carried; recompile the section AND re-approve it before placing.';
 
+/** A section approved before the signature covered its narrative. */
+export const PRE_NARRATIVE_SIGNATURE_SKIP_REASON =
+  'Approved before the signature covered the narrative that is filed; re-approve the section before placing.';
+
+/** A section whose live record or narrative is not the text that was signed. */
+export const CHANGED_SINCE_APPROVAL_SKIP_REASON =
+  'Changed since it was approved — the filed text would not be the signed text. Recompile and re-approve before placing.';
+
+/** An approved, non-stale section as placement reads it. */
+export interface PlaceableSectionRow {
+  sectionKey: string;
+  narrativeText: string | null;
+  deterministicJson: unknown;
+  /** The approved version's snapshot carries the narrative (approved since the signature covered it). */
+  snapshotCoversNarrative: boolean | null;
+  /** The live record and narrative are exactly the approved snapshot. */
+  signedAsIs: boolean | null;
+}
+
+/**
+ * What is filed is what was signed. The approve route freezes the compiled
+ * record and its narrative into cmc_module3_section_versions and binds the
+ * signature to that snapshot; placement read the LIVE row, so anything that
+ * changed the row after the signature (a write that did not reset approval)
+ * would have been filed under a signature over other text. `signedAsIs` is
+ * true only when the live record and narrative equal the approved snapshot.
+ */
+export async function readPlaceableSections(
+  pool: { query: (sql: string, p: unknown[]) => Promise<{ rows: any[] }> },
+  orgId: number,
+  cmcProjectId: string,
+): Promise<PlaceableSectionRow[]> {
+  const { rows } = await pool.query(
+    `SELECT s.section_key AS "sectionKey", s.narrative_text AS "narrativeText",
+            s.deterministic_json AS "deterministicJson",
+            (v.snapshot_json ? 'narrativeText') AS "snapshotCoversNarrative",
+            (v.snapshot_json ? 'narrativeText'
+               AND (v.snapshot_json - 'narrativeText') = s.deterministic_json
+               AND v.snapshot_json->>'narrativeText' IS NOT DISTINCT FROM COALESCE(s.narrative_text, ''))
+              AS "signedAsIs"
+     FROM cmc_module3_sections s
+     LEFT JOIN cmc_module3_section_versions v
+       ON v.id = s.approved_version_id AND v.organization_id = s.organization_id
+     WHERE s.organization_id = $1 AND s.project_id = $2
+       AND s.approval_state = 'approved' AND s.stale = false
+     ORDER BY s.section_key`,
+    [orgId, cmcProjectId],
+  );
+  return rows as PlaceableSectionRow[];
+}
+
+/**
+ * Whether one approved section can be filed, and what is filed when it can:
+ * the reason it is skipped, or its narrative and tables.
+ */
+export function placeableContent(s: PlaceableSectionRow): { skip: string } | { narrative: string; tables: GeneratedTable[] } {
+  if (!s.snapshotCoversNarrative) return { skip: PRE_NARRATIVE_SIGNATURE_SKIP_REASON };
+  if (!s.signedAsIs) return { skip: CHANGED_SINCE_APPROVAL_SKIP_REASON };
+  const narrative = (s.narrativeText ?? '').trim();
+  // An approved section with no compiled narrative has nothing to render
+  // into the package. Say so instead of filing an empty leaf whose pin
+  // would be NULL and whose PDF would be a title page.
+  if (!narrative) return { skip: 'No compiled narrative to place.' };
+  /* The composer writes a narrative that CITES its tables. A section whose
+     stored payload predates tables being carried cannot be rendered
+     faithfully — placing it would file prose saying "see the change history
+     table" into a document with no table in it. Fail closed and name the
+     remedy; a plain recompile restores placement. */
+  const tables = readSectionTables(s.deterministicJson);
+  if (tables === undefined) return { skip: LEGACY_NO_TABLES_SKIP_REASON };
+  return { narrative, tables };
+}
+
 /* The tables reader moved to ./compiled-record: the export gate applies the
    same refusal (an approved section with no `tables` key is unplaceable), and
    this module imports the gate, so keeping it here would have made a cycle.
    Re-exported so this module's own name for it still resolves. */
 import { readSectionTables } from './compiled-record';
+import { resolveCmcArtifactProject } from './resolve-cmc-artifact-project';
 export { readSectionTables };
 
 export interface PlaceModule3Input {
@@ -82,6 +157,8 @@ export interface PlaceModule3Input {
   submissionId: number;
   /** Target sequence — must be unlocked; upsertLeaf refuses otherwise. */
   sequenceId: number;
+  /** Why the person placed it (governed reason): recorded on every leaf's audit row and the provenance event. */
+  reason?: string | null;
 }
 
 export interface PlacedSection {
@@ -92,6 +169,8 @@ export interface PlacedSection {
   leafId: number;
   /** How many composed tables were carried into the filed snapshot. */
   tableCount: number;
+  /** The section already had a leaf in this sequence, and that leaf was updated rather than duplicated. */
+  updatedInPlace?: boolean;
 }
 
 export interface SkippedSection {
@@ -119,6 +198,18 @@ export type PlaceModule3Result =
       error: string;
       /** The vocabulary the target actually files on — named, not implied. */
       vocabulary: PlacementVocabulary;
+    }
+  | {
+      placed: false;
+      /**
+       * The submission is another project's (PF-11; founder decision
+       * 2026-09-26: a cross-project placement is refused by default). Refused
+       * before anything is read or written.
+       */
+      refusedBy: 'cross-project';
+      error: string;
+      cmcProjectId: string;
+      submissionProgramId: string;
     }
   | {
       placed: false;
@@ -172,6 +263,8 @@ async function recordPlacementProvenance(
     leafId: number;
     coauthorDocumentId: number;
     tableCount: number;
+    updatedInPlace: boolean;
+    reason: string | null;
   },
 ): Promise<void> {
   await pool.query(
@@ -200,8 +293,10 @@ async function fileSectionAsLeaf(params: {
   tables: GeneratedTable[];
   /** The same section's leaf in an earlier sequence, when it has one. */
   prior?: { id: number };
+  /** The same section's leaf already in THIS sequence, when it has one. */
+  existing?: { id: number };
 }): Promise<PlacedSection> {
-  const { pool, input, sectionKey, label, narrative, tables, prior } = params;
+  const { pool, input, sectionKey, label, narrative, tables, prior, existing } = params;
   const { orgId, userId, cmcProjectId, submissionId, sequenceId } = input;
   const leafSectionCode = toLeafSectionCode(sectionKey);
   const title = `Module 3 — ${label} (§${sectionKey})`;
@@ -224,23 +319,34 @@ async function fileSectionAsLeaf(params: {
       moduleName: label,
       createdBy: String(userId),
       metadata: {
-        placedFrom: 'cmc-module3-os',
+        placedFrom: MODULE3_PLACED_FROM,
         cmcProjectId,
         sectionKey,
       },
     })
     .returning({ id: coauthorDocuments.id });
 
+  /* A section already placed in THIS sequence is updated in place: placing
+     twice filed a second leaf at the same section code, and a retry after a
+     failure partway through doubled every section the first attempt reached.
+
+     A section filed in an EARLIER sequence is a `replace`. Its parent is not
+     named here: upsertLeaf admits a parentLeafId only inside the same
+     sequence, and passing the earlier sequence's leaf refused every Module 3
+     placement into an amendment sequence. The packager derives modified-file
+     from what the agency holds (prior-sequence-loader.ts), by section code. */
   const leaf = await upsertLeaf(
     {
       sequenceId,
+      ...(existing ? { leafId: existing.id } : {}),
       sectionCode: leafSectionCode,
       title,
       lifecycleOp: prior ? 'replace' : 'new',
-      parentLeafId: prior?.id ?? null,
+      parentLeafId: null,
       documentTable: 'coauthor_documents',
       documentId: snapshot.id,
       documentType: 'cmc_module3_section',
+      reason: input.reason ?? null,
     },
     { organizationId: orgId, userId },
   );
@@ -252,6 +358,7 @@ async function fileSectionAsLeaf(params: {
     coauthorDocumentId: snapshot.id,
     leafId: (leaf as { id: number }).id,
     tableCount: tables.length,
+    updatedInPlace: Boolean(existing),
   };
 
   await recordPlacementProvenance(pool, orgId, cmcProjectId, String(userId), {
@@ -262,6 +369,8 @@ async function fileSectionAsLeaf(params: {
     leafId: placement.leafId,
     coauthorDocumentId: placement.coauthorDocumentId,
     tableCount: placement.tableCount,
+    updatedInPlace: Boolean(existing),
+    reason: input.reason ?? null,
   });
 
   return placement;
@@ -289,6 +398,27 @@ async function priorModule3Leaves(
     }
   }
   return prior;
+}
+
+/** The live Module 3 leaf per section code already in this sequence. */
+async function currentModule3Leaves(sequenceId: number, organizationId: number): Promise<Map<string, { id: number }>> {
+  const current = new Map<string, { id: number }>();
+  for (const leaf of await listLeaves(sequenceId, { organizationId })) {
+    if (leaf.documentType !== 'cmc_module3_section' || leaf.lifecycleOp === 'delete') continue;
+    if (!current.has(leaf.sectionCode)) current.set(leaf.sectionCode, { id: leaf.id });
+  }
+  return current;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** True only when both sides record a project and they differ. */
+async function isOtherProject(orgId: number, cmcProjectId: string, submissionProgramId: string): Promise<boolean> {
+  const id = String(cmcProjectId).trim();
+  if (UUID_RE.test(id)) return id.toLowerCase() !== submissionProgramId.toLowerCase();
+  if (!/^\d+$/.test(id)) return false;
+  const anchor = await resolveCmcArtifactProject(orgId, submissionProgramId, { strict: true });
+  return anchor.state === 'linked' && anchor.artifactProjectId !== Number(id);
 }
 
 export async function placeModule3IntoSubmission(input: PlaceModule3Input): Promise<PlaceModule3Result> {
@@ -345,52 +475,49 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
     };
   }
 
-  // 2b. A section already placed in an earlier sequence of this submission is
+  // 2b. The submission is this project's (PF-11; founder decision 2026-09-26).
+  // Each section is snapshotted into coauthor_documents with no alias, so
+  // upsertLeaf's own project check reads no project for it and cannot judge
+  // it: this is the one place that knows both. A v2 project is the program's
+  // UUID and is compared directly. A legacy numeric project is compared with
+  // the program's anchored projects row. A side that records no project, or a
+  // program with no anchor, cannot be judged and is not refused, as upsertLeaf
+  // does.
+  const submissionProgramId = (submission as { programId?: string | null }).programId ?? null;
+  if (submissionProgramId && (await isOtherProject(orgId, cmcProjectId, submissionProgramId))) {
+    return {
+      placed: false,
+      refusedBy: 'cross-project',
+      error:
+        'This submission belongs to another project. Module 3 is placed only into a submission of its own ' +
+        'project. Nothing was written.',
+      cmcProjectId,
+      submissionProgramId,
+    };
+  }
+
+  // 2c. A section already placed in an earlier sequence of this submission is
   // a revision of that leaf, not a new document. This always filed 'new', so
   // an amendment's m3.2.S.7 was announced to the agency as brand-new content
   // with no lifecycle link to the leaf it replaces.
   const priorBySection = await priorModule3Leaves(submissionId, sequence, orgId);
+  const currentBySection = await currentModule3Leaves(sequenceId, orgId);
 
   // 3. Approved sections with their compiled narrative.
   const pool = getPool();
-  const { rows: sections } = await pool.query(
-    `SELECT section_key AS "sectionKey", narrative_text AS "narrativeText",
-            deterministic_json AS "deterministicJson"
-     FROM cmc_module3_sections
-     WHERE organization_id = $1 AND project_id = $2
-       AND approval_state = 'approved' AND stale = false
-     ORDER BY section_key`,
-    [orgId, cmcProjectId],
-  );
+  const sections = await readPlaceableSections(pool, orgId, cmcProjectId);
 
   const labels = getSectionLabels();
   const placements: PlacedSection[] = [];
   const skipped: SkippedSection[] = [];
 
-  for (const s of sections as Array<{
-    sectionKey: string;
-    narrativeText: string | null;
-    deterministicJson: unknown;
-  }>) {
-    const narrative = (s.narrativeText ?? '').trim();
-    if (!narrative) {
-      // An approved section with no compiled narrative has nothing to render
-      // into the package. Say so instead of filing an empty leaf whose pin
-      // would be NULL and whose PDF would be a title page.
-      skipped.push({ sectionKey: s.sectionKey, reason: 'No compiled narrative to place.' });
+  for (const s of sections) {
+    const verdict = placeableContent(s);
+    if ('skip' in verdict) {
+      skipped.push({ sectionKey: s.sectionKey, reason: verdict.skip });
       continue;
     }
-
-    /* The composer writes a narrative that CITES its tables. A section whose
-       stored payload predates tables being carried cannot be rendered
-       faithfully — placing it would file prose saying "see the change history
-       table" into a document with no table in it. Fail closed and name the
-       remedy; a plain recompile restores placement. */
-    const tables = readSectionTables(s.deterministicJson);
-    if (tables === undefined) {
-      skipped.push({ sectionKey: s.sectionKey, reason: LEGACY_NO_TABLES_SKIP_REASON });
-      continue;
-    }
+    const { narrative, tables } = verdict;
 
     placements.push(
       await fileSectionAsLeaf({
@@ -403,6 +530,7 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
         // A re-placement of a section already filed in an earlier sequence is a
         // `replace` of that leaf, not a second `new` one.
         prior: priorBySection.get(toLeafSectionCode(s.sectionKey)),
+        existing: currentBySection.get(toLeafSectionCode(s.sectionKey)),
       }),
     );
   }

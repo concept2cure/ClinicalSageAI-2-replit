@@ -107,20 +107,20 @@ export class ProtocolAnalyzerService {
         normalizedText.match(/(?:indication|condition|disease):\s*([^\n\.]+)/i) ||
         normalizedText.match(/(?:investigating|studying|trial for|treatment of)\s+([^\n\.]+)/i);
 
-      // classifyTherapeuticArea returns the best-guess therapeutic-area name
-      // (string); the previous confidence/keyword-rich API no longer exists.
-      const UNKNOWN_AREA = 'Unknown';
+      // classifyTherapeuticArea returns a therapeutic-area name, or null when
+      // no keyword matched. It returned 'Other' and this compared against
+      // 'Unknown', so an unclassifiable explicit indication became "Other".
       if (indicationMatch) {
         // Extract the explicit statement and classify it.
         const explicitIndication = indicationMatch[1].trim();
         const explicitArea = classifyTherapeuticArea(explicitIndication);
 
-        if (explicitArea && explicitArea !== UNKNOWN_AREA) {
+        if (explicitArea) {
           indication = explicitArea;
         } else {
           // Fall back to full-text classification, else the explicit text.
           const fullTextArea = classifyTherapeuticArea(protocolText);
-          if (fullTextArea && fullTextArea !== UNKNOWN_AREA) {
+          if (fullTextArea) {
             indication = fullTextArea;
             console.log(
               `Protocol analysis: Overriding explicit indication "${explicitIndication}" with classification "${fullTextArea}"`
@@ -132,11 +132,7 @@ export class ProtocolAnalyzerService {
       } else {
         // No explicit indication found, use full text classification — but a
         // catch-all bucket is not a classification.
-        const classified = classifyTherapeuticArea(protocolText);
-        indication =
-          classified && classified !== UNKNOWN_AREA && classified !== 'Other'
-            ? classified
-            : undefined;
+        indication = classifyTherapeuticArea(protocolText) ?? undefined;
         console.log(
           indication
             ? `Protocol analysis: Classified as "${indication}"`
@@ -275,7 +271,7 @@ export class ProtocolAnalyzerService {
            as an assessment. */
         regulatory_notes:
           'GENERIC GUIDANCE (not derived from this document): protocols should comply ' +
-          'with ICH E6(R2) Good Clinical Practice guidelines.',
+          'with ICH E6(R3) Good Clinical Practice guidelines.',
 
         /* `global_compliance: { FDA: true, EMA: true, ... }` was REMOVED on
            2026-09-10. It asserted that the uploaded document complies with FDA
@@ -363,6 +359,8 @@ export class ProtocolAnalyzerService {
     }
 
     if (input.indication && candidate.indication) {
+      // Only two classified indications are compared: two that matched no
+      // keyword are not "the same area" (they both read 'Other' until 2026-10-15).
       const a = classifyTherapeuticArea(input.indication);
       const b = classifyTherapeuticArea(candidate.indication);
       if (a && b) components.push({ weight: 0.2, score: a === b ? 1 : 0 });

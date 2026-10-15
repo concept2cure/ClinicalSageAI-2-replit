@@ -2,7 +2,9 @@
  * Device/IVD submission + coding tools — registration + offline behavior.
  *
  * assemble_device_submission and score_predicate_adequacy are deterministic and
- * network-free, so their compute paths are exercised here. code_drug calls the
+ * network-free, so their compute paths are exercised here (assemble's
+ * hypothetical mode; its open-project mode reads the database and is covered in
+ * assemble-device-submission.project-scope.test.ts). code_drug calls the
  * NLM RxNav API, so only its offline guards (registration + input validation)
  * are asserted — the network path is not exercised in unit tests.
  */
@@ -34,9 +36,14 @@ describe('assemble_device_submission', () => {
   // PMA_ASSEMBLY: the tool used to reject pathway 'pma' as a validation error,
   // so AnA could never state a PMA's assembly verdict. It now dispatches to the
   // PMA mapper (21 CFR 814 modules) through the same deterministic engine.
-  it("computes a PMA's assembly state against the PMA modules (pathway 'pma')", async () => {
+  // Model-typed leaves are accepted only as a hypothetical outline, and their
+  // `substantive: true` is ignored: the model cannot declare a section finished
+  // (g-assemble-device-project-scope; the open-project path is covered in
+  // assemble-device-submission.project-scope.test.ts).
+  it("maps a hypothetical PMA outline onto the PMA modules (pathway 'pma'), ignoring the model's substantive claim", async () => {
     const out = JSON.parse(
       await getToolHandler('assemble_device_submission')!({
+        mode: 'hypothetical',
         pathway: 'pma',
         pmaSubmissionType: '30_day_notice',
         variant: 'device',
@@ -49,21 +56,37 @@ describe('assemble_device_submission', () => {
       }),
     );
     expect(out.status).toBe('computed');
+    expect(out.mode).toBe('hypothetical');
     expect(out.result.pathway).toBe('pma');
     expect(out.result.artifactKind).toBe('content-package-draft');
     expect(out.result.estar.submissionType).toBe('30_day_notice');
-    expect(out.result.estar.summary.ready).toBe(true);
+    // substantive:true from the model is ignored — the modules stay missing.
+    expect(out.result.estar.summary.ready).toBe(false);
+    expect(out.result.canProduceOfficialEstar).toBe(false);
     expect(out.result.provenance.modules).toContain('pathway-engines/pma/pma-mapper');
   });
 
-  it('requires leaves[]', async () => {
-    const out = JSON.parse(await getToolHandler('assemble_device_submission')!({ pathway: '510k', variant: 'device' }));
+  it("requires leaves[] in mode 'hypothetical'", async () => {
+    const out = JSON.parse(await getToolHandler('assemble_device_submission')!({ mode: 'hypothetical', pathway: '510k', variant: 'device' }));
     expect(out.status).toBe('needs_parameters');
   });
 
-  it('computes an honest assembly state with blockers and artifactKind', async () => {
+  it('with no project open and no hypothetical mode, asks for a project', async () => {
     const out = JSON.parse(
       await getToolHandler('assemble_device_submission')!({
+        pathway: '510k',
+        variant: 'device',
+        leaves: [{ sectionCode: 'DEVICE_DESCRIPTION', title: 'Device Description' }],
+      }),
+    );
+    expect(out.status).toBe('needs_project');
+    expect(out.result).toBeUndefined();
+  });
+
+  it('computes an honest hypothetical assembly state with blockers and artifactKind', async () => {
+    const out = JSON.parse(
+      await getToolHandler('assemble_device_submission')!({
+        mode: 'hypothetical',
         pathway: '510k',
         variant: 'device',
         leaves: [{ sectionCode: 'DEVICE_DESCRIPTION', title: 'Device Description' }],

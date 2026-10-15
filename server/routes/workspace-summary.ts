@@ -47,19 +47,25 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
 
   try {
     // ── 1. Org details ──────────────────────────────────────────────────────
-    const orgRes = await sq(
-      `SELECT id, COALESCE(display_name, name, legal_name, 'Concept2Cure') AS name,
-              COALESCE(slug, 'concept2cure') AS slug,
-              COALESCE(industry_mode, 'biotech') AS industry_mode
+    /* dbQuery, not sq: sq turns any error into an empty result, which would
+       report a FAILED org read as "Organization not found". A failure here
+       reaches the catch below and answers as the failure it is. */
+    const orgRes = await dbQuery(
+      `SELECT id, COALESCE(display_name, name, legal_name) AS name,
+              slug,
+              industry_mode
        FROM organizations WHERE id = $1 LIMIT 1`,
       [orgId]
     );
-    const org = orgRes.rows[0] || {
-      id: orgId,
-      name: 'Concept2Cure',
-      slug: 'concept2cure',
-      industry_mode: 'biotech',
-    };
+    /* A missing org row answered as org "Concept2Cure", slug "concept2cure",
+       industry "biotech" — this platform's own name, presented as the
+       caller's organization; the COALESCE literals did the same per column.
+       The catch block below already refuses to fabricate a workspace; the
+       happy path now does too. */
+    const org = orgRes.rows[0];
+    if (!org) {
+      return res.status(404).json({ success: false, error: 'Organization not found' });
+    }
 
     // ── 2. CRO clients for this org ─────────────────────────────────────────
     const clientsRes = await sq(
@@ -219,20 +225,14 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
       id: 'ask_lumen',
       label: 'Ask AnA a regulatory question',
       intent: 'chat.new',
-      description: 'AI trained on FDA, ICH, ISO 14971 and CE guidelines.',
+      description: 'Ask about FDA, ICH, ISO 14971 and CE requirements.',
     });
 
-    // ── 12. Compliance score (simple heuristic) ─────────────────────────────
-    const complianceScore =
-      pendingReviews === 0 && totalDocuments > 0
-        ? 98
-        : pendingReviews > 5
-          ? 72
-          : pendingReviews > 0
-            ? 89
-            : totalDocuments === 0
-              ? 0
-              : 95;
+    // ── 12. Compliance score — not computed ─────────────────────────────────
+    /* This was 98 / 95 / 89 / 72, chosen by how many reviews were pending. A
+       compliance score is a regulatory claim; nothing here evaluates any
+       requirement. Until an engine computes one, the honest value is null. */
+    const complianceScore: number | null = null;
 
     // ── 13. Build response ───────────────────────────────────────────────────
     const summary = {

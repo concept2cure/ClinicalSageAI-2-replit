@@ -1,0 +1,193 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > rolls back when the actual grant store becomes unavailable during preparation
+[governed-signature] resource signing permission unverified: Current governance grants could not be verified.
+
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > refuses a current reviewer’s resource deny after an earlier allowed admin role 22ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > admits the current reviewer instead of denying a stale caller viewer role 10ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > rolls back when the actual grant store becomes unavailable during preparation 15ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > refuses a non-signing membership before comparing credentials or opening a transaction 4ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > refuses a demoted member after preparation even when a stored grant allows signing 7ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > does not borrow another organization’s deny for the current allowed member 7ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > does not change the dark flag’s off behavior or query grant overrides 5ms
+stderr | server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > returns typed unavailable instead of authorizing when actual transaction SQL fails
+[signing-authority] signer role lookup failed: relation "organization_users" does not exist
+
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > admits an active allowed membership using the canonical policy 8ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > refuses a now-demoted membership despite an earlier allowed read 5ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > does not borrow a membership from a different organization 3ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > refuses inactive users on this executor 3ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > refuses inactive organizations on this executor 4ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > refuses a removed membership 4ms
+ ✓ server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts > current signing authority from the actual transaction executor > returns typed unavailable instead of authorizing when actual transaction SQL fails 8ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > reads the server tree 2ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > defines no local signing-authority wrapper by a retired name 251ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > detects function, const and let declarations for every retired wrapper 2ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > does not confuse calls or longer identifiers with retired declarations 0ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person 24ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-10-14T07:34:48.057Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed
+{
+  "timestamp": "2026-10-14T07:34:49.436Z",
+  "level": "error",
+  "message": "[protocol-development] handling the protocol development request failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 34ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > reserves before checking authorship, then finalizes and writes the ledger AND signature row in one transaction 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > checks independence after reservation when authorship changed while the signer waited 8ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a refused target reservation rolls back before authorship or signature work (ProtocolDevError: No current protocol target.) 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a refused target reservation rolls back before authorship or signature work (ProtocolDevError: Protocol changed while reservation waited.) 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 3ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified
+[signing-authority] signer role lookup failed: membership verification interrupted
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > the role is the membership row’s, not the token’s 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot sign a review disposition either 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > rechecks the actual transaction role after reservation before SoD or domain writes 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified 3ms
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T07:34:50.784Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T07:34:51.178Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T07:34:51.178Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts
+{
+  "timestamp": "2026-10-14T07:34:51.179Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read signs nothing: the ceremony's 503, with no detail
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > refuses a member with 403 before reading anything 28ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > refuses a viewer with 403 before reading anything 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the owner finalize where the signing policy admits the role: status, seal, chain row and signature commit together 15ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the admin finalize where the signing policy admits the role: status, seal, chain row and signature commit together 6ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize (DP-47) > lets the manager finalize where the signing policy admits the role: status, seal, chain row and signature commit together 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > limits signing attempts on finalize (11.300(d)) 1ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses no reason with 400 REASON_REQUIRED before reading anything 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a reason under 8 characters with 400 REASON_REQUIRED before reading anything 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a password that is not accepted with 401, before any transaction 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a meaning a finalize cannot carry 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > refuses the role owner, which the default signing policy does not admit: the ceremony's 403, before any password or transaction 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > refuses the role manager, which the default signing policy does not admit: the ceremony's 403, before any password or transaction 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > refuses a viewer membership under a token saying admin (the role is the membership's), through the ceremony 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > refuses no membership in the organization, through the ceremony 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read signs nothing: the ceremony's 503, with no detail 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g)) > a role with authority is checked before credentials and again on the signing transaction 3ms
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written
+{
+  "timestamp": "2026-10-14T07:34:51.596Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "electronic_signatures refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+{
+  "timestamp": "2026-10-14T07:34:51.606Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an approval from the run's own requester (separation of duties) and rolls back 5ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an authorship signature from someone who did not request the run 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses when a concurrent finalize won the lock, and rolls back 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it 4ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > records nothing when the truthfulness gate refuses the finalize 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > the seal is stored with what it sealed (reporting review 2026-10-01) > stores the exact sealed document beside its seal on the snapshot 3ms
+ ✓ server/routes/__tests__/report-os-finalize-signature.test.ts > the seal is stored with what it sealed (reporting review 2026-10-01) > refuses a run with no snapshot to hold its seal, and rolls back: nothing signed or recorded 4ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > denies when no grant matches 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > allows when an allow grant matches 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > explicit deny wins over allow 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > a null grant dimension is a wildcard matching any query value 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > role mismatch denies 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > can — default policy (DB empty) > applies the canonical defaults per role 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > can — default policy (DB empty) > a per-org DB deny override wins over the default allow 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > whoCan — the projection of RBAC > returns the org users whose role grants the action 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > uses only the supplied executor and applies its explicit deny 3ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (42P01) instead of using a default allow 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (57P01) instead of using a default allow 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"unknown"} 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"allow","resource_type":3} 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":null,"effect":"allow"} 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"foreign-role","action":"sign","effect":"deny"} 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"allow","resource_type":null,"ctd_module":null} 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > retains valid custom action and dimension strings with null wildcards 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > preserves ordinary callers’ defaults-only fallback for an unmigrated store 0ms
+
+ Test Files  6 passed (6)
+      Tests  90 passed (90)
+   Start at  07:34:37
+   Duration  14.23s (transform 3.13s, setup 170ms, import 7.35s, tests 5.66s, environment 1ms)

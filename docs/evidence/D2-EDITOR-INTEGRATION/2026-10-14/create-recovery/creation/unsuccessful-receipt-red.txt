@@ -1,0 +1,1228 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a document twice on synchronous double activation
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a section twice on synchronous double activation
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > canceling the drawer cannot release a pending document guard
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > canceling the drawer cannot release a pending section guard
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > explicit null project never falls back to the shell, including the empty-state event
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > ignores a confirmed old document after a project A → B → A round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > keeps an unreadable successful receipt unknown without claiming nothing persisted
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > refuses both creation paths during held switch, including the event path
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > refuses both creation paths during shell mismatch, including the event path
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > pins the effective workbench project when a shell mismatch occurs with a drawer already open
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > a lost document response blocks another POST until reconciliation
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > a lost section response blocks another POST until reconciliation
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > failed or malformed document recovery reads never release the guard
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > failed or malformed section recovery reads never release the guard
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > an untyped 5xx for a document is unknown rather than a safe retry
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > an untyped 5xx for a section is unknown rather than a safe retry
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not reconcile a document from a success:false read with an array
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not reconcile a section from a success:false read with an array
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > accepts an explicit empty scoped document read without manufacturing a receipt
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > accepts an explicit empty scoped section read without manufacturing a receipt
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not overlap explicit scoped document reconciliation reads
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not overlap explicit scoped section reconciliation reads
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > does not adopt a document receipt explicitly marked unsuccessful 5403ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Document created · New document"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+
+        Download
+
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      />
+    </span>
+    <div
+      class="scaf-note"
+      role="status"
+    >
+      Document created · New document
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Open created
+        document
+      </button>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Document created · New document"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+
+        Download
+
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      />
+    </span>
+    <div
+      class="scaf-note"
+      role="status"
+    >
+      Document created · New document
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Open created
+        document
+      </button>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > does not adopt a section receipt explicitly marked unsuccessful 5092ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Section created · 2.6.6 (initial revision recorded)"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+
+        Download
+
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      />
+    </span>
+    <div
+      class="scaf-note"
+      role="status"
+    >
+      Section created · 2.6.6 (initial revision recorded)
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Open created
+        section
+      </button>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Section created · 2.6.6 (initial revision recorded)"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+
+        Download
+
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      />
+    </span>
+    <div
+      class="scaf-note"
+      role="status"
+    >
+      Section created · 2.6.6 (initial revision recorded)
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Open created
+        section
+      </button>
+    </div>
+  </div>
+</body>
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with wrong project as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing project as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with wrong template as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing title as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing ID as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with wrong document as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing document as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing code as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing ID as unknown
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > adopts the confirmed returned document ID without requiring UUID-shaped IDs
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > adopts the confirmed returned section ID without requiring UUID-shaped IDs
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a readable 4xx document refusal permits an explicit retry
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a readable 4xx section refusal permits an explicit retry
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 401 refusal remains retryable for document
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 403 refusal remains retryable for document
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 422 refusal remains retryable for document
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 401 refusal remains retryable for section
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 403 refusal remains retryable for section
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 422 refusal remains retryable for section
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after document switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after project switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after project round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after unmount
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after document switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after project switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after project round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after unmount
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after document switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after project switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after project round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after unmount
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after document switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after project switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after project round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after unmount
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after document switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after project switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after project round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after unmount
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after document switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after project switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after project round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after unmount
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after document switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after project switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after project round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after unmount
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after document switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after project switch
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after project round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after unmount
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > an old document completion cannot unlock a newer pending creation
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > an old section completion cannot unlock a newer pending creation
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale document check response cannot clear uncertainty or strand checking after a round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale document check JSON cannot clear uncertainty or strand checking after a round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale section check response cannot clear uncertainty or strand checking after a round trip
+ ↓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale section check JSON cannot clear uncertainty or strand checking after a round trip
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > does not adopt a document receipt explicitly marked unsuccessful
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Document created · New document"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+
+        Download
+
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      />
+    </span>
+    <div
+      class="scaf-note"
+      role="status"
+    >
+      Document created · New document
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Open created
+        document
+      </button>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Document created · New document"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+
+        Download
+
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      />
+    </span>
+    <div
+      class="scaf-note"
+      role="status"
+    >
+      Document created · New document
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Open created
+        document
+      </button>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ makeUnknown client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:77:24
+     75| async function makeUnknown(kind: Kind) {
+     76|   await open(kind); fill(kind); submit(kind);
+     77|   expect((await screen.findByRole('alert')).textContent).toMatch(/(?:c…
+       |                        ^
+     78| }
+     79|
+ ❯ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:302:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > does not adopt a section receipt explicitly marked unsuccessful
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Section created · 2.6.6 (initial revision recorded)"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+
+        Download
+
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      />
+    </span>
+    <div
+      class="scaf-note"
+      role="status"
+    >
+      Section created · 2.6.6 (initial revision recorded)
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Open created
+        section
+      </button>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Section created · 2.6.6 (initial revision recorded)"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+
+        Download
+
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      />
+    </span>
+    <div
+      class="scaf-note"
+      role="status"
+    >
+      Section created · 2.6.6 (initial revision recorded)
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Open created
+        section
+      </button>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ makeUnknown client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:77:24
+     75| async function makeUnknown(kind: Kind) {
+     76|   await open(kind); fill(kind); submit(kind);
+     77|   expect((await screen.findByRole('alert')).textContent).toMatch(/(?:c…
+       |                        ^
+     78| }
+     79|
+ ❯ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx:302:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 79 skipped (81)
+   Start at  21:52:34
+   Duration  11.87s (transform 426ms, setup 145ms, import 569ms, tests 10.50s, environment 503ms)

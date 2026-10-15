@@ -143,6 +143,10 @@ beforeAll(async () => {
       // throws and every signature attempt — correct password or not — is
       // refused (ledger C-20, which found it in the route's former verifier).
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The account standing every authenticator and the signer re-verify read
+      // gained users.sessions_ended_at (P0-4b); without it every signature is
+      // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+      'migrations/20261001_users_sessions_ended_at.sql',
       // Run-ledger hardening: getRun now SELECTs workflow_version +
       // dependency_graph_digest (schema-shape errors are fatal by design), and
       // this also puts the RESTRICT FK + append-only step trigger under the

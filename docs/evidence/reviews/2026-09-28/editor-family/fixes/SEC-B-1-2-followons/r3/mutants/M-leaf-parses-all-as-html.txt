@@ -1,0 +1,9 @@
+mutant M-leaf-parses-all-as-html: server/services/ectd/leaf-pdf-renderer.ts
+-   return looksLikeHtml(content) ? content : plainTextToHtml(content);
++   return content;
+
+ × server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — content with no known tag is read as the editor reads it > the Module 3 placement's markdown keeps every character 18ms
+   → words were swallowed as a tag: expected 'm3.2.S.3.2 Module 3  ## Impurities (D…' to contain 'Impurity B was <LOQ in all 3 batches;…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 51 passed (52)

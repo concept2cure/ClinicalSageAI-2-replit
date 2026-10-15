@@ -1,0 +1,530 @@
+# Step test
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > has unique types, required fields, and at least one required document each 2ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > every referenced templateId resolves in the document template library 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > covers the major submission types 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports ready when all required documents and forms are present 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports the specific missing required documents and forms 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > does not let not-applicable documents block readiness once every deciding fact is known 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > returns undefined for an unknown submission type 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) with no labeling, IFU, T&A statement, biocompatibility or user fee is not ready 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > the same gaps hold for a De Novo request 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the 510k eSTAR registry is a required row, and nothing else is 2ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the de_novo eSTAR registry is a required row, and nothing else is 2ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > 510k is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > de_novo is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) Statement satisfies the summary-or-statement requirement, and so does the summary template 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an unanswered device flag is undetermined and keeps ready false 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a conditional section becomes required when its flag is set 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an IVD 510(k) is held to the IVD registry: no analytical performance, not ready 0ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  02:15:00
+   Duration  1.05s (transform 671ms, setup 100ms, import 662ms, tests 17ms, environment 0ms)
+
+
+# Importer tests (estar-mapper, device-blueprint, submission-center-tools, contract + golden journey, ...)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > pulls the 510(k) required documents and forms 11ms
+   → expected [ …(2) ] to include 'eSTAR 510(k) template'
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-10-05T02:15:04.938Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:15:04.939Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-10-05T02:15:04.939Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stdout | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T02:15:06.168Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:15:06.170Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T02:15:06.170Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-10-05T02:15:07.792Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:15:07.793Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-10-05T02:15:07.793Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.656Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.673Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.689Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.703Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.718Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.731Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.744Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.756Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.770Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.784Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.796Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.808Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.864Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.880Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.893Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.909Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.926Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.939Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.950Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.964Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.976Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.987Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:10.997Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:11.009Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:11.021Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:11.723Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] DEVICE_PROFILE_UPDATED regulatory_program",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "d9514b76-5fdf-4550-b6c9-70c496b19b5a"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:11.745Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_CREATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "160fe1a3-9332-42f5-8854-e5bfa3c1a907"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:11.751Z",
+  "level": "info",
+  "message": "[estar-registration-service] Created eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:11.815Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_UPDATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "160fe1a3-9332-42f5-8854-e5bfa3c1a907"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-05T02:15:11.820Z",
+  "level": "info",
+  "message": "[estar-registration-service] Updated eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.report.md
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > pulls the 510(k) required documents and forms
+AssertionError: expected [ …(2) ] to include 'eSTAR 510(k) template'
+ ❯ server/services/market-specs/__tests__/device-blueprint.test.ts:22:30
+     20|
+     21|   it('pulls the 510(k) required documents and forms', () => {
+     22|     expect(bp.requiredForms).toContain('eSTAR 510(k) template');
+       |                              ^
+     23|     expect(bp.requiredDocuments.some((d) => d.templateId === 'k510_sum…
+     24|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  1 failed | 193 passed (194)
+   Start at  02:15:02
+   Duration  10.01s (transform 9.74s, setup 387ms, import 13.36s, tests 9.21s, environment 1ms)
+
+
+# Typecheck (2026-10-05)
+Full `npx tsc --noEmit -p .` through tsc.lock was OOM-killed (exit 137) while other lanes ran tsc concurrently.
+Scoped run through tsc.lock: tsconfig extending the repo tsconfig, include = submission-requirements.test.ts,
+device-blueprint.ts, estar-mapper.ts (and everything they import, incl. submission-requirements.ts): exit=0, 0 errors.
+
+# Lint (npx eslint, HEAD vs working copy, warning+error lines)
+estar-mapper.ts 2 -> 2; submission-requirements.ts 0 -> 0; submission-requirements.test.ts 0 -> 0.

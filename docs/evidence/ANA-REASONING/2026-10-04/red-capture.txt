@@ -1,0 +1,30 @@
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes what a model wrote inside the capture 54ms
+   → expected +0 to be 1 // Object.is equality
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside 15ms
+   → expected [] to deeply equal [ 'echo inside' ]
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart 10ms
+   → expected [] to deeply equal [ 'wrote for a' ]
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture opened inside another also notes into the outer one 6ms
+   → expected [] to deeply equal [ 'inner draft' ]
+[AI Gateway Audit] ✗ anthropic/claude-opus-5-5 task=document_drafting tokens=0 3278ms org=42 user=- caller=- req=c7845b79-03ef-4106-bda7-ef86a3643427
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a generation that failed wrote nothing the tool could return 3280ms
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the tool calls a model chose inside the capture are noted too 3ms
+   → expected +0 to be 1 // Object.is equality
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part 3ms
+   → expected +0 to be 2 // Object.is equality
+ × server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the stream captures every tool handler it runs 3ms
+   → expected '/**\n * POST /api/ana-ri/stream — SSE…' to match /runCapturingGenerations\(generated, \…/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes what a model wrote inside the capture
+AssertionError: expected +0 to be 1 // Object.is equality
+ FAIL  server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside

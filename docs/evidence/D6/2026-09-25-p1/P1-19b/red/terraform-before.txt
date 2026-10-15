@@ -1,0 +1,61 @@
+# P1-19b Terraform, red: the deploy preflight and the boot-contract test name AUDIT_EXPORT_SIGNING_KEY; the stack does not provision it yet
+
+The worker container is missing part of the boot contract.
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... pass
+  run "the_site_is_served_with_security_headers"... pass
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... fail
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 420, in run "staging_carries_every_name_the_deploy_preflight_requires":
+ 420:     condition = alltrue([
+ 421:       for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))) :
+ 422:       contains(output.api_task_boot_contract.names, n)
+ 423:     ])
+    ├────────────────
+    │ output.api_task_boot_contract.names is list of string with 31 elements
+
+The staging API task definition lacks a name the deploy preflight requires.
+  run "staging_is_distinct_from_production"... pass
+  run "provision_workflow_names_are_the_ones_terraform_creates"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_a_short_audit_export_key"... fail
+
+Warning: Value for undeclared variable
+
+  on tests/boot_contract.tftest.hcl line 517, in run "refuses_a_short_audit_export_key":
+ 517:     audit_export_signing_key = "too-short"
+
+The module under test does not declare a variable named
+"audit_export_signing_key", but it is declared in run block
+"refuses_a_short_audit_export_key".
+
+Error: Missing expected failure
+
+  on tests/boot_contract.tftest.hcl line 519, in run "refuses_a_short_audit_export_key":
+ 519:   expect_failures = [var.audit_export_signing_key]
+
+The checkable object, var.audit_export_signing_key, was expected to report an
+error but did not.
+
+  run "refuses_an_audit_export_key_equal_to_the_jwt_secret"... skip
+  run "refuses_an_audit_export_key_equal_to_an_audit_seal_key"... skip
+  run "refuses_phi_approval_without_zero_retention"... skip
+  run "refuses_an_unknown_data_class"... skip
+  run "refuses_a_non_boolean_zero_retention_flag"... skip
+  run "refuses_a_non_string_intended_use"... skip
+  run "refuses_a_missing_region"... skip
+  run "accepts_the_fail_closed_interim_approvals"... skip
+  run "refuses_an_uppercase_domain_alias"... skip
+  run "refuses_a_domain_alias_with_a_scheme"... skip
+  run "refuses_a_domain_alias_with_a_trailing_dot"... skip
+  run "every_container_can_send_login_codes"... skip
+  run "refuses_an_smtp_port_without_required_tls"... skip
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 9 passed, 3 failed, 13 skipped.

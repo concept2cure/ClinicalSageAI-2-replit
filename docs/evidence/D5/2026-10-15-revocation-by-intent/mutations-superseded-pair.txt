@@ -1,0 +1,9 @@
+# M11 alone, then M6+M11: the SQL 'superseded_by IS NULL' clause and the canonical isSignatureWithdrawn filter both dropped.
+
+M11 alone (SQL clause dropped; the canonical predicate still excludes)
+  Tests  25 passed (25)
+
+M6+M11 (both layers dropped)
+  Tests  2 failed | 23 passed (25)
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature already revoked cannot be revoked again by naming it, and no longer counts as live
+    × revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature voided for a refused act (P-23) is out of force: not a candidate, and naming it resolves nothing

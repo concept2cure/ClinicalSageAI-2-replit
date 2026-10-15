@@ -1,0 +1,12 @@
+Mutant K02-lowers: an unlisted section lowers a tier the words raised
+
+--- server/services/kernel-router.ts
+- if (!section) return tier;
++ if (!section) return 'medium';
+
+Tests run: server/services/__tests__/kernel-router-open-section.test.ts
+Result: KILLED
+
+ × server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > never lowers a tier the words already raised 6ms
+      Tests  1 failed | 20 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

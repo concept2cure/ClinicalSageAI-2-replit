@@ -41,6 +41,21 @@ output "api_container" {
   value       = jsondecode(aws_ecs_task_definition.api.container_definitions)[0]
 }
 
+output "api_task_containers" {
+  description = <<-EOT
+    Every container of the API task definition, the API first: the containers
+    that run beside it are part of what a deploy must carry (the virus scanner
+    the API waits on), so the boot contract checks them too. Names, images and
+    plain configuration; never a secret's value.
+  EOT
+  value       = jsondecode(aws_ecs_task_definition.api.container_definitions)
+}
+
+output "scanner_memory" {
+  description = "The scanner container's hard memory limit (MiB), taken out of the API task's memory. The stack checks what is left for the application."
+  value       = var.scanner_memory
+}
+
 output "worker_container" {
   description = "The worker container definition as rendered, for the same checks."
   value       = jsondecode(aws_ecs_task_definition.worker.container_definitions)[0]

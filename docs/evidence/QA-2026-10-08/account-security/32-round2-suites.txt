@@ -1,0 +1,16 @@
+# Round 2: every touched suite, and the DB suites, on the final tree
+
+## Unit and route suites (RLS_ENFORCE=off): 93 files (list: 32-round2-files.txt)
+The round-1 touched suites, every client test that renders EsignModal or a surface that does, every test naming the removed
+routes' modules, and the round-2 tests.
+ Test Files  93 passed (93)
+      Tests  985 passed (985)
+
+## DB suites on concept2cure-ri_qa_fresh2 (CI=true NODE_ENV=test RLS_ENFORCE=on, app_service runtime role)
+The sixteen of 16-db-suites.txt plus workflow-approval-tables.dbtest.ts, with account-standing.dbtest.ts in its own invocation
+(it shares organisation 92100 with sign-in-posture.dbtest.ts; see 16).
+ Test Files  16 passed (16)
+      Tests  232 passed (232)
+account-standing.dbtest.ts:
+ Test Files  1 passed (1)
+      Tests  13 passed (13)

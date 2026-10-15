@@ -1,0 +1,20 @@
+# M3-id-kept-after-removal: shared/ana/plan-diff.ts
+--- /tmp/s5-mut.bak	2026-10-08 15:35:29.549471240 +0000
++++ shared/ana/plan-diff.ts	2026-10-08 15:35:29.551809903 +0000
+@@ -93,7 +93,7 @@
+   /** The task left the plan: its title no longer names it. */
+   release(title: string): string {
+     const id = this.idFor(title);
+-    this.live.delete(title.toLowerCase());
++    
+     return id;
+   }
+ }
+
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > the single in-progress task's id; null with two in progress; null for update_plan, always 59ms
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > before any plan, a step serves no task 8ms
+ × server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 3. task ids across five update_plan calls > hold for each task while it is in the plan; a title removed and added again is a new task 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'added Find t1', …(10) ] to deeply equal [ 'added Find t1', …(10) ]
+      Tests  1 failed | 2 passed (3)
+restored: md5 OK

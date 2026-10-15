@@ -1,0 +1,12 @@
+# npm run ci:discarded-audit-write against the live working tree: the index still lists the deleted file until the control tower stages the deletion, so the scan opens it
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/server/routes/qms.ts'
+    at readFileSync (node:fs:440:20)
+
+# Same gate with the deletion staged in a SCRATCH copy of the index (GIT_INDEX_FILE=<scratchpad>/scratch.index git rm --cached server/routes/qms.ts server/services/qms/qms.service.ts); the repository index was not touched
+check-discarded-audit-write: no new occurrences. 118 baselined across 52 file(s).
+  2 baselined file(s) now below their count — run --write-baseline to shrink it.
+exit=0

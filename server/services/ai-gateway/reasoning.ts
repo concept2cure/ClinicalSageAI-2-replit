@@ -13,7 +13,9 @@
  *   - The reasoning budget scales with effort (Thorough reasons harder), and is
  *     floored up on high-stakes turns.
  *
- * Everything here is side-effect free and unit-tested independently of the
+ * Everything here is side-effect free, except that resolveTierModel writes a
+ * warn log, once per process for each configuration, when it passes over or
+ * withholds a tier model. All of it is unit-tested independently of the
  * gateway and the SSE transport. On the flagship reasoning-only models
  * (Opus 4.7/4.8) thinking is *adaptive* and the model self-budgets, so
  * `budgetTokens` is a hint the gateway only consumes on the legacy thinking
@@ -23,6 +25,10 @@
  */
 
 import type { EffortLevel, ModelConfig } from './types';
+import { governedMatch } from '../ai-governance/approved-models.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const log = createScopedLogger('ai-gateway:tier');
 
 /** Kernel risk tiers that gate/scale reasoning depth. */
 export type RiskTier = 'low' | 'medium' | 'high';
@@ -150,9 +156,10 @@ export type ModelTier = 'economy' | 'standard' | 'flagship';
 
 /**
  * Stable gateway-registry alias id for each tier. Resolved against the live
- * registry at the call site (so a tier is skipped if its model isn't enabled
- * for the tenant), and deliberately NOT a wire model string — the registry owns
- * the concrete version, and every id here is already governance-approved.
+ * registry by {@link resolveTierModel}, so a tier is skipped when its model is
+ * not enabled for the tenant or its registry row is not its approved-models
+ * entry. Deliberately NOT a wire model string: the registry owns the concrete
+ * version, and approved-models pins it.
  */
 export const TIER_MODEL_ID: Record<ModelTier, string> = {
   economy: 'claude-haiku-4',
@@ -211,10 +218,13 @@ export function resolveModelTier(input: ResolveModelTierInput): ModelTier {
 
 /**
  * Per-deployment tier→model override env vars. Values may be a registry alias
- * id ('claude-sonnet-4', 'local-default') or a wire model string — either way
- * the result is validated against the tenant's enabled model set at the call
- * site, so a typo or an un-deployed model degrades to strategy-based selection,
- * never a broken turn. This is the cost-independence dial:
+ * id ('claude-sonnet-4', 'local-default') or a wire model string. Either way
+ * {@link resolveTierModel} pins the result only when it is enabled for the
+ * tenant and is an approved-models entry. A typo, an un-deployed model or a
+ * model with no approved entry pins nothing, and the gateway selects by
+ * strategy: never a broken turn. That selection is approval-gated only on
+ * high-risk work, so on other work it can still choose a row the tier withheld.
+ * This is the cost-independence dial:
  *   ANA_TIER_FLAGSHIP_MODEL=claude-sonnet-4  → strict no-Opus deployment
  *   ANA_TIER_ECONOMY_MODEL=local-default     → self-hosted everyday tier
  */
@@ -225,6 +235,22 @@ export const TIER_MODEL_ENV: Record<ModelTier, string> = {
 };
 
 /**
+ * The model a tier is configured to, and where that value came from: the
+ * tier's env var when it is set to a non-blank value (trimmed), otherwise the
+ * default alias. The one statement of that rule, read by
+ * {@link resolveTierModelIds} for the value and by {@link resolveTierModel}'s
+ * log for the source, so the two cannot disagree.
+ */
+function configuredTierModel(
+  tier: ModelTier,
+  env: Record<string, string | undefined>,
+): { value: string; source: string } {
+  const envVar = TIER_MODEL_ENV[tier];
+  const override = env[envVar]?.trim();
+  return override ? { value: override, source: envVar } : { value: TIER_MODEL_ID[tier], source: 'default' };
+}
+
+/**
  * Resolve the tier→model mapping, applying any per-deployment env overrides on
  * top of the defaults. Pure — the env record is a parameter (callers pass
  * process.env); blank/whitespace values fall back to the default alias.
@@ -232,32 +258,89 @@ export const TIER_MODEL_ENV: Record<ModelTier, string> = {
 export function resolveTierModelIds(
   env: Record<string, string | undefined> = {},
 ): Record<ModelTier, string> {
-  const pick = (tier: ModelTier): string => {
-    const override = env[TIER_MODEL_ENV[tier]];
-    return override && override.trim() ? override.trim() : TIER_MODEL_ID[tier];
+  return {
+    economy: configuredTierModel('economy', env).value,
+    standard: configuredTierModel('standard', env).value,
+    flagship: configuredTierModel('flagship', env).value,
   };
-  return { economy: pick('economy'), standard: pick('standard'), flagship: pick('flagship') };
 }
 
 /**
- * Resolve a tier to a concrete enabled model from the tenant's registry, or
- * null when the tier's configured model isn't enabled (caller falls back to
- * strategy-based selection). Matches on registry id or wire model string. Pure.
+ * Resolve a tier to a concrete model from the tenant's registry, or null (the
+ * tier pins nothing and the gateway selects by strategy). The tier's configured
+ * model, an ANA_TIER_*_MODEL remap included, is matched on registry id or wire
+ * model string, and the first matching row that passes both checks is pinned:
  *
- * Enabled is the only check. Unlike the user model-override path
- * (effort.ts resolveModelOverride), a tier model — including one an
- * ANA_TIER_*_MODEL env remap names — is not checked against approved-models.
- * On high-risk work the gateway refuses one not approved for high risk; on
- * other work it serves it whether or not it has an entry.
+ *   1. Enabled: the row is in the tenant's enabled set.
+ *   2. Approved: the row is its approved-models entry: that entry's id,
+ *      provider and pinned version. CLAUDE.md Rule 2: a model is selectable
+ *      only as an approved-models entry with a pinned version. Until 2026-09-28
+ *      enabled was the only check. The gateway refuses a model not approved for
+ *      high risk on high-risk work, so on every other turn a remap, or a
+ *      default alias whose row had drifted off its pinned version, served
+ *      AnA's default with no approved entry.
+ *
+ * Both checks are {@link governedMatch}, the rule a caller's pin selects by too
+ * (effort.ts resolveModelOverride), so one value against one registry gets one
+ * answer from both. A row that fails step 2 is passed over exactly as a
+ * disabled row always has been. High-risk approval is not asked here; the
+ * gateway still refuses, on high-risk work, a tier model not approved for high
+ * risk.
+ *
+ * What this settles is the tier's pin, not the model that runs:
+ *
+ *   - The pin reaches the gateway as `{ provider, model }`, and the gateway
+ *     looks the row up again by that pair. The row it serves is the row judged
+ *     here only while the pair names one registry row (governedMatch).
+ *   - When nothing is pinned, the withheld row stays enabled in the gateway's
+ *     registry, and strategy selection is approval-gated only on high-risk
+ *     work. On other work it can choose the very row withheld here.
+ *
+ * A matching row passed over or withheld means a deployment's configuration or
+ * registry is being overruled, so it is logged (warn, `ai-gateway:tier`) with
+ * the rows withheld and the row pinned instead, if any. It is logged once per
+ * process for each configuration, because the callers resolve on every AnA
+ * turn, chat turn and deep investigation and the fault is static. The refusal
+ * itself applies on every call.
+ *
+ * On today's registry every enabled row is its own entry (the drift gate holds
+ * it there), so this passes over and withholds nothing that serves today.
  */
 export function resolveTierModel(
   tier: ModelTier,
   enabledModels: ModelConfig[],
   env: Record<string, string | undefined> = {},
 ): { provider: ModelConfig['provider']; model: string; tier: ModelTier } | null {
-  const wanted = resolveTierModelIds(env)[tier];
-  const match = enabledModels.find(
-    (m) => m.enabled && (m.id === wanted || m.model === wanted),
+  const configured = configuredTierModel(tier, env);
+  const { served, withheld } = governedMatch(configured.value, enabledModels);
+  if (withheld.length > 0) reportWithheld(tier, configured, withheld, served?.row);
+  return served ? { provider: served.row.provider, model: served.row.model, tier } : null;
+}
+
+/** Configurations whose withheld rows have been logged in this process. */
+const withheldReported = new Set<string>();
+
+function reportWithheld(
+  tier: ModelTier,
+  configured: { value: string; source: string },
+  withheld: ModelConfig[],
+  served: ModelConfig | undefined,
+): void {
+  const fact = (m: ModelConfig) => ({ id: m.id, provider: m.provider, model: m.model });
+  const context = {
+    tier,
+    configured: configured.value,
+    source: configured.source,
+    withheld: withheld.map(fact),
+    served: served ? fact(served) : null,
+  };
+  const key = JSON.stringify(context);
+  if (withheldReported.has(key)) return;
+  withheldReported.add(key);
+  log.warn(
+    served
+      ? 'tier model: matching rows with no approved-models entry were passed over; the tier pins the first row that is one'
+      : 'tier model withheld: no matching row is an approved-models entry, so the tier pins no model. The gateway selects by strategy, which on normal-risk work is not approval-gated and can choose a withheld row',
+    context,
   );
-  return match ? { provider: match.provider, model: match.model, tier } : null;
 }

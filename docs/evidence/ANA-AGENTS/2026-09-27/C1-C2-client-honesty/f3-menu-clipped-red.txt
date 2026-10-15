@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > Home's engine menu is not clipped by the composer (end-to-end finding F3) > opens fixed, placed from the pill 27ms
+   → expected '' to be 'fixed' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)

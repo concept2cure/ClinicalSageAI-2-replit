@@ -32,7 +32,13 @@ const updateSet = vi.fn();
 vi.mock('../../../db', () => {
   const db: any = {
     select: (..._a: unknown[]) => ({
-      from: () => ({ where: () => ({ limit: () => selectChain() }) }),
+      from: () => ({
+        where: () => ({
+          limit: () => selectChain(),
+          // The leaf's previous document, read under the lock on a re-point (PF-11).
+          for: async () => [{ documentTable: 'vault_documents', documentId: null, documentUuid: 'previous-doc', documentContentSha256: 'old' }],
+        }),
+      }),
     }),
     insert: () => ({ values: (v: unknown) => ({ returning: () => insertValues(v) }) }),
     update: () => ({
@@ -57,6 +63,9 @@ const SEQ = { id: 1, status: 'draft', submissionId: 21 };
 
 beforeEach(() => {
   selectChain.mockReset();
+  // Reads after the queued ones (the same-document check, which runs under the
+  // sequence lock) find no live leaf: an unqueued select answers no rows.
+  selectChain.mockResolvedValue([]);
   insertValues.mockReset();
   updateSet.mockReset();
   insertValues.mockResolvedValue([{ id: 99 }]);

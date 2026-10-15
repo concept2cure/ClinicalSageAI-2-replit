@@ -1,0 +1,13 @@
+Mutant R10-envelope-read: a result's top-level envelope (its echoed query, its note) is read as a record (F2)
+
+--- server/services/ana/answer-check-sources.ts
+- if (!top || declaresVerified(v)) {
++ if (true) {
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an outage envelope that echoes the query finds nothing 9ms
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation looked up is found in the record the lookup returns, not in the echo of a miss 2ms
+      Tests  2 failed | 87 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

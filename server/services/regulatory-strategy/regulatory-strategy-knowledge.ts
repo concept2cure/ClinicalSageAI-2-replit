@@ -11,10 +11,14 @@
  * Regulatory citations: 21 CFR 312/314, FD&C Act sections 505/506, FDASIA 2012,
  * FDORA 2022, FDA Guidance for Industry (various), EMA Regulation (EC) 726/2004,
  * Regulation (EC) 141/2000, ICH E5, PMDA SAKIGAKE, NMPA Breakthrough,
- * Health Canada Food and Drugs Act.
+ * Health Canada Food and Drugs Act. Japan's expedited pathways and conditional
+ * approval are read from the one Japanese programmes record,
+ * server/services/ind/ctd/jp-programs.ts.
  *
  * @module server/services/regulatory-strategy/regulatory-strategy-knowledge
  */
+
+import { getJpProgram, jpProgramBasisLabel, type JpProgram } from '../ind/ctd/jp-programs';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -331,6 +335,26 @@ export interface CompareGlobalPathwaysResult {
 // ═══════════════════════════════════════════════════════════════════════════════
 // Private Reference Data
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Japan, from the one Japanese programmes record ──────────────────────────
+
+/** A Japan expedited pathway row rendered from jp-programs.ts; `equivalent` is this module's cross-market mapping. */
+function jpExpeditedPathway(id: string, equivalent: string): RegionalPathwayInfo['expeditedPathways'][number] {
+  const p: JpProgram = getJpProgram(id);
+  const effective = p.effectiveFrom ? ` In force from ${p.effectiveFrom}.` : '';
+  return {
+    name: p.name,
+    equivalent,
+    criteria: [...p.criteria],
+    benefits: [`${p.benefit}${effective} Basis: ${jpProgramBasisLabel(p)}.`],
+  };
+}
+
+/** Japan's conditional approval, rendered from jp-programs.ts. */
+function jpConditionalApproval(): RegionalPathwayInfo['conditionalApproval'] {
+  const p = getJpProgram('pmda-conditional-approval');
+  return { name: p.name, criteria: [...p.criteria], postApprovalRequirements: [...(p.conditions ?? [])] };
+}
 
 // ── Expedited Program Registry ──────────────────────────────────────────────
 
@@ -1123,7 +1147,7 @@ const GLOBAL_PATHWAY_REGISTRY: Record<TargetMarket, Omit<RegionalPathwayInfo, 'm
       },
       {
         name: 'Accelerated Approval',
-        equivalent: 'EMA Conditional Marketing Authorization, PMDA Conditional/Time-Limited Approval, NMPA Conditional Approval',
+        equivalent: `EMA Conditional Marketing Authorization, PMDA ${getJpProgram('pmda-conditional-approval').name}, NMPA Conditional Approval`,
         criteria: ['Serious condition', 'Unmet need', 'Surrogate or intermediate endpoint'],
         benefits: ['Earlier approval on surrogate endpoint', 'FDORA 2022 strengthened post-marketing requirements'],
       },
@@ -1292,41 +1316,9 @@ const GLOBAL_PATHWAY_REGISTRY: Record<TargetMarket, Omit<RegionalPathwayInfo, 'm
     standardReviewTimeline: '12 months standard review (PMDA target)',
     expeditedReviewTimeline: '6-9 months (SAKIGAKE or Priority Review)',
     expeditedPathways: [
-      {
-        name: 'SAKIGAKE Designation',
-        equivalent: 'FDA Breakthrough Therapy Designation',
-        criteria: [
-          'Drug developed in Japan with world-first application in Japan',
-          'Serious condition with high medical need',
-          'Outstanding efficacy expected (significant improvement over existing therapy)',
-        ],
-        benefits: [
-          'Priority consultation (pre-application)',
-          'Substantial review period reduction (target: 6 months)',
-          'Dedicated review team',
-          'Pre-submission consultation',
-          'Extension of re-examination period (orphan equivalent)',
-        ],
-      },
-      {
-        name: 'Priority Review (PMDA)',
-        equivalent: 'FDA Priority Review',
-        criteria: ['Serious disease with no adequate therapy', 'Outstanding clinical benefit'],
-        benefits: ['Review period target: ~9 months vs. 12 months standard'],
-      },
-      {
-        name: 'Conditional Early Approval',
-        equivalent: 'FDA Accelerated Approval',
-        criteria: [
-          'Serious disease with no adequate therapy',
-          'Patient population limited in Japan',
-          'Significant efficacy confirmed in exploratory clinical trial',
-        ],
-        benefits: [
-          'Approval based on limited clinical data',
-          'Post-marketing requirements for confirmatory evidence',
-        ],
-      },
+      jpExpeditedPathway('pmda-sakigake', 'FDA Breakthrough Therapy Designation'),
+      jpExpeditedPathway('pmda-priority-review', 'FDA Priority Review'),
+      jpExpeditedPathway('pmda-conditional-approval', 'FDA Accelerated Approval'),
     ],
     orphanEquivalent: {
       name: 'Orphan Drug Designation (Japan)',
@@ -1340,20 +1332,7 @@ const GLOBAL_PATHWAY_REGISTRY: Record<TargetMarket, Omit<RegionalPathwayInfo, 'm
         'National Health Insurance (NHI) listing with premium pricing',
       ],
     },
-    conditionalApproval: {
-      name: 'Conditional Early Approval System',
-      criteria: [
-        'Serious life-threatening disease',
-        'No adequate alternative treatment',
-        'Surrogate or biomarker-based efficacy in exploratory trial',
-        'Difficult to conduct adequate confirmatory trial in Japan (small population)',
-      ],
-      postApprovalRequirements: [
-        'Post-marketing clinical study or use-results survey',
-        'Deadline for submission of confirmatory data',
-        'Re-evaluation based on post-marketing data',
-      ],
-    },
+    conditionalApproval: jpConditionalApproval(),
     dataRequirementsDifferences: [
       'Ethnic bridging study may be required per ICH E5 (Ethnic Factors in the Acceptability of Foreign Clinical Data)',
       'Japanese bridging strategy: evaluate PK/PD intrinsic/extrinsic ethnic factors',

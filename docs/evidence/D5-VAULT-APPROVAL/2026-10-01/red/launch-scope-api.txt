@@ -1,0 +1,17 @@
+## RED: ci:launch-scope-api after its surface lookup was anchored (the v2 Vault had resolved to the device Vault's component), before the registry declares the paths
+ci:launch-scope-api: 4 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+  [unmapped] /api/project-rules
+    called by tasks
+    in client/src/concept2cure/v2/surfaces/TaskBoard.tsx
+  [unmapped] /api/regulatory/documents
+    called by vault
+    in client/src/concept2cure/v2/surfaces/VaultLifecycle.tsx
+  [unmapped] /api/regulatory/documents/:p/advance
+    called by vault
+    in client/src/concept2cure/v2/surfaces/VaultLifecycle.tsx
+  [unmapped] /api/regulatory/documents/:p/sign
+    called by vault
+    in client/src/concept2cure/v2/surfaces/VaultLifecycle.tsx

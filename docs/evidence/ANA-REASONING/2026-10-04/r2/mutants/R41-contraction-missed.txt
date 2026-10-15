@@ -1,0 +1,12 @@
+Mutant R41-contraction-missed: "It's ready to file" is not named (F9)
+
+--- server/services/clinical-regulatory-evidence/governance.ts
+- { pattern: /\b(?:is|are|it's|it is|that's|that is|they're|they are|we're|we are|now)\s+(?:now\s+|fully\s+|already\s+)?(?:ready|fit|cleared)
++ { pattern: /\b(?:is|are)\s+(?:now\s+|fully\s+|already\s+)?(?:ready|fit|cleared)
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > names the verdicts stated 15ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

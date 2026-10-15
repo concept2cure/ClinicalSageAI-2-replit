@@ -1,0 +1,15 @@
+Mutant F07-no-count-guard: a check that does not describe its text vouches for it
+
+--- server/services/ana/memory-fact-check.ts
+- if (all.length !== check.claims) return null;
++ 
+--- server/services/ana/memory-fact-check.ts
+- return unsettled.length === 0 && found.length === check.found ? found : null;
++ return found;
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a check that does not describe its text vouches for nothing 8ms
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

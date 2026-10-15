@@ -1,0 +1,165 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T18:37:35.959Z","pid":16985,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T18:37:35.960Z","pid":16985,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T18:37:35.960Z","pid":16985,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T18:37:36.023Z', poolSize: 1 }
+
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-where-used.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T18:37:36.606Z","pid":16985,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:16985) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:36.686Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:36.760Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b1edd1d6-3d84-4664-99f9-f35172dcf469",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:37:36.776Z","pid":16985,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:36.785Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:36.796Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "cea0c6c8-eb57-4db6-8252-69f2d27f590e",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:37:36.804Z","pid":16985,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:36.805Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:36.814Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a9816d9e-0ef5-4ab5-b2d6-8265cf4b9920",
+    "code": "DBTEST-VWHERE-CO",
+    "type": "OTHER",
+    "size": 18,
+    "hasText": true
+  }
+}
+
+{"level":30,"time":"2026-10-01T18:37:36.981Z","pid":16985,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"76"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:37:37.000Z","pid":16985,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"77"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:37:37.017Z","pid":16985,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"78"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:37:37.035Z","pid":16985,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"79"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:37:37.503Z","pid":16985,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"cb10ae14-2e6a-4e2e-80d9-43926a5e8bae"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+{"level":30,"time":"2026-10-01T18:37:37.532Z","pid":16985,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"cb10ae14-2e6a-4e2e-80d9-43926a5e8bae"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+{"level":30,"time":"2026-10-01T18:37:37.538Z","pid":16985,"hostname":"vm","context":{"userId":4102,"tenantId":1328,"resourceId":"5e1f3c04-fccf-434f-8ea4-415f24eca114"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 24ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 12ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 17ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 2ms
+ × tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store 18ms
+   → expected undefined to deeply equal [ ObjectContaining{…} ]
+ × tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed 1ms
+   → readVaultEstarUses is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store
+AssertionError: expected undefined to deeply equal [ ObjectContaining{…} ]
+
+- Expected:
+[
+  ObjectContaining {
+    "chapter": "/CHAPTER 1/CH1.01/",
+    "fileName": "Cover Letter.pdf",
+    "record": "audit",
+    "retainedAs": {
+      "documentCode": "eSTAR-510k-device",
+      "documentId": "a9816d9e-0ef5-4ab5-b2d6-8265cf4b9920",
+      "version": "1.0",
+    },
+    "slot": "root.CoverLetter",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ tests/db/vault-where-used.dbtest.ts:286:49
+    284|     const byId = new Map(res.body.data.versions.map((v: { id: string }…
+    285|     const retainedAs = { documentId: ids.other, documentCode: 'eSTAR-5…
+    286|     expect((byId.get(ids.v1) as any).estarUses).toEqual([expect.object…
+       |                                                 ^
+    287|       record: 'audit', slot: 'root.CoverLetter', chapter: '/CHAPTER 1/…
+    288|     })]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed
+TypeError: readVaultEstarUses is not a function
+ ❯ tests/db/vault-where-used.dbtest.ts:295:25
+    293|     const { readVaultEstarUses } = await import('../../server/services…
+    294|     // As the owner, so only the read's own organisation filter applie…
+    295|     const found = await readVaultEstarUses(owner, mine.orgId, [ids.v1,…
+       |                         ^
+    296|     expect(found.get(ids.v1)).toHaveLength(1);
+    297|     expect(found.get(ids.v2)).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  18:37:34
+   Duration  3.34s (transform 1.62s, setup 65ms, import 123ms, tests 2.92s, environment 0ms)
+

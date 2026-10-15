@@ -1,0 +1,22 @@
+Mutant D7-inline-space: An inline tag reads as a space, as round 3 read every tag.
+Result: KILLED (vitest exit 1, 3 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -292,3 +292,3 @@
+   }
+-  return inline ? '' : ' ';
++  return ' ';
+ }
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > "At Week 2<b>4</b> patients" is not AnA's "At Week 2 4 patients" 8ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D7: an inline tag joins tokens and a block tag separates them, on both sides > the comparison form 2ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D7: two tokens joined: that clause is the member's 1ms
+
+--- summary ---
+ Test Files  1 failed | 3 passed (4)
+      Tests  3 failed | 144 passed (147)

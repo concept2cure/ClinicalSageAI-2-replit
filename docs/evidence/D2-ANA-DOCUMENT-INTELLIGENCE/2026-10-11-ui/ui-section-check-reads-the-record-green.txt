@@ -1,0 +1,109 @@
+GREEN — the same two tests against this change.
+
+=== server/routes/__tests__/authoringDeficiencyScanRecord.test.ts ===
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+{
+  "timestamp": "2026-10-11T23:50:21.427Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+{
+  "timestamp": "2026-10-11T23:50:21.996Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-11T23:50:21.997Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+{
+  "timestamp": "2026-10-11T23:50:21.997Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDeficiencyScanRecord.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > serves 2.5 the record’s own nine elements, from its own entry, unverified by this check 38ms
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > does not turn the record’s descriptions into deficiencies, nor into an extra check 7ms
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > keeps 2.7.3 and 2.7.4 on their own entries 9ms
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > resolves 4.2.3 — a parent the record carries only the leaves of — to the sections it contains 6ms
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > answers a sub-section with no entry of its own from its containing section, and says so 8ms
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > the scan states what the record says the section must contain > a code the record does not index reads as not indexed — never as nothing required 7ms
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > a missing keyword is not an agency requirement > never says "as required by", and never attributes the keyword to the region 7ms
+ ✓ server/routes/__tests__/authoringDeficiencyScanRecord.test.ts > a missing keyword is not an agency requirement > leaves the five-code substring check and its honest wording alone 5ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  23:50:19
+   Duration  5.83s (transform 3.35s, setup 82ms, import 5.35s, tests 91ms, environment 0ms)
+
+
+=== client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx ===
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > lists the record’s elements for 2.5, named as the record’s statement and as unverified, with its basis 1032ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > shows a parent code’s contained sections instead of an empty list 625ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > names the containing section when the answer came from an ancestor entry 596ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > reads a code the record does not index as not indexed — never as nothing required 415ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > says nothing about required content when the server sent no record statement 534ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  23:50:25
+   Duration  7.23s (transform 2.45s, setup 204ms, import 3.00s, tests 3.21s, environment 549ms)
+
+
+=== the existing suites over what changed ===
+--- server/routes/__tests__/authoringDeficiencyScan.test.ts (the scan's arithmetic contract, untouched) ---
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  23:50:34
+   Duration  6.56s (transform 3.73s, setup 105ms, import 6.01s, tests 94ms, environment 0ms)
+
+--- client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx (the panel's existing tests) ---
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  23:50:41
+   Duration  5.40s (transform 1.90s, setup 143ms, import 2.44s, tests 2.29s, environment 393ms)
+
+
+=== regression batches (summaries) ===
+36 client test files importing DocumentWorkbench / DocumentAuthoring:
+  Test Files  36 passed (36)
+      Tests  385 passed (385)
+39 server/service test files importing authoring.router (non-pglite) plus
+tests/schema-contract/authoring-router-columns and authoring-section-gate:
+  Test Files  1 failed | 38 passed (39)
+      Tests  1 failed | 406 passed (407)
+  The one failure is server/services/part11/__tests__/one-signing-authority-policy.test.ts
+  ("isSigningAuthorized outside checkSigningAuthority:
+  server/api/cmc/module3OperatingSystemRoutes.ts: 1 call(s), 0 allowed").
+  That file is unmodified in this working tree (committed at d76e934f) and this
+  step touches neither it nor signing authority — pre-existing, recorded in
+  needs_elsewhere.
+tests/ui (surface-honesty, one-shell, token-authority, filing-path-reachability)
+and tests/regulatory-honesty.contract.test.ts:
+  Test Files  5 passed (5)
+      Tests  63 passed (63)

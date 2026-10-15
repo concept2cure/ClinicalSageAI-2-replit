@@ -1,0 +1,419 @@
+                                                                                                                        
+  Language      Rules   Files          Origin      Rules                                                                
+ ─────────────────────────────        ───────────────────                                                               
+  <multilang>       2      53          Community      21                                                                
+  ts               14      40                                                                                           
+  js               14       8                                                                                           
+  yaml              4       4                                                                                           
+  terraform         1       1                                                                                           
+                                                                                                                        
+                    
+                    
+┌──────────────────┐
+│ 36 Code Findings │
+└──────────────────┘
+                                                                                 
+    docs/evidence/ANA-AGENTS/2026-09-27/E2E-stand-in/harness/replay-log-check.mjs
+   ❯❯❱ typescript.react.security.react-insecure-request.react-insecure-request
+          ❰❰ Blocking ❱❱
+          Unencrypted request over HTTP detected.
+          Details: https://sg.run/1n0b           
+                                                 
+           53┆ const res = await fetch('http://127.0.0.1:8798/v1/messages', { method: 'POST', headers,
+               body: JSON.stringify(saved.body) });                                                   
+                                                                                       
+    docs/evidence/ANA-AGENTS/2026-09-27/E2E-stand-in/harness/wrapper-contract-check.mjs
+   ❯❯❱ typescript.react.security.react-insecure-request.react-insecure-request
+          ❰❰ Blocking ❱❱
+          Unencrypted request over HTTP detected.
+          Details: https://sg.run/1n0b           
+                                                 
+           26┆ const r = await fetch('http://127.0.0.1:8798/v1/messages', { method: 'POST', headers: {
+               'content-type': 'application/json' }, body: JSON.stringify(body) });                   
+                                                                                    
+    docs/evidence/D4/2026-09-28-pq-rag-fail-closed/code/differential/differential.ts
+    ❯❱ javascript.lang.security.insecure-object-assign.insecure-object-assign
+          ❰❰ Blocking ❱❱
+          Depending on the context, user control data in `Object.assign` can cause web response to include
+          data that it should not have or can lead to a mass assignment vulnerability.                    
+          Details: https://sg.run/2R0D                                                                    
+                                                                                                          
+           97┆ Object.assign(p, st);
+                                                                                                                       
+    docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.token-mutant.txt
+   ❯❯❱ generic.secrets.security.detected-jwt-token.detected-jwt-token
+          ❰❰ Blocking ❱❱
+          JWT token detected          
+          Details: https://sg.run/05N5
+                                      
+           57┆ +   "access_token": "***
+               GwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBl
+               IjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWF
+               kIiwic2lkIjoiOTA3ZmRkM2QtODY0NC00MjdhLWEzMjYtZmZhZmI3YmE1NDZkIiwic3N0IjoxNzkwODY0MDMwLCJpZG
+               wiOjM2MDAsImlhdCI6MTc5MDg2NDAzMCwiZXhwIjoxNzkwODY3NjMwLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzM
+               DAvbWNwIn0.lUtbd8alxtK491lpsI_p8tLLXbFyDXPOLywpHWayi68",                                   
+            ⋮┆----------------------------------------
+           82┆ +   "access_token": "***
+               GwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBl
+               IjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWF
+               kIiwic2lkIjoiMmM1NTE2YzgtMmUwMS00YjY0LWJmNDctZTcyODEwZTU1YjA1Iiwic3N0IjoxNzkwODY0MDMwLCJpZG
+               wiOjM2MDAsImlhdCI6MTc5MDg2NDAzMCwiZXhwIjoxNzkwODY3NjMwLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzM
+               DAvbWNwIn0.C0oZMtaxEJk9zf7OWl1mQosfJQYHEeYBAqbGlpmSXAo",                                   
+                                                                                                          
+    docs/evidence/D6/2026-10-01-tranche-4/P1-47-connector-enablement/red/mcp-connector-enablement.test.txt
+   ❯❯❱ generic.secrets.security.detected-jwt-token.detected-jwt-token
+          ❰❰ Blocking ❱❱
+          JWT token detected          
+          Details: https://sg.run/05N5
+                                      
+          203┆ +   "access_token": "***
+               GwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBl
+               IjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWF
+               kIiwic2lkIjoiNjEyZDhlYTMtNDI2YS00ZjBmLWEyZWMtZGNlZDA4MmM5NDhiIiwic3N0IjoxNzkwODQ1MzgzLCJpZG
+               wiOjM2MDAsImlhdCI6MTc5MDg0NTM4MywiZXhwIjoxNzkwODQ4OTgzLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzM
+               DAvbWNwIn0.IuJSCE33fm8Kdan2Uli5HS7LiAMKLXpwxE7VgCdbXnw",                                   
+            ⋮┆----------------------------------------
+          229┆ +   "access_token": "***
+               GwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBl
+               IjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWF
+               kIiwic2lkIjoiYzBiNTMyZWYtZjk1Yi00YTVjLWFkZDAtMjE5YjA1YzU3NjI4Iiwic3N0IjoxNzkwODQ1MzgzLCJpZG
+               wiOjM2MDAsImlhdCI6MTc5MDg0NTM4MywiZXhwIjoxNzkwODQ4OTgzLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzM
+               DAvbWNwIn0.IwIjiwtfci9NyhwBuNA3zIYQo7gfWyJe1ZdwMuTatf8",                                   
+                                                           
+    scripts/ci/__tests__/lineage-save-gate-strings.test.mjs
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `file` function argument, this might allow an attacker to cause a Regular    
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+           96┆ new RegExp(`\\[ci:lineage-save-gate\\] FAIL ${file.replace(/[.]/g, '\\.')}\\n {2}✗
+               unguarded-writer`).test(out);                                                     
+                                                    
+    scripts/ci/check-audit-logs-fixture.selftest.mjs
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `n` function argument, this might allow an attacker to cause a Regular       
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          260┆ const found = (n) => new RegExp(`fixtures found\\s*:\\s*${n}\\n`);
+            ⋮┆----------------------------------------
+          261┆ const writes = (n) => new RegExp(`columns the writer writes\\s*:\\s*${n}\\n`);
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `c` function argument, this might allow an attacker to cause a Regular       
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          461┆ (c) => new RegExp(`missing: [^\\n]*\\b${c}\\b`),
+                                       
+    scripts/ci/check-canonicalizers.mjs
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `line` function argument, this might allow an attacker to cause a Regular    
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+           93┆ return new RegExp(`\\b${name}${ITERATE}|\\bof\\s+${name}\\b|\\b${name}\\s*\\[|stringify\\s*
+               \\([^)]*,\\s*${name}\\b`).test(after);                                                     
+                                                           
+    server/mcp/__tests__/mcp-connector-enablement.dbtest.ts
+     ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+          ❰❰ Blocking ❱❱
+          Detected string concatenation with a non-literal variable in a util.format / console.log function.
+          If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+          constant values for the format string.                                                            
+          Details: https://sg.run/7Y5R                                                                      
+                                                                                                            
+          228┆ console.warn(`[${TAG}] audit cleanup incomplete:`, (err as Error).message);
+            ⋮┆----------------------------------------
+          374┆ await cleanup().catch((err) => console.warn(`[${TAG}] cleanup left rows:`, err?.message));
+            ⋮┆----------------------------------------
+          382┆ console.warn(`[${TAG}] runtime role left behind:`, (err as Error).message);
+                                                        
+    server/mcp/__tests__/mcp-consent-delegated.dbtest.ts
+     ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+          ❰❰ Blocking ❱❱
+          Detected string concatenation with a non-literal variable in a util.format / console.log function.
+          If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+          constant values for the format string.                                                            
+          Details: https://sg.run/7Y5R                                                                      
+                                                                                                            
+          256┆ await cleanup().catch((err) => console.warn(`[${TAG}] cleanup left rows:`, err?.message));
+            ⋮┆----------------------------------------
+          264┆ console.warn(`[${TAG}] runtime role left behind:`, (err as Error).message);
+                                                                        
+    server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts
+    ❯❱ javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret
+          ❰❰ Blocking ❱❱
+          A hard-coded credential was detected. It is not recommended to store credentials in source-code, as
+          this risks secrets being leaked and used by either an internal or external malicious adversary. It 
+          is recommended to use environment variables to securely provide credentials or retrieve credentials
+          from a secure vault or HSM (Hardware Security Module).                                             
+          Details: https://sg.run/4xN9                                                                       
+                                                                                                             
+          219┆ const forged = jwt.sign({ userId: '9', mfaPending: true }, 'not-the-secret-not-the-secret-
+               not-the-secret');                                                                         
+                                                                  
+    server/routes/__tests__/vault-legal-holds-launch-scope.test.ts
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `factory` function argument, this might allow an attacker to cause a Regular 
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+           58┆ const m = src.match(new                                                       
+               RegExp(`import\\s*\\{[^}]*\\b${factory}\\b[^}]*\\}\\s*from\\s*'(\\.[^']+)'`));
+                                               
+    server/services/ana/answer-check-figures.ts
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `unitRe` function argument, this might allow an attacker to cause a Regular  
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          250┆ const m = new RegExp(String.raw`^[ \t]?-?[ \t]?(${unitRe})(?![\w/])`, 'i').exec(after);
+                                           
+    server/services/ana/answer-grounding.ts
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `needle` function argument, this might allow an attacker to cause a Regular  
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          429┆ return new RegExp(`(?<![0-9])${escapeRegExp(needle)}(?![0-9]|\\.[0-9])`).test(haystack);
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `code` function argument, this might allow an attacker to cause a Regular    
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          437┆ return new RegExp(`(?<![A-Z0-9])${m[1]}${rev}(?![0-9A-Z])`).test(haystack);
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `needle` function argument, this might allow an attacker to cause a Regular  
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          442┆ return new RegExp(`(?<![A-Z0-9])${escapeRegExp(needle)}(?![A-Z0-9])`).test(haystack);
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `label` function argument, this might allow an attacker to cause a Regular   
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          447┆ return new                                                                           
+               RegExp(`(?:${label})[^0-9A-Z]{0,12}${escapeRegExp(number)}(?![0-9])`).test(haystack);
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `number` function argument, this might allow an attacker to cause a Regular  
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          447┆ return new                                                                           
+               RegExp(`(?:${label})[^0-9A-Z]{0,12}${escapeRegExp(number)}(?![0-9])`).test(haystack);
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `answer` function argument, this might allow an attacker to cause a Regular  
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          531┆ new RegExp(`(?<![0-9])${number}(?![0-9])`).test(t.upper),
+                                                                 
+    server/services/authoring/__tests__/authoring-read-fixture.ts
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `pattern` function argument, this might allow an attacker to cause a Regular 
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          224┆ return new RegExp(`^${re}$`, 'i');
+                                                                          
+    server/services/authoring/__tests__/section-generation-figures.test.ts
+    ❯❱ javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag
+          ❰❰ Blocking ❱❱
+          Cannot determine what 'stored' is and it is used with a '<script>' tag. This could be susceptible to
+          cross-site scripting (XSS). Ensure 'stored' is not externally controlled, or sanitize this data.    
+          Details: https://sg.run/1Zy1                                                                        
+                                                                                                              
+          189┆ expectEveryReaderReads(stored, modelBody);
+                                                      
+    server/services/authoring/authoring-read-render.ts
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `q` function argument, this might allow an attacker to cause a Regular       
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          465┆ const exact = new RegExp(words.join('\\s*'), 'iu').exec(content);
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `words` function argument, this might allow an attacker to cause a Regular   
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          480┆ const first = new RegExp(words[0], 'giu');
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `w` function argument, this might allow an attacker to cause a Regular       
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          481┆ const rest = words.slice(1).map((w) => new RegExp(w, 'iu'));
+                                                                               
+    server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `stage` function argument, this might allow an attacker to cause a Regular   
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          138┆ expect(out.unfinalizedSections[0].status).toMatch(new RegExp(`${stage}, not approved`));
+                                                                
+    server/services/report-os/sealing/__tests__/run-seal.test.ts
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `field` function argument, this might allow an attacker to cause a Regular   
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+           91┆ expect(v.checks.find((c) => c.check === 'stored-seal')?.detail).toMatch(new RegExp(field));
+                                                 
+    server/services/security/credential-cipher.ts
+   ❯❯❱ javascript.node-crypto.security.gcm-no-tag-length.gcm-no-tag-length
+          ❰❰ Blocking ❱❱
+          The call to 'createDecipheriv' with the Galois Counter Mode (GCM) mode of operation is missing an 
+          expected authentication tag length. If the expected authentication tag length is not specified or 
+          otherwise checked, the application might be tricked into verifying a shorter-than-expected        
+          authentication tag. This can be abused by an attacker to spoof ciphertexts or recover the implicit
+          authentication key of GCM, allowing arbitrary forgeries.                                          
+          Details: https://sg.run/NbGG1                                                                     
+                                                                                                            
+           62┆ const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+                                                                 
+    server/startup/__tests__/ai-provider-election-posture.test.ts
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `variable` function argument, this might allow an attacker to cause a Regular
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+           24┆ ).toThrow(new RegExp(`REFUSING TO BOOT: .*${variable}.*ADR-0014 §1`));
+                                               
+    terraform/modules/embedding-service/main.tf
+    ❯❱ terraform.aws.security.aws-cloudwatch-log-group-unencrypted.aws-cloudwatch-log-group-unencrypted
+          ❰❰ Blocking ❱❱
+          By default, AWS CloudWatch Log Group is encrypted using AWS-managed keys. However, for added        
+          security, it's recommended to configure your own AWS KMS encryption key to protect your log group in
+          CloudWatch. You can either create a new aws_kms_key resource or use the ARN of an existing key in   
+          your AWS account to do so.                                                                          
+          Details: https://sg.run/Pg6Y                                                                        
+                                                                                                              
+           25┆ resource "aws_cloudwatch_log_group" "this" {
+           26┆   name              = "/ecs/${var.name}/embeddings"
+           27┆   retention_in_days = var.log_retention_days
+           28┆   tags              = var.tags
+           29┆ }
+
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 36 (36 blocking)
+ • Rules run: 593
+ • Targets scanned: 3443
+ • Parsed lines: ~100.0%
+ • Scan skipped: 
+   ◦ Files larger than  files 1.0 MB: 3
+   ◦ Files matching .semgrepignore patterns: 135
+ • Scan was limited to files changed since baseline commit.
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 593 rules on 3443 files: 36 findings.
+##[error]Semgrep found what c064711c469ff8541c78c0533b1cffd3509ff07f did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason.

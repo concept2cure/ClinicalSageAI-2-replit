@@ -10,10 +10,15 @@
  * HUBSPOT_API_BASE_URL (proxy/tests). Record links are built when
  * HUBSPOT_PORTAL_ID is set. Network/HTTP failures throw so callers degrade.
  *
+ * 2026-10-01 (D6, decision P-8): the CRM is the deployment's own account, and
+ * it is searched only for the organisation PLATFORM_INTEGRATIONS_ORGANIZATION_ID
+ * names (platform-integration-owner.ts). Every organisation's AnA searched it.
+ *
  * @module server/services/integrations/hubspot-client
  */
 
 import { fetchWithRetry } from './http.js';
+import { callerOwnsPlatformIntegrations, notYourIntegrationNote } from './platform-integration-owner.js';
 
 const DEFAULT_BASE_URL = 'https://api.hubapi.com';
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -114,6 +119,17 @@ export async function searchHubSpotCrm(params: HubSpotSearchParams): Promise<Hub
       resultCount: 0,
       records: [],
       note: 'HubSpot is not connected (HUBSPOT_ACCESS_TOKEN unset). Ask an admin to connect it in Settings → Integrations.',
+    };
+  }
+  if (!callerOwnsPlatformIntegrations()) {
+    return {
+      source: 'HubSpot CRM',
+      configured: false,
+      object,
+      total: 0,
+      resultCount: 0,
+      records: [],
+      note: notYourIntegrationNote('HubSpot CRM'),
     };
   }
 

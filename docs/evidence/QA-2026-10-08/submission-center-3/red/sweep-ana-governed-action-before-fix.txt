@@ -1,0 +1,16 @@
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > moving an artifact to review stays the reason tier > runs on a reason, with no password asked for 50ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved on a reason alone: refused, nothing run 6ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked on a reason alone: refused, nothing run 5ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as RELEASE: refused before the password is checked, nothing run 7ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as AUTHOR: refused before the password is checked, nothing run 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as APPROVER: refused before the password is checked, nothing run 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as REVIEWER: refused before the password is checked, nothing run 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as APPROVER and re-authenticated: runs with a verified signature meaning approval 3ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as RELEASE and re-authenticated: runs with a verified signature meaning release 10ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > Release is the meaning of a lock, not of any e-signature > declared on an action that fixes no meaning: refused before the password is checked 3ms
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > the e-signature tier: signing authority before the password > approved, declared APPROVER, by a manager: refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing run 16ms
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > the e-signature tier: signing authority before the password > locked, declared RELEASE, by a member: refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing run 4ms
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > the e-signature tier: signing authority before the password > a role lookup that cannot run refuses 503, names no cause, runs nothing 4ms
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > the e-signature tier: signing authority before the password > the reason tier signs nothing and does not ask for the role 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 11 passed (14)

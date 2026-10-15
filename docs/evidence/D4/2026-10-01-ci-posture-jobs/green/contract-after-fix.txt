@@ -1,0 +1,19 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the jobs this contract names still exist, and each orders itself after lint 6ms
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > every job that needs lint runs after a red lint, unless it aggregates verdicts 2ms
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the aggregates stay strict: Build and the release evidence still refuse on any failure 2ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/ci.yml: every Trivy step runs unless the run was cancelled 45ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/deploy-aws.yml: every Trivy step runs unless the run was cancelled 7ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: the scans skip only the named directories and files 28ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: a job that runs a Trivy scan checks the exceptions first 8ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: the scans skip only the named directories and files 3ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: a job that runs a Trivy scan checks the exceptions first 3ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  08:54:28
+   Duration  849ms (transform 260ms, setup 281ms, import 135ms, tests 115ms, environment 0ms)
+

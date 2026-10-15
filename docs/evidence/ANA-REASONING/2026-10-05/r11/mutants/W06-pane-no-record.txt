@@ -1,0 +1,14 @@
+Mutant W06-pane-no-record: the pane hands its door no record, so nothing it admits goes in
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- m.turnRecord,
+                          );
++ );
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer every model of which may write governed content is inserted, naming its turn (negative control) 5583ms
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > a paste of the suggestion it admitted keeps AnA’s name; one from a turn it did not admit is the person’s 5493ms
+      Tests  2 failed | 2 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

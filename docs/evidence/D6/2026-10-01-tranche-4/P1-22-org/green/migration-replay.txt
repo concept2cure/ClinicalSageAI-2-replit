@@ -1,0 +1,21 @@
+# replay of migrations/20261001_organization_retention_settings.sql on a throwaway database (p122org_replay_scratch), 2026-10-01
+# (the 68-character FK name drizzle derives is truncated by PostgreSQL to 63; the migration recognises the FK by shape, contype='f' on organization_id, not by name)
+## A. deploy path: apply twice
+apply 1: ok
+apply 2: ok
+organization_retention_settings_organization_id_organizations_i f
+organization_retention_settings_organization_id_unique u
+organization_retention_settings_pkey p
+organization_retention_settings_shorter_is_reasoned c
+organization_retention_settings_years_range c
+## B. push path: drizzle-shaped table first (the model's constraint names), then the migration
+apply over push-created table: ok
+organization_retention_settings_organization_id_organizations_i f
+organization_retention_settings_organization_id_unique u
+organization_retention_settings_pkey p
+organization_retention_settings_shorter_is_reasoned c
+organization_retention_settings_years_range c
+## C. the CHECK refuses a shorter period without its reason
+ERROR:  new row for relation "organization_retention_settings" violates check constraint "organization_retention_settings_shorter_is_reasoned"
+shorter with reason and rule: accepted
+scratch database dropped

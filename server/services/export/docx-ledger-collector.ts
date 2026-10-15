@@ -13,9 +13,16 @@
  * count as "this artifact has no history and no signatures". A count is a
  * claim. Those two loads now carry a third state, `…Unavailable: <reason>`,
  * which the XML renders as `<AuditLog unavailable="true" reason="…"/>` and
- * which the DOCX export refuses to embed at all. The remaining loads
- * (proposals, runs, plan) keep the tolerant behaviour; nothing regulated
- * reads their counts as a verdict.
+ * which the DOCX export refuses to embed at all.
+ *
+ * 2026-10-15: the remaining loads (proposals, runs, plan) kept the tolerant
+ * behaviour, on the view that nothing regulated reads their counts. The ledger
+ * is the document's embedded AI-use record, so a failed read rendered as
+ * `<Proposals count="0">`, `<Runs total="0"><ModelsUsed/>` and
+ * `<AuthoringPlan xsi:nil="true"/>` — no AI proposal, run, model or plan. They
+ * now carry the same `…Unavailable` reason, a missing table included — except
+ * that the plan lookups in authoring-plan-generator still answer a missing
+ * authoring_plans table with "no plan" before this file sees an error.
  *
  * The AnALedger contract:
  *   - artifact + active version + content_hash
@@ -169,7 +176,11 @@ export interface ArtifactLedger {
   organization: LedgerOrganization;
   project: LedgerProject;
   citations: LedgerCitations | null;
+  /** null with `authoringPlanUnavailable` null: no plan matched. */
   authoringPlan: LedgerAuthoringPlan | null;
+  /** As `auditLogUnavailable`, for the authoring-plan lookup: `authoringPlan`
+   * is then null because nothing was read, not because no plan exists. */
+  authoringPlanUnavailable: string | null;
   auditLog: LedgerAuditEntry[];
   /**
    * Non-null when the audit-log query could NOT run; `auditLog` is then empty
@@ -181,17 +192,17 @@ export interface ArtifactLedger {
   /** As `auditLogUnavailable`, for the signatures query. */
   signaturesUnavailable: string | null;
   proposals: LedgerProposal[];
-  runs: LedgerRunSummary;
+  /** As `auditLogUnavailable`, for the applied/superseded proposals query. */
+  proposalsUnavailable: string | null;
+  /** null when the citation-run queries could not run (`runsUnavailable` says why). */
+  runs: LedgerRunSummary | null;
+  runsUnavailable: string | null;
 }
 
 const MAX_AUDIT = 500;
 const MAX_PROPOSALS = 50;
 const MAX_SIGNATURES = 200;
 const ANALEDGER_SCHEMA_VERSION = '1.0';
-
-function isMissingTable(err: any): boolean {
-  return err?.code === '42P01';
-}
 
 async function loadArtifact(
   artifactId: string,
@@ -354,7 +365,7 @@ async function loadSignatures(
 async function loadProposals(
   artifactId: string,
   organizationId: number
-): Promise<LedgerProposal[]> {
+): Promise<{ entries: LedgerProposal[]; unavailable: string | null }> {
   try {
     const { rows } = await getPool().query(
       `SELECT id, status, thread_id, section_code, target_agency,
@@ -368,7 +379,7 @@ async function loadProposals(
         LIMIT $3`,
       [artifactId, organizationId, MAX_PROPOSALS]
     );
-    return rows.map((r: any) => ({
+    const entries: LedgerProposal[] = rows.map((r: any) => ({
       proposalId: r.id,
       status: r.status,
       threadId: r.thread_id,
@@ -383,24 +394,19 @@ async function loadProposals(
       appliedVersionId: r.applied_version_id ?? null,
       expiresAt: new Date(r.expires_at).toISOString(),
     }));
+    return { entries, unavailable: null };
   } catch (err: any) {
-    if (!isMissingTable(err)) {
-      console.warn('[docx-ledger-collector] proposals load failed:', err?.message);
-    }
-    return [];
+    // 2026-10-15: was `return []` (a missing table silently) — "no AI proposal
+    // was applied" for a read that did not happen.
+    console.warn('[docx-ledger-collector] proposals load could not run:', describeFailure(err));
+    return { entries: [], unavailable: describeFailure(err) };
   }
 }
 
 async function loadRunSummary(
   artifactId: string,
   organizationId: number
-): Promise<LedgerRunSummary> {
-  const empty: LedgerRunSummary = {
-    totalRuns: 0,
-    latestRunId: null,
-    latestRunAt: null,
-    modelsUsed: [],
-  };
+): Promise<{ summary: LedgerRunSummary | null; unavailable: string | null }> {
   try {
     const [countRes, latestRes] = await Promise.all([
       getPool().query(
@@ -431,18 +437,21 @@ async function loadRunSummary(
       }
     }
     return {
-      totalRuns,
-      latestRunId: latestRow?.id ?? null,
-      latestRunAt: latestRow?.created_at
-        ? new Date(latestRow.created_at).toISOString()
-        : null,
-      modelsUsed: Array.from(modelSet).sort(),
+      summary: {
+        totalRuns,
+        latestRunId: latestRow?.id ?? null,
+        latestRunAt: latestRow?.created_at
+          ? new Date(latestRow.created_at).toISOString()
+          : null,
+        modelsUsed: Array.from(modelSet).sort(),
+      },
+      unavailable: null,
     };
   } catch (err: any) {
-    if (!isMissingTable(err)) {
-      console.warn('[docx-ledger-collector] run summary failed:', err?.message);
-    }
-    return empty;
+    // 2026-10-15: was a zero summary — "no citation run, no model used" for a
+    // read that did not happen.
+    console.warn('[docx-ledger-collector] run summary could not run:', describeFailure(err));
+    return { summary: null, unavailable: describeFailure(err) };
   }
 }
 
@@ -478,13 +487,16 @@ export async function collectArtifactLedger(
     organization: head.organization,
     project: head.project,
     citations: head.citations,
-    authoringPlan,
+    authoringPlan: authoringPlan.plan,
+    authoringPlanUnavailable: authoringPlan.unavailable,
     auditLog: auditLog.entries,
     auditLogUnavailable: auditLog.unavailable,
     signatures: signatures.entries,
     signaturesUnavailable: signatures.unavailable,
-    proposals,
-    runs,
+    proposals: proposals.entries,
+    proposalsUnavailable: proposals.unavailable,
+    runs: runs.summary,
+    runsUnavailable: runs.unavailable,
   };
 }
 
@@ -496,14 +508,17 @@ export async function collectArtifactLedger(
  *      the case where the artifact was drafted before the plan id was
  *      attached back.
  *
- * Returns null if no plan matches OR the table is missing.
+ * `plan` is null when no plan matches (and, inside the generator's lookups,
+ * when authoring_plans is missing). 2026-10-15: a lookup that threw also
+ * returned null (`catch { return null }`), which the ledger rendered as "no
+ * authoring plan"; it now returns `unavailable` with the reason.
  */
 async function loadAuthoringPlan(
   artifactId: string,
   projectId: number,
   ctdSection: string | null,
   organizationId: number
-): Promise<LedgerAuthoringPlan | null> {
+): Promise<{ plan: LedgerAuthoringPlan | null; unavailable: string | null }> {
   try {
     const {
       getLatestAuthoringPlanForArtifact,
@@ -518,8 +533,8 @@ async function loadAuthoringPlan(
         ctdSection
       );
     }
-    if (!plan || !plan.id) return null;
-    return {
+    if (!plan || !plan.id) return { plan: null, unavailable: null };
+    const entry: LedgerAuthoringPlan = {
       planId: plan.id,
       ctdSection: plan.ctdSection,
       status: plan.status,
@@ -538,7 +553,9 @@ async function loadAuthoringPlan(
       executedAt: plan.executedAt ?? null,
       executedArtifactId: plan.executedArtifactId ?? null,
     };
-  } catch {
-    return null;
+    return { plan: entry, unavailable: null };
+  } catch (err: unknown) {
+    console.warn('[docx-ledger-collector] authoring plan load could not run:', describeFailure(err));
+    return { plan: null, unavailable: describeFailure(err) };
   }
 }

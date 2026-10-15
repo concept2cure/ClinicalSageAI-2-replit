@@ -1,0 +1,19 @@
+ ✓ vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > shows each version's stage and sign-offs, apart from its filing 761ms
+ ✓ vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review, after saying what that means: starts its record, then moves it to In review 290ms
+ ✓ workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > calls the route with the chosen format and renders the server’s folder, hash and id 619ms
+ ✓ vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > signs the review through the e-signature dialog: meaning, reason and password go to the lifecycle route 714ms
+ ✓ workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the Authoring approval carried, naming who reviewed and approved, as the server reported it (FD5 (c)) 373ms
+ ✓ workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the approval did not carry, with the server’s reason and what to do next 337ms
+ ✓ vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > a refused approval shows the server's reason, in the dialog 710ms
+ ✓ workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > claims no approval when the server reported none 390ms
+ ✓ workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > renders the server’s refusal as a refusal, with nothing claimed 281ms
+ ✓ workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > a 2xx without a vault record is not a success 246ms
+ ✓ workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > with no program the dialog says so and offers no submit 308ms
+ ✓ vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says before signing that the reviewer, and the uploader, do not approve 979ms
+ ✓ vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says who sent it for review, and a role without authoring rights, may not act 958ms
+ ✓ vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > names the earlier approved version an approval supersedes 570ms
+ ✓ vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a dropped connection says the outcome is not known, never that nothing happened 531ms
+ ✓ vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > the list row says the stage beside the filing 62ms
+ ✓ vaultLifecycle.test.tsx > what counts as settled in a folder (VR-13, FD4) > an upload counts only once approved; a confirmed filing is not an approval 1ms
+ ✓ vaultLifecycle.test.tsx > a sign-off carried from Authoring (FD5 (c)) > says it was signed in Authoring, by the printed name the Authoring signature holds 3ms
+      Tests  18 passed (18)

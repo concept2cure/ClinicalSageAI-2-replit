@@ -1,0 +1,16 @@
+# Pre-change: the aggregator was routed. tsx probe mounting HEAD's server/api/cmc/index.js at /api/cmc
+GET /api/cmc/status -> 200 ["blueprint-generator:available","change-impact-simulator:available","manufacturing-tuner:available","preclinical-translator:available","global-compliance:available","audit-risk-monitor:available","cmc-copilot:available"]
+
+# Pre-change mount lines, git show 35095fedd:server/bootstrap/register-core-routes.ts
+10:import cmcProjectRoutes from '../api/cmc/projectRoutes';
+11:import cmcBlueprintRoutes from '../api/cmc/blueprintRoutes';
+12:import cmcAggregatorRoutes from '../api/cmc/index.js';
+16:import cmcWorkflowRoutes from '../api/cmc/workflowRoutes';
+21:import cmcModule3AutoDraftRoutes from '../api/cmc/module3AutoDraftRoutes';
+22:import cmcDocumentRoutes from '../api/cmc/documentRoutes';
+74:    app.use('/api/cmc', cmcAggregatorRoutes);
+75:    app.use('/api/cmc', cmcProjectRoutes);
+76:    app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
+87:    app.use('/api/cmc/workflows', cmcWorkflowRoutes);
+94:    app.use('/api/cmc/module3', cmcModule3AutoDraftRoutes);
+122:    app.use('/api/cmc/documents', cmcDocumentRoutes);

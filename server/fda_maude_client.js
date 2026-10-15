@@ -85,6 +85,11 @@ function makeRequest(endpoint, params = {}) {
           } catch (error) {
             reject(new Error(`Failed to parse response: ${error.message}`));
           }
+        } else if (res.statusCode === 404 && isOpenFdaNoMatch(data)) {
+          // openFDA answers a search with no matches as 404 NOT_FOUND. That
+          // is a true zero; it was rejected as an error, so a device with no
+          // MAUDE reports read as "the search could not run" (2026-10-15).
+          resolve({ results: [] });
         } else {
           try {
             const errorData = JSON.parse(data);
@@ -102,6 +107,15 @@ function makeRequest(endpoint, params = {}) {
 
     req.end();
   });
+}
+
+/** openFDA's "No matches found!" reply: HTTP 404 with error.code NOT_FOUND. */
+function isOpenFdaNoMatch(body) {
+  try {
+    return JSON.parse(body)?.error?.code === 'NOT_FOUND';
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -194,7 +208,7 @@ export async function searchDeviceReports({
     const response = await makeRequest(FDA_MAUDE_API_BASE, params);
 
     // Process and transform the results
-    const results = transformMaudeResults(response, { productCode, deviceName, manufacturer });
+    const results = transformMaudeResults(response);
 
     // Cache the results
     await cacheManager.saveToCacheWithExpiry(cacheKey, results, 24 * 60 * 60);
@@ -203,8 +217,11 @@ export async function searchDeviceReports({
   } catch (error) {
     console.error('Error searching FDA MAUDE:', error.message);
 
-    // Return an empty array with error information
-    return [];
+    // A failed search is not an empty one. This returned [] with no error,
+    // so every caller read an unreachable MAUDE as "no reports for this
+    // device". Callers catch it: AnA's tool says the search could not run,
+    // and data_integration.js leaves the source out.
+    throw error;
   }
 }
 
@@ -215,10 +232,18 @@ export async function searchDeviceReports({
  * @param {Object} searchParams Original search parameters
  * @returns {Array} Transformed array of device reports
  */
-function transformMaudeResults(apiResponse, searchParams) {
+export function transformMaudeResults(apiResponse) {
   if (!apiResponse || !apiResponse.results) {
     return [];
   }
+  /* What each report says, and only that (2026-10-15):
+     - event_type is openFDA's own field. It was guessed from keywords in the
+       narrative, so "no death occurred" counted as a Death and any mention of
+       "malfunction" outranked one — and those guesses fed event_types and
+       top_event_types.
+     - device name, manufacturer and product code are the report's. A report
+       that did not state them was labelled with the values searched for.
+     - A transform failure is a failure, not an empty result. */
 
   try {
     return apiResponse.results.map(result => {
@@ -228,36 +253,19 @@ function transformMaudeResults(apiResponse, searchParams) {
       // Extract patient information
       const patientInfo = result.patient || {};
 
-      // Determine event type from MDR text if available
-      let eventType = 'Unknown';
-      if (result.mdr_text && result.mdr_text.length > 0) {
-        const mdrText = result.mdr_text.find(
-          t => t.text_type_code === 'Description of Event or Problem'
-        );
-        if (mdrText && mdrText.text) {
-          // Extract a short event description from the first part of the MDR text
-          const text = mdrText.text.toLowerCase();
-          if (text.includes('malfunction')) {
-            eventType = 'Malfunction';
-          } else if (text.includes('death')) {
-            eventType = 'Death';
-          } else if (text.includes('injury') || text.includes('serious')) {
-            eventType = 'Injury';
-          } else if (text.includes('failure')) {
-            eventType = 'Device Failure';
-          }
-        }
-      }
+      const eventType =
+        typeof result.event_type === 'string' && result.event_type.trim()
+          ? result.event_type.trim()
+          : 'Not stated';
 
       return {
         report_number: result.report_number || '',
         date_received: result.date_received || '',
         date_of_event: result.date_of_event || '',
         event_type: eventType,
-        device_name:
-          deviceInfo.generic_name || deviceInfo.brand_name || searchParams.deviceName || 'Unknown',
-        manufacturer: deviceInfo.manufacturer_d_name || searchParams.manufacturer || 'Unknown',
-        product_code: deviceInfo.product_code || searchParams.productCode || '',
+        device_name: deviceInfo.generic_name || deviceInfo.brand_name || 'Not stated',
+        manufacturer: deviceInfo.manufacturer_d_name || 'Not stated',
+        product_code: deviceInfo.product_code || '',
         device_class: deviceInfo.device_class || '',
         patient_outcome: patientInfo.sequence_number_outcome
           ? patientInfo.sequence_number_outcome.map(o => o.patient_outcome_text).join(', ')
@@ -273,7 +281,7 @@ function transformMaudeResults(apiResponse, searchParams) {
     });
   } catch (error) {
     console.error('Error transforming FDA MAUDE results:', error);
-    return [];
+    throw error;
   }
 }
 

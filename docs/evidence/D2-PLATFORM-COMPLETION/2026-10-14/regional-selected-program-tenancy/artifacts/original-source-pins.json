@@ -1,0 +1,22 @@
+[
+  {
+    "path": "server/routes/insights-canvas-routes.ts",
+    "sha256": "8ff460812a12fe664751c54a6df07ba1ca42e9e7b9c76245a270d1561b358c24"
+  },
+  {
+    "path": "server/routes/__tests__/insights-canvas-regional-filing.test.ts",
+    "sha256": "3c32cc781b6640b4c1daf45002518310df46b0496254c8a5e9f3cb05e5e6c6a5"
+  },
+  {
+    "path": "server/routes/__tests__/insights-canvas-open-program.test.ts",
+    "sha256": "01a65e3854c388694e8817ea0a7cda109fd943ba7c6914aeb8f9f291d1251bee"
+  },
+  {
+    "path": "server/routes/__tests__/insights-canvas-catalog.test.ts",
+    "sha256": "4d318ceb170d04329b0fc8c57eae681706c86dce23701d042150ac2eb81a013e"
+  },
+  {
+    "path": "server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts",
+    "sha256": "af1e9764dbb06407c4a0dca18ad80528a3759c7b3201cf823040c473b44809d6"
+  }
+]

@@ -195,8 +195,30 @@ describe('costShareStatus', () => {
     expect(s.shortfall).toBe(30000);
     expect(s.metPct).toBe(40);
   });
-  it('treats no commitment as met', () => {
-    expect(costShareStatus(null, []).met).toBe(true);
+  // A commitment nobody recorded read as met (2026-10-15); only a recorded
+  // zero commitment is met by nothing.
+  it('does not call an unrecorded commitment met', () => {
+    const s = costShareStatus(null, [{ amount: 1000 }]);
+    expect(s).toMatchObject({ committed: null, contributed: 1000, met: null, metPct: null, shortfall: null });
+  });
+  it('a recorded zero commitment is met, with no percentage of nothing', () => {
+    expect(costShareStatus(0, [])).toMatchObject({ committed: 0, met: true, metPct: null, shortfall: 0 });
+  });
+});
+
+describe('awardPeriodState with dates nobody recorded', () => {
+  it('is undetermined, not "active", when neither date is recorded', () => {
+    expect(awardPeriodState(null, null, TODAY)).toBe('undetermined');
+  });
+  it('is undetermined when the award has started and no end date is recorded', () => {
+    expect(awardPeriodState('2026-01-01', null, TODAY)).toBe('undetermined');
+  });
+  it('is undetermined when no start date is recorded and the end is ahead', () => {
+    expect(awardPeriodState(null, '2026-12-31', TODAY)).toBe('undetermined');
+  });
+  it('still knows what one recorded date settles', () => {
+    expect(awardPeriodState('2026-07-01', null, TODAY)).toBe('pre_start');
+    expect(awardPeriodState(null, '2024-01-01', TODAY)).toBe('lapsed');
   });
 });
 

@@ -1,0 +1,173 @@
+# red: design-controls-qmsr.test.ts against the HEAD (76e7528c) versions of DesignControls.tsx, combination-products-knowledge.ts, design-controls.ts (HEAD content written back temporarily, then the change restored)
+# client/src/concept2cure/v2/surfaces/DesignControls.tsx sha1 0f935bf93df12b44c061a56d24c7d2deb3a3101b == HEAD 0f935bf93df12b44c061a56d24c7d2deb3a3101b
+# server/services/combination-products/combination-products-knowledge.ts sha1 25961aef1937d0d373f629923eb5e29413b66444 == HEAD 25961aef1937d0d373f629923eb5e29413b66444
+# server/services/regulatory/design-controls.ts sha1 16aad179b9f5dfb11207093a6e0600fca3cf7646 == HEAD 16aad179b9f5dfb11207093a6e0600fca3cf7646
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > DHF_ELEMENTS is the crosswalk §7.3.x ids, in crosswalk order 27ms
+ × server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > a DHF with no design inputs as of 2026-10-04 cites ISO 13485:2016 §7.3.3 via 820.10(c), 820.30(c) only as "formerly" 54ms
+   → expected 'No design inputs defined (820.30(c)).' to contain '21 CFR 820.10(c) → ISO 13485:2016 §7.…'
+ × server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > as of 2026-10-04 a review without an independent reviewer is an advisory citing ISO 13485:2016 §7.3.5, not a blocker 15ms
+   → No design review includes an independent reviewer (820.30(e)).: expected true to be false // Object.is equality
+ × server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > before 2026-02-02 the QSR rule and citation apply: no independent reviewer blocks, citing 21 CFR 820.30(e) 43ms
+   → expected 'No design review includes an independ…' to contain '21 CFR 820.30(e)'
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > no review recorded at all is still a gap after the effective date 1ms
+ × server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > a malformed asOf fails closed rather than guessing a regime 31ms
+   → expected [Function] to throw an error
+ × server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > as of 2026-10-04 every element cites citeQms(id, asOf), in crosswalk order 21ms
+   → expected [ '21 CFR 820.30(b)', …(8) ] to deeply equal [ …(9) ]
+ × server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > as of 2026-10-04 the design-review expectation does not require an independent reviewer 1ms
+   → expected 'Conduct formal, documented design rev…' not to match /independent reviewer/i
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > before 2026-02-02 the elements cite 21 CFR 820.30(b)…(j) 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > listDesignControlElements(asOf) is the same list 1ms
+ × server/services/regulatory/__tests__/design-controls-qmsr.test.ts > DesignControls.tsx checklist reads the crosswalk > as of 2026-10-04 each element ref is citeQms(id, asOf), in crosswalk order, labels unchanged 2050ms
+   → designControlChecklistDefs is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > a DHF with no design inputs as of 2026-10-04 cites ISO 13485:2016 §7.3.3 via 820.10(c), 820.30(c) only as "formerly"
+AssertionError: expected 'No design inputs defined (820.30(c)).' to contain '21 CFR 820.10(c) → ISO 13485:2016 §7.…'
+
+Expected: "21 CFR 820.10(c) → ISO 13485:2016 §7.3.3; formerly 21 CFR 820.30(c) (QSR, until 2026-02-01)"
+Received: "No design inputs defined (820.30(c))."
+
+ ❯ server/services/regulatory/__tests__/design-controls-qmsr.test.ts:69:15
+     67|     const b = c.blockers.find((x) => /design inputs/i.test(x));
+     68|     expect(b, c.blockers.join(' | ')).toBeDefined();
+     69|     expect(b).toContain(citeQms('designInputs', AFTER));
+       |               ^
+     70|     expect(b).toContain('ISO 13485:2016 §7.3.3');
+     71|     expect(citesQsrAsCurrent(b as string), b).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > as of 2026-10-04 a review without an independent reviewer is an advisory citing ISO 13485:2016 §7.3.5, not a blocker
+AssertionError: No design review includes an independent reviewer (820.30(e)).: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/regulatory/__tests__/design-controls-qmsr.test.ts:80:93
+     78|       AFTER,
+     79|     );
+     80|     expect(c.blockers.some((b) => /independent reviewer/i.test(b)), c.…
+       |                                                                                             ^
+     81|     expect(c.gaps).not.toContain('designReviews');
+     82|     expect(c.auditReady).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > before 2026-02-02 the QSR rule and citation apply: no independent reviewer blocks, citing 21 CFR 820.30(e)
+AssertionError: expected 'No design review includes an independ…' to contain '21 CFR 820.30(e)'
+
+Expected: "21 CFR 820.30(e)"
+Received: "No design review includes an independent reviewer (820.30(e))."
+
+ ❯ server/services/regulatory/__tests__/design-controls-qmsr.test.ts:96:15
+     94|     const b = c.blockers.find((x) => /independent reviewer/i.test(x));
+     95|     expect(b).toBeDefined();
+     96|     expect(b).toContain('21 CFR 820.30(e)');
+       |               ^
+     97|     expect(c.gaps).toContain('designReviews');
+     98|     expect(c.auditReady).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > a malformed asOf fails closed rather than guessing a regime
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory/__tests__/design-controls-qmsr.test.ts:107:62
+    105|
+    106|   it('a malformed asOf fails closed rather than guessing a regime', ()…
+    107|     expect(() => assessDhfCompleteness(dhf(), '2026-02-30')).toThrow(/…
+       |                                                              ^
+    108|   });
+    109| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > as of 2026-10-04 every element cites citeQms(id, asOf), in crosswalk order
+AssertionError: expected [ '21 CFR 820.30(b)', …(8) ] to deeply equal [ …(9) ]
+
+- Expected
++ Received
+
+  [
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.2; formerly 21 CFR 820.30(b) (QSR, until 2026-02-01)",
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.3; formerly 21 CFR 820.30(c) (QSR, until 2026-02-01)",
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.4; formerly 21 CFR 820.30(d) (QSR, until 2026-02-01)",
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.5; formerly 21 CFR 820.30(e) (QSR, until 2026-02-01)",
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.6; formerly 21 CFR 820.30(f) (QSR, until 2026-02-01)",
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.7; formerly 21 CFR 820.30(g) (QSR, until 2026-02-01)",
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.8; formerly 21 CFR 820.30(h) (QSR, until 2026-02-01)",
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.9; formerly 21 CFR 820.30(i) (QSR, until 2026-02-01)",
+-   "21 CFR 820.10(c) → ISO 13485:2016 §7.3.10; formerly 21 CFR 820.30(j) (QSR, until 2026-02-01)",
++   "21 CFR 820.30(b)",
++   "21 CFR 820.30(c)",
++   "21 CFR 820.30(d)",
++   "21 CFR 820.30(e)",
++   "21 CFR 820.30(f)",
++   "21 CFR 820.30(g)",
++   "21 CFR 820.30(h)",
++   "21 CFR 820.30(i)",
++   "21 CFR 820.30(j)",
+  ]
+
+ ❯ server/services/regulatory/__tests__/design-controls-qmsr.test.ts:116:53
+    114|   it(`as of ${AFTER} every element cites citeQms(id, asOf), in crosswa…
+    115|     const r = assessDeviceConstituentControls(params);
+    116|     expect(r.designControls.map((e) => e.citation)).toEqual(DESIGN_IDS…
+       |                                                     ^
+    117|     for (const e of r.designControls) expect(citesQsrAsCurrent(e.citat…
+    118|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > as of 2026-10-04 the design-review expectation does not require an independent reviewer
+AssertionError: expected 'Conduct formal, documented design rev…' not to match /independent reviewer/i
+
+- Expected:
+/independent reviewer/i
+
++ Received:
+"Conduct formal, documented design reviews at appropriate stages with an independent reviewer present."
+
+ ❯ server/services/regulatory/__tests__/design-controls-qmsr.test.ts:123:36
+    121|     const r = assessDeviceConstituentControls(params);
+    122|     const review = r.designControls[DESIGN_IDS.indexOf('designReviews'…
+    123|     expect(review.expectation).not.toMatch(/independent reviewer/i);
+       |                                    ^
+    124|     expect(review.expectation).toMatch(/specialist personnel/i);
+    125|     expect(r.designHistoryFileContents.join(' ')).not.toMatch(/indepen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/regulatory/__tests__/design-controls-qmsr.test.ts > DesignControls.tsx checklist reads the crosswalk > as of 2026-10-04 each element ref is citeQms(id, asOf), in crosswalk order, labels unchanged
+TypeError: designControlChecklistDefs is not a function
+ ❯ server/services/regulatory/__tests__/design-controls-qmsr.test.ts:153:18
+    151|       '../../../../client/src/concept2cure/v2/surfaces/DesignControls'
+    152|     );
+    153|     const defs = designControlChecklistDefs(AFTER);
+       |                  ^
+    154|     expect(defs.map((d) => d.el)).toEqual(DESIGN_IDS);
+    155|     expect(defs.map((d) => d.ref)).toEqual(DESIGN_IDS.map((id) => cite…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 4 passed (11)
+   Start at  11:14:12
+   Duration  6.32s (transform 1.91s, setup 998ms, import 425ms, tests 2.27s, environment 0ms)
+

@@ -1,0 +1,30 @@
+# Fix round gates, 2026-10-01. ci:tenant-entry-points fails on server/jobs/auditChainIntegritySweep.ts, a file another lane has modified (uncommitted in the shared tree); this round does not touch it.
+# ESLint: npx eslint server/mcp/auth/consent.ts server/mcp/auth/platform-token.ts server/mcp/__tests__/mcp-consent-delegated.dbtest.ts -> exit 0, no output (0 errors, 0 warnings)
+
+=== npm run check:security-patterns
+check-security-patterns: 0 violations across 2961 file(s).
+exit=0
+=== npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 48 baselined site(s) across 46 file(s); no file gained one.
+[ci:server-error-leaks] 48 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0
+=== npm run ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 70 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+exit=0
+=== npm run ci:tenant-entry-points
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+
+[ci:tenant-entry-points] FAIL — 1 baselined entry point(s) CHANGED since justification:
+    server/jobs/auditChainIntegritySweep.ts  (scheduled-sweep)
+
+  Re-read the justification against the new code. If it still holds, refresh
+  the digest: npm run ci:tenant-entry-points:write-baseline
+
+exit=1
+=== npm run ci:check-unrun-tests
+[ci:unrun-tests] 3292 test files · 13 vitest globs · 5 non-vitest runner globs · 0 unrun (0 allowlisted).
+[ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+exit=0
+=== npm run ci:committed-secrets
+[ci:committed-secrets] OK — no committed credential material found in tracked files.
+exit=0

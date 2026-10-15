@@ -1,0 +1,8 @@
+{
+  "baselineRef": "HEAD",
+  "baselineCommit": "24a4f940b89782f9af549597ea74b43be9cdc4b2",
+  "path": "server/services/vault/document-catalog-actor-captures.ts",
+  "baselineSha256": "cf8fb4643ec4d3eec6ac7fcfc175a7c8122e58daeaddba1e6ae297321687cb48",
+  "currentSha256Before": "dbcb51705815c791b26fb48c61dd599c130fb8eab3a496514b4836a20e0b3947",
+  "method": "Vitest load-only archived source at original module path; no production file replacement or SQL rewrite"
+}

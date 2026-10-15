@@ -1,0 +1,122 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:36:34.700Z","pid":28851,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:36:34.702Z","pid":28851,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:36:34.702Z","pid":28851,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:36:34.839Z', poolSize: 1 }
+
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over 1789ms
+{"level":30,"time":"2026-10-01T15:36:34.995Z","pid":28851,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:36:34.995Z","pid":28851,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:36:34.995Z","pid":28851,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:36:35.026Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-01T15:36:35.151Z","pid":28851,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ × tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over 191ms
+   → a session begun after the membership was ended: expected true to be false // Object.is equality
+   → the membership began between 1790868994 and 1790868994; the standing read 1790901394 (32400 s from the first): expected false to be true // Object.is equality
+{"level":30,"time":"2026-10-01T15:36:35.152Z","pid":28851,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:36:35.152Z","pid":28851,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:36:35.172Z', poolSize: 1 }
+
+ × tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over 141ms
+   → a session begun before the membership stayed current: expected false to be true // Object.is equality
+   → the membership began between 1790868995 and 1790868995; the standing read 1790843795 (-25200 s from the first): expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over
+AssertionError: a session begun after the membership was ended: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/db/account-standing-time-zone.dbtest.ts:125:12
+    123|             'a session begun after the membership was ended',
+    124|           )
+    125|           .toBe(false);
+       |            ^
+    126|         expect
+    127|           .soft(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over
+AssertionError: the membership began between 1790868994 and 1790868994; the standing read 1790901394 (32400 s from the first): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/account-standing-time-zone.dbtest.ts:139:12
+    137|             } s from the first)`,
+    138|           )
+    139|           .toBe(true);
+       |            ^
+    140|       } finally {
+    141|         await runtime.getPool().end().catch(() => {});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over
+AssertionError: a session begun before the membership stayed current: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/account-standing-time-zone.dbtest.ts:131:12
+    129|             'a session begun before the membership stayed current',
+    130|           )
+    131|           .toBe(true);
+       |            ^
+    132|         expect
+    133|           .soft(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over
+AssertionError: the membership began between 1790868995 and 1790868995; the standing read 1790843795 (-25200 s from the first): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/account-standing-time-zone.dbtest.ts:139:12
+    137|             } s from the first)`,
+    138|           )
+    139|           .toBe(true);
+       |            ^
+    140|       } finally {
+    141|         await runtime.getPool().end().catch(() => {});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  15:36:32
+   Duration  2.94s (transform 931ms, setup 85ms, import 24ms, tests 2.46s, environment 0ms)
+

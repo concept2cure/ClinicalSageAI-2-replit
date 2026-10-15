@@ -1,0 +1,18 @@
+
+[ci:error-envelope] FAIL — 1 new hand-rolled error-envelope read(s):
+
+  concept2cure/v2/surfaces/Insights.tsx:813  [envelope-error-dot-message]
+
+  Read the envelope through the single canonical reader instead:
+    import { serverMessage } from '@/lib/queryClient';
+    const msg = serverMessage(body) ?? '<your own domain fallback>';
+
+  Reading `error` first renders the enum token (PENDING_STORE, FORBIDDEN)
+  as user copy, and bypasses the filter that keeps SQL, relation names,
+  routes and env vars off the screen.
+
+  If the match is a false positive — an `.error` that is not an API
+  envelope — add it to the baseline with --write-baseline and say why in
+  the commit message.
+
+exit=1

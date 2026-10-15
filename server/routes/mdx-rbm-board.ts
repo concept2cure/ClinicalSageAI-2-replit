@@ -40,6 +40,7 @@ import {
   type RiskReviewInput, type AttentionItem,
 } from '../services/rbm/risk-report';
 import { freshnessFromRun, type SourceFreshness } from '../services/rbm/metric-ingestion';
+import { governingPlanId as governingPlanIdOf } from '../services/rbm/rbm-actuator';
 import { actorLabel, resolveActorNames } from '../services/tenant/actor-names';
 
 const log = createScopedLogger('mdx-rbm-board');
@@ -103,6 +104,30 @@ function amendmentReason(metadata: unknown): string | null {
     return typeof r === 'string' ? r : null;
   }
   return null;
+}
+
+/**
+ * Read metadata.dimensionScores — the per-dimension signed z breakdown the
+ * cohort scorer wrote — off a jsonb column, tolerating anything unexpected.
+ *
+ * A row scored before the breakdown existed has no key at all, and a
+ * partially-written or hand-edited value must degrade to "no breakdown" rather
+ * than putting a NaN on screen next to a real z. Every entry is validated
+ * individually, so one bad element does not discard the others.
+ */
+function dimensionScores(metadata: unknown): { k: string; z: number }[] {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return [];
+  const raw = (metadata as Record<string, unknown>).dimensionScores;
+  if (!Array.isArray(raw)) return [];
+  const out: { k: string; z: number }[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue;
+    const { dimension, z } = entry as { dimension?: unknown; z?: unknown };
+    const n = num(z);
+    if (typeof dimension !== 'string' || dimension === '' || n === null) continue;
+    out.push({ k: dimension, z: n });
+  }
+  return out;
 }
 
 /** Read metadata.approvalReason off a jsonb column without throwing. */
@@ -299,10 +324,29 @@ export default function createRbmBoardRoutes(): Router {
       );
       const chosenAssessment = sortedAssessments[0] ?? null;
 
+      // Plans version like assessments (an approved plan is read-only; /amend
+      // opens the next version), so the same rule applies: highest version
+      // wins, and an open draft amendment is what the plan surface shows and
+      // adds actions to. Ordered by VERSION, not updated_at, because touching an
+      // archived row (an action closing out under it) must not promote it back
+      // onto the screen. Among equal versions — rows written before versioning —
+      // the active plan still wins, then the most recently touched.
       const sortedPlans = [...planRows].sort(
-        (x, y) => (iso(y.p.updatedAt) ?? '').localeCompare(iso(x.p.updatedAt) ?? ''),
+        (x, y) => (y.p.version ?? 0) - (x.p.version ?? 0)
+          || Number(y.p.status === 'active') - Number(x.p.status === 'active')
+          || (iso(y.p.updatedAt) ?? '').localeCompare(iso(x.p.updatedAt) ?? ''),
       );
-      const chosenPlan = sortedPlans.find(r => r.p.status === 'active') ?? sortedPlans[0] ?? null;
+      // An archived version (superseded, or an abandoned draft) is never the
+      // plan on screen while a live one exists.
+      const chosenPlan = sortedPlans.find(r => r.p.status !== 'archived') ?? sortedPlans[0] ?? null;
+      // The plan new monitoring actions are logged against — NOT always the
+      // plan on screen. While an amendment draft is open, chosenPlan is that
+      // draft (for editing), but actions are execution records under the plan
+      // in force: the active version, else a study's first draft, else none.
+      // Same rule as createAction, which refuses anything else with 409.
+      const governingPlanId = governingPlanIdOf(
+        planRows.map(r => ({ id: r.p.id, status: r.p.status, version: r.p.version })),
+      );
 
       // ── Derived aggregates for the summary + the report/attention builders. ─
       const criticalItems = itemRows.filter(r => r.it.isCritical);
@@ -465,7 +509,10 @@ export default function createRbmBoardRoutes(): Router {
           top: p.topDimension,
           status: p.status,
           at: iso(p.scoredAt),
-          metrics: [] as { k: string; z: number }[],
+          // The per-dimension breakdown the cohort scorer produced. Without it a
+          // flag reads "4.8, top dimension: query rate" and a monitor cannot
+          // tell one bad dimension from a patient atypical across the board.
+          metrics: dimensionScores(p.metadata),
         }));
 
       const sites = [...siteRows]
@@ -534,6 +581,7 @@ export default function createRbmBoardRoutes(): Router {
         title: chosenPlan.p.title,
         strategy: chosenPlan.p.strategy,
         status: chosenPlan.p.status,
+        version: chosenPlan.p.version,
         updated: iso(chosenPlan.p.updatedAt),
         // Not persisted per-plan: tier→visit-cadence text, the AnA-draft
         // provenance flag, and the plan "basis" narrative. Returned null/false
@@ -581,6 +629,7 @@ export default function createRbmBoardRoutes(): Router {
           sites,
           oversight,
           plan,
+          governingPlanId,
           actions,
           freshness,
         },
@@ -604,7 +653,7 @@ export default function createRbmBoardRoutes(): Router {
             },
             attention: [], report: null, reportMarkdown: null,
             assessment: null, items: [], kris: [], qtls: [], signals: [],
-            patients: [], sites: [], oversight: {}, plan: null, actions: [],
+            patients: [], sites: [], oversight: {}, plan: null, governingPlanId: null, actions: [],
             freshness: [],
             pendingStore: true,
           },

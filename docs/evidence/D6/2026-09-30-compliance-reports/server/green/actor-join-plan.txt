@@ -1,0 +1,24 @@
+controlled-documents, DOCUMENTS_SQL, EXPLAIN (ANALYZE, SUMMARY) as app_service, app.rls_enforce=on,
+tenant 90301 (no qms_documents rows), local deploy-shaped PostgreSQL, 2026-10-01.
+
+BEFORE — `LEFT JOIN LATERAL public.actor_name(x) n ON TRUE` (function default estimate: 1000 rows per call):
+Limit  (cost=8757692.56..8757817.56 rows=50001 width=389) (actual time=691.365..691.370 rows=0 loops=1)
+  ->  Sort  (cost=8757692.56..8760192.56 rows=1000000 width=389) (actual time=0.050..0.053 rows=0 loops=1)
+        ->  Nested Loop Left Join  (cost=16.96..8302560.71 rows=1000000 width=389) (actual time=0.020..0.024 rows=0 loops=1)
+              ->  Nested Loop Left Join  (cost=8.73..8260044.25 rows=1000000 width=328) (actual time=0.019..0.022 rows=0 loops=1)
+                    ->  Nested Loop Left Join  (cost=0.50..20044.25 rows=1000000 width=284) (actual time=0.019..0.020 rows=0 loops=1)
+                          ->  Nested Loop Left Join  (cost=0.25..44.00 rows=1000 width=256) (actual time=0.018..0.019 rows=0 loops=1)
+                                ->  Seq Scan on qms_documents d  (cost=0.00..23.75 rows=1 width=228) (actual time=0.018..0.018 rows=0 loops=1)
+                                ->  Function Scan on actor_name au  (cost=0.25..10.25 rows=1000 width=32) (never executed)
+                          ->  Function Scan on actor_name ap  (cost=0.25..10.25 rows=1000 width=32) (never executed)
+(the 691 ms on an empty table is JIT compilation, triggered by the 8.7M cost estimate;
+ the whole controlled-documents run measured 817 ms in the scratch probe)
+
+AFTER — actorJoin(): `LEFT JOIN LATERAL (SELECT x.name, x.email FROM public.actor_name(x) x LIMIT 1) n ON TRUE`:
+Limit  (cost=25.28..25.28 rows=1 width=389) (actual time=0.015..0.016 rows=0 loops=1)
+CHANGES_SQL after:
+Limit  (cost=17.01..17.06 rows=2 width=348) (actual time=0.013..0.014 rows=0 loops=1)
+(the whole controlled-documents run: 3 ms in the same probe)
+
+Suggested follow-up outside this lane: `ROWS 1` on public.actor_name (migrations/20260929_actor_names.sql,
+amended in place per CLAUDE.md Rule 1) would fix the estimate for every caller of the function.

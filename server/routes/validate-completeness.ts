@@ -15,6 +15,7 @@ import { validateCompletenessEngine } from '../services/validate-completeness-en
 import { authMiddleware } from '../auth.js';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 
 const router = Router();
 const log = createScopedLogger('validate-completeness-routes');
@@ -61,27 +62,41 @@ router.post('/validate', async (req: Request, res: Response) => {
           predictiveUnavailable: 'tenant_context_required',
         });
       }
-      const { scoreSubmissionDraft } = await import('../services/intelligence/regulatory-intelligence');
-      const result = await scoreSubmissionDraft({
-        organizationId: orgId,
-        projectId: parsed.data.projectId,
-        submissionId: parsed.data.submissionId,
-        submissionType: parsed.data.submissionType,
-        targetAgency: parsed.data.targetAgency,
-        therapeuticArea: parsed.data.therapeuticArea,
-        presentSections: parsed.data.presentSections,
-        sectionScores: parsed.data.sectionScores,
-        harmonizeIssueCount: parsed.data.harmonizeIssueCount,
-        openEscalations: parsed.data.openEscalations,
-      });
-      return res.json({ success: true, data: result });
+      const { scoreSubmissionDraft, CompletenessNotAssessedError } = await import('../services/intelligence/regulatory-intelligence');
+      try {
+        const result = await scoreSubmissionDraft({
+          organizationId: orgId,
+          projectId: parsed.data.projectId,
+          submissionId: parsed.data.submissionId,
+          submissionType: parsed.data.submissionType,
+          targetAgency: parsed.data.targetAgency,
+          therapeuticArea: parsed.data.therapeuticArea,
+          presentSections: parsed.data.presentSections,
+          sectionScores: parsed.data.sectionScores,
+          harmonizeIssueCount: parsed.data.harmonizeIssueCount,
+          openEscalations: parsed.data.openEscalations,
+        });
+        return res.json({ success: true, data: result });
+      } catch (err) {
+        // 2026-10-15: a type with no required-section profile reached
+        // serverError as a 500. It is the caller's request to fix: 422, named.
+        if (err instanceof CompletenessNotAssessedError) {
+          return res.status(422).json({
+            success: false,
+            error: err.message,
+            code: err.code,
+            submissionType: parsed.data.submissionType,
+            assessWith: err.completeness.assessment.assessWith,
+          });
+        }
+        throw err;
+      }
     }
 
     const result = await validateCompletenessEngine.validate(parsed.data);
     res.json({ success: true, data: result });
-  } catch (err: any) {
-    log.error(`VALIDATE-COMPLETENESS failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err) {
+    serverError(res, log, 'validating submission completeness', err);
   }
 });
 

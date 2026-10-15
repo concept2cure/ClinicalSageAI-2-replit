@@ -1,0 +1,3 @@
+# working tree; scripts/check-security-patterns.ts with the cortex-unified exemption removed
+check-security-patterns: 0 violations across 2955 file(s).
+exit=0

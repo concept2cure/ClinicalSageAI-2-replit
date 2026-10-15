@@ -1,0 +1,12 @@
+Mutant B16-wrong-change: a verified source is filed against the wrong change
+
+--- server/services/authoring/authoring-record.ts
+- out[named[v.index].at] = {
++ out[named[0].at] = {
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > one decision reads a bounded number of turn records > bulk: at most MAX_TURN_RECORDS_PER_CHECK distinct turns; a change from one more is said, not verified 138ms
+      Tests  1 failed | 19 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

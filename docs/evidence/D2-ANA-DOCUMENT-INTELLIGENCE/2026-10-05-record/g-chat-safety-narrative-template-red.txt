@@ -1,0 +1,647 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > the E3 node exists and lists the narrative elements 1ms
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > every element the E3 §12.3.2 node lists is in the block AnA receives 23ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to contain 'A brief narrative for each death, eac…'
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names post-mortem findings 6ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /post-mortem findings/
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names countermeasures 1ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /countermeasures/
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names the sponsor's opinion on causality 1ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /sponsor[’']s opinion on causality/
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names the disease being treated and its duration 1ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /the disease being treated and its dur…/
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > carries the reviewer deficiencies the node records 11ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to contain 'Narratives that do not reconcile with…'
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > labels the E3 basis honestly (the node is recall until a verbatim check is filed) 1ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /ICH E3 §12\.3\.2[^\n]*as recalled; ve…/
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > causality: the investigator and the sponsor, in the study's own terms > imposes no five-point scale ending in "definitely related" 1ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' not to match /definitely related/i
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > causality: the investigator and the sponsor, in the study's own terms > the causality section asks for the investigator's and the sponsor's assessments 1ms
+   → expected 'Investigator assessment of relationsh…' to match /sponsor/i
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > detection reads "causal", not "casual" > "causal assessment" reaches the safety narrative template 5ms
+   → expected undefined to be 'safety_narrative' // Object.is equality
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > detection reads "causal", not "casual" > no detection pattern spells "casual" 1ms
+   → expected '\bcasual\s+(?:assessment|narrative)\b' not to match /casual/
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > the template derives from the node, and fails closed without it > a change to the E3 node reaches the template 14ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to contain 'SENTINEL-E3-ELEMENT'
+ × server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > the template derives from the node, and fails closed without it > a missing E3 node says the content is not encoded instead of inventing it 10ms
+   → expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /ICH E3 §12\.3\.2[^\n]*not encoded — d…/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > every element the E3 §12.3.2 node lists is in the block AnA receives
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to contain 'A brief narrative for each death, eac…'
+
+- Expected
++ Received
+
+- A brief narrative for each death, each other serious adverse event, and each other significant adverse event judged of special interest
++ ## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
++
++ **Regulatory Reference:** ICH
++ **Submission Family:** IND/NDA/BLA
++
++ ### DRAFTING INSTRUCTIONS
++ Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
++
++ ### KEY REGULATORY REFERENCES
++ - ICH E3 (Section 12, individual patient data)
++ - ICH E2A (SAE reporting)
++ - MedDRA coding conventions
++
++ ### REQUIRED DOCUMENT STRUCTURE
++
++ You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
++
++ **Required sections:**
++ - **Patient Identification and Demographics** (~80–150 words)
++   Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
++ - **Study Drug Exposure** (~80–150 words)
++   Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
++ - **Event Description** (~200–400 words)
++   Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
++ - **Clinical Course and Investigations** (~200–400 words)
++   Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
++ - **Causality Assessment** (~100–200 words)
++   Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
++ - **Conclusion** (~80–150 words)
++   One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
++
++ ### OUTPUT RULES
++ 1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
++ 2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
++ 3. After completing the document, add a brief "**What data do I still need?**" section listing any placeholders and the specific information needed to complete each.
++ 4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
++ 5. Do NOT include a preamble like "Here is the draft you requested" — start directly with the first section heading.
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:40:56
+     38|   it('every element the E3 §12.3.2 node lists is in the block AnA rece…
+     39|     const text = block();
+     40|     for (const element of node.contains!) expect(text).toContain(eleme…
+       |                                                        ^
+     41|   });
+     42|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names post-mortem findings
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /post-mortem findings/
+
+- Expected:
+/post-mortem findings/
+
++ Received:
+"## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
+
+**Regulatory Reference:** ICH
+**Submission Family:** IND/NDA/BLA
+
+### DRAFTING INSTRUCTIONS
+Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
+
+### KEY REGULATORY REFERENCES
+- ICH E3 (Section 12, individual patient data)
+- ICH E2A (SAE reporting)
+- MedDRA coding conventions
+
+### REQUIRED DOCUMENT STRUCTURE
+
+You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
+
+**Required sections:**
+- **Patient Identification and Demographics** (~80–150 words)
+  Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
+- **Study Drug Exposure** (~80–150 words)
+  Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
+- **Event Description** (~200–400 words)
+  Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
+- **Clinical Course and Investigations** (~200–400 words)
+  Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
+- **Causality Assessment** (~100–200 words)
+  Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
+- **Conclusion** (~80–150 words)
+  One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
+
+### OUTPUT RULES
+1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
+2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
+3. After completing the document, add a brief \"**What data do I still need?**\" section listing any placeholders and the specific information needed to complete each.
+4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
+5. Do NOT include a preamble like \"Here is the draft you requested\" — start directly with the first section heading."
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:49:21
+     47|     ['the disease being treated and its duration', /the disease being …
+     48|   ])('names %s', (_label, re) => {
+     49|     expect(block()).toMatch(re);
+       |                     ^
+     50|   });
+     51|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names countermeasures
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /countermeasures/
+
+- Expected:
+/countermeasures/
+
++ Received:
+"## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
+
+**Regulatory Reference:** ICH
+**Submission Family:** IND/NDA/BLA
+
+### DRAFTING INSTRUCTIONS
+Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
+
+### KEY REGULATORY REFERENCES
+- ICH E3 (Section 12, individual patient data)
+- ICH E2A (SAE reporting)
+- MedDRA coding conventions
+
+### REQUIRED DOCUMENT STRUCTURE
+
+You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
+
+**Required sections:**
+- **Patient Identification and Demographics** (~80–150 words)
+  Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
+- **Study Drug Exposure** (~80–150 words)
+  Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
+- **Event Description** (~200–400 words)
+  Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
+- **Clinical Course and Investigations** (~200–400 words)
+  Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
+- **Causality Assessment** (~100–200 words)
+  Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
+- **Conclusion** (~80–150 words)
+  One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
+
+### OUTPUT RULES
+1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
+2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
+3. After completing the document, add a brief \"**What data do I still need?**\" section listing any placeholders and the specific information needed to complete each.
+4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
+5. Do NOT include a preamble like \"Here is the draft you requested\" — start directly with the first section heading."
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:49:21
+     47|     ['the disease being treated and its duration', /the disease being …
+     48|   ])('names %s', (_label, re) => {
+     49|     expect(block()).toMatch(re);
+       |                     ^
+     50|   });
+     51|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names the sponsor's opinion on causality
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /sponsor[’']s opinion on causality/
+
+- Expected:
+/sponsor[’']s opinion on causality/
+
++ Received:
+"## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
+
+**Regulatory Reference:** ICH
+**Submission Family:** IND/NDA/BLA
+
+### DRAFTING INSTRUCTIONS
+Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
+
+### KEY REGULATORY REFERENCES
+- ICH E3 (Section 12, individual patient data)
+- ICH E2A (SAE reporting)
+- MedDRA coding conventions
+
+### REQUIRED DOCUMENT STRUCTURE
+
+You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
+
+**Required sections:**
+- **Patient Identification and Demographics** (~80–150 words)
+  Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
+- **Study Drug Exposure** (~80–150 words)
+  Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
+- **Event Description** (~200–400 words)
+  Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
+- **Clinical Course and Investigations** (~200–400 words)
+  Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
+- **Causality Assessment** (~100–200 words)
+  Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
+- **Conclusion** (~80–150 words)
+  One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
+
+### OUTPUT RULES
+1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
+2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
+3. After completing the document, add a brief \"**What data do I still need?**\" section listing any placeholders and the specific information needed to complete each.
+4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
+5. Do NOT include a preamble like \"Here is the draft you requested\" — start directly with the first section heading."
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:49:21
+     47|     ['the disease being treated and its duration', /the disease being …
+     48|   ])('names %s', (_label, re) => {
+     49|     expect(block()).toMatch(re);
+       |                     ^
+     50|   });
+     51|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names the disease being treated and its duration
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /the disease being treated and its dur…/
+
+- Expected:
+/the disease being treated and its duration/
+
++ Received:
+"## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
+
+**Regulatory Reference:** ICH
+**Submission Family:** IND/NDA/BLA
+
+### DRAFTING INSTRUCTIONS
+Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
+
+### KEY REGULATORY REFERENCES
+- ICH E3 (Section 12, individual patient data)
+- ICH E2A (SAE reporting)
+- MedDRA coding conventions
+
+### REQUIRED DOCUMENT STRUCTURE
+
+You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
+
+**Required sections:**
+- **Patient Identification and Demographics** (~80–150 words)
+  Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
+- **Study Drug Exposure** (~80–150 words)
+  Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
+- **Event Description** (~200–400 words)
+  Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
+- **Clinical Course and Investigations** (~200–400 words)
+  Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
+- **Causality Assessment** (~100–200 words)
+  Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
+- **Conclusion** (~80–150 words)
+  One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
+
+### OUTPUT RULES
+1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
+2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
+3. After completing the document, add a brief \"**What data do I still need?**\" section listing any placeholders and the specific information needed to complete each.
+4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
+5. Do NOT include a preamble like \"Here is the draft you requested\" — start directly with the first section heading."
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:49:21
+     47|     ['the disease being treated and its duration', /the disease being …
+     48|   ])('names %s', (_label, re) => {
+     49|     expect(block()).toMatch(re);
+       |                     ^
+     50|   });
+     51|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > carries the reviewer deficiencies the node records
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to contain 'Narratives that do not reconcile with…'
+
+- Expected
++ Received
+
+- Narratives that do not reconcile with the safety database or the listings
++ ## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
++
++ **Regulatory Reference:** ICH
++ **Submission Family:** IND/NDA/BLA
++
++ ### DRAFTING INSTRUCTIONS
++ Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
++
++ ### KEY REGULATORY REFERENCES
++ - ICH E3 (Section 12, individual patient data)
++ - ICH E2A (SAE reporting)
++ - MedDRA coding conventions
++
++ ### REQUIRED DOCUMENT STRUCTURE
++
++ You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
++
++ **Required sections:**
++ - **Patient Identification and Demographics** (~80–150 words)
++   Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
++ - **Study Drug Exposure** (~80–150 words)
++   Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
++ - **Event Description** (~200–400 words)
++   Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
++ - **Clinical Course and Investigations** (~200–400 words)
++   Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
++ - **Causality Assessment** (~100–200 words)
++   Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
++ - **Conclusion** (~80–150 words)
++   One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
++
++ ### OUTPUT RULES
++ 1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
++ 2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
++ 3. After completing the document, add a brief "**What data do I still need?**" section listing any placeholders and the specific information needed to complete each.
++ 4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
++ 5. Do NOT include a preamble like "Here is the draft you requested" — start directly with the first section heading.
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:54:61
+     52|   it('carries the reviewer deficiencies the node records', () => {
+     53|     const text = block();
+     54|     for (const pitfall of node.pitfalls ?? []) expect(text).toContain(…
+       |                                                             ^
+     55|   });
+     56|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > labels the E3 basis honestly (the node is recall until a verbatim check is filed)
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /ICH E3 §12\.3\.2[^\n]*as recalled; ve…/
+
+- Expected:
+/ICH E3 §12\.3\.2[^\n]*as recalled; verbatim check owed/
+
++ Received:
+"## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
+
+**Regulatory Reference:** ICH
+**Submission Family:** IND/NDA/BLA
+
+### DRAFTING INSTRUCTIONS
+Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
+
+### KEY REGULATORY REFERENCES
+- ICH E3 (Section 12, individual patient data)
+- ICH E2A (SAE reporting)
+- MedDRA coding conventions
+
+### REQUIRED DOCUMENT STRUCTURE
+
+You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
+
+**Required sections:**
+- **Patient Identification and Demographics** (~80–150 words)
+  Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
+- **Study Drug Exposure** (~80–150 words)
+  Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
+- **Event Description** (~200–400 words)
+  Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
+- **Clinical Course and Investigations** (~200–400 words)
+  Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
+- **Causality Assessment** (~100–200 words)
+  Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
+- **Conclusion** (~80–150 words)
+  One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
+
+### OUTPUT RULES
+1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
+2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
+3. After completing the document, add a brief \"**What data do I still need?**\" section listing any placeholders and the specific information needed to complete each.
+4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
+5. Do NOT include a preamble like \"Here is the draft you requested\" — start directly with the first section heading."
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:58:21
+     56|
+     57|   it('labels the E3 basis honestly (the node is recall until a verbati…
+     58|     expect(block()).toMatch(/ICH E3 §12\.3\.2[^\n]*as recalled; verbat…
+       |                     ^
+     59|   });
+     60| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > causality: the investigator and the sponsor, in the study's own terms > imposes no five-point scale ending in "definitely related"
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' not to match /definitely related/i
+
+- Expected:
+/definitely related/i
+
++ Received:
+"## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
+
+**Regulatory Reference:** ICH
+**Submission Family:** IND/NDA/BLA
+
+### DRAFTING INSTRUCTIONS
+Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
+
+### KEY REGULATORY REFERENCES
+- ICH E3 (Section 12, individual patient data)
+- ICH E2A (SAE reporting)
+- MedDRA coding conventions
+
+### REQUIRED DOCUMENT STRUCTURE
+
+You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
+
+**Required sections:**
+- **Patient Identification and Demographics** (~80–150 words)
+  Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
+- **Study Drug Exposure** (~80–150 words)
+  Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
+- **Event Description** (~200–400 words)
+  Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
+- **Clinical Course and Investigations** (~200–400 words)
+  Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
+- **Causality Assessment** (~100–200 words)
+  Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
+- **Conclusion** (~80–150 words)
+  One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
+
+### OUTPUT RULES
+1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
+2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
+3. After completing the document, add a brief \"**What data do I still need?**\" section listing any placeholders and the specific information needed to complete each.
+4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
+5. Do NOT include a preamble like \"Here is the draft you requested\" — start directly with the first section heading."
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:64:25
+     62| describe('causality: the investigator and the sponsor, in the study\'s…
+     63|   it('imposes no five-point scale ending in "definitely related"', () …
+     64|     expect(block()).not.toMatch(/definitely related/i);
+       |                         ^
+     65|     for (const s of template.sections) expect(s.guidance).not.toMatch(…
+     66|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > causality: the investigator and the sponsor, in the study's own terms > the causality section asks for the investigator's and the sponsor's assessments
+AssertionError: expected 'Investigator assessment of relationsh…' to match /sponsor/i
+
+- Expected:
+/sponsor/i
+
++ Received:
+"Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable."
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:72:33
+     70|     expect(causality, 'a causality section').toBeTruthy();
+     71|     expect(causality!.guidance).toMatch(/investigator/i);
+     72|     expect(causality!.guidance).toMatch(/sponsor/i);
+       |                                 ^
+     73|   });
+     74| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > detection reads "causal", not "casual" > "causal assessment" reaches the safety narrative template
+AssertionError: expected undefined to be 'safety_narrative' // Object.is equality
+
+- Expected:
+"safety_narrative"
+
++ Received:
+undefined
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:78:93
+     76| describe('detection reads "causal", not "casual"', () => {
+     77|   it('"causal assessment" reaches the safety narrative template', () =…
+     78|     expect(detectDocumentTemplate('draft the causal assessment for thi…
+       |                                                                                             ^
+     79|   });
+     80|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > detection reads "causal", not "casual" > no detection pattern spells "casual"
+AssertionError: expected '\bcasual\s+(?:assessment|narrative)\b' not to match /casual/
+
+- Expected:
+/casual/
+
++ Received:
+"\\bcasual\\s+(?:assessment|narrative)\\b"
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:82:70
+     80|
+     81|   it('no detection pattern spells "casual"', () => {
+     82|     for (const p of template.detectionPatterns) expect(p.source).not.t…
+       |                                                                      ^
+     83|   });
+     84| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > the template derives from the node, and fails closed without it > a change to the E3 node reaches the template
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to contain 'SENTINEL-E3-ELEMENT'
+
+- Expected
++ Received
+
+- SENTINEL-E3-ELEMENT
++ ## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
++
++ **Regulatory Reference:** ICH
++ **Submission Family:** IND/NDA/BLA
++
++ ### DRAFTING INSTRUCTIONS
++ Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
++
++ ### KEY REGULATORY REFERENCES
++ - ICH E3 (Section 12, individual patient data)
++ - ICH E2A (SAE reporting)
++ - MedDRA coding conventions
++
++ ### REQUIRED DOCUMENT STRUCTURE
++
++ You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
++
++ **Required sections:**
++ - **Patient Identification and Demographics** (~80–150 words)
++   Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
++ - **Study Drug Exposure** (~80–150 words)
++   Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
++ - **Event Description** (~200–400 words)
++   Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
++ - **Clinical Course and Investigations** (~200–400 words)
++   Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
++ - **Causality Assessment** (~100–200 words)
++   Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
++ - **Conclusion** (~80–150 words)
++   One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
++
++ ### OUTPUT RULES
++ 1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
++ 2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
++ 3. After completing the document, add a brief "**What data do I still need?**" section listing any placeholders and the specific information needed to complete each.
++ 4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
++ 5. Do NOT include a preamble like "Here is the draft you requested" — start directly with the first section heading.
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:110:18
+    108|   it('a change to the E3 node reaches the template', async () => {
+    109|     const text = await blockWith((rows) => rows.map((s) => (s.number =…
+    110|     expect(text).toContain('SENTINEL-E3-ELEMENT');
+       |                  ^
+    111|   });
+    112|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > the template derives from the node, and fails closed without it > a missing E3 node says the content is not encoded instead of inventing it
+AssertionError: expected '## DOCUMENT TYPE DETECTED: SERIOUS AD…' to match /ICH E3 §12\.3\.2[^\n]*not encoded — d…/
+
+- Expected:
+/ICH E3 §12\.3\.2[^\n]*not encoded — do not supply from memory/
+
++ Received:
+"## DOCUMENT TYPE DETECTED: SERIOUS ADVERSE EVENT SAFETY NARRATIVE
+
+**Regulatory Reference:** ICH
+**Submission Family:** IND/NDA/BLA
+
+### DRAFTING INSTRUCTIONS
+Draft a patient-level safety narrative for a serious adverse event (SAE) per ICH E3 and standard regulatory medical writing conventions. The narrative must be a complete, stand-alone account enabling a reviewer to independently assess causality and medical significance. Write in past tense, third person. Include all clinical facts; do not interpret beyond what the data shows.
+
+### KEY REGULATORY REFERENCES
+- ICH E3 (Section 12, individual patient data)
+- ICH E2A (SAE reporting)
+- MedDRA coding conventions
+
+### REQUIRED DOCUMENT STRUCTURE
+
+You MUST organize your output using the following section structure. Use the exact headings below as Markdown headers (##). Required sections MUST be present.
+
+**Required sections:**
+- **Patient Identification and Demographics** (~80–150 words)
+  Patient number, age, sex, race, weight. Relevant medical history and concomitant medications at time of event.
+- **Study Drug Exposure** (~80–150 words)
+  Study drug, dose, start date, cumulative exposure, and any dose modifications prior to the event.
+- **Event Description** (~200–400 words)
+  Onset date, MedDRA-coded event term, description of clinical presentation, severity (NCI CTCAE grade if oncology), and action taken with study drug (dose not changed / dose reduced / drug withdrawn).
+- **Clinical Course and Investigations** (~200–400 words)
+  Chronological description of the event from onset to resolution or death. Include relevant laboratory values, imaging, ECG findings, and clinical management. State outcome (resolved, resolving, not resolved, fatal) and time to resolution if resolved.
+- **Causality Assessment** (~100–200 words)
+  Investigator assessment of relationship to study drug (not related / unlikely related / possibly related / probably related / definitely related) with brief clinical rationale. Include de-challenge and re-challenge data if applicable.
+- **Conclusion** (~80–150 words)
+  One-paragraph synthesis: the event, its relationship to study drug, and the outcome. What action was taken and what follow-up is planned.
+
+### OUTPUT RULES
+1. Use the section headings above verbatim as level-2 Markdown headers (`##`).
+2. Write [PLACEHOLDER] where the user has not yet provided the specific data needed — do NOT fabricate clinical data, patient numbers, p-values, or study results.
+3. After completing the document, add a brief \"**What data do I still need?**\" section listing any placeholders and the specific information needed to complete each.
+4. Write at the level expected by an FDA/EMA regulatory reviewer — precise, evidence-backed, and free of promotional language.
+5. Do NOT include a preamble like \"Here is the draft you requested\" — start directly with the first section heading."
+
+ ❯ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts:115:18
+    113|   it('a missing E3 node says the content is not encoded instead of inv…
+    114|     const text = await blockWith((rows) => rows.filter((s) => s.number…
+    115|     expect(text).toMatch(/ICH E3 §12\.3\.2[^\n]*not encoded — do not s…
+       |                  ^
+    116|   });
+    117| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 1 passed (14)
+   Start at  02:31:05
+   Duration  1.22s (transform 564ms, setup 67ms, import 568ms, tests 79ms, environment 0ms)
+

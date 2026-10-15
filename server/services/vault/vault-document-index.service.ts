@@ -44,6 +44,7 @@
  */
 
 import { pool } from '../../db/runtime';
+import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { documentClassification } from '../../../shared/schema/vault';
 
 /** Enum domain read from the schema rather than restated, so a value can never
@@ -96,6 +97,7 @@ function rethrow(err: unknown): never {
 /** The disclosable column list. Every omission documented above is deliberate;
  *  adding a column here is a disclosure decision, not a convenience. */
 const DOCUMENT_COLUMNS = `d.id, d.program_id, d.document_code, d.document_title,
+         ${vaultBinaryAvailableSql('d')} AS original_file_available,
          d.document_type, d.version, d.file_name, d.file_size, d.mime_type,
          d.content_hash, d.classification,
          d.page_count, d.word_count, d.language,
@@ -105,7 +107,7 @@ const DOCUMENT_COLUMNS = `d.id, d.program_id, d.document_code, d.document_title,
 
 /** The tenant predicate. Built once and shared by the page and its count — a
  *  total taken over a different set than the rows is how a window lies. */
-const TENANT_WHERE = `d.deleted_at IS NULL
+const TENANT_WHERE = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
          AND EXISTS (
            SELECT 1 FROM regulatory_programs rp
             WHERE rp.id = d.program_id
@@ -114,6 +116,7 @@ const TENANT_WHERE = `d.deleted_at IS NULL
          )`;
 
 export interface VaultDocumentSummary {
+  originalFileAvailable?: boolean;
   id: string;
   programId: string;
   documentCode: string;
@@ -141,6 +144,7 @@ export interface VaultDocumentSummary {
 
 function project(r: Record<string, unknown>): VaultDocumentSummary {
   return {
+    originalFileAvailable: r.original_file_available !== false,
     id: String(r.id),
     programId: String(r.program_id),
     documentCode: String(r.document_code),

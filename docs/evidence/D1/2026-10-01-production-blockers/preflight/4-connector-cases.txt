@@ -1,0 +1,18 @@
+=== td-no-connector — new preflight
+::error::Task definition c2c-production-api (container api) is missing required production env: MCP_ENABLED MCP_PUBLIC_URL MCP_CLIENT_REDIRECT_ALLOWLIST
+::error::The app refuses to boot without each of these, with two exceptions it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor), and without AUDIT_TRAIL_ENABLED / AUDIT_REQUIRE_ENFORCE the tamper-proof audit trail is off or its checks only warn; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Add them to the task definition (terraform/stack) before deploying.
+::error::MCP_ENABLED must be exactly 'true' in the API environment (got ''): the connector for Claude ships at launch, and without it CloudFront routes the connector's paths to an API that does not serve them.
+::error::MCP_PUBLIC_URL must be the deployment's https origin, no path (got '<unset>'): it is the connector's OAuth issuer and the audience its tokens are bound to.
+=== td-connector-off — new preflight
+::error::MCP_ENABLED must be exactly 'true' in the API environment (got 'false'): the connector for Claude ships at launch, and without it CloudFront routes the connector's paths to an API that does not serve them.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+=== td-connector-no-allowlist — new preflight
+::error::MCP_CLIENT_REDIRECT_ALLOWLIST is empty in the API environment: production refuses every connector client registration without it, so no client could connect.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+=== td-connector-http-origin — new preflight
+::error::MCP_PUBLIC_URL must be the deployment's https origin, no path (got 'http://app.example.com'): it is the connector's OAuth issuer and the audience its tokens are bound to.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+=== api-td.rendered2 — new preflight
+[terraform-preflight-proof] ok — deploy-aws.yml's preflight accepted the task definition
+=== td-no-connector — trunk's preflight
+[terraform-preflight-proof] ok — deploy-aws.yml's preflight accepted the task definition

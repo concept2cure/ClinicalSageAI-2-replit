@@ -4,7 +4,8 @@
  * Verifies the catalog shape and the deterministic, region-scoped eligibility
  * rules (FDA Expedited Programs guidance 2014; EMA PRIME / Accelerated
  * Assessment / Conditional MA / Exceptional Circumstances; PMDA Sakigake /
- * Conditional Early Approval / Priority Review / Orphan).
+ * conditional approval / Priority Review / Orphan). The PMDA entries are read
+ * from the one Japanese programmes record, server/services/ind/ctd/jp-programs.ts.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -43,7 +44,7 @@ describe('EXPEDITED_PROGRAMS catalog', () => {
     expect(byRegion('PMDA')).toEqual(
       expect.arrayContaining([
         'pmda-sakigake',
-        'pmda-conditional-early-approval',
+        'pmda-conditional-approval',
         'pmda-priority-review',
         'pmda-orphan-drug',
       ]),
@@ -169,6 +170,38 @@ describe('matchExpeditedPrograms — PMDA', () => {
     expect(ids(res.eligible)).not.toContain('pmda-sakigake');
   });
 
+  it('conditional approval is the system as amended in 2025: approval at the exploratory-trial stage, not "confirmatory trials are difficult"', () => {
+    const p = programsForRegion('PMDA').find((x) => x.id === 'pmda-conditional-approval');
+    expect(p).toBeDefined();
+    const text = [p!.name, p!.description, ...p!.criteria].join(' ');
+    expect(p!.criteria.some((c) => /exploratory/i.test(c))).toBe(true);
+    expect(text).not.toMatch(/Confirmatory clinical trials are difficult/i);
+    expect(text).not.toMatch(/Conditional Early Approval/i);
+    expect(p!.effectiveFrom).toBe('2026-05-01');
+    // Not read against MHLW text in this environment: shipped labelled recall (DECISIONS.md #26).
+    expect(p!.basis?.length).toBeGreaterThan(0);
+    expect(p!.basis!.every((b) => b.confidence === 'recall')).toBe(true);
+  });
+
+  it('the conditional-approval screen explains itself from the record and says it is recall', () => {
+    const res = matchExpeditedPrograms({
+      region: 'PMDA',
+      seriousOrLifeThreatening: true,
+      unmetMedicalNeed: true,
+      preliminaryClinicalEvidence: true,
+    });
+    const m = res.eligible.find((e) => e.id === 'pmda-conditional-approval');
+    expect(m).toBeDefined();
+    expect(m!.rationale).toMatch(/exploratory/i);
+    expect(m!.rationale).not.toMatch(/confirmatory trials are difficult/i);
+    expect(m!.rationale).toMatch(/recall — not checked against the regulator's text/);
+    // A miss needs a stated-false fact: an unstated one is not assessed, not "not suitable" (2026-10-15).
+    const miss = matchExpeditedPrograms({ region: 'PMDA', seriousOrLifeThreatening: false }).notSuitable.find(
+      (e) => e.id === 'pmda-conditional-approval',
+    );
+    expect(miss!.reason).not.toMatch(/confirmatory trials are difficult/i);
+  });
+
   it('orphan → Orphan Drug Designation eligible', () => {
     const res = matchExpeditedPrograms({ region: 'PMDA', orphan: true });
     expect(ids(res.eligible)).toContain('pmda-orphan-drug');
@@ -176,11 +209,12 @@ describe('matchExpeditedPrograms — PMDA', () => {
 });
 
 describe('matchExpeditedPrograms — non-matching and scoping', () => {
-  it('empty input → nothing eligible, programs reported as notSuitable', () => {
+  it('empty input → nothing eligible, programs reported as not assessed (not "not suitable")', () => {
+    // Pinned notSuitable until 2026-10-15: a verdict on facts nobody stated.
     const res = matchExpeditedPrograms({ region: 'FDA' });
     expect(res.eligible).toEqual([]);
-    expect(ids(res.notSuitable)).toContain('fda-fast-track');
-    expect(res.notSuitable.length).toBeGreaterThan(0);
+    expect(res.notSuitable).toEqual([]);
+    expect(ids(res.notAssessed)).toContain('fda-fast-track');
   });
 
   it('only returns programs for the requested region', () => {
@@ -190,10 +224,10 @@ describe('matchExpeditedPrograms — non-matching and scoping', () => {
       unmetMedicalNeed: true,
       orphan: true,
     });
-    const all = [...res.eligible, ...res.notSuitable];
+    const all = [...res.eligible, ...res.notSuitable, ...res.notAssessed];
     expect(all.every((m) => m.id.startsWith('fda-'))).toBe(true);
     expect(ids(all)).not.toContain('pmda-orphan-drug');
-    // Every FDA program appears exactly once across the two lists.
+    // Every FDA program appears exactly once across the three lists.
     expect(all.length).toBe(programsForRegion('FDA').length);
   });
 

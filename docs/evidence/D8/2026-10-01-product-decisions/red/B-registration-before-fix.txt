@@ -1,0 +1,209 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+{
+  "timestamp": "2026-10-01T12:41:52.019Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T12:41:52.021Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+{
+  "timestamp": "2026-10-01T12:41:52.022Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+[database] Database connection successful
+
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins 2797ms
+   → expected undefined to be false // Object.is equality
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > is null when the variable is unset; production + null is the closed state, development + null is not 3ms
+   → expected undefined to be true // Object.is equality
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > throws on a malformed allowlist instead of resolving to an open or partial one (fail closed) 17ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > keeps the existing behaviour and shape of the rest of the config 6ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + foreign origin → 400 invalid_redirect_uri, the SDK handler never runs, and the body is not logged 43ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + a listed origin (any path, host case-insensitive) → next() is called 6ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > matches by origin, never by prefix: a look-alike host or a different port is refused 15ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > one bad entry refuses the whole registration 6ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer
+{
+  "timestamp": "2026-10-01T12:41:52.685Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > production posture: an http redirect is refused even with no allowlist, and even for loopback 26ms
+   → expected 201 to be 400 // Object.is equality
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > development posture: http://localhost and http://127.0.0.1 pass; any other http host does not 14ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > a fragment is refused whatever the posture 15ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > not an absolute URL, or not a string → invalid_redirect_uri 15ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > missing, empty or non-array redirect_uris, or no JSON object at all → invalid_client_metadata 27ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered
+{
+  "timestamp": "2026-10-01T12:41:52.690Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard
+{
+  "timestamp": "2026-10-01T12:41:52.718Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too
+{
+  "timestamp": "2026-10-01T12:41:52.733Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > an allowlist, or a non-production posture, emits no such warning
+{
+  "timestamp": "2026-10-01T12:41:52.783Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+{
+  "timestamp": "2026-10-01T12:41:52.785Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer 10ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered 28ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard 16ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too 48ms
+ × server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: closedInProduction is true, registration is refused, and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request 1ms
+   → expected undefined to be true // Object.is equality
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > an allowlist, or a non-production posture, emits no such warning 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:80:55
+     78|     expect(cfg.clientRegistration.redirectOriginAllowlist).toEqual(['h…
+     79|     expect(cfg.clientRegistration.requireHttpsRedirects).toBe(true);
+     80|     expect(cfg.clientRegistration.closedInProduction).toBe(false);
+       |                                                       ^
+     81|   });
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > is null when the variable is unset; production + null is the closed state, development + null is not
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:88:56
+     86|     expect(prod.clientRegistration.redirectOriginAllowlist).toBeNull();
+     87|     expect(prod.clientRegistration.requireHttpsRedirects).toBe(true);
+     88|     expect(prod.clientRegistration.closedInProduction).toBe(true);
+       |                                                        ^
+     89|
+     90|     const dev = resolveMcpConfig(DEV_OPEN);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > production posture: an http redirect is refused even with no allowlist, and even for loopback
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:188:27
+    186|     // closed, not open (product decision 2026-10-01). Nothing reaches…
+    187|     const closed = await register(app, { redirect_uris: ['https://anyo…
+    188|     expect(closed.status).toBe(400);
+       |                           ^
+    189|     expect(closed.body.error).toBe('invalid_redirect_uri');
+    190|     expect(closed.body.error_description).toMatch(/closed/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: closedInProduction is true, registration is refused, and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/__tests__/security/mcp-client-registration.contract.test.ts:319:58
+    317|     const warn = vi.spyOn(logger, 'warn');
+    318|     const config = resolveMcpConfig(PROD_OPEN);
+    319|     expect(config.clientRegistration.closedInProduction).toBe(true);
+       |                                                          ^
+    320|
+    321|     const app = express();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 15 passed (19)
+   Start at  12:41:48
+   Duration  3.85s (transform 1.51s, setup 126ms, import 229ms, tests 3.11s, environment 0ms)
+

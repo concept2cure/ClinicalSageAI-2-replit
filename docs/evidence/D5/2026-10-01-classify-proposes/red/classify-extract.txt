@@ -1,0 +1,22 @@
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > sequence 1 (frozen): no leaf, and the placement is reported as not made
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > sequence 2 (dispatched): no leaf, and the placement is reported as not made
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > sequence 3 (draft): no leaf, and the placement is reported as not made
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > sequence 4 (another organisation's): no leaf, and the placement is reported as not made
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > returns the leaf a person would place, for them to place as its own step
+   → expected undefined to deeply equal { sequenceId: 3, …(6) }
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > document 201 (a draft): its section, metadata and stamp are unchanged
+   → the model's section code was written into the document: expected 'm2.4' to be null // Object.is equality
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > document 202 (an approved filing copy): its section, metadata and stamp are unchanged
+   → the model's section code was written into the document: expected 'm2.4' to be 'm2.5' // Object.is equality
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > never takes the placement outcome from the model
+   → expected { placed: true, refusal: null } to match object { placed: false }
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument proposes; it places nothing and changes no document > proposes no leaf when the model proposed no section
+ × server/services/ingestion/__tests__/classify-placement.pglite.test.ts > extractStructure records its link, and changes no document > leaves the document's metadata and stamp as they were
+   → the extraction was written into an approved filing copy: expected { version: '0001', …(2) } to deeply equal { version: '0001' }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  9 failed | 1 passed (10)

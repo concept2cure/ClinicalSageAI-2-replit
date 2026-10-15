@@ -1,0 +1,3 @@
+2 findings
+  javascript.lang.security.audit.detect-non-literal-regexp server/services/ana/answer-grounding.ts 430
+  javascript.node-crypto.security.gcm-no-tag-length server/services/security/credential-cipher.ts 68

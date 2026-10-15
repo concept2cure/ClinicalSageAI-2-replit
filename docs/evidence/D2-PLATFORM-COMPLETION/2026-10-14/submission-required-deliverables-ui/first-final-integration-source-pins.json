@@ -1,0 +1,59 @@
+{
+  "description": "Scope after first integrated run: 248/249 passed, existing server-confirmed Builder removal notice lost during strict same-sequence refetch. Subsequent preservation fix is separately qualified. Only subsequent comment edits in parent/workspace metadata distinguish the run bytes; runtime behavior and tests unchanged.",
+  "sources": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+      "bytes": 93643,
+      "digestAlgorithm": "sha256",
+      "digest": "0c805b646b39942b0413305440e1f888dca52b8b251a77b3fcf96a1124a528cd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx",
+      "bytes": 19097,
+      "digestAlgorithm": "sha256",
+      "digest": "068d6164fbe97c2d04def7cc14cd94a5fefa1e440f59cbff7b3fd295d20214c4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts",
+      "bytes": 6150,
+      "digestAlgorithm": "sha256",
+      "digest": "1e5f9c26008d9c9ea8d2f7cb14517d4308364e1e75a1783af8fced67ed67f4a2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+      "bytes": 98015,
+      "digestAlgorithm": "sha256",
+      "digest": "4f6c0ad912d2abd5334fda6c17d0cee33aed4a9170ceb157341b43d441dc550c"
+    },
+    {
+      "path": "shared/types/submission-ui.ts",
+      "bytes": 4673,
+      "digestAlgorithm": "sha256",
+      "digest": "a261c746a5ede4afacb320776b02acf2cf472b941a7c074c7efacf4e209fdd30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx",
+      "bytes": 20058,
+      "digestAlgorithm": "sha256",
+      "digest": "2ccea2ff9b76bbbcb244d6865e9e3be7c6045fc4a64ccc675c4fd24155587a4f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionRequiredDeliverablesSession.test.tsx",
+      "bytes": 6638,
+      "digestAlgorithm": "sha256",
+      "digest": "8462ef29e124268b91ae49a54c7ec03de58247df86a74759643ceffb8125146d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx",
+      "bytes": 9922,
+      "digestAlgorithm": "sha256",
+      "digest": "f50bcf82299cd0853d5c829018915479907c5284e4227f75a922c51092709fed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/_submission-deliverables-fixture.tsx",
+      "bytes": 5661,
+      "digestAlgorithm": "sha256",
+      "digest": "8b9a8d44d40902ed0b944c3b65548c0879b23732f17efb0a8ea7ee3db99ad6ba"
+    }
+  ]
+}

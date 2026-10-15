@@ -1,0 +1,208 @@
+{
+  "testedHead": "9ba70078fb55520244b5376d5d17d5e3f09e4471",
+  "completedAt": "2026-10-14T20:51:15.045Z",
+  "syntheticApisOnly": true,
+  "productionFrozenDuringCapture": true,
+  "sourceSha256": {
+    "design-system/colors_and_type.css": "1ddf6ace7e7631b0071c98159955aa812ad2cb284ceff705ce99dd89c74708fe",
+    "client/src/concept2cure/v2/styles/app-v2.css": "d89975cea7ff560fba2827465767df0ccc34249c02fd781ff8997af5b06d0e59",
+    "client/src/concept2cure/v2/styles/journey-v2.css": "14b5fd93e0e60c8b04c825c7f7e19d509f48bdad6cf0e00f6b2632d326cb3aea",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "c179cc1537b9de169714789a3a993eaad96a2e3136e4a780af637bd2f187115b",
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "fac483294e7b1750fcc731e081ef3d3ae4ea9c87ae3f19ec24dff57e923bf5d3",
+    "client/src/concept2cure/v2/editor/DocumentCanvas.tsx": "8cbdc1534eceb26fb556e72dddd0a2f716fbbf287113952d5b91152275e7e192",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "6e02a6812b100ea6e6c3761ce9ea41a82f049175b0a48ebff4e1171db03c5f07",
+    "client/src/concept2cure/v2/C2CForm.tsx": "6d70e9b895364a167219a8fd970a6f278302bf1ea59bad27ab8b9fbee47f3721",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "14bbbd12d8795a456c0c52744516785d0011d9cc775a92af0c3cc5ee0daf102c",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/editor/TemplateGuidance.tsx": "eb92c3867ac1de640dc96f70d676f92d473a13c294f6fde6431c55ad0ec316a7",
+    "client/src/concept2cure/v2/editor/AssignReviewDialog.tsx": "f27068c99d8f90080469ef353f16b0b84c645bd7230a98ca6a7abd5368a0f941",
+    "client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx": "a7ad7ab0f1a8f6e138e75d96a405489694a2253157122fee8d49c30828860685",
+    "client/src/concept2cure/v2/editor/SendForReviewDialog.tsx": "d8b2e3485cb9e526ea88cec0ca39415cee8f02398cd2328190c7553fd118cc77",
+    "client/src/concept2cure/v2/editor/reviewTaskState.ts": "d8e1d679b65b04af80f148f617243c64667b1807ab99abf219c96424e4cfda1d",
+    "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx": "677464c73de5098d2eeb84b33df3176ff16ca3b22f24d55d14ddcd363236c447",
+    "client/src/concept2cure/v2/surfaces/authoringPeerReview.ts": "21b99a4b1085b71dfe7648ff7c2cb147fdb15654c061aa3172e9f8e5df9704d3",
+    "client/src/concept2cure/v2/surfaces/usePeerReviewDecision.ts": "a0b60e4967b1a6cd43c6001314ca70877205bf84a01d3eeeccda581de3f6a5c9",
+    "client/src/concept2cure/v2/styles/review-decision.css": "783a8c58eab8df4949aaba25a0cd2d0c3c03413333e6ddad5ef358da8de18692",
+    "client/src/concept2cure/v2/editor/provenance.ts": "faec5afb9a04d91ee752570e74ee024490a278ba1d3836a83041be30ed41c0c8",
+    "client/src/concept2cure/v2/editor/savedTemplateContext.ts": "433ead62982705de14125e676cf7e7cece3d6b99ad9d3c203dc62f2307d2d235",
+    "client/src/concept2cure/v2/editor/authoringOversight.ts": "6f12075f836cebe56853e985d3f4252e1b5fcd3daa95bdf1ec44c65cfdba4883",
+    "shared/authoring/recorded-template-source.ts": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+    "server/services/ana/saved-document-critique.ts": "23a198966f7a327111fbc10c7621999f9c044ce81fa046d58feeb50364385b8e",
+    "server/services/ana/saved-template-review.ts": "717b63eeb39be1d52ea887d246516d3ddd8a4999f50351a31964620c3dd12f39",
+    "server/services/ana/writingQualityTools.ts": "0aae1ce44dd2a04abff390c16475999532c395fefc0f78875c231cf4006ffaf9",
+    "server/services/authoring/authoring-template-guidance.ts": "e7f225d845d590097135460a90257486490cc55a9e900dfe84ce5c5d6f042c1e",
+    "server/services/authoring/ind-authoring-templates.ts": "69f2e55d64cfe1c11e013287baf00a84aad9ee07a19a546544f62c169743cce4",
+    "server/services/authoring/builtin-authoring-templates.ts": "171891ae3fda0cb195b3445ef6177499c506fe162f8cadeac53d1783db02dfb9",
+    "server/services/market-specs/document-template-library.ts": "20bf24ec482f48ae896dd3df3cdd0f4d65ecdab5ba73e396986c7dceef166e78",
+    "shared/regulatory/global-document-registry.ts": "8abbcc0db110145e950799d07c0bf6a0c2e253c9f2447d0de7817e48ac7b9a79"
+  },
+  "fixtureSha256": {
+    "api-contract.json": "71c2555a96f21514b26810e4e694f6a189f86f2a579dbc825561be0322c22473",
+    "browser.mjs": "ad75f324a5c5197dd3283419ed47d9adaab8925062c63cd2508f905d35e9fe50",
+    "generate.ts": "0e4a2c8e2506527373f2bf360b234a4bfac05dc1e964634dda22ae98b2761001",
+    "import-proof.mjs": "dcf74064d4ceef4acbee3ce5910cc00704c25c0b1452a4bae8bb770d876cc62f",
+    "index.html": "063df1667d86d17bc718c393028f00040f29c80dee68d8ebc87444320d6bb33e",
+    "mock-api.mjs": "225c66433a93174f0793df068b3162131ac3df09b919832920466e8d0d30223a",
+    "probe.tsx": "b7cbc3d11d0833b4e5e5cce40eca923d6b267116ddab8677ef1b54c6f342e615",
+    "server.mjs": "91e2f959485cd3d5ba66ab32506fa597135279db529de515bb53c10aedcefcdd",
+    "visual-checks.mjs": "2c07fc6b5753491bd8bb4d2cacb8fdac5e900bcb6d01e619398cebd86d5b850f"
+  },
+  "apiContractSha256": "71c2555a96f21514b26810e4e694f6a189f86f2a579dbc825561be0322c22473",
+  "contexts": [
+    {
+      "label": "desktop-light",
+      "status": "pass",
+      "cases": [
+        {
+          "key": "US-NDA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "CA-CTA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "EU-CTA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "JP-CTN",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "GLOBAL-QOS",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "EU-PIL-gap",
+          "status": "pass",
+          "violations": 0
+        }
+      ]
+    },
+    {
+      "label": "desktop-dark",
+      "status": "pass",
+      "cases": [
+        {
+          "key": "US-NDA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "CA-CTA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "EU-CTA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "JP-CTN",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "GLOBAL-QOS",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "EU-PIL-gap",
+          "status": "pass",
+          "violations": 0
+        }
+      ]
+    },
+    {
+      "label": "touch-light",
+      "status": "pass",
+      "cases": [
+        {
+          "key": "US-NDA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "CA-CTA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "EU-CTA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "JP-CTN",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "GLOBAL-QOS",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "EU-PIL-gap",
+          "status": "pass",
+          "violations": 0
+        }
+      ]
+    },
+    {
+      "label": "touch-dark",
+      "status": "pass",
+      "cases": [
+        {
+          "key": "US-NDA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "CA-CTA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "EU-CTA",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "JP-CTN",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "GLOBAL-QOS",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "EU-PIL-gap",
+          "status": "pass",
+          "violations": 0
+        }
+      ]
+    }
+  ],
+  "status": "pass",
+  "limitations": [
+    "Synthetic browser fixtures qualify local UI and prefill callback wiring only, not live model behavior, backend authorization, RLS, database persistence, deployment or regulatory readiness.",
+    "Whole filing ordinal headings and the limited PIL preparation source retain null CTD modules. Only the explicit QOS CTD section establishes M2.",
+    "The actual creation component submits one explicitly clicked intercepted POST, whose response and initial GET contain only empty authored bodies. A separately labelled synthetic saved-reading fixture phase remounts Canvas to verify visible paragraph and handoff wiring; no editor save or database persistence is claimed.",
+    "The local host records the actual onAsk prefill boundary. Canonical conversation routing and saved-review paging are independently verified in UI and server suites.",
+    "Axe incomplete rules remain in individual stage metrics and require manual review."
+  ],
+  "qualification": "Pre-picker-copy diagnostic metadata on 9ba70078 plus the initial frozen feature. The tall regional picker description required a copy fix; final-path PNGs are replaced by the subsequent final replay and do not illustrate these earlier metrics."
+}

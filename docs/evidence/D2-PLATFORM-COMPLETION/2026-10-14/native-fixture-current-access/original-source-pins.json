@@ -1,0 +1,32 @@
+[
+  {
+    "path": "tests/db/c2c-project-persistence.dbtest.ts",
+    "originalSha256": "62542e39ba72f0bca36c71da527bac24bb892a0c19445f6e4bae7c964398ec65",
+    "appliedSha256": "1f52b9579832533c8f6ec964da17b5df752a006020f6c4ecf7484407ce453daa",
+    "originalExpectationLinesPreserved": true
+  },
+  {
+    "path": "tests/db/vault-ingest.dbtest.ts",
+    "originalSha256": "5242a2458f82da13c7c9e29d64937767b4f1fac2bec8e08faa2e3fca480622a0",
+    "appliedSha256": "0ea646350213014acec1c6156c658521cf0435f3784448ef85eb89f8e694139a",
+    "originalExpectationLinesPreserved": true
+  },
+  {
+    "path": "tests/db/vault-annotation-harness.ts",
+    "originalSha256": "108149bbb6fa83dee2c7705dc0dec7f2c15a9707ef6d883f4f9dd9cf8894d886",
+    "appliedSha256": "d919d1542bb4ef8b2e6e29026cc0d3ed7cd60692b9b5ca7f4c8c76c8d7e98778",
+    "originalExpectationLinesPreserved": true
+  },
+  {
+    "path": "tests/db/vault-version-annotations.dbtest.ts",
+    "originalSha256": "884effb4773cdd2143510b0b87b5951d0b967439d84291b1474d2ee9f5b7bb29",
+    "appliedSha256": "675adfd58c8c3e02696a452944dc5aa32b1d14dfbe98cb362e4cd53dfb7e6994",
+    "originalExpectationLinesPreserved": true
+  },
+  {
+    "path": "tests/db/vault-version-annotations-record.dbtest.ts",
+    "originalSha256": "ebb17947f40eb919afc63da01cb27877d9a8750f694d640161a3b08f6c7d94d1",
+    "appliedSha256": "e34721424cd4ded1e85cf87835de78fc1c483c3149034e4613226cec9fc688b6",
+    "originalExpectationLinesPreserved": true
+  }
+]

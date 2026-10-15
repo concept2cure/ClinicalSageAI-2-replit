@@ -1,0 +1,208 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:18:41.121Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:18:41.534Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:18:41.535Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:18:41.535Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a member (regulatory-author) creates the record through the runtime db, not a 500 37ms
+ ✓ server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a manager (regulatory-author) reaches the runtime db the same way 6ms
+ ✓ server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a viewer is still refused by the role gate before any store call 4ms
+stdout | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-08T01:18:45.073Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:18:45.074Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-08T01:18:45.075Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-08T01:18:45.264Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > writes exactly one electronic_signatures row, bound to the Vault version, and one chained audit row 184ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > approving writes its own record, bound to the same content, with the approver named 99ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > a document with no source the server can read binds the ledger, and says so 43ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > the signature record refuses UPDATE (control: the §11.70 trigger is in force here) 58ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash: the stored hash is the Vault row's 35ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a document with no readable source 9ms
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back
+{
+  "timestamp": "2026-10-08T01:18:51.123Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO audit_logs\n       (id, tenant_id, user_id, action, table_name, record_id,\n        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,\n        old_values, new_values, ip_address, user_agent)\n     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)\nparams: efbf1512-518c-474d-ae4f-b0308856b947,1,42,regulated_document.in_review,canonical_document,2b327dff-5a0a-4e13-81f6-39b3b7aee248,42,canonical_document:2b327dff-5a0a-4e13-81f6-39b3b7aee248,82bb16f88107283b87b30a525f45ab7680aa3e8aab26055de79b615f81f910ad,83c90e757ccd8fbc602af73199b64e415e89aa74eaa27d03caa9e6bc0fc4fa31,2026-10-08T01:18:51.118Z,,,{\"from\":\"authoring\",\"to\":\"in_review\",\"version\":1,\"contentHash\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\"},,",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back
+{
+  "timestamp": "2026-10-08T01:18:51.205Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO electronic_signatures (\n       document_id, version_id, signed_target, binding_basis,\n       signature_type, signature_purpose, signature_level,\n       signer_id, signer_name, signer_title, signer_email,\n       authentication_method, authentication_timestamp, second_factor_verified,\n       signature_hash, signature_meaning, signature_manifest,\n       is_valid, verification_status, compliance_statement, legal_disclaimer,\n       ip_address, device_info, signed_at, bound_payload_digest, organization_id\n     ) VALUES (\n       $1, $2, $3, $4,\n       $5, $6, $7,\n       $8, $9, $10, $11,\n       $12, $13, $14,\n       $15, $16, $17,\n       $18, $19, $20, $21,\n       $22, $23, $24, $25, $26\n     ) RETURNING id, signed_at\nparams: ,,canonical_document:ac10e8a5-d7be-4beb-aef6-311acbab2c3f,vault-document-version-sha256,regulated-document-lifecycle,Checked against the protocol,1,44,Abe Approver,,abe@example.test,password,Thu Oct 08 2026 01:18:51 GMT+0000 (Coordinated Universal Time),false,65880a42af8ce69429bbe753ea290e1d886a3bf0632b65672c8576589c0cab74,APPROVED,{\"kind\":\"regulated-document-lifecycle\",\"actionId\":\"act_9687d33030734a358cf2fe35e21aebc5\",\"auditId\":\"3343249b-7f40-4e96-a118-562fdf7774b3\",\"auditSha256Chain\":\"e0404ea6842e74dc225338b3090c646fc7caf5069b94d720581942e68990e7d8\",\"target\":\"canonical_document:ac10e8a5-d7be-4beb-aef6-311acbab2c3f\",\"command\":\"sign\",\"reason\":\"Checked against the protocol\",\"meaning\":\"APPROVED\",\"signerId\":44,\"signerName\":\"Abe Approver\",\"signerEmail\":\"abe@example.test\",\"organizationId\":1,\"signedAt\":\"2026-10-08T01:18:51.196Z\",\"boundPayloadDigest\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\",\"bindingBasis\":\"vault-document-version-sha256\",\"bindingNote\":\"sha256 of Vault version 9c501458-ebc0-43a0-9ca1-92fac756f096 (vault.documents.content_hash), read FOR SHARE in the signing transaction.\",\"canonicalId\":\"ac10e8a5-d7be-4beb-aef6-311acbab2c3f\",\"title\":\"Clinical Overview\",\"version\":1,\"stage\":\"in_review\"},true,,Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.,,127.0.0.1,,Thu Oct 08 2026 01:18:51 GMT+0000 (Coordinated Universal Time),f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e,1",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a transition: the trail records the stored one 87ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > refuses a Vault source that is not this organization's, and records nothing 7ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back 27ms
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off
+{
+  "timestamp": "2026-10-08T01:18:51.279Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO electronic_signatures (\n       document_id, version_id, signed_target, binding_basis,\n       signature_type, signature_purpose, signature_level,\n       signer_id, signer_name, signer_title, signer_email,\n       authentication_method, authentication_timestamp, second_factor_verified,\n       signature_hash, signature_meaning, signature_manifest,\n       is_valid, verification_status, compliance_statement, legal_disclaimer,\n       ip_address, device_info, signed_at, bound_payload_digest, organization_id\n     ) VALUES (\n       $1, $2, $3, $4,\n       $5, $6, $7,\n       $8, $9, $10, $11,\n       $12, $13, $14,\n       $15, $16, $17,\n       $18, $19, $20, $21,\n       $22, $23, $24, $25, $26\n     ) RETURNING id, signed_at\nparams: ,,canonical_document:1fb6a0a9-fb78-472c-8248-25d92514e553,vault-document-version-sha256,regulated-document-lifecycle,Checked against the protocol,1,43,Rae Reviewer,,rae@example.test,password,Thu Oct 08 2026 01:18:51 GMT+0000 (Coordinated Universal Time),false,72b94cebc23063177db35d943b411b749f4d496039cfc03154ac46cfd56032c8,REVIEWED,{\"kind\":\"regulated-document-lifecycle\",\"actionId\":\"act_f443003024d344babeb70f3fb0cb0316\",\"auditId\":\"7a47dab5-804e-4b72-8d6b-e4fe69571af1\",\"auditSha256Chain\":\"6602c8f37dc1aa818cc79273b8c31993e26cf70e69ac130a4787ebc776c3b6b2\",\"target\":\"canonical_document:1fb6a0a9-fb78-472c-8248-25d92514e553\",\"command\":\"sign\",\"reason\":\"Checked against the protocol\",\"meaning\":\"REVIEWED\",\"signerId\":43,\"signerName\":\"Rae Reviewer\",\"signerEmail\":\"rae@example.test\",\"organizationId\":1,\"signedAt\":\"2026-10-08T01:18:51.263Z\",\"boundPayloadDigest\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\",\"bindingBasis\":\"vault-document-version-sha256\",\"bindingNote\":\"sha256 of Vault version bc41ad17-e0fd-4b5d-98f2-9072c916faaa (vault.documents.content_hash), read FOR SHARE in the signing transaction.\",\"canonicalId\":\"1fb6a0a9-fb78-472c-8248-25d92514e553\",\"title\":\"Clinical Overview\",\"version\":1,\"stage\":\"in_review\"},true,,Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.,,127.0.0.1,,Thu Oct 08 2026 01:18:51 GMT+0000 (Coordinated Universal Time),f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e,1",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back 84ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off 72ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot review it: 403 SELF_APPROVAL, before any credential check, and nothing is written 35ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the uploader of the Vault version cannot review it 64ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot approve it after someone else reviewed it 83ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator is recorded, and the record cannot be reassigned 17ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review covers the content it was signed over > after a revision that changed the content, the round-1 review does not satisfy the approval gate 67ms
+stdout | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-08T01:18:52.854Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:18:52.855Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-08T01:18:52.855Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-08T01:18:52.989Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > answers a store failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-08T01:18:53.573Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: Failed query: select \"set_b_secret_column\" from \"canonical_documents\"",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > answers a store failure with INTERNAL_ERROR and the request id, never the thrown text 23ms
+ ✓ server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > leaves the no-organization 403 exactly as it was 5ms
+
+ Test Files  3 passed (3)
+      Tests  21 passed (21)
+   Start at  01:18:37
+   Duration  16.16s (transform 4.10s, setup 137ms, import 9.46s, tests 5.69s, environment 0ms)
+
+exit=0

@@ -1,0 +1,86 @@
+# green: g-estar-version-currency, 2026-10-05T11:32:33Z, HEAD 76e7528c + this step's working-tree change
+## step test + the four updated tests
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > covers every eSTAR need: marketing, PMA family, Q-Sub sub-types, IDE, 513(g) 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > keys are unique 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > groups the six PMA-family entries under the pma program type 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > groups the six Q-Sub entries under the q_sub program type 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > maps IDE and 513(g) to their own program types 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > resolves the template family by variant (nIVD vs IVD; PreSTAR is variant-agnostic) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > resolves catalog template metadata (family, current version, OMB) from the version registry 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > every entry carries a regulatory reference and applies to at least one variant 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts > eSTAR submission catalog > populates review clocks only where FDA publishes one 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > returns undefined for an unknown catalog key 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > does not report 100% complete while listing sections as missing 4ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > an unregistered client is not eligible and cannot file 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > canFileNow is true only when registered + content complete + template producible + template current 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > fails closed on producibility by default (honest — no submittable eSTAR claimed) 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > surfaces the template family, current version, and OMB numbers per submission 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > dispatches PMA keys to the PMA mapper with per-submission-type required sections 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > dispatches Q-Sub keys to the PreSTAR mapper (reports Q-Sub-specific gaps) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > dispatches IDE and 513(g) keys to the PreSTAR mapper 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > fee-exempt request types are eligible without the MDUFA fee account; PMA is not 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > accumulates every blocker when nothing is ready 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > has an ISO lastVerified, an fda.gov sourceUrl and a confidence on every row 8ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > names nIVD 7.1, IVD 7.1 and PreSTAR 3.1 current, labelled recall until a verbatim read is filed 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (a) every eSTAR version row carries its provenance > demotes 7.0 / 3.0 to retiring without inventing a retirement date 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (b) a 7.0 template against current 7.1 cannot file, and the blocker names both versions 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (c) a template matching FDA's current version files — the gate is not stuck closed 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > (d) an absent or unpinned template version fails closed 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (b)-(d) filing readiness compares the template on file with FDA's current version > the shared comparison is the one the template registry reports, from the manifest version 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (e) the table's age reuses the currency registry > ages from the oldest row with verificationAgeDays, and is stale past the registry maximum 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (e) the table's age reuses the currency registry > reports versionTableStale on the readiness result, failing closed without an as-of date 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts > (f) the human-factors slot cites FDA's final HF content guidance > names IEC 62366-1 and "Content of Human Factors Information in Medical Device Marketing Submissions" 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > resolves the drop-point dir from env or the default 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > maps every pathway+variant in the manifest to a descriptor 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > covers the whole eSTAR program: 510(k)/De Novo/PMA and the PreSTAR requests 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > assigns every descriptor to a template family 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > lists descriptors by family 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reports available when the required template is present (case-insensitive) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > fails closed in production when the required template is missing and required 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > never blocks in staging or when not required (report-only) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reads the opt-in enforcement flag from the environment 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > files De Novo and PMA on the same vendored v7.0 PDFs as 510(k) — FDA ships one file per family 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > reports De Novo and PMA available in production once the two vendored files are present 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > encodes exactly one current version per family, listed last 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > pins the current versions to FDA's eSTAR Program page (nIVD/IVD 7.1, PreSTAR 3.1) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > carries the correct OMB numbers per family 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > maps the supported submission types per family 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > dates only the retirements that were recorded; superseded 7.0/3.0 carry no invented date 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > resolves the families able to carry a submission type 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > classifies version lifecycle relative to an as-of date 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > recommends only the current version 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-versions.test.ts > eSTAR version registry > looks up a specific record by family + version 0ms
+
+ Test Files  5 passed (5)
+      Tests  50 passed (50)
+   Start at  11:32:34
+   Duration  842ms (transform 638ms, setup 337ms, import 509ms, tests 76ms, environment 1ms)
+
+
+## every test file importing a changed module (38 files, run in parallel)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 35 passed (38)
+      Tests  7 failed | 545 passed (552)
+7 failures in that run:
+ FAIL  server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > reports transmission capability honestly — true for markets with live gateways
+ FAIL  server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts > transmit guard — every bundle format, eSTAR included > lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > the file the manifest routes is the file that is in the document
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > is byte-identical across two runs with the same inputs
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > refuses a blank official form with files stapled to it
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > changes nothing when no attachment is requested
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > delivers when the output fits, and the ceiling is opt-in
+
+### 6 of the 7 are 10 s timeouts of whole-PDF fills under parallel load; run alone with --no-file-parallelism --testTimeout=120000:
+ Test Files  2 passed (2)
+      Tests  53 passed (53)
+
+### the 7th (device-market-advisor, jp-pmda transmit) fails identically with the four estar source files set to their HEAD content — it follows another lane's in-flight pmda-gateway.ts change, not this step:
+ × server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > reports transmission capability honestly — true for markets with live gateways 98ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 passed (12)
+
+## typecheck (flock'd npx tsc --noEmit -p .): 0 errors in this step's files (8 errors total in the tree, all in other lanes' files)
+## eslint: warnings/errors equal to HEAD on every changed file; new test 0/0

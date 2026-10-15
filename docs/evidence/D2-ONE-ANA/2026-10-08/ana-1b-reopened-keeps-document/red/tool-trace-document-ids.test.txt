@@ -1,0 +1,35 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/tool-trace-document-ids.test.ts > the saved step summary of a step that built a document > keeps the document id, the program and the title, whatever came before them 6ms
+   → expected undefined to be 'a6257943-a4f8-4dc0-a957-5dd4ca69e2a6' // Object.is equality
+ ✓ server/services/ana/__tests__/tool-trace-document-ids.test.ts > the saved step summary of a step that built a document > does not carry the draft text into the trace 1ms
+ ✓ server/services/ana/__tests__/tool-trace-document-ids.test.ts > the saved step summary of a step that built a document > leaves every other result as it was 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/tool-trace-document-ids.test.ts > the saved step summary of a step that built a document > keeps the document id, the program and the title, whatever came before them
+AssertionError: expected undefined to be 'a6257943-a4f8-4dc0-a957-5dd4ca69e2a6' // Object.is equality
+
+- Expected:
+"a6257943-a4f8-4dc0-a957-5dd4ca69e2a6"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/tool-trace-document-ids.test.ts:39:42
+     37|   it('keeps the document id, the program and the title, whatever came …
+     38|     const summary = buildTraceEntry('draft_authoring_document', 'Draft…
+     39|     expect(DOC_ID_RE.exec(summary)?.[1]).toBe(DOC);
+       |                                          ^
+     40|     expect(PROGRAM_ID_RE.exec(summary)?.[1]).toBe(PROGRAM);
+     41|     expect(JSON.parse(summary)).toMatchObject({ authoringDocId: DOC, p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  01:34:33
+   Duration  503ms (transform 150ms, setup 105ms, import 85ms, tests 11ms, environment 0ms)
+

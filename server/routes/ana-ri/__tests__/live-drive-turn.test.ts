@@ -28,6 +28,7 @@
  * is asserted, and each piece would otherwise need a database.
  */
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
+import { unframeToolOutput } from '../../../services/ana/tool-output-frame.js';
 import express from 'express';
 import request from 'supertest';
 
@@ -231,6 +232,8 @@ app.use(express.json());
 app.use((req, _res, next) => {
   (req as any).tenantId = 7;
   (req as any).user = { id: 3, organizationId: 7 };
+  // The host passes its request executor to source tools and title reads.
+  (req as any).dbClient = h.pool;
   next();
 });
 const router = express.Router();
@@ -290,7 +293,8 @@ function resultSeenByModel(toolUseId: string): Record<string, unknown> {
   const block = String(turnWithResults?.content ?? '')
     .split('\n\n[Tool Result for ')
     .find(b => b.includes(`(${toolUseId})]:`));
-  return JSON.parse(String(block).slice(String(block).indexOf(']:\n') + 3));
+  // The result is framed as untrusted data before the model reads it (item 23).
+  return JSON.parse(unframeToolOutput(String(block).slice(String(block).indexOf(']:\n') + 3)));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -579,14 +583,14 @@ describe('POST /stream/:runId/control — screen_report', () => {
 
 describe('history — the window opens on a question after an unanswered turn', () => {
   // q1's turn failed or was stopped, so post-processing saved no answer. The
-  // thread ends with this turn's own question, saved before the model runs.
+  // snapshot is read before this turn's question is saved.
   const turnOf = (n: number) => [{ role: 'user', content: `q${n}` }, { role: 'assistant', content: `a${n}` }];
   const saved = [...turnOf(0), { role: 'user', content: 'q1, never answered' }, ...range(2, 10).flatMap(turnOf)];
   const sent = () =>
     h.state.gatewayCalls[0].messages.filter((m: any) => m.role !== 'system').map((m: any) => `${m.role}:${m.content}`);
 
   it.each([
-    ['saved in the thread', () => ((h.state.history = [...saved, { role: 'user', content: 'go' }]), {})],
+    ['saved in the thread', () => ((h.state.history = [...saved]), {})],
     ['sent by the client (no saved thread yet)', () => ({ conversation_history: saved })],
   ])('history %s: the answer at the far edge is dropped, not opened on', async (_source, arrange) => {
     await turn(arrange());
@@ -597,7 +601,7 @@ describe('history — the window opens on a question after an unanswered turn', 
 
   it('a thread whose pairs are intact is passed through unchanged', async () => {
     const intact = range(0, 11).flatMap(turnOf);
-    h.state.history = [...intact, { role: 'user', content: 'go' }];
+    h.state.history = [...intact];
     await turn({});
     expect(sent().slice(0, 20)).toEqual(intact.slice(-20).map(m => `${m.role}:${m.content}`));
   });

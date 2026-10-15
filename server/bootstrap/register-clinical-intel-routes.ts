@@ -146,10 +146,12 @@ export async function registerClinicalIntelRoutes({
   //                                 Math.random() — persisting nothing.
   //
   // Nothing called it: no client/src reference, no test, and its SSE stream had no
-  // production data source. The only producer, cmcEvents.saveLeafPatch, is reached
-  // solely from POST /api/cmc/test-event, which returns 404 when NODE_ENV is
-  // production. The two halves never met in any case — the GET handler served the
-  // templates above and never read the global Map cmcEvents wrote to.
+  // production data source. The only producer, cmcEvents.saveLeafPatch, was reached
+  // solely from POST /api/cmc/test-event, which returned 404 when NODE_ENV was
+  // production; both were retired on 2026-10-05 (server/services/cmcEvents.js and
+  // the /api/cmc aggregator). The two halves never met in any case — the GET
+  // handler served the templates above and never read the global Map cmcEvents
+  // wrote to.
   //
   // A real leaf editor belongs on the submission_leaves table and the governed
   // document paths, not here.

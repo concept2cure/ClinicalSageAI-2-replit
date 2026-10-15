@@ -1127,6 +1127,9 @@ async function main() {
       'db/migrations/20260730_cmc_projects_reconstruction.sql',
       'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
       'db/migrations/20260730_fk_delete_policies_port.sql',
+      // 2026-10-09: the root overlay's ana_run_events FK needs ana_runs now,
+      // not in deploy-migrate after this installer has already failed.
+      'db/migrations/20260917_ana_runs.sql',
     ];
     for (const rel of PRE_OVERLAY_CREATORS) {
       const full = path.resolve(__dirname, '..', '..', rel);
@@ -1910,7 +1913,7 @@ async function main() {
         )
       ).rows.map(r => r.nspname);
       if (schemaGaps.length) {
-        roleFailures.push(`lacks USAGE on schema(s): ${schemaGaps.join(', ')} (grants incomplete)`);
+        roleFailures.push(`lacks USAGE on schema(s): ${schemaGaps.join(', ')}`);
       }
       if (roleFailures.length) {
         throw new Error(`runtime role ${role} posture is unsafe: ${roleFailures.join('; ')}`);

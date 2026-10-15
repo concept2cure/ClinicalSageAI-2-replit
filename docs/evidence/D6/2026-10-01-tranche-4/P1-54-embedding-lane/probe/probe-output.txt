@@ -1,0 +1,66 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe)
+| tenant posture | text | approvals | decision |
+|---|---|---|---|
+| no placement policy (an unelected tenant) | non-sensitive | stack (anthropic only) | ALLOWED |
+| no placement policy (an unelected tenant) | PHI | stack (anthropic only) | DENY_UNKNOWN_PROVIDER |
+| no placement policy (an unelected tenant) | non-sensitive | stack + local/embedding/on_prem | ALLOWED |
+| no placement policy (an unelected tenant) | PHI | stack + local/embedding/on_prem | ALLOWED |
+| residency us | non-sensitive | stack (anthropic only) | ALLOWED |
+| residency us | PHI | stack (anthropic only) | DENY_UNKNOWN_PROVIDER |
+| residency us | non-sensitive | stack + local/embedding/on_prem | ALLOWED |
+| residency us | PHI | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| residency eu + zero retention | non-sensitive | stack (anthropic only) | ALLOWED |
+| residency eu + zero retention | PHI | stack (anthropic only) | DENY_UNKNOWN_PROVIDER |
+| residency eu + zero retention | non-sensitive | stack + local/embedding/on_prem | ALLOWED |
+| residency eu + zero retention | PHI | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| residency on_prem | non-sensitive | stack (anthropic only) | ALLOWED |
+| residency on_prem | PHI | stack (anthropic only) | DENY_UNKNOWN_PROVIDER |
+| residency on_prem | non-sensitive | stack + local/embedding/on_prem | ALLOWED |
+| residency on_prem | PHI | stack + local/embedding/on_prem | ALLOWED |
+| allowedProviders ['anthropic'] (local not named) | non-sensitive | stack (anthropic only) | DENY_TENANT_POLICY |
+| allowedProviders ['anthropic'] (local not named) | PHI | stack (anthropic only) | DENY_TENANT_POLICY |
+| allowedProviders ['anthropic'] (local not named) | non-sensitive | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| allowedProviders ['anthropic'] (local not named) | PHI | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| allowedSubstrates ['frontier_private'] (self_hosted not named) | non-sensitive | stack (anthropic only) | DENY_TENANT_POLICY |
+| allowedSubstrates ['frontier_private'] (self_hosted not named) | PHI | stack (anthropic only) | DENY_TENANT_POLICY |
+| allowedSubstrates ['frontier_private'] (self_hosted not named) | non-sensitive | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| allowedSubstrates ['frontier_private'] (self_hosted not named) | PHI | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| policy lookup fails | non-sensitive | stack (anthropic only) | DENY_TENANT_POLICY |
+| policy lookup fails | PHI | stack (anthropic only) | DENY_TENANT_POLICY |
+| policy lookup fails | non-sensitive | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| policy lookup fails | PHI | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| no organization bound | non-sensitive | stack (anthropic only) | DENY_TENANT_POLICY |
+| no organization bound | PHI | stack (anthropic only) | DENY_TENANT_POLICY |
+| no organization bound | non-sensitive | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+| no organization bound | PHI | stack + local/embedding/on_prem | DENY_TENANT_POLICY |
+
+ ✓ docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe) > no placement policy (an unelected tenant) 11ms
+ ✓ docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe) > residency us 2ms
+ ✓ docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe) > residency eu + zero retention 2ms
+ ✓ docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe) > residency on_prem 1ms
+ ✓ docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe) > allowedProviders ['anthropic'] (local not named) 1ms
+ ✓ docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe) > allowedSubstrates ['frontier_private'] (self_hosted not named) 1ms
+ ✓ docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe) > policy lookup fails 1ms
+ ✓ docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/local-lane-placement.probe.test.ts > the self-hosted embedding lane under production enforcement (P1-54 probe) > no organization bound 1ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  15:01:10
+   Duration  3.06s (transform 1.49s, setup 126ms, import 2.47s, tests 25ms, environment 0ms)
+

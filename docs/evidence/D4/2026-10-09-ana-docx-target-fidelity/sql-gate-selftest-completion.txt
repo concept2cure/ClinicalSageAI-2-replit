@@ -1,0 +1,23 @@
+Commands: npm run --silent ci:sql-interpolation; npm run --silent ci:sql-interpolation:selftest
+Node: v22.23.3. Exit: 0
+Completion output (initial experimental proxy warnings omitted):
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1007 baselined interpolation(s) in 214 file(s); the baseline may only shrink.
+(node:2) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓ RED — a new route interpolates a request value into SQL text
+  ✓ RED — sql.raw in a new service
+  ✓ RED — a baselined file gains one
+  ✓ RED — a typed .query<T>( call is counted
+  ✓ RED — a file fixed but its baseline not lowered
+  ✓ quiet — bind parameters, drizzle sql`` (which parameterizes), and the same text in a comment
+  ✓ quiet — test files and __tests__ are not scanned; code outside server/ is not scanned
+  ✓ quiet — today's shape: a baselined file at its exact count
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+  ! KNOWN GAP 2 — string concatenation
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+
+[ci:sql-interpolation:selftest] 2 known gap(s), NOT counted below.
+[ci:sql-interpolation:selftest] 8 passed — the gate fails on what it exists to catch.

@@ -51,7 +51,9 @@ interface ChainIntegrity {
 }
 /** `meta.chain` of GET /api/audit-trail/ledger (AuditLedgerChainVerdict). */
 interface LedgerChainVerdict {
-  ok: boolean;
+  /** null: nothing was verified (no chained rows), with the server's reason. */
+  ok: boolean | null;
+  reason?: string;
   rowsChecked: number;
   sequencedRows?: number;
   legacyRows?: number;
@@ -91,9 +93,10 @@ function readStateOf(r: DataResult<unknown>): ReadState {
  *  no verdict is not a pass: the chain was not verified on this read. */
 function ledgerVerdictOf(meta: Record<string, unknown> | undefined): LedgerChainVerdict | null {
   const c = meta?.chain as Partial<LedgerChainVerdict> | undefined;
-  if (!c || typeof c.ok !== 'boolean' || typeof c.rowsChecked !== 'number' || !Number.isFinite(c.rowsChecked)) return null;
+  if (!c || (typeof c.ok !== 'boolean' && c.ok !== null) || typeof c.rowsChecked !== 'number' || !Number.isFinite(c.rowsChecked)) return null;
   return {
     ok: c.ok,
+    reason: typeof c.reason === 'string' ? c.reason : undefined,
     rowsChecked: c.rowsChecked,
     sequencedRows: typeof c.sequencedRows === 'number' ? c.sequencedRows : undefined,
     legacyRows: typeof c.legacyRows === 'number' ? c.legacyRows : undefined,

@@ -1,0 +1,8 @@
+server/services/clinical-regulatory-evidence/machine-attribution.ts | now(err warn rules)=0 0 [] | HEAD=0 0 []
+server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts | now(err warn rules)=0 0 [] | HEAD=0 0 []
+server/routes/batch-draft-routes.ts | now(err warn rules)=0 3 ['complexity', 'max-lines-per-function'] | HEAD=0 3 ['complexity', 'max-lines-per-function']
+server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts | now(err warn rules)=0 0 [] | HEAD=0 0 []
+server/services/authoring/machine-claim-verify.ts | now(err warn rules)=0 0 [] | HEAD=(new file)
+server/routes/ana-intelligence.ts | now(err warn rules)=0 2 ['@typescript-eslint/no-unused-vars', 'no-console'] | HEAD=0 2 ['@typescript-eslint/no-unused-vars', 'no-console']
+client/src/concept2cure/v2/surfaces/BatchDraft.tsx | now(err warn rules)=0 7 ['@typescript-eslint/no-unused-vars', 'complexity', 'max-lines', 'max-lines-per-function', 'react-hooks/exhaustive-deps'] | HEAD=0 7 ['@typescript-eslint/no-unused-vars', 'complexity', 'max-lines', 'max-lines-per-function', 'react-hooks/exhaustive-deps']
+client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx | now(err warn rules)=0 0 [] | HEAD=0 0 []

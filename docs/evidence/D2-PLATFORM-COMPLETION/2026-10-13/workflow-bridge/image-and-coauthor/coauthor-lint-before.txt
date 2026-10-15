@@ -1,0 +1,6 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+  640:1   warning  File has too many lines (862). Maximum allowed is 500            max-lines
+  853:73  warning  Arrow function has too many lines (174). Maximum allowed is 100  max-lines-per-function
+
+✖ 2 problems (0 errors, 2 warnings)

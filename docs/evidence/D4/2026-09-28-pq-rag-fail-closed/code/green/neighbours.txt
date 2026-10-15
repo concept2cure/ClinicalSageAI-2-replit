@@ -1,0 +1,6 @@
+# npm run ci:pq-evaluation-callers
+✓ pq-evaluation-callers: AIGateway.evaluateModel is called only from server/eval/pq/ and tests
+
+# vitest run server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts --maxWorkers=2
+ Test Files  1 passed (1)
+      Tests  25 passed (25)

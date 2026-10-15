@@ -1,0 +1,13 @@
+--- a/server/services/tenant/tenant-offboarding.ts	2026-10-01 06:29:58.512648466 +0000
++++ b/server/services/tenant/tenant-offboarding.ts	2026-10-01 06:29:58.535755129 +0000
+@@ -741,4 +741,10 @@
+   'cmc_checklist_instances',
+   'cmc_ai_tool_executions',
+   'cmc_workflows',
++  /* The organisation's own retention period (ADR-0014 §6): its years, and the
++     reason and governing rule for a shorter one. Tenant configuration; each
++     change's history is the chained audit row it wrote, which a purge keeps.
++     A leaf (its only FK is to organizations, which a purge updates rather than
++     deletes), so its position is free. */
++  'organization_retention_settings',
+ ]);

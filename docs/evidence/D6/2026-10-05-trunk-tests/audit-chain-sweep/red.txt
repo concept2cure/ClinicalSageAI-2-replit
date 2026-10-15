@@ -1,0 +1,1660 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts
+{
+  "timestamp": "2026-10-05T05:00:25.153Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T05:00:25.154Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts
+{
+  "timestamp": "2026-10-05T05:00:25.155Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled
+{
+  "timestamp": "2026-10-05T05:00:25.374Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on
+{
+  "timestamp": "2026-10-05T05:00:25.376Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep disabled",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset
+{
+  "timestamp": "2026-10-05T05:00:25.377Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set
+{
+  "timestamp": "2026-10-05T05:00:25.377Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep disabled",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "opt-in outside production (set ENABLE_AUDIT_CHAIN_CHECK=true or AUDIT_TRAIL_ENABLED=true)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured
+{
+  "timestamp": "2026-10-05T05:00:25.378Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset
+{
+  "timestamp": "2026-10-05T05:00:25.379Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false)
+{
+  "timestamp": "2026-10-05T05:00:25.379Z",
+  "level": "warn",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep DISABLED in production — Part 11 tamper-evidence monitoring is off",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too
+{
+  "timestamp": "2026-10-05T05:00:25.380Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies
+{
+  "timestamp": "2026-10-05T05:00:25.390Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content
+{
+  "timestamp": "2026-10-05T05:00:25.401Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.seals, audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.seals",
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "7",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.seals; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number
+{
+  "timestamp": "2026-10-05T05:00:25.411Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor, audit.tamper_proof_log — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor",
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "broken",
+        "rowsChecked": 2,
+        "firstFailure": "2",
+        "reason": "Content tampered: content_hash mismatch at sequence 2"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit.tamper_proof_log; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id
+{
+  "timestamp": "2026-10-05T05:00:25.413Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor, audit_events.linkage — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor",
+      "audit_events.linkage"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "broken",
+        "rowsChecked": 2,
+        "firstFailure": "2",
+        "reason": "1 broken link(s)"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_events.linkage; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger
+{
+  "timestamp": "2026-10-05T05:00:25.416Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor, immutability_triggers — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor",
+      "immutability_triggers"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "missing",
+        "rowsChecked": 7,
+        "firstFailure": "public.audit_logs.trg_audit_logs_no_delete",
+        "reason": "missing: public.audit_logs.trg_audit_logs_no_delete"
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in immutability_triggers; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before
+{
+  "timestamp": "2026-10-05T05:00:25.418Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.chain, audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.chain",
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "broken",
+        "rowsChecked": 12,
+        "firstFailure": "row-9",
+        "reason": "sha256_chain mismatch"
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.chain; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others
+{
+  "timestamp": "2026-10-05T05:00:25.421Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.seals, audit_logs.anchor, audit.tamper_proof_log — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.seals",
+      "audit_logs.anchor",
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "0",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "error",
+        "reason": "boom"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.seals, audit.tamper_proof_log; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified
+{
+  "timestamp": "2026-10-05T05:00:25.423Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor, audit.tamper_proof_log — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor",
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "unverifiable",
+        "rowsChecked": 0,
+        "reason": "no entries: there is no chain to verify"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "missing",
+        "reason": "table absent — db/migrations/20260813_audit_tamper_proof_log.sql has not been applied"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit.tamper_proof_log; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert
+{
+  "timestamp": "2026-10-05T05:00:25.426Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "unverifiable",
+        "reason": "AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified — integrity unverifiable."
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "unverifiable",
+        "reason": "AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified
+{
+  "timestamp": "2026-10-05T05:00:25.429Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "unverifiable",
+        "rowsChecked": 2,
+        "reason": "no row carries a record_hash: the chain has never been hashed, so no link could be checked"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable
+{
+  "timestamp": "2026-10-05T05:00:25.431Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] Audit integrity sweep could not run: pool down",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > in production without AUDIT_ANCHOR_BUCKET the anchor is "not configured": never ok, never written
+{
+  "timestamp": "2026-10-05T05:00:25.432Z",
+  "level": "warn",
+  "message": "[audit-chain-integrity] Audit integrity sweep NOT fully verified: audit_logs.anchor could not be checked",
+  "context": {
+    "unverifiable": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "unverifiable",
+        "reason": "anchor not configured: AUDIT_ANCHOR_BUCKET is unset, so nothing outside the database records the chain head and removal of the newest audit rows cannot be detected"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "anchor not configured: AUDIT_ANCHOR_BUCKET is unset, so nothing outside the database records the chain head and removal of the newest audit rows cannot be detected"
+    },
+    "anchorAge": null
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > verifies against the latest anchor FIRST, then writes the new anchor to the configured bucket
+{
+  "timestamp": "2026-10-05T05:00:25.434Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a truncated chain after an anchor is an incident: alerted, and no new anchor papers over it
+{
+  "timestamp": "2026-10-05T05:00:25.437Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "broken",
+        "firstFailure": "6f1c0d2e-0000-4000-8000-000000000007",
+        "reason": "organization 7: head_missing (4 rows anchored at or before the head, 2 now)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.anchor; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > with no anchor written yet the head is "not verified" (unverifiable), and the first anchor is written
+{
+  "timestamp": "2026-10-05T05:00:25.439Z",
+  "level": "warn",
+  "message": "[audit-chain-integrity] Audit integrity sweep NOT fully verified: audit_logs.anchor could not be checked",
+  "context": {
+    "unverifiable": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "unverifiable",
+        "reason": "not verified: no anchor has been written to s3://c2c-prod-part11-evidence/anchors/audit-chain/"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": null
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > the anchor cannot be read: an incident for that store, and nothing is anchored
+{
+  "timestamp": "2026-10-05T05:00:25.440Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "error",
+        "reason": "AccessDenied"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.anchor; the previous anchor stays the reference"
+    },
+    "anchorAge": null
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > an incident in another store blocks the new anchor too: a tampered state is never anchored
+{
+  "timestamp": "2026-10-05T05:00:25.441Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.seals, audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.seals",
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "3",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.seals; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a failed anchor write is reported, not swallowed
+{
+  "timestamp": "2026-10-05T05:00:25.445Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] Audit chain head NOT anchored to s3://c2c-prod-part11-evidence/anchors/audit-chain/: anchor write failed: SlowDown",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a failed anchor write is reported, not swallowed
+{
+  "timestamp": "2026-10-05T05:00:25.445Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 123 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 123 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "anchor write failed: SlowDown"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 123,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > reports the age on a clean run, and a 24-hour-old anchor is not an incident
+{
+  "timestamp": "2026-10-01T02:00:00.000Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Every audit store verified (audit_logs 12 rows, audit_events 2 rows, tamper_proof_log 2 rows, 8 immutability triggers, chain heads anchored)",
+  "context": {
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 24,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > at exactly 48 hours the anchor is not yet stale
+{
+  "timestamp": "2026-10-02T02:00:00.000Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Every audit store verified (audit_logs 12 rows, audit_events 2 rows, tamper_proof_log 2 rows, 8 immutability triggers, chain heads anchored)",
+  "context": {
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 48,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window
+{
+  "timestamp": "2026-10-02T03:00:00.000Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 49 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 49 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 49,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor that the database also breaks is broken, and nothing is anchored over it
+{
+  "timestamp": "2026-10-03T02:00:00.000Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "broken",
+        "firstFailure": "6f1c0d2e-0000-4000-8000-000000000007",
+        "reason": "organization 7: head_missing (4 rows anchored at or before the head, 2 now)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.anchor; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 72,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor beside another incident does not get a new anchor written over that incident
+{
+  "timestamp": "2026-10-02T03:00:00.000Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT INTEGRITY FAILURE in audit_logs.seals, audit_logs.anchor — investigate immediately",
+  "context": {
+    "failures": [
+      "audit_logs.seals",
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "3",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 49 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 49 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.seals; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 49,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > with no anchor yet there is no age to report, and the run says so
+{
+  "timestamp": "2026-10-05T05:00:25.454Z",
+  "level": "warn",
+  "message": "[audit-chain-integrity] Audit integrity sweep NOT fully verified: audit_logs.anchor could not be checked",
+  "context": {
+    "unverifiable": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "unverifiable",
+        "reason": "not verified: no anchor has been written to s3://c2c-prod-part11-evidence/anchors/audit-chain/"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": null
+  }
+}
+
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set 0ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false) 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too 0ms
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies 19ms
+   → expected false to be true // Object.is equality
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content 10ms
+   → expected [ 'audit_logs.seals', …(1) ] to deeply equal [ 'audit_logs.seals' ]
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number 3ms
+   → expected [ 'audit_logs.anchor', …(1) ] to deeply equal [ 'audit.tamper_proof_log' ]
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id 2ms
+   → expected [ 'audit_logs.anchor', …(1) ] to deeply equal [ 'audit_events.linkage' ]
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger 2ms
+   → expected [ 'audit_logs.anchor', …(1) ] to deeply equal [ 'immutability_triggers' ]
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before 3ms
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others 2ms
+   → expected [ 'audit_logs.seals', …(2) ] to deeply equal [ 'audit_logs.seals', …(1) ]
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified 2ms
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert 4ms
+   → expected [ 'audit_logs.anchor' ] to deeply equal []
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified 3ms
+   → expected [ 'audit_logs.anchor' ] to deeply equal []
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > in production without AUDIT_ANCHOR_BUCKET the anchor is "not configured": never ok, never written 2ms
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > verifies against the latest anchor FIRST, then writes the new anchor to the configured bucket 4ms
+   → expected { store: 'audit_logs.anchor', …(2) } to match object { status: 'ok' }
+(2 matching properties omitted from actual)
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a truncated chain after an anchor is an incident: alerted, and no new anchor papers over it 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > with no anchor written yet the head is "not verified" (unverifiable), and the first anchor is written 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > the anchor cannot be read: an incident for that store, and nothing is anchored 1ms
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > an incident in another store blocks the new anchor too: a tampered state is never anchored 3ms
+   → expected { store: 'audit_logs.anchor', …(2) } to match object { status: 'ok' }
+(2 matching properties omitted from actual)
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a failed anchor write is reported, not swallowed 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > reports the age on a clean run, and a 24-hour-old anchor is not an incident 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > at exactly 48 hours the anchor is not yet stale 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor that the database also breaks is broken, and nothing is anchored over it 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor beside another incident does not get a new anchor written over that incident 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > with no anchor yet there is no age to report, and the run says so 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:202:23
+    200|   it('reports ok and raises no alert when every store verifies', async…
+    201|     const result = await runAuditChainIntegrityCheck();
+    202|     expect(result.ok).toBe(true);
+       |                       ^
+    203|     expect(result.rowsChecked).toBe(12);
+    204|     expect(result.failures).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content
+AssertionError: expected [ 'audit_logs.seals', …(1) ] to deeply equal [ 'audit_logs.seals' ]
+
+- Expected
++ Received
+
+  [
+    "audit_logs.seals",
++   "audit_logs.anchor",
+  ]
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:228:29
+    226|     const result = await runAuditChainIntegrityCheck();
+    227|     expect(result.ok).toBe(false);
+    228|     expect(result.failures).toEqual(['audit_logs.seals']);
+       |                             ^
+    229|     expect(result.stores.find((s) => s.store === 'audit_logs.seals')).…
+    230|     expect(emitWarning).toHaveBeenCalledOnce();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number
+AssertionError: expected [ 'audit_logs.anchor', …(1) ] to deeply equal [ 'audit.tamper_proof_log' ]
+
+- Expected
++ Received
+
+  [
++   "audit_logs.anchor",
+    "audit.tamper_proof_log",
+  ]
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:246:29
+    244|     const result = await runAuditChainIntegrityCheck();
+    245|     expect(result.ok).toBe(false);
+    246|     expect(result.failures).toEqual(['audit.tamper_proof_log']);
+       |                             ^
+    247|     expect(result.stores.find((s) => s.store === 'audit.tamper_proof_l…
+    248|       status: 'broken', firstFailure: '2', rowsChecked: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id
+AssertionError: expected [ 'audit_logs.anchor', …(1) ] to deeply equal [ 'audit_events.linkage' ]
+
+- Expected
++ Received
+
+  [
++   "audit_logs.anchor",
+    "audit_events.linkage",
+  ]
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:268:29
+    266|     const result = await runAuditChainIntegrityCheck();
+    267|     expect(result.ok).toBe(false);
+    268|     expect(result.failures).toEqual(['audit_events.linkage']);
+       |                             ^
+    269|     expect(result.stores.find((s) => s.store === 'audit_events.linkage…
+    270|       status: 'broken', firstFailure: '2', rowsChecked: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger
+AssertionError: expected [ 'audit_logs.anchor', …(1) ] to deeply equal [ 'immutability_triggers' ]
+
+- Expected
++ Received
+
+  [
++   "audit_logs.anchor",
+    "immutability_triggers",
+  ]
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:281:29
+    279|     const result = await runAuditChainIntegrityCheck();
+    280|     expect(result.ok).toBe(false);
+    281|     expect(result.failures).toEqual(['immutability_triggers']);
+       |                             ^
+    282|     expect(result.stores.find((s) => s.store === 'immutability_trigger…
+    283|       status: 'missing', firstFailure: 'public.audit_logs.trg_audit_lo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others
+AssertionError: expected [ 'audit_logs.seals', …(2) ] to deeply equal [ 'audit_logs.seals', …(1) ]
+
+- Expected
++ Received
+
+  [
+    "audit_logs.seals",
++   "audit_logs.anchor",
+    "audit.tamper_proof_log",
+  ]
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:305:29
+    303|     m.verifyAuditChainSeals.mockResolvedValue({ valid: false, brokenAt…
+    304|     const result = await runAuditChainIntegrityCheck();
+    305|     expect(result.failures).toEqual(['audit_logs.seals', 'audit.tamper…
+       |                             ^
+    306|     expect(result.stores.find((s) => s.store === 'audit.tamper_proof_l…
+    307|     expect(m.assertAuditImmutabilityTriggers).toHaveBeenCalledOnce();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert
+AssertionError: expected [ 'audit_logs.anchor' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "audit_logs.anchor",
++ ]
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:329:29
+    327|     const result = await runAuditChainIntegrityCheck();
+    328|     expect(result.ok).toBe(false);
+    329|     expect(result.failures).toEqual([]);
+       |                             ^
+    330|     expect(result.unverifiable).toEqual(['audit_logs.seals', 'audit_ev…
+    331|     expect(m.verifyAuditChainSeals).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified
+AssertionError: expected [ 'audit_logs.anchor' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "audit_logs.anchor",
++ ]
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:348:29
+    346|     const result = await runAuditChainIntegrityCheck();
+    347|     expect(result.ok).toBe(false);
+    348|     expect(result.failures).toEqual([]);
+       |                             ^
+    349|     expect(result.unverifiable).toContain('audit_events.linkage');
+    350|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > verifies against the latest anchor FIRST, then writes the new anchor to the configured bucket
+AssertionError: expected { store: 'audit_logs.anchor', …(2) } to match object { status: 'ok' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "status": "ok",
++   "status": "stale",
+  }
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:394:35
+    392|   it('verifies against the latest anchor FIRST, then writes the new an…
+    393|     const result = await runAuditChainIntegrityCheck();
+    394|     expect(anchorVerdict(result)).toMatchObject({ status: 'ok' });
+       |                                   ^
+    395|     expect(anchorVerdict(result)?.reason).toContain(ANCHOR_KEY);
+    396|     expect(result.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > an incident in another store blocks the new anchor too: a tampered state is never anchored
+AssertionError: expected { store: 'audit_logs.anchor', …(2) } to match object { status: 'ok' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "status": "ok",
++   "status": "stale",
+  }
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:450:35
+    448|     m.verifyAuditChainSeals.mockResolvedValue({ valid: false, brokenAt…
+    449|     const result = await runAuditChainIntegrityCheck();
+    450|     expect(anchorVerdict(result)).toMatchObject({ status: 'ok' });
+       |                                   ^
+    451|     expect(result.failures).toEqual(['audit_logs.seals']);
+    452|     expect(m.writeAuditChainAnchor).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 22 passed (32)
+   Start at  05:00:22
+   Duration  2.58s (transform 1.08s, setup 82ms, import 2.00s, tests 86ms, environment 0ms)
+

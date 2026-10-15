@@ -1,0 +1,287 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — the RTF gate shows the run's recorded score > renders the persisted rtfRiskScore, not a findings-only recomputation 95ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — the RTF gate shows the run's recorded score > publishes the recorded score to AnA, not the recomputed 0 61ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — the RTF gate shows the run's recorded score > the lead sentence quotes the recorded score 19ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — the RTF gate shows the run's recorded score > does not call a 90%-RTF run fileable just because no finding is critical 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — the RTF gate shows the run's recorded score > still calls a genuinely low-risk run with a major finding fileable 26ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — a run with no recorded gate score says so > renders the third state instead of 0% / low risk 14ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — a run with no recorded gate score says so > does not call an unscored run a clean simulated review 13ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — a run with no recorded gate score says so > tells AnA the score is absent rather than zero 58ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — the states that were already honest stay honest > a recorded 0 is still shown as 0% (a real zero is not the third state) 32ms
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx > ShadowReview — the states that were already honest stay honest > a lens that has not been run still refuses to score it 24ms
+stderr | server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-05T01:37:26.049Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchB.test.tsx > Shadow review — an empty findings list is not a clean review > does not report a clean run when the run FAILED 105ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchB.test.tsx > Shadow review — an empty findings list is not a clean review > does not report a clean run while the run is STILL RUNNING 37ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchB.test.tsx > Shadow review — an empty findings list is not a clean review > still reports a clean run when a COMPLETE run recorded nothing 20ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchB.test.tsx > Shadow review — an empty findings list is not a clean review > lists the findings of a complete run and claims no clearance 28ms
+stdout | server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts
+{
+  "timestamp": "2026-10-05T01:37:29.102Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T01:37:29.103Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts
+{
+  "timestamp": "2026-10-05T01:37:29.104Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark — existing risk model recovers the gate > produces a readable report
+
+RTF Benchmark — RTF/RTA criteria-grounded benchmark v1.0.0
+model: benchmark-1.0.0 · threshold: 0.4696 (tuned_on_train)
+train/test: 180/60 · test positive rate: 0.4333
+confusion: TP=26 FP=0 FN=0 TN=34
+precision=1 recall=1 F1=1 accuracy=1 AUC=1
+
+
+ ✓ server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark dataset — integrity & provenance > is reproducible (deterministic generator) 4ms
+ ✓ server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark dataset — integrity & provenance > is non-degenerate (both classes present, realistic positive rate) 0ms
+ ✓ server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark dataset — integrity & provenance > every positive label cites at least one public refuse ground 6ms
+ ✓ server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark dataset — integrity & provenance > the label rule matches the documented administrative/substantive logic 0ms
+ ✓ server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark dataset — integrity & provenance > is honestly labeled as criteria-grounded, not licensed data 0ms
+ ✓ server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark — existing risk model recovers the gate > computes a full confusion matrix on a held-out test split 0ms
+ ✓ server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark — existing risk model recovers the gate > achieves strong recall and precision well above chance 1ms
+ ✓ server/services/shadow-review/benchmark/__tests__/rtf-benchmark.test.ts > RTF benchmark — existing risk model recovers the gate > produces a readable report 1ms
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical
+{
+  "timestamp": "2026-10-05T01:37:29.910Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical
+{
+  "timestamp": "2026-10-05T01:37:29.912Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 2,
+    "sequenceId": 2,
+    "organizationId": 7,
+    "findings": 1
+  }
+}
+
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list
+{
+  "timestamp": "2026-10-05T01:37:29.937Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list
+{
+  "timestamp": "2026-10-05T01:37:29.940Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 4,
+    "sequenceId": 4,
+    "organizationId": 7,
+    "findings": 0
+  }
+}
+
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a lost row: the run completes and the result says the row is missing
+{
+  "timestamp": "2026-10-05T01:37:29.953Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 5,
+    "reason": "audit store unreachable"
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a lost row: the run completes and the result says the row is missing
+{
+  "timestamp": "2026-10-05T01:37:29.954Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 5,
+    "sequenceId": 4,
+    "organizationId": 7,
+    "findings": 0
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a written row says so
+{
+  "timestamp": "2026-10-05T01:37:29.962Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 6,
+    "sequenceId": 4,
+    "organizationId": 7,
+    "findings": 0
+  }
+}
+
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > a model's 0.95 beside one minor finding: the run records the aggregate of that one finding
+{
+  "timestamp": "2026-10-05T01:37:29.969Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 7
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > a model's 0.95 beside one minor finding: the run records the aggregate of that one finding
+{
+  "timestamp": "2026-10-05T01:37:29.970Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 7,
+    "sequenceId": 4,
+    "organizationId": 7,
+    "findings": 1
+  }
+}
+
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply with no findings array instead of completing a run with 0 criticals 34ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical 12ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply whose severity is not one the gate knows 8ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list 20ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a lost row: the run completes and the result says the row is missing 14ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a written row says so 6ms
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > an empty sequence is a critical refuse-to-file finding the server records, whatever the model says
+{
+  "timestamp": "2026-10-05T01:37:29.978Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 8
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > an empty sequence is a critical refuse-to-file finding the server records, whatever the model says
+{
+  "timestamp": "2026-10-05T01:37:29.979Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 8,
+    "sequenceId": 5,
+    "organizationId": 7,
+    "findings": 1
+  }
+}
+
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > a model's 0.95 beside one minor finding: the run records the aggregate of that one finding 9ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > an empty sequence is a critical refuse-to-file finding the server records, whatever the model says 9ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > resolves to an absolute directory that exists 2ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > contains every prompt the services load at runtime 1ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > maps the latest complete run per lens, findings shaped + severity-ordered, lens-ordered 13ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > keeps a reviewed-clean lens (complete run, zero findings) as findings: [] 4ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > uses only the latest run per lens and ignores non-complete runs 9ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > carries the gate scores the run RECORDED, with its run id 5ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > passes an unrecorded score through as null — never as 0 3ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > keeps a recorded 0 as 0 (a real zero is not the missing-score state) 3ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > returns [] for an org with no runs, and never crosses tenants 6ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > excludes soft-deleted runs and findings 5ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-view-assembler.pglite.integration.test.ts > assembleOrgShadowReview > labels each run with the basis of its score, by the prompt that produced it 5ms
+stdout | server/services/shadow-review/__tests__/aggregate-risk.test.ts
+{
+  "timestamp": "2026-10-05T01:37:30.440Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T01:37:30.441Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/shadow-review/__tests__/aggregate-risk.test.ts
+{
+  "timestamp": "2026-10-05T01:37:30.442Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/shadow-review/__tests__/aggregate-risk.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/shadow-review/__tests__/aggregate-risk.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/shadow-review/__tests__/aggregate-risk.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/shadow-review/__tests__/aggregate-risk.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/shadow-review/__tests__/aggregate-risk.test.ts
+{
+  "timestamp": "2026-10-05T01:37:30.613Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/shadow-review/__tests__/aggregate-risk.test.ts > aggregateRisk > is zero risk on both gates when there are no findings 2ms
+ ✓ server/services/shadow-review/__tests__/aggregate-risk.test.ts > aggregateRisk > saturates the RTF gate when any rtf/format finding is critical 1ms
+ ✓ server/services/shadow-review/__tests__/aggregate-risk.test.ts > aggregateRisk > saturates the CRL gate when any crl/nb finding is critical 0ms
+ ✓ server/services/shadow-review/__tests__/aggregate-risk.test.ts > aggregateRisk > routes rtf+format to the RTF gate and crl+nb to the CRL gate 0ms
+ ✓ server/services/shadow-review/__tests__/aggregate-risk.test.ts > aggregateRisk > keeps scores within [0,1] even with many findings 0ms
+ ✓ server/services/shadow-review/__tests__/aggregate-risk.test.ts > aggregateRisk > treats info findings as negligible 0ms
+
+ Test Files  7 passed (7)
+      Tests  47 passed (47)
+   Start at  01:37:23
+   Duration  6.82s (transform 2.77s, setup 436ms, import 7.19s, tests 9.57s, environment 1.17s)
+

@@ -19,11 +19,13 @@ import {
   getFlowDefinition,
   getAvailableFlows,
 } from '../../server/services/ana/intelligence-questions/flows/index';
-import type {
-  FlowDefinition,
-  QuestionNode,
-  FieldPredicate,
+import {
+  OTHER_POSITION,
+  type FieldPredicate,
+  type FlowDefinition,
+  type QuestionNode,
 } from '../../shared/types/intelligence-questions';
+import { predicateLeaves } from '../../shared/ana/question-predicate';
 import type { FlowEngineContext } from '../../server/services/ana/intelligence-questions/types';
 
 const ctx: FlowEngineContext = { organizationId: null, userId: null, projectId: null };
@@ -44,11 +46,19 @@ function allFieldIds(def: FlowDefinition): Set<string> {
 }
 
 /** Every predicate in a node (branches + issueChecks + field visibleWhen). */
+/**
+ * Every field id the node's predicates read.
+ *
+ * A `visibleWhen` may be a GROUP (`anyOf` / `allOf`) since 2026-10-12 — the
+ * notified-body question is gated on two answers — so the fields are flattened
+ * through the shared evaluator's own helper rather than read off `.field`,
+ * which a group does not have.
+ */
 function nodePredicates(node: QuestionNode): FieldPredicate[] {
   const preds: FieldPredicate[] = [];
   for (const b of node.branches ?? []) preds.push(b.when);
   for (const ic of node.issueChecks ?? []) preds.push(ic.condition);
-  for (const field of node.fields) if (field.visibleWhen) preds.push(field.visibleWhen);
+  for (const field of node.fields) if (field.visibleWhen) preds.push(...predicateLeaves(field.visibleWhen));
   return preds;
 }
 
@@ -148,6 +158,15 @@ function probeFlow(def: FlowDefinition): VocabProbe {
       if (TARGET_FIELDS.includes(field.id)) {
         const set = (optionValues[field.id] ??= new Set());
         for (const opt of field.options ?? []) set.add(opt.value);
+        /* A field that declares `allowOther` can also produce OTHER_POSITION —
+           the value it carries when the person took a position the list did not
+           offer. No listed option may use it (that is OTHER_POSITION's own
+           invariant), so it is producible WITHOUT being an option, which is the
+           case this probe did not know: project_setup.therapeutic_area declares
+           `allowOther: {}` and raises an info issue on `__other__`, and the
+           probe read the predicate as a vocabulary mismatch (2026-10-12).
+           Scoped to fields that declare it, so a closed list is still held. */
+        if (field.allowOther) set.add(OTHER_POSITION);
       }
     }
     for (const pred of nodePredicates(node)) {
@@ -182,6 +201,38 @@ describe('value-vocabulary alignment probe', () => {
         }
       }
     });
+  });
+
+  /* The rule above now admits OTHER_POSITION where a field declares
+     `allowOther`. This is the case it must still catch: the same predicate on a
+     field whose list is CLOSED. Without this, the fix for
+     project_setup.therapeutic_area would have made `__other__` acceptable
+     everywhere, which is exactly what the probe exists to prevent. */
+  it('still refuses the own-position value on a field whose list is closed', () => {
+    const closed = probeFlow({
+      category: 'synthetic_closed_list',
+      nodes: [
+        {
+          id: 'n1',
+          fields: [
+            {
+              id: 'therapeutic_area',
+              label: 'Therapeutic Area',
+              type: 'select',
+              options: [{ value: 'oncology', label: 'Oncology' }],
+              // no allowOther: the list is closed
+            },
+          ],
+          issueChecks: [
+            { id: 'ic1', condition: { field: 'therapeutic_area', operator: 'eq', value: OTHER_POSITION }, severity: 'info', title: 't', message: 'm' },
+          ],
+          defaultNext: null,
+        },
+      ],
+    } as unknown as FlowDefinition);
+
+    expect(closed.optionValues.therapeutic_area.has(OTHER_POSITION)).toBe(false);
+    expect(closed.predicateValues.therapeutic_area.has(OTHER_POSITION)).toBe(true);
   });
 
   it('documents the current per-flow vocabularies (informational snapshot)', () => {

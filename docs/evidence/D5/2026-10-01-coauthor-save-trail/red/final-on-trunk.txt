@@ -1,0 +1,183 @@
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL eCTD tree + selected document content
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > derives tree-footer KPIs from the real rows (not hardcoded)
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders REAL server validation findings when Validation is opened
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL ICH M4 compliance score when Compliance is opened
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > answers in its own pane and never writes to the rail this screen hides
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest empty state > shows an EmptyState — never a fixture — when the org has no documents
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest error state > shows an error EmptyState — never a fixture — when the read fails
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — tree search really filters (no dead input) > filters by title and section number, says so on no match, and clears
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports validation as unavailable rather than inventing findings
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports compliance as unavailable rather than inventing a score
+ × client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > mounts the ONE canonical editor over the document and saves through the store’s own PUT
+   → Unable to find a label with the text of: /^Reason for change/
+ × client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > ⌘S in the canvas without a reason is refused at the field, which takes focus; nothing is sent
+   → Unable to find a label with the text of: /^Reason for change/
+ × client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > a reason belongs to its document: opening another clears it
+   → Unable to find a label with the text of: /^Reason for change/
+ × client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > ⌘S in the reason field saves the document, not the web page
+   → Unable to find a label with the text of: /^Reason for change/
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits
+   → expected [ 'coauthor_document.retaken' ] to deeply equal [ 'coauthor_document.updated', …(1) ]
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant
+   → expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a seal the router wrote before it ordered ties (storage order) is read in the editor order, not refused
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a legacy seal with two ties inside one millisecond files them in the order sealed (201)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same legacy seal, with those two swapped after it, is refused (409, nothing written)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > sections created in one transaction under a legacy seal are filed, not refused as altered
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same document with the two sections' texts exchanged after the seal is refused (409, nothing written)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a section created later but placed first files where the seal placed it (order_index before created_at)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction
+   → expected 404 to be 200 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500)
+   → expected 404 to be 500 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > 404 when the document is absent performs no delete and no audit
+   → expected [ 'delete' ] to deeply equal [ 'lock' ]
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > 409 when the document has saved versions: nothing deleted, nothing audited
+   → expected 404 to be 409 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > 400 for a stated reason the one rule refuses: nothing read, deleted or audited
+   → expected 404 to be 400 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > records no reason when none was stated, rather than one the code wrote
+   → expected 404 to be 200 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > writes the deleted event with its reason, actor and Part 11 flags
+   → expected 404 to be 200 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > deletes and audits in one transaction
+   → expected 404 to be 200 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500)
+   → expected 404 to be 500 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > 404 when the document is absent performs no delete and no audit
+   → expected [ 'delete' ] to deeply equal [ 'lock' ]
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > 409 when the document has saved versions: nothing deleted, nothing audited
+   → expected 404 to be 409 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > 400 for a stated reason the one rule refuses: nothing read, deleted or audited
+   → expected 404 to be 400 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > records no reason when none was stated, rather than one the code wrote
+   → expected 404 to be 200 // Object.is equality
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > writes the deleted event with its reason, actor and Part 11 flags
+   → expected 404 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction)
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction)
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > refuses moving an approved document to another module (it would land its verdict on another section)
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a refused status write neither bumps the version nor logs an update (its own approved-list branch is gone)
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a no-op restate logs no lifecycle event either
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > refuses a content save with no reason, or a short one, with 400 and writes nothing
+   → {"content":"<p>revised</p>"} was saved: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > keeps the replaced text as version 1 and records who, why, and the text before and after
+   → expected [] to deeply equal [ { version_number: 1, …(3) } ]
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a second save keeps the first revision as version 2
+   → expected [] to deeply equal [ [ 1, '<p>cover</p>' ], …(1) ]
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > withdrawing a verdict states its reason and is recorded; it replaces no text, so it keeps none
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a no-op restate needs no reason and records nothing
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a refusal for the record’s state is answered before the reason: an approved row is still 409
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > when the audit event cannot be written, nothing is: no text, no version (500)
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > refuses a content save with no reason, or a short one, with 400 and writes nothing
+   → {"content":"<p>revised</p>"} was saved: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > keeps the replaced text as version 1 and records who, why, and the text before and after
+   → expected [] to deeply equal [ { version_number: 1, …(3) } ]
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a second save keeps the first revision as version 2
+   → expected [] to deeply equal [ [ 1, '<p>cover</p>' ], …(1) ]
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > withdrawing a verdict states its reason and is recorded; it replaces no text, so it keeps none
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a no-op restate needs no reason and records nothing
+ × client/src/concept2cure/v2/__tests__/ectdCoauthorFinalizedRefusal.test.tsx > EctdCoauthor — a save refused because the document became approved while open > shows the server's reason and where to go, and does not report the save as done
+   → Unable to find a label with the text of: /^Reason for change/
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a refusal for the record’s state is answered before the reason: an approved row is still 409
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > when the audit event cannot be written, nothing is: no text, no version (500)
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — the placement metadata it replaces is recorded > records section and region before and after, and names what changed
+   → Cannot read properties of undefined (reading 'metadata')
+ × server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/coauthor/documents/:id — the editor is told which rows are read-only (P11-B-3) > marks every verdict row read-only, by the server’s own rule, on the list and on one row
+   → expected { '600': undefined, …(5) } to match object { '600': false, '601': true, …(3) }
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > refuses with 409 DOCUMENT_HAS_HISTORY, and the document and its versions remain
+   → {"success":true,"deletedId":600}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > refuses, not 500s, for a document a batch draft was accepted into (the version row that route writes)
+   → {"error":"Failed to delete document","message":"An unexpected error occurred"}: expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > deletes a document with no history and records the deletion with the stated reason, or none
+   → expected { …(5) } to match object { …(3) }
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > refuses a stated reason the one rule refuses (400), and deletes nothing
+   → expected [ 200, undefined ] to deeply equal [ 400, 'REASON_INVALID' ]
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > answers 404 for another organization's document and deletes nothing
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > refuses with 409 DOCUMENT_HAS_HISTORY, and the document and its versions remain
+   → {"success":true,"deletedId":600}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > refuses, not 500s, for a document a batch draft was accepted into (the version row that route writes)
+   → {"error":"Failed to delete eCTD document","code":"INTERNAL"}: expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > deletes a document with no history and records the deletion with the stated reason, or none
+   → expected { …(5) } to match object { …(3) }
+ × server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > refuses a stated reason the one rule refuses (400), and deletes nothing
+   → expected [ 200, undefined ] to deeply equal [ 400, 'REASON_INVALID' ]
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > answers 404 for another organization's document and deletes nothing
+ × client/src/concept2cure/v2/__tests__/ectdCoauthorReadOnly.test.tsx > EctdCoauthor — a verdict row > opens read-only: no editable canvas, no Save, no reason asked for, and the reason why
+   → expected 'true' to be 'false' // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 42 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  6 failed (6)
+      Tests  42 failed | 96 passed (138)

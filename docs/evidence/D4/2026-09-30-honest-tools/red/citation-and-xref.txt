@@ -1,0 +1,399 @@
+# red at c026894b with only the tests added
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/generate-citation-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:12:13.205Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:12:13.207Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/generate-citation-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:12:13.207Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/generate-citation-honest.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/generate-citation-honest.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/generate-citation-honest.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > resolves each reference against the outlines of the tenant's own documents 14ms
+   → expected { reference: 'Section 2.5.4', …(2) } to match object { status: 'found_in_document', …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not assess table and figure numbers, and does not pass them 4ms
+   → expected 'unverified' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses a document outside the organization, and says the same as for one that does not exist 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses without a tenant, and asks for the references it is to check 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > matches a section by its code, not by a longer code that starts the same 1ms
+   → expected 'unverified' to be 'not_found' // Object.is equality
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > describes what it checks, not a table or figure check it does not do 1ms
+   → expected 'Validate cross-references within a do…' not to match /table\/figu…/figure numbers are correct
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a journal article from the record PubMed returned for its PMID 8ms
+   → expected "vi.fn()" to be called with arguments: [ [ { pmid: '12345678' } ] ]
+
+Number of calls: 0
+
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > looks a DOI up as a DOI 2ms
+   → expected "vi.fn()" to be called with arguments: [ [ { doi: '10.1000/xyz' } ] ]
+
+Number of calls: 0
+
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is not_found — never a placeholder 2ms
+   → expected '[Author(s)]. "[Title]." [Journal], 10…' to be null
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is unverifiable — never a placeholder 1ms
+   → expected '[Author(s)]. "[Title]." [Journal], 10…' to be null
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is error — never a placeholder 1ms
+   → expected '[Author(s)]. "[Title]." [Journal], 10…' to be null
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > carries a retraction with the citation 2ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > takes an ICH guideline's title from the ICH corpus 1ms
+   → expected undefined to be 'identified' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats an ICH code the corpus does not hold, and says it is not in the corpus 1ms
+   → expected undefined to be 'not_in_corpus' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a 21cfr citation from the identifier given and labels it not verified 4ms
+   → expected 'Title 21, Code of Federal Regulations…' to be '21 CFR 820.30.' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a fda_guidance citation from the identifier given and labels it not verified 1ms
+   → expected 'U.S. Food and Drug Administration. "C…' to be 'U.S. Food and Drug Administration. Cl…' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a eu_mdr citation from the identifier given and labels it not verified 1ms
+   → expected 'Regulation (EU) 2017/745 of the Europ…' to be 'Regulation (EU) 2017/745 of the Europ…' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a iso_standard citation from the identifier given and labels it not verified 1ms
+   → expected 'International Organization for Standa…' to be 'ISO 14155:2020.' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > applies the style it names, and says when it cannot apply the one asked for 1ms
+   → expected undefined to be 'ama' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > asks for what is missing instead of formatting nothing 1ms
+   → .toMatch() expects to receive a string, but got undefined
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a journal article from the record PubMed returned for its PMID
+AssertionError: expected "vi.fn()" to be called with arguments: [ [ { pmid: '12345678' } ] ]
+
+Number of calls: 0
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:35:29
+     33|     }));
+     34|     const out = await run({ source_type: 'journal_article', source_ide…
+     35|     expect(verifyCitations).toHaveBeenCalledWith([{ pmid: '12345678' }…
+       |                             ^
+     36|     expect(out.verification).toBe('verified');
+     37|     expect(out.citation).toBe('Smith JA, van der Berg B. A randomized …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > looks a DOI up as a DOI
+AssertionError: expected "vi.fn()" to be called with arguments: [ [ { doi: '10.1000/xyz' } ] ]
+
+Number of calls: 0
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:45:29
+     43|     verifyCitations.mockResolvedValue(verified({ source: 'crossref', t…
+     44|     const out = await run({ source_type: 'journal_article', source_ide…
+     45|     expect(verifyCitations).toHaveBeenCalledWith([{ doi: '10.1000/xyz'…
+       |                             ^
+     46|     expect(out.citation).toBe('Roe J. T. J. 2019.');
+     47|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is not_found — never a placeholder
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is unverifiable — never a placeholder
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is error — never a placeholder
+AssertionError: expected '[Author(s)]. "[Title]." [Journal], 10…' to be null
+
+- Expected:
+null
+
++ Received:
+"[Author(s)]. \"[Title].\" [Journal], 10.9999/nope. DOI: [doi]."
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:54:28
+     52|       verifyCitations.mockResolvedValue([{ status, exists: status === …
+     53|       const out = await run({ source_type: 'journal_article', source_i…
+     54|       expect(out.citation).toBeNull();
+       |                            ^
+     55|       expect(out.verification).toBe(status);
+     56|       expect(JSON.stringify(out)).not.toMatch(/\[(Author|Title|Journal…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > carries a retraction with the citation
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:63:27
+     61|     verifyCitations.mockResolvedValue(verified({ title: 'T', authors: …
+     62|     const out = await run({ source_type: 'journal_article', source_ide…
+     63|     expect(out.retracted).toBe(true);
+       |                           ^
+     64|     expect(out.warning).toMatch(/retracted/i);
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > takes an ICH guideline's title from the ICH corpus
+AssertionError: expected undefined to be 'identified' // Object.is equality
+
+- Expected:
+"identified"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:69:30
+     67|   it('takes an ICH guideline\'s title from the ICH corpus', async () =…
+     68|     const out = await run({ source_type: 'ich_guideline', source_ident…
+     69|     expect(out.verification).toBe('identified');
+       |                              ^
+     70|     expect(out.citation).toMatch(/^International Council for Harmonisa…
+     71|     expect(verifyCitations).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats an ICH code the corpus does not hold, and says it is not in the corpus
+AssertionError: expected undefined to be 'not_in_corpus' // Object.is equality
+
+- Expected:
+"not_in_corpus"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:76:30
+     74|   it('formats an ICH code the corpus does not hold, and says it is not…
+     75|     const out = await run({ source_type: 'ich_guideline', source_ident…
+     76|     expect(out.verification).toBe('not_in_corpus');
+       |                              ^
+     77|     expect(out.citation).toBe('International Council for Harmonisation…
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a 21cfr citation from the identifier given and labels it not verified
+AssertionError: expected 'Title 21, Code of Federal Regulations…' to be '21 CFR 820.30.' // Object.is equality
+
+Expected: "21 CFR 820.30."
+Received: "Title 21, Code of Federal Regulations, Part 820.30. U.S. Government Publishing Office."
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:87:26
+     85|   ])('formats a %s citation from the identifier given and labels it no…
+     86|     const out = await run({ source_type: type, source_identifier: id }…
+     87|     expect(out.citation).toBe(expected);
+       |                          ^
+     88|     expect(out.verification).toBe('not_verified');
+     89|     expect(out.note).toMatch(/not checked/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a fda_guidance citation from the identifier given and labels it not verified
+AssertionError: expected 'U.S. Food and Drug Administration. "C…' to be 'U.S. Food and Drug Administration. Cl…' // Object.is equality
+
+Expected: "U.S. Food and Drug Administration. Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics."
+Received: "U.S. Food and Drug Administration. "Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics." Available at: https://www.fda.gov/regulatory-information/search-fda-guidance-documents."
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:87:26
+     85|   ])('formats a %s citation from the identifier given and labels it no…
+     86|     const out = await run({ source_type: type, source_identifier: id }…
+     87|     expect(out.citation).toBe(expected);
+       |                          ^
+     88|     expect(out.verification).toBe('not_verified');
+     89|     expect(out.note).toMatch(/not checked/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a eu_mdr citation from the identifier given and labels it not verified
+AssertionError: expected 'Regulation (EU) 2017/745 of the Europ…' to be 'Regulation (EU) 2017/745 of the Europ…' // Object.is equality
+
+Expected: "Regulation (EU) 2017/745 of the European Parliament and of the Council on medical devices, Article 61."
+Received: "Regulation (EU) 2017/745 of the European Parliament and of the Council, Article 61."
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:87:26
+     85|   ])('formats a %s citation from the identifier given and labels it no…
+     86|     const out = await run({ source_type: type, source_identifier: id }…
+     87|     expect(out.citation).toBe(expected);
+       |                          ^
+     88|     expect(out.verification).toBe('not_verified');
+     89|     expect(out.note).toMatch(/not checked/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a iso_standard citation from the identifier given and labels it not verified
+AssertionError: expected 'International Organization for Standa…' to be 'ISO 14155:2020.' // Object.is equality
+
+Expected: "ISO 14155:2020."
+Received: "International Organization for Standardization. ISO 14155:2020. Geneva, Switzerland."
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:87:26
+     85|   ])('formats a %s citation from the identifier given and labels it no…
+     86|     const out = await run({ source_type: type, source_identifier: id }…
+     87|     expect(out.citation).toBe(expected);
+       |                          ^
+     88|     expect(out.verification).toBe('not_verified');
+     89|     expect(out.note).toMatch(/not checked/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > applies the style it names, and says when it cannot apply the one asked for
+AssertionError: expected undefined to be 'ama' // Object.is equality
+
+- Expected:
+"ama"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:95:30
+     93|     verifyCitations.mockResolvedValue(verified({ title: 'T', authors: …
+     94|     const ama = await run({ source_type: 'journal_article', source_ide…
+     95|     expect(ama.styleApplied).toBe('ama');
+       |                              ^
+     96|     expect(ama.citation).toContain('doi:10.1056/NEJMoa2034577');
+     97|     const apa = await run({ source_type: 'journal_article', source_ide…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > asks for what is missing instead of formatting nothing
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:103:67
+    101|
+    102|   it('asks for what is missing instead of formatting nothing', async (…
+    103|     expect((await run({ source_type: 'journal_article' })).error).toMa…
+       |                                                                   ^
+    104|     expect((await run({ source_type: 'patent', source_identifier: 'x' …
+    105|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > resolves each reference against the outlines of the tenant's own documents
+AssertionError: expected { reference: 'Section 2.5.4', …(2) } to match object { status: 'found_in_document', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "section": "2.5.4",
+-   "sectionStatus": "drafted",
+-   "status": "found_in_document",
++   "status": "unverified",
+  }
+
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:57:36
+     55|     });
+     56|     const byRef = Object.fromEntries(out.results.map((r: { reference: …
+     57|     expect(byRef['Section 2.5.4']).toMatchObject({ status: 'found_in_d…
+       |                                    ^
+     58|     expect(byRef['Module 2.5.6']).toMatchObject({ status: 'found_in_do…
+     59|     expect(byRef['Section 3.2.P.5.1']).toMatchObject({ status: 'found_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not assess table and figure numbers, and does not pass them
+AssertionError: expected 'unverified' to be 'not_assessed' // Object.is equality
+
+Expected: "not_assessed"
+Received: "unverified"
+
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:69:51
+     67|     wire();
+     68|     const out = await run({ document_id: 'doc_a', section_references: …
+     69|     for (const r of out.results) expect(r.status).toBe('not_assessed');
+       |                                                   ^
+     70|     expect(out.summary.found).toBe(0);
+     71|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses a document outside the organization, and says the same as for one that does not exist
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:77:25
+     75|     const other = await run({ document_id: 'doc_a', section_references…
+     76|     const missing = await run({ document_id: 'doc_zzz', section_refere…
+     77|     expect(other.error).toMatch(/No document 'doc_a' in this organizat…
+       |                         ^
+     78|     expect(missing.error).toMatch(/No document 'doc_zzz' in this organ…
+     79|     expect(other.results).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses without a tenant, and asks for the references it is to check
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:84:90
+     82|   it('refuses without a tenant, and asks for the references it is to c…
+     83|     wire();
+     84|     expect((await run({ document_id: 'doc_a', section_references: ['2.…
+       |                                                                                          ^
+     85|     expect((await run({ document_id: 'doc_a' })).error).toMatch(/secti…
+     86|     expect(query).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > matches a section by its code, not by a longer code that starts the same
+AssertionError: expected 'unverified' to be 'not_found' // Object.is equality
+
+Expected: "not_found"
+Received: "unverified"
+
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:92:35
+     90|     wire({ sections: [{ document_id: 'doc_a', title: DOC.title, sectio…
+     91|     const out = await run({ document_id: 'doc_a', section_references: …
+     92|     expect(out.results[0].status).toBe('not_found');
+       |                                   ^
+     93|   });
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > describes what it checks, not a table or figure check it does not do
+AssertionError: expected 'Validate cross-references within a do…' not to match /table\/figu…/figure numbers are correct
+
+- Expected:
+/table\/figure numbers are correct/i
+
++ Received:
+"Validate cross-references within a document — check that cited sections exist, table/figure numbers are correct, and internal references are consistent."
+
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:97:33
+     95|   it('describes what it checks, not a table or figure check it does no…
+     96|     const def = ALL_ANA_TOOLS.find((t) => t.name === 'validate_cross_r…
+     97|     expect(def.description).not.toMatch(/table\/figure numbers are cor…
+       |                                 ^
+     98|     expect(def.input_schema.required).toEqual(['document_id', 'section…
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  20 failed (20)
+   Start at  00:12:10
+   Duration  6.62s (transform 8.72s, setup 188ms, import 12.11s, tests 55ms, environment 0ms)
+

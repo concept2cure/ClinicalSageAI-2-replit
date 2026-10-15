@@ -79,6 +79,25 @@ export const PREREQ = `
            ('${FILING_B}', '${PROGRAM_B}', ${ORG}, 'ind', 'fda', 'IND filing B');
 `;
 
+/** Canonical project access prerequisites for services that read/write drafts.
+ * Other authoring fixtures opt in; no private permission is inferred. */
+export const AUTHORING_ACCESS_DDL = `
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active';
+  ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active';
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_workspace_id integer;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'planning';
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS owner_id integer;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_by_id integer;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS settings jsonb NOT NULL DEFAULT '{}';
+  CREATE TABLE IF NOT EXISTS project_visibility_settings (project_id integer, organization_id integer, visibility text);
+  CREATE TABLE IF NOT EXISTS project_members (project_id integer, organization_id integer, user_id integer, role text, status text);
+  CREATE TABLE IF NOT EXISTS concept2cure_artifacts (id integer PRIMARY KEY, organization_id integer, project_id integer);
+  CREATE TABLE IF NOT EXISTS concept2cure_review_assignments (id serial PRIMARY KEY, artifact_id integer, organization_id integer, reviewer_id integer, status text);
+  INSERT INTO projects (id,organization_id,name,regulatory_program_id) VALUES (43,${ORG},'second anchor','${PROGRAM_B}') ON CONFLICT DO NOTHING;
+  UPDATE projects SET owner_id=${AUTHOR.id},created_by_id=${AUTHOR.id};
+  INSERT INTO project_visibility_settings VALUES (42,${ORG},'org_public'),(43,${ORG},'org_public');
+`;
+
 /** The vault store as the ingest INSERT and the placement UPDATE write it. */
 export const VAULT_DDL = `
   CREATE SCHEMA IF NOT EXISTS vault;
@@ -95,8 +114,8 @@ export const VAULT_DDL = `
     content_hash TEXT NOT NULL,
     classification TEXT DEFAULT 'INTERNAL',
     retention_policy TEXT, parent_document_id UUID, supersedes_id UUID,
-    -- The retention clock the ingest now starts at admission (9f43e7e9, P1-22):
-    -- today plus the named, active policy's days (migrations/20260608_vault_retention.sql).
+    -- The retention clock the ingest starts at admission (P1-22; ADR-0014 §6):
+    -- the organisation's period, else 25 years, never earlier than a named policy.
     retention_until DATE,
     extracted_text TEXT, page_count INTEGER, word_count INTEGER,
     folder_id TEXT, evidence_kind TEXT, ctd_section TEXT,
@@ -113,12 +132,19 @@ export const VAULT_DDL = `
   CREATE UNIQUE INDEX idx_vault_documents_program_hash_unique ON vault.documents (program_id, content_hash);
   -- The policies the ingest reads the retention days from (the columns it
   -- reads, from migrations/20260608_vault_retention.sql). Empty here: a document
-  -- that names no policy, or an unknown one, gets no date.
+  -- that names no policy, or an unknown one, is dated by the organisation period.
   CREATE TABLE vault.retention_policies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     policy_name TEXT NOT NULL UNIQUE,
     retention_days INTEGER NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE
+  );
+  -- The organisation's own retention period the ingest reads (ADR-0014 §6; the
+  -- columns it reads, from migrations/20261001_organization_retention_settings.sql).
+  -- Empty here: every document is dated by the 25-year default.
+  CREATE TABLE organization_retention_settings (
+    organization_id INTEGER NOT NULL UNIQUE,
+    retention_years INTEGER NOT NULL
   );
 `;
 

@@ -1,0 +1,149 @@
+# GREEN 2026-09-28T15:56:57Z, HEAD c82c056be + the working tree (the H1 files' sha256 in tree.sha256): the H1 test files and every neighbour.
+# Neighbours: every server test that imports reasoning.ts, effort.ts or approved-models.ts, and the unit tests of the three resolveTierModel callers that have one (deep-investigation; stream.ts through stream-model-override). One invocation, --maxWorkers=2 (another agent was building in the same tree).
+# Trimmed: every test line of the four H1 test files; each neighbour as its count of passing tests. ANSI stripped.
+$ npx vitest run --maxWorkers=2 server/services/ai-gateway/__tests__/tier-model-approval.test.ts server/services/ai-gateway/__tests__/reasoning.test.ts server/services/ai-gateway/__tests__/effort.test.ts server/services/ai-governance/__tests__/governing-entry.test.ts server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts server/services/ai-gateway/__tests__/flagship-opus-5-5.test.ts server/services/ai-gateway/__tests__/drive-regressions.test.ts server/services/ai-gateway/__tests__/ledger-provenance.test.ts server/services/ai-governance/__tests__/approved-models.test.ts server/services/ai-governance/__tests__/model-cards.test.ts server/services/ana/__tests__/governed-write-gate.test.ts server/services/ana/__tests__/deep-investigation.test.ts server/eval/pq/__tests__/run-pq.test.ts server/routes/ana-ri/__tests__/stream-model-override.test.ts server/routes/c2c/__tests__/promote-generation-provenance.test.ts server/services/cmc/__tests__/module3-narrative-governance-refusal.test.ts
+
+## The H1 test files
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > isSubstantiveTurn > treats any tool-using turn as substantive
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > isSubstantiveTurn > treats explicit deep intent lenses as substantive
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > isSubstantiveTurn > treats a long message as substantive
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > isSubstantiveTurn > treats a short, lens-less greeting as NOT substantive
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveThinkingConfig > never thinks on Fast, even when substantive or high-risk
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveThinkingConfig > always thinks on Thorough
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveThinkingConfig > Balanced thinks on substantive turns but not on small talk
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveThinkingConfig > Balanced thinks on a high-risk turn even when not otherwise substantive
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveThinkingConfig > high-stakes floor never lowers an already-higher Thorough budget
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveThinkingConfig > non-high risk tiers do not by themselves enable Balanced thinking
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveOutputBudget > scales the requested output budget by effort
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveOutputBudget > gives Thorough more room than Fast for long-form drafting
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveOutputBudget > stays within the kernel planner clamp ceiling (8192)
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveOutputBudget > falls back to the balanced budget for unknown/absent effort
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveModelTier > keeps Fast on the economy tier (cheap, quick)
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveModelTier > sends a HIGH-risk turn to the flagship tier even on Fast
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveModelTier > puts Thorough on the flagship tier (explicit depth request)
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveModelTier > routes routine Balanced turns to economy — the expensive model is NOT the default
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveModelTier > routes real Balanced work (substantive / deep lens / heavy task) to standard, not flagship
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveModelTier > reserves the flagship for genuinely high-stakes Balanced turns
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveModelTier > does not escalate on medium/low risk alone
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveModelTier > maps every tier to a governance-approved registry alias
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModelIds — per-deployment overrides > returns the defaults with no env overrides
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModelIds — per-deployment overrides > applies an override per tier (the no-Opus dial)
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModelIds — per-deployment overrides > supports a self-hosted economy tier
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModelIds — per-deployment overrides > ignores blank/whitespace overrides
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > resolves each tier to its enabled registry model
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > honors an env remap — flagship can be repointed off Opus entirely
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > matches an override by wire model string as well as registry id
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > resolves a self-hosted tier when the local model is enabled
+ ✓ server/services/ai-gateway/__tests__/reasoning.test.ts > resolveTierModel — tier → concrete enabled model > returns null (caller falls back to strategy) when the model is absent or disabled
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > maps each effort to the documented routing strategy
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > resolveEffortStrategy returns the mapped strategy
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > EFFORT_TO_STRATEGY mapping > exposes the three levels and a balanced default
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > passes through the three valid levels
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > resolves 'garbage' to balanced
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > resolves undefined / null / wrong-type to balanced
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveEffortLevel — defaults to balanced on bad input > isEffortLevel narrows correctly
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > lets the user effort strategy take effect when no policy hint is pinned
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > a governance-pinned policyHint ALWAYS wins over user effort
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveStrategyWithPrecedence — governance-safe > falls back to the routing plan when neither policy nor effort is present
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by registry id
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > resolves a valid override by wire model string
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops an unknown override (returns null)
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops a disabled model even if the id matches
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — invalid override refused (null) > drops empty / non-string overrides
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > filters to enabled models only
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > derives label + recommendedEffort and sorts by quality desc
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > deriveRecommendedEffort heuristic
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — projection > humanizes unknown registry ids for the label
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the governed data is what these cases assume
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an enabled model with no approved entry — by id and by wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > passes over a matching row that is not its entry to the next one that is, as the tier resolver does
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses an approved alias whose wire model is not the pinned version
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > resolves an approved entry — by id and by wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, refuses an approved model not approved for high risk
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, resolves an approvedForHighRisk entry — by id and by wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > on high-risk work, still refuses the unapproved model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > the high-risk question has no default, and an unanswered one is the strict case
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses a row whose wire model is the alias id, not the pinned version
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveModelOverride — gated on approved-models > refuses the pinned version under an id the entry does not carry — the gateway would refuse it on high-risk work
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an enabled model with no approved entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes an approved alias drifted off its pinned version
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > excludes a row that is not exactly its approved entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > offers every enabled model in today's registry — the drift gate keeps each one its own entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > carries approvedForHighRisk and pqStatus from the approved entry
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > claims no PQ pass the governed data does not record
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > maps the three levels onto API effort, in order
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > is a different question from which model to route to
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > resolveApiEffort > sends no value the pinned SDK does not know
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > reads the version out of the wire model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > strips a provider prefix
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > claudeModelLabel > declines anything that is not a Claude model
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > names the model that will run, not the alias that points at it
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > marks a fallback rung as one
+ ✓ server/services/ai-gateway/__tests__/effort.test.ts > deriveModelLabel > still hand-labels the non-Claude entries
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > the governed data is what these cases assume
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve an ANA_TIER_* remap to an enabled model with no approved entry — by id or by wire model
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve a remap to an approved alias whose row is not on its pinned version
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve a default tier model whose own registry row is not its approved entry
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > does not serve an entry's id and pinned version under another provider
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — only an approved-models entry serves a tier > passes over a matching row that is not its entry exactly as it passes over a disabled one, and logs the row it passed over
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs a tier that pins nothing, naming the tier, what was configured, where from, and what was withheld
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > does not claim the withheld row goes unserved: strategy selection on normal-risk work can still choose it
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs each configuration once per process, and refuses it on every call
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > logs the source the value was actually taken from: a blank env var is the default's, not the env var's
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — what a withheld row logs > still serves an approved remap — the no-Opus dial and the self-hosted tier — and logs nothing
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > one selection rule: a caller's pin and a tier remap of the same value select the same row > agrees for every value over registries with rows passed over, rows withheld, and none
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — today's registry resolves exactly as before > every tier default, as resolved at HEAD before the approval gate
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — today's registry resolves exactly as before > every remap to an enabled registry row, by id and by wire model, for every tier, and nothing logged
+ ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts > resolveTierModel — today's registry resolves exactly as before > the {provider, model} a tier hands the gateway names only the row the tier judged
+ ✓ server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > the governed data is what these cases assume
+ ✓ server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > finds a row's own entry when an earlier entry for its provider has an id equal to the row's wire model
+ ✓ server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > finds a row's own entry when an earlier entry for its provider pins the same version
+ ✓ server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > still holds a row to identity: the entry's id, provider and pinned version
+ ✓ server/services/ai-governance/__tests__/governing-entry.test.ts > governingEntry — found by identity, not by list order > gives every row of today's registry its own entry, whatever the order of the list
+
+## Passing tests per file (all 16)
+ 14 server/eval/pq/__tests__/run-pq.test.ts
+ 7 server/routes/ana-ri/__tests__/stream-model-override.test.ts
+ 6 server/routes/c2c/__tests__/promote-generation-provenance.test.ts
+ 32 server/services/ai-gateway/__tests__/drive-regressions.test.ts
+ 45 server/services/ai-gateway/__tests__/effort.test.ts
+ 9 server/services/ai-gateway/__tests__/flagship-opus-5-5.test.ts
+ 25 server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts
+ 9 server/services/ai-gateway/__tests__/ledger-provenance.test.ts
+ 31 server/services/ai-gateway/__tests__/reasoning.test.ts
+ 15 server/services/ai-gateway/__tests__/tier-model-approval.test.ts
+ 5 server/services/ai-governance/__tests__/approved-models.test.ts
+ 5 server/services/ai-governance/__tests__/governing-entry.test.ts
+ 4 server/services/ai-governance/__tests__/model-cards.test.ts
+ 19 server/services/ana/__tests__/deep-investigation.test.ts
+ 41 server/services/ana/__tests__/governed-write-gate.test.ts
+ 5 server/services/cmc/__tests__/module3-narrative-governance-refusal.test.ts
+
+ Test Files  16 passed (16)
+ Tests  272 passed (272)
+
+## Type check: NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit (full project, final tree)
+ exit 0, 0 errors (0 "error TS" lines)
+
+## npx eslint --format json on the eight H1 files (none ignored)
+ server/services/ai-gateway/__tests__/effort.test.ts: 0 errors, 0 warnings
+ server/services/ai-gateway/__tests__/reasoning.test.ts: 0 errors, 0 warnings
+ server/services/ai-gateway/__tests__/support/approved-rows.ts: 0 errors, 0 warnings
+ server/services/ai-gateway/__tests__/tier-model-approval.test.ts: 0 errors, 0 warnings
+ server/services/ai-gateway/effort.ts: 0 errors, 0 warnings
+ server/services/ai-gateway/reasoning.ts: 0 errors, 0 warnings
+ server/services/ai-governance/__tests__/governing-entry.test.ts: 0 errors, 0 warnings
+ server/services/ai-governance/approved-models.ts: 0 errors, 0 warnings
+
+## CI gates
+ ### npm run ci:unapproved-model-pins
+ ✓ unapproved-model-pins: 54 known pin(s), each with a recorded reason; no new ones
+ exit=0
+ ### npm run ci:unapproved-model-pins:selftest
+   ✓ a baseline entry with no reason
+ 
+ ✓ self-test: 14 cases, every violation caught and the controls clean
+ exit=0
+ ### npm run ci:gateway-bypass
+ [check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+ exit=0

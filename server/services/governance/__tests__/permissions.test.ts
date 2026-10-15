@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const query = vi.hoisted(() => vi.fn());
 vi.mock('../../../db', () => ({ pool: { query } }));
 
-import { evaluate, can, whoCan, type Grant } from '../permissions';
+import { evaluate, can, resolveGrants, whoCan, type Grant } from '../permissions';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -70,5 +70,64 @@ describe('whoCan — the projection of RBAC', () => {
     });
     const signers = await whoCan(1, { action: 'sign' });
     expect(signers.sort()).toEqual([1, 3]); // admin + manager can sign; viewer cannot
+  });
+
+  // It returned [] on any failure, and GET /api/c2c/governance/eligible
+  // rendered that as "no one is eligible to sign / be assigned" (2026-10-15).
+  it('fails when the members cannot be read, instead of answering "no one"', async () => {
+    query.mockImplementation((sql: string) =>
+      /organization_users/.test(sql)
+        ? Promise.reject(Object.assign(new Error('connection terminated'), { code: '57P01' }))
+        : Promise.resolve({ rows: [] }));
+    await expect(whoCan(1, { action: 'sign' })).rejects.toThrow(/connection terminated/);
+  });
+});
+
+describe('strict grant resolution on an owned transaction', () => {
+  it('uses only the supplied executor and applies its explicit deny', async () => {
+    const transactionQuery = vi.fn(async () => ({ rows: [
+      { role: 'reviewer', action: 'sign', resource_type: 'protocol-document', ctd_module: null,
+        classification: null, effect: 'deny' },
+    ] }));
+    expect(await can(42, 'reviewer', { action: 'sign', resourceType: 'protocol-document' },
+      { executor: { query: transactionQuery }, strict: true })).toBe(false);
+    expect(query).not.toHaveBeenCalled();
+    expect(transactionQuery).toHaveBeenCalledWith(expect.stringContaining('WHERE org_id = $1 AND role = $2'), [42, 'reviewer']);
+  });
+
+  it.each(['42P01', '57P01'])('refuses an unavailable grant store (%s) instead of using a default allow', async code => {
+    const executor = { query: vi.fn(async () => { throw Object.assign(new Error('private grant-store failure'), { code }); }) };
+    await expect(can(42, 'admin', { action: 'sign' }, { executor, strict: true }))
+      .rejects.toMatchObject({ name: 'GovernanceGrantStoreUnavailableError' });
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { role: 'admin', action: 'sign', effect: 'unknown' },
+    { role: 'admin', action: 'sign', effect: 'allow', resource_type: 3 },
+    { role: 'admin', action: null, effect: 'allow' },
+    { role: 'foreign-role', action: 'sign', effect: 'deny' },
+    { role: 'admin', action: 'sign', effect: 'allow', resource_type: null, ctd_module: null },
+  ])('refuses malformed grant data without inventing an allow: %j', async row => {
+    const executor = { query: vi.fn(async () => ({ rows: [row] })) };
+    await expect(resolveGrants(42, 'admin', { executor, strict: true }))
+      .rejects.toMatchObject({ name: 'GovernanceGrantStoreUnavailableError' });
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('retains valid custom action and dimension strings with null wildcards', async () => {
+    const executor = { query: vi.fn(async () => ({ rows: [
+      { role: 'custom-quality', action: '*', resource_type: 'protocol-document', ctd_module: 'M2',
+        classification: 'Sponsor restricted', effect: 'allow' },
+    ] })) };
+    const grants = await resolveGrants(42, 'custom-quality', { executor, strict: true });
+    expect(evaluate(grants, 'custom-quality', { action: 'sign', resourceType: 'protocol-document',
+      ctdModule: 'M2', classification: 'Sponsor restricted' })).toBe(true);
+    expect(evaluate(grants, 'custom-quality', { action: 'sign', resourceType: 'protocol-document' })).toBe(false);
+  });
+
+  it('preserves ordinary callers’ defaults-only fallback for an unmigrated store', async () => {
+    query.mockRejectedValue(Object.assign(new Error('table absent'), { code: '42P01' }));
+    expect(await can(42, 'admin', { action: 'sign' })).toBe(true);
   });
 });

@@ -1,0 +1,9 @@
+mutant D2-05: an unresolved turn is recorded as ALLOWED, the fail-open direction
+verdict: KILLED
+Tests  3 failed | 8 passed (11)
+
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model 84ms
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at 120ms
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve 92ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 passed (11)

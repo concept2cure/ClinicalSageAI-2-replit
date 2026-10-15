@@ -1,0 +1,64 @@
+--- a/server/services/part11/signature-persistence.ts	2026-10-01 14:11:36.949208818 +0000
++++ b/server/services/part11/signature-persistence.ts	2026-10-01 14:11:36.973701513 +0000
+@@ -157,6 +157,15 @@
+    */
+   VAULT_DOCUMENT_VERSION: 'vault-document-version-sha256',
+   /**
++   * sha256 content hash of a Report OS run's seal (buildSealedRecord,
++   * services/report-os/sealing/seal.ts: the rendered report's canonical blocks
++   * and provenance atoms), read from the run's latest snapshot in the signing
++   * transaction, where the finalize has just written it. Added 2026-10-01 with
++   * P1-44b: a final report's signature binds what it sealed. binding_basis is
++   * free TEXT (migrations/20260813d, no CHECK), so no migration is needed.
++   */
++  REPORT_RUN_SEAL: 'report-run-seal-sha256',
++  /**
+    * No content digest is derivable for this target type. The digest column
+    * carries the governed action's audit sha256 chain hash instead — a
+    * tamper-evident link to the ledger row that records the signed act (target
+@@ -569,6 +578,30 @@
+           note: 'sha256 over the section content + version at signing time.',
+         };
+       }
++      case 'report-run': {
++        // The seal the finalize wrote on this client a moment ago (P1-44b);
++        // the run's own content, so no status or timestamp is bound.
++        if (!/^\d+$/.test(rest)) return ledgerFallback('malformed report run pointer');
++        const sealed = await client.query(
++          `SELECT s.snapshot_metadata::jsonb -> 'seal' ->> 'contentHash' AS seal_hash
++             FROM report_runs r
++             JOIN report_snapshots s
++               ON s.run_id = r.id AND s.organization_id = r.organization_id AND s.is_latest = true
++            WHERE r.id = $1::int AND r.organization_id = $2
++            ORDER BY s.id DESC
++            LIMIT 1`,
++          [rest, orgId],
++        );
++        const sealHash = sealed.rows[0]?.seal_hash;
++        if (typeof sealHash !== 'string' || !/^[0-9a-f]{64}$/.test(sealHash)) {
++          return ledgerFallback('the run carries no seal at signing time');
++        }
++        return {
++          digest: sealHash,
++          basis: BINDING_BASIS.REPORT_RUN_SEAL,
++          note: "The run's seal content hash (sha256 over the rendered report and its provenance atoms), as the finalize wrote it on the run's latest snapshot in this transaction.",
++        };
++      }
+       case 'protocol-document':
+       case 'protocol-review-assignment':
+         // `return await`, not `return`: the helper's queries must reject INSIDE
+--- a/tests/db/report-os-registry-seed.dbtest.ts	2026-10-01 14:11:36.954457422 +0000
++++ b/tests/db/report-os-registry-seed.dbtest.ts	2026-10-01 14:11:36.974019873 +0000
+@@ -329,6 +329,12 @@
+     expect(signed.rows).toEqual([
+       { id: res.body.data.signature.signatureId, signature_type: 'governed-action', is_valid: true, superseded_by: null, signed_seal: sealHash },
+     ]);
++    // R1: the binding columns carry the seal itself, not the ledger chain hash.
++    const bound = await owner.query(
++      `SELECT binding_basis, bound_payload_digest FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2`,
++      [ORG_B, `report-run:${runId}`]
++    );
++    expect(bound.rows).toEqual([{ binding_basis: 'report-run-seal-sha256', bound_payload_digest: sealHash }]);
+   });
+ 
+   it('a second finalize is refused: the seal stands and nothing more is recorded', async () => {

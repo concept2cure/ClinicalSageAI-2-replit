@@ -50,10 +50,13 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { I } from '../icons';
 import { liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { redactInternals } from '@/lib/queryClient';
+import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { useHostSummary } from '../TurnSummary';
+import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
@@ -88,6 +91,9 @@ interface CoauthorDoc {
   updatedAt?: string | null;
   createdAt?: string | null;
   createdBy?: string | null;
+  /** The server's verdict that this row is a filing copy no save may change
+   *  (coauthor-status-write.ts withCoauthorReadOnly). */
+  readOnly?: boolean;
 }
 
 interface ValidationFinding {
@@ -246,6 +252,23 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
   /* A refused save was rendered only by the editor's fixed "Save failed —
      kept on this device"; this host never said WHY. */
   const [saveError, setSaveError] = useState<string | null>(null);
+  /* §11.10(e) reason for change (2026-10-01, D5; editor-family review
+     P11-B-1). Every save of a co-author document states why, as the other two
+     hosts of this editor require (DocumentWorkbench, ProtocolDevSection); the
+     server refuses a save without one and records it on the document's audit
+     trail and as the summary of the version it keeps. So a reason describes
+     ONE save: it is cleared after a confirmed save (each save records it
+     against its own version) and when the document changes. Read through a
+     ref because the editor holds `saveContent` across renders. */
+  const [changeReason, setChangeReason] = useState('');
+  const changeReasonRef = useRef('');
+  changeReasonRef.current = changeReason;
+  const reasonOk = changeReason.trim().length >= GOVERNED_REASON_MIN;
+  /* Set when a save was refused for want of a reason; the field then shows
+     itself invalid until the reason meets the floor. */
+  const [reasonRefused, setReasonRefused] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const reasonInputRef = useRef<HTMLInputElement | null>(null);
   /* The server's own count. The list is one page (limit 200); counts and the
      roll-up below are only claimed over the whole set. */
   const [serverTotal, setServerTotal] = useState<number | null>(null);
@@ -324,6 +347,8 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
      every other host (workDock.ts), toggled by the chip in the pane header,
      and the background queue read only while shown. */
   const dock = useProgressDock();
+  /* A turn's Summary: the panel at that turn, or the sheet below 760px (S4). */
+  const summary = useHostSummary(anaChat.messages, dock, anaChat.isStreaming);
   const anaWorkQueue = useAgentActivity(dock.open, anaChat.isStreaming);
   const turns = anaChat.messages;
 
@@ -337,6 +362,8 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
     setValidationError(null);
     setComplianceError(null);
     setSaveError(null);
+    setChangeReason('');
+    setReasonRefused(false);
     // An in-flight check belongs to the document that is going away; its
     // result is dropped by the activeIdRef check where it lands.
     setValidating(false);
@@ -357,17 +384,39 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
   const saveContent = useCallback(
     async (serialized: string) => {
       if (!activeDoc) throw new Error('No document open');
+      /* Every save arrives here — the Save button, ⌘S in the canvas and in
+         the reason field — so the reason is checked here: a save without one
+         is refused at the field, which takes focus, and nothing is sent. */
+      const changeReasonText = changeReasonRef.current.trim();
+      if (changeReasonText.length < GOVERNED_REASON_MIN) {
+        setReasonRefused(true);
+        reasonInputRef.current?.focus();
+        throw new Error('reason-for-change required');
+      }
+      setSaving(true);
       const r = await liveMutateOrNull<{ document?: CoauthorDoc }>(
         'PUT',
         '/api/coauthor/documents/' + activeDoc.id,
-        { content: serialized },
-      );
+        { content: serialized, changeReason: changeReasonText },
+      ).finally(() => setSaving(false));
       const saved = r.data?.document;
       if (!saved) {
         setSaveError(redactInternals(r.error, 'the server did not confirm the write'));
+        /* A 409 is the row having become a filing copy while open: re-read it,
+           so the canvas becomes read-only with its real status instead of
+           refusing every retry. */
+        if (r.status === 409) {
+          const docId = activeDoc.id;
+          void liveGetOrNull<{ document?: CoauthorDoc }>('/api/coauthor/documents/' + docId).then((g) => {
+            const fresh = g.data?.document;
+            if (fresh) setDocs((ds) => ds.map((d) => (d.id === docId ? { ...d, ...fresh } : d)));
+          });
+        }
         throw new Error(r.error || 'The server did not confirm the write.');
       }
       setSaveError(null);
+      setChangeReason('');
+      setReasonRefused(false);
       setDocs((ds) => ds.map((d) => (d.id === activeDoc.id ? { ...d, ...saved } : d)));
       setValidation(null);
       setCompliance(null);
@@ -758,7 +807,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             messages={anaChat.messages}
             streaming={anaChat.isStreaming}
             open={dock.open}
-            onToggle={dock.toggle}
+            onToggle={summary.toggleDock}
             controls={dock.panelId}
           />
         </div>
@@ -769,6 +818,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             <div className="ana-work-host" style={{ padding: '0 0 14px' }}>
               <AnaWorkPanel
                 id={dock.panelId}
+                turn={summary.panelTurn}
                 messages={anaChat.messages}
                 streaming={anaChat.isStreaming}
                 runStatus={anaChat.runStatus}
@@ -782,6 +832,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
               />
             </div>
           )}
+          {summary.sheet}
           <div className="ec-thread">
             {turns.length === 0 && (
               <div className="ec-empty">
@@ -801,7 +852,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                       renders. This pane showed plain text and, while she
                       worked, the single word "Thinking…". The waiting state is
                       the record's live phase now, never an invented sentence. */}
-                  <AnaActivity {...activityPropsFor(m)} />
+                  <AnaActivity {...activityPropsFor(m)} onSummary={() => summary.openFor(m.id)} />
                   {m.text && <AnaMarkdown text={m.text} className="ana-md" />}
                   <AnaOutputCards message={m} />
                   {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
@@ -870,6 +921,8 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
               </button>
             </div>
             <span className="sr-only" aria-live="polite">{ecStatusMessage}</span>
+            {/* This chat sends no run policy: Manual does not reach it (row 74). */}
+            <RunPolicyDockNote />
           </div>
         </div>
       </section>
@@ -947,11 +1000,70 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                         Not saved — {saveError}. Your text is kept on this device; the record is unchanged.
                       </div>
                     )}
+                    {activeDoc.readOnly ? (
+                      /* P11-B-3: a filing copy carrying a verdict is opened
+                         read-only rather than offered a Save the server can
+                         only refuse. */
+                      <div className="ec-readonly-note" role="note">
+                        This document is {activeDoc.status} and read-only here: it is the copy placed into a
+                        filing. Its text changes when its source document is placed into the filing again.
+                      </div>
+                    ) : (
+                      /* The requirement is stated before the click, as the
+                         placement reason field (filingTarget.tsx
+                         PlacementReasonField, A-0928-1) states it: required
+                         state, the floor, where it is recorded, and an invalid
+                         state after a refused save. */
+                      <div className="ec-reason">
+                        <label htmlFor="ec-change-reason">
+                          Reason for change<span className="req" aria-hidden="true">*</span>
+                        </label>
+                        <div className="ec-reason-row">
+                          <input
+                            id="ec-change-reason"
+                            ref={reasonInputRef}
+                            type="text"
+                            value={changeReason}
+                            maxLength={GOVERNED_REASON_MAX}
+                            onChange={(e) => {
+                              setChangeReason(e.target.value);
+                              if (e.target.value.trim().length >= GOVERNED_REASON_MIN) setReasonRefused(false);
+                            }}
+                            onKeyDown={(e) => {
+                              // ⌘S here saves the document, not the web page.
+                              if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+                                e.preventDefault();
+                                void editorRef.current?.save();
+                              }
+                            }}
+                            placeholder="Why this document is changing"
+                            aria-required="true"
+                            aria-describedby="ec-change-reason-note"
+                            aria-invalid={reasonRefused || undefined}
+                          />
+                          <button
+                            type="button"
+                            className="ec-topbtn primary"
+                            disabled={!editorDirty || !reasonOk || saving}
+                            onClick={() => void editorRef.current?.save()}
+                          >
+                            {saving ? 'Saving…' : 'Save (⌘S)'}
+                          </button>
+                        </div>
+                        <div id="ec-change-reason-note" className={'ec-reason-note' + (reasonRefused ? ' sp-tone-warn' : '')}>
+                          {reasonRefused
+                            ? `Not saved — say why this document is changing, in at least ${GOVERNED_REASON_MIN} characters.`
+                            : `Required to save, at least ${GOVERNED_REASON_MIN} characters. Recorded on this document’s audit trail with the save.`}
+                        </div>
+                      </div>
+                    )}
                     <RichSectionEditor
                       key={activeDoc.id}
                       ref={editorRef}
                       value={activeDoc.content ?? ''}
                       format="html"
+                      readOnly={activeDoc.readOnly === true}
+                      showSaveButton={false}
                       onSave={saveContent}
                       onDirtyChange={setEditorDirty}
                       autosaveMs={null}

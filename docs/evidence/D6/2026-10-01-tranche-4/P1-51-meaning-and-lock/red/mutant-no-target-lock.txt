@@ -1,0 +1,66 @@
+# mutant: the ceremony's lock on the target removed (server/routes/governed-signed-act.ts)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T20:13:17.591Z","pid":15715,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T20:13:17.592Z","pid":15715,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T20:13:17.592Z","pid":15715,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/signed-act-meaning-and-lock.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T20:13:17.931Z', poolSize: 1 }
+
+stdout | tests/db/signed-act-meaning-and-lock.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/signed-act-meaning-and-lock.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T20:13:19.314Z","pid":15715,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T20:13:19.317Z","pid":15715,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > runs as a role RLS applies to (not the owner, not BYPASSRLS) 9ms
+{"level":40,"time":"2026-10-01T20:13:19.354Z","pid":15715,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T20:13:19.356Z","pid":15715,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T20:13:19.379Z","pid":15715,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T20:13:19.383Z","pid":15715,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses a biosketch finalized "as review" before the password, and writes nothing 112ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses "release" too: nothing is released by finalizing a biosketch 20ms
+stdout | tests/db/signed-act-meaning-and-lock.dbtest.ts > one record is signed once (DP-65) > two concurrent finalizations of one biosketch: one 201, one 409, one signature
+[database] Database connection successful { timestamp: '2026-10-01T20:13:19.462Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T20:13:19.465Z","pid":15715,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T20:13:19.467Z","pid":15715,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T20:13:19.474Z","pid":15715,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T20:13:19.476Z","pid":15715,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > control: the author finalizes "as authorship", and the signature row says so 84ms
+ × tests/db/signed-act-meaning-and-lock.dbtest.ts > one record is signed once (DP-65) > two concurrent finalizations of one biosketch: one 201, one 409, one signature 111ms
+   → answers: [{"biosketchId":20,"finalized":true,"completeness":{"addressedPct":100,"requiredTotal":1,"requiredAddressed":1,"missing":[],"findings":[],"readyToFinalize":true},"actionId":"act_d8dba32097e7498d9784d758666c79cb","auditId":"738aee15-7086-48ea-a1f5-f52390e31b61","sha256Chain":"5f270d9aaf4b9e7436091ee418505b53228728a95a995e7f5436b03161620a06","signatureId":1013,"signedAt":"2026-10-01T20:13:19.524Z","meaning":"authorship"},{"biosketchId":20,"finalized":true,"completeness":{"addressedPct":100,"requiredTotal":1,"requiredAddressed":1,"missing":[],"findings":[],"readyToFinalize":true},"actionId":"act_429a5a7eb5354836bcdc568a25d02e48","auditId":"d8448c2f-9d72-473c-9c26-543b8cc9f3dc","sha256Chain":"777870eab96eb515ee68b423e5e0194f0386c9287224f2acf15a546b21f406e7","signatureId":1014,"signedAt":"2026-10-01T20:13:19.537Z","meaning":"approval"}]: expected [ 201, 201 ] to deeply equal [ 201, 409 ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/signed-act-meaning-and-lock.dbtest.ts > one record is signed once (DP-65) > two concurrent finalizations of one biosketch: one 201, one 409, one signature
+AssertionError: answers: [{"biosketchId":20,"finalized":true,"completeness":{"addressedPct":100,"requiredTotal":1,"requiredAddressed":1,"missing":[],"findings":[],"readyToFinalize":true},"actionId":"act_d8dba32097e7498d9784d758666c79cb","auditId":"738aee15-7086-48ea-a1f5-f52390e31b61","sha256Chain":"5f270d9aaf4b9e7436091ee418505b53228728a95a995e7f5436b03161620a06","signatureId":1013,"signedAt":"2026-10-01T20:13:19.524Z","meaning":"authorship"},{"biosketchId":20,"finalized":true,"completeness":{"addressedPct":100,"requiredTotal":1,"requiredAddressed":1,"missing":[],"findings":[],"readyToFinalize":true},"actionId":"act_429a5a7eb5354836bcdc568a25d02e48","auditId":"d8448c2f-9d72-473c-9c26-543b8cc9f3dc","sha256Chain":"777870eab96eb515ee68b423e5e0194f0386c9287224f2acf15a546b21f406e7","signatureId":1014,"signedAt":"2026-10-01T20:13:19.537Z","meaning":"approval"}]: expected [ 201, 201 ] to deeply equal [ 201, 409 ]
+
+- Expected
++ Received
+
+  [
+    201,
+-   409,
++   201,
+  ]
+
+ ❯ tests/db/signed-act-meaning-and-lock.dbtest.ts:210:82
+    208|       const statuses = answers.map((r) => r.status).sort();
+    209|       expect(waiting, 'both requests should have been waiting on a loc…
+    210|       expect(statuses, `answers: ${JSON.stringify(answers.map((r) => r…
+       |                                                                                  ^
+    211|       const refused = answers.find((r) => r.status === 409)!;
+    212|       expect(refused.body.error?.code).toBe('INVALID_STATE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  20:13:15
+   Duration  4.18s (transform 2.02s, setup 90ms, import 233ms, tests 3.52s, environment 0ms)
+

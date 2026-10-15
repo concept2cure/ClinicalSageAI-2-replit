@@ -1,0 +1,12 @@
+Mutant R53-strip-hides-unchecked: the strip does not say which claims a source it cannot read may hold
+
+--- client/src/concept2cure/v2/AnaGrounding.tsx
+- {unchecked.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a source the check could not read, and leaves what it may hold unchecked (HS-4) 14ms
+      Tests  1 failed | 21 passed (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

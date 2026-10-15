@@ -23,7 +23,8 @@ export function createDevicePmaFlow(): FlowDefinition {
     name: 'PMA (Premarket Approval)',
     description:
       'Comprehensive questionnaire for Premarket Approval (PMA) submissions per 21 CFR 814, covering device overview, classification, design controls, manufacturing, preclinical testing (biocompatibility, bench performance, animal studies), clinical evidence, software & cybersecurity documentation, labeling, human factors engineering, and post-market surveillance planning.',
-    clientTypes: ['medtech'],
+    // A Class III assay files a PMA (the registry's US_PMA_IVD).
+    clientTypes: ['medtech', 'ivd'],
     entryNode: 'device_basics',
     estimatedMinutes: 90,
 
@@ -582,8 +583,8 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'steam', label: 'Steam (Moist Heat) — ISO 17665' },
               { value: 'dry_heat', label: 'Dry Heat — ISO 20857' },
               { value: 'vhp', label: 'Vaporized Hydrogen Peroxide' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'contract_manufacturers',
@@ -862,8 +863,8 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'iso_5840', label: 'ISO 5840 — Cardiovascular Implants — Heart Valves' },
               { value: 'iso_14243', label: 'ISO 14243 — Wear of Total Knee Joint Prostheses' },
               { value: 'iso_7206', label: 'ISO 7206 — Femoral Stems' },
-              { value: 'other', label: 'Other Device-Specific Standards' },
             ],
+            allowOther: { label: 'Other Device-Specific Standards' },
           },
           {
             id: 'shelf_life_testing',

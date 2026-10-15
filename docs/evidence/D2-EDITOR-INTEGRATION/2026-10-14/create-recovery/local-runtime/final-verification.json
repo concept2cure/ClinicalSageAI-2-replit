@@ -1,0 +1,47 @@
+{
+  "automated": true,
+  "authoritativeRun": "post-sync-node22",
+  "canonicalIntegrationBase": "4997d35ebd6a17bfb33df7860195d832bc094921",
+  "incomingIntegrationCommit": "1bd3af0bc5abaff99f9eea0a0c139617842a32a2",
+  "preintegrationReceipt": "preintegration-final-verification.json",
+  "sourceFilesVerified": 26,
+  "differences": [],
+  "frozenRunnerMatches": true,
+  "node": "v22.23.3",
+  "actualProcessExitCode": 0,
+  "finalResult": "passed-local-manual-api-scope",
+  "requests": 115,
+  "documents": 11,
+  "seededSections": 714,
+  "jwtOrLocalCredentialUrlMatches": [],
+  "installerLogs": [
+    {
+      "step": "install-fresh",
+      "exitCode": 0,
+      "operationReceiptLogSha256": "ed896fa3fecab1687f634e26fbdc864462ee75ca3a720e078510d39cad264c7c",
+      "storedCopySha256": "866923002ab04faa702e591979a95e96d465d40a883812590a9445d039d67eeb",
+      "storedCopyMatchesOriginalOperationReceipt": false,
+      "originalReceiptMatchedBeforeNormalization": true,
+      "storedCopyNormalization": "installer-log-eof-normalization.json"
+    },
+    {
+      "step": "deploy-migrate",
+      "exitCode": 0,
+      "operationReceiptLogSha256": "ab212469e45aea986ceec77c76cdbd61502c41d76aea36acd754da0c3247b8af",
+      "storedCopySha256": "ab212469e45aea986ceec77c76cdbd61502c41d76aea36acd754da0c3247b8af",
+      "storedCopyMatchesOriginalOperationReceipt": true
+    }
+  ],
+  "cleanup": {
+    "serverStopped": true,
+    "ownContainerAndAnonymousVolumeRemoved": true,
+    "temporaryWrapperRemoved": true,
+    "ownProjectBytesRemoved": true
+  },
+  "serverLogNormalization": {
+    "path": "post-sync-node22/server.txt",
+    "onlyChange": "removed trailing horizontal whitespace at line ends",
+    "sha256": "98f7ce56c58644493734cb8ec6ef6d1ccf1de277f00e853402efde21068140f4"
+  },
+  "installerLogEofNormalization": "installer-log-eof-normalization.json"
+}

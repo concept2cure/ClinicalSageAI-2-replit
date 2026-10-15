@@ -1,0 +1,71 @@
+### server/routes/authoring.router.ts HEAD
+   125:53  warning  Arrow function has a complexity of 23. Maximum allowed is 15                             complexity
+   690:3   warning  Async arrow function has too many parameters (10). Maximum allowed is 5                  max-params
+   875:3   warning  Arrow function has too many parameters (7). Maximum allowed is 5                         max-params
+   947:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   995:1   warning  File has too many lines (4530). Maximum allowed is 500                                   max-lines
+  1797:74  warning  Async arrow function has too many lines (248). Maximum allowed is 100                    max-lines-per-function
+  1797:74  warning  Async arrow function has a complexity of 61. Maximum allowed is 15                       complexity
+  3238:82  warning  Async arrow function has too many lines (224). Maximum allowed is 100                    max-lines-per-function
+  3238:82  warning  Async arrow function has a complexity of 32. Maximum allowed is 15                       complexity
+  3561:89  warning  Async arrow function has too many lines (145). Maximum allowed is 100                    max-lines-per-function
+  3561:89  warning  Async arrow function has a complexity of 25. Maximum allowed is 15                       complexity
+  3786:92  warning  Async arrow function has too many lines (158). Maximum allowed is 100                    max-lines-per-function
+  4090:72  warning  Async arrow function has too many lines (131). Maximum allowed is 100                    max-lines-per-function
+  4090:72  warning  Async arrow function has a complexity of 31. Maximum allowed is 15                       complexity
+  4306:72  warning  Async arrow function has too many lines (121). Maximum allowed is 100                    max-lines-per-function
+  4306:72  warning  Async arrow function has a complexity of 22. Maximum allowed is 15                       complexity
+  5128:80  warning  Async arrow function has too many lines (114). Maximum allowed is 100                    max-lines-per-function
+  5128:80  warning  Async arrow function has a complexity of 27. Maximum allowed is 15                       complexity
+  5239:9   warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  5630:72  warning  Async arrow function has a complexity of 21. Maximum allowed is 15                       complexity
+  5957:70  warning  Async arrow function has too many lines (102). Maximum allowed is 100                    max-lines-per-function
+  5957:70  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  6716:97  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  6833:82  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                       complexity
+  6969:39  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                       complexity
+✖ 25 problems (0 errors, 25 warnings)
+### server/routes/authoring.router.ts NOW
+   127:53  warning  Arrow function has a complexity of 23. Maximum allowed is 15                             complexity
+   692:3   warning  Async arrow function has too many parameters (10). Maximum allowed is 5                  max-params
+   877:3   warning  Arrow function has too many parameters (7). Maximum allowed is 5                         max-params
+   949:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   995:1   warning  File has too many lines (4696). Maximum allowed is 500                                   max-lines
+  1801:74  warning  Async arrow function has too many lines (248). Maximum allowed is 100                    max-lines-per-function
+  1801:74  warning  Async arrow function has a complexity of 61. Maximum allowed is 15                       complexity
+  3242:82  warning  Async arrow function has too many lines (224). Maximum allowed is 100                    max-lines-per-function
+  3242:82  warning  Async arrow function has a complexity of 32. Maximum allowed is 15                       complexity
+  3565:89  warning  Async arrow function has too many lines (145). Maximum allowed is 100                    max-lines-per-function
+  3565:89  warning  Async arrow function has a complexity of 25. Maximum allowed is 15                       complexity
+  3790:92  warning  Async arrow function has too many lines (158). Maximum allowed is 100                    max-lines-per-function
+  4240:72  warning  Async arrow function has too many lines (132). Maximum allowed is 100                    max-lines-per-function
+  4240:72  warning  Async arrow function has a complexity of 27. Maximum allowed is 15                       complexity
+  4438:72  warning  Async arrow function has too many lines (111). Maximum allowed is 100                    max-lines-per-function
+  4438:72  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                       complexity
+  5247:80  warning  Async arrow function has too many lines (114). Maximum allowed is 100                    max-lines-per-function
+  5247:80  warning  Async arrow function has a complexity of 27. Maximum allowed is 15                       complexity
+  5358:9   warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  5879:72  warning  Async arrow function has a complexity of 21. Maximum allowed is 15                       complexity
+  6206:70  warning  Async arrow function has too many lines (102). Maximum allowed is 100                    max-lines-per-function
+  6206:70  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  6965:97  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  7082:82  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                       complexity
+✖ 24 problems (0 errors, 24 warnings)
+### server/routes/chat.ts HEAD
+### server/routes/chat.ts NOW
+### server/routes/chat/upload.ts HEAD
+   66:66  warning  Async arrow function has too many lines (437). Maximum allowed is 100  max-lines-per-function
+   66:66  warning  Async arrow function has a complexity of 83. Maximum allowed is 15     complexity
+  500:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+  543:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+✖ 4 problems (0 errors, 4 warnings)
+### server/routes/chat/upload.ts NOW
+   64:66  warning  Async arrow function has too many lines (404). Maximum allowed is 100  max-lines-per-function
+   64:66  warning  Async arrow function has a complexity of 78. Maximum allowed is 15     complexity
+  452:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+  495:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+✖ 4 problems (0 errors, 4 warnings)
+### client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx HEAD
+  181:54  warning  Async arrow function has a complexity of 21. Maximum allowed is 15  complexity
+✖ 1 problem (0 errors, 1 warning)
+### client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx NOW

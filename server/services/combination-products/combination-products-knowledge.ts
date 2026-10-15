@@ -5,7 +5,10 @@
  * A pure, closed-form regulatory knowledge base for drug-device, biologic-device,
  * and drug-biologic combination products. Every engine in this module is
  * DETERMINISTIC: identical input always yields identical output. There is NO LLM,
- * NO network call, NO database access, and NO import from any other service.
+ * NO network call, NO database access, and NO import from any other service; its
+ * imports are the shared QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts)
+ * and the shared regulatory-basis rule (shared/regulatory/regulatory-basis.ts).
+ * Engines that depend on the date take `asOf`, defaulting to today (UTC).
  *
  * The engines implement the FDA and EU regulatory frameworks that govern
  * combination products end-to-end:
@@ -17,7 +20,10 @@
  *   - 21 CFR 3.2(e)        — The four statutory/regulatory categories of
  *                            combination product (single-entity, co-packaged,
  *                            two cross-labeled variants).
- *   - 21 CFR 3.2(m)        — Definition of "mode of action."
+ *   - 21 CFR 3.2(k)        — Definition of "mode of action."
+ *   - 21 CFR 3.2(m)        — Definition of "primary mode of action."
+ *   - 21 CFR 3.7 / 3.8     — Request for designation (RFD) and the letter of
+ *                            designation.
  *   - 21 CFR Part 4        — cGMP for combination products: the "streamlined"
  *                            approach (Subpart A) and post-marketing safety
  *                            reporting (Subpart B).
@@ -43,6 +49,15 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import {
+  QMSR_CROSSWALK,
+  QMSR_EFFECTIVE,
+  QMSR_FACT_ID,
+  QSR_LAST_DAY,
+  citeQms,
+} from '../../../shared/regulatory/qmsr-crosswalk.js';
+import { basisProblems, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 0 — Shared types and citation registry
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,6 +68,8 @@ export interface RegulatoryCitation {
   id: string;
   /** Human-readable description of what the citation establishes. */
   description: string;
+  /** Provenance of the description (shared/regulatory/regulatory-basis.ts), where one has been checked. */
+  basis?: RegulatoryBasis;
 }
 
 /** The three FDA lead Centers that can take a combination product. */
@@ -72,35 +89,89 @@ export type DecisionConfidence = 'high' | 'moderate' | 'low';
 interface CitationEntry {
   id: string;
   description: string;
+  basis?: RegulatoryBasis;
+}
+
+const ECFR_PART_3 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-3/subpart-A';
+
+/**
+ * Basis of a 21 CFR Part 3 section on eCFR. The wording was confirmed only
+ * from search extracts of the eCFR section pages (the container cannot reach
+ * ecfr.gov), so it is recall; see docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
+ * 2026-10-05-record/g-combination-product-one-engine-facts.md. 2026-10-15: this
+ * and cfr44b1 were labelled regulator-text over a note saying "search extract".
+ */
+function part3Basis(section: string, paragraph = ''): RegulatoryBasis {
+  return {
+    ref: `21 CFR ${section}${paragraph}`,
+    confidence: 'recall',
+    url: `${ECFR_PART_3}/section-${section}`,
+    note: 'search extract of the eCFR section page on 2026-10-05; the page itself was not read. Verbatim re-read owed.',
+  };
 }
 
 const CITATIONS: CitationEntry[] = [
   {
     id: '21 CFR 3.2(e)',
+    // Scoped deliberately: the "two different article types" wording is in the
+    // text of (e)(1) ("drug/device, biologic/device, drug/biologic, or
+    // drug/device/biologic") and (e)(2) ("comprised of drug and device products,
+    // device and biological products, or biological and drug products"). (e)(3)
+    // and (e)(4) do not restate it, so this description does not attribute it to
+    // them; the engine's reading of the cross-labeled forms is labelled where it
+    // is made (classifyCombinationProduct, SECTION 2).
     description:
-      'Definition of "combination product": single-entity, co-packaged, and two ' +
-      'cross-labeled forms.',
+      'Definition of "combination product": the single-entity form, 3.2(e)(1) ' +
+      '(drug/device, biologic/device, drug/biologic, or drug/device/biologic), the ' +
+      'co-packaged form, 3.2(e)(2) (drug and device, device and biological, or ' +
+      'biological and drug products), and the two cross-labeled forms, 3.2(e)(3) ' +
+      'and 3.2(e)(4).',
+    basis: part3Basis('3.2', '(e)'),
+  },
+  {
+    id: '21 CFR 3.2(k)',
+    description:
+      'Definition of "mode of action" — the means by which a product achieves an ' +
+      'intended therapeutic effect or action.',
+    basis: part3Basis('3.2', '(k)'),
   },
   {
     id: '21 CFR 3.2(m)',
     description:
-      'Definition of "mode of action" — the means by which a constituent part ' +
-      'achieves its intended therapeutic effect or action.',
+      'Definition of "primary mode of action" — the single mode of action of a ' +
+      'combination product that provides its most important therapeutic action, i.e. ' +
+      'the one expected to make the greatest contribution to its overall intended ' +
+      'therapeutic effects.',
+    basis: part3Basis('3.2', '(m)'),
   },
   {
     id: '21 CFR 3.4',
     description:
-      'Assignment of combination products and the algorithm used when the PMOA ' +
+      'Designated agency component: assignment of a combination product to the Center ' +
+      'with primary jurisdiction by its PMOA, and the algorithm used when the PMOA ' +
       'cannot be determined with reasonable certainty.',
+    basis: part3Basis('3.4'),
   },
   {
     id: '21 CFR 3.5',
-    description: 'Submission of a Request for Designation (RFD) to FDA OCP.',
+    description:
+      'Procedures for identifying the designated agency component: the intercenter ' +
+      'agreements, and the § 3.7 procedure where jurisdiction is unclear or in dispute.',
+    basis: part3Basis('3.5'),
   },
   {
     id: '21 CFR 3.7',
     description:
-      'Timeline and procedures for an FDA letter of designation in response to an RFD.',
+      'Request for designation (RFD) of the agency component with primary jurisdiction, ' +
+      'filed with the Office of Combination Products before any premarket application.',
+    basis: part3Basis('3.7'),
+  },
+  {
+    id: '21 CFR 3.8',
+    description:
+      'Letter of designation: completeness review of an RFD and the designation letter ' +
+      'issued within 60 days of the filing date.',
+    basis: part3Basis('3.8'),
   },
   {
     id: '21 CFR Part 4 Subpart A',
@@ -128,6 +199,12 @@ const CITATIONS: CitationEntry[] = [
   {
     id: '21 CFR 820.30',
     description: 'Design controls for medical devices.',
+  },
+  {
+    id: '21 CFR 820.10',
+    description:
+      'QMSR: requirements for a quality management system that complies with ISO 13485:2016, ' +
+      'incorporated by reference; called out for a drug-cGMP base by 21 CFR 4.4(b)(1) from 2026-02-02.',
   },
   {
     id: '21 CFR 820',
@@ -194,11 +271,16 @@ const CITATIONS: CitationEntry[] = [
   },
 ];
 
+/** A registry entry as a RegulatoryCitation, carrying its basis when it has one. */
+function toCitation(c: CitationEntry): RegulatoryCitation {
+  return c.basis ? { id: c.id, description: c.description, basis: { ...c.basis } } : { id: c.id, description: c.description };
+}
+
 /** Look up a canonical citation by id; returns a fully-typed RegulatoryCitation. */
 function cite(id: string): RegulatoryCitation {
   const found = CITATIONS.find((c: CitationEntry): boolean => c.id === id);
   if (found) {
-    return { id: found.id, description: found.description };
+    return toCitation(found);
   }
   return { id, description: '(citation text not catalogued)' };
 }
@@ -210,7 +292,7 @@ function citeAll(ids: string[]): RegulatoryCitation[] {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 1 — Primary Mode of Action (PMOA) → lead Center assignment
-// 21 CFR 3.2(m), 21 CFR 3.4, 21 USC 353(g)
+// 21 CFR 3.2(k), 21 CFR 3.2(m), 21 CFR 3.4, 21 USC 353(g)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** A single constituent part described for PMOA purposes. */
@@ -266,6 +348,20 @@ export interface PmoaResult {
   notes: string[];
 }
 
+const CONSTITUENT_TYPES: readonly ConstituentType[] = ['drug', 'device', 'biologic'];
+
+/** Whether `value` is one of the three regulated article types. */
+export function isConstituentType(value: unknown): value is ConstituentType {
+  return typeof value === 'string' && (CONSTITUENT_TYPES as readonly string[]).includes(value);
+}
+
+/** Throw on anything that is not drug, device or biologic: no Center is guessed for it. */
+function assertConstituentType(value: unknown, field: string): asserts value is ConstituentType {
+  if (!isConstituentType(value)) {
+    throw new Error(`${field} must be one of ${CONSTITUENT_TYPES.join(', ')}; got ${JSON.stringify(value)}.`);
+  }
+}
+
 /**
  * Map a PMOA constituent type to its default lead FDA Center.
  *
@@ -275,6 +371,9 @@ export interface PmoaResult {
  *                      but the statutory lead-Center construct is CBER for the
  *                      biologic article type)
  *   - device PMOA    → CDRH
+ *
+ * This is the one PMOA → Center map in the codebase; every other combination
+ * classifier reads it through `determinePrimaryModeOfAction`.
  */
 function centerForPmoaType(type: ConstituentType): FdaCenter {
   switch (type) {
@@ -285,7 +384,7 @@ function centerForPmoaType(type: ConstituentType): FdaCenter {
     case 'device':
       return 'CDRH';
     default:
-      return 'CDRH';
+      throw new Error(`No FDA Center for constituent type ${JSON.stringify(type)}.`);
   }
 }
 
@@ -294,9 +393,9 @@ function centerForPmoaType(type: ConstituentType): FdaCenter {
  * resulting lead FDA Center, implementing the 21 CFR 3.2(m) PMOA construct and
  * the 21 CFR 3.4 assignment algorithm.
  *
- * The "mode of action" (21 CFR 3.2(m)) is the means by which a constituent part
- * achieves its intended therapeutic effect. The "primary mode of action"
- * (21 USC 353(g)(1); 21 CFR 3.4(a)) is the single mode of action that provides
+ * The "mode of action" (21 CFR 3.2(k)) is the means by which a product
+ * achieves an intended therapeutic effect. The "primary mode of action"
+ * (21 CFR 3.2(m); 21 USC 353(g)(1)) is the single mode of action that provides
  * the MOST IMPORTANT therapeutic action of the combination product as a whole.
  * The Center with primary jurisdiction over a constituent that provides the
  * PMOA is assigned as the lead.
@@ -310,6 +409,11 @@ function centerForPmoaType(type: ConstituentType): FdaCenter {
  *       significant safety and effectiveness questions.
  */
 export function determinePrimaryModeOfAction(params: PmoaParams): PmoaResult {
+  (params.constituents ?? []).forEach((c: ConstituentDescriptor, i: number): void =>
+    assertConstituentType(c?.type, `constituents[${i}].type`),
+  );
+  if (params.assertedPmoaType !== undefined) assertConstituentType(params.assertedPmoaType, 'assertedPmoaType');
+
   const rationale: string[] = [];
   const notes: string[] = [];
 
@@ -321,13 +425,14 @@ export function determinePrimaryModeOfAction(params: PmoaParams): PmoaResult {
   );
 
   rationale.push(
-    'Mode of action (21 CFR 3.2(m)) is the means by which a constituent part achieves ' +
-      'its intended therapeutic effect or action.',
+    'Mode of action (21 CFR 3.2(k)) is the means by which a product achieves an intended ' +
+      'therapeutic effect or action.',
   );
   rationale.push(
-    'Primary mode of action (PMOA, 21 USC 353(g)(1); 21 CFR 3.4(a)) is the single mode of ' +
+    'Primary mode of action (PMOA, 21 CFR 3.2(m); 21 USC 353(g)(1)) is the single mode of ' +
       'action expected to make the GREATEST contribution to the overall intended ' +
-      'therapeutic effects of the combination product.',
+      'therapeutic effects of the combination product; 21 CFR 3.4(a) assigns the product to ' +
+      'the Center with jurisdiction over that mode of action.',
   );
 
   // 1. Explicit assertion path.
@@ -428,7 +533,7 @@ export function determinePrimaryModeOfAction(params: PmoaParams): PmoaResult {
   if (recommendRequestForDesignation) {
     notes.push(
       'Because the assignment is not unambiguous, submit a Request for Designation (RFD) under ' +
-        '21 CFR 3.5 to obtain a binding FDA letter of designation (21 CFR 3.7), or request a ' +
+        '21 CFR 3.7 to obtain a binding FDA letter of designation (21 CFR 3.8), or request a ' +
         'Pre-RFD informal feedback meeting with OCP.',
     );
   }
@@ -442,11 +547,12 @@ export function determinePrimaryModeOfAction(params: PmoaParams): PmoaResult {
     constituentModes,
     recommendRequestForDesignation,
     citations: citeAll([
+      '21 CFR 3.2(k)',
       '21 CFR 3.2(m)',
       '21 CFR 3.4',
       '21 USC 353(g)',
-      '21 CFR 3.5',
       '21 CFR 3.7',
+      '21 CFR 3.8',
       'FDA OCP Guidance (Jan 2017)',
     ]),
     notes,
@@ -537,15 +643,23 @@ export function classifyCombinationProduct(params: ClassifyParams): ClassifyResu
   let definitionSubparagraph: string;
   let isCombinationProduct = true;
 
-  if (!isMultiType && params.relationship !== 'co-packaged') {
-    // A product of a single article type that is merely co-packaged with more of
-    // the same type is generally NOT a combination product unless types differ.
+  if (!isMultiType) {
+    // 21 CFR 3.2(e)(1) and (e)(2) state the permitted pairings in their own text
+    // ("drug/device, biologic/device, drug/biologic, or drug/device/biologic";
+    // "comprised of drug and device products, device and biological products, or
+    // biological and drug products"). (e)(3) and (e)(4) do not restate the
+    // requirement; reading it into them is this engine's reading, not § 3.2 text,
+    // and the rationale says so. Either way a single article type, however
+    // combined or co-packaged, is not a combination product.
     category = 'not-a-combination-product';
     definitionSubparagraph = 'n/a';
     isCombinationProduct = false;
     rationale.push(
-      'Only a single regulated article type is present and the parts are physically combined; ' +
-        'this does not meet the two-or-more-different-article-type element of 21 CFR 3.2(e). ' +
+      'Only a single regulated article type is present. 21 CFR 3.2(e)(1) and 3.2(e)(2) state ' +
+        'the permitted pairings in their own text — drug and device, device and biological ' +
+        'product, or biological product and drug — and the cross-labeled forms, 3.2(e)(3) and ' +
+        '3.2(e)(4), are read the same way here (this reading is not restated in the text of ' +
+        'those two subparagraphs). ' +
         'NOTE: two devices, or a device with software, are typically regulated as one device, not a combination.',
     );
   } else if (params.relationship === 'physically-combined') {
@@ -645,7 +759,7 @@ export function classifyCombinationProduct(params: ClassifyParams): ClassifyResu
   );
   notes.push(
     'If category or combination-product status is uncertain, OCP can confirm via a Request for ' +
-      'Designation (21 CFR 3.5) or an informal Pre-RFD.',
+      'Designation (21 CFR 3.7) or an informal Pre-RFD.',
   );
 
   return {
@@ -658,7 +772,7 @@ export function classifyCombinationProduct(params: ClassifyParams): ClassifyResu
     citations: citeAll([
       '21 CFR 3.2(e)',
       'FDA OCP Guidance (Jan 2017)',
-      '21 CFR 3.5',
+      '21 CFR 3.7',
     ]),
     notes,
   };
@@ -679,20 +793,122 @@ interface CalledOutProvision {
   topic: string;
   /** What the provision requires. */
   requirement: string;
+  /** Provenance of the call-out (shared/regulatory/regulatory-basis.ts). */
+  basis: RegulatoryBasis;
+  /** On and after the QMSR date: the removed QSR section this call-out replaced, labelled as such. */
+  formerly?: string;
+}
+
+const ECFR_4_4 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-4/subpart-A/section-4.4';
+
+/** Basis of a call-out in the current (QMSR-amended) text of 21 CFR 4.4(b)(1). */
+function cfr44b1(item: string): RegulatoryBasis {
+  return {
+    ref: `21 CFR 4.4(b)(1), ${item}`,
+    confidence: 'recall',
+    url: ECFR_4_4,
+    factId: QMSR_FACT_ID,
+    note:
+      'search extract of the eCFR page on 2026-10-05 (as amended by the QMSR final rule, FR 2024-01709); the page itself was not read. Verbatim re-read owed. ' +
+      'ISO 13485:2016 clause titles are the standard\'s, not a regulator page.',
+  };
+}
+
+/** Basis of a call-out in the pre-QMSR text of 21 CFR 4.4(b)(1). */
+function qsr44b1(section: string): RegulatoryBasis {
+  return {
+    ref: `21 CFR 4.4(b)(1) before ${QMSR_EFFECTIVE}: 21 CFR ${section}`,
+    confidence: 'recall',
+    factId: QMSR_FACT_ID,
+    note: `Recall of the QSR-era text; 21 CFR ${section} was removed by the QMSR and applied until ${QSR_LAST_DAY}.`,
+  };
+}
+
+/** "21 CFR 820.x (QSR, until 2026-02-01)": the only way a removed section is named on and after the QMSR date. */
+function formerlyQsr(section: string): string {
+  return `21 CFR ${section} (QSR, until ${QSR_LAST_DAY})`;
 }
 
 /**
- * The six device Quality System provisions called out by 21 CFR 4.4(b)(1) that
- * a drug-cGMP-base manufacturer must additionally satisfy. (Annotated array,
- * NOT `as const`.)
+ * The device quality-system call-outs of 21 CFR 4.4(b)(1) that a drug-cGMP-base
+ * manufacturer must additionally satisfy, as amended by the QMSR (in force
+ * 2026-02-02): 21 CFR 820.10 and named ISO 13485:2016 clauses.
+ *
+ * 2026-10-05 (g-combination-product-4-4-callouts): this engine stated the
+ * pre-QMSR list (§§ 820.20, 820.30, 820.50, 820.100, 820.170, 820.200) as the
+ * call-outs on every date. Those sections are removed; that list is kept below
+ * for dates before 2026-02-02 only. Clause list: eCFR 21 CFR 4.4, search
+ * extract checked 2026-10-05 (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
+ * 2026-10-05-record/g-combination-product-4-4-callouts-facts.md).
  */
 const DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE: CalledOutProvision[] = [
+  {
+    citation: 'ISO 13485:2016 §4.1, §5, §6.1; 21 CFR 820.10',
+    topic: 'Management responsibility and general requirements',
+    requirement:
+      'Meet the QMS general requirements (§4.1), management responsibility (§5 and its subclauses: quality ' +
+      'policy, objectives, planning, responsibility and authority, management review) and provision of ' +
+      'resources (§6.1) for the device constituent, and the 21 CFR 820.10 quality management system requirements.',
+    basis: cfr44b1('management responsibility and general requirements'),
+    formerly: formerlyQsr('820.20'),
+  },
+  {
+    citation: 'ISO 13485:2016 §7.3 (with the §7.1 risk-management requirement)',
+    topic: 'Design and development',
+    requirement:
+      'Apply design and development controls (§7.3 and its subclauses) to the device constituent: planning, ' +
+      'inputs, outputs, review, verification, validation, transfer, changes and the design and development file; ' +
+      'document one or more processes for risk management in product realization and maintain records of risk ' +
+      'management activities.',
+    basis: cfr44b1('design and development'),
+    formerly: formerlyQsr('820.30'),
+  },
+  {
+    citation: 'ISO 13485:2016 §7.4',
+    topic: 'Purchasing',
+    requirement:
+      'Control purchasing for device-constituent components and services (§7.4 and its subclauses): supplier ' +
+      'evaluation and selection, purchasing information, and verification of purchased product.',
+    basis: cfr44b1('purchasing'),
+    formerly: formerlyQsr('820.50'),
+  },
+  {
+    citation: 'ISO 13485:2016 §8.2.2 with 21 CFR 820.35(a); §8.4; §8.5',
+    topic: 'Analysis of data, improvement, and complaint handling',
+    requirement:
+      'Handle complaints (§8.2.2) and keep the complaint records 21 CFR 820.35(a) requires; analyse data (§8.4); ' +
+      'and operate improvement (§8.5 and its subclauses), including corrective and preventive action — distinct in ' +
+      'scope from the drug investigations under 21 CFR 211.192.',
+    basis: cfr44b1('analysis of data, improvement, and complaint handling'),
+    formerly: formerlyQsr('820.100'),
+  },
+  {
+    citation: 'ISO 13485:2016 §7.5.3',
+    topic: 'Installation activities',
+    requirement: 'Where the device constituent is installed, document installation and verification requirements and keep the records.',
+    basis: cfr44b1('installation activities'),
+    formerly: formerlyQsr('820.170'),
+  },
+  {
+    citation: 'ISO 13485:2016 §7.5.4 with 21 CFR 820.35(b)',
+    topic: 'Servicing activities',
+    requirement:
+      'Where the device constituent is serviced, document servicing procedures and keep the servicing records ' +
+      '21 CFR 820.35(b) requires.',
+    basis: cfr44b1('servicing activities'),
+    formerly: formerlyQsr('820.200'),
+  },
+];
+
+/** The 21 CFR 4.4(b)(1) call-outs that applied before 2026-02-02 (QSR sections, since removed). */
+const QSR_DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE: CalledOutProvision[] = [
   {
     citation: '21 CFR 820.20',
     topic: 'Management responsibility',
     requirement:
       'Establish quality policy, organizational structure, management review, and quality planning ' +
       'for the device constituent (drug cGMP §§ 211 do not fully cover device management controls).',
+    basis: qsr44b1('820.20'),
   },
   {
     citation: '21 CFR 820.30',
@@ -700,6 +916,7 @@ const DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE: CalledOutProvision[] = [
     requirement:
       'Apply full design controls to the device constituent: design and development planning, ' +
       'design inputs/outputs, review, verification, validation, transfer, changes, and a Design History File.',
+    basis: qsr44b1('820.30'),
   },
   {
     citation: '21 CFR 820.50',
@@ -707,6 +924,7 @@ const DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE: CalledOutProvision[] = [
     requirement:
       'Establish supplier evaluation/selection and purchasing data controls for device-constituent ' +
       'components and services.',
+    basis: qsr44b1('820.50'),
   },
   {
     citation: '21 CFR 820.100',
@@ -714,22 +932,73 @@ const DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE: CalledOutProvision[] = [
     requirement:
       'Operate a device-style CAPA system (note: this is distinct in scope from the drug ' +
       'investigations and discrepancy procedures under 21 CFR 211.192).',
+    basis: qsr44b1('820.100'),
   },
   {
     citation: '21 CFR 820.170',
     topic: 'Installation',
     requirement: 'Establish installation and inspection procedures where the device constituent is installed.',
+    basis: qsr44b1('820.170'),
   },
   {
     citation: '21 CFR 820.200',
     topic: 'Servicing',
     requirement: 'Establish servicing procedures and records where the device constituent is serviced.',
+    basis: qsr44b1('820.200'),
   },
 ];
+
+/** Throws unless `asOf` is a real YYYY-MM-DD date (the one ISO-date rule, regulatory-basis.ts). */
+function assertIsoDate(asOf: string): void {
+  if (typeof asOf !== 'string' || basisProblems({ ref: 'asOf', confidence: 'recall', checked: asOf }).length > 0) {
+    throw new Error(`combination-products: asOf "${String(asOf)}" is not a YYYY-MM-DD date`);
+  }
+}
+
+/**
+ * The 21 CFR 4.4(b)(1) call-outs in force on `asOf` (YYYY-MM-DD). Throws on a
+ * malformed date rather than guessing which text applies.
+ */
+function deviceProvisionsForDrugBase(asOf: string): CalledOutProvision[] {
+  assertIsoDate(asOf);
+  const list = asOf >= QMSR_EFFECTIVE ? DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE : QSR_DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE;
+  return list.map((p: CalledOutProvision): CalledOutProvision => ({ ...p, basis: { ...p.basis } }));
+}
+
+/** "Design controls" → "design controls"; keeps acronyms such as "(CAPA)". */
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
+/** The one-line 21 CFR 4.4(b)(1) statement for `asOf`, built from the list in force. */
+function drugBaseCallOutLine(asOf: string): string {
+  const list = deviceProvisionsForDrugBase(asOf);
+  if (asOf >= QMSR_EFFECTIVE) {
+    return (
+      '21 CFR 4.4(b)(1) (as amended by the QMSR, in force ' + QMSR_EFFECTIVE + '): on a drug-cGMP base, additionally ' +
+      'satisfy ' + list.map((p) => `${lowerFirst(p.topic)} (${p.citation})`).join('; ') + '.'
+    );
+  }
+  return (
+    `21 CFR 4.4(b)(1) (QSR text, until ${QSR_LAST_DAY}): on a drug-cGMP base, additionally satisfy device QS ` +
+    list.map((p) => `§ ${p.citation.replace('21 CFR ', '')} (${lowerFirst(p.topic)})`).join(', ') + '.'
+  );
+}
+
+/** Basis of a 21 CFR 4.4(b)(2) call-out (drug cGMP into a device-QS base): recall, not re-read in this step. */
+function cfr44b2(section: string): RegulatoryBasis {
+  return {
+    ref: `21 CFR 4.4(b)(2): 21 CFR ${section}`,
+    confidence: 'recall',
+    url: ECFR_4_4,
+    note: 'Recall; the (b)(2) list was not re-read against the current eCFR text of 21 CFR 4.4.',
+  };
+}
 
 /**
  * The eight drug cGMP provisions called out by 21 CFR 4.4(b)(2) that a
  * device-QS-base manufacturer must additionally satisfy. (Annotated array.)
+ * Each carries a recall basis: this list was not re-read against the current eCFR text.
  */
 const DRUG_PROVISIONS_CALLED_INTO_DEVICE_BASE: CalledOutProvision[] = [
   {
@@ -738,43 +1007,51 @@ const DRUG_PROVISIONS_CALLED_INTO_DEVICE_BASE: CalledOutProvision[] = [
     requirement:
       'Test or examine incoming drug components, containers, and closures and approve/reject them ' +
       'before use.',
+    basis: cfr44b2('211.84'),
   },
   {
     citation: '21 CFR 211.103',
     topic: 'Calculation of yield',
     requirement: 'Calculate and document actual yields and percentages of theoretical yield.',
+    basis: cfr44b2('211.103'),
   },
   {
     citation: '21 CFR 211.132',
     topic: 'Tamper-evident packaging (OTC)',
     requirement: 'Apply tamper-evident packaging requirements to OTC drug constituent parts.',
+    basis: cfr44b2('211.132'),
   },
   {
     citation: '21 CFR 211.137',
     topic: 'Expiration dating',
     requirement: 'Establish and apply expiration dating supported by stability testing.',
+    basis: cfr44b2('211.137'),
   },
   {
     citation: '21 CFR 211.165',
     topic: 'Testing and release for distribution',
     requirement:
       'Perform appropriate laboratory testing of each batch of drug constituent prior to release.',
+    basis: cfr44b2('211.165'),
   },
   {
     citation: '21 CFR 211.166',
     topic: 'Stability testing',
     requirement: 'Operate a written stability-testing program to support expiration dating.',
+    basis: cfr44b2('211.166'),
   },
   {
     citation: '21 CFR 211.167',
     topic: 'Special testing requirements',
     requirement:
       'Conduct special testing (e.g., sterility, pyrogen) for products purporting to be sterile/pyrogen-free.',
+    basis: cfr44b2('211.167'),
   },
   {
     citation: '21 CFR 211.170',
     topic: 'Reserve samples',
     requirement: 'Retain reserve samples of active ingredient and finished drug constituent.',
+    basis: cfr44b2('211.170'),
   },
 ];
 
@@ -798,6 +1075,12 @@ export interface CgmpParams {
   hasSterileDrugConstituent?: boolean;
   /** Whether any drug constituent is an OTC product (drives 211.132). */
   hasOtcDrugConstituent?: boolean;
+  /**
+   * Date the plan is made for (YYYY-MM-DD); defaults to today, UTC. The
+   * 21 CFR 4.4(b)(1) call-outs are the QMSR text on and after 2026-02-02 and
+   * the QSR text before it.
+   */
+  asOf?: string;
 }
 
 export interface CgmpResult {
@@ -805,8 +1088,10 @@ export interface CgmpResult {
   partFourApplies: boolean;
   /** Recommended operating base. */
   recommendedBase: CgmpBase;
-  /** The provisions of the OTHER system that must be additionally satisfied. */
+  /** The provisions of the OTHER system that must be additionally satisfied, as at `asOf`. */
   calledOutProvisions: CalledOutProvision[];
+  /** The date the call-outs were resolved for (YYYY-MM-DD). */
+  asOf: string;
   /** Whether the manufacturer may instead demonstrate compliance with both full systems. */
   fullDualComplianceAllowed: boolean;
   /** Postmarketing safety reporting requirements (Subpart B). */
@@ -815,6 +1100,33 @@ export interface CgmpResult {
   rationale: string[];
   citations: RegulatoryCitation[];
   notes: string[];
+}
+
+/** `asOf` (YYYY-MM-DD), defaulting to today (UTC); throws on a malformed date. */
+function resolveAsOf(asOf: string | undefined): string {
+  const d = asOf ?? utcToday();
+  assertIsoDate(d);
+  return d;
+}
+
+/** The device quality-system regulation cited for a plan dated `asOf`: 820.10 (QMSR) or 820.30 (QSR). */
+function deviceQsCitationId(asOf: string): string {
+  return asOf >= QMSR_EFFECTIVE ? '21 CFR 820.10' : '21 CFR 820.30';
+}
+
+/** The QSR → QMSR note for a cGMP plan dated `asOf`. */
+function cgmpQmsrNote(asOf: string): string {
+  if (asOf >= QMSR_EFFECTIVE) {
+    return (
+      `The QMSR (21 CFR 820 incorporating ISO 13485:2016) is in force from ${QMSR_EFFECTIVE} and amended ` +
+      '21 CFR 4.4(b)(1); the device call-outs above are its current text. Each names the removed QSR ' +
+      'section it replaced only as "formerly", so records indexed to the QSR stay findable.'
+    );
+  }
+  return (
+    `Plan dated ${asOf}, before the QMSR (in force ${QMSR_EFFECTIVE}): the device call-outs above are the QSR ` +
+    'text. From that date 21 CFR 4.4(b)(1) calls out 21 CFR 820.10 and named ISO 13485:2016 clauses instead.'
+  );
 }
 
 /**
@@ -831,6 +1143,7 @@ export interface CgmpResult {
 export function planCombinationCGMP(params: CgmpParams): CgmpResult {
   const rationale: string[] = [];
   const notes: string[] = [];
+  const asOf = resolveAsOf(params.asOf);
 
   const distinctTypes = Array.from(new Set(params.constituentTypes));
   const hasDevice = distinctTypes.includes('device');
@@ -866,8 +1179,7 @@ export function planCombinationCGMP(params: CgmpParams): CgmpResult {
     recommendedBase = 'drug-cGMP-base';
     rationale.push(
       'Default base is drug cGMP (21 CFR 210/211) because a drug/biologic constituent is present; ' +
-        'the device QS gaps (design controls, CAPA, purchasing, management, installation, servicing) ' +
-        'are then called out under 21 CFR 4.4(b)(1).',
+        'the device quality-system provisions drug cGMP lacks are then called out under 21 CFR 4.4(b)(1), listed next.',
     );
   } else {
     recommendedBase = 'device-QS-base';
@@ -877,17 +1189,11 @@ export function planCombinationCGMP(params: CgmpParams): CgmpResult {
   // Assemble called-out provisions for the chosen base.
   let calledOutProvisions: CalledOutProvision[];
   if (recommendedBase === 'drug-cGMP-base') {
-    calledOutProvisions = DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE.map(
-      (p: CalledOutProvision): CalledOutProvision => ({ ...p }),
-    );
-    rationale.push(
-      '21 CFR 4.4(b)(1): on a drug-cGMP base, additionally satisfy device QS §§ 820.20 (management), ' +
-        '820.30 (design controls), 820.50 (purchasing), 820.100 (CAPA), 820.170 (installation), ' +
-        'and 820.200 (servicing).',
-    );
+    calledOutProvisions = deviceProvisionsForDrugBase(asOf);
+    rationale.push(drugBaseCallOutLine(asOf));
   } else {
     calledOutProvisions = DRUG_PROVISIONS_CALLED_INTO_DEVICE_BASE.map(
-      (p: CalledOutProvision): CalledOutProvision => ({ ...p }),
+      (p: CalledOutProvision): CalledOutProvision => ({ ...p, basis: { ...p.basis } }),
     );
     rationale.push(
       '21 CFR 4.4(b)(2): on a device-QS base, additionally satisfy drug cGMP §§ 211.84, 211.103, ' +
@@ -923,12 +1229,8 @@ export function planCombinationCGMP(params: CgmpParams): CgmpResult {
     );
   }
 
-  // QMSR note — Part 820 is being replaced by ISO 13485-based QMSR effective Feb 2, 2026.
-  notes.push(
-    'Effective 2026-02-02, 21 CFR Part 820 is restructured as the QMSR incorporating ISO 13485:2016; ' +
-      'the Part 4 cross-references are correspondingly updated, but the streamlined construct persists. ' +
-      'Map each called-out 820.x clause to its ISO 13485 equivalent (e.g., 820.30 → ISO 13485 §7.3).',
-  );
+  // QMSR transition — the 4.4(b)(1) list above is already the text in force on asOf.
+  notes.push(cgmpQmsrNote(asOf));
 
   // Subpart B — postmarket safety reporting.
   const postmarketSafetyReporting: string[] = [
@@ -944,6 +1246,7 @@ export function planCombinationCGMP(params: CgmpParams): CgmpResult {
     partFourApplies,
     recommendedBase,
     calledOutProvisions,
+    asOf,
     fullDualComplianceAllowed: true,
     postmarketSafetyReporting,
     rationale,
@@ -952,7 +1255,7 @@ export function planCombinationCGMP(params: CgmpParams): CgmpResult {
       '21 CFR 4.3',
       '21 CFR 4.4',
       '21 CFR Part 4 Subpart B',
-      '21 CFR 820.30',
+      deviceQsCitationId(asOf),
       'QMSR (89 FR 7496, Feb 2, 2024)',
       'FDA cGMP Guidance (Jan 2017)',
     ]),
@@ -1172,7 +1475,8 @@ export function designHumanFactorsStudy(params: HumanFactorsParams): HumanFactor
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 5 — Device-constituent design controls (21 CFR 820.30 / QMSR)
+// SECTION 5 — Device-constituent design controls (QMSR: 21 CFR 820.10(c) →
+// ISO 13485:2016 §7.3; before 2026-02-02 the QSR, 21 CFR 820.30)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** A design-control element with its citation and expected content. */
@@ -1182,69 +1486,94 @@ interface DesignControlElement {
   expectation: string;
 }
 
-/** The 820.30 design-control elements (annotated array, not `as const`). */
-const DESIGN_CONTROL_ELEMENTS: DesignControlElement[] = [
-  {
-    citation: '21 CFR 820.30(b)',
-    element: 'Design and development planning',
-    expectation:
+/**
+ * The combination-product expectation for each design-control element. The
+ * element ids, their order, their names and their citations come from the one
+ * crosswalk, shared/regulatory/qmsr-crosswalk.ts, through `citeQms(id, asOf)`;
+ * only the device-constituent expectation lives here.
+ *
+ * 2026-10-05 (g-design-control-lists-one-home): this list carried its own
+ * '21 CFR 820.30(b)'…'(j)' citations, cited as the requirement on every date,
+ * and required an independent reviewer at design review and a "DHF". Neither
+ * is a QMSR requirement: ISO 13485:2016 §7.3.5 names the review participants
+ * and §7.3.10 is the design and development file (ISO text, recall). The QSR
+ * wording is kept for dates before 2026-02-02.
+ */
+const DESIGN_CONTROL_EXPECTATIONS: Record<
+  'designPlan' | 'designInputs' | 'designOutputs' | 'designReviews' | 'designVerification' |
+  'designValidation' | 'designTransfer' | 'designChanges' | 'traceability',
+  { qmsr: string; qsr?: string }
+> = {
+  designPlan: {
+    qmsr:
       'Establish and maintain plans describing design/development activities, responsibilities, and ' +
       'interfaces; update as the design evolves.',
   },
-  {
-    citation: '21 CFR 820.30(c)',
-    element: 'Design inputs',
-    expectation:
+  designInputs: {
+    qmsr:
       'Define the physical and performance requirements of the device constituent, including ' +
       'user/patient needs, intended use, essential performance, and interface with the drug/biologic.',
   },
-  {
-    citation: '21 CFR 820.30(d)',
-    element: 'Design outputs',
-    expectation:
+  designOutputs: {
+    qmsr:
       'Define outputs in terms that allow adequacy evaluation against inputs; identify outputs ' +
       'essential to proper functioning (acceptance criteria, specifications, drawings).',
   },
-  {
-    citation: '21 CFR 820.30(e)',
-    element: 'Design review',
-    expectation:
-      'Conduct formal, documented design reviews at appropriate stages with an independent reviewer present.',
+  designReviews: {
+    qmsr:
+      'Conduct formal, documented design reviews at planned stages; participants include representatives ' +
+      'of the functions concerned with the stage being reviewed and other specialist personnel.',
+    qsr: 'Conduct formal, documented design reviews at appropriate stages with an independent reviewer present.',
   },
-  {
-    citation: '21 CFR 820.30(f)',
-    element: 'Design verification',
-    expectation:
+  designVerification: {
+    qmsr:
       'Confirm design outputs meet design inputs (e.g., dose accuracy, delivery force, dimensional ' +
       'conformance, container-closure integrity).',
   },
-  {
-    citation: '21 CFR 820.30(g)',
-    element: 'Design validation',
-    expectation:
+  designValidation: {
+    qmsr:
       'Confirm devices conform to defined user needs and intended uses under actual or simulated use, ' +
       'using initial production units/lots; includes human factors validation and, where appropriate, ' +
       'clinical/simulated-use data.',
   },
-  {
-    citation: '21 CFR 820.30(h)',
-    element: 'Design transfer',
-    expectation:
-      'Ensure the device design is correctly translated into production specifications.',
+  designTransfer: {
+    qmsr: 'Ensure the device design is correctly translated into production specifications.',
   },
-  {
-    citation: '21 CFR 820.30(i)',
-    element: 'Design changes',
-    expectation: 'Identify, document, validate/verify, review, and approve design changes before implementation.',
+  designChanges: {
+    qmsr: 'Identify, document, validate/verify, review, and approve design changes before implementation.',
   },
-  {
-    citation: '21 CFR 820.30(j)',
-    element: 'Design History File (DHF)',
-    expectation:
+  traceability: {
+    qmsr:
+      'Maintain a design and development file for each device type or family that includes or references ' +
+      'the records demonstrating conformity to design and development requirements and the records of ' +
+      'design changes.',
+    qsr:
       'Maintain a DHF for each device type that demonstrates the design was developed per the ' +
       'approved design plan and 820.30.',
   },
-];
+};
+
+/** Today's UTC date, YYYY-MM-DD: the default `asOf` at this engine's edge. */
+function utcToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * The design-control elements as at `asOf`, in crosswalk order. Throws on a
+ * malformed date (via `citeQms`) rather than guessing which regulation applies.
+ */
+function designControlElements(asOf: string): DesignControlElement[] {
+  const qmsr = asOf >= QMSR_EFFECTIVE;
+  return QMSR_CROSSWALK.filter((r) => /^7\.3\.\d+$/.test(r.iso13485Clause)).map((r): DesignControlElement => {
+    const exp = DESIGN_CONTROL_EXPECTATIONS[r.id as keyof typeof DESIGN_CONTROL_EXPECTATIONS];
+    if (!exp) throw new Error(`combination-products: no expectation for design-control element "${r.id}"`);
+    return {
+      citation: citeQms(r.id, asOf),
+      element: r.title,
+      expectation: qmsr ? exp.qmsr : (exp.qsr ?? exp.qmsr),
+    };
+  });
+}
 
 export interface DeviceConstituentControlsParams {
   /** Device-constituent description, e.g. "prefilled syringe", "on-body injector". */
@@ -1262,10 +1591,15 @@ export interface DeviceConstituentControlsParams {
   containsSoftware?: boolean;
   /** Known/declared essential performance requirements (recorded and supplemented). */
   declaredEssentialPerformance?: string[];
+  /**
+   * Date the program is assessed against (YYYY-MM-DD); defaults to today, UTC.
+   * Before 2026-02-02 the QSR (21 CFR 820.30) applies; on and after, the QMSR.
+   */
+  asOf?: string;
 }
 
 export interface DeviceConstituentControlsResult {
-  /** Full 820.30 design-control program. */
+  /** Full design-control program, cited as at `asOf` (shared/regulatory/qmsr-crosswalk.ts). */
   designControls: DesignControlElement[];
   /** Representative design inputs to capture. */
   designInputs: string[];
@@ -1297,17 +1631,24 @@ export function assessDeviceConstituentControls(
   const rationale: string[] = [];
   const notes: string[] = [];
 
-  rationale.push(
-    'The device constituent of a combination product is subject to design controls under ' +
-      '21 CFR 820.30 (called out for a drug-cGMP base by 21 CFR 4.4(b)(1)).',
+  const asOf = params.asOf ?? utcToday();
+  const designControls = designControlElements(asOf);
+  const qmsr = asOf >= QMSR_EFFECTIVE;
+  const design = deviceProvisionsForDrugBase(asOf).find(
+    (p: CalledOutProvision): boolean => p.topic === 'Design and development' || p.topic === 'Design controls',
   );
+  if (!design) throw new Error('combination-products: no design call-out in the 21 CFR 4.4(b)(1) list');
   rationale.push(
-    'Design controls trace user needs → design inputs → design outputs → verification ' +
-      '→ validation, all captured in the Design History File (DHF).',
+    'The device constituent of a combination product is subject to design and development controls: ' +
+      `${design.citation}${design.formerly ? ` (formerly ${design.formerly})` : ''}, called out for a ` +
+      'drug-cGMP base by 21 CFR 4.4(b)(1).',
   );
 
-  const designControls = DESIGN_CONTROL_ELEMENTS.map(
-    (e: DesignControlElement): DesignControlElement => ({ ...e }),
+  rationale.push(
+    'Design controls trace user needs → design inputs → design outputs → verification ' +
+      (qmsr
+        ? '→ validation, all recorded in the design and development file (ISO 13485:2016 §7.3.10).'
+        : '→ validation, all captured in the Design History File (DHF).'),
   );
 
   // Design inputs.
@@ -1352,7 +1693,7 @@ export function assessDeviceConstituentControls(
 
   // Validation.
   const validationActivities: string[] = [
-    'Design validation on initial production units under actual or simulated use conditions (820.30(g)).',
+    `Design validation on initial production units under actual or simulated use conditions (${citeQms('designValidation', asOf)}).`,
     'Human factors validation (summative) study demonstrating safe and effective use (see HF plan).',
     'Process validation for manufacturing operations affecting the device constituent.',
   ];
@@ -1384,7 +1725,9 @@ export function assessDeviceConstituentControls(
   const designHistoryFileContents: string[] = [
     'Design and development plan(s).',
     'Design input and design output documents with traceability matrix.',
-    'Design review records (with independent reviewer).',
+    qmsr
+      ? 'Design review records, naming the participants and the function each represents.'
+      : 'Design review records (with independent reviewer).',
     'Verification and validation protocols, data, and reports.',
     'Risk management file (ISO 14971) and URRA.',
     'Design transfer records and design change records.',
@@ -1397,8 +1740,8 @@ export function assessDeviceConstituentControls(
     );
   }
   notes.push(
-    'Under the QMSR (effective 2026-02-02), 21 CFR 820.30 design controls map to ISO 13485:2016 §7.3; ' +
-      'maintain the same objective evidence under the ISO clause structure.',
+    `Design controls as at ${asOf}: ${citeQms('design_controls', asOf)}. ` +
+      'Maintain the same objective evidence under the ISO 13485:2016 clause structure.',
   );
   notes.push(
     'For a single-entity combination product, the device design controls and the drug CMC must be ' +
@@ -1676,22 +2019,21 @@ export function selectCombinationSubmissionPathway(
 
 /** Public, read-only view of the canonical citation registry. */
 export function listCitations(): RegulatoryCitation[] {
-  return CITATIONS.map((c: CitationEntry): RegulatoryCitation => ({ id: c.id, description: c.description }));
+  return CITATIONS.map(toCitation);
 }
 
-/** Public view of the device QS provisions called into a drug-cGMP base (4.4(b)(1)). */
-export function listDeviceProvisionsForDrugBase(): Array<{
+/**
+ * Public view of the device quality-system provisions called into a drug-cGMP
+ * base by 21 CFR 4.4(b)(1), as at `asOf` (YYYY-MM-DD; defaults to today, UTC).
+ */
+export function listDeviceProvisionsForDrugBase(asOf: string = utcToday()): Array<{
   citation: string;
   topic: string;
   requirement: string;
+  basis: RegulatoryBasis;
+  formerly?: string;
 }> {
-  return DEVICE_PROVISIONS_CALLED_INTO_DRUG_BASE.map(
-    (p: CalledOutProvision): { citation: string; topic: string; requirement: string } => ({
-      citation: p.citation,
-      topic: p.topic,
-      requirement: p.requirement,
-    }),
-  );
+  return deviceProvisionsForDrugBase(asOf);
 }
 
 /** Public view of the drug cGMP provisions called into a device-QS base (4.4(b)(2)). */
@@ -1709,13 +2051,13 @@ export function listDrugProvisionsForDeviceBase(): Array<{
   );
 }
 
-/** Public view of the 820.30 design-control elements. */
-export function listDesignControlElements(): Array<{
+/** Public view of the design-control elements as at `asOf` (YYYY-MM-DD; defaults to today, UTC). */
+export function listDesignControlElements(asOf: string = utcToday()): Array<{
   citation: string;
   element: string;
   expectation: string;
 }> {
-  return DESIGN_CONTROL_ELEMENTS.map(
+  return designControlElements(asOf).map(
     (e: DesignControlElement): { citation: string; element: string; expectation: string } => ({
       citation: e.citation,
       element: e.element,

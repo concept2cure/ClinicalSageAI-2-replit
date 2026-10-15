@@ -13,6 +13,7 @@
  * V2App); renders nothing outside the shell.
  */
 import React from 'react';
+import { fixedMenuPlacement } from './menuPlacement';
 import { availableDemoScripts } from '../components/ana/anaLockedScreens';
 
 export interface LiveDriveControlsValue {
@@ -44,14 +45,7 @@ export function LiveDriveSwitch() {
       setOpen(false);
       return;
     }
-    const r = btnRef.current?.getBoundingClientRect();
-    if (r) {
-      setPlace(
-        r.top > MENU_ROOM_PX
-          ? { position: 'fixed', left: r.left, bottom: window.innerHeight - r.top + 6, right: 'auto', top: 'auto' }
-          : { position: 'fixed', left: r.left, top: r.bottom + 6, right: 'auto', bottom: 'auto' }
-      );
-    }
+    setPlace(fixedMenuPlacement(btnRef.current, { roomPx: MENU_ROOM_PX }));
     setOpen(true);
   };
   React.useEffect(() => {

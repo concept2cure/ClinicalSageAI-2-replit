@@ -87,7 +87,11 @@ const launchSurfaces = [...new Set([...apps.flatMap((a) => a.surfaces), ...shell
 const launchModules = [...new Set(apps.flatMap((a) => a.modules))];
 
 const findings = [];
-if (apps.length !== 6) findings.push({ rule: 'shape', detail: `expected 6 launch apps, parsed ${apps.length}` });
+// Seven since 2026-09-30: Reporting & analytics joined (founder decision of 2026-09-26).
+/* Eight since 2026-10-12, when CMC / Module 3 joined under decision P-28
+   (seven since 2026-09-30, Reporting & analytics). The count is pinned so the
+   catalog cannot grow or shrink without a decision being written down. */
+if (apps.length !== 8) findings.push({ rule: 'shape', detail: `expected 8 launch apps, parsed ${apps.length}` });
 
 // ── 2. Routable + registered ───────────────────────────────────────────────
 const viewsSrc = read(VIEWS);
@@ -111,9 +115,10 @@ for (const id of launchSurfaces) {
 // nor registered renders in production with enforcement on, and nothing else
 // notices. The deep link resolves DEEP_LINK_ALIASES first (routing.ts
 // surfaceIdFromLocation), so an alias is judged by its target: 'task-board'
-// renders as the in-scope 'tasks', 'ind-lifecycle' as the locked
-// 'ind-checklist'. Checked 2026-09-23 on all 122 routable ids with enforcement
-// on: none leaks today; this keeps it that way.
+// renders as the in-scope 'tasks', 'ind-lifecycle' as 'ind-checklist' (locked
+// until decision P-32, 2026-10-15, made it a Submission Center feature).
+// Checked 2026-09-23 on all 122 routable ids with enforcement on: none leaks
+// today; this keeps it that way.
 const aliasSrc = read(ALIASES);
 const aliasBlock = aliasSrc.match(/export const DEEP_LINK_ALIASES[^=]*=\s*\{([^]*?)\n\};/);
 if (!aliasBlock) {

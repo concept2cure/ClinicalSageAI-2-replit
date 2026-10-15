@@ -213,13 +213,16 @@ describe('completing a task unblocks its dependents in the SAME transaction, wit
     const rows = await ledger();
     const byTarget = Object.fromEntries(rows.map((r) => [r.target, r]));
     expect(Object.keys(byTarget).sort()).toEqual(['task:TASK-A', 'task:TASK-B', 'task:TASK-C', 'task:TASK-D']);
+    // D5: nobody stated a reason for a dependent's move, so none is recorded;
+    // what happened is the row's summary.
     expect(byTarget['task:TASK-B']).toMatchObject({
       command: 'task.transition',
       payload: {
         from: 'blocked', to: 'in-progress', cause: 'predecessor-completed', predecessor: 'TASK-A',
         blockedBy: { from: ['TASK-A'], to: [] },
+        summary: 'Unblocked: predecessor TASK-A completed',
       },
-      reason: 'Unblocked: predecessor TASK-A completed',
+      reason: null,
     });
     // A change to D's record is a change: it has its own row, status unchanged.
     expect(byTarget['task:TASK-D']).toMatchObject({
@@ -229,11 +232,15 @@ describe('completing a task unblocks its dependents in the SAME transaction, wit
         blockedBy: { from: ['TASK-A', 'TASK-X'], to: ['TASK-X'] },
       },
     });
-    expect(byTarget['task:TASK-D'].reason).toMatch(/TASK-A completed/);
+    expect(byTarget['task:TASK-D'].reason).toBeNull();
+    expect(byTarget['task:TASK-D'].payload.summary).toMatch(/TASK-A completed/);
     expect(byTarget['task:TASK-C']).toMatchObject({
       command: 'task.transition',
-      payload: { from: 'blocked', to: 'pending', cause: 'predecessor-completed', predecessor: 'TASK-A' },
-      reason: 'Unblocked: predecessor TASK-A completed',
+      payload: {
+        from: 'blocked', to: 'pending', cause: 'predecessor-completed', predecessor: 'TASK-A',
+        summary: 'Unblocked: predecessor TASK-A completed',
+      },
+      reason: null,
     });
     expect(byTarget['task:TASK-A']).toMatchObject({
       command: 'task.transition',

@@ -1,0 +1,199 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T06:34:20.144Z","pid":149709,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T06:34:20.145Z","pid":149709,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T06:34:20.146Z","pid":149709,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T06:34:20.404Z', poolSize: 1 }
+
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/protocol-finalization-concurrency.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > control: a clean canonical protocol finalizes with a matching real content signature
+[protocol-native-probe:clean-control] {"documentId":281,"signatureId":262,"status":"finalized","version":"1.0","signatures":1,"versions":1,"bindingBasis":"protocol-document-content-sha256","digestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > control: a clean canonical protocol finalizes with a matching real content signature 345ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a required section made draft on the signing client instead of checking the pool old state
+[database] Database connection successful { timestamp: '2026-10-14T06:34:25.719Z', poolSize: 2 }
+
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a required section made draft on the signing client instead of checking the pool old state
+[protocol-native-probe:same-client-structural-regression] {"documentId":282,"sectionId":3654,"sectionKey":"synopsis","signingPid":9760,"independentPoolPid":9763,"refusalCode":"INVALID_STATE","finalized":false,"status":"in_development","returnedCompleteness":null,"currentReadyToFinalize":true,"snapshotSectionStatus":null,"signatures":0,"versions":0}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a required section made draft on the signing client instead of checking the pool old state 424ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a content writer queued behind finalization and preserves the signed digest
+[protocol-native-probe:finalizer-first-content-writer] {"documentId":283,"sectionId":3667,"holderPid":9764,"finalizerPid":9760,"writerPid":9763,"finalizedStatus":201,"finalizedError":null,"writerStatus":409,"writerError":"INVALID_STATE","status":"finalized","signatures":1,"versions":1,"queuedContentCommitted":false,"signedDigest":"61728aa2e752ec8b0946daacd1ede2fd471320e4f3d9bb80cf73c4b26c6644de","currentDigest":"61728aa2e752ec8b0946daacd1ede2fd471320e4f3d9bb80cf73c4b26c6644de","digestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > protocol finalization through the actual native runtime > refuses a content writer queued behind finalization and preserves the signed digest 547ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'header' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-header] {"documentId":284,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'header' queued after the actual finalizer without changing its content/version 1664ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'synopsis' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-synopsis] {"documentId":285,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'synopsis' queued after the actual finalizer without changing its content/version 1575ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'minor snapshot' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-minor snapshot] {"documentId":286,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'minor snapshot' queued after the actual finalizer without changing its content/version 1497ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'objective' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-objective] {"documentId":287,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'objective' queued after the actual finalizer without changing its content/version 1501ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'eligibility' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-eligibility] {"documentId":288,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'eligibility' queued after the actual finalizer without changing its content/version 1766ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'visit rename' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-visit rename] {"documentId":289,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'visit rename' queued after the actual finalizer without changing its content/version 1689ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'remove assessment' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-remove assessment] {"documentId":290,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'remove assessment' queued after the actual finalizer without changing its content/version 1582ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'visit' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-visit] {"documentId":291,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'visit' queued after the actual finalizer without changing its content/version 1860ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'team' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-team] {"documentId":292,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'team' queued after the actual finalizer without changing its content/version 1517ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'assessment' queued after the actual finalizer without changing its content/version
+[protocol-native-probe:finalizer-first-assessment] {"documentId":293,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses 'assessment' queued after the actual finalizer without changing its content/version 1351ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > uses same-client newly completed statuses rather than the old committed pool status 227ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses binding or unbinding a design queued behind finalization
+[protocol-native-probe:finalizer-first-design-bind] {"documentId":295,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses binding or unbinding a design queued behind finalization
+[protocol-native-probe:finalizer-first-design-unbind] {"documentId":296,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > refuses binding or unbinding a design queued behind finalization 3045ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > all protected original-protocol writes reserve the finalized parent > keeps supplemental signedContent:false checks available after finalization 398ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before set cell reaches a held child row
+[protocol-native-probe:mutable-set cell] {"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before set cell reaches a held child row 1637ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before clear cell reaches a held child row
+[protocol-native-probe:mutable-clear cell] {"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before clear cell reaches a held child row 1699ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before remove visit reaches a held child row
+[protocol-native-probe:mutable-remove visit] {"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > mutable SoA rows and protocol visits cannot commit behind a finalization > reserves parent before remove visit reaches a held child row 2107ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > writer-first and stale snapshot finalization ordering > signs the committed SoA content of an actual writer queued first 1804ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > writer-first and stale snapshot finalization ordering > refuses a stale repeatable-read finalizer queued behind the real SoA writer parent update 416ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > current-content signature binding and controlled export > exports genuine clean finalized current content while preserving all retained rows 562ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > current-content signature binding and controlled export > holds a legacy digest drift export without rewriting the genuine signature or history 408ms
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > current-content signature binding and controlled export > holds export as unverified when canonical binding reads fail on the actual restricted snapshot 290ms
+stdout | tests/db/protocol-finalization-concurrency.dbtest.ts
+[protocol-native-concurrency:summary] {"tag":"protocol-native-concurrency-149709-mv7qil76-5258f3a7","database":"platform_ci_native_recheck_20261013","cases":{"clean-control":{"documentId":281,"signatureId":262,"status":"finalized","version":"1.0","signatures":1,"versions":1,"bindingBasis":"protocol-document-content-sha256","digestMatches":true},"same-client-structural-regression":{"documentId":282,"sectionId":3654,"sectionKey":"synopsis","signingPid":9760,"independentPoolPid":9763,"refusalCode":"INVALID_STATE","finalized":false,"status":"in_development","returnedCompleteness":null,"currentReadyToFinalize":true,"snapshotSectionStatus":null,"signatures":0,"versions":0},"finalizer-first-content-writer":{"documentId":283,"sectionId":3667,"holderPid":9764,"finalizerPid":9760,"writerPid":9763,"finalizedStatus":201,"finalizedError":null,"writerStatus":409,"writerError":"INVALID_STATE","status":"finalized","signatures":1,"versions":1,"queuedContentCommitted":false,"signedDigest":"61728aa2e752ec8b0946daacd1ede2fd471320e4f3d9bb80cf73c4b26c6644de","currentDigest":"61728aa2e752ec8b0946daacd1ede2fd471320e4f3d9bb80cf73c4b26c6644de","digestMatches":true},"finalizer-first-header":{"documentId":284,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-synopsis":{"documentId":285,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-minor snapshot":{"documentId":286,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-objective":{"documentId":287,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-eligibility":{"documentId":288,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-visit rename":{"documentId":289,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-remove assessment":{"documentId":290,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-visit":{"documentId":291,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-team":{"documentId":292,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-assessment":{"documentId":293,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-design-bind":{"documentId":295,"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"finalizer-first-design-unbind":{"documentId":296,"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"signatures":1,"versions":1,"currentDigestMatches":true},"mutable-set cell":{"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true},"mutable-clear cell":{"signerPid":9760,"writerPid":9763,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true},"mutable-remove visit":{"signerPid":9763,"writerPid":9760,"signedStatus":201,"writer":{"ok":false,"code":"INVALID_STATE"},"currentDigestMatches":true}},"runtime":{"database":"platform_ci_native_recheck_20261013","role":"app_service","rolsuper":false,"rolbypassrls":false,"enforcement":"on"},"stores":[{"relname":"c2c_ana_actions","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"electronic_signatures","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_documents","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_sections","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_versions","relrowsecurity":true,"relforcerowsecurity":true}],"organizationId":1654996}
+
+ ✓ tests/db/protocol-finalization-concurrency.dbtest.ts > current-content signature binding and controlled export > does not upgrade an explicit read-committed executor into a verified current-content claim 341ms
+{"level":30,"time":"2026-10-14T06:34:56.758Z","pid":149915,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T06:34:56.761Z","pid":149915,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T06:34:56.762Z","pid":149915,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/project-vault-parent-access.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T06:34:57.567Z', poolSize: 1 }
+
+stdout | tests/db/project-vault-parent-access.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/project-vault-parent-access.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/project-vault-parent-access.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T06:35:02.233Z', poolSize: 2 }
+
+stdout | tests/db/project-vault-parent-access.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T06:35:02.255Z', poolSize: 3 }
+
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > proves actual runtime app_service, non-owner NOSUPERUSER/NOBYPASSRLS and FORCE RLS 16ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > has native FORCE RLS on Vault after canonical migration repair without changing table ownership 3ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > proves the same real sharing policy admits public/owner/member and refuses an unassigned private actor 45ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > serves authorized public, private owner and explicitly assigned member detail through real authentication 496ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > serves the authorized public document search and relationship to an actor with both parents 336ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read  360ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /workstreams 105ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /drafts 72ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /team 369ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /evidence 241ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /activity 79ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /records 747ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /conversation-files 96ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /vault-structure 172ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /sources 432ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /source-changes 204ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /versions 724ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /compare 454ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /history 269ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /catalog 180ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /relationships 94ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /annotations 452ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /text 106ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault tree and separately mounted disposition preview 467ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > denies private bytes before filesystem reads or a download audit, then serves the exact authorized bytes 258ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > source and Authoring admission positive boundaries > retains a genuinely global_public source under restricted runtime RLS 193ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > source and Authoring admission positive boundaries > admits public SELECT only and preserves recorded global rows on runtime INSERT UPDATE and DELETE attempts 31ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > source and Authoring admission positive boundaries > admits creator-only unbound conversation adoption and preserves same-target idempotence 463ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > source and Authoring admission positive boundaries > shows only Authoring documents with a whole-document grant in accessible project records 111ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > refuses unattributed409 or foreign404 Vault identity before bytes or audits 37ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > excludes unattributed and foreign Vault metadata before tree search and record-card projection 260ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > refuses malformed or nonexistent parent identities without exposing metadata 28ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > requires reconciliation for missing or deleted anchors and preserves archived retained reads 40ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > retains the canonical native uniqueness constraint rather than selecting a second anchor 42ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses an unassigned actor before private project metadata 25ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses an unassigned actor before private Vault snippets or identity 49ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > pages the accessible portfolio rather than a newer private project 46ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > counts and pages only accessible library documents 53ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > rechecks current organization membership for a previously authenticated public reader 45ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > denies a now-viewer lead mutation despite the retained member JWT and lead identity 53ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > does not return a private counterpart from an accessible public document relationship 259ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > rechecks current write eligibility after request admission and before the real adoption transaction 34ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses a privately bound source selected into an owned target through conversation adoption 40ms
+{"level":30,"time":"2026-10-14T06:35:13.564Z","pid":150029,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T06:35:13.566Z","pid":150029,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T06:35:13.566Z","pid":150029,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/project-vault-secondary-access.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/project-vault-secondary-access.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/project-vault-secondary-access.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > uses a real non-owner runtime with tenant RLS 17ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > preserves actual NULL-org global_public and withholds NULL-org private sources 92ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > enumerates genuinely unbound chat captures only for the original uploader 216ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > does not authorize an unknown workspace by a matching accessible numeric project 13ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > preserves legacy numeric chat access only through its exact artifact/file parent 48ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > does not make a captured artifact appear to be an unbound conversation upload 105ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > counts only currently permitted citing documents even inside one accessible program 132ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > counts an explicit section grant without promoting it to whole-document authority 55ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > rechecks a revoked current section grant 79ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > refuses an explicitly selected private source before returning change metadata 35ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > preserves an unresolved recorded citation without enriching private source facts 184ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > returns unavailable verification rather than fabricated usage zeros 23ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > resolves a recorded unbound source citation for its original uploader 136ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > withholds that source metadata from a different permitted document reader without changing the citation or hash 55ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > runs bibliography and Sources HTTP reads through actual JWT, object ACL and instrumented app_service tenant transactions 426ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > withholds private and unparented submissions while keeping readable placements 45ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > withholds a private eSTAR export or a private retained counterpart 35ms
+ ✓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > keeps permitted CMC evidence without leaking a private compiled section key 36ms
+ ✓ tests/db/report-tenant-index.dbtest.ts > sealed-report tenant index from the canonical Report OS foundation > has a valid tenant-leading index and retains actual unscoped runtime denial 5ms
+ ✓ tests/db/report-tenant-index.dbtest.ts > sealed-report tenant index from the canonical Report OS foundation > repairs a genuinely missing index and replays without changing the original report 52ms
+ ✓ tests/db/report-tenant-index.dbtest.ts > sealed-report tenant index from the canonical Report OS foundation > refuses a conflicting named index while preserving its definition and report 11ms
+
+ Test Files  4 passed (4)
+      Tests  89 passed (89)
+   Start at  06:34:16
+   Duration  66.66s (transform 12.91s, setup 229ms, import 9.69s, tests 55.64s, environment 0ms)

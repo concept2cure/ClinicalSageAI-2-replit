@@ -1,0 +1,107 @@
+{
+  "claims": [
+    {
+      "id": "86e5e193-d230-4b12-9bd6-2d9d99a2fcb3:0",
+      "frame": {
+        "study": {
+          "kind": "study",
+          "aliases": [
+            "DPL-301"
+          ]
+        },
+        "population": {
+          "set": "randomized",
+          "stated": true,
+          "allRandomized": true
+        },
+        "arm": {
+          "kind": "total"
+        },
+        "measure": {
+          "family": "n",
+          "key": {
+            "pop": "randomized"
+          }
+        },
+        "scope": {
+          "subgroups": []
+        },
+        "analysis": {}
+      },
+      "value": {
+        "count": {
+          "raw": "300",
+          "digits": "300",
+          "sign": 1,
+          "dp": 0,
+          "kind": "exact"
+        }
+      },
+      "form": "D-randomized",
+      "loc": {
+        "sourceId": "86e5e193-d230-4b12-9bd6-2d9d99a2fcb3",
+        "start": 0,
+        "end": 58,
+        "quote": "In Study DPL-301, a total of 300 patients were randomized.",
+        "slotFrom": {
+          "study": "clause",
+          "population": "form"
+        }
+      },
+      "measureLabel": "n:randomized",
+      "section": ""
+    },
+    {
+      "id": "86e5e193-d230-4b12-9bd6-2d9d99a2fcb3:1",
+      "frame": {
+        "study": {
+          "kind": "study",
+          "aliases": [
+            "DPL-301"
+          ]
+        },
+        "population": {
+          "set": "treated",
+          "stated": true
+        },
+        "arm": {
+          "kind": "total"
+        },
+        "measure": {
+          "family": "n",
+          "key": {
+            "pop": "treated"
+          }
+        },
+        "scope": {
+          "subgroups": []
+        },
+        "analysis": {}
+      },
+      "value": {
+        "count": {
+          "raw": "292",
+          "digits": "292",
+          "sign": 1,
+          "dp": 0,
+          "kind": "exact"
+        }
+      },
+      "form": "D-treated",
+      "loc": {
+        "sourceId": "86e5e193-d230-4b12-9bd6-2d9d99a2fcb3",
+        "start": 59,
+        "end": 142,
+        "quote": "In Study DPL-301, a total of 292 patients received at least one dose of study drug.",
+        "slotFrom": {
+          "study": "clause",
+          "population": "form"
+        }
+      },
+      "measureLabel": "n:treated",
+      "section": ""
+    }
+  ],
+  "unframed": [],
+  "numberConvention": "point"
+}

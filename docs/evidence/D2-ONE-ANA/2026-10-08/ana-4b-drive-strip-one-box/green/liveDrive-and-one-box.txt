@@ -1,0 +1,62 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > switches a live drive to a demonstration, keeping the turn and its queued moves 1765ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person took over 184ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person switched off 137ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > a turn that begins driving after the switch went off does not engage 129ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > reports through reportScreen, never as a human steer 77ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > a pending move cancelled by a newer turn is reported to ITS turn, not the newer one 146ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move that lands is settled as landed, by its id — navigation or operation 379ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move the screen refuses is settled as not made, with the screen’s reason and its id 91ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move refused on arrival is still settled, with why — never silently dropped 111ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a pending action and the move behind it are both settled as not made when cleared 178ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move is settled once, even when reporting its landing fails 121ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > a new turn that begins driving drops the moves still queued from the last one 153ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer drops that answer’s queued moves 407ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer also refuses the moves still on their way from it 306ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the strip’s Stop refuses the moves still on their way from the run it stopped 170ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the driving chat’s own Stop halts the drive, queued moves and ones still arriving 166ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > stopping an older turn’s chat does not end the drive a newer turn began 79ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation queued behind another move is not shown as made until it lands 394ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a move from the previous turn that lands after a new turn began is not claimed for it 926ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation that cannot be made is worded as a screen that did not open 69ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > one box: the drive strip draws no steer field on the conversation screen > while the shell’s own turn drives 68ms
+stderr | client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > under a Manual hold it is "Do this instead": the step shown will not run
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > when AnA is idle it is the ordinary composer again
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > there is exactly one place to type to AnA, and it steers the run 116ms
+ ✓ client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > a refused steer keeps its text and says so 51ms
+ ✓ client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > under a Manual hold it is "Do this instead": the step shown will not run 22ms
+ ✓ client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > when AnA is idle it is the ordinary composer again 16ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveOverlay.test.tsx > LiveDriveOverlay — a failed move is worded by what it was > a navigation that failed reads as a screen that did not open, its name intact 42ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveOverlay.test.tsx > LiveDriveOverlay — a failed move is worded by what it was > an operation that failed keeps the operation wording 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveOverlay.test.tsx > LiveDriveOverlay — only moves that landed are shown or counted > a navigation that has only arrived shows no step and no stop 7ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveOverlay.test.tsx > LiveDriveOverlay — only moves that landed are shown or counted > the stop count is the moves that landed — not the queued, not the failed 6ms
+
+ Test Files  3 passed (3)
+      Tests  29 passed (29)
+   Start at  02:47:33
+   Duration  11.37s (transform 2.41s, setup 280ms, import 2.87s, tests 6.34s, environment 1.44s)
+

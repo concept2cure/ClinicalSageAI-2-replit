@@ -21,7 +21,7 @@ import { createMiscInlineRoutes } from '../misc-inline-routes';
 const OWNER_ORG = 9;
 const OTHER_ORG = 7;
 const TASK = {
-  task_id: 'task_1', project_id: 'prog-9', ectd_section: '2.5', document_title: 'Clinical Overview', template: null,
+  task_id: 'task_1', project_id: '99999999-9999-4999-8999-999999999999', ectd_section: '2.5', document_title: 'Clinical Overview', template: null,
   status: 'COMPLETED', draft_content: 'body', created_at: new Date('2026-09-26T09:00:00Z'), updated_at: new Date('2026-09-26T09:00:00Z'),
 };
 
@@ -37,7 +37,7 @@ const pool = {
     const p = params ?? ((q as { values?: unknown[] })?.values ?? []);
     calls.push({ sql, params: p });
     if (/from\s+"?regulatory_programs"?/i.test(sql)) {
-      return String(p[1]) === String(OWNER_ORG) ? { rows: [{ id: 'prog-9' }], rowCount: 1 } : { rows: [], rowCount: 0 };
+      return String(p[1]) === String(OWNER_ORG) ? { rows: [{ id: '99999999-9999-4999-8999-999999999999' }], rowCount: 1 } : { rows: [], rowCount: 0 };
     }
     if (/insert\s+into\s+"?drafting_tasks"?/i.test(sql)) {
       if (failing.insert) throw new Error('relation "drafting_tasks" does not exist');
@@ -67,7 +67,7 @@ function app(orgId: number | null) {
 
 const programReads = () => calls.filter(c => /from\s+"?regulatory_programs"?/i.test(c.sql));
 const taskInserts = () => calls.filter(c => /insert\s+into\s+"?drafting_tasks"?/i.test(c.sql));
-const START = { project_id: 'prog-9', ectd_section: '2.5', document_title: 'Clinical Overview' };
+const START = { project_id: '99999999-9999-4999-8999-999999999999', ectd_section: '2.5', document_title: 'Clinical Overview' };
 
 beforeEach(() => {
   calls.length = 0;
@@ -111,7 +111,7 @@ describe('GET /api/v1/drafting/task_status/:task_id: the task is read within the
   it('returns the organisation\'s own task (200)', async () => {
     const res = await request(app(OWNER_ORG)).get('/api/v1/drafting/task_status/task_1');
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ id: 'task_1', project_id: 'prog-9', status: 'COMPLETED', draft_content: 'body' });
+    expect(res.body).toMatchObject({ id: 'task_1', project_id: '99999999-9999-4999-8999-999999999999', status: 'COMPLETED', draft_content: 'body' });
     const read = calls.find(c => /from\s+"?drafting_tasks"?/i.test(c.sql));
     expect(read?.sql).toMatch(/organization_id/);
     expect(String(read?.params[1])).toBe(String(OWNER_ORG));

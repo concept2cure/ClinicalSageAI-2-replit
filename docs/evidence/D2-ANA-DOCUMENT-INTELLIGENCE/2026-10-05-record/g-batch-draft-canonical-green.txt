@@ -1,0 +1,175 @@
+# g-batch-draft-canonical — GREEN after review round 1, 2026-10-05
+# Replaces the round-0 green evidence. §3 re-runs the round-0 mutations against the final code.
+
+## 1. The step's test and every test file that imports AnaDocumentDraftingService (non-pglite)
+# npx vitest run server/services/ana/__tests__/blueprint-grounded-drafting.test.ts server/services/ana/__tests__/batch-draft-settles-per-item.test.ts server/services/ana/__tests__/batch-draft-sections.test.ts server/services/ana/__tests__/quick-complete-governance.test.ts server/services/ai-gateway/__tests__/content-blocks-carried.test.ts server/routes/__tests__/ana-intelligence-quick-provenance.test.ts server/routes/__tests__/ana-intelligence-gateway-errors.test.ts server/routes/__tests__/batch-draft-accept.test.ts server/routes/__tests__/ana-intelligence-identity.test.ts tests/routes/ana-models-endpoint.test.ts tests/routes/ana-intelligence-provenance.test.ts 
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 20ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 10ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 9ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 8ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+ Test Files  11 passed (11)
+      Tests  62 passed (62)
+
+## 2. The pglite importers
+# npx vitest run server/routes/__tests__/batch-draft-accept-{lineage,readers,shown-words}.pglite.integration.test.ts
+ Test Files  3 passed (3)
+      Tests  73 passed (73)
+
+## 3. Mutation check — each guard removed in turn against the final code; the step test fails; file restored
+== mutation: outline ambiguity listing removed (own row always wins)
+ × resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 24ms
+ × resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 16 passed (18)
+== mutation: canonical title checked before the entry's own row (round-0 order)
+ × resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)
+== mutation: outside-outline guard removed
+ × resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)
+== mutation: title-mismatch note removed
+ × resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)
+== mutation: leading code accepted only with its canonical title (round-0 lead rule)
+ × resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)
+== mutation: Module 1 region gate removed (round-0 guard)
+ × resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)
+== mutation: blueprint-numbering framework gate removed (round-0 guard)
+ × resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)
+== mutation: requirementsSource dropped from gateway metadata (round-0 guard)
+ × draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 6ms
+ × draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 16 passed (18)
+
+## 4. Every blueprint row of US_IND, US_ANDA, US_DMF, ICH_QOS, ICH_M3_DS/DP, ICH_CTD_M4/M5, EU_MAA,
+##    asked by code and by title (reviewer probe rv-bdc-probe3.mts). Columns: entry, row code, row title,
+##    record title for that code, source when asked by code, source when asked by title.
+US_IND	1.1	Cover Letter	canon=-	code->record:ctd-section:1.1:parent	title->record:ctd-section:1.2:exact
+US_IND	1.2	Administrative Forms	canon=Cover Letter	code->record:ctd-section:1.2:exact	title->none
+US_IND	1.5	Table of Contents	canon=-	code->record:not-indexed	title->none
+US_IND	2.2	Introduction	canon=Introduction	code->blueprint+record:ctd-section:2.2:exact	title->blueprint+record:ctd-section:2.2:exact
+US_IND	2.3	Quality Overall Summary	canon=Quality Overall Summary (QOS)	code->blueprint+record:ctd-section:2.3:exact	title->blueprint+record:ctd-section:2.3:exact
+US_IND	2.4	Nonclinical Overview	canon=Nonclinical Overview	code->blueprint+record:ctd-section:2.4:exact	title->blueprint+record:ctd-section:2.4:exact
+US_IND	2.5	Clinical Overview	canon=Clinical Overview	code->blueprint+record:ctd-section:2.5:exact	title->blueprint+record:ctd-section:2.5:exact
+US_IND	2.6	Nonclinical Summaries	canon=-	code->blueprint+record:ctd-section:2.6:parent	title->blueprint+record:ctd-section:2.6:parent
+US_IND	2.7	Clinical Summary	canon=-	code->blueprint+record:ctd-section:2.7:parent	title->blueprint+record:ctd-section:2.7:parent
+US_IND	3.2.S	Drug Substance	canon=-	code->blueprint+record:ctd-section:3.2.S:parent	title->blueprint+record:ctd-section:3.2.S:parent
+US_IND	3.2.P	Drug Product	canon=-	code->blueprint+record:ctd-section:3.2.P:parent	title->blueprint+record:ctd-section:3.2.P:parent
+US_IND	3.2.A	Appendices	canon=Appendices (Facilities and Equipment, Adventitious Agents Safety Evaluation, Excipients)	code->blueprint+record:ctd-section:3.2.A:exact	title->blueprint+record:ctd-section:3.2.A:exact
+US_IND	4.2.1	Pharmacology	canon=-	code->blueprint+record:ctd-section:4.2.1:parent	title->blueprint+record:ctd-section:4.2.1:parent
+US_IND	4.2.2	Pharmacokinetics	canon=-	code->blueprint+record:ctd-section:4.2.2:parent	title->blueprint+record:ctd-section:4.2.2:parent
+US_IND	4.2.3	Toxicology	canon=-	code->blueprint+record:ctd-section:4.2.3:parent	title->blueprint+record:ctd-section:4.2.3:parent
+US_IND	5.3	Clinical Study Reports	canon=-	code->blueprint+record:ctd-section:5.3:parent	title->blueprint+record:ctd-section:5.3:parent
+US_IND	5.4	Literature References	canon=Literature References	code->blueprint+record:ctd-section:5.4:exact	title->record:candidates
+US_ANDA	1.1	Cover Letter	canon=-	code->record:ctd-section:1.1:parent	title->record:ctd-section:1.2:exact
+US_ANDA	1.2	Administrative Forms	canon=Cover Letter	code->record:ctd-section:1.2:exact	title->none
+US_ANDA	2.3	Quality Overall Summary	canon=Quality Overall Summary (QOS)	code->blueprint+record:ctd-section:2.3:exact	title->blueprint+record:ctd-section:2.3:exact
+US_ANDA	3.2.S	Drug Substance	canon=-	code->blueprint+record:ctd-section:3.2.S:parent	title->blueprint+record:ctd-section:3.2.S:parent
+US_ANDA	3.2.P	Drug Product	canon=-	code->blueprint+record:ctd-section:3.2.P:parent	title->blueprint+record:ctd-section:3.2.P:parent
+US_ANDA	5.3	Clinical Study Reports	canon=-	code->blueprint+record:ctd-section:5.3:parent	title->blueprint+record:ctd-section:5.3:parent
+US_ANDA	5.4	Literature References	canon=Literature References	code->blueprint+record:ctd-section:5.4:exact	title->blueprint+record:ctd-section:5.4:exact
+US_DMF	1.1	Cover Letter / Administrative Information	canon=-	code->record:ctd-section:1.1:parent	title->none
+US_DMF	1.2	Letter of Authorization (LOA)	canon=Cover Letter	code->record:ctd-section:1.2:exact	title->none
+US_DMF	3.2.S.1	General Information (Nomenclature, Structure, Properties)	canon=General Information (Drug Substance)	code->blueprint+record:ctd-section:3.2.S.1:exact	title->blueprint+record:ctd-section:3.2.S.1:exact
+US_DMF	3.2.S.2	Manufacture (Process, Controls, Validation)	canon=Manufacture (Drug Substance) — Overview	code->blueprint+record:ctd-section:3.2.S.2:exact	title->blueprint+record:ctd-section:3.2.S.2:exact
+US_DMF	3.2.S.3	Characterisation (Structure, Impurities)	canon=Characterisation (Drug Substance) — Overview	code->blueprint+record:ctd-section:3.2.S.3:exact	title->blueprint+record:ctd-section:3.2.S.3:exact
+US_DMF	3.2.S.4	Control of the Substance (Specification, Methods)	canon=Control of Drug Substance — Overview	code->blueprint+record:ctd-section:3.2.S.4:exact	title->blueprint+record:ctd-section:3.2.S.4:exact
+US_DMF	3.2.S.5	Reference Standards or Materials	canon=Reference Standards or Materials	code->blueprint+record:ctd-section:3.2.S.5:exact	title->blueprint+record:ctd-section:3.2.S.5:exact
+US_DMF	3.2.S.6	Container Closure System	canon=Container Closure System	code->blueprint+record:ctd-section:3.2.S.6:exact	title->blueprint+record:ctd-section:3.2.S.6:exact
+US_DMF	3.2.S.7	Stability	canon=Stability (Drug Substance)	code->blueprint+record:ctd-section:3.2.S.7:exact	title->blueprint+record:ctd-section:3.2.S.7:exact
+US_DMF	3.2.R	Regional Information	canon=Regional Information	code->blueprint+record:ctd-section:3.2.R:exact	title->blueprint+record:ctd-section:3.2.R:exact
+ICH_QOS	2.3.I	Introduction	canon=-	code->blueprint+record:ctd-section:2.3:ancestor	title->blueprint+record:ctd-section:2.3:ancestor
+ICH_QOS	2.3.S	Drug Substance	canon=Quality Overall Summary — Drug Substance	code->blueprint+record:ctd-section:2.3.S:exact	title->blueprint+record:ctd-section:2.3.S:exact
+ICH_QOS	2.3.P	Drug Product	canon=Quality Overall Summary — Drug Product	code->blueprint+record:ctd-section:2.3.P:exact	title->blueprint+record:ctd-section:2.3.P:exact
+ICH_QOS	2.3.A	Appendices (Facilities, Adventitious Agents, Excipients)	canon=Quality Overall Summary — Appendices	code->blueprint+record:ctd-section:2.3.A:exact	title->blueprint+record:ctd-section:2.3.A:exact
+ICH_QOS	2.3.R	Regional Information	canon=Quality Overall Summary — Regional Information	code->blueprint+record:ctd-section:2.3.R:exact	title->blueprint+record:ctd-section:2.3.R:exact
+ICH_M3_DS	3.2.S.1	General Information (Nomenclature, Structure, Properties)	canon=General Information (Drug Substance)	code->blueprint+record:ctd-section:3.2.S.1:exact	title->blueprint+record:ctd-section:3.2.S.1:exact
+ICH_M3_DS	3.2.S.2	Manufacture (Manufacturer, Process, Controls, Validation)	canon=Manufacture (Drug Substance) — Overview	code->blueprint+record:ctd-section:3.2.S.2:exact	title->blueprint+record:ctd-section:3.2.S.2:exact
+ICH_M3_DS	3.2.S.3	Characterisation (Structure Elucidation, Impurities)	canon=Characterisation (Drug Substance) — Overview	code->blueprint+record:ctd-section:3.2.S.3:exact	title->blueprint+record:ctd-section:3.2.S.3:exact
+ICH_M3_DS	3.2.S.4	Control of Drug Substance (Specification, Methods, Validation)	canon=Control of Drug Substance — Overview	code->blueprint+record:ctd-section:3.2.S.4:exact	title->blueprint+record:ctd-section:3.2.S.4:exact
+ICH_M3_DS	3.2.S.5	Reference Standards or Materials	canon=Reference Standards or Materials	code->blueprint+record:ctd-section:3.2.S.5:exact	title->blueprint+record:ctd-section:3.2.S.5:exact
+ICH_M3_DS	3.2.S.6	Container Closure System	canon=Container Closure System	code->blueprint+record:ctd-section:3.2.S.6:exact	title->blueprint+record:ctd-section:3.2.S.6:exact
+ICH_M3_DS	3.2.S.7	Stability	canon=Stability (Drug Substance)	code->blueprint+record:ctd-section:3.2.S.7:exact	title->blueprint+record:ctd-section:3.2.S.7:exact
+ICH_M3_DP	3.2.P.1	Description and Composition of the Drug Product	canon=Description and Composition of the Drug Product	code->blueprint+record:ctd-section:3.2.P.1:exact	title->blueprint+record:ctd-section:3.2.P.1:exact
+ICH_M3_DP	3.2.P.2	Pharmaceutical Development	canon=Pharmaceutical Development	code->blueprint+record:ctd-section:3.2.P.2:exact	title->blueprint+record:ctd-section:3.2.P.2:exact
+ICH_M3_DP	3.2.P.3	Manufacture (Batch Formula, Process, Controls, Validation)	canon=Manufacture	code->blueprint+record:ctd-section:3.2.P.3:exact	title->blueprint+record:ctd-section:3.2.P.3:exact
+ICH_M3_DP	3.2.P.4	Control of Excipients	canon=Control of Excipients	code->blueprint+record:ctd-section:3.2.P.4:exact	title->blueprint+record:ctd-section:3.2.P.4:exact
+ICH_M3_DP	3.2.P.5	Control of Drug Product (Specification, Methods, Validation)	canon=Control of Drug Product	code->blueprint+record:ctd-section:3.2.P.5:exact	title->blueprint+record:ctd-section:3.2.P.5:exact
+ICH_M3_DP	3.2.P.6	Reference Standards or Materials	canon=Reference Standards or Materials	code->blueprint+record:ctd-section:3.2.P.6:exact	title->blueprint+record:ctd-section:3.2.P.6:exact
+ICH_M3_DP	3.2.P.7	Container Closure System	canon=Container Closure System	code->blueprint+record:ctd-section:3.2.P.7:exact	title->blueprint+record:ctd-section:3.2.P.7:exact
+ICH_M3_DP	3.2.P.8	Stability	canon=Stability	code->blueprint+record:ctd-section:3.2.P.8:exact	title->blueprint+record:ctd-section:3.2.P.8:exact
+ICH_CTD_M4	4.2.1	Pharmacology	canon=-	code->blueprint+record:ctd-section:4.2.1:parent	title->blueprint+record:ctd-section:4.2.1:parent
+ICH_CTD_M4	4.2.2	Pharmacokinetics	canon=-	code->blueprint+record:ctd-section:4.2.2:parent	title->blueprint+record:ctd-section:4.2.2:parent
+ICH_CTD_M4	4.2.3	Toxicology	canon=-	code->blueprint+record:ctd-section:4.2.3:parent	title->blueprint+record:ctd-section:4.2.3:parent
+ICH_CTD_M5	5.3	Clinical Study Reports	canon=-	code->blueprint+record:ctd-section:5.3:parent	title->blueprint+record:ctd-section:5.3:parent
+ICH_CTD_M5	5.4	Literature References	canon=Literature References	code->blueprint+record:ctd-section:5.4:exact	title->blueprint+record:ctd-section:5.4:exact
+EU_MAA	1.1	Cover Letter	canon=-	code->record:module1-not-indexed:EU	title->record:module1-not-indexed:EU
+EU_MAA	1.2	Administrative Forms	canon=Cover Letter	code->record:module1-not-indexed:EU	title->none
+EU_MAA	1.5	Table of Contents	canon=-	code->record:module1-not-indexed:EU	title->none
+EU_MAA	2.2	Introduction	canon=Introduction	code->blueprint+record:ctd-section:2.2:exact	title->blueprint+record:ctd-section:2.2:exact
+EU_MAA	2.3	Quality Overall Summary	canon=Quality Overall Summary (QOS)	code->blueprint+record:ctd-section:2.3:exact	title->blueprint+record:ctd-section:2.3:exact
+EU_MAA	2.4	Nonclinical Overview	canon=Nonclinical Overview	code->blueprint+record:ctd-section:2.4:exact	title->blueprint+record:ctd-section:2.4:exact
+EU_MAA	2.5	Clinical Overview	canon=Clinical Overview	code->blueprint+record:ctd-section:2.5:exact	title->blueprint+record:ctd-section:2.5:exact
+EU_MAA	2.6	Nonclinical Summaries	canon=-	code->blueprint+record:ctd-section:2.6:parent	title->blueprint+record:ctd-section:2.6:parent
+EU_MAA	2.7	Clinical Summary	canon=-	code->blueprint+record:ctd-section:2.7:parent	title->blueprint+record:ctd-section:2.7:parent
+EU_MAA	3.2.S	Drug Substance	canon=-	code->blueprint+record:ctd-section:3.2.S:parent	title->blueprint+record:ctd-section:3.2.S:parent
+EU_MAA	3.2.P	Drug Product	canon=-	code->blueprint+record:ctd-section:3.2.P:parent	title->blueprint+record:ctd-section:3.2.P:parent
+EU_MAA	3.2.A	Appendices	canon=Appendices (Facilities and Equipment, Adventitious Agents Safety Evaluation, Excipients)	code->blueprint+record:ctd-section:3.2.A:exact	title->blueprint+record:ctd-section:3.2.A:exact
+EU_MAA	4.2.1	Pharmacology	canon=-	code->blueprint+record:ctd-section:4.2.1:parent	title->blueprint+record:ctd-section:4.2.1:parent
+EU_MAA	4.2.2	Pharmacokinetics	canon=-	code->blueprint+record:ctd-section:4.2.2:parent	title->blueprint+record:ctd-section:4.2.2:parent
+EU_MAA	4.2.3	Toxicology	canon=-	code->blueprint+record:ctd-section:4.2.3:parent	title->blueprint+record:ctd-section:4.2.3:parent
+EU_MAA	5.3	Clinical Study Reports	canon=-	code->blueprint+record:ctd-section:5.3:parent	title->blueprint+record:ctd-section:5.3:parent
+EU_MAA	5.4	Literature References	canon=Literature References	code->blueprint+record:ctd-section:5.4:exact	title->record:candidates
+
+## 5. Edge cases (probe6.mts): codes with titles, Module 1 by region, out-of-outline titles
+== US_IND / 1.1 Cover Letter → record:ctd-section:1.1:parent+title-mismatch
+NOTE: the request titles 1.1 "Cover Letter"; the record holds "Cover Letter" at 1.2. Drafted to 1.1 as numbered — confirm the section with the author; do not merge the two.
+== US_NDA / 2.7.4 Clinical Safety → record:ctd-section:2.7.4:exact+title-mismatch
+NOTE: the request titles 2.7.4 "Clinical Safety"; the record titles 2.7.4 "Summary of Clinical Safety". Drafted to 2.7.4 as numbered — confirm the section with the author; do not merge the two.
+== EU_MAA / 1.2 Cover Letter → record:module1-not-indexed:EU
+SECTION REQUIREMENTS: Module 1 is regional; the platform's guidance has no EU (EMA) Module 1 entry for 1.2 — do not supply its requirements from memory. Draft only what the material provided supports, and say which EU Module 1 requirements were not available.
+== EU_MAA / Cover Letter → record:module1-not-indexed:EU
+SECTION REQUIREMENTS: Module 1 is regional; the platform's guidance has no EU (EMA) Module 1 entry — do not supply its requirements from memory. Draft only what the material provided supports, and say which EU Module 1 requirements were not available.
+== US_IND / Cover Letter → record:ctd-section:1.2:exact
+== US_IND / 3 Month Stability → none
+== US_IND / 3 Quality → none
+== ICH_QOS / Stability → record:outside-outline
+== US_IND / Administrative Forms → none
+== US_IND / 9.9.9 Foo → record:not-indexed+title-mismatch
+NOTE: the request titles 9.9.9 "Foo". Drafted to 9.9.9 as numbered — confirm the section with the author; do not merge the two.
+== fda_510k / 3 Device Description → blueprint
+== ICH_IB / 3 → blueprint
+== US_IND / Totally Fabricated Section 99 → none
+== ICH_CTD_M5 / Literature References → blueprint+record:ctd-section:5.4:exact
+== US_DMF / Container Closure System → blueprint+record:ctd-section:3.2.S.6:exact
+== US_IND / Container Closure System → record:candidates
+SECTION REQUIREMENTS: "Container Closure System" names more than one section in the platform's CTD record: 3.2.P.7 Container Closure System; 3.2.S.6 Container Closure System. Ask which section code is meant, or draft to the code given; do not merge their requirements or pick one from memory.
+
+## 6. Typecheck and lint
+# flock tsc.lock npx tsc --noEmit -p . | grep -E 'AnaDocumentDraftingService.ts|blueprint-grounded-drafting.test.ts' → no lines (0 errors in either file)
+# npx eslint AnaDocumentDraftingService.ts → 8 warnings, the same 8 as HEAD (5 unused imports, draftDocument complexity 16, unused startTime, max-lines); 0 errors
+# npx eslint blueprint-grounded-drafting.test.ts → 0 warnings (HEAD: 0)

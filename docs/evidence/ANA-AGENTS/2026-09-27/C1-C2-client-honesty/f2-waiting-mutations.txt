@@ -1,0 +1,3 @@
+== M1 an approval wait is not waiting:       Tests  2 failed | 5 passed (7)
+== M2 strip ignores waiting:       Tests  1 failed | 6 passed (7)
+== O1 overcorrection: a settled turn with an old sign-off still reads as waiting:       Tests  1 failed | 6 passed (7)

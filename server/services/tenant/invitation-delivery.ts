@@ -10,6 +10,7 @@ import auditService from '../auditService';
 import { isEmailConfigured, sendInvitationEmail } from '../emailService';
 import {
   INVITATION_TTL_MS,
+  INVITE_PASSWORD_HASH_PREFIX,
   mintPasswordSetupToken,
   passwordSetupUrl,
 } from '../password-setup-token';
@@ -27,6 +28,8 @@ interface InvitationArgs {
   verifiedRole: string;
   callerId: number | null;
   appBaseUrl: string;
+  /** A new link for a member who never redeemed the first (findUnredeemedInvitee). */
+  reissued?: boolean;
 }
 
 /**
@@ -54,6 +57,9 @@ async function storeSetupToken(
     throw new Error('the password-setup token was not stored on the new account');
   }
 }
+
+/** The audit detail that tells a re-issued link from the first one. */
+const reissueMark = (reissued?: boolean) => (reissued ? { reissued: true } : {});
 
 /** What the admin is told about how the invitee will receive their link. */
 export interface InvitationDelivery {
@@ -125,6 +131,7 @@ export async function issueInvitation(req: any, args: InvitationArgs): Promise<I
       delivery,
       emailSent,
       invitationExpiresAt: setup.expiresAt.toISOString(),
+      ...reissueMark(args.reissued),
     },
   });
   if (!audit.persisted) {
@@ -138,4 +145,69 @@ export async function issueInvitation(req: any, args: InvitationArgs): Promise<I
     ...(emailSent ? {} : { setupUrl }),
     ...(emailError ? { emailError } : {}),
   };
+}
+
+/** A member of the organization who has never redeemed their setup link. */
+export interface UnredeemedInvitee {
+  id: number;
+  name: string | null;
+  role: string;
+}
+
+/**
+ * The member of `organizationId` with this address whose password hash is
+ * still the invitation's — invited and never activated — or null (QA
+ * 2026-10-08, j9 finding 5). Inviting that address again re-issues their setup
+ * link through issueInvitation: a new token replaces the old one, so the old
+ * link stops working. Nobody else qualifies: an account that has set a password
+ * no longer carries the prefix, so re-inviting can never reset an active
+ * member's password, and a member of another organization is not found here.
+ */
+export async function findUnredeemedInvitee(
+  req: any,
+  args: { organizationId: number; verifiedRole: string; email: string }
+): Promise<UnredeemedInvitee | null> {
+  const { rows } = await inVerifiedOrgScope(req, args.organizationId, args.verifiedRole, () =>
+    pool.query(
+      `SELECT u.id, u.name, ou.role
+         FROM organization_users ou
+         JOIN users u ON u.id = ou.user_id
+        WHERE ou.organization_id = $1 AND lower(u.email) = lower($2) AND u.password_hash LIKE $3
+        LIMIT 1`,
+      [args.organizationId, args.email, `${INVITE_PASSWORD_HASH_PREFIX}%`]
+    )
+  );
+  const row = rows[0];
+  return row ? { id: Number(row.id), name: row.name ?? null, role: String(row.role) } : null;
+}
+
+/**
+ * The invitation route's answer when the address is a member of the target
+ * organization who never activated: a new setup link through issueInvitation,
+ * the stored role kept (a role changes through PATCH, with a reason). Null when
+ * the address is anyone else, and the route goes on to create. Nothing here
+ * adds a member or uses a seat.
+ */
+export async function reissueForUnredeemedInvitee(
+  req: any,
+  args: Omit<InvitationArgs, 'userId' | 'role' | 'reissued'>
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  const invitee = await findUnredeemedInvitee(req, args);
+  if (!invitee) return null;
+  try {
+    const invitation = await issueInvitation(req, { ...args, userId: invitee.id, role: invitee.role, reissued: true });
+    return {
+      status: 200,
+      body: { reissued: true, id: invitee.id, email: args.email, name: invitee.name, role: invitee.role, invitation },
+    };
+  } catch (err) {
+    log.error('Invitation could not be re-issued', err);
+    return {
+      status: 500,
+      body: {
+        error: 'INVITATION_NOT_REISSUED',
+        message: 'A new setup link could not be issued. The previous link still works until it expires.',
+      },
+    };
+  }
 }

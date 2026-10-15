@@ -1,0 +1,218 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen 98ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > { id: "new" } with no seed: AnA's running turn is kept, and on screen 30ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > "Open full thread" with an empty box: AnA's running turn is kept, and on screen 29ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an unseeded ask to draft: AnA's running turn is kept, and on screen 30ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an idle conversation is kept too — arriving is not a request to start over 24ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an empty conversation in progress is titled as the new conversation it is 29ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > neither aborts her nor vanishes: it waits in the composer, and the person is told 30ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > when she is idle, the question starts its new conversation and is sent 28ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > is not loaded over a turn that is still running — the person is told to open it again 32ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > once loaded, is the conversation in progress — the next arrival does not load it again 54ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > New conversation resets the shell’s chat 153ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > is not offered while a conversation is loading 64ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > is not offered mid-turn — a reset would abort AnA where she stands 57ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is loading 57ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is failed 57ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > shows the failed history with retry for that same thread and an explicit new conversation control 24ms
+   → expected null not to be null
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > ignores an obsolete load failure without surfacing an error on the newer selection
+[useAnaChat] loadThread failed: Alpha failed
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > allows an explicit new conversation after a failed history read
+[useAnaChat] loadThread failed: Offline
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps the latest selected thread when an older response arrives last 24ms
+   → expected 'alpha' to be 'beta' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps loading and refuses send while the newer history is still pending 5ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > ignores an obsolete load failure without surfacing an error on the newer selection 4ms
+   → expected Error: Alpha failed to be undefined
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > reset cancels pending history so it cannot replace a newly asked conversation 18ms
+   → expected undefined to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > unmount cancels a history read and ignores its late result 4ms
+   → expected undefined to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > clears the previous transcript on switch and blocks a failed selection until retry succeeds 3ms
+   → expected 'alpha' to be null
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > allows an explicit new conversation after a failed history read 4ms
+   → expected undefined to match object { threadId: 'alpha' }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is loading
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is failed
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx:270:27
+    268|     fireEvent.change(composer, { target: { value: 'Keep this question …
+    269|     const send = screen.getByRole('button', { name: 'Send message to A…
+    270|     expect(send.disabled).toBe(true);
+       |                           ^
+    271|     fireEvent.keyDown(composer, { key: 'Enter' });
+    272|     expect(chat.send).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > shows the failed history with retry for that same thread and an explicit new conversation control
+AssertionError: expected null not to be null
+ ❯ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx:283:71
+    281|     });
+    282|     await mount(chat);
+    283|     expect(screen.queryByText("Couldn't load this conversation")).not.…
+       |                                                                       ^
+    284|     expect(screen.queryByText('Talk to AnA')).toBeNull();
+    285|     fireEvent.click(screen.getByRole('button', { name: 'Retry loading …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps the latest selected thread when an older response arrives last
+AssertionError: expected 'alpha' to be 'beta' // Object.is equality
+
+Expected: "beta"
+Received: "alpha"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts:67:37
+     65|     await act(async () => { reads[0].response.resolve(history('Alpha')…
+     66|
+     67|     expect(result.current.threadId).toBe('beta');
+       |                                     ^
+     68|     expect(result.current.messages.map(m => m.text)).toEqual(['Beta qu…
+     69|     expect(reads[0].signal?.aborted).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps loading and refuses send while the newer history is still pending
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts:84:44
+     82|     act(() => { latest = result.current.loadThread('beta'); });
+     83|     await act(async () => { reads[0].response.resolve(history('Alpha')…
+     84|     expect(result.current.isLoadingThread).toBe(true);
+       |                                            ^
+     85|     expect(result.current.messages).toEqual([]);
+     86|     await act(async () => { await result.current.send('Do not send wit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > ignores an obsolete load failure without surfacing an error on the newer selection
+AssertionError: expected Error: Alpha failed to be undefined
+
+- Expected:
+undefined
+
++ Received:
+Error {
+  "message": "Alpha failed",
+}
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts:99:30
+     97|     act(() => { latest = result.current.loadThread('beta'); });
+     98|     await act(async () => { reads[0].response.reject(new Error('Alpha …
+     99|     expect(await oldFailure).toBeUndefined();
+       |                              ^
+    100|     expect(result.current.isLoadingThread).toBe(true);
+    101|     expect(result.current.threadLoadError).toBeFalsy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > reset cancels pending history so it cannot replace a newly asked conversation
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts:111:38
+    109|     await act(async () => { result.current.reset(); await result.curre…
+    110|     await act(async () => { reads[0].response.resolve(history('Alpha')…
+    111|     expect(reads[0].signal?.aborted).toBe(true);
+       |                                      ^
+    112|     expect(result.current.isLoadingThread).toBe(false);
+    113|     expect(result.current.messages.map(m => m.text)).toEqual(['A fresh…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > unmount cancels a history read and ignores its late result
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts:123:38
+    121|     act(() => { loading = result.current.loadThread('alpha'); });
+    122|     unmount();
+    123|     expect(reads[0].signal?.aborted).toBe(true);
+       |                                      ^
+    124|     reads[0].response.resolve(history('Alpha'));
+    125|     await loading;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > clears the previous transcript on switch and blocks a failed selection until retry succeeds
+AssertionError: expected 'alpha' to be null
+
+- Expected:
+null
+
++ Received:
+"alpha"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts:136:37
+    134|     act(() => { switching = result.current.loadThread('beta'); });
+    135|     const failure = switching.catch(error => error);
+    136|     expect(result.current.threadId).toBeNull();
+       |                                     ^
+    137|     expect(result.current.messages).toEqual([]);
+    138|     await act(async () => { reads[1].response.resolve(new Response('',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > allows an explicit new conversation after a failed history read
+AssertionError: expected undefined to match object { threadId: 'alpha' }
+
+- Expected:
+{
+  "threadId": "alpha",
+}
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts:159:44
+    157|     const failure = loading.catch(error => error);
+    158|     await act(async () => { reads[0].response.reject(new Error('Offlin…
+    159|     expect(result.current.threadLoadError).toMatchObject({ threadId: '…
+       |                                            ^
+    160|     await act(async () => { result.current.reset(); await result.curre…
+    161|     expect(result.current.threadLoadError).toBeFalsy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 13 passed (23)
+   Start at  21:48:29
+   Duration  4.17s (transform 1.33s, setup 188ms, import 1.88s, tests 866ms, environment 939ms)
+

@@ -1,0 +1,54 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted 96ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back 19ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept all, then Undo: nothing returns to pending 28ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > an AnA draft inserted and accepted in this session is not removed by Undo 34ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > CONTROL: ordinary typing is still undoable 22ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': Accept, then Undo: the accepted change stands 21ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': Accept, then Undo: the accepted change stands 16ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': Accept all, then Undo: the accepted change stands 17ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': Accept all, then Undo: the accepted change stands 14ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': typing after the decision is still undoable, Undo stops at the decision, Redo is untouched 15ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': typing after the decision is still undoable, Undo stops at the decision, Redo is untouched 13ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: own 'insertion' with no decision: Undo and Redo behave as before 16ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: own 'deletion' with no decision: Undo and Redo behave as before 14ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: an AnA insert is not a decision; the typing before it stays undoable 18ms
+   → expected 'Base text. Typed clause.Confirmed by …' not to contain 'Typed clause.'
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an accepted text present, unmarked, in the document — across a formatting split 7ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is back under a pending insertion mark, and its author with it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is struck by a pending deletion 7ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text the document no longer holds 6ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an author while any one of their accepted texts survives 11ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > does not match a text across a paragraph boundary 14ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after Accept leaves the decision, the canvas and the save in agreement 274ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > attributes nothing to AnA once the accepted text is gone from the section 62ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after accepting one’s own tracked insertion leaves the accepted text (gap (e)) 111ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > answers the same whichever list the host reads first 52ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: an AnA insert is not a decision; the typing before it stays undoable
+AssertionError: expected 'Base text. Typed clause.Confirmed by …' not to contain 'Typed clause.'
+
+Expected: "Typed clause."
+Received: "Base text. Typed clause.Confirmed by MS/NMR."
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:289:46
+    287|     editor.commands.undo();
+    288|
+    289|     expect(editor.state.doc.textContent).not.toContain('Typed clause.'…
+       |                                              ^
+    290|     expect(pendingOf(editor)).toEqual([['insertion', DRAFT]]);
+    291|     expect(decisions).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 passed (24)
+   Start at  18:07:17
+   Duration  2.60s (transform 552ms, setup 158ms, import 860ms, tests 898ms, environment 516ms)
+

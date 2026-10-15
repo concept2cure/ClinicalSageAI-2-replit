@@ -28,8 +28,11 @@ import {
 } from '../services/protocol-amendments-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('protocol-amendments');
 // A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
 router.use(requireEditorAccessForWrites);
 
@@ -52,7 +55,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the protocol amendment request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 

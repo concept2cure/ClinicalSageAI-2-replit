@@ -42,6 +42,34 @@ export interface Queryable {
   query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number | null }>;
 }
 
+export class DocumentWriteReservationError extends Error {
+  constructor(readonly status: 403 | 404, readonly code: string, message: string) {
+    super(message);
+    this.name = 'DocumentWriteReservationError';
+  }
+}
+
+/** Inside the child writer's transaction, before any child row lock/write.
+ * The parent reservation both excludes signing and changes its MVCC version,
+ * so a waiting REPEATABLE READ signer retries instead of using old children. */
+export async function reserveWritableDocument(executor: Queryable, docId: string, tenantId: number): Promise<void> {
+  const locked = await executor.query('SELECT status, locked_at FROM authoring_documents WHERE id=$1 AND tenant_id=$2 FOR UPDATE', [docId,tenantId]);
+  const doc = locked.rows[0] as DocRow | undefined;
+  if (!doc) throw new DocumentWriteReservationError(404,'DOCUMENT_NOT_FOUND','Document not found. Nothing was changed.');
+  if (sealsContent(doc)) throw new DocumentWriteReservationError(403,'DOCUMENT_FROZEN',FROZEN_MESSAGE(String(doc.status ?? '').toUpperCase()));
+  const touched = await executor.query('UPDATE authoring_documents SET updated_at=clock_timestamp() WHERE id=$1 AND tenant_id=$2 RETURNING id', [docId,tenantId]);
+  if (touched.rows.length !== 1) throw new DocumentWriteReservationError(403,'DOCUMENT_WRITE_RESERVATION_DENIED','The current document could not be reserved for this write. Nothing was changed.');
+}
+
+/** Resolve the parent without a child lock, then reserve parent before child.
+ * Section ownership is immutable on the canonical PATCH/revert/accept paths. */
+export async function reserveWritableSection(executor: Queryable, sectionId: string, tenantId: number): Promise<void> {
+  const section = await executor.query('SELECT doc_id::text FROM authoring_sections WHERE id=$1 AND tenant_id=$2', [sectionId,tenantId]);
+  const docId = (section.rows[0] as { doc_id?: unknown } | undefined)?.doc_id;
+  if (typeof docId !== 'string') throw new DocumentWriteReservationError(404,'DOCUMENT_NOT_FOUND','Section not found. Nothing was changed.');
+  await reserveWritableDocument(executor,docId,tenantId);
+}
+
 /**
  * Document statuses that seal the content.
  *
@@ -60,7 +88,7 @@ export interface LockVerdict {
   /** Present when `writable` is false: why, in the user's terms. */
   reason?: string;
   /** Machine-readable, for clients that branch. */
-  code?: 'DOCUMENT_FROZEN' | 'DOCUMENT_NOT_FOUND';
+  code?: 'DOCUMENT_FROZEN' | 'DOCUMENT_NOT_FOUND' | 'SEAL_CHECK_UNAVAILABLE';
   /** The status that decided it, for the audit line. */
   status?: string;
 }
@@ -75,6 +103,20 @@ const FROZEN_MESSAGE = (status: string) =>
 interface DocRow {
   status: string | null;
   locked_at: string | Date | null;
+}
+
+/**
+ * Does this row seal its content? The ONE definition, shared by every entry
+ * point below — it was written out twice and a third copy for the filing door
+ * is exactly how the three would drift apart.
+ *
+ * `locked_at` is part of the schema's lock vocabulary. Nothing sets it today,
+ * so honouring it costs nothing and means a future writer that does set it is
+ * enforced from the moment it lands rather than from the moment someone
+ * remembers to update this list.
+ */
+function sealsContent(doc: DocRow): boolean {
+  return LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase()) || doc.locked_at != null;
 }
 
 /**
@@ -105,15 +147,79 @@ export async function checkDocumentWritable(
   }
 
   const status = String(doc.status ?? '').toUpperCase();
-  // `locked_at` is part of the schema's lock vocabulary. Nothing sets it today,
-  // so honouring it costs nothing and means a future writer that does set it is
-  // enforced from the moment it lands rather than from the moment someone
-  // remembers to update this list.
-  if (LOCKED_DOCUMENT_STATUSES.has(status) || doc.locked_at != null) {
+  if (sealsContent(doc)) {
     return { writable: false, code: 'DOCUMENT_FROZEN', reason: FROZEN_MESSAGE(status), status };
   }
 
   return { writable: true, status };
+}
+
+/**
+ * The same gate, entered from the FILING side — the governed document a
+ * section PATCH on `c2c_document_sections` writes.
+ *
+ * ── Why this exists ──────────────────────────────────────────────────────────
+ * This module's header names four content paths and says "one guard, called by
+ * every writer". There is a FIFTH, and it writes the store that matters most:
+ * `PATCH /api/c2c/documents/:id/sections/:key`, the MDx editor's save, puts
+ * text into `c2c_document_sections` — the system of record an eCTD leaf is
+ * materialized from. It asked only `c2c_documents.status`, and the authoring
+ * freeze does not set that: `POST /docs/:docId/freeze` writes
+ * `frozen_documents` and `authoring_documents.status = 'FROZEN'` and touches
+ * `c2c_documents` not at all. So a FROZEN or APPROVED document's FILED text
+ * could still be changed while its seal, and every signature over it, covered
+ * the editing layer only — the §11.10(e) failure this module was written to
+ * close, one store over.
+ *
+ * ── The three answers, and why none of them is a guess ───────────────────────
+ * NOTHING BOUND is writable, not "not found". A filing nobody edits through
+ * Authoring has no authoring seal to respect, and the MDx editor is a
+ * first-class door — refusing it for the absence of an authoring document
+ * would break the surface to protect a seal that does not exist.
+ *
+ * NO AUTHORING BUNDLE on this deployment is writable too, and for the same
+ * reason rather than by tolerance: if `authoring_documents` is not there, no
+ * authoring document can be bound, so there is nothing sealed on that side.
+ * Only the two codes Postgres raises for that are read this way (42P01, 42703).
+ *
+ * ANY OTHER READ FAILURE refuses, with `SEAL_CHECK_UNAVAILABLE`. "We could not
+ * tell whether this record is sealed" is not permission to write to it — the
+ * posture this module's header already states for an unreadable status, and
+ * the shape the authoring router's own `BINDING_CHECK_UNAVAILABLE` uses.
+ *
+ * ANY sealed bound document seals the filing. The binding is not unique, so
+ * the rows are filtered by {@link sealsContent} rather than the first row
+ * winning: one frozen editing copy is enough.
+ */
+export async function checkFilingWritable(
+  executor: Queryable,
+  c2cDocumentId: string,
+  tenantId: number,
+): Promise<LockVerdict> {
+  let rows: unknown[];
+  try {
+    ({ rows } = await executor.query(
+      'SELECT status, locked_at FROM authoring_documents WHERE c2c_document_id = $1 AND tenant_id = $2',
+      [c2cDocumentId, tenantId],
+    ));
+  } catch (err) {
+    const code = (err as { code?: unknown } | null)?.code;
+    /* 42P01 undefined_table, 42703 undefined_column: this deployment carries
+       the governed bundle without the authoring one, so nothing can be bound
+       and nothing on that side is sealed. */
+    if (code === '42P01' || code === '42703') return { writable: true };
+    return {
+      writable: false,
+      code: 'SEAL_CHECK_UNAVAILABLE',
+      reason:
+        'Whether the document bound to this filing is sealed could not be checked, so nothing was changed. ' +
+        'Try again.',
+    };
+  }
+  const sealed = (rows as DocRow[]).find((d) => sealsContent(d));
+  if (!sealed) return { writable: true };
+  const status = String(sealed.status ?? '').toUpperCase();
+  return { writable: false, code: 'DOCUMENT_FROZEN', reason: FROZEN_MESSAGE(status), status };
 }
 
 /**

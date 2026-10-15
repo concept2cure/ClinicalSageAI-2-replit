@@ -1,0 +1,419 @@
+{
+  "source": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
+  "run": 37658757545,
+  "artifacts": [
+    {
+      "id": 11505322288,
+      "name": "test-results",
+      "job": 112929193020,
+      "zip_sha256": "ad0c5baf868494046f33e65d1dc4240fb42e986f7c80afbcc30902c6009e0957",
+      "members": [
+        {
+          "name": "jest.json",
+          "sha256": "49c241acb497a3f50289d94ac5b45aff003a8b5c0d3a744a85b765399a3704c9",
+          "physical_files": 7,
+          "registered_cases": 40,
+          "actual_assertion_statuses": {
+            "passed": 40
+          },
+          "physical_file_statuses": {
+            "passed": 7
+          },
+          "report_success": true,
+          "registered_nested_suite_count": 7
+        },
+        {
+          "name": "vitest.json",
+          "sha256": "049db84fcd601791178862723f14f49b4379e6b1b0fe0c43238aa12e0cb9d41c",
+          "physical_files": 3563,
+          "registered_cases": 43614,
+          "actual_assertion_statuses": {
+            "passed": 43509,
+            "skipped": 53,
+            "pending": 52
+          },
+          "physical_file_statuses": {
+            "passed": 3563
+          },
+          "report_success": true,
+          "registered_nested_suite_count": 13561
+        }
+      ]
+    },
+    {
+      "id": 11505682108,
+      "name": "integration-tests-results",
+      "job": 112929192952,
+      "zip_sha256": "9f53f1463a16cefbbf219d2d187ede8b62be82b81ecef8afc45f32c00ca71b53",
+      "members": [
+        {
+          "name": "jest.json",
+          "sha256": "52d0213ff56232db5736e2a97cc4e64a2d5bb9198c00f6780dc22ed3a25c5c27",
+          "physical_files": 7,
+          "registered_cases": 40,
+          "actual_assertion_statuses": {
+            "passed": 40
+          },
+          "physical_file_statuses": {
+            "passed": 7
+          },
+          "report_success": true,
+          "registered_nested_suite_count": 7
+        },
+        {
+          "name": "vitest.json",
+          "sha256": "c0fc45d07c79611a79d86b7ee2a13865a04e04346ebb851658c2b9c9ea001d40",
+          "physical_files": 3563,
+          "registered_cases": 43614,
+          "actual_assertion_statuses": {
+            "passed": 43494,
+            "skipped": 120
+          },
+          "physical_file_statuses": {
+            "passed": 3563
+          },
+          "report_success": true,
+          "registered_nested_suite_count": 13561
+        }
+      ]
+    }
+  ],
+  "job_status_snapshot": {
+    "source": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
+    "run": 37658757545,
+    "jobs": [
+      {
+        "id": 112929192952,
+        "head_sha": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
+        "name": "Integration Tests",
+        "status": "completed",
+        "conclusion": "failure",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37658757545/job/112929192952",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Setup Node.js",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Install dependencies",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Install Postgres client",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "Apply GCC migrations",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "Smoke \u2014 apply RLS rollout migrations (0019/0020/0021)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "Run integration tests",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 10,
+            "name": "Upload integration test results",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Provision a deploy-shaped database for the real-database tests",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 12,
+            "name": "Run real-database tests (unmocked pg, RLS_ENFORCE=on)",
+            "status": "completed",
+            "conclusion": "failure"
+          },
+          {
+            "number": 22,
+            "name": "Post Setup Node.js",
+            "status": "completed",
+            "conclusion": "skipped"
+          },
+          {
+            "number": 23,
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 24,
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 25,
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 112929193020,
+        "head_sha": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
+        "name": "Test",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37658757545/job/112929193020",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Setup Node.js",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Install dependencies",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Install Postgres client + xmllint (eCTD qualification)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "Setup Python (document runtime)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "Install document runtime (python-docx + lxml)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "Apply GCC migrations",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 10,
+            "name": "Run tests",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Upload core test results",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 19,
+            "name": "Post Setup Python (document runtime)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 20,
+            "name": "Post Setup Node.js",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 21,
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 22,
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 23,
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 112929193056,
+        "head_sha": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
+        "name": "Coverage (ratchet)",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37658757545/job/112929193056",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Setup Node.js",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Install dependencies",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Install Postgres client",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "Apply GCC migrations",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "Install coverage provider",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "Measure coverage",
+            "status": "in_progress",
+            "conclusion": null
+          },
+          {
+            "number": 10,
+            "name": "Coverage may not go down",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "number": 11,
+            "name": "Upload coverage report",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "number": 20,
+            "name": "Post Setup Node.js",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "number": 21,
+            "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "number": 22,
+            "name": "Stop containers",
+            "status": "pending",
+            "conclusion": null
+          }
+        ]
+      }
+    ],
+    "complete_job_log_retrieval": "Transport closed; assertion cause not retrieved",
+    "current_qualified_source": "a5dc3f3d84ba62a06806f8455897fe0554ae654d",
+    "current_qualified_jobs": [
+      {
+        "id": 112964288622,
+        "name": "Integration Tests",
+        "status": "in_progress",
+        "conclusion": null,
+        "head_sha": "a5dc3f3d84ba62a06806f8455897fe0554ae654d"
+      },
+      {
+        "id": 112964288728,
+        "name": "Test",
+        "status": "in_progress",
+        "conclusion": null,
+        "head_sha": "a5dc3f3d84ba62a06806f8455897fe0554ae654d"
+      },
+      {
+        "id": 112964288873,
+        "name": "Coverage (ratchet)",
+        "status": "in_progress",
+        "conclusion": null,
+        "head_sha": "a5dc3f3d84ba62a06806f8455897fe0554ae654d"
+      }
+    ]
+  },
+  "qualification_limit": "The successful broad reports precede the failing real-database step; they do not qualify that failed Integration job or the newer A5 source. Skipped/pending cases are not passes; nested suite totals are not physical file counts."
+}

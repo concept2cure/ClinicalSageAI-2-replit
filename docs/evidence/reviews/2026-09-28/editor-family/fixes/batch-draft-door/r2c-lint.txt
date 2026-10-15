@@ -1,0 +1,30 @@
+# r2c lint (final bytes): npx eslint on every file this round changed, now and at HEAD (HEAD via git show | eslint --stdin)
+== server/services/clinical-regulatory-evidence/machine-attribution.ts
+  now:
+errors=0 warnings=0
+  HEAD:
+errors=0 warnings=0
+== server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+  now:
+errors=0 warnings=0
+  HEAD:
+errors=0 warnings=0
+== server/routes/batch-draft-routes.ts
+  now:
+errors=0 warnings=3
+    max-lines-per-function line 290 - Function 'createBatchDraftRoutes' has too many lines (244). Maximum allowed is 100.
+    max-lines-per-function line 428 - Async arrow function has too many lines (164). Maximum allowed is 100.
+    complexity line 428 - Async arrow function has a complexity of 34. Maximum allowed is 15.
+  HEAD:
+errors=0 warnings=3
+    max-lines-per-function line 214 - Function 'createBatchDraftRoutes' has too many lines (235). Maximum allowed is 100.
+    max-lines-per-function line 352 - Async arrow function has too many lines (155). Maximum allowed is 100.
+    complexity line 352 - Async arrow function has a complexity of 34. Maximum allowed is 15.
+== server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+  now:
+errors=0 warnings=0
+  HEAD:
+errors=0 warnings=0
+== server/services/authoring/machine-claim-verify.ts (new in this lane, untracked; no HEAD version)
+  now:
+errors=0 warnings=0

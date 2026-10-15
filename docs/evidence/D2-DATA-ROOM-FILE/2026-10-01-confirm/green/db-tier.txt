@@ -1,0 +1,13 @@
+# npm run test:db, this change, RLS_ENFORCE=on, app_service runtime role, 2026-10-01T13:02:28Z
+# The one failure is tests/db/actor-displays.dbtest.ts, red on trunk after 4f74b0f18 (audit-read rule); handed on in docs/work-orders/README.md.
+stdout | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+stdout | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+stderr | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing 1960ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > confirms each with one chained row carrying the reason, and names the person 58ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > a document moved or confirmed since the list was loaded is refused CONFLICT; the others commit 37ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > a viewer is refused, and nothing changes 6ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > the Vault counts the suggestions awaiting confirmation over the program 87ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 102 passed (103)
+      Tests  1 failed | 1006 passed (1007)

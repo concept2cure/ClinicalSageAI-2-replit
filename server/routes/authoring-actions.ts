@@ -16,6 +16,8 @@ import {
    the shared `recordAuditRow`, which reports the outcome instead of discarding
    it. See server/services/audit/audit-write-outcome.ts. */
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { governedActorId } from '../middleware/orgMembership';
+import type { DecisionLifecycleService } from '../services/decision-lifecycle-service.js';
 
 const router = Router();
 
@@ -27,6 +29,17 @@ function requireTenantId(req: Request, res: Response): number | null {
     return null;
   }
   return tenantId;
+}
+
+/**
+ * The session user a governed record here names (governedActorId), or
+ * undefined — which the decision ledger refuses, so nothing is recorded. These
+ * read `(req as any).userId || undefined` until 2026-10-15: a user on req.user
+ * went unrecorded, and a non-numeric req.userId ('system') was the decider.
+ */
+function sessionActor(req: Request): string | undefined {
+  const actorId = governedActorId(req);
+  return actorId == null ? undefined : String(actorId);
 }
 
 async function getScopedArtifact(
@@ -182,6 +195,95 @@ export async function resolveGovernedAuthority(
       checkFailed: true,
     };
   }
+}
+
+/**
+ * Confirm, then execute, a recorded decision. Each transition answers
+ * { success: false } when it is refused or did not persist; the two routes that
+ * stepped through it ignored that answer and then wrote a receipt saying the
+ * decision was executed. A refused step now throws into the route's
+ * governed-record failure path, before any receipt.
+ */
+export async function confirmAndExecuteDecision(
+  service: Pick<DecisionLifecycleService, 'transitionDecision'>,
+  decisionId: string,
+  actorId: string,
+  what: string,
+): Promise<void> {
+  for (const status of ['confirmed', 'executed'] as const) {
+    const t = await service.transitionDecision(decisionId, status, { actorId });
+    if (!t?.success) throw new Error(t?.error ?? `the ${what} decision could not be ${status}`);
+  }
+}
+
+/**
+ * The rationale a governed record of a boundary promotion carries, written from
+ * what the boundary evaluation checked and found met (its metRequirements).
+ * The two promotion routes below recorded literals — "strong confidence", "All
+ * gates passed", "Preflight passed or skipped" — naming checks that had not
+ * run (2026-10-15).
+ */
+function boundaryRationale(from: string, to: string, metRequirements: readonly string[]): string {
+  return metRequirements.length > 0
+    ? `Governance boundary ${from} → ${to} allowed. Checked and met: ${metRequirements.join(' ')}`
+    : `Governance boundary ${from} → ${to} allowed; no boundary rule or gate applied, so nothing was checked.`;
+}
+
+/** A decision_records id, which mark-submission-ready accepts as the decision its confidence rule rates. */
+const DECISION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export type BodyExpectationsCheck = {
+  status: 'pass' | 'warn' | 'fail' | 'unknown';
+  reason?: string;
+  missing?: string[];
+  weak?: string[];
+  requiredLevel?: string;
+};
+
+/**
+ * The body-expectations check for one section: the section's own text measured
+ * against what the named regulator expects of that section.
+ *
+ * Every preflight measured it against '' — the empty string — so each recorded
+ * requirement came back 'missing' and the check failed whatever the section
+ * said, while a section with no recorded expectations passed, measured against
+ * nothing. A missing regulator or submission type was filled in as FDA / IND.
+ * The section preflight's verdict is written into a governed decision
+ * (recordPreflightDecision), so each of those became a recorded judgment
+ * (2026-10-15). It does not run without both a body and a type, or without
+ * text, or without expectations to measure against — and says which.
+ */
+export async function bodyExpectationsCheck(opts: {
+  regulatorBody?: string | null;
+  submissionType?: string | null;
+  sectionCode: string;
+  content: string | null | undefined;
+}): Promise<BodyExpectationsCheck> {
+  if (!opts.regulatorBody || !opts.submissionType) {
+    return { status: 'unknown', reason: 'A regulator body and a submission type are both needed to check body expectations.' };
+  }
+  const text = typeof opts.content === 'string'
+    ? opts.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    : '';
+  if (!text) {
+    return { status: 'unknown', reason: `Section ${opts.sectionCode} has no text to check.` };
+  }
+  const { detectBodySpecificGaps } = await import('../services/body-aware-authoring.js');
+  const analysis = await detectBodySpecificGaps(opts.regulatorBody, opts.submissionType, opts.sectionCode, text);
+  if (analysis.gaps.length === 0) {
+    return {
+      status: 'unknown',
+      reason: `No ${opts.regulatorBody} ${opts.submissionType} expectations are recorded for section ${opts.sectionCode}.`,
+    };
+  }
+  const missing = analysis.gaps.filter((g) => g.status === 'missing').map((g) => g.requirement);
+  const weak = analysis.gaps.filter((g) => g.status === 'weak').map((g) => g.requirement);
+  return {
+    status: missing.length > 0 ? 'fail' : weak.length > 0 ? 'warn' : 'pass',
+    missing,
+    weak,
+    requiredLevel: analysis.requiredLevel,
+  };
 }
 
 export function sectionPreflightVerdict(
@@ -497,11 +599,19 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
+    // The decision and its receipt name who promoted; without a user the
+    // ledger recorded 'system'.
+    const actorId = governedActorId(req);
+    if (actorId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to promote an artifact' });
+    }
 
     // Step 1: Governance boundary evaluation (includes contradiction + readiness gates)
     let blocked = false;
     const blockReasons: string[] = [];
     let boundaryTransition: any = null;
+    // What the boundary checked and found met — the promotion's rationale.
+    let boundaryChecks: string[] = [];
 
     try {
       const { GovernanceBoundaryService } = await import(
@@ -514,44 +624,25 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         artifactId: Number(artifactId),
         fromBoundary: 'advisory',
         toBoundary: 'governed_draft',
-        actorId: (req as any).userId ? Number((req as any).userId) : undefined,
+        // The actor resolved above. The boundary, the decision and the receipt
+        // read `(req as any).userId` instead until 2026-10-15.
+        actorId,
         actorRole: (req as any).userRole || undefined,
       });
 
       boundaryTransition = transitionResult.transition;
+      boundaryChecks = transitionResult.metRequirements ?? [];
 
       if (!transitionResult.allowed) {
         blocked = true;
         blockReasons.push(...transitionResult.blockedReasons);
       }
     } catch {
-      // Governance boundary service unavailable — fall back to direct contradiction check
-      try {
-        const { contradictionEngineService } = await import(
-          '../services/contradiction-engine-service.js'
-        );
-        if (contradictionEngineService?.checkPromotionBlocked) {
-          const result = await contradictionEngineService.checkPromotionBlocked(
-            orgId,
-            Number(projectId),
-            Number(artifactId)
-          );
-          if (result?.blocked) {
-            blocked = true;
-            blockReasons.push(
-              ...((result.blockingFindings || (result as any).findings || []).map(
-                (f: any) => f.title || f.explanation || 'Unresolved blocking contradiction'
-              ))
-            );
-          }
-        }
-      } catch {
-        // Fail closed if contradiction checks are unavailable during promotion.
-        blocked = true;
-        blockReasons.push(
-          'Promotion blocked: contradiction checks unavailable. Retry when governance services are healthy.'
-        );
-      }
+      // Fail closed, as mark-submission-ready does. Until 2026-10-15 this fell
+      // back to the contradiction check alone and promoted with every boundary
+      // rule unchecked.
+      blocked = true;
+      blockReasons.push('Governance boundary could not be evaluated — the artifact cannot be promoted without its boundary check.');
     }
 
     // ── Record blocked promotion as a formal decision ──────────────
@@ -569,11 +660,14 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
           artifactId: String(artifactId),
           summary: `Promotion blocked: ${blockReasons.length} unresolved issue(s)`,
           rationale: blockReasons.join('; '),
+          // The boundary's reasons: a rule requirement, a readiness or
+          // contradiction gate, or the boundary not running. Every one was filed
+          // as kind 'contradiction' until 2026-10-15.
           sourceSignals: blockReasons.map(r => ({
-            kind: 'contradiction' as const, summary: r, severity: 'critical' as const,
+            kind: 'system-rule' as const, summary: r, severity: 'critical' as const,
           })),
           createdByType: 'ana',
-          createdById: (req as any).userId || undefined,
+          createdById: String(actorId),
         });
         // Receipt for the blocked promotion
         if (blockedDecision) {
@@ -586,8 +680,8 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
               actionIds: ['promote-to-review'],
               rationale: 'Promotion requested but blocked by unresolved issues',
             },
-            confirmation: { accepted: false, rejectionReason: 'Blocked by contradictions' },
-            execution: { executed: false, error: 'Blocked by unresolved contradictions' },
+            confirmation: { accepted: false, rejectionReason: 'Blocked by the governance boundary' },
+            execution: { executed: false, error: blockReasons.join('; ') },
             affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'draft', newState: 'draft', changeDescription: 'Promotion blocked' }],
           });
         }
@@ -721,19 +815,17 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
           governedAction: 'promote-to-review',
           artifactId: String(artifactId),
           summary: 'Artifact promoted to review',
-          rationale: 'No blocking contradictions. Preflight passed or skipped.',
+          // From what the boundary checked. This was "No blocking
+          // contradictions. Preflight passed or skipped." — and this route runs
+          // no preflight (2026-10-15).
+          rationale: boundaryRationale('advisory', 'governed_draft', boundaryChecks),
           sourceSignals: [{ kind: 'user-request' as const, summary: 'User confirmed promotion' }],
           createdByType: 'human',
-          createdById: (req as any).userId || undefined,
+          createdById: String(actorId),
         });
         // Transition to confirmed → executed
         if (promotionDecision) {
-          await decisionLifecycleService.transitionDecision(promotionDecision.id, 'confirmed', {
-            actorId: (req as any).userId,
-          });
-          await decisionLifecycleService.transitionDecision(promotionDecision.id, 'executed', {
-            actorId: (req as any).userId,
-          });
+          await confirmAndExecuteDecision(decisionLifecycleService, promotionDecision.id, String(actorId), 'promotion');
           promotionReceipt = await decisionLifecycleService.createReceipt({
             organizationId: Number(orgId),
             decisionId: promotionDecision.id,
@@ -741,15 +833,15 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
             recommendation: {
               summary: 'Promote artifact to review',
               actionIds: ['promote-to-review'],
-              rationale: 'Artifact passed preflight or user overrode warnings',
+              rationale: boundaryRationale('advisory', 'governed_draft', boundaryChecks),
             },
             confirmation: {
               accepted: true,
-              confirmedById: (req as any).userId || undefined,
+              confirmedById: String(actorId),
             },
             execution: {
               executed: true,
-              executedById: (req as any).userId || undefined,
+              executedById: String(actorId),
               executionMethod: 'status-transition:draft→review',
             },
             affectedObjects: [{
@@ -817,502 +909,53 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
   }
 });
 
-// ─── Promotion Lifecycle: approve-artifact (review → approved) ──────────────
-
-router.post('/approve-artifact', async (req: Request, res: Response) => {
-  try {
-    const { projectId, artifactId } = req.body;
-    if (!projectId || !artifactId) {
-      return res.status(400).json({ error: 'projectId and artifactId are required' });
-    }
-
-    const orgId = requireTenantId(req, res);
-    if (orgId == null) return;
-    const userId = (req as any).userId;
-    const userRole = (req as any).userRole;
-
-    // Step 1: Governance boundary check (governed_draft → approved)
-    let blocked = false;
-    const blockReasons: string[] = [];
-    let boundaryTransition: any = null;
-
-    try {
-      const { GovernanceBoundaryService } = await import('../services/governance-boundary-service.js');
-      const boundaryService = GovernanceBoundaryService.getInstance();
-      const result = await boundaryService.evaluateTransition({
-        organizationId: Number(orgId),
-        projectId: Number(projectId),
-        artifactId: Number(artifactId),
-        fromBoundary: 'governed_draft',
-        toBoundary: 'approved',
-        actorId: userId ? Number(userId) : undefined,
-        actorRole: userRole || undefined,
-      });
-      boundaryTransition = result.transition;
-      if (!result.allowed) {
-        blocked = true;
-        blockReasons.push(...result.blockedReasons);
-      }
-    } catch {
-      // Boundary service unavailable — fail closed for approval
-      blocked = true;
-      blockReasons.push('Governance boundary service unavailable — cannot approve without boundary check');
-    }
-
-    if (blocked) {
-      // Record blocked approval decision
-      let blockedDecision: any = null;
-      try {
-        const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-        blockedDecision = await decisionLifecycleService.recordGovernedActionDecision({
-          projectId: String(projectId), organizationId: Number(orgId),
-          kind: 'promotion-decision',
-          governedAction: 'approve-artifact', artifactId: String(artifactId),
-          summary: `Approval blocked: ${blockReasons.length} issue(s)`,
-          rationale: blockReasons.join('; '),
-          sourceSignals: blockReasons.map(r => ({ kind: 'system-rule' as const, summary: r })),
-          createdByType: 'ana', createdById: userId || undefined,
-        });
-      } catch (err) {
-        /* The governed decision and its Part 11 receipt are the record that this
-           act happened. This was a bare catch with a comment reading non-blocking, the same shape
-           this file already documents as a defect for the AUTHORITY check
-           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
-           the other half: a failure here left no record and said nothing, and the
-           service returned an id regardless, so the route answered 200 naming a
-           decision that existed only in this process's heap. It is loud now. */
-        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
-          route: req.path,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-
-      return res.json({
-        approved: false, reason: 'blocked', blockers: blockReasons,
-        message: `Approval blocked: ${blockReasons.length} issue(s). Resolve before approving.`,
-        decisionId: blockedDecision?.id || null,
-      });
-    }
-
-    // Step 2: Authority check
-    const authorityCheck = await resolveGovernedAuthority(
-      'approve-artifact',
-      userRole || undefined
-    );
-    if (!authorityCheck.allowed) {
-      return res.json({
-        approved: false,
-        reason: authorityCheck.checkFailed ? 'authority-check-failed' : 'unauthorized',
-        message: authorityCheck.reason || 'Reviewer approval required',
-        authority: authorityCheck.authority,
-      });
-    }
-
-    // Step 3: Execute status transition
-    try {
-      const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
-      const { and, eq } = await import('drizzle-orm');
-      const { db } = await import('../db.js');
-
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.id, Number(artifactId)),
-            eq(concept2cureArtifacts.projectId, Number(projectId)),
-            eq(concept2cureArtifacts.organizationId, Number(orgId))
-          )
-        )
-        .limit(1);
-      if (!artifact) throw new Error('Artifact not found');
-      if (artifact.status !== 'review') throw new Error(`Cannot approve: artifact is ${artifact.status}, must be in review`);
-
-      // 2026-09-23 (W5/D7, final pass): this is a governed approval act — it
-      // records approved_version_id below, which is what makes an artifact
-      // filable (artifactApproval) — but it never applied the P12 review
-      // quorum the status route applies to review → approved, so an artifact
-      // with a reviewer pending, or one who did not approve, was recorded as
-      // approved. It applies the same implementation now (reviewQuorumVerdict,
-      // server/services/artifact-approval-act.ts). A quorum that cannot be read
-      // is not met: refused, nothing written.
-      const { reviewQuorumVerdict } = await import('../services/artifact-approval-act.js');
-      const { queryableFromDrizzle } = await import('../db/drizzle-queryable.js');
-      let quorum: Awaited<ReturnType<typeof reviewQuorumVerdict>>;
-      try {
-        quorum = await reviewQuorumVerdict(queryableFromDrizzle(db), artifact.id, Number(orgId), artifact.version);
-      } catch (quorumErr: any) {
-        console.error('[authoring-actions] approve-artifact review quorum read failed:', quorumErr?.message);
-        return res.status(500).json({
-          approved: false,
-          reason: 'review-quorum-unavailable',
-          message: 'The review quorum could not be checked, so the artifact was not approved. The problem has been logged.',
-        });
-      }
-      if (!quorum.met) {
-        return res.status(409).json({ approved: false, reason: 'review-quorum-not-met', message: quorum.message });
-      }
-
-      const metadata =
-        artifact.metadata && typeof artifact.metadata === 'object'
-          ? (artifact.metadata as Record<string, unknown>)
-          : {};
-      const existingHarness =
-        metadata.harness && typeof metadata.harness === 'object'
-          ? (metadata.harness as Record<string, unknown>)
-          : {};
-      const governed = resolveGovernedContext({
-        req,
-        projectId: Number(projectId),
-        artifactId: Number(artifactId),
-        documentType:
-          (typeof existingHarness.documentType === 'string' && existingHarness.documentType) ||
-          artifact.type ||
-          'regulatory_document',
-        generationMode: 'manual',
-        lifecycleStatus: 'approved',
-        originSurface: 'api_route',
-        readinessGate: 'submission_candidate',
-        workspaceTarget: 'project',
-        title: artifact.title || 'Artifact',
-        content: artifact.content || '',
-        ctdSection: artifact.ctdSection || null,
-        sourceRefs: [`artifact:${artifact.artifactId || artifact.id}`],
-        eventType: 'artifact.updated',
-      });
-      if (!governed.validation.valid) {
-        throw createGovernedContractInvalidError(governed);
-      }
-
-      await db
-        .update(concept2cureArtifacts)
-        .set({
-          status: 'approved',
-          approvedVersionId: artifact.version,
-          updatedAt: new Date(),
-          metadata: {
-            ...metadata,
-            harness: {
-              ...existingHarness,
-              clientTrack: governed.contract.clientTrack,
-              submissionProgram: governed.contract.submissionProgram,
-              persona: governed.contract.persona,
-              regulatorScope: governed.contract.regulatorScope,
-              documentClass: governed.contract.documentClass,
-              readinessGate: governed.contract.readinessGate,
-              workspaceTarget: governed.contract.workspaceTarget,
-              originSurface: governed.contract.originSurface,
-              recommendationSource: governed.contract.recommendationSource,
-              regulatorIntent: governed.contract.regulatorIntent,
-              gateChecks: governed.contract.exportEligibility.gateChecks,
-              blockingReasons: governed.contract.exportEligibility.blockingReasons,
-              readinessOutcome: governed.contract.exportEligibility.readinessOutcome,
-            },
-          },
-        })
-        .where(
-          and(
-            eq(concept2cureArtifacts.id, Number(artifactId)),
-            eq(concept2cureArtifacts.projectId, Number(projectId)),
-            eq(concept2cureArtifacts.organizationId, Number(orgId))
-          )
-        );
-
-      // Record decision + receipt
-      let approveDecision: any = null;
-      let approveReceipt: any = null;
-      try {
-        const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-        approveDecision = await decisionLifecycleService.recordGovernedActionDecision({
-          projectId: String(projectId), organizationId: Number(orgId),
-          kind: 'promotion-decision',
-          governedAction: 'approve-artifact', artifactId: String(artifactId),
-          summary: 'Artifact approved', rationale: 'All governance gates passed. Reviewer approved.',
-          sourceSignals: [{ kind: 'user-request' as const, summary: 'Reviewer approved artifact' }],
-          createdByType: 'human', createdById: userId || undefined,
-        });
-        if (approveDecision) {
-          await decisionLifecycleService.transitionDecision(approveDecision.id, 'confirmed', { actorId: userId });
-          await decisionLifecycleService.transitionDecision(approveDecision.id, 'executed', { actorId: userId });
-          approveReceipt = await decisionLifecycleService.createReceipt({
-            organizationId: Number(orgId),
-            decisionId: approveDecision.id, projectId: String(projectId),
-            recommendation: { summary: 'Approve artifact', actionIds: ['approve-artifact'], rationale: 'All gates passed' },
-            confirmation: { accepted: true, confirmedById: userId || undefined },
-            execution: { executed: true, executedById: userId || undefined, executionMethod: 'status-transition:review→approved' },
-            affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'review', newState: 'approved', changeDescription: 'Artifact approved by reviewer' }],
-          });
-        }
-      } catch (err) {
-        /* The governed decision and its Part 11 receipt are the record that this
-           act happened. This was a bare catch with a comment reading non-blocking, the same shape
-           this file already documents as a defect for the AUTHORITY check
-           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
-           the other half: a failure here left no record and said nothing, and the
-           service returned an id regardless, so the route answered 200 naming a
-           decision that existed only in this process's heap. It is loud now. */
-        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
-          route: req.path,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-
-      return res.json({
-        approved: true, message: 'Artifact approved.', newStatus: 'approved',
-        decisionId: approveDecision?.id || null, receiptId: approveReceipt?.id || null,
-        boundaryTransitionId: boundaryTransition?.id || null,
-      });
-    } catch (err: any) {
-      if (isGovernedContractInvalidError(err) && err.governed) {
-        return sendGovernedContractInvalid(res, err.governed);
-      }
-      return res.status(500).json({ approved: false, reason: 'error', message: err?.message || 'Failed to approve' });
-    }
-  } catch (err: any) {
-    console.error('[authoring-actions] approve-artifact error:', err?.message);
-    return res.status(500).json({ error: 'Failed to approve artifact' });
-  }
-});
-
-// ─── Promotion Lifecycle: lock-artifact (approved → locked) ─────────────────
-
-router.post('/lock-artifact', async (req: Request, res: Response) => {
-  try {
-    const { projectId, artifactId } = req.body;
-    if (!projectId || !artifactId) {
-      return res.status(400).json({ error: 'projectId and artifactId are required' });
-    }
-
-    const orgId = requireTenantId(req, res);
-    if (orgId == null) return;
-    const userId = (req as any).userId;
-    const userRole = (req as any).userRole;
-
-    // Step 1: Governance boundary check (approved → locked)
-    let blocked = false;
-    const blockReasons: string[] = [];
-    let boundaryTransition: any = null;
-
-    try {
-      const { GovernanceBoundaryService } = await import('../services/governance-boundary-service.js');
-      const boundaryService = GovernanceBoundaryService.getInstance();
-      const result = await boundaryService.evaluateTransition({
-        organizationId: Number(orgId), projectId: Number(projectId),
-        artifactId: Number(artifactId),
-        fromBoundary: 'approved', toBoundary: 'locked',
-        actorId: userId ? Number(userId) : undefined,
-        actorRole: userRole || undefined,
-      });
-      boundaryTransition = result.transition;
-      if (!result.allowed) { blocked = true; blockReasons.push(...result.blockedReasons); }
-    } catch {
-      blocked = true;
-      blockReasons.push('Governance boundary service unavailable — cannot lock without boundary check');
-    }
-
-    if (blocked) {
-      return res.json({
-        locked: false, reason: 'blocked', blockers: blockReasons,
-        message: `Lock blocked: ${blockReasons.length} issue(s).`,
-      });
-    }
-
-    // Step 2: Authority check
-    const lockAuthority = await resolveGovernedAuthority('lock-artifact', userRole || undefined);
-    if (!lockAuthority.allowed) {
-      return res.json({
-        locked: false,
-        reason: lockAuthority.checkFailed ? 'authority-check-failed' : 'unauthorized',
-        message: lockAuthority.reason || 'Reviewer approval required',
-        authority: lockAuthority.authority,
-      });
-    }
-
-    // Step 3: Execute lock
-    try {
-      const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
-      const { and, eq } = await import('drizzle-orm');
-      const { db } = await import('../db.js');
-
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.id, Number(artifactId)),
-            eq(concept2cureArtifacts.projectId, Number(projectId)),
-            eq(concept2cureArtifacts.organizationId, Number(orgId))
-          )
-        )
-        .limit(1);
-      if (!artifact) throw new Error('Artifact not found');
-      if (artifact.status !== 'approved') throw new Error(`Cannot lock: artifact is ${artifact.status}, must be approved`);
-
-      // 2026-09-23 (W5/D7, residual repair): a lock must cover the approval.
-      // This handler checked status alone and stamped published_version_id =
-      // the CURRENT version, so approved v1 → edit to v2 (status stays
-      // 'approved') → lock recorded "locked at v2" over content no one
-      // reviewed. Refused now with the filing rule's own verdict
-      // (artifactApproval, imported — not a second rule): lockable only when
-      // filable as approved, i.e. version = approved_version_id; an approval
-      // that recorded no version fails closed. Mirrors the status route
-      // (server/routes/c2c/artifacts.ts PUT …/status, approved → locked).
-      const { artifactApproval } = await import('../services/ectd/package-content-fingerprint.js');
-      const approval = artifactApproval({
-        status: artifact.status,
-        version: artifact.version,
-        approvedVersionId: artifact.approvedVersionId,
-        publishedVersionId: artifact.publishedVersionId,
-      });
-      if (!approval.filable) {
-        return res.status(409).json({
-          locked: false,
-          reason: approval.reason,
-          message: `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
-        });
-      }
-
-      const metadata =
-        artifact.metadata && typeof artifact.metadata === 'object'
-          ? (artifact.metadata as Record<string, unknown>)
-          : {};
-      const existingHarness =
-        metadata.harness && typeof metadata.harness === 'object'
-          ? (metadata.harness as Record<string, unknown>)
-          : {};
-      const governed = resolveGovernedContext({
-        req,
-        projectId: Number(projectId),
-        artifactId: Number(artifactId),
-        documentType:
-          (typeof existingHarness.documentType === 'string' && existingHarness.documentType) ||
-          artifact.type ||
-          'regulatory_document',
-        generationMode: 'manual',
-        lifecycleStatus: 'locked',
-        originSurface: 'api_route',
-        readinessGate: 'submission_candidate',
-        workspaceTarget: 'project',
-        title: artifact.title || 'Artifact',
-        content: artifact.content || '',
-        ctdSection: artifact.ctdSection || null,
-        sourceRefs: [`artifact:${artifact.artifactId || artifact.id}`],
-        eventType: 'artifact.updated',
-      });
-      if (!governed.validation.valid) {
-        throw createGovernedContractInvalidError(governed);
-      }
-
-      await db
-        .update(concept2cureArtifacts)
-        .set({
-          status: 'locked',
-          publishedVersionId: artifact.version,
-          lockedAt: new Date(),
-          lockedById: userId ? Number(userId) : undefined,
-          updatedAt: new Date(),
-          metadata: {
-            ...metadata,
-            harness: {
-              ...existingHarness,
-              clientTrack: governed.contract.clientTrack,
-              submissionProgram: governed.contract.submissionProgram,
-              persona: governed.contract.persona,
-              regulatorScope: governed.contract.regulatorScope,
-              documentClass: governed.contract.documentClass,
-              readinessGate: governed.contract.readinessGate,
-              workspaceTarget: governed.contract.workspaceTarget,
-              originSurface: governed.contract.originSurface,
-              recommendationSource: governed.contract.recommendationSource,
-              regulatorIntent: governed.contract.regulatorIntent,
-              gateChecks: governed.contract.exportEligibility.gateChecks,
-              blockingReasons: governed.contract.exportEligibility.blockingReasons,
-              readinessOutcome: governed.contract.exportEligibility.readinessOutcome,
-            },
-          },
-        })
-        .where(
-          and(
-            eq(concept2cureArtifacts.id, Number(artifactId)),
-            eq(concept2cureArtifacts.projectId, Number(projectId)),
-            eq(concept2cureArtifacts.organizationId, Number(orgId))
-          )
-        );
-
-      // Record decision + receipt
-      let lockDecision: any = null;
-      let lockReceipt: any = null;
-      try {
-        const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-        lockDecision = await decisionLifecycleService.recordGovernedActionDecision({
-          projectId: String(projectId), organizationId: Number(orgId),
-          kind: 'promotion-decision',
-          governedAction: 'lock-artifact', artifactId: String(artifactId),
-          summary: 'Artifact locked for submission', rationale: 'All decisions resolved. Content locked.',
-          sourceSignals: [{ kind: 'user-request' as const, summary: 'Artifact locked by authorized user' }],
-          createdByType: 'human', createdById: userId || undefined,
-        });
-        if (lockDecision) {
-          await decisionLifecycleService.transitionDecision(lockDecision.id, 'confirmed', { actorId: userId });
-          await decisionLifecycleService.transitionDecision(lockDecision.id, 'executed', { actorId: userId });
-          lockReceipt = await decisionLifecycleService.createReceipt({
-            organizationId: Number(orgId),
-            decisionId: lockDecision.id, projectId: String(projectId),
-            recommendation: { summary: 'Lock artifact', actionIds: ['lock-artifact'], rationale: 'All gates passed' },
-            confirmation: { accepted: true, confirmedById: userId || undefined },
-            execution: { executed: true, executedById: userId || undefined, executionMethod: 'status-transition:approved→locked' },
-            affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'approved', newState: 'locked', changeDescription: 'Artifact locked for submission' }],
-          });
-        }
-      } catch (err) {
-        /* The governed decision and its Part 11 receipt are the record that this
-           act happened. This was a bare catch with a comment reading non-blocking, the same shape
-           this file already documents as a defect for the AUTHORITY check
-           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
-           the other half: a failure here left no record and said nothing, and the
-           service returned an id regardless, so the route answered 200 naming a
-           decision that existed only in this process's heap. It is loud now. */
-        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
-          route: req.path,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-
-      return res.json({
-        locked: true, message: 'Artifact locked for submission.', newStatus: 'locked',
-        decisionId: lockDecision?.id || null, receiptId: lockReceipt?.id || null,
-        boundaryTransitionId: boundaryTransition?.id || null,
-      });
-    } catch (err: any) {
-      if (isGovernedContractInvalidError(err) && err.governed) {
-        return sendGovernedContractInvalid(res, err.governed);
-      }
-      return res.status(500).json({ locked: false, reason: 'error', message: err?.message || 'Failed to lock' });
-    }
-  } catch (err: any) {
-    console.error('[authoring-actions] lock-artifact error:', err?.message);
-    return res.status(500).json({ error: 'Failed to lock artifact' });
-  }
-});
+// ─── Promotion Lifecycle: approve and lock ──────────────────────────────────
+// POST /approve-artifact (review → approved) and POST /lock-artifact
+// (approved → locked) were removed on 2026-10-01 (D5). They recorded an
+// approved or locked version with no signature at all, no client called them
+// (docs/reports/orphan-endpoints-latest.json), and they were the one API path
+// around the electronic signature both acts now are. The same outcomes, signed:
+//   - PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status
+//     (server/routes/c2c/artifacts.ts), pinned by
+//     server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts;
+//   - AnA's update_artifact_status, signed in GovernedActionSignoff through
+//     POST /api/ana-ri/governed-action (server/services/ana-ri/ana-signed-artifact-act.ts),
+//     pinned by server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts and
+//     server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts.
+// Both apply the role table, the lock's coverage of the approval and the review
+// quorum from server/services/artifact-approval-act.ts and commit through
+// server/services/artifact-signed-act.ts.
 
 // ─── Promotion Lifecycle: mark-submission-ready (locked → submission_ready) ──
 
 router.post('/mark-submission-ready', async (req: Request, res: Response) => {
   try {
-    const { projectId, artifactId } = req.body;
+    const { projectId, artifactId, decisionId } = req.body;
     if (!projectId || !artifactId) {
       return res.status(400).json({ error: 'projectId and artifactId are required' });
+    }
+    // The recorded decision whose confidence the boundary's minimum-confidence
+    // rule rates; without one that rule refuses (2026-10-15 — it was skipped).
+    if (decisionId != null && (typeof decisionId !== 'string' || !DECISION_ID_PATTERN.test(decisionId))) {
+      return res.status(400).json({ error: 'decisionId must be the id of a recorded decision' });
     }
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
-    const userId = (req as any).userId;
+    // The decision and its receipt name who judged the dossier ready; without
+    // a user the ledger recorded 'system'.
+    const actorId = governedActorId(req);
+    if (actorId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to mark an artifact submission-ready' });
+    }
+    const userId = String(actorId);
     const userRole = (req as any).userRole;
 
     // Step 1: Governance boundary check (locked → submission_ready)
     let blocked = false;
     const blockReasons: string[] = [];
     let boundaryTransition: any = null;
+    let boundaryChecks: string[] = [];
 
     try {
       const { GovernanceBoundaryService } = await import('../services/governance-boundary-service.js');
@@ -1320,11 +963,13 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
       const result = await boundaryService.evaluateTransition({
         organizationId: Number(orgId), projectId: Number(projectId),
         artifactId: Number(artifactId),
+        decisionId: decisionId ?? undefined,
         fromBoundary: 'locked', toBoundary: 'submission_ready',
         actorId: userId ? Number(userId) : undefined,
         actorRole: userRole || undefined,
       });
       boundaryTransition = result.transition;
+      boundaryChecks = result.metRequirements ?? [];
       if (!result.allowed) { blocked = true; blockReasons.push(...result.blockedReasons); }
     } catch {
       blocked = true;
@@ -1338,21 +983,27 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
       });
     }
 
-    // Step 2: Authority check (requires escalation — RA/submission lead)
-    try {
-      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-      const authorityCheck = decisionLifecycleService.checkAuthority('judge-dossier-ready', userRole || undefined);
-      if (authorityCheck && !authorityCheck.allowed) {
-        return res.json({
-          submissionReady: false, reason: 'unauthorized',
-          message: authorityCheck.reason || 'Escalation required — RA or submission lead must approve',
-        });
-      }
-    } catch { /* non-blocking */ }
+    // Step 2: Authority check (requires escalation — RA/submission lead),
+    // fail-closed through the one resolver. Its catch was "non-blocking": a
+    // check that threw, or answered nothing, let the act through.
+    const authorityCheck = await resolveGovernedAuthority('judge-dossier-ready', userRole || undefined);
+    if (!authorityCheck.allowed) {
+      return res.json({
+        submissionReady: false,
+        reason: authorityCheck.checkFailed ? 'authority-check-failed' : 'unauthorized',
+        message: authorityCheck.reason || 'Escalation required — RA or submission lead must approve',
+      });
+    }
 
     // Step 3: Record governance-level transition (artifact stays 'locked' in DB — submission_ready is a governance boundary)
     let decision: any = null;
     let receipt: any = null;
+    // Written from what the boundary checked and the role the authority check
+    // admitted. These were literals — "All assumptions approved, all decisions
+    // resolved, strong confidence. Ready for submission.", "RA/submission lead
+    // confirmed readiness", "All gates passed" — while the strong-confidence
+    // rule had never run and no rule need have applied (2026-10-15).
+    const rationale = boundaryRationale('locked', 'submission_ready', boundaryChecks);
     try {
       const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
       decision = await decisionLifecycleService.recordGovernedActionDecision({
@@ -1360,17 +1011,16 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
         kind: 'promotion-decision',
         governedAction: 'judge-dossier-ready', artifactId: String(artifactId),
         summary: 'Artifact marked submission-ready',
-        rationale: 'All assumptions approved, all decisions resolved, strong confidence. Ready for submission.',
-        sourceSignals: [{ kind: 'user-request' as const, summary: 'RA/submission lead confirmed readiness' }],
+        rationale,
+        sourceSignals: [{ kind: 'user-request' as const, summary: `Requested by user ${userId}${userRole ? ` (role "${userRole}")` : ''}` }],
         createdByType: 'human', createdById: userId || undefined,
       });
       if (decision) {
-        await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: userId });
-        await decisionLifecycleService.transitionDecision(decision.id, 'executed', { actorId: userId });
+        await confirmAndExecuteDecision(decisionLifecycleService, decision.id, userId, 'submission-ready');
         receipt = await decisionLifecycleService.createReceipt({
           organizationId: Number(orgId),
           decisionId: decision.id, projectId: String(projectId),
-          recommendation: { summary: 'Mark submission-ready', actionIds: ['judge-dossier-ready'], rationale: 'All gates passed' },
+          recommendation: { summary: 'Mark submission-ready', actionIds: ['judge-dossier-ready'], rationale },
           confirmation: { accepted: true, confirmedById: userId || undefined },
           execution: { executed: true, executedById: userId || undefined, executionMethod: 'governance-transition:locked→submission_ready' },
           affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'locked', newState: 'submission_ready', changeDescription: 'Artifact marked submission-ready' }],
@@ -1560,7 +1210,7 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
             summary: t.revisionRationale || 'Correction target identified',
           })),
           createdByType: 'ana',
-          createdById: (req as any).userId || undefined,
+          createdById: sessionActor(req),
         });
       } catch (err) {
         /* The governed decision and its Part 11 receipt are the record that this
@@ -1680,7 +1330,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
             severity: i.severity === 'critical' ? 'critical' as const : i.severity === 'error' ? 'major' as const : 'minor' as const,
           })),
           createdByType: 'ana',
-          createdById: (req as any).userId || undefined,
+          createdById: sessionActor(req),
         });
       } catch (err) {
         /* The governed decision and its Part 11 receipt are the record that this
@@ -1715,6 +1365,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
           autoFixable: i.autoFixable,
         })),
         checkedDimensions: result.checkedDimensions,
+        skippedDimensions: result.skippedDimensions,
         sectionsCompared: Object.keys(sections),
         decisionId: harmonizeDecision?.id || null,
         authority: harmonizeDecision?.authority || null,
@@ -1837,6 +1488,10 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
   try {
     const { projectId, sectionCode } = req.params;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+    // 2026-10-15: no tenant was resolved — the evidence read named no
+    // organization and the gap analysis ran for organization 1.
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     let evidence: any[] = [];
     let gapAnalysis: any = null;
@@ -1856,26 +1511,38 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
           const sectionCodeStr = Array.isArray(sectionCode) ? sectionCode[0] : sectionCode;
           const major = sectionCodeStr?.split('.')[0] || '2';
           const stage = stageMap[major] ?? 1;
-          const stageEvidence = await svc.getStageEvidence(String(projectId), stage);
-          if (stageEvidence && Array.isArray(stageEvidence)) {
-            evidence = stageEvidence.slice(0, 20).map((e: any) => ({
+          const stageEvidence = await svc.getStageEvidence(String(projectId), stage, orgId);
+          // The driver's result holds the rows; `Array.isArray(stageEvidence)` was
+          // never true, so recorded evidence was never returned (2026-10-15). A
+          // device_data_center row's name is file_name; an unrecorded status is
+          // null, not 'pending'.
+          if (stageEvidence && Array.isArray(stageEvidence?.rows)) {
+            evidence = stageEvidence.rows.slice(0, 20).map((e: any) => ({
               id: e.id,
-              title: e.title || e.name || e.filename,
-              type: e.test_type || e.type || 'document',
+              title: e.file_name,
+              type: e.test_type || e.category,
               fdaRequirement: e.fda_requirement,
               fdaSection: e.fda_section,
-              status: e.review_status || e.regulatory_status || 'pending',
+              status: e.regulatory_status ?? null,
             }));
           }
         }
 
         // Also try gap analysis
         if (svc.performGapAnalysis) {
-          gapAnalysis = await svc.performGapAnalysis(String(projectId), 1);
+          gapAnalysis = await svc.performGapAnalysis(String(projectId), orgId);
         }
       }
-    } catch {
-      // Service unavailable
+    } catch (err) {
+      // An unread store is not an empty one: this answered "No evidence found
+      // for section X" (2026-10-15).
+      console.error('[authoring-actions] section-evidence read failed:', err instanceof Error ? err.message : String(err));
+      return res.status(503).json({
+        status: 'unavailable',
+        action: 'section_evidence',
+        error: 'EVIDENCE_READ_FAILED',
+        message: "The evidence store could not be read, so nothing is known about this section's evidence.",
+      });
     }
 
     if (evidence.length > 0) {
@@ -2050,6 +1717,7 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
               autoFixable: i.autoFixable,
             })),
             checkedDimensions: harmonizeResult.checkedDimensions,
+            skippedDimensions: harmonizeResult.skippedDimensions,
           }
         : null,
       contradictions,
@@ -2193,25 +1861,52 @@ router.post('/body-aware-gaps', async (req: Request, res: Response) => {
  * Helper: fetch all artifacts for a project, grouped by CTD module.
  * Returns Map<moduleCode, Array<{ctdSection, id, status}>>
  */
-async function fetchProjectArtifactsByModule(projectId: number): Promise<Map<string, Array<{ ctdSection: string; id: string; status: string }>>> {
-  const result = new Map<string, Array<{ ctdSection: string; id: string; status: string }>>();
-  try {
-    const { db } = await import('../db.js');
-    const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
-      where: (a: any, { eq }: any) => eq(a.projectId, projectId),
-    }).catch(() => []) || [];
-    for (const art of artifacts) {
-      if (!art.ctdSection) continue;
-      const major = art.ctdSection.split('.')[0];
-      const moduleCode = `m${major}`;
-      if (!result.has(moduleCode)) result.set(moduleCode, []);
-      result.get(moduleCode)!.push({
-        ctdSection: art.ctdSection,
-        id: String(art.id),
-        status: art.status || 'draft',
-      });
-    }
-  } catch { /* DB unavailable */ }
+/** The section's text: the artifact named, else this tenant's latest at that CTD section. */
+async function sectionText(
+  organizationId: number,
+  projectId: number,
+  sectionCode: string,
+  artifactId?: unknown,
+): Promise<string | null> {
+  if (artifactId != null && artifactId !== '') {
+    const art = await getScopedArtifact(projectId, Number(artifactId), organizationId);
+    return typeof art?.content === 'string' ? art.content : null;
+  }
+  const { db } = await import('../db.js');
+  const art = await db.query.concept2cureArtifacts.findFirst({
+    where: (a: any, { and, eq }: any) =>
+      and(eq(a.projectId, projectId), eq(a.organizationId, organizationId), eq(a.ctdSection, sectionCode)),
+    orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+  });
+  return typeof art?.content === 'string' ? art.content : null;
+}
+
+async function fetchProjectArtifactsByModule(
+  organizationId: number,
+  projectId: number,
+): Promise<Map<string, Array<{ ctdSection: string; id: string; status: string; content: string | null }>>> {
+  /* This read named no tenant — any caller's projectId listed another
+     organization's sections, ids and statuses — and a failed read became an
+     empty map, which the routes answered with "No sections found … Add
+     documents to this module first." (2026-10-15). Scoped, and a failure
+     propagates to the route's error response. */
+  const result = new Map<string, Array<{ ctdSection: string; id: string; status: string; content: string | null }>>();
+  const { db } = await import('../db.js');
+  const artifacts = (await db.query.concept2cureArtifacts.findMany({
+    where: (a: any, { and, eq }: any) => and(eq(a.projectId, projectId), eq(a.organizationId, organizationId)),
+  })) as Array<{ id: number; ctdSection: string | null; status: string | null; content: unknown }>;
+  for (const art of artifacts) {
+    if (!art.ctdSection) continue;
+    const major = art.ctdSection.split('.')[0];
+    const moduleCode = `m${major}`;
+    if (!result.has(moduleCode)) result.set(moduleCode, []);
+    result.get(moduleCode)!.push({
+      ctdSection: art.ctdSection,
+      id: String(art.id),
+      status: art.status || 'draft',
+      content: typeof art.content === 'string' ? art.content : null,
+    });
+  }
   return result;
 }
 
@@ -2229,7 +1924,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
     if (orgId == null) return;
 
     // Find all sections in this module
-    const artifactMap = await fetchProjectArtifactsByModule(Number(projectId));
+    const artifactMap = await fetchProjectArtifactsByModule(Number(orgId), Number(projectId));
     const moduleSections = artifactMap.get(moduleCode) || [];
 
     if (moduleSections.length === 0) {
@@ -2309,24 +2004,19 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
             const items = ((scanResult?.findings as any[]) || [])
               .filter((f: any) => f.sectionCode === sec.ctdSection || (f.affectedSections || []).includes(sec.ctdSection))
               .slice(0, 5).map((f: any) => ({
-                id: f.id || String(Math.random()), severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
+                id: f.id, severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
                 explanation: f.explanation || f.description || f.title,
               }));
             checks.contradictions = { status: items.some((i: any) => i.severity === 'critical') ? 'fail' : items.length ? 'warn' : 'pass', items };
           }
         } catch { checks.contradictions = { status: 'unknown' }; }
 
-        // Body gaps (lightweight)
-        if (regulatorBody || submissionType) {
-          try {
-            const { detectBodySpecificGaps } = await import('../services/body-aware-authoring.js');
-            if (detectBodySpecificGaps) {
-              const analysis = await detectBodySpecificGaps(regulatorBody || 'FDA', submissionType || 'IND', sec.ctdSection, '');
-              const missing = analysis.gaps.filter((g: any) => g.status === 'missing').map((g: any) => g.requirement);
-              checks.bodyExpectations = { status: missing.length ? 'fail' : 'pass', missing };
-            }
-          } catch { checks.bodyExpectations = { status: 'unknown' }; }
-        } else { checks.bodyExpectations = { status: 'unknown' }; }
+        // Body expectations — against this section's own text
+        try {
+          checks.bodyExpectations = await bodyExpectationsCheck({
+            regulatorBody, submissionType, sectionCode: sec.ctdSection, content: sec.content,
+          });
+        } catch { checks.bodyExpectations = { status: 'unknown', reason: 'The body-expectations check did not complete.' }; }
 
         /* These two are not checks. They are placeholders that have never had an
            implementation, and they were being written into `checks` with
@@ -2428,7 +2118,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       for (const blocker of majorBlockers) {
         signals.push({ kind: blocker.kind || 'readiness-blocker', summary: blocker.message, severity: blocker.severity });
       }
-      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+      decisionRecord = await decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
         organizationId: Number(orgId),
         kind: 'module-preflight-judgment',
@@ -2437,9 +2127,12 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         overall, summary,
         sourceSignals: signals as any,
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
-        createdById: (req as any).userId || undefined,
+        createdById: sessionActor(req),
       });
-    } catch { /* non-blocking */ }
+    } catch (err) {
+      // Not recorded: the response carries decisionId null, and says so here.
+      console.warn('[authoring-actions] preflight decision not recorded:', err instanceof Error ? err.message : String(err));
+    }
 
     // ── Decision-aware gating enrichment ─────────────────────────
     let decisionAwareStatus: any = null;
@@ -2523,7 +2216,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
 
-    const artifactMap = await fetchProjectArtifactsByModule(Number(projectId));
+    const artifactMap = await fetchProjectArtifactsByModule(Number(orgId), Number(projectId));
     const moduleCodes = Array.from(artifactMap.keys()).sort();
 
     if (moduleCodes.length === 0) {
@@ -2674,7 +2367,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
       for (const blocker of majorBlockers) {
         signals.push({ kind: blocker.kind || 'readiness-blocker', summary: blocker.message, severity: blocker.severity });
       }
-      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+      decisionRecord = await decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
         organizationId: Number(orgId),
         kind: 'dossier-preflight-judgment',
@@ -2683,9 +2376,12 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         overall, summary,
         sourceSignals: signals as any,
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
-        createdById: (req as any).userId || undefined,
+        createdById: sessionActor(req),
       });
-    } catch { /* non-blocking */ }
+    } catch (err) {
+      // Not recorded: the response carries decisionId null, and says so here.
+      console.warn('[authoring-actions] preflight decision not recorded:', err instanceof Error ? err.message : String(err));
+    }
 
     // ── Decision-aware gating enrichment ─────────────────────────
     let decisionAwareStatus: any = null;
@@ -2810,7 +2506,9 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
               .map((b: any) => ({ code: b.category || 'BLOCK', severity: b.severity, message: b.message || b.description }));
             const hasCritical = blockers.some((b: any) => b.severity === 'critical');
             const status: CheckStatus = hasCritical ? 'fail' : blockers.length > 0 ? 'warn' : 'pass';
-            return { status, score: moduleItem?.score ?? assessment?.overallScore ?? null, blockers };
+            // The module's score, or null when it was not assessed — never the
+            // project's overall score under the module's name (2026-10-15).
+            return { status, score: moduleItem?.score ?? null, blockers };
           } catch { return null; }
         })(),
         // 2. Contradictions
@@ -2825,7 +2523,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
               .filter((f: any) => f.sectionCode === sectionCode || (f.affectedSections || []).includes(sectionCode))
               .slice(0, 10)
               .map((f: any) => ({
-                id: f.id || f.findingId || String(Math.random()),
+                id: f.id || f.findingId,
                 severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
                 explanation: f.explanation || f.description || f.title,
               }));
@@ -2834,21 +2532,13 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             return { status, items: relevant };
           } catch { return null; }
         })(),
-        // 3. Body-aware gaps
+        // 3. Body expectations — against this section's own text
         (async () => {
-          if (!regulatorBody && !submissionType) return null;
           try {
-            const { detectBodySpecificGaps } = await import(
-              '../services/body-aware-authoring.js'
-            );
-            if (!detectBodySpecificGaps) return null;
-            const analysis = await detectBodySpecificGaps(
-              regulatorBody || 'FDA', submissionType || 'IND', sectionCode, ''
-            );
-            const missing = analysis.gaps.filter((g: any) => g.status === 'missing').map((g: any) => g.requirement);
-            const weak = analysis.gaps.filter((g: any) => g.status === 'weak').map((g: any) => g.requirement);
-            const status: CheckStatus = missing.length > 0 ? 'fail' : weak.length > 0 ? 'warn' : 'pass';
-            return { status, missing, weak, requiredLevel: 'required' };
+            return await bodyExpectationsCheck({
+              regulatorBody, submissionType, sectionCode,
+              content: await sectionText(Number(orgId), Number(projectId), String(sectionCode), artifactId),
+            });
           } catch { return null; }
         })(),
         // 4. Cross-section consistency
@@ -2867,9 +2557,10 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             const { db } = await import('../db.js');
             const sections: Record<string, string> = {};
             for (const code of [sectionCode, ...linked]) {
+              // This tenant's artifact: the read named no organization.
               const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
                 where: (a: any, { and, eq }: any) =>
-                  and(eq(a.projectId, Number(projectId)), eq(a.ctdSection, code)),
+                  and(eq(a.projectId, Number(projectId)), eq(a.organizationId, Number(orgId)), eq(a.ctdSection, code)),
                 orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
               }).catch(() => null);
               if (artifact?.content) {
@@ -2879,7 +2570,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             }
             if (Object.keys(sections).length < 2) return { status: 'unknown' as CheckStatus, items: [] };
             const engine = new HarmonizeEngine();
-            const result = await engine.check({ sections, submissionType: submissionType || 'IND' });
+            const result = await engine.check({ sections, submissionType: submissionType || 'unspecified' });
             const items = result.issues.slice(0, 10).map((i: any) => ({
               type: i.type, severity: i.severity, explanation: i.description,
               linkedSections: [i.sectionA, i.sectionB].filter(Boolean),
@@ -2979,7 +2670,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
         }
       }
 
-      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+      decisionRecord = await decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
         organizationId: Number(orgId),
         kind: 'section-preflight-judgment',
@@ -2989,10 +2680,11 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
         overall, summary,
         sourceSignals: signals as any,
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
-        createdById: (req as any).userId || undefined,
+        createdById: sessionActor(req),
       });
-    } catch {
-      // Decision recording is non-blocking
+    } catch (err) {
+      // Not recorded: the response carries decisionId null, and says so here.
+      console.warn('[authoring-actions] preflight decision not recorded:', err instanceof Error ? err.message : String(err));
     }
 
     // ── Pass 8: Contradiction context enrichment ─────────────────
@@ -3060,10 +2752,12 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
         const moduleBreakdown = assessment?.moduleBreakdown || [];
         const sectionCodeStr = Array.isArray(sectionCode) ? sectionCode[0] : sectionCode;
         const moduleMatch = moduleBreakdown.find(
-          (m: any) => m.moduleCode === `m${sectionCodeStr.split('.')[0]}`
+          (m: any) => m.module === `Module ${sectionCodeStr.split('.')[0]}`
         );
         result.readiness = {
-          score: moduleMatch?.score ?? assessment?.overallScore ?? null,
+          // ModuleReadinessItem has no moduleCode, so this matched nothing and
+          // served the project's overall score as the section's (2026-10-15).
+          score: moduleMatch?.score ?? null,
           blocked: assessment?.blockers?.some(
             (b: any) => b.severity === 'critical'
           ) ?? false,
@@ -3228,12 +2922,26 @@ router.post('/decision/:decisionId/confirm', async (req: Request, res: Response)
   try {
     const { decisionId } = req.params;
     const { accepted, reason } = req.body;
-    const userId = (req as any).userId || 'unknown';
+    /* The confirmation is the record of who accepted or rejected the decision;
+       a request with no user was recorded as 'unknown'. And it resolved no
+       tenant, so a caller could confirm or reject another organization's
+       decision by id — the reads beside it were scoped, this write was not. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+    const actorId = governedActorId(req);
+    if (actorId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to confirm or reject a decision' });
+    }
+    const userId = String(actorId);
     const userRole = (req as any).userRole || undefined;
 
     const { decisionLifecycleService } = await import(
       '../services/decision-lifecycle-service.js'
     );
+    // Another organization's decision is not found, as on the reads.
+    if (!decisionLifecycleService.getDecision(String(decisionId ?? ''), orgId)) {
+      return res.status(404).json({ error: 'Decision not found' });
+    }
 
     const newStatus = accepted ? 'confirmed' : 'rejected';
     const result = await decisionLifecycleService.transitionDecision(
@@ -3482,7 +3190,13 @@ router.post('/contradiction-consequence', async (req: Request, res: Response) =>
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
-    const userId = (req as any).userId || 'system';
+    // The decision, its receipt, the memo and the consequence log name who
+    // acted; a request with no user was attributed to 'system'.
+    const actorId = governedActorId(req);
+    if (actorId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to take a contradiction consequence' });
+    }
+    const userId = String(actorId);
     const userRole = (req as any).userRole || undefined;
 
     // Fetch the finding
@@ -3503,8 +3217,11 @@ router.post('/contradiction-consequence', async (req: Request, res: Response) =>
       { projectId: finding.projectId ?? undefined, organizationId: orgId, actorRole: userRole }
     );
 
-    return res.json({
-      status: result.success ? 'executed' : 'failed',
+    // A refusal records nothing (422); a failure part-way reports what it had
+    // already recorded (500). Both used to answer 200.
+    const httpStatus = result.success ? 200 : result.decision ? 500 : 422;
+    return res.status(httpStatus).json({
+      status: !result.success ? 'failed' : consequenceType === 'escalation' ? 'escalated' : 'executed',
       action: 'contradiction_consequence',
       findingId,
       consequenceType,
@@ -3546,21 +3263,21 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
       }
     );
 
-    // Also get contradiction-aware decision status
-    let contradictionAwareStatus: any = null;
-    try {
-      const { decisionLifecycleService } = await import(
-        '../services/decision-lifecycle-service.js'
-      );
-      contradictionAwareStatus = await decisionLifecycleService.computeContradictionAwareStatus(
-        String(projectId ?? ''),
-        {
-          moduleCode: moduleCode as string || undefined,
-          regulatorBody: regulatorBody as string || undefined,
-          submissionType: submissionType as string || undefined,
-        }
-      );
-    } catch { /* non-blocking */ }
+    // Also get contradiction-aware decision status — for this tenant. A
+    // failure fails the request: it was swallowed into `null` beside a
+    // context that read as complete.
+    const { decisionLifecycleService } = await import(
+      '../services/decision-lifecycle-service.js'
+    );
+    const contradictionAwareStatus = await decisionLifecycleService.computeContradictionAwareStatus(
+      String(projectId ?? ''),
+      {
+        organizationId: orgId,
+        moduleCode: moduleCode as string || undefined,
+        regulatorBody: regulatorBody as string || undefined,
+        submissionType: submissionType as string || undefined,
+      }
+    );
 
     return res.json({
       status: 'data',
@@ -3593,7 +3310,11 @@ router.post('/plan-contradiction-resolution', async (req: Request, res: Response
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
-    const userId = (req as any).userId || 0;
+    // 2026-10-15: was `(req as any).userId || 0` — with no user it ran as user 0.
+    const userId = governedActorId(req);
+    if (userId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to plan a contradiction resolution' });
+    }
 
     /* Loaded, not accepted — see the note on /execute-contradiction-resolution.
        A `finding` supplied in the request body is ignored. */
@@ -3638,7 +3359,12 @@ router.post('/execute-contradiction-resolution', async (req: Request, res: Respo
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
-    const userId = (req as any).userId || 0;
+    // 2026-10-15: was `(req as any).userId || 0` — with no user, the resolution's
+    // decision and receipt were recorded by user '0'.
+    const userId = governedActorId(req);
+    if (userId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to execute a contradiction resolution' });
+    }
     const actorRole = (req as any).userRole || undefined;
 
     /* The finding is LOADED here, not accepted from the caller.

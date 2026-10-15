@@ -28,3 +28,23 @@ output "master_username" {
   description = "Master username (the owner role migrations connect as)"
   value       = aws_db_instance.this.username
 }
+
+output "engine_version_actual" {
+  description = "The PostgreSQL version RDS is running (major pinned, minor chosen and patched by RDS). Recorded in the IQ evidence."
+  value       = aws_db_instance.this.engine_version_actual
+}
+
+output "parameters" {
+  description = "The parameter group's settings, name => value, so the stack's tests can assert them (pgaudit preload, TLS)."
+  value       = { for p in aws_db_parameter_group.this.parameter : p.name => p.value }
+}
+
+output "storage_kms_key_id" {
+  description = "The KMS key encrypting the instance's storage, snapshots and automated backups (null: the AWS-managed aws/rds key)."
+  value       = aws_db_instance.this.kms_key_id
+}
+
+output "performance_insights_kms_key_id" {
+  description = "The KMS key encrypting Performance Insights data, which includes query text."
+  value       = aws_db_instance.this.performance_insights_kms_key_id
+}

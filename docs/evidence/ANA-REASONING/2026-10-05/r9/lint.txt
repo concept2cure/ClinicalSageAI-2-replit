@@ -1,0 +1,10 @@
+ESLint warnings/errors per file touched by round 9: on the round-9 tree, and warnings on trunk where the file exists there.
+Command: npx eslint --no-warn-ignored <file>
+stream.ts keeps trunk's 24: callModel stays at trunk's complexity, the round's sent facts built by a one-line helper (roundSent). turn-record.ts and the tests have none.
+
+server/services/ana/turn-record.ts                                     round9=0/0    trunk=0
+server/routes/ana-ri/stream.ts                                         round9=24/0   trunk=24
+server/services/ana/__tests__/turn-record.pglite.test.ts               round9=0/0    trunk=0
+server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts    round9=0/0    trunk=0
+server/services/ana/__tests__/turn-record-sent.test.ts                 round9=0/0    trunk=new
+server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts         round9=0/0    trunk=new

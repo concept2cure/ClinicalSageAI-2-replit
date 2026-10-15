@@ -1,0 +1,773 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > refuses a status the state machine has never heard of
+{
+  "timestamp": "2026-10-08T05:05:28.002Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > opens a run as running, owned by this process
+{
+  "timestamp": "2026-10-08T05:05:28.010Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > finishes a run
+{
+  "timestamp": "2026-10-08T05:05:28.014Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > NEVER rewrites a cancelled run as finished
+{
+  "timestamp": "2026-10-08T05:05:28.017Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > records a dropped socket as a disconnect, not as a human decision
+{
+  "timestamp": "2026-10-08T05:05:28.025Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > pauses and resumes
+{
+  "timestamp": "2026-10-08T05:05:28.031Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > writes the control event at the moment of acceptance
+{
+  "timestamp": "2026-10-08T05:05:28.037Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > CANCEL IS TERMINAL — pause, resume and steer are all refused afterward
+{
+  "timestamp": "2026-10-08T05:05:28.044Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > aborts the local handle on cancel, and not on pause
+{
+  "timestamp": "2026-10-08T05:05:28.049Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > a steer accepted while paused also resumes
+{
+  "timestamp": "2026-10-08T05:05:28.054Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > refuses an empty steer
+{
+  "timestamp": "2026-10-08T05:05:28.058Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > caps a steer — a redirect, not a new document
+{
+  "timestamp": "2026-10-08T05:05:28.061Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > loses a guarded race rather than applying twice
+{
+  "timestamp": "2026-10-08T05:05:28.067Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > another organization's run is NOT FOUND, not forbidden
+{
+  "timestamp": "2026-10-08T05:05:28.072Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a colleague's run in the same tenant is forbidden, not hidden
+{
+  "timestamp": "2026-10-08T05:05:28.075Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a run with no attributed user is controllable by NOBODY
+{
+  "timestamp": "2026-10-08T05:05:28.077Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a read is scoped to the tenant
+{
+  "timestamp": "2026-10-08T05:05:28.080Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > returns what was queued
+{
+  "timestamp": "2026-10-08T05:05:28.083Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > empties the queue, so a steer is never applied twice
+{
+  "timestamp": "2026-10-08T05:05:28.088Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > applies, and re-applies — every statement is IF NOT EXISTS 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > refuses a status the state machine has never heard of 9ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > refuses a run with no tenant 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > opens a run as running, owned by this process 3ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > finishes a run 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > NEVER rewrites a cancelled run as finished 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > records a dropped socket as a disconnect, not as a human decision 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > pauses and resumes 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > writes the control event at the moment of acceptance 7ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > CANCEL IS TERMINAL — pause, resume and steer are all refused afterward 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > aborts the local handle on cancel, and not on pause 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > a steer accepted while paused also resumes 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > refuses an empty steer 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > caps a steer — a redirect, not a new document 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > loses a guarded race rather than applying twice 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > another organization's run is NOT FOUND, not forbidden 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a colleague's run in the same tenant is forbidden, not hidden 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a run with no attributed user is controllable by NOBODY 3ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a read is scoped to the tenant 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > an unknown run is NOT FOUND 1ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > returns what was queued 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > empties the queue, so a steer is never applied twice 5ms
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > two concurrent drains split the queue — neither sees the same steer
+{
+  "timestamp": "2026-10-08T05:05:28.093Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > is empty for a run with nothing queued
+{
+  "timestamp": "2026-10-08T05:05:28.099Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > a naive RETURNING drains nothing — the defect this CTE exists for
+{
+  "timestamp": "2026-10-08T05:05:28.101Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is drained with its kind, in arrival order with the steers around it
+{
+  "timestamp": "2026-10-08T05:05:28.105Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is NOT written to the control lineage — the person did not type it
+{
+  "timestamp": "2026-10-08T05:05:28.110Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > leaves a paused run paused, and waits in the queue for the resume
+{
+  "timestamp": "2026-10-08T05:05:28.114Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > still wakes a held checkpoint — which re-reads paused and keeps waiting
+{
+  "timestamp": "2026-10-08T05:05:28.124Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is refused on a colleague's run — a report must come from the run's own user
+{
+  "timestamp": "2026-10-08T05:05:28.129Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is NOT FOUND on another organization's run
+{
+  "timestamp": "2026-10-08T05:05:28.131Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is refused on a settled run, and nothing is queued for a round that will never come
+{
+  "timestamp": "2026-10-08T05:05:28.133Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is not lost to a Pause pressed between its read and its write
+{
+  "timestamp": "2026-10-08T05:05:28.137Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is still refused by a Stop that lands between its read and its write
+{
+  "timestamp": "2026-10-08T05:05:28.143Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > refuses an empty report
+{
+  "timestamp": "2026-10-08T05:05:28.148Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > caps a report — one sentence about a move, not a document
+{
+  "timestamp": "2026-10-08T05:05:28.150Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > reads an entry queued with no kind as a steer — rows queued before reports existed
+{
+  "timestamp": "2026-10-08T05:05:28.154Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > queues a landing with its move, drained with nothing for the model to read
+{
+  "timestamp": "2026-10-08T05:05:28.157Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > is not written to the control lineage, and leaves a paused run paused
+{
+  "timestamp": "2026-10-08T05:05:28.162Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > needs a move id that is one, and is held to the same ownership as a report
+{
+  "timestamp": "2026-10-08T05:05:28.167Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > a malformed move id on a report is dropped, and the report kept
+{
+  "timestamp": "2026-10-08T05:05:28.172Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > fails a run whose heartbeat went stale, and says it was orphaned
+{
+  "timestamp": "2026-10-08T05:05:28.179Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > leaves a run that is still beating alone
+{
+  "timestamp": "2026-10-08T05:05:28.184Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > does not resurrect or re-stamp a run that already settled
+{
+  "timestamp": "2026-10-08T05:05:28.188Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > a heartbeat carries the round forward
+{
+  "timestamp": "2026-10-08T05:05:28.193Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > two concurrent drains split the queue — neither sees the same steer 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > is empty for a run with nothing queued 3ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > a naive RETURNING drains nothing — the defect this CTE exists for 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is drained with its kind, in arrival order with the steers around it 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is NOT written to the control lineage — the person did not type it 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > leaves a paused run paused, and waits in the queue for the resume 10ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > still wakes a held checkpoint — which re-reads paused and keeps waiting 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is refused on a colleague's run — a report must come from the run's own user 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is NOT FOUND on another organization's run 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is refused on a settled run, and nothing is queued for a round that will never come 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is not lost to a Pause pressed between its read and its write 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is still refused by a Stop that lands between its read and its write 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > refuses an empty report 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > caps a report — one sentence about a move, not a document 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > reads an entry queued with no kind as a steer — rows queued before reports existed 3ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > queues a landing with its move, drained with nothing for the model to read 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > is not written to the control lineage, and leaves a paused run paused 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > needs a move id that is one, and is held to the same ownership as a report 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > a malformed move id on a report is dropped, and the report kept 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > fails a run whose heartbeat went stale, and says it was orphaned 6ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > leaves a run that is still beating alone 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > does not resurrect or re-stamp a run that already settled 5ms
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > moves the run to awaiting_approval and records what is being asked
+{
+  "timestamp": "2026-10-08T05:05:28.196Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a cancelled run cannot be moved into a gate it would never leave
+{
+  "timestamp": "2026-10-08T05:05:28.200Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a second tool cannot open a gate over the first
+{
+  "timestamp": "2026-10-08T05:05:28.205Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a pending approval is scoped to the tenant
+{
+  "timestamp": "2026-10-08T05:05:28.208Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > refuses a decision from another tenant, and leaves the run held
+{
+  "timestamp": "2026-10-08T05:05:28.212Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > releases the run when the person decides, and keeps what they decided
+{
+  "timestamp": "2026-10-08T05:05:28.217Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > A DECISION CANNOT BE APPLIED TO A DIFFERENT PROPOSAL
+{
+  "timestamp": "2026-10-08T05:05:28.222Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a decision cannot be recorded against a run that is not waiting
+{
+  "timestamp": "2026-10-08T05:05:28.225Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a denial releases the run too — she continues without the tool
+{
+  "timestamp": "2026-10-08T05:05:28.227Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > cancelling while she waits is still allowed
+{
+  "timestamp": "2026-10-08T05:05:28.230Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a new request clears the previous decision
+{
+  "timestamp": "2026-10-08T05:05:28.235Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] could not open a LISTEN client (PGlite has no dedicated client); polling instead. Control still lands, with poll-interval latency instead of immediate.",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > a heartbeat carries the round forward 3ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > moves the run to awaiting_approval and records what is being asked 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a cancelled run cannot be moved into a gate it would never leave 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a second tool cannot open a gate over the first 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a pending approval is scoped to the tenant 3ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > refuses a decision from another tenant, and leaves the run held 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > releases the run when the person decides, and keeps what they decided 5ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > A DECISION CANNOT BE APPLIED TO A DIFFERENT PROPOSAL 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a decision cannot be recorded against a run that is not waiting 2ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a denial releases the run too — she continues without the tool 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > cancelling while she waits is still allowed 4ms
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a new request clears the previous decision 6ms
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+{
+  "timestamp": "2026-10-08T05:05:32.326Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:05:32.326Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+{
+  "timestamp": "2026-10-08T05:05:32.326Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "auto" → runPolicy "auto" 39ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "manual" → runPolicy "manual" 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "AUTO" → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "" → runPolicy null 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy undefined → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold before a step that already goes to a person 22ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold while a demonstration drives 6ms
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > a person pausing a Manual turn is a person, not the policy 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > Auto and no policy never hold on their own 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > under Auto the same steer does not replace anything: it applies after the step 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > a person's own pause in a Manual turn ends it the same way 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > the same pause under Auto is resumed as abandoned, as today 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > an approval nobody answers ends the turn with a closing answer 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, the same unanswered approval is a denial and the turn goes on 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > past 15 minutes of work the next call is the closing answer 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > time held for a person is not work 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, a long step is not a stop 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Auto keeps going past the effort ceiling while each round is new, to 20 rounds 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy the same turn keeps its effort ceiling (balanced: 6 + 2) 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Manual keeps the effort ceiling too 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails closed 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads null (not a person's pause): fails closed 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written though the row reads running, twice: fails closed, never runs unasked 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written (holdForPerson threw): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "failed" — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "finished" — no person answered: fails closed 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as null — no person answered: fails closed 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold: Next is shown, and Resume answers it 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > Stop at a hold: not run, named on done, and the hold filed as stopped 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her step 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2c) a demonstration the model starts does not switch Manual off > Manual with Live Drive on (not a demo), round 1 starts a demo: a hold is still due before round 2 3ms
+(node:59) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-08T05:05:37.762Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:05:37.763Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-08T05:05:37.763Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[AnA RI Stream] Conversation preparation failed: private database host unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[AnA RI Stream] Conversation preparation failed: private connection write failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined 26ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."} 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > retains the last real assistant answer instead of dropping whichever row is last 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > another turn arriving during the save cannot displace a prior clarification or duplicate the current question 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > filters stored system/tool roles before sending the transcript 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > new conversations still accept bounded user/assistant browser turns 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > names older omitted turns without presenting the window as the whole conversation 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > preserves a late market correction in a long browser turn instead of discarding the whole turn 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > bounds long stored drafts, preserving the question at their end and warning about missing text 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > an assistant-only window does not turn an existing conversation into a fresh session 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > does not announce missing history when every valid turn is included 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > passes unresolved evidence judgments to the real streaming follow-up request 18ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > carries unassessed evidence inputs and repair guidance into the next gateway call 10ms
+(node:75) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+{
+  "timestamp": "2026-10-08T05:05:40.245Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:05:40.246Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+{
+  "timestamp": "2026-10-08T05:05:40.246Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be opened, no model call or governed approval proceeds
+[AnA RI Stream] Conversation preparation failed: thread store down
+
+stderr | server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be opened, no model call or governed approval proceeds
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model 33ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a held governed call records the same: the only path a confirm-class draft takes in production 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be opened, no model call or governed approval proceeds 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs 5ms
+(node:91) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-context-latency.test.ts
+{
+  "timestamp": "2026-10-08T05:05:42.834Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:05:42.835Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-latency.test.ts
+{
+  "timestamp": "2026-10-08T05:05:42.835Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-latency.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > starts admitted memory before optional route prefetch finishes and waits for both before the model 30ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > awaits slow memory when optional route context has already returned 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation resolve fails 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation history fails 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation save fails 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > handles an early memory rejection while optional context is pending 3ms
+(node:107) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+{
+  "timestamp": "2026-10-08T05:05:45.420Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:05:45.421Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+{
+  "timestamp": "2026-10-08T05:05:45.421Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > aborts pending generation once after a dropped response without inventing a human cancel 28ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > ignores ordinary request completion and keeps its heartbeat active while generation waits 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > also aborts when an interrupted incoming request closes 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > does not abort a normally completed response (local-only=true) 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > does not abort a normally completed response (local-only=false) 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > keeps a durable disconnect distinct from a human control and settles it once 4ms
+(node:123) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made
+{
+  "timestamp": "2026-10-08T05:05:46.456Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] internal stop failed for run_missing: unreachable",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > reaps under the system scope even when called from inside a tenant request 3ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > does not inherit the caller tenant — the bug this replaces 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > scopes the disconnect write to the run own organization 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made 2ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > request-time reads inherit the caller scope rather than widening it > reads a run under the request own tenant 1ms
+
+ Test Files  7 passed (7)
+      Tests  138 passed (138)
+   Start at  13:05:26
+   Duration  20.43s (transform 5.21s, setup 134ms, import 16.74s, tests 2.34s, environment 1ms)

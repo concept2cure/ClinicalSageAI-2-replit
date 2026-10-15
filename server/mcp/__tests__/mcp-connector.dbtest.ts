@@ -1,5 +1,16 @@
 /**
- * The connector against real PostgreSQL (vitest.db.config.ts, RLS_ENFORCE=on).
+ * The connector against real PostgreSQL (vitest.db.config.ts, RLS_ENFORCE=on),
+ * connecting as the role production connects as.
+ *
+ * ── Why the role is the point (2026-10-01, row D8) ───────────────────────────
+ * Until this date the suite connected as the database owner. The owner here is
+ * a superuser, and RLS never binds a superuser — so `RLS_ENFORCE=on` was set
+ * and no policy applied to a single query below. The launch row's "tenant
+ * scoping under RLS" rested on this file, and under enforced RLS the connector
+ * could not even issue a grant (fixed in 3bdb50458). It now runs as a freshly
+ * provisioned NOSUPERUSER NOBYPASSRLS role, asserted before anything else, so
+ * a cross-tenant result here is one the database itself would have returned.
+ * Fixtures are still seeded and removed through the owner.
  *
  * Proves, with the SDK's own client over Streamable HTTP:
  *   1. tools/list returns the curated catalog with annotations;
@@ -21,8 +32,17 @@ import jwt from 'jsonwebtoken';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { databaseUrl } from '../../../tests/setup.db';
+import { nativeCatalogRunId, seedNativeCatalogProject } from '../../../tests/db/catalog-native-fixture';
+import {
+  provisionAppServiceRole,
+  resolveAppServiceRole,
+} from '../../../scripts/db/provision-app-role.mjs';
 
-const PREFIX = 'dbtest-w7';
+const RUN = nativeCatalogRunId();
+const PREFIX = `dbtest-w7-${RUN}`;
+const RUNTIME_PASSWORD = 'dbtest-w7-connector-runtime-password';
+const runtimeRole = resolveAppServiceRole({ APP_SERVICE_DB_ROLE: `dbw7_rt_${RUN}` });
+let runtimePool: { query: Pool['query']; end: () => Promise<void> } | null = null;
 
 let owner: Pool;
 let server: http.Server;
@@ -39,9 +59,12 @@ let tokenB: string;
 let readOnlyTokenA: string;
 
 async function seedTenant(tag: string): Promise<Tenant> {
+  // Its owner has turned the connector on (P1-47; mcp-connector-enablement.dbtest.ts proves the off state).
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
+    `INSERT INTO organizations (name, slug, settings) VALUES ($1, $2, '{"claudeConnector":{"enabled":true}}'::json)
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name,
+         settings = (COALESCE(organizations.settings::jsonb, '{}'::jsonb) || '{"claudeConnector":{"enabled":true}}'::jsonb)::json
+       RETURNING id, uuid`,
     [`${PREFIX} org ${tag}`, `${PREFIX}-org-${tag}`],
   );
   // tenant-isolation-safe: fixture user in a throw-away test database; `users` is global and tenancy is the organization_users row below
@@ -63,27 +86,13 @@ async function seedTenant(tag: string): Promise<Tenant> {
     [orgId, `${PREFIX} program ${tag}`, `W7-${tag}`, `${PREFIX} product ${tag}`],
   );
   const programId = String(program.rows[0].id);
+  await seedNativeCatalogProject(owner, { organizationId: orgId, userId, programId, namespace: `${PREFIX}-${tag}` });
   const doc = await owner.query(
     `INSERT INTO vault.documents (program_id, content_hash, file_name, document_title, document_code, document_type, organization_id)
        VALUES ($1, $2, $3, $4, $5, 'protocol', $6) RETURNING id`,
     [programId, createHash('sha256').update(`${PREFIX}-${tag}`).digest('hex'), `${PREFIX}-${tag}.pdf`, `${PREFIX} protocol ${tag}`, `W7DOC-${tag}`, orgId],
   );
   return { orgId, orgUuid: String(org.rows[0].uuid), userId, membershipId: Number(membership.rows[0].id), programId, docId: String(doc.rows[0].id) };
-}
-
-async function cleanup(): Promise<void> {
-  const orgIds = await owner.query(`SELECT id FROM organizations WHERE slug LIKE $1`, [`${PREFIX}-org-%`]);
-  const ids = orgIds.rows.map((r) => Number(r.id));
-  if (ids.length === 0) return;
-  await owner.query(`DELETE FROM submission_leaves WHERE organization_id = ANY($1)`, [ids]);
-  await owner.query(`DELETE FROM ectd_sequences WHERE organization_id = ANY($1)`, [ids]);
-  await owner.query(`DELETE FROM submissions WHERE organization_id = ANY($1)`, [ids]);
-  await owner.query(`DELETE FROM vault.documents WHERE program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = ANY($1))`, [ids]);
-  await owner.query(`DELETE FROM regulatory_programs WHERE organization_id = ANY($1)`, [ids]);
-  await owner.query(`DELETE FROM organization_users WHERE organization_id = ANY($1)`, [ids]);
-  // tenant-isolation-safe: removes only this suite's fixture users, matched by the suite-unique PREFIX
-  await owner.query(`DELETE FROM users WHERE email LIKE $1`, [`${PREFIX}-%@example.test`]);
-  await owner.query(`DELETE FROM organizations WHERE id = ANY($1)`, [ids]);
 }
 
 async function mcpClient(token: string): Promise<Client> {
@@ -101,15 +110,39 @@ async function call(client: Client, name: string, args: Record<string, unknown>)
 }
 
 beforeAll(async () => {
-  for (const k of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'MOONSHOT_API_KEY', 'AZURE_OPENAI_API_KEY']) delete process.env[k];
+  for (const k of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'MOONSHOT_API_KEY', 'AZURE_OPENAI_API_KEY']) process.env[k] = '';
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
-  await cleanup();
+  // This run never deletes historical rows from previous fixture namespaces.
+
+  // The role production connects as, before any server module opens a pool.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const provisioned = await provisionAppServiceRole(owner, {
+        env: { APP_SERVICE_DB_ROLE: runtimeRole, APP_SERVICE_DB_PASSWORD: RUNTIME_PASSWORD },
+      });
+      if (provisioned.skipped) throw new Error('[dbtest-w7] provisionAppServiceRole skipped — no runtime role.');
+      break;
+    } catch (err) {
+      if (attempt >= 5 || !/tuple concurrently updated/.test((err as Error).message)) throw err;
+      await new Promise((r) => setTimeout(r, 250 * attempt));
+    }
+  }
+  const runtimeUrl = new URL(databaseUrl);
+  runtimeUrl.username = runtimeRole;
+  runtimeUrl.password = RUNTIME_PASSWORD;
+  process.env.APP_DATABASE_URL = runtimeUrl.toString();
+  process.env.RLS_ENFORCE = 'on';
+  process.env.ALLOW_DEV_AUTH = '0';
+
   A = await seedTenant('a');
   B = await seedTenant('b');
+  // Anchored to A's program: a program's document is placed only into a
+  // submission anchored to that program (P-14, 2026-10-08), and the governed
+  // write below files A's Vault document.
   const sub = await owner.query(
-    `INSERT INTO submissions (title, application_type, client_type, primary_region, organization_id, created_by)
-       VALUES ($1, 'ind', 'pharma', 'fda', $2, $3) RETURNING id`,
-    [`${PREFIX} submission a`, A.orgId, A.userId],
+    `INSERT INTO submissions (title, application_type, client_type, primary_region, organization_id, created_by, program_id)
+       VALUES ($1, 'ind', 'pharma', 'fda', $2, $3, $4) RETURNING id`,
+    [`${PREFIX} submission a`, A.orgId, A.userId, A.programId],
   );
   submissionId = Number(sub.rows[0].id);
   const seq = await owner.query(
@@ -129,6 +162,8 @@ beforeAll(async () => {
   const { resolveMcpConfig } = await import('../config');
   const config = resolveMcpConfig({ ...process.env, MCP_ENABLED: 'true', MCP_PUBLIC_URL: baseUrl });
   app.use(createMcpRouter(config));
+  const { getPool } = await import('../../db');
+  runtimePool = getPool() as unknown as typeof runtimePool;
 
   const { activeJwtSecret } = await import('../../utils/jwtVerify');
   const platformToken = (t: Tenant) =>
@@ -151,8 +186,35 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await new Promise<void>((resolve) => (server ? server.close(() => resolve()) : resolve()));
-  await cleanup().catch(() => {});
+  if (runtimePool) await runtimePool.end().catch(() => {});
+  // Retain this run's real anchors, source pointers and immutable audit history.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await owner.query(`REASSIGN OWNED BY ${runtimeRole} TO CURRENT_USER; DROP OWNED BY ${runtimeRole}`);
+      await owner.query(`DROP ROLE IF EXISTS ${runtimeRole}`);
+      break;
+    } catch (err) {
+      if (attempt >= 5) {
+        console.warn('[dbtest-w7] runtime role left behind:', (err as Error).message);
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 250 * attempt));
+    }
+  }
   await owner.end().catch(() => {});
+});
+
+describe('the posture is the one production runs in', () => {
+  it('connects as a non-superuser runtime role with RLS enforcing', async () => {
+    const { runWithPreAuthScope } = await import('../../db/tenantStore');
+    const { rows } = await runWithPreAuthScope('dbtest-w7:posture', () =>
+      runtimePool!.query(
+        `SELECT current_user AS role, r.rolsuper, r.rolbypassrls, current_setting('app.rls_enforce', true) AS rls
+           FROM pg_roles r WHERE r.rolname = current_user`,
+      ),
+    );
+    expect(rows[0]).toMatchObject({ role: runtimeRole, rolsuper: false, rolbypassrls: false, rls: 'on' });
+  });
 });
 
 describe('discovery and authentication over HTTP', () => {

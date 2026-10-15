@@ -1,0 +1,15 @@
+# sha256 of the H1 files in the tree the red, green and mutation runs were recorded against (HEAD c82c056be + the working tree, uncommitted when filed).
+# source
+ffb236065820d3b31d3ef870d27078fe23549b6dc8c0dfa0bd2fd043a149e8a6  server/services/ai-gateway/reasoning.ts
+2fac0d717e1ba8d81201270d0b30cf5e57fa80a94c7db82c9e29419eba4f6215  server/services/ai-gateway/effort.ts
+615c8137d651c01ea1fc6f3c5d5af825081e22a29bcea5abe211d9dc9d6b1772  server/services/ai-governance/approved-models.ts
+# tests
+fd8370c25fb6b825dd03c0ec13aa0445287421ef1f7d79c186f88f45780252db  server/services/ai-gateway/__tests__/tier-model-approval.test.ts
+be3b66f62b9d52e9545119e83fee3f0c3cf5fdfe3f3a3e7d30f277adb282eda4  server/services/ai-gateway/__tests__/reasoning.test.ts
+c555ab4a0fd7d06e17408154c5200abf937d60e693ca3c4be955b0073087e02c  server/services/ai-gateway/__tests__/effort.test.ts
+37ebefe0eac85a0253b26c04f977b31311d7c7d54556265b07336fdc1d92101a  server/services/ai-governance/__tests__/governing-entry.test.ts
+3b93bcfb662dfc3807d505a4119cf06181a8ab9d8bf020fe166f9763b058ab3b  server/services/ai-gateway/__tests__/support/approved-rows.ts
+# the track G build before the review fixes (red.txt part B)
+# e3e925601b5b55ef7a9bda998896502eeb04c04a089c2632c1000dbe71cd3cfe  server/services/ai-gateway/reasoning.ts
+# c35e27da3f5c8fadf4fa6d5178a2de45ca38f16bde2151affe7a48cb3340debe  server/services/ai-gateway/effort.ts
+# ed1ec3bec9e5aed983249acb6b03a2c59eb9e625dd8dd6ceaf30a3cc5f38b269  server/services/ai-governance/approved-models.ts

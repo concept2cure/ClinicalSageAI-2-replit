@@ -1,0 +1,12 @@
+Mutant R86-ci95-key-unread: an interval returned as ci95: [0.5, 0.77] is not found
+
+--- server/services/ana/answer-check-figures.ts
+- const CI_WORDS = /\bci(?:\d{2})?\b|\b\d{2}ci\b|confidence|interval|lower|upper/i;
++ const CI_WORDS = /\bci\b|confidence|interval|lower|upper/i;
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > an interval returned as a pair of numbers is found 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,16 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > offers the meanings a finalize can carry, sends reason, meaning and the password, and shows the manifestation 1657ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a member, who writes reports but may not finalize them, is offered Export and no Finalize 159ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a report the gate holds below final is refused with its reasons, and nothing is shown as sealed 247ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a password the server does not accept is said in the dialog, and nothing is sealed 222ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > separation of duties: an approval by the run's requester is refused with the server's sentence 162ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a role without signing authority is refused with the server's sentence, and nothing is sealed 208ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  14:13:06
+   Duration  5.51s (transform 895ms, setup 396ms, import 1.05s, tests 2.66s, environment 940ms)
+

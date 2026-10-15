@@ -1,0 +1,10 @@
+ × client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > Home's engine pill > names the popup it opens and points at it 59ms
+   → expected 'true' to be 'dialog' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > Home's engine pill > holds a radio group of the modes, the current one checked 347ms
+   → Unable to find an accessible element with the role "radiogroup" and name `/engine/i`
+ × client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > Home's engine pill > a choice goes to the host and focus returns to the trigger 168ms
+   → Unable to find an accessible element with the role "radio"
+ × client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > EngineChoices (the one implementation both pickers render) > is a named radio group, the current mode checked, and reports a choice 5ms
+   → Unable to find an accessible element with the role "radiogroup" and name `/engine/i`
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

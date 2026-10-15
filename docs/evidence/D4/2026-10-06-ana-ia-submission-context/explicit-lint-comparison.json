@@ -1,0 +1,35 @@
+[
+  {
+    "file": "server/services/ana/submission-chat-handler.ts",
+    "current": {
+      "errors": 0,
+      "warnings": 9
+    },
+    "previous": {
+      "errors": 0,
+      "warnings": 9
+    }
+  },
+  {
+    "file": "server/services/ana/submission-chat-stream-handler.ts",
+    "current": {
+      "errors": 0,
+      "warnings": 4
+    },
+    "previous": {
+      "errors": 0,
+      "warnings": 4
+    }
+  },
+  {
+    "file": "server/routes/ana-features.ts",
+    "current": {
+      "errors": 0,
+      "warnings": 16
+    },
+    "previous": {
+      "errors": 0,
+      "warnings": 16
+    }
+  }
+]

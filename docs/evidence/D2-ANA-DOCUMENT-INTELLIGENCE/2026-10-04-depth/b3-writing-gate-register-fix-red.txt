@@ -1,0 +1,60 @@
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "category": "claims",
++     "evidence": [
++       "The Medical Monitor will approve each dose escalation decision.",
++     ],
++     "message": "Unsupported claim (regulatory_outcome): \"will approve\". Predicts an approval decision. State the evidence and leave the regulatory decision to the agency.",
++     "severity": "high",
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts:88:28
+     86|     'The Medical Monitor will approve each dose escalation decision.',
+     87|   ])('does not flag the governance step: %s', (text) => {
+     88|     expect(claimsOf(text)).toEqual([]);
+       |                            ^
+     89|   });
+     90|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The objective response rate with drug X was superior to that with docetaxel. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Our objective is simple: drug X is superior to every competitor. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients responded to treatment and completed the study. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients achieved complete remission and received follow-up. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Every patient treated with drug X was cured and completed the study. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients in Arm A responded and completed the study. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X eliminated tumour recurrence in patients with renal impairment. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X eliminates the disease and has low hepatic clearance. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X is a clinical cure for hepatitis C. keeps a high claims finding
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Bacterial infections are eradicated by drug X. keeps a high claims finding
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts:126:73
+    124|   for (const register of ['submission', 'promotional'] as const) {
+    125|     it.each(GUARDS)(`${register}: %s keeps a high claims finding`, (te…
+    126|       expect(claimsOf(text, register).some(f => f.severity === 'high')…
+       |                                                                         ^
+    127|     });
+    128|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 50 passed (65)
+   Start at  00:17:55
+   Duration  6.07s (transform 3.74s, setup 93ms, import 5.64s, tests 54ms, environment 0ms)
+

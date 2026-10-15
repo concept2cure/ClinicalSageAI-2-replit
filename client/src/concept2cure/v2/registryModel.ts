@@ -5,12 +5,18 @@
  * The SURFACES themselves live in shared/constants/ui-surface-registry.ts
  * (reconciled with the kit ids in the same change — deep links depend on the
  * ids staying identical). This module carries everything AROUND the surfaces:
- * the rail model (client categories · core · specialist · explore · quick),
+ * the rail's list of places (RAIL_CORE) and the client types it offers,
  * client segmentation, per-segment workspace modules, AnA modes / co-author
  * context / surface-scoped actions, and the governed AI-action taxonomy.
  *
- * GENERATED from the kit registry (scripts in the design package) — edit the
- * kit first, then re-port, so design and code cannot drift.
+ * The NAVIGATION is not generated from the kit any more. Which places the rail
+ * lists, and where each client type lands, is decided in
+ * docs/design/ONE_ANA_ONE_CANVAS.md §5 from the places of
+ * docs/SURFACE_DECISIONS_2026-10-08.md (founder delegation of 2026-10-07), and
+ * edited here. A re-port of the kit's rail arrays would bring back sections
+ * that list screens outside this release; __tests__/shellNav.test.tsx fails if
+ * one does. The rest of this file (segments, modules, AnA context and actions)
+ * still follows the kit.
  *
  * The ANA_* co-author/context objects are REFERENCE CONFIG, not data. They were
  * the kit's offline fixture shapes and carried invented per-programme values —
@@ -27,6 +33,8 @@ import { getSurface, UI_SURFACES, type UiSurface } from '@shared/constants/ui-su
 // companion module (split to keep this file under the repo-health line gate)
 // and is re-exported below so consumers still import it from registryModel.
 import { ANA_SURFACE_CTX } from './registryModel.surfaceCtx';
+import { AUTO_ACTIVE_MS, AUTO_MAX_ROUNDS, AUTO_WALL_MS, MAX_PAUSE_MS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
+import { minutesWords } from '@shared/ana/run-policy';
 
 /** Client-type rail tiers (kit NAV_TIERS — distinct from the registry's structural navTier) */
 export const NAV_TIERS_V2 = [
@@ -89,41 +97,56 @@ export const NAV_GROUP_OF: Record<string, string> = {
 // as a second hand-authored literal here is exactly what let the rail and the
 // TopBar drift onto two different segment axes. See the derivation just after
 // PRIMARY_SEGMENTS / getSegment.
-/** Core workspace — the same central solution for every client type */
+/**
+ * The places, top to bottom — the whole of the rail's list, the same for every
+ * client type (docs/design/ONE_ANA_ONE_CANVAS.md §5). An entry outside the
+ * release is absent, not shown locked; every destination here is in
+ * shared/constants/launch-scope.ts.
+ *
+ * What left, 2026-10-08, and where each went:
+ *  - "Science & intelligence" (CMC / Module 3, Risk-based monitoring, FDA CRL
+ *    library): all three are outside this release. CMC and RBM return as
+ *    features of Project home and clinical operations; the CRL library's
+ *    precedents reach AnA in the conversation.
+ *  - "Explore": AnA Command and AnA memory are locked (SURFACE_DECISIONS:
+ *    scrap / later); Apps catalog is in the account menu; Artifacts Center's
+ *    list moves to the conversation's canvas (slice 25) and stays reachable
+ *    meanwhile from ⌘K, the Apps catalog, and Live Drive, which opens it when
+ *    AnA saves a draft (V2App followWork). "Conversation" stays, last, as the
+ *    stand-in for Recents (§5 item 10, slice 3) until Recents is built: it
+ *    opens the conversation in progress. "New conversation" opens Home, which
+ *    starts a new conversation and does not lead back to the one in progress.
+ *  - "Quick access": "My Tasks" is My work below; "Recent Documents" opened
+ *    the editor, which opens from any document in Vault and from a project.
+ *  - Quality had no entry (it sat in NAV_HIDDEN); it is a place.
+ *  - "Client categories" is the account menu's "Client type".
+ *
+ * Where this list still differs from §5, and why:
+ *  - The labels are the registered surface names ("Vault", "Submission
+ *    Center", "Reporting & analytics"), so the rail, the breadcrumb, the page
+ *    title and ⌘K name a place one way; CLAUDE.md Rule 2's launch catalog uses
+ *    the same names. §5's "Documents" (with Protocols as its child row),
+ *    "Submissions" and "Records & reports" (the audit trail as the place, with
+ *    Reports, Compliance and Integrity as its tabs) rename and regroup
+ *    surfaces, which is the surface registry's change, not this list's.
+ *  - "Search ⌘K" is the top bar's search button, not a row here.
+ *  - My work has no count yet (GET /api/task-management/my-work, §5 item 9).
+ *
+ * `target` is the screen an entry opens when it is not its own id. `applies`
+ * is a screen action the entry asks of that screen as it opens it, through the
+ * same validated bus AnA's moves use (surfaceActions.applySurfaceAction): My
+ * work opens the task board on the signed-in person's own tasks, which is what
+ * its name says (the board alone opens on everyone's).
+ */
 export const RAIL_CORE = [
-  { id: 'projects', label: 'Project management', icon: 'folder' },
+  { id: 'new-conversation', label: 'New conversation', icon: 'plus', target: 'home' },
+  { id: 'projects', label: 'Projects', icon: 'folder' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
-  { id: 'tasks', label: 'Tasking', icon: 'checkSquare' },
+  { id: 'quality', label: 'Quality', icon: 'shieldCheck' },
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart' },
-];
-/** Specialist science apps promoted to the rail (also in the Apps catalog) */
-export const RAIL_SPECIALIST = [
-  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
-  { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
-  { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
-];
-/** Explore section */
-export const RAIL_EXPLORE = [
-  { id: 'ana-command', label: 'AnA Command', icon: 'sparkles', badge: 'AnA' },
-  { id: 'ana-memory', label: 'AnA memory', icon: 'database', badge: 'AnA' },
-  { id: 'apps', label: 'Apps catalog', icon: 'grid' },
-  { id: 'artifacts-center', label: 'Artifacts Center', icon: 'sparkles' },
-  { id: 'conversation-thread', label: 'Conversation', icon: 'messageSquare', badge: 'AnA' },
-];
-/** Quick access (targets resolve to surface ids) */
-export const RAIL_QUICK = [
-  { id: 'recent', label: 'Recent Documents', icon: 'clock', target: 'document-authoring' },
-  // No hardcoded count — the live "what needs me" number lives in the top-bar
-  // Task Tray (GET /api/task-management/my-work), never a constant (D40).
-  { id: 'tasks', label: 'My Tasks', icon: 'checkSquare', target: 'tasks' },
-  /* No "Starred Items". The entry (ported from the kit, 2026-07) opened the
-     full Projects list: nothing in the product can be starred — no star state
-     on any surface, no route, no column — so its label promised a list that
-     does not exist, and on Projects it marked itself current alongside
-     "Project management". The one thing it actually did, open Projects, is
-     RAIL_CORE's `projects` entry above. If starring is ever built, the entry
-     comes back pointed at the starred list, not at Projects. */
+  { id: 'tasks', label: 'My work', icon: 'checkSquare', applies: { actionId: 'tasking.filter', params: { mine: 'true' } } },
+  { id: 'conversation-thread', label: 'Conversation', icon: 'messageSquare' },
 ];
 /** Surfaces reachable via ⌘K/deep-link but intentionally not rail entries */
 export const NAV_HIDDEN: ReadonlySet<string> = new Set([
@@ -159,7 +182,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'human-factors',
   'regulatory-workspace',
   'labeling-pi',
-  'quality',
 ]);
 /** Client segmentation — canonical UI axis organizations.client_type; see kit registry notes */
 export const SEGMENTS = [
@@ -169,7 +191,10 @@ export const SEGMENTS = [
     primary: true,
     icon: 'stethoscope',
     pathways: ['510(k)', 'De Novo', 'PMA', 'IVDR'],
-    defaultSurface: 'device-workstream',
+    /* Was 'device-workstream', outside this release: choosing this client type
+       opened a "Not in this release" panel. Projects is where a client's work
+       starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+    defaultSurface: 'projects',
     focus: [
       'device-workstream',
       'labeling',
@@ -186,7 +211,10 @@ export const SEGMENTS = [
     primary: true,
     icon: 'microscope',
     pathways: ['IVDR', 'CDx', '510(k)', 'De Novo'],
-    defaultSurface: 'device-diagnostics',
+    /* Was 'device-diagnostics', outside this release: choosing this client type
+       opened a "Not in this release" panel. Projects is where a client's work
+       starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+    defaultSurface: 'projects',
     focus: [
       'device-diagnostics',
       'ivd-completeness',
@@ -209,7 +237,10 @@ export const SEGMENTS = [
     primary: true,
     icon: 'atom',
     pathways: ['IND', 'NDA', 'BLA', 'MAA', 'J-NDA', 'Lifecycle'],
-    defaultSurface: 'ind-checklist',
+    /* Was 'ind-checklist', outside this release: choosing this client type
+       opened a "Not in this release" panel. Projects is where a client's work
+       starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+    defaultSurface: 'projects',
     focus: [
       'ind-checklist',
       'nda-cockpit',
@@ -228,7 +259,10 @@ export const SEGMENTS = [
     icon: 'network',
     multiSponsor: true,
     pathways: ['Multi-sponsor: CER / 510K / IND / NDA / BLA / PMA / De Novo'],
-    defaultSurface: 'cro-portfolio',
+    /* Was 'cro-portfolio', outside this release: choosing this client type
+       opened a "Not in this release" panel. Projects is where a client's work
+       starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+    defaultSurface: 'projects',
     focus: [
       'cro-portfolio',
       'protocol-dev',
@@ -363,7 +397,10 @@ export const READINESS_META = {
  *
  * `effort` is not decoration. It is sent as `effort_level` and decides how many
  * agentic rounds AnA gets — `fast` 4, `balanced` 6+2, `thorough` 10+4 — plus her
- * output budget and model tier. Before it existed the picker was inert: the mode
+ * output budget and model tier. Under the Auto run policy (ANA_RUN_POLICY_COPY,
+ * row 74) EVERY mode may run on to AUTO_MAX_ROUNDS (20) while each round
+ * finds something new — Quick ask included — so Quick ask's description and
+ * Auto's own both say so; Manual and no policy keep the numbers above. Before it existed the picker was inert: the mode
  * was stored, shown next to the send button as "Ask · Maximum", and never
  * reached the request, so a reviewer choosing Deep research for a regulatory
  * question silently got the server default instead of the 14 rounds the label
@@ -375,23 +412,24 @@ export const READINESS_META = {
 export const ANA_MODES: Array<{
   id: string;
   label: string;
-  model: string;
+  /** The effort the mode buys, in the server's own words (row 74, ADR-0015 §9). Not a model: the gateway picks that. */
+  effortLabel: string;
   desc: string;
   effort: 'fast' | 'balanced' | 'thorough';
 }> = [
-  { id: 'standard', label: 'Standard', model: 'Balanced', desc: 'Chat, reasoning, quick answers', effort: 'balanced' },
+  { id: 'standard', label: 'Standard', effortLabel: 'Balanced', desc: 'Chat, reasoning, quick answers', effort: 'balanced' },
   {
     id: 'deep-research',
     label: 'Deep research',
-    model: 'Maximum',
+    effortLabel: 'Thorough',
     desc: 'Drafting, multi-step analysis, long-form',
     effort: 'thorough',
   },
   {
     id: 'quick-ask',
     label: 'Quick ask',
-    model: 'Instant',
-    desc: 'Autocomplete, inline, classification',
+    effortLabel: 'Light',
+    desc: `Autocomplete, inline, classification · with Auto, up to ${AUTO_MAX_ROUNDS} rounds`,
     effort: 'fast',
   },
 ];
@@ -400,6 +438,36 @@ export const ANA_MODES: Array<{
 export function effortForMode(modeId: string): 'fast' | 'balanced' | 'thorough' | null {
   return ANA_MODES.find((m) => m.id === modeId)?.effort ?? null;
 }
+
+/**
+ * What AnA does between steps — the run policy (row 74), in the words the
+ * "Between steps" control says them. Beside ANA_MODES because it is the other
+ * half of how a turn runs, and NOT a mode: the mode is the engine and its
+ * effort; this is whether she stops for the person. The numbers are the
+ * server's own ceilings (shared/ana/run-control-limits.ts), never restated.
+ * Manual says nothing about agents: the slice that lets her start them adds
+ * that sentence with them.
+ */
+export const ANA_RUN_POLICY_COPY: Record<AnaRunPolicy, { id: AnaRunPolicy; label: string; desc: string; short: string }> = {
+  manual: {
+    id: 'manual',
+    label: 'Manual',
+    desc:
+      'AnA takes one step, then waits for you to run the next, change it or stop. ' +
+      `If nobody answers within ${minutesWords(MAX_PAUSE_MS)}, or the page is closed, she stops there. ` +
+      'A demonstration you start runs through without stopping.',
+    short: 'She waits for you before each further step.',
+  },
+  auto: {
+    id: 'auto',
+    label: 'Auto',
+    desc:
+      `AnA keeps going, step after step, until she judges the task done — for up to ${AUTO_MAX_ROUNDS} rounds whichever ` +
+      `engine you chose, ${minutesWords(AUTO_ACTIVE_MS)} of work or ${minutesWords(AUTO_WALL_MS)} in all. Anything that ` +
+      `changes a record waits for you; if nobody answers within ${minutesWords(MAX_PAUSE_MS)}, it does not happen and she stops.`,
+    short: `She keeps going: up to ${AUTO_MAX_ROUNDS} rounds, ${minutesWords(AUTO_ACTIVE_MS)} of work.`,
+  },
+};
 /** Governed AI actions (POST /api/ai-actions/execute); governed:true requires the §11.50 e-sign gate */
 export const AI_ACTIONS = [
   {
@@ -571,7 +639,11 @@ export const SEGMENT_MODULES = {
     { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-11: the device segment had no biostatistics surface either,
+      // while the engines a 510(k) or PMA sponsor needs — device performance
+      // sizing, Bayesian device sizing, MRMC, group-sequential operating
+      // characteristics — were reachable only from the two pharma segments.
+      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'biostat-workbench', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
@@ -599,7 +671,13 @@ export const SEGMENT_MODULES = {
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-11: this segment had no biostatistics surface at all, and the
+      // gap is sharpest here: diagnostic accuracy sizing, co-primary
+      // sensitivity/specificity, MRMC reader studies and AUC comparison exist
+      // FOR an IVD sponsor, and this segment could reach none of them. The
+      // workbench is the surface that delivers the outcome
+      // (docs/SURFACE_DECISIONS_2026-10-08.md).
+      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -729,7 +807,11 @@ export const SEGMENT_MODULES = {
     { label: 'Submit & file', items: ['ind-checklist', 'submission-center'] },
     {
       label: 'Science & intelligence',
-      items: ['biostatistics', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-11: the workbench joins the segment that had only the surface
+      // docs/SURFACE_DECISIONS_2026-10-08.md scraps as a place. That surface
+      // stays listed until the change that removes it names the replacement
+      // path for each of its entry points, as the working agreement requires.
+      items: ['biostatistics', 'biostat-workbench', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
   ],

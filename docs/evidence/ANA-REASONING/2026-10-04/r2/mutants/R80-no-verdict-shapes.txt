@@ -1,0 +1,14 @@
+Mutant R80-no-verdict-shapes: readiness, compliance and approvability verdicts are not named (successor of M10)
+
+--- server/services/ana/answer-grounding.ts
+- const all = [...detectUnsupportedClaims(answer), ...detectVerdictClaims(answer)]
++ const all = [...detectUnsupportedClaims(answer)]
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — verdicts > names a readiness, compliance or approval verdict the answer states 7ms
+ × tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > names the verdicts stated 8ms
+ × tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > names the verdicts round 2 still missed 1ms
+      Tests  3 failed | 86 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

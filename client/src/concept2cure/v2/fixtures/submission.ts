@@ -17,7 +17,6 @@ export interface ScSequence { seq: string; type: string; status: string; region:
 export interface ScLeaf { path: string; title: string; op: string; module: string }
 export interface ScFinding { id: string; rule: string; severity: string; status: string; loc: string; msg: string }
 export interface ScShadow { id: string; severity: string; msg: string; ref: string }
-export interface ScCrossRegion { region: string; item: string; status: string; note: string }
 
 /** One spelling per region, matching the server's primaryRegion enum — the
  *  store already writes 'eu' and 'jp' (never their agency aliases), so those

@@ -1,0 +1,2 @@
+Manifest is in sync.
+exit 0

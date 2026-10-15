@@ -18,7 +18,8 @@
  *                    POST /api/coauthor/documents), then             server/routes/submissions.ts:876, :928; server/services/submission-service/submission-service.ts:1842 (:2062)
  *                    PUT /api/submissions/sequences/:id/leaves ×2
  *                    (the filing copy, and the Vault copy)
- *   8 transmit       transition → freeze → dispatch → transmit,      server/routes/submissions.ts:890, :1674, :1690, :1718;
+ *   8 transmit       the original IND's Module 3 by reference, then  server/services/ind-lifecycle/ind-cross-reference-persistence.ts:97;
+ *                    transition → freeze → dispatch → transmit,      server/routes/submissions.ts:890, :1674, :1690, :1718;
  *                    each on a governed Part 11 sign                  server/routes/c2c/actions.ts:777; submission-service.ts:1217 (:1418, :1443);
  *                                                                    server/services/submission-gateways/fda-esg.ts:264-281
  *
@@ -62,7 +63,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from '../golden-journeys/harness';
 import { T, buildWorld, baselineProblems, type World } from './founder-path-lineage.world';
 import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault, hopAdopt } from './founder-path-lineage.hops-authoring';
-import { hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
+import { hopVaultApproval, hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
 
 const h = vi.hoisted(() => ({
   db: null as unknown,
@@ -143,6 +144,11 @@ vi.mock('../../server/services/vault/document-chunking.service', () => ({
 }));
 vi.mock('../../server/export/renderers', () => ({
   renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the lineage test engine\n${html}`),
+  // Filing renders through the tracked form since a056eb9ea (QA 2026-10-08, j4); same stub.
+  renderHtmlToPdfTracked: async (html: string) => ({
+    buffer: Buffer.from(`%PDF-1.7\n% rendered by the lineage test engine\n${html}`),
+    usedFallback: false,
+  }),
 }));
 /* No embedding provider exists here; the atom writer treats that as non-fatal. */
 vi.mock('../../server/services/enhancedEmbeddingService', async (importOriginal) => {
@@ -180,7 +186,16 @@ const MIGRATIONS = [
   // Identity, the chained audit ledger, and the Part 11 signing columns.
   'db/migrations/20260813_audit_tamper_proof_log.sql',
   'db/migrations/20260725_users_signing_lockout_columns.sql',
+  // The account standing every authenticator and the signer re-verify read
+  // gained users.sessions_ended_at (P0-4b); without it every signature is
+  // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+  'migrations/20261001_users_sessions_ended_at.sql',
   'migrations/20260527_mutation_primitives.sql',
+  // The governed-action ledger's open command vocabulary, as the deploy set
+  // applies it after 20260527: the approval signature records command
+  // 'approve' (spine F1, approveBoundFilingSections), which 20260527's
+  // closed list refuses.
+  'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   'migrations/20260921_audit_logs_chain_seq.sql',
   // public.actor_name (D3, 2026-09-29): project reads name people through it.
@@ -192,14 +207,26 @@ const MIGRATIONS = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
   'migrations/20260814_projects_regulatory_program_anchor.sql',
+  'db/migrations/20260401_project_sharing_visibility.sql',
+  'db/migrations/20260314_phase12_multi_user_review.sql',
+  // projects.therapeutic_area and .retrieval_mode: the legacy project routes select the whole row (PF-08).
+  'db/migrations/20260508_project_therapeutic_area.sql',
+  'migrations/20260603_project_retrieval_mode.sql',
   'migrations/20260925b_submissions_program_anchor.sql',
   'db/migrations/20260727_prm_program_link.sql',
   // The Data Room: the evidence spine and the upload ledger.
   'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
   'migrations/20260726_cre_source_program_scope.sql',
   'migrations/20260829_cre_source_versioning.sql',
+  // Who captured it, and the capture record's write-once guard (VR-16, VR-16b).
+  'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
+  // The text a capture was read to, and its measure (Data Room catalog S2).
+  'migrations/20261008c_data_room_source_text.sql',
+  // The study a capture names, keyed to its organization (Data Room catalog S3).
+  'migrations/20261008d_cre_source_study_ref.sql',
   'migrations/20260726_file_uploads_tenancy.sql',
   'db/migrations/20260828_file_uploads_checksum.sql',
+  'migrations/20261006_document_data_dispositions.sql',
   // Authoring: the document loop, its ledger, seal, signatures, span lineage, aliases, provenance.
   'db/migrations/20260725_authoring_document_loop_tables.sql',
   'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -218,21 +245,56 @@ const MIGRATIONS = [
   'migrations/20260728_authoring_document_governed_binding.sql',
   'migrations/20260814d_document_alias_map.sql',
   'migrations/20260921_authoring_document_provenance.sql',
+  /* The AnA turn-record store. The model recorded on a drafted document is
+     resolved FROM the turn record the draft names and from nowhere else
+     (27211528b, SEC-A-7 door 2: provenance.model used to be caller input, so
+     any member could name any model for prose written into three append-only
+     records). Without this store the walk's draft can record no model at all,
+     which is the honest outcome for an unfiled turn -- so the walk files one. */
+  'migrations/20260926_ana_turn_records.sql',
   // Submission Center: the governed sign, the dispatch gate's review store, the transmittal ledger.
   'migrations/20260604_shadow_review.sql',
+  'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
+  'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
+  // P-33: the one dispatch verdict reads the IND LOA and safety-report registers.
+  'migrations/20260614_ind_safety_reports.sql',
+  'migrations/20260614_ind_cross_references.sql',
   'db/migrations/20260725_submission_orchestrator_store_port.sql',
   'db/migrations/20260725_esig_gate_columns_port.sql',
   'migrations/20260813d_esignature_governed_unification.sql',
   'migrations/20260509_submission_gateways.sql',
   'migrations/20260629_submission_transmittals_mdn_raw.sql',
   'migrations/20260629_submission_transmittals_active_lock.sql',
+  // Which account a transmit is sent under (b7bf25037, 2026-10-01). The guard
+  // resolves it before the wire, and an unreadable choice refuses the send.
+  'migrations/20261001g_organization_gateway_accounts.sql',
+  // The Module 1.4 cross-reference register. Since 2026-10-11 (D2, 4ad6118fc)
+  // Submission Readiness asks an ORIGINAL IND for its Module 3 and reads this
+  // register for the files that may stand in for it; a register it cannot read
+  // is reported as unreadable and blocks, so a journey without the table
+  // proves the refusal of a database gap, not of a missing dependency.
+  'migrations/20260614_ind_cross_references.sql',
   // Last: the same-organization project keys (PF-04) over every store above
   // that names a project. After 20260727_prm_program_link, whose unchecked
   // backfill must never run with the key present.
   'migrations/20260926b_program_same_org_keys.sql',
+  // And the integer project key (PF-03) over concept2cure_artifacts and the package spine.
+  'migrations/20261001_integer_project_same_org_keys.sql',
+  // One anchor row per program (PF-08).
+  'migrations/20261001b_projects_one_anchor_per_program.sql',
 ] as const;
-/** pgvector's column, as TEXT: see the header. */
-const TEST_ONLY_SQL = 'ALTER TABLE coauthor_documents ADD COLUMN IF NOT EXISTS embedding TEXT;';
+/**
+ * Columns the walk's database cannot get from a migration file:
+ *   - pgvector's column, as TEXT: see the header;
+ *   - audit_events.updated_at, which shared/schema.ts declares and drizzle-kit
+ *     push lays down (install-fresh.mjs, step 2), and no migration file adds.
+ *     The legacy project delete writes it on every audit row (PF-08); on a
+ *     database built from migrations alone that write fails, and silently.
+ */
+const TEST_ONLY_SQL = [
+  'ALTER TABLE coauthor_documents ADD COLUMN IF NOT EXISTS embedding TEXT;',
+  'ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS updated_at timestamp DEFAULT now();',
+].join('\n');
 
 let world: World;
 beforeAll(async () => {
@@ -249,6 +311,7 @@ describe('LX-00 — the founder path: project → Data Room → AnA → editor �
   it('hop 4 · edit-save — a person edits the quoted section and saves it through the section save path', () => hopEditSave(world), T);
   it('hop 5 · seal — the document is frozen and approved under a Part 11 signature', () => hopSeal(world), T);
   it('hop 6 · file-to-vault — the sealed document is filed to the project’s Vault', () => hopFileToVault(world), T);
+  it('hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault)', () => hopVaultApproval(world), T);
   it('hop 7 · place — the filing copy and the Vault copy are placed as submission leaves', () => hopPlace(world), T);
   it('hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)', () => hopTransmit(world), T);
   it('walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project', () => walkBack(world), T);

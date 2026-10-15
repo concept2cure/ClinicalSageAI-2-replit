@@ -11,7 +11,8 @@ describe('device blueprint — 510(k) software implant', () => {
     submissionType: '510k',
     classification: { framework: 'fda', facts: { fdaClass: 'II', predicateAvailable: true } },
     contact: { nature: 'implant_tissue_bone', duration: 'long_term' },
-    software: { applicable: true, canContributeToNonSeriousInjury: true },
+    // Both harm facts stated: an unstated one no longer reads as "no" (2026-10-15).
+    software: { applicable: true, canContributeToDeathOrSeriousInjury: false, canContributeToNonSeriousInjury: true },
   });
 
   it('recommends the 510(k) pathway from FDA facts', () => {
@@ -19,7 +20,8 @@ describe('device blueprint — 510(k) software implant', () => {
   });
 
   it('pulls the 510(k) required documents and forms', () => {
-    expect(bp.requiredForms).toContain('eSTAR 510(k) template');
+    // The canonical forms since 433200b94: the eSTAR through the CDRH Portal, and the user fee.
+    expect(bp.requiredForms).toEqual(expect.arrayContaining(['eSTAR (submitted via CDRH Portal)', 'FDA 3601']));
     expect(bp.requiredDocuments.some((d) => d.templateId === 'k510_summary')).toBe(true);
   });
 

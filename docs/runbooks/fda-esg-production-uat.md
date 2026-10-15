@@ -43,7 +43,7 @@ Out of scope (defer to follow-on tasks):
 | --- | --- | --- |
 | FDA ESG WebTrader account (test) | Regulatory Ops | <https://esg.fda.gov> registration; sponsor identity tied to the org. |
 | Sponsor AS2 identifier | Regulatory Ops | The value injected as `FDA_ESG_STAGING_AS2_FROM`. Assigned by FDA at account provisioning. |
-| FDA AS2 identifier | Regulatory Ops | Defaults to `FDA-CESUB` (`fda-esg.ts:77`); override only if FDA tells you to in writing. |
+| FDA AS2 identifier | Regulatory Ops | FDA's AS2 identifier for this environment, as issued at ESG registration — record the one FDA issued for each environment. Injected as `FDA_ESG_STAGING_AS2_TO` / `FDA_ESG_AS2_TO`. Required: there is no default, and transmit refuses with a `CredentialError` naming the variable when it is unset (2026-10-01, sweep F16 — it used to fall back to `FDA-CESUB`, a value with no FDA source, the same for both environments). |
 | Sponsor mTLS cert + private key (PEM) | Platform | Pair issued or cross-signed for the FDA ESG endpoint. Same key is used for the AS2 detached signature (`fda-esg.ts:158–166`). |
 | FDA AS2 public cert (PEM) | Platform | Used as the `ca` trust anchor for the mTLS handshake (`fda-esg.ts:244`); the field is also retained for future PKCS#7 encrypt-to-FDA. |
 | Sponsor application number | Regulatory Ops | E.g. `IND123456`. Passed in `metadata.applicationId` (`fda-esg.ts:355–357`). |
@@ -64,7 +64,7 @@ Required for AS2 (presence checked at `fda-esg.ts:81–88`):
 ```text
 FDA_ESG_STAGING_URL              # e.g. https://esgtest.fda.gov/gateway   — fda-esg.ts:75
 FDA_ESG_STAGING_AS2_FROM         # sponsor's AS2 identifier               — fda-esg.ts:76
-FDA_ESG_STAGING_AS2_TO           # optional; defaults to FDA-CESUB        — fda-esg.ts:77
+FDA_ESG_STAGING_AS2_TO           # FDA's AS2 identifier for the test environment, as issued at ESG registration; required, never defaulted
 FDA_ESG_STAGING_CERT_PATH        # absolute path to mTLS client cert PEM  — fda-esg.ts:78
 FDA_ESG_STAGING_KEY_PATH         # absolute path to mTLS private key PEM  — fda-esg.ts:79
 FDA_ESG_STAGING_FDA_CERT_PATH    # absolute path to FDA's AS2 public cert — fda-esg.ts:80
@@ -139,7 +139,7 @@ The gateway builds AS2 headers at `fda-esg.ts:142–156`. Confirm via the smoke 
 
 - `Message-ID` of the form `<uuid@${AS2_FROM}>`
 - `AS2-From` matches `FDA_ESG_STAGING_AS2_FROM`
-- `AS2-To` matches `FDA_ESG_STAGING_AS2_TO` (or `FDA-CESUB`)
+- `AS2-To` matches `FDA_ESG_STAGING_AS2_TO` (FDA's AS2 identifier for this environment; the smoke refuses to run without it)
 - `AS2-Version: 1.2`
 - `Disposition-Notification-To` is set to the sponsor (sync MDN)
 - `Receipt-Delivery-Option: sync`
@@ -466,9 +466,10 @@ GA-2 follow-on tickets.
   has no companion "rollback" / "void" command. UAT rollbacks are recorded manually.
 - **Per-package transmit lock.** Nothing today prevents a second `transmit` against the
   same package after a rollback. Worth a TIER-2 follow-up before GA-1.
-- **Staging variant of AS2-To.** `FDA_ESG_STAGING_AS2_TO` is read (`fda-esg.ts:77`) but the
-  same default (`FDA-CESUB`) applies to both staging and prod; confirm FDA uses the same
-  AS2-To for the WebTrader test endpoint.
+- **Staging variant of AS2-To.** `FDA_ESG_STAGING_AS2_TO` and `FDA_ESG_AS2_TO` are each
+  required, with no default and no fallback from one environment to the other (2026-10-01,
+  sweep F16 — both used to default to the same `FDA-CESUB`, a value with no FDA source). Set each to the AS2
+  identifier FDA issued for that environment at ESG registration.
 
 ---
 

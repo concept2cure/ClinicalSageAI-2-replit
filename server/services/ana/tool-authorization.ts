@@ -40,6 +40,7 @@
  */
 
 import register from './tool-authorization.register.json';
+import type { StepPresentationEntry } from '@shared/ana/step-verbs';
 
 export type ToolClass = 'read' | 'self' | 'confirm' | 'refuse' | 'command';
 
@@ -64,9 +65,22 @@ interface RegisterEntry {
   writes: string;
   why?: string;
   refusedBy?: 'handler';
+  /**
+   * How a step of this tool reads on screen (ANA-SUMMARY S3): a verb and a
+   * source from shared/ana/step-verbs.ts, the object the verb acts on, and the
+   * input fields it may preview. Built into labels, both tenses, by
+   * step-presentation.ts. Required for every in-scope tool
+   * (scripts/ci/check-step-presentation.mjs).
+   */
+  present?: StepPresentationEntry;
 }
 
 export const TOOL_REGISTER: Readonly<Record<string, RegisterEntry>> = register.tools as Record<string, RegisterEntry>;
+
+/** A tool's presentation entry, or undefined: the step then reads "Running a step". */
+export function stepPresentationOf(name: string): StepPresentationEntry | undefined {
+  return Object.prototype.hasOwnProperty.call(TOOL_REGISTER, name) ? TOOL_REGISTER[name].present : undefined;
+}
 
 type Input = Record<string, unknown>;
 type Rule = (input: Input) => ToolAuthorization;

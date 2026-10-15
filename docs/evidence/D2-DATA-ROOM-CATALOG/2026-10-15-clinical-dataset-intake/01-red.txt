@@ -1,0 +1,78 @@
+# RED at 64ab7dc4c with the reader/admission source reverted, tests kept (2026-10-15T05:55:57Z)
+## unit
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles an SDTM AE listing: columns, types, rows, standard and domain 253ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > keeps no cell value: no subject id or term appears in the profile 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles a TSV, and a table with no CDISC signature as no standard 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > reads the datasets a define.xml describes 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles paired and self-closing define elements without accepting longer element names 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles every invocation from the beginning without retaining matching state 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > counts every define dataset while retaining only the existing table limit 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > declines what it does not read: a PDF, or an XML that is not a define.xml 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > detectCdisc > recognises ADaM BDS and ADSL by their required variables 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > detectCdisc > names no domain it cannot see in the variables 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset — SAS transport and Dataset-JSON (2026-10-15) > profiles a Dataset-JSON SDTM AE: columns, types, records, standard and domain, and keeps no value 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset — SAS transport and Dataset-JSON (2026-10-15) > a .json that is not a dataset has no profile 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset — SAS transport and Dataset-JSON (2026-10-15) > a .xpt that is not a transport file has no profile 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset — SAS transport and Dataset-JSON (2026-10-15) > profiles a SAS transport SDTM AE from its headers: variables, types, rows, domain 13ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.csv through the picker and client validation 4ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.tsv through the picker and client validation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.xlsx through the picker and client validation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows resource.json through the picker and client validation 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows define.xml through the picker and client validation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows notes.md through the picker and client validation 0ms
+ × client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > preserves empty, unsupported, and 50 MB refusal boundaries 6ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > shares Vault picker candidates with its receiver while keeping limits and legacy truth explicit 3ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > accepts a buffer starting with %PDF 3ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects a buffer that declares pdf but starts with PNG bytes 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects an executable masquerading as pdf 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts a real PNG 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > rejects a JPEG-marked buffer that is actually PDF bytes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts real JPEG (ff d8 ff) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts both GIF87a and GIF89a 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts a docx-declared buffer that starts with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > rejects a docx-declared buffer that does not start with PK 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts .xlsx and .pptx (same container) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts plain application/zip 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts plain ASCII text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts CSV 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts JSON 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects binary content declared as text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects a buffer with embedded null bytes (classic binary tell) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > accepts OLE compound for application/msword 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > rejects a .doc-declared buffer that is actually a ZIP (real-world bug case) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects an empty buffer 1ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects unknown / unhandled MIME types 2ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects a buffer too short to contain the magic 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .json name carrying a different declared binary type 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .xml name carrying a different declared binary type 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .tsv name carrying a different declared binary type 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.json / application/json 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.xml / application/xml 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.xml / text/xml 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.tsv / text/tab-separated-values 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > verifies the existing byte-shape check for data.json / text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > the SEC-A-3 upload passes the declared-type check on its own — the gap this closes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf declared text/html, naming the type a .pdf must be declared as 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf whose bytes are not a PDF, whatever was declared 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts a real PDF, whatever the case of its extension 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > binds rather than blacklists: text/html is refused for .txt and .md, and left alone for .html 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts the types a text file is actually sent as, parameters and case aside 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses one Office format declared as another 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > leaves a name it does not bind to the caller’s own allowlist 0ms
+ × server/utils/__tests__/fileSignature.test.ts > SAS transport and Dataset-JSON NDJSON (2026-10-15) > checks an .xpt against the transport header, declared as its own type or as a browser sends it 11ms
+## real PostgreSQL 16
+ × tests/db/clinical-dataset-intake.dbtest.ts > a SAS transport file in the Data Room > is read for its structure: text, method and an SDTM AE profile 637ms
+   → expected 'failed' to be 'extracted' // Object.is equality
+ × tests/db/clinical-dataset-intake.dbtest.ts > a SAS transport file in the Data Room > is found by a variable's label in the Data Room search 172ms
+   → expected [] to include 4757
+ × tests/db/clinical-dataset-intake.dbtest.ts > a Dataset-JSON file in the Data Room > is profiled from its columns, and no row value is kept in the profile 161ms
+   → expected null to match object { format: 'dataset-json', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/clinical-dataset-intake.dbtest.ts > a SAS transport file in the Data Room > is read for its structure: text, method and an SDTM AE profile
+AssertionError: expected 'failed' to be 'extracted' // Object.is equality
+ FAIL  tests/db/clinical-dataset-intake.dbtest.ts > a SAS transport file in the Data Room > is found by a variable's label in the Data Room search
+AssertionError: expected [] to include 4757
+ FAIL  tests/db/clinical-dataset-intake.dbtest.ts > a Dataset-JSON file in the Data Room > is profiled from its columns, and no row value is kept in the profile
+AssertionError: expected null to match object { format: 'dataset-json', …(1) }
+ Test Files  1 failed (1)
+      Tests  3 failed (3)

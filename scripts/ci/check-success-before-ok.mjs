@@ -37,6 +37,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const FIXTURES = path.join(ROOT, 'tests/fixtures/success-before-ok');
@@ -65,17 +66,28 @@ function sourceFiles() {
     .filter((f) => !/__tests__|\.test\.tsx$|\/fixtures\//.test(f));
 }
 
-/** Blank comments so prose ABOUT a defect is not read as the defect. */
-function stripComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .split('\n')
-    .map((l) => l.replace(/\/\/.*$/, ''))
-    .join('\n');
-}
+/**
+ * The text a handler is read from: comments gone, so prose ABOUT a defect is
+ * not read as the defect, and every line where it was, so a reported line is
+ * the source line.
+ *
+ * Comments are found by the shared, string-aware stripper. The regex pair this
+ * gate used to carry did not know about strings: a literal holding `/*` (a
+ * route glob such as '/api/vault/*') opened a "comment" that ran to the next
+ * real `*` `/`, and a URL ('https://…', `${proto}://…`, 'vault://…') cut the
+ * rest of its own line, so an apiRequest or a success toast in either place
+ * was never read.
+ *
+ * Line comments are dropped rather than blanked ({ lineComments: 'drop' }),
+ * because WINDOW was tuned on text with line comments removed. Left blank, a
+ * `//` note spends the window on spaces: across this tree on 2026-10-05, 66 of
+ * the 206 apiRequest windows would have read less code, by up to 442 of 900
+ * characters.
+ */
+const codeOf = (raw) => stripComments(raw, { lineComments: 'drop' });
 
 export function scan(file, raw) {
-  const code = stripComments(raw);
+  const code = codeOf(raw);
   const out = [];
   let m;
   CALL.lastIndex = 0;

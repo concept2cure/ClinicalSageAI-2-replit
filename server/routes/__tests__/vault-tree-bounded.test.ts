@@ -43,10 +43,21 @@ vi.mock('../../services/clinical-regulatory-evidence/evidence-spine.service.js',
   listClientDocuments,
 }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization. Its reads are answered
+   from seats (support/current-member.ts); an unseated caller or program is
+   refused exactly as the real gate refuses. */
+vi.mock('../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('../c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import createProjectVaultRoutes from '../c2c/project-vault';
+import { clearSeats, seatMember, seatProgram } from '../c2c/__tests__/support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const CAP = 2;
+const USER = 3;
 
 /** A checksum that is in the vault but NOT in the page the tree fetched. */
 const HASH_BEYOND_PAGE = 'sha256-outside-the-page';
@@ -55,7 +66,9 @@ function app(org: number | null = 7) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: 3 };
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: USER };
+    // The request's own connection, which the production request scope supplies.
+    (req as unknown as { dbClient: unknown }).dbClient = { query };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
@@ -98,6 +111,8 @@ function filedRow(n: number) {
 function dispatch(opts: {
   total: number;
   unfiled: number;
+  /** Documents awaiting a person's confirmation, program-wide (VR-11b). */
+  suggested?: number;
   filedHashes: string[];
   page: Record<string, unknown>[];
 }) {
@@ -107,7 +122,7 @@ function dispatch(opts: {
       return { rows: opts.filedHashes.map(h => ({ content_hash: h })) };
     }
     if (/COUNT\(\*\)::int AS total/.test(q)) {
-      return { rows: [{ total: opts.total, unfiled: opts.unfiled }] };
+      return { rows: [{ total: opts.total, unfiled: opts.unfiled, suggested: opts.suggested ?? 0 }] };
     }
     if (/d\.document_code/.test(q)) return { rows: opts.page };
     if (/SELECT id, name, product_type/.test(q)) {
@@ -118,7 +133,7 @@ function dispatch(opts: {
   };
 }
 
-function wireStore(opts: { total: number; unfiled: number; filedHashes: string[] }) {
+function wireStore(opts: { total: number; unfiled: number; suggested?: number; filedHashes: string[] }) {
   // cap + 1 rows, so the handler sees the overflow. All of them filed.
   query.mockImplementation(
     dispatch({ ...opts, page: [filedRow(1), filedRow(2), filedRow(3)] }),
@@ -127,6 +142,9 @@ function wireStore(opts: { total: number; unfiled: number; filedHashes: string[]
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearSeats();
+  seatMember(7, USER, 'member');
+  seatProgram(7, PROGRAM);
   process.env.VAULT_TREE_MAX_DOCS = String(CAP);
   listClientDocuments.mockResolvedValue([]);
 });
@@ -184,6 +202,15 @@ describe('the unfiled queue counts the program, not the page', () => {
     expect(sql).toMatch(/d\.deleted_at IS NULL/);
     expect(sql).toMatch(/rp\.organization_id = \$2/);
   });
+
+  it('counts the suggestions awaiting confirmation over the program, not the page (VR-11b)', async () => {
+    // Every row the page carries is filed, so a page-derived count would be 0.
+    wireStore({ total: 500, unfiled: 137, suggested: 42, filedHashes: [] });
+    const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
+    expect(res.body.data.awaitingConfirmationCount).toBe(42);
+    const counts = query.mock.calls.find(([sql]) => /COUNT\(\*\)::int AS total/.test(String(sql)));
+    expect(String(counts![0])).toMatch(/d\.folder_id IS NOT NULL AND d\.placement_status = 'suggested'/);
+  });
 });
 
 describe("a source's filed stage is answered by the database, not by the page", () => {
@@ -203,7 +230,10 @@ describe("a source's filed stage is answered by the database, not by the page", 
     wireStore({ total: 500, unfiled: 137, filedHashes: [HASH_BEYOND_PAGE] });
     const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
     expect(res.body.data.dataRoom.sources[0].stage).toBe('filed');
-    expect(res.body.data.dataRoom.filed).toBe(1);
+    // The Filed COUNT is one aggregate over the whole project since 2026-10-08
+    // (countDataRoomStages), proven on PostgreSQL in data-room-processing.dbtest.ts.
+    const counted = query.mock.calls.find(([sql]) => /AS needs_review/.test(String(sql)));
+    expect(counted?.[1]).toEqual([PROGRAM, 7]);
   });
 
   it('still reports not-filed when the database says the checksum is absent', async () => {
@@ -211,7 +241,6 @@ describe("a source's filed stage is answered by the database, not by the page", 
     wireStore({ total: 500, unfiled: 137, filedHashes: [] });
     const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
     expect(res.body.data.dataRoom.sources[0].stage).not.toBe('filed');
-    expect(res.body.data.dataRoom.filed).toBe(0);
   });
 
   it('probes only the checksums it actually holds, scoped to program and tenant', async () => {

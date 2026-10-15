@@ -1,0 +1,441 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:09:21.856Z","pid":18016,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:09:21.858Z","pid":18016,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:09:21.858Z","pid":18016,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-review-fix-round.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-review-fix-round.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-review-fix-round.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:09:22.998Z', poolSize: 1 }
+
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > probe (a) as found is refused, and no access review is recorded 88ms
+   → {"success":true,"review":{"id":94,"kind":"access","periodStart":"2000-01-01","periodEnd":"2000-01-01","scope":{"description":"probe (a)","reportExportId":"exp-that-never-ran"},"outcome":"probe (a)","decisions":[{"role":"admin","userId":999999,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 not to be 201 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a period that ended more than three months ago is refused, naming the date it was due 23ms
+   → {"success":true,"review":{"id":95,"kind":"access","periodStart":"2026-05-01","periodEnd":"2026-06-15","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line for an account that is not a member of this organisation is refused 22ms
+   → {"success":true,"review":{"id":96,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"},{"role":"member","userId":999999,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line that states a role the account does not hold is refused 30ms
+   → {"success":true,"review":{"id":97,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"owner","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an export id this organisation never ran is refused 21ms
+   → {"success":true,"review":{"id":98,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"probe","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"exp-that-never-ran"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an access review that names a run of the other report is refused 21ms
+   → {"success":true,"review":{"id":99,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"probe","reportDataHash":"33fcc2f00d36de3e10ae1b53a591ff08cbec8a99dd3d56b48fed2eefdbfb30d5","reportExportId":"COMPLIANCE-REPORT-1790867363027-cb4bbc83"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a data hash that is not the run's is refused 26ms
+   → {"success":true,"review":{"id":100,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"probe","reportDataHash":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > another organisation's run is refused 41ms
+   → {"success":true,"review":{"id":101,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"probe","reportDataHash":"1b20a3284a5d480ac7291fb179032d8212d891b105e18e39bb164e6da1c7a5da","reportExportId":"COMPLIANCE-REPORT-1790867363289-7fdae6c0"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > probe (b) as found is refused, and the integrity attestation still says none 57ms
+   → {"success":true,"review":{"id":102,"kind":"audit_trail","periodStart":"1999-01-01","periodEnd":"1999-01-01","scope":{"description":"probe (b)"},"outcome":"n/a","decisions":[],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 not to be 201 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > an audit-trail review of the recent quarter that names no report run is refused 20ms
+   → {"success":true,"review":{"id":103,"kind":"audit_trail","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"The quarter, with no run named."},"outcome":"No unexplained change was found. The integrity checks were intact.","decisions":[{"action":"None required.","finding":"Two role changes, both with a recorded reason."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 400 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (c): completeness is decided on current roles and memberships > probe (c) as found is refused, naming every account that holds a privileged role now 17ms
+   → {"success":true,"review":{"id":104,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-09-30","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"member","userId":1652,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce that has not been carried out is refused 17ms
+   → {"success":true,"review":{"id":105,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"reduce","reducedTo":"member","changeReference":"Recorded in the administrative changes report (dbcrr)."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce whose new role is in effect is accepted 27ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an active member is refused 18ms
+   → {"success":true,"review":{"id":107,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"},{"role":"member","userId":1652,"decision":"remove","changeReference":"Recorded in the administrative changes report (dbcrr)."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove the product recorded (member_removed) is accepted 17ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove whose recorded role is not the line's role is refused 16ms
+   → {"success":true,"review":{"id":109,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"},{"role":"admin","userId":2480,"decision":"remove","changeReference":"Recorded in the administrative changes report (dbcrr)."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove SCIM provisioning recorded (scim.user.deactivated) is accepted 17ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of a member whose account is deactivated is accepted 17ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an account this organisation has no recorded removal of is refused 21ms
+   → {"success":true,"review":{"id":112,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"},{"role":"admin","userId":1654,"decision":"remove","changeReference":"Recorded in the administrative changes report (dbcrr)."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a review signed today of a period that ended four months ago is overdue today 21ms
+   → expected { kind: 'audit_trail', …(2) } to match object { state: 'overdue', …(1) }
+(9 matching properties omitted from actual)
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period that leaves days unreviewed after the last signed review is refused, naming the day to start from 14ms
+   → {"success":true,"review":{"id":114,"kind":"audit_trail","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Administrative changes, sign-in events and the integrity attestation for the quarter.","reportDataHash":"33fcc2f00d36de3e10ae1b53a591ff08cbec8a99dd3d56b48fed2eefdbfb30d5","reportExportId":"COMPLIANCE-REPORT-1790867363027-cb4bbc83"},"outcome":"No unexplained change was found. The integrity checks were intact.","decisions":[{"action":"None required.","finding":"Two role changes, both with a recorded reason."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period starting the day after it is accepted, signed, and current until three months after it ends 54ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a role changed after the draft refuses the signature, and nothing is signed 44ms
+   → {"success":true,"review":{"id":116,"kind":"access","status":"signed","periodStart":"2026-07-01","periodEnd":"2026-10-01","contentHash":"5e3e3da60e58a5916d1ff4f2a04b04696a98609804ee3beb67579e8a04562954"},"actionId":"act_19e9e6d17f864dc084f106149517d0f6","auditId":"821be007-b3f5-4b28-9dcf-62c24f13b73b","sha256Chain":"8042359f43d6f18a6298b5dd161cf3e99c82746de3d7b98fbe6e93f64a3adb8e","signatureId":788,"signedAt":"2026-10-01T15:09:23.720Z","meaning":"review"}: expected 201 to be 409 // Object.is equality
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft whose period is stale when it is signed is refused, and nothing is signed 47ms
+   → {"success":true,"review":{"id":117,"kind":"access","status":"signed","periodStart":"2026-01-01","periodEnd":"2026-05-31","contentHash":"2afe36378e90d7fa4e5aa4f718e3a9e8c9e63b1e0dc365c44877ed6476b9b419"},"actionId":"act_9c608378d06346708fdfa0173d8db53a","auditId":"be39bee7-348f-4ef5-9450-4323629f09fd","sha256Chain":"ca8a94767b2034725057004945c2737ed92d6b50291fb40456a075bf2ccf246f","signatureId":789,"signedAt":"2026-10-01T15:09:23.768Z","meaning":"review"}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-70: the review records are retained at offboarding, and the tenant export returns them > the tenant export carries the organisation's review records, signed ones included 921ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > probe (a) as found is refused, and no access review is recorded
+AssertionError: {"success":true,"review":{"id":94,"kind":"access","periodStart":"2000-01-01","periodEnd":"2000-01-01","scope":{"description":"probe (a)","reportExportId":"exp-that-never-ran"},"outcome":"probe (a)","decisions":[{"role":"admin","userId":999999,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 not to be 201 // Object.is equality
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:117:54
+    115|     });
+    116|     if (res.status === 201) await sign(Number(res.body.review.id));
+    117|     expect(res.status, JSON.stringify(res.body)).not.toBe(201);
+       |                                                      ^
+    118|     expect((await status()).access).toMatchObject({ state: 'none', lat…
+    119|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a period that ended more than three months ago is refused, naming the date it was due
+AssertionError: {"success":true,"review":{"id":95,"kind":"access","periodStart":"2026-05-01","periodEnd":"2026-06-15","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:123:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line for an account that is not a member of this organisation is refused
+AssertionError: {"success":true,"review":{"id":96,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"},{"role":"member","userId":999999,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:129:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line that states a role the account does not hold is refused
+AssertionError: {"success":true,"review":{"id":97,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"owner","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:135:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an export id this organisation never ran is refused
+AssertionError: {"success":true,"review":{"id":98,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"probe","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"exp-that-never-ran"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:141:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an access review that names a run of the other report is refused
+AssertionError: {"success":true,"review":{"id":99,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"probe","reportDataHash":"33fcc2f00d36de3e10ae1b53a591ff08cbec8a99dd3d56b48fed2eefdbfb30d5","reportExportId":"COMPLIANCE-REPORT-1790867363027-cb4bbc83"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:146:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a data hash that is not the run's is refused
+AssertionError: {"success":true,"review":{"id":100,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"probe","reportDataHash":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:151:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > another organisation's run is refused
+AssertionError: {"success":true,"review":{"id":101,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"probe","reportDataHash":"1b20a3284a5d480ac7291fb179032d8212d891b105e18e39bb164e6da1c7a5da","reportExportId":"COMPLIANCE-REPORT-1790867363289-7fdae6c0"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > probe (b) as found is refused, and the integrity attestation still says none
+AssertionError: {"success":true,"review":{"id":102,"kind":"audit_trail","periodStart":"1999-01-01","periodEnd":"1999-01-01","scope":{"description":"probe (b)"},"outcome":"n/a","decisions":[],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 not to be 201 // Object.is equality
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:172:54
+    170|     });
+    171|     if (res.status === 201) await sign(Number(res.body.review.id));
+    172|     expect(res.status, JSON.stringify(res.body)).not.toBe(201);
+       |                                                      ^
+    173|     expect((await attestationReviewRow()).review_status).toBe('No audi…
+    174|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > an audit-trail review of the recent quarter that names no report run is refused
+AssertionError: {"success":true,"review":{"id":103,"kind":"audit_trail","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"The quarter, with no run named."},"outcome":"No unexplained change was found. The integrity checks were intact.","decisions":[{"action":"None required.","finding":"Two role changes, both with a recorded reason."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:178:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (c): completeness is decided on current roles and memberships > probe (c) as found is refused, naming every account that holds a privileged role now
+AssertionError: {"success":true,"review":{"id":104,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-09-30","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"member","userId":1652,"decision":"keep"}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:186:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce that has not been carried out is refused
+AssertionError: {"success":true,"review":{"id":105,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"reduce","reducedTo":"member","changeReference":"Recorded in the administrative changes report (dbcrr)."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:223:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an active member is refused
+AssertionError: {"success":true,"review":{"id":107,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"},{"role":"member","userId":1652,"decision":"remove","changeReference":"Recorded in the administrative changes report (dbcrr)."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:244:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove whose recorded role is not the line's role is refused
+AssertionError: {"success":true,"review":{"id":109,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"},{"role":"admin","userId":2480,"decision":"remove","changeReference":"Recorded in the administrative changes report (dbcrr)."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:255:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an account this organisation has no recorded removal of is refused
+AssertionError: {"success":true,"review":{"id":112,"kind":"access","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Members, roles and signing authority of organisation A, as listed by the user access review.","reportDataHash":"ac2e8f54d335c6360dea2661ba17a94a1bc58a8c3dd9d8e95abe829616681e32","reportExportId":"COMPLIANCE-REPORT-1790867362967-329e5fba"},"outcome":"Every privileged account was reviewed and kept.","decisions":[{"role":"admin","userId":1650,"decision":"keep"},{"role":"admin","userId":1651,"decision":"keep"},{"role":"admin","userId":1654,"decision":"remove","changeReference":"Recorded in the administrative changes report (dbcrr)."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:271:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a review signed today of a period that ended four months ago is overdue today
+AssertionError: expected { kind: 'audit_trail', …(2) } to match object { state: 'overdue', …(1) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "latest": {
+      "id": 113,
+-     "nextDue": "2026-08-31",
++     "nextDue": "2027-01-01",
+      "periodEnd": "2026-05-31",
+    },
+-   "state": "overdue",
++   "state": "current",
+  }
+
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:285:25
+    283|   it('a review signed today of a period that ended four months ago is …
+    284|     const { audit_trail } = await status();
+    285|     expect(audit_trail).toMatchObject({ state: 'overdue', latest: { id…
+       |                         ^
+    286|     expect(await attestationReviewRow()).toMatchObject({ review_status…
+    287|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period that leaves days unreviewed after the last signed review is refused, naming the day to start from
+AssertionError: {"success":true,"review":{"id":114,"kind":"audit_trail","periodStart":"2026-07-01","periodEnd":"2026-10-01","scope":{"description":"Administrative changes, sign-in events and the integrity attestation for the quarter.","reportDataHash":"33fcc2f00d36de3e10ae1b53a591ff08cbec8a99dd3d56b48fed2eefdbfb30d5","reportExportId":"COMPLIANCE-REPORT-1790867363027-cb4bbc83"},"outcome":"No unexplained change was found. The integrity checks were intact.","decisions":[{"action":"None required.","finding":"Two role changes, both with a recorded reason."}],"reviewerUserId":1650,"reviewerName":null,"status":"draft","signatureId":null,"contentHash":null,"createdAt":"2026-10-01T15:09:23Z","signedAt":null}}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:291:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a role changed after the draft refuses the signature, and nothing is signed
+AssertionError: {"success":true,"review":{"id":116,"kind":"access","status":"signed","periodStart":"2026-07-01","periodEnd":"2026-10-01","contentHash":"5e3e3da60e58a5916d1ff4f2a04b04696a98609804ee3beb67579e8a04562954"},"actionId":"act_19e9e6d17f864dc084f106149517d0f6","auditId":"821be007-b3f5-4b28-9dcf-62c24f13b73b","sha256Chain":"8042359f43d6f18a6298b5dd161cf3e99c82746de3d7b98fbe6e93f64a3adb8e","signatureId":788,"signedAt":"2026-10-01T15:09:23.720Z","meaning":"review"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:314:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+ FAIL  tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft whose period is stale when it is signed is refused, and nothing is signed
+AssertionError: {"success":true,"review":{"id":117,"kind":"access","status":"signed","periodStart":"2026-01-01","periodEnd":"2026-05-31","contentHash":"2afe36378e90d7fa4e5aa4f718e3a9e8c9e63b1e0dc365c44877ed6476b9b419"},"actionId":"act_9c608378d06346708fdfa0173d8db53a","auditId":"be39bee7-348f-4ef5-9450-4323629f09fd","sha256Chain":"ca8a94767b2034725057004945c2737ed92d6b50291fb40456a075bf2ccf246f","signatureId":789,"signedAt":"2026-10-01T15:09:23.768Z","meaning":"review"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ expectRefused tests/db/compliance-review-fix-round.dbtest.ts:101:48
+     99| /** A refusal: its status and its code. */
+    100| async function expectRefused(res: request.Response, statusCode: number…
+    101|   expect(res.status, JSON.stringify(res.body)).toBe(statusCode);
+       |                                                ^
+    102|   expect(res.body.error?.code, JSON.stringify(res.body)).toBe(code);
+    103| }
+ ❯ tests/db/compliance-review-fix-round.dbtest.ts:330:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/19]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  19 failed | 6 passed (25)
+   Start at  15:09:19
+   Duration  5.61s (transform 1.76s, setup 96ms, import 694ms, tests 4.46s, environment 0ms)
+

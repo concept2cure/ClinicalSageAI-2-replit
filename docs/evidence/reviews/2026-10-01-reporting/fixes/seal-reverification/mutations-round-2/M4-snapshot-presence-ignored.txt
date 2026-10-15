@@ -1,0 +1,75 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is intact when the document, the stored seal and the chain all agree 4ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the stored document was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the document and its stored seal were both rewritten: the chain holds the original 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's sealing time was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's atom count was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's algorithm was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's canonicalizer was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the document's provenance atoms no longer match the recorded count 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch, not "not verifiable", when the sealed document was removed after a finalize that stored it 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch, not "not verifiable", when the stored seal was removed after a finalize that stored it 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the chain holds two finalizations of the run 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the chain row's content no longer matches its payload hash 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when a sealed document is stored but the chain holds no finalization 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is not verifiable for a seal from before the chain row and the stored document existed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is not verifiable for a finalization recorded before the document was stored, whose seal agrees with the chain 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its stored seal disagrees with the chain 0ms
+ × server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its seal was removed from a snapshot that still exists 17ms
+   → expected 'not-verifiable' to be 'mismatch' // Object.is equality
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row holds no chain position 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row does not link to the organisation's chain 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row carries no HMAC seal although the key is configured 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row carries an HMAC seal that does not verify 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when no electronic signature is recorded for a finalize that recorded storing the document 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the signature's manifest names another seal for a finalize that recorded storing the document 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > checks nothing against an unverified record: every other check says it was not run, none claims agreement 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > a malformed stored document is a failed check, never a crash 2ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reports the act as the chain recorded it, with the signature, and verifies the stored copies against it 3ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads a snapshot stored as json text too 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > binds the chain row's content to its payload hash: an edited row fails 3ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > does not trust a finalization row that holds no position on the chain: the app role can insert one 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > fails the chain check when the run was recorded as finalized twice 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > scopes every read to the run and its organisation 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads the chain before the status, so a finalize committing between the two is not a contradiction 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > answers sealed: false for a run that is not final and never was 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > is a mismatch when the run's status was rewritten after the chain recorded its finalization 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > shows only what the chain recorded: seal fields the snapshot carries beside it are never returned 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the sealed document was removed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the snapshot is gone 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the signature is gone 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > throws when a read fails: an error is never a verdict 2ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is intact when the row carries a valid seal over its link 2ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is a mismatch when the row carries no seal 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is a mismatch when the row carries a seal made without the key 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readVerifiedSealedDocument and readSealForExport > return the stored document only when it verifies 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readVerifiedSealedDocument and readSealForExport > has no sealed document for a run not marked final: a mismatch when the chain records its finalization 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readVerifiedSealedDocument and readSealForExport > a malformed stored document with no finalization on the chain is a mismatch, not a crash 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its seal was removed from a snapshot that still exists
+AssertionError: expected 'not-verifiable' to be 'mismatch' // Object.is equality
+
+Expected: "mismatch"
+Received: "not-verifiable"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts:144:65
+    142|   it('is a mismatch for such a finalization when its seal was removed …
+    143|     const legacy = { sealedDocument: null, seal: null, chain: { ...CHA…
+    144|     expect(verdict({ ...legacy, snapshotFound: true }).verdict).toBe('…
+       |                                                                 ^
+    145|     expect(verdict({ ...legacy, snapshotFound: false }).verdict).toBe(…
+    146|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 44 passed (45)
+   Start at  14:45:01
+   Duration  850ms (transform 320ms, setup 157ms, import 224ms, tests 63ms, environment 0ms)
+

@@ -1,0 +1,11 @@
+# P-34 reliance: the waiver on the freeze/dispatch/transmit row, and re-checked under the lock — 2026-10-15T07:40:37Z
+
+ ✓ server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > names the waiver on its §11.10(e) row: signature, waived run, failed run and why it failed
+ ✓ server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > is refused when the waiver is revoked after the assessment and before the lock, and its signature is void
+ ✓ server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > is refused when a critical it counted as closed reopens before the lock (its closing signature revoked)
+ ✓ server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts > a freeze that goes forward on a signed Shadow Review waiver > a freeze on a completed review names no waiver
+      Tests  4 passed (4)
+
+## Regression (71 files: assessor, governed steps, disposition, revocation, the trigger)
+ Test Files  70 passed | 1 skipped (71)
+      Tests  922 passed | 2 skipped (924)

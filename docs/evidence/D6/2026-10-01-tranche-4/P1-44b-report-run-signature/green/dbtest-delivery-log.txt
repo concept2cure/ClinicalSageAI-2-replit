@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T14:04:09.085Z","pid":16669,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T14:04:09.087Z","pid":16669,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T14:04:09.087Z","pid":16669,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-delivery-recording.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T14:04:09.276Z', poolSize: 1 }
+
+stdout | tests/db/report-os-delivery-recording.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-delivery-recording.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a plain member cannot deliver: 403, no letter and no chain row (DP-61) 89ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > platform_send as app_service under RLS: 'sent', with the letter, the record and one chained row 61ms
+{"level":50,"time":"2026-10-01T14:04:10.665Z","pid":16669,"hostname":"vm","context":{"deliveryId":"0efadc38-fb4c-4b7f-8a53-67fb48f401f0","channel":"platform_send","code":"P0001"},"msg":"[report-os] report delivery not recorded; rolled back"}
+{"level":50,"time":"2026-10-01T14:04:10.705Z","pid":16669,"hostname":"vm","context":{"deliveryId":"7a500cca-4728-4631-9236-2ec0d0fc9865","channel":"platform_send","code":"P0001"},"msg":"[report-os] report delivery not recorded; rolled back"}
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused correspondence write is not sent: 503, and no record or chain row claims it 46ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused chain row is not sent: the letter and the record roll back with it 40ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > external_pdf_export of a final report with no signature is refused: 409, nothing recorded 23ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a delivery record refused by the database: 503, and no log line carries the subject, the letter or a recipient 40ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  14:04:06
+   Duration  4.26s (transform 1.99s, setup 87ms, import 3.19s, tests 620ms, environment 0ms)
+

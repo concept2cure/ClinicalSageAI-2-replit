@@ -30,6 +30,14 @@ import {
   isHumanOrAnimalOrigin,
   isReviewRequiredOrigin,
 } from '../../shared/cmc/material-scope';
+import { classifySubstanceModality } from './cmc/substance-modality';
+import {
+  isUsClinicalTrialApplication,
+  US_IND_REGIONAL_FIELDS,
+  usIndRegionalNarrative,
+  usIndRegionalRows,
+  type IndRegionalStatus,
+} from './cmc/us-ind-regional';
 
 export type RegionCode = 'US' | 'EU' | 'JP' | 'CA';
 
@@ -68,6 +76,12 @@ interface AppendixRule {
   title: string;
   requiredSourceTypes: CmcSourceType[];
   optional: boolean;
+  /**
+   * The payload fields whose absence the generator states ("not yet
+   * recorded"). Scored the way module3Composer scores its requiredFields: the
+   * share present is the completeness, the absent ones are the missing inputs.
+   */
+  requiredFields?: string[];
   generator: (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
 }
 
@@ -82,6 +96,8 @@ const APPENDIX_RULES: AppendixRule[] = [
       'container_closure',
     ],
     optional: false,
+    // The two facts the narrative below reports as "not yet recorded/specified".
+    requiredFields: ['manufacturingSite', 'containerDescription'],
     generator: m => {
       const mfgSite = val(m, 'manufacturingSite');
       const route = val(m, 'manufacturingRoute');
@@ -178,49 +194,25 @@ const APPENDIX_RULES: AppendixRule[] = [
       const sourceOrganism = val(m, 'sourceOrganism');
       const viralSafety = val(m, 'viralSafetyEvaluation');
       const tseStatus = val(m, 'tseStatus');
-      const modality = val(m, 'modality'); // 'small_molecule' | 'biologic' (preferred explicit signal)
-      const molecularType = val(m, 'molecularType');
-
-      // Detect biological origin. Prefer an explicit 'modality'/'molecularType'
-      // field on the drug substance source; fall back to a heuristic regex only
-      // when no structured signal is present. Regex uses word boundaries and
-      // concrete biologic tokens to avoid false positives on chemical drug
-      // substances whose name or processDescription incidentally mentions
-      // 'tissue' or 'plasma' (e.g. 'tissue paper packaging', 'plasma etching').
-      const explicitSmallMolecule = /^(small[-_ ]?molecule|synthetic|chemical)$/i.test(modality);
-      const explicitBiologic =
-        /^biologic(al)?$/i.test(modality) || /^biologic(al)?$/i.test(molecularType);
-      /* Widened 2026-09-08 in the FAIL-CLOSED direction. The list missed the
-         way an expression system is usually written down: a substance whose
-         recorded route is "CHO cell culture" matched nothing (the pattern asks
-         for cell LINE, not cell culture) and fell through to the branch below,
-         which declared the section not applicable. A false positive here costs
-         a section that asks for viral-safety data it may not need; a false
-         negative files an adventitious-agents all-clear for a cell-culture
-         product. The INN stems are added for the same reason — a substance
-         named "belantezumab" is a monoclonal antibody by its name alone. */
-      const biologicHeuristic =
-        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian|hybridoma|bioreactor|transgenic|plasmid|viral\s*vector)\b/i.test(
-          `${route} ${processDesc} ${name}`
-        ) ||
-        /\bmAb\b|\bcell[\s-]*(line|culture|bank)\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i.test(
-          `${route} ${processDesc} ${name}`
-        ) ||
-        /\b(cho|hek\s*293|sf9|vero|per\.?c6|e\.?\s?coli|pichia|saccharomyces|baculovirus)\b/i.test(
-          `${route} ${processDesc}`
-        ) ||
-        /(mab|cept|kinra|ase|tide|parin)\b/i.test(String(name).trim().split(/\s+/).pop() || '');
-      const isBiologic =
-        explicitBiologic ||
-        (!explicitSmallMolecule &&
-          !!(
-            biologicalOrigin ||
-            cellLine ||
-            sourceOrganism ||
-            viralSafety ||
-            tseStatus ||
-            biologicHeuristic
-          ));
+      /* ONE modality rule, shared with the composition boundary
+         (services/cmc/substance-modality.ts). Lifted there unchanged so this
+         section and `composition-scope.ts` can never disagree about whether a
+         substance is biologically derived — one saying "chemical synthesis"
+         while the other composed a small-molecule Module 3 is the failure that
+         extraction prevents. */
+      const verdict = classifySubstanceModality({
+        name,
+        manufacturingRoute: route,
+        processDescription: processDesc,
+        biologicalOrigin,
+        cellLine,
+        sourceOrganism,
+        viralSafetyEvaluation: viralSafety,
+        tseStatus,
+        modality: val(m, 'modality'),
+        molecularType: val(m, 'molecularType'),
+      });
+      const isBiologic = verdict.modality === 'biologic';
 
       if (!isBiologic) {
         /* "Not applicable — no animal- or human-derived raw materials, no
@@ -232,9 +224,9 @@ const APPENDIX_RULES: AppendixRule[] = [
            fail-closed branch for exactly this hazard; this section needs the
            same one, and the distinction is between "recorded as a chemical
            synthesis" and "nothing recorded either way". */
-        const statedChemical =
-          explicitSmallMolecule || Boolean(String(route || processDesc || '').trim());
-        if (!statedChemical) {
+        /* `unknown` IS the "nothing recorded either way" case the paragraph
+           above describes — the shared rule draws the same line. */
+        if (verdict.modality === 'unknown') {
           return {
             narrative:
               `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
@@ -274,7 +266,7 @@ const APPENDIX_RULES: AppendixRule[] = [
             `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
             `\n\nNo biological origin, source organism, cell line or fermentation step is recorded against ` +
             (name ? `${name}` : 'the drug substance') +
-            `, ${recordedBasis(route || processDesc, explicitSmallMolecule)}. ` +
+            `, ${recordedBasis(route || processDesc, verdict.explicit)}. ` +
             `On that record this section does not apply to the drug substance itself. ` +
             `\n\nThis is a statement about the SUBSTANCE, not about every material used to make it: the origin of ` +
             `the raw and starting materials is recorded in §3.2.S.2.3 and that of the excipients in §3.2.P.4 and ` +
@@ -543,33 +535,51 @@ const APPENDIX_RULES: AppendixRule[] = [
         String(c?.origin || c?.source || c?.registerOrigin || '').trim()
       ).length;
       const excipientSources = m.filter(s => s.sourceType === 'excipient');
-      const novelExcipients = excipientSources.filter(e => e.sourcePayload?.novel === true);
+      /* 2026-10-15: novel excipients were selected by `novel === true` and
+         printed `function`, `concentration` and `safetyStudies` — fields no
+         mapper writes. The register (mapMaterialSpecPayload) writes the three
+         read here, so a register novel excipient never reached this table; and
+         the branch returned before the TSE/BSE scan below, which every
+         excipient now gets. */
+      const novelExcipients = excipientSources.filter(e => e.sourcePayload?.novelExcipient === true);
 
-      // ── Novel excipients (ICH Q3C / FDA novel-excipient qualification) ──
-      // Detected via dedicated `excipient` sources flagged novel:true.
-      if (novelExcipients.length > 0) {
-        return {
-          narrative:
-            `Per ICH M4Q, Section 3.2.A.3 (Excipients) addresses excipients requiring additional safety ` +
-            `qualification. ${novelExcipients.length} novel excipient(s) are used in the drug product formulation` +
+      // ── Novel excipients (FDA novel-excipient safety qualification) ──
+      // Reported beside the scan: the table leads whichever branch below
+      // answers, and the paragraph closes its narrative.
+      /* 2026-10-15: an excipient with no recorded safety study was listed as
+         'See M4' — a pointer to Module 4 studies nobody recorded — under a
+         sentence saying the qualification data "is provided below", with no
+         NOT ESTABLISHED marker, so the section scored 100%. It also cited
+         ICH Q3C, which is the residual-solvents guideline. */
+      const justificationOf = (e: CanonicalSource) =>
+        String(e.sourcePayload?.novelExcipientJustification ?? '').trim();
+      const unjustified = novelExcipients.filter(e => !justificationOf(e)).length;
+      const novelParagraph =
+        novelExcipients.length === 0
+          ? ''
+          : `\n\n${novelExcipients.length} novel excipient(s) are used in the drug product formulation` +
             (formulationName ? ` (${formulationName})` : '') +
-            `. ` +
-            `Safety qualification data per ICH Q3C / FDA Guidance for Industry — Nonclinical Studies for the Safety ` +
-            `Evaluation of Pharmaceutical Excipients is provided below.`,
-          tables: [
-            {
-              title: 'Novel Excipients — Safety Qualification',
-              headers: ['Excipient', 'Function', 'Concentration', 'Safety Studies'],
-              rows: novelExcipients.map(e => [
-                String(e.sourcePayload?.materialName || 'Unknown'),
-                String(e.sourcePayload?.function || '—'),
-                String(e.sourcePayload?.concentration || '—'),
-                String(e.sourcePayload?.safetyStudies || 'See M4'),
-              ]),
-            },
-          ],
-        };
-      }
+            ` and require additional safety qualification. ` +
+            (unjustified === 0
+              ? `The safety justification recorded for each, per FDA Guidance for Industry — Nonclinical Studies ` +
+                `for the Safety Evaluation of Pharmaceutical Excipients, is reported below.`
+              : `No safety justification is recorded for ${unjustified} of the ${novelExcipients.length} novel ` +
+                `excipient(s), so their safety qualification per FDA Guidance for Industry — Nonclinical Studies for ` +
+                `the Safety Evaluation of Pharmaceutical Excipients is NOT ESTABLISHED by this section.`);
+      const novelTables: GeneratedTable[] =
+        novelExcipients.length === 0
+          ? []
+          : [
+              {
+                title: 'Novel Excipients — Safety Qualification',
+                headers: ['Excipient', 'Function', 'Safety Justification'],
+                rows: novelExcipients.map(e => [
+                  String(e.sourcePayload?.materialName ?? '').trim() || 'not recorded',
+                  String(e.sourcePayload?.functionInFormulation ?? '').trim() || 'not recorded',
+                  justificationOf(e) || 'not recorded',
+                ]),
+              },
+            ];
 
       // ── Excipients of human or animal origin (TSE/BSE) ──
       // Detect human/animal-origin excipients from structured formulation
@@ -648,7 +658,7 @@ const APPENDIX_RULES: AppendixRule[] = [
           ? 'potential'
           : 'none';
 
-      const tables: GeneratedTable[] = [];
+      const tables: GeneratedTable[] = [...novelTables];
 
       /* Nothing recorded is not the same as nothing found. Fail closed: the
          section reports that the question is unanswered rather than clearing
@@ -681,7 +691,8 @@ const APPENDIX_RULES: AppendixRule[] = [
                 `human or animal origin is NOT ESTABLISHED by this section. `) +
             `This is not a statement that none is used: ` +
             `it is a statement that the question has not been answered. Record the formulation and the excipient ` +
-            `specifications, each with its origin, before this section is relied upon.`,
+            `specifications, each with its origin, before this section is relied upon.` +
+            novelParagraph,
           tables,
         };
       }
@@ -747,7 +758,8 @@ const APPENDIX_RULES: AppendixRule[] = [
                   components.length - originRecorded
                 } ` +
                 `of ${components.length} have none recorded. Record the origin of each, per EMA EMEA/410/01 rev. 3, ` +
-                `before this section is relied on.`),
+                `before this section is relied on.`) +
+            novelParagraph,
           tables,
         };
       }
@@ -841,8 +853,14 @@ const APPENDIX_RULES: AppendixRule[] = [
           `applied to excipients derived from human or animal sources used in the drug product formulation. ` +
           (formulationName ? `Formulation: ${formulationName}. ` : '') +
           `\n\n${leadParagraph} ` +
-          `\n\nSpecifications, analytical procedures, and supplier qualification details are provided in 3.2.P.4 ` +
-          `(Control of Excipients). Audit trails for vendor changes are maintained per the site quality system.`,
+          /* 2026-10-15: this closed with "Audit trails for vendor changes are
+             maintained per the site quality system." for every product, and
+             said 3.2.P.4 provides "supplier qualification details" — no field
+             records either; 3.2.P.4 holds each excipient's specification,
+             procedure and supplier name. */
+          `\n\nThe specification, analytical procedure and supplier recorded for each excipient are reported in ` +
+          `3.2.P.4 (Control of Excipients).` +
+          novelParagraph,
         tables,
       };
     },
@@ -1399,8 +1417,18 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
        that exist precisely to report that nothing is established. A section
        whose own narrative says NOT ESTABLISHED is not a complete section. */
     const establishesNothing = NOT_ESTABLISHED_RE.test(generated.narrative);
+    /* 2026-10-15: a section without that marker scored 100 with nothing
+       missing, so §3.2.A.1 read complete from a route alone while saying the
+       site and container closure were not recorded. The fields a generator
+       reports absent are now scored as module3Composer scores requiredFields. */
+    const requiredFields = rule.requiredFields ?? [];
+    const missingFields = requiredFields.filter(f => !val(matched, f));
+    const fieldCompleteness =
+      requiredFields.length === 0
+        ? 100
+        : Math.round(((requiredFields.length - missingFields.length) / requiredFields.length) * 100);
     const completeness =
-      matched.length === 0 ? (rule.optional ? 100 : 0) : establishesNothing ? 0 : 100;
+      matched.length === 0 ? (rule.optional ? 100 : 0) : establishesNothing ? 0 : fieldCompleteness;
     return {
       sectionKey: rule.sectionKey,
       sectionPath: rule.sectionKey,
@@ -1423,9 +1451,10 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
           ? rule.optional
             ? []
             : rule.requiredSourceTypes
-          : establishesNothing
-          ? notEstablishedStatements(generated.narrative)
-          : [],
+          : [
+              ...missingFields,
+              ...(establishesNothing ? notEstablishedStatements(generated.narrative) : []),
+            ],
       lineage: matched.map(m => ({
         sourceObjectId: m.id,
         sourceHashAtCompile: m.sourceHash || '',
@@ -1482,7 +1511,53 @@ export const REGIONAL_SECTION_LABELS: Readonly<Record<string, string>> = Object.
 );
 
 /** The source-payload fields a 3.2.R subsection reads, by section key. */
-export function regionalRequiredFields(sectionKey: string): string[] {
+/** An IND row's standing, in this composer's own status vocabulary. */
+function indStatus(st: IndRegionalStatus): RegionalStatus {
+  switch (st.kind) {
+    case 'cross-referenced':
+      return crossReferenced(st.section);
+    case 'module1':
+      return requiredInModule1(st.location);
+    case 'not-recorded':
+      return st.note ? { text: `Not recorded in this dossier — ${st.note}` } : notRecorded();
+    case 'as-they-occur':
+      return { text: st.text };
+  }
+}
+
+/**
+ * §3.2.R.1.US for an IND (services/cmc/us-ind-regional.ts): 21 CFR
+ * 312.23(a)(7)'s regional items in place of the marketing application's.
+ * Composed when the linked submission is an IND (discovery map 2026-10-04,
+ * us-32r-written-for-nda: the marketing text was filed into INDs).
+ */
+const US_IND_SUBSECTION: RegionalSubsection = {
+  sectionKey: '3.2.R.1.US',
+  title: 'Regional Information — United States (FDA IND)',
+  region: 'US',
+  requiredFields: US_IND_REGIONAL_FIELDS,
+  generator: m => ({
+    narrative: usIndRegionalNarrative(m),
+    tables: [
+      kvTable('US Regional Information — Submission Summary', {
+        Region: 'United States — FDA',
+        'Submission Type': 'IND (21 CFR Part 312)',
+        'Dosage Form': val(m, 'dosageFormDescription'),
+        Strength: val(m, 'strength'),
+        'Manufacturing Site': val(m, 'manufacturingSite'),
+      }),
+      regionalPointerTable(
+        'US IND Regional Items (21 CFR 312.23(a)(7))',
+        usIndRegionalRows(m).map(r => ({ item: r.item, basis: r.basis, status: indStatus(r.status) })),
+      ),
+    ],
+  }),
+};
+
+export function regionalRequiredFields(sectionKey: string, applicationType?: string | null): string[] {
+  if (sectionKey === US_IND_SUBSECTION.sectionKey && isUsClinicalTrialApplication(applicationType)) {
+    return US_IND_SUBSECTION.requiredFields;
+  }
   return REGIONAL_SUBSECTIONS.find(rs => rs.sectionKey === sectionKey)?.requiredFields ?? [];
 }
 
@@ -1499,9 +1574,14 @@ export function hasRegionalTemplate(region: string): boolean {
 
 export function composeRegional(
   sourceObjects: CanonicalSource[],
-  region: RegionCode
+  region: RegionCode,
+  /** The linked submission's application type: an IND gets the IND regional section, not the marketing one. */
+  opts: { applicationType?: string | null } = {},
 ): ComposedSection[] {
-  const applicable = REGIONAL_SUBSECTIONS.filter(rs => rs.region === region);
+  const ind = region === 'US' && isUsClinicalTrialApplication(opts.applicationType);
+  const applicable = REGIONAL_SUBSECTIONS.filter(rs => rs.region === region).map(rs =>
+    ind && rs.sectionKey === US_IND_SUBSECTION.sectionKey ? US_IND_SUBSECTION : rs,
+  );
   return applicable.map(rs => {
     const generated = rs.generator(sourceObjects);
     const present = rs.requiredFields.filter(f => val(sourceObjects, f));

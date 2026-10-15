@@ -30,7 +30,6 @@ import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
 import {
-  FIXTURE_SUMMARY,
   CHANGE_FORMS,
   STATE_LABEL,
   STATE_TONE,
@@ -48,11 +47,6 @@ import {
   type ChangeControl as ChangeControlRow,
 } from './changeData';
 import { useChangeSummary } from './changeHooks';
-/* The canonical sample-mode guard and its marker, shared with the MDX lane
-   rather than re-implemented here — one definition of "may a fixture reach the
-   screen", so the two lanes cannot answer it differently. */
-import { useSampleValue } from '../mdx/lib/useSampleRows';
-import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
@@ -69,12 +63,10 @@ export interface ChangeControlProps {
   openId: number | null;
   /** Toggle a row's linked-records panel. */
   onOpenIdChange: (id: number | null) => void;
-  /** The change register, already through the sample-mode boundary (see QualityApp). */
+  /** The change register as QualityApp read it — the tenant's rows, or none. */
   changes: ChangeControlRow[];
   /** True while the register read is in flight. */
   loading: boolean;
-  /** True when `changes` is the fixture — renders the standing sample marker. */
-  showingSample: boolean;
   /** The register read's error, when it failed. A failed read is not an empty log. */
   error?: string | null;
   /** Re-run the register read. */
@@ -111,7 +103,6 @@ export function ChangeControl({
   onOpenIdChange,
   changes,
   loading,
-  showingSample,
   error,
   onRetry,
 }: ChangeControlProps) {
@@ -120,30 +111,23 @@ export function ChangeControl({
   /** The change being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<ChangeControlRow | null>(null);
 
-  /* The register read — and its sample-mode boundary — lives in QualityApp
-     now, lifted because AnA's open-change action resolves free-text names
-     against the same rows this log renders, and a handler can only read state
-     its own component holds. `changes` arrives already gated: live rows, or
-     the fixture only under explicit sample mode (impossible in a production
-     build), always under the standing marker below. */
-  const summary = useSampleValue(sum.summary, FIXTURE_SUMMARY);
+  /* The register read lives in QualityApp, lifted because AnA's open-change
+     action resolves free-text names against the same rows this log renders,
+     and a handler can only read state its own component holds. */
+  const summary = sum.summary;
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
 
   const visible = changes.filter((c) => stage === 'all' || c.status === stage);
   /* Until 2026-09-25 a failed read rendered "No changes at this stage." under
      a flowchart of zeroes, while the KPI strip above said the totals were
      unavailable (HS-1, docs/evidence/reviews/2026-09-24/lenses.md). A resolved
-     list that is non-empty is live or explicit sample mode; an empty one with
-     an error, or still loading, is unread and may not render a count. */
+     list that is non-empty is live; an empty one with an error, or still
+     loading, is unread and may not render a count. */
   const failed = changes.length === 0 && error != null;
   const unread = failed || (changes.length === 0 && loading);
 
   return (
     <>
-      {/* The standing marker. This surface once had none — its raw fallback
-          was silent as well as ungated. The gate now lives with the read in
-          QualityApp; the marker stays here, where the rows render. */}
-      <SampleDataBanner show={showingSample} loading={loading} label="change records" />
       <div className="qms-head">
         <div>
           <div className="qms-eyebrow">Workstream</div>
@@ -184,7 +168,7 @@ export function ChangeControl({
       </div>
 
       {/* The KPI row is derived entirely from `summary`, so with no summary
-          there is nothing to count. `useSampleValue` returns null rather than a
+          there is nothing to count. An unread summary is null rather than a
           zero-filled shell precisely so this decision has to be made here: a
           row of zeroes is a claim about the register ("no open changes"), not
           an absence of information about it. */}
@@ -337,12 +321,7 @@ export function ChangeControl({
                     {c.status === 'under_assessment' && (
                       <button
                         className="qms-chip"
-                        disabled={showingSample}
-                        title={
-                          showingSample
-                            ? 'Sample changes cannot be approved'
-                            : 'Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it.'
-                        }
+                        title="Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it."
                         onClick={() => setApproving(c)}
                       >
                         {I.check} Approve
@@ -416,7 +395,7 @@ export function ChangeControl({
         <section className="qms-sec">
           <div className="qms-sec-head">
             <h2>How to raise a change</h2>
-            <span className="meta">AnA trains your team</span>
+            <span className="meta">Procedure guidance</span>
           </div>
           <div className="qcc-train">
             <ol className="qcc-steps">
@@ -431,24 +410,23 @@ export function ChangeControl({
                 className="qms-btn primary"
                 onClick={() =>
                   onAsk(
-                    'Train me on how to raise a change request in this quality system. Explain each step of the ' +
+                    'Explain how to raise a change request in this quality system. Explain each step of the ' +
                       'change-control procedure, what makes a change minor, major or critical, and what a good impact ' +
-                      'assessment looks like. Then quiz me and record read-and-understood training for the change-control SOP.',
+                      'assessment looks like. Personal read-and-understood acknowledgements are recorded by the signed-in reader in the SOP register.',
                   )
                 }
               >
-                {I.users} Train me
+                {I.users} Explain the procedure
               </button>
               <button
                 className="qms-btn ghost"
                 onClick={() =>
                   onAsk(
-                    'Record read-and-understood training on the change-control procedure for my team. Ask me which ' +
-                      'team members, capture the acknowledgment method, and set the next refresh date.',
+                    'Help me find the change-control procedure in the SOP register. I will open its controlled revision and record my own read-and-understood acknowledgement there.',
                   )
                 }
               >
-                {I.bookOpen} Record team training
+                {I.bookOpen} Find the controlled procedure
               </button>
             </div>
           </div>

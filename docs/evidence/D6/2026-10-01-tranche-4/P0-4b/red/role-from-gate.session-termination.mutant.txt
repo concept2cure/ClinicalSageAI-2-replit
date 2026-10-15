@@ -1,0 +1,61 @@
+# MUTANT of server/middleware/auth.ts applyOrganizationRole: 'const role = user.organizationRole;' (the 60 s membership cache only, as before the fix). Run 2026-10-01T13:58:30Z
+[mfa] MFA enabled for user 1703
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1704
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1705
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1706
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1707
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1710
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1713
+stdout | tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry
+[database] Database connection successful { timestamp: '2026-10-01T12:59:05.000Z', poolSize: 2 }
+ ↓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it
+ ↓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door
+ ↓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing
+ × tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry 330ms
+   → a router's gate behind the global gate served the cached role: expected 'admin' to be 'member' // Object.is equality
+   → requireRole('admin') admitted the demoted member: {"userId":"1713","role":"admin"}: expected 200 to be 403 // Object.is equality
+ ↓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry
+AssertionError: a router's gate behind the global gate served the cached role: expected 'admin' to be 'member' // Object.is equality
+Expected: "member"
+Received: "admin"
+ ❯ tests/db/session-termination.dbtest.ts:458:104
+    456|     const routerGate = await request(app).get('/api/dbste/router-gate'…
+    457|     expect(routerGate.status, shown(routerGate.body)).toBe(200);
+    458|     expect.soft(routerGate.body.role, "a router's gate behind the glob…
+       |                                                                                                        ^
+    459|     const adminOnly = await request(app).get('/api/dbste/admin-only').…
+    460|     expect.soft(adminOnly.status, `requireRole('admin') admitted the d…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry
+AssertionError: requireRole('admin') admitted the demoted member: {"userId":"1713","role":"admin"}: expected 200 to be 403 // Object.is equality
+- Expected
++ Received
+- 403
++ 200
+ ❯ tests/db/session-termination.dbtest.ts:460:113
+    458|     expect.soft(routerGate.body.role, "a router's gate behind the glob…
+    459|     const adminOnly = await request(app).get('/api/dbste/admin-only').…
+    460|     expect.soft(adminOnly.status, `requireRole('admin') admitted the d…
+       |                                                                                                                 ^
+    461|     const refreshed = await request(app).post('/api/auth/refresh').sen…
+    462|     expect(refreshed.status, shown(refreshed.body)).toBe(200);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  13:58:30
+   Duration  5.90s (transform 2.13s, setup 114ms, import 290ms, tests 5.15s, environment 0ms)

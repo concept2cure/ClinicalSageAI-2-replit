@@ -1,0 +1,75 @@
+# b3-guidance-presentation RED run (before code change), 2026-10-04
+# per-test results:
+ × tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-EFF 8ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-SAFETY 3ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-EFF 2ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-SAFETY 1ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.1 3ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.2 1ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.3 1ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.4 1ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > names every heading in the content elements and the generation prompt 1ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > ties the headings to FDA's Benefit-Risk Framework and fits the brief's caps 1ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > warns against product data in the Therapeutic Context 0ms
+ × tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > reaches the section brief with every heading, including from a child code 2ms
+# tail -60 of: npx vitest run tests/regulatory/ctd-guidance-presentation.test.ts
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > reaches the section brief with every heading, including from a child code
+AssertionError: brief names 2.5.6.1: expected '## Drafting: Module 2.5.6 — Benefits …' to contain '2.5.6.1'
+
+- Expected
++ Received
+
+- 2.5.6.1
++ ## Drafting: Module 2.5.6 — Benefits and Risks Conclusions
++ You are in 2.5.6.2, within 2.5.6; these are 2.5.6's requirements.
++ Required for: IND, NDA, BLA.
++ Subsection 2.5.6 is the culminating benefit-risk assessment — the sponsor's integrated conclusion that, for the proposed indication and population, the benefits outweigh the risks. It synthesizes efficacy (2.5.4) and safety (2.5.5) in the context of the disease and available therapies, and states how risks are managed. FDA reviewers and the signatory authority read it as the bottom-line justification for approval; acceptability depends on a balanced, evidence-anchored conclusion that acknowledges uncertainties and aligns with the proposed labeling and any risk-management commitments.
++
++ ### How it is written
++ Frame the benefit-risk in the context of the disease severity, the unmet need, and the current treatment options. Concisely restate the key benefits (magnitude, durability, clinical meaningfulness) and the key risks (severity, frequency, reversibility, manageability), then weigh them for the proposed population. Address residual uncertainties and how they are mitigated through labeling, monitoring, pharmacovigilance, or a REMS/risk-management plan. Use a structured benefit-risk framework where appropriate (consistent with FDA's Benefit-Risk Assessment framework and ICH M4E(R2)). Keep it concise and free of new data. Conclusions must follow logically from 2.5.4 and 2.5.5 and align exactly with the proposed indication and labeling.
++
++ ### It must contain
++ - Disease context: severity, unmet need, and current treatment landscape
++ - Concise restatement of key benefits with magnitude, durability, and clinical meaningfulness
++ - Concise restatement of key risks with severity, frequency, reversibility, and manageability
++ - Integrated weighing of benefits against risks for the specific proposed population
++ - Discussion of residual uncertainties and their mitigation
++ - Risk-management strategy (labeling, monitoring, pharmacovigilance, REMS if applicable)
++ - Use of a structured benefit-risk framework (FDA BR framework / ICH M4E(R2))
++ - Overall conclusion aligned with the proposed indication and labeling
++
++ ### Tables and data a reviewer expects
++ - Structured benefit-risk summary table (optional)
++
++ ### Common deficiencies
++ - Restating efficacy and safety separately without an integrated weighing
++ - Conclusion not grounded in disease context, unmet need, and available therapies
++ - Ignoring or under-stating residual uncertainties and how they are managed
++ - Introducing new data or analyses not presented in 2.5.4/2.5.5 or 2.7
++ - Benefit-risk conclusion broader than, or inconsistent with, the proposed indication/labeling
++ - No risk-management or pharmacovigilance framing when the safety profile warrants it
++
++ ### Read with
++ 2.5.4, 2.5.5, 2.5
+
+ ❯ tests/regulatory/ctd-guidance-presentation.test.ts:70:65
+     68|     const brief = renderSectionBrief('2.5.6.2');
+     69|     expect(brief).not.toBeNull();
+     70|     for (const h of HEADINGS) expect(brief, `brief names ${h}`).toCont…
+       |                                                                 ^
+     71|   });
+     72| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  23:39:54
+   Duration  745ms (transform 398ms, setup 74ms, import 380ms, tests 30ms, environment 0ms)
+

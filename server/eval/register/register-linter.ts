@@ -13,6 +13,16 @@
  *   first turn, re-introduction, praise opener, restated question, labelled
  *   "next step", capability menu, empty closer, filler transitions.
  *
+ * Exclamation marks and emoji (2026-10-01, the founder's direction that AnA be
+ * warm and sometimes playful): they are no longer banned outright, because
+ * ANA_PERSONALITY_CORE now lets an earned moment show. What the core still
+ * forbids is measured instead: more than one, stacked ("!!", "?!"), on a
+ * greeting, praise or closer ritual, on a sentence that carries substance (a
+ * figure, a citation, a regulation), any at all in a serious room, and an emoji
+ * the person did not introduce. A serious room is derived fail-closed from the
+ * reply and the user's message (SERIOUS_TERMS) unless the transcript labels it.
+ * In an artifact, any exclamation mark or emoji fails.
+ *
  * What it does NOT do: judge whether the answer is correct, grounded or
  * well-cited. That is the RAG / doc-quality harness. This one answers one
  * question only — does the turn read like a colleague or like a memo?
@@ -43,7 +53,14 @@ export type RegisterRule =
   | 'exclamation'
   | 'emoji';
 
-export type ArtifactRule = 'chat-interjection' | 'first-person' | 'empty-closer';
+export type ArtifactRule = 'chat-interjection' | 'first-person' | 'empty-closer' | 'exclamation' | 'emoji';
+
+/**
+ * Where lightness may live. 'serious' is the core's "Serious where it counts":
+ * bad news, safety, a person under strain, governed acts. In it, warmth stays
+ * and play goes — no exclamation mark, no emoji.
+ */
+export type Room = 'open' | 'serious';
 
 export interface RegisterLintOptions {
   /** First turn of a session: a greeting is a human reply, not a ritual. */
@@ -54,6 +71,16 @@ export interface RegisterLintOptions {
   maxParagraphs?: number;
   /** Words in the longest paragraph before it stops being "short". */
   maxParagraphWords?: number;
+  /**
+   * The room this turn is in, as a labeller knows it (stress the words do not
+   * show, such as a 1:40 a.m. deadline). Unlabelled, it is derived fail-closed
+   * from the reply and `userText`: any SERIOUS_TERMS match makes it serious.
+   */
+  room?: Room;
+  /** The user's message this reply answers, for deriving the room. */
+  userText?: string;
+  /** The person has used emoji in this conversation: AnA may mirror one. */
+  userUsedEmoji?: boolean;
 }
 
 export interface RegisterMetrics {
@@ -70,7 +97,15 @@ export interface RegisterMetrics {
   longestParagraphWords: number;
   words: number;
   exclamations: number;
+  /** "!!", "?!" or "!?" anywhere. */
+  stackedExclamation: boolean;
+  /** An exclamation mark in a greeting, praise or empty-closer sentence. */
+  exclamationOnRitual: boolean;
+  /** An exclamation mark in a sentence carrying a figure or a citation. */
+  exclamationOnSubstance: boolean;
   emoji: number;
+  /** An emoji in a sentence carrying a figure or a citation. */
+  emojiOnSubstance: boolean;
   greetingOpener: boolean;
   reintroduction: boolean;
   praiseOpener: boolean;
@@ -105,6 +140,13 @@ export interface RegisterLintSummary {
   passRate: number;
   meanScore: number;
   violationsByRule: Record<string, number>;
+  /**
+   * Share of chat turns carrying any exclamation mark, and any emoji. "Most
+   * replies have none" is the instruction a literal model is most likely to
+   * turn into "one per reply"; these are what show it.
+   */
+  exclamationTurnRate: number;
+  emojiTurnRate: number;
 }
 
 const WEIGHTS: Record<RegisterRule, number> = {
@@ -126,12 +168,14 @@ const WEIGHTS: Record<RegisterRule, number> = {
   emoji: 0.1,
 };
 
-const DEFAULTS: Required<RegisterLintOptions> = {
+const DEFAULTS: Required<Omit<RegisterLintOptions, 'room' | 'userText' | 'userUsedEmoji'>> = {
   firstTurn: false,
   userAskedForList: false,
   maxParagraphs: 4,
   maxParagraphWords: 120,
 };
+
+type ResolvedOptions = typeof DEFAULTS & { room: Room; userUsedEmoji: boolean };
 
 const HEADER_LINE = /^\s{0,3}#{1,6}\s+\S/;
 /** A line that is nothing but a bold phrase — a header in disguise. */
@@ -140,6 +184,32 @@ const LIST_LINE = /^\s*(?:[-*+]|\d{1,3}[.)])\s+\S/;
 const TABLE_SEPARATOR = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
 const BOLD_SPAN = /\*\*[^*\n]+?\*\*|__[^_\n]+?__/g;
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
+const EMOJI_ONE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+
+/**
+ * Words that put a turn in the serious room. Deliberately broad: a false
+ * "serious" costs a playful touch, a false "open" lets one land on bad news.
+ */
+export const SERIOUS_TERMS =
+  /\b(adverse events?|AEs?|SAEs?|SUSARs?|safety (signal|report|finding)s?|Hy'?s law|deaths?|died|fatal|hospitali[sz]ed|patient harm|clinical hold|complete response|CRL|refuse[- ]to[- ]file|RTF|deficienc(y|ies)|AI letter|additional information letter|warning letter|483|inspection finding|recall|failed (endpoint|study|trial)|e-?signature|sign(ed|ing)? off|Part 11|audit trail|reason for change|deviation|OOS|out of specification|CAPA|rejected)\b/i;
+
+/** The room a turn is in: the labeller's, or serious when either side names serious territory. */
+export function deriveRoom(text: string, options: Pick<RegisterLintOptions, 'room' | 'userText'> = {}): Room {
+  if (options.room) return options.room;
+  return SERIOUS_TERMS.test(text) || (options.userText ? SERIOUS_TERMS.test(options.userText) : false) ? 'serious' : 'open';
+}
+
+/** A sentence that carries substance: a figure or a citation. */
+const SUBSTANCE = /\d|\[(?:SRC|Source)[^\]]*\]|\b(?:ICH|CFR|USC|ISO|IEC|MDR|IVDR)\b|\bp\s*[=<>]/i;
+
+/** Sentences, broken after terminal punctuation and after an emoji. */
+function sentences(text: string): string[] {
+  return text
+    .replace(/`[^`\n]*`/g, ' ')
+    .split(/(?<=[.!?\u2026])\s+|(?<=[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}])\s+|\n+/u)
+    .map(x => x.trim())
+    .filter(Boolean);
+}
 
 const GREETING_OPENER =
   /^\s*(hi|hello|hey|good (morning|afternoon|evening)|morning|afternoon|evening|welcome( back)?|great to (see|hear from) you)\b/i;
@@ -225,8 +295,7 @@ export function measureRegister(text: string): RegisterMetrics {
     paragraphs: paragraphs.length,
     longestParagraphWords,
     words: countWords(stripped),
-    exclamations: (stripped.match(/!/g) || []).length,
-    emoji: (stripped.match(EMOJI) || []).length,
+    ...expressiveMetrics(stripped),
     greetingOpener: GREETING_OPENER.test(first),
     reintroduction: REINTRODUCTION.test(stripped),
     praiseOpener: PRAISE_OPENER.test(first) || /\bgreat question\b/i.test(firstParagraph),
@@ -238,7 +307,43 @@ export function measureRegister(text: string): RegisterMetrics {
   };
 }
 
-type RuleCheck = (m: RegisterMetrics, opts: Required<RegisterLintOptions>) => RegisterViolation | null;
+/** Exclamation and emoji measures, inline code excluded (`!=` is not a feeling). */
+function expressiveMetrics(stripped: string) {
+  const prose = stripped.replace(/`[^`\n]*`/g, ' ');
+  const parts = sentences(prose);
+  const ritual = (x: string) => GREETING_OPENER.test(x) || PRAISE_OPENER.test(x) || /\bgreat question\b/i.test(x) || EMPTY_CLOSER.test(x);
+  return {
+    exclamations: (prose.match(/!/g) || []).length,
+    stackedExclamation: /!!|\?!|!\?/.test(prose),
+    exclamationOnRitual: parts.some(x => x.includes('!') && ritual(x)),
+    exclamationOnSubstance: parts.some(x => x.includes('!') && SUBSTANCE.test(x)),
+    emoji: (prose.match(EMOJI) || []).length,
+    emojiOnSubstance: parts.some(x => EMOJI_ONE.test(x) && SUBSTANCE.test(x)),
+  };
+}
+
+type RuleCheck = (m: RegisterMetrics, opts: ResolvedOptions) => RegisterViolation | null;
+
+/** Why an exclamation mark is out of place here, or null when it was earned. */
+function exclamationProblem(m: RegisterMetrics, o: ResolvedOptions): string | null {
+  if (m.exclamations === 0) return null;
+  if (o.room === 'serious') return `${m.exclamations} exclamation mark(s) in a serious room`;
+  if (m.exclamations > 1) return `${m.exclamations} exclamation marks; one is plenty`;
+  if (m.stackedExclamation) return 'stacked exclamation';
+  if (m.exclamationOnRitual) return 'exclamation on a greeting, praise or closer';
+  if (m.exclamationOnSubstance) return 'exclamation on a sentence carrying a figure or citation';
+  return null;
+}
+
+/** Why an emoji is out of place here, or null when it mirrors the person in a light moment. */
+function emojiProblem(m: RegisterMetrics, o: ResolvedOptions): string | null {
+  if (m.emoji === 0) return null;
+  if (o.room === 'serious') return `${m.emoji} emoji in a serious room`;
+  if (!o.userUsedEmoji) return `${m.emoji} emoji the person did not introduce`;
+  if (m.emoji > 1) return `${m.emoji} emoji; at most one`;
+  if (m.emojiOnSubstance) return 'emoji on a sentence carrying a figure or citation';
+  return null;
+}
 
 /** One check per rule; each returns the violation it found or null. */
 const RULE_CHECKS: RuleCheck[] = [
@@ -285,8 +390,14 @@ const RULE_CHECKS: RuleCheck[] = [
   m => (m.emptyCloser ? { rule: 'empty-closer', detail: 'ends with an empty closer' } : null),
   m =>
     m.fillerTransitions > 0 ? { rule: 'filler', detail: `${m.fillerTransitions} filler transition(s)` } : null,
-  m => (m.exclamations > 0 ? { rule: 'exclamation', detail: `${m.exclamations} exclamation mark(s)` } : null),
-  m => (m.emoji > 0 ? { rule: 'emoji', detail: `${m.emoji} emoji` } : null),
+  (m, o) => {
+    const why = exclamationProblem(m, o);
+    return why ? { rule: 'exclamation', detail: why } : null;
+  },
+  (m, o) => {
+    const why = emojiProblem(m, o);
+    return why ? { rule: 'emoji', detail: why } : null;
+  },
 ];
 
 /**
@@ -294,7 +405,12 @@ const RULE_CHECKS: RuleCheck[] = [
  * `score` is a graded distance from the register for trend reporting.
  */
 export function lintChatRegister(text: string, options: RegisterLintOptions = {}): RegisterLintResult {
-  const opts = { ...DEFAULTS, ...options };
+  const opts: ResolvedOptions = {
+    ...DEFAULTS,
+    ...options,
+    room: deriveRoom(stripPlatformBlocks(text), options),
+    userUsedEmoji: options.userUsedEmoji ?? false,
+  };
   const m = measureRegister(text);
   const v: RegisterViolation[] = [];
   for (const check of RULE_CHECKS) {
@@ -342,6 +458,12 @@ export function lintArtifactRegister(text: string): ArtifactLintResult {
   const paragraphs = stripped.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
   const tail = paragraphs.length ? paragraphs[paragraphs.length - 1] : '';
   if (EMPTY_CLOSER.test(tail)) violations.push({ rule: 'empty-closer', detail: 'artifact ends with an empty closer' });
+  // A record outlives the conversation: no exclamation mark and no emoji in it at all.
+  const prose = stripped.replace(/`[^`\n]*`/g, ' ');
+  const bangs = (prose.match(/!/g) || []).length;
+  if (bangs > 0) violations.push({ rule: 'exclamation', detail: `${bangs} exclamation mark(s) in an artifact` });
+  const emoji = (prose.match(EMOJI) || []).length;
+  if (emoji > 0) violations.push({ rule: 'emoji', detail: `${emoji} emoji in an artifact` });
   const firstPerson = (stripped.match(/\b(I|I'm|I've|we|we're|we've)\b/g) || []).length;
   if (firstPerson > 2) {
     violations.push({ rule: 'first-person', detail: `${firstPerson} first-person pronouns in submission-register text` });
@@ -357,5 +479,42 @@ export function summarizeRegisterLint(results: RegisterLintResult[]): RegisterLi
     for (const v of r.violations) violationsByRule[v.rule] = (violationsByRule[v.rule] ?? 0) + 1;
   }
   const meanScore = count ? Math.round((results.reduce((s, r) => s + r.score, 0) / count) * 100) / 100 : 0;
-  return { count, passed, passRate: count ? passed / count : 0, meanScore, violationsByRule };
+  const rate = (n: number) => (count ? Math.round((n / count) * 100) / 100 : 0);
+  return {
+    count,
+    passed,
+    passRate: count ? passed / count : 0,
+    meanScore,
+    violationsByRule,
+    exclamationTurnRate: rate(results.filter(r => r.metrics.exclamations > 0).length),
+    emojiTurnRate: rate(results.filter(r => r.metrics.emoji > 0).length),
+  };
+}
+
+/**
+ * Repetition is what turns charm into a tic. A playful sentence — one carrying
+ * an exclamation mark or an emoji — that recurs, normalised, across replies of
+ * one conversation (or across conversations) is reported with the phrase. A
+ * corpus finding, not a per-turn deduction: one reply cannot know it repeats.
+ */
+export function findCatchphrases(
+  turns: ReadonlyArray<{ text: string; conversationId?: string }>,
+  minRepeats = 2,
+): Array<{ phrase: string; count: number }> {
+  const seen = new Map<string, { phrase: string; count: number }>();
+  for (const t of turns) {
+    const flourishes = new Set(
+      sentences(stripPlatformBlocks(t.text))
+        .filter(x => x.includes('!') || EMOJI_ONE.test(x))
+        .map(x => x.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim())
+        .filter(x => x.split(' ').length >= 2),
+    );
+    for (const f of flourishes) {
+      const key = `${t.conversationId ?? ''}\u0000${f}`;
+      const e = seen.get(key) ?? { phrase: f, count: 0 };
+      e.count += 1;
+      seen.set(key, e);
+    }
+  }
+  return [...seen.values()].filter(e => e.count >= minRepeats).sort((a, b) => b.count - a.count);
 }

@@ -1,0 +1,96 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-04T23:56:17.711Z","pid":15830,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-04T23:56:17.712Z","pid":15830,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-04T23:56:17.712Z","pid":15830,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 6ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 3ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes: pre-auth reaches only its bound account, the system scope the whole table (D3) > pre-auth, unbound: no account is read or written, by email or by id 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes: pre-auth reaches only its bound account, the system scope the whole table (D3) > pre-auth, bound: the sign-in finds its account by email and writes its counters 7ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes: pre-auth reaches only its bound account, the system scope the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 5ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-10-04T23:56:18.219Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-10-04T23:56:18.287Z', poolSize: 2 }
+
+{"level":30,"time":"2026-10-04T23:56:18.312Z","pid":15830,"hostname":"vm","context":{"userId":1535,"tenantId":90301,"resourceId":"1537"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 268ms
+{"level":30,"time":"2026-10-04T23:56:18.486Z","pid":15830,"hostname":"vm","context":{"userId":1535,"tenantId":90302,"resourceId":"1538"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-10-04T23:56:18.492Z","pid":15830,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:512:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+stderr | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into
+{
+  "timestamp": "2026-10-04T23:56:18.494Z",
+  "level": "warn",
+  "message": "[tenant-users] Audit log write failed (non-fatal)",
+  "context": {
+    "action": "user_invited",
+    "err": "new row violates row-level security policy for table \"audit_logs\""
+  }
+}
+
+{"level":50,"time":"2026-10-04T23:56:18.494Z","pid":15830,"hostname":"vm","context":{"error":"retrieval refused: tenant 90302 was requested inside tenant 90301's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 90302 was requested inside tenant 90301's session\n    at assertTenantIsCurrent (/home/user/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:512:22"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 15ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 134ms
+{"level":30,"time":"2026-10-04T23:56:19.544Z","pid":15853,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-04T23:56:19.546Z","pid":15853,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-04T23:56:19.546Z","pid":15853,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/pre-auth-user-lookup.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/pre-auth-user-lookup.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/pre-auth-user-lookup.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/pre-auth-user-lookup.dbtest.ts
+✅ Platform health/auth routes mounted
+
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > positive control: a member of A finds another member of A 55ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a person removed from A is not found, whatever their default organization says 9ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a current member of A is found, even with another default organization 8ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > B's member is not found from A 7ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > the response carries no credential field 8ms
+{"level":30,"time":"2026-10-04T23:56:21.331Z","pid":15868,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-04T23:56:21.333Z","pid":15868,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-04T23:56:21.333Z","pid":15868,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/pre-auth-narrowing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-10-04T23:56:21.461Z","pid":15868,"hostname":"vm","context":{"userId":1546,"tenantId":0,"resourceId":"1546"},"msg":"[audit-service] [AUDIT] user_login pre_auth_narrowing_contract"}
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > reads no row by email, by id, or by scanning 5ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > writes no account: B's password hash and reset token stay as they were 3ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > an unbound pre-auth scope reaches no account (D3) > actor_name names nobody in a tenant-less scope, though B acted in tenant 0's trail 2ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a sign-in by email binds the account it names, and reads and writes that row only 9ms
+stdout | tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a verified access token binds its account: the request cannot then read another's row
+[database] Database connection successful
+
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a verified access token binds its account: the request cannot then read another's row 41ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a request bound to one account cannot be rebound to another 1ms
+ ✓ tests/db/pre-auth-narrowing.dbtest.ts > a bound pre-auth scope reaches its one account and no other (D3) > a reset finds the account holding the token, and only by its hash 3ms
+{"level":30,"time":"2026-10-04T23:56:22.533Z","pid":15884,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-04T23:56:22.534Z","pid":15884,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-04T23:56:22.534Z","pid":15884,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > A's member sees a colleague's presence (positive control) 4ms
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > A's scope does not see B's member, by id or by scanning 3ms
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > A's member cannot rewrite a colleague's presence, nor B's 3ms
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > an unbound pre-auth scope reads none 1ms
+ ✓ tests/db/user-presence-rls.dbtest.ts > a person's presence stays in their organization (D3) > the person, bound, writes their own presence 3ms
+
+ Test Files  4 passed (4)
+      Tests  29 passed (29)
+   Start at  23:56:16
+   Duration  6.70s (transform 1.48s, setup 136ms, import 3.63s, tests 2.31s, environment 0ms)
+

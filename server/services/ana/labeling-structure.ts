@@ -13,6 +13,8 @@
  * @module server/services/ana/labeling-structure
  */
 
+import { smpcQrdSections, SMPC_QRD_BASIS } from '../labeling/smpc-qrd-catalog';
+
 export type LabelFormat = 'uspi' | 'smpc';
 
 export interface LabelSection {
@@ -54,26 +56,47 @@ const USPI_SECTIONS: LabelSection[] = [
   { number: '17', label: 'Patient Counseling Information', cues: ['counsel', 'advise patient', 'patient information', 'instruct'], crossMap: 'PL' },
 ];
 
-const SMPC_SECTIONS: LabelSection[] = [
-  { number: '1', label: 'Name of the medicinal product', cues: ['name of', 'product name', 'invented name'], crossMap: 'HL' },
-  { number: '2', label: 'Qualitative and quantitative composition', cues: ['composition', 'each tablet contains', 'active substance', 'excipient with known effect'], crossMap: '11' },
-  { number: '3', label: 'Pharmaceutical form', cues: ['pharmaceutical form', 'appearance', 'white tablet'], crossMap: '3' },
-  { number: '4.1', label: 'Therapeutic indications', cues: ['indication', 'indicated for', 'treatment of'], crossMap: '1' },
-  { number: '4.2', label: 'Posology and method of administration', cues: ['posology', 'dose', 'dosage', 'method of administration'], crossMap: '2' },
-  { number: '4.3', label: 'Contraindications', cues: ['contraindication', 'must not', 'hypersensitivity to'], crossMap: '4' },
-  { number: '4.4', label: 'Special warnings and precautions for use', cues: ['warning', 'precaution', 'special warning', 'monitor'], crossMap: '5' },
-  { number: '4.5', label: 'Interaction with other medicinal products', cues: ['interaction', 'concomitant', 'co-administration'], crossMap: '7' },
-  { number: '4.6', label: 'Fertility, pregnancy and lactation', cues: ['pregnancy', 'lactation', 'breast-feeding', 'fertility'], crossMap: '8' },
-  { number: '4.7', label: 'Effects on ability to drive and use machines', cues: ['drive', 'machines', 'driving'], crossMap: '—' },
-  { number: '4.8', label: 'Undesirable effects', cues: ['undesirable effect', 'adverse reaction', 'side effect', 'adverse event'], crossMap: '6' },
-  { number: '4.9', label: 'Overdose', cues: ['overdose', 'overdosage'], crossMap: '10' },
-  { number: '5.1', label: 'Pharmacodynamic properties', cues: ['mechanism of action', 'pharmacodynamic', 'clinical efficacy', 'atc code'], crossMap: '12' },
-  { number: '5.2', label: 'Pharmacokinetic properties', cues: ['pharmacokinetic', 'absorption', 'distribution', 'metabolism', 'elimination'], crossMap: '12' },
-  { number: '5.3', label: 'Preclinical safety data', cues: ['preclinical', 'nonclinical', 'carcinogenic', 'genotoxic'], crossMap: '13' },
-  { number: '6.1', label: 'List of excipients', cues: ['excipient', 'list of excipients'], crossMap: '11' },
-  { number: '6.4', label: 'Special precautions for storage', cues: ['storage', 'store at', 'do not freeze'], crossMap: '16' },
-  { number: '7', label: 'Marketing authorisation holder', cues: ['marketing authorisation holder', 'mah'], crossMap: '—' },
-];
+/**
+ * Placement cues and US cross-maps for the SmPC, keyed by QRD section number.
+ * Platform convention, not regulator text. The numbers and headings come from
+ * the one SmPC record (`server/services/labeling/smpc-qrd-catalog.ts`); a
+ * top-level heading that only groups sub-sections (4, 5, 6) has no cues, so
+ * content is placed in its sub-sections.
+ */
+const SMPC_CUES: Record<string, { cues: string[]; crossMap?: string }> = {
+  '1': { cues: ['name of', 'product name', 'invented name'], crossMap: 'HL' },
+  '2': { cues: ['composition', 'each tablet contains', 'active substance', 'excipient with known effect'], crossMap: '11' },
+  '3': { cues: ['pharmaceutical form', 'appearance', 'white tablet'], crossMap: '3' },
+  '4.1': { cues: ['indication', 'indicated for', 'treatment of'], crossMap: '1' },
+  '4.2': { cues: ['posology', 'dose', 'dosage', 'method of administration'], crossMap: '2' },
+  '4.3': { cues: ['contraindication', 'must not', 'hypersensitivity to'], crossMap: '4' },
+  '4.4': { cues: ['warning', 'precaution', 'special warning', 'monitor'], crossMap: '5' },
+  '4.5': { cues: ['interaction', 'concomitant', 'co-administration'], crossMap: '7' },
+  '4.6': { cues: ['pregnancy', 'lactation', 'breast-feeding', 'fertility'], crossMap: '8' },
+  '4.7': { cues: ['drive', 'machines', 'driving'], crossMap: '—' },
+  '4.8': { cues: ['undesirable effect', 'adverse reaction', 'side effect', 'adverse event'], crossMap: '6' },
+  '4.9': { cues: ['overdose', 'overdosage'], crossMap: '10' },
+  '5.1': { cues: ['mechanism of action', 'pharmacodynamic', 'clinical efficacy', 'atc code'], crossMap: '12' },
+  '5.2': { cues: ['pharmacokinetic', 'absorption', 'distribution', 'metabolism', 'elimination'], crossMap: '12' },
+  '5.3': { cues: ['preclinical', 'nonclinical', 'carcinogenic', 'genotoxic'], crossMap: '13' },
+  '6.1': { cues: ['excipient', 'list of excipients'], crossMap: '11' },
+  '6.2': { cues: ['incompatib', 'must not be mixed', 'diluent'], crossMap: '—' },
+  '6.3': { cues: ['shelf life', 'shelf-life', 'expiry', 'after first opening', 'after reconstitution'], crossMap: '16' },
+  '6.4': { cues: ['storage', 'store at', 'do not freeze'], crossMap: '16' },
+  '6.5': { cues: ['container', 'blister', 'vial', 'pack size', 'bottle'], crossMap: '16' },
+  '6.6': { cues: ['disposal', 'dispose', 'handling', 'reconstitut', 'dilution'], crossMap: '16' },
+  '7': { cues: ['marketing authorisation holder', 'mah'], crossMap: '—' },
+  '8': { cues: ['marketing authorisation number', 'eu/1/'], crossMap: '—' },
+  '9': { cues: ['date of first authorisation', 'renewal of the authorisation'], crossMap: '—' },
+  '10': { cues: ['date of revision', 'revision of the text'], crossMap: '—' },
+};
+
+const SMPC_SECTIONS: LabelSection[] = smpcQrdSections().map((s) => ({
+  number: s.number,
+  label: s.title,
+  cues: SMPC_CUES[s.number]?.cues ?? [],
+  crossMap: SMPC_CUES[s.number]?.crossMap,
+}));
 
 const TEMPLATES: LabelTemplate[] = [
   {
@@ -87,9 +110,9 @@ const TEMPLATES: LabelTemplate[] = [
   {
     id: 'smpc',
     label: 'EU Summary of Product Characteristics (SmPC)',
-    basis: 'EMA QRD template; Directive 2001/83/EC Article 11',
+    basis: `${SMPC_QRD_BASIS.ref} (heading wording: ${SMPC_QRD_BASIS.confidence}); Directive 2001/83/EC Article 11`,
     sections: SMPC_SECTIONS,
-    notes: ['Fixed QRD section numbering', 'Section 4.8 follows MedDRA SOC + frequency convention', 'Black-triangle (▼) for additional monitoring where applicable'],
+    notes: ['Fixed QRD section numbering, sections 1–10; 11 (Dosimetry) and 12 (Instructions for preparation of radiopharmaceuticals) for radiopharmaceuticals only', 'Section 4.8 follows MedDRA SOC + frequency convention', 'Black-triangle (▼) for additional monitoring where applicable'],
     aliases: ['smpc', 'spc', 'eu label', 'summary of product characteristics', 'qrd'],
   },
 ];

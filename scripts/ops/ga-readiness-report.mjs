@@ -39,11 +39,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import dotenv from 'dotenv';
-
-dotenv.config({ quiet: true });
+import { canonicalPqClaims, supportsPassedPq } from './lib/pq-claim-verification.mjs';
+import { loadReadinessEnv, readinessEnvNotice } from './lib/readiness-env.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+/* This used to be `dotenv.config({ quiet: true })`, which merged the
+   repository's gitignored development .env into process.env before any row was
+   judged. Row `flag-rls` — "RLS enforcement (RLS_ENFORCE=on)", severity
+   blocker, owner "Ops (deploy env)" — therefore read `ready` off a developer's
+   laptop, and the headline moved with the shell's cwd (6/18 from the repo root,
+   5/19 from anywhere else) because dotenv resolves .env from process.cwd().
+   Both contradict this file's own design contract: "Nothing is ever reported
+   ready on the strength of a comment, a doc, or an intention."
+   Local loading is still available, opt-in and labelled. */
+const readinessEnv = loadReadinessEnv({ repoRoot });
 const env = process.env;
 
 const JSON_MODE = process.argv.includes('--json');
@@ -158,8 +168,16 @@ const GATEWAY_CREDENTIALS = [
   { key: 'fda:esg', label: 'FDA ESG (AS2/SFTP)', vars: ['FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH'] },
   { key: 'ema:cesp', label: 'EMA CESP', vars: ['EMA_CESP_URL', 'EMA_CESP_CLIENT_ID', 'EMA_CESP_CLIENT_SECRET', 'EMA_CESP_ORG_ID'] },
   { key: 'ema:eudamed', label: 'EUDAMED', vars: ['EUDAMED_URL', 'EUDAMED_BEARER'] },
-  { key: 'pmda:pmda_gateway', label: 'PMDA gateway', vars: ['PMDA_URL', 'PMDA_APPLICANT_ID', 'PMDA_CERT_PATH', 'PMDA_KEY_PATH', 'PMDA_HMAC_SECRET'] },
-  { key: 'ca:hc_cesg', label: 'Health Canada CESG', vars: ['HC_CESG_URL', 'HC_CESG_COMPANY_ID', 'HC_CESG_CERT_PATH', 'HC_CESG_KEY_PATH', 'HC_CESG_HMAC_SECRET'] },
+  // 2026-10-05 (g-pmda-transmit-unverified): the PMDA gateway reads no
+  // credentials. Its former REST/HMAC protocol had no regulator source and was
+  // removed; transmit raises UnverifiedTransportError before the wire. The row
+  // is therefore always blocked, whatever is set — never 'ready'.
+  { key: 'pmda:pmda_gateway', label: 'PMDA gateway', vars: [], unverified: 'protocol unverified (no regulator source for a PMDA transport; the real system is the 申請電子データシステム, esg.pmda.go.jp); transmit raises UnverifiedTransportError (transmitted:false)' },
+  // 2026-10-08 (F19b): the CESG REST transport was written from no Health
+  // Canada source and is removed; transmit raises UnverifiedTransportError
+  // before the wire, and the HC_CESG_* variables are no longer read. Always
+  // blocked, like PMDA's row.
+  { key: 'ca:hc_cesg', label: 'Health Canada CESG', vars: [], unverified: 'channel unverified (its adapter was written from no Health Canada source); transmit raises UnverifiedTransportError (transmitted:false)', unblock: 'Source the Health Canada electronic-submission channel from Health Canada material and implement it in server/services/submission-gateways/health-canada-gateway.ts; no credential setting unblocks this row.' },
   { key: 'uk:mhra_gateway', label: 'MHRA gateway', vars: ['MHRA_URL', 'MHRA_API_KEY', 'MHRA_ORG_ID'] },
   { key: 'cn:nmpa_gateway', label: 'NMPA gateway', vars: ['NMPA_URL', 'NMPA_TOKEN', 'NMPA_COMPANY_ID'] },
   { key: 'au:tga_ebs', label: 'TGA eBS', vars: ['TGA_EBS_URL', 'TGA_EBS_API_KEY', 'TGA_EBS_SPONSOR_ID'] },
@@ -469,10 +487,12 @@ for (const gw of GATEWAY_CREDENTIALS) {
     id: `gateway:${gw.key}`,
     group: 'Agency gateway credentials (production)',
     label: restSelected ? `${gw.label} — transport: rest (NextGen)` : gw.label,
-    status: missing.length === 0 && !restSelected && !badTransport ? 'ready' : 'blocked',
+    status: missing.length === 0 && !restSelected && !badTransport && !gw.unverified ? 'ready' : 'blocked',
     // Only FDA ESG is on a GA critical path; the rest are per-market expansion.
     severity: gw.key === 'fda:esg' ? 'blocker' : 'advisory',
-    observed: badTransport
+    observed: gw.unverified
+      ? gw.unverified
+      : badTransport
       ? `FDA_ESG_TRANSPORT='${esgTransport}' is not 'as2' or 'rest'; the gateway refuses every transmit as a configuration error`
       : missing.length === 0
         ? (restSelected
@@ -481,7 +501,9 @@ for (const gw of GATEWAY_CREDENTIALS) {
         : `missing: ${missing.join(', ')}`,
     gate: 'server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()',
     owner: 'Regulatory Ops (agency account) + Ops (secrets manager)',
-    unblock: restSelected
+    unblock: gw.unverified
+      ? gw.unblock ?? 'Source the PMDA electronic-submission protocol from PMDA material (or UAT) and implement it in server/services/submission-gateways/pmda-gateway.ts; no credential setting unblocks this row.'
+      : restSelected
       ? 'Set FDA_ESG_TRANSPORT=as2 with the AS2 credentials for the verified path, or complete the ESG NextGen REST UAT and replace transmitViaNextGenRest in fda-esg.ts.'
       : 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
   });
@@ -542,7 +564,10 @@ const ENFORCEMENT_FLAGS = [
   {
     id: 'flag-pdfa', label: 'PDF/A submission-grade enforcement', varName: 'ECTD_REQUIRE_PDFA', wanted: 'true', severity: 'blocker',
     gate: 'server/services/ectd/pdfa-readiness.ts pdfaRequiredFromEnv → pre-transmit-check.ts',
-    unblock: 'Set ECTD_REQUIRE_PDFA=true after Ghostscript + veraPDF are present in the deployment image (see the pdfa-pipeline deployment TODO).',
+    owner: 'Product (decide the rule), then Ops (deploy env)',
+    unblock: 'Do NOT set ECTD_REQUIRE_PDFA=true yet. Ghostscript + veraPDF are already in the image (cd02466a4), but the gate refuses any unconverted PDF leaf, '
+      + 'and FDA and EMA accept plain PDF 1.4-1.7, so it would refuse packages the agency accepts. The rule needs deciding first: '
+      + 'see the 2026-10-01 note in docs/reports/ectd-gate-posture-2026-09-08.md.',
   },
   {
     id: 'flag-rps-schema', label: 'eCTD v4.0 RPS schema enforcement', varName: 'ECTD_REQUIRE_RPS_SCHEMA', wanted: 'true', severity: 'advisory',
@@ -561,7 +586,7 @@ for (const f of ENFORCEMENT_FLAGS) {
     severity: f.severity,
     observed: actual === '' ? `${f.varName} not set` : `${f.varName}="${env[f.varName]}"`,
     gate: f.gate,
-    owner: 'Ops (deploy env)',
+    owner: f.owner ?? 'Ops (deploy env)',
     unblock: f.unblock,
   });
 }
@@ -690,36 +715,26 @@ for (const f of ENFORCEMENT_FLAGS) {
 {
   const src = readFile('server/services/ai-governance/approved-models.ts');
   const entries = [];
+  let verifiedClaims;
   if (src) {
     for (const chunk of src.split(/\n\s+id: '/).slice(1)) {
       const id = chunk.slice(0, chunk.indexOf("'"));
       const approved = /\n\s+approvedForHighRisk: true,/.test(chunk);
       const pqMatch = chunk.match(/\n\s+pq: \{ status: '([a-z]+)', reference: (null|'([^']*)') \}/);
       const pinned = (chunk.match(/\n\s+pinnedVersion: '([^']+)'/) ?? [])[1] ?? null;
+      const provider = (chunk.match(/\n\s+provider: '([^']+)'/) ?? [])[1] ?? null;
       let pq = pqMatch ? pqMatch[1] : null;
       let note = '';
-      /* A "passed" claim counts only if the record it cites says so — the same
-         rules as verifyPqClaim in server/eval/pq/pq-verdict.ts, which is the
-         canonical check and runs in CI. Repeated here because this probe runs
-         under plain node, and a green dashboard row on a claim CI would reject
-         is the thing this report exists not to be. */
+      // One canonical verifier recomputes every component against current
+      // approved protocol and gold bytes. An unavailable loader/check blocks
+      // the claim; a header-only PASS never establishes readiness.
       if (pq === 'passed') {
         const ref = pqMatch[3] ?? null;
-        let rec = null;
-        try {
-          rec = ref ? JSON.parse(readFile(ref) ?? 'null') : null;
-        } catch {
-          rec = null;
-        }
-        const ok =
-          rec?.kind === 'pq-record' &&
-          rec.modelId === id &&
-          rec.pinnedVersion === pinned &&
-          rec.verdict === 'PASS' &&
-          rec.protocolStatus === 'approved';
+        verifiedClaims ??= canonicalPqClaims(repoRoot) ?? [];
+        const ok = supportsPassedPq(verifiedClaims, { id, pinnedVersion: pinned, provider });
         if (!ok) {
           pq = 'unverified';
-          note = ref ? ` (claims passed; ${ref} does not support it)` : ' (claims passed; cites no record)';
+          note = ref ? ` (claims passed; canonical evidence verification does not support ${ref})` : ' (claims passed; cites no record)';
         }
       }
       if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq, note });
@@ -803,7 +818,10 @@ for (const f of ENFORCEMENT_FLAGS) {
         : `${passed.length} of ${approved.length} approved model(s) have a passed PQ: ` +
           approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}${e.note}`).join(', '),
     gate:
-      'server/services/ai-gateway/gateway.ts approvedForTask — only approvedForHighRisk models serve document_drafting / regulatory_review, at primary, fallback and explicit selection; PQ status in approved-models.ts',
+      'One rule, approved-models.ts isQualifiedForHighRiskDrafting (approvedForHighRisk, and in production pq.status passed; ADR-0015 §3), at two runtime points. ' +
+      '(1) The gateway, server/services/ai-gateway/model-governance.ts selectionRefusal, at explicit, strategy and fallback selection: only approvedForHighRisk entries serve document_drafting, and regulatory_review unless declared low/medium risk; in production document_drafting is refused unless its entry is PQ-passed, deterministic mode included. ' +
+      '(2) The governed-write gate, approved-models.ts isServedModelApprovedForHighRisk (AnaToolExecutor preHandlerRefusal): in production no tool stores model-authored text in a governed record unless the model that wrote it is PQ-passed. ' +
+      'Until this row is ready, production refuses both. Not covered: callers that draft under another task label (listed in docs/evidence/ANA-AGENTS/2026-09-27/H3-gateway-governance/README.md), and model text returned in an answer without being stored. PQ status in approved-models.ts',
     owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
     unblock:
       'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: ' +
@@ -998,6 +1016,11 @@ const advisories = rows.filter((r) => r.severity === 'advisory' && r.status !== 
 const summary = {
   generatedAt: new Date().toISOString(),
   nodeEnv: env.NODE_ENV || '(unset)',
+  /* Whose environment produced this verdict. A reader comparing two runs must
+     be able to see that one of them included a local file. */
+  localEnvLoaded: readinessEnv.localEnvLoaded,
+  localEnvPath: readinessEnv.localEnvLoaded ? readinessEnv.envPath : null,
+  localEnvKeys: readinessEnv.keys,
   total: rows.length,
   ready: rows.filter((r) => r.status === 'ready').length,
   blocked: rows.filter((r) => r.status === 'blocked').length,
@@ -1012,6 +1035,7 @@ if (JSON_MODE) {
   const mark = (s) => (s === 'ready' ? '[x]' : s === 'unknown' ? '[?]' : '[ ]');
   console.log('GA readiness report — blocker status from env + asset presence');
   console.log(`Generated ${summary.generatedAt}   NODE_ENV=${summary.nodeEnv}`);
+  console.log(readinessEnvNotice(readinessEnv));
   console.log('Runbook: docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md');
   console.log('='.repeat(76));
 

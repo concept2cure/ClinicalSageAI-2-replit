@@ -1,0 +1,25 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e
+  server/services/ana/verifiedSealService.ts (505 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+(node:127) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:140) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:140) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+check-security-patterns: 0 violations across 3110 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 2df0142b9] fix(ana): preserve limiting verification evidence before sealing
+ 4 files changed, 228 insertions(+), 5 deletions(-)
+ create mode 100644 server/routes/ana-ri/__tests__/seal-verified-scope.test.ts
+ create mode 100644 server/services/ana/__tests__/verified-seal-scope.test.ts

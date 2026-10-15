@@ -1,0 +1,100 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/regulatory/ana-submission-sequence-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:43:47.729Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T18:43:47.730Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:43:47.731Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: an overview depends on its written summary, never the reverse
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: an overview depends on its written summary, never the reverse
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: an overview depends on its written summary, never the reverse
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the clinical summary depends on every study report and integrated analysis
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the clinical summary depends on every study report and integrated analysis
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: the quality overall summary depends on the Module 3 it summarises
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the quality overall summary depends on the Module 3 it summarises
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the quality overall summary depends on the Module 3 it summarises
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: phase order is a valid order of its own dependencies
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: phase order is a valid order of its own dependencies
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: phase order is a valid order of its own dependencies
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: once planning is done, the first document AnA names is not a Module 2 summary
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: once planning is done, the first document AnA names is not a Module 2 summary
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA and BLA task blueprints name the pre-submission meeting as FDA classifies it > pre-NDA is a Type B meeting 8ms
+   → expected 'Pre-NDA Meeting (Type A) FDA Type A m…' to contain 'Type B'
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA and BLA task blueprints name the pre-submission meeting as FDA classifies it > pre-BLA is a Type B meeting 2ms
+   → expected 'Pre-BLA Meeting FDA Type A meeting fo…' to contain 'Type B'
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > does not require ICH E3 numbering exactly
+ ↓ tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > says E3 is a guideline, not a template, and cites the Q&A
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA and BLA task blueprints name the pre-submission meeting as FDA classifies it > pre-NDA is a Type B meeting
+AssertionError: expected 'Pre-NDA Meeting (Type A) FDA Type A m…' to contain 'Type B'
+
+Expected: "Type B"
+Received: "Pre-NDA Meeting (Type A) FDA Type A meeting for submission planning"
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:121:18
+    119|     expect(task, `${label} task`).toBeTruthy();
+    120|     const text = `${task!.title} ${task!.description}`;
+    121|     expect(text).toContain('Type B');
+       |                  ^
+    122|     expect(text).not.toContain('Type A');
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA and BLA task blueprints name the pre-submission meeting as FDA classifies it > pre-BLA is a Type B meeting
+AssertionError: expected 'Pre-BLA Meeting FDA Type A meeting fo…' to contain 'Type B'
+
+Expected: "Type B"
+Received: "Pre-BLA Meeting FDA Type A meeting for BLA submission strategy"
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:121:18
+    119|     expect(task, `${label} task`).toBeTruthy();
+    120|     const text = `${task!.title} ${task!.description}`;
+    121|     expect(text).toContain('Type B');
+       |                  ^
+    122|     expect(text).not.toContain('Type A');
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 15 skipped (17)
+   Start at  18:43:45
+   Duration  2.28s (transform 1.01s, setup 105ms, import 1.84s, tests 13ms, environment 0ms)
+

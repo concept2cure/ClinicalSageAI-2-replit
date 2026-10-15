@@ -1,0 +1,163 @@
+[
+ {
+  "verdict": "claim_false",
+  "points": [
+   {
+    "statement": "ingestCtgovToCorpus writes only two tables, csr_reports and csr_details. It has no embedding step and defaults to organization 1.",
+    "evidence": "server/services/corpus/index.ts:35-43 wires LiveCtgovFetcher and DrizzleCorpusWriter. server/services/corpus/drizzle-corpus-writer.ts:20 imports only csrReports and csrDetails; the only writes are at :101-107 (update) and :111-114 (insert). DEFAULT_ORG_ID=1 is at :24 and :37. The sweep calls ingestCtgovToCorpus(query) with no org (server/jobs/corpusIngestionSweep.ts:116), and scripts/ingest-corpus.ts:85 passes only an optional --org.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The CT.gov rows have no vectors and hold only registry metadata. Nothing in them is ICH, CFR, EMA or MDR guidance text.",
+    "evidence": "The csr_reports definition (shared/schema.ts:13190-13229) and the csr_details definition (:13231-13259) contain no embedding or vector column. The normalizer (server/services/corpus/ctgov-normalizer.ts:185-209) stores title, sponsor, conditions, phase, status, date, briefSummary, design string, outcome measures, eligibility and enrollment. statisticalMethods is hard-coded null at :206 and results is null at :208.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The RAG eval never names a corpus or a tenant. The pipeline therefore takes the vault arm, which returns [] with no organizationUuid. Retrieval scores 0 items whatever is in any table, so the stated cause (ENABLE_CORPUS_INGESTION unset) is not the cause.",
+    "evidence": "buildQueryParams in server/eval/rag/run-eval.ts:96-108 returns only query, intent 'regulatory_qa', model, limit, useReranking and useMmr, with no corpus, organizationUuid, organizationId or artifactScope. parseArgs at :44-62 has no flag for any of them. optionsForIntent (server/services/ragRouter.ts:180-184) forwards them as undefined. searchInitial (server/services/advancedRAGPipeline.ts:603-645) falls through to searchVaultSimilar, which returns [] when !organizationUuid (:973-982). assertTenantIsCurrent stands down when there is no scope (server/db/currentTenant.ts:93-98), so the result is a silent empty set, not an error.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "Exactly which stores the pipeline can read, and under what conditions.",
+    "evidence": "Default (vault): vault.document_chunks JOIN vault.documents, with c.embedding IS NOT NULL and an explicit org predicate on uuid $4/$3 (advancedRAGPipeline.ts:1040-1047 dense arm, :1096-1100 lexical arm). rag_chunks/rag_documents: only when corpus==='rag_chunks' (:614-623, :1180-1181, :1224-1225). lumen_data_atoms: only when artifactScope {projectId, organizationUuid} is set (:612-613, :655-661). client_memory_entries and project_memory_entries: only with organizationId, else [] (:1280-1281, :1329-1331). The pipeline never reads knowledge_entries, document_vectors, csr_studies, csr_sections or csr_reports/csr_details; they appear only as counts in scripts/verify-rag-corpus.mjs:91-96.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "One bridge from csr_reports into a retrieval store exists: CRE atomization into lumen_data_atoms. It is a separate manual script, not part of ingest-corpus or the sweep. It emits trial-design facts, and it lands in a store that run-eval never queries.",
+    "evidence": "scripts/cre/generate-atoms.ts:1-18 and :57-75 require --org (:37-42) and call projectOrgCsrReports and atomizeCsrReport. atomizeCsrReport is at server/services/clinical-regulatory-evidence/csr-adapter.service.ts:168-178; the features it emits are endpoint, design, randomization, blinding, sample size, phase, eligibility and dropout (:204-221). lumen_data_atoms is read only via artifactScope with a projectId (advancedRAGPipeline.ts:655-661), which run-eval.ts:96-108 never passes. Neither scripts/ingest-corpus.ts nor server/jobs/corpusIngestionSweep.ts imports it.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The named verification step cannot see what the named unblock step writes. The unblock command as quoted also does not run.",
+    "evidence": "scripts/verify-rag-corpus.mjs:89-97 counts lumen_data_atoms, vault.document_chunks, knowledge_entries, rag_chunks, document_vectors, csr_studies, csr_sections, csr_endpoints and academic_embeddings. It never counts csr_reports or csr_details. A bare `tsx scripts/ingest-corpus.ts` exits 2 without --indication, --intervention or --sponsor (scripts/ingest-corpus.ts:52-55).",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The gold set has 20 regulatory-guidance items. Every expectedSourceIds is empty, and the file calls itself a SEED. None of the answers is contained in CT.gov registry records.",
+    "evidence": "server/eval/rag/gold-dataset.json:2 ($comment 'SEED ... Expand to 30-50 items'), version '0.2.0-seed' at :3. The 18 guidance items are ICH Q1A, E6 x2, 21 CFR 312.23, M4 CTD, Q3A, EMA PIP, multiplicity/E9, E9(R1) estimands, BLA vs NDA, Q7, 510(k), EU MDR CER, Q2, orphan 200,000, E2A, Breakthrough and Q8 (:6-130). The 2 negatives are at :132-143. Every item has \"expectedSourceIds\": []. server/eval/rag/README.md:18 and :70 still say '12-item seed' (stale).",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The minHitRate criterion cannot be passed by any corpus until the gold file is rewritten. With every expectedSourceIds empty, no item is scored, mean([]) is 0, and 0 < 0.6 fails. I simulated this with the pure metric functions under tsx: 0 of 20 items scored, hitRate 0, passes 0.6 = false.",
+    "evidence": "run-eval.ts:169-174 pushes to hitRates only when expected.length > 0. rag-metrics.ts:31-34 returns 0 for an empty list, and hitAtK also returns 0 for empty expected ids (:41). run-eval.ts:214-216 then fails the threshold. The criteria are minHitRate 0.6 and minFaithfulness 0.7 (server/eval/pq/pq-protocol.json:40-43); answer-contains is not a PQ criterion.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "Faithfulness and answer-contains cannot rescue the component. With empty retrieval, faithfulness scores no items and reads 0. Answer-contains on the pipeline's refusal is 0.1 (only the two negatives match). Even with retrieval, a CT.gov-grounded judge cannot support ICH or CFR answers.",
+    "evidence": "run-eval.ts:181 skips faithfulness when sources.length === 0, and :218-220 fails 0 < 0.7. The refusal text is at advancedRAGPipeline.ts:1561-1567. Simulation: answer-contains per item was 0 on all 18 guidance items and 1 on both negatives (mean 0.100). judgeFaithfulness grades only against the retrieved sources (rag-metrics.ts:107-132).",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "When retrieval is empty, the pinned generator is never called, yet the run still prints 'Attributable to <model> ... usable as PQ evidence'. The RAG path also discards the served model, so unlike run-pq nothing checks that the pinned model answered.",
+    "evidence": "queryWithGeneration returns the refusal at advancedRAGPipeline.ts:1561-1567, before aiRouter.route at :1594-1611, and its return value (:1646-1651) drops response.model. AIResponse.model carries the serving model (server/services/aiProviderRouter.ts:120-122). run-eval.ts:226-230 decides attribution from the flags alone. Compare run-pq.ts:211-213, which checks servedModelMatches.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The PQ verdict and runner contain no rag path at all. Setting rag to executable:true, the step the claim implies is all that remains, would drop rag from the INCOMPLETE reasons, and an approved protocol could then PASS without rag ever running. That is fail-open. Extraction has a guard for 'required and executable but ran nothing'; rag has none.",
+    "evidence": "rag enters pq-verdict.ts only through unexecutableComponents (:91-96). computeVerdict takes only generation and extraction (:201-205), and PqRecord has no rag field (:244-263). The extraction guard is at :150-172. run-pq.ts never imports ragRouter or run-eval (:39-56) and runs only the generation and extraction phases (:203-241). No package.json script runs server/eval/rag/run-eval.ts (package.json:94-95 has only ai:eval-doc-quality and pq:run).",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The regulatory_qa strategy builds its candidate set with HyDE and multi-query calls that the gateway routes without a model pin. The retrieval set behind hit-rate therefore depends on unpinned models, although the README says --model leaves retrieval unaffected. This affects reproducibility and attribution rather than the corpus question.",
+    "evidence": "ragRouter.ts:140-152 sets strategy 'advanced'. advancedRAGPipeline.ts:475-483 runs hydeRetrieval and multiQueryRetrieval. server/services/rag-retrieval-strategies.ts:72-73 (taskType 'reasoning') and :98-99 (taskType 'structured_output') pass no model. server/eval/rag/README.md:51.",
+    "supports": "neither"
+   },
+   {
+    "statement": "Parts of the claim are accurate. The sweep is gated on ENABLE_CORPUS_INGESTION and also needs CORPUS_INGESTION_INDICATIONS. The two resolvedBlockers (generator pin and judge pin, with self-grading refused) are implemented in code.",
+    "evidence": "corpusIngestionSweep.ts:152-161 is the env gate, and :103-108 no-ops on an empty plan. The generator pin: ragRouter.ts:168 forwards model, advancedRAGPipeline.ts:1594-1596 uses it, and run-eval.ts:103 sets it. The judge pin is at run-eval.ts:111-119, and self-grading is refused at :136-143.",
+    "supports": "claim"
+   },
+   {
+    "statement": "ga-readiness-report.mjs repeats the claim and misnames the gate functions.",
+    "evidence": "scripts/ops/ga-readiness-report.mjs:768-769 says 'rag's remaining blocker is a corpus that was never ingested'. :773-789 echoes notExecutableReason into the D4 PQ row's unblock text (:815). The gate string at :843 names scheduleCorpusIngestionSweep and buildIngestionPlan, but the real functions are startCorpusIngestionSchedule (corpusIngestionSweep.ts:152) and buildCorpusIngestionPlan (:53). A test comment is also stale: server/eval/pq/__tests__/run-pq.test.ts:128 still says 'ragQuery cannot pin a model'.",
+    "supports": "suspicion"
+   }
+  ],
+  "whatRagPqActuallyNeeds": [
+   "A regulatory-guidance corpus the gold questions can be answered from, ingested into a store the pipeline actually reads, with embeddings and pinned document revisions. Candidates: vault.document_chunks under a named eval organization via server/services/vault/document-chunking.service.ts:250, or rag_chunks/rag_documents with organization_id. It must cover ICH Q1A(R2), Q2, Q3A(R2), Q7, Q8, E2A, E6(R2), E9/E9(R1), M4, 21 CFR 312.23, FDA orphan/Breakthrough/510(k)/BLA-NDA material, EMA PIP guidance and EU MDR. CT.gov ingestion into csr_reports/csr_details does not supply this.",
+   "run-eval.ts needs a tenant/corpus scope: new CLI flags (for example --org-uuid for the vault, or --corpus rag_chunks --org-id) threaded through buildQueryParams (run-eval.ts:96-108). Without them searchVaultSimilar returns [] (advancedRAGPipeline.ts:973-982) regardless of corpus contents.",
+   "Rewrite the gold set: populate expectedSourceIds with real ids from that corpus, matching what run-eval compares (s.documentId || s.id, run-eval.ts:166). Expand it to the 30-50 items the file itself requires (gold-dataset.json:2), version and hash it the way run-pq does the doc-quality bank, and fix the stale '12-item' README text (README.md:18, 70).",
+   "Fail closed on unscored metrics. When hit-rate or faithfulness scores 0 items, the run should report NOT_EXECUTED/INCOMPLETE instead of a numeric 0 read as FAIL (run-eval.ts:198-221; rag-metrics.ts:31-34).",
+   "Attribution verification: return the served model from queryWithGeneration (AIResponse.model, aiProviderRouter.ts:120-122, is dropped at advancedRAGPipeline.ts:1646-1651) and from the judge call. Verify both per item with servedModelMatches, as run-pq.ts:211-213 does. Refuse the 'usable as PQ evidence' attestation (run-eval.ts:226-230) when the generator never ran because retrieval was empty.",
+   "Integrate rag into the PQ: add a rag result type and field on PqRecord (pq-verdict.ts:244-263) and a rag phase in run-pq.ts. Add ragFindings in computeVerdict (pq-verdict.ts:201-241) that measures minHitRate and minFaithfulness over verified items and, mirroring extractionFindings (:150-172), returns INCOMPLETE when rag is required and executable but ran nothing. Without this, setting executable:true is fail-open.",
+   "Pin or otherwise control the auxiliary retrieval models (HyDE and multi-query in rag-retrieval-strategies.ts:72-73 and 98-99, plus the reranker), or run the PQ with strategy 'basic', so the retrieval set is reproducible and attributable.",
+   "Correct pq-protocol.json:34 notExecutableReason and ga-readiness-report.mjs:768-769, 843, 845 to name the real blockers. Fix the gate function names, and update the stale test comment at run-pq.test.ts:128."
+  ]
+ },
+ {
+  "verdict": "claim_false",
+  "points": [
+   {
+    "statement": "The named unblock (ingest-corpus.ts and the sweep) writes only ClinicalTrials.gov trial registrations into csr_reports and csr_details. Neither table has an embedding column.",
+    "evidence": "scripts/ingest-corpus.ts:84-85 calls ingestCtgovToCorpus. server/jobs/corpusIngestionSweep.ts:116 calls it too, and 153-160 gates the schedule on ENABLE_CORPUS_INGESTION. server/services/corpus/index.ts:35-43 wires LiveCtgovFetcher and DrizzleCorpusWriter. server/services/corpus/drizzle-corpus-writer.ts:45-115 inserts or updates csrReports and csrDetails only. shared/schema.ts:13190-13262 (csr_reports, csr_details) has no vector or embedding column. docs/runbooks/corpus-ingestion.md:3-4 gives the corpus's purpose as 'precedent benchmarking, design-rule evaluation, success-prior calibration', not RAG.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "ragRouter/advancedRAGPipeline retrieves from exactly five stores: project atoms (lumen_data_atoms via searchHybrid, only with artifactScope), rag_chunks, client_memory_entries, project_memory_entries, and by default vault.document_chunks. It never reads csr_*, knowledge_entries or document_vectors.",
+    "evidence": "server/services/advancedRAGPipeline.ts:611-640 (searchInitial dispatch), :1040 and :1096 (FROM vault.document_chunks), :1180 and :1224 (FROM rag_chunks), :1304 (client_memory_entries), :1355 (project_memory_entries). The query strategies fan out only through deps.search (server/services/rag-retrieval-strategies.ts:58, :85). Grepping advancedRAGPipeline.ts, ragRouter.ts and rag-retrieval-strategies.ts for knowledge_entries|csr_|document_vectors finds nothing.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "Refutation attempt: one bridge from ingestion to a RAG store does exist, scripts/cre/generate-atoms.ts, which projects csr_reports into lumen_data_atoms. It fails as a refutation. The claim does not name it, and ragRouter cannot reach those atoms: the project-atom arm always passes projectId, and the projectId filter admits only source_type 'artifact' or 'data_room_upload', while CRE atoms are 'clinical_regulatory_evidence'. The atoms also hold trial design features (phase, sample size, endpoints), not ICH or CFR text.",
+    "evidence": "scripts/cre/generate-atoms.ts:4-10 and :59-76. server/services/clinical-regulatory-evidence/csr-adapter.service.ts:131-139 (SELECT from csr_reports) and :168-178 (atomizeCsrReport \u2192 design features). server/services/clinical-regulatory-evidence/retrieval-atoms.service.ts:51 (CRE_ATOM_SOURCE_TYPE='clinical_regulatory_evidence') and :421 (INSERT INTO lumen_data_atoms). advancedRAGPipeline.ts:611-613 reaches atoms only when artifactScope is set, and :659-660 always passes projectId. server/services/enhancedEmbeddingService.ts:567-570: the projectId clause restricts to source_type IN ('artifact','data_room_upload').",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The eval harness itself guarantees zero retrieval, however populated any corpus is. run-eval builds its query without organizationUuid, corpus or artifactScope, so it falls to the vault arm, which returns [] when no tenant UUID is given. Outside a session scope the tenant assertion stands down, so the result is a silent empty list, not an error. The cause of 'retrieval scores 0 items' is therefore the harness, not ENABLE_CORPUS_INGESTION.",
+    "evidence": "server/eval/rag/run-eval.ts:96-108 (buildQueryParams: query, intent, model, limit, useReranking, useMmr only). server/services/ragRouter.ts:180-183 forwards organizationUuid/corpus as undefined. advancedRAGPipeline.ts:632-640 defaults to searchVaultSimilar, and :973-982 returns [] when organizationUuid is absent. server/db/currentTenant.ts:97-98 returns early with no scope.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "With zero documents the pipeline returns a canned refusal without calling the model. Faithfulness is then never scored, and the metric falls to mean([]) = 0, which misses minFaithfulness 0.7. The generator under qualification is also never exercised.",
+    "evidence": "advancedRAGPipeline.ts:1561-1568 (canned 'could not find relevant information' answer, sources []). run-eval.ts:181 scores faithfulness only when result.sources.length > 0. server/eval/rag/rag-metrics.ts:31-32 (mean of an empty list is 0). run-eval.ts:218-221 (FAIL when faithfulness < min).",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "Refutation attempt: retrieval metrics are skipped when no expected ids exist. This does not hold. They are skipped per item, but the aggregate falls to 0 and is still compared to the threshold. All 20 gold items have expectedSourceIds [], so hit-rate is 0 and misses minHitRate 0.6 even with perfect retrieval. A pure tsx computation over the real gold file with retrieval set to return every expected id gave {items:20, scoredForHitRate:0, hitRate:0, passes0_6:false}.",
+    "evidence": "server/eval/rag/gold-dataset.json:2 ('SEED ... Expand to 30-50 items ... Populate expectedSourceIds'), :3 version '0.2.0-seed', and expectedSourceIds [] at :8, :15, :22, :29, :36 and every other item (node check: 20/20 empty). run-eval.ts:170-174 pushes to hitRates only when expected.length > 0, :198 hitRate = mean(hitRates), :214-216 FAIL when hitRate < minHitRate. rag-metrics.ts:31-32. server/eval/rag/README.md:87-88 says the seed ids are empty so hit-rate reports on 0 items. pq-protocol.json:41-43 sets minHitRate 0.6.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The PQ verdict engine and runner have no RAG path. The rag component's only effect on the verdict is the 'cannot execute' INCOMPLETE reason. Flipping executable to true without new code would drop rag from the verdict entirely, letting a PQ pass without RAG ever running, which is the failure mode the file warns about for extraction. Making rag 'executable' therefore requires code in this repository.",
+    "evidence": "server/eval/pq/pq-verdict.ts:201-205 (computeVerdict takes protocol, generation, extraction only), :92-96 (unexecutableComponents is the only place rag is read), :150-153 (the warning for a required component that 'ran no task'), :244-263 (PqRecord has no rag field). server/eval/pq/run-pq.ts:243 (computeVerdict(protocol, generation, extraction)). run-pq.ts has no rag phase; its only rag references are comments at :89.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "RAG output cannot satisfy PQ rule 4 (served-model verification). The rag result carries no served or resolved model; the pipeline returns only response.content. run-eval also routes through aiRouter.route, not the gateway.evaluateModel path that run-pq uses to check the reported model.",
+    "evidence": "pq-verdict.ts:14-15 and :105-111 (servedModelVerified is required). server/services/ragRouter.ts:112-118 (RagRouterResult: answer, sources, context, grounded). advancedRAGPipeline.ts:1597-1614 and :1644-1649 (only response.content is kept). run-eval.ts:132 and :146 (aiRouter.route). run-pq.ts:111-117 (gateway.evaluateModel, response.resolvedModel).",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "The named verification step cannot observe the named unblock: verify-rag-corpus.mjs does not count csr_reports or csr_details, the only tables ingest-corpus writes.",
+    "evidence": "scripts/verify-rag-corpus.mjs:89-97 reports lumen_data_atoms, vault.document_chunks, knowledge_entries, rag_chunks, document_vectors, csr_studies, csr_sections, csr_endpoints and academic_embeddings, but not csr_reports or csr_details. drizzle-corpus-writer.ts:101-114 writes csr_reports/csr_details.",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "No regulatory-guidance corpus exists in any store ragRouter reads, nor any seed for one. The guidance store (knowledge_entries) is read only by retrieveGuidance, never by ragRouter, and nothing in the repo inserts into it. The ICH data directory holds only a README. The ICH and FDA 'corpora' in code are hardcoded indexes or maps, not retrieval data.",
+    "evidence": "server/services/regulatory-guidance-retrieval.ts:4-5 and :61-75 (knowledge_entries, GUIDELINE/REGULATION). Grepping server, scripts, migrations and db for 'INSERT INTO knowledge_entries' finds nothing; the table is only created at migrations/0000_sweet_joseph.sql:3889. git ls-files data/ich_guidelines lists only README.md, which at :40-42 describes PDFs to be added later. server/services/ana-ri/ich-guideline-corpus.ts:12-15 calls itself 'a CITABLE INDEX, not a substitute for the guidelines'. server/services/ana/AnaToolExecutor.ts:4235-4274 (lookup_fda_guidance is a hardcoded 3-entry map). vault.document_chunks is written only by vault upload chunking, which a tenant toggle keeps off by default (server/services/vault/document-chunking.service.ts:33-39 and :250).",
+    "supports": "suspicion"
+   },
+   {
+    "statement": "Partial concession: the faithfulness criterion alone needs no expectedSourceIds. Once the harness passes a tenant and a guidance corpus exists in that tenant's vault or rag_chunks, minFaithfulness could be evaluated and passed with the gold set as it is. minHitRate could not, so the component as specified still cannot pass.",
+    "evidence": "run-eval.ts:181-190 (faithfulness depends only on returned sources and the judge). rag-metrics.ts:107-133. pq-protocol.json:40-43 requires both minHitRate and minFaithfulness.",
+    "supports": "neither"
+   },
+   {
+    "statement": "The claim is repeated verbatim in the GA readiness dashboard. The D4 PQ row's unblock text therefore sends operators to CT.gov ingestion, and its own comment says it quotes the reason so that no session 'goes looking for the code', steering sessions away from the code that has to be written.",
+    "evidence": "server/eval/pq/pq-protocol.json:34. scripts/ops/ga-readiness-report.mjs:766-769 (comment: 'rag's remaining blocker is a corpus that was never ingested, and a session that cannot see that goes looking for the code'), :771-784 (quotes notExecutableReason), :808-810 (D4 unblock), :835-845 ('Precedent corpus ingestion sweep' row).",
+    "supports": "suspicion"
+   }
+  ],
+  "whatRagPqActuallyNeeds": [
+   "A regulatory-guidance corpus in a store that ragRouter reads, holding the texts the gold set asks about: ICH Q1A(R2), E6, E9(R1), Q3A(R2), Q7, Q8, Q2, M4, E2A; 21 CFR 312.23 and the orphan threshold; the EU MDR CER; the PIP rules; 510(k) substantial equivalence; Breakthrough Therapy. Load it into vault.document_chunks for a named eval organization with ana.vault_chunking on, or into rag_chunks, and check redistribution terms for each source. ClinicalTrials.gov ingestion (csr_reports/csr_details) does not supply this.",
+   "Tenant and corpus flags on run-eval (e.g. --org-uuid, --corpus, and --org-id for rag_chunks), forwarded through buildQueryParams (server/eval/rag/run-eval.ts:96-108). Without them the vault arm returns [] (advancedRAGPipeline.ts:973-982) whatever the corpus holds. Add a test that fails when the tenant is dropped.",
+   "The gold set grown from the 20-item seed to 30-50 items, with expectedSourceIds filled from real chunk ids in that corpus, so minHitRate has any scored items. Version and hash it the way run-pq records goldBankSha256.",
+   "Zero scored items reported as not-evaluated or INCOMPLETE rather than as a metric of 0. Today mean([]) = 0 (rag-metrics.ts:31-32) makes a missing gold set read as a retrieval failure, and a no-retrieval run read as faithfulness 0.",
+   "A RAG phase in run-pq.ts and a ragFindings step in pq-verdict.ts. It needs its own result type with hit, faithfulness, servedModel and judge fields; INCOMPLETE when nothing is scorable; minHitRate and minFaithfulness measured only over verified tasks; results stored in PqRecord. Only then may pq-protocol.json set rag.executable to true. Flipping the flag alone would drop rag from the verdict.",
+   "The served model surfaced from queryWithGeneration through RagRouterResult (resolvedModel), or the RAG generation routed through gateway.evaluateModel, so PQ rule 4 (servedModelVerified) can be applied to RAG answers. A pinned judge that differs from the generator is already enforced (run-eval.ts:73-85).",
+   "verify-rag-corpus.mjs, or an eval preflight, that reports the specific store and organization the RAG PQ will read, with a non-zero exit on an empty eval corpus. It does not currently count csr_reports/csr_details, and those tables are irrelevant to RAG anyway.",
+   "Correct notExecutableReason in pq-protocol.json:34 and the D4 unblock text in ga-readiness-report.mjs:808-810 and :845 so they no longer say CT.gov ingestion is the only, operational blocker.",
+   "Owner approval of pq-protocol.json (status 'draft' at :6). This is a separate existing precondition for any PASS (pq-verdict.ts:231-238)."
+  ]
+ }
+]

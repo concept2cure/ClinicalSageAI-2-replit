@@ -1,0 +1,3 @@
+[ci:test-imports] 3299 test files · 6452 local imports checked · 7629 bare package specifiers skipped (out of scope).
+[ci:test-imports] OK — every local import in every test file resolves.
+exit 0

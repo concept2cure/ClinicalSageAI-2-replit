@@ -1,0 +1,7 @@
+# GREEN, 2026-10-01T16:11:39Z: terraform validate in both environment roots (scratch copy; init -backend=false -lockfile=readonly with production's lock: aws 5.70.0, random 3.6.3; terraform 1.9.8)
+## production
+Success! The configuration is valid.
+
+## staging
+Success! The configuration is valid.
+

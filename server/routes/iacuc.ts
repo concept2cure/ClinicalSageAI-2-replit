@@ -9,11 +9,14 @@
  * @module server/routes/iacuc
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import {
   createProtocolTx,
   setProtocolStatusTx,
@@ -23,10 +26,14 @@ import {
   listProtocols,
   getProtocolCompletenessInput,
 } from '../services/iacuc/iacuc-service';
-import { evaluateProtocolCompleteness, reviewStatus, recommendReviewType } from '../services/iacuc/iacuc-logic';
+import { evaluateProtocolCompleteness, approvalReviewStatus, recommendReviewType } from '../services/iacuc/iacuc-logic';
 import { recordIacucProtocolCreated, recordIacucApproval, recordIacucReview } from '../services/iacuc-metrics';
 
 const router = Router();
+// A viewer reads these records and writes none of them: one gate for every
+// write, as the ProtocolDev routers (P11-C-1). The signed review routes also
+// check signing authority (P0-10b).
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -122,11 +129,25 @@ const statusSchema = z.object({
   reason,
 });
 
+/*
+ * A status a committee determination sets is set only by the determination,
+ * POST /api/iacuc/protocols/:id/reviews, where an approval is an electronic signature
+ * (signGovernedAct) and every outcome leaves a review record. This route used
+ * to accept 'approved' too and wrote it under a 'transition' ledger row and
+ * nothing else: an approval with no signature, no review and no reviewer, from
+ * a session alone (P0-10b fix round, DP-02). The statuses no determination
+ * sets still move here.
+ */
+const SET_BY_DETERMINATION: ReadonlySet<string> = new Set(['approved', 'conditional']);
+
 router.patch('/protocols/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = statusSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (SET_BY_DETERMINATION.has(parsed.data.status)) {
+    return res.status(409).json({ error: { code: 'STATUS_SET_BY_DETERMINATION', message: `'${parsed.data.status}' is a committee determination. Record it at POST /api/iacuc/protocols/:id/reviews; an approval there is an electronic signature. Nothing was changed.` } });
+  }
   await governed(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
     await setProtocolStatusTx(client, orgId, id, parsed.data.status, parsed.data.reviewType);
     return { target: `iacuc-protocol:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
@@ -138,21 +159,39 @@ const reviewSchema = z.object({
   reviewerCount: z.number().int().positive().optional(),
   outcome: z.enum(['approved', 'conditional', 'tabled', 'withdrawn']),
   conditions: z.string().max(4000).optional(),
-  determinationDate: z.string().optional(),
+  determinationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'determinationDate must be YYYY-MM-DD'),
+  // The expiration the COMMITTEE set on an approval. Absent, none is stored; it
+  // used to be computed (+3 years) and stored as the committee's (2026-10-15).
+  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expirationDate must be YYYY-MM-DD').optional(),
   reason,
 });
 
-router.post('/protocols/:id/reviews', async (req, res) => {
+/*
+ * An approval is an electronic signature (21 CFR 11.50, 11.200): it runs the
+ * platform's one signing ceremony (governed-signed-act.ts): password, enrolled
+ * second factor, declared meaning and reason, then the act, the ledger `sign`
+ * and the electronic_signatures row on one transaction. A request without them
+ * writes nothing. Any other outcome is a determination recorded under
+ * 'resolve' and asks for no password. It used to write a 'sign' ledger row
+ * with neither (P0-10b, DP-02).
+ */
+/** The signing-attempt limit, for the requests that sign. */
+const whenApproving: RequestHandler = (req, res, next) =>
+  req.body?.outcome === 'approved' ? signedActAttempts(req, res, next) : next();
+
+router.post('/protocols/:id/reviews', whenApproving, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = reviewSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, parsed.data.outcome === 'approved' ? 'sign' : 'resolve', parsed.data.reason, async (client, orgId, userId) => {
+  const record = async (client: any, orgId: number, userId: number) => {
     const result = await recordReviewTx(client, orgId, userId, id, parsed.data);
     recordIacucReview(parsed.data.outcome);
     if (parsed.data.outcome === 'approved') recordIacucApproval();
     return { target: `iacuc-protocol:${id}`, payload: { outcome: parsed.data.outcome, expirationDate: result.expirationDate, provenanceLinkId: result.provenanceLinkId }, body: { id, ...result } };
-  });
+  };
+  if (parsed.data.outcome !== 'approved') return governed(req, res, 'resolve', parsed.data.reason, record);
+  await signGovernedAct(req, res, { domain: 'iacuc', target: `iacuc-protocol:${id}`, meanings: DECISION_ACT_MEANINGS, codeStatus: CODE_STATUS, run: record });
 });
 
 const cohortSchema = z.object({
@@ -197,7 +236,9 @@ router.get('/protocols/:id/completeness', async (req, res) => {
   try {
     const input = await getProtocolCompletenessInput(client, orgId, id);
     const completeness = evaluateProtocolCompleteness(input);
-    const status = reviewStatus(input.approvalDate, new Date().toISOString().slice(0, 10));
+    // Undetermined without an approval date; reviewStatus said "not expired". The
+    // committee's recorded expiration wins over approval + 3 years (2026-10-15).
+    const status = approvalReviewStatus(input.approvalDate, new Date().toISOString().slice(0, 10), input.expirationDate);
     res.json({ completeness, reviewStatus: status, recommendedReview: recommendReviewType(input.painCategory) });
   } catch (err) {
     fail(res, err);

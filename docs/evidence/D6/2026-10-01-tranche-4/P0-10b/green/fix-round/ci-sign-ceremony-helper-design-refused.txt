@@ -1,0 +1,18 @@
+Captured 2026-10-01 during this fix round (first design, not shipped).
+
+The first version of server/api/cmc/cmc-signer.ts moved verifyReauth out of the
+three CMC handlers into a shared verifyCmcSigner(). ci:sign-ceremony proves a
+`sign` write is ceremonied by finding verifyReauth/reverifySigner in the same
+handler, so it refused all three sites:
+
+===== npm run -s ci:sign-ceremony
+[ci:sign-ceremony] FAIL — a `sign` ledger write without the signature ceremony:
+  ✗ server/api/cmc/batchRecordRoutes.ts:481  (no verifyReauth/reverifySigner)
+  ✗ server/api/cmc/routes.ts:903  (no verifyReauth/reverifySigner)
+  ✗ server/api/cmc/specificationRoutes.ts:379  (no verifyReauth/reverifySigner)
+exit=1
+
+The shipped design keeps verifyReauth in each handler and moves only the
+authority check (refusedWithoutSigningAuthority) and the factor record
+(verifiedReauthFactors) into cmc-signer.ts. ci:sign-ceremony then passes
+(gates.txt).

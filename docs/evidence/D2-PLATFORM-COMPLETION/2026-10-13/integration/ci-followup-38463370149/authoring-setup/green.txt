@@ -1,0 +1,45 @@
+ ✓ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > reads actual saved provenance and refuses withdrawn data before audit/history 389ms
+ ✓ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > refuses a noncurrent source version without inventing a disposition 36ms
+ ✓ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > refuses recorded extraction failure before audit/history 30ms
+ ✓ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > exports valid current evidence with retained-original=false 90ms
+ ✓ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > exports valid current evidence with retained-original=true 127ms
+ ✓ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > refuses malformed persisted groups without treating them as manually authored 25ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing 501ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing 16ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing 8ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing 8ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > returns a long refused src shortened, so a megabyte data: URI is not echoed back 11ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent 16ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload) 38ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > an external address: 400 with the sentence, nothing read or written 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > dot segments: 400 with the sentence, nothing read or written 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > an inline SVG: 400 with the sentence, nothing read or written 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > refuses content that is not text, which the driver would store as JSON unchecked 3ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard) 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > 400 naming the template section, and no document is created 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > tells the person what they can do: choose another template, never "save again" 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard) 8ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not flip the document to APPROVED 46ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > still records the signature — only the APPROVAL is withheld 28ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not seal the document into frozen_documents either 11ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > still flips to APPROVED once every step is approved 13ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > does NOT approve while a step is still pending 9ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT 38ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > REFUSES with 409 when the document is a DRAFT — no unapproved artifact, no manifest 7ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash 14ms
+ ✓ server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > binds the approval signature to the snapshot the approval writes 156ms
+ ✓ server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > records approved_at and frozen_at on the document it approves 13ms
+ ✓ server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a second approval of an already approved document covers the approved snapshot that exists 6ms
+ ✓ server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a freeze records frozen_at on the document it freezes 13ms
+ ✓ server/routes/__tests__/authoringApprovalSealBinding.test.ts > POST /docs/:docId/e-sign APPROVER > a REVIEWER signature still covers only the snapshot in force, and approves nothing 7ms
+ Test Files  5 passed (5)
+      Tests  41 passed (41)
+   Start at  23:00:14
+   Duration  29.63s (transform 6.83s, setup 328ms, import 13.75s, tests 13.71s, environment 0ms)

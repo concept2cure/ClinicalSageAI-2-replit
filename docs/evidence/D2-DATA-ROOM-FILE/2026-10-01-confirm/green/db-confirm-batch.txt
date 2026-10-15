@@ -1,0 +1,6 @@
+# tests/db/vault-placement-batch.dbtest.ts, this change
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing 1960ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > confirms each with one chained row carrying the reason, and names the person 58ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > a document moved or confirmed since the list was loaded is refused CONFLICT; the others commit 37ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > a viewer is refused, and nothing changes 6ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > the Vault counts the suggestions awaiting confirmation over the program 87ms

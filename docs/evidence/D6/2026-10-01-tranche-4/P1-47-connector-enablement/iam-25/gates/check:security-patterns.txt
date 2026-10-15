@@ -1,0 +1,3 @@
+# IAM-25/INF-35, 2026-10-01T16:22:50Z: npm run -s check:security-patterns
+check-security-patterns: 0 violations across 2977 file(s).
+exit=0

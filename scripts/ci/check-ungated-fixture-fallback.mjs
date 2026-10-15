@@ -54,15 +54,27 @@
  * and a fallback whose identifier also appears on the LEFT of the `??` is an
  * intra-fixture default, not a live-vs-fixture swap.
  *
- * The fix is `useSampleRows(live, fixture)` — which returns the fixture only
- * under the explicit sample-mode boundary (impossible in a production build)
- * and an honest empty otherwise — plus `useShowingSample` driving a
- * `<SampleDataBanner>`. Not a wider baseline.
+ * The fix is to render the read's own state — DataGate's loading / error /
+ * idle / empty, or an EmptyState / ErrorState — never example rows. Not a
+ * wider baseline.
+ *
+ * ── 2026-10-14: and there is no sample mode to route a fixture through ──────
+ * The fix used to be `useSampleRows(live, fixture)`: the fixture only under an
+ * explicit, client-side "sample mode" (force-disabled in production builds),
+ * under a <SampleDataBanner>. That kept example rows out of a production
+ * tenant's screen, and it kept them IN the product: thirty-odd example
+ * datasets — invented devices with GUDID states, risk files, change logs,
+ * "effective" SOPs, agency letters, a 14-program portfolio — one toggle away in
+ * every non-production build, and a standing temptation to reach for in the
+ * next surface. The owner's rule is that there is no fake data anywhere, so the
+ * mode, its hooks, its banner, DataGate's `sample` prop and the datasets were
+ * removed together. The third check below refuses any of them coming back.
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCAN = path.join(ROOT, 'client', 'src', 'concept2cure');
@@ -90,6 +102,30 @@ const CONTENT_NAME = /^(?:FIXTURE|SAMPLE|DEMO|MOCK|SEED)(?:_|$)/;
 
 
 /**
+ * The THIRD check: the sample-mode mechanism itself, which no longer exists.
+ * Any code (comments are stripped first) that names one of its parts, imports
+ * it, or passes DataGate a `sample={…}` prop is a finding. Its parts are named
+ * here rather than matched loosely, so a new name for the same idea is caught
+ * by review of this list, not by accident.
+ */
+const SAMPLE_MODE_NAMES =
+  /\b(useSampleRows|useSampleValue|useShowingSample|useSampleMode|isSampleMode|setSampleMode|sampleModeAvailable|onSampleModeChange|SampleDataBanner|enableSampleFixtures)\b/;
+const SAMPLE_PROP = /(?<![\w-])sample=\{/;
+const SAMPLE_MODULE = /from\s+['"][^'"]*(?:lib\/sampleMode|lib\/useSampleRows|SampleDataBanner)['"]/;
+
+function sampleModeFindings(code, rel) {
+  const found = [];
+  code.split('\n').forEach((line, i) => {
+    const where = `${rel}:${i + 1}`;
+    const named = line.match(SAMPLE_MODE_NAMES);
+    if (named) found.push({ where, id: named[1], shape: 'sample-mode' });
+    else if (SAMPLE_MODULE.test(line)) found.push({ where, id: 'sample-mode module', shape: 'sample-mode' });
+    if (SAMPLE_PROP.test(line)) found.push({ where, id: 'sample={…}', shape: 'sample-mode' });
+  });
+  return found;
+}
+
+/**
  * The SECOND shape of the same defect: a ternary, not a `??`.
  *
  *     extras.pmaTrialMetrics?.length ? extras.pmaTrialMetrics : PMA_TRIAL_METRICS
@@ -104,22 +140,20 @@ const CONTENT_NAME = /^(?:FIXTURE|SAMPLE|DEMO|MOCK|SEED)(?:_|$)/;
  *
  * So the signal here is structural instead of lexical: the else-branch is a bare
  * identifier this file IMPORTS from a `data/` or `fixtures/` module, and the
- * then-branch is not. Two exclusions keep it honest, and both were found by
- * running it — each is a real line in this tree that is CORRECT:
- *
- *   Overview.tsx     `sourcePrograms.length > 0 || !sampleOn ? derive(...) : MDX_HEALTH`
- *                    The fixture is behind the sample-mode boundary, which is
- *                    the remedy, not the defect. A condition that consults
- *                    sample mode is exempt.
+ * then-branch is not. One exclusion keeps it honest, found by running it — a
+ * real line in this tree that is CORRECT:
  *
  *   Pyramid.tsx      `vocab === 'risk' ? PY_RISK : PY_STATUS`
  *                    Both branches are imported constants, so this SELECTS a
  *                    vocabulary rather than substituting for absent data.
  *
+ * There was a second: a condition that consulted sample mode was exempt, the
+ * fixture being "behind the sample-mode boundary" (Overview.tsx's MDX_HEALTH).
+ * Sample mode is gone (2026-10-14), so a fixture behind it is a fixture.
+ *
  * Kept in this file rather than a new one: it is the same rule about the same
  * thing, and a second gate would be a second place to forget.
  */
-const SAMPLE_GATED = /\b(?:sampleOn|isSampleMode|useSampleMode|sampleModeAvailable|showingSample)\b/;
 
 /** Names imported as values from a `data/` or `fixtures/` module. */
 function importedContentNames(src) {
@@ -140,11 +174,9 @@ function ternaryFallbacks(src, rel) {
   const names = importedContentNames(src);
   if (!names.size) return found;
   for (const m of src.matchAll(/\?([^?:;]{0,200}?):\s*([A-Za-z_$][\w$]*)\s*[;,)\]\n]/g)) {
-    const [whole, thenBranch, id] = m;
+    const [, thenBranch, id] = m;
     if (!names.has(id)) continue;
     if (names.has(thenBranch.trim())) continue;             // a selector, not a fallback
-    const from = Math.max(0, m.index - 220);
-    if (SAMPLE_GATED.test(src.slice(from, m.index + whole.length))) continue;
     found.push({ where: `${rel}:${src.slice(0, m.index).split('\n').length}`, id, shape: '? :' });
   }
   return found;
@@ -172,29 +204,6 @@ function walk(dir, out = []) {
   return out;
 }
 
-/**
- * Blank out comments so prose ABOUT the pattern is not reported as the pattern.
- *
- * This was a line test — skip a line that STARTS with `*`, `//` or `/*` — and it
- * missed the comment style this codebase actually uses, where a block comment's
- * continuation lines are indented with no leading asterisk:
- *
- *     /* ...
- *        `ci:fixture-fallback` keys on `live ?\u003F FIXTURE` ...   <- not skipped
- *      *\/
- *
- * So the file that explains why a fallback was removed fails the check for the
- * fallback it removed. Blanking preserves line numbers, so the offsets a real
- * finding reports still point at the right line.
- */
-function stripComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .split('\n')
-    .map((l) => l.replace(/\/\/.*$/, ''))
-    .join('\n');
-}
-
 function main() {
   const findings = [];
 
@@ -207,7 +216,27 @@ function main() {
     }
     const rel = path.relative(ROOT, file);
 
-    stripComments(src).split('\n').forEach((line, i) => {
+    /*
+     * Comments are blanked so prose ABOUT the pattern is not reported as the
+     * pattern, and blanked rather than skipped so a finding's line is its
+     * source line.
+     *
+     * This was first a line test (skip a line that STARTS with `*`, `//` or
+     * a block opener), which missed this codebase's block comments, whose
+     * continuation lines are indented with no leading asterisk: the file that
+     * explained why a fallback was removed failed the check for the fallback
+     * it removed. Then it was a regex pair that did not know about strings: a
+     * literal holding `/*` (a glob such as '/api/regulatory/*') opened a
+     * "comment" that ran to the next real `*` `/`, and an 'https://…' literal
+     * cut the rest of its own line, so a `?? FIXTURE_*` or a fixture ternary
+     * in either place was never read. The shared stripper is quote-,
+     * template- and escape-aware. Line comments are dropped rather than
+     * blanked, so the 200-character then-branch and 220-character
+     * SAMPLE_GATED windows are spent on code, as they were before.
+     */
+    const code = stripComments(src, { lineComments: 'drop' });
+
+    code.split('\n').forEach((line, i) => {
       for (const m of line.matchAll(/\?\?\s*([A-Z][A-Za-z0-9_]{2,})\s*(\[|\.)?/g)) {
         const id = m[1];
         if (!CONTENT_NAME.test(id)) continue;
@@ -219,7 +248,8 @@ function main() {
       }
     });
 
-    findings.push(...ternaryFallbacks(stripComments(src), rel));
+    findings.push(...ternaryFallbacks(code, rel));
+    findings.push(...sampleModeFindings(code, rel));
   }
 
   findings.sort((a, b) => a.where.localeCompare(b.where));
@@ -242,7 +272,7 @@ function main() {
   );
   const fresh = findings.filter((f) => !baseline.has(key(f)));
 
-  console.log('[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure');
+  console.log('[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure');
   console.log(`  ungated content fallbacks  : ${findings.length}`);
   console.log(`  baselined (known, unfixed) : ${baseline.size}`);
 
@@ -258,13 +288,13 @@ function main() {
   console.log(`\n❌ ${fresh.length} new ungated fixture fallback(s):\n`);
   for (const f of fresh) console.log(`  ${f.where}  ${f.shape ?? '??'} ${f.id}`);
   console.log(
-    '\n  This substitutes example content for a tenant\'s own data on exactly the\n' +
-      '  occasions they cannot detect it: an empty tenant, an expired token, a 500,\n' +
-      '  a fetch that has not started.\n\n' +
-      '  Use `useSampleRows(live, fixture)` — it returns the fixture only under the\n' +
-      '  explicit sample-mode boundary and an honest empty otherwise — and drive a\n' +
-      '  <SampleDataBanner> from `useShowingSample(live)` so the substitution is\n' +
-      '  never silent. See client/src/concept2cure/mdx/lib/useSampleRows.ts.',
+    '\n  This puts example content where a tenant\'s own data belongs — on exactly\n' +
+      '  the occasions they cannot detect it (an empty tenant, an expired token, a\n' +
+      '  500, a fetch that has not started), or behind a sample mode.\n\n' +
+      '  There is no sample mode and no example dataset to fall back to: render the\n' +
+      '  read\'s own state — DataGate\'s loading / error / idle / empty, or an\n' +
+      '  EmptyState / ErrorState. A test that needs rows serves live-shaped rows\n' +
+      '  through its own mocked read.',
   );
   return 1;
 }

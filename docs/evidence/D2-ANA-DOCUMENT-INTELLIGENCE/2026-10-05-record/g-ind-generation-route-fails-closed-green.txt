@@ -1,0 +1,190 @@
+# GREEN — working tree on HEAD e97611d9 with server/routes/ind-generation.ts changed; 2026-10-05T04:04:03Z
+# npx vitest run server/routes/__tests__/ind-generation-fail-closed.test.ts server/routes/__tests__/ind-generation-error-containment.test.ts server/routes/__tests__/ind-generation-no-fabrication.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-05T04:04:05.222Z",
+  "level": "error",
+  "message": "[ind-generation] generating the section failed",
+  "context": {
+    "err": "SENTINEL-PROVIDER-DETAIL: 401 invalid x-api-key for model claude-set-b at api.example.internal",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false, with no draft content, when the save fails as the uncredentialed loopback does
+{
+  "timestamp": "2026-10-05T04:04:05.236Z",
+  "level": "warn",
+  "message": "[ind-generation] section drafted but not saved",
+  "context": {
+    "projectRef": "3",
+    "sectionCode": "2.5",
+    "saveStatus": 401
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > generate-section: the save failure text never reaches the body
+{
+  "timestamp": "2026-10-05T04:04:05.238Z",
+  "level": "error",
+  "message": "[ind-generation] section artifact save failed",
+  "context": {
+    "projectRef": "3",
+    "error": "SENTINEL-LOOPBACK-DETAIL: connect ECONNREFUSED 127.0.0.xxx:5000"
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > generate-section: the save failure text never reaches the body
+{
+  "timestamp": "2026-10-05T04:04:05.238Z",
+  "level": "warn",
+  "message": "[ind-generation] section drafted but not saved",
+  "context": {
+    "projectRef": "3",
+    "sectionCode": "2.6",
+    "saveStatus": null
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > status: the read failure text never reaches the body
+{
+  "timestamp": "2026-10-05T04:04:05.242Z",
+  "level": "error",
+  "message": "[ind-generation] project artifact read failed",
+  "context": {
+    "projectRef": "3",
+    "error": "SENTINEL-LOOPBACK-DETAIL: connect ECONNREFUSED 127.0.0.xxx:5000"
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save throws (connection refused)
+{
+  "timestamp": "2026-10-05T04:04:05.246Z",
+  "level": "error",
+  "message": "[ind-generation] section artifact save failed",
+  "context": {
+    "projectRef": "3",
+    "error": "connect ECONNREFUSED 127.0.0.xxx:5000"
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save throws (connection refused)
+{
+  "timestamp": "2026-10-05T04:04:05.246Z",
+  "level": "warn",
+  "message": "[ind-generation] section drafted but not saved",
+  "context": {
+    "projectRef": "3",
+    "sectionCode": "2.5",
+    "saveStatus": null
+  }
+}
+
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text 31ms
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > leaves the unknown-section 400 exactly as it was 4ms
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > generate-section: the save failure text never reaches the body 5ms
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > a failed artifact save or read is contained the same way > status: the read failure text never reaches the body 4ms
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save answers 2xx but returns no artifact id
+{
+  "timestamp": "2026-10-05T04:04:05.255Z",
+  "level": "warn",
+  "message": "[ind-generation] section drafted but not saved",
+  "context": {
+    "projectRef": "3",
+    "sectionCode": "2.5",
+    "saveStatus": 201
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > passes the artifact route's 404 through: the project is not the caller's
+{
+  "timestamp": "2026-10-05T04:04:05.258Z",
+  "level": "warn",
+  "message": "[ind-generation] section drafted but not saved",
+  "context": {
+    "projectRef": "3",
+    "sectionCode": "2.5",
+    "saveStatus": 404
+  }
+}
+
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > the orphaned assembly routes are gone > /api/ind-generation/assemble is not a route 35ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > the orphaned assembly routes are gone > /api/ind-generation/generate-form is not a route 4ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > POST /api/ind-generation/generate-section — no fabrication > signals needsData (never "drafted successfully") when the model leaves an unresolved placeholder 28ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > POST /api/ind-generation/generate-section — no fabrication > reports "drafted successfully" when the content has no unresolved placeholders 4ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > POST /api/ind-generation/generate-section — no fabrication > sends the AI gateway an explicit anti-fabrication / do-not-invent system prompt 4ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > POST /api/ind-generation/generate-section — no fabrication > threads an optional sourceData field into the user prompt so the model has real material to ground on 4ms
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status answers an error, with no sections, when the artifact read fails
+{
+  "timestamp": "2026-10-05T04:04:05.285Z",
+  "level": "warn",
+  "message": "[ind-generation] project artifact read refused",
+  "context": {
+    "projectRef": "3",
+    "status": 401
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status answers an error when the read throws
+{
+  "timestamp": "2026-10-05T04:04:05.289Z",
+  "level": "error",
+  "message": "[ind-generation] project artifact read failed",
+  "context": {
+    "projectRef": "3",
+    "error": "connect ECONNREFUSED 127.0.0.xxx:5000"
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status passes the 404 through for a project that is not the caller's
+{
+  "timestamp": "2026-10-05T04:04:05.291Z",
+  "level": "warn",
+  "message": "[ind-generation] project artifact read refused",
+  "context": {
+    "projectRef": "3",
+    "status": 404
+  }
+}
+
+stderr | server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /device-status answers an error, with no sections, when the artifact read fails
+{
+  "timestamp": "2026-10-05T04:04:05.296Z",
+  "level": "warn",
+  "message": "[ind-generation] project artifact read refused",
+  "context": {
+    "projectRef": "3",
+    "status": 401
+  }
+}
+
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false, with no draft content, when the save fails as the uncredentialed loopback does 26ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save throws (connection refused) 5ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > answers success:false when the save answers 2xx but returns no artifact id 8ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > passes the artifact route's 404 through: the project is not the caller's 4ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > saves with the caller's own credentials and reports the artifact id the store returned 5ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > gives the gateway the caller's organizationId and userId 7ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a missing projectId with 400 before any model call 3ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a a path segment projectId with 400 before any model call 3ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > POST /generate-section: success only with a saved artifact > refuses a dot-dot projectId with 400 before any model call 5ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status answers an error, with no sections, when the artifact read fails 4ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status answers an error when the read throws 2ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status passes the 404 through for a project that is not the caller's 2ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /status reads with the caller's credentials and maps the saved artifacts 3ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > /device-status answers an error, with no sections, when the artifact read fails 2ms
+ ✓ server/routes/__tests__/ind-generation-fail-closed.test.ts > GET /status and /device-status: a failed read is an error, not "not started" > refuses a malformed projectId on both reads without a fetch 4ms
+
+ Test Files  3 passed (3)
+      Tests  25 passed (25)
+   Start at  04:04:03
+   Duration  1.36s (transform 1.91s, setup 278ms, import 2.41s, tests 221ms, environment 0ms)
+
+
+# tsc (flock tsc.lock; npx tsc --noEmit -p . | grep the four ind-generation files): no errors in these files
+# eslint server/routes/ind-generation.ts: working copy 2 warnings (two pre-existing unused 'error' in outer catches); HEAD 3 warnings (the same two + handler complexity 16 > 15)
+# eslint on both test files: 0 problems

@@ -1,0 +1,32 @@
+ × tests/services/answer-check.test.ts > checkAnswer — figures > finds a figure a tool returned, and flags one it did not 13ms
+   → expected 'no_sources' to be 'sources' // Object.is equality
+ × tests/services/answer-check.test.ts > checkAnswer — figures > reads a percentage as its proportion too 4ms
+   → expected +0 to be 1 // Object.is equality
+ × tests/services/answer-check.test.ts > checkAnswer — figures > needs both bounds of a confidence interval, and does not read "95% CI" as a result 3ms
+   → expected [] to deeply equal [ '95% CI 0.48-0.91' ]
+ × tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a tool only echoed from what the model passed in 2ms
+   → expected [] to deeply equal [ { kind: 'figure', text: '240 mg' } ]
+ × tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a model wrote inside the tool call 2ms
+   → expected [] to deeply equal [ { kind: 'figure', text: '47%' } ]
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > a figure an engine returned beside a model-written one is still found 0ms
+ × tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > finds the identifiers the evidence holds 1ms
+   → expected +0 to be 3 // Object.is equality
+ × tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not find a truncated or altered identifier inside a longer one 1ms
+   → expected [] to deeply equal [ 'doi', 'fda_nda', 'pmid' ]
+ × tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not credit an identifier a model wrote inside the tool call 1ms
+   → expected [] to deeply equal [ Array(1) ]
+ × tests/services/answer-check.test.ts > toolEvidence — what is a source > a successful result is a source, named by its tool 1ms
+   → expected undefined to be 'tool:get_trial_details' // Object.is equality
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a failed, stopped or empty step is not 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a governed write is not: its output is the content it stored 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a result whose generations are unknown, or too many to keep, is not 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > with only the person's own message, claims are unchecked, never "not found" 1ms
+ × tests/services/answer-check.test.ts > checkAnswer — the basis > a source the check cannot read is named, not counted as read 1ms
+   → expected 'no_sources' to be 'sources' // Object.is equality
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > names the engine that checked 0ms
+ × tests/services/answer-check.test.ts > checkAnswer — verdicts > names a readiness, compliance or approval verdict the answer states 1ms
+   → Cannot read properties of undefined (reading 'map')
+ × tests/services/answer-check.test.ts > checkAnswer — verdicts > includes the §14 prohibited claims, and not a verdict the answer declines to give 0ms
+   → Cannot read properties of undefined (reading 'map')
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 6 passed (18)

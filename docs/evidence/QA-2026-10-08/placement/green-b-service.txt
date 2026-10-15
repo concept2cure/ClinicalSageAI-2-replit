@@ -1,0 +1,11 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/list-submissions-program-scope.pglite.test.ts > the submission list, scoped to a program > returns only the program's own submissions when a programId is given 23ms
+ ✓ server/services/submission-service/__tests__/list-submissions-program-scope.pglite.test.ts > the submission list, scoped to a program > with no programId, every submission of the organization is listed, as the Submission Center reads it 10ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  01:32:50
+   Duration  10.97s (transform 3.82s, setup 182ms, import 5.45s, tests 4.58s, environment 0ms)
+

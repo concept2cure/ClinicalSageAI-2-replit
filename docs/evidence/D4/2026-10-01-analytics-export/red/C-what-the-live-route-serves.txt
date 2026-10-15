@@ -1,0 +1,64 @@
+GET /api/analytics/export?type=predictive&format=json  (tenant 7, any tenant)  -> 200
+{
+  "predictedEndpoints": [
+    {
+      "endpointName": "Overall Survival",
+      "predictedEffectSize": 0.42,
+      "confidenceInterval": [
+        0.35,
+        0.49
+      ],
+      "reliability": "High"
+    },
+    {
+      "endpointName": "Progression-Free Survival",
+      "predictedEffectSize": 0.37,
+      "confidenceInterval": [
+        0.29,
+        0.45
+      ],
+      "reliability": "Moderate"
+    }
+  ],
+  "trialDesignRecommendations": [
+    {
+      "factor": "Sample Size",
+      "recommendation": "Based on historical power calculations, we recommend a minimum sample size of 150 participants per arm for adequate statistical power.",
+      "impactLevel": "High"
+    },
+    {
+      "factor": "Endpoint Selection",
+      "recommendation": "Consider using composite endpoints that combine clinical outcomes with biomarker data for increased sensitivity.",
+      "impactLevel": "Medium"
+    }
+  ],
+  "marketTrends": [
+    {
+      "indication": "Breast Cancer",
+      "trend": "Increasing",
+      "numberOfTrials": 87
+    },
+    {
+      "indication": "Lung Cancer",
+      "trend": "Stable",
+      "numberOfTrials": 76
+    },
+    {
+      "indication": "Colorectal Cancer",
+      "trend": "Increasing",
+      "numberOfTrials": 65
+    }
+  ]
+}
+
+GET /api/analytics/export?type=predictive&format=csv  -> 200 text/csv; charset=utf-8
+Endpoint,Predicted Effect Size,Confidence Interval,Reliability
+Overall Survival,0.42,0.35-0.49,High
+Progression-Free Survival,0.37,0.29-0.45,Moderate
+
+Factor,Recommendation,Impact Level
+Sample Size,"Based on historical power calculations, we recommend a minimum sample size of 150 participants per arm for adequate statistical power.",High
+Endpoint Selection,"Consider using composite endpoints that combine clinical outcomes with biomarker data for increased sensitivity.",Medium
+
+
+GET /api/analytics/export?type=predictive&format=pdf  -> 200 application/pdf, 1962 bytes, starts %PDF-1.3

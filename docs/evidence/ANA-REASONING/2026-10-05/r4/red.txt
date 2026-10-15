@@ -1,0 +1,21 @@
+Red first: round 4's tests against the tree before the change (trunk 7d07de5f5 plus nothing of round 4).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ai-gateway/__tests__/turn-api-effort.test.ts server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+(The demonstration case and the 'no effort maps above high' case were added after this run; their red is their mutants, F02 and E05-max-mapped.)
+
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > is the effort the person chose, as before 5ms
+   → resolveTurnApiEffort is not a function
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > is not sent when a kernel-pinned strategy is in force, as before 1ms
+   → resolveTurnApiEffort is not a function
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > a high-stakes turn runs at high or above, pinned strategy or not: the floor reaches an adaptive model 1ms
+   → resolveTurnApiEffort is not a function
+ × server/services/ai-gateway/__tests__/turn-api-effort.test.ts > the API effort a turn runs at > Fast stays Fast, as the thinking floor does (resolveThinkingConfig) 0ms
+   → resolveTurnApiEffort is not a function
+ × server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 56ms
+   → expected undefined to deeply equal { enabled: true, budgetTokens: 16000 }
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a Fast turn reasons on no call 9ms
+ × server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 9ms
+   → expected [ 'medium', 'medium' ] to deeply equal [ 'high', 'high' ]
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > a turn that is not high-stakes keeps the effort chosen 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  6 failed | 2 passed (8)

@@ -37,7 +37,7 @@
  * confirmed write — no register is patched locally, so the screen can only
  * ever show what the record holds.
  */
-import { ApiRequestError, apiRequest } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, errorCodeOf, serverMessage } from '@/lib/queryClient';
 
 /** The section PATCH's optimistic-concurrency refusal (409 SECTION_CHANGED). */
 export class ProtocolSectionConflict extends Error {
@@ -71,13 +71,11 @@ export function optionalNumber(raw: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/* serverMessage() first: a 500 answered through serverError() puts the code
+   INTERNAL_ERROR in `error` and its sentence in `message`, and returning a
+   string `error` as-is showed the code as the reason (P1-17, IAM-18 (1)). */
 function detailOf(json: unknown, status: number): string {
-  const err = (json as { error?: unknown } | null)?.error;
-  if (typeof err === 'string') return err;
-  const obj = err as { message?: unknown; code?: unknown } | undefined;
-  if (typeof obj?.message === 'string') return obj.message;
-  if (typeof obj?.code === 'string') return obj.code;
-  return `HTTP ${status}`;
+  return serverMessage(json) ?? errorCodeOf(json) ?? `HTTP ${status}`;
 }
 
 /** The one refusal, whichever way the HTTP client delivered it. */
@@ -86,6 +84,11 @@ function refusal(what: string, status: number, code: string | undefined, message
   // is not the same as an expired session and must not be reported as one.
   if (status === 401 && code?.startsWith('REAUTH_TOTP')) {
     return new Error(`Couldn't ${what} — the authenticator code was ${code === 'REAUTH_TOTP_REQUIRED' ? 'required and not given' : 'not accepted'}. Nothing was signed.`);
+  }
+  // In production a signer with no authenticator is refused after the password
+  // verified (ADR-0014 P1-2b): the server's sentence says what to do.
+  if (status === 401 && code === 'REAUTH_AUTHENTICATOR_REQUIRED') {
+    return new Error(`Couldn't ${what} — ${message}`);
   }
   if (status === 401 && code?.startsWith('REAUTH')) {
     return new Error(`Couldn't ${what} — the password was not accepted. Nothing was signed.`);
@@ -323,9 +326,12 @@ export interface ReviewerCandidate {
 
 /**
  * The organization's members who can sign a review: GET /api/tenant-users/:orgId,
- * the member-readable list. Viewers are left out, because the server refuses to
- * assign a review to someone who can never sign it. THROWS when the list cannot
- * be read: an error is not an organization with no members.
+ * the member-readable list, keeping only the rows the server marks `canSign`
+ * (its signing policy applied to the membership role). The server assigns a
+ * review only to someone who can sign its disposition and refuses anyone else
+ * with 409 REVIEWER_CANNOT_SIGN, so nobody else is offered; a row with no mark
+ * is not offered either. THROWS when the list cannot be read: an error is not
+ * an organization with no members.
  */
 export async function listReviewerCandidates(organizationId: string | number): Promise<ReviewerCandidate[]> {
   let res: Response;
@@ -339,7 +345,7 @@ export async function listReviewerCandidates(organizationId: string | number): P
   if (!Array.isArray(rows)) throw new Error('the member list was not in the expected shape');
   return rows
     .map((r) => r as Record<string, unknown>)
-    .filter((r) => Number.isInteger(Number(r.id)) && String(r.role ?? '').toLowerCase() !== 'viewer')
+    .filter((r) => Number.isInteger(Number(r.id)) && r.canSign === true)
     .map((r) => ({ id: Number(r.id), name: String(r.name ?? '').trim(), email: String(r.email ?? ''), role: String(r.role ?? '') }));
 }
 

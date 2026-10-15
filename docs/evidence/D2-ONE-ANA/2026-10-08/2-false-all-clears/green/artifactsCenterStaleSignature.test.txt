@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/artifactsCenterStaleSignature.test.tsx > Artifacts Center — signature status per version > draws the e-signed shield once: only for the signature that covers the current version 97ms
+ ✓ client/src/concept2cure/v2/__tests__/artifactsCenterStaleSignature.test.tsx > Artifacts Center — signature status per version > says in words that an earlier version is the one signed 30ms
+ ✓ client/src/concept2cure/v2/__tests__/artifactsCenterStaleSignature.test.tsx > Artifacts Center — signature status per version > does not claim the current version is signed when the covered version is unknown 27ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  00:50:36
+   Duration  1.81s (transform 697ms, setup 145ms, import 838ms, tests 159ms, environment 509ms)
+

@@ -1,0 +1,40 @@
+Selected results from /workspace/scratch/global-biotech-ui-before.log; routine request/setup logs omitted.
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Review document ask 682ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Prepare targeted fixes ask 322ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Review document 254ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Prepare targeted fixes 255ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > uses the existing provenance line to identify the preparation worksheet 117ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps mismatched source metadata unavailable instead of guessing preparation limits 229ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps missing source metadata unavailable instead of guessing preparation limits 224ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves US_NDA scope after the working document is renamed 227ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves CA_CTA scope after the working document is renamed 229ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves EU_CTA scope after the working document is renamed 202ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves JP_CTN scope after the working document is renamed 217ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > marks malformed recorded regional identity unavailable rather than dropping it 207ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template context is scoped to the saved document currently open > bounds long handoff limits explicitly and points to complete saved-review pages 212ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template context is scoped to the saved document currently open > does not carry late prior-document metadata into another document ask 304ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > section reads saved template limits before proposing changes 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > document reads saved template limits before proposing changes 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > evidence reads saved template limits before proposing changes 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > fixes reads saved template limits before proposing changes 0ms
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves US_NDA scope after the working document is renamed
+AssertionError: expected undefined to deeply equal { registryId: 'US_NDA', …(2) }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves US_NDA scope after the working document is renamed
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves EU_CTA scope after the working document is renamed
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves JP_CTN scope after the working document is renamed
+AssertionError: expected 'Created from an IND template · prepar…' to contain 'regulatory template'
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves CA_CTA scope after the working document is renamed
+AssertionError: expected undefined to deeply equal { registryId: 'CA_CTA', …(2) }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves CA_CTA scope after the working document is renamed
+AssertionError: expected 'Created from an IND template · prepar…' to contain 'regulatory template'
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves EU_CTA scope after the working document is renamed
+AssertionError: expected undefined to deeply equal { registryId: 'EU_CTA', …(2) }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > preserves JP_CTN scope after the working document is renamed
+AssertionError: expected undefined to deeply equal { registryId: 'JP_CTN', …(2) }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > regional filing source stays recorded in the one editor > marks malformed recorded regional identity unavailable rather than dropping it
+AssertionError: expected 'recorded' to be 'unavailable' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  5 failed | 13 passed (18)
+   Start at  20:33:06
+   Duration  6.56s (transform 1.57s, setup 149ms, import 2.02s, tests 3.69s, environment 511ms)

@@ -1,0 +1,243 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > clean schema → ready, and serves
+✅ Database connection successful
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > clean schema → ready, and serves
+✅ Database readiness verified (1 schemas, 2 tables, authoring subsystem present)
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > clean schema → ready, and serves
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > verification reported errors → error, does NOT serve
+✅ Database connection successful
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > verification reported errors → error, does NOT serve
+❌ CRITICAL: Table verification errors: [ 'relation "x" does not exist' ]
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > verification reported errors → error, does NOT serve
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > missing schemas → missing, does NOT serve
+✅ Database connection successful
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > missing schemas → missing, does NOT serve
+❌ CRITICAL: Database schemas required initialization: schemas missing: cmc, ectd
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > missing schemas → missing, does NOT serve
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > warnings with success=false → error, does NOT serve
+✅ Database connection successful
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > warnings with success=false → error, does NOT serve
+⚠️ Database readiness warnings: [ 'drift detected' ]
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > warnings with success=false → error, does NOT serve
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > success=false with no diagnosable cause → error, does NOT serve
+✅ Database connection successful
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > success=false with no diagnosable cause → error, does NOT serve
+❌ CRITICAL: Schema verification failed without a diagnosable cause.
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > success=false with no diagnosable cause → error, does NOT serve
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > ensureCoreTables THREW → error, does NOT serve
+✅ Database connection successful
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > ensureCoreTables THREW → error, does NOT serve
+❌ CRITICAL: Core table verification failed: connection terminated unexpectedly
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > ensureCoreTables THREW → error, does NOT serve
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > database unreachable (non-production) → error, does NOT serve
+❌ Database connection failed: ECONNREFUSED
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > missing auth/RBAC tables → missing, does NOT serve
+✅ Database connection successful
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > missing auth/RBAC tables → missing, does NOT serve
+❌ CRITICAL: security-critical tables missing: organization_users, platform_role_grants, revoked_tokens
+   Auth, RBAC and licensing cannot function. Run: node scripts/db/install-fresh.mjs
+   on a fresh database, then node scripts/db/deploy-migrate.mjs.
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > missing auth/RBAC tables → missing, does NOT serve
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > missing only non-essential module tables → degraded, serves but names them
+✅ Database connection successful
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > missing only non-essential module tables → degraded, serves but names them
+⚠️ Database serving DEGRADED — important tables missing: cerv2_510k_sections, document_templates
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > missing only non-essential module tables → degraded, serves but names them
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+stdout | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > auth tables outrank module tables when both are absent
+✅ Database connection successful
+
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > auth tables outrank module tables when both are absent
+❌ CRITICAL: security-critical tables missing: revoked_tokens
+   Auth, RBAC and licensing cannot function. Run: node scripts/db/install-fresh.mjs
+   on a fresh database, then node scripts/db/deploy-migrate.mjs.
+
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > found a substantial number of source files 3ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > includes the surfaces that carried the defect 2ms
+stderr | tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > auth tables outrank module tables when both are absent
+⚠️  [audit-enforcement] the audit immutability triggers could not be verified (client.query is not a function) — this is NOT a pass: the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)). {
+  verified: false,
+  controlledBy: 'AUDIT_REQUIRE_ENFORCE',
+  remediation: 'set AUDIT_REQUIRE_ENFORCE=true to refuse boot on an unverifiable posture; fix the database connection or catalog privilege'
+}
+
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > clean schema → ready, and serves 6ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > verification reported errors → error, does NOT serve 2ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > missing schemas → missing, does NOT serve 3ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > warnings with success=false → error, does NOT serve 3ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > success=false with no diagnosable cause → error, does NOT serve 2ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > ensureCoreTables THREW → error, does NOT serve 3ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > database unreachable (non-production) → error, does NOT serve 2ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > missing auth/RBAC tables → missing, does NOT serve 2ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > missing only non-essential module tables → degraded, serves but names them 6ms
+ ✓ tests/ci/readyz-boot-verdict.test.ts > boot always records a schema-readiness verdict > security-load-bearing tables > auth tables outrank module tables when both are absent 6ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API has no remaining reads anywhere 174ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED has no remaining reads anywhere 90ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING has no remaining reads anywhere 92ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API is not assigned either — it stays a non-thing 87ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > the same connection-URI and Neon patterns 3ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > the same placeholders and non-live hosts 1ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > as patterns: the INF-22 shape is found; stand-ins and local hosts are not 2ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > one escape hatch for both scanners 1ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > CI scans every commit on the branch, and fails on a new finding > has the job, with the whole history checked out 0ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > CI scans every commit on the branch, and fails on a new finding > installs a pinned gitleaks and runs it blocking over HEAD with the repository config 1ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaksignore lists history, each finding with its status and reason > every entry is a fingerprint in a block that says what it is 2ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaksignore lists history, each finding with its status and reason > the INF-22 credential is listed as live, not as a false positive 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED is not assigned either — it stays a non-thing 82ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING is not assigned either — it stays a non-thing 88ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never written 102ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never read either — it stays a non-thing 97ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > the shared handoff POSTs a document and a section 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx hands off through saveToAuthoring 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx hands off through saveToAuthoring 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcModule.tsx hands off through saveToAuthoring 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx does not navigate when the handoff failed 6ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx does not navigate when the handoff failed 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcModule.tsx does not navigate when the handoff failed 8ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/BatchDraft.tsx reads no ghost channel at all 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/AnaVerbs.tsx reads no ghost channel at all 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > __C2C_DOC_ID is read nowhere, so it needs no fence 71ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/LicensingSurface.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/ReportEngine.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/AnaMemory.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > liveMutateOrNull exists and returns null rather than a fixture 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > AnaMemory reports what actually happened instead of always claiming success 0ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > exactly one PR template exists > there is no second, competing template 4ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > Danger asks only for headings the template provides > declares a non-empty required-section list 1ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > Danger asks only for headings the template provides > the template contains ## Summary 0ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > Danger asks only for headings the template provides > the template contains ## Type of Change 1ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > Danger asks only for headings the template provides > the template contains ## Testing 0ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > Danger asks only for headings the template provides > matches as a heading at the start of a line, not mid-sentence 1ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > Danger asks only for headings the template provides > is not defeated by a deeper heading level 1ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > the template still carries the regulated-product sections > retains ## Part 11 Compliance Check 0ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > the template still carries the regulated-product sections > retains ## Security 1ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > the template still carries the regulated-product sections > retains docs/SECURITY_REVIEW_CHECKLIST.md 0ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > the template still carries the regulated-product sections > retains CODEOWNERS 0ms
+ ✓ tests/ci/pr-template-danger-parity.contract.test.ts > the template still carries the regulated-product sections > still names tenant isolation as a security checklist item 0ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/ci.yml: every Trivy step runs unless the run was cancelled 37ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/deploy-aws.yml: every Trivy step runs unless the run was cancelled 5ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: the scans skip only the named directories and files 14ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/ci.yml: a job that runs a Trivy scan checks the exceptions first 8ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: the scans skip only the named directories and files 3ms
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy exceptions are narrow and checked > .github/workflows/deploy-aws.yml: a job that runs a Trivy scan checks the exceptions first 2ms
+ ✓ tests/ci/esm-dirname-guard.test.ts > ESM module-scope __dirname / __filename guard > no server ESM file uses __dirname/__filename at module scope without recreating it 638ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > cerv2-export-routes.ts must import or call a governed export function 2ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > 510k-estar-routes.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > ectd-export.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > rtm-export.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > docx-factory.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > ivdr-routes.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > all export route files exist in the inventory 6ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > exempted files have documented reasons 1ms
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the jobs this contract names still exist, and each orders itself after lint 7ms
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > every job that needs lint runs after a red lint, unless it aggregates verdicts 3ms
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the aggregates stay strict: Build and the release evidence still refuse on any failure 3ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > finds the chat route directory (guards against the fixture being moved) 2ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > does not call server/routes/chat/health.ts dead 1ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > does not call server/routes/chat/provenance.ts dead 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > does not call server/routes/chat/send-message.ts dead 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > does not call server/routes/chat/shared.ts dead 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > does not call server/routes/chat/stream.ts dead 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > does not call server/routes/chat/threads.ts dead 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > does not call server/routes/chat/upload.ts dead 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > does not call server/routes/chat/verifier.ts dead 1ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 1 — .js specifiers naming .ts files > treats x.js, x.ts and x as the same module key 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 2 — routers mounted from a manifest of path strings > the manifest form is no longer used for route registration 1ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 2 — routers mounted from a manifest of path strings > does not call server/routes/chat-actions.ts dead 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 2 — routers mounted from a manifest of path strings > does not call server/routes/workspace-summary.ts dead 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > resolution quirk 2 — routers mounted from a manifest of path strings > still resolves a manifest string to the same key as an import would 891ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > references are collected from tests and scripts too > searches more trees for references than it scans for candidates 2ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > entry points > every declared entry point exists on disk 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > entry points > does not report an entry point as unreferenced 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > the ratchet only turns one way > the baseline matches what the scanner finds 1ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > the ratchet only turns one way > the recorded count matches the recorded list 0ms
+ ✓ tests/ci/unreferenced-modules.contract.test.ts > the ratchet only turns one way > every baselined module is a real file 1ms
+ ✓ tests/ci/authoring-subsystem-readiness.test.ts > evaluateSubsystem — regulated subsystem readiness > present: all tables exist → never fails readiness 4ms
+ ✓ tests/ci/authoring-subsystem-readiness.test.ts > evaluateSubsystem — regulated subsystem readiness > absent: no tables exist → fails readiness by default 1ms
+ ✓ tests/ci/authoring-subsystem-readiness.test.ts > evaluateSubsystem — regulated subsystem readiness > absent + optional: opt-out downgrades a wholly-absent subsystem to non-failing 1ms
+ ✓ tests/ci/authoring-subsystem-readiness.test.ts > evaluateSubsystem — regulated subsystem readiness > partial: some tables missing → ALWAYS fails readiness 1ms
+ ✓ tests/ci/authoring-subsystem-readiness.test.ts > evaluateSubsystem — regulated subsystem readiness > partial + optional: the opt-out CANNOT rescue a partial subsystem 0ms
+ ✓ tests/ci/pii-screen.test.ts > extractRequestText > concatenates message content and text content blocks 2ms
+ ✓ tests/ci/pii-screen.test.ts > extractRequestText > handles empty/missing messages safely 1ms
+ ✓ tests/ci/pii-screen.test.ts > getPiiEnforcement > defaults to audit and normalizes values 1ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > returns 503 and names schema when the boot check found missing tables 40ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > returns 200 when the schema is verified ready 10ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > FAILS readiness when schema state is unknown (never verified) 8ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > FAILS readiness when schema verification itself threw 6ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > serves traffic when degraded, but names the missing tables 7ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > resolves to an absolute directory that exists 3ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > contains every prompt the services load at runtime 2ms
+
+ Test Files  13 passed (13)
+      Tests  109 passed (109)
+   Start at  08:54:47
+   Duration  4.51s (transform 1.10s, setup 691ms, import 5.63s, tests 2.97s, environment 2ms)
+

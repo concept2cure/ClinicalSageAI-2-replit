@@ -17,8 +17,11 @@ import { recordGovernedAction } from './c2c/actions';
 import { upsertFundingProfileTx, getFundingProfile, discoverOpportunities, recordMatchTx } from '../services/grants/grant-finder-service';
 import { recordFundingProfileUpserted, recordOpportunityDiscovery } from '../services/grant-finder-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('grant-finder');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -39,7 +42,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the grant-finder request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 const AGENCY = z.enum(['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other']);
@@ -114,8 +117,9 @@ router.get('/discover', async (req, res) => {
   const limit = req.query.limit ? Number(req.query.limit) : undefined;
   try {
     const result = await discoverOpportunities(orgId, { query, limit: Number.isFinite(limit) ? limit : undefined });
-    const strong = result.matches.filter((m) => m.fitScore >= 70).length;
-    recordOpportunityDiscovery(result.scored, strong);
+    // 2026-10-15: recounted here as fitScore >= 70, so a match whose eligibility
+    // was never checked (or not met) still counted as strong. The service's count requires it confirmed.
+    recordOpportunityDiscovery(result.scored, result.strongMatches);
     res.json(result);
   } catch (err) { fail(res, err); }
 });

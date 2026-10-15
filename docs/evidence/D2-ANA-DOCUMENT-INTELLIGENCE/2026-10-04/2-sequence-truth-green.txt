@@ -1,0 +1,127 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > scopes every artifact read to the caller organization 3ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > issues no artifact read at all without an organization 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > still returns the workflow definition when the org is absent 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > returns null for a submission type with no workflow, scoped or not 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > with no project records, marks no step complete and no step it cannot track as done 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > computes progress over tracked steps only 0ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > resolves a CSR for oncology to FDA, regulator audience, with ICH E3 + RECIST 3ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > resolves therapeutic area from a disease name via loose alias match 1ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > defaults region to ICH-global and uses the document’s default audience 1ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > honors an explicit audience override (payer) for a manuscript 0ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > falls back gracefully for an unknown document type (general craft + catalog) 1ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > always includes the global craft rules and the evidence-grounding guidance 0ms
+ ✓ server/services/ana/__tests__/medical-writing.test.ts > composeMedicalWritingGuidance > lists a non-trivial catalog for discovery 1ms
+stdout | tests/regulatory/ana-submission-sequence-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:52:07.226Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T18:52:07.228Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:52:07.228Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: an overview depends on its written summary, never the reverse 2ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: an overview depends on its written summary, never the reverse 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: an overview depends on its written summary, never the reverse 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the clinical summary depends on every study report and integrated analysis 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the clinical summary depends on every study report and integrated analysis 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: the quality overall summary depends on the Module 3 it summarises 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the quality overall summary depends on the Module 3 it summarises 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the quality overall summary depends on the Module 3 it summarises 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: phase order is a valid order of its own dependencies 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: phase order is a valid order of its own dependencies 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: phase order is a valid order of its own dependencies 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: once planning is done, the first document AnA names is not a Module 2 summary 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: once planning is done, the first document AnA names is not a Module 2 summary 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA and BLA task blueprints name the pre-submission meeting as FDA classifies it > pre-NDA is a Type B meeting 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA and BLA task blueprints name the pre-submission meeting as FDA classifies it > pre-BLA is a Type B meeting 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > does not require ICH E3 numbering exactly 0ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > says E3 is a guideline, not a template, and cites the Q&A 0ms
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-04T18:52:07.455Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T18:52:07.456Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-04T18:52:07.456Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA context-of-use list carries the Module 1 headings this contract is derived from 3ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the deep IND eCTD map (project bootstrap / readiness / checklist) files Module 1 where FDA does 2ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the IND section registry (AnA plans, coverage, chat) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the CTD authoring guidance (AnA drafting prompts) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack (the editor outline) files Module 1 where FDA does 18ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack carries the Module 1 content an initial IND must file 20ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the submission workflows AnA is guided by file Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the global-RI FDA Module 1 requirements file where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the reference FDA backbone template files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the required-artifact matrix (IND / NDA / BLA project bootstrap) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the Module 1 authoring-surface structure (M1/M2 build state) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template (dispatch-readiness required sections) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template requires of an IND only what an IND files, and of an NDA only what an NDA files 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the compile gate baseline (unknown program type) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the compile gate requires of an IND (the live rule pack) is what the seeded IND tree creates 23ms
+
+ Test Files  4 passed (4)
+      Tests  45 passed (45)
+   Start at  18:52:05
+   Duration  2.54s (transform 2.16s, setup 299ms, import 4.19s, tests 122ms, environment 0ms)
+

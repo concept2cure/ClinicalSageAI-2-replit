@@ -24,6 +24,7 @@
 
 import type { EctdLeaf, PackagerInput } from '../submission-gateways/regional-packager';
 import type { Region } from '../submission-gateways/types';
+import { sequenceTypeRefusal } from '../regulatory/market-support';
 
 /** Core leaf shape (decoupled from the Drizzle row type so this stays pure). */
 export interface CoreLeaf {
@@ -39,6 +40,14 @@ export interface CoreLeaf {
   granularity?: string | null;
   /** submission_leaves.document_type (e.g. 'ind_safety_report', 'ind_annual_report'). */
   documentType?: string | null;
+  /** submission_leaves.study_id — the study this leaf belongs to, for its Study
+   *  Tagging File. Null means the leaf names no study; FDA validation 1789
+   *  refuses a Module 4/5 study file that none references (the exempt sections
+   *  are 4.3, 5.2, 5.3.6 and 5.4). */
+  studyId?: string | null;
+  /** submission_leaves.stf_file_tag — the STF file-tag this leaf is referenced
+   *  under. A study id with no tag is still in no STF. */
+  stfFileTag?: string | null;
 }
 
 /**
@@ -56,6 +65,8 @@ export interface SubmissionLeafRow {
   documentUuid: string | null;
   granularity: string | null;
   documentType: string | null;
+  studyId: string | null;
+  stfFileTag: string | null;
 }
 
 /**
@@ -81,6 +92,8 @@ export function coreLeafFromSubmissionLeaf(row: SubmissionLeafRow): CoreLeaf {
     documentUuid: row.documentUuid,
     granularity: row.granularity,
     documentType: row.documentType,
+    studyId: row.studyId,
+    stfFileTag: row.stfFileTag,
   };
   return leaf;
 }
@@ -187,6 +200,12 @@ export function mapCoreLeafToEctdLeaf(leaf: CoreLeaf, resolved: ResolvedFile): E
     // that does not match the shipped bytes. When resolved.md5 is absent, leave
     // md5 undefined; the packager computes it from the actual bytes downstream.
     md5: resolved.md5 ?? undefined,
+    /* The study and the file-tag the leaf names, carried as written. The
+       packager's 1789 check reads them (auditStfCoverage), and the STF
+       generator writes them; neither is inferred here, so a leaf that names
+       neither is refused by name rather than tagged by guess. */
+    ...(leaf.studyId ? { studyId: leaf.studyId } : {}),
+    ...(leaf.stfFileTag ? { stfFileTag: leaf.stfFileTag } : {}),
   };
 }
 
@@ -223,9 +242,17 @@ export function fdaSubmissionTypeFor(
   const carriesSafetyReport = leaves.some((l) => /safety[_-]?report|icsr/i.test(String(l.documentType ?? '')));
   if (carriesSafetyReport) return { submissionType: 'ind_safety_report', submissionSubType: 'original' };
   if (type === 'annual') return { submissionType: 'annual', submissionSubType: 'original' };
-  if (type === 'amendment' || type === 'response' || type === 'variation') {
+  if (type === 'amendment' || type === 'response') {
     return { submissionType: 'original', submissionSubType: 'amendment' };
   }
+  // 2026-10-08 (F19b; WORKFLOW_DECISION_2026-10-08 §5). 'variation' was coded
+  // with amendment and response above, so an FDA "variation" left the packager
+  // as an amendment to the ORIGINAL application and a post-approval change
+  // would have been misfiled. FDA has no variation; the reason is the market
+  // verdict's (market-support.ts sequenceTypeRefusal), which createSequence
+  // also reads. This is the backstop for a sequence that already carries it.
+  const refused = sequenceTypeRefusal('fda', type);
+  if (refused) throw new Error(`FDA submission type for a '${type}' sequence is not derived. ${refused}`);
   if (type === 'withdrawal') {
     // The FDA submission-type vocabulary (CV_SUBMISSION_TYPE) has no withdrawal
     // entry, and this fell through to "Original Application" — a withdrawal
@@ -301,7 +328,9 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
   }
 
   const region = toPackagerRegion(args.sequence.region);
-  const fdaType = fdaSubmissionTypeFor(args.sequence, args.leaves);
+  // FDA only: 'variation' is a legitimate EU sequence type, and the FDA coding
+  // (which refuses it) is not derived for a sequence that is not FDA's.
+  const fdaType = region === 'fda' ? fdaSubmissionTypeFor(args.sequence, args.leaves) : null;
   const input: PackagerInput = {
     region,
     applicationId: args.applicationId,
@@ -317,7 +346,7 @@ export function buildPackagerInputFromCore(args: BuildPackagerInputArgs): BuildP
     // ('ind' → fdaat4), submission type and sub-type from the SEQUENCE. Without
     // this the packager resolved 'ind' as a submission type and coded every IND
     // sequence fdast9 (IND Safety Reports).
-    ...(region === 'fda'
+    ...(fdaType
       ? {
           fda: {
             applicationType: args.submission.applicationType,

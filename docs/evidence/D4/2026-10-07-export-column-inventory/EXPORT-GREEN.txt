@@ -1,0 +1,92 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > replaces each withheld value with a marker naming what it was, and keeps null as null 27ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > returns the rest of a gateway account: which gateway, which mode, which identity, which fields 18ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > no withheld value appears anywhere in the export 11ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > a table with nothing to withhold is returned as stored, with no withheld list 11ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > still returns only the tenant’s own rows 11ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > withholds license access material while returning license facts and retaining null 12ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > withholds a mailbox token reference while returning connection facts and retaining null 10ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > returns the recorded P.8 authoring tokens as customer data 12ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > returns audit integrity seals unchanged and keeps an unsealed record null 11ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts > exportTenantFull withholds credential material > isolates tenant rows in all four newly classified tables 13ms
+stdout | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+{
+  "timestamp": "2026-10-07T22:34:18.289Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T22:34:18.290Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+{
+  "timestamp": "2026-10-07T22:34:18.291Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > discovers a substantial share of the schema, not a handful of tables 4ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > EVERY table the purge destroys is covered by the export 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > no purge target is on the export exclusion list 0ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > excludes secrets and cross-tenant infrastructure from the return 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > resolves one tenant column per table, preferring organization_id 9ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > export coverage vs purge destruction > provisions the receipts table the purge verifies against 2ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > is stable under key reordering — it depends on data, not insertion order 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > changes when any value changes 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > distinguishes nesting from flattening 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > canonicalizes arrays positionally — order is data, not noise 1ms
+ ✓ tests/schema-contract/tenant-export-covers-purge.contract.test.ts > the digest > is prefixed so the algorithm is self-describing 0ms
+stdout | testConnection (/workspace/scratch/bd36ee581acd/concept2cure/server/db.js:184:13)
+[database] Database connection successful
+
+stderr | new TamperProofAuditLog (/workspace/scratch/bd36ee581acd/concept2cure/server/lib/tamper-proof-audit.ts:361:15)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | Object.error (/workspace/scratch/bd36ee581acd/concept2cure/server/utils/logger.js:156:13)
+{
+  "timestamp": "2026-10-07T22:34:22.822Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts > discoverTenantTables — schema coverage > discovers vault.documents, which the public-only sweep could not 19ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts > discoverTenantTables — schema coverage > still discovers public tenant tables 8ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts > discoverTenantTables — schema coverage > does NOT sweep schemas that are not on the include list 7ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts > discoverTenantTables — schema coverage > ignores tables with no tenant key 6ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts > exclusions are per schema, not per bare name > excludes public.api_keys — a credential is not a record to hand back 6ms
+ ✓ server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts > exclusions are per schema, not per bare name > does not let that exclusion silently reach a same-named table elsewhere 6ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 with no organization context 61ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 403 for non-admin users 6ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > accepts admin role via roles array too 5ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > returns 404 when org missing 6ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > emits tenant.export audit on success 7ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export > passes the caller orgId through to the service (no override) 5ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > returns 503 when attestation key not configured 6ms
+ ✓ server/__tests__/routes/tenant-export.test.ts > GET /api/tenant-export/attestation > emits tenant.attestation.generate audit on success 4ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET / 63ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /full 9ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /attestation 3ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > leaves the 404 and the 503 answers unchanged 6ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > records a failed resource read instead of returning it as empty 4ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > reports a failed audit-log count as null, never as zero 1ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > a clean export carries an empty failure list and a real count 1ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > bumps schemaVersion, because a 1.0 consumer cannot read a null count 0ms
+ ✓ server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts > exportTenantData distinguishes empty from unread > collects every failure, not the first 0ms
+
+ Test Files  6 passed (6)
+      Tests  44 passed (44)
+   Start at  18:34:09
+   Duration  17.67s (transform 1.65s, setup 200ms, import 2.68s, tests 13.20s, environment 1ms)
+

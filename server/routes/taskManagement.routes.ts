@@ -43,6 +43,8 @@ import {
   calculateCriticalPath,
   getOptimalAssignee,
 } from '../services/tasking/task-planning';
+import { requestDb } from '../db/requestDb';
+import { projectForTaskSource, AUTHORING_DOCUMENT_SOURCE } from '../services/tasking/task-project';
 
 const router = Router();
 const storage = { db };
@@ -101,7 +103,7 @@ const createTaskSchema = z.object({
   // terminal status let it mint an already-completed approval-gated task
   // without the sign-off ceremony (the gate only runs on transitions).
   status: creatableStatusSchema.optional(),
-  assigneeId: z.number().optional(),
+  assigneeId: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
   estimatedHours: z.number().optional(),
@@ -175,10 +177,69 @@ const createAutomationSchema = z.object({
   smartAssignment: jsonValueSchema.optional(),
 });
 
+/**
+ * The project a new task is on, or null once a refusal has been sent.
+ *
+ * A task raised on an authoring document is on that document's program's
+ * project (services/tasking/task-project.ts), read on the request's RLS client.
+ * Assign review sends no projectId — the editor holds the program UUID, not
+ * projects.id — so the reviewer's task was stored with project_id NULL and the
+ * program's Review tab, which reads work by project, listed nothing (QA
+ * 2026-10-08, second walk, j1). A project the caller named is kept. A read that
+ * cannot complete refuses the create (503): a task whose project could not be
+ * told is not written.
+ */
+async function taskProjectOrRefuse(
+  req: Request,
+  res: Response,
+  organizationId: number,
+  data: { projectId?: number; sourceEntityType?: string; sourceEntityId?: string },
+): Promise<{ projectId: number | undefined } | null> {
+  if (data.projectId !== undefined || data.sourceEntityType !== AUTHORING_DOCUMENT_SOURCE) {
+    return { projectId: data.projectId };
+  }
+  try {
+    const projectId = await projectForTaskSource(requestDb(req), {
+      orgId: organizationId,
+      sourceEntityType: data.sourceEntityType,
+      sourceEntityId: data.sourceEntityId,
+    });
+    return { projectId: projectId ?? undefined };
+  } catch (err) {
+    console.error('Task create: the source document\'s project could not be read:', err instanceof Error ? err.message : err);
+    res.status(503).json({
+      success: false,
+      code: 'TASK_PROJECT_UNREADABLE',
+      error: 'The project of the document this task is for could not be read. Nothing was created; try again.',
+    });
+    return null;
+  }
+}
+
+/** Tell a new task's assignee it is theirs, unless they created it themselves. */
+function notifyNewAssignee(
+  organizationId: number,
+  assigneeId: number | undefined,
+  actorUserId: number,
+  task: { title: string; description?: string },
+  taskId: string,
+): void {
+  if (!assigneeId || assigneeId === actorUserId) return;
+  notifyTaskEvent({
+    organizationId,
+    recipientUserId: assigneeId,
+    category: 'task_assigned',
+    title: `Task assigned: ${task.title}`,
+    body: task.description ?? null,
+    taskId,
+  });
+}
+
 // Critical-path + workload-balancing helpers live in
 // services/tasking/task-planning (extracted for the repo-health line gate).
 // Create single task
 router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) => {
+  let commitInFlight = false;
   try {
     const ctx = governedWriter(req, res);
     if (!ctx) return;
@@ -188,7 +249,34 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
 
     // Auto-assign if not specified
     let assigneeId = validatedData.assigneeId;
-    let assigneeName = null;
+    let assigneeName: string | null = null;
+    /* A NAMED assignee is someone in this organization, recorded with who
+       assigned the task and when (QA 2026-10-08, j4: the review task Assign
+       review creates was stored with assignee_name, assigned_by and assigned_at
+       all NULL — "ASSIGNED BY --" in the drawer — and any integer was accepted
+       as the assignee). Resolved before anything is written; a non-member is
+       refused. */
+    let assignment: { assignedBy: number; assignedAt: Date } | null = null;
+    if (assigneeId) {
+      const [member] = await storage.db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .innerJoin(organizationUsers, eq(organizationUsers.userId, users.id))
+        .where(and(eq(users.id, assigneeId), eq(organizationUsers.organizationId, organizationId)))
+        .limit(1);
+      if (!member) {
+        return res.status(400).json({
+          success: false,
+          code: 'ASSIGNEE_NOT_MEMBER',
+          error: 'The assignee is not a member of this organization. Nothing was created.',
+        });
+      }
+      assigneeName = member.name || (member.email ? String(member.email).split('@')[0] : null);
+      assignment = { assignedBy: actorUserId, assignedAt: new Date() };
+    }
+
+    const project = await taskProjectOrRefuse(req, res, organizationId, validatedData);
+    if (!project) return;
 
     if (!assigneeId) {
       const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
@@ -208,10 +296,12 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
           taskId,
           organizationId,
           ...taskFields,
+          projectId: project.projectId,
           startDate: startDate ? new Date(startDate) : undefined,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           assigneeId,
           assigneeName,
+          ...(assignment ?? {}),
           status: validatedData.status ?? 'pending',
           progress: 0,
           completionPercentage: 0,
@@ -234,20 +324,12 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
         },
         reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
       });
+      commitInFlight = true;
       return row;
     });
+    commitInFlight = false;
 
-    // Tell the assignee (unless they created it themselves).
-    if (assigneeId && assigneeId !== actorUserId) {
-      notifyTaskEvent({
-        organizationId,
-        recipientUserId: assigneeId,
-        category: 'task_assigned',
-        title: `Task assigned: ${validatedData.title}`,
-        body: validatedData.description ?? null,
-        taskId,
-      });
-    }
+    notifyNewAssignee(organizationId, assigneeId, actorUserId, validatedData, taskId);
 
     res.json({
       success: true,
@@ -255,6 +337,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     });
   } catch (error) {
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The task');
+    if (commitInFlight) return outcomeUnknown(res);
     console.error('Error creating task:', error);
     res.status(400).json({
       success: false,
@@ -824,7 +907,7 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
               status: 'pending',
               templateId: template.templateId,
             },
-            reason: `Created from workflow template "${template.name}"`,
+            summary: `Created from workflow template "${template.name}"`,
           });
         }
       }
@@ -855,7 +938,7 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
                 dependencyType,
                 templateId: template.templateId,
               },
-              reason: `Linked by workflow template "${template.name}"`,
+              summary: `Linked by workflow template "${template.name}"`,
             });
           }
         }
@@ -1032,7 +1115,7 @@ router.post('/tasks/dependencies', requireEditorAccess, async (req: Request, res
           command: 'task.transition',
           taskId: successorTask.taskId,
           payload: { from: successorTask.status, to: 'blocked' },
-          reason: `Blocked by new dependency on ${validatedData.predecessorTaskId}`,
+          summary: `Blocked by new dependency on ${validatedData.predecessorTaskId}`,
         });
       }
       return { newDependency: dependency, successorBlocked: Boolean(blocked) };
@@ -1157,7 +1240,7 @@ async function autoAssignOne(
       command: 'task.assign',
       taskId,
       payload: { assigneeId: optimalAssignee.id, method: 'workload-balanced' },
-      reason: 'Workload-balanced auto-assign',
+      summary: 'Workload-balanced auto-assign',
     });
     at.unconfirmed = taskId;
     return true;

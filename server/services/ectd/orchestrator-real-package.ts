@@ -17,7 +17,7 @@
  * that needs lifecycle operators is produced there, not here.
  *
  * Determinism: PDF/A normalization is SKIPPED here (skipPdfaConversion) so the
- * leaf bytes equal the deterministic renderLeafPdf output. The orchestrator's
+ * leaf bytes equal the deterministic renderTypesetLeafPdf output. The orchestrator's
  * sign-path drift check re-derives the assembly and compares
  * sha256(assembly.leaves); Ghostscript PDF/A conversion embeds timestamps and
  * would make that comparison false-positive. PDF/A compliance itself remains
@@ -32,14 +32,14 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
-import { renderLeafPdf } from './leaf-pdf-renderer';
+import { literalParagraphs, renderTypesetLeafPdf, type TypesetBlock } from './typeset-leaf-pdf';
 import {
   packageEctdSubmission,
   type EctdLeaf,
   type FdaRegionalAdmin,
 } from '../submission-gateways/regional-packager';
 import type { ECTDLeaf } from './ectd4-validator';
-import type { ComposedSection, GeneratedTable } from '../module3Composer';
+import type { ComposedSection } from '../module3Composer';
 
 /** RegionCode used across the orchestrator/module3 layer. The Move-7 widening
  *  accepts 2-letter ISO codes beyond the original four, so this is a string at
@@ -82,9 +82,16 @@ export interface RealAssemblyContext {
    * PMDA applicant id. It is NOT the application number: `sponsorId` was filled
    * with `applicationNumber`, so the backbone's <id> / <pmda-applicant-id> /
    * <company-id> carried the IND/NDA number as the applicant's identity.
+   *
+   * Required, with sponsorName, since 2026-10-08 (P-27 follow-up): this module
+   * filled both with its own UNASSIGNED placeholders, and the regional backbone
+   * they went into is a checksummed leaf of the index.xml the release signature
+   * binds. The caller (the orchestrator's assembleForValidation) now passes the
+   * recorded applicant, or the dry-run placeholder for an assembly it will not
+   * let be signed.
    */
-  applicantId?: string;
-  sponsorName?: string;
+  applicantId: string;
+  sponsorName: string;
   productName?: string;
 }
 
@@ -100,20 +107,21 @@ export interface RealAssemblyResult {
   totalSizeBytes: number;
 }
 
-/** Serialize a table to delimited PLAIN TEXT (the renderer drops HTML cell
- *  boundaries, so an HTML table would collapse into run-on rows). */
-export function serializeTable(t: GeneratedTable): string {
-  const lines: string[] = [];
-  if (t.title) lines.push(t.title);
-  if (t.headers?.length) lines.push(t.headers.join('  |  '));
-  for (const row of t.rows ?? []) lines.push(row.join('  |  '));
-  return lines.join('\n');
-}
-
-/** Flatten a ComposedSection into a single content string for the leaf PDF. */
-export function sectionToContent(section: ComposedSection): string {
-  const parts = [section.narrativeDraft ?? '', ...(section.tables ?? []).map(serializeTable)];
-  return parts.filter((p) => p && p.length).join('\n\n');
+/**
+ * A composed section as typeset blocks: its narrative as literal paragraphs
+ * (recorded text, never reinterpreted as markup) followed by each table under
+ * its title. Tables are drawn as ruled
+ * grids; they used to be serialized to "a  |  b" text lines because the text
+ * renderer could not draw a table, which is also how the filed Module 3 leaf
+ * read until the typeset renderer (hand-off item 17).
+ */
+export function composedSectionBlocks(section: ComposedSection): TypesetBlock[] {
+  const blocks = literalParagraphs((section.narrativeDraft ?? '').trim());
+  for (const t of section.tables ?? []) {
+    if (t.title) blocks.push({ kind: 'heading', level: 3, text: t.title });
+    blocks.push({ kind: 'table', headers: t.headers ?? [], rows: t.rows ?? [] });
+  }
+  return blocks;
 }
 
 /** A leaf filename derived deterministically from a section key. */
@@ -161,7 +169,7 @@ export async function assembleRealPackage(
         fileName = `${base}-${n}.pdf`;
       }
       usedNames.add(fileName);
-      const buf = await renderLeafPdf(sectionToContent(section), {
+      const buf = await renderTypesetLeafPdf(composedSectionBlocks(section), {
         title: section.sectionKey,
         sectionCode: section.sectionKey,
       });
@@ -189,11 +197,10 @@ export async function assembleRealPackage(
          from being coded fdast9 ("IND Safety Reports") by a lookup in the wrong
          vocabulary. An explicit block always wins. */
       fda: ctx.fda ?? { applicationType: ctx.submissionType },
-      // An absent identity says it is absent. 'Sponsor' and 'Product' read as
-      // real values in the backbone; regulatory-identifiers.ts' rule is that a
-      // missing identifier must SAY it is unassigned.
-      sponsorId: ctx.applicantId ?? 'UNASSIGNED-APPLICANT',
-      sponsorName: ctx.sponsorName ?? 'UNASSIGNED (applicant)',
+      // The caller's: the recorded applicant, or a dry run's placeholder.
+      sponsorId: ctx.applicantId,
+      sponsorName: ctx.sponsorName,
+      // An absent product name says it is absent; 'Product' would read as a real one.
       productName: ctx.productName ?? 'UNASSIGNED (product)',
       outputDir: path.join(work, 'out'),
       environment: 'staging',
@@ -231,7 +238,7 @@ export async function assembleRealPackage(
 
     return { leaves, backboneXml, leafBuffers, totalSizeBytes };
   } finally {
-    // Best-effort cleanup. Guard it: if the try body threw (renderLeafPdf /
+    // Best-effort cleanup. Guard it: if the try body threw (renderTypesetLeafPdf /
     // packageEctdSubmission / JSZip) AND fs.rm also rejects (EPERM/EBUSY — not
     // ENOENT, which force:true already swallows), an unguarded rm rejection
     // would REPLACE the primary error and obscure the real root cause.

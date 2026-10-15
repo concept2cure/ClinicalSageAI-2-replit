@@ -20,19 +20,6 @@ export interface SapDiffEntry {
   after?: unknown;
 }
 
-/** Electronic-signature payload compliant with 21 CFR Part 11 */
-export interface SignatureData {
-  signatureId: string;
-  signerName: string;
-  signerTitle: string;
-  signerEmail: string;
-  meaning: 'authorship' | 'review' | 'approval';
-  timestamp: string; // ISO-8601
-  method: 'password' | 'mfa' | 'certificate';
-  /** Base-64 encoded signature image, if available */
-  signatureImage?: string;
-}
-
 // ── Service ────────────────────────────────────────────────────────────
 
 export class CollaborativeSapService {
@@ -378,76 +365,6 @@ export class CollaborativeSapService {
     };
   }
 
-  // ── 6. signVersion ────────────────────────────────────────────────
-
-  /**
-   * Attach a 21 CFR Part 11 compliant electronic signature to a SAP version.
-   * This updates the version status to 'approved'.
-   */
-  async signVersion(
-    sapVersionId: number,
-    signatureData: SignatureData,
-    organizationId: number,
-    userId: number
-  ) {
-    const database = this.getDb();
-
-    // Verify version exists and is not already signed
-    const [version] = await database
-      .select()
-      .from(sapVersions)
-      .where(
-        and(
-          eq(sapVersions.id, sapVersionId),
-          eq(sapVersions.organizationId, organizationId)
-        )
-      );
-
-    if (!version) {
-      throw new Error(`SAP version ${sapVersionId} not found`);
-    }
-
-    if (version.signatureId) {
-      throw new Error(
-        `SAP version ${sapVersionId} has already been signed (signature: ${version.signatureId})`
-      );
-    }
-
-    // Validate required Part 11 fields
-    if (
-      !signatureData.signatureId ||
-      !signatureData.signerName ||
-      !signatureData.meaning ||
-      !signatureData.timestamp ||
-      !signatureData.method
-    ) {
-      throw new Error(
-        '21 CFR Part 11 compliance requires signatureId, signerName, meaning, timestamp, and method'
-      );
-    }
-
-    const [updated] = await database
-      .update(sapVersions)
-      .set({
-        signatureId: signatureData.signatureId,
-        approvedBy: userId,
-        approvedAt: new Date(signatureData.timestamp),
-        status: 'approved',
-      })
-      .where(
-        and(
-          eq(sapVersions.id, sapVersionId),
-          eq(sapVersions.organizationId, organizationId)
-        )
-      )
-      .returning();
-
-    return {
-      version: updated,
-      signature: signatureData,
-    };
-  }
-
   // ── 7. lockVersion ────────────────────────────────────────────────
 
   /**
@@ -549,7 +466,8 @@ export class CollaborativeSapService {
     // Build a unified chronological audit trail
     type AuditEntry = {
       type: 'version_created' | 'comment_added' | 'comment_resolved' | 'amendment_created' | 'version_signed' | 'version_locked';
-      timestamp: Date;
+      /** Null when the event's time is not recorded. Never a substitute time. */
+      timestamp: Date | null;
       details: Record<string, unknown>;
     };
 
@@ -567,6 +485,13 @@ export class CollaborativeSapService {
           diffSummary: Array.isArray(v.diff) ? (v.diff as SapDiffEntry[]).length : 0,
         },
       });
+      /* A legacy row only. No writer anywhere has set `signatureId` or
+         `approvedBy` since 505f71263 removed `signVersion` and its route
+         (2026-10-08); a signature now goes through the platform's one ceremony
+         (services/part11/reverify-signer.ts). On a database where the removed
+         route ever ran, the stored values are a CLIENT-ASSERTED signer — the
+         defect that route was removed for — so the entry says what it is
+         rather than presenting it as a verified signature. */
       if (v.signatureId) {
         trail.push({
           type: 'version_signed',
@@ -575,14 +500,27 @@ export class CollaborativeSapService {
             versionId: v.id,
             signatureId: v.signatureId,
             approvedBy: v.approvedBy,
+            unverified: true,
+            note:
+              'Recorded by a route removed on 2026-10-08 that accepted the signer from the request body and verified nothing. '
+              + 'It is not a verified signature and does not bind to the content.',
+            ...(v.approvedAt ? {} : { timestampIsCreationTime: true }),
           },
         });
       }
+      /* There is no `locked_at` column on sap_versions, so WHEN the lock
+         happened is not recorded. This entry was stamped `v.createdAt`, which
+         asserts the version was locked at the moment it was created — a false
+         timestamp in an audit trail, and one that reordered the trail. It now
+         carries no time, and says so, until the column exists. */
       if (v.isLocked) {
         trail.push({
           type: 'version_locked',
-          timestamp: v.createdAt,
-          details: { versionId: v.id },
+          timestamp: null,
+          details: {
+            versionId: v.id,
+            timeNotRecorded: 'sap_versions records no lock time; the trail orders this entry last for its version.',
+          },
         });
       }
     }
@@ -625,10 +563,15 @@ export class CollaborativeSapService {
       });
     }
 
-    // Sort by timestamp ascending
-    trail.sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
+    /* Chronological, with the untimed entries last rather than at the epoch.
+       `new Date(null)` is 1970-01-01, so an entry whose time is not recorded
+       used to sort to the top of the trail — a lock appearing before the
+       version it locked. */
+    trail.sort((a, b) => {
+      const ta = a.timestamp ? new Date(a.timestamp).getTime() : Number.POSITIVE_INFINITY;
+      const tb = b.timestamp ? new Date(b.timestamp).getTime() : Number.POSITIVE_INFINITY;
+      return ta - tb;
+    });
 
     return {
       thread,

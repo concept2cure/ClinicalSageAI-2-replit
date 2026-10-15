@@ -1,0 +1,50 @@
+{
+  "base": "bd886f5d3a766ba35179f98ecb053f61420f69f6",
+  "branch_gate_exit": 0,
+  "snapshots": [
+    {
+      "path": "scripts/ci/__eslint_ratchet_prev__.check-unbacked-tables.mjs",
+      "original_source": "scripts/ci/check-unbacked-tables.mjs",
+      "verified_base_blob": "0ad5678fcf0e8026e5524d7ec76b48172a0ea7ff",
+      "moved_to_scratch": true
+    },
+    {
+      "path": "scripts/ci/__tests__/__eslint_ratchet_prev__.unbacked-tables-strings.test.mjs",
+      "original_source": "scripts/ci/__tests__/unbacked-tables-strings.test.mjs",
+      "verified_base_blob": "556239c0ad53fab27b2b1affb839908ba52662b9",
+      "moved_to_scratch": true
+    },
+    {
+      "path": "server/routes/c2c/__tests__/__eslint_ratchet_prev__.projects-adoption.test.ts",
+      "original_source": "server/routes/c2c/__tests__/projects-adoption.test.ts",
+      "verified_base_blob": "e8c967cb743e1f4bcfd926245520d480e2887f98",
+      "moved_to_scratch": true
+    },
+    {
+      "path": "server/services/document-data-disposition/__eslint_ratchet_prev__.derived-impact.ts",
+      "original_source": "server/services/document-data-disposition/derived-impact.ts",
+      "verified_base_blob": "e73ca30e33dcd040727ee5f14d3721955ec4510d",
+      "moved_to_scratch": true
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/__eslint_ratchet_prev__.recorded-lineage.pglite.integration.test.ts",
+      "original_source": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "verified_base_blob": "5b7c7e9f2378b096114f2974d8121bf83cae71de",
+      "moved_to_scratch": true
+    },
+    {
+      "path": "server/services/document-data-disposition/__eslint_ratchet_prev__.recorded-lineage.ts",
+      "original_source": "server/services/document-data-disposition/recorded-lineage.ts",
+      "verified_base_blob": "a31fb8c25b7e09606e4138523060ae47c9f07eec",
+      "moved_to_scratch": true
+    },
+    {
+      "path": "server/services/ana/__tests__/__eslint_ratchet_prev__.derived-spreadsheet-sql.test.ts",
+      "original_source": "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+      "verified_base_blob": "c4b91c0b16b8f4f8bb9a982673c22877bc6daa80",
+      "moved_to_scratch": true
+    }
+  ],
+  "all_test_and_source_roots_checked": true,
+  "reason": "Generated prior-version lint snapshots must not remain eligible as extra test/source inputs."
+}

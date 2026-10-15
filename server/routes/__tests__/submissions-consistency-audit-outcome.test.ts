@@ -41,7 +41,7 @@ const body = {
 };
 
 beforeEach(() => {
-  svc.impl = async () => ({ findings: FINDINGS, auditTrail: { persisted: true, chained: true } });
+  svc.impl = async () => ({ findings: FINDINGS, notCompared: [], auditTrail: { persisted: true, chained: true } });
 });
 
 describe('the consistency route reports its audit row', () => {
@@ -56,6 +56,7 @@ describe('the consistency route reports its audit row', () => {
   it('says so in headers when the row was not written', async () => {
     svc.impl = async () => ({
       findings: FINDINGS,
+      notCompared: [],
       auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'x' },
     });
     const res = await request(app).post('/api/submissions/11/consistency').send(body);
@@ -63,5 +64,14 @@ describe('the consistency route reports its audit row', () => {
     expect(res.body).toEqual(FINDINGS);
     expect(res.headers['x-audit-row-persisted']).toBe('false');
     expect(res.headers['x-audit-row-code']).toBe('AUDIT_ROW_NOT_PERSISTED');
+  });
+
+  it('says in a header how many sources shared no figure with the claim', async () => {
+    // An empty findings array is "nothing compared" as often as "no conflict".
+    svc.impl = async () => ({ findings: [], notCompared: ['Label', 'IB'], auditTrail: { persisted: true, chained: true } });
+    const res = await request(app).post('/api/submissions/11/consistency').send(body);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+    expect(res.headers['x-consistency-not-compared']).toBe('2');
   });
 });

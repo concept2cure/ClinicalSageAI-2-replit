@@ -1,0 +1,40 @@
+Red first: round 7's tests against trunk 89238d8d1's code (kernel-router.ts and stream.ts as trunk has them).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/__tests__/kernel-router-open-section.test.ts server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts
+Each test that passes here is a negative control; its red is its mutant (mutants/).
+
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 2.7.4 (Summary of Clinical Safety) is high-stakes, and the plan says why 7ms
+   → expected 'medium' to be 'high' // Object.is equality
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > m2.5.5 (Overview of Safety) is high-stakes, and the plan says why 2ms
+   → expected 'medium' to be 'high' // Object.is equality
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 2.6.6 (Toxicology Written Summary) is high-stakes, and the plan says why 1ms
+   → expected 'medium' to be 'high' // Object.is equality
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 2.3.P.8 (QOS, drug product stability) is high-stakes, and the plan says why 1ms
+   → expected 'medium' to be 'high' // Object.is equality
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 2.4 (Nonclinical Overview) is high-stakes, and the plan says why 1ms
+   → expected 'medium' to be 'high' // Object.is equality
+ × server/services/__tests__/kernel-router-open-section.test.ts > the open section raises the tier > 5.3.5.3 (integrated analyses (ISS/ISE)) is high-stakes, and the plan says why 1ms
+   → expected 'medium' to be 'high' // Object.is equality
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for no section 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for Module 3 manufacture 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for regional Module 1 (labeling in the US, contact details in an EU 1.3.1) 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for the CTD table of contents 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for an individual study report 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for a code that only begins like a listed one 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for a CSR heading, not a CTD code 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for a list 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for a number 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for an object 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > leaves the tier alone for an overlong string 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > never lowers a tier the words already raised 0ms
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > changes the tier and nothing else 0ms
+ × server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > every listed root is a section the canonical CTD overlay knows 1ms
+   → Cannot read properties of undefined (reading 'length')
+ ✓ server/services/__tests__/kernel-router-open-section.test.ts > what it may not do > the stream reads no tool cap the tier derives: a high-stakes section must not cost a turn its steps 1ms
+ × server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > a plain question in the Summary of Clinical Safety is served as high-stakes on every call 48ms
+   → expected 'medium' to be 'high' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > Fast stays fast there: no thinking and low effort, though the gateway is told the turn is high-stakes 6ms
+   → expected 'medium' to be 'high' // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > the same question in a Module 3 manufacturing section is served as it was 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  9 failed | 15 passed (24)

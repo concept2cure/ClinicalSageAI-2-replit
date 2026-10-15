@@ -1,0 +1,9 @@
+# mutation: flush-unscoped (the flush runs in whatever context created the timer)
+# test: run-events-rls.dbtest.ts -t 8a (real PostgreSQL, app_service, RLS_ENFORCE=on)
+ × server/services/ana/__tests__/run-events-rls.dbtest.ts > 8. the mirror and the heartbeat under RLS, as the runtime role > 8a. a flush armed in tenant A's turn, fired from a timer tenant B's request created, writes A's rows 3080ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-events-rls.dbtest.ts > 8. the mirror and the heartbeat under RLS, as the runtime role > 8a. a flush armed in tenant A's turn, fired from a timer tenant B's request created, writes A's rows
+Error: condition not met within 3000ms
+     59|   throw new Error(`condition not met within ${withinMs}ms`);
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)

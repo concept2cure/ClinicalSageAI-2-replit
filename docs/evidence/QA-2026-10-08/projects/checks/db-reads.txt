@@ -1,0 +1,37 @@
+# Read-only SELECTs against the QA database (c2c_qa), 2026-10-08 ~03:20 UTC.
+
+## Programs named in the findings (regulatory_programs)
+  code   |                            name                            | program_type | product_type | product_name  | status  |                              metadata                              
+---------+------------------------------------------------------------+--------------+--------------+---------------+---------+--------------------------------------------------------------------
+ ARD-411 | Investigational New Drug Application                       | ind          | biologic     | ARD-411       | active  | {"createdVia":"v2-new-project-wizard","submissionTypeId":"us_ind"}
+ BX-204  | BX-204 Continuous Glucose Monitor                          | 510K         | device       | BX-204 CGM    | active  | 
+ BX-256  | BX-256 · systemic lupus erythematosus (IND)                | IND          | biologic     | BX-256        | active  | {"blocker":"Drug substance stability data pending 6-month pull"}
+ BX-301  | BX-301 · paroxysmal nocturnal hemoglobinuria (BLA)         | BLA          | biologic     | BX-301        | active  | {"pathway":"351(a)","region":"US"}
+ H       | HLV-333 — Investigational New Drug Application (QA-J1)     | ind          | biologic     | Helvanta-QA3  | active  | {"createdVia":"v2-new-project-wizard","submissionTypeId":"us_ind"}
+ HLV-334 | HLV-334 — Investigational New Drug Application (QA-FIX j1) | ind          | biologic     | Helvanta      | active  | {"createdVia":"v2-new-project-wizard","submissionTypeId":"us_ind"}
+ NM-512  | NM-512 Neuromodulation Lead                                | PMA          | device       | NM-512 Lead   | blocked | 
+ Q       | Investigational New Drug Application                       | ind          | biologic     | QA-EMPTY-NAME | active  | {"createdVia":"v2-new-project-wizard","submissionTypeId":"us_ind"}
+ Q       | J9 Selfserve IND                                           | ind          | biologic     | QA-SS-101     | active  | {"createdVia":"v2-new-project-wizard","submissionTypeId":"us_ind"}
+(9 rows)
+
+## The submissions the Submission Center listed against BX-204 / BX-301 (program_id NULL = no program)
+ id |                    title                    | product_name | application_type |              program_id              
+----+---------------------------------------------+--------------+------------------+--------------------------------------
+  3 | BX-204 (NDA 212345 · 505(b)(1))             | BX-204       | nda              | 
+  4 | BX-301 (anti-BCMA mAb)                      | BX-301       | ind              | 
+  5 | BX-256 · systemic lupus erythematosus (IND) | BX-256       | ind              | 099991d1-dac8-43c5-b88a-8baab26194ee
+(3 rows)
+
+## The governed blocker store: NM-512's seeded blocker is on projects.id 1, which anchors no program
+    blocker_id     | project_id | status |       project       | regulatory_program_id 
+-------------------+------------+--------+---------------------+-----------------------
+ blk_demo_nm512-qs |          1 | open   | C2C-001 IND Program | 
+(1 row)
+
+## Codes before (H, from the QA walk at 01:19) and after the fix (HLV-334, created through the UI on :5086 at 03:16)
+  code   |                            name                            | product_name |         created_at         
+---------+------------------------------------------------------------+--------------+----------------------------
+ H       | HLV-333 — Investigational New Drug Application (QA-J1)     | Helvanta-QA3 | 2026-10-08 01:19:11.331322
+ HLV-334 | HLV-334 — Investigational New Drug Application (QA-FIX j1) | Helvanta     | 2026-10-08 03:16:11.064689
+(2 rows)
+

@@ -1,0 +1,72 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-15T03:52:53.064Z","pid":5083,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-15T03:52:53.065Z","pid":5083,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-15T03:52:53.065Z","pid":5083,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/figure-lineage.dbtest.ts > a drafted figure as derived lineage to its Vault version > is recorded, and every reader returns it with its state
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/figure-lineage.dbtest.ts > a drafted figure as derived lineage to its Vault version > is recorded, and every reader returns it with its state 2665ms
+   → svc.replaceVaultFigureSpans is not a function
+ × tests/db/figure-lineage.dbtest.ts > a drafted figure as derived lineage to its Vault version > reads as changed when the cited version no longer has that content 5ms
+   → IMMUTABILITY_VIOLATION: vault.documents.content_hash of version 3c59fd7b-2c76-4c3f-b014-010eebf3079e is recorded and cannot change (21 CFR 11.10(e)). Upload a new version instead.
+ × tests/db/figure-lineage.dbtest.ts > a drafted figure as derived lineage to its Vault version > refuses a span naming another organization's Vault version, and writes nothing 14ms
+   → expected [Function] to throw error matching /does not hold/ but got 'svc.replaceVaultFigureSpans is not a …'
+ ✓ tests/db/figure-lineage.dbtest.ts > a drafted figure as derived lineage to its Vault version > the database refuses a vault_document span with no reference or hash 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/figure-lineage.dbtest.ts > a drafted figure as derived lineage to its Vault version > is recorded, and every reader returns it with its state
+TypeError: svc.replaceVaultFigureSpans is not a function
+ ❯ tests/db/figure-lineage.dbtest.ts:88:26
+     86|       try {
+     87|         await client.query('BEGIN');
+     88|         expect(await svc.replaceVaultFigureSpans(orgId, ref(), [figure…
+       |                          ^
+     89|         await client.query('COMMIT');
+     90|       } finally {
+ ❯ tests/db/figure-lineage.dbtest.ts:84:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/figure-lineage.dbtest.ts > a drafted figure as derived lineage to its Vault version > reads as changed when the cited version no longer has that content
+error: IMMUTABILITY_VIOLATION: vault.documents.content_hash of version 3c59fd7b-2c76-4c3f-b014-010eebf3079e is recorded and cannot change (21 CFR 11.10(e)). Upload a new version instead.
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/figure-lineage.dbtest.ts:105:5
+    103|   it('reads as changed when the cited version no longer has that conte…
+    104|     const svc = await import('../../server/services/clinical-regulator…
+    105|     await owner.query('UPDATE vault.documents SET content_hash = $1 WH…
+       |     ^
+    106|     try {
+    107|       expect((await scoped(() => svc.listDocumentSpans(orgId, ref())))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 308, severity: 'ERROR', code: 'P0001', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'PL/pgSQL function vault.documents_record_guard() line 11 at RAISE', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'pl_exec.c', routine: 'exec_stmt_raise' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/figure-lineage.dbtest.ts > a drafted figure as derived lineage to its Vault version > refuses a span naming another organization's Vault version, and writes nothing
+AssertionError: expected [Function] to throw error matching /does not hold/ but got 'svc.replaceVaultFigureSpans is not a …'
+
+- Expected:
+/does not hold/
+
++ Received:
+"svc.replaceVaultFigureSpans is not a function"
+
+ ❯ tests/db/figure-lineage.dbtest.ts:129:7
+    127|         client.release();
+    128|       }
+    129|     })).rejects.toThrow(/does not hold/);
+       |       ^
+    130|     const { rows } = await owner.query('SELECT count(*)::int AS n FROM…
+    131|     expect(rows[0].n).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  03:52:50
+   Duration  3.66s (transform 1.61s, setup 100ms, import 42ms, tests 3.07s, environment 0ms)
+

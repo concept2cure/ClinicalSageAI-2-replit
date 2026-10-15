@@ -1,0 +1,47 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:17:07.419Z","pid":1543,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:17:07.421Z","pid":1543,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:17:07.421Z","pid":1543,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/admin-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful { timestamp: '2026-10-01T03:17:07.991Z', poolSize: 1 }
+
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back
+{
+  "timestamp": "2026-10-01T03:17:08.065Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays
+{
+  "timestamp": "2026-10-01T03:17:08.094Z",
+  "level": "error",
+  "message": "[tenant-users] Error removing user from organization:",
+  "context": {}
+}
+
+{"level":50,"time":"2026-10-01T03:17:08.156Z","pid":1543,"hostname":"vm","context":{"error":"probe: the audit store refused the row","stack":"Error: probe: the audit store refused the row\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/tests/db/admin-change-audit.dbtest.ts:28:36)\n    at writeTenantSettings (/home/user/ClinicalSageAI-2-replit/server/routes/tenant-config.ts:218:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-config.ts:489:22"},"msg":"[tenant-config-api] Error updating security settings for tenant 90301"}
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded 99ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back 14ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the reason 18ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays 11ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > writes one chained row with the role the member held 19ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > when its audit row cannot be written, the settings stay as they were 44ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after 37ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a notifications change names the webhook field and never records its address 67ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a reset writes one tenant_settings_reset row with the retention values 48ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  03:17:05
+   Duration  3.60s (transform 1.36s, setup 77ms, import 2.48s, tests 714ms, environment 0ms)
+

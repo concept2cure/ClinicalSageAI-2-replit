@@ -1,0 +1,16 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcSignedRecords.test.tsx > a signed register record > a qualified system offers no edit, says why, and offers Retire 471ms
+ ✓ server/services/cmc/__tests__/signed-record.test.ts > a qualified or validated register record > refuses a content edit, naming the way out 2ms
+ ✓ server/services/cmc/__tests__/signed-record.test.ts > a qualified or validated register record > refuses a status that is not retirement (an unsigned de-qualification) 4ms
+ ✓ server/services/cmc/__tests__/signed-record.test.ts > a qualified or validated register record > admits retirement alone — with or without the reason key, which the route then requires 1ms
+ ✓ server/services/cmc/__tests__/signed-record.test.ts > a qualified or validated register record > leaves an unsigned record to the ordinary rules 0ms
+ ✓ server/services/cmc/__tests__/signed-record.test.ts > a batch record > release testing and dispositions belong to the signed release alone 1ms
+ ✓ server/services/cmc/__tests__/signed-record.test.ts > a batch record > a batch carrying a signed disposition is closed to ordinary edits 0ms
+ ✓ server/services/cmc/__tests__/signed-record.test.ts > a batch record > released and rejected are final; a conditional release may be signed again 0ms
+ ✓ server/services/cmc/__tests__/signed-record.test.ts > a specification > is approved only in the approved state 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSignedRecords.test.tsx > a signed register record > an unsigned system is editable and has nothing to retire under a signature 127ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSignedRecords.test.tsx > a signed register record > Retire sends the retirement and the reason, and shows the server’s row 133ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSignedRecords.test.tsx > the signed-record helpers > blocks Update only in the signed state 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSignedRecords.test.tsx > the signed-record helpers > a process retires on its own status column 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSignedRecords.test.tsx > the signed-record helpers > a specification edit carries the reason the approved form asks for 0ms
+ Test Files  2 passed (2)
+      Tests  14 passed (14)

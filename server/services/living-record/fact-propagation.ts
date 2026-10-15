@@ -36,6 +36,8 @@ import {
   bindingImpactInput,
   classifyBindingImpact,
   factChangeFailure as fail,
+  isIdentifiedUser,
+  livingRecordAuditActor,
   propagationEligibility,
   type FactChangeFailure,
   type PropagationSkipReason,
@@ -138,6 +140,10 @@ export async function propagateFactToCitations(
 ): Promise<PropagateFactResult | FactChangeFailure> {
   const reason = (params.reason ?? '').trim();
   if (!reason) return fail('invalid', 'reason for change is required');
+  // 2026-10-15: claims were rewritten with no actor and audited as 'system'.
+  if (!isIdentifiedUser(params.actor)) {
+    return fail('invalid', 'an identified user is required to propagate a governed value');
+  }
 
   const fact = await getFact(params.factId);
   if (!fact || fact.organizationId !== params.organizationId) {
@@ -184,7 +190,7 @@ export async function propagateFactToCitations(
 
   await auditService.logAction({
     tenantId: fact.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.propagated',
     resourceType: 'canonical_fact',
     resourceId: fact.id,

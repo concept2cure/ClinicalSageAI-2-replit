@@ -1,0 +1,1380 @@
+{
+  "red": {
+    "cases": [
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason",
+        "outcome": "passed",
+        "durationMs": 91
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today",
+        "outcome": "passed",
+        "durationMs": 55
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature",
+        "outcome": "failed",
+        "durationMs": 69
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer",
+        "outcome": "passed",
+        "durationMs": 38
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature",
+        "outcome": "passed",
+        "durationMs": 34
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so",
+        "outcome": "passed",
+        "durationMs": 61
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review",
+        "outcome": "passed",
+        "durationMs": 56
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > an unsigned review has no signature",
+        "outcome": "passed",
+        "durationMs": 43
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads",
+        "outcome": "passed",
+        "durationMs": 21
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row",
+        "outcome": "failed",
+        "durationMs": 41
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature",
+        "outcome": "passed",
+        "durationMs": 12
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it",
+        "outcome": "passed",
+        "durationMs": 30
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > reports a real matching approval signature as unassessed and preserves every stored field",
+        "outcome": "failed",
+        "durationMs": 93
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > does not infer a signing-time verdict from the current live author set",
+        "outcome": "failed",
+        "durationMs": 34
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > authorship remains a declared authorship statement without independent approval assurance",
+        "outcome": "failed",
+        "durationMs": 31
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds missing-digest while retaining the exact historical signature fields",
+        "outcome": "failed",
+        "durationMs": 103
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds missing-basis while retaining the exact historical signature fields",
+        "outcome": "failed",
+        "durationMs": 86
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds contradictory-basis while retaining the exact historical signature fields",
+        "outcome": "failed",
+        "durationMs": 98
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > keeps content drift held while retaining the declared historical approval",
+        "outcome": "failed",
+        "durationMs": 133
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "unrecognized metadata and meanings do not supply historical policy assurance > a valid manifest hash and caller-shaped assurance metadata do not establish a historical independence check",
+        "outcome": "failed",
+        "durationMs": 43
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "unrecognized metadata and meanings do not supply historical policy assurance > keeps an unknown historical meaning as a generic unassessed policy fact",
+        "outcome": "failed",
+        "durationMs": 35
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason",
+        "outcome": "failed",
+        "durationMs": 10
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a revoked signature says so first, and still names who signed",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a protocol that is not finalized says no signature applies",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess",
+        "outcome": "failed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a decision recorded on someone’s behalf names them",
+        "outcome": "failed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "historical signatures never attest to changed or unverified current content > qualifies the changed record as historical if the pure renderer is called directly",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "historical signatures never attest to changed or unverified current content > qualifies the unverified record as historical if the pure renderer is called directly",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared approval without claiming independent approval",
+        "outcome": "failed",
+        "durationMs": 4
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared authorship without claiming independent approval",
+        "outcome": "failed",
+        "durationMs": 3
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared review without claiming independent approval",
+        "outcome": "failed",
+        "durationMs": 2
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared responsibility without claiming independent approval",
+        "outcome": "failed",
+        "durationMs": 2
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > keeps qualification out of draft content imports",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for changed history",
+        "outcome": "failed",
+        "durationMs": 2
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for unverified history",
+        "outcome": "failed",
+        "durationMs": 2
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for revoked history",
+        "outcome": "failed",
+        "durationMs": 1
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read \"Ready to finalize\"",
+        "outcome": "passed",
+        "durationMs": 601
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why",
+        "outcome": "passed",
+        "durationMs": 159
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol still in development keeps the gate and its action",
+        "outcome": "passed",
+        "durationMs": 134
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol in development with a blocker keeps the gate, with the action disabled",
+        "outcome": "passed",
+        "durationMs": 137
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads markdown through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "failed",
+        "durationMs": 142
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads pdf through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "failed",
+        "durationMs": 131
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads docx through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "failed",
+        "durationMs": 144
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > who signed, as what, and when, from the signature row",
+        "outcome": "failed",
+        "durationMs": 86
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for",
+        "outcome": "failed",
+        "durationMs": 10
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a revoked signature says it is revoked",
+        "outcome": "passed",
+        "durationMs": 9
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a recorded disposition with no signature on record says so",
+        "outcome": "passed",
+        "durationMs": 12
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a signature record that could not be read is said, not left blank",
+        "outcome": "passed",
+        "durationMs": 8
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature",
+        "outcome": "passed",
+        "durationMs": 6
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words",
+        "outcome": "failed",
+        "durationMs": 4
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy approval record without changing its declared meaning",
+        "outcome": "failed",
+        "durationMs": 6
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy authorship record without changing its declared meaning",
+        "outcome": "failed",
+        "durationMs": 7
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy review record without changing its declared meaning",
+        "outcome": "failed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy responsibility record without changing its declared meaning",
+        "outcome": "failed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the changed warning and does not claim a current content match",
+        "outcome": "failed",
+        "durationMs": 7
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the unverified warning and does not claim a current content match",
+        "outcome": "failed",
+        "durationMs": 4
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the revoked warning and does not claim a current content match",
+        "outcome": "failed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > does not invent a policy question or verdict for an unknown historical meaning",
+        "outcome": "failed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > does not promote arbitrary qualification metadata into independence assurance",
+        "outcome": "failed",
+        "durationMs": 3
+      }
+    ],
+    "perFileCounts": {
+      "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts": 21,
+      "server/services/protocol-export/__tests__/protocol-export-signature.test.ts": 18,
+      "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx": 7,
+      "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx": 19
+    },
+    "totals": {
+      "passed": 29,
+      "failed": 36
+    },
+    "skipped": 0,
+    "duration": "12.45s (transform 3.19s, setup 341ms, import 4.68s, tests 5.42s, environment 1.19s)"
+  },
+  "firstGreen": {
+    "cases": [
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason",
+        "outcome": "passed",
+        "durationMs": 184
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today",
+        "outcome": "passed",
+        "durationMs": 131
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature",
+        "outcome": "passed",
+        "durationMs": 76
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer",
+        "outcome": "passed",
+        "durationMs": 68
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature",
+        "outcome": "passed",
+        "durationMs": 40
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so",
+        "outcome": "passed",
+        "durationMs": 100
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review",
+        "outcome": "passed",
+        "durationMs": 207
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > an unsigned review has no signature",
+        "outcome": "passed",
+        "durationMs": 92
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads",
+        "outcome": "passed",
+        "durationMs": 61
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row",
+        "outcome": "passed",
+        "durationMs": 61
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature",
+        "outcome": "passed",
+        "durationMs": 33
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it",
+        "outcome": "passed",
+        "durationMs": 48
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > reports a real matching approval signature as unassessed and preserves every stored field",
+        "outcome": "passed",
+        "durationMs": 222
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > does not infer a signing-time verdict from the current live author set",
+        "outcome": "passed",
+        "durationMs": 271
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > authorship remains a declared authorship statement without independent approval assurance",
+        "outcome": "passed",
+        "durationMs": 108
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds missing-digest while retaining the exact historical signature fields",
+        "outcome": "passed",
+        "durationMs": 384
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds missing-basis while retaining the exact historical signature fields",
+        "outcome": "passed",
+        "durationMs": 129
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds contradictory-basis while retaining the exact historical signature fields",
+        "outcome": "passed",
+        "durationMs": 399
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > keeps content drift held while retaining the declared historical approval",
+        "outcome": "passed",
+        "durationMs": 289
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "unrecognized metadata and meanings do not supply historical policy assurance > a valid manifest hash and caller-shaped assurance metadata do not establish a historical independence check",
+        "outcome": "passed",
+        "durationMs": 187
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "unrecognized metadata and meanings do not supply historical policy assurance > keeps an unknown historical meaning as a generic unassessed policy fact",
+        "outcome": "passed",
+        "durationMs": 99
+      },
+      {
+        "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+        "case": "controlled protocol export HTTP hold > returns a named SIGNATURE_CONTENT_CHANGED refusal with status 409 and no exported content",
+        "outcome": "passed",
+        "durationMs": 32
+      },
+      {
+        "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+        "case": "controlled protocol export HTTP hold > returns a named SIGNATURE_NOT_CURRENT refusal with status 409 and no exported content",
+        "outcome": "passed",
+        "durationMs": 6
+      },
+      {
+        "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+        "case": "controlled protocol export HTTP hold > returns a named SIGNATURE_VERIFICATION_UNAVAILABLE refusal with status 503 and no exported content",
+        "outcome": "passed",
+        "durationMs": 5
+      },
+      {
+        "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+        "case": "controlled protocol export HTTP hold > returns a named SIGNATURE_UNREADABLE refusal with status 503 and no exported content",
+        "outcome": "passed",
+        "durationMs": 4
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a revoked signature says so first, and still names who signed",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a protocol that is not finalized says no signature applies",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a decision recorded on someone’s behalf names them",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "historical signatures never attest to changed or unverified current content > qualifies the changed record as historical if the pure renderer is called directly",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "historical signatures never attest to changed or unverified current content > qualifies the unverified record as historical if the pure renderer is called directly",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared approval without claiming independent approval",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared authorship without claiming independent approval",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared review without claiming independent approval",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared responsibility without claiming independent approval",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > keeps qualification out of draft content imports",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for changed history",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for unverified history",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for revoked history",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read \"Ready to finalize\"",
+        "outcome": "passed",
+        "durationMs": 475
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why",
+        "outcome": "passed",
+        "durationMs": 164
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol still in development keeps the gate and its action",
+        "outcome": "passed",
+        "durationMs": 190
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol in development with a blocker keeps the gate, with the action disabled",
+        "outcome": "passed",
+        "durationMs": 125
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads markdown through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "passed",
+        "durationMs": 212
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads pdf through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "passed",
+        "durationMs": 149
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads docx through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "passed",
+        "durationMs": 187
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > who signed, as what, and when, from the signature row",
+        "outcome": "passed",
+        "durationMs": 78
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for",
+        "outcome": "passed",
+        "durationMs": 8
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a revoked signature says it is revoked",
+        "outcome": "passed",
+        "durationMs": 11
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a recorded disposition with no signature on record says so",
+        "outcome": "passed",
+        "durationMs": 16
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a signature record that could not be read is said, not left blank",
+        "outcome": "passed",
+        "durationMs": 9
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature",
+        "outcome": "passed",
+        "durationMs": 5
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy approval record without changing its declared meaning",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy authorship record without changing its declared meaning",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy review record without changing its declared meaning",
+        "outcome": "passed",
+        "durationMs": 5
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy responsibility record without changing its declared meaning",
+        "outcome": "passed",
+        "durationMs": 4
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the changed warning and does not claim a current content match",
+        "outcome": "passed",
+        "durationMs": 4
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the unverified warning and does not claim a current content match",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the revoked warning and does not claim a current content match",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > does not invent a policy question or verdict for an unknown historical meaning",
+        "outcome": "passed",
+        "durationMs": 4
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > does not promote arbitrary qualification metadata into independence assurance",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > a disposition recorded: shows the signed state and opens nothing",
+        "outcome": "passed",
+        "durationMs": 346
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing",
+        "outcome": "passed",
+        "durationMs": 40
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing",
+        "outcome": "passed",
+        "durationMs": 106
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > an open review still offers the signature, to anyone who may record it",
+        "outcome": "passed",
+        "durationMs": 83
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > an open review assigned to someone else stays disabled, with that reason",
+        "outcome": "passed",
+        "durationMs": 20
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+        "case": "assembleProtocolExport + renderProtocolMarkdown > assembles ordered parts and renders markdown with all sections",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+        "case": "buildCtGovRegistrationDraft > maps to PRS elements and is ready when primary outcome + eligibility + synopsis present",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+        "case": "buildCtGovRegistrationDraft > flags missing primary outcome",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+        "case": "buildCtGovRegistrationDraft > marks observational study type",
+        "outcome": "passed",
+        "durationMs": 0
+      }
+    ],
+    "perFileCounts": {
+      "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts": 21,
+      "server/routes/__tests__/protocol-export-binding.http.test.ts": 4,
+      "server/services/protocol-export/__tests__/protocol-export-signature.test.ts": 18,
+      "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx": 7,
+      "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx": 19,
+      "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx": 5,
+      "server/services/protocol-export/__tests__/protocol-export-logic.test.ts": 4
+    },
+    "totals": {
+      "passed": 78
+    },
+    "skipped": 0,
+    "duration": "22.98s (transform 4.51s, setup 462ms, import 7.65s, tests 11.00s, environment 2.05s)"
+  },
+  "finalGreen": {
+    "cases": [
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason",
+        "outcome": "passed",
+        "durationMs": 264
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today",
+        "outcome": "passed",
+        "durationMs": 76
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature",
+        "outcome": "passed",
+        "durationMs": 162
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer",
+        "outcome": "passed",
+        "durationMs": 95
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature",
+        "outcome": "passed",
+        "durationMs": 83
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so",
+        "outcome": "passed",
+        "durationMs": 131
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review",
+        "outcome": "passed",
+        "durationMs": 142
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a disposition’s signature, on its review row > an unsigned review has no signature",
+        "outcome": "passed",
+        "durationMs": 55
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads",
+        "outcome": "passed",
+        "durationMs": 23
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row",
+        "outcome": "passed",
+        "durationMs": 102
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature",
+        "outcome": "passed",
+        "durationMs": 33
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it",
+        "outcome": "passed",
+        "durationMs": 73
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > reports a real matching approval signature as unassessed and preserves every stored field",
+        "outcome": "passed",
+        "durationMs": 152
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > does not infer a signing-time verdict from the current live author set",
+        "outcome": "passed",
+        "durationMs": 68
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "the read qualifies recorded meanings without rewriting historical signatures > authorship remains a declared authorship statement without independent approval assurance",
+        "outcome": "passed",
+        "durationMs": 37
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds missing-digest while retaining the exact historical signature fields",
+        "outcome": "passed",
+        "durationMs": 231
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds missing-basis while retaining the exact historical signature fields",
+        "outcome": "passed",
+        "durationMs": 140
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > holds contradictory-basis while retaining the exact historical signature fields",
+        "outcome": "passed",
+        "durationMs": 267
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "missing or changed binding remains held without rewriting historical signatures > keeps content drift held while retaining the declared historical approval",
+        "outcome": "passed",
+        "durationMs": 234
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "unrecognized metadata and meanings do not supply historical policy assurance > a valid manifest hash and caller-shaped assurance metadata do not establish a historical independence check",
+        "outcome": "passed",
+        "durationMs": 30
+      },
+      {
+        "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+        "case": "unrecognized metadata and meanings do not supply historical policy assurance > keeps an unknown historical meaning as a generic unassessed policy fact",
+        "outcome": "passed",
+        "durationMs": 38
+      },
+      {
+        "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+        "case": "controlled protocol export HTTP hold > returns a named SIGNATURE_CONTENT_CHANGED refusal with status 409 and no exported content",
+        "outcome": "passed",
+        "durationMs": 45
+      },
+      {
+        "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+        "case": "controlled protocol export HTTP hold > returns a named SIGNATURE_NOT_CURRENT refusal with status 409 and no exported content",
+        "outcome": "passed",
+        "durationMs": 8
+      },
+      {
+        "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+        "case": "controlled protocol export HTTP hold > returns a named SIGNATURE_VERIFICATION_UNAVAILABLE refusal with status 503 and no exported content",
+        "outcome": "passed",
+        "durationMs": 10
+      },
+      {
+        "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+        "case": "controlled protocol export HTTP hold > returns a named SIGNATURE_UNREADABLE refusal with status 503 and no exported content",
+        "outcome": "passed",
+        "durationMs": 7
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a signed finalization prints the printed name, the meaning in words, the UTC time and the reason",
+        "outcome": "passed",
+        "durationMs": 21
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > comes before the content, so no page of the protocol reads unsigned above its signature",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a revoked signature says so first, and still names who signed",
+        "outcome": "passed",
+        "durationMs": 4
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a finalized protocol with no signature on record says so, never a signer",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a protocol that is not finalized says no signature applies",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a signature record that could not be read is said, not printed as unsigned",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess",
+        "outcome": "passed",
+        "durationMs": 4
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "the export’s status line and signature block > a decision recorded on someone’s behalf names them",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "historical signatures never attest to changed or unverified current content > qualifies the changed record as historical if the pure renderer is called directly",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "historical signatures never attest to changed or unverified current content > qualifies the unverified record as historical if the pure renderer is called directly",
+        "outcome": "passed",
+        "durationMs": 8
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared approval without claiming independent approval",
+        "outcome": "passed",
+        "durationMs": 13
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared authorship without claiming independent approval",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared review without claiming independent approval",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > preserves the declared responsibility without claiming independent approval",
+        "outcome": "passed",
+        "durationMs": 7
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > keeps qualification out of draft content imports",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for changed history",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for unverified history",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+        "case": "content binding and historical independence are separate export facts > never prints a matching-current-content claim for revoked history",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read \"Ready to finalize\"",
+        "outcome": "passed",
+        "durationMs": 955
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why",
+        "outcome": "passed",
+        "durationMs": 528
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol still in development keeps the gate and its action",
+        "outcome": "passed",
+        "durationMs": 675
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol in development with a blocker keeps the gate, with the action disabled",
+        "outcome": "passed",
+        "durationMs": 821
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads markdown through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "passed",
+        "durationMs": 609
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads pdf through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "passed",
+        "durationMs": 814
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx",
+        "case": "a legacy signed protocol keeps its existing qualified-copy downloads reachable > downloads docx through the existing Export drawer and carries the exact qualified server copy",
+        "outcome": "passed",
+        "durationMs": 341
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > who signed, as what, and when, from the signature row",
+        "outcome": "passed",
+        "durationMs": 86
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a decision recorded for a reviewer with no account names the signer, and whom it was recorded for",
+        "outcome": "passed",
+        "durationMs": 9
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a revoked signature says it is revoked",
+        "outcome": "passed",
+        "durationMs": 16
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a recorded disposition with no signature on record says so",
+        "outcome": "passed",
+        "durationMs": 16
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > a signature record that could not be read is said, not left blank",
+        "outcome": "passed",
+        "durationMs": 13
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "a review row shows the signature on record > an open review, with nothing signed, says nothing about a signature",
+        "outcome": "passed",
+        "durationMs": 7
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a finalized protocol with no live signature says so, never nothing",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a protocol that is not finalized, with no signature, renders nothing",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > a read model without the facet is treated as unreadable, not as unsigned",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "SignatureLine, as the protocol header uses it for the finalization > the meaning is printed in words",
+        "outcome": "passed",
+        "durationMs": 8
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy approval record without changing its declared meaning",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy authorship record without changing its declared meaning",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy review record without changing its declared meaning",
+        "outcome": "passed",
+        "durationMs": 5
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > qualifies a legacy responsibility record without changing its declared meaning",
+        "outcome": "passed",
+        "durationMs": 5
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the changed warning and does not claim a current content match",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the unverified warning and does not claim a current content match",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > preserves the revoked warning and does not claim a current content match",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > does not invent a policy question or verdict for an unknown historical meaning",
+        "outcome": "passed",
+        "durationMs": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx",
+        "case": "the signature line separates recorded meaning from independent approval > does not promote arbitrary qualification metadata into independence assurance",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > a disposition recorded: shows the signed state and opens nothing",
+        "outcome": "passed",
+        "durationMs": 562
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > a completed review, disposition column empty: shows the signed state and opens nothing",
+        "outcome": "passed",
+        "durationMs": 165
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > a disposition recorded, status not yet moved: shows the signed state and opens nothing",
+        "outcome": "passed",
+        "durationMs": 74
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > an open review still offers the signature, to anyone who may record it",
+        "outcome": "passed",
+        "durationMs": 61
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx",
+        "case": "the disposition control on a review row > an open review assigned to someone else stays disabled, with that reason",
+        "outcome": "passed",
+        "durationMs": 31
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+        "case": "assembleProtocolExport + renderProtocolMarkdown > assembles ordered parts and renders markdown with all sections",
+        "outcome": "passed",
+        "durationMs": 2
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+        "case": "buildCtGovRegistrationDraft > maps to PRS elements and is ready when primary outcome + eligibility + synopsis present",
+        "outcome": "passed",
+        "durationMs": 1
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+        "case": "buildCtGovRegistrationDraft > flags missing primary outcome",
+        "outcome": "passed",
+        "durationMs": 0
+      },
+      {
+        "path": "server/services/protocol-export/__tests__/protocol-export-logic.test.ts",
+        "case": "buildCtGovRegistrationDraft > marks observational study type",
+        "outcome": "passed",
+        "durationMs": 0
+      }
+    ],
+    "perFileCounts": {
+      "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts": 21,
+      "server/routes/__tests__/protocol-export-binding.http.test.ts": 4,
+      "server/services/protocol-export/__tests__/protocol-export-signature.test.ts": 18,
+      "client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx": 7,
+      "client/src/concept2cure/v2/__tests__/protocolSignatureManifestation.test.tsx": 19,
+      "client/src/concept2cure/v2/__tests__/protocolDispositionSigned.test.tsx": 5,
+      "server/services/protocol-export/__tests__/protocol-export-logic.test.ts": 4
+    },
+    "totals": {
+      "passed": 78
+    },
+    "skipped": 0,
+    "duration": "40.44s (transform 8.65s, setup 1.59s, import 15.69s, tests 15.02s, environment 4.89s)"
+  }
+}

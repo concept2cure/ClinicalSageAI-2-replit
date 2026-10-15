@@ -5,8 +5,11 @@ import { fda510kDocuments } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import PDFDocument from 'pdfkit';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('document-orchestration');
 const orchestrationService = new DocumentOrchestrationService();
 
 function resolveActorContext(req: any, res: Response): { userId: string; organizationId: string } | null {
@@ -38,11 +41,7 @@ router.post('/api/510k/:projectId/generate-documents', async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error('Document generation error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to generate documents',
-    });
+    return serverError(res, log, 'generating the 510(k) documents', error);
   }
 });
 
@@ -68,11 +67,7 @@ router.post('/api/510k/documents/:documentId/lock', async (req, res) => {
       document: lockedDocument,
     });
   } catch (error) {
-    console.error('Document lock error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to lock document',
-    });
+    return serverError(res, log, 'locking the document', error);
   }
 });
 
@@ -98,11 +93,7 @@ router.post('/api/510k/documents/:documentId/version', async (req, res) => {
       document: newVersion,
     });
   } catch (error) {
-    console.error('Document versioning error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create document version',
-    });
+    return serverError(res, log, 'creating the document version', error);
   }
 });
 

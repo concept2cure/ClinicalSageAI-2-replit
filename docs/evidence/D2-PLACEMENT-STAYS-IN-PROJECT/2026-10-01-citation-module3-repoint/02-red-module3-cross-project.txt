@@ -1,0 +1,5 @@
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > another program's submission is refused before anything is read or written 13ms
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > the submission is the CMC project’s own (PF-11) > a legacy numeric project is compared with the program's anchored row: another one is refused 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)

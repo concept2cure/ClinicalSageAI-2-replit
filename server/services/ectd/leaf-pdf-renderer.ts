@@ -20,10 +20,12 @@
  */
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import { parse as parseHtml } from 'node-html-parser';
+import { parseSectionHtml } from '../../export/section-html-parse';
+import { looksLikeHtml, plainTextToHtml } from '@shared/authoring/plain-text-html';
 import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
 import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
 import { decodeHtmlEntities } from '../../export/decode-html-entities.js';
+import { unfiledFigureLabel } from '../../export/authoring-images.js';
 
 const PAGE_WIDTH = 612; // US Letter, points
 const PAGE_HEIGHT = 792;
@@ -204,13 +206,12 @@ export function toWinAnsiSafe(input: string): string {
  *
  * Only the boundary BETWEEN adjacent cells becomes a delimiter; the row's final
  * `</td>` is still stripped by the generic rule, so a row does not end in a
- * dangling separator. ` | ` matches the convention serializeTable() already
- * uses in orchestrator-real-package.ts, and single spaces survive the
- * whitespace-collapsing rules below (a two-space separator would not).
+ * dangling separator. Single spaces survive the whitespace-collapsing rules
+ * below (a two-space separator would not).
  *
- * The orchestrator path was never affected: it serializes structured tables via
- * serializeTable() before rendering. This is the leaf-source-resolver path,
- * which renders stored document HTML directly.
+ * This is the leaf-source-resolver path, which renders stored document HTML
+ * directly. Composed Module 3 sections (orchestrator-real-package) and placed
+ * Module 3 snapshots are drawn with real ruled tables by typeset-leaf-pdf.ts.
  */
 /**
  * Reduce stored document HTML to the plain text a leaf renders.
@@ -274,6 +275,27 @@ function collapseInline(text: string): string {
 
 function isElement(node: any): boolean {
   return node?.nodeType === 1;
+}
+
+/**
+ * A <pre>'s text, verbatim: its text nodes as written, a line break for a
+ * <br>, and its figures named the way every other figure is. The leaf read
+ * <pre> as raw text, so a figure inside one printed its markup and base64
+ * payload into the filed leaf, and a <code> its tags (refute-review of the
+ * figure rule, round 3: D2; the parse is server/export/section-html-parse.ts).
+ */
+function preText(node: any, ctx: WalkContext): string {
+  let out = '';
+  for (const child of node.childNodes ?? []) {
+    if (child?.nodeType === 3) out += child.text ?? '';
+    else if (isElement(child)) {
+      const tag = tagOf(child) ?? '';
+      if (tag === 'img') out += walkNode(child, ctx);
+      else if (tag === 'br') out += '\n';
+      else if (!DROPPED_TAGS.has(tag)) out += preText(child, ctx);
+    }
+  }
+  return out;
 }
 
 /** A node's child text, inline whitespace collapsed and trimmed. */
@@ -346,15 +368,20 @@ function walkNode(node: any, ctx: WalkContext): string {
 
     case 'img': {
       // Never silent. Alt text is the figure's only description in a text
-      // rendering; the file name still tells a reviewer something was there.
+      // rendering. Without it, the figure is named the way the authoring
+      // export names a figure it did not file (unfiledFigureLabel): by the kind
+      // of src, or, for an upload to the image store, by that short reference;
+      // no other src is printed. The text
+      // after the src's last "/" used to be printed here, and for a data: URI
+      // that is the tail of its base64 payload, or the whole payload when the
+      // payload holds no "/" (periodic review 2026-09-28, editor family).
       const alt = collapseInline(node.getAttribute('alt') ?? '').trim();
-      const src = (node.getAttribute('src') ?? '').split(/[/\\]/).pop() ?? '';
-      return '\n[Figure: ' + (alt || src || 'image') + ']\n';
+      return '\n[Figure: ' + unfiledFigureLabel({ src: node.getAttribute('src') ?? '', alt }) + ']\n';
     }
 
     case 'pre':
       // Verbatim, indentation included, fenced so normalization leaves it alone.
-      return '\n' + PRE_SENTINEL + node.text + PRE_SENTINEL + '\n';
+      return '\n' + PRE_SENTINEL + preText(node, ctx) + PRE_SENTINEL + '\n';
 
     // <sup> and the tracked-change marks are converted upstream by
     // inlineMarksToText, which both export pipelines share; handling them again
@@ -420,11 +447,14 @@ export function htmlToPlainText(input: string): string {
   // [+...+] because silently settling an unresolved suggestion either way
   // fabricates a decision nobody made. One implementation, both callers - these
   // two pipelines had already drifted apart on the identical table-cell defect.
-  const marked = inlineMarksToText(input);
+  /* A document-type declaration is not text. The parser keeps `<!doctype html>`
+     as a text node, so a whole HTML document (the authoring PDF export hands the
+     fallback renderer one) printed it above the title (QA 2026-10-08, j4). */
+  const marked = inlineMarksToText(String(input ?? '').replace(/<!doctype[^>]*>/gi, ''));
 
   let raw: string;
   try {
-    raw = walkNode(parseHtml(marked) as any, { listDepth: 0 });
+    raw = walkNode(parseSectionHtml(marked) as any, { listDepth: 0 });
   } catch (error) {
     // Degrading is right - a parse failure must not fail a submission export -
     // but it must not be invisible either: the fallback loses figures, list
@@ -512,6 +542,19 @@ function wrapLine(text: string, font: import('pdf-lib').PDFFont, maxWidth: numbe
  * Render content (HTML or plain text) to a deterministic, valid PDF leaf.
  * Returns the PDF bytes as a Buffer.
  */
+/**
+ * Stored content as the section editor opens it: HTML when it holds a known
+ * tag, otherwise plain text with every character kept (looksLikeHtml, the one
+ * rule every reader of section content shares). The leaf parsed every string
+ * as HTML, so text stored without markup lost whatever looked like a tag. The
+ * CMC Module 3 placement's "Impurity B was <LOQ in all 3 batches" was filed as
+ * "Impurity B was 98.0%)." (refute-review of the figure rule, 2026-10-04,
+ * round 3: O1).
+ */
+function asStoredHtml(content: string): string {
+  return looksLikeHtml(content) ? content : plainTextToHtml(content);
+}
+
 export async function renderLeafPdf(content: string, options: LeafPdfOptions = {}): Promise<Buffer> {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -552,7 +595,7 @@ export async function renderLeafPdf(content: string, options: LeafPdfOptions = {
 
   // toWinAnsiSafe BEFORE wrapping: both width measurement and drawText must see
   // only representable glyphs, or either can throw on the raw content.
-  const text = toWinAnsiSafe(htmlToPlainText(content || ''));
+  const text = toWinAnsiSafe(htmlToPlainText(asStoredHtml(content || '')));
   const logicalLines = text.length ? text.split('\n') : ['(no content)'];
   for (const logical of logicalLines) {
     for (const wrapped of wrapLine(logical, font, maxWidth)) {
@@ -652,7 +695,7 @@ export async function renderStructuredLeafPdf(
       const label = toWinAnsiSafe(s.sectionCode ? `${s.sectionCode}  ${s.heading}` : s.heading);
       draw(label, bold, indent);
 
-      const bodyText = toWinAnsiSafe(htmlToPlainText(s.body ?? ''));
+      const bodyText = toWinAnsiSafe(htmlToPlainText(asStoredHtml(s.body ?? '')));
       const lines = bodyText.length ? bodyText.split('\n') : ['—'];
       for (const logical of lines) {
         for (const wrapped of wrapLine(logical, font, maxWidth - indent)) {

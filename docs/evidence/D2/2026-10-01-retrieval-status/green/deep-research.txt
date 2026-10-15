@@ -1,0 +1,146 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/w2
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.894Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "1",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.896Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "2",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.896Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "5",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.897Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "6",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.897Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "7",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.897Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "8",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.897Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "9",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.898Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "10",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.898Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "11",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.899Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "12",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+{
+  "timestamp": "2026-10-01T20:15:49.899Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "13",
+    "cause": "connect ECONNREFUSED 10.0.0.xxx:443"
+  }
+}
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > one failing section does not end retrieval for the rest, and the document says failed
+{
+  "timestamp": "2026-10-01T20:15:49.919Z",
+  "level": "warn",
+  "message": "[deep-research] Data Room retrieval failed",
+  "context": {
+    "section": "1",
+    "cause": "timeout"
+  }
+}
+
+ ✓ server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text 49ms
+ ✓ server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > one failing section does not end retrieval for the rest, and the document says failed 8ms
+ ✓ server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > nothing above the floor is empty, not failed 6ms
+ ✓ server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > evidence found is ok (positive control) 5ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  20:15:48
+   Duration  1.35s (transform 534ms, setup 116ms, import 773ms, tests 73ms, environment 0ms)
+

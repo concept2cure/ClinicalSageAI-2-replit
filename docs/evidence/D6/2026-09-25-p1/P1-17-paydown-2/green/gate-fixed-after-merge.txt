@@ -1,0 +1,3 @@
+# after merging trunk (which made the gate follow a local alias, 117 -> 146 sites); trunk's baseline taken, gate run on the merged tree
+[ci:server-error-leaks] OK — 121 baselined site(s) across 68 file(s); no file gained one.
+[ci:server-error-leaks] 25 site(s) fixed since the baseline — shrink it with --write-baseline.

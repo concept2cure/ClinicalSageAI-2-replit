@@ -16,6 +16,8 @@
  * @module server/services/tenant/governed-tenant-context
  */
 
+import { switchPinTerms } from '../../db/sessionScope';
+
 interface Queryable { query: (sql: string, params?: unknown[]) => Promise<unknown>; }
 
 /**
@@ -24,6 +26,7 @@ interface Queryable { query: (sql: string, params?: unknown[]) => Promise<unknow
  */
 export async function setTenantContextTx(client: Queryable, orgId: number | null | undefined, role?: string | null): Promise<void> {
   if (orgId == null) return; // governed handlers guard on org context already; no-op defensively
-  await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [String(orgId)]);
+  // The isolation switches are pinned in the same statement (server/db/sessionScope.ts).
+  await client.query(`SELECT set_config('app.current_tenant_id', $1, true), ${switchPinTerms(true)}`, [String(orgId)]);
   if (role) await client.query("SELECT set_config('app.current_user_role', $1, true)", [role]);
 }

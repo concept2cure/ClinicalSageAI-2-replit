@@ -1,0 +1,9 @@
+# 8. An assumed module is said to be assumed — GREEN
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > names the document type in the type line 189ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > says an assumed module was assumed, and a chosen one plainly 72ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > outlines every section, drafted or not, with the count drafted 60ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > shows the section chosen in the outline 115ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — keeps up while AnA works > re-reads on a new refreshKey and marks the sections whose text changed 130ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — keeps up while AnA works > a quiet re-read that fails keeps the document on screen and says the refresh failed 72ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

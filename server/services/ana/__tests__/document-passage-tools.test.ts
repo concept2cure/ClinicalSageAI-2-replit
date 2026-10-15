@@ -24,6 +24,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ToolContext } from '../AnaToolExecutor.js';
 
 const searchDocumentPassages = vi.hoisted(() => vi.fn());
+const scope = vi.hoisted(() => ({ read: vi.fn(), db: { query: vi.fn() } }));
+// This suite verifies tool output/delivery. Actual parent admission and SQL
+// scoping are exercised by the independent PGlite/native service suites.
+vi.mock('../catalog-scope.js', () => ({ catalogScope: scope.read }));
 
 class FakeUnavailable extends Error {
   constructor(reason: string) {
@@ -36,7 +40,8 @@ vi.mock('../../vault/document-passage-search.js', () => ({
   searchDocumentPassages,
   PassageSearchUnavailableError: FakeUnavailable,
 }));
-vi.mock('../../vault/document-catalog.service.js', () => ({
+vi.mock('../../vault/document-catalog.service.js', async () => ({
+  withAnaSourceReadScope: (await import('./support/source-read-tool-fixture.js')).syntheticReadWrapper,
   isDocumentCatalogEnabled: vi.fn(async () => true),
 }));
 
@@ -50,6 +55,7 @@ const CTX: ToolContext = {
   organizationId: 42,
   organizationUuid: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
   userId: 7,
+  sqlClient: scope.db,
 };
 
 async function callAs(ctx: ToolContext | undefined, input: Record<string, unknown>) {
@@ -65,6 +71,11 @@ const call = (input: Record<string, unknown>) => callAs(CTX, input);
    as an unhandled error, failing tests whose subject handled it correctly. */
 beforeEach(() => {
   searchDocumentPassages.mockReset();
+  scope.read.mockResolvedValue({ programId: null, executor: scope.db, accessibleScope: {
+    scope: 'verified-accessible-programs', actor: { userId: 7, role: 'member' },
+    programIds: [], reconciliationRequired: false,
+  }, admittedScope: { organizationId: 42, userId: 7, role: 'member', projectId: null, programId: null,
+    accessibleProgramIds: [], actorFiltered: true } });
 });
 
 describe('what it returns on a hit', () => {
@@ -91,8 +102,10 @@ describe('what it returns on a hit', () => {
     expect(out.passages[0].locator).toBe('p.41 · 7.2 Results');
     expect(out.message).toContain('All 4 document(s) are in the passage index');
     expect(searchDocumentPassages).toHaveBeenCalledWith(
-      { organizationId: 42, organizationUuid: CTX.organizationUuid, query: 'mortality at the high dose' },
-      { limit: 8 },
+      scope.db,
+      { organizationId: 42, userId: 7, organizationUuid: CTX.organizationUuid, query: 'mortality at the high dose' },
+      // No project open: the verified accessible library.
+      expect.objectContaining({ limit: 8, programId: null, sourceReadScope: expect.objectContaining({ userId: 7, actorFiltered: true }) }),
     );
   });
 
@@ -102,7 +115,7 @@ describe('what it returns on a hit', () => {
       coverage: { total: 1, indexed: 1, pending: 0, failed: 0 },
     });
     await call({ query: 'anything', limit: 500 });
-    expect(searchDocumentPassages.mock.calls[0][1]).toEqual({ limit: 25 });
+    expect(searchDocumentPassages.mock.calls[0][2]).toMatchObject({ limit: 25, programId: null, sourceReadScope: { userId: 7, actorFiltered: true } });
   });
 });
 
@@ -196,7 +209,7 @@ describe('what it says when it finds nothing', () => {
     expect(out.unavailable).toBeUndefined();
     expect(out.message).toContain('None of the 6 document(s)');
     expect(out.message).toContain('nothing was searched');
-    expect(out.message).toContain('ana.vault_chunking');
+    expect(out.message).toContain('backfill');
     expect(out.message).not.toContain('embedding provider');
   });
 
@@ -206,7 +219,7 @@ describe('what it says when it finds nothing', () => {
       coverage: { total: 0, indexed: 0, pending: 0, failed: 0 },
     });
     const out = await call({ query: 'anything at all' });
-    expect(out.message).toContain('No documents are filed in this vault yet');
+    expect(out.message).toContain('No documents with verified access are filed in this scope yet');
   });
 });
 
@@ -269,7 +282,7 @@ describe('what it says about the files that are not in this index at all', () =>
       coverage: { total: 0, indexed: 0, pending: 0, failed: 0, unfiledUploads: 2, unfiledUploadsMore: false },
     });
     const out = await call({ query: 'the primary endpoint' });
-    expect(out.message).toContain('No documents are filed in this vault yet');
+    expect(out.message).toContain('No documents with verified access are filed in this scope yet');
     expect(out.message).toContain('2 file(s) the client attached in chat');
   });
 });
@@ -294,7 +307,8 @@ describe('what it says when it could not look', () => {
       throw new Error('connection reset');
     });
     const out = await call({ query: 'stability at 6 months' });
-    expect(out.error).toContain('connection reset');
+    expect(out).toMatchObject({ ok: false, code: 'DOCUMENT_REQUEST_FAILED' });
+    expect(out.error).not.toContain('connection reset');
     expect(out.passages).toBeUndefined();
   });
 

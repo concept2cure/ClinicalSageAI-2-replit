@@ -1,0 +1,20 @@
+{
+  "scope": "Mechanical preservation of exact explicit expect assertion lines through test helper extraction; actual native rerun remains the execution proof.",
+  "originalAssertionLines": 101,
+  "currentAssertionLines": 101,
+  "identicalMultiset": true,
+  "files": [
+    {
+      "path": "/tmp/protocol-sod-native-test-before-helper-refactor.ts",
+      "bytes": 29090,
+      "digestAlgorithm": "sha256",
+      "digest": "691217fc36ee507a81d18927c93e3e7749b59241a2d6f9c9eb2168cb5e59caf5"
+    },
+    {
+      "path": "tests/db/protocol-approval-independence.dbtest.ts",
+      "bytes": 30805,
+      "digestAlgorithm": "sha256",
+      "digest": "230a14a2a7ce647bbec160bb2daf4af9d4978616fea20b947be500ff767fdb32"
+    }
+  ]
+}

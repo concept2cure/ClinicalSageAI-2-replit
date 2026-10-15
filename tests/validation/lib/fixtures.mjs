@@ -69,6 +69,20 @@ export async function ingestPdf(api, expect, { programId, title, documentType = 
   return { document: r.json.document, filing: r.json.filing, bytes: buf, sha256: sha256(buf) };
 }
 
+/** A plain-text document through the governed ingest; its text is extracted as written. */
+export async function ingestText(api, expect, { programId, title, text, documentType = 'OTHER' }) {
+  const buf = Buffer.from(text, 'utf8');
+  const form = new FormData();
+  form.append('file', new Blob([buf], { type: 'text/plain' }), `${title.replace(/[^a-z0-9]+/gi, '-')}.txt`);
+  form.append('programId', programId);
+  form.append('documentCode', `${title}.txt`);
+  form.append('documentTitle', title);
+  form.append('documentType', documentType);
+  const r = await api('POST', '/api/vault/ingest', form);
+  expect(r.status === 201, `text ingest expected 201, got ${r.status}`, r.json);
+  return { document: r.json.document, bytes: buf, sha256: sha256(buf) };
+}
+
 /**
  * A submission with one sequence. Pass `submissionId` to build the sequence on
  * an EXISTING submission — the program's own spine (createProgram's

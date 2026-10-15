@@ -1,0 +1,29 @@
+{
+  "qualification": "Current root-owned SQL correction source after focused checks; each run retains its separate scope. Earlier sealed browser/source snapshots are unchanged.",
+  "sources": [
+    {
+      "path": "server/services/advancedRAGPipeline.ts",
+      "bytes": 87479,
+      "digestAlgorithm": "SHA-256",
+      "digest": "efa0f3e0a7e659c15f9406d4dd3586a4fecb9bd8c6334d67d840d57a1edc5e97"
+    },
+    {
+      "path": "server/services/vault/vault-upload-source-admission.ts",
+      "bytes": 3423,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6910eb5ded465561d7b4c90de13af01bdc2dce7935819f4b4254a47ca1bf2a07"
+    },
+    {
+      "path": "server/services/ana/saved-document-critique.ts",
+      "bytes": 13900,
+      "digestAlgorithm": "SHA-256",
+      "digest": "2ff0f3ddadd8d09146fde21530f8e6d55027c8250b1147aa301a1f77e09e11ce"
+    },
+    {
+      "path": "scripts/ci/sql-interpolation-baseline.json",
+      "bytes": 11831,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4f3c1bfd01385e450d474dbf59349443b9ab192ee163286359fb48cd2aa88464"
+    }
+  ]
+}

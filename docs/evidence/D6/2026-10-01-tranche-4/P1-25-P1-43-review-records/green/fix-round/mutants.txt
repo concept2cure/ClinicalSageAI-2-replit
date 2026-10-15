@@ -1,0 +1,74 @@
+=== M1: signing no longer re-checks the record
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a role changed after the draft refuses the signature, and nothing is signed 102ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft whose period is stale when it is signed is refused, and nothing is signed 68ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft that no longer meets the draft rules is refused at signing, and nothing is signed 62ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 23 skipped (26)
+=== M2: the clock runs from the signing time again
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a review signed today of a period that ended four months ago is overdue today 29ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period that leaves days unreviewed after the last signed review is refused, naming the day to start from 28ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period starting the day after it is accepted, signed, and current until three months after it ends 89ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed | 23 skipped (26)
+=== M3: completeness read as of yesterday (an earlier period end) instead of now
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (c): completeness is decided on current roles and memberships > probe (c) as found is refused, naming every account that holds a privileged role now 51ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 25 skipped (26)
+=== M4: decision lines no longer checked
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line for an account that is not a member of this organisation is refused 42ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line that states a role the account does not hold is refused 23ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce that has not been carried out is refused 22ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce whose new role is in effect is accepted 32ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an active member is refused 25ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove the product recorded (member_removed) is accepted 19ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove whose recorded role is not the line's role is refused 24ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove SCIM provisioning recorded (scim.user.deactivated) is accepted 20ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of a member whose account is deactivated is accepted 18ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an account this organisation has no recorded removal of is refused 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 4 passed | 16 skipped (26)
+=== M5: the named run is no longer looked up
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an export id this organisation never ran is refused 50ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an access review that names a run of the other report is refused 23ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a data hash that is not the run's is refused 34ms
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > another organisation's run is refused 49ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 22 skipped (26)
+=== M6: the stored draft is signed without being read back through the draft schema
+ × tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft that no longer meets the draft rules is refused at signing, and nothing is signed 81ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 25 skipped (26)
+=== restored: 
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > probe (a) as found is refused, and no access review is recorded 36ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a period that ended more than three months ago is refused, naming the date it was due 15ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line for an account that is not a member of this organisation is refused 20ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line that states a role the account does not hold is refused 12ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an export id this organisation never ran is refused 12ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an access review that names a run of the other report is refused 14ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a data hash that is not the run's is refused 10ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > another organisation's run is refused 39ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > probe (b) as found is refused, and the integrity attestation still says none 39ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > an audit-trail review of the recent quarter that names no report run is refused 8ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (c): completeness is decided on current roles and memberships > probe (c) as found is refused, naming every account that holds a privileged role now 14ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce that has not been carried out is refused 18ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce whose new role is in effect is accepted 29ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an active member is refused 14ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove the product recorded (member_removed) is accepted 19ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove whose recorded role is not the line's role is refused 12ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove SCIM provisioning recorded (scim.user.deactivated) is accepted 21ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of a member whose account is deactivated is accepted 15ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an account this organisation has no recorded removal of is refused 14ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a review signed today of a period that ended four months ago is overdue today 38ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period that leaves days unreviewed after the last signed review is refused, naming the day to start from 12ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period starting the day after it is accepted, signed, and current until three months after it ends 79ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a role changed after the draft refuses the signature, and nothing is signed 59ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft whose period is stale when it is signed is refused, and nothing is signed 49ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft that no longer meets the draft rules is refused at signing, and nothing is signed 38ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-70: the review records are retained at offboarding, and the tenant export returns them > the tenant export carries the organisation's review records, signed ones included 957ms
+      Tests  26 passed (26)
+
+=== after the script: the two mutated files against their sha256 taken before it ran (they are untracked, so the git diff line above is empty)
+d9f9e7251fdb10b1ffa4d20852baf39e919fc850fafdabf75fce678b160cc8f4  server/services/audit/compliance-reviews.ts
+56d63a04bcff04a8c37a079f72b3b7125d59cdf0a3204bea8a76ce60557bb25d  server/services/audit/compliance-reports/queries/review-record.ts
+server/services/audit/compliance-reviews.ts: OK
+server/services/audit/compliance-reports/queries/review-record.ts: OK

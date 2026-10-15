@@ -1,0 +1,2 @@
+[ci:unrun-tests] 3285 test files · 13 vitest globs · 5 non-vitest runner globs · 0 unrun (0 allowlisted).
+[ci:unrun-tests] OK — every test file is reachable by a runner, or explained.

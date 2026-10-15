@@ -1,0 +1,359 @@
+# green: unit suites — the new service pins, the compliance report suites (catalog, queries, route), and the immutability-trigger pins left unchanged
+# npx vitest run server/services/audit/__tests__/compliance-reviews.test.ts server/services/audit/compliance-reports server/routes/__tests__/audit-compliance-reports.test.ts server/services/audit/__tests__/audit-immutability-triggers.test.ts server/services/entitlements/__tests__/launch-scope.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > names the immutability triggers of every audit store the sweep verifies 2ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > is created by a migration on a deploy applier, under exactly that name (drift guard) 8ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports ok when every expected trigger is present and enabled 3ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > issues one read-only catalog probe over pg_trigger, pg_class and pg_namespace, parameterised 2ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > names a trigger the catalog does not have (trg_audit_logs_no_delete dropped) 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > treats a disabled trigger (ALTER TABLE … DISABLE TRIGGER) as not protecting the table 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports a table that does not exist yet as missing every trigger on it 0ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > fails closed when the probe returns no row for an expected trigger 0ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > propagates a probe failure rather than reporting ok (caller decides the posture) 3ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > describeAuditImmutabilityGap > names every missing and disabled trigger, the absent tables and the migration to run 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > security-health panel exposure > runs as a critical check that fails when a trigger is missing 171ms
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T14:23:47.224Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:23:47.226Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T14:23:47.226Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > lists the eight reports in catalog order, each id once 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > access-review has a title, a one-sentence purpose, a basis, sections and what is not recorded 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > authentication-events has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > administrative-changes has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > electronic-signatures has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail-integrity has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > retention-legal-holds has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > controlled-documents has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > access-review is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > authentication-events is run here, and every section names its columns once 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > administrative-changes is run here, and every section names its columns once 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > electronic-signatures is run here, and every section names its columns once 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail-integrity is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > retention-legal-holds is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > controlled-documents is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > the full audit trail is an entry only: its run is the existing signed export 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > states the periods the brief fixes 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > an unknown id is not a report 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > the summary a client receives carries the contract fields and nothing executable 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > copy is calm: no exclamation marks and no route names in what a reader sees 2ms
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T14:23:47.602Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:23:47.604Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T14:23:47.605Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T14:23:47.658Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-01T14:23:47.610Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:23:47.617Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | Object.warn (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:171:13)
+{
+  "timestamp": "2026-10-01T14:23:47.619Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded 1ms
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is 7ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap while the handler writes no row, and stops once it writes one 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+stderr | server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere
+{
+  "timestamp": "2026-10-01T14:23:48.107Z",
+  "level": "warn",
+  "message": "[launch-scope] [launch-scope] LAUNCH_SCOPE_ENFORCE is not \"on\" or \"off\"; treating as off outside production",
+  "context": {
+    "value": "yes"
+  }
+}
+
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere 2ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere 3ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > has seven apps and every app surface is in the id set 2ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > keeps the two Part 11 surfaces the catalog may never gate 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row 9ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface 1ms
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read
+{
+  "timestamp": "2026-10-01T14:23:48.464Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] compliance report refused: the audit export signing key is not available",
+  "context": {
+    "err": "[audit-export-key-posture] REFUSING TO BOOT: AUDIT_EXPORT_SIGNING_KEY is not configured in production. It signs the audit exports an inspector re-verifies (21 CFR Part 11 §11.10(e)); without it the export would be sealed under the JWT secret, the session-token key. Set it to a high-entropy secret held outside the database (KMS / secrets manager), with AUDIT_EXPORT_SIGNING_KEY_ID naming it. There is no accept flag for this posture."
+  }
+}
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > a member sees the catalog and that they cannot run it 33ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > an administrator can run them; a platform administrator too 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > no organisation, no catalog 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a non-reader is refused 403 with the audit gate body, before any query 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a session without an organisation is refused 403 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > an unknown report is 404 UNKNOWN_REPORT 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > the full audit trail is 409 USE_SIGNED_EXPORT: its run is the signed export 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2026-09-30&to=2026-09-01) is 400 BAD_PERIOD 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (to=2026-02-30) is 400 BAD_PERIOD 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2024-01-01&to=2026-01-01) is 400 BAD_PERIOD 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read 15ms
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent
+[audited-export] export not recorded: chain write refused
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back
+{
+  "timestamp": "2026-10-01T14:23:48.530Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] running the compliance report failed",
+  "context": {
+    "reportId": "access-review",
+    "err": "relation \"organization_users\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified
+[audited-export] tenant chain walk failed: admin scope unavailable
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — a run > reads in a tenant-stamped transaction, records the run, and sends an export that verifies 15ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > the existing verification endpoint verifies the package, and refuses it after a one-byte change 29ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > a CSV run is one file of titled sections 7ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > an unknown format is refused rather than read as JSON 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified 7ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation is ok only when every check is intact, and false when any is broken 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation runs one report at a time: a second concurrent run is 429 REPORT_IN_PROGRESS 12ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > report runs are rate limited per organisation and person: 429 REPORT_RATE_LIMITED 53ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 0 is not a tenant: 403 before anything 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of -3 is not a tenant: 403 before anything 20ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 7.5 is not a tenant: 403 before anything 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of "7abc" is not a tenant: 403 before anything 7ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > defaults to the 90 days before today, today included 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > defaults `from` to 90 days before a given `to` 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > takes both dates as given, the end exclusive the day after `to` 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > accepts a one-day period and a full leap year (366 days) 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > an as-of report uses `to` only, and ignores `from` even when it is malformed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-1-01","to":"2026-01-31"} (malformed from) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"to":"30/09/2026"} (malformed to) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-02-30","to":"2026-03-31"} (a date that does not exist) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"to":"2026-13-01"} (month 13) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-01-01T00:00:00Z","to":"2026-01-31"} (a timestamp, not a date) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":["2026-01-01","2026-01-02"],"to":"2026-01-31"} (a repeated parameter) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-02-01","to":"2026-01-31"} (from after to) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2025-01-01","to":"2026-01-02"} (a span over 366 days) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"","to":"2026-01-31"} (an empty from) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > an as-of report still refuses a malformed `to` 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > stamps version 2 and the key id, and signs the canonical manifest with the export key 11ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > refuses in production without the dedicated key, rather than sign under a fallback 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > sha256Hex is the hash the verifier recomputes 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > verifies with the existing export verifier 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > fails verification after a one-byte change to the data 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > fails verification when a manifest claim is changed 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > carries the contract manifest 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > the data is the report itself 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > verifies with the existing export verifier 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > fails verification after a one-byte change to the data 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > fails verification when a manifest claim is changed 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > carries the contract manifest 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > the data is the report itself 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the stores > counts each store for this organisation only, with the period bounds 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > states three intact checks when all three ran and passed 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a broken chain says where, as this organisation may read it 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a broken linkage and a failing seal are broken 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the chain walk did not run: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the linkage had nothing hashed: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the linkage query did not run: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the seal check could not run: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > no row carried a seal: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a check that could not run does not put the failure text in the report 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes each section as a titled block: title line, header, rows, blank line 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "=HYPERLINK(\"http://x\")" with a leading quote 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "+1+1" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "-2+3" with a leading quote 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "@SUM(A1)" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "\tcmd" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "\rcmd" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes a date as its UTC ISO instant and an object as JSON 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes only the declared columns, in their declared order 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > opens with a block saying what the file is: report, organisation, period, time, chain, sections and what is not recorded 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > states a range period and a verified chain in the block 4ms
+stdout | server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+{
+  "timestamp": "2026-10-01T14:23:50.192Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:23:50.193Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+{
+  "timestamp": "2026-10-01T14:23:50.194Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain states it as unknown, with the reason 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain still says ok over rows it checked 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the signed audit export states the audit_logs chain as unverified, not intact 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the integrity attestation says "not verified" for a walk of zero rows, even if handed ok: true 2ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > an access review with a keep, a reduce and a remove, each as the policy asks, is accepted 5ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a reduce names the role it leaves, and a reduce or remove names the change that carried it out 2ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > one line per account, at least one line, and no decision outside keep, reduce, remove 2ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a period that ends before it starts, or in the future, or is not a calendar date, is refused 1ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > an audit-trail review carries findings, may carry none, and takes no field it does not define 1ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > is sha256 hex, and the same content in any key order hashes the same 1ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the outcome changes 1ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when a decision changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the period changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the reviewer changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the organisation changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the record changes 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > names this organisation's broken row and its hashes, not [object Object] 7ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > does not name another organisation's row, its hashes or its organisation 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:120:30
+    118|     expect(start).toBeGreaterThan(-1);
+    119|     expect(end).toBeGreaterThan(start);
+    120|     expect(writesRoleChange).toBe(true);
+       |                              ^
+    121|   });
+    122|   it.each(['access-review', 'administrative-changes'])('%s states the …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  1 failed | 153 passed (154)
+   Start at  14:23:45
+   Duration  5.97s (transform 3.67s, setup 458ms, import 12.26s, tests 711ms, environment 1ms)
+

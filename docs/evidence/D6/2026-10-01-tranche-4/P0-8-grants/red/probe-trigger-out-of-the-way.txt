@@ -1,0 +1,19 @@
+# HEAD c6f2028b, 2026-10-01T06:07:08Z, as postgres -> SET ROLE app_service, replica mode, BEFORE any change
+Pager usage is off.
+BEGIN
+SET
+SET
+SET
+SET
+SET
+  acting_as  | replication_role 
+-------------+------------------
+ app_service | replica
+(1 row)
+
+INSERT 0 1
+SAVEPOINT
+UPDATE 1
+ROLLBACK
+DELETE 1
+ROLLBACK

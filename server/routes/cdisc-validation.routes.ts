@@ -6,7 +6,8 @@
  * authenticateToken applied at mount time.
  *
  *  - POST /sdtm-domain/conformance  check a domain's variable metadata against
- *    the SDTM-IG v3.4 reference spec (DM, AE).
+ *    the SDTM-IG v3.4 reference spec (DM, AE, LB, VS, CM, DS, EX, TS; any other
+ *    SDTM-IG domain is reported not conformance-checked).
  *
  * The checker is pure/deterministic over the supplied variable metadata.
  */
@@ -130,17 +131,40 @@ router.post('/adam-occds/conformance', limiter, requireRole(AUTHOR), (req: Reque
   }
 });
 
+/** The shape error in a readiness body's optional defineXml / tsParameters, or null. */
+function packageDeclarationError(b: { defineXml?: unknown; tsParameters?: unknown }): string | null {
+  const d = b.defineXml as Record<string, unknown> | undefined;
+  if (d !== undefined) {
+    const isObject = d !== null && typeof d === 'object' && !Array.isArray(d);
+    const keysOk = isObject && Object.entries(d).every(([k, v]) => (k === 'sdtm' || k === 'adam') && (v === undefined || typeof v === 'boolean'));
+    if (!keysOk) return 'defineXml must be { sdtm?: boolean, adam?: boolean }.';
+  }
+  const t = b.tsParameters;
+  if (t !== undefined && (!Array.isArray(t) || !t.every((p) => typeof p === 'string'))) {
+    return 'tsParameters must be an array of TSPARMCD strings.';
+  }
+  return null;
+}
+
 /**
  * Dataset-package readiness — dispatch each dataset (SDTM domain / ADaM class)
- * to the right checker and roll up one verdict. Body: { studyName?, datasets[] }.
+ * to the right checker, check FDA's study-data TRC requirements (1734, 1736),
+ * and roll up one verdict.
+ * Body: { studyName?, datasets[], defineXml?: { sdtm?: boolean, adam?: boolean },
+ * tsParameters?: string[] }. Omitting defineXml or tsParameters leaves those
+ * requirements 'not-stated', so the package is not ready.
  */
 router.post('/package/readiness', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
   const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
   if (!Array.isArray(b.datasets)) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'datasets[] is required.' } });
   }
+  const shapeError = packageDeclarationError(b);
+  if (shapeError) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: shapeError } });
+  }
   try {
-    res.json(assessPackageReadiness({ studyName: b.studyName, datasets: b.datasets }));
+    res.json(assessPackageReadiness({ studyName: b.studyName, datasets: b.datasets, defineXml: b.defineXml, tsParameters: b.tsParameters }));
   } catch (err) {
     fail(res, err);
   }

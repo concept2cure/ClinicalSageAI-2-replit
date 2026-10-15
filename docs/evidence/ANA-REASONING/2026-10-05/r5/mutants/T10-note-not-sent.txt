@@ -1,0 +1,15 @@
+Mutant T10-note-not-sent: the next model call is not told what came back empty, as before TP-RL-4
+
+--- server/routes/ana-ri/stream.ts
+- buildShortfallNote(
+              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack, result: r.resultStr })),
+              calls.length,
+            ),
++ 
+
+Tests run: server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a search that found nothing is named in the note the next call reads 46ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -110,8 +110,9 @@ export function evaluateSubmissionGrade(input: SubmissionGradeGateInput): Submis
   if (input.requirePdfA && input.environment === 'production' && !summary.allPdfA) {
     blockers.push(
       `${summary.notConverted.length} PDF leaf/leaves were not converted to PDF/A-1b ` +
-        `(${summary.notConverted.join(', ')}). A production eCTD submission requires PDF/A. ` +
-        'Ensure Ghostscript/veraPDF are present in the deployment image, or clear ECTD_REQUIRE_PDFA only for non-submission builds.'
+        `(${summary.notConverted.join(', ')}), and this deployment requires PDF/A for every submission ` +
+        '(ECTD_REQUIRE_PDFA). The agency itself also accepts plain PDF 1.4–1.7 (decided 2026-10-01, ' +
+        'ectd/pdfa-requirement.ts). Check that Ghostscript is present in the deployment image.'
     );
   }
 

@@ -132,11 +132,11 @@ describe('client results carry additive freshness fields (fresh fetch)', () => {
     expectFresh(result);
   });
 
-  it('validation fallback: malformed body degrades gracefully, still fresh', async () => {
+  // 2026-10-15: this pinned a malformed body → zero trials, "still fresh". A body
+  // with no studies array is a failed read, and a failed read is an error
+  // (server/services/integrations/__tests__/unexpected-response-shape-is-an-error-not-zero-results.test.ts).
+  it('malformed body is an error, not zero trials', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => 'not-an-object' }) as any;
-    const result = await searchTrials({ condition: 'x' });
-    expect(result.trials).toEqual([]);
-    expect(result.totalCount).toBe(0);
-    expectFresh(result);
+    await expect(searchTrials({ condition: 'x' })).rejects.toThrow(/studies/);
   });
 });

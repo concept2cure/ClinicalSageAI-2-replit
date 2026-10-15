@@ -1,0 +1,11 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "stdin": null,
+  "exit_code": 0,
+  "elapsed_seconds": 18.486,
+  "node": "v22.23.3"
+}

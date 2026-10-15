@@ -1,0 +1,16 @@
+Every suite of the modules rounds 1-4 touch, on the round-4 tree (trunk 7d07de5f5 plus round 4).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <the round-3 related set>
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 435 passed | 1 skipped (438)
+      Tests  16 failed | 6026 passed | 3 skipped (6045)
+
+Two failing files, neither this round's:
+
+1. server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts (15): needs a CONNECTOR_ENCRYPTION_KEY this container does not set; fails 15 of 15 the same way on an export of trunk 962f15f7f (../related.txt).
+
+2. server/services/ana/__tests__/governed-reason-not-invented.test.ts (1): 'registered tools the scan never read: draft_quality_overall_summary_m2_3', a tool trunk added in 881945fe5 (the CMC lane, 2026-10-05 01:25) from a module the scan does not read. It fails the same way on an export of trunk eab6563eb, before any change of this round:
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "draft_quality_overall_summary_m2_3",
+      Tests  1 failed | 59 skipped (60)
+Handed on: docs/work-orders/README.md, item 24.

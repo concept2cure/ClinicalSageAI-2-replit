@@ -1,0 +1,12 @@
+server/routes/irb.ts HEAD=0e/0w NOW=0e/0w
+server/routes/iacuc.ts HEAD=0e/0w NOW=0e/0w
+server/routes/ibc.ts HEAD=0e/0w NOW=0e/0w
+server/routes/rim.ts HEAD=0e/0w NOW=0e/0w
+server/routes/protocol-consent.ts HEAD=0e/0w NOW=0e/0w
+server/routes/protocol-deviations.ts HEAD=0e/0w NOW=0e/0w
+server/routes/biopharma/bla-workbench.ts HEAD=0e/1w NOW=0e/1w
+server/api/cmc/batchRecordRoutes.ts HEAD=0e/5w NOW=0e/5w
+server/api/cmc/routes.ts HEAD=0e/21w NOW=0e/21w
+server/api/cmc/specificationRoutes.ts HEAD=0e/2w NOW=0e/2w
+tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts HEAD=0e/0w NOW=0e/0w
+tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts HEAD=0e/0w NOW=0e/0w

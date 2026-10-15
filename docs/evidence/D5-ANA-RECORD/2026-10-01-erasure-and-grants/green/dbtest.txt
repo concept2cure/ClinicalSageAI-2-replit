@@ -1,0 +1,23 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present 17ms
+{"level":30,"time":"2026-10-01T06:17:19.740Z","pid":6169,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:17:19.741Z","pid":6169,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:17:19.741Z","pid":6169,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 32ms
+stderr | tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 111ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 52ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 6ms
+{"level":40,"time":"2026-10-01T06:17:20.597Z","pid":6169,"hostname":"vm","context":{"organizationId":90611,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"trpurge_6169_mup56ksw-digest","turnRecordErasure":{"records":2,"blobs":4}},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 724ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 15ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  06:17:16
+   Duration  3.79s (transform 1.42s, setup 96ms, import 2.27s, tests 1.04s, environment 0ms)
+

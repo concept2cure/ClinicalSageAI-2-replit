@@ -12,6 +12,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { agencyOptions } from '../../../../../shared/regulatory/agency-positions.js';
 
 export function createStabilityStudyFlow(): FlowDefinition {
   return {
@@ -114,8 +115,8 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'transdermal', label: 'Transdermal Patch' },
               { value: 'suppository', label: 'Suppository' },
               { value: 'bulk_api', label: 'Bulk API (drug substance)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             visibleWhen: {
               field: 'product_type',
               operator: 'neq',
@@ -299,8 +300,8 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'high_voltage_leak', label: 'High Voltage Leak Detection (HVLD)' },
               { value: 'dye_ingress', label: 'Dye Ingress (microbial challenge)' },
               { value: 'headspace_analysis', label: 'Headspace Gas Analysis' },
-              { value: 'other', label: 'Other Method' },
             ],
+            allowOther: { label: 'Other Method' },
           },
           {
             id: 'extractables_leachables',
@@ -495,17 +496,24 @@ export function createStabilityStudyFlow(): FlowDefinition {
             id: 'zone_regulatory_authorities',
             label: 'Target Regulatory Authorities',
             type: 'multi_select',
+            /* The twelve agencies AnA configures, from the one governed list
+               (shared/regulatory/agency-positions.ts), plus the two targets
+               that are not national filings. This was a second hand-written
+               list of six: a stability programme filing with the MHRA, NMPA,
+               Swissmedic, CDSCO, MFDS or HSA could not say so, though the
+               platform holds every one of their Module 1 requirements
+               (2026-10-12 review, "three uncanonical region lists"). */
             options: [
-              { value: 'fda', label: 'US FDA' },
-              { value: 'ema', label: 'European Medicines Agency (EMA)' },
-              { value: 'pmda', label: 'Japan PMDA' },
-              { value: 'health_canada', label: 'Health Canada' },
-              { value: 'tga', label: 'Australia TGA' },
-              { value: 'anvisa', label: 'Brazil ANVISA' },
-              { value: 'asean', label: 'ASEAN (ACTD format)' },
-              { value: 'who_pq', label: 'WHO Prequalification' },
-              { value: 'other', label: 'Other' },
+              ...agencyOptions(),
+              /* Not a national filing, so neither names a region: ASEAN is a
+                 DOSSIER FORMAT several authorities accept, and WHO
+                 prequalification is an assessment for UN procurement. Both are
+                 real targets for a stability package, and both are declared
+                 non-facts in programme-facts.ts for that reason. */
+              { value: 'asean', label: 'ASEAN — the ACTD dossier format, not one authority' },
+              { value: 'who_pq', label: 'WHO Prequalification — a UN procurement assessment, not a national filing' },
             ],
+            allowOther: {},
             helpText: 'Different regulatory authorities may have specific stability data expectations beyond ICH Q1A(R2). Identify all target markets to ensure the stability data package is sufficient.',
           },
           {
@@ -721,7 +729,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
         question:
           'What analytical methods and test parameters are included in your stability-indicating testing program? The stability-indicating assay method is the cornerstone of any stability program. Describe your approach to assay, degradation product monitoring, and dosage-form-specific testing.',
         guidance:
-          'ICH Q1A(R2) Section 2.2.4 requires that testing should cover those features susceptible to change during storage and likely to influence quality, safety, and/or efficacy. A validated, stability-indicating analytical procedure per ICH Q2(R1) must be used, capable of detecting changes in the active ingredient and distinguishing degradation products from the parent compound. Degradation product limits must comply with ICH Q3A(R2) for drug substances and ICH Q3B(R2) for drug products.',
+          'ICH Q1A(R2) Section 2.2.4 requires that testing should cover those features susceptible to change during storage and likely to influence quality, safety, and/or efficacy. A validated, stability-indicating analytical procedure per ICH Q2(R2) must be used, capable of detecting changes in the active ingredient and distinguishing degradation products from the parent compound. Degradation product limits must comply with ICH Q3A(R2) for drug substances and ICH Q3B(R2) for drug products.',
         fields: [
           {
             id: 'stability_indicating_method',
@@ -742,9 +750,9 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'uv_vis', label: 'UV-Vis Spectrophotometry' },
               { value: 'potentiometric', label: 'Potentiometric Titration' },
               { value: 'ce', label: 'Capillary Electrophoresis' },
-              { value: 'other', label: 'Other' },
             ],
-            helpText: 'The assay method must be validated per ICH Q2(R1) and demonstrated to be stability-indicating through forced degradation studies.',
+            allowOther: {},
+            helpText: 'The assay method must be validated per ICH Q2(R2) and demonstrated to be stability-indicating through forced degradation studies.',
           },
           {
             id: 'degradation_product_monitoring',
@@ -793,7 +801,7 @@ export function createStabilityStudyFlow(): FlowDefinition {
             title: 'No Stability-Indicating Method Available',
             message:
               'ICH Q1A(R2) Section 2.2.4 requires that a validated, stability-indicating analytical procedure be used for all stability studies. Without a stability-indicating method, the analytical data cannot reliably distinguish between the intact drug and its degradation products, rendering the stability data of limited regulatory value. Method development and validation should be prioritized.',
-            reference: 'ICH Q1A(R2) Section 2.2.4; ICH Q2(R1)',
+            reference: 'ICH Q1A(R2) Section 2.2.4; ICH Q2(R2)',
           },
         ],
         defaultNext: 'photostability',

@@ -1,0 +1,56 @@
+# GREEN neighbours, 2026-10-01T16:19:01Z: npx vitest run server/lib/__tests__/unified-ai-client-embeddings.test.ts server/services/__tests__/revectorize-corpus.test.ts tests/audit-medium-fabrication-attribution.test.ts server/lib/__tests__ server/__tests__/startup* tests/build-order-14-governed-export-and-ops.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > CI guard script scopes the ZIP scan to a marker that exists 2ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > CI guard script forbids the sample export routes from returning 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for PDF 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for DOCX 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for ZIP 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > serves no export route from placeholder content 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > governed POST /zip route does NOT use archive.pipe(res) 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > platform_maintenance is a registered job type 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handlePlatformMaintenance handler is registered 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > platform_maintenance is in default schedules 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handler imports runPlatformMaintenance 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handler returns structured ScheduledJobRun 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > readiness-check.mjs script exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script supports --strict flag 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script supports warn-only mode (default) 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > npm scripts for readiness exist 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script uses runStartupInvariants from startup-invariants 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > startup invariants have severity levels (critical vs warning) 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > readiness runner exits 1 in strict mode on critical failure 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > degraded mode policy exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > token revocation still three-tier 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > bridge still v3 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > maintenance route still exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > startup invariants route still exists 1ms
+ ✓ server/lib/__tests__/unified-ai-client-embeddings.test.ts > ai.embeddings > is served by the embedding provider, not a chat completion 5ms
+ ✓ server/lib/__tests__/unified-ai-client-embeddings.test.ts > ai.embeddings > no vector is an error, not an empty embedding 2ms
+ ✓ server/lib/__tests__/unified-ai-client-embeddings.test.ts > ai.embeddings > a provider failure propagates 1ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — validation / tenant isolation > throws for an unknown corpus (never silently defaults) 3ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — validation / tenant isolation > fails closed without a valid organizationId 1ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — validation / tenant isolation > rejects a non-positive-integer target dimension 0ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — validation / tenant isolation > rejects an empty target model 0ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — change classification > flags a column migration + re-embed for a dimension change (documentVectors 3072 -> 1536) 1ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — change classification > needs no column migration and no re-embed when model + dimension are unchanged 0ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — change classification > warns about silent retrieval misses when the model changes but the dimension does not 0ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — sizing > calls the injected counter with org-scoped args and sizes batches 2ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — sizing > leaves rowCount null and warns when neither counter nor knownRowCount is given 1ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > planRevectorization — sizing > reports zero batches for an empty tenant corpus 0ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > executeRevectorization > returns the plan unchanged for a dry run 1ms
+ ✓ server/services/__tests__/revectorize-corpus.test.ts > executeRevectorization > refuses a live (non-dry-run) migration with its deferred preconditions 2ms
+ ✓ tests/audit-medium-fabrication-attribution.test.ts > MEDIUM · digital-twin CQA cannot auto-release on synthetic values > forces manual review when synthetic predictions would auto-approve 2ms
+ ✓ tests/audit-medium-fabrication-attribution.test.ts > MEDIUM · digital-twin CQA cannot auto-release on synthetic values > discloses that CQA predictions are synthetic 1ms
+ ✓ tests/audit-medium-fabrication-attribution.test.ts > MEDIUM · embeddings route through the governed provider, never silent TF-IDF > routes embeddings through the governed provider seam 0ms
+ ✓ tests/audit-medium-fabrication-attribution.test.ts > MEDIUM · embeddings route through the governed provider, never silent TF-IDF > has no silent degraded fallback (no empty try-catch, no TF-IDF path) 1ms
+ ✓ tests/audit-medium-fabrication-attribution.test.ts > MEDIUM · Part 11 attribution is honest > medicalDeviceService resolves a real username and does not hardcode a role 1ms
+ ✓ tests/audit-medium-fabrication-attribution.test.ts > MEDIUM · Part 11 attribution is honest > part11ComplianceService does not fabricate a 127.0.0.1 IP 0ms
+
+ Test Files  4 passed (4)
+      Tests  45 passed (45)
+   Start at  16:19:02
+   Duration  755ms (transform 433ms, setup 289ms, import 285ms, tests 53ms, environment 0ms)
+

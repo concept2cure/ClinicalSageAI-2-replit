@@ -1,0 +1,6 @@
+[dbras] cleanup left rows: IMMUTABILITY_VIOLATION: c2c_ana_actions is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+[dbdsc] cleanup left rows: IMMUTABILITY_VIOLATION: c2c_ana_actions is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+error: IMMUTABILITY_VIOLATION: c2c_ana_actions is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+    193|   await owner.query('DELETE FROM c2c_ana_actions WHERE org_id = $1', […
+ Test Files  1 failed | 1 passed (2)
+      Tests  37 passed | 31 skipped (68)

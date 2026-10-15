@@ -53,7 +53,7 @@ const daysAgo = (n: number) => new Date(NOW - n * 24 * 60 * 60 * 1000).toISOStri
  *   unrouted_document    — doc 103 is approved and unrouted
  *   stale_content        — doc 103 was last touched 200 days ago
  *   validation_failure   — validation on doc 104 has 2 critical findings
- *   readiness_gap        — Module 1 holds 1 of the 3 expected documents
+ *   readiness_gap        — Module 1 is measured at 20% complete
  *   blocked_workflow     — task 201 is blocked at high priority
  *   overdue_task         — task 202 is past its due date
  *   weak_content         — validation on doc 103 scores 40 with no criticals
@@ -69,6 +69,8 @@ const PAYLOAD: CrossObjectReasoningPayload = {
     totalTasks: 2,
     blockedTasks: 1,
     overdueTasks: 1,
+    doneTasks: 0,
+    taskCountsPartial: false,
   },
   documents: [
     {
@@ -118,7 +120,7 @@ const PAYLOAD: CrossObjectReasoningPayload = {
   ],
   tasks: [
     {
-      id: 201,
+      id: 'board:201',
       title: 'Resolve CMC query',
       status: 'blocked',
       priority: 'high',
@@ -126,7 +128,7 @@ const PAYLOAD: CrossObjectReasoningPayload = {
       isOverdue: false,
     },
     {
-      id: 202,
+      id: 'board:202',
       title: 'Submit annual report',
       status: 'open',
       priority: 'medium',

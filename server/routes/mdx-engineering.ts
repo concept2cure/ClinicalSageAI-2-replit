@@ -43,6 +43,7 @@ import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../
 import type { QueryResultRow } from 'pg';
 import { pool } from '../db';
 import { designControlTraceState } from '../../shared/regulatory/design-controls-trace';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 const log = createScopedLogger('mdx-engineering');
@@ -153,11 +154,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
   try {
     /* Verify tenancy before reading anything. A valid UUID from another
        org and a non-existent UUID both 404, so neither leaks. */
-    const program = await pool.query<{ id: string }>(
-      `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [programId, orgId],
-    );
-    if (program.rows.length === 0) return notFoundInTenant(res, 'Program');
+    if (!(await programInOrganization(pool, programId, orgId))) return notFoundInTenant(res, 'Program');
 
     /* ── Risks — ISO 14971, program-scoped ───────────────────────────
        Controls are aggregated per risk so the surface can show the

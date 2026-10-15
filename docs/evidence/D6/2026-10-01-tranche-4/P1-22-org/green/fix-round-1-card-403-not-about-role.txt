@@ -1,0 +1,16 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > reads the period from the server and says when it is the 25-year default 143ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a failed read is an error, never the default presented as this organisation’s period 336ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a member is told who sets the period and is offered no control 50ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a 403 that is not about role is shown in the server’s words, never as “your role cannot” 33ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > shortening sends the reason and the governing rule; a refusal leaves the period in force and says why 165ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a lengthened period is shown from the server’s answer, and only then reported as saved 181ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  07:14:55
+   Duration  4.80s (transform 1.26s, setup 332ms, import 1.66s, tests 925ms, environment 1.22s)
+

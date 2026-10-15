@@ -10,7 +10,233 @@
  *
  * @module server/services/ind/ctd/lifecycle-document-types
  */
-import type { LifecycleDocumentType } from './types.js';
+import type { E3Basis, LifecycleDocumentType } from './types.js';
+import { recall } from './regulatory-basis.js';
+import { getApplicationType } from '../../../../shared/regulatory/global-document-registry';
+
+/** One route fact: the checked registry authority is shared by inquiry, package and drafting. */
+export const IND_SAFETY_REPORT_ROUTE_LIMITS = getApplicationType('US_IND_SR')?.moduleAuthority
+  ?? 'IND safety report route not indexed; confirm report subtype and sponsor commercial/noncommercial status before choosing an electronic format or placement.';
+
+/** Current FDA reporting clocks; case dates and calculated due dates require approved source records. */
+export const IND_SAFETY_REPORT_TIMING = 'Initial reports under 312.32(c)(1)(i)-(iv): as soon as possible, no later than 15 calendar days after sponsor determination that the information qualifies. Unexpected fatal or life-threatening suspected adverse reactions: as soon as possible, no later than 7 calendar days after initial receipt. Relevant follow-up information: submit as soon as the information is available under 312.32(d)(2). If investigation changes an initially nonreportable event to reportable, the 15-day limit runs from the determination under 312.32(d)(3). Record the applicable trigger and approved dates; do not assume one receipt-based clock for every report.';
+
+
+// ── FDA formal meetings (PDUFA products) ─────────────────────────────────────
+// One table for every meeting deadline AnA states. The meeting entries below
+// read their timing from it. Until 2026-10-04 each entry carried its own
+// string, and end_of_phase_2_meeting said 60 days / package 30 days before.
+// That was a Type B figure. EOP2 is Type B(EOP): 70 days, package 50 days
+// before. The Dec 2017 draft already said 70/50, so the old figure was a
+// transcription error, not a rule change.
+// (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-04-depth/b3-meetings-dsur-facts.md)
+
+/** FDA's final formal-meetings guidance, finalized 2026-08-12 (FR 2026-16452), replacing the 2023 revised draft and the 2017 draft. */
+export const FDA_FORMAL_MEETINGS_GUIDANCE =
+  'FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (final, Aug 2026)';
+
+// 2026-10-15: the PDUFA VII, draft-text and E2F bases were `regulator-text`, but
+// each was read only in a search extract (regulator hosts block WebFetch here;
+// b3-meetings-dsur-facts.md), which is recall. A recall deadline says so where stated.
+const SEARCH_EXTRACT = 'Search extract of the regulator-hosted document on 2026-10-04; the document itself was not read (egress blocked). Verbatim re-read owed.';
+const PDUFA_VII_URL = 'https://www.fda.gov/media/151712/download';
+/** Sept 2023 revised draft; finalized Aug 2026. Package deadlines were seen in a search extract of this text, not the final. */
+const FORMAL_MEETINGS_DRAFT_URL = 'https://www.fda.gov/media/172311/download';
+
+const pdufa = (ref: string): E3Basis => ({ ref: `PDUFA VII commitment letter: ${ref}`, confidence: 'recall', url: PDUFA_VII_URL, note: SEARCH_EXTRACT });
+const draftText = (ref: string): E3Basis => ({ ref: `FDA formal-meetings guidance (2023 revised draft text; finalized Aug 2026): ${ref}`, confidence: 'recall', url: FORMAL_MEETINGS_DRAFT_URL, note: SEARCH_EXTRACT });
+
+export type FdaMeetingType = 'A' | 'B' | 'B(EOP)' | 'C' | 'D' | 'INTERACT';
+
+export interface FdaMeetingTimeline {
+  type: FdaMeetingType;
+  /** Days within which FDA responds to the meeting request. */
+  requestResponseDays: number;
+  /** Days from FDA's receipt of the request within which the meeting is held (or the written response sent). */
+  scheduleDays: number;
+  /** The meeting package goes with the request, or no later than this many calendar days before the meeting. */
+  packageDue: 'with-request' | number;
+  /** How packageDue was checked. Also listed in basis. A recall deadline is said to be recall wherever it is stated. */
+  packageDueBasis: E3Basis;
+  /** Which meetings take this type. */
+  eligibility: string;
+  /** One entry per figure or statement, each labelled by how it was checked. */
+  basis: E3Basis[];
+}
+
+// Follow-up F18 (2026-10-05): Type C's 47 days is still recall. Searches on
+// fda.gov/media/172311 (and the Dec 2017 draft, media/109951) return it, with
+// the surrogate-endpoint exception, but only in a search engine's synthesis;
+// the text itself is unread (regulator hosts are blocked here). So the row
+// keeps 47 and every sentence that states it says it is recall.
+// (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-meeting-template-followups-facts.md)
+const PACKAGE_A = draftText('Type A meeting package submitted with the meeting request');
+const PACKAGE_B = draftText('Type B meeting package no later than 30 days before the meeting');
+const PACKAGE_B_EOP = draftText('Type B(EOP) meeting package no later than 50 days before the meeting; Type B(EOP) eligibility');
+const PACKAGE_C = recall('Type C meeting package no later than 47 days before the meeting (or the written-response date); a Type C meeting on a new surrogate endpoint takes its package with the request. Returned for fda.gov/media/172311 and media/109951 only in search-engine syntheses, checked 2026-10-05; the guidance text is unread');
+const PACKAGE_D = draftText('Type D request response in 14 days; meeting package with the request; two topics, three disciplines');
+const PACKAGE_INTERACT = draftText('INTERACT meeting package with the request');
+
+export const FDA_FORMAL_MEETING_TIMELINES: Record<FdaMeetingType, FdaMeetingTimeline> = {
+  A: {
+    type: 'A', requestResponseDays: 14, scheduleDays: 30, packageDue: 'with-request', packageDueBasis: PACKAGE_A,
+    eligibility: 'Needed for an otherwise stalled development program to proceed, or to address an important safety issue (e.g., dispute resolution, clinical-hold response, post-action meetings).',
+    basis: [pdufa('Type A scheduled within 30 days'), PACKAGE_A, recall('Type A request response in 14 days; eligibility wording')],
+  },
+  B: {
+    type: 'B', requestResponseDays: 21, scheduleDays: 60, packageDue: 30, packageDueBasis: PACKAGE_B,
+    eligibility: 'Milestone meetings such as pre-IND, pre-NDA and pre-BLA, and End-of-Phase 1 meetings not taken as Type B(EOP).',
+    basis: [pdufa('Type B scheduled within 60 days'), PACKAGE_B, recall('Type B request response in 21 days; eligibility wording')],
+  },
+  'B(EOP)': {
+    type: 'B(EOP)', requestResponseDays: 14, scheduleDays: 70, packageDue: 50, packageDueBasis: PACKAGE_B_EOP,
+    eligibility: 'End-of-Phase 2 / pre-Phase 3 meetings, and End-of-Phase 1 meetings for products under 21 CFR 312 subpart E or 21 CFR 314 subpart H (or similar).',
+    basis: [pdufa('Type B(EOP) scheduled within 70 days'), PACKAGE_B_EOP, recall('Type B(EOP) request response in 14 days')],
+  },
+  C: {
+    type: 'C', requestResponseDays: 21, scheduleDays: 75, packageDue: 47, packageDueBasis: PACKAGE_C,
+    eligibility: 'Any meeting other than Type A, B, B(EOP), D or INTERACT on the development or review of a product. A Type C meeting on a novel surrogate endpoint takes its package with the request.',
+    basis: [pdufa('Type C scheduled within 75 days'), PACKAGE_C, recall('Type C request response in 21 days; eligibility wording')],
+  },
+  D: {
+    type: 'D', requestResponseDays: 14, scheduleDays: 50, packageDue: 'with-request', packageDueBasis: PACKAGE_D,
+    eligibility: 'A narrow set of issues: no more than two focused topics, needing input from no more than three disciplines or divisions.',
+    basis: [pdufa('Type D scheduled within 50 days'), PACKAGE_D],
+  },
+  INTERACT: {
+    type: 'INTERACT', requestResponseDays: 21, scheduleDays: 75, packageDue: 'with-request', packageDueBasis: PACKAGE_INTERACT,
+    eligibility: 'Novel questions early in development, before a pre-IND meeting. Not appropriate once a pre-IND meeting has been held or an IND filed.',
+    basis: [pdufa('INTERACT scheduled within 75 days'), PACKAGE_INTERACT, recall('INTERACT request response in 21 days; not appropriate after a pre-IND meeting or IND (final guidance, trade-press report)')],
+  },
+};
+
+/** "Type B(EOP)", but "INTERACT": FDA does not call INTERACT a Type. */
+export function meetingTypeName(type: FdaMeetingType): string {
+  return type === 'INTERACT' ? type : `Type ${type}`;
+}
+
+/** "no later than 50 calendar days before the meeting" / "with the meeting request", marked when the deadline is recall. */
+export function meetingPackageDeadline(type: FdaMeetingType): string {
+  const row = FDA_FORMAL_MEETING_TIMELINES[type];
+  const due = row.packageDue === 'with-request' ? 'with the meeting request' : `no later than ${row.packageDue} calendar days before the meeting`;
+  return row.packageDueBasis.confidence === 'recall' ? `${due} (recall: not yet read in FDA's guidance text; confirm before relying on it)` : due;
+}
+
+/** A meeting entry's timing line: when it is requested, then FDA's schedule and package deadline from the table. */
+function meetingTiming(type: FdaMeetingType, when: string): string {
+  const row = FDA_FORMAL_MEETING_TIMELINES[type];
+  return `${when}; FDA schedules a ${meetingTypeName(type)} meeting within ${row.scheduleDays} days of receipt of the meeting request, with the briefing document (meeting package) due ${meetingPackageDeadline(type)}.`;
+}
+
+// ── The core every FDA formal-meeting package carries ───────────────────────
+// For a meeting with no lifecycle entry of its own (End-of-Phase 1, Type A,
+// C, D, INTERACT), ana-ri's fda_formal_meeting_package drafts from this core.
+// Until 2026-10-05 (follow-up F17) it took these sections from the pre-IND
+// entry, so it called every request a "Formal Type B meeting request" and
+// headed the background "Development Rationale". Each code is one every
+// lifecycle meeting entry also carries in its own words (pinned by
+// tests/regulatory/meetings-and-dsur-truth.test.ts).
+
+export interface MeetingPackageCoreComponent {
+  /** The code the lifecycle meeting entries give the same component. */
+  code: string;
+  title: string;
+  required: boolean;
+  /** What the component carries, for any meeting type. */
+  guidance: string;
+  basis: E3Basis[];
+}
+
+const MEETING_CONTENTS_RECALL = recall(`${FDA_FORMAL_MEETINGS_GUIDANCE}: contents of a meeting request and a meeting package; not re-read in the guidance text on 2026-10-05`);
+
+const WITH_REQUEST_TYPES = Object.values(FDA_FORMAL_MEETING_TIMELINES)
+  .filter((r) => r.packageDue === 'with-request')
+  .map((r) => meetingTypeName(r.type));
+const SEPARATE_PACKAGE_TYPES = Object.values(FDA_FORMAL_MEETING_TIMELINES)
+  .filter((r) => r.packageDue !== 'with-request')
+  .map((r) => meetingTypeName(r.type));
+const inWords = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs.join(''));
+
+export const FDA_MEETING_PACKAGE_CORE: MeetingPackageCoreComponent[] = [
+  {
+    code: 'MTG-REQ-CL', title: 'Meeting Request Letter and Cover Letter', required: true,
+    guidance: `The meeting request that starts FDA's scheduling clock. It names the meeting type requested and why, the product and its application number (if one is assigned), the proposed indication, the purpose and objectives, the preliminary questions grouped by discipline, the requested format and suggested dates. For ${inWords(WITH_REQUEST_TYPES)} meetings the meeting package goes with the request; for ${inWords(SEPARATE_PACKAGE_TYPES)} meetings it is a separate, later submission (except a Type C meeting on a new surrogate endpoint, whose package goes with the request; recall).`,
+    basis: [...Object.values(FDA_FORMAL_MEETING_TIMELINES).map((r) => r.packageDueBasis), MEETING_CONTENTS_RECALL],
+  },
+  {
+    code: 'MTG-AGENDA', title: 'Proposed Agenda', required: true,
+    guidance: 'Time-boxed agenda listing the topics and the numbered questions to be discussed, with the sponsor speaker for each item.',
+    basis: [MEETING_CONTENTS_RECALL],
+  },
+  {
+    code: 'MTG-ATTEND', title: 'Sponsor Attendee List', required: true,
+    guidance: 'Table of sponsor and consultant attendees with names, titles, roles and affiliations, plus the FDA disciplines or attendees requested.',
+    basis: [MEETING_CONTENTS_RECALL],
+  },
+  {
+    code: 'MTG-BKGD', title: 'Product Background and Development History', required: true,
+    guidance: 'Overview of the product, the proposed indication, the regulatory history to date including any prior FDA agreements, and the development status that sets the context for the questions.',
+    basis: [MEETING_CONTENTS_RECALL],
+  },
+  {
+    code: 'MTG-QUES', title: 'Numbered Questions for FDA with Sponsor Positions', required: true,
+    guidance: "Numbered questions grouped by discipline, each stating the sponsor's position and the supporting rationale, on which FDA's agreement or advice is sought.",
+    basis: [MEETING_CONTENTS_RECALL],
+  },
+];
+
+// ── ICH E2F DSUR outline ─────────────────────────────────────────────────────
+// The headings of ICH E2F (Step 5), once. ana-ri's dsur template reads them.
+// Until 2026-10-04 the dsur entry called §19 "Conclusions" and never asked for
+// §19 Summary of Important Risks. ana-ri forced its own 14 mis-numbered
+// headings (e.g. "14. Conclusions").
+
+const E2F_URL = 'https://www.ema.europa.eu/en/documents/scientific-guideline/ich-guideline-e2f-development-safety-update-report-step-5_en.pdf';
+
+export interface E2fSection {
+  /** E2F section number; absent for the title page, executive summary and appendices. */
+  number?: string;
+  title: string;
+  required: boolean;
+  /** What the section carries, in E2F's terms. */
+  guidance: string;
+  basis: E3Basis[];
+}
+
+// Every section is required: E2F says all sections should be completed, and
+// where there is no information or a section does not apply, that is stated.
+// (Until 2026-10-05 §9-§11 and §14-§17 were optional, which put them after
+// §20 in ana-ri's prompt and made §16, the US IND items, look optional.)
+const e2f = (number: string | undefined, title: string, guidance: string): E2fSection => ({
+  ...(number ? { number } : {}), title, required: true, guidance,
+  basis: [{ ref: number ? `ICH E2F §${number}` : `ICH E2F ${title}`, confidence: 'recall', url: E2F_URL, note: SEARCH_EXTRACT }],
+});
+
+export const ICH_E2F_DSUR_SECTIONS: E2fSection[] = [
+  e2f(undefined, 'Title Page', 'DSUR number, investigational drug(s), reporting period, data lock point, sponsor name and address, confidentiality statement.'),
+  e2f(undefined, 'Executive Summary', 'Stand-alone synopsis of the most important information: period, exposure, actions taken for safety, changes to the RSI, the overall safety assessment and important risks.'),
+  e2f('1', 'Introduction', 'Reporting period, DIBD, the drug(s), indications and populations under study, and the scope of the report.'),
+  e2f('2', 'Worldwide Marketing Approval Status', 'Countries where the drug is approved for marketing, with dates and indications.'),
+  e2f('3', 'Actions Taken in the Reporting Period for Safety Reasons', 'Significant actions by the sponsor, regulators, DMCs or ethics committees for safety reasons, each with date and reason.'),
+  e2f('4', 'Changes to Reference Safety Information', 'Changes to the RSI (usually the IB) during the period.'),
+  e2f('5', 'Inventory of Clinical Trials Ongoing and Completed During the Reporting Period', 'Overview of ongoing and completed trials, typically tabulated in an appendix.'),
+  e2f('6', 'Estimated Cumulative Exposure', 'Cumulative subject exposure in the development programme and, where marketed, patient exposure; method stated.'),
+  e2f('7', 'Data in Line Listings and Summary Tabulations', 'Interval line listings of serious adverse reactions (7.2) and cumulative summary tabulations of serious adverse events since the DIBD (7.3); RSI version used for expectedness stated.'),
+  e2f('8', 'Significant Findings from Clinical Trials During the Reporting Period', 'Completed, ongoing, long-term follow-up and other therapeutic use trials; new safety findings.'),
+  e2f('9', 'Safety Findings from Non-interventional Studies', 'Relevant safety information from non-interventional studies.'),
+  e2f('10', 'Other Clinical Trial/Study Safety Information', 'Safety information from other trials, e.g. pooled analyses or co-development partners.'),
+  e2f('11', 'Safety Findings from Marketing Experience', 'Significant safety findings from marketed use, where the drug is marketed.'),
+  e2f('12', 'Non-clinical Data', 'Major safety findings from non-clinical studies ongoing or completed in the period.'),
+  e2f('13', 'Literature', 'New, significant safety findings published or presented in the period.'),
+  e2f('14', 'Other DSURs', 'Significant findings from other DSURs on the same drug held by the sponsor.'),
+  e2f('15', 'Lack of Efficacy', 'Lack of efficacy that could reflect a significant risk to subjects, e.g. in serious or life-threatening conditions.'),
+  e2f('16', 'Region-Specific Information', 'Information a region requires, which may be provided in appendices (for a US IND: subjects who died, AE dropouts, the general investigational plan, the log of outstanding business).'),
+  e2f('17', 'Late-Breaking Information', 'Important safety information received after the data lock point while the DSUR was being prepared.'),
+  e2f('18', 'Overall Safety Assessment', 'Integrated evaluation of the period\'s data: evaluation of the risks and the benefit-risk balance.'),
+  e2f('19', 'Summary of Important Risks', 'Concise, cumulative, issue-by-issue summary of the important identified and potential risks; resolved risks stay in, briefly described; narrative or tabular.'),
+  e2f('20', 'Conclusions', 'Changes to the previous knowledge of efficacy and safety since the last DSUR, and the actions taken or planned to address emerging safety issues.'),
+  e2f(undefined, 'Appendices', 'RSI in effect at the start of the period, trial inventory, cumulative tabulations, line listings, region-specific appendices.'),
+];
 
 export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
   {
@@ -21,7 +247,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "agency": "FDA",
     "description": "Briefing package (meeting request plus briefing document) supporting a Pre-IND (Type B) meeting with the reviewing division to align on the adequacy of the nonclinical program, proposed CMC, and the design and safety of the first-in-human clinical protocol before an IND is submitted. The package frames a small number of focused questions and the sponsor's positions, giving the division the basis to agree the development program can proceed to the clinic or to identify gaps that would otherwise draw a clinical hold.",
     "regulatoryBasis": [
-      "FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (Dec 2017)",
+      FDA_FORMAL_MEETINGS_GUIDANCE,
       "21 CFR 312.47 (meetings)",
       "21 CFR 312.82 (early consultation / Pre-IND)",
       "21 CFR 312.23 (IND content and format)",
@@ -35,7 +261,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "narrative",
         "guidance": "Formal Type B meeting request that triggers FDA scheduling and travels ahead of (or with) the briefing document. It states the meeting type, product, proposed indication, and the rationale for the meeting.",
-        "authoringGuidance": "This letter is read first and determines whether FDA grants the meeting and what format (face-to-face, teleconference, or written response only) is offered, so it must contain every element the 2017 formal-meetings guidance enumerates for a meeting request. The division uses the stated purpose and question list to assign the correct review disciplines (pharm/tox, CMC, clinical, clinical pharmacology, statistics) and to decide whether the meeting is warranted or better handled as written responses. An acceptable request is specific about the product and phase of development, ties each proposed question to the objective, and names the sponsor's requested date range and attendees. Requests that are vague about purpose, omit the preliminary questions, or bundle unrelated products are the most common reasons a meeting is downgraded to written responses or delayed.",
+        "authoringGuidance": "This letter is read first and determines whether FDA grants the meeting and what format (face-to-face, teleconference, or written response only) is offered, so it must contain every element FDA's formal-meetings guidance enumerates for a meeting request. The division uses the stated purpose and question list to assign the correct review disciplines (pharm/tox, CMC, clinical, clinical pharmacology, statistics) and to decide whether the meeting is warranted or better handled as written responses. An acceptable request is specific about the product and phase of development, ties each proposed question to the objective, and names the sponsor's requested date range and attendees. Requests that are vague about purpose, omit the preliminary questions, or bundle unrelated products are the most common reasons a meeting is downgraded to written responses or delayed.",
         "keyContentElements": [
           "Product name, established/proper name, and pharmacologic class",
           "Application type and number if any (Pre-IND number once assigned)",
@@ -48,7 +274,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Approximate time needed and a statement of whether the sponsor will provide a briefing document",
           "Regulatory contact name, telephone, and email"
         ],
-        "generationPrompt": "Draft a Type B Pre-IND meeting request letter to the reviewing division of FDA for {{SPONSOR}}'s product {{PRODUCT_NAME}} in {{INDICATION}} at {{PHASE}}. Include product identity, meeting type and requested format, purpose, a preliminary numbered question list grouped by discipline, requested date range, proposed attendees, and confirmation that a briefing document will be provided no later than 30 days before the meeting per the 2017 formal-meetings guidance and 21 CFR 312.47."
+        "generationPrompt": "Draft a Type B Pre-IND meeting request letter to the reviewing division of FDA for {{SPONSOR}}'s product {{PRODUCT_NAME}} in {{INDICATION}} at {{PHASE}}. Include product identity, meeting type and requested format, purpose, a preliminary numbered question list grouped by discipline, requested date range, proposed attendees, and confirmation that a briefing document will be provided " + meetingPackageDeadline('B') + " per FDA's formal-meetings guidance and 21 CFR 312.47."
       },
       {
         "code": "MTG-AGENDA",
@@ -189,7 +415,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       }
     ],
     "registryId": "US_PRE_IND",
-    "timing": "Requested and held before IND submission; FDA schedules a Type B meeting within 60 days of receipt of the meeting request, with the briefing document due no later than 30 calendar days before the meeting date.",
+    "timing": meetingTiming('B', "Requested and held before IND submission"),
     "ctdSectionCodes": [
       "2.4",
       "2.5",
@@ -199,13 +425,13 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
   },
   {
     "id": "end_of_phase_2_meeting",
-    "label": "End-of-Phase-2 Meeting Briefing Document (Type B)",
+    "label": "End-of-Phase-2 Meeting Briefing Document (Type B(EOP))",
     "category": "meeting",
     "family": "MEETING",
     "agency": "FDA",
-    "description": "Briefing package supporting an End-of-Phase-2 (Type B) meeting to reach agreement with FDA on the design of the pivotal Phase 3 program before it begins: the adequacy of Phase 2 data to justify proceeding, the primary and key secondary endpoints, the target population and dose(s), the statistical analysis and success criteria, and any safety database, CMC, and nonclinical requirements needed to support a future marketing application. The package presents Phase 2 efficacy and safety summaries and dose-finding results and poses numbered questions seeking agreement on the pivotal design.",
+    "description": "Briefing package supporting an End-of-Phase-2 (Type B(EOP)) meeting to reach agreement with FDA on the design of the pivotal Phase 3 program before it begins: the adequacy of Phase 2 data to justify proceeding, the primary and key secondary endpoints, the target population and dose(s), the statistical analysis and success criteria, and any safety database, CMC, and nonclinical requirements needed to support a future marketing application. The package presents Phase 2 efficacy and safety summaries and dose-finding results and poses numbered questions seeking agreement on the pivotal design.",
     "regulatoryBasis": [
-      "FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (Dec 2017)",
+      FDA_FORMAL_MEETINGS_GUIDANCE,
       "21 CFR 312.47(b)(1) (end-of-Phase-2 meetings)",
       "21 CFR 312.47 (meetings)",
       "PDUFA VII commitment letter (meeting management goals)",
@@ -218,20 +444,20 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "title": "Meeting Request Letter and Cover Letter",
         "required": true,
         "contentType": "narrative",
-        "guidance": "Type B end-of-Phase-2 meeting request identifying the product, IND, proposed indication, purpose, and preliminary questions that trigger FDA scheduling.",
-        "authoringGuidance": "The request establishes that this is an end-of-Phase-2 meeting under 21 CFR 312.47(b)(1) and sets the disciplines FDA must bring, so it should clearly state that the sponsor seeks agreement on the pivotal Phase 3 design. It must include the IND number, proposed indication, the numbered preliminary questions, and requested format and dates within the Type B window. Because these meetings are decisive for a costly Phase 3, the request should make the objectives concrete. Requests that fail to signal the pivotal-design purpose or omit the preliminary questions risk being scheduled without the right statistical or clinical pharmacology reviewers present.",
+        "guidance": "Type B(EOP) end-of-Phase-2 meeting request identifying the product, IND, proposed indication, purpose, and preliminary questions that trigger FDA scheduling.",
+        "authoringGuidance": "The request establishes that this is an end-of-Phase-2 meeting under 21 CFR 312.47(b)(1) and sets the disciplines FDA must bring, so it should clearly state that the sponsor seeks agreement on the pivotal Phase 3 design. It must include the IND number, proposed indication, the numbered preliminary questions, and requested format and dates within the Type B(EOP) window. Because these meetings are decisive for a costly Phase 3, the request should make the objectives concrete. Requests that fail to signal the pivotal-design purpose or omit the preliminary questions risk being scheduled without the right statistical or clinical pharmacology reviewers present.",
         "keyContentElements": [
           "Product name, established name, and pharmacologic class",
           "IND number and proposed indication",
-          "Meeting type (Type B, end-of-Phase-2) and requested format",
+          "Meeting type (Type B(EOP), end-of-Phase-2) and requested format",
           "Statement of purpose: agreement on Phase 3 pivotal design and marketing-application requirements",
           "Preliminary numbered questions grouped by discipline",
           "Sponsor attendees and any requested FDA disciplines (esp. biostatistics, clin pharm)",
-          "Requested dates within the Type B response window",
-          "Confirmation of briefing-document delivery 30 days ahead",
+          "Requested dates within the Type B(EOP) response window",
+          "Confirmation of briefing-document delivery " + meetingPackageDeadline('B(EOP)'),
           "Regulatory contact information"
         ],
-        "generationPrompt": "Draft an end-of-Phase-2 Type B meeting request for {{SPONSOR}}'s {{PRODUCT_NAME}} (IND number) in {{INDICATION}}, stating the purpose of reaching agreement on the pivotal Phase 3 design and marketing-application requirements, listing preliminary numbered questions by discipline, requesting format and dates within the Type B window, and confirming briefing-document delivery 30 days before the meeting per the 2017 formal-meetings guidance and 21 CFR 312.47(b)(1)."
+        "generationPrompt": "Draft an end-of-Phase-2 Type B(EOP) meeting request for {{SPONSOR}}'s {{PRODUCT_NAME}} (IND number) in {{INDICATION}}, stating the purpose of reaching agreement on the pivotal Phase 3 design and marketing-application requirements, listing preliminary numbered questions by discipline, requesting format and dates within the Type B(EOP) window, and confirming briefing-document delivery " + meetingPackageDeadline('B(EOP)') + " per FDA's formal-meetings guidance and 21 CFR 312.47(b)(1)."
       },
       {
         "code": "MTG-AGENDA",
@@ -387,7 +613,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the numbered FDA questions for {{SPONSOR}}'s end-of-Phase-2 meeting on {{PRODUCT_NAME}} in {{INDICATION}}, grouped by clinical, statistical, safety, nonclinical/CMC, and regulatory. For each, give context, an explicit sponsor position with Phase 2 support cross-referenced to the relevant section, and an agreement-seeking ask covering dose(s), endpoint/estimand, population, statistical success criteria, safety database size, and remaining studies. Keep each answerable; do not fabricate the underlying data."
       }
     ],
-    "timing": "Requested after completion of Phase 2 and before major Phase 3 investment; FDA schedules the Type B meeting within 60 days of the request, with the briefing document due no later than 30 calendar days before the meeting.",
+    "timing": meetingTiming('B(EOP)', "Requested after completion of Phase 2 and before major Phase 3 investment (an End-of-Phase 1 meeting for a 21 CFR 312 subpart E or 21 CFR 314 subpart H product is also Type B(EOP))"),
     "ctdSectionCodes": [
       "2.3",
       "2.4",
@@ -405,7 +631,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "agency": "FDA",
     "description": "Briefing package supporting a Pre-NDA (Type B) meeting to align with FDA on the format, content, and completeness of the planned NDA before submission: the acceptability of the primary efficacy and safety analyses, the integrated summaries of safety and effectiveness, the datasets and their standards, pediatric and post-marketing plans, proposed labeling, and any application-organization or review-facilitation matters. The package draws on the CTD Module 2 summaries and poses numbered questions intended to de-risk the filing and the anticipated review.",
     "regulatoryBasis": [
-      "FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (Dec 2017)",
+      FDA_FORMAL_MEETINGS_GUIDANCE,
       "21 CFR 312.47(b)(2) (Other meetings, including pre-NDA / pre-submission meetings)",
       "21 CFR 314.50 (content and format of an NDA)",
       "21 CFR 314.101 (filing / refuse-to-file)",
@@ -430,10 +656,10 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Preliminary numbered questions by discipline",
           "Sponsor attendees and requested FDA disciplines",
           "Requested dates within the Type B window",
-          "Confirmation of briefing-document delivery 30 days ahead",
+          "Confirmation of briefing-document delivery " + meetingPackageDeadline('B'),
           "Regulatory contact information"
         ],
-        "generationPrompt": "Draft a Type B Pre-NDA meeting request for {{SPONSOR}}'s {{PRODUCT_NAME}} (IND number) in {{INDICATION}}, stating the purpose of agreeing on NDA content and format, giving the planned submission date and any expedited designation, listing preliminary numbered questions by discipline, requesting format and dates within the Type B window, and confirming briefing-document delivery 30 days before the meeting per the 2017 formal-meetings guidance."
+        "generationPrompt": "Draft a Type B Pre-NDA meeting request for {{SPONSOR}}'s {{PRODUCT_NAME}} (IND number) in {{INDICATION}}, stating the purpose of agreeing on NDA content and format, giving the planned submission date and any expedited designation, listing preliminary numbered questions by discipline, requesting format and dates within the Type B window, and confirming briefing-document delivery " + meetingPackageDeadline('B') + " per FDA's formal-meetings guidance."
       },
       {
         "code": "MTG-AGENDA",
@@ -494,18 +720,18 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "Summary of the pivotal efficacy results and the planned integrated summary of effectiveness (ISE) approach, including pre-specified primary and key secondary analyses.",
-        "authoringGuidance": "This section previews the efficacy evidence and the analytic approach FDA will scrutinize at filing, so it should present the pivotal trial results against the pre-specified primary endpoint and estimand, the key secondary results within the multiplicity hierarchy, and the planned structure of the integrated summary of effectiveness per ICH M4E(R2) (CTD 2.7.3). It should confirm that the analyses match prior agreements and describe any pooling or subgroup approach. Reviewers issue requests when the applicant proposes post-hoc analyses, deviates from the agreed estimand, pools heterogeneous studies without justification, or bases claims on unadjusted secondary endpoints.",
+        "authoringGuidance": "This section previews the efficacy evidence and the analytic approach FDA will scrutinize at filing, so it should present the pivotal trial results against the pre-specified primary endpoint and estimand, the key secondary results within the multiplicity hierarchy, and the planned integrated summary of effectiveness (ISE), filed in 5.3.5.3 and summarized in CTD 2.7.3. It should confirm that the analyses match prior agreements and describe any pooling or subgroup approach. Reviewers issue requests when the applicant proposes post-hoc analyses, deviates from the agreed estimand, pools heterogeneous studies without justification, or bases claims on unadjusted secondary endpoints.",
         "keyContentElements": [
           "Pivotal study designs and pre-specified primary analysis (estimand)",
           "Primary efficacy results with effect estimates and confidence intervals (tables)",
           "Key secondary results and the multiplicity/testing hierarchy outcome",
-          "Planned structure of the integrated summary of effectiveness (CTD 2.7.3)",
+          "Planned ISE structure (filed in 5.3.5.3; summarized in 2.7.3)",
           "Pooling strategy and consistency across studies/subgroups",
           "Durability / maintenance of effect where relevant",
           "Consistency with prior FDA agreements on endpoints and analyses",
           "Summary efficacy tables"
         ],
-        "generationPrompt": "Summarize clinical efficacy and the planned integrated summary of effectiveness for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present pivotal designs and the pre-specified primary analysis and estimand, primary and key secondary results in tables, the planned CTD 2.7.3 structure, pooling/subgroup approach, and consistency with prior FDA agreements. Describe where data reside without fabricating specific values."
+        "generationPrompt": "Summarize clinical efficacy and the planned integrated summary of effectiveness for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present pivotal designs and the pre-specified primary analysis and estimand, primary and key secondary results in tables, the planned ISE (5.3.5.3) structure and how 2.7.3 will summarize it, pooling/subgroup approach, and consistency with prior FDA agreements. Describe where data reside without fabricating specific values."
       },
       {
         "code": "MTG-SAFETY",
@@ -513,19 +739,19 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "Overview of the integrated safety analysis (ISS) approach and the cumulative safety findings that will support the NDA and labeling.",
-        "authoringGuidance": "FDA uses this to preview the safety database, the pooling strategy for the integrated summary of safety, and how the applicant will characterize important risks in labeling, so it should present cumulative exposure, the AE/SAE profile, deaths and discontinuations, adverse events of special interest, and the planned ISS structure per CTD 2.7.4. It should confirm the safety database meets ICH E1 expectations and describe the approach to adjudicated events and special populations. Deficiencies that draw requests include an ISS pooling strategy that masks study-level signals, inadequate exposure for a chronic indication, unaddressed safety signals, and analyses that do not support the proposed labeling.",
+        "authoringGuidance": "FDA uses this to preview the safety database, the pooling strategy for the integrated summary of safety, and how the applicant will characterize important risks in labeling, so it should present cumulative exposure, the AE/SAE profile, deaths and discontinuations, adverse events of special interest, and the planned ISS structure (filed in 5.3.5.3; summarized in 2.7.4). It should confirm the safety database meets ICH E1 expectations and describe the approach to adjudicated events and special populations. Deficiencies that draw requests include an ISS pooling strategy that masks study-level signals, inadequate exposure for a chronic indication, unaddressed safety signals, and analyses that do not support the proposed labeling.",
         "keyContentElements": [
           "Cumulative exposure by dose and duration (ICH E1 adequacy statement)",
           "Integrated AE and SAE profile (tables)",
           "Deaths, discontinuations, and dose modifications",
           "Adverse events of special interest and adjudicated events",
           "Laboratory, ECG/QT, and vital-sign findings",
-          "Planned integrated summary of safety structure and pooling strategy (CTD 2.7.4)",
+          "Planned ISS structure and pooling strategy (filed in 5.3.5.3; summarized in 2.7.4)",
           "Special-population safety (hepatic/renal, elderly, pediatric, pregnancy)",
           "Link between safety findings and proposed labeling / risk management",
           "Summary safety tables"
         ],
-        "generationPrompt": "Prepare a clinical safety summary and integrated safety analysis plan for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present cumulative exposure and ICH E1 adequacy, integrated AE/SAE tables, deaths and discontinuations, AEs of special interest, lab/QT findings, the planned CTD 2.7.4 pooling strategy, special-population safety, and the link to proposed labeling. State where data reside without fabricating counts."
+        "generationPrompt": "Prepare a clinical safety summary and integrated safety analysis plan for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present cumulative exposure and ICH E1 adequacy, integrated AE/SAE tables, deaths and discontinuations, AEs of special interest, lab/QT findings, the planned ISS (5.3.5.3) pooling strategy and how 2.7.4 will summarize it, special-population safety, and the link to proposed labeling. State where data reside without fabricating counts."
       },
       {
         "code": "MTG-DATA",
@@ -589,7 +815,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the numbered FDA questions for {{SPONSOR}}'s Pre-NDA meeting on {{PRODUCT_NAME}} in {{INDICATION}}, grouped by efficacy, safety, data standards/format, clinical pharmacology, pediatric/REMS/PMR/labeling, and CMC/facility. For each, give context, the applicant's proposal cross-referenced to the relevant section and CTD module, and an acceptability/agreement-seeking ask that de-risks filing and review. Keep each answerable; do not fabricate underlying data."
       }
     ],
-    "timing": "Requested a few months before planned NDA submission; FDA schedules the Type B meeting within 60 days of the request, with the briefing document due no later than 30 calendar days before the meeting.",
+    "timing": meetingTiming('B', "Requested a few months before planned NDA submission"),
     "ctdSectionCodes": [
       "2.3",
       "2.4",
@@ -607,7 +833,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "agency": "FDA",
     "description": "Briefing package supporting a Pre-BLA (Type B) meeting to align with FDA on the format, content, and completeness of the planned Biologics License Application before submission, with the biologics-specific emphasis on product characterization and comparability, potency, immunogenicity, manufacturing process validation and facility readiness, and lot-release/stability, alongside the integrated summaries of safety and effectiveness, data standards, and labeling. The package draws on the CTD Module 2 summaries and poses numbered questions to de-risk the filing and review of the BLA.",
     "regulatoryBasis": [
-      "FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (Dec 2017)",
+      FDA_FORMAL_MEETINGS_GUIDANCE,
       "21 CFR 312.47 (meetings)",
       "21 CFR 601.2 (BLA submission) and Section 351 of the PHS Act (42 U.S.C. 262)",
       "21 CFR 601.20 (standards for licensing)",
@@ -633,10 +859,10 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Preliminary numbered questions by discipline (with product-quality emphasis)",
           "Sponsor attendees and requested FDA disciplines (incl. product quality/CMC, facilities)",
           "Requested dates within the Type B window",
-          "Confirmation of briefing-document delivery 30 days ahead",
+          "Confirmation of briefing-document delivery " + meetingPackageDeadline('B'),
           "Regulatory contact information"
         ],
-        "generationPrompt": "Draft a Type B Pre-BLA meeting request for {{SPONSOR}}'s biological product {{PRODUCT_NAME}} (IND number) in {{INDICATION}}, stating the purpose of agreeing on BLA content and format, giving the planned submission date and any expedited designation, listing preliminary numbered questions by discipline with a product-quality emphasis, requesting format and dates within the Type B window, and confirming briefing-document delivery 30 days ahead per the 2017 formal-meetings guidance."
+        "generationPrompt": "Draft a Type B Pre-BLA meeting request for {{SPONSOR}}'s biological product {{PRODUCT_NAME}} (IND number) in {{INDICATION}}, stating the purpose of agreeing on BLA content and format, giving the planned submission date and any expedited designation, listing preliminary numbered questions by discipline with a product-quality emphasis, requesting format and dates within the Type B window, and confirming briefing-document delivery " + meetingPackageDeadline('B') + " per FDA's formal-meetings guidance."
       },
       {
         "code": "MTG-AGENDA",
@@ -739,18 +965,18 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "Summary of pivotal efficacy results and the planned integrated summary of effectiveness, including pre-specified primary and key secondary analyses.",
-        "authoringGuidance": "As in a Pre-NDA package, this previews the efficacy evidence and the analytic approach FDA will scrutinize, presenting the pivotal results against the pre-specified primary endpoint and estimand, the key secondary results within the multiplicity hierarchy, and the planned integrated summary of effectiveness per CTD 2.7.3. It must confirm the analyses match prior agreements and, for biologics, that efficacy conclusions rest on material representative of the to-be-marketed product. Reviewers issue requests for post-hoc analyses, deviations from the agreed estimand, unjustified pooling, or efficacy claims resting on non-representative early-process material.",
+        "authoringGuidance": "As in a Pre-NDA package, this previews the efficacy evidence and the analytic approach FDA will scrutinize, presenting the pivotal results against the pre-specified primary endpoint and estimand, the key secondary results within the multiplicity hierarchy, and the planned integrated summary of effectiveness (ISE), filed in 5.3.5.3 and summarized in CTD 2.7.3. It must confirm the analyses match prior agreements and, for biologics, that efficacy conclusions rest on material representative of the to-be-marketed product. Reviewers issue requests for post-hoc analyses, deviations from the agreed estimand, unjustified pooling, or efficacy claims resting on non-representative early-process material.",
         "keyContentElements": [
           "Pivotal study designs and pre-specified primary analysis (estimand)",
           "Primary efficacy results with effect estimates and confidence intervals (tables)",
           "Key secondary results and the multiplicity/testing hierarchy outcome",
-          "Planned integrated summary of effectiveness structure (CTD 2.7.3)",
+          "Planned ISE structure (filed in 5.3.5.3; summarized in 2.7.3)",
           "Pooling strategy and consistency across studies/subgroups",
           "Representativeness of the clinical material to the commercial product",
           "Consistency with prior FDA agreements on endpoints and analyses",
           "Summary efficacy tables"
         ],
-        "generationPrompt": "Summarize clinical efficacy and the planned integrated summary of effectiveness for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present pivotal designs and the pre-specified primary analysis and estimand, primary and key secondary results in tables, the planned CTD 2.7.3 structure, pooling/subgroup approach, the representativeness of clinical material to the commercial product, and consistency with prior FDA agreements. Describe where data reside without fabricating values."
+        "generationPrompt": "Summarize clinical efficacy and the planned integrated summary of effectiveness for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present pivotal designs and the pre-specified primary analysis and estimand, primary and key secondary results in tables, the planned ISE (5.3.5.3) structure and how 2.7.3 will summarize it, pooling/subgroup approach, the representativeness of clinical material to the commercial product, and consistency with prior FDA agreements. Describe where data reside without fabricating values."
       },
       {
         "code": "MTG-SAFETY",
@@ -758,7 +984,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "Overview of the integrated safety analysis approach and cumulative safety findings, including immunogenicity-related safety, supporting the BLA and labeling.",
-        "authoringGuidance": "FDA uses this to preview the safety database and the pooling strategy for the integrated summary of safety and, for biologics, to see immunogenicity-related safety (hypersensitivity, injection/infusion reactions, ADA-associated events) characterized. It should present cumulative exposure, the AE/SAE profile, deaths and discontinuations, adverse events of special interest including immunogenicity-related events, and the planned ISS structure per CTD 2.7.4, confirming ICH E1 adequacy. Deficiencies drawing requests include an ISS that masks study-level signals, inadequate exposure for a chronic indication, immunogenicity-related safety not linked to ADA data, and analyses that do not support the proposed labeling and risk management.",
+        "authoringGuidance": "FDA uses this to preview the safety database and the pooling strategy for the integrated summary of safety and, for biologics, to see immunogenicity-related safety (hypersensitivity, injection/infusion reactions, ADA-associated events) characterized. It should present cumulative exposure, the AE/SAE profile, deaths and discontinuations, adverse events of special interest including immunogenicity-related events, and the planned ISS structure (filed in 5.3.5.3; summarized in 2.7.4), confirming ICH E1 adequacy. Deficiencies drawing requests include an ISS that masks study-level signals, inadequate exposure for a chronic indication, immunogenicity-related safety not linked to ADA data, and analyses that do not support the proposed labeling and risk management.",
         "keyContentElements": [
           "Cumulative exposure by dose and duration (ICH E1 adequacy statement)",
           "Integrated AE and SAE profile (tables)",
@@ -766,12 +992,12 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Immunogenicity-related safety (hypersensitivity, infusion reactions, ADA-associated events)",
           "Other adverse events of special interest and adjudicated events",
           "Laboratory, ECG/QT, and vital-sign findings",
-          "Planned integrated summary of safety structure and pooling strategy (CTD 2.7.4)",
+          "Planned ISS structure and pooling strategy (filed in 5.3.5.3; summarized in 2.7.4)",
           "Special-population safety",
           "Link between safety findings and proposed labeling / risk management",
           "Summary safety tables"
         ],
-        "generationPrompt": "Prepare a clinical safety summary and integrated safety analysis plan for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present cumulative exposure and ICH E1 adequacy, integrated AE/SAE tables, deaths and discontinuations, immunogenicity-related and other AEs of special interest, lab/QT findings, the planned CTD 2.7.4 pooling strategy, special-population safety, and the link to labeling and risk management. State where data reside without fabricating counts."
+        "generationPrompt": "Prepare a clinical safety summary and integrated safety analysis plan for {{SPONSOR}}'s {{PRODUCT_NAME}} in {{INDICATION}}: present cumulative exposure and ICH E1 adequacy, integrated AE/SAE tables, deaths and discontinuations, immunogenicity-related and other AEs of special interest, lab/QT findings, the planned ISS (5.3.5.3) pooling strategy and how 2.7.4 will summarize it, special-population safety, and the link to labeling and risk management. State where data reside without fabricating counts."
       },
       {
         "code": "MTG-DATA-PLANS",
@@ -816,7 +1042,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the numbered FDA questions for {{SPONSOR}}'s Pre-BLA meeting on {{PRODUCT_NAME}} in {{INDICATION}}, grouped by product quality/comparability, manufacturing/facility, efficacy, safety, data standards/format, and pediatric/REMS/PMR/labeling. For each, give context, the applicant's proposal cross-referenced to the relevant section and CTD module, and an acceptability/agreement-seeking ask that de-risks filing, quality review, and inspection. Keep each answerable; do not fabricate underlying data."
       }
     ],
-    "timing": "Requested a few months before planned BLA submission; FDA schedules the Type B meeting within 60 days of the request, with the briefing document due no later than 30 calendar days before the meeting.",
+    "timing": meetingTiming('B', "Requested a few months before planned BLA submission"),
     "ctdSectionCodes": [
       "2.3",
       "2.4",
@@ -840,7 +1066,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "21 CFR 312.40 (General requirements for use of an investigational new drug in a clinical investigation)",
       "FDA Guidance for Industry: Content and Format of Investigational New Drug Applications (INDs) for Phase 1 Studies of Drugs, Including Well-Characterized, Therapeutic, Biotechnology-Derived Products (1995)",
       "ICH M4 / M4Q / M4S / M4E (Common Technical Document)",
-      "ICH E6(R2) Good Clinical Practice",
+      "ICH E6(R3) Good Clinical Practice",
       "ICH M3(R2) Nonclinical Safety Studies for the Conduct of Human Clinical Trials"
     ],
     "components": [
@@ -966,8 +1192,8 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "title": "Investigator's Brochure",
         "required": true,
         "contentType": "mixed",
-        "guidance": "Compilation of clinical and nonclinical data relevant to the study of the drug in humans, per 21 CFR 312.23(a)(5) and ICH E6(R2) §7.",
-        "authoringGuidance": "The Investigator's Brochure equips investigators and IRBs to make a benefit-risk judgment and to manage subjects safely, so it must present the physicochemical, pharmacological, toxicological, pharmacokinetic, and any clinical data in an objective, balanced way that supports the proposed protocol. Reviewers and IRBs use the IB to confirm that the reference safety information, starting dose, dose-escalation rationale, and monitoring are justified by the actual nonclinical and (if any) clinical findings. Under ICH E6(R2) the IB must be reviewed at least annually and updated as significant new information emerges, and its summary of data and guidance for the investigator section should translate the data into practical safety guidance. An acceptable IB is data-driven, internally consistent with the protocol and CMC/pharm-tox sections, clearly identifies the expected adverse reactions that define seriousness/expectedness for safety reporting, and avoids overstating efficacy.",
+        "guidance": "Compilation of clinical and nonclinical data relevant to the study of the drug in humans, per 21 CFR 312.23(a)(5) and ICH E6(R3) Appendix A (Investigator's Brochure).",
+        "authoringGuidance": "The Investigator's Brochure equips investigators and IRBs to make a benefit-risk judgment and to manage subjects safely, so it must present the physicochemical, pharmacological, toxicological, pharmacokinetic, and any clinical data in an objective, balanced way that supports the proposed protocol. Reviewers and IRBs use the IB to confirm that the reference safety information, starting dose, dose-escalation rationale, and monitoring are justified by the actual nonclinical and (if any) clinical findings. Under ICH E6(R3) Appendix A the IB must be reviewed at least annually and updated as significant new information emerges, and its summary of data and guidance for the investigator section should translate the data into practical safety guidance. An acceptable IB is data-driven, internally consistent with the protocol and CMC/pharm-tox sections, clearly identifies the expected adverse reactions that define seriousness/expectedness for safety reporting, and avoids overstating efficacy.",
         "keyContentElements": [
           "Title page, confidentiality statement, and edition/date with version control",
           "Table of contents and summary",
@@ -980,14 +1206,14 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Marketing experience and any regulatory withdrawals, if applicable",
           "References/bibliography supporting the data presented"
         ],
-        "generationPrompt": "Draft an Investigator's Brochure for {{PRODUCT_NAME}} ({{SPONSOR}}) supporting {{PHASE}} investigation in {{INDICATION}}, structured per ICH E6(R2) §7: physicochemical/pharmaceutical properties, nonclinical pharmacology, PK, and toxicology, any human experience, and a Summary of Data and Guidance for the Investigator including the reference safety information. Describe where each data set belongs and what a complete section contains; do not fabricate study results or product facts."
+        "generationPrompt": "Draft an Investigator's Brochure for {{PRODUCT_NAME}} ({{SPONSOR}}) supporting {{PHASE}} investigation in {{INDICATION}}, structured per ICH E6(R3) Appendix A: physicochemical/pharmaceutical properties, nonclinical pharmacology, PK, and toxicology, any human experience, and a Summary of Data and Guidance for the Investigator including the reference safety information. Describe where each data set belongs and what a complete section contains; do not fabricate study results or product facts."
       },
       {
         "code": "PROTOCOL",
         "title": "Clinical Protocol(s)",
         "required": true,
         "contentType": "mixed",
-        "guidance": "Full protocol for each planned study, per 21 CFR 312.23(a)(6) and ICH E6(R2), placed in CTD Module 5.3.5.",
+        "guidance": "Full protocol for each planned study, per 21 CFR 312.23(a)(6) and ICH E6(R3) Appendix B, placed in CTD Module 5.3.5.",
         "authoringGuidance": "The protocol is the scientific and operational contract for the study and is the section FDA scrutinizes most for subject safety: it must state objectives, design, subject selection criteria, dosing and dose-modification rules, and the safety monitoring and stopping rules in enough detail for a reviewer to judge whether risks are minimized. For a first-in-human protocol the starting dose justification (e.g., MABEL or NOAEL-based with safety factor per FDA's 2005 estimating-maximum-safe-starting-dose guidance), the dose-escalation scheme, and stopping/pausing criteria receive particular attention. Phase 1 protocols may be less detailed on efficacy but must be complete on eligibility, dosing, monitoring, and adverse-event management; the protocol must align with the IB reference safety information and the informed consent. An acceptable protocol is internally consistent, has unambiguous safety governance (DSMB/SRC where appropriate), defined endpoints, and a schedule of assessments that operationalizes every safety commitment.",
         "keyContentElements": [
           "Protocol title, number, version/date, and phase",
@@ -1001,7 +1227,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Statistical considerations and sample size rationale",
           "Names of all investigators and clinical facilities where known (or commitment to provide)"
         ],
-        "generationPrompt": "Write the clinical protocol for {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} in {{INDICATION}}, following ICH E6(R2): objectives/endpoints, design, eligibility, dosing with starting-dose and escalation justification, schedule of assessments, adverse-event and safety monitoring plan with stopping rules, and statistical considerations. Describe required content and where data belong; do not invent results. Ensure alignment with the IB reference safety information."
+        "generationPrompt": "Write the clinical protocol for {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} in {{INDICATION}}, following ICH E6(R3) Appendix B: objectives/endpoints, design, eligibility, dosing with starting-dose and escalation justification, schedule of assessments, adverse-event and safety monitoring plan with stopping rules, and statistical considerations. Describe required content and where data belong; do not invent results. Ensure alignment with the IB reference safety information."
       },
       {
         "code": "PREV-HUMAN-EXP",
@@ -1059,7 +1285,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "21 CFR 312.30(a) (New protocol)",
       "21 CFR 312.30(b) (Changes in a protocol)",
       "21 CFR 312.30(c) (New investigator)",
-      "ICH E6(R2) Good Clinical Practice"
+      "ICH E6(R3) Good Clinical Practice"
     ],
     "components": [
       {
@@ -1116,7 +1342,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Cross-reference to updated IB, informed consent, or safety information as needed",
           "Protocol version number and date"
         ],
-        "generationPrompt": "Prepare the protocol-amendment content for {{SPONSOR}}'s {{PRODUCT_NAME}} study in {{INDICATION}} at {{PHASE}}: either a full new protocol per ICH E6(R2)/21 CFR 312.23(a)(6), or a redlined description of the change to an existing protocol per 21 CFR 312.30(b) with rationale and an assessment of any new or increased subject risk. State IRB approval status and cross-reference updated IB/consent. Do not fabricate data."
+        "generationPrompt": "Prepare the protocol-amendment content for {{SPONSOR}}'s {{PRODUCT_NAME}} study in {{INDICATION}} at {{PHASE}}: either a full new protocol per ICH E6(R3) Appendix B/21 CFR 312.23(a)(6), or a redlined description of the change to an existing protocol per 21 CFR 312.30(b) with rationale and an assessment of any new or increased subject risk. State IRB approval status and cross-reference updated IB/consent. Do not fabricate data."
       },
       {
         "code": "SUPPORTING-INFO",
@@ -1459,7 +1685,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "category": "safety",
     "family": "IND",
     "agency": "FDA",
-    "description": "An expedited safety report submitted to the reviewing division under an active IND to notify FDA (and all participating investigators) of a serious and unexpected suspected adverse reaction, a finding from clinical or nonclinical studies suggesting a significant human risk, or a clinically important increase in the rate of a serious suspected adverse reaction over that listed in the protocol or Investigator Brochure. The trigger for an individual case is a suspected adverse reaction (an adverse event for which there is a reasonable possibility the drug caused the event) that is both serious and unexpected. It is a stand-alone, event-driven administrative submission — not a CTD dossier section — transmitted on a statutory clock.",
+    "description": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Confirm the sponsor-approved reporting decision and source records before drafting. This is a route-dependent safety report, not a universal CTD section or form package.`,
     "regulatoryBasis": [
       "21 CFR 312.32 (IND safety reporting)",
       "21 CFR 312.32(a) (definitions: adverse event, suspected adverse reaction, serious, unexpected, life-threatening)",
@@ -1467,39 +1693,39 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "21 CFR 312.32(d) (follow-up)",
       "21 CFR 312.55 (Investigator Brochure / informing investigators)",
       "21 CFR 312.64(b) (investigator reporting of adverse events to sponsor)",
-      "FDA Guidance for Industry: Safety Reporting Requirements for INDs and BA/BE Studies (December 2012)",
-      "FDA Guidance: Safety Assessment for IND Safety Reporting (December 2015, draft)",
       "ICH E2A: Clinical Safety Data Management — Definitions and Standards for Expedited Reporting",
-      "ICH E2B(R3): Electronic Transmission of Individual Case Safety Reports"
+      "ICH E2B(R3): Electronic Transmission of Individual Case Safety Reports",
+      "FDA Sponsor Responsibilities — Safety Reporting Requirements and Safety Assessment for IND and Bioavailability/Bioequivalence Studies (final December 2025)",
+      "FDA Providing Regulatory Submissions in Electronic Format: IND Safety Reports (final April 2024); current implementation described in FDA IND Application Reporting: IND Safety Reports, checked 2026-10-07"
     ],
     "components": [
       {
         "code": "safety.cover",
-        "title": "IND Safety Report Cover Letter / Transmittal (with Form FDA 1571)",
+        "title": "IND Safety Report Identification / Route-Dependent Transmittal",
         "required": true,
         "contentType": "narrative",
-        "guidance": "21 CFR 312.32(c); 21 CFR 312.23(a)(1) (Form FDA 1571); FDA Safety Reporting Guidance (Dec 2012)",
-        "authoringGuidance": "The cover letter transmits the expedited report to the reviewing division and orients the reviewer within seconds: it must prominently identify the submission as an IND Safety Report and state which reporting clock is being met (7-day for fatal/life-threatening, 15-day otherwise). An FDA reviewer reads it first to triage severity and to confirm the sponsor made the two required determinations — serious and unexpected, with a reasonable possibility of causal relationship. It is acceptable when it names the specific basis under 312.32(c)(1), records day-zero and the resulting due date, and cross-references prior related reports so the reviewer can see an emerging signal rather than an isolated case. Common deficiencies that draw FDA information requests: failing to state day-zero (making timeliness unverifiable), omitting the reporting category, burying or omitting the causality determination, and inconsistent event characterization between the letter and the attached ICSR.",
+        "guidance": "21 CFR 312.32(c) and (d); FDA Sponsor Responsibilities safety guidance (final December 2025); current FDA IND safety report submission instructions",
+        "authoringGuidance": "Confirm the report subtype under 312.32(c)(1)(i)-(iv), commercial/noncommercial status, and initial/follow-up status before selecting a route or transmittal form. A cover letter or Form FDA 1571 is not a universal requirement for an E2B(R3) report to AEMS; prepare it only where the selected route requires it. Identify the IND, sponsor, safety finding and prior related reports from controlled records. Use the applicable receipt or sponsor-determination date and approved deadline calculation; never infer a reporting decision or due date from an incomplete case. Do not assume every report is an individual serious and unexpected suspected adverse reaction, or assert notifications were completed without records.",
         "keyContentElements": [
           "IND number, product name (established/proprietary), and sponsor of record",
-          "Explicit heading 'IND Safety Report' and the reporting category invoked (7-day fatal/life-threatening vs 15-day serious unexpected)",
-          "Day-zero date (date sponsor first received information qualifying the case) and calculated due date demonstrating timeliness",
+          "Report subtype under 312.32(c)(1)(i)-(iv), commercial/noncommercial status, and sponsor-approved reporting decision",
+          "Applicable trigger date: initial receipt for the 7-day category or sponsor determination for the 15-day category; approved due date calculation and follow-up status",
           "Submission serial number and cross-reference to related prior IND safety reports (same event term / same signal)",
           "Whether this is an initial report or a follow-up (and follow-up number)",
           "One-line clinical characterization of the reported event(s) with MedDRA Preferred Term(s)",
-          "Statement of the source form used (MedWatch 3500A or CIOMS I) and format (paper/eCTD/E2B)",
+          "Confirmed applicable AEMS E2B(R3), eCTD or exempt-report route; any transmittal form only where that route requires it",
           "Sponsor safety physician / pharmacovigilance contact name, telephone, and email",
-          "Confirmation that participating investigators and IRBs are being notified per 312.32(c)(1) and 312.55"
+          "Documented notification to FDA and participating investigators; applicable ethics/IRB obligations and status separately verified"
         ],
-        "generationPrompt": "Draft an IND Safety Report cover letter for {{SPONSOR}}'s {{PRODUCT_NAME}} (IND for {{INDICATION}}, {{PHASE}}). Prominently label it an IND Safety Report, state whether the 7-day or 15-day clock applies, and include IND number, day-zero date and due date, serial number, initial-vs-follow-up status, a one-line MedDRA-coded event characterization, the source form used, and the sponsor safety contact. Do not invent case facts — insert bracketed placeholders for event term, dates, and subject identifiers. Confirm investigator/IRB notification per 21 CFR 312.32(c)(1) and 312.55."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft an IND safety report identification or transmittal for {{SPONSOR}} and {{PRODUCT_NAME}} using the documented report subtype, commercial/noncommercial status and initial/follow-up status. Produce a cover letter or Form FDA 1571 content only where the selected route requires it. State applicable receipt/determination dates and approved due dates from source records; do not calculate or invent them. Include documented case/finding identifiers, prior report linkage and safety contact. Describe notification status only where supported; mark unresolved route or reporting decisions for sponsor safety review.`
       },
       {
         "code": "safety.icsr",
-        "title": "Individual Case Safety Report (MedWatch Form FDA 3500A or CIOMS I)",
+        "title": "Individual Case Safety Report (Applicable Case Reporting Route)",
         "required": true,
         "contentType": "form",
-        "guidance": "21 CFR 312.32(c)(1); FDA Safety Reporting Guidance (Dec 2012); ICH E2A; ICH E2B(R3) for electronic submission",
-        "authoringGuidance": "The ICSR is the structured case itself — the four minimum-valid-case elements (identifiable patient, identifiable reporter, a suspect drug, and a suspect adverse reaction) plus the full clinical narrative. FDA reviewers read the narrative for a coherent chronology: baseline status, drug exposure with dates and dose, event onset relative to dosing (temporal plausibility), treatment, de-challenge/re-challenge outcome, and outcome/seriousness criterion. A complete 3500A/CIOMS I carries concomitant medications, relevant medical history, relevant lab/diagnostic results with units and reference ranges, and the reporter's and sponsor's causality. Deficiencies that trigger information requests: missing dechallenge/rechallenge information, narratives that omit dose or dates, seriousness criterion not marked, absent or non-coded event terms, and no assessment of confounders (concomitant meds, underlying disease).",
+        "guidance": "21 CFR 312.32(c)(1)(i); FDA Sponsor Responsibilities safety guidance (final December 2025); ICH E2B(R3) and current FDA electronic submission instructions",
+        "authoringGuidance": "For a case-based report, prepare a source-grounded case narrative and structured information for the applicable safety-system workflow. For required commercial 312.32(c)(1)(i) reports, a MedWatch/CIOMS document is not a substitute for the required E2B(R3) AEMS submission. Noncommercial exemption must be established from sponsor records; reports under (ii), (iii) and (iv) are not automatically individual case forms. Document identifiable patient/reporter, suspect product, suspected reaction, chronology, dose/dates, seriousness, outcome, relevant tests and reporter/sponsor assessments only as supported. Missing case facts remain explicit gaps. This authoring record does not construct or validate an E2B message.",
         "keyContentElements": [
           "Four valid-case minimum elements: identifiable patient, identifiable reporter, suspect product, suspect adverse reaction",
           "Which seriousness criterion is met (death, life-threatening, hospitalization/prolongation, disability/incapacity, congenital anomaly, other medically important event)",
@@ -1512,7 +1738,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Patient demographics (age, sex, weight) and study/site/subject identifiers (de-identified per privacy rules)",
           "Case status: initial vs follow-up, and receipt/date fields supporting the reporting clock"
         ],
-        "generationPrompt": "Structure an ICSR (MedWatch 3500A or CIOMS I) for a suspected adverse reaction to {{SPONSOR}}'s {{PRODUCT_NAME}} in a {{PHASE}} study for {{INDICATION}}. Lay out the four valid-case elements, the seriousness criterion checkboxes, suspect-drug dose/dates/lot, MedDRA-coded event terms, and a chronological clinical narrative template covering exposure, onset, treatment, dechallenge/rechallenge, and outcome. Use bracketed placeholders for all patient-specific facts and lab values — do not fabricate results. Include fields for reporter and sponsor causality."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Prepare an ICSR narrative and source-data checklist only when the confirmed report subtype calls for case information. This is not an E2B(R3) message and does not validate or transmit one. Do not substitute a MedWatch/CIOMS document for a required commercial AEMS submission. Preserve approved case identifiers, exposure chronology, seriousness, outcome, tests and sponsor/reporter assessments; use explicit gaps for absent facts and confirm the approved pharmacovigilance workflow.`
       },
       {
         "code": "safety.causality",
@@ -1531,7 +1757,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Sponsor's causality conclusion distinct from the investigator/reporter's conclusion, with any disagreement reconciled",
           "For events where a single case is uninformative (e.g., events also common in the study population), reference to the aggregate analysis"
         ],
-        "generationPrompt": "Draft the causality assessment for a serious adverse event reported in {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} for {{INDICATION}}. Apply the 21 CFR 312.32(a) 'reasonable possibility' standard explicitly and structure the reasoning around temporal relationship, dechallenge/rechallenge, biological plausibility versus known pharmacology, and alternative etiologies (concomitant meds, underlying disease). State the sponsor conclusion separately from the reporter's. Use placeholders for case-specific facts; do not fabricate outcomes."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft the causality assessment for a serious adverse event reported in {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} for {{INDICATION}}. Apply the 21 CFR 312.32(a) 'reasonable possibility' standard explicitly and structure the reasoning around temporal relationship, dechallenge/rechallenge, biological plausibility versus known pharmacology, and alternative etiologies (concomitant meds, underlying disease). State the sponsor conclusion separately from the reporter's. Use placeholders for case-specific facts; do not fabricate outcomes.`
       },
       {
         "code": "safety.expectedness",
@@ -1550,15 +1776,15 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Conclusion: expected or unexpected, feeding the reporting decision under 312.32(c)",
           "Note of any pending IB update that would change future expectedness classification"
         ],
-        "generationPrompt": "Draft the expectedness assessment for an adverse event in {{SPONSOR}}'s development of {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Identify the controlling Investigator Brochure edition/date as Reference Safety Information, compare the MedDRA-coded event term against the specific IB-listed reactions, and apply the specificity-and-severity test to conclude expected vs unexpected. Quote bracketed placeholders for the IB language and event term. Flag whether an IB update is pending."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft the expectedness assessment for an adverse event in {{SPONSOR}}'s development of {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Identify the controlling Investigator Brochure edition/date as Reference Safety Information, compare the MedDRA-coded event term against the specific IB-listed reactions, and apply the specificity-and-severity test to conclude expected vs unexpected. Quote bracketed placeholders for the IB language and event term. Flag whether an IB update is pending.`
       },
       {
         "code": "safety.aggregate",
         "title": "Aggregate / Similar-Events and Increased-Rate Analysis",
         "required": false,
         "contentType": "mixed",
-        "guidance": "21 CFR 312.32(c)(1)(i)(C) (aggregate analysis of specific events); 21 CFR 312.32(c)(1)(iv) (clinically important increased rate); FDA Safety Assessment for IND Safety Reporting (Dec 2015 draft)",
-        "authoringGuidance": "Required when the individual case is uninformative on its own — typically serious events that are anticipated to occur in the study population or disease under study (e.g., disease progression, expected complications) — the sponsor must judge whether the aggregate of accumulating cases indicates the drug caused the events, or whether the observed rate clinically importantly exceeds the expected rate. Reviewers look for a pre-specified safety surveillance plan, comparison of observed versus anticipated (control-arm or historical) rates, and unblinded aggregate review by a party independent of the trial teams where feasible. Acceptable analyses state the denominators, the comparison basis, and the decision rule. Deficiencies: reporting each anticipated serious event as an isolated 15-day case (over-reporting that obscures signals), or conversely never performing the aggregate analysis and missing a rate increase; and failing to describe who performs the unblinded review.",
+        "guidance": "21 CFR 312.32(c)(1)(i)(C) (aggregate analysis of specific events); 21 CFR 312.32(c)(1)(iv) (clinically important increased rate); FDA Sponsor Responsibilities safety guidance (final December 2025)",
+        "authoringGuidance": "Confirm whether the sponsor determination invokes 312.32(c)(1)(i)(C) or (iv): an aggregate analysis does not by itself identify the submission route. Use the approved surveillance plan, observed counts and denominators, comparison population/rates, decision rule and documented review responsibilities. Commercial (i)(C) reporting follows the applicable AEMS E2B(R3) route; (iv) reports follow eCTD. Do not invent counts, independently declare a regulatory reporting determination, or treat an unresolved subtype as a waiver.",
         "keyContentElements": [
           "The specific serious event(s) under aggregate evaluation and why single cases are uninformative",
           "Observed count and exposure denominator (person-time or number of subjects) for the event",
@@ -1569,18 +1795,18 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Blinding-management approach and rationale for any unblinding",
           "Reference to the safety surveillance plan governing the analysis"
         ],
-        "generationPrompt": "Draft an aggregate / similar-events analysis for anticipated serious events in {{SPONSOR}}'s {{PHASE}} program for {{PRODUCT_NAME}} in {{INDICATION}}. Structure it around the observed count and exposure denominator, the anticipated rate and its basis (control or historical), a pre-specified decision rule for a clinically important increase, and the unblinded aggregate-review process. State the reporting determination under 21 CFR 312.32(c)(1)(i)(C) or (c)(1)(iv). Use placeholders for all counts and rates; do not fabricate data."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft an aggregate / similar-events analysis for anticipated serious events in {{SPONSOR}}'s {{PHASE}} program for {{PRODUCT_NAME}} in {{INDICATION}}. Structure it around the observed count and exposure denominator, the anticipated rate and its basis (control or historical), a pre-specified decision rule for a clinically important increase, and the unblinded aggregate-review process. State the reporting determination under 21 CFR 312.32(c)(1)(i)(C) or (c)(1)(iv). Use placeholders for all counts and rates; do not fabricate data.`
       },
       {
         "code": "safety.followup",
         "title": "Follow-Up Report",
         "required": false,
         "contentType": "mixed",
-        "guidance": "21 CFR 312.32(d) (follow-up information); FDA Safety Reporting Guidance (Dec 2012)",
-        "authoringGuidance": "A follow-up conveys material new information obtained after the initial report — final outcome, autopsy/pathology results, corrected coding, revised causality or expectedness, or the results of a promised investigation. Reviewers reconcile the follow-up against the initial case and read it for whether the assessment has changed (e.g., a fatal outcome now met, an event now considered related). Acceptable follow-ups clearly flag what changed, preserve version/serial linkage to the initial ICSR, and are submitted within 15 calendar days of the sponsor receiving the new information. Deficiencies: submitting follow-ups without identifying what is new, breaking the linkage to the parent case, and delaying beyond the 15-day clock when the follow-up itself upgrades the case (e.g., non-fatal to fatal).",
+        "guidance": "21 CFR 312.32(d) (follow-up information); FDA Sponsor Responsibilities safety guidance (final December 2025)",
+        "authoringGuidance": "Preserve linkage to the initial report, identify relevant new information and its availability date, and state supported changes in outcome, coding, causality or expectedness. Under 312.32(d)(2), relevant follow-up is submitted as soon as the information is available; there is no blanket 15-day-after-receipt follow-up allowance. Under (d)(3), if investigation makes an initially nonreportable event reportable, report as soon as possible and no later than 15 calendar days after determination. Reassess applicable subtype, reporting obligations and route from sponsor-approved records; do not invent a new deadline or claim submission or notification occurred.",
         "keyContentElements": [
           "Clear linkage to the initial report (case number, serial number, initial submission date)",
-          "Follow-up sequence number and the date new information was received (new day-zero for the 15-day follow-up clock)",
+          "Follow-up sequence number, date relevant new information became available, and any sponsor determination that changes reportability",
           "Explicit description of what changed since the prior version (outcome, coding, causality, expectedness)",
           "Updated seriousness, causality, and expectedness determinations if altered",
           "New clinical/diagnostic/autopsy information and its impact on the assessment",
@@ -1588,11 +1814,11 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Whether the case is now complete or further follow-up is pending",
           "Confirmation of investigator/IRB notification of the updated information where warranted"
         ],
-        "generationPrompt": "Draft a follow-up IND safety report for a case in {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} ({{INDICATION}}). Link it to the initial report, state the date the new information was received, and clearly flag what changed (outcome, coding, causality, or expectedness) and whether the reporting category is upgraded. Update the seriousness/causality/expectedness conclusions accordingly. Use placeholders for case-specific facts; do not fabricate results."
+        "generationPrompt": `${IND_SAFETY_REPORT_ROUTE_LIMITS} Draft a source-grounded follow-up narrative linked to the prior IND safety report. Identify what changed and when relevant new information became available; apply prompt follow-up under 312.32(d)(2), without a blanket 15-day allowance. Distinguish a new reportability determination under (d)(3) using sponsor-approved dates and decisions. Confirm subtype and applicable route before placement. Do not invent case facts, due dates, completed transmissions or notification status.`
       }
     ],
     "registryId": "US_IND_SR",
-    "timing": "7 calendar days (fatal or life-threatening, unexpected, suspected adverse reaction — initial notification, which may be by telephone or fax/electronic) / 15 calendar days (other serious and unexpected suspected adverse reactions; findings from other studies or class; clinically important rate increase). Clock starts on day zero — the day the sponsor first receives information meeting the reporting criteria. Follow-up information is submitted within 15 calendar days of receipt."
+    "timing": IND_SAFETY_REPORT_TIMING
   },
   {
     "id": "ind_annual_report",
@@ -1728,10 +1954,10 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "agency": "FDA",
     "description": "The internationally harmonized annual report on the safety of a drug under clinical development, structured per ICH E2F. It presents a comprehensive, thoughtful annual review and evaluation of accumulated safety information across all studies and indications worldwide during the reporting period, focusing on interventional clinical trials. In the US, a DSUR can be submitted to satisfy the safety-related elements of the 21 CFR 312.33 IND annual report, typically supplemented with the US-specific administrative elements that E2F does not cover. It is an administrative periodic safety report, not a CTD dossier section.",
     "regulatoryBasis": [
-      "ICH E2F: Development Safety Update Report (2010)",
+      "ICH E2F: Development Safety Update Report (2010; EMA Step 5: " + E2F_URL + "; ICH: https://database.ich.org/sites/default/files/E2F_Guideline.pdf)",
       "21 CFR 312.33 (US IND annual report obligation the DSUR may satisfy in part)",
       "21 CFR 312.32 (relationship to expedited IND safety reporting)",
-      "FDA Guidance for Industry: E2F Development Safety Update Report (August 2011)",
+      "FDA Guidance for Industry: E2F Development Safety Update Report (August 2011; https://www.fda.gov/downloads/drugs/guidances/ucm073109.pdf)",
       "ICH E2A (definitions of serious/unexpected referenced by E2F)",
       "ICH E2B(R3) (electronic ICSR standard for line listings/tabulations)"
     ],
@@ -1795,18 +2021,19 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "title": "Data in Line Listings and Summary Tabulations",
         "required": true,
         "contentType": "data",
-        "guidance": "ICH E2F Section 7 (Data in Line Listings and Summary Tabulations); ICH E2B(R3); ICH E2A",
-        "authoringGuidance": "This presents the period's serious adverse event data: a cumulative summary tabulation of serious adverse events from the clinical development program (by MedDRA SOC/PT, treatment arm where unblinding rules allow) and, per regional requirement, line listings of SAEs for the interval. Reviewers scan the summary tabulations for disproportionality across system organ classes and for accumulating serious events. Acceptable sections use consistent MedDRA versioning, state blinding conventions, and reconcile counts with exposure. Deficiencies: mixing MedDRA versions, tabulations that do not reconcile with the exposure denominators, unblinding data prematurely, and omitting the cumulative view in favor of interval-only counts.",
+        "guidance": "ICH E2F Section 7 (Data in Line Listings and Summary Tabulations): 7.2 interval line listings of serious adverse reactions, 7.3 cumulative summary tabulations of serious adverse events; ICH E2B(R3); ICH E2A",
+        "authoringGuidance": "This presents the period's serious adverse reaction and serious adverse event data: interval line listings of the serious adverse reactions (SARs) reported in the period (E2F 7.2) and a cumulative summary tabulation of serious adverse events since the DIBD (E2F 7.3; by MedDRA SOC/PT, treatment arm where unblinding rules allow), with the RSI version used for expectedness stated. Reviewers scan the summary tabulations for disproportionality across system organ classes and for accumulating serious events. Acceptable sections use consistent MedDRA versioning, state blinding conventions, and reconcile counts with exposure. Deficiencies: mixing MedDRA versions, tabulations that do not reconcile with the exposure denominators, unblinding data prematurely, and omitting the cumulative view in favor of interval-only counts.",
         "keyContentElements": [
-          "Cumulative summary tabulation of serious adverse events by MedDRA System Organ Class and Preferred Term",
-          "Interval SAE line listings per regional requirement (subject ID, event, seriousness criterion, outcome, causality)",
+          "Cumulative summary tabulation of serious adverse events since the DIBD by MedDRA System Organ Class and Preferred Term (E2F 7.3)",
+          "Interval line listings of serious adverse reactions (E2F 7.2): subject ID, event, seriousness criterion, outcome, causality",
+          "Reference safety information (document and version) used to assess expectedness",
           "Treatment-arm presentation consistent with blinding-maintenance conventions",
           "Consistent MedDRA version stated and applied throughout",
           "Reconciliation of SAE counts against the cumulative exposure denominators",
           "Distinction between blinded and unblinded data and the rules governing any unblinding",
           "Cross-reference from tabulations to the significant-findings and safety-evaluation sections"
         ],
-        "generationPrompt": "Draft the DSUR line listings and summary tabulations section (ICH E2F Section 7) for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Provide a cumulative SAE summary-tabulation template by MedDRA SOC/PT and an interval SAE line-listing template (subject ID, event, seriousness, outcome, causality), stating the MedDRA version and blinding conventions, and reconciling to exposure. Use bracketed placeholders for all data; do not fabricate adverse events."
+        "generationPrompt": "Draft the DSUR line listings and summary tabulations section (ICH E2F Section 7) for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Provide an interval line-listing template of serious adverse reactions (E2F 7.2: subject ID, event, seriousness, outcome, causality) and a cumulative SAE summary-tabulation template since the DIBD by MedDRA SOC/PT (E2F 7.3), naming the RSI used for expectedness, stating the MedDRA version and blinding conventions, and reconciling to exposure. Use bracketed placeholders for all data; do not fabricate adverse events."
       },
       {
         "code": "dsur.safety_evaluation",
@@ -1819,7 +2046,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Evaluation of significant safety findings from clinical trials completed and interim during the period",
           "Safety findings from non-interventional studies, marketed use, nonclinical studies, and the literature",
           "Findings on lack of efficacy that carry safety implications (e.g., in serious/life-threatening indications)",
-          "Region-specific information required by any participating region (e.g., US cumulative subjects, serious ADRs)",
+          "Region-specific information (E2F 16), which may be given in appendices. For a US IND (FDA E2F guidance, ucm073109): subjects who died in the period (case number, assigned treatment, cause of death); subjects who dropped out in association with adverse events; the general investigational plan for the coming year; a log of outstanding business on the IND. Significant Phase 1 protocol modifications and manufacturing changes are recall, not yet checked against E2F text",
           "Late-breaking information received after the DLP but before finalization",
           "Characterization of identified risks, potential risks, and missing information (aligned with any development RMP)",
           "Overall safety evaluation integrating all sources into an updated benefit-risk statement",
@@ -1828,14 +2055,30 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the DSUR significant-findings and overall safety assessment (ICH E2F Sections 8-18) for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Evaluate (do not merely list) clinical-trial, non-interventional, marketing, nonclinical, and literature findings; address lack-of-efficacy safety implications, region-specific US data, and late-breaking information; and integrate everything into identified/potential risks, missing information, and an updated benefit-risk statement. Use bracketed placeholders; do not fabricate findings."
       },
       {
+        "code": "dsur.important_risks",
+        "title": "Summary of Important Risks",
+        "required": true,
+        "contentType": "mixed",
+        "guidance": "ICH E2F Section 19 (Summary of Important Risks)",
+        "authoringGuidance": "A concise, cumulative, issue-by-issue summary of the important identified and potential risks recognised in the development programme, in narrative or tabular form. Each risk is re-evaluated in light of the period's data; a risk that has been resolved stays in the summary, briefly described, so the cumulative picture is complete. Reviewers read it to see the sponsor's current risk profile at a glance and check that it agrees with the overall safety assessment (Section 18) and with the reference safety information. Deficiencies: an interval-only list, risks dropped without explanation, and a summary that disagrees with the IB's RSI.",
+        "keyContentElements": [
+          "Important identified risks, one issue at a time, cumulative to the DLP",
+          "Important potential risks, one issue at a time, cumulative to the DLP",
+          "Resolved risks retained and briefly described",
+          "For each risk: what is known, what the period added, and how it is being managed",
+          "Consistency with the Overall Safety Assessment (Section 18) and the IB reference safety information"
+        ],
+        "generationPrompt": "Draft the DSUR Summary of Important Risks (ICH E2F Section 19) for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Give a cumulative, issue-by-issue summary of important identified and potential risks in narrative or tabular form, keep resolved risks with a brief description, and keep it consistent with Section 18 and the IB reference safety information. Use bracketed placeholders; do not fabricate risks or findings."
+      },
+      {
         "code": "dsur.conclusion_appendices",
         "title": "Conclusions and Appendices",
         "required": true,
         "contentType": "mixed",
-        "guidance": "ICH E2F Section 19 (Conclusions) and Appendices (contacts, IB/RSI in effect, cumulative tabulations, region-specific tables)",
-        "authoringGuidance": "The conclusion summarizes new safety information of greatest importance, its impact on the benefit-risk balance, and the actions the sponsor proposes or has taken; the appendices carry the supporting materials — the RSI/IB in effect at the DLP, cumulative summary tabulations, the trial inventory, and region-specific appendices (e.g., US). Reviewers read the conclusion for the sponsor's forward plan and check that appendices substantiate the narrative. Acceptable conclusions are decisive about whether the benefit-risk remains favorable and what changes are proposed. Deficiencies: a conclusion that does not commit to actions, appendices that omit the controlling RSI/IB, and region-specific appendices missing when a participating region requires them.",
+        "guidance": "ICH E2F Section 20 (Conclusions) and Appendices (contacts, IB/RSI in effect, cumulative tabulations, region-specific tables)",
+        "authoringGuidance": "The conclusion briefly describes changes to the previous knowledge of efficacy and safety since the last DSUR, drawing on the Overall Safety Assessment (Section 18) and the Summary of Important Risks (Section 19), and the actions taken or planned to address emerging safety issues; the appendices carry the supporting materials — the RSI/IB in effect at the DLP, cumulative summary tabulations, the trial inventory, and region-specific appendices (e.g., US). Reviewers read the conclusion for the sponsor's forward plan and check that appendices substantiate the narrative. Acceptable conclusions are decisive about whether the benefit-risk remains favorable and what changes are proposed. Deficiencies: a conclusion that does not commit to actions, appendices that omit the controlling RSI/IB, and region-specific appendices missing when a participating region requires them.",
         "keyContentElements": [
-          "Summary of the most important new safety information of the period",
+          "Changes to the previous knowledge of efficacy and safety since the last DSUR",
           "Statement of the impact on the benefit-risk balance and whether it remains favorable",
           "Actions proposed or taken (protocol/IB/consent changes, risk-minimization, further analyses)",
           "Appendix: Reference Safety Information (IB / RSI section) in effect at the DLP",
@@ -1843,7 +2086,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Appendix: region-specific information (e.g., US) where required",
           "Appendix: sponsor safety contacts and signatory/qualified person as applicable"
         ],
-        "generationPrompt": "Draft the DSUR conclusions and appendix structure (ICH E2F Section 19 and appendices) for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Summarize the most important new safety information, state the benefit-risk impact and whether it remains favorable, and commit to proposed/taken actions. List the appendices (RSI/IB in effect at DLP, cumulative tabulations, trial inventory, region-specific US tables, contacts). Use bracketed placeholders; do not fabricate conclusions."
+        "generationPrompt": "Draft the DSUR conclusions and appendix structure (ICH E2F Section 20 and appendices) for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Drawing on Sections 18 and 19, describe changes to the previous knowledge of efficacy and safety since the last DSUR, state the benefit-risk impact and whether it remains favorable, and commit to proposed/taken actions. List the appendices (RSI/IB in effect at DLP, cumulative tabulations, trial inventory, region-specific US tables, contacts). Use bracketed placeholders; do not fabricate conclusions."
       }
     ],
     "registryId": "ICH_DSUR",
@@ -2819,7 +3062,9 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       "ICH E2A/E2E safety terminology and signal frameworks",
       "FDA Reviewer Guidance: Conducting a Clinical Safety Review of a New Product Application (2005)",
       "FDA Guidance: Premarketing Risk Assessment (2005)",
-      "FDA Guidance: Integrated Summary of Effectiveness (Aug 2015) - companion analytic principles"
+      "FDA Guidance: Integrated Summary of Effectiveness (Aug 2015) - companion analytic principles",
+      "FDA OND Standard Safety Tables and Figures: Integrated Guide and Targeted Analysis Guides (OND reviewer practice for NDA/BLA review)",
+      "FDA OND Custom Medical Queries (OCMQs, formerly FMQs; MAPP 6025.8), voluntary for sponsors"
     ],
     "components": [
       {
@@ -2904,7 +3149,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "mixed",
         "guidance": "The core integrated analyses of common adverse events, serious adverse events, deaths, discontinuations due to AEs, and other significant AEs, presented by SOC/PT with between-treatment comparisons in controlled pools.",
-        "authoringGuidance": "This is the analytic heart of the ISS and the section the medical reviewer scrutinizes most closely; present overall AE incidence, common treatment-emergent AEs by MedDRA SOC and preferred term with between-group comparisons (drug vs. comparator/placebo) in controlled pools, and dedicated analyses of deaths, other serious AEs, and AEs leading to discontinuation or dose modification. Include severity and causality breakdowns, dose- and time-to-onset relationships, and narratives or cross-references for deaths and important SAEs. Use risk differences/relative risks where appropriate and flag adverse events of special interest. Reviewers look for a transparent, consistently-denominated presentation that neither buries nor over-adjusts signals; failing to present the marketed-dose comparison, omitting time-to-onset/duration for key events, inconsistent counting, or inadequate death/SAE narratives are the deficiencies that generate information requests and safety-review findings.",
+        "authoringGuidance": "This is the analytic heart of the ISS and the section the medical reviewer scrutinizes most closely; present overall AE incidence, common treatment-emergent AEs by MedDRA SOC and preferred term with between-group comparisons (drug vs. comparator/placebo) in controlled pools, and dedicated analyses of deaths, other serious AEs, and AEs leading to discontinuation or dose modification. Include severity and causality breakdowns, dose- and time-to-onset relationships, and narratives or cross-references for deaths and important SAEs. Use risk differences/relative risks where appropriate and flag adverse events of special interest. Reviewers look for a transparent, consistently-denominated presentation that neither buries nor over-adjusts signals; failing to present the marketed-dose comparison, omitting time-to-onset/duration for key events, inconsistent counting, or inadequate death/SAE narratives are the deficiencies that generate information requests and safety-review findings. FDA reviewers regenerate these analyses with the Standard Safety Tables and Figures Integrated Guide and the OCMQs, so imbalances those groupings expose should be found and addressed by the sponsor first.",
         "keyContentElements": [
           "Overall incidence of treatment-emergent AEs by pool and treatment group",
           "Common AEs by SOC/PT with between-group comparisons in controlled pools",
@@ -2914,7 +3159,9 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Severity and causality distributions",
           "Dose-response and time-to-onset/duration analyses for key events",
           "Risk difference/relative risk estimates where appropriate",
-          "Common/serious AE tables split for controlled vs. all-exposure pools"
+          "Common/serious AE tables split for controlled vs. all-exposure pools",
+          "AE groupings by OCMQ (Narrow/Broad, and Algorithmic where defined), version-matched to the integrated database's MedDRA version, alongside SMQs and any sponsor-defined groupings",
+          "Common-AE and OCMQ tables anticipating the FDA ST&F layout: by organ system, then decreasing risk difference, with an unadjusted confidence interval"
         ],
         "generationPrompt": "Write the integrated adverse-event analysis section and table shells for the ISS of {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}). Structure overall AE incidence, common AEs by SOC/PT with drug-vs-comparator comparisons, deaths, SAEs, AESIs, discontinuations, and dose/time relationships. Provide table structures and describe WHERE narratives reside; do not invent event rates."
       },
@@ -2933,7 +3180,8 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Vital-sign changes including orthostatic and weight effects",
           "ECG/QTc analyses and outlier/categorical thresholds",
           "Any specialized assessments (renal biomarkers, immunogenicity, etc.)",
-          "Cross-reference to relevant AESIs and AE analyses"
+          "Cross-reference to relevant AESIs and AE analyses",
+          "Kidney- and muscle-injury analyses anticipating the ST&F Targeted Analysis Guides where the program has a renal or CK/rhabdomyolysis signal"
         ],
         "generationPrompt": "Draft the laboratory/vital-signs/ECG safety section and table shells for the ISS of {{SPONSOR}}'s {{PRODUCT_NAME}}. Include central-tendency changes, shift tables, marked-abnormality incidence, a Hy's Law/eDISH hepatotoxicity evaluation, and QTc analyses. Provide table structures with placeholders; do not fabricate laboratory values."
       },

@@ -1,0 +1,3 @@
+# npm run ci:server-error-leaks  (2026-10-01T03:11:16Z)
+[ci:server-error-leaks] OK — 95 baselined site(s) across 61 file(s); no file gained one.
+[ci:server-error-leaks] 1 site(s) fixed since the baseline — shrink it with --write-baseline.

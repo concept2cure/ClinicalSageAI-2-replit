@@ -1,0 +1,123 @@
+{
+  "runtime": "v22.23.3",
+  "fixture": {
+    "database": "ana_source_access_fixture",
+    "ownerRole": "source_fixture_owner",
+    "name": "c2c-source-access-b46e441b-be9",
+    "image": [
+      "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+    ]
+  },
+  "proofScope": "Actual canonical source admission/catalog filter SQL on owned synthetic PostgreSQL. Ordinary table owner except forced policy control. No provider/client/deployed RLS qualification.",
+  "observations": [
+    {
+      "server": {
+        "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+        "current_database": "ana_source_access_fixture",
+        "current_user": "source_fixture_owner",
+        "pg_backend_pid": 73,
+        "superuser": false,
+        "bypassrls": false
+      },
+      "image": [
+        "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+      ],
+      "rolePosture": "Synthetic minimal schema, ordinary table owner NOSUPERUSER NOBYPASSRLS. Owner bypasses ordinary RLS; explicit FORCE case separately labelled."
+    },
+    {
+      "barrier": "same-length",
+      "blocker": 74,
+      "waiters": [
+        {
+          "pid": 75,
+          "application_name": "source-same-length",
+          "wait_event_type": "Lock",
+          "blockers": [
+            74
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "revoked",
+      "blocker": 76,
+      "waiters": [
+        {
+          "pid": 77,
+          "application_name": "source-revoked",
+          "wait_event_type": "Lock",
+          "blockers": [
+            76
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "source-dml",
+      "blocker": 78,
+      "waiters": [
+        {
+          "pid": 79,
+          "application_name": "source-source-dml",
+          "wait_event_type": "Lock",
+          "blockers": [
+            78
+          ]
+        }
+      ]
+    },
+    {
+      "rolePolicy": "Explicit forced synthetic SELECT true / INSERT false; actual SQL refusal, zero accepted receipt count. Not deployed RLS qualification."
+    }
+  ],
+  "before": {
+    "server/services/ana/source-read-scope.ts": "5abea7972ff0f2568a488686223f187255853c76e198cca52a3ae346457c05df",
+    "server/services/ana/project-scope-admission.ts": "059fa1b134452dec603c1a862df0ceb9200a87789cb961f5fabd0f605f970454",
+    "server/services/vault/document-catalog.service.ts": "e7e9320ab612c71a7fdc529d06c4495dc3714ea9845bf40ccb9e08e99297fa3d",
+    "server/services/vault/document-catalog-actor-access.ts": "14e308c46756925ea3cb553f81eafa47253859602df836583443a3b44ae5faa8",
+    "server/services/vault/document-catalog-actor-reads.ts": "ab97dfd2fc3ea47ac3b74ce32e6077ef03d4dfb9baba3b0d6a004282d396d83d",
+    "server/services/vault/document-catalog-actor-captures.ts": "f243efe76ef06665e359de3d75a51ae98391d20a849e504e955271fa52526e27",
+    "server/services/ana/source-read-receipt.ts": "8863bbab2a38b28fb6ce318ef3526b907cff7f969afd488a78265cf10af214c8",
+    "server/services/vault/document-catalog-admission.ts": "0022f748129fa42a43c3a193cf5fae16d23bd9ad2f6e72eaae489119cde8b360",
+    "server/services/report-os/project-access.ts": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "server/services/ana/source-context-admission.ts": "790d2daf1a9700ffebd7529c6ecab09c743f178c34e5fbd67678ffc2e352d156",
+    "server/services/ana/read-receipts.ts": "2a5a43d16ca6456bece9937d189982179e93e88feaa6c6395f90d32358080131",
+    "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/c2c/program-access.ts": "b7879560db14239ab7ff1c3aa0258a5df1e1451dea5c362abf981281149d6d14",
+    "server/services/c2c/program-project-anchor.ts": "e05b25b9066602d60f130fdac1f4f58a5a42dec3a1e213c3752febc4a16b4bb1",
+    "migrations/20260905_document_catalog.sql": "820a30b5a07d420970b8e48104149d7650b5be01f174b7b59d9c5fb7b02ad584",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260930_vault_documents_version_lineage.sql": "44e06daed45ac1e584c98ea88879b9216dba3fbcfee3473c59c3e0caee699ab2",
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts": "f988aedff340196b9741fda1c90a97e10cbf3b488e48ac73b718f5fbc4638050",
+    "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.config.mts": "c4aa528bfd4531645817be445f7292292a97689e6ca5efaf32545f60b8f3bc21"
+  },
+  "after": {
+    "server/services/ana/source-read-scope.ts": "5abea7972ff0f2568a488686223f187255853c76e198cca52a3ae346457c05df",
+    "server/services/ana/project-scope-admission.ts": "059fa1b134452dec603c1a862df0ceb9200a87789cb961f5fabd0f605f970454",
+    "server/services/vault/document-catalog.service.ts": "e7e9320ab612c71a7fdc529d06c4495dc3714ea9845bf40ccb9e08e99297fa3d",
+    "server/services/vault/document-catalog-actor-access.ts": "14e308c46756925ea3cb553f81eafa47253859602df836583443a3b44ae5faa8",
+    "server/services/vault/document-catalog-actor-reads.ts": "ab97dfd2fc3ea47ac3b74ce32e6077ef03d4dfb9baba3b0d6a004282d396d83d",
+    "server/services/vault/document-catalog-actor-captures.ts": "f243efe76ef06665e359de3d75a51ae98391d20a849e504e955271fa52526e27",
+    "server/services/ana/source-read-receipt.ts": "8863bbab2a38b28fb6ce318ef3526b907cff7f969afd488a78265cf10af214c8",
+    "server/services/vault/document-catalog-admission.ts": "0022f748129fa42a43c3a193cf5fae16d23bd9ad2f6e72eaae489119cde8b360",
+    "server/services/report-os/project-access.ts": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58",
+    "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+    "server/services/ana/source-context-admission.ts": "790d2daf1a9700ffebd7529c6ecab09c743f178c34e5fbd67678ffc2e352d156",
+    "server/services/ana/read-receipts.ts": "2a5a43d16ca6456bece9937d189982179e93e88feaa6c6395f90d32358080131",
+    "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/c2c/program-access.ts": "b7879560db14239ab7ff1c3aa0258a5df1e1451dea5c362abf981281149d6d14",
+    "server/services/c2c/program-project-anchor.ts": "e05b25b9066602d60f130fdac1f4f58a5a42dec3a1e213c3752febc4a16b4bb1",
+    "migrations/20260905_document_catalog.sql": "820a30b5a07d420970b8e48104149d7650b5be01f174b7b59d9c5fb7b02ad584",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260930_vault_documents_version_lineage.sql": "44e06daed45ac1e584c98ea88879b9216dba3fbcfee3473c59c3e0caee699ab2",
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts": "f988aedff340196b9741fda1c90a97e10cbf3b488e48ac73b718f5fbc4638050",
+    "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.config.mts": "c4aa528bfd4531645817be445f7292292a97689e6ca5efaf32545f60b8f3bc21"
+  },
+  "changedSources": [],
+  "sourcesUnchangedDuringRun": true
+}

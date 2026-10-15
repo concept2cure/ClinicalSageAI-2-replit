@@ -54,3 +54,19 @@
 #   pptxgenjs is replaced). Re-check with `npm ls image-size --all`.
 CVE-2025-71329 exp:2026-11-25
 CVE-2025-71330 exp:2026-11-25
+
+# owner: Security Engineering (dependency-risk-ledger.json row
+#   GHSA-vfj7-8cjw-p6xm; expires with the ledger, 2026-11-05)
+# reason: braces CVE-2026-93687 (stack-exhaustion DoS when braces expands a
+#   deeply nested PATTERN, CWE-674), vulnerable range <=3.0.3. braces 3.0.3 is
+#   the latest release, so no bump remediates it. The only production path was
+#   http-proxy-middleware, a declared dependency nothing imported; it was removed
+#   (2026-10-05), and `npm ls braces --omit=dev --all` is now empty: the runtime
+#   image does not contain braces or micromatch. What remains is dev-only (jest
+#   29 > @jest/core > micromatch; danger 13 > micromatch), expanding glob
+#   patterns from this repository's own config, never from a request. Disposition
+#   UNREACHABLE per the ledger. Trivy scans package-lock.json separately from npm
+#   audit, so this is the ledger decision mirrored for Trivy, not a second
+#   authority. Drop when braces ships a fix above 3.0.3; re-review if a new
+#   runtime dependency pulls micromatch or braces.
+CVE-2026-93687 exp:2026-11-05

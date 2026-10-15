@@ -1,18 +1,14 @@
 import express from 'express';
 import { z } from 'zod';
 import { getPool } from '../../db';
-import {
-  markStaleSections,
-  summarizeSectionDiff,
-  createSourceHash,
-} from '../../services/cmc-module3-compiler';
-import { CMC_SOURCE_TYPES, impactedSectionsForSourceType, renderComposedSectionMarkdown } from '../../services/module3Composer';
+import { summarizeSectionDiff } from '../../services/cmc-module3-compiler';
+import { renderComposedSectionMarkdown } from '../../services/module3Composer';
 import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
+import { compositionRefusalBody, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
-import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
-import { evaluateFinalExportGate, evaluateModule3GovernedState } from '../../services/cmc/final-export-gate';
+import { evaluateFinalExportGate } from '../../services/cmc/final-export-gate';
 import {
   parsedDeterministicJson,
   readCompiledRecord,
@@ -30,9 +26,16 @@ import {
 } from '../../services/part11/signature-persistence';
 import { SIGNATURE_MEANINGS, signatureMeaningSchema, resolveActorUserId } from './governance';
 import { serverError } from '../../lib/api-response';
-import { projectBelongsToTenant } from '../../services/cmc/project-membership';
+import { guardModule3Project, module3OrgId } from './module3-project-guard';
 import { createScopedLogger } from '../../utils/logger';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
+import { describeDrift, findSectionDrift } from '../../services/cmc/section-drift';
+import { findEvidenceDrift } from '../../services/cmc/source-evidence';
+import { reconcileContradictions, resolveContradiction } from '../../services/cmc/contradiction-lifecycle';
+import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership';
 import { clientIpOf } from '../../utils/client-ip';
+import { requireRole } from '../../middleware/auth';
+import { requireGovernedReason } from '../../routes/governed-reason';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
@@ -42,42 +45,9 @@ const router = express.Router();
 const logger = createScopedLogger('cmc-module3-os');
 
 /* Every route here that names a project acts only in a project of the
-   caller's organization (PF-15). They took :projectId from the URL and wrote
-   and read under it unchecked, so an organization's Module 3 sources, compiled
-   sections, approvals and placements could be filed under another
-   organization's project, or under an id naming none. One guard, for all of
-   them: another organization's project, a deleted one and a malformed id are
-   404 before the handler runs; a lookup that cannot complete is a 500. With no
-   organization in context the handler's own refusal stands. */
-router.param('projectId', async (req, res, next, projectId: string) => {
-  let orgId: number;
-  try {
-    orgId = getOrgId(req);
-  } catch {
-    return next();
-  }
-  try {
-    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
-      return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
-    }
-    return next();
-  } catch (err) {
-    return serverError(res, logger, 'checking the Module 3 project', err, { projectId });
-  }
-});
+   caller's organization (PF-15): the shared guard, module3-project-guard.ts. */
+guardModule3Project(router, logger);
 
-const upsertSourceObjectSchema = z.object({
-  /* Derived from the composer's own list — the enum here used to be a
-     hand-copied subset that refused five types the composer requires. */
-  sourceType: z.enum(CMC_SOURCE_TYPES),
-  sourceKey: z.string().min(1),
-  sourcePayload: z.record(z.any()),
-  version: z.number().int().positive().optional(),
-});
-
-const resolveContradictionSchema = z.object({
-  resolutionNote: z.string().min(3),
-});
 
 /**
  * Why an approval is refused on an incomplete compiled record, in the signer's
@@ -96,61 +66,22 @@ function incompleteSectionRefusal(sectionKey: string, record: CompiledRecordStat
   return verdict + remedy;
 }
 
-function getOrgId(req: express.Request): number {
-  const orgId = parseInt(
-    String((req as any).tenantId || (req as any).tenantContext?.organizationId || 0),
-    10
-  );
-  if (!orgId || Number.isNaN(orgId)) throw new Error('Organization context required');
-  return orgId;
-}
-
-
-router.post('/source-objects/:projectId', async (req, res) => {
-  try {
-    const orgId = getOrgId(req);
-    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
-    const data = upsertSourceObjectSchema.parse(req.body);
-    const pool = getPool();
-    const sourceHash = createSourceHash(data.sourcePayload as Record<string, any>);
-    const version = data.version || 1;
-
-    const inserted = await pool.query(
-      `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, source_hash, version)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7)
-       ON CONFLICT (organization_id, project_id, source_type, source_key, version)
-       DO UPDATE SET source_payload = excluded.source_payload, source_hash = excluded.source_hash, updated_at = NOW()
-       RETURNING id, source_type as "sourceType", source_key as "sourceKey", source_hash as "sourceHash", version`,
-      [orgId, projectId, data.sourceType, data.sourceKey, JSON.stringify(data.sourcePayload), sourceHash, version]
-    );
-
-    await pool.query(
-      `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1,$2,'source_object',$3,'upserted',$4::jsonb,$5)`,
-      [
-        orgId,
-        projectId,
-        inserted.rows[0].id,
-        JSON.stringify({ sourceType: data.sourceType, sourceKey: data.sourceKey, version }),
-        (req as any).user?.id || 'system',
-      ]
-    );
-
-    return res.status(201).json({ success: true, data: inserted.rows[0] });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid source object payload', details: error.errors });
-    }
-    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    return serverError(res, logger, 'saving source objects', error);
-  }
-});
+/* POST /source-objects/:projectId and POST /source-changed/:projectId are
+   gone (2026-10-05, D2). The first upserted any payload into
+   cmc_source_objects with a caller-chosen version, marked no section stale,
+   and named the actor 'system' when it had none; the second marked sections
+   stale for a body-supplied source type with no record behind it. Neither had
+   a client caller. Canonical sources are written by the CMC registers only:
+   every register route (server/api/cmc/routes.ts, specificationRoutes.ts,
+   batchRecordRoutes.ts) projects through cmc-write-through.ts
+   (writeThroughToCanonicalSource), which also marks the impacted sections
+   stale — reachable from the CMC screens and pinned by the staff simulation
+   (scripts/dev/cmc-staff-simulation.sh, steps 3-8i then 11) and by
+   server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts. */
 
 router.get('/sections/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const { rows } = await pool.query(
@@ -182,8 +113,11 @@ router.post('/compile/:projectId', async (req, res) => {
   const pool = getPool();
   const client = await pool.connect();
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
+    // 2026-10-15: with no user, each section's provenance event was written by 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     await client.query('BEGIN');
 
     /* One composition for the project — core sections, emittable 3.2.A
@@ -203,11 +137,11 @@ router.post('/compile/:projectId', async (req, res) => {
       return res.status(409).json({
         success: false,
         error: 'No canonical source objects for this project — nothing to compile.',
-        hint: 'Upsert source objects via POST /api/cmc/module3-os/source-objects/:projectId first.',
+        hint: 'Record the program\'s CMC data in the registers (substance, product, methods, specifications, batches, stability); each record reaches Module 3 as a canonical source.',
       });
     }
 
-    const actorId = String((req as any).user?.id || 'system');
+    const actorId = String(userId);
     for (const section of compiled) {
       await persistComposedSection(client, orgId, projectId, section, { actorId, event: 'compiled' });
     }
@@ -228,7 +162,7 @@ router.post('/compile/:projectId', async (req, res) => {
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
-        }, { createdById: Number((req as any).user?.id) || null });
+        }, { createdById: userId });
         if (bridged.bridged) {
           bridgedArtifacts.push({
             sectionKey: section.sectionKey,
@@ -250,6 +184,14 @@ router.post('/compile/:projectId', async (req, res) => {
     res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts, bridgeSkips });
   } catch (error) {
     await client.query('ROLLBACK');
+    /* Outside the composition scope this platform ships — a biologically
+       derived substance, a modality the record does not establish, or a
+       submission that files something other than a US IND
+       (services/cmc/composition-scope.ts). A business refusal, not a server
+       fault: 409 with the reason and the path that does author it. */
+    if (isCompositionOutOfScope(error)) {
+      return res.status(409).json(compositionRefusalBody(error.refusal));
+    }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
@@ -259,41 +201,9 @@ router.post('/compile/:projectId', async (req, res) => {
   }
 });
 
-router.post('/source-changed/:projectId', async (req, res) => {
-  try {
-    const orgId = getOrgId(req);
-    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
-    const { changedSourceType, reason } = req.body;
-    const pool = getPool();
-    const sectionsRes = await pool.query(
-      `SELECT section_key as "sectionKey", section_path as "sectionPath", deterministic_json as "deterministicJson", compiled_hash as "compiledHash"
-       FROM cmc_module3_sections WHERE organization_id=$1 AND project_id=$2`,
-      [orgId, projectId]
-    );
-    const staleSections = impactedSectionsForSourceType(changedSourceType);
-    const stale = markStaleSections(
-      sectionsRes.rows.map((r: any) => ({ ...r, lineage: [], stale: false, staleReason: null })),
-      changedSourceType,
-      reason || 'Source changed'
-    );
-    for (const s of stale.filter((x) => x.stale && staleSections.includes(x.sectionKey))) {
-      await pool.query(
-        `UPDATE cmc_module3_sections SET stale = true, stale_reason = $1, updated_at = now() WHERE organization_id=$2 AND project_id=$3 AND section_key=$4`,
-        [s.staleReason, orgId, projectId, s.sectionKey]
-      );
-    }
-    res.json({ success: true, staleSections: stale.filter((s) => s.stale).map((s) => s.sectionKey) });
-  } catch (error) {
-    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    return serverError(res, logger, 'saving source changed', error);
-  }
-});
-
 router.post('/contradictions/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     /* The ONE tenant-scoped register sweep
@@ -308,29 +218,33 @@ router.post('/contradictions/:projectId', async (req, res) => {
 
     const contradictions = detectContradictions(registers);
 
-    // Wrap DELETE + INSERT in a transaction to prevent partial state
+    /* Reconciled, not replaced (services/cmc/contradiction-lifecycle.ts): the
+       sweep deleted every finding of the program and re-inserted what it
+       detected, all open, so a resolution QA had recorded was erased by the
+       next sweep and the critical finding blocked approval again. The same
+       conflict over the same data keeps its standing; changed data is a new
+       finding; an open finding the data no longer shows is cleared. */
+    /* What the sweep looked at, so "nothing found" is a statement about named
+       records and not about nothing: a sweep over empty registers finds
+       nothing too (GA review 2026-10-05, plan item 5). */
+    const examined = {
+      specifications: registers.specifications.length,
+      methods: registers.methods.length,
+      stability: registers.stability.length,
+      batches: registers.batch.length,
+      comparability: registers.comparability.length,
+    };
     const client = await pool.connect();
+    let sweep;
     try {
       await client.query('BEGIN');
-      await client.query(`DELETE FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`, [
-        orgId,
-        projectId,
-      ]);
-      for (const c of contradictions) {
-        await client.query(
-          `INSERT INTO cmc_contradictions (organization_id, project_id, severity, contradiction_type, details, impacted_sections, required_reviewers)
-           VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb)`,
-          [
-            orgId,
-            projectId,
-            c.severity,
-            c.contradictionType,
-            c.details,
-            JSON.stringify(c.impactedSections),
-            JSON.stringify(c.requiredReviewers),
-          ]
-        );
-      }
+      sweep = await reconcileContradictions(client, orgId, projectId, contradictions);
+      // The sweep itself is on the record: when, by whom, over what.
+      await client.query(
+        `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
+         VALUES ($1, $2, 'contradiction_sweep', $2, 'swept', $3::jsonb, $4)`,
+        [orgId, projectId, JSON.stringify({ examined, found: contradictions.length, outcome: sweep }), governedActorId(req) != null ? String(governedActorId(req)) : null],
+      );
       await client.query('COMMIT');
     } catch (e) {
       await client.query('ROLLBACK');
@@ -359,6 +273,8 @@ router.post('/contradictions/:projectId', async (req, res) => {
     res.json({
       success: true,
       contradictions,
+      sweep,
+      examined,
       impactTasks: deriveImpactTasks(contradictions),
       tasks: taskSync,
     });
@@ -372,7 +288,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
 
 router.get('/contradictions/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const { rows } = await pool.query(
@@ -384,7 +300,19 @@ router.get('/contradictions/:projectId', async (req, res) => {
        ORDER BY updated_at DESC`,
       [orgId, projectId]
     );
-    return res.json({ success: true, data: rows });
+    /* When the program was last swept and over what. Without it, an empty list
+       read as "no contradictions" for a program nobody had swept. */
+    const last = await pool.query(
+      `SELECT created_at AS "at", created_by AS "by", event_payload AS "payload"
+         FROM cmc_provenance_events
+        WHERE organization_id = $1 AND project_id = $2 AND artifact_type = 'contradiction_sweep'
+        ORDER BY created_at DESC LIMIT 1`,
+      [orgId, projectId],
+    );
+    const lastSweep = last.rows[0]
+      ? { at: last.rows[0].at, by: last.rows[0].by || null, examined: last.rows[0].payload?.examined ?? null, found: last.rows[0].payload?.found ?? null }
+      : null;
+    return res.json({ success: true, data: rows, meta: { lastSweep } });
   } catch (error) {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -393,39 +321,44 @@ router.get('/contradictions/:projectId', async (req, res) => {
   }
 });
 
-router.patch('/contradictions/:id/resolve', async (req, res) => {
+/* Resolving a finding unblocks approval, so it is a governed act: a writing
+   role, a stated reason, the signed-in user as the actor, and the provenance
+   event and a chained audit row in the same transaction as the status change
+   (services/cmc/contradiction-lifecycle.ts). It needed none of these. */
+router.patch('/contradictions/:id/resolve', requireEditorAccess, async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
-    const parsed = resolveContradictionSchema.parse(req.body || {});
-    const pool = getPool();
-    const updated = await pool.query(
-      `UPDATE cmc_contradictions
-       SET status = 'resolved',
-           updated_at = NOW()
-       WHERE organization_id = $1 AND id = $2
-       RETURNING id, project_id as "projectId"`,
-      [orgId, id]
-    );
-    const row = updated.rows[0];
-    if (!row) return res.status(404).json({ success: false, error: 'Contradiction not found' });
-
-    await pool.query(
-      `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1,$2,'contradiction',$3,'resolved',$4::jsonb,$5)`,
-      [
-        orgId,
-        row.projectId,
-        id,
-        JSON.stringify({ resolutionNote: parsed.resolutionNote }),
-        (req as any).user?.id || 'system',
-      ]
-    );
+    const userId = governedActorId(req);
+    if (!userId) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    /* A critical finding blocks every section approval; clearing one is a
+       signer's decision, not any member's (GA plan item 4, separation of
+       duties). The answer comes from the ONE gate (checkSigningAuthority,
+       part11/signing-authority-gate.ts), which reads the role from the
+       membership row and answers a lookup that cannot run with 503
+       SIGNING_AUTHORITY_UNVERIFIED. This route used to read the role and apply
+       the predicate itself, so a failed lookup reached the catch-all as a 500
+       and the person was told the server had erred rather than that their
+       authority could not be verified (one-signing-authority-policy, P-27). */
+    const authority = await checkSigningAuthority(userId, orgId);
+    if (authority && authority.code === 'SIGNING_AUTHORITY_UNVERIFIED') {
+      return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
+    }
+    /* A refusal here means "this role may not sign", which only a CRITICAL
+       finding requires: the service still decides that, by severity. */
+    const signingAuthority = authority === null;
+    const out = await resolveContradiction({
+      organizationId: orgId,
+      userId,
+      signingAuthority,
+      contradictionId: id,
+      reason: (req.body ?? {}).resolutionNote,
+      ipAddress: clientIpOf(req) ?? undefined,
+      userAgent: req.headers['user-agent'],
+    });
+    if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message, field: 'resolutionNote' });
     return res.json({ success: true, data: { id, status: 'resolved' } });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid resolution payload', details: error.errors });
-    }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
@@ -435,30 +368,27 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
 
 router.get('/readiness/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
 
-    // The same evaluation the final-export gate runs, so this read cannot be
-    // more optimistic than the gate it previews. It used to compute
-    // `exportReady` from approvals alone and stamp a degraded governed state
-    // beside it — reporting "export ready" in the exact state where the gate
-    // fails closed and refuses.
-    const { state } = await evaluateModule3GovernedState({
+    /* The final-export gate's own verdict, so this read cannot be more
+       optimistic than the gate it previews. It used to compute `exportReady`
+       from approvals alone and stamp a degraded governed state beside it, then
+       from a hand-kept list of the gate's conditions that missed the lineage
+       drift and table checks: the board offered placement for a project the
+       gate then refused (discovery map 2026-10-04,
+       readiness-ready-while-gate-refuses). */
+    // 2026-10-15: with no user the gate's governed evaluation was recorded as
+    // decided by 'system'; it is the user's, by id, or refused.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    const verdict = await evaluateFinalExportGate({
       orgId,
       projectId,
-      actorId: (req as any).user?.id || 'system',
+      actorId: String(userId),
     });
-
-    const exportReady =
-      state.totalSections > 0 &&
-      state.approvedSections === state.totalSections &&
-      state.staleSections === 0 &&
-      state.openCriticalContradictions === 0 &&
-      state.sectionsWithoutProvenance === 0 &&
-      state.incompleteApprovedSections.length === 0 &&
-      state.governedStateEvaluated &&
-      !state.fabricBlocks &&
-      !state.governedDecisionsBlock;
+    const state = verdict.data;
+    const exportReady = verdict.allowed;
 
     return res.json({
       success: true,
@@ -471,10 +401,15 @@ router.get('/readiness/:projectId', async (req, res) => {
         // Approved sections whose own compiled record says they are not
         // complete. An approval is not evidence the content exists.
         incompleteApprovedSections: state.incompleteApprovedSections,
+        unplaceableApprovedSections: state.unplaceableApprovedSections,
+        driftedApprovedSections: state.driftedApprovedSections,
+        supersededEvidenceSections: state.supersededEvidenceSections,
         // False means the governed-decision fabric did not return a verdict —
         // NOT that it looked and cleared the project.
         governedStateEvaluated: state.governedStateEvaluated,
         exportReady,
+        // The gate's sentence when it would refuse, so the board says why.
+        blockedBecause: verdict.allowed ? null : (verdict.error ?? null),
         canonicalGovernedState: state.canonicalGovernedState,
       },
     });
@@ -512,7 +447,7 @@ router.get('/readiness/:projectId', async (req, res) => {
  */
 router.get('/sections/:projectId/:sectionKey', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId;
     const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? '');
     const sectionKey = String(req.params.sectionKey ?? '');
@@ -588,7 +523,7 @@ router.get('/sections/:projectId/:sectionKey', async (req, res) => {
 
 router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
     const pool = getPool();
     const sectionRes = await pool.query(
@@ -618,7 +553,7 @@ router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
 
 router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
 
     // §11.10(g) / §11.200 re-authentication. Approving a Module 3 section is a
@@ -629,6 +564,58 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     if (!actorId) {
       return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     }
+
+    /* §11.50(a)(3): the signed record must show the MEANING of the signature.
+       An unrecognised value used to fall back to the constant 'approval',
+       which recorded a meaning the signer did not declare: a caller sending
+       'TECHNICAL_APPROVAL' — a token the GCC signature-role vocabulary in
+       db/migrations/080 and client/src/concept2cure/v2/registryModel.ts both
+       carry — got 'approval' written into electronic_signatures and into the
+       hash-chained ledger, and nothing said so. Substituting a meaning is
+       fabricating the one field §11.50(a)(3) exists to preserve, so this
+       refuses instead, exactly as the sibling specification-approve and
+       batch-release endpoints do through the same schema. SIGNATURE_MEANINGS
+       is the regulation's own list (review, approval, responsibility,
+       authorship) and is what the CMC signature form offers.
+       Checked FIRST: it used to run after the version row, the state flip and
+       the provenance event were written, and its 400 returned without a
+       ROLLBACK — handing a connection with an open transaction back to the
+       pool. */
+    const meaningParse = signatureMeaningSchema.safeParse((req.body ?? {}).meaning);
+    if (!meaningParse.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'INVALID_SIGNATURE_MEANING',
+        detail:
+          `A signature meaning must be one of ${SIGNATURE_MEANINGS.join(', ')} ` +
+          '(21 CFR 11.50(a)(3)). The signature was not recorded.',
+      });
+    }
+    const signMeaning: SignatureMeaning = meaningParse.data;
+    /* The signer's own reason, or no signature. The route used to record
+       'Approved Module 3 section <key>' when none was stated — a reason the
+       code made up, against recordGovernedAction's contract (GA plan item 4).
+       Checked before authority and the password, so nothing is spent. */
+    const reasonCheck = requireGovernedReason((req.body ?? {}).reason);
+    if (!reasonCheck.ok) {
+      return res.status(400).json({ success: false, error: 'REASON_REQUIRED', detail: reasonCheck.error, field: 'reason' });
+    }
+    const signReason = reasonCheck.reason;
+    /* Idempotency, per organisation: the client's key is namespaced so one
+       tenant's key can never collide with another's (the column is globally
+       unique, and a collision made the signature fail with a 500). */
+    const rawKey = (req.body ?? {}).idempotencyKey;
+    const idempotencyKey = typeof rawKey === 'string' && rawKey.trim() ? `cmc-m3-approve:${orgId}:${rawKey.trim()}` : null;
+
+    /* §11.10(g): identity is not authority. Batch release, specification
+       approval and register qualification each ask whether the signer may
+       sign (checkSigningAuthority); this, the signature over the text that is filed
+       in Module 3, did not — any member of the organisation who knew their own
+       password, a read-only viewer included, could approve a section. Asked
+       before the password, so a signer who may not sign spends no guess. */
+    const authority = await checkSigningAuthority(actorId, orgId);
+    if (authority) return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
+
     const reauthResult = await verifyReauth(actorId, (req.body ?? {}).reauth);
     if (!reauthResult.ok) {
       res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -636,47 +623,6 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     }
 
     const pool = getPool();
-
-    const blocking = await pool.query(
-      `SELECT id FROM cmc_contradictions
-       WHERE organization_id = $1 AND project_id = $2 AND status <> 'resolved' AND severity = 'critical'
-       LIMIT 1`,
-      [orgId, projectId]
-    );
-    if (blocking.rows.length > 0) {
-      return res
-        .status(409)
-        .json({ success: false, error: 'Critical contradictions must be resolved before approval.' });
-    }
-
-    let canonicalGovernedState: Record<string, any> | null = null;
-    try {
-      const unresolvedContradictions = blocking.rows.length; // already queried above
-      canonicalGovernedState = await buildCanonicalGovernedState({
-        context: {
-          organizationId: String(orgId),
-          projectId: String(projectId),
-          actorId: (req as any).user?.id || 'system',
-          intendedAction: 'approve',
-          documentType: 'cmc_module3',
-          ctdSection: sectionKey,
-        },
-        documentState: {
-          hasContent: true,
-          hasEvidence: true,
-          hasBeenReviewed: true,
-          hasApproval: false, // not yet approved — that is what we are doing
-          hasPlacement: true,
-          placementValid: true,
-          hasProvenance: true,
-          unresolvedContradictionCount: unresolvedContradictions,
-          criticalContradictionCount: unresolvedContradictions,
-          isStale: false,
-        },
-      });
-    } catch {
-      canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
-    }
 
     // The version snapshot + section flip + provenance event + the hash-chained
     // governed-action record are one atomic transaction: approval either lands
@@ -687,16 +633,65 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     try {
       await client.query('BEGIN');
 
+      /* A retry with the same key replays the approval it already made,
+         rather than signing twice or failing on the key. */
+      if (idempotencyKey) {
+        const prior = await client.query(
+          `SELECT id, payload FROM c2c_ana_actions WHERE org_id = $1 AND idempotency_key = $2 LIMIT 1`,
+          [orgId, idempotencyKey],
+        );
+        if (prior.rows[0]) {
+          await client.query('ROLLBACK');
+          const p = prior.rows[0].payload ?? {};
+          return res.json({
+            success: true,
+            replayed: true,
+            sectionKey,
+            versionNumber: p.versionNumber ?? null,
+            approvedVersionId: p.approvedVersionId ?? null,
+            governance: { actionId: prior.rows[0].id },
+          });
+        }
+      }
+
+      /* Everything the signature depends on is read INSIDE the transaction,
+         with the section row locked: a sweep, a recompile or a second signer
+         that commits after these reads cannot slip between the check and the
+         signature (GA plan item 4). */
       const sectionRes = await client.query(
-        `SELECT id, deterministic_json, approval_state
+        `SELECT id, deterministic_json, narrative_text, approval_state, stale, stale_reason, compiled_hash
          FROM cmc_module3_sections
-         WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
+         WHERE organization_id = $1 AND project_id = $2 AND section_key = $3
+         FOR UPDATE`,
         [orgId, projectId, sectionKey]
       );
       const section = sectionRes.rows[0];
       if (!section) {
         await client.query('ROLLBACK');
         return res.status(404).json({ success: false, error: 'Section not found' });
+      }
+      /* What the signer read (the read-before-sign panel shows the content
+         hash) is what is signed: a recompile since then is refused. */
+      const readHash = (req.body ?? {}).compiledHash;
+      if (typeof readHash === 'string' && readHash.trim() && readHash.trim() !== String(section.compiled_hash ?? '')) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: 'SECTION_CHANGED',
+          detail: `§${sectionKey} was recompiled after you read it. Read the current content, then sign. Nothing was signed.`,
+        });
+      }
+      const blocking = await client.query(
+        `SELECT id FROM cmc_contradictions
+         WHERE organization_id = $1 AND project_id = $2 AND status <> 'resolved' AND severity = 'critical'
+         LIMIT 1`,
+        [orgId, projectId]
+      );
+      if (blocking.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res
+          .status(409)
+          .json({ success: false, error: 'Critical contradictions must be resolved before approval.' });
       }
 
       /* The export gate's rule, applied at the signature. An approval is a
@@ -717,6 +712,51 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         });
       }
 
+      /* An approval is a signature over what the sources say NOW. This route
+         used to approve a stale section and clear its stale flag in the same
+         UPDATE, without recompiling — signing text the system had already
+         recorded as out of date. Stale (the flag) or drifted (the lineage:
+         a source it read changed or is gone, or a newer source of a type it
+         reads was recorded) is refused, and nothing is written. */
+      if (section.stale) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: 'SECTION_STALE',
+          detail:
+            `§${sectionKey} is out of date: ${section.stale_reason ?? 'its source data changed after compile'}. ` +
+            'Recompile it, review the result, then approve. Nothing was signed.',
+        });
+      }
+      const drift = await findSectionDrift(client, orgId, projectId, { sectionKey });
+      if (drift.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: 'SECTION_DRIFTED',
+          detail: `${describeDrift(drift)}. Recompile it, review the result, then approve. Nothing was signed.`,
+        });
+      }
+      /* A record it read was taken from a Vault document that has since been
+         superseded or withdrawn: the record may no longer say what the current
+         document says, and only a person can tell (source-evidence.ts). */
+      const evidenceDrift = await findEvidenceDrift(client, orgId, projectId, { sectionKey });
+      if (evidenceDrift.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: 'EVIDENCE_SUPERSEDED',
+          detail:
+            `${describeDrift(evidenceDrift)}. Verify each record against the current version and move its evidence ` +
+            'link, or correct the record and recompile, then approve. Nothing was signed.',
+        });
+      }
+
+      /* What is signed is what is filed: the compiled record AND the narrative
+         placement renders from it. The snapshot carried deterministic_json
+         only, so the §11.70 digest did not cover a word of the filed prose. */
+      const approvedSnapshot = { ...(section.deterministic_json ?? {}), narrativeText: section.narrative_text ?? '' };
+
       const verRes = await client.query(
         `SELECT COALESCE(MAX(version_number), 0) as max_version
          FROM cmc_module3_section_versions
@@ -733,18 +773,22 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
           section.id,
           projectId,
           versionNumber,
-          JSON.stringify(section.deterministic_json),
+          JSON.stringify(approvedSnapshot),
           JSON.stringify({ approvedFromState: section.approval_state }),
           String(actorId),
         ]
       );
       const approvedVersionId = insertedVersion.rows[0].id;
-      await client.query(
+      const flipped = await client.query(
         `UPDATE cmc_module3_sections
-         SET approval_state = 'approved', approved_version_id = $1, stale = false, stale_reason = null, updated_at = NOW()
-         WHERE id = $2`,
-        [approvedVersionId, section.id]
+         SET approval_state = 'approved', approved_version_id = $1, updated_at = NOW()
+         WHERE id = $2 AND compiled_hash IS NOT DISTINCT FROM $3`,
+        [approvedVersionId, section.id, section.compiled_hash ?? null]
       );
+      if (flipped.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ success: false, error: 'SECTION_CHANGED', detail: `§${sectionKey} changed while it was being signed. Nothing was signed.` });
+      }
       await client.query(
         `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
          VALUES ($1,$2,'section',$3,'approved',$4::jsonb,$5)`,
@@ -758,34 +802,6 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       );
 
       const signTarget = `cmc_module3_section:${projectId}/${sectionKey}`;
-      const signReason =
-        typeof (req.body ?? {}).reason === 'string' && (req.body as any).reason.trim()
-          ? (req.body as any).reason.trim()
-          : `Approved Module 3 section ${sectionKey}`;
-      /* §11.50(a)(3): the signed record must show the MEANING of the signature.
-         An unrecognised value used to fall back to the constant 'approval',
-         which recorded a meaning the signer did not declare: a caller sending
-         'TECHNICAL_APPROVAL' — a token the GCC signature-role vocabulary in
-         db/migrations/080 and client/src/concept2cure/v2/registryModel.ts both
-         carry — got 'approval' written into electronic_signatures and into the
-         hash-chained ledger, and nothing said so. Substituting a meaning is
-         fabricating the one field §11.50(a)(3) exists to preserve, so this
-         refuses instead, exactly as the sibling specification-approve and
-         batch-release endpoints do through the same schema. SIGNATURE_MEANINGS
-         is the regulation's own list (review, approval, responsibility,
-         authorship) and is what the CMC signature form offers. */
-      const meaningParse = signatureMeaningSchema.safeParse((req.body ?? {}).meaning);
-      if (!meaningParse.success) {
-        return res.status(400).json({
-          success: false,
-          error: 'INVALID_SIGNATURE_MEANING',
-          detail:
-            `A signature meaning must be one of ${SIGNATURE_MEANINGS.join(', ')} ` +
-            '(21 CFR 11.50(a)(3)). The signature was not recorded.',
-        });
-      }
-      const signMeaning: SignatureMeaning = meaningParse.data;
-
       // §11.10(e) hash-chained governed-action record (audit_logs + c2c_ana_actions),
       // the same ledger the specification-approve and batch-release endpoints write.
       const governance = await recordGovernedAction(client, {
@@ -797,7 +813,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         payload: { meaning: signMeaning, versionNumber, approvedVersionId },
         domain: 'cmc',
         surface: 'cmc-module3-section-approve',
-        idempotencyKey: (req.body ?? {}).idempotencyKey ?? null,
+        idempotencyKey,
       });
 
       // 21 CFR Part 11 signature row, same transaction as the ledger pair.
@@ -827,10 +843,10 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
             sectionKey,
             versionNumber,
             approvedVersionId,
-            snapshot: section.deterministic_json,
+            snapshot: approvedSnapshot,
           }),
           basis: BINDING_BASIS.CMC_MODULE3_SECTION_VERSION,
-          note: 'sha256 over the canonical JSON of the approved cmc_module3_section_versions snapshot (organization, project, section key, version number, version id and the frozen deterministic_json) at approval time.',
+          note: 'sha256 over the canonical JSON of the approved cmc_module3_section_versions snapshot (organization, project, section key, version number, version id, the frozen deterministic_json and the narrative filed with it) at approval time.',
         },
         complianceStatement:
           'Module 3 section approval applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
@@ -842,7 +858,6 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         sectionKey,
         versionNumber,
         approvedVersionId,
-        canonicalGovernedState,
         governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
       };
     } catch (txErr) {
@@ -875,8 +890,11 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
   const pool = getPool();
   const client = await pool.connect();
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
+    // 2026-10-15: with no user, the refresh's provenance event was written by 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     await client.query('BEGIN');
     const sectionRes = await client.query(
       `SELECT id, deterministic_json, approval_state FROM cmc_module3_sections
@@ -907,7 +925,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     }
 
     const diffSummary = summarizeSectionDiff(section.deterministic_json, compiledRecordOf(composed));
-    const actorId = String((req as any).user?.id || 'system');
+    const actorId = String(userId);
     await persistComposedSection(client, orgId, projectId, composed, {
       actorId,
       event: 'refreshed',
@@ -924,7 +942,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
         completeness: composed.completeness,
         missingInputs: composed.missingInputs,
         lineage: composed.lineage,
-      }, { createdById: Number((req as any).user?.id) || null });
+      }, { createdById: userId });
     } catch (bridgeErr) {
       bridged = { bridged: false, reason: 'error', detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr) };
     }
@@ -941,6 +959,11 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     });
   } catch (error) {
     await client.query('ROLLBACK');
+    // Same boundary as the compile: a refresh re-composes, so it is refused on
+    // the same terms (services/cmc/composition-scope.ts).
+    if (isCompositionOutOfScope(error)) {
+      return res.status(409).json(compositionRefusalBody(error.refusal));
+    }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
@@ -952,14 +975,17 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
 
 router.post('/guard/final-export/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     // The verdict lives in evaluateFinalExportGate so the placement path
     // (place-into-submission below) refuses on exactly the same answer.
+    // 2026-10-15: with no user its governed evaluation was decided by 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     const verdict = await evaluateFinalExportGate({
       orgId,
       projectId,
-      actorId: (req as any).user?.id || 'system',
+      actorId: String(userId),
     });
     if (!verdict.allowed) {
       return res.status(409).json({ success: false, error: verdict.error, data: verdict.data });
@@ -986,9 +1012,14 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
  * m-prefixed section code. Refuses outright — before any write — unless the
  * final-export gate passes; the refusal body carries the gate's own verdict.
  */
-router.post('/place-into-submission/:projectId', async (req, res) => {
+/* The same gate and the same reason the Submission Center asks of a leaf
+   placement (routes/submissions.ts PUT /sequences/:seqId/leaves): this route
+   writes leaves into a regulator-facing sequence too, and asked neither, so a
+   viewer could place Module 3 into the IND and the ledger said what changed
+   and never why (discovery map 2026-10-04, placement-second-door). */
+router.post('/place-into-submission/:projectId', requireRole('regulatory-author'), async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
 
     const actorId = resolveActorUserId(req);
@@ -1005,6 +1036,10 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
         error: 'submissionId and sequenceId are required (the target sequence for the Module 3 leaves).',
       });
     }
+    const reason = requireGovernedReason((req.body ?? {}).reason);
+    if (!reason.ok) {
+      return res.status(400).json({ success: false, code: 'REASON_REQUIRED', error: reason.error, field: 'reason' });
+    }
 
     const result = await placeModule3IntoSubmission({
       orgId,
@@ -1012,6 +1047,7 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
       cmcProjectId: projectId,
       submissionId: parsed.data.submissionId,
       sequenceId: parsed.data.sequenceId,
+      reason: reason.reason,
     });
 
     if (!result.placed) {
@@ -1030,6 +1066,9 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
           .status(409)
           .json({ success: false, error: result.error, vocabulary: result.vocabulary });
       }
+      if (result.refusedBy === 'cross-project') {
+        return res.status(409).json({ success: false, code: 'CROSS_PROJECT', error: result.error });
+      }
       return res.status(409).json({ success: false, error: result.error, skipped: result.skipped });
     }
     return res.json({ success: true, data: result });
@@ -1044,7 +1083,7 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
     if (msg.includes('NOT_FOUND') || msg.includes('FORBIDDEN')) {
       return res.status(404).json({ success: false, error: msg });
     }
-    return res.status(500).json({ success: false, error: msg || 'Placement failed' });
+    return serverError(res, logger, 'placing the document', error);
   }
 });
 

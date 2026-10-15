@@ -1,0 +1,10 @@
+Mutant R31-n-any-number: n = 212 is found through any 212
+
+--- server/services/ana/answer-check-figures.ts
+- n: (_f, value, o) => o.value === value && N_WORDS.test(`${o.before.slice(-24)} ${o.key}`),
++ n: (_f, value, o) => o.value === value,
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: SURVIVED
+
+      Tests  75 passed (75)

@@ -31,17 +31,26 @@ export type RelationshipType =
   | 'same_product' // A and B about same product
   | 'same_agency' // A and B from same regulatory agency
   | 'similar_outcome' // A and B have similar outcomes
-  | 'contrasting_outcome'; // A and B have different outcomes
+  | 'contrasting_outcome' // A and B have different outcomes
+  | 'shares_key_terms' // A and B both mention a key term (metadata.keyTerms)
+  | 'same_atom_type'; // A and B have the same atom_type
 
 export interface Edge {
   id?: string;
   sourceAtomId: string;
   targetAtomId: string;
   relationshipType: RelationshipType;
-  relationshipStrength: number; // 0.0 - 1.0
-  bidirectional: boolean;
+  /** 0.0 - 1.0; null when no strength was stated or computed. */
+  relationshipStrength: number | null;
+  /** null when the read that produced this edge did not return it. */
+  bidirectional: boolean | null;
   extractedFrom?: 'content_analysis' | 'citation' | 'manual' | 'embedding_similarity' | 'metadata';
-  confidence: number;
+  /**
+   * Nothing in this service measures an edge's confidence, so it is null
+   * (2026-10-15: until then constants were stamped here, and reads reported
+   * relationship_strength or a column the table does not have).
+   */
+  confidence: number | null;
   metadata?: Record<string, any>;
 }
 
@@ -49,8 +58,10 @@ export interface GraphNode {
   atomId: string;
   title: string;
   atomType: string;
-  sourceType: string;
-  confidence: number;
+  /** null when the read did not return it (getNeighbors). */
+  sourceType: string | null;
+  /** The atom's own confidence; null when the read did not return it (getNeighbors). */
+  confidence: number | null;
   qualityScore?: number;
   edges: Edge[];
 }
@@ -74,48 +85,6 @@ export interface SubgraphResult {
 
 export class KnowledgeGraphService {
   private pool: Pool;
-
-  // Relationship keywords for content analysis
-  private relationshipPatterns: Record<RelationshipType, RegExp[]> = {
-    references: [
-      /according to/i,
-      /as stated in/i,
-      /cites/i,
-      /references/i,
-      /per guidance/i,
-      /FDA guidance/i,
-      /EMA guideline/i,
-    ],
-    contradicts: [
-      /however/i,
-      /in contrast/i,
-      /contradicts/i,
-      /conflicting/i,
-      /disagrees with/i,
-      /opposite/i,
-    ],
-    supports: [
-      /supports/i,
-      /confirms/i,
-      /consistent with/i,
-      /in agreement/i,
-      /corroborates/i,
-      /validates/i,
-    ],
-    supersedes: [/replaces/i, /supersedes/i, /updated/i, /revised/i, /new guidance/i],
-    derived_from: [/based on/i, /derived from/i, /extracted from/i, /learned from/i],
-    related_to: [/related to/i, /associated with/i, /concerning/i, /regarding/i],
-    part_of: [/part of/i, /section of/i, /component of/i, /included in/i],
-    example_of: [/for example/i, /such as/i, /instance of/i, /case study/i],
-    requires: [/requires/i, /must include/i, /necessary/i, /mandatory/i, /prerequisite/i],
-    caused_by: [/caused by/i, /due to/i, /resulted from/i, /because of/i],
-    precedes: [/before/i, /prior to/i, /precedes/i, /followed by/i],
-    same_topic: [],
-    same_product: [],
-    same_agency: [],
-    similar_outcome: [],
-    contrasting_outcome: [],
-  };
 
   constructor(pool: Pool) {
     this.pool = pool;
@@ -223,7 +192,14 @@ export class KnowledgeGraphService {
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
-   * Discover edges based on content analysis
+   * Discover edges based on content analysis: one 'shares_key_terms' edge to
+   * each atom whose text matches this atom's key terms (drug names, 21 CFR
+   * sections, ICH codes, application numbers), naming the terms.
+   *
+   * Until 2026-10-15 the relation was read off cue words in THIS atom alone and
+   * asserted of every such atom: a "however" made it 'contradicts' them, an
+   * "updated" 'supersedes' them, with confidence 0.6. Nothing compared the two
+   * atoms; a shared key term is all that is observed, so that is the edge.
    */
   async discoverEdgesFromContent(atomId: string): Promise<Edge[]> {
     // Get the atom
@@ -237,55 +213,29 @@ export class KnowledgeGraphService {
 
     if (atomResult.rows.length === 0) return [];
     const atom = atomResult.rows[0];
-    const content = `${atom.title} ${atom.content}`;
+    const keyTerms = this.extractKeyTerms(`${atom.title} ${atom.content}`);
 
-    const discoveredEdges: Edge[] = [];
-
-    // Find relationships by pattern matching
-    for (const [relType, patterns] of Object.entries(this.relationshipPatterns)) {
-      if (patterns.length === 0) continue;
-
-      for (const pattern of patterns) {
-        if (pattern.test(content)) {
-          // Found a potential relationship - look for related atoms
-          const relatedAtoms = await this.findRelatedAtomsByKeywords(
-            atomId,
-            content,
-            relType as RelationshipType
-          );
-
-          for (const related of relatedAtoms) {
-            discoveredEdges.push({
-              sourceAtomId: atomId,
-              targetAtomId: related.id,
-              relationshipType: relType as RelationshipType,
-              relationshipStrength: related.strength,
-              bidirectional: ['related_to', 'same_topic', 'same_product', 'same_agency'].includes(
-                relType
-              ),
-              extractedFrom: 'content_analysis',
-              confidence: 0.6,
-              metadata: { pattern: pattern.source },
-            });
-          }
-          break; // Found match for this relationship type
-        }
-      }
-    }
-
-    return discoveredEdges;
+    const relatedAtoms = await this.findRelatedAtomsByKeywords(atomId, keyTerms);
+    return relatedAtoms.map(related => ({
+      sourceAtomId: atomId,
+      targetAtomId: related.id,
+      relationshipType: 'shares_key_terms' as const,
+      // The full-text match rank of the shared terms, scaled to 0..1.
+      relationshipStrength: related.strength,
+      bidirectional: true,
+      extractedFrom: 'content_analysis' as const,
+      confidence: null,
+      metadata: { keyTerms },
+    }));
   }
 
   /**
-   * Find related atoms by extracted keywords
+   * Find atoms whose text matches any of the key terms
    */
   private async findRelatedAtomsByKeywords(
     sourceAtomId: string,
-    content: string,
-    relType: RelationshipType
+    keyTerms: string[]
   ): Promise<Array<{ id: string; strength: number }>> {
-    // Extract key terms (drug names, guideline references, etc.)
-    const keyTerms = this.extractKeyTerms(content);
     if (keyTerms.length === 0) return [];
 
     // Search for atoms containing these terms
@@ -362,15 +312,18 @@ export class KnowledgeGraphService {
       [atomId, atom.atom_type]
     );
 
+    // 2026-10-15: these were 'same_topic' at strength 0.3 and confidence 0.5,
+    // all three asserted from a shared atom_type alone. The edge now says that.
     for (const related of sameTypeAtoms.rows) {
       edges.push({
         sourceAtomId: atomId,
         targetAtomId: related.id,
-        relationshipType: 'same_topic',
-        relationshipStrength: 0.3,
+        relationshipType: 'same_atom_type',
+        relationshipStrength: null,
         bidirectional: true,
         extractedFrom: 'metadata',
-        confidence: 0.5,
+        confidence: null,
+        metadata: { atomType: atom.atom_type },
       });
     }
 
@@ -395,10 +348,11 @@ export class KnowledgeGraphService {
           sourceAtomId: atomId,
           targetAtomId: related.id,
           relationshipType: 'same_agency',
-          relationshipStrength: 0.4,
+          relationshipStrength: null, // was a constant 0.4 (and confidence 0.7)
           bidirectional: true,
           extractedFrom: 'metadata',
-          confidence: 0.7,
+          confidence: null,
+          metadata: { agency },
         });
       }
     }
@@ -425,7 +379,7 @@ export class KnowledgeGraphService {
           relationshipStrength: strength,
           bidirectional: true,
           extractedFrom: 'metadata',
-          confidence: 0.6,
+          confidence: null, // was a constant 0.6
           metadata: { sharedTags: atom.tags.filter((t: string) => related.tags.includes(t)) },
         });
       }
@@ -523,14 +477,17 @@ export class KnowledgeGraphService {
     // Group by atom to create nodes with edges
     const nodesMap = new Map<string, GraphNode>();
 
+    // get_atom_neighbors returns no source type, atom confidence or
+    // bidirectional flag. Until 2026-10-15 they were reported as '', 0 and
+    // false, and the edge's strength was repeated as its confidence.
     for (const row of result.rows) {
       if (!nodesMap.has(row.atom_id)) {
         nodesMap.set(row.atom_id, {
           atomId: row.atom_id,
           title: row.title,
           atomType: row.atom_type,
-          sourceType: '',
-          confidence: 0,
+          sourceType: null,
+          confidence: null,
           edges: [],
         });
       }
@@ -541,8 +498,8 @@ export class KnowledgeGraphService {
         targetAtomId: row.atom_id,
         relationshipType: row.relationship_type,
         relationshipStrength: row.relationship_strength,
-        bidirectional: false,
-        confidence: row.relationship_strength,
+        bidirectional: null,
+        confidence: null,
       });
     }
 
@@ -600,12 +557,13 @@ export class KnowledgeGraphService {
     const neighbors = await this.getNeighbors(atomId, depth);
     nodes.push(...neighbors);
 
-    // Get all edges between these nodes
+    // Get all edges between these nodes. (Until 2026-10-15 this also selected
+    // `confidence`, which the edge table does not have, so every call failed.)
     const nodeIds = nodes.map(n => n.atomId);
     const edgesResult = await this.pool.query(
       `
       SELECT source_atom_id, target_atom_id, relationship_type,
-             relationship_strength, bidirectional, confidence
+             relationship_strength, bidirectional
       FROM lumen_knowledge_graph_edges
       WHERE source_atom_id = ANY($1) AND target_atom_id = ANY($1)
     `,
@@ -618,7 +576,7 @@ export class KnowledgeGraphService {
       relationshipType: row.relationship_type,
       relationshipStrength: row.relationship_strength,
       bidirectional: row.bidirectional,
-      confidence: row.confidence,
+      confidence: null,
     }));
 
     return {
@@ -642,7 +600,7 @@ export class KnowledgeGraphService {
 
     if (direction === 'outgoing') {
       query = `
-        SELECT a.*, e.relationship_type, e.relationship_strength, e.bidirectional, e.confidence
+        SELECT a.*, e.relationship_type, e.relationship_strength, e.bidirectional
         FROM lumen_knowledge_graph_edges e
         JOIN lumen_data_atoms a ON e.target_atom_id = a.id
         WHERE e.source_atom_id = $1 AND e.relationship_type = $2
@@ -650,7 +608,7 @@ export class KnowledgeGraphService {
       params = [atomId, relationshipType];
     } else if (direction === 'incoming') {
       query = `
-        SELECT a.*, e.relationship_type, e.relationship_strength, e.bidirectional, e.confidence
+        SELECT a.*, e.relationship_type, e.relationship_strength, e.bidirectional
         FROM lumen_knowledge_graph_edges e
         JOIN lumen_data_atoms a ON e.source_atom_id = a.id
         WHERE e.target_atom_id = $1 AND e.relationship_type = $2
@@ -658,7 +616,7 @@ export class KnowledgeGraphService {
       params = [atomId, relationshipType];
     } else {
       query = `
-        SELECT a.*, e.relationship_type, e.relationship_strength, e.bidirectional, e.confidence,
+        SELECT a.*, e.relationship_type, e.relationship_strength, e.bidirectional,
                CASE WHEN e.source_atom_id = $1 THEN 'outgoing' ELSE 'incoming' END as direction
         FROM lumen_knowledge_graph_edges e
         JOIN lumen_data_atoms a ON
@@ -684,7 +642,9 @@ export class KnowledgeGraphService {
         relationshipType: row.relationship_type,
         relationshipStrength: row.relationship_strength,
         bidirectional: row.bidirectional,
-        confidence: row.confidence,
+        // Until 2026-10-15 the queries selected e.confidence, which the edge
+        // table does not have; `row.confidence` is now the atom's (a.*).
+        confidence: null,
       },
     }));
   }

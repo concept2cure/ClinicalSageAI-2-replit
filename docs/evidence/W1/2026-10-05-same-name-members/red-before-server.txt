@@ -1,0 +1,7 @@
+# at trunk 69bb475b, endpoint unchanged, the new test added
+$ npx vitest run server/routes/__tests__/taskBoard-assignees-labels.test.ts
+ × server/routes/__tests__/taskBoard-assignees-labels.test.ts > GET /assignees > two members with one name have two different labels; a unique name is left as it is
+ ✓ server/routes/__tests__/taskBoard-assignees-labels.test.ts > GET /assignees > keeps name as it was, for the readers that show it
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'JM Smith · jm.smith@acme.test' // Object.is equality
+      Tests  1 failed | 1 passed (2)

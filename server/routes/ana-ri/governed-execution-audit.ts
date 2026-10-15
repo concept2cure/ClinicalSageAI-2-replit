@@ -6,6 +6,34 @@
 import { recordAuditRow, type AuditRowOutcome } from '../../services/audit/audit-write-outcome.js';
 import { canonicalJson, sha256Hex } from '../../services/ana/turn-record.js';
 import type { readPendingApproval } from '../../services/ana/run-control.js';
+import type { AnswerCheck } from '../../services/ana/answer-grounding.js';
+
+/** Texts of each list the row keeps, at most, and the length of each. */
+const MAX_ROW_TEXTS = 20;
+const MAX_ROW_TEXT_CHARS = 200;
+const rowTexts = (items: ReadonlyArray<{ text: string }>) =>
+  items.slice(0, MAX_ROW_TEXTS).map((c) => c.text.slice(0, MAX_ROW_TEXT_CHARS));
+
+/**
+ * What the approver was shown about a governed draft (GRD-2): the check of
+ * its prose against what AnA consulted, as the sign-off dialog showed it. The
+ * run row clears the full check when the person decides, so the sign-off row
+ * keeps its counts, what was not found and the verdicts the draft states,
+ * bounded.
+ */
+function proposalCheckOf(check: AnswerCheck) {
+  return {
+    engine: check.engine,
+    basis: check.basis,
+    claims: check.claims,
+    found: check.found,
+    notFound: rowTexts(check.notFound),
+    fromInput: check.fromInput.length,
+    fromPerson: check.fromPerson.length,
+    unchecked: check.unchecked.length,
+    verdicts: rowTexts(check.verdicts),
+  };
+}
 
 /**
  * What a governed action's audit rows name beside the command (D5/D6): the run
@@ -13,6 +41,8 @@ import type { readPendingApproval } from '../../services/ana/run-control.js';
  * row's proposedBy, never the body), and a hash of exactly the params a person
  * authorised. The hash is the turn record's canonical one, so the row joins the
  * turn's step. A command posted without its run has no run and no model call.
+ * A draft held with the check of its prose names what the approver was shown
+ * of it (proposalCheckOf).
  */
 export function governedActionTrace(
   runId: string,
@@ -27,6 +57,7 @@ export function governedActionTrace(
     gatewayRequestId: proposer?.requestId ?? null,
     servingModel: proposer ? { provider: proposer.provider, model: proposer.model } : null,
     paramsSha256: sha256Hex(canonicalJson(params ?? {})),
+    ...(pending?.check && { proposalCheck: proposalCheckOf(pending.check) }),
   };
 }
 

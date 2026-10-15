@@ -1,0 +1,1075 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T17:46:01.536Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T17:46:01.537Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T17:46:01.537Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T17:46:01.862Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-29T17:46:03.135Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-29T17:46:03.241Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-29T17:46:03.268Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+{
+  "timestamp": "2026-09-29T17:46:03.297Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-29T17:46:03.321Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-29T17:46:03.336Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored 112ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored 27ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored 28ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element 23ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote 16ms
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-29T17:46:03.373Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-29T17:46:03.403Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-29T17:46:03.416Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-29T17:46:03.434Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-29T17:46:03.452Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote 36ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote 30ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote 13ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote 18ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote 18ms
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard)
+{
+  "timestamp": "2026-09-29T17:46:03.497Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard)
+{
+  "timestamp": "2026-09-29T17:46:03.498Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a body written with CRLF line endings as the same paragraphs and line breaks (guard)
+{
+  "timestamp": "2026-09-29T17:46:03.515Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'only the JSON trailer': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-09-29T17:46:03.517Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'only a trailer listing what the evide…': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-09-29T17:46:03.524Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'an empty completion': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-09-29T17:46:03.531Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a completion of whitespace': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-09-29T17:46:03.538Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote 43ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard) 3ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard) 18ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a body written with CRLF line endings as the same paragraphs and line breaks (guard) 1ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > the editor converts plain text with the function that stores it (one implementation) 0ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'only the JSON trailer': the draft and the result body are "", and the trailer is still read 8ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'only a trailer listing what the evide…': the draft and the result body are "", and the trailer is still read 7ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'an empty completion': the draft and the result body are "", and the trailer is still read 7ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a completion of whitespace': the draft and the result body are "", and the trailer is still read 32ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > this file exercises the router’s own statements > still contains the order read this file mirrors 4ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > this file exercises the router’s own statements > still contains the shift this file mirrors 1ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > this file exercises the router’s own statements > still resolves the position with the shared comparator 1ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > the defect, demonstrated against a real database > leaves every section at index 0 the old way, so the order is not determined by anything 5ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > creating 5.6 then 5.1 assembles 5.1 first — the W1-2 acceptance criterion 9ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > converges on full order however scrambled the creation sequence 9ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > nests sub-sections under their parent 8ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > puts drug substance before drug product, whichever was created first 6ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > assigns contiguous indices, so no two sections tie 6ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > actually moves the rows below an insertion point 6ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > an explicit position still wins > honours a caller-supplied order_index instead of deriving one 7ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > an explicit position still wins > does not re-sort a document someone deliberately reordered 4ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > tenant isolation > reads only this tenant’s sections when resolving a position 4ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > round-trips: the prefill of a recorded block parses back to the same block, φ1 and φ2 included 17ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > refuses a non-number with its label, and a starting dose that is not a level 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > refuses, before any request, what the server would refuse: range, whole number, the cohort rules and the neighbourhood 5ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > reads only plain decimals: "0x9", "0b1" and "Infinity" are not numbers 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > refuses a dose line with a "|" inside a value, naming the line, rather than dropping what follows it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > refuses a dose label listed twice, so the starting dose names one level 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > a recorded dose holding "|" is shown as recorded, and the drawer says it must be corrected — never rewritten to "/" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > a recorded start on a duplicated label is not silently moved to the first 5ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > dose escalation > leaves a blank optional field out rather than defaulting it; "Clear" sends null 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > reports a bad site line by the number the author sees, and round-trips a recorded plan 7ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > refuses a duplicate site id and a sixth field, each by line 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > pre-selects no choice for a block that is not recorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > parses MMRM retention as a list and refuses a bad entry, and an empty slot, by position 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > accrual plan and MMRM > refuses a retention that rises or does not match the visits, a target visit outside them, and more visits than the bound 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > external control > round-trips a plan of either method, keeping "not stated" as absent 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > external control > sends only the discount the chosen method reads, and requires it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > registration titles > round-trips recorded titles, and never prefills the public title from the official one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > registration titles > refuses a record with neither title, and leaves a blank one out 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > round-trips a recorded plan from its own prefill: optional fields, an arm with a comma, and each shared-control state 2ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > a sub-study stated as not biomarker-defined round-trips as null, distinct from a blank biomarker; the justification round-trips 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > refuses a not-biomarker-defined id that is no sub-study, is listed twice, or also names a biomarker 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > refuses an arm the design does not carry, a line with no arm, a duplicate id, and an eighth field 5ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > a recorded population with a line break is not split into two sub-studies on the next edit: the drawer says so 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > master protocol > offers the shared control from the design's arms, keeping a recorded one the design lacks, marked 1ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > lossless editing: what cannot come back exactly is named, and recording it is a stated choice > a recorded key the form has no field for is named, and no action is pre-selected 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > lossless editing: what cannot come back exactly is named, and recording it is a stated choice > text a single-line input cannot hold is shown as the input would hold it, and named 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > lossless editing: what cannot come back exactly is named, and recording it is a stated choice > a recorded value no option shows is named rather than held out of sight 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > lossless editing: what cannot come back exactly is named, and recording it is a stated choice > losses compares numbers as text and names additions 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > one activity > edits only the activity it was opened for: no activity picker, and the id is the drawer's 5ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > one activity > "Not stated" and "None recorded" clear, a value records, a bad volume is refused 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > parity with the server > the location and specimen vocabularies, and the MMRM visit bound, are the server's 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > biospecimen view > prints the worst 8-week window as a lower bound when the totals are lower bounds 0ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a design that cannot be read is an alert, never an empty panel 413ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a refused write keeps the drawer open and reports the server's own details, framed as nothing written 502ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a successful write carries the block as read, and the badge says "recorded" only after the design is re-read 302ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a block another author wrote in between is refused: the drawer closes and the design is re-read 165ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a request that did not complete is not reported as nothing written; the design is re-read 220ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > an activity drawer posts for its own activity, with what it recorded as the precondition 121ms
+ ✓ client/src/concept2cure/v2/__tests__/planningInputForms.test.ts > the planning-inputs panel > a viewer's buttons name their target and say why they are disabled; no Schedule of Activities is stated 51ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 93ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 11ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 10ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 8ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 8ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 18ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing 10ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason 4ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > accepts a completed draft that reports its finish reason 18ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent
+{
+  "timestamp": "2026-09-29T17:46:08.366Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing 446ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing 10ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing 10ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing 8ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing 12ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section 9ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > returns a long refused src shortened, so a megabyte data: URI is not echoed back 16ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone
+{
+  "timestamp": "2026-09-29T17:46:08.374Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-29T17:46:08.379Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790703968378_4fzzzx",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-29T17:46:08.383Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-29T17:46:08.384Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790703968384_i",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-29T17:46:08.387Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-29T17:46:08.389Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790703968389_9",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-29T17:46:08.392Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-29T17:46:08.394Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790703968394_",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-09-29T17:46:08.397Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard)
+{
+  "timestamp": "2026-09-29T17:46:08.419Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard)
+{
+  "timestamp": "2026-09-29T17:46:08.420Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.CREATE",
+    "resourceType": "authoring_section",
+    "resourceId": "f35eab3c-8e29-4183-bd85-dbd80ffa3304",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard)
+[authoring] audit_logs index entry NOT written for authoring.section.CREATE on authoring_section f35eab3c-8e29-4183-bd85-dbd80ffa3304; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-09-29T17:46:08.456Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "e7fd8a11-fd67-4c23-9050-18ddaa29fe32",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-09-29T17:46:08.457Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e7fd8a11-fd67-4c23-9050-18ddaa29fe32 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-09-29T17:46:08.457Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e7fd8a11-fd67-4c23-9050-18ddaa29fe32 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > the batch records what it produced: one turn record holding the draft, its id and hash on the result 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a forged claim with no record behind it yields no accepted_machine_draft span, and the claim is disclosed 19ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a real record id does not launder the accepter's own text as AnA's 33ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent 12ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload) 23ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > an external address: 400 with the sentence, nothing read or written 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > dot segments: 400 with the sentence, nothing read or written 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > an inline SVG: 400 with the sentence, nothing read or written 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > refuses content that is not text, which the driver would store as JSON unchecked 2ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard) 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > 400 naming the template section, and no document is created 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > tells the person what they can do: choose another template, never "save again" 23ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard) 7ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a draft accepted with its record id is AnA's, accepted by this person, under the record's model 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a model named in the body is ignored; the model comes from the record 37ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record from another tenant does not verify 36ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record that no longer verifies whole does not verify a claim 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of "not-a-uuid" is disclosed as malformed_turn_record_id, not answered with a 500 14ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of 12345 is disclosed as no_turn_record_id, not answered with a 500 14ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of {"id":"3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b"} is disclosed as no_turn_record_id, not answered with a 500 15ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > the accepter's own words, stored in the record as their request, do not verify as AnA's 36ms
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T17:46:08.691Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ai_generation ai_drafting_surface",
+  "context": {
+    "userId": 501,
+    "tenantId": 77,
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T17:46:08.699Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:417:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T17:46:08.701Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T17:46:08.703Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:397:36",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+    at TamperProofAuditLog.log (./server/lib/tamper-proof-audit.ts:430:39)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at AuditService.logAction (./server/services/auditService.ts:455:9)
+    at ./server/routes/ana-intelligence.ts:105:7
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T17:46:08.706Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one verified claim does not carry a forged one: only the recorded draft is AnA's 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept 52ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-A: words typed inside < … > into the draft: does not verify, and every clause is the accepter's 23ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the recorded draft and the accepter's own paragraph, as one claim: does not verify, and every clause is the accepter's 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the draft with an asterisk AnA never wrote: does not verify, and every clause is the accepter's 32ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-B: words typed inside < … > into a verified draft are the accepter's, not AnA's 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > a draft recorded as markdown verifies as the text it shows 26ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/../../tenant-export/full 19ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/%2e%2e/%2e%2e/users/me 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/..\..\tenant-export\full 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/file_1_a?download=1 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: https://collector.example/p.png?d=secret 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: //collector.example/p.png 19ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/svg+xml;base64,PHN2Zz4= 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:text/html;base64,PHNjcmlwdD4= 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/webp;base64,UklGRg== 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: javascript:alert(1) 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > keeps a governed reference and an inline PNG exactly as written 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > finds the image wherever the parse puts it: inside a table cell, and in upper case 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > still strips scripts and handlers, and leaves the chat-safe rest alone 5ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > does not leave its image rule on the shared DOMPurify instance 1ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a claim with no record behind it: the audit reason, the version summary and lastDraftSource say what verified 30ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > no claim at all: the audit reason, the version summary and lastDraftSource say what verified 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft: the audit reason, the version summary and lastDraftSource say what verified 33ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft beside a forged paragraph: the audit reason, the version summary and lastDraftSource say what verified 25ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names nothing in prose, a governed reference, an inline PNG, or an image with no src 387ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/../../tenant-export/full 16ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/%2e%2e/%2e%2e/users/me 5ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/..\..\tenant-export\full 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/file_1_a?download=1 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: https://collector.example/p.png?d=secret 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: //collector.example/p.png 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/svg+xml;base64,PHN2Zz4= 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:text/html;base64,PHNjcmlwdD4= 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/webp;base64,UklGRg== 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: javascript:alert(1) 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > reads the markup the way a browser does 6ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > says which images, by position and kind, without echoing an application path 1ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > refuses an image that is not an uploaded figure, and writes nothing 373ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > accepts an uploaded figure reference 37ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > figures in the section schema > a stored <img> reference survives parse → serialize untouched 100ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > figures in the section schema > insertAuthoringImage writes the store reference at the caret 23ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > figures in the section schema > an inline PNG parses and round-trips as it is 31ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > fetches a governed reference with the viewer’s credentials 2ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > displays an inline PNG as it is, without a request 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/../../tenant-export/full 1ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/%2e%2e/%2e%2e/users/me 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/..\..\tenant-export\full 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export 1ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a?download=1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: https://collector.example/p.png?d=secret 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: //collector.example/p.png 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:image/svg+xml;base64,PHN2Zz4= 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:text/html;base64,PHNjcmlwdD4= 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: data:image/webp;base64,UklGRg== 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > never hands a src that is not a figure to the browser: /api/c2c/projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/../../tenant-export/full 14ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/%2e%2e/%2e%2e/users/me 13ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/..\..\tenant-export\full 18ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export 15ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/authoring/images/file_1_a?download=1 17ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: https://collector.example/p.png?d=secret 14ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: //collector.example/p.png 13ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:image/svg+xml;base64,PHN2Zz4= 12ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:text/html;base64,PHNjcmlwdD4= 16ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: data:image/webp;base64,UklGRg== 9ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not parse in stored or set content: /api/c2c/projects 11ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > stored content holding one fails the fidelity gate on its image count, so it opens in source mode 25ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > does not take one in from pasted or inserted HTML 21ms
+ ✓ client/src/concept2cure/v2/__tests__/imageEditing.test.ts > an image reference is a governed figure or nothing > a node that arrives without a parse (JSON, live sync) is not fetched and says the figure must be uploaded 61ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > round-trip fidelity gate > plain textarea-era content survives conversion with every word intact 34ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > round-trip fidelity gate > execCommand-era DocCanvas HTML normalizes without losing a word 25ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > round-trip fidelity gate > serialize→parse is a fixed point (no drift on repeated save) 173ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > round-trip fidelity gate > CATCHES the loss case: text a schema parse silently drops is flagged, not rewritten 19ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > round-trip fidelity gate > suggestion and comment marks persist through save/reload with attribution 95ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > round-trip fidelity gate > prose containing tag-shaped tokens is plain text, not HTML to parse away 20ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > round-trip fidelity gate > plain text with single newlines survives the text-format serializer 15ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > BP-W1-1 authoring capabilities > superscript and subscript survive as formatting, not just as text 34ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > BP-W1-1 authoring capabilities > a stability table can be AUTHORED with the editor commands and serializes as a real table 119ms
+ ✓ tests/concept2cure/rich-section-editor-roundtrip.test.tsx > BP-W1-1 authoring capabilities > table structure commands work against an authored table 25ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > a document goes out through the exporter and comes back with its structure > recovers the sections from the headings, with their codes 284ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > a document goes out through the exporter and comes back with its structure > keeps the table — the thing raw-text extraction destroys 37ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > a document goes out through the exporter and comes back with its structure > keeps the list, not just its text 75ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > a document goes out through the exporter and comes back with its structure > is measurably better than the extractRawText the other four readers use 37ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > section codes are parsed, never invented > splits a dotted code from its title 1ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > section codes are parsed, never invented > does not invent a code for a heading that carries none 0ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > section codes are parsed, never invented > reports headings that carry no code rather than guessing one 19ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > nothing is dropped silently > keeps content that appears before the first heading 0ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > nothing is dropped silently > says so when a document has no headings at all 24ms
+ ✓ server/import/__tests__/docx-to-authoring.test.ts > nothing is dropped silently > reports counts the author can check against the file they dragged in 20ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — table cell boundaries > delimits adjacent cells instead of concatenating them 7ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — table cell boundaries > does not leave a dangling separator at the end of a row 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — table cell boundaries > leaves non-table content unchanged 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText > reduces HTML to readable text with block boundaries 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a superscript is not silently dropped > keeps the magnitude: 10^6, not 106 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a superscript is not silently dropped > keeps an exponent in a unit 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a superscript is not silently dropped > leaves subscript inline, which is the conventional written form 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > does not fuse a proposed replacement into one garbled value 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > does not accept a proposed DELETION into the filed leaf 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > does not accept a proposed INSERTION either 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > handles the attributed marks the editor actually writes 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — an unresolved change is not settled for the author > leaves settled prose completely alone 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > transliterates Greek letters instead of deleting them 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > leaves no Greek letter unaccounted for — the fallback marks, never removes 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > keeps exponents as exponents 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > uses one exponent notation throughout, including the Latin-1 superscripts 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > renders subscripts as ordinary digits in chemical formulae 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > preserves the CP1252 punctuation the encoder can actually draw 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > still substitutes operators outside the code page rather than dropping them 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > toWinAnsiSafe — submission text fidelity > leaves WinAnsi characters clinical text depends on untouched 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — the retained characters are drawable > renders CP1252 punctuation and transliterated statistics without throwing 43ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — the retained characters are drawable > draws the redline brackets and the caret this renderer now emits 4ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — the retained characters are drawable > is total over arbitrary Unicode — unmappable input degrades, never crashes 3ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > never drops a figure silently 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > keeps ordered-list numbering, including an explicit start 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > keeps list nesting depth distinguishable 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > separates definition terms from their definitions 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > decodes the named and numeric entities a document actually contains 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > preserves indentation inside <pre> 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > does not leak stylesheet or script bodies into the document 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > keeps a row intact when a cell contains a block element or a nested table 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > keeps the shared inline marks the DOCX pipeline also emits 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > is total over malformed markup and empty input 1ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — structural fidelity > is deterministic — the leaf checksum contract depends on it 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by any other src > inline PNG data whose payload holds a "/" 2ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by any other src > inline PNG data whose payload holds no "/" 2ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by any other src > inline WebP data 2ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by any other src > an external address 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by any other src > a path outside the image store 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by any other src > names a governed upload by its reference, as the export names one it could not file 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by any other src > names the figure by its alt text when it has one; alt text of spaces is none 3ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > htmlToPlainText — a figure with no alt text is named by its kind, never by any other src > says a figure with no src and no alt text is an unresolved reference 0ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — list nesting reaches the page > draws each nesting level further from the margin than the one above it 2348ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > produces a valid PDF (correct header, loadable, ≥1 page) 10ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > adds a document-level bookmark (/Outlines) for navigation per FDA eCTD guidance 6ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > is deterministic — identical input yields byte-identical output 9ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > paginates long content across multiple pages 116ms
+ ✓ server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf > renders empty content as a valid one-page PDF (no crash) 2ms
+ ✓ server/services/ectd/__tests__/structured-leaf-bookmarks.test.ts > renderStructuredLeafPdf — bookmark destinations > points every bookmark at the page its heading is drawn on 3490ms
+ ✓ server/services/ectd/__tests__/structured-leaf-bookmarks.test.ts > renderStructuredLeafPdf — bookmark destinations > nests subsections under their parent rather than flattening the tree 104ms
+stderr | server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX 264ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a subscript reads as the conventional formula 17ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > an unresolved tracked change stays unresolved 13ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > table cells keep a delimiter instead of running together 33ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a figure leaves a trace instead of disappearing 14ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > the DOCX branch still produces a document for the same input 44ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > keeps the source id off the run, never a number 8ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > leaves an ordinary anchor alone — a link is not a citation 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > does not merge two citations of DIFFERENT sources into one run 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > does not merge two citations of the SAME source at different pinpoints 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > keeps a block whose only content is a citation 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > lists the cited source ids so an export knows what to look up 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > prints a number derived from position and links it to the reference list 2ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > assembles the reference list from the citations actually used, in first-appearance order 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > gives a source cited three times ONE number and ONE entry 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > leaves an UNCITED source out of the reference list entirely 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > emits no reference list at all when nothing is cited 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > INSERTING A CITATION EARLIER RENUMBERS THE REST, with the stored content untouched 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > never prints the editor’s cached name in place of a number 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > states an unknown source rather than printing a number or nothing 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > an unresolved citation consumes NO number, so the list has no gap 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > treats a source with nothing printable as unresolved, not as an empty entry 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > resolves a citation written inside a table cell 2ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > does not silently drop a citation when no registry is supplied 0ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > caption parsing > carries the object’s identity and its words, and no ordinal anywhere 10ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > caption parsing > recognises a table by its caption and a figure by its alt text 2ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > caption parsing > does not make an UNCAPTIONED table a numbered object 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > caption parsing > offers only the objects that can be pointed at as reference targets 2ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > prints the number in the caption position, tables and figures counted separately 2ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > leaves the figure’s alt text as the author’s words, without the number 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > makes the caption the anchor a reference to the object lands on 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > resolves a cross-reference to a TABLE through the same mechanism as a section 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > prints the caption words alongside the number for a code-title reference 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > INSERTING A TABLE EARLIER RENUMBERS THE REST, with the stored content untouched 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > an uncaptioned table consumes no ordinal, so the numbers have no gap 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > states a reference to a DELETED table, and never a plausible number 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > still files the author’s caption when the caller supplied no numbering 0ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > does not number a figure that sits inside a table cell 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > emits the number as a real Word internal hyperlink into the reference list 148ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > files a reference list built from the citations actually used 44ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > INSERTING A CITATION EARLIER RENUMBERS THE WORD TEXT, stored content untouched 39ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > states an unknown source in the filed document, and emits no link for it 23ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > does not silently drop a citation when no registry is supplied 47ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > carries a citation out of a TABLE CELL 20ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > the two filed formats agree > numbers the same sources identically in DOCX and in HTML 20ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > DOCX rendering > files the numbered caption, and bookmarks it so a REF field can cite it 199ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > DOCX rendering > emits a real Word REF field from a reference to a table 53ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > DOCX rendering > INSERTING A TABLE EARLIER RENUMBERS THE FILED WORD DOCUMENT 41ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > DOCX rendering > states a reference to a deleted table, and emits no field for it 45ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > the two filed formats agree > numbers the same object the same way in DOCX and in HTML 17ms
+stderr | server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is the renderer actually in use unless a Puppeteer driver is installed
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > keeps table cells, list numbering, figures and entities readable 208ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > renders a placeholder rather than an empty page for empty input 19ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is deterministic for identical input 35ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > says on the page that it is a plain-text rendering 15ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > puts the notice before the content, not after it 17ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > does not alter the content it is warning about 8ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is the renderer actually in use unless a Puppeteer driver is installed 14ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > parses to a table block rather than tab-separated paragraphs 11ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > emits a real w:tbl with every row, cell and value intact 61ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > is falsifiable: prose with no table produces no w:tbl 13ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > cross-reference parsing > keeps the target id off the run, not the printed number 11ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > cross-reference parsing > leaves an ordinary anchor alone — a link is not a cross-reference 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > cross-reference parsing > does not merge two references to DIFFERENT sections into one run 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > cross-reference parsing > keeps a block whose only content is a reference 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > prints the target’s CURRENT code and title, and links to it 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > RENUMBERING THE TARGET CHANGES THE RENDERED TEXT, with the stored content untouched 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > never prints the editor’s cached number, even when it is stale 0ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > states a dangling reference rather than printing a number or nothing 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > resolves a reference written inside a table cell 3ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > carries merged header cells rather than silently unmerging them 20ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > keeps a caption with its table 17ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a Module 3.2.P.8.3 stability table — the biopharma wave gate > round-trips 10 rows x 7 columns into the .docx as a real table 39ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a Module 3.2.P.8.3 stability table — the biopharma wave gate > keeps every cell reachable as text, so nothing is lost to consumers that only read text 1ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > ordered lists keep their numbers > marks ol items ordered and ul items not 1ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > ordered lists keep their numbers > exports an ordered list against a real numbering definition, not as a bullet 22ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > ordered lists keep their numbers > counts unresolved suggestions inside table cells 1ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > emits a real HTML table with header cells and every value 2ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > groups consecutive items into one real ol or ul, not a run of paragraphs 0ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > escapes text and never passes stored markup through raw 1ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > carries a pending suggestion into the PDF as redline, not as a settled edit 0ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > agrees with the DOCX branch on table shape — the two formats cannot drift 12ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > superscript and subscript reach the DOCX as vertical alignment, not flattened text (BP-W1-1) 14ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > superscript and subscript survive the HTML/PDF branch too 0ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > sup/sub inside a table cell keep their alignment in the DOCX 14ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > emits a real Word REF field pointing at the target’s bookmark 149ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > writes the bookmark the field cites onto the section heading 21ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > RENUMBERING THE TARGET CHANGES THE WORD TEXT, with the stored content untouched 31ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > states a dangling reference in the filed document, and emits no field for it 27ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > does not silently drop the reference when no directory is supplied 44ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > the two filed formats agree > renders the same resolved text in DOCX and in HTML 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > INCIDENT 1: a heading flattened by the pre-fix schema 33ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > INCIDENT 2: a caption reparented into a data cell by the pre-fix schema 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #1: an <h6> — above the schema ceiling — silently becomes a paragraph 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #2: a definition list — no schema node — is flagged 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #3: a header row written with <td> in <thead> is demoted to data 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 1 fixed: an <h4> round-trips under the shipped schema 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 2 fixed: a captioned table stays in rich mode 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > div→p and b→strong do not trip the gate 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > the execCommand provenance strip (1 div, 3 spans → paragraphs) is not refused 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > a colspan cell counts as ONE declared cell on both sides — merged tables are not refused 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a ragged table (a short row) is refused — the editor would pad it 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a rowspan that overflows the table is refused — the editor would clamp it 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a well-formed rectangular table is NOT refused — fixTables leaves it alone 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a merged (colspan) table is NOT refused — declared cells agree, no fabrication 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a srcless <img> (its alt caption lost) is flagged: any <img> is counted 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a normal img[src] still round-trips — not a false positive 8ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a nested procedure keeps its ranks through the parse > records the depth of every item instead of flattening them 8ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a nested procedure keeps its ranks through the parse > keeps the kind of each rank, so notes under a step stay bulleted 2ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a nested procedure keeps its ranks through the parse > leaves a flat list exactly as it was — the fix adds nothing to it 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a nested procedure keeps its ranks through the parse > treats an li with no list around it as a top-level item, not a drop 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the DOCX files the sub-steps at their own rank > emits w:ilvl 1 for the sub-steps and 0 for the steps 54ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the DOCX files the sub-steps at their own rank > declares a numbering format for every rank it can emit 31ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the DOCX files the sub-steps at their own rank > clamps a depth beyond the declared ranks rather than emitting an unnumbered step 15ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > opens the sub-list inside the step it belongs to 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > closes every list and item it opens, at any depth 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > numbers each rank as the DOCX does, so the two renditions agree 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > does not wrap a flat list in anything new 0ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > starts a new list when the kind changes at the same rank 0ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > parses to a table that keeps both figures (the old failure returned nothing) 3ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > files a real w:tbl with both images embedded as media parts 18ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > states an unresolvable figure in the cell rather than filing an empty one 25ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > renders the figures into the PDF branch cells too 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > survives with NO text anywhere — two photographs side by side 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > keeps a genuinely empty table out — emptiness is having no cells 0ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > leaves an all-text table exactly as it was 1ms
+ ✓ tests/export-contract/pdf-export.proof.test.ts > PDF export → reopen → PDF/A qualification > renders, reopens with an independent parser, and qualifies the bytes 321ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > emits w:ins for an insertion, attributed to its author and time 127ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > emits w:del with delText for a deletion 15ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > does not fall back to colouring the text 15ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > gives every revision a unique id, as Word requires 16ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > falls back to a named-but-unattributed revision when the mark carries no author 13ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > leaves settled text alone — no revision markup on an ordinary paragraph 13ms
+stderr | server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > an upload that did not resolve, by its reference, which the rule keeps short
+{
+  "timestamp": "2026-09-29T17:46:20.530Z",
+  "level": "warn",
+  "message": "[authoring-images] export image ref did not resolve",
+  "context": {
+    "fileId": "file_1727500000000_k3v9qa",
+    "reason": "not in this test"
+  }
+}
+
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > WebP: the PDF names its kind and prints no base64 12ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > an upper-case PNG type: the PDF names its kind and prints no base64 3ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > SVG: the PDF names its kind and prints no base64 3ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > WebP: the Word file names its kind and prints no base64 46ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > an upper-case PNG type: the Word file names its kind and prints no base64 18ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > a figure in a table cell is named the same way 4ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > the author's alt text, when there is one 10ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > an upload that did not resolve, by its reference, which the rule keeps short 17ms
+ ✓ server/export/__tests__/authoring-footnotes-docx.test.ts > footnotes in a packed .docx > emits a real w:footnoteReference, not a superscript run 116ms
+ ✓ server/export/__tests__/authoring-footnotes-docx.test.ts > footnotes in a packed .docx > writes the note text into footnotes.xml under the id that cites it 27ms
+ ✓ server/export/__tests__/authoring-footnotes-docx.test.ts > footnotes in a packed .docx > carries a footnote out of a TABLE CELL — the case the feature exists for 15ms
+ ✓ server/export/__tests__/authoring-footnotes-docx.test.ts > footnotes in a packed .docx > degrades to text rather than vanishing when no sink is supplied 13ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > docToPlainText — exact plain-text round trip > returns ordinary prose unchanged 38ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > docToPlainText — exact plain-text round trip > exposes collapsed runs of spaces (a space-aligned column) as a difference 12ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > docToPlainText — exact plain-text round trip > exposes extra blank lines folded into one break 6ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > assessPasteFidelity — the one-word floor is for long pastes only > reports a single dropped word on a short paste 9ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > assessPasteFidelity — the one-word floor is for long pastes only > keeps the noise floor on a long paste 8ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > structural drift between clipboard HTML and the parsed slice — the paste gate's comparison > names a definition list the schema flattened, though every word survived 32ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > structural drift between clipboard HTML and the parsed slice — the paste gate's comparison > names a table the schema (without the table extension) flattened into paragraphs 16ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > structural drift between clipboard HTML and the parsed slice — the paste gate's comparison > is silent on ordinary paragraphs and headings the schema keeps 8ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > an <img> becomes an image block instead of vanishing (the old failure) 8ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > image-only content is not dropped by the whitespace filter (the trap) 4ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > collectImageSrcs > finds and deduplicates refs across sections 2ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > sniffImageDimensions > reads PNG, GIF and JPEG headers; refuses garbage 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > embeds the resolved figure as a data URI with its caption 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > states an unresolved figure instead of dropping it 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > the figure is REALLY in the filed .docx — a drawing plus its media part 107ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > an unresolved figure files a stated placeholder, never silence 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition list 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition term 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition detail 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > table caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > still refuses to treat a tag-shaped prose token as markup 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > does not report a glossary as faithfully editable in rich mode 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > reads a glossary as the words a reviewer sees, not as its tags 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still passes content the editor genuinely represents 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still catches real text loss 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the two allowlists agree > the server parser recognises exactly what the client does 4ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > plain textarea-era text: one block per line, nothing invented 3ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > prose with a tag-shaped token stays literal plain text 1ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > editor HTML: headings, formatting and lists map to typed runs 11ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > unresolved suggestions survive as redline runs with a countable census 2ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > comment-anchor spans keep their words and lose their dressing 1ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > execCommand-era markup (div soup, provenance strip) loses no words 1ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > empty and null content yield no blocks (honest empty, nothing fabricated) 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > reports the words the parse could not keep 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > stays quiet when the parse kept everything 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > does not cry wolf over a one-word tokenisation difference 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > reports a real loss on a long paste, where one word would be noise 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > ignores a plain-text paste, which has no structure to lose 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > is insensitive to reflowed whitespace 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a dot segment after a real id: the loader is not called and nothing resolves 8ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a query after a real id: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > an id the store never minted: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > percent-encoded dot segments: the loader is not called and nothing resolves 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a reference padded with spaces: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline an upper-case type: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline WebP, which Word cannot hold: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline SVG, a script container: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline TIFF: not decoded, not filed 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline a PNG whose payload holds a newline: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > the PDF of a section holding an inline WebP states it instead of embedding it 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > reads srcs the way the export parser does: character references, unquoted and upper-case 6ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > still files a governed reference and an inline PNG (guard) 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > files an inline JPEG and GIF under their own types (guard) 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > the author's alt text, as written 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline WebP, in words 5ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upper-case PNG type, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline PNG whose bytes did not decode, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an external address, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > a path out of the image route, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upload that did not resolve, by its reference 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > no src at all 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > never carries a data: payload, whatever its length 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: keeps the limit, the criterion, and the text between them 7ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > eCTD leaf: same document, same text 9ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a decoded entity is never re-read as a tag 1ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a real tag is still stripped, and its content kept 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: an entity inside a heading survives too 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: &amp; decodes exactly once 0ms
+ ✓ server/export/__tests__/authoring-heading-depth.test.ts > heading depth — CTD nests deeper than three > keeps every level through the parse instead of clamping at 3 9ms
+ ✓ server/export/__tests__/authoring-heading-depth.test.ts > heading depth — CTD nests deeper than three > renders each level as its own rank in HTML, offset below the section title 3ms
+ ✓ server/export/__tests__/authoring-heading-depth.test.ts > heading depth — CTD nests deeper than three > never emits a heading above h6, whatever the input claims 1ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > every section-content overwrite is preceded by a revision snapshot > finds the write sites at all — the gate is not vacuous 2ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > every section-content overwrite is preceded by a revision snapshot > each one sits inside a handler that also calls createRevision 1ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > every section-content overwrite is preceded by a revision snapshot > createRevision itself still writes the revision ledger 1ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > every section-content overwrite is preceded by a revision snapshot > and it is tenant-scoped, so a snapshot cannot land in another org 1ms
+ ✓ tests/schema-contract/authoring-section-revision-gate.contract.test.ts > the section store has exactly one revision ledger > nothing writes a second section-history table 3ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > parses a note off its reference rather than dropping it 9ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > leaves ordinary superscript alone — cm², t½ are not footnotes 2ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > letters the markers by position and collects the notes after the content 4ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > gives the same note text ONE letter, however often it is cited 2ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > emits no notes block at all when nothing cites one 0ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > does not merge two references to DIFFERENT notes into one run 1ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > mounts the permissions router BEFORE the authoring router 2ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the permissions router owns the path and never delegates 1ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the authoring router no longer declares the shadowed pair 1ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the surviving permission-management implementation writes an audit row 0ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > writes doc_permissions through the canonical grant writer, never with its own INSERT 2ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > drops the constant that only the deleted route used 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is the store route followed by an id in the shape the store mints 2ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not dot segments 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not dot segments after a valid id 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a trailing dot segment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not percent-encoded dot segments 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not upper-case percent-encoding 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a half-encoded dot segment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not backslash segments 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an extra segment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a query 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a fragment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not leading whitespace 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a trailing newline 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a tab inside the id 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an absolute URL to the route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a protocol-relative URL 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a doubled slash 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an id the store does not mint 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an upper-case id 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not the bare route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not another API route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is a base64 PNG, JPEG or GIF: the formats both export branches file 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not WebP, which Word cannot hold 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not SVG, a script container 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not SVG as text 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not HTML 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not image/jpg, which the export does not embed 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not a payload that is not base64 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not a payload carrying markup 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not an empty payload 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "https://collector.example/p.png?d=secret" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "http://example.com/fig.png" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "javascript:alert(1)" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "blob:https://app.example/0b3c" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "x.png" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > a value that is not a string is not a figure 0ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > resolves to an absolute directory that exists 2ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > contains every prompt the services load at runtime 1ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > keeps a superscript as a magnitude, not a concatenated digit 2ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > marks both sides of an unresolved change 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > tolerates the attributes the editor actually writes 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > leaves subscript alone — dropping it changes nothing a reader misreads 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > leaves every other tag untouched for the caller to handle 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > changes nothing when there are no marks 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the eCTD leaf PDF renderer > does not fuse a pending change 4ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the eCTD leaf PDF renderer > does not drop an exponent 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the eCTD leaf PDF renderer > does not accept a proposed deletion 1ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the master DOCX builder > does not fuse a pending change 1ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the master DOCX builder > does not drop an exponent 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the master DOCX builder > does not accept a proposed deletion 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the master DOCX builder > still builds ordinary settled prose unchanged 0ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > decodes each entity exactly once 2ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > decodes the comparators specifications are written with 1ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > decodes numeric references, decimal and hex 0ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > leaves an unrecognised entity written out rather than dropping it 0ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > leaves a bare ampersand alone 0ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > does not touch markup — it runs after the strip, never before 0ms
+stdout | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-09-29T17:46:25.218Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T17:46:25.220Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-09-29T17:46:25.220Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-09-29T17:46:25.288Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses another organization’s project, before anything is written 4ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a project that does not exist, before anything is written 1ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a deleted project, before anything is written 1ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > still refuses a malformed id with 400 1ms
+
+ Test Files  39 passed (39)
+      Tests  551 passed (551)
+   Start at  17:45:58
+   Duration  27.54s (transform 7.31s, setup 1.49s, import 42.10s, tests 24.89s, environment 4.18s)
+

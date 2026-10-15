@@ -1,0 +1,21 @@
+Mutant C2a-no-mask: The gate splits the content unmasked: a style's ": " cuts its tag.
+Result: KILLED (vitest exit 1, 2 failing tests)
+Tests run: server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/lineage-gate.ts
++++ b/server/services/clinical-regulatory-evidence/lineage-gate.ts
+@@ -111,3 +111,3 @@
+   const masked = tagsMaskedForSplit(content);
+-  if (masked === content) return detectSpans(content, 'clause');
++  if (masked) return detectSpans(content, 'clause');
+   return detectSpans(masked, 'clause').map((s) => {
+
+--- failing tests ---
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > an inline style: the split does not cut inside the tag: every clause is AnA's, and the accept names AnA 40ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > honest, unedited drafts are AnA's (C2) > the inline-style draft is one clause, not two cut at the ": " inside its tag 33ms
+
+--- summary ---
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 36 passed (38)

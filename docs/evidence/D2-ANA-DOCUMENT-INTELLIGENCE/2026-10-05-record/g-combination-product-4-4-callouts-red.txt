@@ -1,0 +1,228 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > calls out 21 CFR 820.10 and the ISO 13485:2016 clauses named in 21 CFR 4.4(b)(1) 13ms
+   → expected [ '21 CFR 820.20', …(5) ] to deeply equal [ …(6) ]
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > states no removed QSR section as a current requirement 1ms
+   → 21 CFR 820.20: expected '21 CFR 820.20 Management responsibili…' not to match /\b820\.(20|30|50|100|170|200)\b/
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > every call-out carries a well-formed basis pointing at the eCFR text of 21 CFR 4.4 1ms
+   → 21 CFR 820.20: expected undefined to be defined
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > names the removed QSR section only as "formerly" 1ms
+   → expected [ undefined, undefined, …(4) ] to deeply equal [ …(6) ]
+ ✓ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > listDeviceProvisionsForDrugBase(asOf) is the same list 13ms
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > defaults asOf to today (UTC), which is on or after the QMSR date 1ms
+   → expected '21 CFR 820.20' to match /21 CFR 820\.10/
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > before 2026-02-02 the QSR call-outs applied > a drug-cGMP base calls out 820.20, 820.30, 820.50, 820.100, 820.170, 820.200, labelled recall 1ms
+   → Cannot read properties of undefined (reading 'confidence')
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > before 2026-02-02 the QSR call-outs applied > a malformed asOf fails closed 2ms
+   → expected [Function] to throw an error
+ ✓ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > the device-QS base call-outs (21 CFR 4.4(b)(2)) are unchanged > lists the 211 sections 13ms
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > assessDeviceConstituentControls names the current 4.4(b)(1) call-out > as of 2026-10-05 the rationale does not call 21 CFR 820.30 the called-out section 2ms
+   → expected 'The device constituent of a combinati…' not to match /\b820\.(20|30|50|100|170|200)\b/
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > AnA tool plan_combination_cgmp > does not tell the model the removed QSR call-out list 1ms
+   → expected 'Plan the cGMP operating model for a c…' not to match /820\.20, 820\.30, 820\.50/
+ × server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > AnA tool plan_combination_cgmp > exposes asOf so the call-outs are resolved for a date 0ms
+   → expected undefined to be defined
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > calls out 21 CFR 820.10 and the ISO 13485:2016 clauses named in 21 CFR 4.4(b)(1)
+AssertionError: expected [ '21 CFR 820.20', …(5) ] to deeply equal [ …(6) ]
+
+- Expected
++ Received
+
+  [
+-   "ISO 13485:2016 §4.1, §5, §6.1; 21 CFR 820.10",
+-   "ISO 13485:2016 §7.3 (with the §7.1 risk-management requirement)",
+-   "ISO 13485:2016 §7.4",
+-   "ISO 13485:2016 §8.2.2 with 21 CFR 820.35(a); §8.4; §8.5",
+-   "ISO 13485:2016 §7.5.3",
+-   "ISO 13485:2016 §7.5.4 with 21 CFR 820.35(b)",
++   "21 CFR 820.20",
++   "21 CFR 820.30",
++   "21 CFR 820.50",
++   "21 CFR 820.100",
++   "21 CFR 820.170",
++   "21 CFR 820.200",
+  ]
+
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:56:19
+     54|     expect(r.recommendedBase).toBe('drug-cGMP-base');
+     55|     const cites = r.calledOutProvisions.map((p) => p.citation);
+     56|     expect(cites).toEqual([
+       |                   ^
+     57|       'ISO 13485:2016 §4.1, §5, §6.1; 21 CFR 820.10',
+     58|       'ISO 13485:2016 §7.3 (with the §7.1 risk-management requirement)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > states no removed QSR section as a current requirement
+AssertionError: 21 CFR 820.20: expected '21 CFR 820.20 Management responsibili…' not to match /\b820\.(20|30|50|100|170|200)\b/
+
+- Expected:
+/\b820\.(20|30|50|100|170|200)\b/
+
++ Received:
+"21 CFR 820.20 Management responsibility Establish quality policy, organizational structure, management review, and quality planning for the device constituent (drug cGMP §§ 211 do not fully cover device management controls)."
+
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:77:90
+     75|     const r = drugBase(AFTER);
+     76|     for (const p of r.calledOutProvisions) {
+     77|       expect(stripFormerly(`${p.citation} ${p.topic} ${p.requirement}`…
+       |                                                                                          ^
+     78|     }
+     79|     const b1 = r.rationale.find((l) => l.startsWith('21 CFR 4.4(b)(1)'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > every call-out carries a well-formed basis pointing at the eCFR text of 21 CFR 4.4
+AssertionError: 21 CFR 820.20: expected undefined to be defined
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:88:35
+     86|   it('every call-out carries a well-formed basis pointing at the eCFR …
+     87|     for (const p of drugBase(AFTER).calledOutProvisions) {
+     88|       expect(p.basis, p.citation).toBeDefined();
+       |                                   ^
+     89|       expect(basisProblems(p.basis), p.citation).toEqual([]);
+     90|       expect(p.basis.confidence).toBe('regulator-text');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > names the removed QSR section only as "formerly"
+AssertionError: expected [ undefined, undefined, …(4) ] to deeply equal [ …(6) ]
+
+- Expected
++ Received
+
+  [
+-   "21 CFR 820.20 (QSR, until 2026-02-01)",
+-   "21 CFR 820.30 (QSR, until 2026-02-01)",
+-   "21 CFR 820.50 (QSR, until 2026-02-01)",
+-   "21 CFR 820.100 (QSR, until 2026-02-01)",
+-   "21 CFR 820.170 (QSR, until 2026-02-01)",
+-   "21 CFR 820.200 (QSR, until 2026-02-01)",
++   undefined,
++   undefined,
++   undefined,
++   undefined,
++   undefined,
++   undefined,
+  ]
+
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:98:58
+     96|   it('names the removed QSR section only as "formerly"', () => {
+     97|     const r = drugBase(AFTER);
+     98|     expect(r.calledOutProvisions.map((p) => p.formerly)).toEqual([
+       |                                                          ^
+     99|       '21 CFR 820.20 (QSR, until 2026-02-01)',
+    100|       '21 CFR 820.30 (QSR, until 2026-02-01)',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > planCombinationCGMP on a drug-cGMP base, as of 2026-10-05 > defaults asOf to today (UTC), which is on or after the QMSR date
+AssertionError: expected '21 CFR 820.20' to match /21 CFR 820\.10/
+
+- Expected:
+/21 CFR 820\.10/
+
++ Received:
+"21 CFR 820.20"
+
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:116:56
+    114|   it('defaults asOf to today (UTC), which is on or after the QMSR date…
+    115|     expect(new Date().toISOString().slice(0, 10) >= QMSR_EFFECTIVE).to…
+    116|     expect(drugBase().calledOutProvisions[0].citation).toMatch(/21 CFR…
+       |                                                        ^
+    117|   });
+    118| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > before 2026-02-02 the QSR call-outs applied > a drug-cGMP base calls out 820.20, 820.30, 820.50, 820.100, 820.170, 820.200, labelled recall
+TypeError: Cannot read properties of undefined (reading 'confidence')
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:132:22
+    130|     ]);
+    131|     for (const p of r.calledOutProvisions) {
+    132|       expect(p.basis.confidence).toBe('recall');
+       |                      ^
+    133|       expect(basisProblems(p.basis)).toEqual([]);
+    134|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > before 2026-02-02 the QSR call-outs applied > a malformed asOf fails closed
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:138:42
+    136|
+    137|   it('a malformed asOf fails closed', () => {
+    138|     expect(() => drugBase('2026-02-30')).toThrow(/YYYY-MM-DD/);
+       |                                          ^
+    139|   });
+    140| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > assessDeviceConstituentControls names the current 4.4(b)(1) call-out > as of 2026-10-05 the rationale does not call 21 CFR 820.30 the called-out section
+AssertionError: expected 'The device constituent of a combinati…' not to match /\b820\.(20|30|50|100|170|200)\b/
+
+- Expected:
+/\b820\.(20|30|50|100|170|200)\b/
+
++ Received:
+"The device constituent of a combination product is subject to design controls under 21 CFR 820.30 (called out for a drug-cGMP base by 21 CFR 4.4(b)(1))."
+
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:159:38
+    157|     const line = r.rationale.find((l) => /4\.4\(b\)\(1\)/.test(l));
+    158|     expect(line).toBeDefined();
+    159|     expect(stripFormerly(line!)).not.toMatch(REMOVED);
+       |                                      ^
+    160|     expect(line).toMatch(/ISO 13485:2016 §7\.3/);
+    161|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > AnA tool plan_combination_cgmp > does not tell the model the removed QSR call-out list
+AssertionError: expected 'Plan the cGMP operating model for a c…' not to match /820\.20, 820\.30, 820\.50/
+
+- Expected:
+/820\.20, 820\.30, 820\.50/
+
++ Received:
+"Plan the cGMP operating model for a combination product under 21 CFR Part 4, using the streamlined approach (21 CFR 4.4): choose a single base quality system — drug cGMP (21 CFR 210/211) or device QS (21 CFR 820) — and additionally satisfy the specific \"called-out\" provisions of the other system. Returns whether Part 4 applies, the recommended base, the exact called-out provisions (for a drug base: 820.20, 820.30, 820.50, 820.100, 820.170, 820.200; for a device base: 211.84, 211.103, 211.132, 211.137, 211.165, 211.166, 211.167, 211.170), postmarketing safety-reporting requirements (Part 4 Subpart B), the QMSR (ISO 13485, effective 2026-02-02) mapping note, rationale, and citations. Use when the user needs to design the quality-system / cGMP compliance strategy for a combination product. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect."
+
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:166:51
+    164| describe('AnA tool plan_combination_cgmp', () => {
+    165|   it('does not tell the model the removed QSR call-out list', () => {
+    166|     expect(PLAN_COMBINATION_CGMP.description).not.toMatch(/820\.20, 82…
+       |                                                   ^
+    167|     expect(PLAN_COMBINATION_CGMP.description).toMatch(/21 CFR 820\.10/…
+    168|     expect(PLAN_COMBINATION_CGMP.description).toMatch(/ISO 13485:2016/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-4-4-callouts.test.ts > AnA tool plan_combination_cgmp > exposes asOf so the call-outs are resolved for a date
+AssertionError: expected undefined to be defined
+ ❯ server/services/combination-products/__tests__/combination-4-4-callouts.test.ts:173:24
+    171|   it('exposes asOf so the call-outs are resolved for a date', () => {
+    172|     const props = (PLAN_COMBINATION_CGMP.input_schema as { properties:…
+    173|     expect(props.asOf).toBeDefined();
+       |                        ^
+    174|   });
+    175| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  12:06:40
+   Duration  964ms (transform 290ms, setup 166ms, import 160ms, tests 67ms, environment 0ms)
+

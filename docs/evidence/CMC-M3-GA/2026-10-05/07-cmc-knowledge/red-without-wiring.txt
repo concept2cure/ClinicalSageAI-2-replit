@@ -1,0 +1,15 @@
+ × server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what CMC quality information does the…'" 11ms
+ × server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'get_cmc_requirements'" for: "'what does the EU IMPD quality dossier…'" 6ms
+ × server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'is ICH Q2(R2) final and which guidanc…'" 4ms
+ × server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'find_cmc_guidance'" for: "'which guidance covers nitrosamine imp…'" 6ms
+ × server/services/ana/__tests__/tool-selection-routing.test.ts > AnA tool-selection routing eval > selects "'explain_cmc_topic'" for: "'explain how impurity limits are justi…'" 6ms
+ × server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are offered to the model 8ms
+ × server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > have a handler 2ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are classed read, so a read never asks the person to confirm 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are in launch scope 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > have a plan label of their own, not a humanised tool name 1ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > report deterministic registry pedigree: no model wrote these answers 0ms
+ ✓ server/services/ana/__tests__/cmc-knowledge-registration.test.ts > the CMC knowledge tools are wired > are named in the prompt AnA works under, which tells her not to supply requirements from memory 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  7 failed | 36 passed (43)

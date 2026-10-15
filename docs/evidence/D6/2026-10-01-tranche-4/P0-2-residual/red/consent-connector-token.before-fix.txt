@@ -1,0 +1,111 @@
+# Red run: server/mcp/__tests__/mcp-consent-delegated.dbtest.ts against HEAD 0e58e794 server/mcp/auth/consent.ts and platform-token.ts (unchanged; git diff --quiet HEAD confirmed)
+# 2026-10-01, PostgreSQL 16 local c2c_testdb, NOSUPERUSER NOBYPASSRLS runtime role, RLS_ENFORCE=on
+# npx vitest run --config vitest.db.config.ts server/mcp/__tests__/mcp-consent-delegated.dbtest.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:56:33.577Z","pid":15388,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:56:33.583Z","pid":15388,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:56:33.584Z","pid":15388,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T06:56:33.956Z","pid":15388,"hostname":"vm","context":{"resource":"http://localhost:41205/mcp","issuer":"http://localhost:41205/","resourceMetadataUrl":"http://localhost:41205/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read
+[database] Database connection successful { timestamp: '2026-10-01T06:56:34.155Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > the grant is a connector token carrying exactly c2c:read 175ms
+{"level":30,"time":"2026-10-01T06:56:34.518Z","pid":15388,"hostname":"vm","context":{"userId":988,"tenantId":244,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > the user consents to c2c:read > that token opens /mcp and is refused the governed write there 385ms
+{"level":30,"time":"2026-10-01T06:56:35.108Z","pid":15388,"hostname":"vm","context":{"userId":988,"tenantId":244,"resourceId":"6"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T06:56:35.134Z","pid":15388,"hostname":"vm","context":{"userId":988,"tenantId":244,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T06:56:35.367Z","pid":15388,"hostname":"vm","context":{"userId":988,"tenantId":244,"resourceId":"7"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T06:56:35.379Z","pid":15388,"hostname":"vm","context":{"userId":988,"tenantId":244,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+ × server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for another client: no code, no code row, and nothing for /mcp 557ms
+   → expected { consentStatus: 302, …(4) } to deeply equal { consentStatus: 401, …(4) }
+ × server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for its own client: no code, no code row, and nothing for /mcp 247ms
+   → expected { consentStatus: 302, …(4) } to deeply equal { consentStatus: 401, …(4) }
+ × server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for another client: no code, no code row, and nothing for /mcp 68ms
+   → expected { consentStatus: 302, …(4) } to deeply equal { consentStatus: 401, …(4) }
+ × server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for its own client: no code, no code row, and nothing for /mcp 59ms
+   → expected { consentStatus: 302, …(4) } to deeply equal { consentStatus: 401, …(4) }
+{"level":30,"time":"2026-10-01T06:56:35.735Z","pid":15388,"hostname":"vm","context":{"userId":988,"tenantId":244,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the c2c:read connector token still opens /mcp for a read 228ms
+{"level":30,"time":"2026-10-01T06:56:35.823Z","pid":15388,"hostname":"vm","context":{"account":"connector:988","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > a refresh cannot widen the grant either 16ms
+{"level":30,"time":"2026-10-01T06:56:35.886Z","pid":15388,"hostname":"vm","context":{"userId":988,"tenantId":244,"resourceId":"8"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T06:56:35.896Z","pid":15388,"hostname":"vm","context":{"userId":988,"tenantId":244,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > what a connector token still does, and what the user still can > the user's own session still consents to all three scopes, and that grant files the draft 128ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for another client: no code, no code row, and nothing for /mcp
+ FAIL  server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > all three scopes, for its own client: no code, no code row, and nothing for /mcp
+AssertionError: expected { consentStatus: 302, …(4) } to deeply equal { consentStatus: 401, …(4) }
+
+- Expected
++ Received
+
+  {
+-   "codeIssued": false,
+-   "codeRowsAdded": 0,
+-   "consentStatus": 401,
+-   "governedWrite": null,
+-   "tokenScope": null,
++   "codeIssued": true,
++   "codeRowsAdded": 1,
++   "consentStatus": 302,
++   "governedWrite": "filed",
++   "tokenScope": "c2c:read c2c:draft c2c:file",
+  }
+
+ ❯ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts:321:23
+    319|         governedWrite: g.tokens && g.tokens.scope.includes('c2c:file')…
+    320|       };
+    321|       expect(outcome).toEqual({ consentStatus: 401, codeIssued: false,…
+       |                       ^
+    322|       expect(g.consent.body).toMatchObject({ error: 'invalid_token' });
+    323|       expect(String(g.consent.body?.error_description)).toMatch(/conne…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for another client: no code, no code row, and nothing for /mcp
+ FAIL  server/mcp/__tests__/mcp-consent-delegated.dbtest.ts > a connector token cannot authorise a grant at the consent page > the scope it already holds, for its own client: no code, no code row, and nothing for /mcp
+AssertionError: expected { consentStatus: 302, …(4) } to deeply equal { consentStatus: 401, …(4) }
+
+- Expected
++ Received
+
+  {
+-   "codeIssued": false,
+-   "codeRowsAdded": 0,
+-   "consentStatus": 401,
++   "codeIssued": true,
++   "codeRowsAdded": 1,
++   "consentStatus": 302,
+    "governedWrite": null,
+-   "tokenScope": null,
++   "tokenScope": "c2c:read",
+  }
+
+ ❯ server/mcp/__tests__/mcp-consent-delegated.dbtest.ts:321:23
+    319|         governedWrite: g.tokens && g.tokens.scope.includes('c2c:file')…
+    320|       };
+    321|       expect(outcome).toEqual({ consentStatus: 401, codeIssued: false,…
+       |                       ^
+    322|       expect(g.consent.body).toMatchObject({ error: 'invalid_token' });
+    323|       expect(String(g.consent.body?.error_description)).toMatch(/conne…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 6 passed (10)
+   Start at  06:56:28
+   Duration  8.06s (transform 2.70s, setup 216ms, import 762ms, tests 6.22s, environment 0ms)
+

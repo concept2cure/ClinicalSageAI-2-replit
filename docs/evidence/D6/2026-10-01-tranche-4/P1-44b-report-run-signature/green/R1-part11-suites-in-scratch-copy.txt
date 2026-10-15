@@ -1,0 +1,120 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/54adf5a4-792f-5e11-8798-ae17682e5284/scratchpad/r1-verify
+
+ ✓ server/services/part11/__tests__/signer-org-scope.test.ts > the signer lookup is scoped by org membership > constrains the lookup on organization_users, bound to the signing org 4ms
+ ✓ server/services/part11/__tests__/signer-org-scope.test.ts > the signer lookup is scoped by org membership > does not scope on default_organization_id 1ms
+ ✓ server/services/part11/__tests__/signer-org-scope.test.ts > the signer lookup is scoped by org membership > refuses to sign when the signer is not a member of the signing org 2ms
+ ✓ server/services/part11/__tests__/signer-org-scope.test.ts > the signer lookup is scoped by org membership > says nothing about whether the user exists elsewhere 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is absent, before any query (SIGNATURE_MEANING_REQUIRED) 4ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is null, before any query (SIGNATURE_MEANING_REQUIRED) 2ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is empty, before any query (SIGNATURE_MEANING_REQUIRED) 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a meaning outside the closed vocabulary, before any query (SIGNATURE_MEANING_UNKNOWN) 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (approval) verbatim into signature_meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (review) verbatim into signature_meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (release) verbatim into signature_meaning 0ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (APPROVED) verbatim into signature_meaning 0ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (RESPONSIBILITY) verbatim into signature_meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > may carry no meaning: it withdraws a signature, it does not assert one 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > is held to the vocabulary when it does carry a meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > the exemption is the revocation type only: another type with no meaning is refused 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when no password is supplied 7ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses an empty password rather than treating it as absent-but-fine 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses a non-string password (a JSON object cannot be bcrypt-compared) 2ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when the password does not match 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses a signer with no stored hash, and never calls compare 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when the comparison itself throws, rather than propagating a 500 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > accepts password alone when the signer has no MFA enrolled 5ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > requires a token when MFA is enrolled 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > rejects a token that is not six digits before spending a verify call 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > refuses when the token does not verify 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > refuses when verification throws 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > REFUSES when the MFA enrolment state cannot be read 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > accepts and reports password+mfa when both factors verify 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > what gets persisted is what was checked > never reports a second factor that was not verified 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > what gets persisted is what was checked > takes no authentication claim from its caller 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > refuses a locked account before comparing anything, and counts nothing 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > refuses when the lockout cannot be read, rather than signing unmetered 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > counts a wrong password 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > counts a wrong code once the password is right 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > does not count a missing or malformed factor: nothing was guessed 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > does not count a signature that verifies 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > still refuses when the failure cannot be counted 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > refuses an account that is not active before comparing anything, and counts nothing 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > refuses when the account's standing cannot be read, rather than assuming it is active 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > the signing dialog's password check refuses it too: it is the same first factor 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > a request without a password is still a request without a password 0ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > the governed sign vocabulary > is the union of the two spellings the product uses, and nothing else 2ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a sign that declares no meaning before any query runs 7ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses an empty-string meaning the same way 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a meaning outside the vocabulary before any query runs 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a meaning that is not a string (an object, a number) rather than coercing it 5ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning approval through to the signer lookup 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning release through to the signer lookup 0ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning APPROVED through to the signer lookup 0ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning AUTHORSHIP through to the signer lookup 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > the refusal names the vocabulary so the caller can say what is accepted 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command approve with no payload meaning reaches the signer lookup unchanged 9ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command revoke-signature with no payload meaning reaches the signer lookup unchanged 0ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command transmit with no payload meaning reaches the signer lookup unchanged 0ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > returns the printed name, email and title from the membership record 3ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > constrains the lookup on organization_users, bound to the signing org 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > REGRESSION: refuses rather than synthesising when the signer is not a member 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > REGRESSION: refuses a row with no email rather than writing an empty string 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > falls back to the email as the printed name, but never past it 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > refuses a non-finite or non-positive id without querying at all 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > does not disclose whether the user exists in another tenant 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/ana/submission-chat-apply-rewrite.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/ana/verifiedSealService.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/DocumentOrchestrationService.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/routes/esignature.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > a live signature is not withdrawn 1ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > verification_status = revoked withdraws it 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > a superseded_by pointer withdraws it (the §11.70 append-only marker) 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > is_valid = false withdraws it (the older flag) 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > exactly the columns persistGovernedSignatureRevocation writes 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > does not treat missing fields as withdrawn (absence is not revocation) 1ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > governedSignatureRefusal — Gate 1 observes withdrawal > selects the three withdrawal columns from electronic_signatures 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > governedSignatureRefusal — Gate 1 observes withdrawal > applies the canonical predicate rather than restating it 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > governedSignatureRefusal — Gate 1 observes withdrawal > refuses with a message naming revocation 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > the withdrawal rule has exactly one definition > sequence-release-signature delegates instead of keeping a second copy 1ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > is a stable, re-derivable sha256 over the canonical version tuple 4ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > changes when the signed content changes (the whole point of §11.70) 3ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > changes when the version identity changes 1ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > treats a null versionNumber as null (unversioned) deterministically 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > fails closed on empty or absent content — never sign nothing 1ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > evaluateBindingVerification (§11.70 read-side check) > verifies a signature whose signed content is unchanged 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > evaluateBindingVerification (§11.70 read-side check) > detects tampering when the signed content changed after signing 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > evaluateBindingVerification (§11.70 read-side check) > is INVALID when the signed version content is gone (unverifiable) 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > evaluateBindingVerification (§11.70 read-side check) > reports a legacy (unbound) signature as valid but NOT binding-verified 0ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the revocation statement from signature-persistence.ts succeeds (supersession + the verification column group in one statement) 21ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a superseded row can never be modified again 9ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the verification column group cannot change outside a supersession 4ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a supersession cannot restore validity or give the superseded signature a status other than revoked 6ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > the attested columns never change, even in the supersession statement 16ms
+ ✓ server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the governed revocation > a plain supersession (pointer only) still passes, and DELETE is refused 9ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > attributes to the real user and adds no email at all 2ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is 0 2ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is -1 1ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is NaN 0ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is null 0ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is undefined 0ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > never produces the person-shaped forms the fabricated-identity gate rejects 1ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > refuses a component name that is not a stable kebab-case identifier 1ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > does not mistake a person for a system actor 1ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > is what resolveGovernedContext reads: the user id, or the named actor 2ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > authorizes the default signing roles (admin/approver/reviewer) 6ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > is case-insensitive 0ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > fails closed for non-signing, empty, and absent roles 0ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > respects an explicit allowlist argument 0ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > honors the ESIGNATURE_SIGNING_ROLES env override 1ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > falls back to the default policy when the override is blank 0ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > changes when a vault leaf is re-pointed at a different document 11ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > changes when the content pin changes 6ms
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > does not change for workflow columns the signature must survive 4ms
+
+ Test Files  11 passed (11)
+      Tests  110 passed (110)
+   Start at  14:12:21
+   Duration  4.57s (transform 834ms, setup 401ms, import 2.84s, tests 7.08s, environment 1ms)
+

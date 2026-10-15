@@ -128,8 +128,11 @@ const ANY_ROUTE_RE = /router\.(?:get|post|put|patch|delete|all)\s*\(/g;
 /**
  * `router.param('x', cb)` runs cb for EVERY route carrying `:x`, so a guard
  * living there covers routes whose own bodies contain no check at all. This
- * codebase does exactly that — `server/api/cmc/projectRoutes.ts` verifies
- * project ownership for 18 handlers via a single `router.param('projectId')`.
+ * codebase does exactly that — `guardModule3Project`
+ * (server/api/cmc/module3-project-guard.ts) verifies project ownership for every
+ * Module 3 handler via a single `router.param('projectId')`, as
+ * server/routes/client-intelligence.ts does for its own; the retired
+ * server/api/cmc/projectRoutes.ts did it for 18.
  *
  * A handler-scoped analysis cannot see it. An earlier revision of this gate had
  * that blind spot and reported a correctly-guarded router as UNGUARDED, which is

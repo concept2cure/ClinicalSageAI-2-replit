@@ -1,0 +1,22 @@
+[
+  {
+    "file": "server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "file": "server/routes/ana-ri/stream.ts",
+    "errors": 0,
+    "warnings": 24
+  },
+  {
+    "file": "server/services/__tests__/ana-recall-overlap.test.ts",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "file": "server/services/ana-ri/chat-context-builder.ts",
+    "errors": 0,
+    "warnings": 4
+  }
+]

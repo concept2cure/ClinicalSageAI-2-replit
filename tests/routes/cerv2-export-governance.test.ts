@@ -198,7 +198,8 @@ describe('CERV2 export governance gate', () => {
     expect(mockDocx).toHaveBeenCalledTimes(1);
     expect(mockGovernedConsequence).toHaveBeenCalledTimes(1);
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-AI-Generated', 'true');
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Human-Review-Approved', 'false');
+    // 2026-10-15: was Human-Review-Approved — a caller assertion stamped as an approval.
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Export-Authorization', 'none');
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Required', 'true');
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       governed: true,
@@ -236,8 +237,9 @@ describe('CERV2 export governance gate', () => {
     await handler(req, res);
 
     expect(mockPdf).toHaveBeenCalledTimes(1);
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Reviewer', 'QA%20Reviewer');
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Timestamp', '2026-03-24T12:00:00.000Z');
+    // 2026-10-15: were Reviewer / Review-Timestamp — request text named as the reviewer of record.
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Asserted-Reviewer', 'QA%20Reviewer');
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Asserted-Review-Timestamp', '2026-03-24T12:00:00.000Z');
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       governed: true,
       source_type: 'export_pdf',
@@ -261,7 +263,15 @@ describe('CERV2 export governance gate', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'GOVERNED_EXPORT_FAILED' }));
+    // D6 / IAM-18 (1), P1-17 paydown 2: the code stays machine-readable, the
+    // sentence is static, and the thrown text is in the log — not in the body.
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'GOVERNED_EXPORT_FAILED',
+        message: 'Governed PDF export failed before consequence persistence',
+      }),
+    );
+    expect(JSON.stringify(res.json.mock.calls)).not.toContain('db writeback failed');
     expect(res.send).not.toHaveBeenCalled();
   });
 

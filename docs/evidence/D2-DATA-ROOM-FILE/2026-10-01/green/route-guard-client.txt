@@ -1,0 +1,16 @@
+# server/routes/__tests__/vault-data-room-file.test.ts + client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx, this change
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > offers a checkbox only for sources not yet filed 239ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > files the chosen sources and answers for each one, saying the batch was not complete 499ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a refusal of the whole request says nothing was filed, and gives the reason 212ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a dropped connection says the outcome is not known 223ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > can select every source not yet filed in one step 168ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > already in the Vault names the version and what replaced it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a source the classifier could not place says it is not in a folder yet 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a complete batch has no caveat 0ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > a 503 from the scanner on the second source leaves the first filed, and the batch is not complete 54ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > an unexpected failure on one source is that source’s refusal, not the batch’s 10ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > every source filed is complete 5ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > the role is checked first > a viewer is refused 403 before any source is read 6ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > one upload-to-Vault orchestration > only vault-file-upload-to-vault.ts both loads an upload and admits it 1837ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > one upload-to-Vault orchestration > AnA’s filing tool and the data room both call it 2ms
+      Tests  14 passed (14)

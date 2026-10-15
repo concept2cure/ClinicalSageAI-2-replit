@@ -10,7 +10,7 @@
 
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
@@ -24,6 +24,7 @@ import {
   DOSSIER_LINK_KINDS,
 } from '../../../shared/schema/q-sub';
 import type { QSubmission, QSubCommitment } from '../../../shared/schema/q-sub';
+import { programInOrganization } from '../c2c/program-access';
 
 // ─── Types exposed to the route layer ───────────────────────────────────────
 
@@ -415,17 +416,7 @@ export async function createQSubmission(
   input: CreateQSubInput,
 ): Promise<CreatedQSubmission> {
   // Tenant gate: program must belong to caller's org.
-  const [program] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(
-        eq(regulatoryPrograms.id, input.programId),
-        eq(regulatoryPrograms.organizationId, organizationId),
-      ),
-    )
-    .limit(1);
-  if (!program) {
+    if (!(await programInOrganization(pool, input.programId, organizationId))) {
     throw new TenantAccessError('Program does not belong to this organization');
   }
 

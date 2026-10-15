@@ -1,0 +1,76 @@
+    148|   it('reference safety information carries the frequency and nature of…
+    149|     expect(allText(g)).toMatch(/frequency and nature/);
+       |                        ^
+    150|   });
+    151|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > the drafting prompt drafts the IB at 1.14.4.1, not a 1.4.1 reference stub
+AssertionError: expected 'You are a senior regulatory affairs w…' not to contain 'Prepare the 1.4.1'
+
+- Expected
++ Received
+
+- Prepare the 1.4.1
++ You are a senior regulatory affairs writer authoring CTD section 1.14.4.1 "Investigator's Brochure" for an FDA submission. Write in formal regulatory language suitable for filing; follow the ICH M4 CTD structure.
++
++ Section intent: The Investigator's Brochure is required by 21 CFR 312.23(a)(5), which enumerates its content; 21 CFR 312.55 separately obligates the sponsor to furnish the current IB to each participating investigator. ICH E6(R2)/E6(R3) Good Clinical Practice Section 7 defines the standard IB structure. In the US eCTD regional backbone the IB appears at 1.4.1 as a reference document that gives investigators and the FDA reviewer a consolidated, current summary of the physical/chemical/pharmaceutical properties, nonclinical pharmacology and toxicology, pharmacokinetics, and available clinical safety and efficacy data — plus guidance for the investigator on possible risks and adverse-reaction management. Acceptability requires that the version referenced matches the version supporting the current protocol, that the safety information (including a summary of known and potential risks) is current as of the submission, and that the IB is internally consistent with the protocol, the 1571, and Module 4/5 data. A stale IB that does not reflect new safety findings is a common information-amendment trigger.
++
++ The section MUST cover:
++ - Title page with product identifier, IB version/edition number, and date
++ - Summary of physical, chemical, and pharmaceutical properties and formulation
++ - Summary of nonclinical pharmacology, toxicology, and pharmacokinetics/ADME
++ - Summary of available clinical pharmacokinetics, safety, and efficacy data
++ - A guidance-for-the-investigator section describing known and potential risks and adverse-reaction management
++ - Reference safety information (expected/listed adverse events) used for expedited-reporting assessments
++ - Clear version control and identification of the edition supporting the current protocol
++ - Cross-reference to the underlying nonclinical (Module 4) and clinical (Module 5) data sources
++
++ Expected tables / datasets:
++ - Summary tables of nonclinical toxicology findings and exposure margins
++ - Summary tables of clinical safety (adverse events) and available PK parameters
++
++ Avoid these common deficiencies:
++ - Referencing an outdated IB edition that does not reflect newly identified safety information
++ - IB reference safety information inconsistent with the safety-reporting assessments (expectedness determinations)
++ - Version/date on the IB not matching the protocol it is meant to support
++ - Summaries that overstate efficacy or understate risk relative to the underlying Module 4/5 data
++ - Failing to update or re-reference the IB when an amendment changes the risk profile
++
++ Prepare the 1.4.1 Investigator's Brochure reference content and version-control guidance for [Sponsor]'s [Phase] IND for [Product Name] in [Indication]. Describe the IB edition/date being referenced and confirm it supports the current protocol; summarize the required IB sections (physicochemical/pharmaceutical properties, nonclinical pharmacology/toxicology/PK, available clinical safety and efficacy, guidance for the investigator on known and potential risks, and reference safety information for expectedness assessments); and specify the cross-references to Module 4 and Module 5. Emphasize version control and consistency with the 1571 and protocol. Use bracketed placeholders for edition numbers, dates, and specific findings; do not fabricate data.
++
++ Do not fabricate study results, numbers, or product-specific facts you were not given; where a value is unknown, insert a clearly-marked placeholder. Governing reference: In the FDA regional module the Investigator's Brochure (IB) is referenced under 1.4.1 as one of the references/cross-references for the submission. The IB compiles the clinical and nonclinical information relevant to the study drug for the investigators; the submitted IND must include a current IB and each amendment must reference the version in effect..
+
+ ❯ tests/regulatory/ctd-guidance-correctness.test.ts:155:19
+    153|     const p = prompt('1.14.4.1');
+    154|     expect(p).toContain('1.14.4.1');
+    155|     expect(p).not.toContain('Prepare the 1.4.1');
+       |                   ^
+    156|     expect(g.wordCountRange).not.toEqual([300, 800]);
+    157|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 1 passed (14)
+   Start at  20:32:31
+   Duration  1.13s (transform 574ms, setup 100ms, import 567ms, tests 42ms, environment 0ms)
+
+
+=== per-test results (npx vitest run --reporter=verbose, same file, same code) ===
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.3 / 2.7.4 prompts agree with their own guidance: the ISE / ISS are filed in 5.3.5.3 > 2.7.3 drafting prompt does not say the section houses the integrated summary 7ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.3 / 2.7.4 prompts agree with their own guidance: the ISE / ISS are filed in 5.3.5.3 > 2.7.4 drafting prompt does not say the section houses the integrated summary 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.4 references where death / SAE narratives are; it does not send them to 2.7.6 > no field ties narratives to 2.7.6 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.4 references where death / SAE narratives are; it does not send them to 2.7.6 > names 2.7.4.2.2 and the study reports as the narratives’ home 5ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > states that synopses are not repeated in Module 2 in eCTD and are hyperlinked 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > keeps the EU nuance: copies are also accepted 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > no longer routes SAE/death narratives through 2.7.6 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > every sentence that says PREA does not apply to orphan indications also states the exception 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > names the 505B(k)(2) molecular-target exception, and the drafting prompt carries it 1ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > requiredFor stays NDA/BLA: an iPSP is not owed by every IND 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > no field places the IB at 1.4.1; 1.4.1 appears only named as the letter of authorization 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > cites E6(R3) Appendix A, and "Section 7" only as the E6(R2) location 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > reference safety information carries the frequency and nature of expected serious adverse reactions 1ms
+ × tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > the drafting prompt drafts the IB at 1.14.4.1, not a 1.4.1 reference stub 10ms

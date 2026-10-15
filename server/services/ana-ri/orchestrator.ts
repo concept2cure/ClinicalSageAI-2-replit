@@ -43,45 +43,31 @@ import {
   type LearnedInsight,
   type ReadinessContext,
   type IntelligenceUpdatePayload,
+  type SignalSummary,
 } from '../intelligence/index.js';
+import { describeReadiness } from '../intelligence/readiness-scoring-engine.js';
 import { getGateway } from '../ai-gateway/index.js';
+import { sectionIdentityLine } from '../ind/ctd/index.js';
+import { statedTypeLine } from './open-document.js';
+import { sanitizeLine } from './surface-context-block.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CTD Section Guidance — compact regulatory knowledge per section
+// The open CTD section, named from the canonical overlay
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SECTION_GUIDANCE: Record<string, string> = {
-  '2.2': 'Introduction to the CTD: brief overview of the drug product, pharmacological class, proposed indication, and route of administration. Keep concise — typically 1-2 pages.',
-  '2.3': 'Quality Overall Summary (QOS): summarize all Module 3 CMC data. Cover drug substance, drug product, manufacturing, controls, stability. Must be self-contained.',
-  '2.4': 'Nonclinical Overview: integrated assessment of pharmacology, PK, and toxicology. Expert narrative, not a summary of studies. Must support the proposed clinical use.',
-  '2.5': 'Clinical Overview: integrated benefit-risk assessment. Cover efficacy, safety, dosing, special populations. This is the most critical Module 2 section — reviewers read this first.',
-  '2.6': 'Nonclinical Written and Tabulated Summaries: study-level summaries organized by pharmacology (2.6.2), PK (2.6.4), and toxicology (2.6.6). Tabulated format per ICH M4S.',
-  '2.7': 'Clinical Summary: detailed clinical data summaries. 2.7.1 (biopharmaceutics), 2.7.2 (PK), 2.7.3 (PD), 2.7.4 (efficacy), 2.7.5 (safety), 2.7.6 (individual studies).',
-  '2.7.1': 'Summary of Biopharmaceutic Studies and Associated Analytical Methods: BA/BE studies, dissolution, food effect, formulation bridging.',
-  '2.7.2': 'Summary of Clinical Pharmacology Studies: PK characterization, dose-response, DDI, special populations, PK modeling.',
-  '2.7.3': 'Summary of Clinical Pharmacodynamics: PD biomarkers, dose-response relationships, PK/PD modeling.',
-  '2.7.4': 'Summary of Clinical Efficacy: pivotal trial results, endpoints, statistical analyses. Must align with the benefit claim in 2.5.',
-  '2.7.5': 'Summary of Clinical Safety: adverse events, deaths, lab abnormalities, vital signs, special populations. Aggregate across all studies.',
-  '2.7.6': 'Synopses of Individual Studies: one synopsis per clinical study following ICH E3 format.',
-  '3.2.S': 'Drug Substance: characterization, manufacturing, controls, stability. Each topic needs its own subsection per ICH M4Q.',
-  '3.2.P': 'Drug Product: formulation, manufacturing process, controls, container closure, stability. Critical for process validation and shelf life.',
-  '5.3.5': 'Reports of Efficacy and Safety Studies: full clinical study reports (CSRs) per ICH E3. Each pivotal study needs a complete CSR.',
-  '1.2': 'Cover Letter: formal submission letter to the health authority. Reference regulatory pathway, submission type, and any pre-submission agreements.',
-  '1.3': 'Administrative Information: prescribing information, labels, patent certificates, exclusivity claims.',
-  '1.14': 'Environmental Assessment: required for NDAs. Justify categorical exclusion or provide full EA.',
-};
-
-function getSectionGuidance(sectionCode: string): string | null {
-  // Direct match
-  if (SECTION_GUIDANCE[sectionCode]) return SECTION_GUIDANCE[sectionCode];
-  // Try prefix match (e.g., "2.7.4.1" matches "2.7.4")
-  const parts = sectionCode.split('.');
-  while (parts.length > 1) {
-    parts.pop();
-    const prefix = parts.join('.');
-    if (SECTION_GUIDANCE[prefix]) return SECTION_GUIDANCE[prefix];
-  }
-  return null;
+/**
+ * The line naming the open section in the "ACTIVE SECTION" block.
+ *
+ * This was a hand-kept table here, and it told AnA that 2.7.3 is "Summary of
+ * Clinical Pharmacodynamics", 2.7.4 efficacy, 2.7.5 safety and 1.14 the
+ * environmental assessment — none of which ICH M4E or FDA's Module 1 says. It
+ * now reads CTD_AUTHORING_GUIDANCE through the same renderer as the stream's
+ * section playbook (ind/ctd/section-brief.ts). The full brief rides on that
+ * playbook; this line only says which section is open, so the two blocks do
+ * not repeat each other. Null for a code nothing registers.
+ */
+export function getSectionGuidance(sectionCode: string): string | null {
+  return sectionIdentityLine(sectionCode);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -300,6 +286,12 @@ export interface OrchestratorInput {
    * with the briefing/deadline pair.
    */
   _contradictionWatchBlock?: string | null;
+  /**
+   * Pre-rendered OPEN DOCUMENT block (open-document.ts, via the route prefetch):
+   * the type of the document open in front of the person and its outline, from
+   * the saved record or a registry-validated surface type.
+   */
+  _openDocumentBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -350,6 +342,21 @@ export interface OrchestratorOutput {
  * The core orchestrator — assembles the complete AnA RI system prompt
  * by analyzing the user's message, context, and role.
  */
+/**
+ * The document context the persona prompt may print. It is client-supplied and
+ * lands in the cached system prefix: the type is printed only as a registry id
+ * and name (or as "not a registry type"), and section and module as one
+ * sanitized line each — never the client's multi-line text.
+ */
+function promptDocumentContext(doc: OrchestratorInput['documentContext']): AnaRIPromptOptions['documentContext'] {
+  if (!doc) return undefined;
+  const line = (v: unknown) => (typeof v === 'string' ? sanitizeLine(v, 80) || undefined : undefined);
+  const documentType = statedTypeLine(doc.documentType);
+  const section = line(doc.section);
+  const module = line(doc.module);
+  return documentType || section || module ? { documentType, section, module } : undefined;
+}
+
 export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   // 1. Detect intent
   const detectedIntent =
@@ -387,7 +394,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     intentLens: detectedIntent.lens,
     language: input.language,
     projectContext: input.projectContext,
-    documentContext: input.documentContext,
+    documentContext: promptDocumentContext(input.documentContext),
   };
 
   const activeWorkstream = detectWorkstream(input, detectedIntent.lens, detectedSubmissionType);
@@ -441,6 +448,12 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       systemPrompt += '\n\n' + profileBlock;
       projectIntelligenceInjected = true;
     }
+  }
+
+  // 4b'. The document open in front of the person, resolved by the route from
+  //      the saved record — ahead of anything guessed from the message.
+  if (input._openDocumentBlock && input._openDocumentBlock.trim()) {
+    systemPrompt += '\n\n' + input._openDocumentBlock.trim();
   }
 
   // 4c. Detect specific regulatory document type and inject its template structure.
@@ -576,7 +589,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
 
     if (sectionCode) {
       const sectionGuidance = getSectionGuidance(sectionCode);
-      systemPrompt += `\n\n## ACTIVE SECTION: ${sectionCode}${moduleCode ? ` (Module ${moduleCode})` : ''}\nThe user is working in a specific CTD section. Tailor all guidance to this section. When the user says "this section" or "here", they mean ${sectionCode}. Be section-specific, not generic.${sectionGuidance ? `\n\n### Section Requirements\n${sectionGuidance}` : ''}`;
+      systemPrompt += `\n\n## ACTIVE SECTION: ${sectionCode}${moduleCode ? ` (Module ${moduleCode})` : ''}\nThe user is working in a specific CTD section. Tailor all guidance to this section. When the user says "this section" or "here", they mean ${sectionCode}. Be section-specific, not generic.${sectionGuidance ? `\n\n### This section\n${sectionGuidance}` : ''}`;
     }
   }
 
@@ -592,12 +605,11 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       .filter(d => d.count > 1)
       .slice(0, 3);
     if (dismissedWithCounts.length > 0) {
-      const lines = dismissedWithCounts.map(d => {
-        const typeRate = fb.totalFeedback > 0
-          ? Math.round(((fb.totalFeedback - d.count) / fb.totalFeedback) * 100)
-          : 0;
-        return `- ${d.type}: dismissed ${d.count} times (acceptance rate: ${typeRate}%)`;
-      }).join('\n');
+      // 2026-10-15: printed "(acceptance rate: N%)", N being the share of all
+      // feedback actions that were not this type's dismissals. It is a count.
+      const lines = dismissedWithCounts
+        .map(d => `- ${d.type}: dismissed ${d.count} of the last ${fb.totalFeedback} recommendation feedback actions recorded for this project`)
+        .join('\n');
       systemPrompt += `\n\n## USER FEEDBACK PATTERNS\nThe user has previously dismissed or rejected the following types of recommendations for this project:\n${lines}\n\nAvoid repeating these exact patterns. If you must recommend something similar, acknowledge the prior dismissal and explain why the recommendation is still relevant, or offer an alternative approach.`;
     }
   }
@@ -606,11 +618,11 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   systemPrompt += `
 
 ## INTELLIGENCE QUESTIONING FLOWS
-When a user asks to create, build, draft, or develop a regulatory document (protocol, CSR, IND, SOP, 510(k), CER, etc.), invoke the \`start_intelligence_flow\` tool with the document type. This launches a guided questioning flow that collects structured information through step-by-step questions with validation and regulatory issue detection.
+Apply Intelligent Awareness when choosing how to collect missing inputs for a regulatory document (protocol, CSR, IND, SOP, 510(k), CER, etc.). When the user requests a guided interview, or essential inputs need structured collection, invoke the \`start_intelligence_flow\` tool with the document type. For a small clarification, ask focused questions in chat. For a sufficiently specified drafting task, use the confirmed context and draft the supported content. Do not automatically start or restart an interview merely because the user requests a document; use the existing answers and active flow when relevant.
 
 Available document types: protocol, csr, ind, nda, bla, sop, 510k, pma, cer, cmc, risk management, safety narrative, labeling, briefing book, stability study, project setup — plus natural language aliases (e.g., "new drug application", "biologics license", "premarket approval", "prescribing information", "advisory committee briefing").
 
-Ask these questions through the tool, not in free text: the client renders its steps as structured form widgets with validation, which a question in prose cannot give the person.
+Within an active structured flow, ask its questions through the tool: the client renders those steps as form widgets with validation. This does not prohibit ordinary clarifying questions in chat. Resume a persisted interview using the session_id returned by the tool and answer_intelligence_question rather than starting over. Do not claim a flow started or resumed unless its tool result confirms it.
 
 ## WAR GAME SIMULATION
 When a user asks you to "run a war game", "pressure test", "audit simulation", "FDA review simulation", "stress test", or similar, use the start_war_game tool with the collected intelligence data from the most recent completed flow. If no flow has been completed yet, start an intelligence flow for the relevant document type first, since the war game audits what the flow collected. When a flow completes on a document that is heading to an agency, a war game is often the consequential next move; offer it in your own words when it is.
@@ -621,7 +633,7 @@ War Game auditors are available for 15 document categories: protocol, ind, csr, 
   systemPrompt += `
 
 ## USING INJECTED INTELLIGENCE
-The PROJECT INTELLIGENCE PROFILE, REGULATORY INTELLIGENCE CONTEXT, PERSISTENT MEMORY CONTEXT and USER FEEDBACK PATTERNS sections above are what this project already knows. Use the items that bear on the question and cite them as below. A documented decision is never overturned silently: if your answer departs from one, say so and why. Let the evidence sufficiency scores set how firmly you recommend. When readiness is low for what they asked about, still answer first, then say in a sentence what is missing and what it blocks.
+The PROJECT INTELLIGENCE PROFILE, REGULATORY INTELLIGENCE CONTEXT, PERSISTENT MEMORY CONTEXT and USER FEEDBACK PATTERNS sections above are what this project already knows. Use the items that bear on the question and cite them as below. A documented decision is never overturned silently: if your answer departs from one, say so and why. Let the evidence sufficiency scores set how firmly you recommend. Low readiness is context, not an instruction to guess or to run an interview. Apply Intelligent Awareness to decide whether the gap blocks a defensible recommendation: ask the decisive question first when it does; otherwise give bounded help, naming what is missing and how it could change the answer.
 
 ## EVIDENCE CITATION PROTOCOL
 When your response draws on specific knowledge from the injected context above, cite the source inline using this format:
@@ -714,6 +726,37 @@ The injected blocks above are where your foresight comes from: a risk in the int
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * The signal block of the RIM preload. 2026-10-15: it printed "Trend: stable"
+ * with too little data to tell, and an "Average score" that averaged the
+ * invented scores of every artifact edit and feedback click.
+ */
+function formatSignalSummaryBlock(summary: SignalSummary): string {
+  const riskLines = Object.entries(summary.byRiskLevel)
+    .filter(([, count]) => Number(count) > 0)
+    .map(([risk, count]) => `- ${risk}: ${count}`)
+    .join('\n');
+  const patternLine =
+    summary.topPatternIds.length > 0
+      ? `Top patterns: ${summary.topPatternIds.slice(0, 5).join(', ')}`
+      : 'Top patterns: none captured yet';
+  const trendLine =
+    summary.overallTrend === null
+      ? `Trend: not determined (${summary.trendConfidence} data, n=${summary.trendSampleSize})`
+      : `Trend: ${summary.overallTrend} (${summary.trendConfidence}, n=${summary.trendSampleSize})`;
+  const meanLine =
+    summary.averageScore === null
+      ? 'Mean signal score: none recorded'
+      : `Mean signal score: ${summary.averageScore} (model scores and severity-mapped pattern scores; not a readiness figure)`;
+  return (
+    `**${summary.totalSignals} intelligence signals**\n` +
+    `${trendLine}\n` +
+    `${meanLine}\n` +
+    `${patternLine}\n` +
+    `Risk distribution:\n${riskLines || '- none'}`
+  );
+}
+
+/**
  * Pre-fetch RIM intelligence context for injection into the orchestrator.
  *
  * Call this in the async route layer BEFORE calling `orchestrate()`, then
@@ -751,8 +794,10 @@ export async function preloadRIMContext(
               `- [${g.severity.toUpperCase()}] ${g.module}: ${g.description}`,
           )
           .join('\n');
+        // 2026-10-15: printed "Readiness: {overallScore}/100", which without a
+        // recorded assessment is document completeness alone.
         parts.push(
-          `**Readiness: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}` +
+          `**${describeReadiness(score)}** | Trend: ${score.trend?.direction || 'unknown'}` +
             (gapLines ? `\nTop gaps:\n${gapLines}` : ''),
         );
       } catch (e: unknown) {
@@ -768,21 +813,7 @@ export async function preloadRIMContext(
       try {
       const summary = getProjectSignals(organizationId, Number(projectId));
       if (summary && summary.totalSignals > 0) {
-        const riskLines = Object.entries(summary.byRiskLevel)
-          .filter(([, count]) => Number(count) > 0)
-          .map(([risk, count]) => `- ${risk}: ${count}`)
-          .join('\n');
-        const patternLine =
-          summary.topPatternIds.length > 0
-            ? `Top patterns: ${summary.topPatternIds.slice(0, 5).join(', ')}`
-            : 'Top patterns: none captured yet';
-        parts.push(
-          `**${summary.totalSignals} intelligence signals**\n` +
-          `Trend: ${summary.overallTrend} (${summary.trendConfidence}, n=${summary.trendSampleSize})\n` +
-          `Average score: ${summary.averageScore}\n` +
-          `${patternLine}\n` +
-          `Risk distribution:\n${riskLines || '- none'}`,
-        );
+        parts.push(formatSignalSummaryBlock(summary));
       }
       } catch (e: unknown) {
         console.warn(
@@ -795,7 +826,7 @@ export async function preloadRIMContext(
     if (parts.length === 0) return '';
 
     return (
-      `## REGULATORY INTELLIGENCE CONTEXT (cite as [Readiness: section at score%] or [Signal: type — description])\n` +
+      `## REGULATORY INTELLIGENCE CONTEXT (cite a readiness score as [Readiness: section at score%] only where one is given below; cite a signal as [Signal: type — description])\n` +
       parts.join('\n\n') +
       `\n\nUse this intelligence to inform your response. Flag sections with low readiness. When citing readiness scores or signals, use the Evidence Citation Protocol format.`
     );
@@ -1098,11 +1129,13 @@ function detectCurrentFocus(
   if (sectionMatch) {
     return sectionMatch[0].trim();
   }
+  // Printed as "Current Focus" in the cached prefix: one sanitized line, and a
+  // type only as the registry states it (promptDocumentContext).
   if (input.documentContext?.section) {
-    return input.documentContext.section;
+    return sanitizeLine(input.documentContext.section, 80) || undefined;
   }
   if (input.documentContext?.documentType) {
-    return input.documentContext.documentType;
+    return statedTypeLine(input.documentContext.documentType);
   }
 
   switch (stream) {
@@ -1711,7 +1744,7 @@ export async function extractThreadIntelligence(
     payload.learnedInsights = extracted.insights.map(i => ({
       insight: i,
       source: 'ana-thread-extraction',
-      confidence: 0.7,
+      confidence: null, // was 0.7, a constant shown to AnA as "confidence: 70%"
       extractedAt: now,
     }));
   }
@@ -1845,7 +1878,9 @@ function formatProjectIntelligenceBlock(
     parts.push('');
     parts.push('### Learned Insights');
     for (const i of topInsights) {
-      parts.push(`- ${i.insight} (source: ${i.source}, confidence: ${Math.round((i.confidence ?? 0) * 100)}%)`);
+      // 2026-10-15: a missing confidence printed as "confidence: 0%".
+      const conf = i.confidence == null ? '' : `, confidence: ${Math.round(i.confidence * 100)}%`;
+      parts.push(`- ${i.insight} (source: ${i.source}${conf})`);
     }
     if (insights.length > maxInsights) {
       parts.push(`- ... and ${insights.length - maxInsights} more`);
@@ -1866,7 +1901,7 @@ function formatProjectIntelligenceBlock(
 
   // Closing directive
   parts.push('');
-  parts.push('Use this profile to maintain continuity. Reference known risks and open questions proactively. Do not repeat recommendations that contradict prior decisions. When citing items from this profile, use the Evidence Citation Protocol format: [Risk: severity — description], [Decision: summary], [Insight: summary].');
+  parts.push('Use this profile to maintain continuity. Reference known risks and open questions proactively. Reconsider prior recommendations when new evidence or an explicit user correction changes their basis. Explain the departure; do not silently amend a recorded decision. If the current request and profile conflict without a clear correction, ask which applies to this task. When citing items from this profile, use the Evidence Citation Protocol format: [Risk: severity — description], [Decision: summary], [Insight: summary].');
 
   return parts.join('\n');
 }

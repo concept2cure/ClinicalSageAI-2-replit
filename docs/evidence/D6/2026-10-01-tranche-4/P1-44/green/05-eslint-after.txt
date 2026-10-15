@@ -1,0 +1,13 @@
+
+/home/user/ClinicalSageAI-2-replit/server/routes/report-os.ts
+   199:7   warning  'REPORT_OS_RECORD_CATEGORY' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+   280:23  warning  Unexpected control character(s) in regular expression: \x09, \x0a, \x0d        no-control-regex
+   613:1   warning  File has too many lines (2126). Maximum allowed is 500                         max-lines
+  1444:58  warning  Async arrow function has too many lines (170). Maximum allowed is 100          max-lines-per-function
+  1444:58  warning  Async arrow function has a complexity of 24. Maximum allowed is 15             complexity
+  1757:1   warning  Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15  complexity
+  1997:11  warning  The value assigned to 'compare' is not used in subsequent statements           no-useless-assignment
+  2490:60  warning  Async arrow function has a complexity of 16. Maximum allowed is 15             complexity
+
+✖ 8 problems (0 errors, 8 warnings)
+

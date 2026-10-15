@@ -52,6 +52,7 @@ vi.mock('../../../services/audit/tenant-chain-verdict.js', async () => {
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { TurnRecorder, writeTurnRecord, sha256Hex } from '../../../services/ana/turn-record';
 import { mountTurnRecordRoutes, TURN_RECORD_EXPORT_ACTION } from '../turn-records';
+import { listTurnRecords } from '../../../services/ana/turn-record-verify';
 import { deleteConversation, CONVERSATION_DELETED_AUDIT_ACTION } from '../../../services/chat-thread-helpers';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -87,7 +88,7 @@ const pool = () => ({
   connect: async () => ({ query: (s: string, p?: unknown[]) => holder.pg.query(s, p), release: () => undefined }),
 });
 
-async function recordTurn(question: string, threadId = 'th_live') {
+async function recordTurn(question: string, threadId = 'th_live', outcome: 'answered' | 'stopped' = 'answered') {
   const r = new TurnRecorder();
   r.setTurn({ organizationId: ORG, threadId, runId: 'run_x', actorUserId: USERS.owner.id });
   r.setRequest(question, question);
@@ -98,7 +99,7 @@ async function recordTurn(question: string, threadId = 'th_live') {
   r.addRoundInput(1, [{ role: 'user', content: '[Tool Result for project_knowledge_search (tu_1)]:\n{"hits":1}' }]);
   r.addServed(1, { provider: 'anthropic', model: 'model-x' });
   r.setAnswer({ streamed: 'The answer.', stored: 'The answer.' });
-  return writeTurnRecord(pool(), r.seal('answered'));
+  return writeTurnRecord(pool(), r.seal(outcome));
 }
 
 beforeAll(async () => {
@@ -112,6 +113,8 @@ beforeAll(async () => {
                                title TEXT, model TEXT, metadata JSONB, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());
     CREATE TABLE chat_messages (id SERIAL PRIMARY KEY, thread_id TEXT, role TEXT, content TEXT, model TEXT,
                                 tokens_used INTEGER, metadata JSONB, created_at TIMESTAMPTZ DEFAULT now());
+    -- The second thread store: a thread's transcript is readable when either store holds it (S4).
+    CREATE TABLE ai_threads (id TEXT PRIMARY KEY, organization_id INTEGER);
   `);
 });
 afterAll(async () => {
@@ -170,6 +173,39 @@ describe('reading a turn record', () => {
     // A colleague learns nothing about someone else's run.
     const colleague = await request(appAs()).get('/api/ana-ri/turn-records?run_id=run_x').set('x-as', 'colleague');
     expect(colleague.body.data.records).toEqual([]);
+  });
+
+  /* SEC-A-7, door 3: a reloaded conversation decides "Open as document" from
+     this listing, so it says which models served each turn, as the live
+     stream does. Without it every reopened draft was refused for want of it. */
+  it('a listing says which models served each turn, with RULE 2\'s verdict on each', async () => {
+    const { id } = await recordTurn('which model wrote this?', 'th_served');
+    for (const as of ['owner', 'admin']) {
+      const res = await request(appAs()).get('/api/ana-ri/turn-records?thread_id=th_served').set('x-as', as);
+      const row = res.body.data.records.find((r: any) => r.id === id);
+      expect(row.servedBy, as).toEqual([{ provider: 'anthropic', model: 'model-x', qualified: false, approvedForHighRisk: null, pq: null }]);
+    }
+  });
+
+  it('a turn that did not finish lists no models: its saved text is not a whole answer', async () => {
+    const { id } = await recordTurn('a turn whose connection dropped', 'th_stopped', 'stopped');
+    const res = await request(appAs()).get('/api/ana-ri/turn-records?thread_id=th_stopped').set('x-as', 'owner');
+    const row = res.body.data.records.find((r: any) => r.id === id);
+    expect(row.outcome).toBe('stopped');
+    expect(row.servedBy).toBeUndefined();
+  });
+
+  it('a listed record whose text does not match its hash, or does not parse, says nothing of who served it', async () => {
+    // The table's CHECK keeps a mismatch out of the database; the listing does
+    // not rely on it, so it is driven here with the rows a broken store returns.
+    const row = { id: 'r', thread_id: 't', assistant_message_id: null, actor_user_id: 7, outcome: 'answered',
+      started_at: new Date(), ended_at: new Date() };
+    const listed = async (record_text: string, record_sha256: string) =>
+      (await listTurnRecords({ query: async () => ({ rows: [{ ...row, record_text, record_sha256 }] }) } as any, ORG, { withServedBy: true }))[0];
+    const body = JSON.stringify({ model: { provider: 'anthropic', model: 'model-x' } });
+    expect((await listed(body, sha256Hex(body))).servedBy).toEqual([expect.objectContaining({ model: 'model-x' })]);
+    expect((await listed(body, sha256Hex(body + ' '))).servedBy).toBeUndefined();
+    expect((await listed('not json', sha256Hex('not json'))).servedBy).toBeUndefined();
   });
 
   it('a record rewritten past the trigger reads as not intact', async () => {

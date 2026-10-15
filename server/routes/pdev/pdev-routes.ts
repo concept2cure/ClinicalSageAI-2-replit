@@ -59,8 +59,8 @@ import {
   notFoundInTenant,
   serverError,
 } from '../../lib/api-response';
-import { db } from '../../db';
-import { regulatoryPrograms } from '../../../shared/schema/programs';
+import { db, pool } from '../../db';
+import { programInOrganization } from '../../services/c2c/program-access';
 import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
 /*
  * WO-16C #133. The three governed writes in this router each recorded their
@@ -138,20 +138,6 @@ const READINESS_BATCH_ROLES = new Set([
   'superadmin',
   'regulatory_lead',
 ]);
-
-async function programBelongsToOrg(programId: string, organizationId: number): Promise<boolean> {
-  const row = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(
-        eq(regulatoryPrograms.id, programId),
-        eq(regulatoryPrograms.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-  return Boolean(row[0]);
-}
 
 // ─── GET /api/pdev/registry — closed enum ───────────────────────────────────
 
@@ -445,8 +431,7 @@ router.post(
       return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
     }
 
-    const inOrg = await programBelongsToOrg(programId, orgId);
-    if (!inOrg) return notFoundInTenant(res, 'program');
+        if (!(await programInOrganization(pool, programId, orgId))) return notFoundInTenant(res, 'program');
 
     // Dependency gate: refuse promotion to completed states when the
     // registry dependsOn chain isn't satisfied, unless caller forces.

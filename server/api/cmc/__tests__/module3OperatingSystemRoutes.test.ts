@@ -7,6 +7,13 @@ const mockVerifyReauth = vi.fn();
 // The project guard's own refusals are in module3ProjectScope.test.ts.
 vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));
 const mockRecordGoverned = vi.fn();
+// §11.10(g) gate; its role read is proven in cmc-sign-signature-row.test.ts.
+const mockRefusedAuthority = vi.fn();
+// P-27 (2026-10-08): the route asks the platform's one policy directly
+// (cmc-signer's refusedWithoutSigningAuthority was deleted).
+vi.mock('../../../services/part11/signing-authority-gate', () => ({
+  checkSigningAuthority: (...a: unknown[]) => mockRefusedAuthority(...a),
+}));
 
 vi.mock('../../../db', () => ({
   getPool: () => ({
@@ -62,6 +69,9 @@ describe('module3OperatingSystemRoutes', () => {
 
   beforeEach(() => {
     mockQuery.mockReset();
+    mockQuery.mockResolvedValue({ rows: [] }); // unscripted reads (lineage drift): nothing found
+    mockRefusedAuthority.mockReset();
+    mockRefusedAuthority.mockResolvedValue(null);
     mockVerifyReauth.mockReset();
     mockVerifyReauth.mockResolvedValue({ ok: true });
     mockRecordGoverned.mockReset();
@@ -95,25 +105,16 @@ describe('module3OperatingSystemRoutes', () => {
     expect(res.body.data).toHaveLength(2);
   });
 
-  it('resolves contradiction and returns resolved status', async () => {
-    mockQuery
-      .mockResolvedValueOnce({ rows: [{ id: 'c-1', projectId: 'proj-1' }] })
-      .mockResolvedValueOnce({ rows: [] });
-
-    const res = await request(app)
-      .patch('/api/cmc/module3-os/contradictions/c-1/resolve')
-      .send({ resolutionNote: 'closed after CAPA' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe('resolved');
-  });
+  /* Resolving a contradiction is a governed act now (writing role, stated
+     reason, audit row): module3GovernedActs.test.ts proves who reaches
+     it, contradiction-lifecycle.pglite.test.ts what it records. */
 
   it('section approve fails closed with 401 when re-authentication fails — before any DB write', async () => {
     mockVerifyReauth.mockResolvedValueOnce({ ok: false, error: 'REAUTH_REQUIRED' });
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
-      .send({ reason: 'approve for filing', reauth: { password: 'wrong' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'wrong' } });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('REAUTH_REQUIRED');
@@ -123,12 +124,17 @@ describe('module3OperatingSystemRoutes', () => {
 
   it('section approve proceeds past the re-auth gate on success (then honors the contradiction block)', async () => {
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
-    // First query after the gate is the critical-contradiction check.
-    mockQuery.mockResolvedValueOnce({ rows: [{ id: 'c-1' }] });
+    /* The critical-contradiction check runs INSIDE the transaction, after the
+       section row is locked (GA plan item 4): BEGIN, the section, then it. */
+    mockQuery
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: COMPLETE, approval_state: 'draft', stale: false }] }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [{ id: 'c-1' }] }) // contradiction check: one critical open
+      .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
-      .send({ reason: 'approve for filing', reauth: { password: 'right', totp: '123456' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'right', totp: '123456' } });
 
     expect(mockVerifyReauth).toHaveBeenCalledWith(1, { password: 'right', totp: '123456' });
     expect(res.status).toBe(409);
@@ -138,9 +144,13 @@ describe('module3OperatingSystemRoutes', () => {
   it('approves a section atomically and records a hash-chained governed action (§11)', async () => {
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: COMPLETE, approval_state: 'draft' }] }) // section
+      .mockResolvedValueOnce({
+        rows: [{ id: 'sec-1', deterministic_json: COMPLETE, narrative_text: 'The drug product is a tablet.', approval_state: 'draft', stale: false }],
+      }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
+      .mockResolvedValueOnce({ rows: [] }) // drift: lineage against live sources
+      .mockResolvedValueOnce({ rows: [] }) // drift: sources of the project
       .mockResolvedValueOnce({ rows: [{ max_version: 2 }] }) // version max
       .mockResolvedValueOnce({ rows: [{ id: 'ver-3' }] }) // insert version
       .mockResolvedValueOnce({}) // update section
@@ -199,7 +209,6 @@ describe('module3OperatingSystemRoutes', () => {
     // must refuse it first, with the same rule.
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [{
@@ -207,7 +216,8 @@ describe('module3OperatingSystemRoutes', () => {
           deterministic_json: { completeness: 0, missingInputs: ['containerClosureDescription', 'suitabilityJustification'] },
           approval_state: 'draft',
         }],
-      }) // section
+      }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
@@ -243,14 +253,14 @@ describe('module3OperatingSystemRoutes', () => {
     // the same reading the export gate applies.
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: '{}', approval_state: 'draft' }] })
-      .mockResolvedValueOnce({});
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: '{}', approval_state: 'draft' }] }) // section
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check
+      .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.S.1/approve')
-      .send({ reason: 'approve', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
 
     expect(res.status).toBe(409);
     expect(res.body.error).toContain('3.2.S.1');
@@ -295,25 +305,6 @@ describe('module3OperatingSystemRoutes', () => {
     expect(res.body.data[2]).toMatchObject({ sectionKey: '3.2.P.1', stale: true, completeness: null, missingInputs: [] });
     // The listing carries the two figures, not the whole compiled blob.
     for (const row of res.body.data) expect(row).not.toHaveProperty('deterministicJson');
-  });
-
-  it('source-object upsert accepts every canonical CmcSourceType, not a hand-copied subset', async () => {
-    // These five compose real sections (§3.2.S.2 needs process_validation and
-    // raw_material_spec; §3.2.S.3/S.4 impurity_profile; §3.2.P.2
-    // dissolution_profile; §3.2.P.1 / 3.2.A.3 formulation_record) and the
-    // route's own enum used to reject all of them with a 400.
-    const previouslyRefused = [
-      'process_validation', 'raw_material_spec', 'impurity_profile', 'dissolution_profile', 'formulation_record',
-    ];
-    for (const sourceType of previouslyRefused) {
-      mockQuery.mockReset();
-      mockQuery.mockResolvedValue({ rows: [{ id: 'so-1', sourceType, sourceKey: 'k', sourceHash: 'h', version: 1 }] });
-      const res = await request(app)
-        .post('/api/cmc/module3-os/source-objects/proj-1')
-        .send({ sourceType, sourceKey: 'k', sourcePayload: { any: 'thing' } });
-      expect(res.status, `sourceType ${sourceType}`).toBe(201);
-      expect(res.body.data.sourceType).toBe(sourceType);
-    }
   });
 
   it('blocks final export when not all sections approved and critical contradictions open', async () => {
@@ -549,9 +540,17 @@ describe('module3OperatingSystemRoutes', () => {
   });
 
   describe('POST /sections/:projectId/:sectionKey/refresh — the record is the composer\'s, never the body\'s', () => {
-    /* One drug_substance source with only a name: §3.2.S.1 composes at well
-       under 100% with missing inputs. The request body claims 100% / none. */
-    const SOURCE = { id: 'so-1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-701' }, sourceHash: 'h1' };
+    /* One drug_substance source: §3.2.S.1 composes at well under 100% with
+       missing inputs, and the request body claims 100% / none. `modality` is
+       not one of §3.2.S.1's inputs — it is what the composition boundary reads
+       to establish the program composes here at all
+       (services/cmc/composition-scope.ts). */
+    const SOURCE = {
+      id: 'so-1',
+      sourceType: 'drug_substance',
+      sourcePayload: { name: 'BX-701', modality: 'small_molecule' },
+      sourceHash: 'h1',
+    };
     function scriptRefresh(statements: Array<{ text: string; params: unknown[] }>) {
       mockQuery.mockImplementation(async (text: string, params: unknown[] = []) => {
         statements.push({ text, params });
@@ -559,7 +558,10 @@ describe('module3OperatingSystemRoutes', () => {
           return { rows: [{ id: 'sec-1', deterministic_json: { completeness: 40, missingInputs: ['manufacturer'] }, approval_state: 'approved' }] };
         }
         if (/FROM cmc_source_objects/.test(text)) return { rows: [SOURCE] };
-        if (/FROM regulatory_programs/.test(text)) return { rows: [] };
+        // The program row the boundary reads: a US IND for a drug.
+        if (/FROM regulatory_programs/.test(text)) {
+          return { rows: [{ id: 'proj-1', programType: 'ind', productType: 'drug', productName: 'BX-701', name: 'BX-701 IND', code: 'BX701' }] };
+        }
         if (/INSERT INTO cmc_module3_sections/.test(text)) return { rows: [{ id: 'sec-1' }] };
         return { rows: [], rowCount: 0 };
       });

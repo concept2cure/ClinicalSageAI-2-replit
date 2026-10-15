@@ -20,6 +20,8 @@
 import { Router, type Request, type Response } from 'express';
 
 import { authedOrgId } from '../utils/authedOrgId';
+import { authedUserId } from '../utils/authedActor';
+import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
 import { createScopedLogger } from '../utils/logger.js';
 import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import {
@@ -111,11 +113,16 @@ router.post('/selection', async (req: Request, res: Response) => {
   }
 });
 
-/** The same report, as something a reviewer can be handed. */
+/**
+ * The same report, as something a reviewer can be handed. Recorded before it is
+ * delivered (2026-10-01): an EXPORT_GENERATED row with the SHA-256 of the exact
+ * bytes, and nothing delivered when that row does not persist.
+ */
 router.post('/selection.pdf', async (req: Request, res: Response) => {
   const orgId = authedOrgId(req);
-  if (!orgId) {
-    return res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Organization context required' } });
+  const userId = authedUserId(req);
+  if (!orgId || !userId) {
+    return res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Organization and user context required' } });
   }
 
   const parsed = parseSelection((req.body ?? {}) as SelectionBody);
@@ -142,11 +149,24 @@ router.post('/selection.pdf', async (req: Request, res: Response) => {
     const name = `data-origins-${parsed.value.documentId}-${parsed.value.charStart}-${parsed.value.charEnd}.pdf`
       .replace(/[^a-zA-Z0-9._-]/g, '_');
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
-    res.setHeader('Content-Length', String(pdf.length));
-    res.end(pdf);
+    await sendAuditedDownload(res, {
+      organizationId: orgId,
+      userId,
+      sourceType: 'export_pdf',
+      backendRoute: '/api/data-origins/selection.pdf',
+      resourceType: 'data_origins_selection',
+      resourceId: `${parsed.value.documentTable}:${parsed.value.documentId}:${parsed.value.charStart}-${parsed.value.charEnd}`,
+      programUuid: null,
+      filename: name,
+      mimeType: 'application/pdf',
+      buffer: pdf,
+    });
   } catch (err) {
+    if (isUnauditedExportRefusal(err)) {
+      return res.status(503).json({
+        error: { code: 'UNAUDITED_EXPORT_REFUSED', message: 'The report was not delivered because its record could not be written. Try again.' },
+      });
+    }
     fail(res, err);
   }
 });

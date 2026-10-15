@@ -8,6 +8,8 @@
  * @module server/services/ana-ri/response-contract
  */
 
+import type { AnswerCheck } from '../ana/answer-grounding.js';
+
 // ── Evidence Verdict ──────────────────────────────────────────────────────────
 
 /**
@@ -25,15 +27,21 @@ export interface EvidenceVerdict {
   attempted: boolean;
   /** Whether evidence passed validation */
   validated: boolean;
-  /** Number of real evidence sources consulted */
+  /**
+   * [KNOWN] and [INFERRED] labels in the answer. These are AnA's own labels,
+   * not sources anything read: the sources a claim was compared with are in
+   * the answer check (services/ana/answer-grounding.ts).
+   */
   source_count: number;
-  /** Types of sources (e.g., 'regulatory_reference', 'project_memory', 'persisted_evidence') */
+  /** The kinds of support the labels claim ('regulatory_reference', 'analytical_inference') */
   source_types: string[];
-  /** Number of claims with grounded evidence */
+  /** The labels AnA wrote, by kind. */
+  label_counts?: { known: number; inferred: number; missing: number };
+  /** Claims with a [KNOWN] or [INFERRED] label nearby */
   grounded_claim_count: number;
-  /** Claims with weak or no evidence */
+  /** Claims with no label nearby, and overclaims */
   weak_or_ungrounded_claim_count: number;
-  /** Claims that need evidence but have none */
+  /** Claims AnA herself marked [MISSING]: support she says is absent */
   missing_support_count: number;
   /** Evidence provider used */
   provider: 'ana-ri' | 'enterprise-bridge' | 'none' | 'fallback';
@@ -220,32 +228,71 @@ export function buildEmptyEvidenceVerdict(): EvidenceVerdict {
   };
 }
 
-/**
- * Pure: render a compact, human-readable trust summary from an evidence verdict
- * so the end user can gauge an answer's reliability at a glance (21 CFR Part 11
- * verifiability). Honest by construction — it only restates the verdict's own
- * counts; it never upgrades confidence. Returns a short single line.
- */
-export function buildTrustSummary(verdict?: EvidenceVerdict): string {
-  if (!verdict || !verdict.attempted) {
-    return 'Evidence check not run for this response — verify any regulatory claims before relying on them.';
+/** "1 claim" / "2 claims". */
+const claimsWord = (n: number) => `${n} claim${n === 1 ? '' : 's'}`;
+
+/** A source as a person would name it ("tool:get_x" → "get x", "attachment:a.pdf" → "a.pdf"). */
+const sourceName = (s: string) =>
+  s.startsWith('tool:') ? s.slice(5).replace(/_/g, ' ') : s.startsWith('attachment:') ? s.slice('attachment:'.length) : s;
+
+/** Nothing consulted: what was not checked, and what was only the person's. */
+function noSourcesSentence(check: AnswerCheck): string {
+  const parts = [];
+  if (check.unchecked.length > 0) parts.push(`${claimsWord(check.unchecked.length)} not checked`);
+  if ((check.fromPerson?.length ?? 0) > 0) parts.push(`${check.fromPerson.length} only in your message`);
+  return parts.length > 0 ? `No source consulted this turn: ${parts.join('; ')}.` : 'No source consulted this turn.';
+}
+
+/** Sources consulted: how each claim ended. */
+function sourcesSentence(check: AnswerCheck): string {
+  if (check.claims === 0) return "No specific claims to check against this turn's sources.";
+  const fromInput = check.fromInput?.length ?? 0;
+  const fromPerson = check.fromPerson?.length ?? 0;
+  const parts = [`${check.found} found in this turn's sources`];
+  if (check.notFound.length > 0) parts.push(`${check.notFound.length} not found`);
+  if (fromInput > 0) parts.push(`${fromInput} AnA's own ${fromInput === 1 ? 'input' : 'inputs'}, not results`);
+  if (fromPerson > 0) parts.push(`${fromPerson} only in your message`);
+  if (check.unchecked.length > 0) {
+    parts.push(`${check.unchecked.length} not checked (may be in ${check.unreadable.map(sourceName).join(', ')}, which this check cannot read)`);
   }
-  const grounded = verdict.grounded_claim_count;
+  return `${check.notFound.length > 0 ? '⚠ ' : ''}Of ${claimsWord(check.claims)}: ${parts.join('; ')}.`;
+}
+
+/** The engine's check, in one sentence. */
+function checkSentence(check: AnswerCheck): string {
+  const line = check.basis === 'no_sources' ? noSourcesSentence(check) : sourcesSentence(check);
+  if (check.verdicts.length === 0) return line;
+  const verdicts = check.verdicts.length === 1 ? 'a verdict' : `${check.verdicts.length} verdicts`;
+  return `${line} States ${verdicts}, not checked: a verdict needs an engine result behind it.`;
+}
+
+/**
+ * Pure: one human-readable line saying what was checked about an answer, so a
+ * person can gauge its reliability at a glance (21 CFR Part 11
+ * verifiability). Honest by construction: it restates the check's and the
+ * labels' own counts and never upgrades confidence.
+ *
+ * The check (the engine's comparison with what AnA consulted) leads, in its
+ * own words: found is "in this turn's sources", not verified. The evidence
+ * labels follow as the text's own: a [KNOWN] label is the writer describing a
+ * claim, so a clean set of labels is not "Verified", and a label is not a
+ * source (2026-10-04, AnA reasoning). This line is also used for a person's
+ * own draft (section-validation.ts), so the labels are not named as AnA's.
+ */
+export function buildTrustSummary(verdict?: EvidenceVerdict, check?: AnswerCheck | null): string {
+  const lead = check ? checkSentence(check) : null;
+  if (!verdict || !verdict.attempted) {
+    return lead ?? 'Evidence check not run for this response — verify any regulatory claims before relying on them.';
+  }
+  const labelled = verdict.grounded_claim_count;
   const weak = verdict.weak_or_ungrounded_claim_count;
   const missing = verdict.missing_support_count;
-  const sources = verdict.source_count;
   const clean = verdict.validated && weak === 0 && missing === 0;
-  const label = clean
-    ? 'Verified'
-    : verdict.validated
-      ? '⚠ Verified with caveats'
-      : '⚠ Unverified — reviewer check recommended';
-  const counts = `${grounded} grounded · ${weak} inferred/weak · ${missing} missing · ${sources} source${sources === 1 ? '' : 's'}`;
-  let line = `${label} · ${counts}`;
+  let line = `${clean ? '' : '⚠ '}Evidence labels: ${labelled} labelled · ${weak} unlabelled or overclaimed · ${missing} marked missing`;
   if (verdict.reviewer_risk_summary && verdict.reviewer_risk_summary.trim()) {
     line += `. ${verdict.reviewer_risk_summary.trim()}`;
   } else if (weak > 0) {
     line += `. ${weak} claim${weak === 1 ? '' : 's'} need${weak === 1 ? 's' : ''} verification before reviewer-facing use.`;
   }
-  return line;
+  return lead ? `${lead} ${line}` : line;
 }

@@ -18,8 +18,14 @@
  *                       (concept2cure_provenance_events)
  *   - reasoning       — AnA's persisted thought process per turn
  *                       (chat_messages.metadata.reasoning for the artifact thread)
+ *   - policyHolds     — AnA's own holds under Manual, apart from the human
+ *                       controls (chat_messages.metadata.policyHolds; row 74)
  *   - dataLineage     — evidence source → content links
  *                       (data_lineage_records targeting the artifact / its thread)
+ *   - provenanceCompleteness — the share of the document's current text whose
+ *                       origin the span lineage records (document_span_lineage,
+ *                       via summarizeDocumentAttribution); the evidence &
+ *                       provenance trace's confidence (P-26)
  *
  * Every satellite query is tenant-scoped and tolerant of a missing/unmigrated
  * table (contributes an empty array), mirroring the AnALedger collector — the
@@ -31,6 +37,11 @@
  */
 import { getPool } from '../../db/runtime.js';
 import { listTurnRecords } from './turn-record-verify.js';
+import { humanControlsOf, policyHoldsOf, type DossierPolicyHold } from './lineage-dossier-holds.js';
+import { loadProvenanceCompleteness, type DossierProvenanceCompleteness } from './lineage-dossier-completeness.js';
+
+export type { DossierPolicyHold } from './lineage-dossier-holds.js';
+export { measureProvenanceCompleteness, type DossierProvenanceCompleteness } from './lineage-dossier-completeness.js';
 import {
   collectArtifactLedger,
   type ArtifactLedger,
@@ -176,6 +187,8 @@ export interface DossierDataLineage {
   linkageType: string;
   transformationType: string | null;
   confidenceScore: number | null;
+  /** What the recorded confidence is (data_lineage_records.confidence_basis), or null when none was recorded. */
+  confidenceBasis: string | null;
   aiModelUsed: string | null;
   createdAt: string;
 }
@@ -194,7 +207,23 @@ export interface DocumentLineageDossier {
   reasoning: DossierReasoningTurn[];
   /** Human control actions (pause/interject/redirect/cancel) across the turns. */
   humanControls: DossierHumanControl[];
+  /**
+   * AnA's own Manual holds across the turns, kept apart from the human
+   * controls (row 74). Absent from dossiers assembled before this field.
+   */
+  policyHolds?: DossierPolicyHold[];
+  /**
+   * Stored hold entries that could not be read (malformed), counted rather
+   * than dropped in silence: a corrupt record must not read as "no holds".
+   */
+  policyHoldsUnreadable?: number;
   dataLineage: DossierDataLineage[];
+  /**
+   * The document's measured provenance completeness. Null when the span
+   * lineage or the document's text could not be read — not measured, never a
+   * zero. Absent from dossiers assembled before this field.
+   */
+  provenanceCompleteness?: DossierProvenanceCompleteness | null;
   /**
    * The retained turn records of the document's conversation, oldest first.
    * Null when the store could not be read — never an empty list standing in
@@ -491,8 +520,8 @@ function parseMetadata(raw: unknown): Record<string, unknown> | null {
  */
 async function loadTurnRecords(
   threadId: string | null,
-): Promise<{ reasoning: DossierReasoningTurn[]; humanControls: DossierHumanControl[] }> {
-  if (!threadId) return { reasoning: [], humanControls: [] };
+): Promise<TurnRecordsRead> {
+  if (!threadId) return { reasoning: [], humanControls: [], policyHolds: [], policyHoldsUnreadable: 0 };
   try {
     const { rows } = await getPool().query(
       `SELECT metadata, model, created_at
@@ -504,6 +533,8 @@ async function loadTurnRecords(
     );
     const reasoning: DossierReasoningTurn[] = [];
     const humanControls: DossierHumanControl[] = [];
+    const policyHolds: DossierPolicyHold[] = [];
+    let policyHoldsUnreadable = 0;
     let turn = 0;
     for (const r of rows as any[]) {
       turn += 1;
@@ -524,24 +555,23 @@ async function loadTurnRecords(
         });
       }
 
-      if (Array.isArray(meta.humanControls)) {
-        for (const c of meta.humanControls as any[]) {
-          if (!c || typeof c.action !== 'string') continue;
-          humanControls.push({
-            turn,
-            action: c.action,
-            message: typeof c.message === 'string' ? c.message : null,
-            round: typeof c.round === 'number' ? c.round : null,
-            at: typeof c.at === 'string' ? c.at : createdAt,
-          });
-        }
-      }
+      humanControls.push(...humanControlsOf(meta, turn, createdAt));
+      const held = policyHoldsOf(meta, turn);
+      policyHolds.push(...held.holds);
+      policyHoldsUnreadable += held.unreadable;
     }
-    return { reasoning, humanControls };
+    return { reasoning, humanControls, policyHolds, policyHoldsUnreadable };
   } catch (err) {
     warnUnless42P01('turn-records', err);
-    return { reasoning: [], humanControls: [] };
+    return { reasoning: [], humanControls: [], policyHolds: [], policyHoldsUnreadable: 0 };
   }
+}
+
+interface TurnRecordsRead {
+  reasoning: DossierReasoningTurn[];
+  humanControls: DossierHumanControl[];
+  policyHolds: DossierPolicyHold[];
+  policyHoldsUnreadable: number;
 }
 
 async function loadDataLineage(
@@ -557,7 +587,7 @@ async function loadDataLineage(
       `SELECT source_object_type, source_object_id, source_title,
               source_content_hash, target_object_type, target_object_id,
               linkage_type, transformation_type, confidence_score,
-              ai_model_used, created_at
+              confidence_basis, ai_model_used, created_at
        FROM data_lineage_records
        WHERE organization_id = $1 AND target_object_id = ANY($2)
        ORDER BY created_at ASC
@@ -574,6 +604,7 @@ async function loadDataLineage(
       linkageType: r.linkage_type ?? 'unknown',
       transformationType: r.transformation_type ?? null,
       confidenceScore: r.confidence_score != null ? Number(r.confidence_score) : null,
+      confidenceBasis: r.confidence_basis ?? null,
       aiModelUsed: r.ai_model_used ?? null,
       createdAt: toIso(r.created_at),
     }));
@@ -628,7 +659,7 @@ export async function buildDocumentLineageDossier(
   const artifactPk = ledger.artifact.artifactPk;
   const threadId = await loadThreadId(artifactId, organizationId);
 
-  const [versionHistory, decisionResult, provenanceEvents, turnRecords, dataLineage, retainedTurnRecords] =
+  const [versionHistory, decisionResult, provenanceEvents, turnRecords, dataLineage, retainedTurnRecords, provenanceCompleteness] =
     await Promise.all([
       loadVersionHistory(artifactPk, organizationId, ledger.artifact.version),
       loadDecisions(artifactPk, artifactId, organizationId),
@@ -636,6 +667,7 @@ export async function buildDocumentLineageDossier(
       loadTurnRecords(threadId),
       loadDataLineage(artifactId, threadId, organizationId),
       loadRetainedTurnRecords(threadId, organizationId),
+      loadProvenanceCompleteness(artifactPk, organizationId),
     ]);
 
   return {
@@ -649,7 +681,10 @@ export async function buildDocumentLineageDossier(
     provenanceEvents,
     reasoning: turnRecords.reasoning,
     humanControls: turnRecords.humanControls,
+    policyHolds: turnRecords.policyHolds,
+    policyHoldsUnreadable: turnRecords.policyHoldsUnreadable,
     dataLineage,
     retainedTurnRecords,
+    provenanceCompleteness,
   };
 }

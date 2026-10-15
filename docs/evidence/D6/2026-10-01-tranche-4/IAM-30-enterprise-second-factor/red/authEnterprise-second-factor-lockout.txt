@@ -1,0 +1,215 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > refuses a locked account before any code is tried (423), and audits it 52ms
+   → {"error":"INVALID_MFA_CODE","message":"Invalid or expired verification code. Each code works once; if you just used it, wait for the next."}: expected 401 to be 423 // Object.is equality
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > counts a wrong authenticator code toward the lockout 10ms
+   → expected "vi.fn()" to be called with arguments: [ 7 ]
+
+Number of calls: 0
+
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > says so when the wrong code locks the account 8ms
+   → expected [ 'invalid_code' ] to include 'invalid_code_threshold_exceeded'
+stdout | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:04:18.563Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:04:18.564Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:04:18.564Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:04:18.599Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > control: a right password clears it for an account whose second factor is the emailed code
+{
+  "timestamp": "2026-10-01T21:04:18.636Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "u***@acme.test"
+  }
+}
+
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right 193ms
+   → expected "vi.fn()" to be called with arguments: [ 7 ]
+
+Number of calls: 0
+
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > control: a wrong emailed code keeps its own cap and is not counted here 9ms
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > a right password does not clear the count of an account with an authenticator 15ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      7,
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > control: a right password clears it for an account whose second factor is the emailed code 11ms
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the account key reads the enterprise partial token, verified 2ms
+   → expected null to be 'user:9' // Object.is equality
+ × server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the eleventh wrong code for one account is refused 429, each from a new address 40ms
+   → expected 401 to be 429 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > refuses a locked account before any code is tried (423), and audits it
+AssertionError: {"error":"INVALID_MFA_CODE","message":"Invalid or expired verification code. Each code works once; if you just used it, wait for the next."}: expected 401 to be 423 // Object.is equality
+
+- Expected
++ Received
+
+- 423
++ 401
+
+ ❯ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts:164:50
+    162|     state.locked = true;
+    163|     const res = await verifyMfa(7);
+    164|     expect(res.status, JSON.stringify(res.body)).toBe(423);
+       |                                                  ^
+    165|     expect(res.body.error).toBe('ACCOUNT_LOCKED');
+    166|     expect(verifyLoginSecondFactor).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > counts a wrong authenticator code toward the lockout
+AssertionError: expected "vi.fn()" to be called with arguments: [ 7 ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts:174:39
+    172|     const res = await verifyMfa(7);
+    173|     expect(res.status).toBe(401);
+    174|     expect(lockout.recordFailedLogin).toHaveBeenCalledWith(7);
+       |                                       ^
+    175|     expect(reasons()).toContain('invalid_code');
+    176|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > says so when the wrong code locks the account
+AssertionError: expected [ 'invalid_code' ] to include 'invalid_code_threshold_exceeded'
+ ❯ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts:182:23
+    180|     const res = await verifyMfa(7);
+    181|     expect(res.status).toBe(401);
+    182|     expect(reasons()).toContain('invalid_code_threshold_exceeded');
+       |                       ^
+    183|   });
+    184|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+AssertionError: expected "vi.fn()" to be called with arguments: [ 7 ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts:189:39
+    187|     const res = await verifyMfa(7);
+    188|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    189|     expect(lockout.resetFailedLogins).toHaveBeenCalledWith(7);
+       |                                       ^
+    190|   });
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > a right password does not clear the count of an account with an authenticator
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      7,
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts:205:43
+    203|     const res = await verifyPassword();
+    204|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    205|     expect(lockout.resetFailedLogins).not.toHaveBeenCalled();
+       |                                           ^
+    206|   });
+    207|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the account key reads the enterprise partial token, verified
+AssertionError: expected null to be 'user:9' // Object.is equality
+
+- Expected:
+"user:9"
+
++ Received:
+null
+
+ ❯ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts:218:71
+    216| describe('wrong codes are limited per account, whatever the address (I…
+    217|   it('the account key reads the enterprise partial token, verified', (…
+    218|     expect(secondFactorAccountKey({ partialToken: partialToken(9) })).…
+       |                                                                       ^
+    219|     const forged = jwt.sign({ userId: '9', mfaPending: true }, 'not-th…
+    220|     expect(secondFactorAccountKey({ partialToken: forged })).toBeNull(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the eleventh wrong code for one account is refused 429, each from a new address
+AssertionError: expected 401 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 401
+
+ ❯ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts:229:26
+    227|     for (let i = 0; i < 11; i++) statuses.push((await verifyMfa(9)).st…
+    228|     expect(statuses.slice(0, 10).every((s) => s === 401), `first ten: …
+    229|     expect(statuses[10]).toBe(429);
+       |                          ^
+    230|   });
+    231| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  21:04:15
+   Duration  2.82s (transform 1.14s, setup 105ms, import 2.04s, tests 344ms, environment 0ms)
+

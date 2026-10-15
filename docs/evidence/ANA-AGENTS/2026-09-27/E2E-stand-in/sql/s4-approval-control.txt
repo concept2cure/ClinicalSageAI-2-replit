@@ -1,0 +1,76 @@
+# s4-approval-control — rows in postgresql://127.0.0.1:5432/ana_e2e_2
+# runs: run_1a0a1adb-a5a1-4c70-a3bd-3a7f36d43c66
+# threads: ana-ri_1790620731449_a0di82nxu
+
+## ana_runs
+                    id                    |  status  | stopped_reason | current_round |    surface    | controls | pending_command | decided  | decided_by |   created    |   finished   
+------------------------------------------+----------+----------------+---------------+---------------+----------+-----------------+----------+------------+--------------+--------------
+ run_1a0a1adb-a5a1-4c70-a3bd-3a7f36d43c66 | finished | no_more_tools  |             1 | ana-ri-stream |        0 |                 | approved | 1          | 18:38:51.411 | 18:38:53.859
+(1 row)
+
+
+## ana_runs.control_events
+                    id                    | jsonb_pretty 
+------------------------------------------+--------------
+ run_1a0a1adb-a5a1-4c70-a3bd-3a7f36d43c66 | [           +
+                                          | ]
+(1 row)
+
+
+## chat_messages (the saved turn; metadata fields S1/S4 write)
+ id |   role    |                                          content                                           | stopped_reason | rounds | run_policy | pending_steps 
+----+-----------+--------------------------------------------------------------------------------------------+----------------+--------+------------+---------------
+ 19 | user      | Create a review task for the BX-512 stability protocol (control run: I will confirm it).   |                |        |            | 
+ 20 | assistant | I will propose the task; it needs your approval.Stand-in answer: the task outcome was succ |                | 1      | auto       | 
+(2 rows)
+
+
+## chat_messages.metadata policyHolds / humanControls / warnings (assistant rows)
+ id | jsonb_pretty 
+----+--------------
+ 20 | {           +
+    | }
+(1 row)
+
+
+## ana_turn_records 05509f73-d328-4377-8832-364e67f18908 (row columns, then the record's own fields)
+                  run_id                  | outcome  |  schema_version   | hash_ok 
+------------------------------------------+----------+-------------------+---------
+ run_1a0a1adb-a5a1-4c70-a3bd-3a7f36d43c66 | answered | ana-turn-record/1 | t
+(1 row)
+
+{
+ "model": {
+  "effort": "balanced",
+  "model": "claude-opus-5-5",
+  "calls": 2
+ },
+ "turn": {
+  "runId": "run_1a0a1adb-a5a1-4c70-a3bd-3a7f36d43c66",
+  "outcome": "answered",
+  "surface": "conversation-thread"
+ },
+ "warnings": [],
+ "controls": [],
+ "steps": [
+  {
+   "round": 1,
+   "tool": "execute_platform_command",
+   "label": "Executing platform command: create_task",
+   "status": "success",
+   "error": null
+  }
+ ]
+}
+
+## project_tasks and unified_tasks rows with the stand-in title, after the control run
+ id | project_id | organization_id |                    name                     | status | created_by_id | created  
+----+------------+-----------------+---------------------------------------------+--------+---------------+----------
+  1 |          1 |               1 | E2E stand-in: review the stability protocol | todo   |             1 | 18:38:53
+(1 row)
+
+ id |                    title                    | status  | created  
+----+---------------------------------------------+---------+----------
+ 17 | E2E stand-in: review the stability protocol | pending | 18:38:53
+(1 row)
+

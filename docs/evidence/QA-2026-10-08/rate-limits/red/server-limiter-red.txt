@@ -1,0 +1,186 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > a user who opens eight documents in a minute is not refused a read 114ms
+   → document metadata reads were refused as document requests: expected [ 200, 200, 200, 200, 200, 200, …(26) ] to deeply equal [ 200, 200, 200, 200, 200, 200, …(26) ]
+ × server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > a posted annotation and the list read that follows it are both accepted after several opens 64ms
+   → expected [ 429, 429 ] to deeply equal [ 200, 200 ]
+ × server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > metadata reads keep a per-user ceiling: the 601st in a minute is refused 1206ms
+   → a read inside the ceiling was refused: expected false to be true // Object.is equality
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > document downloads and document writes keep the 20-a-minute ceiling > the 21st download in a minute is refused 37ms
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > document downloads and document writes keep the 20-a-minute ceiling > a document write (Send for review) shares the 20-a-minute ceiling and the 21st is refused 55ms
+ × server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a Data room drop is not refused for a normal batch of files > a batch of fifteen files dropped at once by one user is not refused 37ms
+   → files refused by the per-user upload limit: expected [ 200, 200, 200, 200, 200, 200, …(9) ] to deeply equal [ 200, 200, 200, 200, 200, 200, …(9) ]
+ × server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a Data room drop is not refused for a normal batch of files > a flood of uploads by one user is still refused: the 61st in a minute is 158ms
+   → an upload inside the ceiling was refused: expected false to be true // Object.is equality
+ × server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > the bucket each path is counted in > vault metadata reads are api reads; vault downloads, text and writes stay documents 2ms
+   → versions: expected 'documents' to be 'api' // Object.is equality
+ ✓ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > the bucket each path is counted in > chat uploads are upload reads 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > a user who opens eight documents in a minute is not refused a read
+AssertionError: document metadata reads were refused as document requests: expected [ 200, 200, 200, 200, 200, 200, …(26) ] to deeply equal [ 200, 200, 200, 200, 200, 200, …(26) ]
+
+- Expected
++ Received
+
+@@ -17,18 +17,18 @@
+    200,
+    200,
+    200,
+    200,
+    200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
++   429,
++   429,
++   429,
++   429,
++   429,
++   429,
++   429,
++   429,
++   429,
++   429,
++   429,
++   429,
+  ]
+
+ ❯ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts:64:83
+     62|       }
+     63|     }
+     64|     expect(statuses, 'document metadata reads were refused as document…
+       |                                                                                   ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > a posted annotation and the list read that follows it are both accepted after several opens
+AssertionError: expected [ 429, 429 ] to deeply equal [ 200, 200 ]
+
+- Expected
++ Received
+
+  [
+-   200,
+-   200,
++   429,
++   429,
+  ]
+
+ ❯ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts:75:42
+     73|     const post = await request(a).post(`${docPath(0)}/annotations`).se…
+     74|     const reread = await request(a).get(`${docPath(0)}/annotations`).s…
+     75|     expect([post.status, reread.status]).toEqual([200, 200]);
+       |                                          ^
+     76|   });
+     77|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a document open is not refused by the document read limit > metadata reads keep a per-user ceiling: the 601st in a minute is refused
+AssertionError: a read inside the ceiling was refused: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts:85:101
+     83|       statuses.push((await request(a).get(`${docPath(i % 8)}/${READS[i…
+     84|     }
+     85|     expect(statuses.slice(0, 600).every((s) => s === 200), 'a read ins…
+       |                                                                                                     ^
+     86|     expect(statuses[600]).toBe(429);
+     87|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a Data room drop is not refused for a normal batch of files > a batch of fifteen files dropped at once by one user is not refused
+AssertionError: files refused by the per-user upload limit: expected [ 200, 200, 200, 200, 200, 200, …(9) ] to deeply equal [ 200, 200, 200, 200, 200, 200, …(9) ]
+
+- Expected
++ Received
+
+@@ -7,11 +7,11 @@
+    200,
+    200,
+    200,
+    200,
+    200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
++   429,
++   429,
++   429,
++   429,
++   429,
+  ]
+
+ ❯ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts:116:90
+    114|       Array.from({ length: 15 }, () => request(a).post('/api/chat/uplo…
+    115|     );
+    116|     expect(responses.map((r) => r.status), 'files refused by the per-u…
+       |                                                                                          ^
+    117|   });
+    118|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > a Data room drop is not refused for a normal batch of files > a flood of uploads by one user is still refused: the 61st in a minute is
+AssertionError: an upload inside the ceiling was refused: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts:129:103
+    127|       last = r as unknown as typeof last;
+    128|     }
+    129|     expect(statuses.slice(0, 60).every((s) => s === 200), 'an upload i…
+       |                                                                                                       ^
+    130|     expect(statuses[60]).toBe(429);
+    131|     expect(last.body).toMatchObject({ message: 'Too many file uploads.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > the bucket each path is counted in > vault metadata reads are api reads; vault downloads, text and writes stay documents
+AssertionError: versions: expected 'documents' to be 'api' // Object.is equality
+
+Expected: "api"
+Received: "documents"
+
+ ❯ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts:138:93
+    136|   it('vault metadata reads are api reads; vault downloads, text and wr…
+    137|     for (const r of ['versions', 'annotations', 'relationships', 'hist…
+    138|       expect(getCategory(`/c2c/project-vault/${PID}/documents/${docId(…
+       |                                                                                             ^
+    139|       expect(getCategory(`/api/c2c/project-vault/${PID}/documents/${do…
+    140|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  01:17:26
+   Duration  2.92s (transform 300ms, setup 175ms, import 445ms, tests 1.68s, environment 0ms)
+

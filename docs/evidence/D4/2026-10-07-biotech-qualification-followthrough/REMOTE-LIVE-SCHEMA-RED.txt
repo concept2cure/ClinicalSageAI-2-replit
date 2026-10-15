@@ -1,0 +1,35 @@
+Actual LIVE-schema RED excerpt (not the entire provisioning log).
+Source: d46df5e1c406b0e8347385bcc0963dc02fd3e513
+Run37658757545 / job112929193093; successful provision/deploy/replay/RLS/readiness/invariants precede this step.
+
+2026-10-07T17:45:48.3207186Z ##[group]Run npm run ci:tables-live-schema
+2026-10-07T17:45:48.3207845Z [36;1mnpm run ci:tables-live-schema[0m
+2026-10-07T17:45:48.3296518Z shell: /usr/bin/bash -e {0}
+2026-10-07T17:45:48.3296935Z env:
+2026-10-07T17:45:48.3297557Z   DATABASE_URL: postgresql://postgres@localhost:5432/c2c_blank_proof?sslmode=disable
+2026-10-07T17:45:48.3298311Z ##[endgroup]
+2026-10-07T17:45:48.4341685Z
+2026-10-07T17:45:48.4342465Z > concept2cure-riai@1.0.0 ci:tables-live-schema
+2026-10-07T17:45:48.4343397Z > node scripts/ci/check-tables-against-live-schema.mjs --strict-no-regression
+2026-10-07T17:45:48.4343853Z
+2026-10-07T17:45:48.9228465Z [ci:tables-live-schema] 1297 relations on the live database; 759 referenced by server SQL; 13 resolved as functions; 40 absent
+2026-10-07T17:45:48.9231608Z
+2026-10-07T17:45:48.9232837Z [ci:tables-live-schema] ❌ 1 table(s) referenced by server SQL do not exist on the provisioned database:
+2026-10-07T17:45:48.9233299Z
+2026-10-07T17:45:48.9234690Z   server/services/document-data-disposition/derived-impact.ts
+2026-10-07T17:45:48.9241590Z       rl_walk
+2026-10-07T17:45:48.9242334Z   server/services/document-data-disposition/recorded-lineage.ts
+2026-10-07T17:45:48.9242946Z       rl_walk
+2026-10-07T17:45:48.9243081Z
+2026-10-07T17:45:48.9243530Z   These were checked against a REAL database built by install-fresh +
+2026-10-07T17:45:48.9244482Z   deploy-migrate, not against the repo. A CREATE TABLE existing somewhere
+2026-10-07T17:45:48.9245108Z   in the tree is not the question and does not resolve this: the applier
+2026-10-07T17:45:48.9245967Z   may never reach it, a guard clause may skip it, a later migration may
+2026-10-07T17:45:48.9246511Z   drop it, or it may land in a schema the query does not resolve.
+2026-10-07T17:45:48.9246786Z
+2026-10-07T17:45:48.9247021Z   Fix: put the creating migration on a durable apply path (usually
+2026-10-07T17:45:48.9247529Z   C2C_MIGRATION_FILES in scripts/db/migration-set.mjs), then re-run the
+2026-10-07T17:45:48.9248070Z   provisioning locally and confirm the table is there. Or delete the
+2026-10-07T17:45:48.9248699Z   query, if the feature it belongs to is dead.
+2026-10-07T17:45:48.9249034Z
+2026-10-07T17:45:48.9390452Z ##[error]Process completed with exit code 1.

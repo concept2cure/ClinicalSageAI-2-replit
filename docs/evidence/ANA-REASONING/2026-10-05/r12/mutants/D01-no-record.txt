@@ -1,0 +1,21 @@
+Mutant D01-no-record: the door files no turn record, as before round 12
+
+--- server/services/ana/turn-record-draft.ts
+- if (!recorder) return null;
+  recorder.setModelInput
++ if (recorder) return null;
+  recorder!.setModelInput
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > files one record holding the prompt sent, the draft returned, the model and the gateway request 89ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > opens the record before the model is asked, so the turn starts when it did 16ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn 14ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent 12ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > names the claims no source holds and the verdict it states; the person’s words are theirs, not a source 12ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a figure past the 600-character cut is not found: the model was never shown it 15ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence 11ms
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from 67ms
+      Tests  8 failed | 1 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯

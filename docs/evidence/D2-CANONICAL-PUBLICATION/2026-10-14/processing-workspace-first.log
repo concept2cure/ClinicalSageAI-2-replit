@@ -1,0 +1,137 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed missing_reason metadata out of runnable slots 166ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_hour metadata out of runnable slots 100ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > keeps malformed normalized_second metadata out of runnable slots 104ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 held-out stage coherence > refuses same-token stage identity changes before completion or failure journaling 42ms
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > processes an exact captured workspace that differs from the project row identifier 13ms
+   → expected { ok: false, processed: false, …(2) } to match object { Object (status, processed) }
+(2 matching properties omitted from actual)
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses a wrong workspace even when that number is an unrelated project ID 48ms
+   → expected 'completed' to be 'blocked' // Object.is equality
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an ambiguous program anchor before extraction 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses an exclusively deleted anchor before extraction 6ms
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > rechecks the exact program workspace after extraction before storing derived text 6ms
+   → expected 'blocked' to be 'stale_source' // Object.is equality
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > loads the recorded original; correct duplicate bytes do not mask missing original 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest null 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bad 21ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses independently invalid/different upload digest bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 21ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > refuses wrong caller project and a missing live project 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects project deletion after claim/extraction 25ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > rejects mutable original association after extraction even with equal bytes 43ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > owns the caller Buffer before any await 42ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > reuses only byte/revision-bound extraction and clears old error on success 41ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > does not trust arbitrary supplied pre-extracted content 40ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"fileName":"Renamed.csv"} 40ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > same bytes with changed extraction behavior cannot reuse cached text {"mimeType":"text/csv"} 39ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > healthy same identity is idempotent without extraction or new attempt 56ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":2} 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"running","leaseExpiresAt":"not-a-date"} 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 exact original identity and atomic derived processing > blocks malformed/future stage without resetting it {"version":1,"state":"failed","attempts":-1} 21ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > a live claim excludes a second worker before it extracts 53ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker success 77ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > lease takeover fences late original worker failure 73ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > expired ownership without takeover cannot finalize 38ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 sequential worker fencing, retries and sweep diagnostics > failed extraction is named and requires explicit retry, then clears its error 94ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > dry-run is read-only and strict invalid options refuse before I/O 62ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy readable text is already complete without fabricated stage history 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > diagnostic malformed rows do not starve runnable slots 66ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " " 88ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable "﻿" 93ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > legacy Unicode blank text remains repairable " \n\t" 82ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 bounded sweep and honest observations > exact already-readable dryrun observes completion without claiming a processed count 27ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final-write outage records bounded due retry and never marks readable completion 100ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > final and failure-journal outage leaves the durable running lease reclaimable 85ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > automatic attempt budget is bounded; explicit expired-claim retry never resets it 144ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > busy and not-due diagnostics cannot consume runnable slots 90ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+lost-recovery probe {"sourceId":55,"status":"extracted","text":null,"report":{"examined":1,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[{"sourceId":55,"status":"candidate"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 durable failures and bounded recovery > a lost completion COMMIT reply is resolved by durable readable state on retry 68ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable 57ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: pending capture is selected, one successful derived UPDATE makes text searchable, then leaves retry set 196ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: foreign organization and deleted capture are refused at the derived writer 58ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+capture-byte-binding probe {"sourceId":60,"done":{"ok":false,"processed":false,"status":"blocked","reasonCode":"SOURCE_BYTES_MISMATCH"},"captureDigest":"06e3d15d54dfdcc221d0a57a2b1f2017685073f5ffcc72b150a9091b0927f922","suppliedDigest":"93225f57937ab9d7e73e89f2efde8d644b091b88c248f1efaf0f825807f03ccd"}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+stale-source probe {"sourceId":61,"committed":false,"current":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+superseded-candidate probe {"examined":0,"processed":0,"unreadable":[],"dryRun":true,"completed":0,"failed":0,"blocked":0,"skipped":0,"items":[],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+failed-extraction report probe {"examined":1,"processed":0,"unreadable":[{"sourceId":63,"reason":"EXTRACTION_FAILED"}],"dryRun":false,"completed":0,"failed":1,"blocked":0,"skipped":0,"items":[{"sourceId":63,"status":"extraction_failed","reasonCode":"EXTRACTION_FAILED"}],"diagnosticCounts":{"blocked":0,"busy":0,"retry_not_due":0,"retry_exhausted":0,"extraction_failed":0,"stale_source":0},"limit":50,"diagnosticLimit":50,"diagnosticsCapped":false}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: a pending intake survives the shared processor persistence exception and stays retryable 73ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source 59ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success 99ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > processes an exact captured workspace that differs from the project row identifier
+AssertionError: expected { ok: false, processed: false, …(2) } to match object { Object (status, processed) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "processed": true,
+-   "status": "completed",
++   "processed": false,
++   "status": "blocked",
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:149:95
+    147|     expect(projectId).not.toBe(900);
+    148|     const id = await seed('pending', { workspace: 900 });
+    149|     expect(await processCapturedSource(ORG, id, input({ expectedWorksp…
+       |                                                                                               ^
+    150|     const row = await state(id);
+    151|     expect(row.client_workspace_id).toBe(900);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > refuses a wrong workspace even when that number is an unrelated project ID
+AssertionError: expected 'completed' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "completed"
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:163:104
+    161|     await exec.query('INSERT INTO projects (id,organization_id,regulat…
+    162|     const id = await seed('pending', { workspace: 901 });
+    163|     expect((await processCapturedSource(ORG, id, input({ expectedWorks…
+       |                                                                                                        ^
+    164|     expect(seam.extract).not.toHaveBeenCalled();
+    165|     expect((await state(id)).extracted_text).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts > D2 program-bound capture workspace admission > rechecks the exact program workspace after extraction before storing derived text
+AssertionError: expected 'blocked' to be 'stale_source' // Object.is equality
+
+Expected: "stale_source"
+Received: "blocked"
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts:189:76
+    187|       return { text: BODY, method: 'plain-text' };
+    188|     });
+    189|     expect((await processCapturedSource(ORG, id, input(), opts())).sta…
+       |                                                                            ^
+    190|     expect((await state(id)).extracted_text).toBeNull();
+    191|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 47 passed (50)
+   Start at  21:56:53
+   Duration  5.42s (transform 237ms, setup 78ms, import 224ms, tests 4.88s, environment 0ms)
+

@@ -1,0 +1,25 @@
+     27|     expect(() => decryptCredential(truncateTag(sealed, 4))).toThrow();
+       |                                                             ^
+     28|     expect(() => decryptCredential(truncateTag(sealed, 12))).toThrow();
+     29|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/security/__tests__/gcm-tag-length.test.ts > a GCM tag shorter than 16 bytes is refused > mfaService: a TOTP secret
+AssertionError: expected [Function] to throw an error
+ ❯ server/services/security/__tests__/gcm-tag-length.test.ts:35:61
+     33|     const sealed = __testing.encrypt('JBSWY3DPEHPK3PXP');
+     34|     expect(__testing.decrypt(sealed)).toBe('JBSWY3DPEHPK3PXP');
+     35|     expect(() => __testing.decrypt(truncateTag(sealed, 4))).toThrow();
+       |                                                             ^
+     36|     expect(() => __testing.decrypt(truncateTag(sealed, 12))).toThrow();
+     37|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  04:16:26
+   Duration  2.09s (transform 820ms, setup 86ms, import 10ms, tests 1.64s, environment 0ms)
+

@@ -1,5 +1,6 @@
 import express from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from '../middleware/tokenType';
 import {
   dynamicContentAssembly,
   ProjectAccessError,
@@ -24,7 +25,12 @@ function authenticateSse(req: express.Request, res: express.Response): boolean {
     return false;
   }
   try {
-    verifyJwtWithRotation(auth.slice(7));
+    const decoded = verifyJwtWithRotation(auth.slice(7));
+    // IAM-23: only an access token opens the stream.
+    if (requireAccessTokenReason(decoded as Parameters<typeof requireAccessTokenReason>[0])) {
+      res.status(401).json({ success: false, error: 'Invalid authentication token' });
+      return false;
+    }
     return true;
   } catch {
     res.status(401).json({ success: false, error: 'Invalid authentication token' });

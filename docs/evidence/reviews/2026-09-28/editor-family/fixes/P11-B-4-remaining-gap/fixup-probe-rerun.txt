@@ -1,0 +1,37 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stdout | ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > REDO door: own insertion, deleted, undo the delete, accept, redo -> accepted text must stay
+after delete own insertion: "Base text." []
+after undo of delete: "Base text. Typed clause." [ [ 'insertion', ' Typed clause.' ] ] undo 1 redo 1
+after accept: "Base text. Typed clause." [ 'accept' ] redo 1
+after redo: "Base text. Typed clause." []
+
+stdout | ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > REDO door: AnA draft deleted (tracking on), undo, accept, redo -> accepted draft must stay
+after delete draft: "Base. " []
+after undo: "Base. Confirmed by MS/NMR." [ [ 'insertion', 'Confirmed by MS/NMR.' ] ]
+after redo: "Base. Confirmed by MS/NMR." [] [ 'accept' ]
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > REDO door: own insertion, deleted, undo the delete, accept, redo -> accepted text must stay 95ms
+stdout | ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > reject own insertion then undo
+reject+undo: "Base text." []
+
+stdout | ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > can().undo() stays true at the floor (ribbon stays enabled)
+can undo at floor: true undo() returns true
+
+stdout | ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > coarse floor: own typing elsewhere before an unrelated decision is frozen
+pending before decision: [ [ 'insertion', ' Extra' ], [ 'insertion', 'Confirmed by MS/NMR.' ] ]
+coarse: "Mine. ExtraBase. Confirmed by MS/NMR." [ [ 'insertion', ' Extra' ] ] [ 'accept' ]
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > REDO door: AnA draft deleted (tracking on), undo, accept, redo -> accepted draft must stay 14ms
+ ✓ ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > keyboard Mod-z path is filtered too 10ms
+ ✓ ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > reject own insertion then undo 13ms
+ ✓ ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > can().undo() stays true at the floor (ribbon stays enabled) 10ms
+ ✓ ../../..<scratch>/fixes2/undo-floor/review-probe/probe.test.ts > review probes > coarse floor: own typing elsewhere before an unrelated decision is frozen 9ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  19:20:10
+   Duration  1.04s (transform 147ms, setup 156ms, import 118ms, tests 155ms, environment 448ms)
+

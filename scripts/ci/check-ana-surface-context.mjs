@@ -50,8 +50,11 @@
  *     `rbm` ran the real assistant, on the real endpoint, with the real study
  *     id, and passed NO `moduleContext` at all, so it could not name one KRI on
  *     the board beside it. Both channels are now counted, each on the surfaces
- *     it actually applies to, and an owned surface that forwards no context is
- *     as blind here as one that never published.
+ *     it actually applies to. The 2026-10-08 one-conversation decision now also
+ *     allows a full-width owned surface to publish saved screen context and
+ *     hand its requests to the canonical conversation. Authoring uses that
+ *     path rather than a private editor hook. Either real grounding channel
+ *     must be present; the layout flag alone establishes neither.
  *
  *  4. THE RATCHET ONLY TURNED ONE WAY IN THEORY. `covered < BASELINE` fails,
  *     but `covered > BASELINE` passed silently, so the constant drifted below
@@ -91,7 +94,7 @@ const SCAN_ROOT = 'client/src/concept2cure';
  * wired and this number was not raised with it. Both are failures — see (3) in
  * the header. Raise it in the same commit that wires the surface.
  */
-const ID_BASELINE = 115;
+const ID_BASELINE = 116; // 116: conversation-thread, grounded since 2026-10-01 through the DocumentWorkbench it embeds (cf4aa7800, 4c8b5534d)
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.
@@ -313,9 +316,9 @@ const selfGrounded = new Set(
     .filter(([id, file]) => ROUTABLE_IDS.has(id) && ownedSurfaceIsGrounded(file))
     .map(([id]) => id)
 );
-/** Owned surfaces whose own hook forwards no context — the `rbm` failure mode. */
+/** Full-width surfaces with neither a grounded hook nor a real publisher. */
 const ownedUngrounded = [...OWNED_SURFACES.keys()]
-  .filter(id => ROUTABLE_IDS.has(id) && !selfGrounded.has(id) && !(id in NO_CONTEXT_NEEDED))
+  .filter((id) => ROUTABLE_IDS.has(id) && !selfGrounded.has(id) && !PUBLISHERS.has(id) && !(id in NO_CONTEXT_NEEDED))
   .sort();
 
 const isGrounded = id => PUBLISHERS.has(id) || selfGrounded.has(id);
@@ -408,13 +411,7 @@ if (JSON_MODE) {
 } else if (LIST_MODE) {
   console.log(`\nRoutable surface ids AnA cannot see the screen of (${blind.length}):\n`);
   for (const id of blind) {
-    console.log(
-      `  ${id}${
-        OWNED_SURFACES.has(id)
-          ? '   [owns its conversation — needs a moduleContext, not a publish]'
-          : ''
-      }`
-    );
+    console.log(`  ${id}${OWNED_SURFACES.has(id) ? '   [needs saved published context or a grounded conversation]' : ''}`);
   }
   console.log('');
 } else if (failures.length === 0) {
@@ -424,8 +421,8 @@ if (JSON_MODE) {
       `${summary.blind} still blind.\n` +
       `  ${summary.viaPublisher} through usePublishSurfaceContext; ` +
       `${summary.viaOwnConversation.length} through their own useAnaChat moduleContext ` +
-      `(${summary.viaOwnConversation.join(', ') || 'none'}) — surfaces that own the\n` +
-      '  conversation are grounded on that channel, because the shell draws no rail there.\n' +
+      `(${summary.viaOwnConversation.join(', ') || 'none'}) — full-width surfaces may\n` +
+      '  publish saved context and hand requests to the canonical conversation.\n' +
       `  ${summary.registeredIds} ids are registered; ${summary.aliasSourceIds.length} of those ` +
       `(${
         summary.aliasSourceIds.join(', ') || 'none'

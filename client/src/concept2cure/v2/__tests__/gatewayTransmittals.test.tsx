@@ -38,13 +38,22 @@ vi.mock('../C2CForm', () => ({
     (globalThis as any).__c2cFormConfig = config; // the mounted form, for picker assertions
     const values =
       config.title === 'Record regulatory identifiers'
-        ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
+        // FDA's form (sweep F05, F07b): six digits, nine-digit D-U-N-S, a contact.
+        ? ((globalThis as any).__c2cFormValues
+            ?? {
+              packageId: '77', applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics Inc',
+              contactName: 'Jane Q. Regulatory', contactPhone: '+1 301 555 0100', contactEmail: 'regulatory@acme.example',
+              reason: 'Recording the IND number assigned by CDER',
+            })
         : config.title === 'Assemble bundle'
           // A case that needs particular field values sets __c2cFormValues; the
           // default stands in for "the operator filled the form in".
           ? ((globalThis as any).__c2cFormValues
               ?? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' })
-          : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', meaning: 'approval', password: 'pw', totp: '123456' };
+          : /technical rejection/.test(config.title)
+            // The agency's notice as the operator pastes it (surrounding blanks included).
+            ? { evidenceDocumentId: ' 5f0c2d7a-0b6f-4d1e-9c39-4f0e9a516f10 ', reason: 'FDA technical rejection notice: Ack3 failed', meaning: 'responsibility', password: 'pw', totp: '' }
+            : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', meaning: 'approval', password: 'pw', totp: '123456' };
     return <button data-testid="form-submit" onClick={() => onSubmit(values)}>{config.submitLabel}</button>;
   },
 }));
@@ -154,7 +163,9 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     const cfg = (globalThis as any).__c2cFormConfig;
     const meaning = cfg.fields.find((f: any) => f.key === 'meaning');
     expect(meaning?.required).toBe(true);
-    expect(meaning?.options.map((o: any) => o.value).sort()).toEqual(['approval', 'authorship', 'release', 'responsibility', 'review']);
+    // No "Authorship": a transmission is a release, and the server refuses one
+    // signed as author (assertTransmitterIndependent, 2026-10-05).
+    expect(meaning?.options.map((o: any) => o.value).sort()).toEqual(['approval', 'release', 'responsibility', 'review']);
   });
 
   it('surfaces the 409 active-transmittal lock with the holder id', async () => {
@@ -233,14 +244,47 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     render(<GatewayTransmittals {...props()} />);
     await screen.findByText('FDA ESG');
     fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
+    // The example is FDA's own form: six digits, no IND/NDA/BLA prefix (sweep
+    // F05). 'e.g. IND123456' taught every operator to record what FDA refuses.
+    const fields = (globalThis as any).__c2cFormConfig.fields as Array<{ key: string; placeholder?: string; desc?: string }>;
+    const field = (key: string) => fields.find((f) => f.key === key)!;
+    expect(field('applicationNumber').placeholder).toBe('e.g. 123456');
+    expect(field('applicationNumber').desc).toMatch(/six digits FDA assigned/);
+    expect(field('applicationNumber').desc).toMatch(/K-number/);
+    expect(field('applicantId').placeholder).toBe('e.g. 123456789');
+    expect(fields.map((f) => f.key)).toEqual(expect.arrayContaining(['contactName', 'contactPhone', 'contactEmail']));
     fireEvent.click(screen.getByTestId('form-submit'));
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[0] === 'PUT');
       expect(call).toBeTruthy();
       expect(call![1]).toBe('/api/submission-ops/packages/77/regulatory-identifiers');
-      expect(call![2]).toMatchObject({ applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' });
+      expect(call![2]).toMatchObject({
+        applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER',
+        contact: { name: 'Jane Q. Regulatory', phone: '+1 301 555 0100', email: 'regulatory@acme.example' },
+      });
     });
     expect(await screen.findByText(/Identifiers recorded on package pkg_77.*cleared — assemble again before transmitting/)).toBeTruthy();
+  });
+
+  it('sends no contact when none of its fields is filled (a 510(k) or a non-US package needs none)', async () => {
+    (globalThis as any).__c2cFormValues = {
+      packageId: '77', applicationNumber: 'K123456', applicantId: '123456789', applicantName: 'Acme Devices Inc',
+      contactName: '', contactPhone: ' ', contactEmail: '', reason: 'Recording the 510(k) number',
+    };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'PUT') return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: false, ledgerWriteFailed: false });
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await waitFor(() => expect(apiRequest.mock.calls.find((c) => c[0] === 'PUT')).toBeTruthy());
+    const body = apiRequest.mock.calls.find((c) => c[0] === 'PUT')![2];
+    expect(body).toMatchObject({ applicationNumber: 'K123456' });
+    expect(body).not.toHaveProperty('contact');
   });
 
   it('surfaces a refused identifier (400) with the server’s own reason, and records nothing', async () => {
@@ -502,7 +546,11 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     // operator reaches for and the one FDA has no code for, so suggesting it
     // sent them to a refusal — and before that, to a bare 500.
     expect(field.placeholder).not.toMatch(/amendment/i);
-    expect(field.placeholder).toMatch(/Efficacy Supplement/);
+    // An IND amendment is an Original Application; supplements are for an
+    // approved NDA or BLA, so an IND could not file the old example (sweep F04).
+    expect(field.placeholder).toMatch(/Original Application/);
+    const keys = (globalThis as any).__c2cFormConfig.fields.map((f: any) => f.key);
+    expect(keys).toEqual(expect.arrayContaining(['submissionSubType', 'submissionId']));
     fireEvent.click(screen.getByTestId('form-submit'));
     // A sequence carries what changed, so the leaf count alone would mislead.
     await screen.findByText(/Sequence 0001: 1 new, 1 replaced, 3 left unchanged on file/);
@@ -547,7 +595,8 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     });
     // Set before the dialog mounts: the stub captures its values at render.
     (globalThis as any).__c2cFormValues = {
-      packageId: 'pkg_77', sequence: '0001', submissionType: 'Efficacy Supplement',
+      packageId: 'pkg_77', sequence: '0001', submissionType: 'Original Application',
+      submissionSubType: ' Amendment ', submissionId: '0000',
       withdraw: '2.5/clinical-overview.pdf\n\n  3.2.P.1/description.pdf  \n',
       reason: 'Withdraw the superseded overview and file the revision',
     };
@@ -556,7 +605,7 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
     await screen.findByText(/Sequence 0001/);
-    expect(sent.submissionType).toBe('Efficacy Supplement');
+    expect(sent).toMatchObject({ submissionType: 'Original Application', submissionSubType: 'Amendment', submissionId: '0000' });
     expect(sent.withdraw).toEqual([
       { ctdSection: '2.5', fileName: 'clinical-overview.pdf' },
       { ctdSection: '3.2.P.1', fileName: 'description.pdf' },
@@ -858,3 +907,234 @@ describe('GatewayTransmittals — the declared signature meaning is shown back',
     expect(screen.getByText(/meaning: release/)).toBeTruthy();
   });
 });
+
+/* 2026-10-01 (W5/D7, sweep F19, part 2): the governed act that records an
+   agency technical rejection — the one thing that takes a sequence off the filed
+   history — and the transmit 409 for a sequence already on file, which a
+   rollback would not clear (a rollback does not un-file). */
+describe('GatewayTransmittals — an agency technical rejection (sweep F19)', () => {
+  const PACKAGE_ROW = { ...LOG[0], id: 7, transmission_id: 'ESG-0001', status: 'received', package_id: 77 };
+  const routes = (post: (url: string) => Response) => async (method: string, url: string) => {
+    if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+    if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env([PACKAGE_ROW]);
+    if (method === 'POST') return post(url);
+    return env(null);
+  };
+  const refusal = (status: number, error: string, details: Record<string, unknown> = {}) => () => {
+    throw new ApiRequestError(error, status, { error, details });
+  };
+
+  it('records it from the transmittal row: posts the notice, reason, meaning and re-auth, and says the sequence is off file', async () => {
+    authUser.current = { id: '11', email: 'ada@sponsor.example', firstName: 'Ada', lastName: 'Lovelace', displayName: 'Dr Ada Lovelace' };
+    apiRequest.mockImplementation(routes(() => env({
+      packageDbId: 77, sequence: '0001', transmittalId: 7,
+      transmittalStatus: { previous: 'received', current: 'validation_failed' },
+      staleBundleCleared: { sequence: '0002', sha256: 'f'.repeat(64) },
+    })));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0001');
+    fireEvent.click(screen.getByRole('button', { name: /Technical rejection/ }));
+    const cfg = (globalThis as any).__c2cFormConfig;
+    expect(cfg.title).toMatch(/technical rejection of transmittal #7/);
+    expect(cfg.sub).toMatch(/not a rollback/);
+    expect(cfg.fields.map((f: any) => f.key)).toEqual(['evidenceDocumentId', 'reason', 'meaning', 'password', 'totp']);
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => c[0] === 'POST');
+      expect(call?.[1]).toBe('/api/mdx/gateways/transmittals/7/technical-rejection');
+      expect(call?.[2]).toEqual({
+        evidenceDocumentId: '5f0c2d7a-0b6f-4d1e-9c39-4f0e9a516f10', reason: 'FDA technical rejection notice: Ack3 failed',
+        meaning: 'responsibility', reauth: { password: 'pw' },
+      });
+    });
+    const toast = await screen.findByText(/off the filed history/);
+    expect(toast.textContent).toMatch(/next assembly reuses sequence 0001/);
+    expect(toast.textContent).toMatch(/sequence 0002 .*cleared/);
+    expect(toast.textContent).toMatch(/Signed by Dr Ada Lovelace — meaning: responsibility/);
+    expect(screen.queryByTestId('form-submit')).toBeNull();
+  });
+
+  it('a refusal closes the drawer and shows the server’s own sentence', async () => {
+    apiRequest.mockImplementation(routes(refusal(409,
+      'Only the latest sequence on file can be recorded as rejected. Sequence 0002 (transmittal 9) is on file after 0001.',
+      { code: 'NOT_LATEST_FILED_SEQUENCE' })));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0001');
+    fireEvent.click(screen.getByRole('button', { name: /Technical rejection/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/Not recorded — Only the latest sequence on file can be recorded as rejected/)).toBeTruthy();
+    expect(screen.queryByTestId('form-submit')).toBeNull();
+  });
+
+  it('a request that never completed does not claim that nothing changed', async () => {
+    apiRequest.mockImplementation(routes(() => { throw new TypeError('Failed to fetch'); }));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0001');
+    fireEvent.click(screen.getByRole('button', { name: /Technical rejection/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const toast = await screen.findByText(/Not recorded — the request did not complete/);
+    expect(toast.textContent).not.toMatch(/nothing changed/);
+  });
+
+  it('is offered only on a package transmittal with no rejection recorded, and a recorded one is shown on its row', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') {
+        return env([LOG[0], { ...PACKAGE_ROW, status: 'validation_failed', metadata: { technicalRejection: { sequence: '0001' } } }]);
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0001');
+    expect(screen.queryAllByRole('button', { name: /Technical rejection/ })).toHaveLength(0);
+    expect(screen.getByText(/technical rejection recorded · sequence 0001 off file/)).toBeTruthy();
+  });
+
+  it('a transmit refused because the sequence is already on file shows the server’s sentence, not "already active — roll it back"', async () => {
+    const sentence = 'Sequence 0001 of this package is already on file, sent by transmittal 7 as a different bundle.';
+    apiRequest.mockImplementation(routes(refusal(409, sentence,
+      { code: 'SEQUENCE_ALREADY_FILED', sequence: '0001', filedSha256: 'a'.repeat(64), filedTransmittalId: 7 })));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(`Not transmitted — ${sentence}`)).toBeTruthy();
+    expect(screen.queryByText(/already active|Roll it back/)).toBeNull();
+  });
+
+  it('a refused rollback closes the drawer and shows the server’s reason', async () => {
+    apiRequest.mockImplementation(routes(refusal(409,
+      "Transmittal 7 cannot be rolled back from status 'pending'.", { transmittalId: 7, status: 'pending' })));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0001');
+    fireEvent.click(screen.getByRole('button', { name: /Rollback/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(/Not rolled back — Transmittal 7 cannot be rolled back from status 'pending'\./)).toBeTruthy();
+    expect(screen.queryByTestId('form-submit')).toBeNull();
+  });
+});
+
+/* QA 2026-10-08 (j6): a transmit and a technical rejection are electronic
+   signatures. The server refuses a role without signing authority before the
+   password (403 ESIGNATURE_NO_AUTHORITY); GET /gateways says, from the same
+   check, whether this person may sign (meta.signing.canSign). The form is not
+   offered to someone the server will refuse, and the refusal is said in words. */
+describe('GatewayTransmittals — signing authority', () => {
+  const PACKAGE_LOG = [{ ...LOG[0], id: 9, package_id: 77, transmission_id: 'ESG-0009' }];
+  function withSigning(canSign: boolean | null) {
+    return async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') {
+        return { ok: true, status: 200, json: async () => ({ data: GATEWAYS, meta: { signing: { canSign } } }) } as Response;
+      }
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(PACKAGE_LOG);
+      return env(null);
+    };
+  }
+
+  it('a person whose role does not sign is not offered Transmit or Technical rejection, and is told why', async () => {
+    apiRequest.mockImplementation(withSigning(false));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0009');
+    expect(screen.queryByRole('button', { name: /^Transmit$/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Technical rejection/ })).toBeNull();
+    expect(screen.getByText(/Transmitting is an electronic signature, and your role does not sign/)).toBeTruthy();
+    // Preparing a package is not a signature: those controls stay.
+    expect(screen.getByRole('button', { name: /Assemble bundle/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Record identifiers/ })).toBeTruthy();
+  });
+
+  it('a signer is offered both', async () => {
+    apiRequest.mockImplementation(withSigning(true));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0009');
+    expect(screen.getByRole('button', { name: /^Transmit$/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Technical rejection/ })).toBeTruthy();
+    expect(screen.queryByText(/your role does not sign/)).toBeNull();
+  });
+
+  it('an authority the server could not read hides nothing: unknown is not "you cannot"', async () => {
+    apiRequest.mockImplementation(withSigning(null));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0009');
+    expect(screen.getByRole('button', { name: /^Transmit$/ })).toBeTruthy();
+  });
+
+  it('a 403 ESIGNATURE_NO_AUTHORITY from the transmit is said in the server’s words, with no status code', async () => {
+    const sentence = 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.';
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url.endsWith('/transmit')) {
+        throw new ApiRequestError(sentence, 403, { error: sentence, details: { code: 'ESIGNATURE_NO_AUTHORITY' } });
+      }
+      return withSigning(null)(method, url);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(`Not transmitted — ${sentence}`)).toBeTruthy();
+    expect(screen.queryByText(/HTTP 403/)).toBeNull();
+  });
+});
+
+/**
+ * Separation of duties, said where the package is chosen. The transmit refuses
+ * the package's creator only after the password is verified, so the picker
+ * marks a package the signer created — from the server's dry-run of that same
+ * check, never a client-side comparison of user ids.
+ */
+describe('GatewayTransmittals — the picker says which packages this signer may not transmit', () => {
+  const PKGS = [
+    { id: 5, packageId: 'p-5', title: 'IND 0000', status: 'locked' },
+    { id: 6, packageId: 'p-6', title: 'IND 0001', status: 'locked' },
+    { id: 8, packageId: 'p-8', title: 'Legacy', status: 'locked' },
+  ];
+  const optionLabels = () =>
+    ((globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId')?.options ?? [])
+      .map((o: any) => String(o.label));
+
+  function serve(independence: unknown, independenceOk = true) {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'GET' && url === '/api/submission-ops/packages') return env(PKGS);
+      if (method === 'GET' && url.startsWith('/api/mdx/gateways/transmit-independence')) {
+        return independenceOk ? env(independence) : ({ ok: false, status: 500, json: async () => ({ error: 'boom' }) } as Response);
+      }
+      return env(null);
+    });
+  }
+
+  it('marks the package the signer created, and the one with no recorded creator', async () => {
+    serve({ 5: 'author', 6: 'independent', 8: 'no-creator' });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c) => String(c[1]).includes('transmit-independence?packageIds=5,6,8'))).toBe(true),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    const labels = optionLabels();
+    expect(labels.find((l: string) => l.startsWith('#5'))).toMatch(/you created this; a colleague must transmit it/);
+    expect(labels.find((l: string) => l.startsWith('#6'))).not.toMatch(/you created|no creator/);
+    expect(labels.find((l: string) => l.startsWith('#8'))).toMatch(/no creator recorded; it cannot be transmitted/);
+  });
+
+  it('marks nothing when the answer could not be read — unknown is not "you cannot"', async () => {
+    serve(null, false);
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    expect(optionLabels().join(' | ')).not.toMatch(/you created|no creator/);
+  });
+
+  it('the assemble form is not marked — only transmitting is refused to the creator', async () => {
+    serve({ 5: 'author', 6: 'independent', 8: 'no-creator' });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c) => String(c[1]).includes('transmit-independence'))).toBe(true),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    expect(optionLabels().join(' | ')).not.toMatch(/you created|no creator/);
+  });
+});
+

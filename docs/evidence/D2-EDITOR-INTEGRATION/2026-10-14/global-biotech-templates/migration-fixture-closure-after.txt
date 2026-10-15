@@ -1,0 +1,9 @@
+Local deterministic JWT/HTTP/PGlite evaluation. Full raw log: /workspace/scratch/global-biotech-migration-fixture-check.log
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > finds the harnesses at all — the gate is not vacuous 2ms
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > and the applier itself still declares files that ALTER what it creates 2ms
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > no harness builds a table and then skips an applier file that alters it 27ms
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > lists its migrations as calls or array elements, never as bare strings 808ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  20:35:35
+   Duration  1.74s (transform 111ms, setup 107ms, import 270ms, tests 846ms, environment 0ms)

@@ -1,0 +1,610 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/__tests__/enhancedEmbeddingService.policy-refusal.test.ts > embedBatch and a placement refusal > asks once and rethrows the refusal unchanged
+✅ Enhanced Embedding Service initialized
+
+stdout | server/services/__tests__/enhancedEmbeddingService.policy-refusal.test.ts > embedBatch and a placement refusal > still retries a transient provider failure
+✅ Enhanced Embedding Service initialized
+
+ ✓ server/services/__tests__/enhancedEmbeddingService.policy-refusal.test.ts > embedBatch and a placement refusal > asks once and rethrows the refusal unchanged 5ms
+ ✓ server/services/__tests__/enhancedEmbeddingService.policy-refusal.test.ts > embedBatch and a placement refusal > still retries a transient provider failure 2ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is ready, and says the store is ok, when the store answers 41ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the store does not answer 14ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the probe throws 7ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when no store can be selected 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports no_provider — the incident — when the gateway has zero providers 4ms
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403)
+{
+  "timestamp": "2026-10-01T14:56:47.145Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "path": "/api/metrics"
+  }
+}
+
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports ready and names the providers when at least one is enabled 219ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports deterministic — never ready — when the fixture mode is opted into 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports error rather than throwing when the gateway cannot be constructed 0ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > reports error when getGateway returns nothing 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness > defaults to unknown, and unknown does not serve 0ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403) 64ms
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401)
+{
+  "timestamp": "2026-10-01T14:56:48.123Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "path": "/api/ai-gateway/health/detail"
+  }
+}
+
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller
+{
+  "timestamp": "2026-10-01T14:56:48.133Z",
+  "level": "warn",
+  "message": "[inline-endpoints] ai-gateway health probe failed",
+  "context": {
+    "error": "provider openai rejected key sk-live-0000 (401)"
+  }
+}
+
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a platform administrator reads them 941ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > the scrape token reads them (the Prometheus path, unchanged) 12ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > an anonymous caller is refused (401) 4ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > answers an anonymous caller with a status word and nothing about the providers 5ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > gives a platform administrator the provider detail, at /detail 4ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401) 5ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > a tenant user's session gets the same answer as an anonymous caller 5ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller 4ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > returns 503 and names schema when the boot check found missing tables 25ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > returns 200 when the schema is verified ready 6ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > FAILS readiness when schema state is unknown (never verified) 6ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > FAILS readiness when schema verification itself threw 4ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > serves traffic when degraded, but names the missing tables 4ms
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+{
+  "timestamp": "2026-10-01T14:56:49.418Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:56:49.420Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+{
+  "timestamp": "2026-10-01T14:56:49.420Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts
+{
+  "timestamp": "2026-10-01T14:56:49.611Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready, and does not hang, when the store never answers 3015ms
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > is NOT serving in production when drafting runs only on Vertex, a lane an organization must elect
+{
+  "timestamp": "2026-10-01T14:56:49.658Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane
+{
+  "timestamp": "2026-10-01T14:56:49.669Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is NOT serving on an OpenAI-only deployment — the production posture 2506ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving when an Anthropic key is present, and names the drafting model 6ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving with OpenAI and Anthropic together 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > is serving on Bedrock alone — the private-cloud drafting path counts 8ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > still reports no_provider — not no_high_risk_model — when nothing is configured 3ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > fails closed when the gateway exposes no model registry to check 0ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — regulatory drafting needs an approved model (U3a) > /readyz answers 503 with ana down on an OpenAI-only deployment 23ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > is NOT serving in production when embeddings run on OpenAI, the default lane 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > an OpenAI key does not make the OpenAI lane serve an organization that has not elected it 4ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > is serving in production with the self-hosted embedding lane, and says which lane embeds 3ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > is NOT serving when the self-hosted lane names no address 3ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > is NOT serving in production when drafting runs only on Vertex, a lane an organization must elect 6ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > Vertex beside Anthropic is serving: every organization still has a drafting lane 13ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > outside production nothing needs an election, so the default embedding lane does not change the verdict 7ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > evaluateAnaReadiness — lanes an organization must elect (R4, P1-54) > /readyz answers 503 with ana down when the only embedding lane needs an election 8ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > prints to console.error when AnA cannot answer 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > warns — not errors — that responses are fixtures in deterministic mode 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says drafting — not chat — is what failed when no model is approved for it 0ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says who is refused when a lane serves elected organizations only (R4) 0ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > says search is what fails when the embedding lane cannot be built (R4) 0ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > logAnaReadinessBanner > stays quiet on the happy path 1ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when AnA has no provider, with every other dependency green 5ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when AnA readiness was never evaluated 4ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is NOT ready when the gateway failed to construct 3ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > is ready when AnA has a live provider 54ms
+ ✓ server/startup/__tests__/ana-readiness.test.ts > /readyz — AnA is load-bearing > serves in deterministic mode but says so on the success path 3ms
+stderr | tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > answers an unreachable shadow service with the static sentence, never the transport text
+{
+  "timestamp": "2026-10-01T14:56:49.861Z",
+  "level": "error",
+  "message": "[inline-endpoints] shadow health probe failed",
+  "context": {
+    "err": "connect ECONNREFUSED 10.9.8.xxx:8001 SENTINEL-TRANSPORT-DETAIL",
+    "correlationId": null
+  }
+}
+
+ ✓ tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > answers an unreachable shadow service with the static sentence, never the transport text 58ms
+ ✓ tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > leaves the pass-through of the upstream non-OK answer exactly as it was 38ms
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 2ms org=7 user=- caller=embedding-provider req=eeeacefe-fa80-4955-b6cd-2e581e3f451f
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 1ms org=7 user=- caller=embedding-provider req=a0f11b2b-0164-4d1b-a108-7d73e11ff977
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 1ms org=9 user=- caller=embedding-provider req=c119b793-8123-486a-9a73-2ab4978d0585
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 1ms org=- user=- caller=embedding-provider req=7607ddc4-e9db-43ac-a94d-675353459ef1
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE)
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:30477) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30477) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30477) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30477) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30477) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30477) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30477) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > plain text with no org policy is allowed on both lanes 9ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production 10ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > the same zero-retention tenant may embed through the self-hosted lane 1ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it 6ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a signed zero-retention agreement (OPENAI_ZERO_RETENTION=true) is the operator control that unlocks OpenAI 1ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy 4ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free 3ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically 3ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE) 3ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > development audit mode records PHI-bound embedding content-free and does not block 1ms
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+{
+  "timestamp": "2026-10-01T14:56:51.467Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:56:51.469Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+{
+  "timestamp": "2026-10-01T14:56:51.469Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > plain text with no policy embeds through OpenAI; the client is constructed once, lazily
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 3ms org=- user=- caller=embedding-provider req=ec827c9e-ec29-4df4-9155-42eead47554d
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > plain text with no policy embeds through OpenAI; the client is constructed once, lazily
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed
+{
+  "timestamp": "2026-10-01T14:56:51.581Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_SHARED_PROVIDER_WITHOUT_ZDR",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry
+{
+  "timestamp": "2026-10-01T14:56:51.586Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "DENY_UNAPPROVED_INTENDED_USE",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "phi",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant
+{
+  "timestamp": "2026-10-01T14:56:51.589Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_APPROVED_PLACEMENT",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "phi",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none
+{
+  "timestamp": "2026-10-01T14:56:51.594Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the estate-wide system scope ('0') is not an organisation and is not offered as one
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 0ms org=- user=- caller=embedding-provider req=c708198b-e7c4-4503-8306-33d5e6ef3bf7
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the estate-wide system scope ('0') is not an organisation and is not offered as one
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > one content-free served row, with the placement decision, the model and the tokens
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 0ms org=7 user=- caller=embedding-provider req=13248406-be90-4425-b660-fd12716886fd
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > one content-free served row, with the placement decision, the model and the tokens
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > an embedding the provider failed leaves a failure row, and the error still reaches the caller
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1ms org=- user=- caller=embedding-provider req=61b4a9df-7097-42fe-85df-57966f3991b9
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > an embedding the provider failed leaves a failure row, and the error still reaches the caller
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:30492) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30492) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30492) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30492) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30492) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30492) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30492) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30492) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > defaults to the OpenAI embedding provider (shared frontier) 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > selects the self-hosted provider when EMBEDDING_PROVIDER=local and a base URL is set 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > local with no base URL is a configuration error naming EMBEDDING_LOCAL_BASE_URL, never a fallback to OpenAI 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > plain text with no policy embeds through OpenAI; the client is constructed once, lazily 13ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed 6ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry 4ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant 5ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the estate-wide system scope ('0') is not an organisation and is not offered as one 3ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > one content-free served row, with the placement decision, the model and the tokens 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > an embedding the provider failed leaves a failure row, and the error still reaches the caller 5ms
+stdout | server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts
+{
+  "timestamp": "2026-10-01T14:56:52.088Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:56:52.093Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts
+{
+  "timestamp": "2026-10-01T14:56:52.093Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the gateway at request time (defence in depth) > refuses to serve a fixed response in production without the acceptance 12ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the gateway at request time (defence in depth) > serves it in production only when AI_GATEWAY_ACCEPT_DETERMINISTIC=true 3ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the gateway at request time (defence in depth) > does not treat the permissive-governance acceptance as accepting fixed responses 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the gateway at request time (defence in depth) > is unchanged outside production (tests and development rely on it) 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the shared predicates > reads the flag exactly as the gateway config does, legacy alias included 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the shared predicates > accepts only the literal "true" 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — the shared predicates > assertDeterministicServingAllowed throws only in unaccepted production 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > chat: no [KNOWN] or [INFERRED] marker 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > document_analysis: no [KNOWN] or [INFERRED] marker 1ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > document_drafting: no [KNOWN] or [INFERRED] marker 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > structured_output: no [KNOWN] or [INFERRED] marker 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > regulatory_review: no [KNOWN] or [INFERRED] marker 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > code_generation: no [KNOWN] or [INFERRED] marker 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > summarization: no [KNOWN] or [INFERRED] marker 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > embedding: no [KNOWN] or [INFERRED] marker 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > general: no [KNOWN] or [INFERRED] marker 0ms
+ ✓ server/services/ai-gateway/__tests__/deterministic-mode-production.test.ts > deterministic mode — fixed responses claim nothing about the input > structured_output does not report success 1ms
+ ✓ server/lib/__tests__/unified-ai-client-embeddings.test.ts > ai.embeddings > is served by the embedding provider, not a chat completion 17ms
+ ✓ server/lib/__tests__/unified-ai-client-embeddings.test.ts > ai.embeddings > no vector is an error, not an empty embedding 2ms
+ ✓ server/lib/__tests__/unified-ai-client-embeddings.test.ts > ai.embeddings > a provider failure propagates 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > CI guard script scopes the ZIP scan to a marker that exists 2ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > CI guard script forbids the sample export routes from returning 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for PDF 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for DOCX 2ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for ZIP 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > serves no export route from placeholder content 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > governed POST /zip route does NOT use archive.pipe(res) 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > platform_maintenance is a registered job type 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handlePlatformMaintenance handler is registered 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > platform_maintenance is in default schedules 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handler imports runPlatformMaintenance 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handler returns structured ScheduledJobRun 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > readiness-check.mjs script exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script supports --strict flag 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script supports warn-only mode (default) 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > npm scripts for readiness exist 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script uses runStartupInvariants from startup-invariants 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > startup invariants have severity levels (critical vs warning) 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > readiness runner exits 1 in strict mode on critical failure 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > degraded mode policy exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > token revocation still three-tier 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > bridge still v3 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > maintenance route still exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > startup invariants route still exists 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production with no election, allows exactly anthropic, bedrock and local 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production, openai / azure / vertex are allowed once named 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > in production, moonshot is refused even when named 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > reads NODE_ENV the way config load does (trimmed, any case) 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > providerElectionRefusal > outside production refuses nothing 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > effectiveAllowedProviders > production: absent → the default set; a list → that list without moonshot 4ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > effectiveAllowedProviders > outside production: absent → no constraint; a list → that list 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > production: an administrator can elect openai explicitly 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > production: a list that names moonshot is refused, naming ADR-0014 §1 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > production: NULL providers with a shared-only substrate list is satisfiable by the default set 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-election.test.ts > the placement-policy writer and the election > outside production: moonshot may still be elected (development lane) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > has every corpus mapped to a model with matching dimensions 2ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > has unique corpus names and unique table names 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > has at least one entry per known table 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > throws a helpful error for an unregistered corpus 9ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > lists every known corpus 8ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > passes when model matches corpus policy 1ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > throws when querying 3072d corpus with 1536d model (dimension mismatch) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > throws when querying 1536d corpus with 3072d model 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > throws when querying ragChunks with the legacy ada model (silent retrieval miss) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > passes for vaultDocumentChunks with 3-small (active writer + reader model) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > throws when querying vaultDocumentChunks with ada-002 (silent retrieval miss) 0ms
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+{
+  "timestamp": "2026-10-01T14:56:53.341Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:56:53.342Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+{
+  "timestamp": "2026-10-01T14:56:53.343Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists
+{
+  "timestamp": "2026-10-01T14:56:53.419Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election
+{
+  "timestamp": "2026-10-01T14:56:53.429Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI
+{
+  "timestamp": "2026-10-01T14:56:53.433Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before
+{
+  "timestamp": "2026-10-01T14:56:53.438Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 1ms org=4502 user=- caller=embedding-provider req=f901db42-4cda-4e88-932f-187ffb3eeca1
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:30554) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30554) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30554) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30554) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:30554) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists 15ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election 5ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI 5ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before 5ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development 3ms
+
+ Test Files  14 passed (14)
+      Tests  149 passed (149)
+   Start at  14:56:45
+   Duration  8.13s (transform 4.16s, setup 645ms, import 11.00s, tests 7.48s, environment 99ms)
+

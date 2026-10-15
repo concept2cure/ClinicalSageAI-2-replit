@@ -1,0 +1,4 @@
+# npm run ci:unreferenced-modules  (2026-10-01T03:11:16Z)
+Unreferenced modules: 86 (baseline 86)
+
+OK: no new unreachable modules.

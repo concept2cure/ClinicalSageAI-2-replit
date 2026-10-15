@@ -36,14 +36,18 @@ describe('getIntegrationStatuses', () => {
     expect(byId(statuses, 'hubspot').configured).toBe(false);
   });
 
-  it('reports env-gated integrations as live when their env is set', async () => {
+  it('reports env-gated integrations as live when their env is set, for the organisation they belong to', async () => {
+    // 2026-10-01 (D6, decision P-8): the deployment's own accounts are live
+    // only for the organisation PLATFORM_INTEGRATIONS_ORGANIZATION_ID names
+    // (platform-integration-owner.test.ts pins every other caller).
     const statuses = await getIntegrationStatuses(
-      null,
+      42,
       makeDeps({
         GMAIL_OAUTH_JSON: '{}',
         GOOGLE_CALENDAR_ID: 'cal',
         GOOGLE_SERVICE_ACCOUNT: '{}',
         HUBSPOT_ACCESS_TOKEN: 'pat',
+        PLATFORM_INTEGRATIONS_ORGANIZATION_ID: '42',
       })
     );
     expect(byId(statuses, 'gmail').configured).toBe(true);
@@ -62,6 +66,27 @@ describe('getIntegrationStatuses', () => {
     expect(conn.label).not.toContain('box'); // not configured → not listed as live
   });
 
+  it('counts only document repositories: a credential-free public source is not a connected repository (S2)', async () => {
+    // search_connected_repositories searches the five repositories only
+    // (connector-search.ts). PubMed and openFDA need no credential, so the
+    // catalog marks them configured; they must not make AnA report a
+    // repository as connected.
+    const statuses = await getIntegrationStatuses(
+      42,
+      makeDeps({}, {
+        getConnectorCatalog: vi.fn().mockResolvedValue([
+          { id: 'pubmed', configured: true, healthy: true },
+          { id: 'fda_drugs', configured: true, healthy: true },
+          { id: 'google_drive', configured: false, healthy: true },
+        ]),
+      }),
+    );
+    const conn = byId(statuses, 'document_connectors');
+    expect(conn.configured).toBe(false);
+    expect(conn.label).toContain('none connected');
+    expect(conn.label).not.toMatch(/pubmed|fda_drugs/);
+  });
+
   it('reports connectors as unknown without org context, and on catalog failure', async () => {
     const noOrg = await getIntegrationStatuses(null, makeDeps({}));
     expect(byId(noOrg, 'document_connectors').configured).toBeNull();
@@ -74,10 +99,13 @@ describe('getIntegrationStatuses', () => {
     expect(byId(failing, 'document_connectors').requires).toMatch(/unavailable/i);
   });
 
-  it('summarizeStatuses counts live / notConfigured / unknown', async () => {
+  it('summarizeStatuses counts live / configuredUnchecked / notConfigured / unknown', async () => {
     const statuses = await getIntegrationStatuses(null, makeDeps({ HUBSPOT_ACCESS_TOKEN: 'pat' }));
     const summary = summarizeStatuses(statuses);
-    // 6 public (CT.gov, PubMed, CMS, openFDA, ChEMBL, preprints) + hubspot live; gmail + calendar not configured; connectors unknown.
-    expect(summary).toEqual({ live: 7, notConfigured: 2, unknown: 1 });
+    // 6 public (CT.gov, PubMed, CMS, openFDA, ChEMBL, preprints) configured, none called, so none live
+    // (2026-10-15: this pinned `live: 6` for six APIs nothing had probed); hubspot, gmail and calendar not
+    // configured for this caller (2026-10-01, decision P-8: no organisation, so not the accounts' owner);
+    // connectors unknown.
+    expect(summary).toEqual({ live: 0, configuredUnchecked: 6, notConfigured: 3, unknown: 1 });
   });
 });

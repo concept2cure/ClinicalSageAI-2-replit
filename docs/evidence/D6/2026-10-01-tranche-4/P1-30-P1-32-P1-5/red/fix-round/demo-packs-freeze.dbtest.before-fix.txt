@@ -1,0 +1,113 @@
+# 2026-10-01T07:31:04Z HEAD 0e58e794 + working tree. Packs: step functions exported (ensureFreeze, ensureSignature; freezeSummary extracted unchanged, signSummary) — NO behaviour change yet.
+# Author = an org admin (signing authority, as the founder is in the demo tenant); second signer = another org admin.
+# PostgreSQL 16, c2c_testdb on 127.0.0.1:55433 (the shared local cluster, served on that port by another lane at the time), RLS_ENFORCE=on
+# NODE_OPTIONS=--max-old-space-size=2560 npx vitest run --config vitest.db.config.ts tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T07:31:09.604Z","pid":7312,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T07:31:09.605Z","pid":7312,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T07:31:09.605Z","pid":7312,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 97ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 55ms
+{"level":30,"time":"2026-10-01T07:31:12.901Z","pid":7312,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 61c10e8d-5fbf-4441-b765-68ee6451b83f by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:31:12.902Z","pid":7312,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"2d541970-a9bc-449c-b836-4f288b906e0a"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 78ms
+{"level":30,"time":"2026-10-01T07:31:12.985Z","pid":7312,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc b265fcae-ce13-4af9-a12a-cd19de903dc5 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record 76ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 27ms
+{"level":30,"time":"2026-10-01T07:31:13.219Z","pid":7312,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 8a125d7e-e2e6-4762-9218-4de950406aa7 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 113ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 36ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 48ms
+{"level":30,"time":"2026-10-01T07:31:13.450Z","pid":7312,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3b5e0e97-91fe-4a41-8551-27cd8ff6caca by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:31:13.450Z","pid":7312,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"e3c22dc3-615d-4989-b368-f817cf137c92"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: the second signer seals the synopsis as REVIEWER, then e-signs; a re-run adds nothing 97ms
+   → freeze synopsis: HTTP 400 {"error":"A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.","field":"meaning"}
+{"level":30,"time":"2026-10-01T07:31:13.557Z","pid":7312,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 7a0572a8-b35e-41ca-b7d4-2ae14314626f by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:31:13.558Z","pid":7312,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"2adf10c1-28e7-4777-9cbc-9d09ff4e11ae"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+{"level":30,"time":"2026-10-01T07:31:13.629Z","pid":7312,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a1cc381f-bf2c-4a94-8609-fbbef49a6f09 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:31:13.630Z","pid":7312,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"bf120fc2-9e65-4e7b-b599-e6d6357ebcef"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: without a signer credential the freeze is recorded as not executed and the pack goes on 89ms
+   → freeze synopsis: HTTP 400 {"error":"A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.","field":"meaning"}
+{"level":30,"time":"2026-10-01T07:31:13.702Z","pid":7312,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc ae4fda17-cb2a-4e68-aef0-a13947a5359d by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:31:13.703Z","pid":7312,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"b64ece26-09b9-41a6-a012-2b9548e9c784"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: the second signer seals the summary as REVIEWER, then approves; the approval is its own signature 67ms
+   → freeze document: HTTP 400 {"error":"A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.","field":"meaning"}
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: without a signer credential the freeze is recorded as not executed and the pack goes on 64ms
+   → freeze document: HTTP 400 {"error":"A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.","field":"meaning"}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: the second signer seals the synopsis as REVIEWER, then e-signs; a re-run adds nothing
+Error: freeze synopsis: HTTP 400 {"error":"A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.","field":"meaning"}
+ ❯ must scripts/demo/launch-demo/lib.mjs:71:18
+     69| export function must(res, accepted, what) {
+     70|   const ok = Array.isArray(accepted) ? accepted.includes(res.status) :…
+     71|   if (!ok) throw new Error(`${what}: HTTP ${res.status} ${String(res.t…
+       |                  ^
+     72|   return res.json ?? {};
+     73| }
+ ❯ Module.ensureFreeze scripts/demo/launch-demo/packs/biotech-authoring.mjs:122:9
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:377:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: without a signer credential the freeze is recorded as not executed and the pack goes on
+Error: freeze synopsis: HTTP 400 {"error":"A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.","field":"meaning"}
+ ❯ must scripts/demo/launch-demo/lib.mjs:71:18
+     69| export function must(res, accepted, what) {
+     70|   const ok = Array.isArray(accepted) ? accepted.includes(res.status) :…
+     71|   if (!ok) throw new Error(`${what}: HTTP ${res.status} ${String(res.t…
+       |                  ^
+     72|   return res.json ?? {};
+     73| }
+ ❯ Module.ensureFreeze scripts/demo/launch-demo/packs/biotech-authoring.mjs:122:9
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:401:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: the second signer seals the summary as REVIEWER, then approves; the approval is its own signature
+Error: freeze document: HTTP 400 {"error":"A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.","field":"meaning"}
+ ❯ must scripts/demo/launch-demo/lib.mjs:71:18
+     69| export function must(res, accepted, what) {
+     70|   const ok = Array.isArray(accepted) ? accepted.includes(res.status) :…
+     71|   if (!ok) throw new Error(`${what}: HTTP ${res.status} ${String(res.t…
+       |                  ^
+     72|   return res.json ?? {};
+     73| }
+ ❯ Module.freezeSummary scripts/demo/launch-demo/packs/mdx.mjs:233:9
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:413:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: without a signer credential the freeze is recorded as not executed and the pack goes on
+Error: freeze document: HTTP 400 {"error":"A freeze is signed: state its meaning, AUTHOR or REVIEWER. An approval is applied with E-sign, which approves and freezes the document in one act.","field":"meaning"}
+ ❯ must scripts/demo/launch-demo/lib.mjs:71:18
+     69| export function must(res, accepted, what) {
+     70|   const ok = Array.isArray(accepted) ? accepted.includes(res.status) :…
+     71|   if (!ok) throw new Error(`${what}: HTTP ${res.status} ${String(res.t…
+       |                  ^
+     72|   return res.json ?? {};
+     73| }
+ ❯ Module.freezeSummary scripts/demo/launch-demo/packs/mdx.mjs:233:9
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:433:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 8 passed (12)
+   Start at  07:31:05
+   Duration  8.03s (transform 3.43s, setup 108ms, import 419ms, tests 6.89s, environment 0ms)
+
+exit=1

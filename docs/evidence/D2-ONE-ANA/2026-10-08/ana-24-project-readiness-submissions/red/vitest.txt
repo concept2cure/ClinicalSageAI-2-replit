@@ -1,0 +1,62 @@
+# Red: the four new test files run against the committed (HEAD) SubmissionCenter.tsx, DispatchReadiness.tsx and ProjectHome.tsx (each swapped in with git show HEAD:<path> > <path>, then restored; no stash).
+# Result: 26 failed, 2 passed (the two pins: "Open Submission Center" stays; with no project open the Center reads and creates as before).
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx
+# (DOM dumps trimmed: only the per-test lines, failure reasons and totals are kept.)
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 5329ms
+   → Unable to find an element by: [data-testid="pj-submission"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 5196ms
+   → Unable to find an element with the text: No submissions for this project yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 5175ms
+   → Unable to find an element with the text: Couldn't load this project's submissions. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 420ms
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 5107ms
+   → Unable to find an element by: [data-testid="pj-readiness-verdict"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 5133ms
+   → Unable to find an element by: [data-testid="pj-readiness-verdict"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 5093ms
+   → Unable to find an element by: [data-testid="pj-readiness-verdict"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 5084ms
+   → Unable to find an element by: [data-testid="pj-readiness"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > an IND project whose only submission is an MAA is not told it has no submission 5125ms
+   → Unable to find an element by: [data-testid="pj-submission"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a CER project (no application type is CER) names its submissions instead of denying them 5108ms
+   → Unable to find an element by: [data-testid="pj-readiness"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a verdict for a submission matched by name is named by the list, not denied 5083ms
+   → Unable to find an element by: [data-testid="pj-readiness-verdict"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 5073ms
+   → Unable to find an element by: [data-testid="pj-readiness-verdict"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 5110ms
+   → Unable to find an element by: [data-testid="pj-readiness-verdict"]
+ × client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 5087ms
+   → Unable to find an element by: [data-testid="pj-readiness-verdict"]
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx > DispatchReadiness — the program’s submissions of other types > says the IND is missing and names the MAA, never "no submission" 5052ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to contain 'No IND submission for BX-512 IND yet'
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessOtherTypes.test.tsx > DispatchReadiness — the program’s submissions of other types > a program with nothing recorded is still "no submission", with its type named 15ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to contain 'reads BX-512 IND\'s IND submission, a…'
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > reads the project-scoped list, not the organization, and lists only its submissions 296ms
+   → expected [ '/api/submissions', …(5) ] to include '/api/submissions?programId=4c2a9e1b-7…'
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > says whose submissions these are and how many others the server left out 5013ms
+   → Unable to find an element by: [data-testid="sc-scope"]
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > shows every submission of the organization on request, and can go back 5013ms
+   → Unable to find role="button" and name "Show all of the organization's submissions"
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > does not guess the count of others when the server did not send one 52ms
+   → Unable to find an element by: [data-testid="sc-scope"]
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > creates the submission in the open project: no programme picker, the project named 80ms
+   → expected <select …(3)>…(2)</select> to be null
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with no project open > reads the organization as before, with no scope line and the programme picker 99ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > keeps keyboard focus on the scope toggle in both directions 5013ms
+   → Unable to find role="button" and name "Show all of the organization's submissions"
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > a project known only by its id is "the open project" once, not twice 81ms
+   → Unable to find an element by: [data-testid="sc-scope"]
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > a failed scoped read does not call the list the organization’s 5013ms
+   → Unable to find an element with the text: Couldn't load the submissions. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > AnA asking for another project’s submission is told it is not listed here, not that it does not exist 5064ms
+   → Unable to find an element by: [data-testid="sc-scope"]
+ × client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > says in one line that the work is not filtered to this project, and no longer claims readiness is unwired 5238ms
+   → Unable to find role="heading" and name "My work"
+ × client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — My work > "Open My work" opens the task board on the person's own tasks, as the nav does 5259ms
+   → Unable to find role="button" and name `/Open My work/`
+ Test Files  4 failed (4)
+      Tests  26 failed | 2 passed (28)
+   Duration  115.99s (transform 2.14s, setup 531ms, import 3.20s, tests 108.44s, environment 2.60s)

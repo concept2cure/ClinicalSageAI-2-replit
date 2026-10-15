@@ -1,0 +1,4 @@
+current-version check removed:       Tests  1 failed | 11 passed (12)
+steady-stage check removed:       Tests  4 failed | 8 passed (12)
+approved-bytes check removed:       Tests  1 failed | 11 passed (12)
+organization scope dropped from the record:       Tests  1 failed | 11 passed (12)

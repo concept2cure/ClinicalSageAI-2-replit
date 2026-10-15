@@ -10,6 +10,7 @@ export interface RegulatoryBootstrapContext {
 }
 
 import { GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
+import { ROLE_EXTENDS } from '../../shared/constants/org-roles';
 
   /*
    * Module scope, not per-request: this is a constant, and it was being rebuilt
@@ -61,9 +62,43 @@ import { GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
      access here. Adding a role to GOVERNED_WRITE_ROLES can therefore never
      again leave it locked out of this module — which is the exact shape of
      the defect this replaces. */
+  // P-18: a signing role holds what the role it extends holds here (approver: full).
+  for (const [extending, base] of Object.entries(ROLE_EXTENDS)) {
+    if (!IVDR_ROLE_PERMISSIONS[extending]) IVDR_ROLE_PERMISSIONS[extending] = IVDR_ROLE_PERMISSIONS[base];
+  }
   for (const role of GOVERNED_WRITE_ROLES) {
     if (!IVDR_ROLE_PERMISSIONS[role]) IVDR_ROLE_PERMISSIONS[role] = IVDR_CONTRIBUTOR;
   }
+
+/**
+ * The IVDR gate's answer when its entitlement read fails: a refusal to send,
+ * 'error' to pass to the error handler, or null to let a development request
+ * through. Outside development every failure denies.
+ *
+ * 2026-10-15: a read that timed out fell through to the module in EVERY
+ * environment ("allowing dev mode access" logged in production too), so a slow
+ * licence check granted IVDR access; any other read error was thrown from an
+ * async middleware rather than passed on.
+ */
+export function ivdrEntitlementReadFailure(
+  err: { message?: string; code?: string } | null | undefined,
+  nodeEnv: string | undefined,
+): { status: number; body: { error: string; code: string } } | 'error' | null {
+  if (nodeEnv === 'development') return null;
+  if (err?.message === 'IVDR_ENTITLEMENT_TIMEOUT') {
+    return {
+      status: 503,
+      body: { error: 'The IVDR licence could not be checked in time. Try again.', code: 'IVDR_ENTITLEMENT_UNAVAILABLE' },
+    };
+  }
+  if (err?.code === '42P01') {
+    return {
+      status: 503,
+      body: { error: 'IVDR module licensing tables not yet provisioned', code: 'IVDR_NOT_PROVISIONED' },
+    };
+  }
+  return 'error';
+}
 
 export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstrapContext) {
   // SECURITY: every regulatory route family is tenant-scoped. FDA 510(k)
@@ -180,23 +215,13 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
           }
         }
       } catch (err: any) {
-        if (err?.message === 'IVDR_ENTITLEMENT_TIMEOUT') {
-          console.warn('[IVDR] Entitlement check timed out — allowing dev mode access');
-        } else if (err?.code === '42P01') {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('[IVDR] module_subscriptions table not found — allowing dev mode access');
-          } else {
-            return res.status(503).json({
-              error: 'IVDR module licensing tables not yet provisioned',
-              code: 'IVDR_NOT_PROVISIONED',
-            });
-          }
-        } else {
+        const failure = ivdrEntitlementReadFailure(err, process.env.NODE_ENV);
+        if (failure === 'error') {
           console.error('[IVDR] Entitlement check error:', err?.message);
-          if (process.env.NODE_ENV !== 'development') {
-            throw err;
-          }
+          return next(err);
         }
+        if (failure) return res.status(failure.status).json(failure.body);
+        console.warn(`[IVDR] Entitlement check failed (${err?.code ?? err?.message}) — allowing dev mode access`);
       }
 
       const userPermissions: string[] =

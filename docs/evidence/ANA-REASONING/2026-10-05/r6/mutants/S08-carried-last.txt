@@ -1,0 +1,12 @@
+Mutant S08-carried-last: the carried tools come after the word matches, not first
+
+--- server/services/ana/tool-selection.ts
+- return [...always, ...carried, ...scored.slice(0, room - carried.length).map(x => x.t)];
++ return [...always, ...scored.slice(0, room - carried.length).map(x => x.t), ...carried];
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > a bare continuation is offered the carried tool first, right after the always-on core and the pins 9ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

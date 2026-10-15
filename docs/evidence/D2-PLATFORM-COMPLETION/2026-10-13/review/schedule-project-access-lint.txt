@@ -1,0 +1,5 @@
+
+/workspace/ClinicalSageAI-2-replit/server/services/report-os/scheduling/configuration.ts
+  26:8  warning  Async function 'validateSubscriptionConfiguration' has a complexity of 31. Maximum allowed is 15  complexity
+
+✖ 1 problem (0 errors, 1 warning)

@@ -12,7 +12,7 @@
  * unit-testable; the fetch itself is a thin, org-scoped query loop.
  */
 
-import { and, eq, isNull, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { db } from '../../../db';
 import { projects } from '@shared/schema';
 import {
@@ -46,29 +46,43 @@ export function riskFromBlockers(criticalBlockerCount: number): RiskLevel {
 
 /**
  * PURE: map a computed run for one member project into a ProgramMemberInsight.
- * readinessScore = the run's confidence (0–100); status is derived from
- * confidence + critical blockers so it never claims "ready" with a critical
- * gap open. topBlockers are the (non-critical) blockers surfaced for themes.
+ * readinessScore = the evaluated readiness the run carries
+ * (summary.regulatory.readinessScore, evaluateReadiness), or null when the run
+ * evaluated none. It was the run's confidence, a blocker count clamped to
+ * [25, 95], so a program with nothing in it read "25% ready" (reporting review
+ * 2026-10-01). Status is the evaluated readiness verdict, and never "ready"
+ * with a critical gap open. topBlockers are the
+ * (non-critical) blockers surfaced for themes.
  */
+/** The run's evaluated readiness (0–100), or null when it evaluated none. */
+function evaluatedReadiness(computed: RunComputationResult): number | null {
+  const regulatory = (computed.summary as { regulatory?: { readinessScore?: unknown } } | undefined)?.regulatory;
+  const score = regulatory?.readinessScore;
+  return typeof score === 'number' && Number.isFinite(score) ? Math.max(0, Math.min(100, Math.round(score))) : null;
+}
+
 export function toMemberInsight(
   projectId: number,
   name: string,
   computed: RunComputationResult,
-  extra?: { code?: string | null; indication?: string | null },
+  extra?: { code?: string | null; indication?: string | null; programId?: string | null },
 ): ProgramMemberInsight {
   const criticalBlockerCount = computed.criticalBlockers.length;
-  const confidence = Math.max(0, Math.min(100, Math.round(computed.confidence)));
-  const status: ProgramMemberInsight['status'] =
-    criticalBlockerCount > 0 ? 'missing'
-    : confidence >= 70 ? 'ready'
-    : confidence > 0 ? 'partial'
-    : 'missing';
+  const confidence =
+    computed.confidence == null ? null : Math.max(0, Math.min(100, Math.round(computed.confidence)));
+  /* The member's status is the run's one readiness verdict (the evaluator's
+     `submission_readiness` row). It was `confidence >= 70 ? 'ready'`, the
+     clamped blocker count, so a program whose readiness was not computed read
+     "ready" in the overview (QA 2026-10-08, j8). */
+  const verdict = computed.providers.find((p) => p.provider === 'submission_readiness')?.status ?? 'missing';
+  const status: ProgramMemberInsight['status'] = criticalBlockerCount > 0 ? 'missing' : verdict;
   return {
     projectId,
     name,
     code: extra?.code ?? null,
     indication: extra?.indication ?? null,
-    readinessScore: confidence,
+    programId: extra?.programId ?? null,
+    readinessScore: evaluatedReadiness(computed),
     confidence,
     status,
     criticalBlockerCount,
@@ -132,13 +146,15 @@ export async function fetchPortfolioSummary(
 /** Top-level programs (roots of the project hierarchy) for an org, capped. */
 async function fetchOrgPrograms(
   organizationId: number,
-): Promise<{ rows: Array<{ projectId: number; name: string; code: string | null; indication: string | null }>; truncated: boolean }> {
+  accessibleProjectIds?: readonly number[],
+): Promise<{ rows: Array<{ projectId: number; name: string; code: string | null; indication: string | null; programId: string | null }>; truncated: boolean }> {
   const rows = await db
     .select({
       projectId: projects.id,
       name: projects.name,
       code: projects.code,
       indication: projects.therapeuticArea,
+      programId: projects.regulatoryProgramId,
     })
     .from(projects)
     .where(
@@ -148,6 +164,7 @@ async function fetchOrgPrograms(
         // under it, so counting them too would double-count the portfolio.
         isNull(projects.parentProjectId),
         ne(projects.status, 'archived'),
+        ...(accessibleProjectIds ? [inArray(projects.id, [...accessibleProjectIds])] : []),
       ),
     )
     .limit(ORG_ROLLUP_CAP + 1);
@@ -162,6 +179,7 @@ async function fetchOrgPrograms(
       name: r.name ?? `Project ${r.projectId}`,
       code: r.code ?? null,
       indication: r.indication ?? null,
+      programId: r.programId ?? null,
     })),
     truncated,
   };
@@ -176,8 +194,9 @@ async function fetchOrgPrograms(
  */
 export async function fetchOrgPortfolioSummary(
   organizationId: number,
+  options?: { accessibleProjectIds?: readonly number[] },
 ): Promise<OrgPortfolioSummary | null> {
-  const { rows, truncated } = await fetchOrgPrograms(organizationId);
+  const { rows, truncated } = await fetchOrgPrograms(organizationId, options?.accessibleProjectIds);
   if (rows.length === 0) return null;
 
   /* ── Readiness runs are independent, so they are not serialized ───────────
@@ -211,6 +230,7 @@ export async function fetchOrgPortfolioSummary(
         insights[i] = toMemberInsight(r.projectId, r.name, computed, {
           code: r.code,
           indication: r.indication,
+          programId: r.programId,
         });
       }
     }),

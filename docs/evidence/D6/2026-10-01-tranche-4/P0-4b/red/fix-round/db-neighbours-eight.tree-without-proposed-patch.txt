@@ -1,0 +1,663 @@
+# Fix round 2: the eight database-tier neighbour files on the working tree as it stands (without the proposed fixture patch). 2026-10-01T15:40:25Z, HEAD 01b1020c + working tree
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:40:29.487Z', poolSize: 1 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/one-time-credentials.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/one-time-credentials.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 3197
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 3198
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 3199
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 3200
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 3203
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > enrolment used the step it presented 8ms
+ × tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses the same code the second time 129ms
+   → {"success":false,"error":{"code":"MFA_002","message":"This sign-in has ended. Sign in again."}}: expected 401 to be 200 // Object.is equality
+ × tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses a code from a step earlier than the last accepted, though that code was never used 59ms
+   → expected +0 to be 1 // Object.is equality
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session
+[database] Database connection successful { timestamp: '2026-10-01T15:40:05.000Z', poolSize: 2 }
+
+ × tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > accepts the next code: a refusal is per step, not a lockout 130ms
+   → expected 1 to be 2 // Object.is equality
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-10-01T15:40:35.000Z', poolSize: 3 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-10-01T15:40:35.000Z', poolSize: 4 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-10-01T15:40:35.000Z', poolSize: 5 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-10-01T15:40:35.000Z', poolSize: 6 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-10-01T15:40:35.000Z', poolSize: 7 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-10-01T15:40:35.000Z', poolSize: 8 }
+
+ × tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session 105ms
+   → expected [ 401, 401 ] to deeply equal [ 200, 401 ]
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it 39ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the enterprise sign-in refuses a code it already accepted 132ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the password sign-in refuses a code the enterprise sign-in used 38ms
+ × tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the modal can check a code, even twice, and it is still unused 25ms
+   → {"error":"This session has ended. Sign in again.","code":"SESSION_ENDED"}: expected 401 to be 200 // Object.is equality
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the signature then accepts that same code, and uses it 29ms
+ × tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > a used code neither checks nor signs again 10ms
+   → expected { …(2) } to deeply equal { valid: false }
+ × tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the code pre-check is metered per signer, and a wrong code counts against the account 61ms
+   → expected [ 401, 401, 401, 401, 401, 401, …(2) ] to deeply equal [ 200, 200, 200, 200, 200, 423, …(2) ]
+ × tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the password pre-check is metered per signer too, on its own budget, and a wrong password counts 12ms
+   → expected { …(2) } to deeply equal { valid: true, mfaRequired: true }
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > five verifiers racing one emailed code: exactly one accepts it 28ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 4 wrong guesses the right code is accepted: true (the limit is exactly five) 37ms
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-10-01T15:40:05.000Z', poolSize: 9 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-10-01T15:40:05.000Z', poolSize: 10 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-10-01T15:40:05.000Z', poolSize: 11 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-10-01T15:40:05.000Z', poolSize: 12 }
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 5 wrong guesses the right code is accepted: false (the limit is exactly five) 33ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused 65ms
+stdout | tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set
+{
+  "timestamp": "2026-10-01T15:40:05.000Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 3202
+  }
+}
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set 2029ms
+stdout | tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step
+[mfa] MFA disabled for user 3203
+
+stdout | tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step
+[mfa] MFA enabled for user 3203
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step 40ms
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:40:36.231Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 3204
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 3206
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA disabled for user 3206
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 3207
+
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
+{
+  "timestamp": "2026-10-01T15:41:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say 5ms
+ × tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so 88ms
+   → {"success":false,"error":{"code":"MFA_002","message":"This sign-in has ended. Sign in again."}}: expected 401 to be 200 // Object.is equality
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree 152ms
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
+{
+  "timestamp": "2026-10-01T15:41:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree 119ms
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
+{
+  "timestamp": "2026-10-01T15:41:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false 99ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address 15ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched 15ms
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:40:39.837Z', poolSize: 1 }
+
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/session-termination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/session-termination.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/session-termination.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3208
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3209
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3210
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3211
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3212
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3213
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3214
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3215
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3216
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3217
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3218
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3219
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3220
+
+stdout | tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one
+[database] Database connection successful { timestamp: '2026-10-01T14:42:05.000Z', poolSize: 2 }
+
+ ✓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 7ms
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one 2089ms
+stdout | tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held
+{
+  "timestamp": "2026-10-01T14:43:35.000Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 3209
+  }
+}
+
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held 1458ms
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it 798ms
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door 1258ms
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so 132ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended 111ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended 79ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh 67ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing 121ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed and re-added holds nothing from before: the session is over at every door, and they sign in again (R1) 185ms
+ ✓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry 170ms
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door 918ms
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that second has begun 1872ms
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing 854ms
+ ✓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards 16ms
+stdout | tests/db/second-factor-binding.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:40:53.200Z', poolSize: 1 }
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/second-factor-binding.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/second-factor-binding.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[mfa] MFA enabled for user 3222
+
+stdout | tests/db/second-factor-binding.dbtest.ts
+[mfa] MFA enabled for user 3223
+
+ ✓ tests/db/second-factor-binding.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > is refused, hands out no secret, and leaves the stored one as it was 103ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing them in 81ms
+stdout | tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded
+[mfa] MFA enabled for user 3224
+
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing for them 27ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > records the refused attempt against the account 4ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded 79ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > once enrolled, that member is refused a new secret too 25ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > an enrolment not yet confirmed can be restarted: nothing is switched on until a code confirms it 64ms
+stdout | tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again
+[mfa] MFA disabled for user 3223
+
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again 88ms
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:40:56.310Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 3226
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 3227
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 3228
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 3229
+
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 7ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 27ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 5ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 4ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 185ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 24ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 19ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 57ms
+stdout | tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why
+[database] Database connection successful { timestamp: '2026-10-01T15:43:05.000Z', poolSize: 2 }
+
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 145ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 84ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 63ms
+stdout | tests/db/signing-lockout.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:40:59.813Z', poolSize: 1 }
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/signing-lockout.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/signing-lockout.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/signing-lockout.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[mfa] MFA enabled for user 3231
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[mfa] MFA enabled for user 3234
+
+ ✓ tests/db/signing-lockout.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > count against the account, and the fifth locks it 76ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance 57ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > while locked, refuse a signature even with the right password, without comparing it 11ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > unlock when the lockout has run out 14ms
+stderr | tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has
+{
+  "timestamp": "2026-10-01T15:41:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong codes at signing > count against the account once the password is right, and the fifth locks it 95ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a signer who mistypes and then gets it right signs 51ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has 37ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong password, and the fifth locks the account 169ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > say the account is locked, and do not compare the password 19ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong code, and the fifth locks the account 130ms
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization
+[database] Database connection successful { timestamp: '2026-10-01T15:41:03.577Z', poolSize: 1 }
+
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 92ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 32ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 8ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 11ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 17ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 6ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-10-01T15:41:04.142Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 426,
+    "granted": 20
+  }
+}
+
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 744ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+[database] Database connection successful { timestamp: '2026-10-01T15:41:04.506Z', poolSize: 2 }
+
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 20ms
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-01T15:41:04.546Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-01T15:41:04.558Z",
+  "level": "warn",
+  "message": "[tenant-users] Audit log write failed (non-fatal)",
+  "context": {
+    "action": "user_invited",
+    "err": "new row violates row-level security policy for table \"audit_logs\""
+  }
+}
+
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 232ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 26ms
+stderr | tests/db/platform-role-grants.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member
+[database] Database connection successful
+
+stdout | tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member
+[database] Database connection successful { timestamp: '2026-10-01T15:41:06.270Z', poolSize: 1 }
+
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > positive control: the console refuses a plain member 106ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot write its member a platform role, so the console never admits them 24ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > a tenant scope cannot make anyone a platform operator (D3) > cannot reinstate, re-role or delete a grant 12ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a tenant scope reads grants: the platform-admin check runs in the caller's own scope 3ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > the platform scope grants and revokes 7ms
+ ✓ tests/db/platform-role-grants.dbtest.ts > what still works (D3) > a platform operator grants and revokes through the Access Management console 89ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses the same code the second time
+AssertionError: {"success":false,"error":{"code":"MFA_002","message":"This sign-in has ended. Sign in again."}}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/db/one-time-credentials.dbtest.ts:300:54
+    298|     const a = members.a;
+    299|     const first = await verify(await challenge(a), code(a, 1));
+    300|     expect(first.status, JSON.stringify(first.body)).toBe(200);
+       |                                                      ^
+    301|
+    302|     const second = await verify(await challenge(a), code(a, 1));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses a code from a step earlier than the last accepted, though that code was never used
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/one-time-credentials.dbtest.ts:315:37
+    313|     const res = await verify(await challenge(a), code(a, -1));
+    314|     expect(res.status, 'a code older than one already accepted still v…
+    315|     expect(await sessionsIssued(a)).toBe(1);
+       |                                     ^
+    316|     expect(await lastStep(a)).toBe(S0 + 1);
+    317|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > accepts the next code: a refusal is per step, not a lockout
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ tests/db/one-time-credentials.dbtest.ts:324:37
+    322|     const res = await verify(await challenge(a), code(a, 2));
+    323|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    324|     expect(await sessionsIssued(a)).toBe(2);
+       |                                     ^
+    325|     expect(await lastStep(a)).toBe(S0 + 2);
+    326|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session
+AssertionError: expected [ 401, 401 ] to deeply equal [ 200, 401 ]
+
+- Expected
++ Received
+
+  [
+-   200,
++   401,
+    401,
+  ]
+
+ ❯ tests/db/one-time-credentials.dbtest.ts:335:49
+    333|     const [c1, c2] = [await challenge(b), await challenge(b)];
+    334|     const results = await Promise.all([verify(c1, code(b, 1)), verify(…
+    335|     expect(results.map((r) => r.status).sort()).toEqual([200, 401]);
+       |                                                 ^
+    336|     expect(await sessionsIssued(b)).toBe(1);
+    337|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the modal can check a code, even twice, and it is still unused
+AssertionError: {"error":"This session has ended. Sign in again.","code":"SESSION_ENDED"}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/db/one-time-credentials.dbtest.ts:402:52
+    400|     for (let i = 0; i < 2; i++) {
+    401|       const res = await precheck(code(d, 1));
+    402|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                    ^
+    403|       expect(res.body).toEqual({ valid: true });
+    404|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > a used code neither checks nor signs again
+AssertionError: expected { …(2) } to deeply equal { valid: false }
+
+- Expected
++ Received
+
+  {
+-   "valid": false,
++   "code": "SESSION_ENDED",
++   "error": "This session has ended. Sign in again.",
+  }
+
+ ❯ tests/db/one-time-credentials.dbtest.ts:418:47
+    416|     at(0);
+    417|     const d = members.d;
+    418|     expect((await precheck(code(d, 1))).body).toEqual({ valid: false }…
+       |                                               ^
+    419|     expect(await sign(code(d, 1))).toMatchObject({ ok: false, code: 'M…
+    420|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the code pre-check is metered per signer, and a wrong code counts against the account
+AssertionError: expected [ 401, 401, 401, 401, 401, 401, …(2) ] to deeply equal [ 200, 200, 200, 200, 200, 423, …(2) ]
+
+- Expected
++ Received
+
+  [
+-   200,
+-   200,
+-   200,
+-   200,
+-   200,
+-   423,
+-   423,
+-   429,
++   401,
++   401,
++   401,
++   401,
++   401,
++   401,
++   401,
++   401,
+  ]
+
+ ❯ tests/db/one-time-credentials.dbtest.ts:440:22
+    438|     const statuses: number[] = [];
+    439|     for (let i = 0; i < 8; i++) statuses.push((await precheck('000000'…
+    440|     expect(statuses).toEqual([200, 200, 200, 200, 200, 423, 423, 429]);
+       |                      ^
+    441|     expect(await locked(d)).toBe(true);
+    442|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the password pre-check is metered per signer too, on its own budget, and a wrong password counts
+AssertionError: expected { …(2) } to deeply equal { valid: true, mfaRequired: true }
+
+- Expected
++ Received
+
+  {
+-   "mfaRequired": true,
+-   "valid": true,
++   "code": "SESSION_ENDED",
++   "error": "This session has ended. Sign in again.",
+  }
+
+ ❯ tests/db/one-time-credentials.dbtest.ts:451:24
+    449|       request(app).post('/api/esignature/verify-password').set(bearer)…
+    450|     const first = await check(PASSWORD);
+    451|     expect(first.body).toEqual({ valid: true, mfaRequired: true });
+       |                        ^
+    452|     const statuses: number[] = [];
+    453|     for (let i = 0; i < 10; i++) statuses.push((await check('not-the-p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so
+AssertionError: {"success":false,"error":{"code":"MFA_002","message":"This sign-in has ended. Sign in again."}}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ signIn tests/db/sign-in-posture.dbtest.ts:133:54
+    131|     .post('/api/auth/mfa/verify')
+    132|     .send({ challengeId: login.body.challengeId, code: await factorCod…
+    133|   expect(verify.status, JSON.stringify(verify.body)).toBe(200);
+       |                                                      ^
+    134|   return { login: login.body, verify: verify.body, bearer: { Authoriza…
+    135| }
+ ❯ tests/db/sign-in-posture.dbtest.ts:263:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed | 6 passed (8)
+      Tests  9 failed | 84 passed (93)
+   Start at  15:40:26
+   Duration  40.44s (transform 2.53s, setup 344ms, import 3.43s, tests 35.12s, environment 1ms)
+

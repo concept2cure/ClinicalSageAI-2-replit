@@ -8,9 +8,11 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import { documents, documentVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
-import { requestDb, requestPgClient } from '../db/requestDb';
+import { requestPgClient } from '../db/requestDb';
 import { FeatureToggleService } from '../services/featureToggleService';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 const logger = createScopedLogger('cerv2-documents');
@@ -97,18 +99,7 @@ const programVisibleInOrg = async (
   programId: string,
   organizationId: number,
 ): Promise<boolean> => {
-  const { regulatoryPrograms } = await import('../../shared/schema/programs');
-  const [program] = await requestDb(req)
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(
-        eq(regulatoryPrograms.id, programId),
-        eq(regulatoryPrograms.organizationId, organizationId),
-      ),
-    )
-    .limit(1);
-  return Boolean(program);
+  return programInOrganization(requestPgClient(req), programId, organizationId);
 };
 
 const tableExists = async (_req: any, tableName: string) => {
@@ -268,15 +259,7 @@ router.post('/literature/record', authMiddleware, async (req, res) => {
       notes: [SCREENING_RECORDED_SEPARATELY, PROGRAM_BINDING_NOTE],
     });
   } catch (error) {
-    logger.error('Failed to record literature entries', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return res.status(500).json({
-      recorded: false,
-      error: `Failed to record literature entries — ${
-        error instanceof Error ? error.message : 'database error'
-      }`,
-    });
+    return serverError(res, logger, 'recording literature entries', error);
   }
 });
 
@@ -417,15 +400,7 @@ router.post('/literature/screen', authMiddleware, async (req, res) => {
       });
       return res.status(422).json({ screened: false, code: error.code, error: error.message });
     }
-    logger.error('Failed to record literature screening decision', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return res.status(500).json({
-      screened: false,
-      error: `Failed to record the screening decision — ${
-        error instanceof Error ? error.message : 'database error'
-      }`,
-    });
+    return serverError(res, logger, 'recording the screening decision', error);
   }
 });
 
@@ -491,16 +466,7 @@ router.get('/literature/screening', authMiddleware, async (req, res) => {
         decisions: [],
       });
     }
-    logger.error('Failed to read literature screening decisions', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return res.status(500).json({
-      available: false,
-      error: `Failed to read screening decisions — ${
-        error instanceof Error ? error.message : 'database error'
-      }`,
-      decisions: [],
-    });
+    return serverError(res, logger, 'reading the screening decisions', error);
   }
 });
 

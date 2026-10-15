@@ -1,0 +1,27 @@
+Local deterministic JWT/HTTP/PGlite evaluation. Full raw log: /workspace/scratch/global-biotech-route-before.log
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active biotech filing and component reaches the one editor > lists exact registry and component identities with explicit regional scope, without writes 114ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active biotech filing and component reaches the one editor > creates and reopens all registry filings and existing biotech components with exact saved evidence 43ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active biotech filing and component reaches the one editor > retains null module for ordinal documents and exact Module 3 for explicit CTD components 40ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > refuses module without any authoring evidence 37ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > refuses foreign-project without any authoring evidence 51ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > refuses a current revoked membership despite the old JWT 35ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > refuses a current reader membership despite the old JWT 37ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > rolls back a multi-section regional copy when the second section fails 35ms
+ FAIL  server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active biotech filing and component reaches the one editor > lists exact registry and component identities with explicit regional scope, without writes
+AssertionError: expected [ { …(17) }, { …(17) }, …(198) ] to deep equally contain ObjectContaining{…}
+ FAIL  server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active biotech filing and component reaches the one editor > creates and reopens all registry filings and existing biotech components with exact saved evidence
+AssertionError: US_PRE_IND: expected undefined to be defined
+ FAIL  server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active biotech filing and component reaches the one editor > retains null module for ordinal documents and exact Module 3 for explicit CTD components
+AssertionError: component:protocol must be loadable from the one existing template picker: expected undefined to be defined
+ FAIL  server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > refuses module without any authoring evidence
+ FAIL  server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > refuses foreign-project without any authoring evidence
+AssertionError: component:drug_substance must be loadable from the one existing template picker: expected undefined to be defined
+ FAIL  server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > refuses a current revoked membership despite the old JWT
+ FAIL  server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > refuses a current reader membership despite the old JWT
+AssertionError: registry:CA_CTA must be loadable from the one existing template picker: expected undefined to be defined
+ FAIL  server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > regional starts preserve current actor, project and atomic creation boundaries > rolls back a multi-section regional copy when the second section fails
+AssertionError: registry:JP_CTN must be loadable from the one existing template picker: expected undefined to be defined
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  20:32:28
+   Duration  10.92s (transform 3.50s, setup 81ms, import 1.48s, tests 9.10s, environment 0ms)

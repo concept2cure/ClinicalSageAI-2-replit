@@ -1,0 +1,25 @@
+BEGIN
+SET
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+          table          |                 tgname                  | tgenabled 
+-------------------------+-----------------------------------------+-----------
+ concept2cure_signatures | trg_concept2cure_signatures_append_only | O
+ concept2cure_signatures | trg_concept2cure_signatures_no_truncate | O
+ authoring_audit_trail   | trg_authoring_audit_trail_append_only   | O
+ authoring_audit_trail   | trg_authoring_audit_trail_no_truncate   | O
+(4 rows)
+
+SET
+ rls | tenant | current_user 
+-----+--------+--------------
+ on  | 71     | app_service
+(1 row)
+
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe-already-closed.sql:18: ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be changed — it is a retained authoring record (21 CFR Part 11 §11.10(e)).
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe-already-closed.sql:19: ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be deleted — it is a retained authoring record (21 CFR Part 11 §11.10(e)).
+RESET
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe-already-closed.sql:23: ERROR:  IMMUTABILITY_VIOLATION: concept2cure_signatures is append-only (21 CFR Part 11 §11.70) — TRUNCATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe-already-closed.sql:24: ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail cannot be truncated — it holds retained authoring records (21 CFR Part 11 §11.10(e)).
+ROLLBACK

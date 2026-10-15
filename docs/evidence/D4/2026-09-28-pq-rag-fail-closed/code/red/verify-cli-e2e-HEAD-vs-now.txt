@@ -1,0 +1,66 @@
+# The CLI end to end on PGlite (tests/ops/helpers/pglite-as-pg-register.mjs): HEAD's script vs the changed one, --org-uuid <eval org A>.
+# Seed: 500 csr_reports, 480 csr_details, another tenant's embedded vault chunk; org A empty, then with 1 embedded chunk. Harness: e2e-head-vs-now.mjs in this folder.
+
+===== HEAD  --org-uuid 11111111-1111-4111-8111-111111111111  [empty eval org]  exit=0
+RAG corpus verification
+════════════════════════════════════════════════════════════════════════
+Embedding-bearing tables:
+  lumen_data_atoms                   table not present (lumen_data_atoms)
+  vault.document_chunks              rows=         1   embedded=         1 (100.0%)
+  knowledge_entries                  table not present (knowledge_entries)
+  rag_chunks                         table not present (rag_chunks)
+  document_vectors                   table not present (document_vectors)
+  csr_studies                        table not present (csr_studies)
+  csr_sections                       table not present (csr_sections)
+  csr_endpoints                      table not present (csr_endpoints)
+  academic_embeddings                table not present (academic_embeddings)
+vault.documents processing status:
+  completed                    1
+════════════════════════════════════════════════════════════════════════
+Done. "embedded" near zero means the pipeline is retrieving over an empty corpus.
+
+===== HEAD  --org-uuid 11111111-1111-4111-8111-111111111111  [eval org with 1 embedded chunk]  exit=0
+RAG corpus verification
+════════════════════════════════════════════════════════════════════════
+Embedding-bearing tables:
+  lumen_data_atoms                   table not present (lumen_data_atoms)
+  vault.document_chunks              rows=         2   embedded=         2 (100.0%)
+  knowledge_entries                  table not present (knowledge_entries)
+  rag_chunks                         table not present (rag_chunks)
+  document_vectors                   table not present (document_vectors)
+  csr_studies                        table not present (csr_studies)
+  csr_sections                       table not present (csr_sections)
+  csr_endpoints                      table not present (csr_endpoints)
+  academic_embeddings                table not present (academic_embeddings)
+vault.documents processing status:
+  completed                    2
+════════════════════════════════════════════════════════════════════════
+Done. "embedded" near zero means the pipeline is retrieving over an empty corpus.
+
+===== NOW   --org-uuid 11111111-1111-4111-8111-111111111111  [empty eval org]  exit=1
+RAG PQ evaluation corpus — the store a PQ rag run will read (vault arm, this organization) once run-eval is tenant-scoped
+════════════════════════════════════════════════════════════════════════
+  store          vault.document_chunks ⋈ vault.documents, embedding IS NOT NULL, by organization
+  organization   11111111-1111-4111-8111-111111111111 (organizations.id 1)
+  documents      0 (0 with at least one embedded chunk)
+  chunks         0 (0 embedded — only these are retrievable)
+  RESULT: EMPTY — a PQ rag run would retrieve nothing for this organization. Ingest the corpus
+          through Vault with the document catalog and ana.vault_chunking enabled for this organization.
+Also present, and NOT the PQ corpus:
+  csr_reports    rows=500   NOT read by the RAG pipeline — ClinicalTrials.gov registry metadata (scripts/ingest-corpus.ts), no embeddings; not the PQ corpus
+  csr_details    rows=480   NOT read by the RAG pipeline — ClinicalTrials.gov registry metadata (scripts/ingest-corpus.ts), no embeddings; not the PQ corpus
+════════════════════════════════════════════════════════════════════════
+
+===== NOW   --org-uuid 11111111-1111-4111-8111-111111111111  [eval org with 1 embedded chunk]  exit=0
+RAG PQ evaluation corpus — the store a PQ rag run will read (vault arm, this organization) once run-eval is tenant-scoped
+════════════════════════════════════════════════════════════════════════
+  store          vault.document_chunks ⋈ vault.documents, embedding IS NOT NULL, by organization
+  organization   11111111-1111-4111-8111-111111111111 (organizations.id 1)
+  documents      1 (1 with at least one embedded chunk)
+  chunks         1 (1 embedded — only these are retrievable)
+  RESULT: NON-EMPTY — 1 embedded chunk(s) across 1 document(s) are retrievable for this organization.
+          This is a non-empty preflight: completeness against the guidance-corpus manifest is NOT checked.
+Also present, and NOT the PQ corpus:
+  csr_reports    rows=500   NOT read by the RAG pipeline — ClinicalTrials.gov registry metadata (scripts/ingest-corpus.ts), no embeddings; not the PQ corpus
+  csr_details    rows=480   NOT read by the RAG pipeline — ClinicalTrials.gov registry metadata (scripts/ingest-corpus.ts), no embeddings; not the PQ corpus
+════════════════════════════════════════════════════════════════════════

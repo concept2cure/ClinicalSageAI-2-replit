@@ -1,0 +1,13 @@
+Mutant C05-tool-schemas-kept: the record keeps the tools' whole definitions, not their names
+
+--- server/services/ana/turn-record.ts
+- const tools = (req.tools ?? []).map((t) => t.name).filter((n): n is string => typeof n === 'string');
++ const tools = (req.tools ?? []) as unknown as string[];
+
+Tests run: server/services/ana/__tests__/turn-record-sent.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 13ms
+ × server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > records what was sent, never the tool schemas, and no thinking as none 1ms
+      Tests  2 failed | 1 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

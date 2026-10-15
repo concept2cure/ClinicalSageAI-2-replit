@@ -335,3 +335,67 @@ describe('honest about integrity', () => {
     expect(screen.queryByText('Verified')).toBeNull();
   });
 });
+
+// Fix round DP-71 (a), 2026-10-01: the anchored head's verdict reaches the reader.
+describe('honest about the newest entries (the anchor outside the database)', () => {
+  it('says plainly that the end of the chain does not match its anchor, not that the check failed', async () => {
+    serve(() =>
+      payload({
+        integrity: {
+          status: 'broken',
+          reason: 'chain-head-broken',
+          head: 'broken',
+          rowsChecked: 12,
+          checkedAt: '2026-08-24T09:00:00.000Z',
+        },
+      }),
+    );
+    render(<LicensingHistoryPanel />);
+
+    await screen.findByText('Module tier changed');
+    const block = screen.getByTestId('lh-integrity').textContent ?? '';
+    expect(block).toContain('The end of the record chain does not match its anchor');
+    expect(block).toContain('entries may have been removed or rewritten at the end of the record');
+    // Neither the "could not be completed" default nor the mid-chain break wording.
+    expect(block).not.toContain('could not be completed');
+    expect(block).not.toContain('One entry does not match its position');
+  });
+
+  it('says when the newest entries were not checked against the anchor', async () => {
+    serve(() =>
+      payload({
+        integrity: {
+          status: 'verified',
+          reason: 'chain-and-seals-verified',
+          head: 'not-verified',
+          rowsChecked: 12,
+          checkedAt: '2026-08-24T09:00:00.000Z',
+        },
+      }),
+    );
+    render(<LicensingHistoryPanel />);
+
+    await screen.findByText('Module tier changed');
+    const block = screen.getByTestId('lh-integrity').textContent ?? '';
+    expect(block).toContain('Record chain and seals verified');
+    expect(block).toContain('The newest entries were not checked against the copy kept outside the database');
+  });
+
+  it('adds no such caveat when the newest entries were checked', async () => {
+    serve(() =>
+      payload({
+        integrity: {
+          status: 'verified',
+          reason: 'chain-and-seals-verified',
+          head: 'verified',
+          rowsChecked: 12,
+          checkedAt: '2026-08-24T09:00:00.000Z',
+        },
+      }),
+    );
+    render(<LicensingHistoryPanel />);
+
+    await screen.findByText('Module tier changed');
+    expect(screen.getByTestId('lh-integrity').textContent).not.toContain('were not checked against');
+  });
+});

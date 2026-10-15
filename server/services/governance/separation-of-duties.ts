@@ -182,6 +182,105 @@ async function documentAuthors(db: AuthorshipReader, documentId: string, orgId: 
 }
 
 /**
+ * A lifecycle document's authors (VR-12): whoever created the canonical record
+ * and, for a document made from a Vault version, whoever uploaded that version.
+ * Both are write-once (the canonical append-only guard; the Vault record guard).
+ */
+async function canonicalDocumentAuthors(db: AuthorshipReader, canonicalId: string, orgId: number): Promise<TargetAuthorship> {
+  const set = new AuthorSet();
+  const doc = await db.query(
+    `SELECT created_by, source_refs->'vault_documents'->>'nativeId' AS vault_id
+       FROM canonical_documents WHERE canonical_id = $1 AND organization_id = $2 LIMIT 1`,
+    [canonicalId, orgId],
+  );
+  set.add(doc.rows, 'created_by', 'lifecycle record creator');
+  const vaultId = doc.rows[0]?.vault_id;
+  if (typeof vaultId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(vaultId)) {
+    const version = await db.query(
+      `SELECT created_by FROM vault.documents WHERE id = $1::uuid AND organization_id = $2 LIMIT 1`,
+      [vaultId, orgId],
+    );
+    set.add(version.rows, 'created_by', 'Vault uploader');
+  }
+  return set.result();
+}
+
+function unresolvedAuthoringHeading():SeparationOfDutiesAuthorUnresolvedError {
+  return new SeparationOfDutiesAuthorUnresolvedError(
+    'The recorded Authoring heading change cannot be identified reliably. Review independence is unresolved.',
+  );
+}
+
+function authoringHeadingChanged(raw:unknown):boolean {
+  if (!raw || typeof raw!=='object' || Array.isArray(raw)) throw unresolvedAuthoringHeading();
+  const change=raw as Record<string,unknown>;
+  if (typeof change.field!=='string') throw unresolvedAuthoringHeading();
+  if (!['title','code'].includes(change.field)) return false;
+  if (![change.from,change.to].every(value=>value===null || typeof value==='string')) throw unresolvedAuthoringHeading();
+  return change.from!==change.to;
+}
+
+/** RENAME's native from/to facts distinguish visible changes from noops and
+ * track-mode-only activity. Incomplete relevant evidence cannot establish independence. */
+function authoringHeadingAuditHasChange(metadata:unknown):boolean {
+  const changes=metadata && typeof metadata==='object' && !Array.isArray(metadata)
+    ? (metadata as Record<string,unknown>).changes : undefined;
+  if (!Array.isArray(changes)) throw unresolvedAuthoringHeading();
+  // Check the entire recorded set: a valid first change must not hide malformed later facts.
+  return changes.map(authoringHeadingChanged).some(Boolean);
+}
+
+/** Authoring uses the recorded creator, immutable prose revision actors and
+ * existing visible-mutation audit actors. Permissions never rewrite authorship. */
+async function authoringDocumentAuthors(db: AuthorshipReader, documentId: string, orgId: number): Promise<TargetAuthorship> {
+  const empty: TargetAuthorship = { modelled: true, authors: [], sources: [] };
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId)) return empty;
+  const document = await db.query(
+    `SELECT d.created_by FROM authoring_documents d WHERE d.id = $1 AND d.tenant_id = $2 LIMIT 1`,
+    [documentId, orgId],
+  );
+  if (document.rows.length !== 1) return empty;
+  const actorId = (value: unknown): number => {
+    const canonical = typeof value === 'number' || (typeof value === 'string' && /^[1-9]\d*$/.test(value));
+    const id = canonical ? Number(value) : NaN;
+    if (!Number.isSafeInteger(id) || id < 1 || id > 2_147_483_647) {
+      throw new SeparationOfDutiesAuthorUnresolvedError(
+        'The recorded Authoring creator or content contributor cannot be identified reliably. Review independence is unresolved.',
+      );
+    }
+    return id;
+  };
+  const authors = new Set<number>([actorId(document.rows[0].created_by)]);
+  const sources = ['Authoring document creator'];
+  const revisions = await db.query(
+    `SELECT DISTINCT r.created_by FROM doc_revisions r
+       JOIN authoring_sections s ON s.id = r.section_id AND s.tenant_id = r.tenant_id
+       JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
+      WHERE d.id = $1 AND d.tenant_id = $2`,
+    [documentId, orgId],
+  );
+  for (const row of revisions.rows) authors.add(actorId(row.created_by));
+  if (revisions.rows.length) sources.push('Authoring revision ledger');
+  const mutations = await db.query(
+    `SELECT actor_id, operation_type, metadata FROM authoring_audit_trail
+      WHERE doc_id = $1 AND tenant_id = $2 AND (
+        (operation_type = 'CREATE' AND section_id IS NOT NULL)
+        OR operation_type = 'REORDER_SECTIONS'
+        OR (operation_type = 'RENAME' AND metadata->>'source' = 'section-metadata')
+      )`,
+    [documentId, orgId],
+  );
+  let visibleMutation = false;
+  for (const row of mutations.rows) {
+    if (row.operation_type==='RENAME' && !authoringHeadingAuditHasChange(row.metadata)) continue;
+    authors.add(actorId(row.actor_id));
+    visibleMutation = true;
+  }
+  if (visibleMutation) sources.push('Authoring visible mutation audit');
+  return { modelled: true, authors: [...authors].sort((a, b) => a - b), sources };
+}
+
+/**
  * A protocol's authors: everyone who wrote its content. That is its creator, the
  * creator of every live content row (sections, objectives, eligibility, visits,
  * schedule-of-assessments rows and cells, team, version snapshots), and everyone
@@ -246,6 +345,57 @@ async function single(db: AuthorshipReader, sql: string, params: unknown[], colu
 }
 
 /**
+ * Target types whose author is one recorded column on one row, keyed by the
+ * target prefix. The id is passed as text; `$1::int` columns are guarded by
+ * `numericId`, so a malformed id reads as "no such record" (no authors, refused
+ * 409) rather than a failed lookup (503).
+ */
+const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: string; numericId?: boolean }> = {
+  task: { sql: `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, column: 'owner_id', source: 'recorded owner' },
+  blocker: { sql: `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, column: 'owner_user_id', source: 'recorded owner' },
+  // The one target the Part 11 freeze/dispatch/transmit chain signs.
+  //
+  // Its author is the sequence's CREATOR only — a decision (founder,
+  // 2026-10-05), not an oversight. Leaf placers are deliberately not authors:
+  //   • Content independence is enforced where content is written. Every
+  //     placed document must be approved before freeze or dispatch
+  //     (LEAF-UNAPPROVED, submission-service Gate 3), and approving a document
+  //     excludes everyone who wrote any version of it (documentAuthors).
+  //     Placing an approved document is assembly, not authorship.
+  //   • Launch clients are small regulatory teams, often two or three people
+  //     for a whole IND. Counting every leaf placer as an author would bar the
+  //     colleague who helped publish from releasing it, leaving the team unable
+  //     to sign its own submission, with no independence gained over content
+  //     the document gate has not already separated.
+  // Guarantee: whoever assembled the sequence never releases it. A stricter
+  // rule belongs in a per-org tightening (the header's "admin may tighten,
+  // never loosen") — NOTE no such setting exists yet; that principle has no
+  // mechanism today. Evidence: docs/evidence/D7/2026-09-28-dispatch-reachable/.
+  'ectd-sequence': { sql: `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'sequence creator' },
+  // An assembled submission package, transmitted to an agency gateway
+  // (executeGovernedTransmit). Its author is the package's creator, on the same
+  // reasoning as 'ectd-sequence' above: whoever assembled it never sends it.
+  // A package created without one (AnA's create path, until it records the
+  // creator) has no author and is refused, never guessed.
+  'submission-package': {
+    sql: `SELECT created_by_id FROM c2c_submission_packages WHERE id = $1::int AND org_id = $2 LIMIT 1`,
+    column: 'created_by_id',
+    source: 'package creator',
+    numericId: true,
+  },
+  program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'program creator' },
+  // Report finalize is signed (reporting review 2026-10-01). The run's content
+  // is computed by the engines; the person who requested it is its author. A
+  // run whose requester was removed has none, and is refused.
+  'report-run': {
+    sql: `SELECT requested_by FROM report_runs WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
+    column: 'requested_by',
+    source: 'run requester',
+    numericId: true,
+  },
+};
+
+/**
  * Resolve the authors of a governed target, org-scoped. THROWS when a lookup
  * fails — that is not an answer about authorship and must not be read as one.
  */
@@ -255,7 +405,15 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
   const prefix = target.slice(0, colonIdx);
   const rest = target.slice(colonIdx + 1);
 
+  const one = SINGLE_AUTHOR[prefix];
+  if (one) {
+    if (one.numericId && !/^\d+$/.test(rest)) return new AuthorSet().result();
+    return single(db, one.sql, [rest, orgId], one.column, one.source);
+  }
+
   switch (prefix) {
+    case 'authoring-document':
+      return authoringDocumentAuthors(db, rest, orgId);
     case 'document':
       return documentAuthors(db, rest, orgId, null);
     case 'section': {
@@ -264,17 +422,10 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
       const [docId, ...keyParts] = parts;
       return documentAuthors(db, docId, orgId, keyParts.join(':'));
     }
-    case 'task':
-      return single(db, `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_id', 'recorded owner');
-    case 'blocker':
-      return single(db, `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_user_id', 'recorded owner');
-    case 'ectd-sequence':
-      // The one target the Part 11 freeze/dispatch/transmit chain signs.
-      return single(db, `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'sequence creator');
-    case 'program':
-      return single(db, `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'program creator');
     case 'protocol-document':
       return protocolDocumentAuthors(db, rest, orgId);
+    case 'canonical_document':
+      return canonicalDocumentAuthors(db, rest, orgId);
     case 'protocol-review-assignment': {
       // A reviewer signs over the protocol, so independence is from its authors.
       if (!/^\d+$/.test(rest)) return new AuthorSet().result();
@@ -322,9 +473,10 @@ export async function assertSignerIsNotAuthor(
   try {
     authorship = await resolveTargetAuthors(target, orgId, opts.client);
   } catch (err: unknown) {
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) throw err;
     const e = err as { code?: unknown; message?: unknown } | null;
     const cause = typeof e?.code === 'string' ? `database error ${e.code}` : 'owner lookup failed';
-    console.error(`[governance/SoD] authorship lookup failed for "${target}"; refusing to sign:`, e?.message);
+    console.error('[governance/SoD] authorship lookup failed for "%s"; refusing to sign:', target, e?.message);
     throw new SeparationOfDutiesUnverifiedError(target, cause);
   }
 
@@ -350,3 +502,37 @@ export async function assertSignerIsNotAuthor(
   }
   return { checked: true, reason: `Signer is not among the record's authors (${authorship.sources.join(', ')}).` };
 }
+
+/** What signing this record with an approval meaning would meet at the
+ *  separation-of-duties check, asked in advance. */
+export type SignerIndependence = 'independent' | 'author' | 'unresolved' | 'unverified';
+
+/**
+ * Would assertSignerIsNotAuthor let this user sign this record as review,
+ * approval or release?
+ *
+ * Asked of the enforcing check itself, so a screen that warns in advance (the
+ * Submission Center's Dispatch tab: a sequence's creator cannot sign its
+ * freeze or dispatch) cannot disagree with what the sign step will do. Before
+ * this the route re-derived the rule from resolveTargetAuthors — a second
+ * copy, which would have drifted the day the rule changed. The gateway's
+ * transmitIndependenceOf asks its own check the same way.
+ *
+ * A lookup failure is 'unverified', never 'independent': unknown is not
+ * permission, and the sign step still decides.
+ */
+export async function signerIndependenceOf(
+  target: string,
+  orgId: number,
+  signerId: number,
+): Promise<SignerIndependence> {
+  try {
+    await assertSignerIsNotAuthor(target, orgId, signerId, { command: 'sign', meaning: 'approval' });
+    return 'independent';
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError) return 'author';
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) return 'unresolved';
+    return 'unverified';
+  }
+}
+

@@ -1,0 +1,26 @@
+# trunk server code and trunk migration set, with the new and amended DB tests
+ × tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source 2355ms
+   → expected null to deeply equal { sourceId: 196 }
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > an antivirus refusal on one source leaves the other filed, and the batch is not complete 35ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses bytes that no longer match the checksum recorded at capture, storing nothing 13ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a viewer is refused before anything is filed 7ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a superseded capture, another project’s capture and a source with no file are each refused with a reason 25ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses an empty or oversized selection 7ms
+ × tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row 169ms
+   → column "created_by" does not exist
+ × tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a re-capture names what it supersedes, and the retired capture names its successor 20ms
+   → Cannot read properties of undefined (reading 'new_values')
+ × tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a failed audit write rolls the capture back 10ms
+   → promise resolved "{ id: 209, organizationId: 777, …(29) }" instead of rejecting
+ × tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > who captured a file, and where its bytes are stored, cannot be changed 8ms
+   → expected [Function] to throw error matching /IMMUTABILITY_VIOLATION/ but got 'column "created_by" of relation "cre_…'
+ × tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > control: a system source writes no data-room row and names no capturer 4ms
+   → column "created_by" does not exist
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 187, severity: 'ERROR', code: '42703', detail: undefined, hint: 'Perhaps you meant to reference the column "cre_evidence_sources.created_at".', position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+TypeError: Cannot read properties of undefined (reading 'new_values')
+AssertionError: promise resolved "{ id: 209, organizationId: 777, …(29) }" instead of rejecting
+AssertionError: expected [Function] to throw error matching /IMMUTABILITY_VIOLATION/ but got 'column "created_by" of relation "cre_…'
+Serialized Error: { length: 187, severity: 'ERROR', code: '42703', detail: undefined, hint: 'Perhaps you meant to reference the column "cre_evidence_sources.created_at".', position: '8', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+AssertionError: expected null to deeply equal { sourceId: 196 }
+      Tests  6 failed | 5 passed (11)

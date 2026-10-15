@@ -1,0 +1,196 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-13T21:21:14.506Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:21:14.515Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-13T21:21:14.515Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-13T21:21:14.984Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a copy when a current fingerprint and unknown/template metadata are its only evidence 122ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a review verdict and an unchecked REVIEWER signature are not explicit adoption 222ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows unknown source after a current full-hash signed assigned adoption 42ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows template source after a current full-hash signed assigned adoption 48ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a signature and editable audit-shaped metadata without the chained act do not release 35ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > rejects the author adopting their own copy and an unassigned reviewer 22ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model null even after explicit adoption 54ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model a-model-name even after explicit adoption 32ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > immutable genesis and current source facts win over relabeling the displayed origin 15ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > moving copied machine prose to another section cannot launder it as a local human save 93ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > formatting and whitespace changes are not replacement by human words 56ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > punctuation-only edits do not clear a positive machine source hold 77ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > a genuine governed human rewrite clears qualification hold but requires a fresh full-document adoption 73ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > fails closed when source access or fingerprint verification fails, including a previously adopted copy 18ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a title change invalidates adoption even when signature prose hash is unchanged 22ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a reopened review assignment invalidates its earlier signed adoption 20ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a signature with an invalid recomputable digest is not adoption 25ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > refuses a write whose present text no longer matches its live lineage 10ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > uncontrolled review copies retain the real qualification hold > renders a working DOCX with NOT FINAL and qualification disclosure while controlled rendition refuses 591ms
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+{
+  "timestamp": "2026-10-13T21:21:24.369Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T21:21:24.377Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts
+{
+  "timestamp": "2026-10-13T21:21:24.377Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-13T21:21:28.215Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction
+{
+  "timestamp": "2026-10-13T21:21:28.229Z",
+  "level": "error",
+  "message": "[authoring-router] Section save refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "S1",
+    "tenantId": 7,
+    "err": "injected mid-transaction failure"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-13T21:21:28.238Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction
+Error freezing document: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:5172:20
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-13T21:21:28.269Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction
+Sign error: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:7444:20
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+{
+  "timestamp": "2026-10-13T21:21:28.275Z",
+  "level": "error",
+  "message": "[authoring-router] signing docs failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it
+{
+  "timestamp": "2026-10-13T21:21:28.280Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT 42ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction 8ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT 9ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction 24ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT 8ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction 5ms
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+CRITICAL: Failed to create audit trail: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:701:9)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:2641:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+Error reverting section: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:151:41)
+    at Object.Mock [as query] (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:701:9)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:2641:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+{
+  "timestamp": "2026-10-13T21:21:28.286Z",
+  "level": "error",
+  "message": "[authoring-router] saving revert failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it 5ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500 5ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  21:21:09
+   Duration  18.83s (transform 6.68s, setup 149ms, import 12.36s, tests 5.40s, environment 0ms)

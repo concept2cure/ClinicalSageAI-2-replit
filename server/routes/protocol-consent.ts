@@ -14,6 +14,8 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createConsentFormTx,
   updateElementTx,
@@ -152,15 +154,24 @@ router.patch('/elements/:id', async (req, res) => {
 
 // ─── Approve ───────────────────────────────────────────────────────────────
 
-router.post('/forms/:id/approve', async (req, res) => {
+// Approving a consent form is an electronic signature (21 CFR 11.50, 11.200):
+// the platform's one signing ceremony (governed-signed-act.ts), behind the
+// deterministic completeness gate in approveConsentFormTx. A request without
+// password, meaning and reason writes nothing. It used to write a 'sign'
+// ledger row with none of them (P0-10b, DP-02).
+router.post('/forms/:id/approve', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const result = await approveConsentFormTx(client, orgId, userId, id);
-    recordConsentFormApproved();
-    return { target: `consent-form:${id}`, payload: { requiredPresentPct: result.completeness.requiredPresentPct }, body: { formId: id, ...result } };
+  await signGovernedAct(req, res, {
+    domain: 'protocol_development',
+    target: `consent-form:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const result = await approveConsentFormTx(client, orgId, userId, id);
+      recordConsentFormApproved();
+      return { target: `consent-form:${id}`, payload: { requiredPresentPct: result.completeness.requiredPresentPct }, body: { formId: id, ...result } };
+    },
   });
 });
 

@@ -1,0 +1,20 @@
+# Negative claim in the document §2.1: CloudFront does not route /socket.io/* at HEAD.
+$ grep -c 'socket.io' terraform/modules/cloudfront/main.tf
+0
+$ sed -n '8,23p' terraform/modules/cloudfront/main.tf
+  alb_path_patterns = var.api_domain_name == "" ? [] : [
+    "/api/*",
+    "/readyz", # D1's acceptance line reads it here
+    "/healthz",
+    "/collab", # live co-editing WebSocket (server/services/hocuspocus-server.ts)
+    "/collab/*",
+    "/scim/*", # SCIM 2.0 provisioning (/scim/v2)
+    "/mcp",    # the connector for Claude and its OAuth endpoints (server/mcp/index.ts)
+    "/mcp/*",
+    "/.well-known/*",
+    "/authorize",
+    "/token",
+    "/register",
+    "/revoke",
+    "/oauth/*",
+  ]

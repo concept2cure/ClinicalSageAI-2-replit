@@ -1,0 +1,26 @@
+{
+ "frameTypes": [
+  "run_started",
+  "status",
+  "status",
+  "drive_state",
+  "context_used",
+  "status",
+  "thread_id",
+  "orchestration",
+  "status",
+  "step",
+  "tool_use",
+  "approval_required"
+ ],
+ "done": false,
+ "taskRowsWithTheTitle": {
+  "project_tasks (name = title)": 0,
+  "project_tasks (all rows)": 0,
+  "concept2cure_review_tasks (title = title)": 0,
+  "regulatory_tasks (title = title)": 0,
+  "unified_tasks (title = title)": 0,
+  "submission_tasks (title = title)": 0
+ },
+ "runRow": "awaiting_approval | pending_approval=create_task | decision=none"
+}

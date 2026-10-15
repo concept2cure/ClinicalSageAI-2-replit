@@ -1,0 +1,9 @@
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(126,50): error TS2339: Property 'steps' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(126,61): error TS7006: Parameter 's' implicitly has an 'any' type.
+client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(127,44): error TS2339: Property 'steps' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(74,51): error TS2339: Property 'fact' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(79,16): error TS2339: Property 'fact' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(84,50): error TS2339: Property 'fact' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(88,103): error TS2339: Property 'fact' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.

@@ -1,0 +1,12 @@
+Mutant R26-sign-dropped: a negative figure is read without its sign (F8)
+
+--- server/services/ana/answer-check-figures.ts
+- const N = String.raw`(?<![\w.])-?(?:
++ const N = String.raw`(?<![\w.])(?:
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > figures the check reads (F8) > a range checks both ends, and a sign or a proportion is read as written (F8) 10ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

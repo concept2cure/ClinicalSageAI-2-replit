@@ -1,0 +1,1325 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > refuses a locked account before any code is tried (423), and audits it 38ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > counts a wrong authenticator code toward the lockout 8ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > says so when the wrong code locks the account 6ms
+stdout | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:05:22.564Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:22.564Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:05:22.565Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right
+{
+  "timestamp": "2026-10-01T21:05:22.592Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > control: a right password clears it for an account whose second factor is the emailed code
+{
+  "timestamp": "2026-10-01T21:05:22.618Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "u***@acme.test"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > clears the count only once the second factor is right 190ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-mfa: the lockout (IAM-30) > control: a wrong emailed code keeps its own cap and is not counted here 7ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > a right password does not clear the count of an account with an authenticator 9ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > POST /api/auth/enterprise/verify-password: when the count is cleared (IAM-30) > control: a right password clears it for an account whose second factor is the emailed code 8ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the account key reads the enterprise partial token, verified 2ms
+ ✓ server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts > wrong codes are limited per account, whatever the address (IAM-30) > the eleventh wrong code for one account is refused 429, each from a new address 45ms
+stderr | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing
+{
+  "timestamp": "2026-10-01T21:05:22.728Z",
+  "level": "error",
+  "message": "[auth] Sign-up refused: e-mail is not configured, so the verification link cannot be sent",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers without a token 458ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 8ms
+stdout | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before)
+{
+  "timestamp": "2026-10-01T21:05:23.145Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:23.146Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before)
+{
+  "timestamp": "2026-10-01T21:05:23.146Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before)
+{
+  "timestamp": "2026-10-01T21:05:23.184Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "[vitest] No \"runWithSystemTenantScope\" export is defined on the \"../../db/tenantStore\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > an unknown e-mail pays exactly one bcrypt comparison, at the stored hashes' cost, and is still 401 INVALID_CREDENTIALS 695ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before) 457ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 31ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 12ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 17ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 16ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > a known account with no stored password pays the same one comparison, and is 401 339ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > control: a known account with the wrong password is compared against its own hash only, never the pad 7ms
+stdout | server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code")
+{
+  "timestamp": "2026-10-01T21:05:24.002Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:24.003Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code")
+{
+  "timestamp": "2026-10-01T21:05:24.003Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code")
+{
+  "timestamp": "2026-10-01T21:05:24.031Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator
+{
+  "timestamp": "2026-10-01T21:05:24.053Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 140ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 6ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 7ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > re-issues a code for an account without an authenticator through the capped re-issue, never a fresh challenge 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > refuses a challenge that has had its limit of codes: 429 MFA_RESEND_LIMIT, no mail, one audit row 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login for a known account > control: issues a fresh challenge through createEmailOtp, never the capped re-issue, so the count of codes starts again with the password 28ms
+stderr | server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > spraying from one address is still stopped, at the per-address failure ceiling
+[RATE_LIMIT] Rate limit exceeded for 203.0.113.11 on /login
+
+ ✓ server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > a hundred colleagues sign in and twenty of them mistype a password first — nobody is refused 470ms
+ ✓ server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > spraying from one address is still stopped, at the per-address failure ceiling 96ms
+ ✓ server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > the production numbers are the ones this change sets 1ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-mail is unknown 695ms
+stdout | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.750Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:24.750Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.751Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.804Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.817Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.832Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.848Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.858Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.866Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.874Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.884Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.892Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.900Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.908Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.915Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.923Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.930Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.942Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.952Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.961Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.968Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.975Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.982Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.988Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:24.998Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.004Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.010Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.017Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.028Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.036Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.043Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.049Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.056Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.064Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.071Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.078Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.084Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.092Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.099Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.106Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > a client that claims a new address on every attempt is still stopped at the limit
+[RATE_LIMIT] Rate limit exceeded for 203.0.113.77 on /login
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.113Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.122Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused
+{
+  "timestamp": "2026-10-01T21:05:25.130Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > wrong second-factor codes for one account are refused past the per-account limit — the next account is not
+{
+  "timestamp": "2026-10-01T21:05:25.202Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused 532ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > failed passwords for one address signed in with are refused past the per-account limit — and nobody else is 46ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > wrong second-factor codes for one account are refused past the per-account limit — the next account is not 24ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > a successful sign-in spends none of the account’s allowance 55ms
+stderr | server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > control: different clients keep their own allowances
+[RATE_LIMIT] Rate limit exceeded for 203.0.113.88 on /login
+
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > a client that claims a new address on every attempt is still stopped at the limit 226ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > control: different clients keep their own allowances 173ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: counts failures, so successful sign-in steps do not use up a shared edge > many viewers behind one CloudFront edge complete SSO steps without a refusal 196ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > refuses a refresh token issued before password_changed_at: no new session, nothing rotated 82ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints from a refresh token issued after the change, and rotates it (existing behaviour) 9ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints for an account that never changed its password 6ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > refuses a refresh token whose session began before it, even one rotated after it 12ms
+stdout | server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > mints for a session that began after it
+{
+  "timestamp": "2026-10-01T21:05:26.350Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:26.351Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > mints for a session that began after it
+{
+  "timestamp": "2026-10-01T21:05:26.351Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > mints for a session that began after it
+{
+  "timestamp": "2026-10-01T21:05:26.381Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > mints for a session that began after it 163ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/logout > revokes the refresh token the client sends in the body, as well as the bearer 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 1ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 0ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 46ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 9ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 12ms
+stdout | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted)
+{
+  "timestamp": "2026-10-01T21:05:26.926Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:26.927Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted)
+{
+  "timestamp": "2026-10-01T21:05:26.928Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted)
+{
+  "timestamp": "2026-10-01T21:05:26.954Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token
+{
+  "timestamp": "2026-10-01T21:05:26.973Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token
+{
+  "timestamp": "2026-10-01T21:05:26.979Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stdout | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-01T21:05:26.949Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:26.950Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-01T21:05:26.951Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check
+{
+  "timestamp": "2026-10-01T21:05:26.987Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token
+{
+  "timestamp": "2026-10-01T21:05:26.993Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 226ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 7ms
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token
+{
+  "timestamp": "2026-10-01T21:05:26.999Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token
+{
+  "timestamp": "2026-10-01T21:05:27.004Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > control: sessions ended before the challenge was issued do not stop it
+{
+  "timestamp": "2026-10-01T21:05:27.006Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 137ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > is refused at the second factor (401 SIGN_IN_ENDED), no code is spent, and the refusal is audited 9ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa: a sign-in begun before the account's sessions were ended > control: sessions ended before the challenge was issued do not stop it 9ms
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token
+{
+  "timestamp": "2026-10-01T21:05:27.013Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token
+{
+  "timestamp": "2026-10-01T21:05:27.018Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token
+{
+  "timestamp": "2026-10-01T21:05:27.025Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401)
+{
+  "timestamp": "2026-10-01T21:05:27.033Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401)
+{
+  "timestamp": "2026-10-01T21:05:27.039Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401)
+{
+  "timestamp": "2026-10-01T21:05:27.044Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401)
+{
+  "timestamp": "2026-10-01T21:05:27.049Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401)
+{
+  "timestamp": "2026-10-01T21:05:27.054Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401)
+{
+  "timestamp": "2026-10-01T21:05:27.058Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401)
+{
+  "timestamp": "2026-10-01T21:05:27.063Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 14ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 8ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 9ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 4ms
+stdout | server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > carries the membership role into the successor
+{
+  "timestamp": "2026-10-01T21:05:27.869Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:27.870Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > carries the membership role into the successor
+{
+  "timestamp": "2026-10-01T21:05:27.871Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > carries the membership role into the successor
+{
+  "timestamp": "2026-10-01T21:05:27.905Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > mints nothing and revokes nothing once the account no longer belongs to it
+{
+  "timestamp": "2026-10-01T21:05:27.919Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > carries the membership role into the successor 222ms
+stderr | server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token
+{
+  "timestamp": "2026-10-01T21:05:27.926Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a refresh token: nothing minted, nothing revoked
+{
+  "timestamp": "2026-10-01T21:05:27.933Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa_challenge token: nothing minted, nothing revoked
+{
+  "timestamp": "2026-10-01T21:05:27.942Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa-partial token: nothing minted, nothing revoked
+{
+  "timestamp": "2026-10-01T21:05:27.947Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > mints nothing and revokes nothing once the account no longer belongs to it 8ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token 7ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a refresh token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa_challenge token: nothing minted, nothing revoked 9ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa-partial token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > cannot renew a session the password change ended (iat before password_changed_at) 4ms
+ ✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > allows ten attempts, then refuses the eleventh with 429 64ms
+ ✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > counts per signer: another signer is not refused 38ms
+ ✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > one scope is one budget, even when two routers each build the limiter 22ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account is never verified by an emailed code: the emailed-code verifier is not called, and a wrong authenticator code is 401 64ms
+stdout | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE)
+{
+  "timestamp": "2026-10-01T21:05:28.562Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:28.563Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE)
+{
+  "timestamp": "2026-10-01T21:05:28.563Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE)
+{
+  "timestamp": "2026-10-01T21:05:28.589Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens
+{
+  "timestamp": "2026-10-01T21:05:28.613Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stdout | server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp
+{
+  "timestamp": "2026-10-01T21:05:28.601Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:28.601Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp
+{
+  "timestamp": "2026-10-01T21:05:28.602Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp
+{
+  "timestamp": "2026-10-01T21:05:28.626Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 194ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 8ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 8ms
+stderr | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED)
+{
+  "timestamp": "2026-10-01T21:05:28.632Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED)
+{
+  "timestamp": "2026-10-01T21:05:28.633Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stdout | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED)
+{
+  "timestamp": "2026-10-01T21:05:28.633Z",
+  "level": "info",
+  "message": "[session-inactivity] Sessions ended by a sign-in beyond the account limit",
+  "context": {
+    "account": "7",
+    "limit": 1,
+    "ended": 1
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with a recovery code, recorded as backup_code
+{
+  "timestamp": "2026-10-01T21:05:28.635Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+stderr | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED)
+{
+  "timestamp": "2026-10-01T21:05:28.636Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator is verified by its emailed code, recorded as email
+{
+  "timestamp": "2026-10-01T21:05:28.641Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 11ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED) 12ms
+stderr | server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa issues a session only where the account is a member > carries the membership role into the session
+{
+  "timestamp": "2026-10-01T21:05:28.653Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "register",
+    "error": "Cannot read properties of undefined (reading 'catch')"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp 179ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with a recovery code, recorded as backup_code 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator is verified by its emailed code, recorded as email 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator whose emailed code is wrong is 401, after the authenticator verifier had its turn 6ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa issues a session only where the account is a member > carries the membership role into the session 6ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa issues a session only where the account is a member > refuses, and records it, when the account no longer belongs to the organisation — no invented role 5ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > passes the organization from the verified request, not the signature id alone 24ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > refuses when the request carries no organization 6ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > cannot be told which organization to read — the caller does not get a vote 4ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > rejects a non-numeric id instead of querying on NaN 4ms
+stdout | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-01T21:05:29.965Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:05:29.966Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-01T21:05:29.966Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-01T21:05:30.002Z",
+  "level": "warn",
+  "message": "[session-inactivity] Session store could not be reached; this process's memory decides",
+  "context": {
+    "caller": "read",
+    "error": "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token 258ms
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-01T21:05:30.035Z",
+  "level": "info",
+  "message": "[audit] [AUDIT] authorization:organization_switch",
+  "context": {
+    "userId": "1",
+    "resourceType": "organization",
+    "resourceId": "7",
+    "success": true
+  }
+}
+
+stderr | Object.error (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:156:13)
+{
+  "timestamp": "2026-10-01T21:05:30.039Z",
+  "level": "error",
+  "message": "[audit] Audit event NOT persisted to the canonical store",
+  "context": {
+    "auditEventId": "audit_1790888730035_l9qdmhv1o",
+    "action": "authorization.organization_switch",
+    "reason": "the canonical store returned no write result"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > address unconfirmed: the refusal names the organisation it belongs to 41ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > account out of use: the refusal names the organisation it belongs to 6ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > locked: the refusal names the organisation it belongs to 5ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > wrong password: the refusal names the organisation it belongs to 12ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > control: its default organisation, where it holds a membership, is named 5ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > the second-factor challenge names the organisation its sign-in lands in 9ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > the partial token and the challenge name a MEMBERSHIP, never a default the account does not belong to 7ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > with no membership at all, the default organisation is named 3ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: which organisation the sign-in lands in > an account with a membership and no default signs in, into its membership 9ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: which organisation the sign-in lands in > an account with no membership at all is refused, and the refusal is recorded 7ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-v1-mount.test.ts > applySecurityMiddleware: the sign-in limit > is mounted on /api/auth and on /api/v1/auth, the two mounts of the auth router 3ms
+
+ Test Files  18 passed (18)
+      Tests  107 passed (107)
+   Start at  21:05:19
+   Duration  10.49s (transform 3.81s, setup 616ms, import 19.19s, tests 7.46s, environment 2ms)
+

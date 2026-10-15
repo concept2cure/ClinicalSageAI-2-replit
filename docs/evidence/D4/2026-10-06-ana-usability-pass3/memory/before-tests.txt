@@ -1,0 +1,237 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts tenant-scoped client and project searches before recency resolves 10ms
+   → expected "vi.fn()" to be called with arguments: [ null, 7, 'risk summary', …(1) ]
+
+Number of calls: 0
+
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 2ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 3ms
+   → expected '' to contain 'Client Memory unavailable (timeout)'
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims 7ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'Client Memory unavailable (timeout)'
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 3ms
+   → expected { workingMemory: 'empty', …(2) } to deeply equal { workingMemory: 'error', …(2) }
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 2ms
+   → expected 'empty' to be 'timeout' // Object.is equality
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
+   → expected 'empty' to be 'error' // Object.is equality
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
+   → expected 2 to be +0 // Object.is equality
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 1ms
+   → expected 'ok' to be 'timeout' // Object.is equality
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts tenant-scoped client and project searches before recency resolves
+AssertionError: expected "vi.fn()" to be called with arguments: [ null, 7, 'risk summary', …(1) ]
+
+Number of calls: 0
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:85:28
+     83|
+     84|     expect(sources.latest).toHaveBeenCalledWith(INPUT.threadId, INPUT.…
+     85|     expect(sources.client).toHaveBeenCalledWith(null, 7, INPUT.query, …
+       |                            ^
+     86|     expect(sources.project).toHaveBeenCalledWith(null, 33, 7, INPUT.qu…
+     87|     recency.resolve('Earlier working summary');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:99:21
+     97|     await vi.advanceTimersByTimeAsync(1);
+     98|
+     99|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+    100|     const result = await promise;
+    101|     expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:115:28
+    113|     const { promise } = observeAssembly();
+    114|     await vi.advanceTimersByTimeAsync(0);
+    115|     expect(sources.client).toHaveBeenCalledTimes(1);
+       |                            ^
+    116|     expect(sources.project).toHaveBeenCalledTimes(1);
+    117|     expect(sources.latest).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable
+AssertionError: expected '' to contain 'Client Memory unavailable (timeout)'
+
+- Expected
++ Received
+
+- Client Memory unavailable (timeout)
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:134:32
+    132|     const result = await promise;
+    133|     expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: …
+    134|     expect(result.memoryBlock).toContain('Client Memory unavailable (t…
+       |                                ^
+    135|     expect(result.memoryBlock).toContain('Project Memory unavailable (…
+    136|     expect(result.atoms).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'Client Memory unavailable (timeout)'
+
+- Expected
++ Received
+
+- Client Memory unavailable (timeout)
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Working Memory
++ Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary...
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:146:32
+    144|     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
+    145|     const result = await promise;
+    146|     expect(result.memoryBlock).toContain('Client Memory unavailable (t…
+       |                                ^
+    147|     expect(result.memoryBlock).toContain('Do not infer that missing me…
+    148|     expect(result.memoryBlock.indexOf('unavailable')).toBeLessThan(res…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall
+AssertionError: expected { workingMemory: 'empty', …(2) } to deeply equal { workingMemory: 'error', …(2) }
+
+- Expected
++ Received
+
+  {
+    "clientMemory": "error",
+    "projectMemory": "error",
+-   "workingMemory": "error",
++   "workingMemory": "empty",
+  }
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:158:46
+    156|     sources.project.mockRejectedValue(Object.assign(new Error('relatio…
+    157|     const result = await buildMemoryContextForChat(INPUT);
+    158|     expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: …
+       |                                              ^
+    159|     expect(result.memoryBlock).toContain('Working Memory unavailable (…
+    160|     expect(result.memoryBlock).toContain('Client Memory unavailable (e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory
+AssertionError: expected 'empty' to be 'timeout' // Object.is equality
+
+Expected: "timeout"
+Received: "empty"
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:192:61
+    190|     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
+    191|     const result = await promise;
+    192|     expect(result.diagnostics.layerOutcomes?.workingMemory).toBe('time…
+       |                                                             ^
+    193|     expect(result.diagnostics.workingMemoryMode).toBe('none');
+    194|     expect(result.memoryBlock).toContain('Working Memory unavailable (…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:205:21
+    203|     expect(settled).not.toHaveBeenCalled();
+    204|     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
+    205|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+    206|     expect((await promise).diagnostics.layerOutcomes?.workingMemory).t…
+    207|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary
+AssertionError: expected 'empty' to be 'error' // Object.is equality
+
+Expected: "error"
+Received: "empty"
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:212:61
+    210|     sources.semantic.mockRejectedValue(new Error('semantic failed'));
+    211|     const result = await buildMemoryContextForChat(INPUT);
+    212|     expect(result.diagnostics.layerOutcomes?.workingMemory).toBe('erro…
+       |                                                             ^
+    213|     expect(result.memoryBlock).toContain('Working Memory unavailable (…
+    214|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs
+AssertionError: expected 2 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:223:32
+    221|     sources.project.mockResolvedValue(PROJECT);
+    222|     await buildMemoryContextForChat(INPUT);
+    223|     expect(vi.getTimerCount()).toBe(0);
+       |                                ^
+    224|     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
+    225|     expect(console.warn).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback
+AssertionError: expected 'ok' to be 'timeout' // Object.is equality
+
+Expected: "timeout"
+Received: "ok"
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:256:60
+    254|     recency.resolve('Fallback working summary');
+    255|     const result = await promise;
+    256|     expect(result.diagnostics.layerOutcomes?.clientMemory).toBe('timeo…
+       |                                                            ^
+    257|     expect(result.atoms.some(atom => atom.layer === 'client_memory')).…
+    258|     expect(result.memoryBlock).not.toContain('Keep risk summaries conc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:270:21
+    268|     const { promise, settled } = observeAssembly();
+    269|     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
+    270|     expect(settled).toHaveBeenCalledTimes(1);
+       |                     ^
+    271|     const result = await promise;
+    272|     const snapshot = JSON.stringify(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 3 passed (15)
+   Start at  21:31:55
+   Duration  501ms (transform 125ms, setup 88ms, import 76ms, tests 38ms, environment 0ms)
+

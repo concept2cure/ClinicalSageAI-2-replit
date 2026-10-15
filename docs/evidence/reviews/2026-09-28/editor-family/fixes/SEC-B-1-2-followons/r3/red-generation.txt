@@ -1,0 +1,6 @@
+ × generateSection stores an empty body as an empty draft > 'a zero-width space before the trailer': the draft and the result body are "", and the trailer is still read 6ms
+ × generateSection stores an empty body as an empty draft > 'a zero-width joiner': the draft and the result body are "", and the trailer is still read 1ms
+ × generateSection stores an empty body as an empty draft > 'a soft hyphen': the draft and the result body are "", and the trailer is still read 1ms
+ × generateSection stores an empty body as an empty draft > 'a word joiner and a byte-order mark': the draft and the result body are "", and the trailer is still read 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 19 passed (23)

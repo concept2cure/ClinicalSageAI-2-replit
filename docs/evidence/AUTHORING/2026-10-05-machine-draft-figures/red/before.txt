@@ -1,0 +1,166 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-05T02:22:50.370Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 62578f51-81cd-440d-96c8-1ca707406634 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-05T02:22:50.393Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 62578f51-81cd-440d-96c8-1ca707406634 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-05T02:22:50.404Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 62578f51-81cd-440d-96c8-1ca707406634 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-10-05T02:22:50.462Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a5907cb9-38f1-4255-a5ee-af0e28639ddf by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-05T02:22:50.500Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b29d1e0-1c5f-4f1b-b1ea-bf2515328004 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-05T02:22:50.511Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b29d1e0-1c5f-4f1b-b1ea-bf2515328004 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-05T02:22:50.520Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b29d1e0-1c5f-4f1b-b1ea-bf2515328004 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 157ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 39ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+{
+  "timestamp": "2026-10-05T02:22:50.559Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4a9cbabe-f6e4-4939-9418-dd0231542eeb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > an imported draft keeps its governed figure (a person placed it)
+{
+  "timestamp": "2026-10-05T02:22:50.592Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8bb681a5-081a-4253-8540-ad113450b33e by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre> 61ms
+   → expected '<p>Results.</p><img src="data:image/p…' not to match /<img/i
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft's section that held only an image is stored empty (a gap), not as <p></p> 34ms
+   → expected '<p><img src="data:image/png;base64,iV…' to be '' // Object.is equality
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > an imported draft keeps its governed figure (a person placed it) 32ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 6ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 5ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 7ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 4ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 2ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 5ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-05T02:22:50.684Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc edc0b406-c777-4df2-b450-7783adabd040 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-05T02:22:50.698Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc edc0b406-c777-4df2-b450-7783adabd040 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-05T02:22:50.707Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc edc0b406-c777-4df2-b450-7783adabd040 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 93ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+AssertionError: expected '<p>Results.</p><img src="data:image/p…' not to match /<img/i
+
+- Expected:
+/<img/i
+
++ Received:
+"<p>Results.</p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\" alt=\"Figure 1\">"
+
+ ❯ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts:175:21
+    173|     const stored = (res.body.data.sections as Array<{ content: string …
+    174|     for (const c of stored) {
+    175|       expect(c).not.toMatch(/<img/i);
+       |                     ^
+    176|       expect(c).toContain('Results.');
+    177|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+AssertionError: expected '<p><img src="data:image/png;base64,iV…' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="></p>
+
+ ❯ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts:188:47
+    186|     );
+    187|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    188|     expect(res.body.data.sections[0].content).toBe('');
+       |                                               ^
+    189|   });
+    190|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  02:22:44
+   Duration  6.36s (transform 1.89s, setup 71ms, import 557ms, tests 5.50s, environment 0ms)
+

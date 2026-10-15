@@ -1,0 +1,8 @@
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 135ms
+   → retention/source-changes-of-a-deleted-or-malformed-project FAILS and is not baselined — a deleted project's source changes, and a malformed id's, are not found
+    observed {"deleted":200,"malformed":500,"live":200}
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Error: retention/source-changes-of-a-deleted-or-malformed-project FAILS and is not baselined — a deleted project's source changes, and a malformed id's, are not found
+    observed {"deleted":200,"malformed":500,"live":200}
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)

@@ -125,6 +125,17 @@ describe('computeLifecycleOperations', () => {
     expect(computeLifecycleOperations(p, d).summary).toMatchObject({ replace: 1, unchanged: 0 });
   });
 
+  it('compares like with like: the desired md5 against the prior\'s PRE-normalization digest when it was recorded', () => {
+    // The packager converts leaves to PDF/A where Ghostscript is installed (the
+    // production image), so a filed leaf's `md5` is of the converted bytes and
+    // differs on every run. A caller's desired md5 is computed before that.
+    const p = [prior({ ctdSection: '2.5', fileName: 'overview.pdf', md5: 'gs-output-run-1', sourceMd5: 'rendered' })];
+    expect(computeLifecycleOperations(p, [desired({ ctdSection: '2.5', fileName: 'overview.pdf', md5: 'rendered' })]).summary)
+      .toMatchObject({ unchanged: 1, replace: 0 });
+    expect(computeLifecycleOperations(p, [desired({ ctdSection: '2.5', fileName: 'overview.pdf', md5: 'rendered-v2' })]).summary)
+      .toMatchObject({ replace: 1, unchanged: 0 });
+  });
+
   it('handles a mixed sequence: new + replace + delete + unchanged together', () => {
     const p = [
       prior({ ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o1' }), // -> replace

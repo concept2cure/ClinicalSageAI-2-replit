@@ -208,7 +208,9 @@ describe('the /api/chat door: the agentic loop tells the gate which model produc
 describe('the stream door (source pin)', () => {
   const src = readFileSync(path.resolve(__dirname, '../../../routes/ana-ri/stream.ts'), 'utf8');
   it('hands every tool call the model that produced it', () => {
-    expect(src).toMatch(/handler\(toolUse\.input, \{\s*servingModel: lastServedModel,/);
+    // Through the one tool-context builder (services/ana/turn-tool-context.ts,
+    // PF-10 S5), which sets servingModel and model from it.
+    expect(src).toMatch(/\.\.\.turnToolContext\(streamProjectId, \{ threadId, turnId: runId, servingModel: lastServedModel \}\)/);
   });
   it('sets the served model from the first response and updates it after every round', () => {
     expect(src).toMatch(/let lastServedModel = servedModelOf\(gwResponse\);/);

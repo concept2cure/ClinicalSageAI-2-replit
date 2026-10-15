@@ -1,0 +1,18 @@
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > the probe runs as the runtime role, under RLS > is app_service-shaped: not the owner, not a superuser, no BYPASSRLS, RLS enforced 3572ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_module3_section_versions (DP-84) > accepts an INSERT from the runtime role — the one path every writer uses 493ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_module3_section_versions (DP-84) > refuses an UPDATE from the runtime role 207ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_module3_section_versions (DP-84) > refuses a DELETE from the runtime role 342ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_module3_section_versions (DP-84) > refuses an UPDATE and a DELETE even by the owner 216ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_module3_section_versions (DP-84) > refuses a TRUNCATE, even by the owner 3ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_module3_section_versions (DP-84) > is installed under its own names, enabled 154ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_provenance_events (DP-84) > accepts an INSERT from the runtime role — the one path every writer uses 144ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_provenance_events (DP-84) > refuses an UPDATE from the runtime role 9ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_provenance_events (DP-84) > refuses a DELETE from the runtime role 139ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_provenance_events (DP-84) > refuses an UPDATE and a DELETE even by the owner 63ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_provenance_events (DP-84) > refuses a TRUNCATE, even by the owner 2ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > cmc_provenance_events (DP-84) > is installed under its own names, enabled 1ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > a section cannot take its signed snapshots with it > deleting a section that has a signed version is refused (the ON DELETE CASCADE meets the trigger) 241ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > a section cannot take its signed snapshots with it > a section with no signed version can still be deleted 326ms
+ ✓ tests/db/cmc-module3-history-append-only.dbtest.ts > the migration replays (CLAUDE.md Rule 1) > applies twice with no error and leaves one trigger of each name 11ms
+ Test Files  1 passed (1)
+      Tests  16 passed (16)

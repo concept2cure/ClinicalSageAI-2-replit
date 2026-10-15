@@ -1,0 +1,34 @@
+{
+  "productionPath": "server/services/ana-ri/workflow-orchestration.ts",
+  "productionSha256": "b53b3862d03e6c297776b69a5a779f5c3b56349ba5317e436bf24d70b87ad9db",
+  "productionBlob": "3504d16bddb05a9507d67fd7788cb91ab78bb7b9",
+  "testPath": "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts",
+  "testSha256": "437f0b2bc3d7078c0e26d265df62599e1f725364f35d6715f2d80d1434f62cfa",
+  "testBlob": "43c9410ca629f61b0d2dfbcbf7cc9d03316ddaa8",
+  "originalProductionBlob": "b215fe2dc8d49829b596524fbfd3df5dc837d076",
+  "sqlTextPreserved": true,
+  "red": {
+    "failed": 6,
+    "passed": 0,
+    "pending": 22
+  },
+  "green": {
+    "failed": 0,
+    "passed": 28,
+    "pending": 0
+  },
+  "outputPreservation": {
+    "workflowTypes": 8,
+    "fixtures": [
+      "empty",
+      "mixed"
+    ],
+    "cases": 16,
+    "fullStatusAndPromptEquality": true
+  },
+  "scope": [
+    "W3",
+    "D4"
+  ],
+  "caveat": "Scripted timing demonstrates overlap only. It is not a production latency or database pool saturation benchmark."
+}

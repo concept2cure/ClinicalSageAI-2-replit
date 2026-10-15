@@ -25,6 +25,7 @@ import { authenticateToken } from '../../server/middleware/auth';
 import createProjectHomeRoutes from '../../server/routes/project-home-routes';
 import createRbmBoardRoutes from '../../server/routes/mdx-rbm-board';
 import { loadTaskAnalytics } from '../../server/services/tasking/task-analytics';
+import artifactRoutes from '../../server/routes/c2c/artifacts';
 import {
   TAG,
   ORG_A,
@@ -45,6 +46,7 @@ const projects: number[] = [];
 let client = 0;
 let silent = 0; // never in A's audit trail, then left
 let rbmProgram = '';
+const artifactKey = `${TAG}-reviewed`;
 let app: express.Express;
 
 const inA = <T>(fn: () => Promise<T>) =>
@@ -126,6 +128,28 @@ beforeAll(async () => {
     [ORG_A, plan.rows[0].id, leaver, silent]
   );
 
+  // An artifact reviewed in round 1: the leaver approved it; the silent member
+  // was assigned and has not decided.
+  const art = await owner.query(
+    `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content, status)
+     VALUES ($1, $2, $3, 'document', 'regulatory', 'Reviewed artifact', 'body', 'in_review') RETURNING id`,
+    [artifactKey, projects[0], ORG_A]
+  );
+  const artId = art.rows[0].id;
+  const asg = await owner.query(
+    `INSERT INTO concept2cure_review_assignments
+       (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, review_round, status)
+     VALUES ($1, $3, $4, $5, $7, 1, 'completed'), ($2, $3, $4, $6, $7, 1, 'pending') RETURNING id, reviewer_id`,
+    [`${TAG}-asg-1`, `${TAG}-asg-2`, artId, ORG_A, leaver, silent, userA]
+  );
+  const leaverAssignment = asg.rows.find((r: { reviewer_id: number }) => r.reviewer_id === leaver).id;
+  await owner.query(
+    `INSERT INTO concept2cure_review_decisions
+       (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+     VALUES ($1, $2, $3, $4, $5, 1, 'approve', 1)`,
+    [`${TAG}-dec-1`, leaverAssignment, artId, ORG_A, leaver]
+  );
+
   await owner.query('DELETE FROM organization_users WHERE organization_id = $1 AND user_id = ANY($2::int[])', [
     ORG_A,
     [leaver, silent],
@@ -136,6 +160,7 @@ beforeAll(async () => {
   app.use('/api', createAuthBoundary());
   app.use('/api/project-home', authenticateToken, createProjectHomeRoutes());
   app.use('/api/mdx-rbm', authenticateToken, createRbmBoardRoutes());
+  app.use('/api/concept2cure', authenticateToken, artifactRoutes);
 }, 60_000);
 
 afterAll(async () => {
@@ -149,6 +174,7 @@ afterAll(async () => {
     }
     await owner.query('DELETE FROM cro_team_assignments WHERE client_id = $1', [client]);
     await owner.query('DELETE FROM cro_clients WHERE id = $1', [client]);
+    await owner.query('DELETE FROM concept2cure_artifacts WHERE artifact_id = $1', [artifactKey]);
     await owner.query('DELETE FROM project_members WHERE project_id = ANY($1::int[])', [projects]);
     await owner.query('DELETE FROM unified_tasks WHERE project_id = ANY($1::int[])', [projects]);
     await owner.query('DELETE FROM projects WHERE id = ANY($1::int[])', [projects]);
@@ -203,5 +229,33 @@ describe('work held by someone who left stays visible, and theirs (D3)', () => {
   it("task analytics keeps the leaver's work in team productivity", async () => {
     const a = await inA(() => loadTaskAnalytics(ORG_A, projects[0]));
     expect(a.teamProductivity.map(t => t.name)).toContain(leaverName);
+  });
+
+  it("the artifact's review record keeps the approval of a reviewer who left", async () => {
+    const res = await request(app)
+      .get(`/api/concept2cure/projects/proj_${projects[0]}/artifacts/${artifactKey}/reviewers`)
+      .set(auth(accessToken(userA, ORG_A, 'member')));
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    const rows = (res.body.data.assignments as Array<{
+      reviewerId: number;
+      reviewerName: string | null;
+      decision: { decision: string } | null;
+    }>).map(a => [a.reviewerId, a.reviewerName, a.decision?.decision ?? null]);
+    expect(rows, "a former member's review vanished from the record").toEqual(
+      expect.arrayContaining([
+        [leaver, leaverName, 'approve'],
+        [silent, null, null],
+      ])
+    );
+    expect(rows).toHaveLength(2);
+  });
+
+  it('the review status names each reviewer, and never calls one "Unknown"', async () => {
+    const res = await request(app)
+      .get(`/api/concept2cure/projects/proj_${projects[0]}/artifacts/${artifactKey}/reviews/status`)
+      .set(auth(accessToken(userA, ORG_A, 'member')));
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    const names = (res.body.data.reviewers as Array<{ reviewerName: string }>).map(r => r.reviewerName).sort();
+    expect(names).toEqual([leaverName, `user ${silent}`].sort());
   });
 });

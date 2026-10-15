@@ -1,0 +1,360 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > every lifecycle-spine type exists in the registry 3ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > every lifecycle-spine type is at least buildable (real structure, not generic) 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > the four named regions are represented on the spine 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > US IND, NDA, BLA and EU MAA are production-ready (dedicated section + task blueprints) 25ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > Canada NDS and Japan marketing approval are production-ready 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > US IND requires forms 1571/1572/3674 and they are FDA-registry backed and implemented 14ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > US IND is reported form-backed: all three required editions now fill officially 14ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > and stops being form-backed the moment the official editions are not installed 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > the named regions have an eCTD backbone reference 13ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > returns null for an unknown id 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CSR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_PROTOCOL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_IB has a real (non-generic) section blueprint 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_SAP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_QOS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_M3_DS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_M3_DP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_IND_SR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_IND_ANNUAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_DSUR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PSUR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_REMS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_RMP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_NDA_SUPP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_BLA_SUPP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_CBE has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_NDA_ANNUAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_FAST_TRACK has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_BTD has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_RMAT has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ORPHAN has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_ORPHAN has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_DMF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_ASMF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_MF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > JP_MF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_IA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_IB has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_II has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > JP_PARTIAL_CHANGE has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_SUPPLEMENT has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_SNDS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PIP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PSP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_351K has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ACCEL_APPROVAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_CMA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_MA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CH_MA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_MA_NEW has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > SG_NDA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_MAA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > BR_MA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CAT1 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_ICF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_ICSR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_BENEFIT_RISK has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_CTA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_CTA_A has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CTA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CH_CTA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_IND has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > BR_DEEC has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_ANDS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_MA_GENERIC has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > SG_GDA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_SCIENTIFIC_ADVICE has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PRIME has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_RENEWAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PSMF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_COMPARABILITY has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT06 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT07 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT11 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT18 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT19 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT21 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PMR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ICSR_15DAY has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PADER has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_EA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_EUA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_IRP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_VARIATION has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_RENEWAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_SIGNAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_SUPAC has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CAT2 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M1 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M2 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M3 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M4 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M5 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CSR reports a readiness its governed path can deliver 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_PROTOCOL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_IB reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_SAP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_QOS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_M3_DS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_M3_DP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_IND_SR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_IND_ANNUAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_DSUR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PSUR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_REMS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_RMP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_NDA_SUPP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_BLA_SUPP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_CBE reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_NDA_ANNUAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_FAST_TRACK reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_BTD reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_RMAT reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ORPHAN reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_ORPHAN reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_DMF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_ASMF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_MF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > JP_MF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_IA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_IB reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_II reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > JP_PARTIAL_CHANGE reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_SUPPLEMENT reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_SNDS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PIP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PSP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_351K reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ACCEL_APPROVAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_CMA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_MA reports a readiness its governed path can deliver 3ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CH_MA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_MA_NEW reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > SG_NDA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_MAA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > BR_MA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CAT1 reports a readiness its governed path can deliver 6ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_ICF reports a readiness its governed path can deliver 2ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_ICSR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_BENEFIT_RISK reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_CTA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_CTA_A reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CTA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CH_CTA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_IND reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > BR_DEEC reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_ANDS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_MA_GENERIC reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > SG_GDA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_SCIENTIFIC_ADVICE reports a readiness its governed path can deliver 5ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PRIME reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_RENEWAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PSMF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_COMPARABILITY reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT06 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT07 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT11 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT18 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT19 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT21 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PMR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ICSR_15DAY reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PADER reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_EA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_EUA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_IRP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_VARIATION reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_RENEWAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_SIGNAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_SUPAC reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CAT2 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M1 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M2 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M3 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M4 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M5 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > the CSR blueprint follows the ICH E3 structure (efficacy + safety evaluation) 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > accounts for every active registry entry exactly once 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > has a meaningful production-ready core 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > every active document type resolves to a real (non-generic) authoring structure 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > reports the startability gap rather than showing none 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > every active document type resolves to a real, family-appropriate task plan 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > every region on the report reconciles its readiness buckets to its total 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > human review is reported separately from integrity-backed fill > names the reviewer per form, treats an empty reviewer as none, and does not claim review across the filing 4ms
+ ✓ tests/regulatory/registryCoverage.test.ts > human review is reported separately from integrity-backed fill > claims human review for the filing only when every required form names a reviewer 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > human review is reported separately from integrity-backed fill > a form with no manifest at all has no reviewer 4ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > asks three decisive questions and never certifies readiness 4ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > continues an interview without re-asking answered topics or promoting them to evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps all discussion markers from becoming a filing-ready verdict 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps an EU CTA on CTIS, with national documents and disclosure questions 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not confuse Canada CTA with a full marketing dossier 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not re-label a Japanese trial notification as a marketing eCTD 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > makes Japanese language and ethnic evidence conditional 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps pediatric and advanced-therapy overlays conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not infer an application from an ambiguous alias or an unknown id 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects contradictory market and filing identity 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not assume a drug pathway for a device entry 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > routes all four marketing regions with independent regional requirements 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses document-specific questions, not trial results for every build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses the shared component mapping for registry-only protocol and SAP builds 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses device component preparation without requiring a registry id 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses smpc as a direct non-EU build 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses impd as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses risk_management_plan as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses rmp as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > keeps safety messages and datasets outside generic prose build claims 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects unrecognized topics instead of silently skipping questions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_DMF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_ASMF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks CA_MF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks JP_MF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > resolves US_IND_AMENDMENT change scope and agency issues before generic scientific drafting 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > resolves CA_CTA_A change scope and agency issues before generic scientific drafting 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_NDA_SUPP approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_BLA_SUPP approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_CBE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_SUPAC approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_IA approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_IB approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_II approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_LINE_EXTENSION approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes CA_SNDS approved-to-proposed changes and affected evidence 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes CA_SANDS approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes JP_PARTIAL_CHANGE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes JP_MINOR_CHANGE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_PRE_IND around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_A_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_B_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_C_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares EU_SCIENTIFIC_ADVICE around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares CA_PRESUB_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares JP_PRE_CONSULT around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_PSP about age groups, extrapolation and existing plan decisions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_PIP about age groups, extrapolation and existing plan decisions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_ORPHAN for regional rarity evidence and a defensible condition definition 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_ORPHAN for regional rarity evidence and a defensible condition definition 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_351K for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_BIOSIMILAR_MAA for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks JP_BIOSIMILAR for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares ICH_ICSR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares ICH_SUSAR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_ICSR_15DAY as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares EU_EUDRAVIGILANCE_ICSR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_IND_SR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_IND_ANNUAL about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_NDA_ANNUAL about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_PSUR about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_PADER about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares post-marketing studies from the actual obligation and milestone record 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_COMPARABILITY for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_STABILITY_PROTOCOL for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_CTD_M3 for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_NONCLIN_SUMMARY about nonclinical findings and their translational limits 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_CTD_M4 about nonclinical findings and their translational limits 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > keeps a selected protocol interview scientific even when the filing context is an amendment 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > rejects a global device clinical-investigation entry instead of treating its family as a medicinal product 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > does not turn complete lifecycle discussion markers into qualified evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > keeps IND aggregate safety assessment available alongside individual cases 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_CTN 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MF 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MINOR_CHANGE 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_PRE_CONSULT 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not turn an integral-device opinion into a medicines meeting package 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks US_REMS about risk controls and their assessment, not just adverse events 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks EU_RMP about risk controls and their assessment, not just adverse events 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > requires reviewed signal evidence and alternative explanations before concluding a risk 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_DMF inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_ASMF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the CA_MF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the JP_MF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_IND_AMENDMENT inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the CA_CTA_A inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_351K inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_PSP inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_PIP inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_ORPHAN inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the ICH_COMPARABILITY inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the ICH_STABILITY_PROTOCOL inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_IND_SR inquiry within the existing paged tool budget 0ms
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T02:50:05.998Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T02:50:06.000Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-07T02:50:06.000Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > registered tool exposes the prepared outline and stays read-only 5ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > new named builds are discoverable without a second tool or renderer 4ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > pages through CSR sections without truncation or skipping headings 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > returns the repaired region-specific trial outline and its limitations 4ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > reports available and unavailable existing types in a regional coverage page 3ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > returns catalog summaries and a continuation, not a truncated whole library 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > explicit prepare:false returns an outline-only page even with a confirmed registry id 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > outline-only cannot bypass the registry and market scope checks: {"registry_id":"CTA","prepare":false} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > outline-only cannot bypass the registry and market scope checks: {"registry_id":"EU_CTA","market":"US","prepare":false} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > registry-only components receive their document-specific inquiry profile 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps k510_summary available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps gspr_checklist available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps ivdr_gspr_checklist available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps performance_evaluation_report available as an outline but refuses medicinal preparation 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > preserves an exact device registry outline without allowing a drug preparation plan 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted smpc build, including outline-only 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted impd build, including outline-only 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted risk_management_plan build, including outline-only 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted rmp build, including outline-only 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"market":"UK"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"registry_id":"CTA"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"offset":-1} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"offset":null} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"limit":0} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"limit":null} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"prepare":"yes"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"discussed_topics":["approved"]} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"template_id":"missing"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"template_id":"protocol","registry_id":"CA_CTA","market":"EU"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > exposes the preparation fields in Anna’s actual schema 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > passes preparation instructions and the correct region to drafting rather than only the ICH generic prompt 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > makes the same preparation rule available to conversation 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 4ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim 2ms
+ ✓ shared/regulatory/__tests__/ind-safety-route.test.ts > FDA IND safety registry — subtype-dependent delivery > cannot promise a universal eCTD Module 5 route for IND safety reports 2ms
+ ✓ shared/regulatory/__tests__/ind-safety-route.test.ts > FDA IND safety registry — subtype-dependent delivery > preserves the parent IND and distinguishes reporting clocks by trigger 1ms
+
+ Test Files  5 passed (5)
+      Tests  323 passed (323)
+   Start at  22:50:01
+   Duration  9.72s (transform 5.26s, setup 163ms, import 8.21s, tests 213ms, environment 0ms)
+

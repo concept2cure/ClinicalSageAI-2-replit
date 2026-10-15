@@ -1,0 +1,10 @@
+Mutant R54-strip-no-sources-hides-person: with nothing consulted, the strip does not say which claims are the person's
+
+--- client/src/concept2cure/v2/AnaGrounding.tsx
+- {check.fromPerson.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+Result: SURVIVED
+
+      Tests  21 passed (21)

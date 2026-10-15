@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing 242ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written 209ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a DIFFERENT document may still be placed into an occupied section: the section may hold several New leaves 63ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a document whose earlier leaf was removed is placed again as a new leaf (the check reads only live leaves) 102ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:24:45
+   Duration  28.37s (transform 7.43s, setup 305ms, import 10.37s, tests 16.31s, environment 0ms)
+

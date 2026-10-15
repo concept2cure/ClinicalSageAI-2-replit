@@ -1,0 +1,12 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/regulatory/submission-inventory-reader-contract.test.ts > saved submission inventory has a schema-compatible read capability > accepts the schema-bearing runtime database without a cast 1290ms
+ ✓ tests/regulatory/submission-inventory-reader-contract.test.ts > saved submission inventory has a schema-compatible read capability > preserves the full store transaction contract rather than erasing its schema incompatibility 1540ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  23:12:41
+   Duration  3.83s (transform 269ms, setup 107ms, import 509ms, tests 2.83s, environment 0ms)
+

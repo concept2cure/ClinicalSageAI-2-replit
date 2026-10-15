@@ -1,0 +1,47 @@
+# CI gates (npm run -s <gate>), 2026-10-08
+ci:migration-set-order exit=0 :: [ci:migration-set-order] OK — 363 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+ci:migration-drop-safety exit=0 :: [ci:migration-drop-safety] OK — 363 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (na
+ci:migration-drop-safety:selftest exit=0 :: [ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+ci:migration-deploy-path exit=0 :: [ci:migration-deploy-path] OK — 112 baselined file(s) on no deploy path, none new.
+ci:migration-reachability exit=0 :: [ci:migration-reachability] ✅ no new unreachable table references.
+ci:migration-prefix-collisions exit=0 :: [ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+db:sync-manifest:check exit=0 :: Manifest is in sync.
+ci:column-reachability exit=0 :: [ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+ci:runtime-ddl exit=0 :: [ci:runtime-ddl] ✅ no new runtime DDL.
+ci:json-operator-types exit=0 :: [ci:json-operator-types] ✅ no jsonb operator on a json column.
+ci:drizzle-tenant-scope exit=0 :: [ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 17 fix(es).
+ci:fabricated-identity exit=0 :: [ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+ci:discarded-audit-write exit=0 ::   5 baselined file(s) now below their count — run --write-baseline to shrink it.
+ci:server-error-leaks exit=0 :: [ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+ci:untracked-imports exit=1 ::   and anchor the pattern with a leading slash if it names a root directory.
+ci:no-mock-in-prod-routes exit=0 :: ✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+ci:fixture-fallback exit=0 :: ✅ no new ungated fixture fallback. 0 baselined.
+  (ci:untracked-imports fails on server/routes/insights-canvas-routes.ts:62 -> ../services/report-os/report-engine, an untracked file that is not part of this change.)
+
+# ESLint per changed file: HEAD -> now (warnings/errors). No file gained a warning.
+| file | HEAD | now |
+|---|---|---|
+| server/routes/c2c/projects.ts | 5w/0e | 5w/0e |
+| server/services/c2c/program-project-anchor.ts | 1w/0e | 1w/0e |
+| server/routes/c2c/__tests__/projects-create.test.ts | 2w/0e | 2w/0e |
+| tests/golden-journeys/device-510k-estar.journey.test.ts | 4w/0e | 4w/0e |
+| tests/db/c2c-project-persistence.dbtest.ts | 1w/0e | 1w/0e |
+| client/src/concept2cure/v2/surfaces/Projects.tsx | 7w/0e | 7w/0e |
+| scripts/seed-ga-demo.mjs | 1w/0e | 1w/0e |
+| scripts/db/migration-set.mjs | 1w/0e | 1w/0e |
+| server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts | (new) | 0w/0e |
+| tests/schema-contract/program-project-anchor-backfill.pglite.test.ts | (new) | 0w/0e |
+
+# Scoped tsc (scratch tsconfig extending ./tsconfig.json; files = the 8 changed TS/TSX files incl. the dbtest; include = [])
+# 14 diagnostics, none in a changed file. All are ambient-declaration artefacts of the scoped config (css modules,
+# import.meta.env, untyped pdfkit/jsonwebtoken/qrcode, the Request.dbClient augmentation) in files this change does not touch:
+  1 client/src/concept2cure/components/ana/BriefingBookPanel.tsx
+  1 client/src/concept2cure/components/ana/CrlPremortemPanel.tsx
+  1 client/src/concept2cure/components/ana/GovernedActionSignoff.tsx
+  1 client/src/concept2cure/mdx/lib/sampleMode.ts
+  1 client/src/concept2cure/v2/surfaceActions.ts
+  2 server/export/renderers.ts
+  3 server/middleware/establishRequestTenantScope.ts
+  2 server/services/mfaService.ts
+  1 server/services/token-revocation.ts
+  1 server/utils/jwtVerify.ts

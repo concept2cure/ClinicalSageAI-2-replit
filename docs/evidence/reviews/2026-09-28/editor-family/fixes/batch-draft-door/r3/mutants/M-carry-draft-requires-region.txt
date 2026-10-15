@@ -1,0 +1,9 @@
+mutant M-carry-draft-requires-region: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- (!accepted || comparable[i])
++ comparable[i]
+
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region > an unaccepted machine draft is carried: it was never compared, every character is the machine's (guard) 8ms
+   → expected [] to deeply equal [ Array(1) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 42 passed (43)

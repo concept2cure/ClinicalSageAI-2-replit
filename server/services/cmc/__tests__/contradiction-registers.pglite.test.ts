@@ -27,6 +27,7 @@ const MINE = 11;
 const THEIRS = 22;
 const MY_PROJECT = '11111111-1111-4111-8111-111111111111';
 const THEIR_PROJECT = '22222222-2222-4222-8222-222222222222';
+const OTHER_PROGRAM = '33333333-3333-4333-8333-333333333333';
 
 /** Anything from this list appearing in a result for org MINE is a cross-tenant read. */
 const THEIR_SECRETS = [
@@ -58,10 +59,10 @@ beforeAll(async () => {
       material_name text, acceptance_criteria jsonb);
     CREATE TABLE analytical_methods (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int,
-      title text, purpose text, status text);
+      title text, purpose text, status text, project_id text);
     CREATE TABLE stability_studies (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int,
-      study_title text, status text);
+      study_title text, status text, project_id text);
     CREATE TABLE cmc_batch_records (
       -- tenant_id is TEXT here (db/migrations/20260401_cmc_convergence_os.sql:121),
       -- organization_id INTEGER NOT NULL (migrations/0006). The two types are the
@@ -82,6 +83,12 @@ beforeAll(async () => {
     INSERT INTO stability_studies (organization_id, study_title, status)
       VALUES (${THEIRS}, 'THEIR STABILITY STUDY', 'ongoing'),
              (${MINE},   'My stability',          'ongoing');
+    -- My organisation's OTHER program (migrations/20261005_cmc_core_registers_
+    -- project.sql): its method and failed study are not this program's.
+    INSERT INTO analytical_methods (organization_id, title, purpose, status, project_id)
+      VALUES (${MINE}, 'OTHER PROGRAM METHOD', 'assay', 'development', '${OTHER_PROGRAM}');
+    INSERT INTO stability_studies (organization_id, study_title, status, project_id)
+      VALUES (${MINE}, 'OTHER PROGRAM STUDY', 'failed', '${OTHER_PROGRAM}');
     INSERT INTO cmc_batch_records (tenant_id, organization_id, project_id, batch_number, disposition)
       VALUES ('${THEIRS}', ${THEIRS}, '${THEIR_PROJECT}', 'THEIR-BATCH-001', 'released'),
              ('${MINE}',   ${MINE},   '${MY_PROJECT}',    'MY-BATCH-001',    'released'),
@@ -150,6 +157,17 @@ describe('readContradictionRegisters — tenant scoping', () => {
 
     const theirs = await readContradictionRegisters(pool, { organizationId: THEIRS, projectId: THEIR_PROJECT });
     expect(theirs.batch.map((b) => b.batchNumber).sort()).toEqual(['THEIR-BATCH-001', 'THEIR-LEGACY-003']);
+  });
+
+  it("does not raise one program's unvalidated method or failed study in another program's sweep", async () => {
+    // Read organisation-wide, program A collected program B's
+    // method_validation_gap and stability_failure (discovery map,
+    // core-registers-not-project-scoped). Unfiled records still count: they
+    // are nobody else's.
+    const out = await readContradictionRegisters(pool, { organizationId: MINE, projectId: MY_PROJECT });
+    expect(JSON.stringify(out)).not.toContain('OTHER PROGRAM');
+    const other = await readContradictionRegisters(pool, { organizationId: MINE, projectId: OTHER_PROGRAM });
+    expect(other.methods.map((m) => m.methodName).sort()).toEqual(['My HPLC', 'OTHER PROGRAM METHOD']);
   });
 
   it('reads the columns the tables actually have, rather than raising', async () => {

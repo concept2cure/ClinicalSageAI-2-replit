@@ -1,0 +1,20 @@
+== Vault.tsx mount of VaultPlaceIntoSubmission (lines 1397-1405)
+      ))}
+
+      {filingIntoSubmission && (
+        <VaultPlaceIntoSubmission
+          documentUuid={filingIntoSubmission.documentUuid}
+          documentTitle={filingIntoSubmission.documentTitle}
+          mimeType={filingIntoSubmission.mimeType}
+          projectId={projectId ?? null}
+          filing={filingIntoSubmission.filing ?? null}
+== onPlaced occurrences in Vault.tsx:
+0
+== the call site that needs it (VaultPlaceIntoSubmission.tsx):
+70:  onPlaced?: () => void;
+402:  onPlaced,
+543:      onPlaced?.();
+== Vault epoch setter already used for other mutations in Vault.tsx:
+740:  const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+742:  const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+792:    if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);

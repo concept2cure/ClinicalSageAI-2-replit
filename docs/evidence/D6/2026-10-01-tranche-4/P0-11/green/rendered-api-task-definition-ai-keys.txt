@@ -1,0 +1,85 @@
+# The API task definition terraform-preflight-proof.mjs rendered (run "renders_the_boot_contract", default variables: openai_enabled unset) and deploy-aws.yml's preflight accepted (green/terraform-preflight-proof.txt).
+# Secret NAMES and their sources (the mock invents the ARNs); plain environment NAMES only.
+# 2026-10-01T07:10:11Z
+$ jq ... /tmp/tf-td-*/api-td.json
+{
+  "family": "c2c-production-api",
+  "secrets": [
+    {
+      "name": "DATABASE_URL",
+      "valueFrom": "9p5rwd1r"
+    },
+    {
+      "name": "APP_DATABASE_URL",
+      "valueFrom": "3qmo1ksn"
+    },
+    {
+      "name": "JWT_SECRET",
+      "valueFrom": "a4ipjo3c"
+    },
+    {
+      "name": "REFRESH_TOKEN_SECRET",
+      "valueFrom": "lpny5wcj"
+    },
+    {
+      "name": "MFA_ENCRYPTION_KEY",
+      "valueFrom": "zrjs5fvc"
+    },
+    {
+      "name": "AUDIT_HMAC_KEY",
+      "valueFrom": "9x4zve4d"
+    },
+    {
+      "name": "AUDIT_HMAC_SECRET",
+      "valueFrom": "b0rmodfo"
+    },
+    {
+      "name": "AUDIT_EXPORT_SIGNING_KEY",
+      "valueFrom": "2ngoc6ln"
+    },
+    {
+      "name": "CONNECTOR_ENCRYPTION_KEY",
+      "valueFrom": "bb9ftt4d"
+    },
+    {
+      "name": "ANTHROPIC_API_KEY",
+      "valueFrom": "oa9ol2t1"
+    },
+    {
+      "name": "SMTP_USER",
+      "valueFrom": "9qhmg0us"
+    },
+    {
+      "name": "SMTP_PASS",
+      "valueFrom": "9psroj40"
+    },
+    {
+      "name": "APP_SERVICE_DB_PASSWORD",
+      "valueFrom": "0pmacpge"
+    }
+  ],
+  "environment_names": [
+    "NODE_ENV",
+    "PORT",
+    "TRUST_PROXY_HOPS",
+    "CONCEPT2CURE_SIGNER_MODE",
+    "CONCEPT2CURE_SIGNER_KMS_KEY_ID",
+    "CONCEPT2CURE_SIGNER_KMS_REGION",
+    "RLS_ENFORCE",
+    "AUDIT_TRAIL_ENABLED",
+    "AUDIT_REQUIRE_ENFORCE",
+    "AI_SENSITIVE_DATA_POLICY_MODE",
+    "AI_PROVIDER_PLACEMENT_APPROVALS",
+    "APP_URL",
+    "ALLOWED_ORIGINS",
+    "STORAGE_PROVIDER",
+    "AWS_S3_BUCKET",
+    "AWS_REGION",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_FROM",
+    "AUDIT_ANCHOR_BUCKET"
+  ],
+  "has_ANTHROPIC_API_KEY_secret": true,
+  "has_OPENAI_API_KEY_anywhere": false
+}

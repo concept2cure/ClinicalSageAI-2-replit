@@ -7,8 +7,11 @@
 
 import { Router, Request, Response } from 'express';
 import { computeConversationHealth } from '../services/conversation-health';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('conversation-health');
 
 /**
  * GET /api/conversation-health/:conversationId
@@ -35,9 +38,8 @@ router.get('/:conversationId', async (req: Request, res: Response) => {
     const report = await computeConversationHealth(conversationId, Number(organizationId));
 
     res.json({ success: true, data: report });
-  } catch (error: any) {
-    console.error('Conversation health error:', error);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (error) {
+    return serverError(res, log, 'computing conversation health', error);
   }
 });
 

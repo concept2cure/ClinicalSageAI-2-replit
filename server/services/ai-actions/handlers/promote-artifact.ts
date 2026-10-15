@@ -230,7 +230,9 @@ const promoteArtifactHandler: AIActionHandler = {
           title,
           documentType,
           status: 'draft',
-          createdBy: ctx.user.userName,
+          // The user id, as every other writer of unified_documents records it;
+          // the display name is in metadata.promotion (2026-10-15: was the name).
+          createdBy: String(ctx.user.userId),
           organizationId: ctx.user.organizationId,
           latestVersion: 1,
           metadata: {
@@ -263,7 +265,7 @@ const promoteArtifactHandler: AIActionHandler = {
         documentId: doc.id,
         version: 1,
         content: { body: artifact.content || '', sourceArtifactId: artifact.artifactId },
-        createdBy: ctx.user.userName,
+        createdBy: String(ctx.user.userId),
         comments: `Promoted from artifact ${artifact.artifactId}`,
         organizationId: doc.organizationId,
       });

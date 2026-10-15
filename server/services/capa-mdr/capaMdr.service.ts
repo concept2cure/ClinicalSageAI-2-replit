@@ -27,7 +27,7 @@
 
 import { and, asc, desc, eq, like, sql } from 'drizzle-orm';
 
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import auditService from '../auditService';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
@@ -36,6 +36,8 @@ import {
   capaRecords,
   capaActions,
   vigilanceEvents,
+  HARM_LEVELS,
+  SEVERITY_LEVELS,
 } from '../../../shared/schema/capa-mdr';
 import type {
   Complaint,
@@ -69,6 +71,7 @@ import {
   assertMdrTransition,
   assertActionTransition,
 } from './stateMachine';
+import { programInOrganization } from '../c2c/program-access';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Errors
@@ -88,22 +91,26 @@ export class NotFoundError extends Error {
   }
 }
 
+/**
+ * A complaint was offered without an assessment the intake needs.
+ *
+ * Patient harm drives the preliminary MDR reportability classification, so it
+ * cannot be assumed. Both fields used to default ('none', 'minor'), and a
+ * complaint nobody had assessed was classified "no MDR".
+ */
+export class ComplaintAssessmentRequired extends Error {
+  constructor(readonly field: 'patientHarm' | 'severityAssessment', allowed: readonly string[]) {
+    super(`${field} is required at intake and must be one of: ${allowed.join(', ')}`);
+    this.name = 'ComplaintAssessmentRequired';
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tenant guard — one DB roundtrip to confirm the program belongs to the org.
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function assertProgramAccess(organizationId: number, programId: string): Promise<void> {
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(
-        eq(regulatoryPrograms.id, sql`${programId}::uuid`),
-        eq(regulatoryPrograms.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, programId, organizationId))) {
     throw new TenantAccessError(
       `Program ${programId} not accessible by organization ${organizationId}`
     );
@@ -281,8 +288,9 @@ export interface CreateComplaintInput {
   eventDate?: Date | null;
   eventLocationCountry?: string | null;
   eventNarrative: string;
-  patientHarm?: HarmLevel;
-  severityAssessment?: SeverityLevel;
+  /** Required: the intake classification is computed from it. */
+  patientHarm: HarmLevel;
+  severityAssessment: SeverityLevel;
   isMalfunction?: boolean;
   anticipatesCorrection?: boolean;
   trendThresholdCrossed?: boolean;
@@ -293,10 +301,16 @@ export async function createComplaint(
   organizationId: number,
   input: CreateComplaintInput
 ): Promise<Complaint> {
+  if (!(HARM_LEVELS as readonly string[]).includes(input.patientHarm)) {
+    throw new ComplaintAssessmentRequired('patientHarm', HARM_LEVELS);
+  }
+  if (!(SEVERITY_LEVELS as readonly string[]).includes(input.severityAssessment)) {
+    throw new ComplaintAssessmentRequired('severityAssessment', SEVERITY_LEVELS);
+  }
   await assertProgramAccess(organizationId, input.programId);
 
   const triageInput: TriageInput = {
-    patientHarm: input.patientHarm ?? 'none',
+    patientHarm: input.patientHarm,
     isMalfunction: input.isMalfunction ?? false,
     eventLocationCountry: input.eventLocationCountry ?? null,
     anticipatesCorrection: input.anticipatesCorrection ?? false,
@@ -322,8 +336,8 @@ export async function createComplaint(
         eventDate: input.eventDate ?? null,
         eventLocationCountry: input.eventLocationCountry ?? null,
         eventNarrative: input.eventNarrative,
-        patientHarm: input.patientHarm ?? 'none',
-        severityAssessment: input.severityAssessment ?? 'minor',
+        patientHarm: input.patientHarm,
+        severityAssessment: input.severityAssessment,
         preliminaryClassification: classification,
         triageState: 'new',
         createdBy: input.createdBy ?? null,

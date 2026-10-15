@@ -1,0 +1,34 @@
+# 2026-10-01T15:54:40Z. Fix round. ESLint warnings per file: HEAD 01b1020c content (via --stdin --stdin-filename, so the same config applies) vs the working file, for every file this round changed.
+server/services/audit/tenant-chain-verdict.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/routes/c2c/actions.ts
+   HEAD: 5w/0e max-lines-per-function@145,complexity@145,max-params@438,complexity@634,max-lines@727
+   now : 5w/0e max-lines-per-function@149,complexity@149,max-params@442,complexity@638,max-lines@727
+server/routes/audit-trail-ledger.routes.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/services/audit/audited-export.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/services/audit/signedAuditExport.ts
+   HEAD: 1w/0e no-useless-assignment@437
+   now : 1w/0e no-useless-assignment@446
+server/services/audit/compliance-reports/types.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/services/audit/compliance-reports/queries/audit-trail-integrity.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 
+client/src/concept2cure/v2/surfaces/licensing/LicensingHistoryPanel.tsx
+   HEAD: 2w/0e max-lines-per-function@289,complexity@289
+   now : 2w/0e max-lines-per-function@312,complexity@312
+client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx
+   HEAD: 0w/0e 
+   now : 0w/0e 
+server/services/audit/__tests__/chain-head-on-demand.test.ts
+   HEAD: (new file)
+   now : 0w/0e 
+tests/db/turn-record-purge-door.dbtest.ts
+   HEAD: 0w/0e 
+   now : 0w/0e 

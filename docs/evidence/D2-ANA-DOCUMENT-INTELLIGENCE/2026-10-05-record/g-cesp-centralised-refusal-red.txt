@@ -1,0 +1,215 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses MAA (EU_MAA) before the transmittal row and before any https request 9ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_MAA (EU_MAA) before the transmittal row and before any https request 1ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_VARIATION_II (EU_VARIATION_II) before the transmittal row and before any https request 2ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses renewal (EU_RENEWAL) before the transmittal row and before any https request 1ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses psur (EU_PSUR) before the transmittal row and before any https request 1ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses CMA (EU_CMA) before the transmittal row and before any https request 6ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_BIOSIMILAR_MAA (EU_BIOSIMILAR_MAA) before the transmittal row and before any https request 1ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses a CTIS filing (EU_CTA) and an IRIS filing (EU_ORPHAN), naming their channels 1ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ × server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses a filing whose channel is another region's gateway (US_NDA → fda:esg) 1ms
+   → expected Error: test transport: no socket is opened to be an instance of ValidationError
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — positive controls: what CESP does carry still proceeds > a national decentralised filing (EU_GENERIC_DCP) passes the refusal and reaches the wire 1ms
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — positive controls: what CESP does carry still proceeds > a lifecycle type that names no registry filing (seq.type "original") is not refused here 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes FDA (all client types) to ESG 2ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes Japan (all client types) to the PMDA gateway 1ms
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > refuses a centralised-procedure EU dossier: no gateway, never CESP 8ms
+   → expected { gwRegion: 'ema', gwName: 'cesp' } to be null
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > names the eSubmission Gateway / Web Client and why CESP is not it, for a centralised MAA 1ms
+   → transmitRouteFor is not a function
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > refuses an EU CTA (CTIS portal) and an IRIS filing, naming the channel 1ms
+   → expected { gwRegion: 'ema', gwName: 'cesp' } to be null
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes a national decentralised EU filing (EU_GENERIC_DCP) to CESP 1ms
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > fails closed for an EU dossier whose filing type names no EU registry entry 1ms
+   → expected { gwRegion: 'ema', gwName: 'cesp' } to be null
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > routes EU device/IVD (mdx|ivd) to EUDAMED, whatever the filing type 0ms
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > returns null for an unknown region (caller raises VALIDATION) 0ms
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called 199ms
+   → expected undefined to be 'VALIDATION' // Object.is equality
+ ✓ server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > positive control: a DCP submission is routed on to ema:cesp 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — the guard refuses before the gateway > is true for a guard refusal, and the gateway is never called 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit 5ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the FDA NextGen REST refusal (UnverifiedTransportError, transmitted === false) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the requiredAgencyMetadata refusal raised before the transmittal row 1ms
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the CESP refusal of a centralised-procedure MAA, raised before the transmittal row 10ms
+   → expected CredentialError: EMA cesp (staging) — mis… { …(5) } to be an instance of ValidationError
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > requiredAgencyMetadata marks both of its refusals, and only those 0ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a CredentialError raised by a gateway's credential check (real MHRA transmit, no credentials) 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a TransportError only when its throw site passed NOTHING_TRANSMITTED 0ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 231ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > test setup keeps staged bundles out of the repository > resolves the bundle root outside the working tree 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses MAA (EU_MAA) before the transmittal row and before any https request
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_MAA (EU_MAA) before the transmittal row and before any https request
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_VARIATION_II (EU_VARIATION_II) before the transmittal row and before any https request
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses renewal (EU_RENEWAL) before the transmittal row and before any https request
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses psur (EU_PSUR) before the transmittal row and before any https request
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses CMA (EU_CMA) before the transmittal row and before any https request
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses EU_BIOSIMILAR_MAA (EU_BIOSIMILAR_MAA) before the transmittal row and before any https request
+AssertionError: expected Error: test transport: no socket is opened to be an instance of ValidationError
+ ❯ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts:96:17
+     94|   ])('refuses %s (%s) before the transmittal row and before any https …
+     95|     const err = await failureOf(new EmaCespGateway().transmit(request(…
+     96|     expect(err).toBeInstanceOf(ValidationError);
+       |                 ^
+     97|     expect((err as ValidationError).transmitted).toBe(false);
+     98|     expect(refusedBeforeWire(err)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses a CTIS filing (EU_CTA) and an IRIS filing (EU_ORPHAN), naming their channels
+AssertionError: expected Error: test transport: no socket is opened to be an instance of ValidationError
+ ❯ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts:109:17
+    107|   it('refuses a CTIS filing (EU_CTA) and an IRIS filing (EU_ORPHAN), n…
+    108|     const cta = await failureOf(new EmaCespGateway().transmit(request(…
+    109|     expect(cta).toBeInstanceOf(ValidationError);
+       |                 ^
+    110|     expect(String((cta as Error).message)).toMatch(/CTIS/);
+    111|     const orphan = await failureOf(new EmaCespGateway().transmit(reque…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses a filing whose channel is another region's gateway (US_NDA → fda:esg)
+AssertionError: expected Error: test transport: no socket is opened to be an instance of ValidationError
+ ❯ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts:120:17
+    118|   it('refuses a filing whose channel is another region\'s gateway (US_…
+    119|     const err = await failureOf(new EmaCespGateway().transmit(request(…
+    120|     expect(err).toBeInstanceOf(ValidationError);
+       |                 ^
+    121|     expect(String((err as Error).message)).toMatch(/fda:esg/);
+    122|     expect(poolQueries).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the CESP refusal of a centralised-procedure MAA, raised before the transmittal row
+AssertionError: expected CredentialError: EMA cesp (staging) — mis… { …(5) } to be an instance of ValidationError
+ ❯ server/services/submission-gateways/__tests__/refused-before-wire.test.ts:166:17
+    164|     })));
+    165|     expect(wire).toHaveBeenCalledTimes(1);
+    166|     expect(err).toBeInstanceOf(ValidationError);
+       |                 ^
+    167|     expect(String((err as Error).message)).toMatch(/eSubmission Gatewa…
+    168|     expect(dbCalls.some((t) => /INSERT INTO submission_transmittals/.t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > refuses a centralised-procedure EU dossier: no gateway, never CESP
+AssertionError: expected { gwRegion: 'ema', gwName: 'cesp' } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "gwName": "cesp",
+  "gwRegion": "ema",
+}
+
+ ❯ server/services/submission-service/__tests__/gateway-selection.test.ts:99:51
+     97|       for (const ct of ['pharma', 'biotech']) {
+     98|         for (const type of ['MAA', 'maa', 'EU_MAA', 'EU_VARIATION_II',…
+     99|           expect(selectGateway(region, ct, type)).toBeNull();
+       |                                                   ^
+    100|         }
+    101|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > names the eSubmission Gateway / Web Client and why CESP is not it, for a centralised MAA
+TypeError: transmitRouteFor is not a function
+ ❯ server/services/submission-service/__tests__/gateway-selection.test.ts:106:19
+    104|
+    105|   it('names the eSubmission Gateway / Web Client and why CESP is not i…
+    106|     const route = transmitRouteFor('eu', 'pharma', 'maa');
+       |                   ^
+    107|     expect(route.ok).toBe(false);
+    108|     if (route.ok) return;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > refuses an EU CTA (CTIS portal) and an IRIS filing, naming the channel
+AssertionError: expected { gwRegion: 'ema', gwName: 'cesp' } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "gwName": "cesp",
+  "gwRegion": "ema",
+}
+
+ ❯ server/services/submission-service/__tests__/gateway-selection.test.ts:115:50
+    113|
+    114|   it('refuses an EU CTA (CTIS portal) and an IRIS filing, naming the c…
+    115|     expect(selectGateway('eu', 'pharma', 'cta')).toBeNull();
+       |                                                  ^
+    116|     const cta = transmitRouteFor('eu', 'pharma', 'cta');
+    117|     expect(!cta.ok && cta.reason).toMatch(/CTIS/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts > selectGateway > fails closed for an EU dossier whose filing type names no EU registry entry
+AssertionError: expected { gwRegion: 'ema', gwName: 'cesp' } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "gwName": "cesp",
+  "gwRegion": "ema",
+}
+
+ ❯ server/services/submission-service/__tests__/gateway-selection.test.ts:128:43
+    126|
+    127|   it('fails closed for an EU dossier whose filing type names no EU reg…
+    128|     expect(selectGateway('eu', 'pharma')).toBeNull();
+       |                                           ^
+    129|     expect(selectGateway('eu', 'pharma', 'original')).toBeNull();
+    130|     const us = transmitRouteFor('eu', 'pharma', 'nda');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called
+AssertionError: expected undefined to be 'VALIDATION' // Object.is equality
+
+- Expected:
+"VALIDATION"
+
++ Received:
+undefined
+
+ ❯ server/services/submission-service/__tests__/gateway-selection.test.ts:161:45
+    159|     } as any).then(() => null, (e) => e);
+    160|     expect(err).not.toBeNull();
+    161|     expect((err as { code?: string }).code).toBe('VALIDATION');
+       |                                             ^
+    162|     expect(String((err as Error).message)).toMatch(/eSubmission Gatewa…
+    163|     expect(gatewayCalls).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  15 failed | 21 passed (36)
+   Start at  04:27:58
+   Duration  3.15s (transform 5.13s, setup 990ms, import 5.85s, tests 518ms, environment 0ms)
+

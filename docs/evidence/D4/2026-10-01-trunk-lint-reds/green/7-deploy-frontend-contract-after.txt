@@ -1,0 +1,11 @@
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > needs deploy-api and the CI verdict 2ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > publishes: a full release, API rolled 1ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: the migration failed, so the API was not rolled 1ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: the API deploy failed or was rolled back 0ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > publishes: a frontend-only dispatch (deploy_api=false) 0ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: an API-only dispatch (deploy_frontend=false) 0ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: tests failed on a frontend-only dispatch 0ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: the commit's CI is red, on a full release 0ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: the commit's CI is red, on a frontend-only dispatch 1ms
+ ✓ tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > the smoke test still runs after a frontend-only dispatch 0ms
+      Tests  10 passed (10)

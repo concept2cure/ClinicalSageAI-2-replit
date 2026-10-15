@@ -1,0 +1,14 @@
+Mutant M15-strip-only-when-labelled: a short answer the labels do not assess gets no strip
+
+--- server/routes/ana-ri/post-processing.ts
+- if (verification) {
+      res.write(
++ if (verification && verification.labels.attempted) {
+      res.write(
+
+Tests run: server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 4ms
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

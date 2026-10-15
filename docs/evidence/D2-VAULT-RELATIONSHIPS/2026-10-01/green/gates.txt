@@ -1,0 +1,109 @@
+== ci_action-overclaim
+check-action-overclaim: no new occurrences. 0 baselined.
+EXIT=0
+
+== ci_ana-surface-context
+declare its ID in NO_CONTEXT_NEEDED with a reason.
+
+EXIT=1
+
+== ci_check-client-api-calls
+check-client-api-calls-resolve: 138 client /api prefixes, 315 server /api prefixes.
+✅ every client /api call has a server route behind it.
+EXIT=0
+
+== ci_column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+EXIT=0
+
+== ci_design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+EXIT=0
+
+== ci_fixture-fallback
+
+✅ no new ungated fixture fallback. 0 baselined.
+EXIT=0
+
+== ci_internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+EXIT=0
+
+== ci_launch-scope-api
+ci:launch-scope-api: 286 API paths named by launch and shell screens; none refused. {"launch":240,"never-gated":44,"infrastructure":2}
+EXIT=0
+
+== ci_migration-deploy-path
+[ci:migration-deploy-path] OK — 112 baselined file(s) on no deploy path, none new.
+EXIT=0
+
+== ci_migration-drop-safety
+[ci:migration-drop-safety] OK — 351 migrations, 35 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+EXIT=0
+
+== ci_migration-drop-safety_selftest
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+EXIT=0
+
+== ci_migration-set-order
+[ci:migration-set-order] OK — 351 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+EXIT=0
+
+== ci_purge-coverage
+CASCADE path from a table already there. A tenant that asks to be erased
+must not keep rows in a table nobody remembered to list.
+EXIT=1
+
+== ci_runtime-ddl
+[ci:runtime-ddl] 84 DDL statement(s) in 14 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ no new runtime DDL.
+EXIT=0
+
+== ci_server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+EXIT=0
+
+== ci_sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+EXIT=0
+
+== ci_success-before-ok
+check-success-before-ok: no occurrences across 197 file(s).
+EXIT=0
+
+== ci_tenant-entry-points
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+EXIT=0
+
+== ci_tenant-isolation_no-regression
+Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+EXIT=0
+
+== ci_unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 70 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+EXIT=0
+
+== ci_undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+EXIT=0
+
+== ci_unkeyed-request-tables
+  Fix: npm run ci:unkeyed-request-tables:write-baseline
+
+EXIT=1
+
+== ci_vault-document-writers
+[ci:vault-document-writers] 6 file(s) write vault.documents; 6 named.
+[ci:vault-document-writers] OK: every writer is a named one.
+EXIT=0
+
+== audit-requestdb-coverage
+[ci:requestdb-coverage] FAIL — 1 NEW route(s) on the shared pool above baseline of 228. New tenant-facing routes must use requestDb(req):
+  server/routes/governed-signed-act.ts
+EXIT=1
+
+== tsc
+EXIT=0

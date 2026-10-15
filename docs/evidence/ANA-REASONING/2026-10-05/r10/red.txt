@@ -1,0 +1,52 @@
+Red first: round 10's suites against trunk 9321255ef's authoring-record.ts, machine-claim-verify.ts, approved-models.ts and authoring.router.ts, with the new turn-record-models.ts set aside.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ana/__tests__/turn-record-served-models.test.ts server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Nine tests fail and the unit suite cannot load its module. The decisions suite's other eleven tests pass there: they are not about the source.
+
+stdout | server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: words the turn never wrote → unverified, and AnA is not the verified proposer
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 2 — "Accept all" records every change > 25 changes → 25 upserts, ONE trail row carrying all 25 texts whole with their hashes, one chain entry
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a turn record of this organization → verified, with that record’s SHA-256
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: another organization’s turn record → unverified, "no such turn record in this organization"
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a claim that is not a record id → unverified, "not a record id"
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: words the turn never wrote → unverified, and AnA is not the verified proposer 150ms
+   → expected { outcome: 'answered', …(3) } to deeply equal { verified: false, …(2) }
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 2 — "Accept all" records every change > 25 changes → 25 upserts, ONE trail row carrying all 25 texts whole with their hashes, one chain entry 57ms
+ × server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a turn record of this organization → verified, with that record’s SHA-256 32ms
+   → expected { outcome: 'answered', …(3) } to deeply equal { verified: true, …(4) }
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: another organization’s turn record → unverified, "no such turn record in this organization" 15ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a claim that is not a record id → unverified, "not a record id" 12ms
+ × server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > bulk: each change is resolved on its own — own, foreign, non-id and none 23ms
+   → expected { outcome: 'answered', …(3) } to deeply equal { verified: true, …(4) }
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive
+stderr | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive
+stderr | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive
+stdout | server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > single: two models served the turn → both, each qualified or not, with its PQ status
+stderr | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > bulk: each change is held to its own words — the turn’s are verified, others are not 75ms
+   → expected { outcome: 'answered', …(3) } to deeply equal { verified: false, …(2) }
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: a decision that names a turn and no words is not vouched for 44ms
+   → expected { outcome: 'answered', …(3) } to deeply equal { verified: false, …(2) }
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: a record that does not verify vouches for nothing, even for its own words 34ms
+   → expected { outcome: 'answered', …(3) } to deeply equal { verified: false, …(2) }
+stderr | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 4 — a decision is filed only against a section of its own document > single and bulk: a section of ANOTHER document → 400, and nothing is written 26ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive 80ms
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > no reason, or only whitespace → null in the trail and in audit_logs, never a made-up one
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > no reason, or only whitespace → null in the trail and in audit_logs, never a made-up one
+stdout | server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > no reason, or only whitespace → null in the trail and in audit_logs, never a made-up one
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > no reason, or only whitespace → null in the trail and in audit_logs, never a made-up one 48ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 7 — a sealed document takes no decision (existing behaviour) > FROZEN → 403 DOCUMENT_FROZEN on single and bulk, and nothing is written 20ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > single: two models served the turn → both, each qualified or not, with its PQ status 38ms
+   → expected { outcome: 'answered', …(3) } to deeply equal { verified: true, …(4) }
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > the claim verifier names every model that served a turn, and no one model for a turn two served 28ms
+   → expected [ [ undefined, …(3) ], …(1) ] to deeply equal [ [ +0, null, …(2) ], …(1) ]
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > one decision reads a bounded number of turn records > bulk: at most MAX_TURN_RECORDS_PER_CHECK distinct turns; a change from one more is said, not verified 147ms
+   → expected { outcome: 'answered', …(3) } to deeply equal { verified: false, …(2) }
+ FAIL  server/services/ana/__tests__/turn-record-served-models.test.ts [ server/services/ana/__tests__/turn-record-served-models.test.ts ]
+Error: Cannot find module '../turn-record-models' imported from <repo>/server/services/ana/__tests__/turn-record-served-models.test.ts
+ FAIL  server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: words the turn never wrote → unverified, and AnA is not the verified proposer
+ FAIL  server/routes/__tests__/authoring-decision-source.pglite.test.ts > a verified source names every model that wrote the words, as RULE 2 reads it > single: two models served the turn → both, each qualified or not, with its PQ status
+ FAIL  server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a turn record of this organization → verified, with that record’s SHA-256
+ Test Files  3 failed (3)
+      Tests  9 failed | 11 passed (20)

@@ -1,0 +1,108 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T13:38:25.919Z","pid":18611,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:25.920Z","pid":18611,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:25.920Z","pid":18611,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: submission_readiness_review
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: draft_validate_route
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: project_blocker_scan
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+{
+  "timestamp": "2026-10-01T13:38:26.350Z",
+  "level": "info",
+  "message": "[index] Phase 3 orchestration system loaded",
+  "context": {}
+}
+
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 18ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is assembled from reads that all succeed, and names the project 75ms
+{"level":40,"time":"2026-10-01T13:38:26.541Z","pid":18611,"hostname":"vm","context":{"read":"project","error":"Failed query: select \"id\", \"organization_id\", \"client_workspace_id\", \"parent_project_id\", \"depth\", \"path\", \"name\", \"code\", \"description\", \"status\", \"priority\", \"type\", \"start_date\", \"target_end_date\", \"actual_end_date\", \"progress\", \"budget\", \"budget_currency\", \"budget_status\", \"created_by_id\", \"owner_id\", \"sponsors\", \"tags\", \"therapeutic_area\", \"critical_to_quality_factors\", \"risk_level\", \"risk_assessment\", \"quality_targets\", \"module_references\", \"settings\", \"metadata\", \"retrieval_mode\", \"knowledge_token_estimate\", \"regulatory_program_id\", \"created_at\", \"updated_at\" from \"projects\" where (\"projects\".\"id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.541Z","pid":18611,"hostname":"vm","context":{"read":"documents","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.541Z","pid":18611,"hostname":"vm","context":{"read":"artifacts","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.542Z","pid":18611,"hostname":"vm","context":{"read":"module placements","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2)\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.545Z","pid":18611,"hostname":"vm","context":{"read":"last signal","error":"Failed query: \n      SELECT MAX(ts) AS last_signal_at\n      FROM (\n        SELECT MAX(updated_at) AS ts\n        FROM concept2cure_artifacts\n        WHERE organization_id = $1\n          AND project_id = $2\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_source_objects\n        WHERE organization_id = $3\n          AND project_id::text = $4\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_contradictions\n        WHERE organization_id = $5\n          AND project_id::text = $6\n      ) sub\n    \nparams: 91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.561Z","pid":18611,"hostname":"vm","context":{"read":"project","error":"Failed query: select \"id\", \"organization_id\", \"client_workspace_id\", \"parent_project_id\", \"depth\", \"path\", \"name\", \"code\", \"description\", \"status\", \"priority\", \"type\", \"start_date\", \"target_end_date\", \"actual_end_date\", \"progress\", \"budget\", \"budget_currency\", \"budget_status\", \"created_by_id\", \"owner_id\", \"sponsors\", \"tags\", \"therapeutic_area\", \"critical_to_quality_factors\", \"risk_level\", \"risk_assessment\", \"quality_targets\", \"module_references\", \"settings\", \"metadata\", \"retrieval_mode\", \"knowledge_token_estimate\", \"regulatory_program_id\", \"created_at\", \"updated_at\" from \"projects\" where (\"projects\".\"id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.562Z","pid":18611,"hostname":"vm","context":{"read":"documents","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.562Z","pid":18611,"hostname":"vm","context":{"read":"artifacts","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.562Z","pid":18611,"hostname":"vm","context":{"read":"module placements","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2)\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:38:26.563Z","pid":18611,"hostname":"vm","context":{"read":"last signal","error":"Failed query: \n      SELECT MAX(ts) AS last_signal_at\n      FROM (\n        SELECT MAX(updated_at) AS ts\n        FROM concept2cure_artifacts\n        WHERE organization_id = $1\n          AND project_id = $2\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_source_objects\n        WHERE organization_id = $3\n          AND project_id::text = $4\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_contradictions\n        WHERE organization_id = $5\n          AND project_id::text = $6\n      ) sub\n    \nparams: 91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc"},"msg":"[cross-object-resolver] Resolver query failed"}
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is reviewed to completion, and the review says which project it read 48ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid fails the payload, naming every read it broke 19ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid ends the review run as failed, with no step completed and the reason recorded 18ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a project another organisation holds is refused, not assessed as empty 31ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the project's tasks, counted from every store > counts schedule, board and correspondence tasks, and how many are done, blocked and overdue 65ms
+{"level":30,"time":"2026-10-01T13:38:29.225Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:29.226Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:29.226Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > no baseline yet is said, not dressed up as "stable" > a project never snapshotted reports no_baseline and no newly-ready claims 1004ms
+{"level":30,"time":"2026-10-01T13:38:29.501Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:29.502Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:29.502Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:29.693Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > no baseline yet is said, not dressed up as "stable" > a snapshot minutes old is not a baseline: a 12-point move is not called a trend yet 229ms
+{"level":30,"time":"2026-10-01T13:38:29.693Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:29.694Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:29.879Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:29.879Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:29.879Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:30.077Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:30.077Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:30.077Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > every task answers from the same baseline > task A records at 60; a day later tasks B, C (post-deploy) and A all say improving at 72 569ms
+{"level":30,"time":"2026-10-01T13:38:30.263Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:30.422Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:30.263Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:30.264Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:30.423Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:30.423Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:30.660Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > every task answers from the same baseline > page views on another task do not move the baseline 372ms
+{"level":30,"time":"2026-10-01T13:38:30.660Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:30.660Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:30.940Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:30.940Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:30.940Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > every task answers from the same baseline > declining is measured against the shared baseline too 484ms
+{"level":30,"time":"2026-10-01T13:38:31.122Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:31.122Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:31.122Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:31.285Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:31.285Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:31.285Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > every task answers from the same baseline > newly ready is what cleared since the baseline task A recorded 344ms
+{"level":30,"time":"2026-10-01T13:38:31.438Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:31.438Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:31.438Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:31.617Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:31.617Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:31.617Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > every task answers from the same baseline > the latest snapshot is readable from a task that never generated one 324ms
+{"level":30,"time":"2026-10-01T13:38:31.816Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:31.977Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:38:31.817Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:31.817Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:31.977Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:31.977Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:32.210Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > the store stays bounded > records at most one snapshot per project per hour 403ms
+{"level":30,"time":"2026-10-01T13:38:32.210Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:32.210Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:38:32.430Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > the store stays bounded > drops rows older than the current baseline, which can never be a baseline again 224ms
+ ✓ tests/db/continuity-baseline.dbtest.ts > tenant isolation > the sweep gives the new table the tenant policy, with RLS forced 3ms
+{"level":30,"time":"2026-10-01T13:38:32.431Z","pid":18640,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:38:32.431Z","pid":18640,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/continuity-baseline.dbtest.ts > tenant isolation > another organisation neither sees nor inherits a project's baseline 220ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  13:38:22
+   Duration  9.84s (transform 1.46s, setup 158ms, import 167ms, tests 8.88s, environment 0ms)
+

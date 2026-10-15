@@ -1,0 +1,14 @@
+Mutant G08-held-row-without-check: the held row (and so the sign-off audit row) keeps no check
+
+--- server/routes/ana-ri/stream.ts
+- tier: verdict.tier,
+            ...checked,
++ tier: verdict.tier,
+
+Tests run: server/routes/ana-ri/__tests__/stream-proposal-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 69ms
+ × server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a draft written before anything was consulted is not checked — never found 13ms
+      Tests  2 failed | 1 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

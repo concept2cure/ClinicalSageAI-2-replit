@@ -1,0 +1,6 @@
+required, server without pgaudit: exit=1
+❌ Deploy migration failed: database-level audit is required (DB_AUDIT_REQUIRED=pgaudit) and this server does not load pgaudit (shared_preload_libraries = ''). Statements that bypass the application are not being recorded. The RDS parameter group must list pgaudit in shared_preload_libraries, and the instance must have rebooted since that change (a static parameter).
+not required, server without pgaudit: exit=0
+  • pgaudit is not loaded on this server; database-level audit is not required here
+unrecognised value: exit=1
+❌ Deploy migration failed: DB_AUDIT_REQUIRED='yes' is not understood. The only value is 'pgaudit' (or unset, where database-level audit is not required). Refu

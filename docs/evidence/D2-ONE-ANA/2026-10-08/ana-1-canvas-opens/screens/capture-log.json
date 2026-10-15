@@ -1,0 +1,665 @@
+{
+ "1440-0-approval": {
+  "at": "2026-10-08T01:18:25.923Z",
+  "note": "before confirming",
+  "clicks": [
+   "Send message to AnA"
+  ],
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "display": "none",
+   "hidden": true
+  },
+  "paneHasEditor": false,
+  "paneText": "",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 1000,
+   "h": 789,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [],
+  "standInAnswer": false,
+  "stopVisible": true,
+  "confirmVisible": true,
+  "openFullEditorVisible": false,
+  "activeElement": "button"
+ },
+ "1440-a-after-confirm": {
+  "at": "2026-10-08T01:18:26.053Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 46,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "display": "none",
+   "hidden": true
+  },
+  "paneHasEditor": false,
+  "paneText": "",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 1000,
+   "h": 789,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [],
+  "standInAnswer": false,
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "body"
+ },
+ "1440-b-document-appears": {
+  "at": "2026-10-08T01:18:27.074Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 1066,
+  "paneOpenedMsAfterFirstSign": 147,
+  "turnStillRunningAtFirstSign": true,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "pane": {
+   "x": 527,
+   "y": 112,
+   "w": 913,
+   "h": 789,
+   "display": "flex",
+   "hidden": false
+  },
+  "paneHasEditor": true,
+  "paneText": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Overview (stand-in draft",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 471,
+   "h": 789,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [
+   {
+    "docId": "a6257943-a4f8-4dc0-a957-5dd4ca69e2a6",
+    "expanded": "true"
+   }
+  ],
+  "standInAnswer": false,
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "button"
+ },
+ "1440-c-turn-ended": {
+  "at": "2026-10-08T01:18:30.511Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 4507,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "pane": {
+   "x": 527,
+   "y": 112,
+   "w": 913,
+   "h": 789,
+   "display": "flex",
+   "hidden": false
+  },
+  "paneHasEditor": true,
+  "paneText": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Overview (stand-in draft",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 471,
+   "h": 789,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [
+   {
+    "docId": "a6257943-a4f8-4dc0-a957-5dd4ca69e2a6",
+    "expanded": "true"
+   }
+  ],
+  "standInAnswer": true,
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "button"
+ },
+ "1440-meta": {
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "convo": "{\"id\":\"current\",\"seed\":null}",
+  "finalUrl": "http://localhost:5077/concept2cure/conversation-thread",
+  "layout": {
+   "url": "/concept2cure/conversation-thread",
+   "viewport": "1440x900",
+   "pane": {
+    "x": 527,
+    "y": 112,
+    "w": 913,
+    "h": 789,
+    "display": "flex",
+    "hidden": false
+   },
+   "paneHasEditor": true,
+   "paneText": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Overview (stand-in draft",
+   "conv": {
+    "x": 56,
+    "y": 112,
+    "w": 471,
+    "h": 789,
+    "display": "flex",
+    "hidden": false
+   },
+   "readyNotice": "",
+   "readyNoticeRole": "status/polite",
+   "canvases": [
+    {
+     "docId": "a6257943-a4f8-4dc0-a957-5dd4ca69e2a6",
+     "expanded": "true"
+    }
+   ],
+   "standInAnswer": true,
+   "stopVisible": false,
+   "confirmVisible": false,
+   "openFullEditorVisible": false,
+   "activeElement": "button"
+  }
+ },
+ "1280-a-after-confirm": {
+  "at": "2026-10-08T01:18:56.878Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 55,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1280x800",
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "display": "none",
+   "hidden": true
+  },
+  "paneHasEditor": false,
+  "paneText": "",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 840,
+   "h": 689,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [],
+  "standInAnswer": false,
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "body"
+ },
+ "1280-b-document-appears": {
+  "at": "2026-10-08T01:18:57.909Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 1082,
+  "paneOpenedMsAfterFirstSign": 148,
+  "turnStillRunningAtFirstSign": true,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1280x800",
+  "pane": {
+   "x": 472,
+   "y": 112,
+   "w": 808,
+   "h": 689,
+   "display": "flex",
+   "hidden": false
+  },
+  "paneHasEditor": true,
+  "paneText": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Overview (stand-in draft",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 416,
+   "h": 689,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [
+   {
+    "docId": "6f431aa9-1d2f-4411-bf66-cb3c5bcb5492",
+    "expanded": "true"
+   }
+  ],
+  "standInAnswer": false,
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "button"
+ },
+ "1280-c-turn-ended": {
+  "at": "2026-10-08T01:19:01.376Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 4557,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1280x800",
+  "pane": {
+   "x": 472,
+   "y": 112,
+   "w": 808,
+   "h": 689,
+   "display": "flex",
+   "hidden": false
+  },
+  "paneHasEditor": true,
+  "paneText": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Overview (stand-in draft",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 416,
+   "h": 689,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [
+   {
+    "docId": "6f431aa9-1d2f-4411-bf66-cb3c5bcb5492",
+    "expanded": "true"
+   }
+  ],
+  "standInAnswer": true,
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "button"
+ },
+ "1280-meta": {
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "convo": "{\"id\":\"current\",\"seed\":null}",
+  "finalUrl": "http://localhost:5077/concept2cure/conversation-thread",
+  "layout": {
+   "url": "/concept2cure/conversation-thread",
+   "viewport": "1280x800",
+   "pane": {
+    "x": 472,
+    "y": 112,
+    "w": 808,
+    "h": 689,
+    "display": "flex",
+    "hidden": false
+   },
+   "paneHasEditor": true,
+   "paneText": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Overview (stand-in draft",
+   "conv": {
+    "x": 56,
+    "y": 112,
+    "w": 416,
+    "h": 689,
+    "display": "flex",
+    "hidden": false
+   },
+   "readyNotice": "",
+   "readyNoticeRole": "status/polite",
+   "canvases": [
+    {
+     "docId": "6f431aa9-1d2f-4411-bf66-cb3c5bcb5492",
+     "expanded": "true"
+    }
+   ],
+   "standInAnswer": true,
+   "stopVisible": false,
+   "confirmVisible": false,
+   "openFullEditorVisible": false,
+   "activeElement": "button"
+  }
+ },
+ "1024-a-after-confirm": {
+  "at": "2026-10-08T01:19:23.520Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 65,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1024x768",
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "display": "none",
+   "hidden": true
+  },
+  "paneHasEditor": false,
+  "paneText": "",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 584,
+   "h": 657,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [],
+  "standInAnswer": false,
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "body"
+ },
+ "1024-b-notice": {
+  "at": "2026-10-08T01:19:24.195Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "msSinceConfirm": 743,
+  "turnStillRunningAtFirstSign": true,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1024x768",
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "display": "none",
+   "hidden": true
+  },
+  "paneHasEditor": false,
+  "paneText": "",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 584,
+   "h": 657,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "AnA built Module 2.5 Clinical Overview (stand-in draft) Open ×",
+  "readyNoticeRole": "status/polite",
+  "canvases": [
+   {
+    "docId": "ed19a25c-7fa9-4973-a832-40fae5af952b",
+    "expanded": null
+   }
+  ],
+  "standInAnswer": false,
+  "stopVisible": true,
+  "confirmVisible": false,
+  "openFullEditorVisible": true,
+  "activeElement": "body"
+ },
+ "1024-c-notice-after-turn": {
+  "at": "2026-10-08T01:19:26.945Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run"
+  ],
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1024x768",
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "display": "none",
+   "hidden": true
+  },
+  "paneHasEditor": false,
+  "paneText": "",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 584,
+   "h": 657,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "AnA built Module 2.5 Clinical Overview (stand-in draft) Open ×",
+  "readyNoticeRole": "status/polite",
+  "canvases": [
+   {
+    "docId": "ed19a25c-7fa9-4973-a832-40fae5af952b",
+    "expanded": null
+   }
+  ],
+  "standInAnswer": true,
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": true,
+  "activeElement": "body"
+ },
+ "1024-d-after-open-click": {
+  "at": "2026-10-08T01:19:30.664Z",
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run",
+   "Open (notice)"
+  ],
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1024x768",
+  "pane": {
+   "x": 56,
+   "y": 112,
+   "w": 968,
+   "h": 657,
+   "display": "flex",
+   "hidden": false
+  },
+  "paneHasEditor": true,
+  "paneText": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Overview (stand-in draft",
+  "conv": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "display": "none",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [
+   {
+    "docId": "ed19a25c-7fa9-4973-a832-40fae5af952b",
+    "expanded": "true"
+   }
+  ],
+  "standInAnswer": false,
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "button"
+ },
+ "1024-meta": {
+  "clicks": [
+   "Send message to AnA",
+   "Confirm and run",
+   "Open (notice)"
+  ],
+  "convo": "{\"id\":\"current\",\"seed\":null}",
+  "finalUrl": "http://localhost:5077/concept2cure/conversation-thread",
+  "layout": {
+   "url": "/concept2cure/conversation-thread",
+   "viewport": "1024x768",
+   "pane": {
+    "x": 56,
+    "y": 112,
+    "w": 968,
+    "h": 657,
+    "display": "flex",
+    "hidden": false
+   },
+   "paneHasEditor": true,
+   "paneText": "Back to conversation Module 2.5 Clinical Overview (stand-in draft) Vorelinib · KIT-mutant GIST (IND) · Planning Esc Module 2.5 Clinical Overview (stand-in draft",
+   "conv": {
+    "x": 0,
+    "y": 0,
+    "w": 0,
+    "h": 0,
+    "display": "none",
+    "hidden": false
+   },
+   "readyNotice": "",
+   "readyNoticeRole": "status/polite",
+   "canvases": [
+    {
+     "docId": "ed19a25c-7fa9-4973-a832-40fae5af952b",
+     "expanded": "true"
+    }
+   ],
+   "standInAnswer": false,
+   "stopVisible": false,
+   "confirmVisible": false,
+   "openFullEditorVisible": false,
+   "activeElement": "button"
+  }
+ },
+ "1440-h1-project-conversations-list": {
+  "at": "2026-10-08T01:20:19.145Z",
+  "wantedThread": "ana-ri_1791422302138_3qisj9qga",
+  "rowIndex": 2,
+  "rowsNewestFirst": [
+   "ana-ri_1791422359658_w32l8lrqr",
+   "ana-ri_1791422333056_sus315o66",
+   "ana-ri_1791422302138_3qisj9qga",
+   "ana-ri_1791422253253_8ur3kwa5g",
+   "ana-ri_1791416736401_6g6fiqda8",
+   "ana-ri_1791416651858_4zdi4zplu",
+   "ana-ri_1791416620075_yevyec75m"
+  ],
+  "url": "/concept2cure/project-home",
+  "viewport": "1440x900",
+  "pane": null,
+  "paneHasEditor": false,
+  "paneText": null,
+  "conv": null,
+  "readyNotice": null,
+  "readyNoticeRole": null,
+  "canvases": [],
+  "standInAnswer": false,
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "body"
+ },
+ "1440-h2-reopened-from-history": {
+  "at": "2026-10-08T01:21:25.330Z",
+  "clicks": [
+   "Projects: Vorelinib",
+   "Conversations row 3"
+  ],
+  "convo": "{\"id\":\"ana-ri_1791422302138_3qisj9qga\"}",
+  "waitedMsAfterHistoryLoaded": 6000,
+  "url": "/concept2cure/conversation-thread",
+  "viewport": "1440x900",
+  "pane": {
+   "x": 0,
+   "y": 0,
+   "w": 0,
+   "h": 0,
+   "display": "none",
+   "hidden": true
+  },
+  "paneHasEditor": false,
+  "paneText": "",
+  "conv": {
+   "x": 56,
+   "y": 112,
+   "w": 1000,
+   "h": 789,
+   "display": "flex",
+   "hidden": false
+  },
+  "readyNotice": "",
+  "readyNoticeRole": "status/polite",
+  "canvases": [],
+  "standInAnswer": true,
+  "stopVisible": false,
+  "confirmVisible": false,
+  "openFullEditorVisible": false,
+  "activeElement": "body"
+ },
+ "history-meta": {
+  "convo": "{\"id\":\"ana-ri_1791422302138_3qisj9qga\"}",
+  "wanted": "ana-ri_1791422302138_3qisj9qga",
+  "layout": {
+   "url": "/concept2cure/conversation-thread",
+   "viewport": "1440x900",
+   "pane": {
+    "x": 0,
+    "y": 0,
+    "w": 0,
+    "h": 0,
+    "display": "none",
+    "hidden": true
+   },
+   "paneHasEditor": false,
+   "paneText": "",
+   "conv": {
+    "x": 56,
+    "y": 112,
+    "w": 1000,
+    "h": 789,
+    "display": "flex",
+    "hidden": false
+   },
+   "readyNotice": "",
+   "readyNoticeRole": "status/polite",
+   "canvases": [],
+   "standInAnswer": true,
+   "stopVisible": false,
+   "confirmVisible": false,
+   "openFullEditorVisible": false,
+   "activeElement": "body"
+  }
+ }
+}

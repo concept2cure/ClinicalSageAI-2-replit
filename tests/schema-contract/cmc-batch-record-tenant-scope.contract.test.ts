@@ -105,7 +105,7 @@ vi.mock('../../server/db', () => ({
 // The canonical write-through and the governance gate are stubbed so that a 404
 // is attributable to tenant scope and nothing else. The signature counter is
 // what proves no e-signature was recorded for a refused release.
-const gov = vi.hoisted(() => ({ signatures: 0 }));
+const gov = vi.hoisted(() => ({ signatures: 0, signatureRows: 0 }));
 vi.mock('../../server/services/cmc-write-through', () => ({
   // The real signature returns a WriteThroughOutcome; linkToModule3 reads
   // `.ok` off it, so `undefined` here 500s the route under test.
@@ -118,6 +118,19 @@ vi.mock('../../server/routes/c2c/actions', () => ({
     return { actionId: 'a', sha256Chain: 'h' };
   },
 }));
+// The electronic_signatures row the approval writes beside its ledger sign
+// (P0-10b): counted, so a refused act is shown to have written neither.
+vi.mock('../../server/services/part11/signature-persistence', async (orig) => ({
+  ...(await orig<Record<string, unknown>>()),
+  persistGovernedActionSignature: async () => {
+    gov.signatureRows += 1;
+    return { id: 1, signedAt: new Date() };
+  },
+}));
+// The signer's role from the membership row (§11.10(g)): an admin here, so a
+// release is decided by tenant scope alone. The refusal of a role without
+// authority is pinned in server/api/cmc/__tests__/cmc-sign-signature-row.test.ts.
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'admin' }));
 
 import batchRecordRouter from '../../server/api/cmc/batchRecordRoutes';
 
@@ -194,9 +207,24 @@ beforeEach(async () => {
   await pg.exec(BASE_DDL);
   await pg.exec(TENANT_COLUMN_DDL);
   await pg.exec(parityBatchDdl());
+  // Since 88f27b53d a release is signed over the batch's recorded QC results
+  // (services/cmc/batch-release-evidence.ts) by the session's own account. The
+  // columns those two reads select, and one reviewed passing result per batch
+  // in organisation 1, so what is judged here is still the tenant predicate.
+  await pg.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+    INSERT INTO users (id, name, email) VALUES (42, 'QA Signer', 'qa-signer@example.invalid');
+    CREATE TABLE qc_testing (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, project_id TEXT,
+      batch_number TEXT, sample_id TEXT, test_method TEXT, test_results JSONB, specifications JSONB,
+      pass_fail_status TEXT, reviewed_by INTEGER);`);
+  await pg.query(
+    `INSERT INTO qc_testing (organization_id, project_id, batch_number, sample_id, test_method, pass_fail_status, reviewed_by)
+     VALUES (1, $1, $2, 'S-1', 'Assay', 'pass', 42), (1, $1, $3, 'S-2', 'Assay', 'pass', 42)`,
+    [PROJECT, OWNED_BATCH, LEGACY_BATCH],
+  );
   h.holder.pg = pg;
   h.holder.afterQuery = null;
   gov.signatures = 0;
+  gov.signatureRows = 0;
   currentTenant = 1;
 
   const owned = await pg.query<{ id: string }>(
@@ -259,6 +287,7 @@ describe('cmc_batch_records is scoped to the caller organization, and only to it
     expect(row.release_status ?? null).toBeNull();
     expect(row.released_by ?? null).toBeNull();
     expect(gov.signatures, 'a release signature was recorded against a foreign batch').toBe(0);
+    expect(gov.signatureRows).toBe(0);
   }, 60_000);
 
   // ── Positive controls: the fix must not be "scope everything to nothing" ──
@@ -280,6 +309,7 @@ describe('cmc_batch_records is scoped to the caller organization, and only to it
     expect(res.status).toBe(200);
     expect((await batchRow(legacyId)).release_status).toBe('released');
     expect(gov.signatures).toBe(1);
+    expect(gov.signatureRows).toBe(1);
   }, 60_000);
 
   it('lets the owning organization update its own row', async () => {
@@ -334,5 +364,6 @@ describe('the writes are tenant-scoped in their own right', () => {
     const row = await batchRow(ownedId);
     expect(row.release_status ?? null).toBeNull();
     expect(gov.signatures, 'a 21 CFR 11.50 release signature was manifested over a record the UPDATE did not write').toBe(0);
+    expect(gov.signatureRows).toBe(0);
   }, 60_000);
 });

@@ -1,0 +1,7 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/tenant/tenant-offboarding.ts
+  799:1  warning  File has too many lines (603). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+

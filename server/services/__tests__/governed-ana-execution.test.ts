@@ -19,7 +19,9 @@ vi.mock('../intelligence/rim-integration.js', () => ({
   integrateSignal: mocks.integrateSignal,
 }));
 
-vi.mock('../artifact-tagger.js', () => ({
+vi.mock('../artifact-tagger.js', async importOriginal => ({
+  // The refusal class is the writer's own (2026-10-01): what it throws is what is caught.
+  ArtifactWriteRefusedError: (await importOriginal<typeof import('../artifact-tagger.js')>()).ArtifactWriteRefusedError,
   tagArtifact: mocks.tagArtifact,
 }));
 
@@ -60,7 +62,13 @@ function arrangeEvaluation() {
     decisionReference: { decisionId: 'dec_1', projectId: '2', intent: 'create', outcome: 'allow', actorId: '3', timestamp: new Date().toISOString() },
   });
   mocks.hasUnresolvedGovernedDecisions.mockResolvedValue({ hasUnresolved: true, unresolvedCount: 2, escalatedCount: 1, states: { under_review: 1 } });
-  mocks.integrateSignal.mockReturnValue({ runId: 'rim_run_1' });
+  // A completed capture, as integrateSignal reports one. This returned only a
+  // runId, and the run id came back as the reference whatever the capture's
+  // status; since 2026-10-15 only a completed capture is referenced.
+  mocks.integrateSignal.mockReturnValue({
+    runId: 'rim_run_1', status: 'completed', signalsGenerated: 1,
+    persistenceStatus: 'not_attempted', trendContextIncluded: false, warnings: [],
+  });
 }
 
 describe('governed-ana-execution', () => {
@@ -152,5 +160,25 @@ describe('governed-ana-execution: a lifecycle read that cannot be answered (L186
     mocks.tagArtifact.mockResolvedValue({ artifactId: 'art_1', versionId: 'ver_1' });
     await executeGovernedAnaOperation(passingMutation);
     expect(mocks.tagArtifact).toHaveBeenCalledTimes(1);
+  });
+
+  // 2026-10-01 (D5): the writer refuses an approved/locked status, and an
+  // overwrite of an approved or locked artifact, with its reason. A refusal is
+  // reported as one, with the words, not as a bare failure.
+  it('a write the artifact writer refuses is rejected with its reason, not failed', async () => {
+    const { ArtifactWriteRefusedError } = await import('../artifact-tagger.js');
+    mocks.hasUnresolvedGovernedDecisions.mockResolvedValue({ hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} });
+    mocks.tagArtifact.mockRejectedValue(new ArtifactWriteRefusedError('FINALIZED_ARTIFACT', 'It is locked, so it is not overwritten.'));
+    const result = await executeGovernedAnaOperation(passingMutation);
+    expect(result.persistenceStatus).toBe('rejected');
+    expect(result.persistenceRefusal).toEqual({ code: 'FINALIZED_ARTIFACT', message: 'It is locked, so it is not overwritten.' });
+  });
+
+  it('any other error is still a failure, with no refusal claimed', async () => {
+    mocks.hasUnresolvedGovernedDecisions.mockResolvedValue({ hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} });
+    mocks.tagArtifact.mockRejectedValue(new Error('connection reset'));
+    const result = await executeGovernedAnaOperation(passingMutation);
+    expect(result.persistenceStatus).toBe('failed');
+    expect(result.persistenceRefusal).toBeUndefined();
   });
 });

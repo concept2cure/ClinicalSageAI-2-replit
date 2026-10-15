@@ -223,6 +223,10 @@ beforeAll(async () => {
       // gained password_changed_at (613c6e00) and, without it, every signature
       // here was refused ACCOUNT_STATE_UNKNOWN — fail-closed, correctly.
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The account standing every authenticator and the signer re-verify read
+      // gained users.sessions_ended_at (P0-4b); without it every signature is
+      // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+      'migrations/20261001_users_sessions_ended_at.sql',
       // The project the document belongs to (PF-07). createDocument checks the
       // anchor against the real regulatory_programs table (LX-20:
       // programInOrganization — this org, not soft-deleted), so the table is
@@ -236,6 +240,10 @@ beforeAll(async () => {
       // against a real table instead of a 42P01 the schema-gap check would
       // (rightly) reject. The document stays unbound, as it was before PF-07.
       'migrations/20260527_mutation_primitives.sql',
+      // public.actor_name (D3, 2026-09-29): the revision history names its
+      // author through it; after mutation primitives, which adds the
+      // audit_logs.actor_id it reads.
+      'migrations/20260929_actor_names.sql',
       'migrations/20260528_phase9_document_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       // authoring_documents.client_program_id — the column the project anchor
@@ -539,7 +547,8 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.step('freeze-document', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/freeze`),
-      ).send({ reason: 'Pre-signature freeze for IND submission' });
+        // DP-35 (2026-10-01): a freeze is signed — its meaning and the re-verified password.
+      ).send({ reason: 'Pre-signature freeze for IND submission', meaning: 'AUTHOR', password: AUTHOR_PASSWORD });
       expect(res.status).toBe(200);
       const frozen = await asUser(AUTHOR)(
         request(app).get(`/api/authoring/docs/${docId}/frozen`),
@@ -626,7 +635,9 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         [docId],
       );
       const emails = sigs.rows.map((r) => (r as { signer_email: string }).signer_email);
-      expect(emails).toEqual([AUTHOR.email, APPROVER.email]);
+      // DP-35 (2026-10-01): the freeze is itself a signature, so the author signs
+      // twice — sealing it, then attesting authorship — before the approver.
+      expect(emails).toEqual([AUTHOR.email, AUTHOR.email, APPROVER.email]);
       return { signers: sigs.rows };
     });
 
@@ -641,7 +652,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       );
       expect(res.status).toBe(200);
       const list = res.body.signatures as { signer_email: string; meaning: string; method: string }[];
-      expect(list).toHaveLength(2);
+      expect(list).toHaveLength(3); // the signed freeze, the author's e-sign, the approval
       expect(new Set(list.map((s) => s.meaning))).toEqual(new Set(['AUTHOR', 'APPROVER']));
       // What the ceremony verified: the password, no second factor enrolled.
       expect(list.every((s) => s.method === 'password')).toBe(true);
@@ -685,12 +696,18 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         signature_digest: string; covered_freeze_version: string | null;
         covered_content_hash: string | null;
       }[];
-      expect(rows.length).toBe(2);
+      expect(rows.length).toBe(3); // the signed freeze (DP-35), the author's e-sign, the approval
 
+      // Since a056eb9ea (QA 2026-10-08, j4) an APPROVER e-signature writes the
+      // approval's own snapshot first and is bound to it, so the approval names
+      // the snapshot it created. Every earlier signature names the first freeze.
+      const approvalSnapshot = froz.rows[froz.rows.length - 1] as { version: string; content_hash: string };
+      expect(froz.rows.length, 'the approval wrote its own snapshot').toBe(2);
       for (const r of rows) {
         // The link: each signature names the snapshot in force when it was made.
-        expect(r.covered_content_hash).toBe(firstFreeze.content_hash);
-        expect(r.covered_freeze_version).toBe(firstFreeze.version);
+        const inForce = r.meaning === 'APPROVER' ? approvalSnapshot : firstFreeze;
+        expect(r.covered_content_hash).toBe(inForce.content_hash);
+        expect(r.covered_freeze_version).toBe(inForce.version);
         // The binding is cryptographic, and independently recomputable.
         expect(r.signature_digest).toBe(recompute(r));
       }
@@ -798,6 +815,29 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       expect(res.body.baseline).not.toBeNull();
       expect(res.body.count ?? 0).toBe(0);
       return { status: res.status, baseline: res.body.baseline, changed: res.body.count ?? 0 };
+    });
+
+    await R.step('diff-since-export-detects-a-real-later-citation', async () => {
+      // Controlled DB fixture: verify the timezone fix has not simply hidden
+      // every change. Advance the citation relative to the DB export baseline
+      // without relying on sleeps or application/server clock agreement.
+      const citationId = randomBytes(16).toString('hex').replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+      await jdb.pool.query(
+        `INSERT INTO authoring_citations (id, section_id, tenant_id, citation_text, created_at)
+         VALUES ($1,$2,1,'Later citation',
+           (SELECT MAX(exported_at)::timestamptz + interval '1 second'
+            FROM authoring_export_history WHERE document_id = $3 AND tenant_id = 1))`,
+        [citationId, sectionId, docId],
+      );
+      try {
+        const res = await asUser(AUTHOR)(request(app).get(`/api/authoring/docs/${docId}/diff-since-export`));
+        expect(res.status).toBe(200);
+        expect(res.body.count).toBe(1);
+        expect(res.body.changed[0].id).toBe(citationId);
+        return { status: res.status, changed: res.body.count, citationId };
+      } finally {
+        await jdb.pool.query('DELETE FROM authoring_citations WHERE id = $1 AND tenant_id = 1', [citationId]);
+      }
     });
 
     await R.expectBlocked('export-cross-tenant-is-not-found', async () => {

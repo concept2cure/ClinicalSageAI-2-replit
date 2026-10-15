@@ -35,13 +35,30 @@
 import { Router, type Request, type Response } from 'express';
 import { and, eq, desc } from 'drizzle-orm';
 import { projects } from '@shared/schema';
+import { DEVICE_CLASSES, MDR_DECLARED_CLASSES } from '@shared/regulatory/device-class';
 import { db } from '../db';
 import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
 import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 
 const router = Router();
 
-const VALID_DEVICE_CLASSES = ['I', 'II', 'IIa', 'IIb', 'III'];
+/**
+ * The classes a device project may state, from the one vocabulary that governs
+ * them rather than from a literal written here.
+ *
+ * This was `['I', 'II', 'IIa', 'IIb', 'III']` — the three US classes and two of
+ * the four MDR rule classes, mixed, with nothing saying which regulator each
+ * belonged to. It therefore refused `Is`, `Im` and `Ir`, which ARE the classes
+ * a sterile, measuring or reusable-surgical Class I device declares under the
+ * MDR (Art 52(7)); a European sponsor could not state its own class through
+ * this route at all. `shared/regulatory/device-class` holds both vocabularies
+ * and says why each has the shape it has (2026-10-12 review).
+ */
+const VALID_DEVICE_CLASSES: readonly string[] = [
+  ...new Set<string>([...DEVICE_CLASSES, ...MDR_DECLARED_CLASSES]),
+];
 const MAX_NAME_LENGTH = 200;
 const MAX_TEXT_LENGTH = 2000;
 const VALID_STATUSES = ['draft', 'active', 'submitted', 'approved', 'archived'];
@@ -118,7 +135,16 @@ router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
       deviceName,
       deviceType = 'medical-device',
       manufacturer = '',
-      deviceClass = 'II',
+      /* NO DEFAULT. This read `deviceClass = 'II'`, so a create that did not
+         state a class produced a device project whose record ASSERTED Class II
+         — the class that decides the premarket route, the evidence burden and,
+         in Europe, whether a notified body is involved at all. A risk class is
+         a verdict, and this repository's second rule is that verdicts come
+         from deterministic engines; inventing one in a request default is the
+         same defect as asking a model for it. An unstated class is now stored
+         as unstated, which the surfaces that read it already render honestly
+         ("device class not set"). */
+      deviceClass,
       intendedUse = '',
       state = {},
       attachedDocuments = [],
@@ -134,7 +160,13 @@ router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
         .status(400)
         .json({ error: `deviceName must be ${MAX_NAME_LENGTH} characters or fewer` });
     }
-    if (!VALID_DEVICE_CLASSES.includes(String(deviceClass))) {
+    /* A class that was given must be one of the two vocabularies; a class that
+       was not given is not a validation failure. A device project is created
+       before the classification is determined more often than not, and
+       demanding one here would only move the invention from this file to the
+       caller. */
+    const statedClass = deviceClass === undefined || deviceClass === null ? '' : String(deviceClass).trim();
+    if (statedClass !== '' && !VALID_DEVICE_CLASSES.includes(statedClass)) {
       return res
         .status(400)
         .json({ error: `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}` });
@@ -172,7 +204,9 @@ router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
         progress: 0,
         metadata: {
           manufacturer: String(manufacturer).trim(),
-          deviceClass: String(deviceClass),
+          /* Explicitly null rather than absent: "nobody has stated a class" and
+             "the writer forgot the field" must not read the same. */
+          deviceClass: statedClass === '' ? null : statedClass,
           intendedUse: String(intendedUse).trim(),
           deviceType: String(deviceType).trim(),
           attachedDocuments,
@@ -228,8 +262,14 @@ const PATCH_RULES: ReadonlyArray<readonly [string, (value: unknown) => string | 
     if (trimmed.length === 0) return 'deviceName cannot be empty';
     return trimmed.length > MAX_NAME_LENGTH ? `deviceName must be ${MAX_NAME_LENGTH} characters or fewer` : null;
   }],
+  /* An explicit null WITHDRAWS the class. A sponsor who stated one in error
+     must be able to say so: without this, a wrong class could be exchanged for
+     another wrong class but never taken back, and the record would carry a
+     determination nobody stands behind. */
   ['deviceClass', value =>
-    (!VALID_DEVICE_CLASSES.includes(String(value)) ? `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}` : null)],
+    (value !== null && !VALID_DEVICE_CLASSES.includes(String(value))
+      ? `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}, or null to withdraw it`
+      : null)],
   ['manufacturer', value =>
     (String(value).length > MAX_TEXT_LENGTH ? `manufacturer must be ${MAX_TEXT_LENGTH} characters or fewer` : null)],
   ['intendedUse', value =>
@@ -310,7 +350,7 @@ router.put('/:id', requireEditorAccess, async (req: Request, res: Response) => {
     const mergedMeta = {
       ...prevMeta,
       ...(manufacturer !== undefined && { manufacturer: String(manufacturer).trim() }),
-      ...(deviceClass !== undefined && { deviceClass: String(deviceClass) }),
+      ...(deviceClass !== undefined && { deviceClass: deviceClass === null ? null : String(deviceClass) }),
       ...(intendedUse !== undefined && { intendedUse: String(intendedUse).trim() }),
       ...(deviceType !== undefined && { deviceType: String(deviceType).trim() }),
       ...(attachedDocuments !== undefined && { attachedDocuments }),
@@ -372,11 +412,39 @@ router.delete('/:id', requireEditorAccess, async (req: Request, res: Response) =
     const actorId = governedActorId(req);
     if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
 
-    const [deleted] = await db
-      .delete(projects)
-      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id)))
-      .returning();
-
+    /* A program's anchor row, and a project holding documents that are
+       records, is never hard-deleted here (PF-08; PF-13 founder decision
+       2026-09-26): the delete cascades them away. Judged and deleted in one
+       transaction, and only this router's own device projects: it filtered
+       by id and organization alone, so it could delete any project. */
+    const outcome = await db.transaction(async (tx) => {
+      /* Ownership first, as the two sibling deletes already do. The holds read
+         judges every row the cascade would remove, whatever its organization,
+         and its 409 names the anchored programs. Asked first about another
+         organization's project id, it could answer with that organization's
+         program ids before the org-scoped delete below said 404 (RLS hides
+         those rows when enforced; this does not depend on it). */
+      const [own] = await tx
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id), eq(projects.type, 'medical-device')))
+        .limit(1);
+      if (!own) return { deleted: undefined } as const;
+      const refused = projectDeletionRefusal(
+        await projectDeletionHolds(queryableFromDrizzle(tx), { projectIds: [projectId] }),
+        'project',
+      );
+      if (refused) return { refused } as const;
+      const [row] = await tx
+        .delete(projects)
+        .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id), eq(projects.type, 'medical-device')))
+        .returning();
+      return { deleted: row } as const;
+    });
+    if ('refused' in outcome && outcome.refused) {
+      return res.status(outcome.refused.status).json(outcome.refused.body);
+    }
+    const deleted = 'deleted' in outcome ? outcome.deleted : undefined;
     if (!deleted) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -404,6 +472,12 @@ router.delete('/:id', requireEditorAccess, async (req: Request, res: Response) =
     console.log('✅ Deleted device project:', projectId, `(org=${organization_id})`);
     res.json({ success: true, id: projectId, auditTrail });
   } catch (error: any) {
+    // Another store keeps a record under the project; the delete rolled back (PF-13).
+    const blocked = projectDeleteBlockedRefusal(error, 'project');
+    if (blocked) {
+      console.warn('Device project delete refused by the database: a store keeps records under it', blocked.heldBy);
+      return res.status(blocked.status).json(blocked.body);
+    }
     console.error('Failed to delete device project:', error);
     res.status(500).json({ error: 'Failed to delete device project' });
   }

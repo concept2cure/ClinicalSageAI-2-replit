@@ -1,0 +1,8 @@
+## npm run ci:dependency-risk after the change
+Dependency risk gate: PASS; 4 Critical/High advisory occurrence(s), all reviewed.
+Scanner: npm audit 10.9.7; Node v22.22.2; lockfile 00d0e320e66078d2c2a2bbb29b80c13e9ec5611d7ffba8d2876d11f75e7b663d
+  GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+  GHSA-W3RX-R6R6-PGPR image-size high: unreachable
+  GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+  GHSA-W3RX-R6R6-PGPR image-size high: unreachable
+exit=0

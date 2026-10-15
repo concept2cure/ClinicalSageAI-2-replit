@@ -18,7 +18,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
-import { programInOrganization } from '../c2c/program-access';
+import { resolveOpenProgram } from '../c2c/program-access';
 import type { AuthoringPool } from './authoring-documents';
 import {
   createDocumentFromDraft,
@@ -30,7 +30,6 @@ import type { AuthoringAuditContext } from './authoring-evidence';
 
 const logger = createScopedLogger('draft-authoring-document-tool');
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The refusal, verbatim, when no project is open. */
 export const DRAFT_AUTHORING_DOCUMENT_NO_PROJECT =
@@ -49,7 +48,10 @@ export interface DraftToolContext {
 }
 
 export interface DraftToolResult {
+  projectSourceReferences: NonNullable<import('./authoring-from-draft').DocumentProvenance['projectSourceReferences']>;
   status: 'generated';
+  saved: true;
+  documentStatus: 'draft';
   authoringDocId: string;
   programId: string;
   title: string;
@@ -61,32 +63,11 @@ export interface DraftToolResult {
 }
 
 /**
- * Resolve the open program as a regulatory_programs UUID the organization
- * owns. Null when there is none — the caller refuses.
- *
- * Both branches end at the same check. The legacy integer project's anchor
- * (`projects.regulatory_program_id`) is a soft link with no key, so a row can
- * name another organization's program, a missing one or a deleted one; it is
- * never trusted on its own (PF-04 precondition P2).
+ * The open program: one resolver, in services/c2c/program-access.ts beside the
+ * membership check it ends at (PF-10 S7 moved it there so the catalog tools use
+ * the same one). Re-exported here for the callers that import it from the tool.
  */
-export async function resolveOpenProgram(pool: AuthoringPool, ctx: DraftToolContext): Promise<string | null> {
-  const orgId = Number(ctx.organizationId);
-  const ref = typeof ctx.projectRef === 'string' ? ctx.projectRef.trim() : '';
-  if (ref && UUID_RE.test(ref)) {
-    return (await programInOrganization(pool, ref, orgId)) ? ref : null;
-  }
-  const legacy = Number(ctx.projectId);
-  if (Number.isSafeInteger(legacy) && legacy > 0) {
-    const anchored = await pool.query(
-      `SELECT regulatory_program_id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [legacy, orgId],
-    );
-    const programId = anchored.rows[0]?.regulatory_program_id;
-    if (typeof programId !== 'string' || !UUID_RE.test(programId)) return null;
-    return (await programInOrganization(pool, programId, orgId)) ? programId : null;
-  }
-  return null;
-}
+export { resolveOpenProgram } from '../c2c/program-access';
 
 /** The acting user's email for the audit row — their own row, or 'unknown' as the router records an absent one. */
 async function actorEmail(pool: AuthoringPool, userId: number): Promise<string | null> {
@@ -119,6 +100,24 @@ function summaryContent(input: CreateDocumentFromDraftInput): string {
 }
 
 /**
+ * The drafted figures no cited source states (S5a), said to AnA in the result
+ * she relays: each is named with its section, so she does not present it to
+ * the user as the source's. Empty when every figure was found, or when the
+ * draft cited no source (then nothing was checked, and the result's
+ * projectSourceReferences is empty).
+ */
+export function unverifiedFigureNote(refs: import('./authoring-from-draft').DocumentProvenance['projectSourceReferences']): string {
+  const missing = (refs ?? []).flatMap(r =>
+    (r.figures?.figures ?? []).filter(f => f.status === 'unverified').map(f => `${f.text} (${r.sectionCode})`));
+  const total = (refs ?? []).reduce((n, r) => n + (r.figures?.unverified ?? 0), 0);
+  if (total === 0) return '';
+  const shown = missing.slice(0, 10).join('; ');
+  return ` ${total} figure(s) in the draft are not stated in the sources it cites: ${shown}` +
+    `${total > 10 ? `; and ${total - 10} more` : ''}. Tell the user they are unverified, and do not present them as ` +
+    'the sources\u2019 figures. The editor lists them.';
+}
+
+/**
  * The tool body. Returns the JSON string the model receives; `{ error }` for
  * every refusal, so telemetry classifies it as degraded rather than a crash.
  */
@@ -136,7 +135,12 @@ export async function draftAuthoringDocumentTool(
   const provenance: ProvenanceInput = { source: 'ana' };
   if (ctx.threadId) provenance.conversationId = String(ctx.threadId);
   if (ctx.turnId) provenance.turnId = String(ctx.turnId);
-  if (ctx.model) provenance.model = String(ctx.model);
+  /* `ctx.model` is NOT set here any more (round 15, SEC-A-7 door 2). The model
+     recorded on a drafted document comes from the turn record this draft names,
+     or from nothing — one rule, no privileged channel beside it. Setting it
+     here would be inert in any case: `createDocumentFromDraft` parses the
+     provenance of both its callers, and `parseProvenance` no longer accepts
+     `model`. Leaving the line would read as attribution that still happens. */
 
   const parsed = parseDraftInput({ ...input, programId, provenance });
   if (!parsed.ok) return JSON.stringify({ error: parsed.error });
@@ -158,7 +162,10 @@ export async function draftAuthoringDocumentTool(
     );
     if (outcome.kind === 'refused') return JSON.stringify({ error: outcome.error });
     const result: DraftToolResult = {
+      projectSourceReferences: outcome.provenance.projectSourceReferences ?? [],
       status: 'generated',
+      saved: true,
+      documentStatus: 'draft',
       authoringDocId: String(outcome.document.id),
       programId,
       title: parsed.value.title,
@@ -166,8 +173,9 @@ export async function draftAuthoringDocumentTool(
       ...(parsed.value.documentType ? { documentType: parsed.value.documentType } : {}),
       content: summaryContent(parsed.value),
       message:
-        `Drafted '${parsed.value.title}' as an authoring document (${outcome.sections.length} section(s)) in the open project. ` +
-        'It is a draft in the editor; nothing is filed in the vault until someone files it.',
+        `Saved '${parsed.value.title}' as an authoring draft (${outcome.sections.length} section(s)) in the open project. ` +
+        'It is a draft in the editor; nothing is filed in the vault until someone files it.' +
+        unverifiedFigureNote(outcome.provenance.projectSourceReferences),
     };
     return JSON.stringify(result);
   } catch (err) {

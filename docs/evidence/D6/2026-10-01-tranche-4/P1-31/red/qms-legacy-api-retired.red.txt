@@ -1,0 +1,382 @@
+# HEAD 747f7c68, before the change; 2026-10-01T03:06:28Z
+# NODE_OPTIONS=--max-old-space-size=2560 npx vitest run server/routes/__tests__/qms-legacy-api-retired.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts
+{
+  "timestamp": "2026-10-01T03:06:04.780Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:06:04.781Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts
+{
+  "timestamp": "2026-10-01T03:06:04.781Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/qms-legacy-api-retired.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/qms-legacy-api-retired.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Loaded 0 academic documents
+
+
+
+
+
+
+
+
+{
+  "timestamp": "2026-10-01T03:06:20.735Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+{
+  "timestamp": "2026-10-01T03:06:20.734Z",
+  "level": "info",
+  "context": {}
+}
+
+{
+  "timestamp": "2026-10-01T03:06:20.736Z",
+  "level": "info",
+  "context": {}
+}
+
+{
+  "timestamp": "2026-10-01T03:06:20.876Z",
+  "level": "info",
+  "context": {}
+}
+
+   → expected { status: 422, …(3) } to deeply equal { status: 404, …(3) }
+   → expected { status: 200, …(3) } to deeply equal { status: 404, …(3) }
+   → expected { status: 200, state: 'revoked', …(2) } to deeply equal { Object (status, state, ...) }
+   → expected { status: 200, …(3) } to deeply equal { status: 404, state: 'pending', …(2) }
+   → expected { status: 200, …(3) } to deeply equal { status: 404, …(3) }
+   → /api/qms/documents: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot requalify or revoke a supplier through PATCH /api/mdx/qms/suppliers/12 14ms
+   → expected { status: 200, state: 'revoked', …(2) } to deeply equal { Object (status, state, ...) }
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot disposition nonconforming product through PATCH /api/mdx/qms/nonconforming/13/disposition 7ms
+   → expected { status: 200, …(3) } to deeply equal { status: 403, state: 'pending', …(2) }
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot qualify a supplier through POST /api/mdx/qms/suppliers 8ms
+   → expected { status: 201, state: null, …(2) } to deeply equal { status: 403, state: null, …(2) }
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot record a nonconformance through POST /api/mdx/qms/nonconforming 6ms
+   → expected { status: 201, state: null, …(2) } to deeply equal { status: 403, state: null, …(2) }
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot log an internal audit through POST /api/mdx/qms/internal-audits 5ms
+   → expected { status: 201, state: null, …(2) } to deeply equal { status: 403, state: null, …(2) }
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot close out an internal audit through PATCH /api/mdx/qms/internal-audits/14 4ms
+   → expected { status: 200, state: 'closed', …(2) } to deeply equal { status: 403, …(3) }
+ × server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot sign off a management review through POST /api/mdx/qms/management-reviews 4ms
+   → expected { status: 201, state: null, …(2) } to deeply equal { status: 403, state: null, …(2) }
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot retire a document (already gated by 6582e3a3) through POST /api/mdx/qms/documents/11/retire 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still revokes a supplier, and the change is audited 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a member still dispositions nonconforming product, and the change is audited 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still routes a draft for review: the twin of transition to=in_review 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer still acknowledges training on a procedure: that is their own record, not a governed change 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+AssertionError: expected { status: 422, …(3) } to deeply equal { status: 404, …(3) }
+
+- Expected
++ Received
+
+  {
+    "auditRows": 0,
+    "state": "effective",
+-   "status": 404,
++   "status": 422,
+    "writes": 0,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:164:10
+    162|       const app = await productionApp();
+    163|       expect(await outcome(request(app).post(w.path).send(w.body), w.s…
+    164|         .toEqual({ status: 404, state: w.before, writes: 0, auditRows:…
+       |          ^
+    165|     });
+    166|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+AssertionError: expected { status: 200, …(3) } to deeply equal { status: 404, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "auditRows": 0,
+-   "state": "effective",
+-   "status": 404,
+-   "writes": 0,
++   "auditRows": 1,
++   "state": "superseded",
++   "status": 200,
++   "writes": 1,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:164:10
+    162|       const app = await productionApp();
+    163|       expect(await outcome(request(app).post(w.path).send(w.body), w.s…
+    164|         .toEqual({ status: 404, state: w.before, writes: 0, auditRows:…
+       |          ^
+    165|     });
+    166|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+AssertionError: expected { status: 200, state: 'revoked', …(2) } to deeply equal { Object (status, state, ...) }
+
+- Expected
++ Received
+
+  {
+    "auditRows": 0,
+-   "state": "approved",
+-   "status": 404,
+-   "writes": 0,
++   "state": "revoked",
++   "status": 200,
++   "writes": 1,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:164:10
+    162|       const app = await productionApp();
+    163|       expect(await outcome(request(app).post(w.path).send(w.body), w.s…
+    164|         .toEqual({ status: 404, state: w.before, writes: 0, auditRows:…
+       |          ^
+    165|     });
+    166|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+AssertionError: expected { status: 200, …(3) } to deeply equal { status: 404, state: 'pending', …(2) }
+
+- Expected
++ Received
+
+  {
+    "auditRows": 0,
+-   "state": "pending",
+-   "status": 404,
+-   "writes": 0,
++   "state": "use_as_is",
++   "status": 200,
++   "writes": 1,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:164:10
+    162|       const app = await productionApp();
+    163|       expect(await outcome(request(app).post(w.path).send(w.body), w.s…
+    164|         .toEqual({ status: 404, state: w.before, writes: 0, auditRows:…
+       |          ^
+    165|     });
+    166|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+AssertionError: expected { status: 200, …(3) } to deeply equal { status: 404, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "auditRows": 0,
+-   "state": "effective",
+-   "status": 404,
+-   "writes": 0,
++   "auditRows": 1,
++   "state": "superseded",
++   "status": 200,
++   "writes": 1,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:172:8
+    170|     const app = await productionApp();
+    171|     expect(await outcome(request(app).post('/api/qms/documents/11/tran…
+    172|       .toEqual({ status: 404, state: 'effective', writes: 0, auditRows…
+       |        ^
+    173|   });
+    174|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+AssertionError: /api/qms/documents: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:178:53
+    176|     const app = await productionApp();
+    177|     for (const p of ['/api/qms/documents', '/api/qms/suppliers', '/api…
+    178|       expect((await request(app).get(p)).status, p).toBe(404);
+       |                                                     ^
+    179|     }
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot requalify or revoke a supplier through PATCH /api/mdx/qms/suppliers/12
+AssertionError: expected { status: 200, state: 'revoked', …(2) } to deeply equal { Object (status, state, ...) }
+
+- Expected
++ Received
+
+  {
+-   "auditRows": 0,
+-   "state": "approved",
+-   "status": 403,
+-   "writes": 0,
++   "auditRows": 1,
++   "state": "revoked",
++   "status": 200,
++   "writes": 1,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:205:10
+    203|       const app = await productionApp();
+    204|       expect(await outcome(request(app)[c.method](c.path).send(c.body)…
+    205|         .toEqual({ status: 403, state: c.before, writes: 0, auditRows:…
+       |          ^
+    206|     });
+    207|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot disposition nonconforming product through PATCH /api/mdx/qms/nonconforming/13/disposition
+AssertionError: expected { status: 200, …(3) } to deeply equal { status: 403, state: 'pending', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "auditRows": 0,
+-   "state": "pending",
+-   "status": 403,
+-   "writes": 0,
++   "auditRows": 1,
++   "state": "use_as_is",
++   "status": 200,
++   "writes": 1,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:205:10
+    203|       const app = await productionApp();
+    204|       expect(await outcome(request(app)[c.method](c.path).send(c.body)…
+    205|         .toEqual({ status: 403, state: c.before, writes: 0, auditRows:…
+       |          ^
+    206|     });
+    207|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot qualify a supplier through POST /api/mdx/qms/suppliers
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot record a nonconformance through POST /api/mdx/qms/nonconforming
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot log an internal audit through POST /api/mdx/qms/internal-audits
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot sign off a management review through POST /api/mdx/qms/management-reviews
+AssertionError: expected { status: 201, state: null, …(2) } to deeply equal { status: 403, state: null, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "auditRows": 0,
++   "auditRows": 1,
+    "state": null,
+-   "status": 403,
+-   "writes": 0,
++   "status": 201,
++   "writes": 1,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:205:10
+    203|       const app = await productionApp();
+    204|       expect(await outcome(request(app)[c.method](c.path).send(c.body)…
+    205|         .toEqual({ status: 403, state: c.before, writes: 0, auditRows:…
+       |          ^
+    206|     });
+    207|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot close out an internal audit through PATCH /api/mdx/qms/internal-audits/14
+AssertionError: expected { status: 200, state: 'closed', …(2) } to deeply equal { status: 403, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "auditRows": 0,
+-   "state": "in_progress",
+-   "status": 403,
+-   "writes": 0,
++   "auditRows": 1,
++   "state": "closed",
++   "status": 200,
++   "writes": 1,
+  }
+
+ ❯ server/routes/__tests__/qms-legacy-api-retired.test.ts:205:10
+    203|       const app = await productionApp();
+    204|       expect(await outcome(request(app)[c.method](c.path).send(c.body)…
+    205|         .toEqual({ status: 403, state: c.before, writes: 0, auditRows:…
+       |          ^
+    206|     });
+    207|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 5 passed (18)
+   Start at  03:06:00
+   Duration  20.42s (transform 14.17s, setup 135ms, import 12.88s, tests 6.89s, environment 0ms)
+

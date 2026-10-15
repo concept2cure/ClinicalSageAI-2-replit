@@ -26,12 +26,26 @@
  *
  * Fail-soft per org, loud per process: one org's failure never stops the
  * sweep, and the boot path warns explicitly when this fallback is standing in.
+ * A tick in which any org failed is recorded as a FAILED run (with the count),
+ * not ok:true.
+ *
+ * Multi-process: every server process starts this heartbeat (production runs
+ * three). Each tick runs under a cross-process lease (db/scheduledOnce), so
+ * ticks never overlap — which is what makes the check-then-insert above safe:
+ * the per-day guard is only racy when two ticks run at once. A process whose
+ * tick finds the lease held skips it; the holder is doing the work.
+ *
+ * Tenant scope: each org's digest runs in THAT org's job scope
+ * (runWithOrgJobScope — the same one the Bull trigger uses). It used to run
+ * with none, and under RLS_ENFORCE=on every digest query failed closed: on a
+ * Redis-less deploy no proactive digest was ever created.
  *
  * @module server/services/digest/digest-heartbeat
  */
 
 import { runProactiveDigest, PROACTIVE_DIGEST_CATEGORY } from './proactive-digest.js';
-import { runWithSystemTenantScope } from '../../db/tenantStore';
+import { runWithOrgJobScope, runWithSystemTenantScope } from '../../db/tenantStore';
+import { runScheduledOnce } from '../../db/scheduledOnce';
 import {
   recordBackgroundJobRun,
   registerBackgroundJob,
@@ -90,11 +104,19 @@ function rolloverAttempts(dayKey: string): void {
  * One heartbeat pass. Exported for deterministic testing; production reaches
  * it only through the interval. `now` is injectable for the same reason.
  */
+export interface DigestHeartbeatTickResult {
+  orgsChecked: number;
+  digestsCreated: number;
+  /** Orgs whose digest threw this tick (they retry next tick). */
+  orgsFailed: number;
+  skipped: 'outside_window' | null;
+}
+
 export async function runDigestHeartbeatTick(
   now: Date = new Date()
-): Promise<{ orgsChecked: number; digestsCreated: number; skipped: 'outside_window' | null }> {
+): Promise<DigestHeartbeatTickResult> {
   if (!isWithinDigestWindow(now)) {
-    return { orgsChecked: 0, digestsCreated: 0, skipped: 'outside_window' };
+    return { orgsChecked: 0, digestsCreated: 0, orgsFailed: 0, skipped: 'outside_window' };
   }
   rolloverAttempts(now.toISOString().slice(0, 10));
 
@@ -109,6 +131,7 @@ export async function runDigestHeartbeatTick(
   const windowStart = digestWindowStart(now);
   let orgsChecked = 0;
   let digestsCreated = 0;
+  let orgsFailed = 0;
 
   for (const { id: orgId } of rows) {
     if (attemptedOrgs.has(orgId)) continue;
@@ -128,7 +151,9 @@ export async function runDigestHeartbeatTick(
         continue;
       }
 
-      const result = await runProactiveDigest(orgId, undefined, now);
+      const result = await runWithOrgJobScope(orgId, 'digest-heartbeat:proactive_digest', () =>
+        runProactiveDigest(orgId, undefined, now)
+      );
       // quiet_hours is the one skip that must RETRY on a later tick — the org's
       // own quiet window can end while today's digest window is still open.
       if (result.skipped !== 'quiet_hours') {
@@ -138,6 +163,7 @@ export async function runDigestHeartbeatTick(
     } catch (err) {
       // Fail-soft per org: one org's failure never starves the rest. Not
       // marked attempted — a transient failure retries on the next tick.
+      orgsFailed++;
       console.warn(
         `[digest-heartbeat] digest failed for org ${orgId} (will retry next tick):`,
         err instanceof Error ? err.message : err
@@ -145,20 +171,30 @@ export async function runDigestHeartbeatTick(
     }
   }
 
-  return { orgsChecked, digestsCreated, skipped: null };
+  return { orgsChecked, digestsCreated, orgsFailed, skipped: null };
 }
 
 async function tick(): Promise<void> {
   try {
-    const result = await runDigestHeartbeatTick();
+    const outcome = await runScheduledOnce('proactive-digest-heartbeat', () => runDigestHeartbeatTick());
+    if (!outcome.ran) {
+      // Another process holds the lease and is running this tick's work.
+      recordBackgroundJobRun(BACKGROUND_JOB.PROACTIVE_DIGEST_HEARTBEAT, { ok: true, processed: 0 });
+      return;
+    }
+    const result = outcome.value;
     lastTick = {
       at: new Date(),
       orgsChecked: result.orgsChecked,
       digestsCreated: result.digestsCreated,
     };
     recordBackgroundJobRun(BACKGROUND_JOB.PROACTIVE_DIGEST_HEARTBEAT, {
-      ok: true,
+      ok: result.orgsFailed === 0,
       processed: result.digestsCreated,
+      error:
+        result.orgsFailed > 0
+          ? `digest failed for ${result.orgsFailed} of ${result.orgsChecked} org(s) this tick`
+          : undefined,
     });
     if (result.digestsCreated > 0) {
       console.log(

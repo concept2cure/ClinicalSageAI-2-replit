@@ -1,0 +1,201 @@
+# Track GW (H3) — mutation pass on the final tree
+
+Each mutation replaces one anchor (present exactly once), runs the named tests with --maxWorkers=2, and restores the file byte-for-byte. Before restoring, the file must still carry the mutated hash (no other writer touched it); after, its sha256 must equal the original. [over] marks an overcorrection: a change that goes too far, which a control must catch. M1–M15 are the build's 15 mutations re-aimed at the final code; R1–R28 cover the review fixes. Harness: scratchpad mutate-review.py (R28 run separately, same restore rule).
+
+Result: 43 of 43 mutations red, 0 survived, 0 not applied.
+
+M1 governingEntry check removed: RED (exit 1) Tests  6 failed | 9 passed (15)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on 
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-o
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails 5m
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not se
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an appr
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+M2 [over] nominal pin excluded in every environment: RED (exit 1) Tests  2 failed | 16 passed (18)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before 
+    × server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > outside production, every cell is served exactly as before 747ms
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+M3 [over] PQ required outside production too: RED (exit 1) Tests  5 failed | 15 passed (20)  [server/services/ai-governance/approved-models.ts]
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > outside production, drafting is served by the flagship as before 16ms
+    × server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > outside production, every cell is served exactly as before 840ms
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > control: outside production the same confirmed write reaches its handler 5ms
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > outside production approvedForHighRisk is enough, as before 6ms
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > the served-model check the gate calls reads it: false in production today, true
+    restored server/services/ai-governance/approved-models.ts sha256=0da5c9704ea8e9c4… verified
+M4 [over] review gated as drafting: RED (exit 1) Tests  1 failed | 10 passed (11)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, high-risk review runs on a PQ-pending approved model 4ms
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+M5 PQ gate removed at the gateway: RED (exit 1) Tests  6 failed | 5 passed (11)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > strategy: refused in plain words, terminal, nothing disp
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > explicit: naming the flagship does not reach it 7ms
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > every declared risk tier: drafting is high-risk at all o
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > no environment variable turns it off in production 3ms
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > the refusal is ledgered as a governance refusal, and the
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+M6 provider ignored when naming a model: RED (exit 1) Tests  2 failed | 50 passed (52)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no su
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > is refused, terminal, naming the provider;
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+M7 explicit not-governed refusal falls through to strategy: RED (exit 1) Tests  4 failed | 11 passed (15)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not se
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, a
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it 4ms
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is r
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+M8 [over] unbound refusal applied outside production: RED (exit 1) Tests  1 failed | 8 passed (9)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: outside production an unbound call is served, as befo
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+M9 [over] platform scope treated as no tenant: RED (exit 1) Tests  2 failed | 7 passed (9)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is not charged to the shared bucket: platform work after it st
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: platform work in the explicit system scope is served 
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+M10 rate bucket keyed on organizationId alone (HEAD rule): RED (exit 1) Tests  3 failed | 43 passed (46)  [server/services/ai-gateway/policy.ts]
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate 
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [3] one tenant, one bucket, measured at the default limit (100 a minute per process) > an Auto turn at its 20-round ceiling has 80 ca
+    restored server/services/ai-gateway/policy.ts sha256=057a27cd2cfbb377… verified
+M11 rate refusal not ledgered: RED (exit 1) Tests  2 failed | 7 passed (9)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit 7ms
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope 4ms
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+M12 not-governed refusal not ledgered: RED (exit 1) Tests  2 failed | 13 passed (15)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, a
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the v
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+M13 digest ignored: every local entry nominal: RED (exit 1) Tests  1 failed | 14 passed (15)  [server/services/ai-governance/approved-models.ts]
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest i
+    restored server/services/ai-governance/approved-models.ts sha256=0da5c9704ea8e9c4… verified
+M14 fallback ladder not governed: RED (exit 1) Tests  3 failed | 23 passed (26)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, the fallback ladder does not walk from a qualified model to a PQ-pending one 11ms
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails 14
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder 6ms
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+M15 error map: PQ refusal unclassified: RED (exit 1) Tests  2 failed | 46 passed (48)  [server/services/ai-gateway/gateway-error-map.ts]
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > the refusal is ledgered as a governance refusal, and the
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > the PQ refusal is MODEL_NOT_QUALIFIED at 403, in the plain words — not a 5
+    restored server/services/ai-gateway/gateway-error-map.ts sha256=8cc63a5b751020bc… verified
+R1 [1/9/19] governed-write gate without the PQ clause: RED (exit 1) Tests  3 failed | 3 passed (6)  [server/services/ai-governance/approved-models.ts]
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses a write produced by an approved but PQ-pending model; nothing is stored 19ms
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses every governed-write tool the same way 5ms
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > the served-model check the gate calls reads it: false in production today, true
+    restored server/services/ai-governance/approved-models.ts sha256=0da5c9704ea8e9c4… verified
+R2 [over] governed-write gate refuses outside production too: RED (exit 1) Tests  5 failed | 42 passed (47)  [server/services/ai-governance/approved-models.ts]
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > control: outside production the same confirmed write reaches its handler 4ms
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > the served-model check the gate calls reads it: false in production today, true
+    × server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > an approved model is not refused by the gate 6ms
+    × server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Opus clears the model gate — and, 
+    × server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > and on a person's yes, the Opus-written content reach
+    restored server/services/ai-governance/approved-models.ts sha256=0da5c9704ea8e9c4… verified
+R3 [2/11] deterministic mode skips governance in production: RED (exit 1) Tests  4 failed | 33 passed (37)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > AI_GATEWAY_DETERMINISTIC=true: high-risk drafting is r
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > DETERMINISTIC_MODE=true: high-risk drafting is refused
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > switched on at runtime (setDeterministicMode), the sam
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > with no provider configured at all (the CI boot smoke)
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R4 [over] deterministic mode refused outright in production: RED (exit 1) Tests  5 failed | 32 passed (37)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > AI_GATEWAY_DETERMINISTIC=true: high-risk drafting is r
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > DETERMINISTIC_MODE=true: high-risk drafting is refused
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > switched on at runtime (setDeterministicMode), the sam
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > with no provider configured at all (the CI boot smoke)
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > control: production deterministic chat is still the fi
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R5 [21] PQ refusal reuses the approval code: RED (exit 1) Tests  8 failed | 42 passed (50)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > strategy: refused in plain words, terminal, nothing disp
+    × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > the refusal is ledgered as a governance refusal, and the
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > AI_GATEWAY_DETERMINISTIC=true: high-risk drafting is r
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > DETERMINISTIC_MODE=true: high-risk drafting is refused
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > its code is MODEL_NOT_PQ_QUALIFIED: 
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R6 [21] council has no PQ branch: RED (exit 1) Tests  1 failed | 1 passed (2)  [server/services/multi-agent-council.ts]
+    × server/services/__tests__/pq-refusal-consumers.test.ts > the drafting council > tells the author no performance-qualified model is available — not that none is approved "right now" 22ms
+    restored server/services/multi-agent-council.ts sha256=0004b7cecc349c02… verified
+R7 [21] Module 3 has no PQ reason: RED (exit 1) Tests  1 failed | 1 passed (2)  [server/services/cmc/module3-narrative-builder.ts]
+    × server/services/__tests__/pq-refusal-consumers.test.ts > the Module 3 builder > records the fallback as model_not_pq_qualified, not model_not_approved 16ms
+    restored server/services/cmc/module3-narrative-builder.ts sha256=323fd223e885a1ce… verified
+R8 [22] every withheld row recorded as a PQ fault: RED (exit 1) Tests  1 failed | 36 passed (37)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > explicit: a model withheld because i
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+R9 [22] nothing-capable not distinguished in the ledger: RED (exit 1) Tests  1 failed | 36 passed (37)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > no capable model configured is its o
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+R10 [5/23] governance refusal answered 503: RED (exit 1) Tests  1 failed | 36 passed (37)  [server/services/ai-gateway/gateway-error-map.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > the PQ refusal is MODEL_NOT_QUALIFIED at 403, in the plain words — not a 5
+    restored server/services/ai-gateway/gateway-error-map.ts sha256=8cc63a5b751020bc… verified
+R11 [25] unknown-model told a real model would have served: RED (exit 1) Tests  1 failed | 36 passed (37)  [server/services/ai-gateway/gateway-error-map.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > an unknown model says the platform does not have it, not that a real model
+    restored server/services/ai-gateway/gateway-error-map.ts sha256=8cc63a5b751020bc… verified
+R12 [26] rate refusal thrown as a plain policy error: RED (exit 1) Tests  3 failed | 34 passed (37)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > a rate-limit refusal carries its code and is answered 429 RATE_LIMITED, as
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > with an ambient tenant, the call binds to it and is charged to it 4ms
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [3] one tenant, one bucket, measured at the default limit (100 a minute per process) > an Auto turn at its 20-round ceiling has 80 ca
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R13 [24] admission told it is the organization policy: RED (exit 1) Tests  1 failed | 36 passed (37)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [24] a call with no tenant is refused as a platform fault, not as the organization's policy > its reason code and words name the miss
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R14 [24] admission ledgered under tenantPlacement: RED (exit 1) Tests  2 failed | 44 passed (46)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > leaves one ledger row saying it was refused at admission for w
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [24] a call with no tenant is refused as a platform fault, not as the organization's policy > its ledger row names tenant binding, an
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R15 [13] any non-nullish organizationId binds: RED (exit 1) Tests  8 failed | 29 passed (37)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "": refused at admission in production 11ms
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > 0: refused at admission in production 3ms
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "undefined": refused at admission in production 3ms
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > null: refused at admission in production 2ms
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > -3: refused at admission in production 6ms
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R16 [over] a numeric-string id does not bind: RED (exit 1) Tests  1 failed | 36 passed (37)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > control: a numeric string id is a binding 14ms
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R17 [6] keyless check reads NODE_ENV exactly: RED (exit 1) Tests  2 failed | 36 passed (38)  [server/services/ai-gateway/gateway.ts]
+    × tests/audit-ai-gateway-keyless-prod.test.ts > AI gateway fails closed on keyless production > throws in production when no provider is available, before any demo fallback 9ms
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [6] production is read one way across the gateway (NODE_ENV "Production") > a keyless deploy refuses instead of serving demo content 
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R18 [12] metering reads the explicit id only: RED (exit 1) Tests  1 failed | 36 passed (37)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > an ambient-bound served call is metered under the ambient tenant 14ms
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R19 [16] provider with no row not refused: RED (exit 1) Tests  1 failed | 36 passed (37)  [server/services/ai-gateway/model-governance.ts]
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > is refused, terminal, naming the provider;
+    restored server/services/ai-gateway/model-governance.ts sha256=c2898c5edb1ba0c0… verified
+R20 [over, 8] a known but unconfigured row refused: RED (exit 1) Tests  2 failed | 50 passed (52)  [server/services/ai-gateway/gateway.ts]
+    × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not co
+    × server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > control (known gap [8]): a known provider 
+    restored server/services/ai-gateway/gateway.ts sha256=3e92cd2750998d5b… verified
+R21 [4] resolvers do not know the production exclusion: RED (exit 1) Tests  5 failed | 1 passed (6)  [server/services/ai-governance/approved-models.ts]
+    × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > governedMatch withholds local-default instead of serving it 10ms
+    × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > ANA_TIER_ECONOMY_MODEL=local-default pins no model; the gateway selects by strategy 1ms
+    × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > a caller cannot pin it 1ms
+    × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > the picker does not offer it 4ms
+    × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > controls > in production, every other row resolves exactly as outside it 3ms
+    restored server/services/ai-governance/approved-models.ts sha256=0da5c9704ea8e9c4… verified
+R22 [over, 4] resolvers exclude local-default everywhere: RED (exit 1) Tests  3 failed | 48 passed (51)  [server/services/ai-governance/approved-models.ts]
+    × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > controls > outside production every resolver still reaches it, as before 7ms
+    × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > offers every enabled model in today's registry — the dr
+    × server/services/ai-gateway/__tests__/effort.test.ts > projectModelsForPicker — lists only approved models, and says how far each is approved > claims no PQ pass the governed data does not record 3ms
+    restored server/services/ai-governance/approved-models.ts sha256=0da5c9704ea8e9c4… verified
+R23 [10] framework quick completion not drafting: RED (exit 1) Tests  2 failed | 1 passed (3)  [server/services/ana/AnaDocumentDraftingService.ts]
+    × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > in production it is refused in plain words; nothing is dispatched 22ms
+    × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > outside production it is document_drafting with no pin, served by an approve
+    restored server/services/ana/AnaDocumentDraftingService.ts sha256=ced44a386db2e85e… verified
+R24 [over, 10] every quick completion drafting: RED (exit 1) Tests  1 failed | 2 passed (3)  [server/services/ana/AnaDocumentDraftingService.ts]
+    × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > control: with no framework it is a quick general completion on Sonnet, as be
+    restored server/services/ana/AnaDocumentDraftingService.ts sha256=ced44a386db2e85e… verified
+R25 [15] list not frozen: RED (exit 1) Tests  1 failed | 9 passed (10)  [server/services/ai-governance/approved-models.ts]
+    × server/services/ai-governance/__tests__/approved-models-invariant.test.ts > the governed list cannot be changed at runtime > APPROVED_MODELS is frozen, and so is every entry and its PQ record 9ms
+    restored server/services/ai-governance/approved-models.ts sha256=0da5c9704ea8e9c4… verified
+R26 qualified predicate ignores approvedForHighRisk: RED (exit 1) Tests  18 failed | 29 passed (47)  [server/services/ai-governance/approved-models.ts]
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > in production it needs approvedForHighRisk AND a passed PQ 7ms
+    × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > the served-model check the gate calls reads it: false in production today, true
+    × server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > author_docx_native: refused when Sonnet produced the call 9ms
+    × server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > commit_document_revision: refused when Sonnet produced the call 2ms
+    × server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > draft_authoring_document: refused when Sonnet produced the call 2ms
+    restored server/services/ai-governance/approved-models.ts sha256=0da5c9704ea8e9c4… verified
+R27 [over, 3] every call shares one bucket: RED (exit 1) Tests  1 failed | 8 passed (9)  [server/services/ai-gateway/policy.ts]
+    × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate 
+    restored server/services/ai-gateway/policy.ts sha256=057a27cd2cfbb377… verified
+harness exit 0
+R28 [14] PQ callers gate back to `.evaluateModel(` only: RED (self-test exit 1)  [scripts/ci/check-pq-evaluation-callers.mjs]
+    ✗ a service reaches it by bracket access  — NOT CAUGHT
+    ✗ a service destructures it  — NOT CAUGHT
+    ✗ a service binds it  — NOT CAUGHT
+    ✗ self-test: 3 case(s) wrong
+    restored scripts/ci/check-pq-evaluation-callers.mjs sha256=c0e4bd152088142a… verified

@@ -1,0 +1,15 @@
+Mutant R46-overlays-are-sources: the instruction overlays' example figures and citations are a source (F5)
+
+--- server/routes/ana-ri/stream.ts
+- authoringContextBlock,
+      ].filter((t) => typeof t === 'string' && t.trim().length > 0);
++ authoringContextBlock,
+        enrichment.block,
+      ].filter((t) => typeof t === 'string' && t.trim().length > 0);
+
+Tests run: server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not 13ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -23,6 +23,7 @@ import {
   manufacturingProcessForm, manufacturingProcessBody, manufacturingProcessPatch,
   characterizationStudyForm, characterizationStudyBody, characterizationStudyPatch,
   qualifyForm, qualifyBody,
+  signedUpdateBlocked, retireSignedForm, retireSignedBody,
   asUserId,
 } from './cmcRegisterForms';
 import type {
@@ -113,28 +114,28 @@ import { useAuth } from '@/services/portal/authService';
    reused across programs. To move one, change its entry here — nothing else
    reads this decision.
 
-   'program-unscoped-store' is the honest third state. The record belongs to a
-   program, but its table has NO project_id column (public.drug_substances,
-   drug_products, analytical_methods, stability_studies are org-scoped only —
-   the shared/cmc-schema shapes drizzle.config.ts never provisioned), so the
-   list CANNOT be narrowed. The card says so rather than implying the rows on
-   screen are this program's. The project-scoped truth for those record types
-   lives in cmc_source_objects, which is what the Module 3 composer and the ICH
-   engines read. */
-export type RegisterScope = 'program' | 'organization' | 'program-unscoped-store';
+   Since 2026-10-05 every per-application register's table records its
+   program (migrations/20261005_cmc_core_registers_project.sql): drug
+   substances, drug products, stability studies and analytical methods were
+   org-scoped only, so their lists could not be narrowed and an edit made with
+   another program open filed a second copy of the record under that program.
+   A list narrowed to a program still shows UNFILED records (no program) — they
+   are nobody else's, and hiding them would lose a saved record. */
+export type RegisterScope = 'program' | 'organization';
 
 export const REGISTER_SCOPE: Record<string, RegisterScope> = {
   // Per-application records — filed against one dossier.
   '/api/cmc/qc-testing': 'program',
   '/api/cmc/comparability-studies': 'program',
+  '/api/cmc/drug-substances': 'program',
+  '/api/cmc/drug-products': 'program',
+  '/api/cmc/stability-studies': 'program',
+  /* A method is validated for a product's matrix, and §3.2.S.4.2 / §3.2.P.5.2
+     cite the dossier's own methods, so it is filed per program like the rest. */
+  '/api/cmc/analytical-methods': 'program',
   // Organisation assets — reused across programs by design.
   '/api/cmc/change-control': 'organization',
   '/api/cmc/process-validation': 'organization',
-  // Per-application, but the store cannot express it. See the note above.
-  '/api/cmc/drug-substances': 'program-unscoped-store',
-  '/api/cmc/drug-products': 'program-unscoped-store',
-  '/api/cmc/stability-studies': 'program-unscoped-store',
-  '/api/cmc/analytical-methods': 'program-unscoped-store',
 };
 
 /** The path to read, narrowed to the open program when the register is scoped. */
@@ -273,14 +274,6 @@ const SCOPE_NOTE: Record<RegisterScope | 'program-none', { testId: string; text:
   program: { testId: 'register-scope-program', text: '· this program' },
   'program-none': { testId: 'register-scope-no-program', text: '· all programs — open one to narrow' },
   organization: { testId: 'register-scope-organization', text: '· all programs' },
-  'program-unscoped-store': {
-    testId: 'register-scope-unscopeable',
-    text: '· all programs — this register cannot be narrowed',
-    title:
-      "These records are filed per program, but this register's table records no " +
-      'program, so the list cannot be narrowed. The per-program record is what the ' +
-      'Module 3 build reads.',
-  },
 };
 
 function RegisterScopeNote({ scope, hasProgram }: { scope: RegisterScope; hasProgram: boolean }) {
@@ -1113,6 +1106,28 @@ function elSummary(r: ContainerClosureApiRow): React.ReactNode {
 }
 
 /**
+ * Retire a signed record with a reason (server/services/cmc/signed-record.ts):
+ * offered only while the record is in its signed state, where Update is closed.
+ */
+function retireSignedAction<T extends { id?: unknown }>(
+  noun: string,
+  signed: 'qualified' | 'validated',
+  field: 'status' | 'validationStatus',
+  name: (r: T) => string,
+  path: (r: T) => string,
+): RegisterRowAction<T> {
+  return {
+    label: 'Retire',
+    icon: I.lock,
+    subject: noun,
+    when: (r) => Boolean(signedUpdateBlocked((r as Record<string, unknown>)[field], signed, noun)),
+    form: (r) => retireSignedForm(noun, name(r), signed),
+    path,
+    toBody: (v) => retireSignedBody(v, field),
+  };
+}
+
+/**
  * The container closure register — the capture path §3.2.S.6 and §3.2.P.7 never
  * had. `Evidence for` is the column that decides which of the two a system
  * files into, so it is shown in the table rather than buried in the record.
@@ -1159,6 +1174,7 @@ export function CmContainerClosures() {
              whole column. The patch body then sends every editable field, so a
              value the staffer clears is actually cleared. */
           form: (r) => containerClosureForm(r as ContainerClosureRow),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'qualified', 'container closure system'),
           path: (r) => `/api/cmc/container-closures/${r.id}`,
           toBody: (v) => containerClosurePatch(v),
         },
@@ -1175,6 +1191,7 @@ export function CmContainerClosures() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('container closure system', 'qualified', 'status', (r) => r.systemName, (r) => `/api/cmc/container-closures/${r.id}`),
       ]}
       columns={[
         { header: 'System', render: (r) => r.systemName, mono: true, bold: true },
@@ -1261,6 +1278,7 @@ export function CmReferenceStandards() {
           icon: I.penLine,
           subject: 'reference standard',
           form: (r) => referenceStandardForm(r as Partial<ReferenceStandardBody>),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'qualified', 'reference standard'),
           path: (r) => `/api/cmc/reference-standards/${r.id}`,
           toBody: (v) => referenceStandardPatch(v),
         },
@@ -1274,6 +1292,7 @@ export function CmReferenceStandards() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('reference standard', 'qualified', 'status', (r) => `${r.standardCode} — ${r.standardName}`, (r) => `/api/cmc/reference-standards/${r.id}`),
       ]}
       columns={[
         { header: 'Code', render: (r) => r.standardCode, mono: true, bold: true },
@@ -1380,6 +1399,7 @@ export function CmImpurityProfiles() {
           icon: I.penLine,
           subject: 'impurity',
           form: (r) => impurityProfileForm(r as Partial<ImpurityProfileBody>),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'qualified', 'impurity'),
           path: (r) => `/api/cmc/impurity-profiles/${r.id}`,
           toBody: (v) => impurityProfilePatch(v),
         },
@@ -1399,6 +1419,7 @@ export function CmImpurityProfiles() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('impurity', 'qualified', 'status', (r) => `${r.impurityName} in ${r.materialName}`, (r) => `/api/cmc/impurity-profiles/${r.id}`),
       ]}
       columns={[
         { header: 'Impurity', render: (r) => r.impurityName, mono: true, bold: true },
@@ -1807,6 +1828,7 @@ export function CmManufacturingProcesses() {
           icon: I.penLine,
           subject: 'manufacturing process',
           form: (r) => manufacturingProcessForm(r as Partial<ManufacturingProcessBody>),
+          disabledReason: (r) => signedUpdateBlocked(r.validationStatus, 'validated', 'manufacturing process'),
           path: (r) => `/api/cmc/manufacturing-processes/${r.id}`,
           /* The stored row travels with the form values: a step's in-process
              controls have no column in the drawer and must survive the edit. */
@@ -1829,6 +1851,7 @@ export function CmManufacturingProcesses() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('manufacturing process', 'validated', 'validationStatus', (r) => r.processName, (r) => `/api/cmc/manufacturing-processes/${r.id}`),
       ]}
       columns={[
         { header: 'Process', render: (r) => r.processName, bold: true },
@@ -1945,6 +1968,7 @@ export function CmCharacterizationStudies() {
           icon: I.penLine,
           subject: 'characterisation study',
           form: (r) => characterizationStudyForm(r as Partial<CharacterizationStudyBody>),
+          disabledReason: (r) => signedUpdateBlocked(r.status, 'qualified', 'characterisation study'),
           path: (r) => `/api/cmc/characterization-studies/${r.id}`,
           toBody: (v) => characterizationStudyPatch(v),
         },
@@ -1962,6 +1986,7 @@ export function CmCharacterizationStudies() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
+        retireSignedAction('characterisation study', 'qualified', 'status', (r) => r.studyTitle, (r) => `/api/cmc/characterization-studies/${r.id}`),
       ]}
       columns={[
         { header: 'Study', render: (r) => r.studyTitle, bold: true },

@@ -1,0 +1,472 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is absent, before any query (SIGNATURE_MEANING_REQUIRED) 11ms
+   → promise resolved "{ id: 501, …(1) }" instead of rejecting
+ × server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is null, before any query (SIGNATURE_MEANING_REQUIRED) 2ms
+   → promise resolved "{ id: 501, …(1) }" instead of rejecting
+ × server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is empty, before any query (SIGNATURE_MEANING_REQUIRED) 2ms
+   → promise resolved "{ id: 501, …(1) }" instead of rejecting
+ × server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a meaning outside the closed vocabulary, before any query (SIGNATURE_MEANING_UNKNOWN) 1ms
+   → promise resolved "{ id: 501, …(1) }" instead of rejecting
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (approval) verbatim into signature_meaning 2ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (review) verbatim into signature_meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (release) verbatim into signature_meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (APPROVED) verbatim into signature_meaning 0ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (RESPONSIBILITY) verbatim into signature_meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > may carry no meaning: it withdraws a signature, it does not assert one 0ms
+ × server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > is held to the vocabulary when it does carry a meaning 1ms
+   → promise resolved "{ id: 501, …(1) }" instead of rejecting
+ × server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > the exemption is the revocation type only: another type with no meaning is refused 1ms
+   → promise resolved "{ id: 501, …(1) }" instead of rejecting
+stderr | server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > CRITICAL: rolls the signature back and 500s when the audit write throws
+[esignature] sign transaction failed: audit sink down
+
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > CRITICAL: rolls the signature back and 500s when the audit write throws 57ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > signs successfully (201) when password verifies and the audit write succeeds 9ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > writes the audit row on the SAME client as the signature (atomicity) 8ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > §11.50: ignores a client-supplied signerTitle and persists the server-resolved one 18ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > rejects a reserved/unknown signatureType (allowlist) 10ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > accepts an allowed signatureType (witness) 7ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 403s when the signer role lacks signing authority (§11.10(g)) 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 401s when the password fails re-verification (§11.200) 11ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > fails closed (400) requiring mfaToken when MFA is enabled but none supplied 6ms
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a signature that declares no meaning (400 SIGNATURE_MEANING_REQUIRED) before re-verifying the signer 10ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses an empty string as a meaning with the same code 7ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses null as a meaning with the same code 7ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a number as a meaning with the same code 7ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses an object as a meaning with the same code 7ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses free text outside the vocabulary (400 SIGNATURE_MEANING_UNKNOWN), names what is accepted, and checks no password 8ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a near-miss spelling rather than normalising it (Approval is not approval) 6ms
+   → expected 201 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning approval and persists exactly that meaning 15ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning review and persists exactly that meaning 5ms
+stdout | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T03:04:24.006Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:04:24.007Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T03:04:24.007Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning APPROVED and persists exactly that meaning 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning AUTHORSHIP and persists exactly that meaning 7ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50 signer attribution > REGRESSION: refuses to sign when the signer is not attributable in the org 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > reports an enrolled second factor once the password verified 7ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > reports none when none is enrolled 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > says nothing about enrolment for a wrong password 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > leaves the answer out, not false, when enrolment cannot be read 6ms
+stdout | server/services/ana-ri/__tests__/command-rbac.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T03:04:26.324Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > DENIES a dispatchable-looking command that carries no authorization metadata 2ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > allows a read-only command without consulting RBAC 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a non-MDX write that the tenant deny-list names 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a READ the tenant deny-list names (deny outranks the degraded-read path) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a command absent from a non-empty allow-list (whitelist actually constrains) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > ALLOWS a command that is on the allow-list, and when no policy is set 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation when the caller lacks the required role (viewer) 2ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > ALLOWS a mutation when the caller holds the required role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > demands the manager tier for Part 11 record-altering commands 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES when the RBAC lookup throws (fail closed, never fail open) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with non-numeric userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with zero organizationId (identity must come from the verified principal) 0ms
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a viewer (RBAC_DENIED), naming the manager tier 10ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a member (RBAC_DENIED), naming the manager tier 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a manager 2ms
+   → expected "vi.fn()" to be called with arguments: [ 7, 'manager', 3 ]
+
+Number of calls: 0
+
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a admin 1ms
+   → expected "vi.fn()" to be called with arguments: [ 7, 'manager', 3 ]
+
+Number of calls: 0
+
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES when the role lookup throws (fail closed) 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES without a provable identity, before any role lookup 0ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > a self-asserted ctx.userRole does not stand in for the RBAC lookup 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > stays a read: the tier is checked while governance is unresolved, and a manager is still admitted 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > leaves untiered reads open to every member without a role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS every mutation when tenant governance config could not be resolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS a Part 11 governed mutation when governance config is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > keeps READ-ONLY commands available while governance is unresolved (documented degraded mode) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > lets the central gate through so the handler can apply the self-service rule 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > still demands provable identity for the GDPR commands 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > blocks the erase mutation when governance is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for manager+ in the organization 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for a dedicated privacy role that has no hierarchy level 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false for an ordinary member and never trusts ctx.userRole 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false when the role lookup throws 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false without a provable identity 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > classifies EVERY dispatchable command 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > has no authorization entry for a command that is not dispatchable 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > gives every mutation-capable command a role tier or an explicit handler carve-out 0ms
+ × server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > puts a role tier on a read only where the read returns the audit trail (audit.explain, manager) 2ms
+   → expected [] to deeply equal [ [ 'audit.explain', 'manager' ] ]
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > marks every dispatchable Part 11 governed command as a manager-tier write 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > mirrors the Part 11 e-signature subset exactly 15ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > never marks a Part 11 governed command as read-only 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > refuses a hidden-app command in production, read or write, whatever the role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > leaves in-scope commands to the normal checks 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > with launch scope off (a development server), a hidden-app command reaches the normal checks 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a signature that declares no meaning (400 SIGNATURE_MEANING_REQUIRED) before re-verifying the signer
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/esignature-sign.test.ts:286:24
+    284|   it('refuses a signature that declares no meaning (400 SIGNATURE_MEAN…
+    285|     const res = await request(makeApp()).post('/api/esignature/sign').…
+    286|     expect(res.status).toBe(400);
+       |                        ^
+    287|     expect(res.body.code).toBe('SIGNATURE_MEANING_REQUIRED');
+    288|     // Nothing read: not the password hash, not the signer, not the ve…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯
+
+ FAIL  server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses an empty string as a meaning with the same code
+ FAIL  server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses null as a meaning with the same code
+ FAIL  server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a number as a meaning with the same code
+ FAIL  server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses an object as a meaning with the same code
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/esignature-sign.test.ts:301:24
+    299|   ])('refuses %s as a meaning with the same code', async (_label, mean…
+    300|     const res = await request(makeApp()).post('/api/esignature/sign').…
+    301|     expect(res.status).toBe(400);
+       |                        ^
+    302|     expect(res.body.code).toBe('SIGNATURE_MEANING_REQUIRED');
+    303|     expect(hoisted.poolQuery).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯
+
+ FAIL  server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses free text outside the vocabulary (400 SIGNATURE_MEANING_UNKNOWN), names what is accepted, and checks no password
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/esignature-sign.test.ts:308:24
+    306|   it('refuses free text outside the vocabulary (400 SIGNATURE_MEANING_…
+    307|     const res = await request(makeApp()).post('/api/esignature/sign').…
+    308|     expect(res.status).toBe(400);
+       |                        ^
+    309|     expect(res.body.code).toBe('SIGNATURE_MEANING_UNKNOWN');
+    310|     expect(String(res.body.error)).toContain('approval');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯
+
+ FAIL  server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a near-miss spelling rather than normalising it (Approval is not approval)
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/esignature-sign.test.ts:318:24
+    316|   it('refuses a near-miss spelling rather than normalising it (Approva…
+    317|     const res = await request(makeApp()).post('/api/esignature/sign').…
+    318|     expect(res.status).toBe(400);
+       |                        ^
+    319|     expect(res.body.code).toBe('SIGNATURE_MEANING_UNKNOWN');
+    320|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a viewer (RBAC_DENIED), naming the manager tier
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a member (RBAC_DENIED), naming the manager tier
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/command-rbac.test.ts:193:25
+    191|     holds(role);
+    192|     const decision = await authorizeCommand('audit.explain', ctx());
+    193|     expect(decision.ok).toBe(false);
+       |                         ^
+    194|     if (decision.ok) return;
+    195|     expect(decision.result.error).toBe('RBAC_DENIED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a manager
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a admin
+AssertionError: expected "vi.fn()" to be called with arguments: [ 7, 'manager', 3 ]
+
+Number of calls: 0
+
+ ❯ server/services/ana-ri/__tests__/command-rbac.test.ts:203:26
+    201|     holds(role);
+    202|     await expect(authorizeCommand('audit.explain', ctx())).resolves.to…
+    203|     expect(rbac.hasRole).toHaveBeenCalledWith(7, 'manager', 3);
+       |                          ^
+    204|   });
+    205|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES when the role lookup throws (fail closed)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/command-rbac.test.ts:209:25
+    207|     rbac.hasRole.mockRejectedValue(new Error('connection lost'));
+    208|     const decision = await authorizeCommand('audit.explain', ctx());
+    209|     expect(decision.ok).toBe(false);
+       |                         ^
+    210|     if (decision.ok) return;
+    211|     expect(decision.result.error).toBe('RBAC_DENIED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/22]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES without a provable identity, before any role lookup
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/command-rbac.test.ts:216:25
+    214|   it('REFUSES without a provable identity, before any role lookup', as…
+    215|     const decision = await authorizeCommand('audit.explain', ctx({ use…
+    216|     expect(decision.ok).toBe(false);
+       |                         ^
+    217|     if (decision.ok) return;
+    218|     expect(decision.result.error).toBe('RBAC_CONTEXT_MISSING');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/22]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > a self-asserted ctx.userRole does not stand in for the RBAC lookup
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/command-rbac.test.ts:225:25
+    223|     holds('member');
+    224|     const decision = await authorizeCommand('audit.explain', ctx({ use…
+    225|     expect(decision.ok).toBe(false);
+       |                         ^
+    226|   });
+    227|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/22]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > stays a read: the tier is checked while governance is unresolved, and a manager is still admitted
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/command-rbac.test.ts:233:25
+    231|     holds('member');
+    232|     const decision = await authorizeCommand('audit.explain', ctx({ gov…
+    233|     expect(decision.ok).toBe(false);
+       |                         ^
+    234|   });
+    235|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/22]⎯
+
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > puts a role tier on a read only where the read returns the audit trail (audit.explain, manager)
+AssertionError: expected [] to deeply equal [ [ 'audit.explain', 'manager' ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "audit.explain",
+-     "manager",
+-   ],
+- ]
++ []
+
+ ❯ server/services/ana-ri/__tests__/command-rbac.test.ts:353:20
+    351|       .filter(([, a]) => a.effect === 'read' && a.minRole)
+    352|       .map(([n, a]) => [n, a.minRole]);
+    353|     expect(tiered).toEqual([['audit.explain', 'manager']]);
+       |                    ^
+    354|   });
+    355|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/22]⎯
+
+ FAIL  server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is absent, before any query (SIGNATURE_MEANING_REQUIRED)
+ FAIL  server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is null, before any query (SIGNATURE_MEANING_REQUIRED)
+ FAIL  server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is empty, before any query (SIGNATURE_MEANING_REQUIRED)
+AssertionError: promise resolved "{ id: 501, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "id": 501,
++   "signedAt": 2026-10-01T00:00:00.000Z,
+  }
+
+ ❯ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts:67:25
+     65|     const { client, query } = recordingClient();
+     66|     const attempt = persistElectronicSignature(client, record({ signat…
+     67|     await expect(attempt).rejects.toBeInstanceOf(SignatureMeaningError…
+       |                         ^
+     68|     await expect(attempt).rejects.toMatchObject({ code: 'SIGNATURE_MEA…
+     69|     expect(query).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/22]⎯
+
+ FAIL  server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a meaning outside the closed vocabulary, before any query (SIGNATURE_MEANING_UNKNOWN)
+AssertionError: promise resolved "{ id: 501, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "id": 501,
++   "signedAt": 2026-10-01T00:00:00.000Z,
+  }
+
+ ❯ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts:76:5
+     74|     await expect(
+     75|       persistElectronicSignature(client, record({ signatureMeaning: 'I…
+     76|     ).rejects.toMatchObject({ code: 'SIGNATURE_MEANING_UNKNOWN' });
+       |     ^
+     77|     expect(query).not.toHaveBeenCalled();
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/22]⎯
+
+ FAIL  server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > is held to the vocabulary when it does carry a meaning
+AssertionError: promise resolved "{ id: 501, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "id": 501,
++   "signedAt": 2026-10-01T00:00:00.000Z,
+  }
+
+ ❯ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts:111:5
+    109|         record({ signatureType: GOVERNED_REVOCATION_SIGNATURE_TYPE, si…
+    110|       ),
+    111|     ).rejects.toMatchObject({ code: 'SIGNATURE_MEANING_UNKNOWN' });
+       |     ^
+    112|     expect(query).not.toHaveBeenCalled();
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/22]⎯
+
+ FAIL  server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > the exemption is the revocation type only: another type with no meaning is refused
+AssertionError: promise resolved "{ id: 501, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "id": 501,
++   "signedAt": 2026-10-01T00:00:00.000Z,
+  }
+
+ ❯ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts:119:5
+    117|     await expect(
+    118|       persistElectronicSignature(client, record({ signatureType: 'gove…
+    119|     ).rejects.toMatchObject({ code: 'SIGNATURE_MEANING_REQUIRED' });
+       |     ^
+    120|     expect(query).not.toHaveBeenCalled();
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/22]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  22 failed | 59 passed (81)
+   Start at  03:04:19
+   Duration  7.85s (transform 6.39s, setup 410ms, import 11.22s, tests 336ms, environment 0ms)
+

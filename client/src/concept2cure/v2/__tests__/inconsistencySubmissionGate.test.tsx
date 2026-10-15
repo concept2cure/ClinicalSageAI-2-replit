@@ -83,16 +83,22 @@ const RESOLVED_FINDING = {
   resolvedBy: 'jm.smith@concept2cure.pro',
   resolvedAt: '2026-08-20T10:00:00.000Z',
   authorityState: 'informational',
-  overlayApplied: null,
 };
 
-function board(findings: unknown[]) {
+/** The gate the server counts over every finding (ProjectGate) — here, none. */
+const NO_GATE = {
+  total: 0, open: 0, resolved: 0, superseded: 0,
+  blocking: 0, needApproval: 0, needEscalation: 0, needReview: 0, advisory: 0, unrecognized: 0,
+  blocked: false,
+};
+
+function board(findings: unknown[], gate: Record<string, unknown> = NO_GATE) {
   return {
     ok: true,
     status: 200,
     json: async () => ({
       success: true,
-      data: { program: PROGRAM, findings, assumptions: [], decisions: [], checks: [] },
+      data: { program: PROGRAM, gate, findings, assumptions: [], decisions: [], checks: [] },
     }),
   };
 }

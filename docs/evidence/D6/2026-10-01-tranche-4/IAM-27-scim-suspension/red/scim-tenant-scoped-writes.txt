@@ -1,0 +1,179 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > DELETE removes the caller's membership row and never touches users.status (204)
+{
+  "timestamp": "2026-10-01T18:55:49.567Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=true on a platform-suspended shared account is a no-op on status; response reflects the stored status
+{
+  "timestamp": "2026-10-01T18:55:49.639Z",
+  "level": "info",
+  "message": "[scim] SCIM activate ignored — account status is platform-wide and the user belongs to other organisations",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended",
+    "organizationCount": 2
+  }
+}
+
+stdout | server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > adds the membership only, never writes users.status; 201 reflects the stored (suspended) status
+{
+  "timestamp": "2026-10-01T18:55:49.646Z",
+  "level": "info",
+  "message": "[scim] SCIM provision joined an existing account whose status is not active; status unchanged",
+  "context": {
+    "orgId": 7,
+    "userId": 100,
+    "storedStatus": "suspended"
+  }
+}
+
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > DELETE removes the caller's membership row and never touches users.status (204) 1931ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=false removes the caller's membership row and never touches users.status (200, active=false) 18ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with a new displayName is refused: 403, scimType mutability, no write 8ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH replace displayName is refused: 403, scimType mutability, no write 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PUT with the SAME name and active=false still deprovisions (membership removed, not 403) 6ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — user in more than one organisation > PATCH active=true on a platform-suspended shared account is a no-op on status; response reflects the stored status 5ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > adds the membership only, never writes users.status; 201 reflects the stored (suspended) status 6ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — POST for an existing account > active:false in the body for an existing account deactivates nobody 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > DELETE still issues the global UPDATE users SET status = 'inactive' (204) 6ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > PATCH active=false still deactivates globally (200, active=false) 4ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — sole-organisation user keeps today's contract > PUT with a new displayName renames as before (200) 4ms
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=true does not lift the suspension: no status write, no activation row, active=false 8ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with active: true does not lift the suspension 4ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with no active at all does not lift the suspension 4ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT still renames: the name is the sole organisation's, the status is not 5ms
+   → expected [ 'Jane Renamed', 'active', 100 ] to deeply equal [ 'Jane Renamed', 100 ]
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=false removes this organisation's membership and leaves the suspension in place 3ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT active=false removes this organisation's membership and leaves the suspension in place 3ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > DELETE removes this organisation's membership and leaves the suspension in place 3ms
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > a deactivated sole-organisation account stays inactive 3ms
+   → expected false to be true // Object.is equality
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > control: PATCH active=true still reactivates an account SCIM deactivated 3ms
+ ✓ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — unknown membership count fails closed > DELETE with no count row removes only the membership and never writes users.status 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=true does not lift the suspension: no status write, no activation row, active=false
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:380:56
+    378|     expect(res.status).toBe(200);
+    379|     expect(res.body.active).toBe(false);
+    380|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+       |                                                        ^
+    381|     expect(sqlMatching(queryMock, AUDIT_INSERT).some(c => c[1]?.[1] ==…
+    382|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with active: true does not lift the suspension
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT with no active at all does not lift the suspension
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:395:56
+    393|     expect(res.status).toBe(200);
+    394|     expect(res.body.active).toBe(false);
+    395|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+       |                                                        ^
+    396|   });
+    397|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT still renames: the name is the sole organisation's, the status is not
+AssertionError: expected [ 'Jane Renamed', 'active', 100 ] to deeply equal [ 'Jane Renamed', 100 ]
+
+- Expected
++ Received
+
+  [
+    "Jane Renamed",
++   "active",
+    100,
+  ]
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:407:23
+    405|     const upd = sqlMatching(queryMock, USERS_NAME_WRITE);
+    406|     expect(upd).toHaveLength(1);
+    407|     expect(upd[0][1]).toEqual(['Jane Renamed', USER_ID]);
+       |                       ^
+    408|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+    409|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PATCH active=false removes this organisation's membership and leaves the suspension in place
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > PUT active=false removes this organisation's membership and leaves the suspension in place
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27) > DELETE removes this organisation's membership and leaves the suspension in place
+AssertionError: expected [ [ …(2) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:424:56
+    422|
+    423|     expect([200, 204]).toContain(res.status);
+    424|     expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+       |                                                        ^
+    425|     const del = sqlMatching(queryMock, MEMBERSHIP_DELETE);
+    426|     expect(del).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts > SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27) > a deactivated sole-organisation account stays inactive
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/__tests__/security/scim-tenant-scoped-writes.contract.test.ts:444:68
+    442|     expect(res.body.active).toBe(false);
+    443|     const upd = sqlMatching(queryMock, USERS_STATUS_WRITE);
+    444|     expect(upd.every(([, params]) => !params?.includes('active'))).toB…
+       |                                                                    ^
+    445|   });
+    446|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 13 passed (21)
+   Start at  18:55:46
+   Duration  2.73s (transform 1.26s, setup 99ms, import 261ms, tests 2.04s, environment 0ms)
+
+exit 1

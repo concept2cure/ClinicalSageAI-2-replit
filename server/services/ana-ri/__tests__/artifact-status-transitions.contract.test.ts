@@ -8,6 +8,12 @@
  * an un-reviewed one) were both permitted — the permissive-transition defect.
  *
  * Proven against real Postgres (PGlite) through the real handler.
+ *
+ * 2026-10-01 (D5): approving and locking through this command are the status
+ * route's electronic signature (ana-signed-artifact-act.ts). Without one they
+ * are refused before anything else is read; the signed steps, and the signed
+ * illegal skips refused by the status route's own transition table, are in
+ * ana-signed-artifact-act.pglite.integration.test.ts.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -70,21 +76,20 @@ describe('update_artifact_status — lawful lifecycle steps are allowed', () => 
     expect((await change('review')).success).toBe(true);
     expect(await statusOf()).toBe('review');
   });
-  it('review → approved', async () => {
+  it('review → approved needs an electronic signature: unsigned, refused and unchanged', async () => {
     await setStatus('review');
-    expect((await change('approved')).success).toBe(true);
-    expect(await statusOf()).toBe('approved');
+    const res = await change('approved');
+    expect(res.success).toBe(false);
+    expect((res as { error?: string }).error).toBe('PART11_SIGNATURE_REQUIRED');
+    expect(await statusOf()).toBe('review');
   });
-  it('approved → locked', async () => {
-    // 2026-09-23 (W5/D7, residual repair; final pass): a lock must cover the
-    // approval, so the approved state carries the version the governed act
-    // approved (v1) — this command records none itself. The refusal of a lock
-    // over an unreviewed edit is pinned in
-    // artifact-status-approval-version.pglite.test.ts.
+  it('approved → locked needs an electronic signature: unsigned, refused and unchanged', async () => {
     await setStatus('approved');
     await pglite.query('UPDATE concept2cure_artifacts SET approved_version_id = version WHERE artifact_id = 1');
-    expect((await change('locked')).success).toBe(true);
-    expect(await statusOf()).toBe('locked');
+    const res = await change('locked');
+    expect(res.success).toBe(false);
+    expect((res as { error?: string }).error).toBe('PART11_SIGNATURE_REQUIRED');
+    expect(await statusOf()).toBe('approved');
   });
   it('locked → draft (explicit unlock)', async () => {
     await setStatus('locked');
@@ -98,7 +103,6 @@ describe('update_artifact_status — illegal skips are blocked (Part 11)', () =>
     await setStatus('draft');
     const res = await change('locked');
     expect(res.success).toBe(false);
-    expect(res.message).toMatch(/approved before it can be locked/i);
     expect(await statusOf()).toBe('draft');
   });
   it('review → locked is refused', async () => {
@@ -111,7 +115,6 @@ describe('update_artifact_status — illegal skips are blocked (Part 11)', () =>
     await setStatus('draft');
     const res = await change('approved');
     expect(res.success).toBe(false);
-    expect(res.message).toMatch(/reviewed|review/i);
     expect(await statusOf()).toBe('draft');
   });
   it('locked → approved is refused (unlock to draft only)', async () => {

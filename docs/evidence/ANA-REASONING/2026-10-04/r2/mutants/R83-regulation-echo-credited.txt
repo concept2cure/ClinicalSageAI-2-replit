@@ -1,0 +1,13 @@
+Mutant R83-regulation-echo-credited: a regulation the model asked for is found in the echo of its own request (successor of M26)
+
+--- server/services/ana/answer-grounding.ts
+- settle('cfr', needle, text, (t) => containsCitation(t.cfr, needle), (t) => containsCitation(t.upper, section));
++ settle('cfr', needle, text, (t) => containsCitation(t.cfr, needle), () => false);
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation formatted from what the model gave, and not verified, finds nothing 10ms
+ × tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a verified citation confirms the identifier it matched, not what the model packed beside it 9ms
+      Tests  2 failed | 87 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

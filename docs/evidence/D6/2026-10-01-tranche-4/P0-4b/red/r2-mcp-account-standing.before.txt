@@ -1,0 +1,81 @@
+# server/mcp/__tests__/mcp-account-standing.dbtest.ts with the R2 cases, against server/mcp/auth/provider.ts BEFORE R2 (sessionPredatesPasswordChange on password_changed_at only). Run 2026-10-01T14:02:42Z
+{"level":30,"time":"2026-10-01T14:02:46.537Z","pid":15302,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T14:02:46.539Z","pid":15302,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T14:02:46.539Z","pid":15302,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T14:02:46.888Z","pid":15302,"hostname":"vm","context":{"resource":"http://localhost:34041/mcp","issuer":"http://localhost:34041/","resourceMetadataUrl":"http://localhost:34041/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T14:02:47.121Z', poolSize: 1 }
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 158ms
+{"level":30,"time":"2026-10-01T14:02:47.667Z","pid":15302,"hostname":"vm","context":{"userId":1781,"tenantId":358,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 395ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 9ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 13ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 8ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 17ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 7ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 12ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 1244ms
+   → a grant made before the account was suspended refreshed again once it was back in use: {"access_token":"<token>","token_type":"bearer","expires_in":3600,"scope":"c2c:read","refresh_token":"<redacted>"}: expected 200 to be 400 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 1245ms
+   → a grant made before the account was deprovisioned refreshed again once it was back in use: {"access_token":"<token>","token_type":"bearer","expires_in":3600,"scope":"c2c:read","refresh_token":"<redacted>"}: expected 200 to be 400 // Object.is equality
+{"level":30,"time":"2026-10-01T14:02:52.614Z","pid":15302,"hostname":"vm","context":{"account":"connector:1784","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+{"level":30,"time":"2026-10-01T14:02:52.648Z","pid":15302,"hostname":"vm","context":{"account":"connector:1784","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a password change ends the connector grants authorised before it > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2408ms
+{"level":30,"time":"2026-10-01T14:02:53.794Z","pid":15302,"hostname":"vm","context":{"account":"connector:1784","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a sign-out of every session ends the connector grants authorised before it (R2) > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 1196ms
+   → a connector token issued before the sign-out everywhere still opened /mcp: expected 200 to be 401 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 23ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 44ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use
+AssertionError: a grant made before the account was suspended refreshed again once it was back in use: {"access_token":"<token>","token_type":"bearer","expires_in":3600,"scope":"c2c:read","refresh_token":"<redacted>"}: expected 200 to be 400 // Object.is equality
+- Expected
++ Received
+- 400
++ 200
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:517:136
+    515|       // door. The account is back in use, so it signs in and connects…
+    516|       const back = await refresh(g.refresh);
+    517|       expect(back.status, `a grant made before the account was ${label…
+       |                                                                                                                                        ^
+    518|       expect(back.body.error).toBe('invalid_grant');
+    519|       expect(back.body.access_token).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use
+AssertionError: a grant made before the account was deprovisioned refreshed again once it was back in use: {"access_token":"<token>","token_type":"bearer","expires_in":3600,"scope":"c2c:read","refresh_token":"<redacted>"}: expected 200 to be 400 // Object.is equality
+- Expected
++ Received
+- 400
++ 200
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:517:136
+    515|       // door. The account is back in use, so it signs in and connects…
+    516|       const back = await refresh(g.refresh);
+    517|       expect(back.status, `a grant made before the account was ${label…
+       |                                                                                                                                        ^
+    518|       expect(back.body.error).toBe('invalid_grant');
+    519|       expect(back.body.access_token).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a sign-out of every session ends the connector grants authorised before it (R2) > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again
+AssertionError: a connector token issued before the sign-out everywhere still opened /mcp: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:603:106
+    601|     try {
+    602|       const access = await mcp(g.access);
+    603|       expect(access.status, 'a connector token issued before the sign-…
+       |                                                                                                          ^
+    604|
+    605|       const r = await refresh(g.refresh);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 passed (16)
+   Start at  14:02:43
+   Duration  11.11s (transform 1.54s, setup 100ms, import 311ms, tests 10.29s, environment 0ms)

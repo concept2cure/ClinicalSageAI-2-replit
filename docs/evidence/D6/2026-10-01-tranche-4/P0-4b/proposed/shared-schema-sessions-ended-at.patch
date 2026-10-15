@@ -1,0 +1,12 @@
+--- a/shared/schema.ts
++++ b/shared/schema.ts
+@@ -2610,6 +2610,9 @@
+   lastFailedLogin: timestamp('last_failed_login'),
+   // Password policy fields
+   passwordChangedAt: timestamp('password_changed_at'),
++  // Every session that began before it is over: a sign-out everywhere, or the account
++  // leaving status 'active'. migrations/20261001_users_sessions_ended_at.sql (plan P0-4b).
++  sessionsEndedAt: timestamp('sessions_ended_at', { withTimezone: true }),
+   passwordHistory: json('password_history'), // array of previous password hashes
+   mustChangePassword: boolean('must_change_password').default(false),
+   // Password reset fields

@@ -1,0 +1,32 @@
+# MUTATION: the filters pushdown removed from searchDocumentPassages
+ ✓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches
+ ✓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic
+ ✓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > with no project open, the organization: both projects' studies are found
+ × tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > the open project's study, never the other project's
+   → expected true to be false // Object.is equality
+ × tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > and the other way round, with the coverage of the open project alone
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 8 passed (10)
+
+# MUTATION: mergeFilters forgets programId; a corpus without the column ignores the scope
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > returns empty and touches no params when filters is undefined
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > appends ILIKE predicates with placeholders sequential after existing params
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > respects an existing org-filter placeholder (filters start at $5)
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > expands a date range into >= and <= bounds
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > skips filters with no backing column on the corpus (vault has no source)
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > never applies domain (no corpus has a column for it)
+ ✓ server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > the vault corpus filters on the document's program, as a bound uuid
+ × server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > a corpus with no program column refuses the scope rather than searching wider
+   → expected [Function] to throw an error
+ × server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > survives the merge with self-query filters, alone or beside them
+   → expected undefined to deeply equal { Object (programId) }
+ ✓ server/services/__tests__/rag-filters.test.ts > mergeFilters > returns undefined when neither side contributes anything
+ ✓ server/services/__tests__/rag-filters.test.ts > mergeFilters > lets explicit filters win field-by-field over extracted ones
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 9 passed (11)

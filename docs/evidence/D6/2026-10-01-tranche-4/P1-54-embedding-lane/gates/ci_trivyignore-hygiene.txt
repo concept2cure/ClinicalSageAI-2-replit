@@ -1,0 +1,3 @@
+# npm run ci:trivyignore-hygiene  (2026-10-01T15:00:02Z)
+[ci:trivyignore-hygiene] OK — 2 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+exit=0

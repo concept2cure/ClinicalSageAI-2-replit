@@ -1,0 +1,369 @@
+# red, review round 2: sources at 901dbefa, review-round tests
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result 3ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog 1ms
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 5ms
+   → expected undefined to be false // Object.is equality
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is skipped by the repository search as not connected, and never listed as searched 4ms
+   → expected [ 'pmda_reviews' ] to deeply equal []
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog 0ms
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is skipped by the repository search as not connected, and never listed as searched 1ms
+   → expected [ 'nmpa_cde' ] to deeply equal []
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 0ms
+stdout | server/services/integrations/__tests__/connector-search.test.ts
+{
+  "timestamp": "2026-10-01T00:42:31.128Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:42:31.129Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/integrations/__tests__/connector-search.test.ts
+{
+  "timestamp": "2026-10-01T00:42:31.129Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/integrations/__tests__/connector-search.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/integrations/__tests__/connector-search.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/integrations/__tests__/connector-search.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > searches only configured+healthy connectors and reports the rest as skipped 5ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > flags unknown requested connectors and short-circuits when none are usable 1ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > surfaces per-connector errors as skipped and clamps the limit 1ms
+ × server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > does not list a connector whose search failed as searched 6ms
+   → expected [ 'google-drive' ] to deeply equal []
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:42:31.374Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:42:31.376Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/rasterize-page-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:42:31.376Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/rasterize-page-honest.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/rasterize-page-honest.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > writes a PNG of the page asked for, and succeeds only when it exists
+{
+  "timestamp": "2026-10-01T00:42:35.507Z",
+  "level": "info",
+  "message": "[pdf-rasterizer] Rasterized PDF",
+  "context": {
+    "pages": 1,
+    "dpi": 72,
+    "region": "full"
+  }
+}
+
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > converts a DOCX through the one DOCX→PDF pipeline first
+{
+  "timestamp": "2026-10-01T00:42:35.561Z",
+  "level": "info",
+  "message": "[pdf-rasterizer] Rasterized PDF",
+  "context": {
+    "pages": 1,
+    "dpi": 72,
+    "region": "full"
+  }
+}
+
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > caps the pixels it renders, lowering the dpi and saying so, instead of exhausting memory
+{
+  "timestamp": "2026-10-01T00:42:35.902Z",
+  "level": "info",
+  "message": "[pdf-rasterizer] Rasterized PDF",
+  "context": {
+    "pages": 1,
+    "dpi": 300,
+    "region": "full"
+  }
+}
+
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > writes a PNG of the page asked for, and succeeds only when it exists 322ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a page the document does not have, naming how many it has 6ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a path outside the tenant's workspace without opening it 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses another tenant's file 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > converts a DOCX through the one DOCX→PDF pipeline first 34ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > reports a failed conversion as a failure 2ms
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > reads a page number given as a numeral string, and refuses one that is not a page
+{
+  "timestamp": "2026-10-01T00:42:35.949Z",
+  "level": "info",
+  "message": "[pdf-rasterizer] Rasterized PDF",
+  "context": {
+    "pages": 1,
+    "dpi": 72,
+    "region": "full"
+  }
+}
+
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > says the image is a server file that nobody is shown
+{
+  "timestamp": "2026-10-01T00:42:35.980Z",
+  "level": "info",
+  "message": "[pdf-rasterizer] Rasterized PDF",
+  "context": {
+    "pages": 1,
+    "dpi": 72,
+    "region": "full"
+  }
+}
+
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > caps the pixels it renders, lowering the dpi and saying so, instead of exhausting memory 343ms
+   → expected 8417550 to be less than or equal to 100000
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > renders an upload stored without an extension, by what its bytes are 12ms
+   → expected { success: false, …(1) } to match object { Object (success, page, ...) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > reads a page number given as a numeral string, and refuses one that is not a page 32ms
+   → expected { success: true, …(9) } to match object { success: true, page: 3 }
+(8 matching properties omitted from actual)
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > says the image is a server file that nobody is shown 30ms
+   → expected undefined to be false // Object.is equality
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > says it is unavailable and writes nothing, instead of reporting overlays queued 1ms
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > answers unavailable to an unapproved model too, rather than inviting a retry that cannot succeed 1ms
+   → expected undefined to be 'unavailable' // Object.is equality
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > does not offer signatures or approval stamps in its definition 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > caps the pixels it renders, lowering the dpi and saying so, instead of exhausting memory
+AssertionError: expected 8417550 to be less than or equal to 100000
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:105:40
+    103|       documentPath: pdfPath, page: 1, dpi: 300, outputDir: path.join(d…
+    104|     });
+    105|     expect(out.widthPx * out.heightPx).toBeLessThanOrEqual(100_000);
+       |                                        ^
+    106|     expect(out.dpi).toBeLessThan(300);
+    107|     expect(out.dpiRequested).toBe(300);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > renders an upload stored without an extension, by what its bytes are
+AssertionError: expected { success: false, …(1) } to match object { Object (success, page, ...) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "page": 3,
+-   "pageCount": 3,
+-   "success": true,
++   "success": false,
+  }
+
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:117:19
+    115|     try {
+    116|       const out = await run('rasterize_page', { document_path: upload,…
+    117|       expect(out).toMatchObject({ success: true, page: 3, pageCount: 3…
+       |                   ^
+    118|     } finally {
+    119|       await fs.rm(uploads, { recursive: true, force: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > reads a page number given as a numeral string, and refuses one that is not a page
+AssertionError: expected { success: true, …(9) } to match object { success: true, page: 3 }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "page": 3,
++   "page": 1,
+    "success": true,
+  }
+
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:124:96
+    122|
+    123|   it('reads a page number given as a numeral string, and refuses one t…
+    124|     expect(await run('rasterize_page', { document_path: pdfPath, page_…
+       |                                                                                                ^
+    125|     for (const page_number of [0, 2.5, 'two']) {
+    126|       const out = await run('rasterize_page', { document_path: pdfPath…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > says the image is a server file that nobody is shown
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:134:27
+    132|   it('says the image is a server file that nobody is shown', async () …
+    133|     const out = await run('rasterize_page', { document_path: pdfPath, …
+    134|     expect(out.displayed).toBe(false);
+       |                           ^
+    135|     expect(out.message).toMatch(/not shown/i);
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > answers unavailable to an unapproved model too, rather than inviting a retry that cannot succeed
+AssertionError: expected undefined to be 'unavailable' // Object.is equality
+
+- Expected:
+"unavailable"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:160:24
+    158|       { organizationId: ORG, servingModel: { provider: 'openai', model…
+    159|     );
+    160|     expect(out.status).toBe('unavailable');
+       |                        ^
+    161|     expect(JSON.stringify(out)).not.toMatch(/Thorough|approved model/i…
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:54:67
+     52|
+     53|   it('is not offered as connected: the catalog says unavailable, so no…
+     54|     expect(CONNECTOR_CATALOG.find((c) => c.id === id)?.available).toBe…
+       |                                                                   ^
+     55|     const entry = (await getConnectorCatalog(7)).find((c) => c.id === …
+     56|     expect(entry).toMatchObject({ configured: false, available: false …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is skipped by the repository search as not connected, and never listed as searched
+AssertionError: expected [ 'pmda_reviews' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "pmda_reviews",
++ ]
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:61:26
+     59|   it('is skipped by the repository search as not connected, and never …
+     60|     const out = await searchConnectedRepositories(7, { query: 'pembrol…
+     61|     expect(out.searched).toEqual([]);
+       |                          ^
+     62|     expect(out.skipped).toEqual([{ connector: id, reason: expect.strin…
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is skipped by the repository search as not connected, and never listed as searched
+AssertionError: expected [ 'nmpa_cde' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "nmpa_cde",
++ ]
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:61:26
+     59|   it('is skipped by the repository search as not connected, and never …
+     60|     const out = await searchConnectedRepositories(7, { query: 'pembrol…
+     61|     expect(out.searched).toEqual([]);
+       |                          ^
+     62|     expect(out.skipped).toEqual([{ connector: id, reason: expect.strin…
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > does not list a connector whose search failed as searched
+AssertionError: expected [ 'google-drive' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "google-drive",
++ ]
+
+ ❯ server/services/integrations/__tests__/connector-search.test.ts:97:26
+     95|     });
+     96|     const res = await searchConnectedRepositories(1, { query: 'protoco…
+     97|     expect(res.searched).toEqual([]);
+       |                          ^
+     98|     expect(res.skipped).toContainEqual({ connector: 'google-drive', re…
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  10 failed | 21 passed (31)
+   Start at  00:42:28
+   Duration  7.28s (transform 5.83s, setup 270ms, import 9.41s, tests 862ms, environment 0ms)
+

@@ -1,0 +1,97 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure/docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14
+
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 01: a live claimed attempt makes a second caller busy without a second extraction
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 02: expired A cannot overwrite B completed text with a late successful result
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 03: expired A late extraction/profile failure cannot replace B completion or reintroduce an error
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 04: an expired token is refused even before a replacement claims
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 05: supersession or live-project deletion while extraction runs refuses stale completion
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 06: actual same-program keep_data withdrawal fences new processing and retains prior text
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 07: another program withdrawing the same upload makes in-flight original processing unavailable
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 08: a null-program capture still refuses organization-wide original withdrawal
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 09: nullable scope and exact upload file/path/name/MIME association cannot change during an attempt
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 10: source/upload hash split, missing upload digest, and caller Buffer mutation fail safely
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 11: correct duplicate input cannot bypass missing canonical original loading
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 12: failed final persistence and failed journaling retain an expired-lease recovery signal
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 13: lost completion reply is resolved from persisted state without repeating extraction
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 14: future/malformed metadata and timestamps cannot reset budget or crash a sweep
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 15: blockers do not consume runnable limit; dry run has no load, extraction or writes
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 16: persisted extraction failure is not completion, explicit retry clears stale prose, lineage changes fence a result
+ × final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected failed-null-reason metadata cannot consume runnable limit 143ms
+   → expected [ 2 ] to deeply equal [ 3 ]
+ × final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected 24-hour-normalization metadata cannot consume runnable limit 91ms
+   → expected [ 5 ] to deeply equal [ 6 ]
+ × final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected leap-second-normalization metadata cannot consume runnable limit 89ms
+   → expected [ 8 ] to deeply equal [ 9 ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected failed-null-reason metadata cannot consume runnable limit
+AssertionError: expected [ 2 ] to deeply equal [ 3 ]
+
+- Expected
++ Received
+
+  [
+-   3,
++   2,
+  ]
+
+ ❯ final-review-sweep-coherence.test.mts:525:94
+    523|     const pending = await seed();
+    524|     const dry = await processPendingSources(activeOrg, { db, limit: 1 …
+    525|     expect(dry.items.filter(item => item.status === 'candidate').map(i…
+       |                                                                                              ^
+    526|     expect(dry.items.find(item => item.sourceId === malformed.id)?.sta…
+    527|     const applied = await processPendingSources(activeOrg, { db, limit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected 24-hour-normalization metadata cannot consume runnable limit
+AssertionError: expected [ 5 ] to deeply equal [ 6 ]
+
+- Expected
++ Received
+
+  [
+-   6,
++   5,
+  ]
+
+ ❯ final-review-sweep-coherence.test.mts:525:94
+    523|     const pending = await seed();
+    524|     const dry = await processPendingSources(activeOrg, { db, limit: 1 …
+    525|     expect(dry.items.filter(item => item.status === 'candidate').map(i…
+       |                                                                                              ^
+    526|     expect(dry.items.find(item => item.sourceId === malformed.id)?.sta…
+    527|     const applied = await processPendingSources(activeOrg, { db, limit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected leap-second-normalization metadata cannot consume runnable limit
+AssertionError: expected [ 8 ] to deeply equal [ 9 ]
+
+- Expected
++ Received
+
+  [
+-   9,
++   8,
+  ]
+
+ ❯ final-review-sweep-coherence.test.mts:525:94
+    523|     const pending = await seed();
+    524|     const dry = await processPendingSources(activeOrg, { db, limit: 1 …
+    525|     expect(dry.items.filter(item => item.status === 'candidate').map(i…
+       |                                                                                              ^
+    526|     expect(dry.items.find(item => item.sourceId === malformed.id)?.sta…
+    527|     const applied = await processPendingSources(activeOrg, { db, limit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 16 skipped (19)
+   Start at  04:49:11
+   Duration  2.65s (transform 241ms, setup 0ms, import 318ms, tests 2.12s, environment 0ms)
+

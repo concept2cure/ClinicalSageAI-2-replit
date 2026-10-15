@@ -1,0 +1,138 @@
+users.id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+users.name  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+users.email  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+users.status  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+users.mfa_enabled  <-  db/migrations/20260725_users_signing_lockout_columns.sql ; drizzle push: shared/schema.ts
+users.mfa_method  <-  db/migrations/20260725_users_signing_lockout_columns.sql ; drizzle push: shared/schema.ts
+users.mfa_verified_at  <-  db/migrations/20260725_users_signing_lockout_columns.sql ; drizzle push: shared/schema.ts
+users.mfa_backup_codes  <-  db/migrations/20260725_users_signing_lockout_columns.sql ; drizzle push: shared/schema.ts
+users.locked_until  <-  db/migrations/20260725_users_signing_lockout_columns.sql ; drizzle push: shared/schema.ts
+users.password_changed_at  <-  db/migrations/20260725_users_signing_lockout_columns.sql ; drizzle push: shared/schema.ts
+organization_users.organization_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+organization_users.user_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+organization_users.role  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+organization_users.persona  <-  migrations/20260706_org_user_persona.sql ; drizzle push: shared/schema.ts
+organization_users.created_at  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+platform_role_grants.user_id  <-  drizzle push: shared/schema.ts
+platform_role_grants.role  <-  drizzle push: shared/schema.ts
+platform_role_grants.revoked_at  <-  drizzle push: shared/schema.ts
+organizations.id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+organizations.uuid  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.tenant_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.user_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.actor_id  <-  migrations/20260527_mutation_primitives.sql
+audit_logs.action  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.table_name  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.record_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.new_values  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.reason  <-  migrations/20260527_mutation_primitives.sql
+audit_logs.ip_address  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.user_agent  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.occurred_at  <-  migrations/20260527_mutation_primitives.sql
+audit_logs.created_at  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_logs.chain_seq  <-  migrations/20260921_audit_logs_chain_seq.sql
+audit_logs.sha256_chain  <-  migrations/20260527_mutation_primitives.sql
+audit_logs.hmac_seal  <-  migrations/20260609_audit_hmac_seal.sql
+audit_events.organization_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.event_type  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.entity_type  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.entity_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.user_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.user_name  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.ip_address  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.reason  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.metadata  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.timestamp  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.created_at  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+audit_events.record_hash  <-  migrations/0000_sweet_joseph.sql ; db/migrations/20260222_audit_events_hash_chain.sql (+1)
+audit_events.hmac_seal  <-  db/migrations/20260617_audit_events_hmac_seal.sql
+electronic_signatures.id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.organization_id  <-  migrations/20260629_orchestrator_awaiting_signature_status.sql ; migrations/20260813c2_electronic_signatures_tenant_key.sql (+2)
+electronic_signatures.signed_at  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.created_at  <-  db/migrations/20260725_users_signing_lockout_columns.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signer_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signer_name  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signer_email  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signer_title  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signature_meaning  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signature_type  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signed_target  <-  migrations/20260813d_esignature_governed_unification.sql ; drizzle push: shared/schema.ts
+electronic_signatures.version_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.document_id  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signature_hash  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.bound_payload_digest  <-  migrations/20260629_orchestrator_awaiting_signature_status.sql ; db/migrations/20260725_esig_gate_columns_port.sql (+1)
+electronic_signatures.binding_basis  <-  migrations/20260813d_esignature_governed_unification.sql ; drizzle push: shared/schema.ts
+electronic_signatures.authentication_method  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.second_factor_verified  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.is_valid  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.verification_status  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.superseded_by  <-  migrations/20260629_orchestrator_awaiting_signature_status.sql ; db/migrations/20260725_esig_gate_columns_port.sql (+1)
+electronic_signatures.signature_manifest  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+electronic_signatures.signature_purpose  <-  migrations/0000_sweet_joseph.sql ; drizzle push: shared/schema.ts
+vault.documents.organization_id  <-  migrations/20260905_vault_documents_organization_id.sql
+vault.documents.program_id  <-  migrations/0000_sweet_joseph.sql ; db/migrations/044c_gcc_vault_schema.sql (+1)
+vault.documents.retention_policy  <-  migrations/0000_sweet_joseph.sql ; migrations/20260821_vault_documents_canonical_shape.sql (+1)
+vault.documents.retention_until  <-  migrations/0000_sweet_joseph.sql ; migrations/20260821_vault_documents_canonical_shape.sql (+1)
+vault.documents.deleted_at  <-  migrations/0000_sweet_joseph.sql ; migrations/20260821_vault_documents_canonical_shape.sql (+1)
+vault.retention_policies.id  <-  migrations/20260608_vault_retention.sql
+vault.retention_policies.policy_name  <-  migrations/20260608_vault_retention.sql
+vault.retention_policies.retention_days  <-  migrations/20260608_vault_retention.sql
+vault.retention_policies.archive_before_delete  <-  migrations/20260608_vault_retention.sql
+vault.retention_policies.hard_delete  <-  migrations/20260608_vault_retention.sql
+vault.retention_policies.active  <-  migrations/20260608_vault_retention.sql
+vault.legal_holds.id  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.organization_id  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.reference  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.scope  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.program_id  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.document_id  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.reason  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.placed_at  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.placed_by  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.lifted_at  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.lifted_by  <-  migrations/20260906b_vault_legal_holds.sql
+vault.legal_holds.lift_reason  <-  migrations/20260906b_vault_legal_holds.sql
+vault.document_archives.id  <-  migrations/20260608_vault_retention.sql
+vault.document_archives.original_document_id  <-  migrations/20260608_vault_retention.sql
+vault.document_archives.archive_reason  <-  migrations/20260608_vault_retention.sql
+vault.document_archives.archived_at  <-  migrations/20260608_vault_retention.sql
+regulatory_programs.id  <-  migrations/20260524_program_workbench_schema.sql
+regulatory_programs.organization_id  <-  migrations/20260524_program_workbench_schema.sql
+qms_documents.id  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.organization_id  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.doc_number  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.title  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.doc_type  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.version  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.status  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.effective_date  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.next_review_date  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.author_id  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.approver_id  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.approved_at  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.metadata  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.created_at  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.deleted_at  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_documents.superseded_by_id  <-  migrations/20260511_qms_and_labeling.sql ; drizzle push: shared/schema.ts
+qms_change_controls.id  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.organization_id  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.change_number  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.title  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.change_type  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.classification  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.risk_level  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.status  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.created_at  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.proposed_by  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.approved_at  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.approved_by  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.implemented_at  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.verified_at  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.closed_at  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.qms_document_id  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.deleted_at  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.description  <-  db/migrations/20260724_qms_change_control_store.sql
+qms_change_controls.reason  <-  db/migrations/20260724_qms_change_control_store.sql
+
+0 column(s) with no durable creator

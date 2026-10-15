@@ -137,9 +137,21 @@ rows, D1–D10, each with named evidence. Until every row is green:
 - A session that cannot produce that evidence reports **blocked**, not done.
 - No session adds a surface, module, tool, model or integration outside the
   launch catalog (Projects, Vault, Authoring, Submission Center, Submission
-  Readiness, QMS controlled documents) or the gateway/connector scope named in
-  that file. The regulatory digital twin, epistemic / causal / self-evolving
-  engines, federated learning and the manufacturing digital twin get no sessions.
+  Readiness, QMS controlled documents, Reporting & analytics, CMC / Module 3)
+  or the gateway/connector scope named in that file. Submission Readiness is the
+  one dispatch verdict per sequence, shown inside Submit; its name stays as a
+  catalog and entitlement entry (P-33). The IND lifecycle and forms
+  tools are features of Submission Center (P-32). Reporting & analytics
+  joined the catalog by the founder's decision of 2026-09-26, as a central
+  service for every client type. CMC / Module 3 joined it by decision P-28
+  (2026-10-12, under the founder's delegation of 2026-10-07) **with a
+  composition boundary**: it composes small-molecule Module 3 for a US IND, and
+  refuses a biologic, a marketing application or a non-US clinical-trial
+  application by name (`services/cmc/composition-scope.ts`). Widening that
+  boundary is a founder decision, not a session's
+  (`shared/constants/launch-scope.ts`). The regulatory digital twin, epistemic
+  / causal / self-evolving engines, federated learning and the manufacturing
+  digital twin get no sessions.
 - Numbers, verdicts and governed content come from deterministic engines; the
   model narrates. A tool that asks a model for a figure is a defect.
 - Multi-model is governance, not marketing: a model is selectable only as an

@@ -1,0 +1,3 @@
+never-gated  /api/audit/reports  [compliance-reports]
+never-gated  /api/audit/reports/:p  [compliance-reports]
+never-gated  /api/audit/reviews  [compliance-reports]

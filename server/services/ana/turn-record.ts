@@ -20,6 +20,11 @@
  *                             pause / steer / stop, her reasoning
  *   what she answered         the answer as streamed and as stored, and every
  *                             draft she produced
+ *   what was checked          the engine's check of that answer against what
+ *                             she consulted, and her own evidence labels, as
+ *                             the person was shown them (`verification`,
+ *                             schema /2 from 2026-10-04: a later re-run of a
+ *                             changed engine is not the verdict she was given)
  *
  * ── How it is kept ───────────────────────────────────────────────────────────
  * Content-addressed. Every text is stored once, in `ana_record_blobs`, under
@@ -52,10 +57,26 @@ import { createHash } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json.js';
 
 import { writeChainedAuditRow } from '../auditService.js';
+import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models.js';
+import { servedModelsOf } from './turn-record-models.js';
 import type { TurnPlanStep } from './turn-plan.js';
 import type { ContextUsedEvent } from './turn-context-used.js';
+import type { TurnVerification } from './turn-verification.js';
+import { endReasonOf, stepRecordLink, type SealedTimelineEvent, type StepRecordLink, type StepRecordTimes, type TimelineEvent } from '@shared/ana/turn-timeline';
 
-export const TURN_RECORD_SCHEMA = 'ana-turn-record/1';
+/**
+ * /2 (2026-10-04) adds `verification`. A /1 record has no such section.
+ * /3 (2026-10-05, AnA reasoning round 9) adds `routing`, and on each model
+ * call its gateway `requestId` and what it was `sent`.
+ * /4 (2026-10-08, ANA-SUMMARY S4) adds `timeline` — the events the Summary is
+ * built from, exactly as the client was sent them, each note's text by
+ * reference — and `stoppedReason`; and on each step its tool-use id, its
+ * timeline handle, when its handler was dispatched and ended, whether it was
+ * held back, its status sentence and whether a model was used in it.
+ * Verification has no schema gate: /1–/3 records verify as they always did,
+ * and only the Summary branches on the version.
+ */
+export const TURN_RECORD_SCHEMA = 'ana-turn-record/4';
 export const TURN_RECORD_AUDIT_ACTION = 'ana.turn.recorded';
 export const TURN_RECORD_RESOURCE = 'ana_turn_record';
 
@@ -93,7 +114,8 @@ export interface RecordedFile {
   uploadSha256: string | null;
 }
 
-export interface RecordedStep {
+/** A step as the record keeps it; from /4 with its link to the timeline (StepRecordLink). */
+export interface RecordedStep extends StepRecordLink {
   round: number;
   tool: string;
   label: string;
@@ -113,6 +135,9 @@ export interface RecordedStep {
   /** 'server' for a model-provider tool (web search / fetch) run inside the model call. */
   runBy: 'platform' | 'server';
 }
+
+/** What /4 adds to a step, as the stream knows it when the step ends. */
+export type RecordedStepTimes = StepRecordTimes;
 
 export interface RecordedDraft {
   title: string;
@@ -164,8 +189,24 @@ export interface TurnRecordBody {
      * results both belong to round 1, so the call number is what orders them.
      * A model the gateway did not report is recorded as null, not omitted.
      */
-    calls: Array<{ call: number; round: number; provider: string | null; model: string | null }>;
+    calls: Array<{
+      call: number;
+      round: number;
+      provider: string | null;
+      model: string | null;
+      /** The gateway request the call was, which joins it to the ledger row (D6). Null when not reported. */
+      requestId: string | null;
+      /** What the call asked for. Null where the door does not say. */
+      sent: CallSent | null;
+    }>;
   };
+  /**
+   * How the kernel routed the turn, and why: the risk tier that decides the
+   * model, the thinking and the effort (rounds 4 and 7). Null where the door
+   * does not hand its routing over, as the loop doors (turn-record-loop.ts)
+   * do not.
+   */
+  routing: { riskTier: string; taskType: string; rationale: string } | null;
   plan: Array<{ round: number; at: string; steps: TurnPlanStep[] }>;
   steps: RecordedStep[];
   /** Pause, steer and stop, as the run row holds them. Null when they could not be read — never an empty list standing in for "none". */
@@ -177,7 +218,43 @@ export interface TurnRecordBody {
     executedActions: unknown[];
     executedCommands: unknown[];
   };
+  /**
+   * The check of the stored answer and AnA's labels, exactly as the person
+   * was shown them (services/ana/turn-verification.ts). Null when no check
+   * ran: the turn failed first, or its door does not check.
+   */
+  verification: TurnVerification | null;
   warnings: string[];
+  /**
+   * From /4: the Summary's events, in the order the client was sent them
+   * (shared/ana/turn-timeline.ts), a note's text by reference. Absent before /4.
+   */
+  timeline?: SealedTimelineEvent[];
+  /** From /4: why the run stopped, `client_disconnected` included; null when it was not stopped. */
+  stoppedReason?: string | null;
+}
+
+/**
+ * What one model call asked for: its API effort, its thinking config, the
+ * tools it offered (by name — never their schemas) and its tool choice.
+ */
+export interface CallSent {
+  effort: string | null;
+  thinking: { enabled: boolean; budgetTokens: number | null } | null;
+  tools: string[];
+  toolChoice: string | null;
+}
+
+/** A call's sent facts, read from the request the stream built. */
+export function callSent(req: {
+  apiEffort?: string | null;
+  thinking?: { enabled?: boolean; budgetTokens?: number } | null;
+  tools?: ReadonlyArray<{ name?: string }>;
+  toolChoice?: string | null;
+}): CallSent {
+  const thinking = req.thinking ? { enabled: req.thinking.enabled === true, budgetTokens: req.thinking.budgetTokens ?? null } : null;
+  const tools = (req.tools ?? []).map((t) => t.name).filter((n): n is string => typeof n === 'string');
+  return { effort: req.apiEffort ?? null, thinking, tools, toolChoice: req.toolChoice ?? null };
 }
 
 export function sha256Hex(text: string | Buffer): string {
@@ -225,7 +302,10 @@ export class TurnRecorder {
   private reasoning: TextRef | null = null;
   private answer: TurnRecordBody['answer'] = { streamed: null, stored: null };
   private outputs: TurnRecordBody['outputs'] = { drafts: [], executedActions: [], executedCommands: [] };
+  private verification: TurnVerification | null = null;
+  private routing: TurnRecordBody['routing'] = null;
   private readonly warnings: string[] = [];
+  private readonly timeline: SealedTimelineEvent[] = [];
   private streamedSoFar = '';
 
   /** Keep a text as a blob and return its reference. */
@@ -320,9 +400,25 @@ export class TurnRecorder {
     if (m.effort !== undefined) this.model.effort = m.effort ?? null;
   }
 
-  /** A model call returned; recorded in call order. */
-  addServed(round: number, served: { provider?: string | null; model?: string | null }): void {
-    this.model.calls.push({ call: this.model.calls.length + 1, round, provider: served.provider ?? null, model: served.model ?? null });
+  /** A model call returned; recorded in call order, with what it was sent when the door says. */
+  addServed(
+    round: number,
+    served: { provider?: string | null; model?: string | null; requestId?: string | null },
+    sent?: CallSent,
+  ): void {
+    this.model.calls.push({
+      call: this.model.calls.length + 1,
+      round,
+      provider: served.provider ?? null,
+      model: served.model ?? null,
+      requestId: served.requestId ?? null,
+      sent: sent ?? null,
+    });
+  }
+
+  /** How the kernel routed the turn (planKernelExecution's plan). */
+  setRouting(plan: { riskTier: string; taskType: string; decisionRationale: string }): void {
+    this.routing = { riskTier: plan.riskTier, taskType: plan.taskType, rationale: plan.decisionRationale };
   }
 
   addPlan(round: number, steps: TurnPlanStep[]): void {
@@ -340,7 +436,7 @@ export class TurnRecorder {
     result: string | null;
     error?: string | null;
     runBy?: 'platform' | 'server';
-  }): void {
+  } & StepRecordTimes): void {
     this.steps.push({
       round: s.round,
       tool: s.tool,
@@ -351,9 +447,20 @@ export class TurnRecorder {
       result: typeof s.result === 'string' ? this.ref(s.result) : null,
       error: s.error ?? null,
       runBy: s.runBy ?? 'platform',
+      // From /4: the step's link to its timeline events, only the fields the stream reported.
+      ...stepRecordLink(s),
     });
     if (s.toolUseId) this.stepByToolUseId.set(s.toolUseId, this.steps.length - 1);
   }
+
+  /**
+   * One timeline event, as the client was sent it. A note's text is kept as a
+   * blob and referenced, so it shares the blob of the round's prose. Accepted
+   * until the record seals, whatever the run's status: the steps a cancel
+   * stopped are written after the cancel, and they are rows the person reads.
+   * The end event's stop reason is the record's `stoppedReason`.
+   */
+  addEvent(e: TimelineEvent): void { this.timeline.push(e.kind === 'note' ? { ...e, text: this.ref(e.text) } : { ...e }); }
 
   /** The round's results as the model received them; recorded where they differ from the result. */
   setSentToModel(entries: Array<{ tool_use_id: string; content: string }>): void {
@@ -423,6 +530,11 @@ export class TurnRecorder {
     };
   }
 
+  /** What was checked about the stored answer, as the person was shown it. */
+  setVerification(v: TurnVerification | null): void {
+    this.verification = v;
+  }
+
   warn(text: string): void {
     this.warnings.push(text);
   }
@@ -459,7 +571,10 @@ export class TurnRecorder {
       reasoning: this.reasoning,
       answer: this.answer,
       outputs: this.outputs,
+      verification: this.verification,
+      routing: this.routing,
       warnings: this.warnings,
+      timeline: this.timeline, stoppedReason: endReasonOf(this.timeline),
     };
     const text = canonicalJson(body);
     return { body, text, sha256: sha256Hex(text), blobs: new Map(this.blobs) };
@@ -560,9 +675,14 @@ export async function writeTurnRecord(
   }
 }
 
-/** What the client is told about a turn's record: recorded, with its hash, or not, and why. */
+/**
+ * What the client is told about a turn's record: recorded, with its hash, or
+ * not, and why. A filed record also names every model that wrote the turn,
+ * with RULE 2's verdict, so the client can apply the governed-write rule to
+ * inserting the answer into a document (round 11).
+ */
 export type TurnRecordStatus =
-  | { status: 'recorded'; id: string; sha256: string }
+  | { status: 'recorded'; id: string; sha256: string; servedBy?: QualifiedServedModel[] }
   | { status: 'not_recorded'; reason: string };
 
 /**
@@ -606,8 +726,9 @@ export async function writeTurnRecordSafely(
 ): Promise<TurnRecordStatus> {
   if (!recorder) return { status: 'not_recorded', reason: 'This turn had no organization to file it under.' };
   try {
-    const { id, sha256 } = await writeTurnRecord(pool, recorder.seal(outcome), audit);
-    return { status: 'recorded', id, sha256 };
+    const sealed = recorder.seal(outcome);
+    const { id, sha256 } = await writeTurnRecord(pool, sealed, audit);
+    return { status: 'recorded', id, sha256, servedBy: qualifyServedModels(servedModelsOf(sealed.body.model)) };
   } catch (err) {
     console.error('[turn-record] could not write the turn record:', err instanceof Error ? err.message : err);
     return { status: 'not_recorded', reason: 'The record of this turn could not be written.' };

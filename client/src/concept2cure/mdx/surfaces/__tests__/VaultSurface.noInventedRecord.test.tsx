@@ -35,7 +35,7 @@ function serve(opts: { vault: 'ok' | 'fail'; audit: unknown[] }) {
     calls.push(url);
     const json = (b: unknown, status = 200) =>
       new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } });
-    if (url.includes('/api/mdx/audit')) return json({ data: { events: opts.audit, actions: [], resources: [], kpis: [] } });
+    if (/\/api\/mdx\/vault\/[^/]+\/audit/.test(url)) return json({ data: { events: opts.audit, actions: [], resources: [], kpis: [] } });
     if (url.includes('/api/mdx/vault')) {
       return opts.vault === 'ok' ? json({ data: [ARTIFACT] }) : new Response('upstream unavailable', { status: 503 });
     }
@@ -60,7 +60,10 @@ describe('VaultSurface — no invented Part 11 record', () => {
     serve({ vault: 'ok', audit: [] });
     const { container } = mount();
     await waitFor(() => expect(screen.getByTestId('vault-audit-empty')).toBeTruthy());
-    expect(calls.some((u) => u.includes('/api/mdx/audit') && u.includes('record=art-1'))).toBe(true);
+    // Under the Vault's own route: production refuses /api/mdx/audit, and the
+    // unfiltered org-wide read it made with nothing selected is gone.
+    expect(calls.some((u) => u.includes('/api/mdx/vault/art-1/audit'))).toBe(true);
+    expect(calls.some((u) => u.includes('/api/mdx/audit'))).toBe(false);
     const text = container.textContent ?? '';
     for (const invented of ['A-9924812', 'A-9924809', 'SHA-256 verified · system', 'Recent audit · sample']) {
       expect(text).not.toContain(invented);
@@ -76,6 +79,23 @@ describe('VaultSurface — no invented Part 11 record', () => {
     expect(container.querySelector('.docs-esig-signed')).toBeNull();
     expect(text).not.toContain('88%');
     expect(text).not.toMatch(/e-signed/);
+  });
+
+  it('shows the recorded events, and says so when the trail cannot be read', async () => {
+    serve({ vault: 'ok', audit: [{ id: 'A-5', when: '2026-09-30T10:00:00.000Z', actor: 'u-12', actorName: 'Ana Author', action: 'update' }] });
+    const { container } = mount();
+    await waitFor(() => expect(container.textContent ?? '').toContain('update · Ana Author'));
+    cleanup();
+    vi.unstubAllGlobals();
+    calls = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      calls.push(url);
+      if (url.includes('/audit')) return new Response('refused', { status: 404 });
+      return new Response(JSON.stringify({ data: [ARTIFACT] }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }));
+    mount();
+    await waitFor(() => expect(screen.getByTestId('vault-audit-error')).toBeTruthy());
   });
 
   it('reports a FAILED vault read as a failure', async () => {

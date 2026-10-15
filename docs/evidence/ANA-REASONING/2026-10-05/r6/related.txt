@@ -1,0 +1,21 @@
+Every suite of the modules rounds 1-6 touch, on the round-6 tree (merged with trunk d11ee2368).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <round 5's related set, plus tests/services/tool-trace.test.ts and server/routes/__tests__/chat-path-parity.test.ts>
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 452 passed | 1 skipped (456)
+      Tests  16 failed | 6334 passed | 3 skipped (6353)
+
+Three failing files, none of them this round's:
+
+1. server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts (15): needs a CONNECTOR_ENCRYPTION_KEY this container does not set (../r4/related.txt):
+→ handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+
+2. server/services/ana/__tests__/governed-reason-not-invented.test.ts (1): 'registered tools the scan never read: draft_quality_overall_summary_m2_3', a tool trunk added in 881945fe5 (the CMC lane). Handed on: docs/work-orders/README.md, item 24.
+
+3. server/services/ana/__tests__/deepening-tools.test.ts (fails at load): 'TypeError: mockPool.connect.mockResolvedValue is not a function'. It fails the same way on trunk d11ee2368 with round 6 stashed. Bisected on exports of trunk: 1e6ceaea0 passes 43 of 43; 8d919b1f8 ('AnA's writing gate no longer passes a document whose structure it did not check', the D2 lane, 03:35 today) loads no tests. Handed on: docs/work-orders/README.md, item 25.
+ FAIL  server/services/ana/__tests__/deepening-tools.test.ts [ server/services/ana/__tests__/deepening-tools.test.ts ]
+TypeError: mockPool.connect.mockResolvedValue is not a function
+ ❯ server/services/ana/__tests__/deepening-tools.test.ts:11:39
+      9|    so it is given the pool's own empty result here — captured before t…
+
+A source-scan test (stream-stopped-reason.test.ts) read an 800-character window after the trace-note line and failed on the first related run, because round 6's added line pushed the push it checks past the window. The added line moved to just before the trace note; the test passes in this run.

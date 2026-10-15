@@ -1,0 +1,12 @@
+Mutant S03-cap-8: eight tools are carried: a stability question loses its own CMC tools, ranked 24th and 25th of 29
+
+--- server/services/ana/tool-selection.ts
+- export const MAX_CARRIED_TOOLS = 4;
++ export const MAX_CARRIED_TOOLS = 8;
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carried tools never cost a question its own tools near the end of its slots 13ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

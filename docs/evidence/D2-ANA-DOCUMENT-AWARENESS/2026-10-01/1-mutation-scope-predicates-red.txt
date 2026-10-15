@@ -1,0 +1,187 @@
+# MUTATION RED: the scope predicates of server/services/authoring/authoring-read.ts removed one at a time, the leak tests going red for the right reason, and the file restored byte-identical (sha256 3471b9b27d0499072d8e58b8d73a9ed272e1b1113e8eb353af16b80430c7d3ba) — 2026-10-01T18:38:11Z.
+
+Why a mutation: the first red (1-authoring-read-red.txt) is only "module not found".
+These runs show the tests fail when the property they guard is broken.
+
+Three mutations, each applied alone, run against both suites, then reverted by
+copying the saved original back (checked by sha256 after each run):
+
+  1. program  — the documents query loses `d.client_program_id = $2` (parameters
+                renumbered, as a real edit would). Result: 8 failed. Program B's
+                document "Other program" is listed in program A's outline, and a
+                program-B document id is found from program A.
+  2. tenant   — the documents query loses `d.tenant_id = $1` (renumbered). Result:
+                7 failed. The other tenant's document that carries program A's id
+                (DOC_X1, there for exactly this) is listed to tenant 1.
+  3. or-true  — the shared section fragment's program predicate is neutralised as
+                `(d.client_program_id = $2 OR TRUE)`. Result: 3 failed, all on
+                PGlite. The SQL-aware fake does not evaluate OR, so it stays green.
+                That gap is why every case also runs on PGlite. The outline
+                stayed green under this mutation because it also drops any
+                section whose document is not in the scoped document list.
+
+════════════════════════════════════════════════════════════════════════
+MUTATION: program
+────────── diff (original → mutated) ──────────
+-  const params: unknown[] = [scope.tenantId, scope.programId];
++  const params: unknown[] = [scope.tenantId];
+- WHERE d.tenant_id = $1 AND d.client_program_id = $2`;
++ WHERE d.tenant_id = $1`;
+-    sql += ' AND d.id = $3';
++    sql += ' AND d.id = $2';
+────────── vitest run server/services/authoring/__tests__/authoring-read.test.ts server/services/ana/__tests__/authoring-read-tools.test.ts ──────────
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 19ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 2ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 2ms
+ × server/services/ana/__tests__/authoring-read-tools.test.ts > scope > list_authoring_outline: another program's or tenant's document is not found in this project 4ms
+ × server/services/ana/__tests__/authoring-read-tools.test.ts > scope > the open program decides, not the tenant alone: program B sees only its own document 8ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 35ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 18ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 13ms
+ Test Files  2 failed (2)
+      Tests  8 failed | 59 passed (67)
+────────── first assertion failures ──────────
+84:AssertionError: 00000000-0000-4000-8000-000000000201: expected 'undefined' to match /not found in this project/
+85-
+86-- Expected:
+87-/not found in this project/
+88-
+89-+ Received:
+90-"undefined"
+91-
+92- ❯ server/services/ana/__tests__/authoring-read-tools.test.ts:128:38
+--
+103:AssertionError: expected '{"nextCursor":null,"totalSections":1,…' not to contain '00000000-0000-4000-8000-000000000101'
+104-
+105-Expected: "00000000-0000-4000-8000-000000000101"
+106-Received: "{"nextCursor":null,"totalSections":1,"documentCount":3,"documents":[{"id":"00000000-0000-4000-8000-000000000201","title":"Other program","module":"M2","productCode":"IND","documentStatus":"draft","updatedAt":"2026-08-01T00:00:00.000Z","sectionCount":1},{"id":"00000000-0000-4000-8000-000000000101","title":"Module 2 summaries","module":"M2","productCode":"IND","documentStatus":"draft"
+107-
+108- ❯ server/services/ana/__tests__/authoring-read-tools.test.ts:136:21
+109-    134|     const { raw } = await call('list_authoring_outline', {}, { organiz…
+110-    135|     expect(raw).toContain(DOC_B1);
+111-    136|     expect(raw).not.toContain(DOC_A1);
+--
+119:AssertionError: expected [ [ …(2) ], [ …(2) ], [ …(2) ] ] to deeply equal [ [ …(2) ], [ …(2) ] ]
+120-
+121-- Expected
+122-+ Received
+123-
+124-@@ -1,7 +1,11 @@
+125-  [
+126-    [
+127-+     "00000000-0000-4000-8000-000000000201",
+--
+148:AssertionError: 00000000-0000-4000-8000-000000000201: expected true to be false // Object.is equality
+149-
+150-- Expected
+151-+ Received
+152-
+153-- false
+154-+ true
+155-
+156- ❯ server/services/authoring/__tests__/authoring-read.test.ts:164:31
+--
+restored: sha256 matches original
+════════════════════════════════════════════════════════════════════════
+MUTATION: tenant
+────────── diff (original → mutated) ──────────
+-  const params: unknown[] = [scope.tenantId, scope.programId];
++  const params: unknown[] = [scope.programId];
+- WHERE d.tenant_id = $1 AND d.client_program_id = $2`;
++ WHERE d.client_program_id = $1`;
+-    sql += ' AND d.id = $3';
++    sql += ' AND d.id = $2';
+────────── vitest run server/services/authoring/__tests__/authoring-read.test.ts server/services/ana/__tests__/authoring-read-tools.test.ts ──────────
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 17ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 3ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 3ms
+ × server/services/ana/__tests__/authoring-read-tools.test.ts > scope > list_authoring_outline: another program's or tenant's document is not found in this project 8ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 29ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 22ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 10ms
+ Test Files  2 failed (2)
+      Tests  7 failed | 60 passed (67)
+────────── first assertion failures ──────────
+83:AssertionError: 00000000-0000-4000-8000-000000000301: expected 'undefined' to match /not found in this project/
+84-
+85-- Expected:
+86-/not found in this project/
+87-
+88-+ Received:
+89-"undefined"
+90-
+91- ❯ server/services/ana/__tests__/authoring-read-tools.test.ts:128:38
+--
+102:AssertionError: expected [ [ …(2) ], [ …(2) ], [ …(2) ] ] to deeply equal [ [ …(2) ], [ …(2) ] ]
+103-
+104-- Expected
+105-+ Received
+106-
+107-@@ -1,7 +1,11 @@
+108-  [
+109-    [
+110-+     "00000000-0000-4000-8000-000000000301",
+--
+131:AssertionError: 00000000-0000-4000-8000-000000000301: expected true to be false // Object.is equality
+132-
+133-- Expected
+134-+ Received
+135-
+136-- false
+137-+ true
+138-
+139- ❯ server/services/authoring/__tests__/authoring-read.test.ts:164:31
+--
+150:AssertionError: expected [ …(3) ] to deeply equal [ Array(1) ]
+151-
+152-- Expected
+153-+ Received
+154-
+155-  [
+156-    "00000000-0000-4000-8000-000000000301",
+157-+   "00000000-0000-4000-8000-000000000101",
+158-+   "00000000-0000-4000-8000-000000000102",
+--
+restored: sha256 matches original
+════════════════════════════════════════════════════════════════════════
+MUTATION: or-true
+────────── diff (original → mutated) ──────────
+- WHERE s.tenant_id = $1 AND d.client_program_id = $2`;
++ WHERE s.tenant_id = $1 AND (d.client_program_id = $2 OR TRUE)`;
+────────── vitest run server/services/authoring/__tests__/authoring-read.test.ts server/services/ana/__tests__/authoring-read-tools.test.ts ──────────
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 34ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program's and another tenant's sections are not found by id 13ms
+ × server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > search never returns another program's or tenant's text 17ms
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 64 passed (67)
+────────── first assertion failures ──────────
+79:AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+80-
+81-- Expected
+82-+ Received
+83-
+84-  [
+85-+   "00000000-0000-4000-8000-000000002001",
+86-    "00000000-0000-4000-8000-000000001001",
+87-  ]
+--
+100:AssertionError: 00000000-0000-4000-8000-000000002001: expected true to be false // Object.is equality
+101-
+102-- Expected
+103-+ Received
+104-
+105-- false
+106-+ true
+107-
+108- ❯ server/services/authoring/__tests__/authoring-read.test.ts:261:25
+--
+119:AssertionError: expected [ { …(6) } ] to deeply equal []
+120-
+121-- Expected
+122-+ Received
+123-
+124-- []
+125-+ [
+126-+   {
+127-+     "code": "2.5",
+restored: sha256 matches original

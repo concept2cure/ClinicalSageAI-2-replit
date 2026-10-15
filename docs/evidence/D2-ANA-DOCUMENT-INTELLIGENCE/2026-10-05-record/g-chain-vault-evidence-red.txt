@@ -1,0 +1,81 @@
+# Red: HEAD a9ac124a, before the change to submission-chain.ts / regulatory-knowledge-tools.ts
+ × tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a final SAP at 5.3.5.1 is the SAP, not the CSR, and the ISS is not next 9ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a protocol at 5.3.5.1 is not a CSR; a CSR named by its protocol number is 1ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > an integrated summary or a Module 2 summary filed under 5.3 is not a CSR 1ms
+ ✓ tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a real CSR at a study-type leaf is still filed, by its title or by the kind the Vault recorded 0ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a document the Vault recorded as a CSR is not the final SAP 1ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a confirmed CSR at the heading 5.3.5 is suggested-level with the placement to fix 1ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a CSR in Module 5 with no section is seen, at suggested level 2ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a properly filed CSR outranks one filed at the heading 2ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > a Summary of Clinical Efficacy in Module 5 is misfiled, expected at 2.7.3 (ICH M4E) 1ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > a Summary of Clinical Safety in Module 5 with no section is misfiled, expected at 2.7.4 1ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > an ISS outside 5.3.5.3, 2.7.3 and 2.7.4 is misfiled on FDA’s placement page 1ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > an ISS whose narrative is placed at 2.7.4 is not misfiled, and the 5.3.5.3 leaf it needs is named 3ms
+ × tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > documents filed where they belong report nothing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > answers a CSR heading, a CTD section and a document type from the canonical record 4ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > says what it does not index, and lists what it does 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > fits the result budget for every section, document type and E3 heading it knows 20ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > without a project, gives the plan and says there is no standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > with an organization but no open project, says so rather than reading another project 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the open project’s Vault, scoped by organization and program, and decides the standing 2ms
+ × server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the folder and kind the Vault records, sees a CSR filed in Module 5 without a section, and reports misfiling 13ms
+ × server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > says in its description and step detail that it matches by kind and reports misfiling 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a step the Vault cannot hold is never reported missing, and never as what a step waits on 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed 4ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a read cut short says so, and claims nothing is missing 14ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > gives one step in full, with its checked sources 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > fits the result budget, with and without a standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > lists every rule in brief with what the platform checks, and what FDA has said about Elsa 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the pdf rules in full, each with its source 5ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the ectd rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the study-data rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the content rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > refuses an area it does not have 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a final SAP at 5.3.5.1 is the SAP, not the CSR, and the ISS is not next
+AssertionError: expected 'filed' to be 'not_found' // Object.is equality
+Expected: "not_found"
+Received: "filed"
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a protocol at 5.3.5.1 is not a CSR; a CSR named by its protocol number is
+AssertionError: expected 'filed' to be 'not_found' // Object.is equality
+Expected: "not_found"
+Received: "filed"
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > an integrated summary or a Module 2 summary filed under 5.3 is not a CSR
+AssertionError: expected 'filed' to be 'not_found' // Object.is equality
+Expected: "not_found"
+Received: "filed"
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document counts for the CSR step only when it is a CSR > a document the Vault recorded as a CSR is not the final SAP
+AssertionError: expected 'filed' to be 'not_found' // Object.is equality
+Expected: "not_found"
+Received: "filed"
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a confirmed CSR at the heading 5.3.5 is suggested-level with the placement to fix
+AssertionError: expected 'not_found' to be 'suggested' // Object.is equality
+Expected: "suggested"
+Received: "not_found"
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a CSR in Module 5 with no section is seen, at suggested level
+TypeError: Cannot read properties of null (reading 'startsWith')
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a CSR filed without a study-type leaf is reported, not lost and not filed > a properly filed CSR outranks one filed at the heading
+TypeError: Cannot read properties of undefined (reading 'map')
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > a Summary of Clinical Efficacy in Module 5 is misfiled, expected at 2.7.3 (ICH M4E)
+AssertionError: Target cannot be null or undefined.
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > a Summary of Clinical Safety in Module 5 with no section is misfiled, expected at 2.7.4
+TypeError: Cannot read properties of null (reading 'startsWith')
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > an ISS outside 5.3.5.3, 2.7.3 and 2.7.4 is misfiled on FDA’s placement page
+AssertionError: Target cannot be null or undefined.
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > an ISS whose narrative is placed at 2.7.4 is not misfiled, and the 5.3.5.3 leaf it needs is named
+AssertionError: expected undefined to deeply equal []
+- Expected:
++ Received:
+ FAIL  tests/regulatory/chain-vault-evidence.test.ts > a document filed where its kind does not go is reported as misfiled > documents filed where they belong report nothing
+AssertionError: expected undefined to deeply equal []
+- Expected:
++ Received:
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the folder and kind the Vault records, sees a CSR filed in Module 5 without a section, and reports misfiling
+AssertionError: expected 'SELECT d.ctd_section, d.placement_sta…' to match /d\.folder_id/
+- Expected:
++ Received:
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > says in its description and step detail that it matches by kind and reports misfiling
+AssertionError: expected 'The sequence from study close-out and…' to match /misfiled/
+- Expected:
++ Received:

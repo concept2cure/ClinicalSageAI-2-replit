@@ -233,6 +233,7 @@ function detectContradictions(response: string): ContradictionResult {
  */
 function buildRiskSummary(params: {
   ungroundedCount: number;
+  missingCount: number;
   overclaims: string[];
   contradictions: string[];
   totalClaims: number;
@@ -251,6 +252,10 @@ function buildRiskSummary(params: {
     );
   }
 
+  if (params.missingCount > 0) {
+    parts.push(`${params.missingCount}/${params.totalClaims} claims marked by AnA as lacking support ([MISSING])`);
+  }
+
   if (params.overclaims.length > 0) {
     parts.push(
       `${params.overclaims.length} overclaim(s) using strong language without [KNOWN] backing`
@@ -265,7 +270,8 @@ function buildRiskSummary(params: {
     if (params.totalLabels === 0) {
       return 'Response lacks evidence discipline labels. Claims may be ungrounded.';
     }
-    return 'All claims appear adequately grounded by evidence labels.';
+    // A label is AnA describing her own claim, not grounding (2026-10-04).
+    return 'Every claim carries an evidence label.';
   }
 
   return parts.join('; ') + '.';
@@ -340,18 +346,22 @@ export function validateEvidence(
   // Step 2: Extract claims
   const rawClaims = extractClaims(response);
 
-  // Step 3: Ground each claim against nearest label
+  // Step 3: Ground each claim against nearest label. [MISSING] is AnA saying
+  // the support is absent (persona.ts): a declared gap, not grounding, and
+  // not an unlabelled claim either. It is counted as missing support.
   const claims: ExtractedClaim[] = rawClaims.map(claim => {
     const nearestLabel = findNearestLabel(claim.position, labels);
     return {
       ...claim,
       nearestLabel,
-      grounded: nearestLabel !== null,
+      grounded: nearestLabel !== null && nearestLabel.type !== 'MISSING',
     };
   });
+  const declaredGap = (c: ExtractedClaim) => c.nearestLabel?.type === 'MISSING';
 
   const groundedCount = claims.filter(c => c.grounded).length;
-  const ungroundedCount = claims.filter(c => !c.grounded).length;
+  const missingCount = claims.filter(declaredGap).length;
+  const ungroundedCount = claims.filter(c => !c.grounded && !declaredGap(c)).length;
 
   // Step 4: Detect overclaims
   const overclaims = detectOverclaims(response, labels);
@@ -359,12 +369,14 @@ export function validateEvidence(
   // Step 5: Detect contradictions
   const contradictionResult = detectContradictions(response);
 
-  // Step 6: Determine source types from labels
+  // Step 6: The kinds of support AnA's labels claim. A [MISSING] label claims
+  // none, so it is neither a source type nor counted as a source.
   const sourceTypes = new Set<string>();
+  const labelCounts = { known: 0, inferred: 0, missing: 0 };
   for (const label of labels) {
     if (label.type === 'KNOWN') sourceTypes.add('regulatory_reference');
     if (label.type === 'INFERRED') sourceTypes.add('analytical_inference');
-    if (label.type === 'MISSING') sourceTypes.add('identified_gap');
+    labelCounts[label.type.toLowerCase() as keyof typeof labelCounts]++;
   }
 
   // Step 7: Itemize the flagged claims so the client can show *which* claims
@@ -380,7 +392,7 @@ export function validateEvidence(
     flaggedClaims.push({ kind, text });
   };
   for (const claim of claims) {
-    if (!claim.grounded) pushFlagged('ungrounded', claim.text);
+    if (!claim.grounded && !declaredGap(claim)) pushFlagged('ungrounded', claim.text);
   }
   for (const overclaim of overclaims) pushFlagged('overclaim', overclaim);
   for (const contradiction of contradictionResult.contradictions) {
@@ -408,14 +420,16 @@ export function validateEvidence(
   return {
     attempted: true,
     validated,
-    source_count: labels.length,
+    source_count: labelCounts.known + labelCounts.inferred,
     source_types: Array.from(sourceTypes),
+    label_counts: labelCounts,
     grounded_claim_count: groundedCount,
     weak_or_ungrounded_claim_count: ungroundedCount + overclaims.length,
-    missing_support_count: claims.filter(c => !c.grounded && c.pattern.includes('missing')).length,
+    missing_support_count: missingCount,
     provider,
     reviewer_risk_summary: buildRiskSummary({
       ungroundedCount,
+      missingCount,
       overclaims,
       contradictions: contradictionResult.contradictions,
       totalClaims: claims.length,

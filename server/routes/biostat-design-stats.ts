@@ -37,6 +37,7 @@ import {
   commensurateBorrow,
   treatmentEffect,
   tippingPointBias,
+  tippingPointBorrow,
   renderExternalControlMemo,
   type CovariateInput,
 } from '../services/stats/external-control';
@@ -50,6 +51,7 @@ import {
   forecastCompletion,
   forecastEnrollmentByTime,
   forecastRetention,
+  accrualHoldoutError,
   type SiteConfig,
 } from '../services/stats/enrollment-forecast';
 import {
@@ -84,7 +86,13 @@ import {
   type DoseLevelData,
 } from '../services/stats/dose-finding-boin';
 import { rmstDifference, restrictedMeanSurvival } from '../services/stats/rmst';
-import { mmrmSampleSize, type MmrmCovariance } from '../services/stats/mmrm-design';
+import { mmrmPower, mmrmSampleSize, type MmrmCovariance } from '../services/stats/mmrm-design';
+import {
+  calculateSpendingBoundaries,
+  conditionalPowerScenarios,
+  computePredictivePower,
+} from '../services/adaptive-trial-operations-service';
+import { driftForTwoSampleMeans } from '../services/stats/group-sequential-oc';
 
 const router = Router();
 const authMiddleware = authenticateToken;
@@ -443,6 +451,15 @@ router.post('/external-control/sensitivity', authMiddleware, async (req: Request
     const effect = treatmentEffect(b.meanT, b.seT, control, alpha);
     // The bias tipping-point uses the power-prior path with the active a0.
     const tipping = tippingPointBias({ ...summary, meanT: b.meanT, seT: b.seT, a0, alpha });
+    /* The BORROWING-WEIGHT tipping point: the same design swept over a0 from 1
+       to 0. "How much of your conclusion depends on how much you borrowed?" is
+       the question FDA and EMA ask of every external-control filing, and
+       `tippingPointBorrow` answered it from nowhere — declared in
+       stats/external-control.ts and referenced by no route, tool or client.
+       It takes exactly the inputs this route already has, so it belongs in
+       this response rather than behind a second endpoint computing the same
+       borrow and the same effect again. */
+    const tippingBorrow = tippingPointBorrow({ ...summary, meanT: b.meanT, seT: b.seT, alpha });
     const balance = Array.isArray(b.covariates) && b.covariates.length > 0
       ? covariateBalance(b.covariates as CovariateInput[])
       : undefined;
@@ -457,9 +474,337 @@ router.post('/external-control/sensitivity', authMiddleware, async (req: Request
       tipping,
     });
 
-    res.json({ success: true, data: { control, effect, tipping, balance, memo } });
+    res.json({ success: true, data: { control, effect, tipping, tippingBorrow, balance, memo } });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// ─── POST /adaptive/interim: request validation ───────────────────────────────
+//
+// Split into named validators so the handler stays a handler. Each returns an
+// error sentence or null; `parseInterimLook` composes them with early returns.
+
+/** The design's looks: strictly increasing, in (0, 1], ending at the final analysis. */
+function checkInformationFractions(fractions: unknown): string | null {
+  if (!Array.isArray(fractions) || fractions.length === 0 ||
+      !fractions.every((t) => typeof t === 'number' && Number.isFinite(t) && t > 0 && t <= 1)) {
+    return 'informationFractions must be a non-empty array of numbers in (0, 1], strictly increasing, with the last equal to 1 (the final analysis).';
+  }
+  for (let i = 1; i < fractions.length; i++) {
+    if (!(fractions[i] > fractions[i - 1])) {
+      return `informationFractions must be strictly increasing; ${fractions[i - 1]} is followed by ${fractions[i]}.`;
+    }
+  }
+  if (fractions[fractions.length - 1] !== 1) {
+    // Conditional and predictive power are both defined against the FINAL
+    // critical value, so the final analysis has to be on the list. The
+    // boundary-only route (/adaptive/oc-exact) has the same contract.
+    return 'The last information fraction must be 1 — the final analysis — because the conditional and predictive power are computed against its critical value.';
+  }
+  return null;
+}
+
+/** Which look is being read, and what was observed there. */
+function checkLook(fractions: number[], lookNumber: unknown, observedZ: unknown): string | null {
+  if (!Number.isInteger(lookNumber) || (lookNumber as number) < 1 || (lookNumber as number) > fractions.length) {
+    return `lookNumber must be an integer between 1 and ${fractions.length} (the number of information fractions given); got ${lookNumber}.`;
+  }
+  if (typeof observedZ !== 'number' || !Number.isFinite(observedZ)) {
+    return 'observedZ is required: the z-statistic observed at this look, on the one-sided upper scale.';
+  }
+  return null;
+}
+
+interface DesignDriftResolution {
+  error?: string;
+  designDrift: number | null;
+  derived: Array<{ field: string; value: number; from: string }>;
+}
+
+/**
+ * The design effect on the drift scale.
+ *
+ * `designDrift` and `designEffect` are alternatives, never both: two figures
+ * for one quantity can disagree, and a route that silently prefers one is how
+ * a design gets judged against a number nobody chose. A sponsor knows their
+ * design as an effect size and an n per arm rather than as θ, so the
+ * conversion is offered — through the canonical `driftForTwoSampleMeans` — and
+ * recorded in `derived`, so a reader can see the figure was computed and from
+ * what. With neither, the H1 figure is reported as not computed.
+ */
+function resolveDesignDrift(b: Record<string, any>): DesignDriftResolution {
+  const none: DesignDriftResolution = { designDrift: null, derived: [] };
+  if (b.designDrift !== undefined && b.designEffect !== undefined) {
+    return { ...none, error: 'Supply designDrift or designEffect, not both: they are two statements of one quantity and could disagree.' };
+  }
+  if (typeof b.designDrift === 'number' && Number.isFinite(b.designDrift)) {
+    return { designDrift: b.designDrift, derived: [] };
+  }
+  if (!b.designEffect || typeof b.designEffect !== 'object') return none;
+
+  const { standardizedEffect, nPerArm } = b.designEffect;
+  if (typeof standardizedEffect !== 'number' || !Number.isFinite(standardizedEffect)) {
+    return { ...none, error: 'designEffect.standardizedEffect must be a finite number (the design effect as a standardized difference).' };
+  }
+  if (typeof nPerArm !== 'number' || !Number.isFinite(nPerArm) || !(nPerArm > 0)) {
+    return { ...none, error: 'designEffect.nPerArm must be a positive number (subjects per arm at the final analysis).' };
+  }
+  const designDrift = driftForTwoSampleMeans(standardizedEffect, nPerArm);
+  return {
+    designDrift,
+    derived: [{
+      field: 'designDrift',
+      value: designDrift,
+      from: `standardized effect ${standardizedEffect} at ${nPerArm} per arm, through driftForTwoSampleMeans (theta = d*sqrt(n/2))`,
+    }],
+  };
+}
+
+/** The predictive-power prior: both fields or neither. */
+function resolvePrior(raw: unknown): { error?: string; prior?: { mean: number; sd: number } } {
+  if (!raw || typeof raw !== 'object') return {};
+  const p = raw as { mean?: unknown; sd?: unknown };
+  if (typeof p.mean !== 'number' || !Number.isFinite(p.mean) ||
+      typeof p.sd !== 'number' || !(p.sd > 0) || !Number.isFinite(p.sd)) {
+    return { error: 'prior needs a finite mean and a positive finite sd, both on the drift scale.' };
+  }
+  return { prior: { mean: p.mean, sd: p.sd } };
+}
+
+interface InterimLookRequest {
+  fractions: number[];
+  lookNumber: number;
+  observedZ: number;
+  alpha: number;
+  spendingFunction: SpendingFunction;
+  designDrift: number | null;
+  derived: Array<{ field: string; value: number; from: string }>;
+  prior?: { mean: number; sd: number };
+}
+
+/** The validated request, or the one sentence that says why there is none. */
+function parseInterimLook(b: Record<string, any>): { error: string } | InterimLookRequest {
+  const fractionsError = checkInformationFractions(b.informationFractions);
+  if (fractionsError) return { error: fractionsError };
+  const fractions = b.informationFractions as number[];
+
+  const lookError = checkLook(fractions, b.lookNumber, b.observedZ);
+  if (lookError) return { error: lookError };
+
+  if (b.spendingFunction !== undefined && !['obrien-fleming', 'pocock', 'linear'].includes(b.spendingFunction)) {
+    return { error: `spendingFunction must be one of obrien-fleming, pocock, linear; got ${JSON.stringify(b.spendingFunction)}. No other spending function is implemented, and none is substituted.` };
+  }
+
+  const drift = resolveDesignDrift(b);
+  if (drift.error) return { error: drift.error };
+
+  const priorResult = resolvePrior(b.prior);
+  if (priorResult.error) return { error: priorResult.error };
+
+  return {
+    fractions,
+    lookNumber: b.lookNumber as number,
+    observedZ: b.observedZ as number,
+    alpha: typeof b.alpha === 'number' ? b.alpha : 0.025,
+    spendingFunction: (b.spendingFunction ?? 'obrien-fleming') as SpendingFunction,
+    designDrift: drift.designDrift,
+    derived: drift.derived,
+    prior: priorResult.prior,
+  };
+}
+
+/**
+ * POST /api/biostat/mmrm/power
+ *
+ * The power an MMRM design has at an n the sponsor names — the reverse of
+ * /mmrm/sample-size, and the question that follows a budget: "we can only
+ * enrol 90 per arm, what does that buy us?"
+ *
+ * `mmrmPower` was declared in stats/mmrm-design.ts and referenced by no route,
+ * tool or client, so the reverse direction could not be asked. Same engine as
+ * the sizing — same variance factor, same monotone-dropout information — so a
+ * power read here and an n read there cannot disagree.
+ *
+ * Body: { visits, covariance, rho, sigma, delta, retention[], nPerArm,
+ *         n2?, alpha?, targetVisit?, allocationRatio? }
+ */
+router.post('/mmrm/power', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    const required = ['visits', 'rho', 'sigma', 'delta', 'nPerArm'];
+    const missing = required.filter((k) => typeof b[k] !== 'number' || !Number.isFinite(b[k]));
+    if (missing.length > 0) {
+      return res.status(400).json({ success: false, error: `${missing.join(', ')} must be finite numbers.` });
+    }
+    if (!Array.isArray(b.retention) || !b.retention.every((r: unknown) => typeof r === 'number')) {
+      return res.status(400).json({ success: false, error: 'retention must be an array of numbers, one per post-baseline visit, monotone non-increasing.' });
+    }
+    if (!['compound_symmetry', 'ar1'].includes(b.covariance)) {
+      return res.status(400).json({ success: false, error: 'covariance must be compound_symmetry or ar1; no other structure is implemented and none is substituted.' });
+    }
+
+    const input = {
+      visits: b.visits,
+      covariance: b.covariance as MmrmCovariance,
+      rho: b.rho,
+      sigma: b.sigma,
+      delta: b.delta,
+      retention: b.retention as number[],
+      nPerArm: b.nPerArm,
+      n2: typeof b.n2 === 'number' ? b.n2 : undefined,
+      alpha: typeof b.alpha === 'number' ? b.alpha : undefined,
+      targetVisit: typeof b.targetVisit === 'number' ? b.targetVisit : undefined,
+      allocationRatio: typeof b.allocationRatio === 'number' ? b.allocationRatio : undefined,
+    };
+
+    const power = mmrmPower(input);
+    /* The sizing beside it, at this design's own target power, so a sponsor
+       can see both the power their budget buys and the n the target needs —
+       from one engine, in one answer. */
+    const sized = mmrmSampleSize({ ...input, power: typeof b.power === 'number' ? b.power : 0.9 });
+
+    res.json({
+      success: true,
+      data: {
+        power,
+        nPerArm: input.nPerArm,
+        n2: input.n2 ?? input.nPerArm,
+        atTargetPower: { power: sized.inputs.power, nPerArm: sized.nPerArm, achievedPower: sized.achievedPower },
+        varianceFactor: sized.varianceFactor,
+        efficiencyVsCompleters: sized.efficiencyVsCompleters,
+        provenance: sized.provenance,
+      },
+    });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/enrollment/backtest
+ *
+ * The forecast scored against what actually enrolled: the per-point error, the
+ * mean absolute error and the RMSE.
+ *
+ * `accrualHoldoutError` was declared in stats/enrollment-forecast.ts and
+ * referenced by no route, tool or client. A forecast that is never scored
+ * against reality is the thing a CRO is measured on and could not show: this
+ * platform produced the forecast and had no way to say how far off it was.
+ *
+ * Body: { sites: SiteConfig[], observed: [{ time, cumulative }] }
+ */
+router.post('/enrollment/backtest', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (!Array.isArray(b.sites) || b.sites.length === 0) {
+      return res.status(400).json({ success: false, error: 'sites must be a non-empty array of site configurations.' });
+    }
+    if (!Array.isArray(b.observed) || b.observed.length === 0 ||
+        !b.observed.every((o: unknown) => !!o && typeof (o as any).time === 'number' && typeof (o as any).cumulative === 'number')) {
+      return res.status(400).json({ success: false, error: 'observed must be a non-empty array of { time, cumulative } with finite numbers — the actual cumulative enrolment at each time.' });
+    }
+    res.json({
+      success: true,
+      data: accrualHoldoutError(b.sites as SiteConfig[], b.observed as Array<{ time: number; cumulative: number }>),
+    });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/adaptive/interim
+ *
+ * The interim look a data monitoring committee sits in front of, computed from
+ * the design and the observed z — no stored plan, no tenant data.
+ *
+ * ── Why this route exists ───────────────────────────────────────────────────
+ * `calculateSpendingBoundaries`, `conditionalPowerScenarios` and
+ * `computePredictivePower` (services/adaptive-trial-operations-service.ts) were
+ * reachable only through the adaptive PLAN lifecycle: POST /adaptive/plan, then
+ * an interim snapshot, then /adaptive/:planId/evaluate/:snapshotId. No client
+ * code calls any of those, so the figures a DSMB needs could not be obtained at
+ * all — although the engines are correct and pinned to gsDesign and to the
+ * source papers (tests/biostat/adaptive-and-spending-reference.test.ts). That
+ * is what this route serves, and it adds no second implementation: it calls
+ * those same three functions. The plan lifecycle — stored snapshots and a
+ * governed decision ceremony — is separate work and is not replaced here.
+ *
+ * Body: {
+ *   informationFractions: number[],   // the design's looks, strictly increasing, last = 1
+ *   lookNumber: number,               // 1-based index into informationFractions
+ *   observedZ: number,                // the z-statistic observed at that look
+ *   alpha?: number,                   // one-sided, default 0.025
+ *   spendingFunction?: 'obrien-fleming' | 'pocock' | 'linear',   // default obrien-fleming
+ *   designDrift?: number,             // theta under H1, on the drift scale
+ *   designEffect?: { standardizedEffect: number, nPerArm: number },  // derives it instead
+ *   prior?: { mean: number, sd: number }   // for predictive power; omitted = flat
+ * }
+ */
+router.post('/adaptive/interim', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+
+  try {
+    const parsed = parseInterimLook(req.body ?? {});
+    if ('error' in parsed) return res.status(400).json({ success: false, error: parsed.error });
+
+    const { fractions, lookNumber, observedZ, alpha, spendingFunction, designDrift, derived, prior } = parsed;
+
+    const boundaries = calculateSpendingBoundaries(fractions, alpha, spendingFunction);
+    const informationFraction = fractions[lookNumber - 1];
+    const criticalValue = boundaries.criticalValues[lookNumber - 1];
+    const finalCriticalValue = boundaries.criticalValues[boundaries.criticalValues.length - 1];
+
+    return res.json({
+      success: true,
+      data: {
+        boundaries,
+        look: {
+          number: lookNumber,
+          informationFraction,
+          criticalValue,
+          observedZ,
+          crossedEfficacy: observedZ >= criticalValue,
+          isFinal: informationFraction >= 1,
+        },
+        conditionalPower: conditionalPowerScenarios(
+          observedZ,
+          informationFraction,
+          finalCriticalValue,
+          designDrift,
+          'this request (designDrift, or designEffect as a standardized effect and n per arm)',
+        ),
+        predictivePower: {
+          value: computePredictivePower(observedZ, informationFraction, finalCriticalValue, prior),
+          prior: prior ?? 'flat',
+          formula: 'PP = 1 - Phi((c - B(t) - (1-t)*m) / sqrt((1-t) + (1-t)^2*v)), posterior theta ~ N(m, v)',
+          citation: 'Spiegelhalter, Freedman & Blackburn (1986) Control Clin Trials 7:8; Jennison & Turnbull (2000) §10.3',
+        },
+        derived,
+        provenance: {
+          engine: 'adaptive-trial-operations-service',
+          method: boundaries.method,
+          note: 'Stateless: computed from this request only. No plan, snapshot or decision is recorded, and nothing here is an interim decision — a binding look belongs in the adaptive plan lifecycle with its own ceremony.',
+        },
+      },
+    });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error?.message ?? 'The interim computation failed.' });
   }
 });
 

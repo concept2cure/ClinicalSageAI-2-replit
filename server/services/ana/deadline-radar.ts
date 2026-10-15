@@ -13,6 +13,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { regulatoryObligations } from '../../../shared/schema';
+import { deadlineBucketFor, type DeadlineBucket } from '../../../shared/regulatory/agency-interaction';
 
 /** Terminal statuses that are not "open" work and are excluded by default. */
 const TERMINAL_STATUSES = new Set(['completed', 'cancelled']);
@@ -31,7 +32,11 @@ export interface ObligationLike {
   consequenceOfNonCompliance: string | null;
 }
 
-export type DeadlineBucket = 'overdue' | 'due_soon' | 'upcoming';
+/* The bucket vocabulary lives beside the rule that computes it
+   (shared/regulatory/agency-interaction.ts) so the correspondence response
+   clock and this radar cannot disagree about what "overdue" means. Re-exported
+   because this module's consumers have always imported it from here. */
+export type { DeadlineBucket };
 
 export interface RadarItem {
   id: number;
@@ -61,8 +66,6 @@ export interface BucketOptions {
   includeCompleted?: boolean;
 }
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
 /**
  * Pure: bucket dated obligations into overdue / due_soon / upcoming and sort by
  * urgency (most overdue first). Obligations with no due date are omitted (they
@@ -78,9 +81,8 @@ export function bucketObligations(rows: ObligationLike[], opts: BucketOptions = 
     .filter(r => r.dueDate != null)
     .map(r => {
       const due = r.dueDate instanceof Date ? r.dueDate : new Date(r.dueDate as string);
-      const daysUntilDue = Math.floor((due.getTime() - now.getTime()) / MS_PER_DAY);
-      const bucket: DeadlineBucket =
-        daysUntilDue < 0 ? 'overdue' : daysUntilDue <= windowDays ? 'due_soon' : 'upcoming';
+      // The one rule, shared with the correspondence response clock.
+      const { daysUntilDue, bucket } = deadlineBucketFor(due, now, windowDays);
       return {
         id: r.id,
         title: r.title,

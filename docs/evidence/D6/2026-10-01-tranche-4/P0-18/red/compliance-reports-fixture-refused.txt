@@ -1,0 +1,52 @@
+# 2026-10-01T06:46:24Z, guard applied, tests/db/compliance-reports.dbtest.ts UNCHANGED (fixture INSERTs an effective qms_documents row with no signature)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:44:52.550Z","pid":19499,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:44:52.556Z","pid":19499,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:44:52.556Z","pid":19499,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ↓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+ ↓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows
+ ↓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows
+ ↓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows
+ ↓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows
+ ↓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows
+ ↓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows
+ ↓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows
+ ↓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row
+ ↓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not
+ ↓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one
+ ↓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only
+ ↓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty
+ ↓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only
+ ↓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why
+ ↓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict
+ ↓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/compliance-reports.dbtest.ts [ tests/db/compliance-reports.dbtest.ts ]
+error: QMS_SIGNATURE_REQUIRED: qms_documents 300 (organization 90301) may become 'effective' only in the transaction that writes its 'qms-document-approval' electronic signature (21 CFR Part 11 §11.50/§11.70) — refused.
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ seed tests/db/compliance-reports.dbtest.ts:117:15
+    115|   );
+    116|   s.hold = hold.rows[0].id;
+    117|   const doc = await owner.query(
+       |               ^
+    118|     `INSERT INTO qms_documents (organization_id, doc_number, title, do…
+    119|      VALUES ($1,$2,$3,'SOP','1.0','effective',$4) RETURNING id::text`,
+ ❯ tests/db/compliance-reports.dbtest.ts:180:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 442, severity: 'ERROR', code: '23000', detail: undefined, hint: 'Approve or retire the document through POST /api/mdx/qms/documents/:id/approve or /retire.', position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'PL/pgSQL function qms_documents_signed_status_guard() line 27 at RAISE', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'pl_exec.c', routine: 'exec_stmt_raise' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 skipped (17)
+   Start at  06:44:49
+   Duration  5.82s (transform 2.18s, setup 99ms, import 3.65s, tests 1.77s, environment 0ms)
+

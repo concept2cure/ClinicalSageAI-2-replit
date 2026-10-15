@@ -1,0 +1,184 @@
+Round 9's suites, green, on the round-9 tree (merged with trunk f7973d225): round 9's two suites, every turn-record suite, every stream-route suite, every post-processing suite, and deepening-tools (fixed on trunk by e5cf44624, board item 25).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/services/ana/__tests__/turn-record-sent.test.ts server/services/ana/__tests__/turn-record-loop.test.ts server/services/ana/__tests__/turn-record.pglite.test.ts server/routes/ana-ri/__tests__/stream-*.test.ts server/routes/ana-ri/__tests__/post-processing-*.test.ts server/services/ana/__tests__/deepening-tools.test.ts
+
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > commits the record, every text it references and a chain row carrying its hash 45ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > leaves nothing behind when the chain write fails 17ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > stores a repeated text once — turn 40 references the history, it does not copy it 15ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_turn_records SET outcome = 'failed' 22ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_turn_records 11ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_turn_records 12ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_record_blobs SET chars = 0 10ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_record_blobs 13ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_record_blobs 15ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > refuses a record or a text stored under a hash that is not its own 4ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a record rewritten with a consistent hash no longer matches the chain 20ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a text that is missing is named 1ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > controls that could not be read are recorded as unknown, not as none 1ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > numbers model calls in order, and gives each later call the input staged for it 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > deepening tools — registration > assess_batch_poolability is defined and registered 4ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > deepening tools — registration > assess_recorded_batch_poolability is defined and registered 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > deepening tools — registration > list_cmc_registers is defined and registered 0ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > deepening tools — registration > estimate_recorded_shelf_life is defined and registered 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > deepening tools — registration > get_submission_readiness_twin is defined and registered 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > deepening tools — registration > assess_benefit_risk is defined and registered 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > deepening tools — registration > assess_recorded_stability_trend is defined and registered 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > deepening tools — registration > assess_recorded_process_capability is defined and registered 0ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_batch_poolability > refuses without an organization context rather than reading across tenants 3ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_batch_poolability > needs at least two distinct ids 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_batch_poolability > will not assess a partial set when an id is not in this organization 203ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_batch_poolability > decides poolability and a shelf life 23ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_batch_poolability > requires ≥2 batches 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_benefit_risk > computes a structured benefit-risk result 7ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_benefit_risk > validates inputs 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > get_submission_readiness_twin > refuses without an organization context 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > get_submission_readiness_twin > requires a program id 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > get_submission_readiness_twin > will not report a score for a program outside the caller's organization 101ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > list_cmc_registers — the discovery the recorded tools point at > refuses without an organization context rather than reading across tenants 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > list_cmc_registers — the discovery the recorded tools point at > answers with the ids the recorded tools take, and never confuses unreadable with empty 3ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > list_cmc_registers — the discovery the recorded tools point at > caps the page size so a broad call cannot pull a register wholesale 3ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > list_cmc_registers — the discovery the recorded tools point at > lists the container closure and reference standard registers too 29ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > list_cmc_registers — the discovery the recorded tools point at > declares both new registers as selectable values, so a scoped call is not a silent no-op 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > list_cmc_registers — the discovery the recorded tools point at > lists the impurity and dissolution registers, with the ICH inputs a threshold needs 3ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > list_cmc_registers — the discovery the recorded tools point at > reports the E&L and characterisation packages as presence flags, not as payloads 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > estimate_recorded_shelf_life — ICH Q1E over a study on file > refuses without an organization context 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > estimate_recorded_shelf_life — ICH Q1E over a study on file > needs a real study id, and points at the register to find one 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > estimate_recorded_shelf_life — ICH Q1E over a study on file > a study that is not this organization's is not found — never answered from elsewhere 2ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > the recorded engine is SHARED with the stability surface, not a second copy > estimateRecordedShelfLife refuses a multi-condition study — the same refusal the route serves 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > the recorded engine is SHARED with the stability surface, not a second copy > refuses a study with no recorded pull points rather than fitting nothing 0ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > the recorded engine is SHARED with the stability surface, not a second copy > fits the limiting attribute from recorded results, and says why an attribute is not estimable 2ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > compare_recorded_dissolution > is defined and registered 0ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > compare_recorded_dissolution > refuses without an organization context rather than reading across tenants 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > compare_recorded_dissolution > needs two real ids, and points at the register to find them 0ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > compare_recorded_dissolution > refuses to compare a profile against itself 0ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > compare_recorded_dissolution > will not answer from a partial set when a profile is not this organization 22ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > compare_recorded_dissolution > tells the model to relay a refusal rather than route around it with typed numbers 0ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_stability_trend > refuses without an organization rather than reading across tenants 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_stability_trend > asks for the study id instead of guessing one 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_process_capability > refuses without an organization 1ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_process_capability > asks which project when neither the session nor the caller names one 2ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_process_capability > the OPEN program outranks a project id the model supplied 52ms
+ ✓ server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_process_capability > says a project it could not find was not read, and never reports an absence of findings for it 1ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step, the answer, and what the door cannot report 40ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > a turn with no organization is not recorded, and says why 1ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status 71ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId 29ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool 10ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn 19ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done 94ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted 17ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 5709ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4) 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered 1558ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop 14ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer 4ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it 3ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it 4ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it 1028ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals 6ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved 8ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why 5ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > an empty reply with only a navigation chip: nothing was changed 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 1139ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 12ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > with no tool run, a turn still says what was checked: claims unchecked, not grounded 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "auto" → runPolicy "auto" 46ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "manual" → runPolicy "manual" 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "AUTO" → runPolicy null 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "" → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy undefined → runPolicy null 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold before a step that already goes to a person 25ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold while a demonstration drives 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > a person pausing a Manual turn is a person, not the policy 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > Auto and no policy never hold on their own 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > under Auto the same steer does not replace anything: it applies after the step 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > a person's own pause in a Manual turn ends it the same way 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > the same pause under Auto is resumed as abandoned, as today 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > an approval nobody answers ends the turn with a closing answer 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, the same unanswered approval is a denial and the turn goes on 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > past 15 minutes of work the next call is the closing answer 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > time held for a person is not work 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, a long step is not a stop 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Auto keeps going past the effort ceiling while each round is new, to 20 rounds 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy the same turn keeps its effort ceiling (balanced: 6 + 2) 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Manual keeps the effort ceiling too 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads null (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written though the row reads running, twice: fails closed, never runs unasked 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written (holdForPerson threw): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "failed" — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "finished" — no person answered: fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as null — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold: Next is shown, and Resume answers it 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > Stop at a hold: not run, named on done, and the hold filed as stopped 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her step 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2c) a demonstration the model starts does not switch Manual off > Manual with Live Drive on (not a demo), round 1 starts a demo: a hold is still due before round 2 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model 56ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a held governed call records the same: the only path a confirm-class draft takes in production 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be persisted, the held call names no conversation — never the client's thread id 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a search that found nothing is named in the note the next call reads 74ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts > the model is told what came back empty (TP-RL-4) > a round where every step returned something carries no note 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 82ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a draft written before anything was consulted is not checked — never found 30ms
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a proposal that stores no prose carries no check 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 42ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 43ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > a plain question in the Summary of Clinical Safety is served as high-stakes on every call 38ms
+ ✓ server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > Fast stays fast there: no thinking and low effort, though the gateway is told the turn is high-stakes 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > the same question in a Module 3 manufacturing section is served as it was 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is not sent back to the model as a failure to work around 54ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is shown to the person as their decision, not as AnA failing 14ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > nobody answering in time is not a failure to work around either 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > control: an approved action that then fails is still a failure > stays in the adaptation note, so a real error is not hidden 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 74ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > and how the turn was routed, and why 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 37ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a demonstration keeps its follow-up rounds as narration: no reasoning display there 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a Fast turn reasons on no call 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > a turn that is not high-stakes keeps the effort chosen 14ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold 38ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not put to a person carries no check 5ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program UUID beginning with digits: every step gets its anchor row, never the integer its digits spell 26ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program with no anchor row: no step acts on any project 25ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a legacy integer project is itself, without the anchor 9ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a malformed project is no project 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled 2ms
+ ✓ server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > is on the record, call by call, with the gateway request that joins it to the ledger 5ms
+ ✓ server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > says plainly what it does not know: no request id, no sent facts, no routing 1ms
+ ✓ server/services/ana/__tests__/turn-record-sent.test.ts > what each call was sent > records what was sent, never the tool schemas, and no thinking as none 0ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts > the write-back is handed the turn's answer check > the same check the message is stored with: what it found and what it did not 28ms
+ Test Files  22 passed (22)
+      Tests  178 passed (178)
+exit=0

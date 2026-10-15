@@ -1,0 +1,671 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 4ms
+   → summarizeIntegrityChecks is not a function
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+   → summarizeIntegrityChecks is not a function
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 1ms
+   → summarizeIntegrityChecks is not a function
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 3ms
+   → expected 'To verify: compute SHA-256 of data an…' to match /platform holds/
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 3ms
+   → expected '{"exportId":"COMPLIANCE-REPORT-179081…' not to match /independent/i
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > role history and the review decision are stated as not recorded 2ms
+   → expected [ …(2) ] to include 'A member\'s role on a past date canno…'
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration changes are not recorded; organisation settings are recorded by section name only 1ms
+   → expected 'A change to a member\'s organisation …' to match /tenant configuration/
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 1ms
+   → expected [ 'id', 'signed_at', …(18) ] to include 'signature_purpose'
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 1ms
+   → expected [ 'id', 'doc_number', 'title', …(15) ] to include 'approval_signer_name'
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 1ms
+   → expected [ 'id', 'change_number', …(16) ] to include 'description'
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 4ms
+   → expected 'A document approval, document retirem…' to contain 'Documents deleted before the date do …'
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes each section as a titled block: title line, header, rows, blank line 8ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "=HYPERLINK(\"http://x\")" with a leading quote 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "+1+1" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "-2+3" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "@SUM(A1)" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "\tcmd" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "\rcmd" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes a date as its UTC ISO instant and an object as JSON 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes only the declared columns, in their declared order 1ms
+ × server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > opens with a block saying what the file is: report, organisation, period, time, chain, sections and what is not recorded 15ms
+   → expected [] to deeply equal [ '"# User access review"', …(10) ]
+ × server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > states a range period and a verified chain in the block 2ms
+   → expected [ '# Members', …(4) ] to include '"# Period: 2026-09-01 to 2026-09-30"'
+ × server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain states it as unknown, with the reason 9ms
+   → expected { ok: true, rowsChecked: +0 } to deeply equal { ok: null, rowsChecked: +0, …(1) }
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain still says ok over rows it checked 1ms
+ × server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the signed audit export states the audit_logs chain as unverified, not intact 5ms
+   → expected { status: 'intact', …(4) } to match object { status: 'unverified', …(2) }
+(3 matching properties omitted from actual)
+ × server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the integrity attestation says "not verified" for a walk of zero rows, even if handed ok: true 2ms
+   → expected { Object (check, store, ...) } to match object { verdict: 'not verified', …(2) }
+(2 matching properties omitted from actual)
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > lists the eight reports in catalog order, each id once 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > access-review has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > authentication-events has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > administrative-changes has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > electronic-signatures has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail-integrity has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > retention-legal-holds has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > controlled-documents has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > access-review is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > authentication-events is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > administrative-changes is run here, and every section names its columns once 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > electronic-signatures is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail-integrity is run here, and every section names its columns once 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > retention-legal-holds is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > controlled-documents is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > the full audit trail is an entry only: its run is the existing signed export 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > states the periods the brief fixes 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > an unknown id is not a report 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > the summary a client receives carries the contract fields and nothing executable 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > copy is calm: no exclamation marks and no route names in what a reader sees 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the stores > counts each store for this organisation only, with the period bounds 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > states three intact checks when all three ran and passed 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a broken chain says where, as this organisation may read it 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a broken linkage and a failing seal are broken 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the chain walk did not run: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the linkage had nothing hashed: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the linkage query did not run: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the seal check could not run: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > no row carried a seal: "not verified", with the reason, never intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a check that could not run does not put the failure text in the report 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > stamps version 2 and the key id, and signs the canonical manifest with the export key 6ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > refuses in production without the dedicated key, rather than sign under a fallback 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > sha256Hex is the hash the verifier recomputes 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > verifies with the existing export verifier 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > fails verification after a one-byte change to the data 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > fails verification when a manifest claim is changed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > carries the contract manifest 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > the data is the report itself 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > verifies with the existing export verifier 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > fails verification after a one-byte change to the data 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > fails verification when a manifest claim is changed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > carries the contract manifest 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > the data is the report itself 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > defaults to the 90 days before today, today included 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > defaults `from` to 90 days before a given `to` 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > takes both dates as given, the end exclusive the day after `to` 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > accepts a one-day period and a full leap year (366 days) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > an as-of report uses `to` only, and ignores `from` even when it is malformed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-1-01","to":"2026-01-31"} (malformed from) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"to":"30/09/2026"} (malformed to) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-02-30","to":"2026-03-31"} (a date that does not exist) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"to":"2026-13-01"} (month 13) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-01-01T00:00:00Z","to":"2026-01-31"} (a timestamp, not a date) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":["2026-01-01","2026-01-02"],"to":"2026-01-31"} (a repeated parameter) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-02-01","to":"2026-01-31"} (from after to) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2025-01-01","to":"2026-01-02"} (a span over 366 days) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"","to":"2026-01-31"} (an empty from) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > an as-of report still refuses a malformed `to` 0ms
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T01:06:42.343Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:06:42.344Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T01:06:42.345Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > names this organisation's broken row and its hashes, not [object Object] 5ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > does not name another organisation's row, its hashes or its organisation 2ms
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read
+{
+  "timestamp": "2026-10-01T01:06:42.604Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] compliance report refused: the audit export signing key is not available",
+  "context": {
+    "err": "[audit-export-key-posture] REFUSING TO BOOT: AUDIT_EXPORT_SIGNING_KEY is not configured in production. It signs the audit exports an inspector re-verifies (21 CFR Part 11 §11.10(e)); without it the export would be sealed under the JWT secret, the session-token key. Set it to a high-entropy secret held outside the database (KMS / secrets manager), with AUDIT_EXPORT_SIGNING_KEY_ID naming it. There is no accept flag for this posture."
+  }
+}
+
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > a member sees the catalog and that they cannot run it 31ms
+   → expected { success: true, canRun: false, …(2) } to match object { success: true, canRun: false, …(1) }
+(1 matching property omitted from actual)
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > an administrator can run them; a platform administrator too 7ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > no organisation, no catalog 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a non-reader is refused 403 with the audit gate body, before any query 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a session without an organisation is refused 403 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > an unknown report is 404 UNKNOWN_REPORT 11ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > the full audit trail is 409 USE_SIGNED_EXPORT: its run is the signed export 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2026-09-30&to=2026-09-01) is 400 BAD_PERIOD 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (to=2026-02-30) is 400 BAD_PERIOD 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2024-01-01&to=2026-01-01) is 400 BAD_PERIOD 11ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read 3ms
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — a run > reads in a tenant-stamped transaction, records the run, and sends an export that verifies 8ms
+   → expected { ok: true, rowsChecked: 4 } to deeply equal { Object (ok, scope, ...) }
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent
+[audited-export] export not recorded: chain write refused
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back
+{
+  "timestamp": "2026-10-01T01:06:42.641Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] running the compliance report failed",
+  "context": {
+    "reportId": "access-review",
+    "err": "relation \"organization_users\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified
+[audited-export] tenant chain walk failed: admin scope unavailable
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > the existing verification endpoint verifies the package, and refuses it after a one-byte change 16ms
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > a CSV run is one file of titled sections 5ms
+   → expected '# Members' to be '"# User access review"' // Object.is equality
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > an unknown format is refused rather than read as JSON 2ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back 3ms
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified 5ms
+   → expected { ok: null, …(1) } to deeply equal { ok: null, …(3) }
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation is ok only when every check is intact, and false when any is broken 3ms
+   → expected { ok: false, rowsChecked: 4, …(1) } to match object { ok: false, …(3) }
+(1 matching property omitted from actual)
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation runs one report at a time: a second concurrent run is 429 REPORT_IN_PROGRESS 4ms
+   → expected 200 to be 429 // Object.is equality
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > report runs are rate limited per organisation and person: 429 REPORT_RATE_LIMITED 11ms
+   → expected 404 to be 429 // Object.is equality
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 0 is not a tenant: 403 before anything 3ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of -3 is not a tenant: 403 before anything 3ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 7.5 is not a tenant: 403 before anything 3ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of "7abc" is not a tenant: 403 before anything 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > a member sees the catalog and that they cannot run it
+AssertionError: expected { success: true, canRun: false, …(2) } to match object { success: true, canRun: false, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "canRun": false,
+-   "readers": "organisation owners, admins and managers, and platform administrators",
++   "readers": "organisation owners, admins and managers",
+    "success": true,
+  }
+
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:84:22
+     82|     const res = await request(app()).get('/api/audit/reports');
+     83|     expect(res.status).toBe(200);
+     84|     expect(res.body).toMatchObject({
+       |                      ^
+     85|       success: true,
+     86|       canRun: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/26]⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — a run > reads in a tenant-stamped transaction, records the run, and sends an export that verifies
+AssertionError: expected { ok: true, rowsChecked: 4 } to deeply equal { Object (ok, scope, ...) }
+
+- Expected
++ Received
+
+  {
+-   "ok": null,
+-   "reason": "This report does not verify the audit chain. The audit trail integrity attestation does.",
+-   "scope": "not-checked",
++   "ok": true,
++   "rowsChecked": 4,
+  }
+
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:191:24
+    189|       reason: 'This report does not verify the audit chain. The audit …
+    190|     };
+    191|     expect(data.chain).toEqual(notChecked);
+       |                        ^
+    192|     expect(exp.manifest.chainAtGeneration).toEqual(notChecked);
+    193|     expect(walk).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/26]⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > a CSV run is one file of titled sections
+AssertionError: expected '# Members' to be '"# User access review"' // Object.is equality
+
+Expected: ""# User access review""
+Received: "# Members"
+
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:248:22
+    246|     expect(res.status).toBe(200);
+    247|     const lines = res.body.export.data.split('\n');
+    248|     expect(lines[0]).toBe('"# User access review"');
+       |                      ^
+    249|     expect(lines).toContain('# Members');
+    250|     expect(res.body.export.contentType).toBe('text/csv; charset=utf-8'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/26]⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified
+AssertionError: expected { ok: null, …(1) } to deeply equal { ok: null, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "checks": {
+-     "broken": 0,
+-     "intact": 0,
+-     "notVerified": 3,
+-     "total": 3,
+-   },
+    "ok": null,
+-   "reason": "3 of 3 checks could not verify.",
+-   "scope": "integrity-checks",
++   "reason": "The audit chain could not be walked at export time.",
+  }
+
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:299:24
+    297|     expect(walk).toHaveBeenCalledWith(ORG);
+    298|     // Chain walk: did not run. Linkage: no rows. Seals: no seal key i…
+    299|     expect(data.chain).toEqual({
+       |                        ^
+    300|       ok: null,
+    301|       scope: 'integrity-checks',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/26]⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation is ok only when every check is intact, and false when any is broken
+AssertionError: expected { ok: false, rowsChecked: 4, …(1) } to match object { ok: false, …(3) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "checks": {
+-     "broken": 1,
+-     "total": 3,
+-   },
+    "ok": false,
+    "rowsChecked": 4,
+-   "scope": "integrity-checks",
+  }
+
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:312:24
+    310|     const res = await request(app()).get('/api/audit/reports/audit-tra…
+    311|     const data = JSON.parse(res.body.export.data);
+    312|     expect(data.chain).toMatchObject({ ok: false, scope: 'integrity-ch…
+       |                        ^
+    313|   });
+    314| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/26]⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation runs one report at a time: a second concurrent run is 429 REPORT_IN_PROGRESS
+AssertionError: expected 200 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 200
+
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:334:27
+    332|     await reading;
+    333|     const second = await request(a).get('/api/audit/reports/electronic…
+    334|     expect(second.status).toBe(429);
+       |                           ^
+    335|     expect(second.body).toMatchObject({ success: false, error: { code:…
+    336|     release();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/26]⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > report runs are rate limited per organisation and person: 429 REPORT_RATE_LIMITED
+AssertionError: expected 404 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 404
+
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:348:28
+    346|     expect(statuses.slice(0, 6)).toEqual([404, 404, 404, 404, 404, 404…
+    347|     const limited = await request(a).get('/api/audit/reports/nope');
+    348|     expect(limited.status).toBe(429);
+       |                            ^
+    349|     expect(limited.body).toMatchObject({ success: false, error: { code…
+    350|     expect(statuses[6]).toBe(429);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/26]⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 0 is not a tenant: 403 before anything
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of -3 is not a tenant: 403 before anything
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 7.5 is not a tenant: 403 before anything
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:355:83
+    353|   it.each([0, -3, 7.5, '7abc'])('an organisation id of %j is not a ten…
+    354|     user = { id: 11, organizationId: orgId, role: 'admin' };
+    355|     expect((await request(app()).get('/api/audit/reports/access-review…
+       |                                                                                   ^
+    356|     expect((await request(app()).get('/api/audit/reports')).status).to…
+    357|     nothingRead();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > opens with a block saying what the file is: report, organisation, period, time, chain, sections and what is not recorded
+AssertionError: expected [] to deeply equal [ '"# User access review"', …(10) ]
+
+- Expected
++ Received
+
+- [
+-   "\"# User access review\"",
+-   "\"# Report: access-review, version 1\"",
+-   "\"# Organisation: 7\"",
+-   "\"# Period: as of 2026-09-30\"",
+-   "\"# Generated at: 2026-09-30T12:00:00.000Z\"",
+-   "\"# Audit chain: not checked. This report does not verify the audit chain. The audit trail integrity attestation does.\"",
+-   "\"# Section Members: 2 rows, complete\"",
+-   "\"# Section Members note: Read as it is now.\"",
+-   "\"# Section Privileged members: 0 rows, truncated at the row limit\"",
+-   "\"# Not recorded: Removals, role changes and =HYPERLINK(\"\"x\"\") are not recorded.\"",
+-   "",
+- ]
++ []
+
+ ❯ server/services/audit/compliance-reports/__tests__/csv.test.ts:114:19
+    112|     const lines = formatReportCsv(data).split('\n');
+    113|     const block = lines.slice(0, lines.indexOf('# Members'));
+    114|     expect(block).toEqual([
+       |                   ^
+    115|       '"# User access review"',
+    116|       '"# Report: access-review, version 1"',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > states a range period and a verified chain in the block
+AssertionError: expected [ '# Members', …(4) ] to include '"# Period: 2026-09-01 to 2026-09-30"'
+ ❯ server/services/audit/compliance-reports/__tests__/csv.test.ts:134:19
+    132|     data.chain = { ok: true, scope: 'integrity-checks', rowsChecked: 4…
+    133|     const lines = formatReportCsv(data).split('\n');
+    134|     expect(lines).toContain('"# Period: 2026-09-01 to 2026-09-30"');
+       |                   ^
+    135|     expect(lines).toContain('"# Audit chain: verified (3 of 3 checks i…
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact
+TypeError: summarizeIntegrityChecks is not a function
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:19:12
+     17|   const row = (verdict: string) => ({ check: 'c', store: 's', verdict,…
+     18|   it('ok only when every check is intact', () => {
+     19|     expect(summarizeIntegrityChecks([row('intact'), row('intact'), row…
+       |            ^
+     20|       ok: true,
+     21|       scope: 'integrity-checks',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say
+TypeError: summarizeIntegrityChecks is not a function
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:27:15
+     25|   });
+     26|   it('false when any check is broken, whatever the others say', () => {
+     27|     const s = summarizeIntegrityChecks([row('intact'), row('broken'), …
+       |               ^
+     28|     expect(s).toMatchObject({ ok: false, checks: { total: 3, intact: 1…
+     29|     expect(s.reason).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact
+TypeError: summarizeIntegrityChecks is not a function
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:32:12
+     30|   });
+     31|   it('null, with how many could not verify, when none is broken and no…
+     32|     expect(summarizeIntegrityChecks([row('intact'), row('not verified'…
+       |            ^
+     33|       ok: null,
+     34|       scope: 'integrity-checks',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector
+AssertionError: expected 'To verify: compute SHA-256 of data an…' to match /platform holds/
+
+- Expected:
+/platform holds/
+
++ Received:
+"To verify: compute SHA-256 of data and compare it with manifest.dataHash; then compute HMAC-SHA256 of the canonical manifest JSON (keys sorted at every depth) with the audit export key named by manifest.signingKeyId and compare it with the signature. The audit export verification endpoint performs both checks with the named key."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:44:32
+     42|   it('the instruction names the HMAC key the platform holds, the verif…
+     43|     expect(VERIFY_INSTRUCTION).toMatch(/HMAC-SHA256/);
+     44|     expect(VERIFY_INSTRUCTION).toMatch(/platform holds/);
+       |                                ^
+     45|     expect(VERIFY_INSTRUCTION).toMatch(/signingKeyId/);
+     46|     expect(VERIFY_INSTRUCTION).toContain('POST /api/audit/export/verif…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification
+AssertionError: expected '{"exportId":"COMPLIANCE-REPORT-179081…' not to match /independent/i
+
+- Expected:
+/independent/i
+
++ Received:
+"{\"exportId\":\"COMPLIANCE-REPORT-1790816800995-78f9100a\",\"kind\":\"compliance-report\",\"report\":{\"id\":\"access-review\",\"title\":\"User access review\",\"version\":1},\"organizationId\":7,\"period\":{\"from\":null,\"to\":\"2026-09-30\",\"kind\":\"as-of\"},\"generatedAt\":\"2026-09-30T12:00:00.000Z\",\"generatedBy\":\"x\",\"generatedByRole\":\"admin\",\"format\":\"json\",\"sections\":[],\"dataHash\":\"8effe7ae5e1a9cad7c0a7a948cf92e4ca9d77e2d1a94854208cbaeed2dc74fc2\",\"hashAlgorithm\":\"SHA-256\",\"chainAtGeneration\":{\"ok\":null,\"scope\":\"not-checked\",\"reason\":\"r\"},\"basis\":[],\"compliance\":{\"standard\":\"21 CFR Part 11\",\"section\":\"§11.10(e)\",\"description\":\"Compliance report generated from the organisation’s records and sealed for independent verification\"},\"manifestVersion\":2,\"signingKeyId\":\"k1\"}"
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:66:46
+     64|     };
+     65|     const out = buildSignedReport(data, { format: 'json', generatedBy:…
+     66|     expect(JSON.stringify(out.manifest)).not.toMatch(/independent/i);
+       |                                              ^
+     67|   });
+     68| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > role history and the review decision are stated as not recorded
+AssertionError: expected [ …(2) ] to include 'A member\'s role on a past date canno…'
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:73:27
+     71|   const r = findReport('access-review')!;
+     72|   it('role history and the review decision are stated as not recorded'…
+     73|     expect(r.notRecorded).toContain("A member's role on a past date ca…
+       |                           ^
+     74|     expect(r.notRecorded).toContain(
+     75|       'This report records no review decision, reviewer or sign-off. P…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration changes are not recorded; organisation settings are recorded by section name only
+AssertionError: expected 'A change to a member\'s organisation …' to match /tenant configuration/
+
+- Expected:
+/tenant configuration/
+
++ Received:
+"A change to a member's organisation role, and a member's removal by an administrator, are not recorded. Acceptance of an invitation is not recorded. A role change that arrives through a SCIM group is not recorded. Changes to the organisation's security settings, such as the second-factor requirement and the session timeout, are not recorded. Administration of SCIM tokens and of the IP allow-list is not recorded. SAML single sign-on is configured from the server environment, so its configuration has no change record. Suspensions by the platform operator and grants of platform roles are recorded in the platform's records, not the organisation's, so they do not appear here."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:84:18
+     82|   const text = findReport('administrative-changes')!.notRecorded.join(…
+     83|   it('tenant configuration changes are not recorded; organisation sett…
+     84|     expect(text).toMatch(/tenant configuration/);
+       |                  ^
+     85|     expect(text).toMatch(/second-factor requirement/);
+     86|     expect(text).toMatch(/session timeout/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns
+AssertionError: expected [ 'id', 'signed_at', …(18) ] to include 'signature_purpose'
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:97:18
+     95|   it('carries the purpose and the signed version as their own columns'…
+     96|     const cols = columnsOf('electronic-signatures', 'signatures');
+     97|     expect(cols).toContain('signature_purpose');
+       |                  ^
+     98|     expect(cols).toContain('signed_version');
+     99|     expect(cols).toContain('meaning');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document
+AssertionError: expected [ 'id', 'doc_number', 'title', …(15) ] to include 'approval_signer_name'
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:107:20
+    105|     const cols = columnsOf('controlled-documents', 'documents');
+    106|     for (const c of ['approval_signer_name', 'approval_meaning', 'revo…
+    107|       expect(cols).toContain(c);
+       |                    ^
+    108|     }
+    109|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason
+AssertionError: expected [ 'id', 'change_number', …(16) ] to include 'description'
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:112:84
+    110|   it('change controls carry their description and reason', () => {
+    111|     const cols = columnsOf('controlled-documents', 'changes');
+    112|     for (const c of ['status', 'closed_at', 'description', 'reason']) …
+       |                                                                                    ^
+    113|   });
+    114|   it('states what does not appear and where training lives', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives
+AssertionError: expected 'A document approval, document retirem…' to contain 'Documents deleted before the date do …'
+
+Expected: "Documents deleted before the date do not appear."
+Received: "A document approval, document retirement or change approval made before these became electronic signatures has no signature, so its signature columns are empty. The register does not reconstruct a past status: for a past date it shows each record as it is now, with the signatures applied by that date."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:116:18
+    114|   it('states what does not appear and where training lives', () => {
+    115|     const text = findReport('controlled-documents')!.notRecorded.join(…
+    116|     expect(text).toContain('Documents deleted before the date do not a…
+       |                  ^
+    117|     expect(text).toMatch(/Distribution of a controlled document/);
+    118|     expect(text).toMatch(/QMS training records/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain states it as unknown, with the reason
+AssertionError: expected { ok: true, rowsChecked: +0 } to deeply equal { ok: null, rowsChecked: +0, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "ok": null,
+-   "reason": "No chained rows exist for this organisation, so there is no chain to verify.",
++   "ok": true,
+    "rowsChecked": 0,
+  }
+
+ ❯ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts:32:38
+     30|   it('walkTenantChain states it as unknown, with the reason', async ()…
+     31|     walk.mockResolvedValue(empty);
+     32|     expect(await walkTenantChain(7)).toEqual({ ok: null, rowsChecked: …
+       |                                      ^
+     33|   });
+     34|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the signed audit export states the audit_logs chain as unverified, not intact
+AssertionError: expected { status: 'intact', …(4) } to match object { status: 'unverified', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reason": "No chained rows exist for this organisation, so there is no chain to verify.",
+    "rowsChecked": 0,
+-   "status": "unverified",
++   "status": "intact",
+  }
+
+ ❯ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts:47:41
+     45|       { verifyAuditLogsChain: async () => empty },
+     46|     );
+     47|     expect(out.manifest.auditLogsChain).toMatchObject({ status: 'unver…
+       |                                         ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/26]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the integrity attestation says "not verified" for a walk of zero rows, even if handed ok: true
+AssertionError: expected { Object (check, store, ...) } to match object { verdict: 'not verified', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "detail": "No chained rows exist for this organisation, so there is no chain to verify.",
++   "detail": "Every chained row re-derives from its predecessor.",
+    "rows_checked": 0,
+-   "verdict": "not verified",
++   "verdict": "intact",
+  }
+
+ ❯ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts:65:17
+     63|     const out = await findReport('audit-trail-integrity')!.run!(ctx);
+     64|     const row = out.verdicts.rows.find((r) => r.check === 'audit_logs …
+     65|     expect(row).toMatchObject({ verdict: 'not verified', rows_checked:…
+       |                 ^
+     66|   });
+     67| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/26]⎯
+
+
+ Test Files  4 failed | 5 passed (9)
+      Tests  26 failed | 86 passed (112)
+   Start at  01:06:39
+   Duration  3.60s (transform 2.92s, setup 374ms, import 7.37s, tests 328ms, environment 1ms)
+

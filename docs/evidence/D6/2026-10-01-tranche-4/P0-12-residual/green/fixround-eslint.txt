@@ -1,0 +1,14 @@
+# ESLint fix round, HEAD 0e58e794 (via --stdin at the same path) vs working tree; errors/warnings per file
+server/services/ana-guidance-executor.ts HEAD=0e/9w NOW=0e/3w
+server/routes/ana-ri/post-processing.ts HEAD=0e/5w NOW=0e/4w
+server/routes/chat/send-message.ts HEAD=0e/22w NOW=0e/22w
+server/services/ana-ri/persona.ts HEAD=0e/2w NOW=0e/2w
+server/services/lumen-context/base-system-prompt.ts HEAD=0e/0w NOW=0e/0w
+server/services/ana-ri/document-routing.ts HEAD=0e/0w NOW=0e/0w
+server/services/ana/AnaToolExecutor.ts HEAD=0e/101w NOW=0e/101w
+server/services/__tests__/ana-guidance-executor.test.ts HEAD=0e/2w NOW=0e/2w
+server/services/ana-ri/__tests__/chat-turn-proposals.test.ts NEW=0e/0w
+server/services/ana-ri/__tests__/chat-doors-propose-only.test.ts NEW=0e/0w
+server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts NEW=0e/0w
+server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts NEW=0e/0w
+server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts NEW=0e/0w

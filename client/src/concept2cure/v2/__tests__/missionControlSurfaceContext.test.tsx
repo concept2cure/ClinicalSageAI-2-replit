@@ -63,7 +63,7 @@ function renderMc() {
 }
 
 const PROGRAMS = [{ id: 7, name: 'C2C-101', code: 'IND-2201', customerTrack: 'biotech', modality: 'mab' }];
-const READINESS = { overallConfidence: 61, readiness: { artifactCompleteness: 62 }, blockers: [], nextActions: [] };
+const READINESS = { readiness: { artifactCompleteness: 62, reviewMaturity: null }, notMeasured: [], blockers: [], nextActions: [] };
 
 beforeEach(() => { seen = null; apiRequest.mockReset(); });
 afterEach(cleanup);
@@ -92,6 +92,9 @@ describe('Mission Control publishes read-state, never a false clear', () => {
       expect(seen!.facts!.riskCount).toBeNull();
       expect(seen!.facts!.staleDependencyCount).toBeNull();
     });
+    // Only what the server measured reaches AnA; no "overall readiness" figure.
+    await waitFor(() => expect(seen!.facts!.readiness).toEqual({ artifactCompleteness: 62 }));
+    expect(seen!.summary).not.toMatch(/overall/i);
   });
 
   it('publishes blockers as null (unknown), not [] , when the readiness read failed', async () => {
@@ -106,7 +109,7 @@ describe('Mission Control publishes read-state, never a false clear', () => {
       expect(seen!.facts!.readinessLoaded).toBe(false);
       expect(seen!.facts!.blockers).toBeNull();
       expect(seen!.facts!.nextActions).toBeNull();
-      expect(seen!.facts!.overallConfidence).toBeNull();
+      expect(seen!.facts!.readiness).toBeNull();
     });
   });
 

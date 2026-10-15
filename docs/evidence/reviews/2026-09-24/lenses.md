@@ -133,6 +133,8 @@ or meaning field. P1-28's fix needs a client half.
 
 ### DP-34: Medium, QMS: `/api/qms/*` is a second QMS write API with no role gate and, for most writes, no audit row
 
+**Closed 2026-10-01:** the router and its only service are deleted; see the commit naming DP-34.
+
 - **Where:** `server/routes/qms.ts`, mounted at `register-document-routes.ts:270` with no
   group middleware. Its only guard is `authenticateToken`.
 - **What it allows:** any member of the organisation, a `viewer` included, can do all of the
@@ -167,6 +169,8 @@ or meaning field. P1-28's fix needs a client half.
   - `applyAuditTrailMiddleware` does not run in the deployed configuration (DP-06).
 
 ### DP-35: Medium, Authoring: freeze makes a document "finalized" with no re-authentication and no signing-authority check
+
+**Decided 2026-10-01:** freeze stays a content lock, and an unsigned freeze no longer counts as approved or complete; see the commit naming DP-35.
 
 - **Where:** `POST /api/authoring/docs/:docId/freeze` (`authoring.router.ts:3673-3880`).
   - **Who may call it:** a document OWNER, which every creator becomes by trigger, or an

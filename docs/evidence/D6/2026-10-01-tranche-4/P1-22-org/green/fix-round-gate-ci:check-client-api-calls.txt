@@ -1,0 +1,2 @@
+check-client-api-calls-resolve: 137 client /api prefixes, 315 server /api prefixes.
+✅ every client /api call has a server route behind it.

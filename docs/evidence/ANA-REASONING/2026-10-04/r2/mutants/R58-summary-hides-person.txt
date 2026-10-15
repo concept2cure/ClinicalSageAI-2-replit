@@ -1,0 +1,12 @@
+Mutant R58-summary-hides-person: the summary line does not count claims only in the person's message
+
+--- server/services/ana-ri/response-contract.ts
+- if (fromPerson > 0) parts.push(`${fromPerson} only in your message`);
++ 
+
+Tests run: server/services/__tests__/ana-trust-summary.test.ts server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × server/services/__tests__/ana-trust-summary.test.ts > buildTrustSummary > leads with the engine's check when there is one 5ms
+      Tests  1 failed | 9 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,12 @@
+Mutant M14-record-without-verification: the record is sealed without the check the person was shown
+
+--- server/routes/ana-ri/post-processing.ts
+- turnRecorder?.setVerification(verification);
++ 
+
+Tests run: server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 13ms
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

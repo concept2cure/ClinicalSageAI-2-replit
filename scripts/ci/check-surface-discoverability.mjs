@@ -77,6 +77,7 @@ const CONTEXTUAL = {
   'ana-memory': 'AnA rail surface, on the persistent rail',
   'audit-trail': 'governance surface, reached from Part 11 console and record views',
   'part11-console': 'governance surface, reached from admin and compliance views',
+  'compliance-reports': 'reporting surface, reached from Reporting & analytics and the audit trail',
   'task-board': 'on the persistent rail as Tasks',
   coverage: 'engineering diagnostic, not a customer capability',
   'client-portal': 'external-participant surface, entered by invitation link',

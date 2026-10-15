@@ -1,0 +1,301 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+{
+  "timestamp": "2026-10-01T06:40:17.760Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc"
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted
+{
+  "timestamp": "2026-10-01T06:40:17.769Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc"
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded
+{
+  "timestamp": "2026-10-01T06:40:17.771Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc"
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > a refused audit row rolls the purge back: ROLLBACK, no COMMIT, and the purge rejects
+{
+  "timestamp": "2026-10-01T06:40:17.776Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc"
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > refuses a purge it cannot attribute to a person, before anything is touched
+{
+  "timestamp": "2026-10-01T06:40:17.782Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 0,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc"
+  }
+}
+
+ × server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT 12ms
+   → the purge must write an audit row: expected -1 to be greater than -1
+ × server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted 2ms
+   → Cannot read properties of undefined (reading 'params')
+ × server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded 4ms
+   → expected undefined to deeply equal { projects: 4, documents: 9 }
+ × server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > a refused audit row rolls the purge back: ROLLBACK, no COMMIT, and the purge rejects 6ms
+   → promise resolved "{ organizationId: 42, …(9) }" instead of rejecting
+ × server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > refuses a purge it cannot attribute to a person, before anything is touched 3ms
+   → promise resolved "{ organizationId: 42, …(9) }" instead of rejecting
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > lists neither the audit trail nor the export receipt it relied on 1ms
+stdout | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-01T06:40:19.531Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:40:19.533Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-01T06:40:19.533Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers a failed purge (its audit row refused) with 500 and no error text
+{
+  "timestamp": "2026-10-01T06:40:19.973Z",
+  "level": "error",
+  "message": "[tenants-simple] Error purging organization:",
+  "context": {}
+}
+
+ × server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent 2400ms
+   → expected { organizationId: 515, …(2) } to match object { organizationId: 515, …(3) }
+ × server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers an unattributable purge as a refusal (403), not a conflict 7ms
+   → expected 409 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers a failed purge (its audit row refused) with 500 and no error text 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+AssertionError: expected { organizationId: 515, …(2) } to match object { organizationId: 515, …(3) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,6 @@
+  {
+-   "auditContext": {
+-     "ipAddress": "203.0.113.9",
+-     "userAgent": "ops-console/1.0",
+-   },
+    "organizationId": 515,
+    "preconditions": {
+      "finalExportDigest": "sha256:abc",
+    },
+    "purgedByUserId": 11,
+
+ ❯ server/routes/__tests__/tenants-simple-purge-audit.test.ts:76:42
+     74|     expect(res.status).toBe(200);
+     75|     expect(purgeTenant).toHaveBeenCalledTimes(1);
+     76|     expect(purgeTenant.mock.calls[0][1]).toMatchObject({
+       |                                          ^
+     77|       organizationId: ORG,
+     78|       purgedByUserId: 11,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers an unattributable purge as a refusal (403), not a conflict
+AssertionError: expected 409 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 409
+
+ ❯ server/routes/__tests__/tenants-simple-purge-audit.test.ts:89:24
+     87|     purgeTenant.mockRejectedValueOnce(new OffboardingStateError('PURGE…
+     88|     const res = await post();
+     89|     expect(res.status).toBe(403);
+       |                        ^
+     90|     expect(res.body.error.code).toBe('PURGE_ACTOR_REQUIRED');
+     91|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+AssertionError: the purge must write an audit row: expected -1 to be greater than -1
+ ❯ server/services/tenant/__tests__/tenant-purge-audit.test.ts:90:57
+     88|     const s: Statement[] = pool.statements;
+     89|     const insert = indexOf(s, /INSERT INTO audit_logs/);
+     90|     expect(insert, 'the purge must write an audit row').toBeGreaterTha…
+       |                                                         ^
+     91|     expect(s[insert].via, 'on the purge’s own transaction, not a side …
+     92|     expect(insert).toBeGreaterThan(indexOf(s, /^DELETE FROM documents/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted
+TypeError: Cannot read properties of undefined (reading 'params')
+ ❯ server/services/tenant/__tests__/tenant-purge-audit.test.ts:102:70
+    100|
+    101|     const insert = pool.statements.find((x: Statement) => /INSERT INTO…
+    102|     const [, tenantId, userId, action, tableName, recordId] = insert.p…
+       |                                                                      ^
+    103|     expect({ tenantId, userId, action, tableName, recordId }).toEqual({
+    104|       tenantId: ORG,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded
+AssertionError: expected undefined to deeply equal { projects: 4, documents: 9 }
+
+- Expected:
+{
+  "documents": 9,
+  "projects": 4,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/tenant/__tests__/tenant-purge-audit.test.ts:136:32
+    134|   it('returns the counts it recorded', async () => {
+    135|     const result = await purge(makePool());
+    136|     expect(result.deletedRows).toEqual({ projects: 4, documents: 9 });
+       |                                ^
+    137|   });
+    138| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > a refused audit row rolls the purge back: ROLLBACK, no COMMIT, and the purge rejects
+AssertionError: promise resolved "{ organizationId: 42, …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "deletionReason": "contract ended",
++   "deletionRequestedAt": 2026-08-01T00:00:00.000Z,
++   "deletionRequestedBy": 3,
++   "finalExportDigest": null,
++   "name": "Acme Bio",
++   "organizationId": 42,
++   "purgeEligibleAt": 2026-09-30T06:40:17.776Z,
++   "purgedAt": null,
++   "status": "pending_deletion",
++   "storageErasure": {
++     "deleted": 0,
++     "notDeleted": [],
++     "objects": 0,
++   },
+  }
+
+ ❯ server/services/tenant/__tests__/tenant-purge-audit.test.ts:143:29
+    141|   it('a refused audit row rolls the purge back: ROLLBACK, no COMMIT, a…
+    142|     const pool = makePool({ refuseAudit: true });
+    143|     await expect(purge(pool)).rejects.toThrow(/audit store refused/);
+       |                             ^
+    144|     const s: Statement[] = pool.statements;
+    145|     expect(indexOf(s, /^COMMIT$/), 'nothing commits without its record…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > refuses a purge it cannot attribute to a person, before anything is touched
+AssertionError: promise resolved "{ organizationId: 42, …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "deletionReason": "contract ended",
++   "deletionRequestedAt": 2026-08-01T00:00:00.000Z,
++   "deletionRequestedBy": 3,
++   "finalExportDigest": null,
++   "name": "Acme Bio",
++   "organizationId": 42,
++   "purgeEligibleAt": 2026-09-30T06:40:17.782Z,
++   "purgedAt": null,
++   "status": "pending_deletion",
++   "storageErasure": {
++     "deleted": 0,
++     "notDeleted": [],
++     "objects": 0,
++   },
+  }
+
+ ❯ server/services/tenant/__tests__/tenant-purge-audit.test.ts:152:39
+    150|     for (const nobody of [0, -1, Number.NaN, 1.5]) {
+    151|       const pool = makePool();
+    152|       await expect(purge(pool, nobody)).rejects.toMatchObject({ code: …
+       |                                       ^
+    153|       expect(pool.connect).not.toHaveBeenCalled();
+    154|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 2 passed (9)
+   Start at  06:40:16
+   Duration  3.14s (transform 1.76s, setup 230ms, import 647ms, tests 2.45s, environment 0ms)
+

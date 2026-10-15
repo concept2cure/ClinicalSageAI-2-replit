@@ -8,6 +8,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   applySurfaceAction,
+  listedChoices,
   notifySurfaceActionReady,
   useSurfaceActionHandlers,
 } from '../surfaceActions';
@@ -57,6 +58,11 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
+import { RetentionPeriodCard } from './RetentionPeriodCard';
+import { LegalHoldsCard } from './LegalHoldsCard';
+import { GatewayAccountsSetting } from './GatewayAccountsSetting';
+import { PdfARequirementSetting } from './PdfARequirementSetting';
+import { SessionPolicySetting } from '../onboarding/SessionPolicySetting';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
@@ -696,15 +702,23 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             <div className="txw-row">
               <div className="txw-row-l">
                 Multi-factor authentication
-                <small>TOTP via an authenticator app, enrolled by each member.</small>
+                {/* QA 2026-10-08 (j9): this said "enrolled by each member", but no
+                    screen started an authenticator enrolment, so it said what sign-in
+                    does instead (routes/auth.ts POST /login). P-25: the account panel
+                    (v2/AccountPanel.tsx) now enrols one, so the row says where. */}
+                <small>
+                  Sign-in asks for an emailed code, or for an authenticator app on an account that
+                  has one.
+                </small>
               </div>
               <div
                 className="txw-row-r"
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
               >
                 <span className="txw-help">
-                  {I.info} Set per user, not per organization. Sign-in enforcement follows each
-                  member's own enrolment, so there is nothing for an administrator to switch here.
+                  {I.info} Set per user, not per organization, so there is nothing for an
+                  administrator to switch here. Each person sets up an authenticator app from
+                  Account in the account menu.
                 </span>
               </div>
             </div>
@@ -728,6 +742,13 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           </div>
         </div>
+
+        {/* -- Agency gateway accounts: platform or the organisation's own, per
+            gateway and environment (D7, founder decision 2026-10-01). -- */}
+        <GatewayAccountsSetting />
+        <SessionPolicySetting />
+        {/* PDF/A only where this organisation's procedures require it (D7, decided 2026-10-01). */}
+        <PdfARequirementSetting />
 
         {/* -- Translation workspace -- */}
         <div className="txw-set-card">
@@ -900,6 +921,12 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           )}
         </div>
+
+        {/* -- Records retention (P1-22; ADR-0014 §6) -- its own read and its
+            own governed save, because the period has its own route and its own
+            chained audit row; see RetentionPeriodCard.tsx. */}
+        <RetentionPeriodCard describeFailure={saveFailure} />
+        <LegalHoldsCard describeFailure={saveFailure} />
       </div>
     </div>
   );
@@ -909,16 +936,31 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
  *  AuditLedgerChainVerdict), reduced to what the banner and AnA state. */
 type ChainVerdictView = {
   verdict: 'intact' | 'broken' | 'unverified';
+  /** The server's reason when it verified nothing (no chained rows). */
+  reason: string | null;
   rowsChecked: number;
   legacyRows: number;
   sequencedRows: number;
-  brokenAt: { id: string; segment: string; commitsTo: string | null } | null;
+  /**
+   * Where it breaks, as this organisation may be told (audited-export.ts
+   * breakForTenant): its own entry by id, another organisation's only as such.
+   * `commitsTo` is the entry the stored hash derives from, 'genesis', or null
+   * when no predecessor derives it.
+   */
+  brokenAt: { id: string | null; segment: string; commitsTo: string | null } | null;
 };
+
+/** The break's "commits to" as a phrase: an entry id, genesis, another organisation's entry, or nothing. */
+function commitsToOf(v: unknown): string | null {
+  if (v && typeof v === 'object' && typeof (v as { id?: unknown }).id === 'string') return `entry ${(v as { id: string }).id}`;
+  return typeof v === 'string' ? (v === 'genesis' ? 'genesis' : `an entry of ${v}`) : null;
+}
 
 function readChainVerdict(meta: Record<string, unknown> | undefined): ChainVerdictView {
   const c = meta?.chain as
     | {
         ok?: unknown;
+        reason?: unknown;
         rowsChecked?: unknown;
         legacyRows?: unknown;
         sequencedRows?: unknown;
@@ -927,18 +969,19 @@ function readChainVerdict(meta: Record<string, unknown> | undefined): ChainVerdi
     | undefined;
   const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
   if (!c || typeof c.ok !== 'boolean') {
-    return { verdict: 'unverified', rowsChecked: 0, legacyRows: 0, sequencedRows: 0, brokenAt: null };
+    const reason = c && c.ok === null && typeof c.reason === 'string' ? c.reason : null;
+    return { verdict: 'unverified', reason, rowsChecked: 0, legacyRows: 0, sequencedRows: 0, brokenAt: null };
   }
   const b = c.brokenAt;
   return {
     verdict: c.ok ? 'intact' : 'broken',
+    reason: null,
     rowsChecked: n(c.rowsChecked),
     legacyRows: n(c.legacyRows),
     sequencedRows: n(c.sequencedRows),
-    brokenAt:
-      b && typeof b.id === 'string'
-        ? { id: b.id, segment: String(b.segment ?? ''), commitsTo: typeof b.commitsTo === 'string' ? b.commitsTo : null }
-        : null,
+    brokenAt: b && typeof b === 'object'
+      ? { id: typeof b.id === 'string' ? b.id : null, segment: String(b.segment ?? ''), commitsTo: commitsToOf(b.commitsTo) }
+      : null,
   };
 }
 
@@ -948,11 +991,13 @@ function chainTone(v: ChainVerdictView): string {
 
 function chainSummary(v: ChainVerdictView): string {
   if (v.verdict === 'unverified') {
-    return 'The server returned no chain verdict on this read, so the chain is not verified here';
+    return v.reason
+      ? `The chain is not verified: ${v.reason.replace(/\.$/, '')}`
+      : 'The server returned no chain verdict on this read, so the chain is not verified here';
   }
   const span = `${v.rowsChecked} chained ${v.rowsChecked === 1 ? 'entry' : 'entries'} verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
   if (v.verdict === 'intact') return `Hash chain verifies intact over ${span}`;
-  return `Hash chain breaks at entry ${v.brokenAt?.id ?? 'unknown'} (${v.brokenAt?.segment ?? 'unknown'} segment, ${
+  return `Hash chain breaks at ${v.brokenAt?.id ? `entry ${v.brokenAt.id}` : "another organisation's entry"} (${v.brokenAt?.segment || 'unknown'} segment, ${
     v.brokenAt?.commitsTo ? `commits to ${v.brokenAt.commitsTo}` : 'content does not derive from any predecessor'
   }) over ${span}`;
 }
@@ -1016,7 +1061,7 @@ function ActorRef({ value }: { value?: string | null }) {
   );
 }
 
-export function AuditTrail({ onAsk }: SurfaceViewProps) {
+export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
   const [kind, setKind] = useState('all');
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<string | null>(null);
@@ -1027,7 +1072,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
   // Real hash-chained ledger. useLiveRows unwraps the { success, data } envelope,
   // returns a fresh [] while loading / on error (rendered directly, so no seed
   // loop), and sets `error` only on a genuine fetch failure.
-  const { rows: entries, loading, error, meta } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
+  const { rows: entries, loading, error, status: readStatus, meta } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
 
   const log = entries.filter(
     (e) =>
@@ -1148,6 +1193,105 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [loading, error, entries, log, kind, term, q, kindCounts, chainStatus, chainView, entry, exportErr]);
+  /* AnA's hands on this screen (wave 7). The audit trail is where the training
+     demonstration ends and where an inspector starts, and she had no action
+     here at all: she could walk in and then do nothing. Every handler drives
+     the same state the controls above drive — the kind buttons, the search
+     box, a row click, the hash-chain toggle. Reading only: the signed export
+     is a governed act and stays a human one. */
+  useSurfaceActionHandlers('audit-trail', {
+    'audit-trail.filter-entries': (params) => {
+      const wanted = (params.kind ?? '').trim().toLowerCase();
+      const legal = AUDIT_KINDS.map((k) => k.id);
+      if (!legal.includes(wanted)) {
+        return { ok: false, reason: `No audit kind "${params.kind}" — this ledger files events as ${legal.join(', ')}.` };
+      }
+      if (loading) return { ok: false, reason: 'The audit trail is still loading.', retry: true };
+      if (error) {
+        return {
+          ok: false,
+          reason:
+            'The hash-chained ledger could not be read, so there is nothing on screen to filter. ' +
+            'That is not the same as the trail being empty.',
+        };
+      }
+      if (entries.length === 0) return { ok: false, reason: 'This workspace has no audit entries yet, so there is nothing to filter.' };
+      const n = wanted === 'all' ? entries.length : entries.filter((e) => e.kind === wanted).length;
+      const label = AUDIT_KINDS.find((k) => k.id === wanted)?.label ?? wanted;
+      if (kind === wanted) return { ok: true, detail: `Already filtered to ${label} (${n} entries)` };
+      setKind(wanted);
+      // A kind with no entries still applies; the count is told truthfully
+      // rather than letting an empty table read as an empty ledger.
+      return { ok: true, detail: `Filtered to ${label} — ${n} of ${entries.length} entries` };
+    },
+    'audit-trail.search': (params) => {
+      const wanted = (params.query ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'Name what to search the audit trail for.' };
+      if (loading) return { ok: false, reason: 'The audit trail is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The hash-chained ledger could not be read, so there is nothing on screen to search.' };
+      if (entries.length === 0) return { ok: false, reason: 'This workspace has no audit entries yet, so there is nothing to search.' };
+      setQ(wanted);
+      const hits = entries.filter(
+        (e) =>
+          (kind === 'all' || e.kind === kind) &&
+          [e.id, e.event, e.target, e.actor].some((f) => String(f ?? '').toLowerCase().includes(wanted.toLowerCase())),
+      ).length;
+      return { ok: true, detail: `Searched the audit trail for "${wanted}" — ${hits} matching ${hits === 1 ? 'entry' : 'entries'}` };
+    },
+    'audit-trail.select-entry': (params) => {
+      const wanted = (params.entry ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'Name an audit entry to open.' };
+      if (loading) return { ok: false, reason: 'The audit trail is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The hash-chained ledger could not be read, so there are no entries to open.' };
+      if (log.length === 0) {
+        return {
+          ok: false,
+          reason:
+            entries.length === 0
+              ? 'This workspace has no audit entries yet.'
+              : 'No entries match the filter and search on screen, so there is none to open.',
+        };
+      }
+      const lower = wanted.toLowerCase();
+      const exact = log.find((e) => e.id.toLowerCase() === lower);
+      const contains = exact ? [] : log.filter((e) => [e.id, e.event, e.target].some((f) => String(f ?? '').toLowerCase().includes(lower)));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            (contains.length > 1
+              ? `"${wanted}" matches ${contains.length} entries — name one exactly.`
+              : `No audit entry matching "${wanted}" on screen.`) + listedChoices(log.slice(0, 8).map((e) => e.id), 'On screen'),
+        };
+      }
+      if (sel === match.id) return { ok: true, detail: `Already showing ${match.id}` };
+      setSel(match.id);
+      return { ok: true, detail: `Opened ${match.id} — ${match.event}` };
+    },
+    'audit-trail.set-chain-view': (params) => {
+      const want = (params.state ?? '').trim().toLowerCase();
+      if (want !== 'shown' && want !== 'hidden') {
+        return { ok: false, reason: `"${params.state}" is not a hash-chain view state — choose shown or hidden.` };
+      }
+      const next = want === 'shown';
+      if (chainView === next) return { ok: true, detail: `The hash chain is already ${want}` };
+      setChainView(next);
+      return { ok: true, detail: next ? 'Showing the hash chain' : 'Hid the hash chain' };
+    },
+    'audit-trail.close-entry': () => {
+      if (!sel) return { ok: true, detail: 'No audit entry is open' };
+      const was = sel;
+      setSel(null);
+      return { ok: true, detail: `Closed ${was}` };
+    },
+  });
+  /* The ready signal for the holds above. Gated on the read settling and
+     nothing else: a failed read must reach a held action as the handler's own
+     refusal, not as a twenty-second timeout (surfaceReadySignal.test.ts). */
+  useEffect(() => {
+    if (!loading) notifySurfaceActionReady('audit-trail');
+  }, [loading]);
   usePublishSurfaceContext('audit-trail', anaContext);
 
   return (
@@ -1169,6 +1313,12 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             >
               {I.link || I.network} Hash chain
             </button>
+            {/* The scoped, per-question reports (access review, sign-ins,
+                signatures, retention) are sealed the same way and live on
+                their own surface. */}
+            <button type="button" className="btn ghost" onClick={() => onNav('compliance-reports')}>
+              {I.fileCheck} Compliance reports
+            </button>
             <button className="btn primary" onClick={doExport} disabled={exporting}>
               {I.scroll} {exporting ? 'Generating…' : 'Export signed bundle'}
             </button>
@@ -1185,6 +1335,15 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         <div role="status" className="scaf-note" style={{ padding: '18px 10px', maxWidth: 680 }}>
           Loading audit trail…
         </div>
+      ) : error && readStatus === 403 ? (
+        /* A refusal is not an outage (QA 2026-10-08, j8): a member was told the
+           ledger "didn't respond" and to retry, when the server had refused the
+           read for the member's role. The server's own sentence says who reads it. */
+        <EmptyState
+          icon={I.lock}
+          title="The audit trail is not available to your role"
+          hint={error}
+        />
       ) : error ? (
         <EmptyState
           tone="error"
@@ -1559,8 +1718,8 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
         Entries are append-only, hash-chained (SHA-256), and timestamped. Each entry's hash
         incorporates the previous entry's hash, creating a verifiable chain. Any modification to a
-        historical entry breaks the chain. Export produces a signed PDF carrying the full
-        verification manifest, in the form Part 11 record retention expects.
+        historical entry breaks the chain. Export downloads the entries as a signed JSON bundle:
+        the data, a verification manifest and an HMAC-SHA256 signature over both.
       </div>
         </React.Fragment>
       )}
@@ -2027,6 +2186,27 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       ],
     };
   }, [catState.loading, catState.error, licState.loading, licState.error, groups, lic, pj, us, admin]);
+  /* AnA's hands on this screen (wave 7): the admin controls strip, the one
+     thing a person switches here. Enabling or disabling a module for the
+     organisation is an entitlement change and stays a governed human act —
+     this only shows or hides the controls. */
+  useSurfaceActionHandlers('apps', {
+    'apps.show-admin-controls': (params) => {
+      const want = (params.state ?? '').trim().toLowerCase();
+      if (want !== 'on' && want !== 'off') {
+        return { ok: false, reason: `"${params.state}" is not a state for the admin controls — choose on or off.` };
+      }
+      if (catState.loading) return { ok: false, reason: 'The apps catalog is still loading.', retry: true };
+      if (catState.error) return { ok: false, reason: 'The apps catalog could not be read, so the admin controls are not on screen.' };
+      const next = want === 'on';
+      if (admin === next) return { ok: true, detail: `The admin controls are already ${want}` };
+      setAdmin(next);
+      return { ok: true, detail: next ? 'Showing the admin controls' : 'Hid the admin controls' };
+    },
+  });
+  useEffect(() => {
+    if (!catState.loading) notifySurfaceActionReady('apps');
+  }, [catState.loading]);
   usePublishSurfaceContext('apps', anaContext);
 
   return (
@@ -2323,9 +2503,24 @@ interface ArtifactRow {
   when: string;
   ver: string;
   sig: boolean;
+  /** The version the active signature covers; null when it cannot be resolved. */
+  sigVersion?: number | null;
+  /** True when the signature covers an earlier version than the current one;
+   *  null when that cannot be told (the server never guesses). */
+  sigStale?: boolean | null;
   reviewed: boolean;
   sourceCount: number;
   prog: string;
+}
+
+/** What one artifact's signature says about its CURRENT version. The gallery
+    showed the e-signed shield whenever any active signature existed, so a
+    version edited after signing read as signed. */
+function signatureState(a: Pick<ArtifactRow, 'sig' | 'sigStale' | 'sigVersion'>): 'none' | 'current' | 'stale' | 'unknown' {
+  if (!a.sig) return 'none';
+  if (a.sigStale === true) return 'stale';
+  if (a.sigStale === false) return 'current';
+  return 'unknown';
 }
 
 /* CSV cell: quote always, double any embedded quote. Artifact names carry
@@ -2414,21 +2609,25 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         availableActions: ['Retry the artifact gallery read'],
       };
     }
-    const signed = rows.filter((a) => a.sig).length;
+    const signed = rows.filter((a) => signatureState(a) === 'current').length;
+    const stale = rows.filter((a) => signatureState(a) === 'stale').length;
     const programs = [...new Set(rows.map((a) => a.prog).filter(Boolean))];
     return {
       summary:
         `Artifacts Center: ${rows.length} artifact(s) across ${programs.length} program(s), ` +
-        `${signed} carrying a Part 11 e-signature.`,
+        `${signed} with a Part 11 e-signature on the current version` +
+        (stale ? `, ${stale} signed on an earlier version only (the current version is not signed)` : '') +
+        '.',
       facts: {
         totalArtifacts: rows.length,
         eSignedArtifacts: signed,
+        signedOnEarlierVersionOnly: stale,
         programs,
         // Enough to name an artifact back to the user, not the whole gallery.
         artifacts: rows.slice(0, 15).map((a) => ({
           id: a.id, name: a.name, kind: a.kind, format: a.fmt,
           version: a.ver, program: a.prog, model: a.model,
-          updated: a.when, eSigned: a.sig,
+          updated: a.when, eSigned: signatureState(a) === 'current', signature: signatureState(a),
         })),
       },
       availableActions: [
@@ -2467,7 +2666,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         // eslint-disable-next-line no-alert
         window.alert(
           'Not downloaded — ' +
-            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`) + '.',
+            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`).replace(/\.$/, '') + '.',
         );
         return;
       }
@@ -2486,7 +2685,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
       ['Size', (r) => r.size],
       ['Model', (r) => r.model ?? ''],
       ['Version', (r) => r.ver],
-      ['Signed', (r) => (r.sig ? 'yes' : 'no')],
+      ['Signed', (r) => ({ none: 'no', current: 'yes', stale: `earlier version only (v${r.sigVersion})`, unknown: 'yes, version not determined' })[signatureState(r)]],
       ['Program', (r) => r.prog],
       ['Updated', (r) => r.when],
     ];
@@ -2595,13 +2794,30 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
               <div style={{ color: 'var(--text-400)' }}>{a.model ?? '—'}</div>
               <div style={{ color: 'var(--text-400)' }}>{a.when}</div>
               <div>
-                {a.sig ? (
-                  <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)" title="E-signed (21 CFR Part 11)">
-                    {I.shieldCheck}
-                  </span>
-                ) : (
-                  <span style={{ color: 'var(--text-500)' }}>--</span>
-                )}
+                {(() => {
+                  const st = signatureState(a);
+                  if (st === 'current')
+                    return (
+                      <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)" title="E-signed (21 CFR Part 11)">
+                        {I.shieldCheck}
+                      </span>
+                    );
+                  /* Said in words as well as tone: the signature does not
+                     cover what is on file now. */
+                  if (st === 'stale')
+                    return (
+                      <span className="rd-chip tone-warn" title={`The signature covers v${a.sigVersion}; the current version (${a.ver}) is not signed.`}>
+                        {I.alertTriangle} Signed v{a.sigVersion} only
+                      </span>
+                    );
+                  if (st === 'unknown')
+                    return (
+                      <span className="rd-chip tone-idle" title="Signed, but the version the signature covers could not be determined.">
+                        Signed · version unknown
+                      </span>
+                    );
+                  return <span style={{ color: 'var(--text-500)' }}>--</span>;
+                })()}
               </div>
               <div className="art-acts">
                 {/* The non-docx branch used to run
@@ -3348,6 +3564,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
 
             {sec === 'security' && (
               <>
+                <SessionPolicySetting />
                 {/* ── These describe controls; they never read this org's config ──
                     Two of the tags used to assert a posture: "IP allowlist —
                     Off" and "Session policy — 7-day refresh". Both were string

@@ -414,7 +414,7 @@ export async function dispatchAction(
       ? `${request.targetType}:${request.targetId}`
       : null;
     const lock = lockResource
-      ? await acquireLock(lockResource, actionId, timeoutMs + 5000)
+      ? await acquireLock(lockResource, actionId, timeoutMs + 5000, options.user.organizationId)
       : null;
 
     if (needsLock && !lock) {

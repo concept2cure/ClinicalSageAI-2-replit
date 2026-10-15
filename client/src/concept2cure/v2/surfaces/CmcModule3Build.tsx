@@ -37,6 +37,9 @@ import { C2CForm } from '../C2CForm';
 import { cmcProjectId, cmcWriteError } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
+import { SectionEvidence } from './CmcSectionEvidence';
+import { PlaceIntoSubmission } from './CmcPlaceIntoSubmission';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 
 /* ── The read models ─────────────────────────────────────────────────────── */
 
@@ -84,26 +87,6 @@ interface Module3BuildPayload {
   artifactRegistry?: { state: 'linked' | 'unanchored' | 'unaddressable'; detail?: string };
 }
 
-/** GET /api/submissions rows (subset the placement picker reads). */
-interface SubmissionRow {
-  id: number;
-  title: string;
-  applicationType: string;
-  status: string;
-}
-
-/** GET /api/submissions/:id/sequences rows (subset). */
-interface SequenceRow {
-  id: number;
-  sequenceNumber: string;
-  status: string; // draft|assembling|validated|frozen|dispatched
-}
-
-interface PlacementOutcome {
-  placements: Array<{ sectionKey: string; leafSectionCode: string; leafId: number; title: string }>;
-  skipped: Array<{ sectionKey: string; reason: string }>;
-}
-
 export interface Module3Readiness {
   totalSections: number;
   approvedSections: number;
@@ -116,6 +99,8 @@ export interface Module3Readiness {
   /** False = the governed-decision fabric returned no verdict (not "it cleared"). */
   governedStateEvaluated?: boolean;
   exportReady: boolean;
+  /** The export gate's own sentence when it would refuse — readiness is the gate's verdict. */
+  blockedBecause?: string | null;
 }
 
 export interface Module3Contradiction {
@@ -158,6 +143,40 @@ export const BUILD_STATE_META: Record<string, { tone: string; label: string; hin
   locked: { tone: 'ok', label: 'locked', hint: 'Locked for submission.' },
 };
 
+/** What a contradiction sweep compared (POST …/contradictions `examined`). */
+interface SweepExamined {
+  specifications?: number;
+  methods?: number;
+  stability?: number;
+  batches?: number;
+  comparability?: number;
+}
+
+/** The last recorded sweep (GET …/contradictions `meta.lastSweep`). */
+interface LastSweep {
+  at: string;
+  by: string | null;
+  examined: SweepExamined | null;
+  found: number | null;
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** "Compared 2 specifications, 1 method, …" — or that the scope was not reported. */
+function sweepScope(e: SweepExamined | undefined): string {
+  if (!e) return 'What it compared was not reported';
+  return (
+    'Compared ' +
+    [
+      plural(e.specifications ?? 0, 'specification', 'specifications'),
+      plural(e.methods ?? 0, 'method', 'methods'),
+      plural(e.stability ?? 0, 'stability study', 'stability studies'),
+      plural(e.batches ?? 0, 'batch', 'batches'),
+      plural(e.comparability ?? 0, 'comparability assessment', 'comparability assessments'),
+    ].join(', ')
+  );
+}
+
 export function buildStateMeta(state: string) {
   return BUILD_STATE_META[state] ?? { tone: 'dim', label: state.replace(/_/g, ' '), hint: '' };
 }
@@ -199,11 +218,16 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
   const [busy, setBusy] = React.useState<string | null>(null);
   const [resolving, setResolving] = React.useState<Module3Contradiction | null>(null);
   const [provenanceFor, setProvenanceFor] = React.useState<Module3SectionState | null>(null);
+  const [evidenceFor, setEvidenceFor] = React.useState<Module3SectionState | null>(null);
   const [gate, setGate] = React.useState<{ ok: boolean; message: string } | null>(null);
 
   const sections = build.data?.sections ?? [];
   const summary = build.data?.summary;
   const open = contradictions.rows.filter((c) => c.status !== 'resolved');
+  /* When the program was last swept, and over what (GET …/contradictions
+     meta). An empty list from a program nobody swept is not "no
+     contradictions"; the export gate runs the detector itself either way. */
+  const lastSweep = (contradictions.meta as { lastSweep?: LastSweep | null } | undefined)?.lastSweep ?? null;
   const criticalOpen = open.filter((c) => String(c.severity).toLowerCase() === 'critical');
 
   /** Every action here is awaited, reports the server's own words, and reloads
@@ -269,7 +293,8 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
       };
       const found = body?.contradictions?.length ?? 0;
       if (found === 0) {
-        return 'Contradiction sweep complete — nothing found across specifications, methods, stability, batches and comparability.';
+        // Say what was compared: a sweep over empty registers also finds nothing.
+        return 'Contradiction sweep complete — nothing found. ' + sweepScope((json as { examined?: SweepExamined })?.examined) + '.';
       }
       /* Each finding is now raised as work on the shared task board. Say what
          happened to it: "3 findings recorded" and a silently empty board is the
@@ -432,6 +457,9 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                       ? ' · the governed-decision state could not be evaluated, so nothing here is cleared'
                       : ''}
                   </span>
+                  {!readiness.data.exportReady && readiness.data.blockedBecause && (
+                    <div className="cm-meta" data-testid="m3-readiness-blocked">{readiness.data.blockedBecause}</div>
+                  )}
                 </div>
               ) : (
                 <div className="cm-meta">No compiled sections yet — compile Module 3 to establish a readiness baseline.</div>
@@ -474,7 +502,9 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                   ? 'Loading contradictions…'
                   : contradictions.error
                     ? 'Couldn’t load contradictions — no count is claimed'
-                    : `${open.length} open${criticalOpen.length ? ` — ${criticalOpen.length} critical` : ''} — across specifications, methods, stability, batch and comparability`}
+                    : !lastSweep
+                      ? 'Not swept yet — no count is claimed'
+                      : `${open.length} open${criticalOpen.length ? ` — ${criticalOpen.length} critical` : ''} — last swept ${new Date(lastSweep.at).toLocaleString()}`}
               </span>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
@@ -485,11 +515,19 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                   ) : contradictions.error ? (
                     <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradictions" hint={contradictions.error} retry={bump} />
                   ) : (
-                    <EmptyState
-                      icon={I.shieldCheck}
-                      title="No open contradictions"
-                      hint="The detection engine compares specifications against their methods, stability against its studies, batch dispositions and comparability risk. Run the sweep after recording new CMC data — a critical finding blocks section approval."
-                    />
+                    !lastSweep ? (
+                      <EmptyState
+                        icon={I.shieldAlert}
+                        title="Not swept yet"
+                        hint="No contradiction sweep has run for this program, so no finding is recorded and none is claimed absent. Run the sweep after recording CMC data. The export gate refuses a critical finding in the records whether or not a sweep recorded it."
+                      />
+                    ) : (
+                      <EmptyState
+                        icon={I.shieldCheck}
+                        title="No open contradictions at the last sweep"
+                        hint={`Swept ${new Date(lastSweep.at).toLocaleString()}. ${sweepScope(lastSweep.examined ?? undefined)}. Run the sweep again after recording new CMC data — a critical finding blocks section approval.`}
+                      />
+                    )
                   )}
                 </div>
               ) : (
@@ -601,6 +639,14 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                             >
                               {I.history} History
                             </button>
+                            <button
+                              className="nda-open"
+                              style={{ marginLeft: 6 }}
+                              onClick={() => setEvidenceFor(s)}
+                              title="The Vault documents this section’s records were taken from"
+                            >
+                              {I.paperclip} Evidence
+                            </button>
                           </td>
                         </tr>
                       );
@@ -619,7 +665,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
             eyebrow: 'Module 3 — contradiction',
             title: 'Resolve ' + resolving.contradictionType,
             sub: resolving.details,
-            governed: 'The resolution note is written to the Module 3 provenance chain against your account.',
+            governed: 'The resolution note is written to the Module 3 provenance chain and the audit trail against your account.',
             submitLabel: 'Record resolution',
             fields: [
               {
@@ -628,6 +674,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                 type: 'textarea',
                 required: true,
                 rows: 4,
+                desc: `At least ${GOVERNED_REASON_MIN} characters. A later sweep keeps this resolution while the data stays the same; a change to the data reopens the finding.`,
                 placeholder: 'What was changed, or why the two records are not in fact in conflict…',
               },
             ],
@@ -639,160 +686,16 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
       {provenanceFor && (
         <SectionProvenance projectId={projectId} section={provenanceFor} onClose={() => setProvenanceFor(null)} />
       )}
-      <C2CToast msg={toast} />
-    </div>
-  );
-}
-
-/* ── Place into submission ───────────────────────────────────────────────── */
-
-/**
- * The CMC → IND seam, from this side. POST /place-into-submission snapshots
- * every approved §3.2 section into the canonical renderable leaf source and
- * places real submission leaves at the m-prefixed section codes — after
- * re-running the same final-export gate this surface's "Check export gate"
- * button reports. The pickers render live org data with honest empty and
- * error states; frozen/dispatched sequences are excluded WITH the reason
- * (their leaves are immutable — the server refuses them too); the server's
- * verdict is shown verbatim either way.
- */
-function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string; onPlaced: () => void }) {
-  const submissions = useLiveRows<SubmissionRow>('/api/submissions');
-  const [submissionId, setSubmissionId] = React.useState<number | null>(null);
-  const sequences = useLiveRows<SequenceRow>(
-    submissionId != null ? `/api/submissions/${submissionId}/sequences` : null,
-    [submissionId],
-  );
-  const [sequenceId, setSequenceId] = React.useState<number | null>(null);
-  const [busy, setBusy] = React.useState(false);
-  const [verdict, setVerdict] = React.useState<
-    | { ok: true; outcome: PlacementOutcome }
-    | { ok: false; message: string }
-    | null
-  >(null);
-
-  const lockedSeq = (s: SequenceRow) => s.status === 'frozen' || s.status === 'dispatched';
-
-  const place = async () => {
-    if (busy || submissionId == null || sequenceId == null) return;
-    setBusy(true);
-    setVerdict(null);
-    try {
-      const res = await apiRequest(
-        'POST',
-        '/api/cmc/module3-os/place-into-submission/' + encodeURIComponent(projectId),
-        { submissionId, sequenceId },
-      );
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        setVerdict({ ok: false, message: cmcWriteError(json, res.status) });
-        return;
-      }
-      const data = (json as { data?: PlacementOutcome })?.data;
-      setVerdict({ ok: true, outcome: { placements: data?.placements ?? [], skipped: data?.skipped ?? [] } });
-      onPlaced();
-    } catch (e) {
-      setVerdict({ ok: false, message: e instanceof Error ? e.message : String(e) });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div data-testid="m3-place-into-submission">
-      <div className="cm-meta" style={{ marginBottom: 6 }}>
-        Place the approved §3.2 sections into an IND sequence — each becomes a real submission leaf the
-        checklist, package manifest and eCTD assembly read.
-      </div>
-      {submissions.loading ? (
-        <div role="status" className="cm-meta">Loading submissions…</div>
-      ) : submissions.error ? (
-        <div className="cm-meta">Submissions could not be loaded — {submissions.error}</div>
-      ) : submissions.rows.length === 0 ? (
-        <div className="cm-meta">No submissions exist in this workspace yet — create one in the Submission Center first.</div>
-      ) : (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <select
-            className="c2c-input"
-            aria-label="Target submission"
-            value={submissionId ?? ''}
-            onChange={(e) => {
-              const v = e.target.value ? Number(e.target.value) : null;
-              setSubmissionId(v);
-              setSequenceId(null);
-              setVerdict(null);
-            }}
-          >
-            <option value="">Choose a submission…</option>
-            {submissions.rows.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title} ({s.applicationType.toUpperCase()})
-              </option>
-            ))}
-          </select>
-          {submissionId != null &&
-            (sequences.loading ? (
-              <span role="status" className="cm-meta">Loading sequences…</span>
-            ) : sequences.error ? (
-              <span className="cm-meta">Sequences could not be loaded — {sequences.error}</span>
-            ) : sequences.rows.length === 0 ? (
-              <span className="cm-meta">This submission has no sequences yet — create one in the Submission Center.</span>
-            ) : (
-              <select
-                className="c2c-input"
-                aria-label="Target sequence"
-                value={sequenceId ?? ''}
-                onChange={(e) => {
-                  setSequenceId(e.target.value ? Number(e.target.value) : null);
-                  setVerdict(null);
-                }}
-              >
-                <option value="">Choose a sequence…</option>
-                {sequences.rows.map((s) => (
-                  <option key={s.id} value={s.id} disabled={lockedSeq(s)}>
-                    {s.sequenceNumber} · {s.status}
-                    {lockedSeq(s) ? ' — leaves are immutable' : ''}
-                  </option>
-                ))}
-              </select>
-            ))}
-          <button
-            className="reg-cta"
-            onClick={() => void place()}
-            disabled={busy || submissionId == null || sequenceId == null}
-          >
-            {I.fileDown} {busy ? 'Placing…' : 'Place into the submission'}
-          </button>
-        </div>
+      {evidenceFor && (
+        <SectionEvidence
+          projectId={projectId}
+          sectionKey={evidenceFor.sectionKey}
+          sectionLabel={evidenceFor.sectionLabel}
+          onClose={() => setEvidenceFor(null)}
+          onChanged={bump}
+        />
       )}
-      {verdict &&
-        (verdict.ok ? (
-          <div className="pj-con cm-gate-verdict is-ok" style={{ marginTop: 10 }}>
-            <span className="ico">{I.shieldCheck}</span>
-            <div>
-              <div className="pj-con-t">
-                {verdict.outcome.placements.length}{' '}
-                {verdict.outcome.placements.length === 1 ? 'section' : 'sections'} placed into the submission
-              </div>
-              <div className="pj-con-d">
-                {verdict.outcome.placements.map((p) => p.leafSectionCode).join(', ') || '—'}
-                {verdict.outcome.skipped.length > 0 && (
-                  <>
-                    {' '}· skipped: {verdict.outcome.skipped.map((s) => `§${s.sectionKey} (${s.reason})`).join('; ')}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="pj-con cm-gate-verdict" style={{ marginTop: 10 }}>
-            <span className="ico">{I.alertTriangle}</span>
-            <div>
-              <div className="pj-con-t">Placement refused</div>
-              <div className="pj-con-d">{verdict.message}</div>
-            </div>
-          </div>
-        ))}
+      <C2CToast msg={toast} />
     </div>
   );
 }

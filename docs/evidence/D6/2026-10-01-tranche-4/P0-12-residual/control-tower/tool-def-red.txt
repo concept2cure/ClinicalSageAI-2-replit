@@ -1,0 +1,5 @@
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > execute_platform_command: on a proposal, nothing ran, tell the person, do not re-issue 4861ms
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the execute_platform_command definition the model reads says the same as the bridge > never asks for params.confirm, says a write is only proposed, and says not to re-issue it 8ms
+   → expected 'Execute any governed platform command…' not to match /re-issue with params\.confirm|confir…/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Execute any governed platform command…' not to match /re-issue with params\.confirm|confir…/i

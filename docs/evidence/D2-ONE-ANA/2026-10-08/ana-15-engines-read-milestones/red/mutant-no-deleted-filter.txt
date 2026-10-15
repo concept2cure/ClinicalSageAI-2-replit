@@ -1,0 +1,98 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > scores a linked project and lists its overdue milestone as a critical gap 37ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > scores a project with no linked program: no milestones, not an error 13ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > milestones feed the gap list only: the figure is the same with or without them 19ms
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > reads nothing for another organization, or for a soft-deleted program 41ms
+   → expected [ { id: 'gap-ms-0', …(5) } ] to deeply equal []
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > turns the linked program’s overdue and due-soon milestones into recommendations 15ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > a project with no linked program yields no milestone recommendations, and no failure 9ms
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > reads nothing for another organization, or for a soft-deleted program 20ms
+   → expected [ { …(13) } ] to deeply equal []
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > without a twin assessment, quality, consistency and compliance are null (they were 65, 70, 80) 10ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > an empty project scores 0, not 46 from the placeholders 10ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the overall score covers only what was measured: document completeness 12ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the trend is unknown with no recorded scores, not stable with a delta of 0 9ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > a twin assessment supplies what it recorded; a column it left empty stays null 22ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > another organization reads no twin assessment for a program it does not own 11ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > with all four dimensions measured the overall score is the original weighted formula 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > reads nothing for another organization, or for a soft-deleted program
+AssertionError: expected [ { id: 'gap-ms-0', …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "description": "Milestone \"Retired deadline\" is overdue",
++     "estimatedEffortHours": null,
++     "id": "gap-ms-0",
++     "module": "milestones",
++     "remediation": "Prioritize completion of \"Retired deadline\"",
++     "severity": "critical",
++   },
++ ]
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:180:41
+    178|     expect(milestoneGaps(foreign.gaps)).toEqual([]);
+    179|     const retired = await computeReadinessScore({ organizationId: ORG,…
+    180|     expect(milestoneGaps(retired.gaps)).toEqual([]);
+       |                                         ^
+    181|   });
+    182| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > reads nothing for another organization, or for a soft-deleted program
+AssertionError: expected [ { …(13) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "confidence": null,
++     "createdAt": "2026-10-08T07:38:58.962Z",
++     "evidence": [
++       {
++         "relevance": 1,
++         "sourceId": "7d16dd03-5673-4a55-bb29-2344fbb5b221",
++         "sourceTitle": "Retired deadline",
++         "sourceType": "document_state",
++       },
++     ],
++     "reason": "Milestone \"Retired deadline\" is overdue (0% complete)",
++     "recommendationId": "9e0eff30-a321-44c0-91f0-9d34e69c41d5",
++     "requiresApproval": false,
++     "severity": "critical",
++     "sourceType": "rules_based",
++     "status": "active",
++     "suggestedAction": "Prioritize completion of: Retired deadline",
++     "targetObjectId": "7d16dd03-5673-4a55-bb29-2344fbb5b221",
++     "targetObjectType": "milestone",
++     "type": "readiness_blocker",
++   },
++ ]
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:208:87
+    206|     const retired = await generateRecommendations({ organizationId: OR…
+    207|     expect(foreign.recommendations.filter((r) => r.targetObjectType ==…
+    208|     expect(retired.recommendations.filter((r) => r.targetObjectType ==…
+       |                                                                                       ^
+    209|     expect(warn.mock.calls.filter(([msg]) => String(msg).includes('Gen…
+    210|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  07:38:52
+   Duration  6.63s (transform 1.07s, setup 122ms, import 1.80s, tests 4.27s, environment 0ms)
+

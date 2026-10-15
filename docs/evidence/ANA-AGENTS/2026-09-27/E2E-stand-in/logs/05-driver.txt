@@ -1,0 +1,77 @@
+$ OUT=<evidence folder> STATE=<scratch>/state.json SERVER_LOG=<scratch>/server.log DATABASE_URL=postgresql://postgres@127.0.0.1:5432/ana_e2e_2 node harness/drive-e2e.mjs s1-round-cap s4-manual s4-manual-unavailable s4-auto s4-approval s2-deep
+18:33:30 ── s1-round-cap
+18:33:35 policy Auto: aria-checked=true
+18:33:40 S1 done {"stoppedReason":"max_rounds","rounds":20,"runPolicy":"auto"}
+18:33:43 screenshot s1-round-cap-1-stopped.png
+18:33:43 Continue buttons visible: 1
+18:33:44 continue sent: "Continue from where you stopped."
+18:33:46 Continue buttons after the continued turn finished: 0
+18:33:46 screenshot s1-round-cap-2-after-continue.png
+18:33:46 s1-round-cap: ran
+18:33:46 ── s4-manual
+18:33:49 policy Manual: aria-checked=true
+18:33:49 screenshot s4-manual-0-home-manual.png
+18:33:52 screenshot s4-manual-1-hold-before-round-2.png
+18:33:52 pressed Run this step
+18:33:53 screenshot s4-manual-2-hold-before-round-3.png
+18:33:53 screenshot s4-manual-3-typed-do-this-instead.png
+18:33:53 pressed Do this instead
+18:33:56 screenshot s4-manual-4-after-redirect.png
+18:33:56 s4-manual: ran
+18:33:56 ── s4-manual-unavailable
+18:34:00 policy Manual: aria-checked=true
+18:34:00 ana_runs now refuses new rows
+18:34:01 ana_runs constraint dropped
+18:34:04 screenshot s4-manual-unavailable-1-manual-unavailable.png
+18:34:04 s4-manual-unavailable: ran
+18:34:04 ── s4-auto
+18:34:08 policy Auto: aria-checked=true
+18:34:08 screenshot s4-auto-0-home-auto.png
+18:34:10 auto done {"stoppedReason":"no_more_tools","rounds":12,"runPolicy":"auto"}
+18:34:13 screenshot s4-auto-1-finished.png
+18:34:13 s4-auto: ran
+18:34:13 ── s4-approval
+18:34:16 policy Auto: aria-checked=true
+18:34:19 screenshot s4-approval-1-approval-prompt.png
+18:34:19 holding 20s with the prompt unanswered
+18:34:39 screenshot s4-approval-2-still-waiting-20s.png
+18:34:39 declined (Cancel)
+18:34:43 screenshot s4-approval-3-after-decline.png
+18:34:43 s4-approval: ran
+18:34:43 ── s2-deep
+18:34:46 policy Auto: aria-checked=true
+18:34:46 pill before: AnA Balanced Standard
+18:34:47 screenshot s2-deep-0-engine-menu.png
+18:34:47 pill after: AnA Maximum Deep research
+18:34:47 screenshot s2-deep-1-pill-deep-research.png
+18:34:50 screenshot s2-deep-2-answered.png
+18:34:54 pill restored: AnA Balanced Standard
+18:34:54 s2-deep: ran
+exit=0
+
+$ (re-run, approval only: the first run counted task tables by `title` and missed project_tasks.name) node harness/drive-e2e.mjs s4-approval
+18:36:42 ── s4-approval
+18:36:46 policy Auto: aria-checked=true
+18:36:49 screenshot s4-approval-1-approval-prompt.png
+18:36:49 holding 20s with the prompt unanswered
+18:37:09 screenshot s4-approval-2-still-waiting-20s.png
+18:37:09 declined (Cancel)
+18:37:12 screenshot s4-approval-3-after-decline.png
+18:37:13 s4-approval: ran
+exit=0
+
+$ (stand-in restarted with the proposal naming projectId 1, so a confirmed task CAN be written; request numbering continues) node harness/drive-e2e.mjs s4-approval s4-approval-control
+18:38:16 ── s4-approval
+18:38:19 policy Auto: aria-checked=true
+18:38:22 screenshot s4-approval-1-approval-prompt.png
+18:38:22 holding 20s with the prompt unanswered
+18:38:43 screenshot s4-approval-2-still-waiting-20s.png
+18:38:43 declined (Cancel)
+18:38:46 screenshot s4-approval-3-after-decline.png
+18:38:46 s4-approval: ran
+18:38:46 ── s4-approval-control
+18:38:50 policy Auto: aria-checked=true
+18:38:53 confirmed (Confirm and run)
+18:38:56 screenshot s4-approval-control-1-after-confirm.png
+18:38:56 s4-approval-control: ran
+exit=0

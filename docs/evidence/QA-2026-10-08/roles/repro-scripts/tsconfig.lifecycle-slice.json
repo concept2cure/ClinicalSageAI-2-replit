@@ -1,0 +1,6 @@
+{
+  "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+  "include": ["/home/user/ClinicalSageAI-2-replit/server/routes/document-lifecycle.ts"],
+  "exclude": ["/home/user/ClinicalSageAI-2-replit/node_modules"],
+  "compilerOptions": { "skipLibCheck": true, "noEmit": true, "incremental": false }
+}

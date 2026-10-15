@@ -1,0 +1,13 @@
+diff --git a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+index c97221e55..3fb74f79d 100644
+--- a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx
++++ b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+@@ -168,7 +168,7 @@ function placedMessage(sectionCode: string, sequenceNumber: string, refusal: str
+    classifier's guess. The code is then judged exactly as a typed one, so a
+    container still keeps Place disabled. */
+ function confirmedSectionOf(filing: VaultPlaceIntoSubmissionProps['filing']): string | null {
+-  return filing?.placementStatus === 'confirmed' ? filing.ctdSection?.trim() || null : null;
++  return filing?.ctdSection?.trim() || null;
+ }
+ 
+ function StageNotice({ read, op }: { read: StageRead; op: string }) {

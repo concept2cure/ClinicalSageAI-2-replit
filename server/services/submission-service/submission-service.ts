@@ -41,9 +41,59 @@ import type {
 } from '../../../shared/types/database';
 import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
-import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
+import {
+  deriveGovernedTargetBinding,
+  BINDING_BASIS,
+  isSignatureWithdrawn,
+  voidSignatureForRefusedAct,
+  VOIDED_VERIFICATION_STATUS,
+} from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
-import { programInOrganization } from '../c2c/program-access';
+import { canMutateProgram, programInOrganization } from '../c2c/program-access';
+import {
+  assertSignerIsNotAuthor,
+  requiresIndependence,
+  SeparationOfDutiesAuthorUnresolvedError,
+  SeparationOfDutiesError,
+} from '../governance/separation-of-duties';
+import {
+  SHADOW_REVIEW_WAIVED_ACTION,
+  SHADOW_WAIVER_INTENT,
+  completedShadowReviewRuns,
+  evaluateShadowPresenceWithWaiver,
+  resolveShadowReviewWaiver,
+  shadowReviewWaivable,
+  shadowWaiverInsert,
+  shadowWaiverMeaningRefusal,
+  shadowWaiverRunRefusal,
+  type ShadowReviewWaivability,
+  type ShadowReviewWaiverRecord,
+} from '../ectd/shadow-review-waiver';
+import {
+  SHADOW_FINDING_DISPOSITIONED_ACTION,
+  SHADOW_FINDING_DISPOSITION_INTENT,
+  criticalsStandingOpen,
+  reopenedCriticalSentence,
+  dispositionSignatureReason,
+  isShadowFindingDisposition,
+  readShadowFindingDisposition,
+  shadowFindingDisposable,
+  shadowFindingDispositionMeaningRefusal,
+  shadowFindingDispositionPayloadRefusal,
+  shadowFindingDispositionRefusal,
+  shadowFindingDispositionUpdate,
+  type ShadowFindingDisposability,
+  type ShadowFindingDispositionRecord,
+  type ShadowFindingDispositionRequest,
+} from '../ectd/shadow-finding-disposition';
+import { isWaivableShadowReviewFailure } from '../../../shared/constants/shadow-review-failure';
+import { isSameSubmissionType, resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
+import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
+import { usableIdentifier } from '../ectd/regulatory-identifiers';
+import { packageIdentityRefusal, readRecordedPackageIdentity } from '../ectd/package-identity';
+import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
+import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
+import { sequenceTypeRefusal } from '../regulatory/market-support';
 import {
   validateSectionCode,
   vocabularyForApplicationType,
@@ -61,7 +111,15 @@ export type SubmissionErrorCode =
   | 'GOVERNED_REQUIRED'
   | 'DISPATCH_BLOCKED'
   | 'FORBIDDEN'
-  | 'CROSS_PROJECT';
+  | 'CROSS_PROJECT'
+  | 'ALREADY_PLACED'
+  | 'VALIDATION_FAILED'
+  | 'UNANCHORED_SUBMISSION'
+  | 'APPLICATION_NUMBER_MISMATCH'
+  | 'APPLICATION_TYPE_MISMATCH'
+  | 'PACKAGE_IDENTITY_MISSING'
+  | 'SHADOW_WAIVER_NOT_ELIGIBLE'
+  | 'SHADOW_FINDING_NOT_DISPOSABLE';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -90,6 +148,22 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   DISPATCH_BLOCKED: 422,
   FORBIDDEN: 403,
   CROSS_PROJECT: 409,
+  ALREADY_PLACED: 409,
+  VALIDATION_FAILED: 422,
+  UNANCHORED_SUBMISSION: 409,
+  // The status the eCTD export answers for the same contradiction (ectd-export.ts).
+  APPLICATION_NUMBER_MISMATCH: 409,
+  // A submission anchored only to a project of its own filing type (QA j6).
+  APPLICATION_TYPE_MISMATCH: 409,
+  // The record names no application number or no applicant (QA j6), as the
+  // eCTD export answers it (ectd-export.ts classifyError).
+  PACKAGE_IDENTITY_MISSING: 409,
+  // No Shadow Review waiver is on offer for this sequence (P-34): no outage is
+  // recorded on its newest run, or a review already completed, or it is frozen.
+  SHADOW_WAIVER_NOT_ELIGIBLE: 409,
+  // The finding cannot be closed this way now (P-35): it is not an open critical
+  // of this sequence, or 'fixed' was asked with no completed review after it.
+  SHADOW_FINDING_NOT_DISPOSABLE: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -260,11 +334,27 @@ export async function createSubmissionTx(
   return insertSubmissionRow(drizzle(client), input, ctx);
 }
 
-export async function listSubmissions(ctx: { organizationId: number }): Promise<Submission[]> {
+/**
+ * The organization's live submissions, newest first. With `scope.programId`, only
+ * the submissions anchored to that program (submissions.program_id): an
+ * unanchored submission (NULL) belongs to no program and is not in that list. The
+ * filing picker reads the scoped list; the Submission Center and Dispatch
+ * Readiness read the whole organization.
+ */
+export async function listSubmissions(
+  ctx: { organizationId: number },
+  scope?: { programId?: string },
+): Promise<Submission[]> {
   const rows = await db
     .select()
     .from(submissions)
-    .where(and(eq(submissions.organizationId, ctx.organizationId), isNull(submissions.deletedAt)))
+    .where(
+      and(
+        eq(submissions.organizationId, ctx.organizationId),
+        isNull(submissions.deletedAt),
+        scope?.programId ? eq(submissions.programId, scope.programId) : undefined,
+      ),
+    )
     .orderBy(desc(submissions.updatedAt));
   return rows as Submission[];
 }
@@ -280,6 +370,221 @@ export async function getSubmission(
     .limit(1);
   if (!row) throw new SubmissionError('NOT_FOUND', 'Submission not found for this organization.');
   return row as Submission;
+}
+
+// ── Anchoring a submission to its project (P-14's remedy) ───────────────────
+
+/** Who is anchoring: the caller, with their organisation role from the membership row. */
+export type AnchorContext = { organizationId: number; userId: number; orgRole: string | null };
+
+/**
+ * The live leaves of a submission whose document belongs to a project other
+ * than `programId`, described for a refusal ("sequence 0000, m5.3.5"). A leaf
+ * whose store records no project is not judged, as at placement.
+ */
+async function leavesOfAnotherProgram(submissionId: number, programId: string, organizationId: number): Promise<string[]> {
+  const res = await pool.query(
+    `SELECT s.sequence_number, l.section_code, l.document_table, l.document_id, l.document_uuid
+       FROM submission_leaves l
+       JOIN ectd_sequences s ON s.id = l.sequence_id AND s.organization_id = l.organization_id
+      WHERE s.submission_id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL
+        AND l.deleted_at IS NULL AND l.document_table IS NOT NULL
+      ORDER BY s.sequence_number, l.section_code`,
+    [submissionId, organizationId],
+  );
+  type Row = { sequence_number: string; section_code: string; document_table: string; document_id: number | null; document_uuid: string | null };
+  const foreign: string[] = [];
+  for (const l of (res.rows ?? []) as Row[]) {
+    const owner = await leafSourceProgram(
+      l.document_table,
+      { documentId: l.document_id ?? null, documentUuid: l.document_uuid ?? null },
+      organizationId,
+    );
+    if (owner && owner !== programId) foreign.push(`sequence ${l.sequence_number}, ${l.section_code}`);
+  }
+  return foreign;
+}
+
+/**
+ * Anchor a submission that records no project to one (P-14,
+ * docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08: "A legacy submission with no
+ * program is anchored first, through the Submission Center, and then accepts
+ * placements"). Until this, nothing wrote submissions.program_id after creation,
+ * so the UNANCHORED_SUBMISSION refusal had no remedy.
+ *
+ * Refused, with nothing changed:
+ *   - NOT_FOUND: the submission, or the project, is not a live record of the
+ *     caller's organization (programInOrganization, the one tenancy answer);
+ *   - FORBIDDEN: the caller neither leads the project nor manages the
+ *     organization (canMutateProgram, the rule for changing a project's
+ *     records). Anchoring makes the project's documents placeable here and puts
+ *     this filing under the project's recorded application number;
+ *   - INVALID_STATE: the submission already has a project. A project holds
+ *     several submissions (one per market), so there is no "one submission per
+ *     project" rule; what is not done here is moving a filing between projects;
+ *   - CROSS_PROJECT: the submission already files another project's document,
+ *     placed before P-14 refused it. A filing holds only its own project's
+ *     documents (PF-11), so those leaves are removed first;
+ *   - APPLICATION_TYPE_MISMATCH: the project files another kind of application
+ *     than the submission (isSameSubmissionType, the shared submission-type
+ *     resolution; never a name). QA 2026-10-08 (j6): the control offered a
+ *     device programme for an NDA, the server checked no type, and an anchor
+ *     is not undone here. listAnchorCandidates offers only what this admits.
+ * The update is a compare-and-set on program_id IS NULL, and it commits with
+ * its chained SUBMISSION_PROGRAM_ANCHORED audit row, carrying the reason, or
+ * neither does (§11.10(e)).
+ */
+export async function anchorSubmissionToProgram(
+  input: { submissionId: number; programId: string; reason: string },
+  ctx: AnchorContext,
+): Promise<Submission> {
+  const reason = input.reason.trim();
+  if (!reason) throw new SubmissionError('VALIDATION', 'A reason for anchoring the submission is required. Nothing was changed.');
+  const current = await getSubmission(input.submissionId, ctx);
+  if (current.programId) throw alreadyAnchoredRefusal(current.programId, input.programId);
+  await assertMayAnchorTo(input.programId, current.applicationType, ctx);
+  const foreign = await leavesOfAnotherProgram(input.submissionId, input.programId, ctx.organizationId);
+  if (foreign.length > 0) throw foreignLeavesRefusal(foreign);
+  await writeSubmissionAnchor(input.submissionId, input.programId, reason, ctx);
+  logger.info('Anchored submission to its project', {
+    submissionId: input.submissionId, programId: input.programId, organizationId: ctx.organizationId,
+  });
+  return getSubmission(input.submissionId, ctx);
+}
+
+/** A submission that has a project keeps it: anchoring is not a move between projects. */
+function alreadyAnchoredRefusal(current: string, requested: string): SubmissionError {
+  return new SubmissionError(
+    'INVALID_STATE',
+    current === requested
+      ? 'This submission is already anchored to that project. Nothing was changed.'
+      : 'This submission is already anchored to another project, and a submission is not moved between projects here. Nothing was changed.',
+  );
+}
+
+/**
+ * The project is a live one of this organization, files the submission's kind
+ * of application, and the caller leads it or manages the organization. The type
+ * is judged before the role, so a wrong choice is told what is wrong with it.
+ */
+async function assertMayAnchorTo(programId: string, applicationType: string, ctx: AnchorContext): Promise<void> {
+  if (!(await programInOrganization(pool, programId, ctx.organizationId))) {
+    throw new SubmissionError('NOT_FOUND', 'Project not found for this organization. Nothing was changed.');
+  }
+  const lead = await pool.query(
+    `SELECT lead_user_id, program_type, code FROM regulatory_programs WHERE id = $1 AND organization_id = $2`,
+    [programId, ctx.organizationId],
+  );
+  const program = lead.rows[0] as { lead_user_id?: unknown; program_type?: string | null; code?: string | null } | undefined;
+  if (!isSameSubmissionType(program?.program_type, applicationType)) {
+    throw applicationTypeMismatch(applicationType, program?.program_type ?? null, program?.code ?? null);
+  }
+  const raw = program?.lead_user_id;
+  const leadUserId = raw == null ? null : Number(raw);
+  if (!canMutateProgram({ actor: { userId: ctx.userId, orgRole: ctx.orgRole }, program: { leadUserId } })) {
+    throw new SubmissionError(
+      'FORBIDDEN',
+      'Only the project’s lead or an organization manager can anchor a submission to it. Nothing was changed.',
+    );
+  }
+}
+
+/** A filing type as the reader knows it ('NDA', '510(k)'), from the shared registry; the raw value when unknown. */
+const filingTypeLabel = (t: string | null): string => (t ? resolveToRegistryEntry(t)?.applicationType ?? t : 'not recorded');
+
+function applicationTypeMismatch(applicationType: string, programType: string | null, code: string | null): SubmissionError {
+  return new SubmissionError(
+    'APPLICATION_TYPE_MISMATCH',
+    `This submission's filing type is ${filingTypeLabel(applicationType)}; project${code ? ` ${code}` : ''}'s is ` +
+      `${filingTypeLabel(programType)}, so the submission cannot be anchored to it. Choose a project of the same filing type. ` +
+      'Nothing was changed.',
+  );
+}
+
+export interface AnchorCandidates {
+  /** submissions.application_type, the type a candidate must file. */
+  applicationType: string;
+  /** That type as the reader knows it ('NDA', '510(k)'), from the shared registry. */
+  applicationTypeLabel: string;
+  /** This organization's live projects of that type, ordered by code. */
+  candidates: Array<{ id: string; code: string; title: string }>;
+  /** Live projects of other filing types: counted, never named. */
+  otherTypes: number;
+}
+
+/**
+ * The projects a submission may be anchored to: this organization's live
+ * projects (not deleted, as programInOrganization reads them) whose type is the
+ * submission's (isSameSubmissionType, the rule the anchor applies). The Submission Center offers exactly these; the anchor still
+ * judges type, role and leaves itself. NOT_FOUND for another organization's
+ * submission (getSubmission).
+ */
+export async function listAnchorCandidates(
+  submissionId: number,
+  ctx: { organizationId: number; userId: number },
+): Promise<AnchorCandidates> {
+  const current = await getSubmission(submissionId, ctx);
+  const rows = (
+    await pool.query(
+      `SELECT id::text AS id, code, name, program_type FROM regulatory_programs
+        WHERE organization_id = $1 AND deleted_at IS NULL
+        ORDER BY code, name, id`,
+      [ctx.organizationId],
+    )
+  ).rows as Array<{ id: string; code: string | null; name: string | null; program_type: string | null }>;
+  const same = rows.filter((r) => isSameSubmissionType(r.program_type, current.applicationType));
+  return {
+    applicationType: current.applicationType,
+    applicationTypeLabel: filingTypeLabel(current.applicationType),
+    candidates: same.map((r) => ({ id: r.id, code: r.code ?? '', title: r.name ?? '' })),
+    otherTypes: rows.length - same.length,
+  };
+}
+
+/** The refusal for a submission that already files another project's documents. */
+function foreignLeavesRefusal(foreign: string[]): SubmissionError {
+  const what = foreign.length === 1 ? 'a document' : `${foreign.length} documents`;
+  const more = foreign.length > 5 ? `; and ${foreign.length - 5} more` : '';
+  return new SubmissionError(
+    'CROSS_PROJECT',
+    `This submission already files ${what} of another project (${foreign.slice(0, 5).join('; ')}${more}). A filing holds only ` +
+      'its own project’s documents, so remove those leaves before anchoring it to this project. Nothing was changed.',
+  );
+}
+
+/** The anchor and its chained audit row, in one transaction; a compare-and-set on program_id IS NULL. */
+async function writeSubmissionAnchor(submissionId: number, programId: string, reason: string, ctx: AnchorContext): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const updated = (await client.query(
+      `UPDATE submissions SET program_id = $1, updated_at = NOW()
+        WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND program_id IS NULL
+        RETURNING id`,
+      [programId, submissionId, ctx.organizationId],
+    )) as { rows?: unknown[]; rowCount?: number | null };
+    if (!(updated.rowCount ?? updated.rows?.length ?? 0)) {
+      throw new SubmissionError(
+        'INVALID_STATE',
+        'This submission was anchored to a project while this request was being checked. Nothing was changed.',
+      );
+    }
+    await writeChainedAuditRow(client, {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'SUBMISSION_PROGRAM_ANCHORED',
+      resourceType: 'submission',
+      resourceId: submissionId,
+      reason,
+      details: { previousProgramId: null, programId, reason },
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch { /* the failure below is the one to report */ }
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ── Sequences ───────────────────────────────────────────────────────────────
@@ -308,7 +613,14 @@ export async function createSequence(
   ctx: { organizationId: number; userId: number }
 ): Promise<CreatedSequence> {
   // Tenant ownership of the parent submission.
-  await getSubmission(input.submissionId, ctx);
+  const parent = await getSubmission(input.submissionId, ctx);
+  // A sequence type the market does not take is refused before anything is
+  // written (F19b): today, an FDA 'variation', which the packager would code
+  // as an amendment to the original application. Judged on the region the
+  // caller names AND the submission's own region, so naming another region
+  // does not get one past. The reason is the market verdict's.
+  const refused = sequenceTypeRefusal(input.region, input.type) ?? sequenceTypeRefusal(parent.primaryRegion, input.type);
+  if (refused) throw new SubmissionError('VALIDATION', refused);
   const [row] = await db
     .insert(ectdSequences)
     .values({
@@ -400,6 +712,9 @@ export async function transitionSequence(
   if (!canTransitionSequence(seq.status, toStatus)) {
     throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
+  // Validated is a claim about the content, so it is made only after the
+  // validation it names has run and found no error (QA 2026-10-08, j6).
+  const validation = toStatus === 'validated' ? await validateForValidatedStatus(seq, ctx) : null;
   const frozenAt = toStatus === 'frozen' ? new Date() : undefined;
   /* Same compare-and-set as the governed twin: `seq.status` was read above and
      canTransitionSequence was evaluated against it, so the write must apply only
@@ -408,7 +723,15 @@ export async function transitionSequence(
      transition it never saw. */
   const [row] = await db
     .update(ectdSequences)
-    .set({ status: toStatus, updatedAt: new Date(), ...(frozenAt ? { frozenAt } : {}) })
+    .set({
+      status: toStatus,
+      updatedAt: new Date(),
+      ...(frozenAt ? { frozenAt } : {}),
+      // The recorded verdict travels with the status: 'passed' when the
+      // validation above cleared it, and cleared again when the sequence
+      // leaves Validated for an earlier stage.
+      ...(validation ? { validationStatus: 'passed' } : seq.status === 'validated' ? { validationStatus: null } : {}),
+    })
     .where(
       and(
         eq(ectdSequences.id, id),
@@ -434,9 +757,61 @@ export async function transitionSequence(
     action: toStatus === 'frozen' ? 'SEQUENCE_FROZEN' : 'SEQUENCE_TRANSITIONED',
     resourceType: 'ectd_sequence',
     resourceId: id,
-    details: { from: seq.status, to: toStatus },
+    details: { from: seq.status, to: toStatus, ...(validation ? { validation } : {}) },
   });
   return { ...(row as EctdSequence), auditTrail };
+}
+
+/**
+ * Run the sequence's deterministic validation — the dispatch-readiness checks
+ * over its canonical leaves, the same findings the Validation tab shows — and
+ * refuse Validated while any of them is an error. Returns the counts recorded
+ * with the transition.
+ *
+ * QA 2026-10-08 (j6, finding 2): Validated was a free label. A sequence moved
+ * to it with no validation run and validation_status NULL, while the Dispatch
+ * tab told the user a sequence must be Validated before it can be frozen.
+ *
+ * The leaf manifest is read before and after the checks: a leaf written while
+ * they ran is content they did not judge, so the move is refused rather than
+ * recorded as validated. (A leaf written after the move reverts it — see
+ * lockSequenceForLeafWrite.) Warnings do not block: they are the region's
+ * informative findings, as they are for dispatch. Freeze and dispatch keep
+ * their own gates; this one decides only what Validated may claim.
+ *
+ * P-22 (product decision 2026-10-08): approval gates the release, not the
+ * technical validation. A leaf whose document is not yet approved is a warning
+ * here (DOCUMENT_NOT_APPROVED, `blocksRelease`), so a publisher validates
+ * while final approvals are collected; its count is recorded with the move,
+ * and freeze, dispatch and transmit refuse the sequence until it is zero.
+ */
+async function validateForValidatedStatus(
+  seq: EctdSequence,
+  ctx: { organizationId: number },
+): Promise<{ errors: number; warnings: number; notYetApproved: number; leafCount: number }> {
+  const before = await sequenceLeafManifestDigest(asQueryable(pool), seq.id, ctx.organizationId);
+  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
+  const a = await assessSequenceDispatchReadiness({ sequenceId: seq.id, organizationId: ctx.organizationId });
+  const errors = a.readiness.findings.filter((f) => f.severity === 'error');
+  if (errors.length > 0) {
+    const shown = errors
+      .slice(0, 5)
+      .map((f) => (f.sectionCode ? `${f.sectionCode}: ${f.message}` : f.message))
+      .join(' ');
+    throw new SubmissionError(
+      'VALIDATION_FAILED',
+      `Sequence ${seq.sequenceNumber} was not marked Validated: its validation found ${errors.length} ` +
+        `${errors.length === 1 ? 'error' : 'errors'}. ${shown}${errors.length > 5 ? ` (and ${errors.length - 5} more in the Validation tab)` : ''}`,
+    );
+  }
+  const after = await sequenceLeafManifestDigest(asQueryable(pool), seq.id, ctx.organizationId);
+  if (before !== after) {
+    throw new SubmissionError(
+      'INVALID_STATE',
+      `Sequence ${seq.sequenceNumber}'s leaves changed while it was being validated, so it was not marked Validated. Validate it again.`,
+    );
+  }
+  return { errors: 0, warnings: a.readiness.warnings, notYetApproved: a.readiness.releaseBlockers, leafCount: a.leafCount };
 }
 
 // ── Governed freeze / dispatch (the SUBMIT step of assemble→submit→transmit) ──
@@ -462,6 +837,42 @@ const STEP_AUDIT_ACTION: Record<GovernedSequenceStep, string> = {
 };
 
 /**
+ * What a sequence signature may declare it authorizes: one of the governed
+ * steps, the Shadow Review waiver (P-34, ectd/shadow-review-waiver.ts), or the
+ * closing of one critical Shadow Review finding (P-35,
+ * ectd/shadow-finding-disposition.ts). Gate 1 verifies, spends and voids them
+ * alike. Neither is a step: STEP_AUDIT_ACTION and the release intent
+ * (sequence-release-signature.ts) stay the three steps' alone, so neither
+ * signature freezes, dispatches, transmits or releases anything.
+ */
+export type SequenceSignatureIntent =
+  | GovernedSequenceStep
+  | typeof SHADOW_WAIVER_INTENT
+  | typeof SHADOW_FINDING_DISPOSITION_INTENT;
+
+/** How a sentence names the act a signature was given for. */
+const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
+  freeze: 'freeze',
+  dispatch: 'dispatch',
+  transmit: 'transmit',
+  [SHADOW_WAIVER_INTENT]: 'Shadow Review waiver',
+  [SHADOW_FINDING_DISPOSITION_INTENT]: 'Shadow Review finding disposition',
+};
+
+/**
+ * The meanings an intent narrows Gate 1 to, beyond requiresIndependence. A
+ * waiver (P-34) and a finding disposition (P-35) are decisions the signer
+ * approves or answers for: responsibility or approval, never review or release.
+ */
+const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: unknown) => string | null>> = {
+  [SHADOW_WAIVER_INTENT]: shadowWaiverMeaningRefusal,
+  [SHADOW_FINDING_DISPOSITION_INTENT]: shadowFindingDispositionMeaningRefusal,
+};
+
+/** Why a signature's payload does not authorize this particular request, or null (P-35: which finding, closed how). */
+type SignaturePayloadRefusal = (payload: Record<string, unknown> | null) => string | null;
+
+/**
  * Why a recorded governed `sign` action does not authorize `step` on `target`
  * for this actor, or null when it does. Four things are checked, and each used
  * to be missing:
@@ -478,7 +889,7 @@ async function governedSignatureRefusal(
   signatureActionId: string,
   target: string,
   ctx: { organizationId: number; userId: number },
-  step: GovernedSequenceStep,
+  step: SequenceSignatureIntent,
 ): Promise<string | null> {
   return (await governedSignatureVerdict(signatureActionId, target, ctx, step)).refusal;
 }
@@ -494,8 +905,12 @@ async function governedSignatureVerdict(
   signatureActionId: string,
   target: string,
   ctx: { organizationId: number; userId: number },
-  step: GovernedSequenceStep,
-): Promise<{ refusal: string; boundDigest: null } | { refusal: null; boundDigest: string }> {
+  step: SequenceSignatureIntent,
+  payloadRefusal?: SignaturePayloadRefusal,
+): Promise<
+  | { refusal: string; boundDigest: null }
+  | { refusal: null; boundDigest: string; signatureId: number | null; meaning: unknown }
+> {
   const refuse = (refusal: string) => ({ refusal, boundDigest: null }) as const;
   const action = await db.execute(sql`
     SELECT id, payload FROM c2c_ana_actions
@@ -516,17 +931,40 @@ async function governedSignatureVerdict(
     return refuse(`the sign action declares intent '${intent ?? 'none'}', not '${step}'; sign this step with its own meaning`);
   }
 
-  const sequenceId = target.slice(target.indexOf(':') + 1);
-  const spent = await db.execute(sql`
-    SELECT 1 FROM audit_logs
-    WHERE tenant_id = ${ctx.organizationId}
-      AND table_name = 'ectd_sequence'
-      AND record_id = ${sequenceId}
-      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED')
-      AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
-    LIMIT 1
-  `);
-  if (((spent as { rows?: unknown[] }).rows?.length ?? 0) > 0) {
+  // Freeze, dispatch and transmit are approval and release acts, never an
+  // author attesting authorship. The sign route skips separation of duties
+  // for an authorship meaning (requiresIndependence — correct for a document
+  // author signing as author), so a signature declaring one was never checked
+  // for independence. Accepting it here let the sequence's creator choose
+  // "Authorship" in the signing dialog and release their own submission, and
+  // the release resolver then counted that signature as the §11.70 release.
+  // Refused at the step itself, so it holds whichever client signed it.
+  if (!requiresIndependence('sign', payload?.meaning)) {
+    return refuse(
+      `the signature declares the meaning '${String(payload?.meaning)}'; ${INTENT_LABEL[step]} is an approval or release step, ` +
+        'so it must be signed with an approval, responsibility or release meaning by someone other than the ' +
+        'sequence\'s creator',
+    );
+  }
+  // A waiver of Shadow Review (P-34) and the closing of a critical finding
+  // (P-35) are decisions the signer approves or answers for.
+  const intentMeaning = INTENT_MEANING_REFUSAL[step]?.(payload?.meaning) ?? null;
+  if (intentMeaning) return refuse(intentMeaning);
+  // What the signature names must be what is asked: a disposition signature
+  // names one finding and one disposition (P-35).
+  const notThisRequest = payloadRefusal?.(payload ?? null) ?? null;
+  if (notThisRequest) return refuse(notThisRequest);
+
+  // Spent by a performed step, or void because the step it was given for was
+  // refused (P-23, voidRefusedStepSignature). The void is also on the signature
+  // row (checked below); this ledger read holds even where that write failed.
+  const spentBy = await signatureSpentBy(signatureActionId, target, ctx.organizationId);
+  if (spentBy === SIGNATURE_VOIDED_ACTION) {
+    return refuse(
+      `this signature was given for a ${INTENT_LABEL[step]} the server refused, so it is void; sign again for a new attempt`,
+    );
+  }
+  if (spentBy !== null) {
     return refuse('this sign action already authorized a governed transition; each step needs its own signature');
   }
 
@@ -548,7 +986,7 @@ async function governedSignatureVerdict(
      transmit. (Dispatch was covered, because its Gate 2 release-signature check
      does apply this predicate.) */
   const esig = await db.execute(sql`
-    SELECT bound_payload_digest, binding_basis, superseded_by, is_valid, verification_status
+    SELECT id, bound_payload_digest, binding_basis, superseded_by, is_valid, verification_status
       FROM electronic_signatures
     WHERE organization_id = ${ctx.organizationId}
       AND signed_target = ${target}
@@ -557,6 +995,7 @@ async function governedSignatureVerdict(
   `);
   const sig = ((esig as unknown as {
     rows?: Array<{
+      id: unknown;
       bound_payload_digest: string | null;
       binding_basis: string | null;
       superseded_by: unknown;
@@ -565,6 +1004,11 @@ async function governedSignatureVerdict(
     }>;
   }).rows ?? [])[0];
   if (!sig) return refuse('no electronic signature record is bound to this sign action');
+  if (String(sig.verification_status ?? '') === VOIDED_VERIFICATION_STATUS) {
+    return refuse(
+      `this signature was given for a ${INTENT_LABEL[step]} the server refused, so it is void; sign again for a new attempt`,
+    );
+  }
   if (isSignatureWithdrawn(sig)) {
     return refuse('the electronic signature authorizing this step has been revoked; obtain a new signature');
   }
@@ -579,11 +1023,167 @@ async function governedSignatureVerdict(
   if (current.digest !== sig.bound_payload_digest) {
     return refuse('the sequence changed after it was signed (leaf manifest digest differs); re-sign the current content');
   }
-  return { refusal: null, boundDigest: sig.bound_payload_digest };
+  const signatureId = Number(sig.id);
+  return {
+    refusal: null,
+    boundDigest: sig.bound_payload_digest,
+    signatureId: Number.isFinite(signatureId) && signatureId > 0 ? signatureId : null,
+    meaning: payload?.meaning,
+  };
 }
 
 function safeJson(text: string): Record<string, unknown> | null {
   try { return JSON.parse(text) as Record<string, unknown>; } catch { return null; }
+}
+
+/** The audit action that records a signature voided by a refused step (P-23). */
+const SIGNATURE_VOIDED_ACTION = 'GOVERNED_SIGNATURE_VOIDED';
+
+/**
+ * The audit action that spent this sign action on this sequence — a performed
+ * freeze, dispatch or transmit, a recorded Shadow Review waiver (P-34), a
+ * closed critical finding (P-35), or the void a refused one recorded — or null
+ * when nothing has. Each signature serves one act.
+ */
+async function signatureSpentBy(signatureActionId: string, target: string, organizationId: number): Promise<string | null> {
+  const sequenceId = target.slice(target.indexOf(':') + 1);
+  const spent = await db.execute(sql`
+    SELECT action FROM audit_logs
+    WHERE tenant_id = ${organizationId}
+      AND table_name = 'ectd_sequence'
+      AND record_id = ${sequenceId}
+      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SHADOW_REVIEW_WAIVED_ACTION},
+                     ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION})
+      AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
+    LIMIT 1
+  `);
+  const row = ((spent as { rows?: Array<{ action?: unknown }> }).rows ?? [])[0];
+  return row ? String(row.action ?? '') : null;
+}
+
+/** What became of the signature a refused governed step was given. */
+type SignatureVoidOutcome = 'voided' | 'not-voidable' | 'failed';
+
+/**
+ * P-23 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08): a signature collected
+ * for a freeze, dispatch or transmit that the server then refuses is void. It
+ * cannot be reused later when the gate clears.
+ *
+ * QA 2026-10-08 (j6) recorded a freeze signature for a freeze the server
+ * refused at its dispatch gate. The single-use check read only the audit row a
+ * PERFORMED step writes, and a refused step writes none, so that signature —
+ * given while the gate refused — stayed able to freeze the sequence once the
+ * gate cleared, at a time and on a state its signer never saw.
+ *
+ * Only the caller's own executed `sign` on this sequence that declares this
+ * step is voided. A signature someone else gave, or one given for another
+ * step, is refused by Gate 1 and left alone: naming a colleague's signature
+ * must not be a way to cancel it. One that a performed step already spent, or
+ * that is already void, is left as it is.
+ *
+ * Two independent records, each enough on its own for Gate 1 to refuse the
+ * signature again: the signature row is taken out of force
+ * (voidSignatureForRefusedAct, the row every reader checks through
+ * isSignatureWithdrawn), and a chained GOVERNED_SIGNATURE_VOIDED audit row
+ * names it, the step and the refusal (signatureSpentBy). The audit row is
+ * written also when the signature-row write failed, so a void survives the
+ * loss of either. A void that reached neither is 'failed' and is logged.
+ * Never throws: the refusal is the answer the caller gives either way.
+ */
+async function voidRefusedStepSignature(
+  signatureActionId: string,
+  sequenceId: number,
+  ctx: { organizationId: number; userId: number },
+  step: SequenceSignatureIntent,
+  refusal: string,
+): Promise<SignatureVoidOutcome> {
+  const target = `ectd-sequence:${sequenceId}`;
+  try {
+    const action = await db.execute(sql`
+      SELECT payload FROM c2c_ana_actions
+      WHERE id = ${signatureActionId}
+        AND org_id = ${ctx.organizationId}
+        AND command = 'sign'
+        AND target = ${target}
+        AND state = 'executed'
+        AND proposed_by = ${ctx.userId}
+      LIMIT 1
+    `);
+    const row = ((action as { rows?: Array<{ payload?: unknown }> }).rows ?? [])[0];
+    if (!row) return 'not-voidable';
+    const payload = typeof row.payload === 'string' ? safeJson(row.payload) : (row.payload as Record<string, unknown> | null);
+    if (payload?.intent !== step) return 'not-voidable';
+    if ((await signatureSpentBy(signatureActionId, target, ctx.organizationId)) !== null) return 'not-voidable';
+  } catch (err) {
+    logger.error('A refused governed step could not read the signature it was given, so it was not voided', {
+      sequenceId, step, signatureActionId, organizationId: ctx.organizationId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return 'failed';
+  }
+
+  let signatureId: number | null = null;
+  let signatureRowFailed = false;
+  try {
+    signatureId = await voidSignatureForRefusedAct(asQueryable(pool), {
+      orgId: ctx.organizationId, target, actionId: signatureActionId, occurredAt: new Date(),
+    });
+  } catch (err) {
+    signatureRowFailed = true;
+    logger.error('A refused governed step could not void its signature row', {
+      sequenceId, step, signatureActionId, organizationId: ctx.organizationId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+  // No live signature row and no failure: nothing was persisted for this action,
+  // or it is already out of force. Gate 1 refuses it either way.
+  if (signatureId === null && !signatureRowFailed) return 'not-voidable';
+
+  const audit = await recordAuditRow({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: SIGNATURE_VOIDED_ACTION,
+    resourceType: 'ectd_sequence',
+    resourceId: sequenceId,
+    details: { signatureActionId, signatureId, signatureRowVoided: signatureId !== null, step, refusal },
+  });
+  if (signatureId !== null || audit.persisted) return 'voided';
+  logger.error('A refused governed step voided its signature nowhere', { sequenceId, step, signatureActionId, organizationId: ctx.organizationId });
+  return 'failed';
+}
+
+/** What the signer is told about the signature a refused step was given. */
+function voidedSignatureSentence(outcome: SignatureVoidOutcome, step: SequenceSignatureIntent): string {
+  if (outcome === 'voided') return ` The signature given for this ${INTENT_LABEL[step]} is now void; sign again for a new attempt.`;
+  if (outcome === 'failed') {
+    return ` The signature given for this ${INTENT_LABEL[step]} could not be marked void right now; do not reuse it, sign again for a new attempt.`;
+  }
+  return '';
+}
+
+/**
+ * Run a governed step; when it is refused, void the signature it was given
+ * (voidRefusedStepSignature) and say so in the refusal. `voidable(err)` decides
+ * whether a failure is a refusal of the act — false only where the act may have
+ * happened (a transmit that reached the gateway).
+ */
+async function voidingSignatureOnRefusal<T>(
+  run: () => Promise<T>,
+  sig: { signatureActionId: string; sequenceId: number; ctx: { organizationId: number; userId: number }; step: SequenceSignatureIntent },
+  voidable: (err: unknown) => boolean | Promise<boolean> = () => true,
+): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    if (!(await voidable(err))) throw err;
+    const refusal = err instanceof Error ? err.message : String(err);
+    const outcome = await voidRefusedStepSignature(sig.signatureActionId, sig.sequenceId, sig.ctx, sig.step, refusal);
+    const sentence = voidedSignatureSentence(outcome, sig.step);
+    if (!sentence) throw err;
+    if (err instanceof SubmissionError) throw new SubmissionError(err.code, `${err.message}${sentence}`);
+    if (err instanceof Error) err.message = `${err.message}${sentence}`;
+    throw err;
+  }
 }
 
 
@@ -875,15 +1475,15 @@ async function assertSequencePackageable(
   const { assembleSequence, assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
   let assembled: Awaited<ReturnType<typeof assembleSequence>>;
   try {
-    // The agency identifiers only fill backbone text; the blockers do not
-    // depend on them, and nothing assembled here is sent.
+    // A dry run (package-identity.ts): the blockers do not depend on the
+    // agency identifiers, so it names none and carries the one dry-run
+    // placeholder. It produces no package — the bundle is discarded below on
+    // every path, and nothing of it is stored or sent (P-27, 2026-10-08).
     assembled = await assembleSequence({
       sequenceId: id,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      applicationId: `UNASSIGNED-SEQ-${id}`,
-      sponsorId: `UNASSIGNED-ORG-${ctx.organizationId}`,
-      sponsorName: `UNASSIGNED (organization ${ctx.organizationId})`,
+      dryRun: true,
     });
   } catch (err) {
     throw new SubmissionError(
@@ -905,6 +1505,199 @@ async function assertSequencePackageable(
     await assembled.cleanup();
   }
   return assembledAgainst;
+}
+
+/**
+ * Gates 2 and 3 of a governed freeze or dispatch: everything but the
+ * signature. Throws DISPATCH_BLOCKED with the refusal; returns the assessment
+ * and the leaf-manifest digest the package gate assembled against.
+ *
+ * Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof),
+ * composed for the step (`verdictFor` picks which verdict). Freeze takes every
+ * gate except the REQUIREMENT for a §11.70 release signature: that control is
+ * the transmit re-check, a release signature comes from a signed package
+ * orchestrator run, and requiring one to freeze inverted the order the product
+ * works in — freeze, then build and sign the release. A tampered signature
+ * still blocks a freeze, and dispatch is unchanged. See assess-dispatch-
+ * readiness → composeDispatchGatesForStep.
+ *
+ * Gate 3 — the package this sequence would transmit (2026-09-23, W5/D7).
+ * Transmit refuses a package that leaves out a placed leaf, carries an
+ * unapproved document, or cannot materialize a source (assembledTransmit-
+ * Blockers). Readiness does not assemble, so those refusals used to surface
+ * only at transmit — after freeze had made the leaves immutable and dispatch
+ * had removed every way back: a signed sequence that could never be sent.
+ * The same assembly and the same rule run here, while the author can still act.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic): the filing-order rule runs FIRST, so a
+ * sequence waiting on a lower one is told to wait rather than told its leaves
+ * cannot be packaged — the lifecycle binding it would fail on is judged
+ * against an inventory that is about to change.
+ *
+ * Extracted 2026-10-08 (QA j6, finding 1) so precheckGovernedStep asks these
+ * exact gates BEFORE a signature is taken: the client signed first and asked
+ * the gate second, so a refused freeze left an executed approval signature.
+ */
+async function governedContentGates(
+  seq: EctdSequence,
+  ctx: { organizationId: number; userId: number },
+  step: 'freeze' | 'dispatch',
+  verdictFor: (a: DispatchReadinessAssessment) => { cleared: boolean; blockers: string[] },
+): Promise<{ assessment: DispatchReadinessAssessment; assembledAgainst: string | null }> {
+  const toStatus = step === 'freeze' ? 'frozen' : 'dispatched';
+  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
+  const assessment = await assessSequenceDispatchReadiness({ sequenceId: seq.id, organizationId: ctx.organizationId });
+  const stepGate = verdictFor(assessment);
+  if (!stepGate.cleared) {
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
+    );
+  }
+  const orderRefusal = await filingOrderRefusal(asQueryable(pool), seq, ctx.organizationId, step);
+  if (orderRefusal) throw new SubmissionError('DISPATCH_BLOCKED', orderRefusal);
+  const assembledAgainst = await assertSequencePackageable(seq.id, ctx, step);
+  return { assessment, assembledAgainst };
+}
+
+/** What a precheck of a governed step answers. `cleared: false` carries the
+ *  server's refusal, in the words the step itself would refuse with. */
+export interface GovernedStepPrecheck {
+  step: SequenceSignatureIntent;
+  cleared: boolean;
+  refusal: string | null;
+  /** Transmit only: where it would go and whether that gateway can send. */
+  transmit?: SequenceTransmitReadiness;
+  /** Shadow Review waiver only (P-34): whether one is offered, and the failed run it would cite. */
+  shadowWaiver?: ShadowReviewWaivability;
+  /** Finding disposition only (P-35): how the named finding may be closed now, and the later run 'fixed' rests on. */
+  shadowFindingDisposition?: ShadowFindingDisposability;
+}
+
+/** What a precheck may name beyond the step: a transmit's destination, a disposition's finding. */
+export interface GovernedPrecheckOptions {
+  environment?: 'staging' | 'production';
+  applicationId?: string;
+  /** Finding disposition (P-35): the finding to close, and how. */
+  findingId?: number;
+  disposition?: string;
+}
+
+/** The disposition's own rule (P-35), the one dispositionShadowFinding applies. */
+async function precheckShadowFindingDisposition(
+  seq: EctdSequence,
+  ctx: { organizationId: number },
+  opts: GovernedPrecheckOptions,
+): Promise<GovernedStepPrecheck> {
+  const step = SHADOW_FINDING_DISPOSITION_INTENT;
+  const { findingId, disposition } = opts;
+  if (typeof findingId !== 'number' || !isShadowFindingDisposition(disposition)) {
+    return { step, cleared: false, refusal: 'Name the finding and how it is closed (accepted or fixed); nothing was checked.' };
+  }
+  const shadowFindingDisposition = await shadowFindingDisposable(asQueryable(pool), {
+    sequenceId: seq.id, organizationId: ctx.organizationId, findingId,
+  });
+  const refusal = shadowFindingDispositionRefusal(shadowFindingDisposition, disposition);
+  return { step, cleared: refusal === null, refusal, shadowFindingDisposition };
+}
+
+/**
+ * Would this governed step be refused for a reason other than its signature?
+ * Runs the step's own gates — for freeze and dispatch, governedContentGates
+ * (the dispatch verdict as it will stand once the dispatch signature is
+ * recorded, since that signature is the one about to be taken); for transmit,
+ * sequenceTransmitReadiness — and changes nothing a governed step depends on.
+ * The package gate's assembly writes its own ECTD_ASSEMBLED audit row, as it
+ * does at freeze.
+ *
+ * QA 2026-10-08 (j6, finding 1): the Sequences row opened the e-signature with
+ * no gate shown, the client posted the signature, and only then did the freeze
+ * refuse — an executed approval signature for a freeze that did not happen.
+ * The client now asks here first and signs only on `cleared`. The step still
+ * runs every gate again itself; this is advice, never authority.
+ */
+export async function precheckGovernedStep(
+  id: number,
+  step: SequenceSignatureIntent,
+  ctx: { organizationId: number; userId: number },
+  opts: GovernedPrecheckOptions = {},
+): Promise<GovernedStepPrecheck> {
+  if (step === 'transmit') {
+    const transmit = await sequenceTransmitReadiness(id, ctx, opts.environment, opts.applicationId);
+    return { step, cleared: transmit.refusal === null, refusal: transmit.refusal, transmit };
+  }
+  const seq = await getSequence(id, ctx);
+  // The waiver's own rule (P-34), the one waiveShadowReview applies.
+  if (step === SHADOW_WAIVER_INTENT) {
+    const shadowWaiver = await shadowReviewWaivable(asQueryable(pool), { sequenceId: seq.id, organizationId: ctx.organizationId });
+    return { step, cleared: shadowWaiver.eligible, refusal: shadowWaiver.eligible ? null : shadowWaiver.reason, shadowWaiver };
+  }
+  if (step === SHADOW_FINDING_DISPOSITION_INTENT) return precheckShadowFindingDisposition(seq, ctx, opts);
+  const toStatus = step === 'freeze' ? 'frozen' : 'dispatched';
+  if (!canTransitionSequence(seq.status, toStatus)) {
+    return { step, cleared: false, refusal: `Cannot transition sequence from ${seq.status} to ${toStatus}.` };
+  }
+  try {
+    await governedContentGates(seq, ctx, step, (a) => (step === 'freeze' ? a.freezeGate : a.dispatchGateOnSigning));
+    return { step, cleared: true, refusal: null };
+  } catch (err) {
+    if (err instanceof SubmissionError && err.code === 'DISPATCH_BLOCKED') {
+      return { step, cleared: false, refusal: err.message };
+    }
+    throw err;
+  }
+}
+
+/**
+ * The Shadow Review waiver a governed step went forward on (P-34): what its
+ * §11.10(e) row names when the presence gate cleared because of a waiver, so a
+ * freeze, dispatch or transmit made without an AI review says under which
+ * signature, and on which failed run. Null when a completed review cleared it.
+ */
+function waiverReliedOn(a: Partial<Pick<DispatchReadinessAssessment, 'shadowReviewRunCount' | 'shadowReviewWaiver'>>): Record<string, unknown> | null {
+  const w = a.shadowReviewWaiver;
+  if (a.shadowReviewRunCount !== 0 || w?.state !== 'active') return null;
+  return {
+    signatureActionId: w.signatureActionId ?? null,
+    signatureId: w.signatureId ?? null,
+    waiverRunId: w.waiverRunId ?? null,
+    failedRunId: w.failedRunId ?? null,
+    failureCode: w.failureCode ?? null,
+  };
+}
+
+/** `{ shadowReviewWaiver }` for an audit row's details, or nothing. */
+function withWaiverReliedOn(a: Parameters<typeof waiverReliedOn>[0]): { shadowReviewWaiver?: Record<string, unknown> } {
+  const w = waiverReliedOn(a);
+  return w ? { shadowReviewWaiver: w } : {};
+}
+
+/**
+ * Under the transition lock, on the transaction's client: does what the
+ * Shadow Review half of the verdict relied on still stand? The assessment ran
+ * seconds earlier, unlocked; a revocation in that window must not freeze or
+ * dispatch over it. A waiver it relied on must still be active (P-34), and no
+ * critical finding may block that it counted as closed (P-35: a closure stands
+ * only while its signature is in force). The reason, or null.
+ */
+async function shadowReviewRefusalUnderLock(
+  q: SequenceQueryable,
+  a: Partial<Pick<DispatchReadinessAssessment, 'shadowReviewRunCount' | 'shadowReviewWaiver' | 'unacknowledgedShadowCriticals'>>,
+  scope: { sequenceId: number; organizationId: number },
+  step: string,
+): Promise<string | null> {
+  const since = `Since this ${step} was checked`;
+  const criticals = await criticalsStandingOpen(q, scope);
+  if (criticals.count > Number(a.unacknowledgedShadowCriticals ?? 0)) {
+    const why = criticals.reopened.map(reopenedCriticalSentence).join(' ');
+    return `${since}, a critical Shadow Review finding blocks dispatch again. ${why}`.trim();
+  }
+  if (!waiverReliedOn(a)) return null;
+  const presence = evaluateShadowPresenceWithWaiver(
+    await completedShadowReviewRuns(q, scope),
+    await resolveShadowReviewWaiver(q, scope),
+  );
+  return presence.cleared ? null : `${since}, the Shadow Review waiver it relied on no longer stands. ${presence.blockers.join(' ')}`;
 }
 
 async function applyGovernedSequenceTransition(
@@ -930,38 +1723,14 @@ async function applyGovernedSequenceTransition(
     );
   }
 
-  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof),
-  // composed for THIS step. Freeze takes every gate except the REQUIREMENT for a
-  // §11.70 release signature: that control is the transmit re-check, a release
-  // signature comes from a signed package orchestrator run, and requiring one to
-  // freeze inverted the order the product works in — freeze, then build and sign
-  // the release. A tampered signature still blocks a freeze, and dispatch is
-  // unchanged. See assess-dispatch-readiness → composeDispatchGatesForStep.
-  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
-  const assessment = await assessSequenceDispatchReadiness({ sequenceId: id, organizationId: ctx.organizationId });
-  const stepGate = toStatus === 'frozen' ? assessment.freezeGate : assessment.gate;
-  if (!stepGate.cleared) {
-    throw new SubmissionError(
-      'DISPATCH_BLOCKED',
-      `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
-    );
-  }
-
-  // Gate 3 — the package this sequence would transmit (2026-09-23, W5/D7).
-  // Transmit refuses a package that leaves out a placed leaf, carries an
-  // unapproved document, or cannot materialize a source (assembledTransmit-
-  // Blockers). Readiness does not assemble, so those refusals used to surface
-  // only at transmit — after freeze had made the leaves immutable and dispatch
-  // had removed every way back: a signed sequence that could never be sent.
-  // The same assembly and the same rule run here, while the author can still act.
-  //
-  // 2026-09-23 (W5/D7, round-2 skeptic): the filing-order rule runs FIRST, so a
-  // sequence waiting on a lower one is told to wait rather than told its leaves
-  // cannot be packaged — the lifecycle binding it would fail on is judged
-  // against an inventory that is about to change.
-  const orderRefusal = await filingOrderRefusal(asQueryable(pool), seq, ctx.organizationId, step);
-  if (orderRefusal) throw new SubmissionError('DISPATCH_BLOCKED', orderRefusal);
-  const assembledAgainst = await assertSequencePackageable(id, ctx, step);
+  // Gates 2 and 3 — see governedContentGates. Freeze reads the freeze verdict;
+  // dispatch reads `gate`, with the dispatch signature above now on record.
+  const { assessment, assembledAgainst } = await governedContentGates(
+    seq,
+    ctx,
+    step === 'freeze' ? 'freeze' : 'dispatch',
+    (a) => (toStatus === 'frozen' ? a.freezeGate : a.gate),
+  );
 
   // The state change and its chained audit row commit together, or neither.
   // 'dispatched' queues the sequence for transmit (dispatch_status pending);
@@ -1006,6 +1775,8 @@ async function applyGovernedSequenceTransition(
         }
         const lockedOrderRefusal = await filingOrderRefusal(q, seq, ctx.organizationId, step);
         if (lockedOrderRefusal) throw new SubmissionError('DISPATCH_BLOCKED', lockedOrderRefusal);
+        const shadowRefusal = await shadowReviewRefusalUnderLock(q, assessment, { sequenceId: id, organizationId: ctx.organizationId }, step);
+        if (shadowRefusal) throw new SubmissionError('DISPATCH_BLOCKED', shadowRefusal);
       },
       /* COMPARE-AND-SET on the status this transition was authorized against.
          `seq.status` was read at the top of this function, and everything since —
@@ -1035,6 +1806,8 @@ async function applyGovernedSequenceTransition(
         signatureActionId,
         validationErrors: assessment.validationErrors,
         unacknowledgedShadowCriticals: assessment.unacknowledgedShadowCriticals,
+        // P-34: the waiver this step went forward on, when no review had completed.
+        ...withWaiverReliedOn(assessment),
       },
     },
   );
@@ -1042,23 +1815,269 @@ async function applyGovernedSequenceTransition(
   return getSequence(id, ctx);
 }
 
-/** Freeze a validated sequence. Governed: requires e-signature + a clear dispatch gate. */
+/** Freeze a validated sequence. Governed: requires e-signature + a clear dispatch gate.
+ *  A refused freeze voids the signature it was given (P-23). */
 export function freezeSequence(
   id: number,
   ctx: { organizationId: number; userId: number },
   signatureActionId: string
 ): Promise<EctdSequence> {
-  return applyGovernedSequenceTransition(id, 'frozen', ctx, signatureActionId);
+  return voidingSignatureOnRefusal(
+    () => applyGovernedSequenceTransition(id, 'frozen', ctx, signatureActionId),
+    { signatureActionId, sequenceId: id, ctx, step: 'freeze' },
+  );
 }
 
 /** Mark a frozen sequence dispatched. Governed: requires e-signature + a clear gate.
- *  This records intent; actual transmission stays behind transmit_submission. */
+ *  This records intent; actual transmission stays behind transmit_submission.
+ *  A refused dispatch voids the signature it was given (P-23). */
 export function dispatchSequence(
   id: number,
   ctx: { organizationId: number; userId: number },
   signatureActionId: string
 ): Promise<EctdSequence> {
-  return applyGovernedSequenceTransition(id, 'dispatched', ctx, signatureActionId);
+  return voidingSignatureOnRefusal(
+    () => applyGovernedSequenceTransition(id, 'dispatched', ctx, signatureActionId),
+    { signatureActionId, sequenceId: id, ctx, step: 'dispatch' },
+  );
+}
+
+// ── The Shadow Review waiver (P-34) ──────────────────────────────────────────
+
+/**
+ * Record a signed Shadow Review waiver (P-34, docs/LAUNCH_DEFINITION_OF_DONE.md,
+ * 2026-10-15): the sequence's newest Shadow Review run failed because every AI
+ * provider failed or was overloaded, and a person with signing authority who
+ * did not author the sequence signs that it may proceed unreviewed. The rules
+ * are ectd/shadow-review-waiver.ts's; this is the act, and its one door is
+ * POST /api/submissions/sequences/:seqId/shadow-review/waive (no AnA tool).
+ *
+ * Gate 1 is the governed steps' own (governedSignatureVerdict with intent
+ * 'shadow-waiver': this actor, this sequence, responsibility or approval,
+ * unspent, bound to the current leaf manifest). Separation of duties is checked
+ * again here, so it holds whichever client signed. Eligibility is re-asked
+ * under the sequence row lock — the lock leaf writes take — with the leaf
+ * manifest the signature binds. The 'waived' row and its chained
+ * SHADOW_REVIEW_WAIVED audit row commit together or not at all, and that audit
+ * row spends the signature. The signature's own reason is the waiver's reason.
+ * A refused waive voids the signature it was given (P-23).
+ */
+export function waiveShadowReview(
+  input: { sequenceId: number; signatureActionId: string; failedRunId: number },
+  ctx: { organizationId: number; userId: number },
+): Promise<ShadowReviewWaiverRecord> {
+  return voidingSignatureOnRefusal(
+    () => applyShadowReviewWaiver(input, ctx),
+    { signatureActionId: input.signatureActionId, sequenceId: input.sequenceId, ctx, step: SHADOW_WAIVER_INTENT },
+  );
+}
+
+/**
+ * Separation of duties for a decision signed on the sequence — the Shadow
+ * Review waiver (P-34), the closing of a critical finding (P-35) — as a
+ * refusal: the sequence's creator never waives its review or closes what the
+ * review found. Checked at the act, so it holds whichever client signed.
+ */
+async function independentSignerRefusal(
+  target: string,
+  ctx: { organizationId: number; userId: number },
+  meaning: unknown,
+): Promise<SubmissionError | null> {
+  try {
+    await assertSignerIsNotAuthor(target, ctx.organizationId, ctx.userId, { command: 'sign', meaning });
+    return null;
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError) return new SubmissionError('FORBIDDEN', err.message);
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) return new SubmissionError('INVALID_STATE', err.message);
+    throw err;
+  }
+}
+
+/**
+ * Inside a sequence act's transaction: take the sequence row lock — the lock
+ * leaf writes take — re-ask the act's own rule on the transaction's client, and
+ * refuse when the leaves are no longer the ones the signature binds. A throw
+ * rolls the act back.
+ */
+async function recheckUnderSequenceLock(
+  client: PoolClient,
+  p: { sequenceId: number; organizationId: number; boundDigest: string; act: string; recheck: (q: SequenceQueryable) => Promise<void> },
+): Promise<void> {
+  await client.query(
+    `SELECT id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+    [p.sequenceId, p.organizationId],
+  );
+  const q = asQueryable(client);
+  await p.recheck(q);
+  if ((await sequenceLeafManifestDigest(q, p.sequenceId, p.organizationId)) !== p.boundDigest) {
+    throw new SubmissionError(
+      'INVALID_STATE',
+      `Sequence ${p.sequenceId}'s leaves changed while this ${p.act} was being recorded, so the signature no longer binds them. ` +
+        'Nothing was recorded; sign again over the current leaves.',
+    );
+  }
+}
+
+async function applyShadowReviewWaiver(
+  input: { sequenceId: number; signatureActionId: string; failedRunId: number },
+  ctx: { organizationId: number; userId: number },
+): Promise<ShadowReviewWaiverRecord> {
+  const { signatureActionId, failedRunId } = input;
+  const seq = await getSequence(input.sequenceId, ctx);
+  const target = `ectd-sequence:${seq.id}`;
+  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, SHADOW_WAIVER_INTENT);
+  if (verdict.refusal !== null) {
+    throw new SubmissionError(
+      'GOVERNED_REQUIRED',
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent '${SHADOW_WAIVER_INTENT}' ` +
+        `and the meaning responsibility or approval, then pass its actionId. Refused: ${verdict.refusal}.`,
+    );
+  }
+  const independence = await independentSignerRefusal(target, ctx, verdict.meaning);
+  if (independence) throw independence;
+  const offered = await shadowReviewWaivable(asQueryable(pool), { sequenceId: seq.id, organizationId: ctx.organizationId });
+  const notOffered = shadowWaiverRunRefusal(offered, failedRunId);
+  if (notOffered !== null) throw new SubmissionError('SHADOW_WAIVER_NOT_ELIGIBLE', notOffered);
+  const failureCode = offered.failureCode;
+  if (!isWaivableShadowReviewFailure(failureCode)) throw new SubmissionError('SHADOW_WAIVER_NOT_ELIGIBLE', offered.reason);
+
+  const insert = shadowWaiverInsert({
+    sequenceId: seq.id, organizationId: ctx.organizationId, signerId: ctx.userId, signatureActionId, failedRunId, failureCode,
+  });
+  await applySequenceChangeWithAudit(
+    {
+      underLock: (client) =>
+        recheckUnderSequenceLock(client, {
+          sequenceId: seq.id,
+          organizationId: ctx.organizationId,
+          boundDigest: verdict.boundDigest,
+          act: 'waiver',
+          recheck: async (q) => {
+            const still = shadowWaiverRunRefusal(
+              await shadowReviewWaivable(q, { sequenceId: seq.id, organizationId: ctx.organizationId }),
+              failedRunId,
+            );
+            if (still !== null) throw new SubmissionError('SHADOW_WAIVER_NOT_ELIGIBLE', still);
+          },
+        }),
+      text: insert.text,
+      params: insert.params,
+      noRowsRefusal: `Run #${failedRunId} is no longer a failed run of this sequence, so nothing was waived.`,
+    },
+    {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: SHADOW_REVIEW_WAIVED_ACTION,
+      resourceId: seq.id,
+      details: { signatureActionId, signatureId: verdict.signatureId, failedRunId, failureCode },
+    },
+  );
+  logger.info('Shadow Review waived', { sequenceId: seq.id, failedRunId, failureCode, organizationId: ctx.organizationId });
+  const waiver = await resolveShadowReviewWaiver(asQueryable(pool), { sequenceId: seq.id, organizationId: ctx.organizationId });
+  return { sequenceId: seq.id, failedRunId, failureCode, signatureActionId, signatureId: verdict.signatureId, waiver };
+}
+
+// ── Closing a critical Shadow Review finding (P-35) ──────────────────────────
+
+/**
+ * Close one open critical Shadow Review finding by a Part 11 signature (P-35,
+ * docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-15): 'accepted' (the finding
+ * stands and the signer accepts going forward with it) or 'fixed' (the signer
+ * states what changed; offered only when a completed review ran after the
+ * finding's run). The rules are ectd/shadow-finding-disposition.ts's; this is
+ * the act, and its one door is
+ * POST /api/submissions/sequences/:seqId/shadow-review/findings/:findingId/disposition
+ * (no AnA tool).
+ *
+ * Gate 1 is the governed steps' own, with intent 'shadow-finding-disposition'
+ * and the payload naming THIS finding and THIS disposition (a signature for
+ * finding A closes neither finding B nor A another way). Separation of duties
+ * is checked again here. Eligibility is re-asked under the sequence row lock
+ * with the leaf manifest the signature binds. The finding's status and its
+ * disposition columns, and the chained SHADOW_FINDING_DISPOSITIONED row that
+ * spends the signature, commit together or not at all. The signature's own
+ * reason is the disposition's reason. A refused act voids its signature (P-23).
+ */
+export function dispositionShadowFinding(
+  input: ShadowFindingDispositionRequest & { sequenceId: number; signatureActionId: string },
+  ctx: { organizationId: number; userId: number },
+): Promise<ShadowFindingDispositionRecord> {
+  return voidingSignatureOnRefusal(
+    () => applyShadowFindingDisposition(input, ctx),
+    { signatureActionId: input.signatureActionId, sequenceId: input.sequenceId, ctx, step: SHADOW_FINDING_DISPOSITION_INTENT },
+  );
+}
+
+async function applyShadowFindingDisposition(
+  input: ShadowFindingDispositionRequest & { sequenceId: number; signatureActionId: string },
+  ctx: { organizationId: number; userId: number },
+): Promise<ShadowFindingDispositionRecord> {
+  const { findingId, disposition, signatureActionId } = input;
+  const seq = await getSequence(input.sequenceId, ctx);
+  const target = `ectd-sequence:${seq.id}`;
+  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, SHADOW_FINDING_DISPOSITION_INTENT, (payload) =>
+    shadowFindingDispositionPayloadRefusal(payload, { findingId, disposition }),
+  );
+  if (verdict.refusal !== null) {
+    throw new SubmissionError(
+      'GOVERNED_REQUIRED',
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent ` +
+        `'${SHADOW_FINDING_DISPOSITION_INTENT}', the payload { findingId: ${findingId}, disposition: '${disposition}' } and the ` +
+        `meaning approval or responsibility, then pass its actionId. Refused: ${verdict.refusal}.`,
+    );
+  }
+  const independence = await independentSignerRefusal(target, ctx, verdict.meaning);
+  if (independence) throw independence;
+  const scope = { sequenceId: seq.id, organizationId: ctx.organizationId, findingId };
+  const offered = await shadowFindingDisposable(asQueryable(pool), scope);
+  const notOffered = shadowFindingDispositionRefusal(offered, disposition);
+  if (notOffered !== null) throw new SubmissionError('SHADOW_FINDING_NOT_DISPOSABLE', notOffered);
+  const reason = await dispositionSignatureReason(asQueryable(pool), { organizationId: ctx.organizationId, signatureActionId });
+  if (reason === null) {
+    throw new SubmissionError('GOVERNED_REQUIRED', 'The signature records no reason, so nothing was closed; sign again with your reason.');
+  }
+
+  const runId = Number(offered.runId);
+  // Compare-and-set on what was judged: an open critical, or one whose closing
+  // signature is no longer in force and so blocks again (closureStands).
+  const judged = offered.judged;
+  if (!judged) throw new SubmissionError('SHADOW_FINDING_NOT_DISPOSABLE', offered.reason);
+  const update = shadowFindingDispositionUpdate({ ...scope, signerId: ctx.userId, disposition, signatureActionId, reason, judged });
+  await applySequenceChangeWithAudit(
+    {
+      underLock: (client) =>
+        recheckUnderSequenceLock(client, {
+          sequenceId: seq.id,
+          organizationId: ctx.organizationId,
+          boundDigest: verdict.boundDigest,
+          act: 'disposition',
+          recheck: async (q) => {
+            const still = shadowFindingDispositionRefusal(await shadowFindingDisposable(q, scope), disposition);
+            if (still !== null) throw new SubmissionError('SHADOW_FINDING_NOT_DISPOSABLE', still);
+          },
+        }),
+      text: update.text,
+      params: update.params,
+      noRowsRefusal: `Finding #${findingId} changed while this disposition was being recorded (it was closed, deleted or moved), so nothing was closed.`,
+    },
+    {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: SHADOW_FINDING_DISPOSITIONED_ACTION,
+      resourceId: seq.id,
+      details: { findingId, runId, disposition, signatureActionId, signatureId: verdict.signatureId },
+    },
+  );
+  logger.info('Shadow Review finding closed by signature', { sequenceId: seq.id, findingId, runId, disposition, organizationId: ctx.organizationId });
+  // The act is committed; a failed read-back is said as null, never as a refusal.
+  const dispositionRecord = await readShadowFindingDisposition(asQueryable(pool), { organizationId: ctx.organizationId, findingId })
+    .catch((err: unknown) => {
+      logger.warn('A recorded finding disposition could not be read back', {
+        sequenceId: seq.id, findingId, err: err instanceof Error ? err.message : String(err),
+      });
+      return null;
+    });
+  return { sequenceId: seq.id, findingId, runId, disposition, signatureActionId, signatureId: verdict.signatureId, dispositionRecord };
 }
 
 // ── Transmit (the TRANSMIT step — assemble → send to the agency gateway) ──────
@@ -1071,48 +2090,90 @@ export function dispatchSequence(
 // submission_transmittals record and performs the real transport (AS2 / OAuth2 /
 // mTLS+HMAC). Tenant-scoped + audited.
 
+/** Where transmitSequence sends a sequence, or why it sends it nowhere. */
+export type TransmitRoute =
+  | { ok: true; gwRegion: string; gwName: string }
+  | { ok: false; reason: string };
+
 /**
- * Select the agency gateway for a submission by region AND client type. The EU
- * splits by product class: device/IVD (mdx|ivd) register through EUDAMED, while
- * drug/biologic dossiers go through CESP. FDA (incl. eSTAR) routes through ESG;
- * Japan through the PMDA gateway.
+ * Route a submission to its agency gateway by region, client type and filing
+ * type. FDA (incl. eSTAR) routes through ESG; Japan through the PMDA gateway.
+ *
+ * The EU splits twice. Device/IVD (mdx|ivd) register through EUDAMED. A drug or
+ * biologic dossier goes to CESP only when its filing type resolves
+ * (`resolveToRegistryEntry`) to a filing the one channel function,
+ * `submissionChannelFor` (regulatory/registry/submittabilityCoverage.ts), routes
+ * to ema:cesp — the national, MRP and DCP filings. Anything else is refused with
+ * the channel named: a centralised-procedure filing (MAA, variation, renewal,
+ * PSUR, ASMF) goes through the EMA eSubmission Gateway / Web Client, which the
+ * platform has no connector for (DECISIONS.md row 10); a CTA through CTIS; an
+ * orphan, PIP, PRIME or advice request through IRIS. A filing type that names
+ * no registry filing is refused too: nothing says CESP accepts it.
+ *
+ * 2026-10-05 (D2 record, step g-cesp-centralised-refusal; finding 42): every
+ * non-device EU dossier was routed to ema:cesp, so an e-signed centralised MAA
+ * sequence would have been POSTed to CESP's /baskets. EMA has made the
+ * eSubmission Gateway / Web Client mandatory for centralised-procedure eCTD
+ * submissions since 2014-03-01 (basis: docs/evidence/
+ * D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-cesp-centralised-refusal-facts.md).
  */
-export function selectGateway(
+export function transmitRouteFor(
   region: string,
-  clientType: string
-): { gwRegion: string; gwName: string } | null {
+  clientType: string,
+  applicationType?: string | null
+): TransmitRoute {
   switch (region) {
     case 'fda':
-      return { gwRegion: 'fda', gwName: 'esg' };
+      return { ok: true, gwRegion: 'fda', gwName: 'esg' };
     case 'jp':
     case 'pmda':
-      return { gwRegion: 'pmda', gwName: 'pmda_gateway' };
+      return { ok: true, gwRegion: 'pmda', gwName: 'pmda_gateway' };
     case 'eu':
-    case 'ema':
-      return clientType === 'mdx' || clientType === 'ivd'
-        ? { gwRegion: 'ema', gwName: 'eudamed' }
-        : { gwRegion: 'ema', gwName: 'cesp' };
+    case 'ema': {
+      if (clientType === 'mdx' || clientType === 'ivd') return { ok: true, gwRegion: 'ema', gwName: 'eudamed' };
+      const type = typeof applicationType === 'string' ? applicationType.trim() : '';
+      const entry = type ? resolveToRegistryEntry(type) : null;
+      if (!entry) {
+        return {
+          ok: false,
+          reason: `The filing type ${type ? `"${type}"` : '(none recorded)'} names no filing in the regulatory registry, so the platform cannot tell whether CESP accepts it (CESP carries national, MRP and DCP filings only; a centralised-procedure filing goes through the EMA eSubmission Gateway / Web Client). Nothing was sent.`,
+        };
+      }
+      const notCesp = cespChannelRefusal(entry, submissionChannelFor(entry));
+      if (notCesp) return { ok: false, reason: `${notCesp} Nothing was sent.` };
+      return { ok: true, gwRegion: 'ema', gwName: 'cesp' };
+    }
     case 'ca':
-      return { gwRegion: 'ca', gwName: 'hc_cesg' };
+      return { ok: true, gwRegion: 'ca', gwName: 'hc_cesg' };
     case 'uk':
-      return { gwRegion: 'uk', gwName: 'mhra_gateway' };
+      return { ok: true, gwRegion: 'uk', gwName: 'mhra_gateway' };
     case 'cn':
-      return { gwRegion: 'cn', gwName: 'nmpa_gateway' };
+      return { ok: true, gwRegion: 'cn', gwName: 'nmpa_gateway' };
     case 'au':
-      return { gwRegion: 'au', gwName: 'tga_ebs' };
+      return { ok: true, gwRegion: 'au', gwName: 'tga_ebs' };
     case 'ch':
-      return { gwRegion: 'ch', gwName: 'swissmedic_egateway' };
+      return { ok: true, gwRegion: 'ch', gwName: 'swissmedic_egateway' };
     case 'br':
-      return { gwRegion: 'br', gwName: 'anvisa_gateway' };
+      return { ok: true, gwRegion: 'br', gwName: 'anvisa_gateway' };
     case 'in':
-      return { gwRegion: 'in', gwName: 'cdsco_sugam' };
+      return { ok: true, gwRegion: 'in', gwName: 'cdsco_sugam' };
     case 'kr':
-      return { gwRegion: 'kr', gwName: 'mfds_dbio' };
+      return { ok: true, gwRegion: 'kr', gwName: 'mfds_dbio' };
     case 'sg':
-      return { gwRegion: 'sg', gwName: 'hsa_prism' };
+      return { ok: true, gwRegion: 'sg', gwName: 'hsa_prism' };
     default:
-      return null;
+      return { ok: false, reason: `No transmit gateway is mapped for region "${region}".` };
   }
+}
+
+/** The gateway pair `transmitRouteFor` names, or null when it refuses. */
+export function selectGateway(
+  region: string,
+  clientType: string,
+  applicationType?: string | null
+): { gwRegion: string; gwName: string } | null {
+  const route = transmitRouteFor(region, clientType, applicationType);
+  return route.ok ? { gwRegion: route.gwRegion, gwName: route.gwName } : null;
 }
 
 /** Project a gateway transmit status onto the sequence's coarse dispatch_status. */
@@ -1159,7 +2220,8 @@ export interface TransmitSequenceParams {
    */
   applicationId?: string;
   sponsorId?: string;
-  sponsorName?: string;
+  /* No sponsorName: the applicant is the organisation's recorded name
+     (package-identity.ts), never a value the caller supplies. QA 2026-10-08 (j6). */
 }
 
 export interface TransmitSequenceResult {
@@ -1194,6 +2256,12 @@ export interface TransmitSequenceResult {
   preTransmitFailedChecks?: string[] | null;
   /** The transmit guard's warnings (e.g. evidence it could not check). */
   preTransmitWarnings?: string[] | null;
+  /**
+   * Set when nothing was transmitted (`transmitted: false`): whether the
+   * signature given for this attempt is now void (P-23). It must not serve a
+   * later attempt either way; false only when the void could not be recorded.
+   */
+  signatureVoided?: boolean;
 }
 
 /**
@@ -1245,10 +2313,156 @@ async function releaseTransmitSlot(sequenceId: number, organizationId: number): 
   );
 }
 
+/** Whether, and where, a sequence can be transmitted — read before anyone signs. */
+export interface SequenceTransmitReadiness {
+  sequenceStatus: string;
+  dispatchStatus: string | null;
+  /** The gateway transmitRouteFor names, or why it names none. */
+  route: { ok: true; region: string; gateway: string } | { ok: false; reason: string };
+  /** Credentials per environment: null when the route names no gateway or the
+   *  check could not run (unknown is not "configured"). */
+  configured: { staging: boolean | null; production: boolean | null };
+  /** The program's recorded agency application number, when one is usable. */
+  recordedApplicationNumber: string | null;
+  /** The organisation's recorded name, which the package names as the applicant. */
+  recordedApplicant: string | null;
+  /** The transmit-time dispatch gate (`gate`, every gate composed). */
+  gate: { cleared: boolean; blockers: string[] };
+  /** Why transmit would be refused before the wire — for `environment` when
+   *  one is given, else for every environment — or null when it would not. */
+  refusal: string | null;
+}
+
+/**
+ * Why `typed` may not be transmitted as this filing's application number, or
+ * null. P-23 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08): transmit checks a
+ * typed number against the program's recorded one, as the eCTD export already
+ * does (assemble-from-core.ts exportApplicationId, answered 409
+ * APPLICATION_NUMBER_MISMATCH by ectd-export.ts). The record is authoritative;
+ * a number it contradicts would be written into the backbone and the package
+ * name and sent to the agency. A program with no usable recorded number is
+ * refused before this is asked (packageIdentityRefusal, QA 2026-10-08 j6): it
+ * used to accept any usable typed number, so a package went out under a number
+ * no record held.
+ */
+export function transmitApplicationNumberRefusal(typed: string, recorded: string | null): SubmissionError | null {
+  const usable = usableIdentifier('applicationNumber', typed);
+  if (usable === null) {
+    return new SubmissionError(
+      'VALIDATION',
+      `"${typed.trim()}" is not a usable application number: it must start with a letter or digit and hold only ` +
+        'letters, digits, ".", "_" or "-" (up to 64). Nothing was sent.',
+    );
+  }
+  if (recorded !== null && usable !== recorded) {
+    return new SubmissionError(
+      'APPLICATION_NUMBER_MISMATCH',
+      `Application number "${usable}" does not match the program's recorded application number "${recorded}". ` +
+        'The record is authoritative: transmit under the recorded number, or correct the program record first. Nothing was sent.',
+    );
+  }
+  return null;
+}
+
+/** transmitApplicationNumberRefusal's sentence for a number the person typed; null when none was typed. */
+function typedApplicationNumberRefusal(typed: string | undefined, recorded: string | null): string | null {
+  if (typeof typed !== 'string' || !typed.trim()) return null;
+  return transmitApplicationNumberRefusal(typed, recorded)?.message ?? null;
+}
+
+/**
+ * The pre-signature half of transmitSequence, as a read: status, re-send rule,
+ * the dispatch gate, the route, and the gateway's credentials. Same functions,
+ * same order, minus Gate 1 (the signature that has not been taken yet).
+ *
+ * QA 2026-10-08 (j6, the blocker): a dispatched sequence had no path to a
+ * package or a transmit, and the copy promised "the governed transmit path"
+ * without naming it. The Dispatch tab reads this to say where the sequence
+ * would go and whether that gateway can send — "not configured" is said
+ * before a password is typed, never discovered after.
+ */
+export async function sequenceTransmitReadiness(
+  sequenceId: number,
+  ctx: { organizationId: number; userId: number },
+  environment?: 'staging' | 'production',
+  /** The number the person typed, when they have: judged against the record
+   *  here, before anyone signs (P-23), by the rule transmit applies. */
+  applicationId?: string,
+): Promise<SequenceTransmitReadiness> {
+  const seq = await getSequence(sequenceId, ctx);
+  const submission = await getSubmission(seq.submissionId, ctx);
+  const routed = transmitRouteFor(seq.region, submission.clientType, submission.applicationType || seq.type);
+  const route: SequenceTransmitReadiness['route'] = routed.ok
+    ? { ok: true, region: routed.gwRegion, gateway: routed.gwName }
+    : { ok: false, reason: routed.reason };
+
+  const configured: SequenceTransmitReadiness['configured'] = { staging: null, production: null };
+  if (routed.ok) {
+    const { getGateway } = await import('../submission-gateways/index');
+    // transmitRouteFor returns valid Region/GatewayName values, as transmitSequence relies on.
+    const gw = getGateway(routed.gwRegion as Parameters<typeof getGateway>[0], routed.gwName as Parameters<typeof getGateway>[1]);
+    for (const env of ['staging', 'production'] as const) {
+      try {
+        configured[env] = await gw.isConfigured(ctx.organizationId, env);
+      } catch {
+        configured[env] = null;
+      }
+    }
+  }
+
+  const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
+  const assessment = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ctx.organizationId });
+  const gate = { cleared: assessment.gate.cleared, blockers: [...assessment.gate.blockers] };
+
+  // The applicant and the application the package would name, from the record
+  // (package-identity.ts); with either missing transmit refuses, and says so here.
+  const identity = await readRecordedPackageIdentity(pool, ctx.organizationId, submission.programId);
+  const recordedApplicationNumber = identity.applicationNumber;
+  const identityRefusal = packageIdentityRefusal(identity, 'Nothing can be sent until it is recorded.')?.message ?? null;
+  const typedNumberRefusal = identityRefusal ?? typedApplicationNumberRefusal(applicationId, recordedApplicationNumber);
+
+  const gatewayRefusal = (): string | null => {
+    if (!route.ok) return route.reason;
+    const envs = environment ? [environment] : (['staging', 'production'] as const);
+    const unusable = envs.filter((e) => configured[e] !== true);
+    if (unusable.length < envs.length) return null;
+    const unknown = unusable.some((e) => configured[e] === null);
+    return unknown
+      ? `Whether this sequence's agency gateway is configured for ${envs.join(' or ')} could not be checked, so nothing can be sent until it can.`
+      : `This sequence's agency gateway has no ${envs.join(' or ')} credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.`;
+  };
+  const refusal =
+    seq.status !== 'dispatched'
+      ? `Sequence must be dispatched before transmit (current: ${seq.status}).`
+      : resendRefusal(seq.dispatchStatus) ??
+        (!gate.cleared ? `Dispatch gate blocks transmit: ${gate.blockers.join(' ')}` : null) ??
+        typedNumberRefusal ??
+        gatewayRefusal();
+
+  return {
+    sequenceStatus: seq.status,
+    dispatchStatus: seq.dispatchStatus ?? null,
+    route,
+    configured,
+    recordedApplicationNumber,
+    recordedApplicant: identity.applicantName,
+    gate,
+    refusal,
+  };
+}
+
 /**
  * Transmit a dispatched sequence to its regional agency gateway. Governed:
  * requires a valid e-signature on the sequence target AND a clear dispatch gate.
  * Real transmission only occurs when the gateway is configured for the org.
+ *
+ * P-23: an attempt that sends nothing voids the signature it was given — a
+ * refusal before the gateway, a refusal the gateway guard made before the wire
+ * (refusedBeforeWire), and `transmitted: false`. A failure once the package
+ * may have reached the agency voids nothing: that signature is the one of
+ * record for whatever the agency holds. The request's own shape (environment,
+ * a usable application number) is checked before anything is read; a request
+ * missing them is malformed, not refused, and voids nothing.
  */
 export async function transmitSequence(params: TransmitSequenceParams): Promise<TransmitSequenceResult> {
   const { sequenceId, ctx, signatureActionId } = params;
@@ -1256,20 +2470,61 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     throw new SubmissionError('VALIDATION', 'Transmit requires an explicit environment: staging or production.');
   }
   const environment = params.environment;
-  const applicationId = typeof params.applicationId === 'string' ? params.applicationId.trim() : '';
-  if (!applicationId || /^UNASSIGNED/i.test(applicationId)) {
+  const typed = typeof params.applicationId === 'string' ? params.applicationId.trim() : '';
+  if (!typed || /^UNASSIGNED/i.test(typed)) {
     throw new SubmissionError(
       'VALIDATION',
       'Transmit requires the agency application number; a sequence with none recorded is assembled for inspection only, never sent.',
     );
   }
+  const unusable = transmitApplicationNumberRefusal(typed, null);
+  if (unusable) throw unusable;
+  const applicationId = usableIdentifier('applicationNumber', typed) ?? typed;
 
+  const attempt = { reachedGateway: false };
+  const result = await voidingSignatureOnRefusal(
+    () => transmitDispatchedSequence(params, { environment, applicationId }, attempt),
+    { signatureActionId, sequenceId, ctx, step: 'transmit' },
+    async (err) => {
+      if (!attempt.reachedGateway) return true;
+      const { refusedBeforeWire } = await import('../submission-gateways/index');
+      return refusedBeforeWire(err);
+    },
+  );
+  if (result.transmitted) return result;
+  const voided = await voidRefusedStepSignature(
+    signatureActionId, sequenceId, ctx, 'transmit', `Not transmitted: ${result.reason ?? 'the gateway did not send it'}.`,
+  );
+  return { ...result, signatureVoided: voided === 'voided' };
+}
+
+/** transmitSequence past the request's shape: every gate, then the gateway.
+ *  `attempt.reachedGateway` is set as the package is handed to it. */
+async function transmitDispatchedSequence(
+  params: TransmitSequenceParams,
+  checked: { environment: 'staging' | 'production'; applicationId: string },
+  attempt: { reachedGateway: boolean },
+): Promise<TransmitSequenceResult> {
+  const { sequenceId, ctx, signatureActionId } = params;
+  const { environment, applicationId } = checked;
   const seq = await getSequence(sequenceId, ctx);
   if (seq.status !== 'dispatched') {
     throw new SubmissionError('INVALID_STATE', `Sequence must be dispatched before transmit (current: ${seq.status}).`);
   }
   const resend = resendRefusal(seq.dispatchStatus);
   if (resend) throw new SubmissionError('INVALID_STATE', resend);
+
+  // The typed application number against the program's record (P-23), as the
+  // eCTD export judges it. The submission is read here, once, for the route too.
+  const submission = await getSubmission(seq.submissionId, ctx);
+  // The package names its applicant and its application from the record, or it
+  // is not sent (package-identity.ts, QA 2026-10-08 j6).
+  const identity = await readRecordedPackageIdentity(pool, ctx.organizationId, submission.programId);
+  const missingIdentity = packageIdentityRefusal(identity, 'Nothing was sent.');
+  if (missingIdentity) throw new SubmissionError('PACKAGE_IDENTITY_MISSING', missingIdentity.message);
+  const numberRefusal = transmitApplicationNumberRefusal(applicationId, identity.applicationNumber);
+  if (numberRefusal) throw numberRefusal;
+  const applicantName = identity.applicantName as string;
 
   // Gate 1 — Part 11 e-signature on this sequence, for transmit, by this actor.
   const target = `ectd-sequence:${sequenceId}`;
@@ -1288,15 +2543,17 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     throw new SubmissionError('DISPATCH_BLOCKED', `Dispatch gate blocks transmit: ${assessment.gate.blockers.join(' ')}`);
   }
 
-  // Route by region AND client type (EU device/IVD → EUDAMED, else CESP).
-  const submission = await getSubmission(seq.submissionId, ctx);
-  const route = selectGateway(seq.region, submission.clientType);
-  if (!route) {
-    throw new SubmissionError('VALIDATION', `No transmit gateway is mapped for region "${seq.region}".`);
+  // Route by region, client type and filing type (EU device/IVD → EUDAMED; an
+  // EU dossier → CESP only for a national/MRP/DCP filing — see transmitRouteFor).
+  // The submission's applicationType names the filing; seq.type is the
+  // lifecycle (original|amendment|…) and is read only when it is empty.
+  const route = transmitRouteFor(seq.region, submission.clientType, submission.applicationType || seq.type);
+  if (!route.ok) {
+    throw new SubmissionError('VALIDATION', route.reason);
   }
 
   const { getGateway, preTransmitFindings } = await import('../submission-gateways/index');
-  // gwRegion and gwName are always valid Region/GatewayName values returned by selectGateway
+  // gwRegion and gwName are always valid Region/GatewayName values returned by transmitRouteFor
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gw = getGateway(route.gwRegion as any, route.gwName as any);
 
@@ -1355,8 +2612,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     // also a package filename component. An unassigned value SAYS it is
     // unassigned, in the wording the transmit path already uses.
     applicationId,
+      // The applicant's <id> (D-U-N-S) has no recorded home on this path yet
+      // (package-identity.ts header); its name is the organisation's.
       sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
-      sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
+      sponsorName: applicantName,
     });
   } catch (err) {
     await releaseTransmitSlot(sequenceId, ctx.organizationId);
@@ -1422,6 +2681,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
 
   let result;
   try {
+    attempt.reachedGateway = true;
     result = await gw.transmit({
       organizationId: ctx.organizationId,
       userId: ctx.userId,
@@ -1493,6 +2753,8 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
         // warnings, on the §11.10(e) record of the send (2026-09-22, W5/D7).
         preTransmitFailedChecks: preTransmit.failedChecks,
         preTransmitWarnings: preTransmit.warnings,
+        // P-34: the waiver the send went forward on, when no review had completed.
+        ...withWaiverReliedOn(assessment),
       },
     },
   );
@@ -1593,6 +2855,28 @@ const sha256Hex = (value: string | Buffer): string =>
   createHash('sha256')
     .update(typeof value === 'string' ? Buffer.from(value, 'utf8') : value)
     .digest('hex');
+
+/**
+ * The status an authoring filing copy carries at this write (draft, finalized,
+ * approved; coauthor-snapshot.ts takes it from the source when the copy is
+ * taken). Recorded on the leaf's ledger row, because re-placing a copy that was
+ * approved without its text changing leaves the pin, and so documentChanged,
+ * as they were: without the status the row could not show draft → approved.
+ * Other stores carry no copy status, and null claims nothing.
+ */
+async function placedCopyStatus(
+  documentTable: string | null | undefined,
+  documentId: number | null | undefined,
+  organizationId: number,
+): Promise<string | null> {
+  if (documentTable !== 'coauthor_documents' || documentId == null) return null;
+  const [doc] = await db
+    .select({ status: coauthorDocuments.status })
+    .from(coauthorDocuments)
+    .where(and(eq(coauthorDocuments.id, documentId), eq(coauthorDocuments.organizationId, organizationId)))
+    .limit(1);
+  return doc?.status ?? null;
+}
 
 const LEAF_SOURCE_VERIFIERS: Record<string, LeafSourceVerifier> = {
   /** Authoring store. Pin = sha256 of the stored body text. */
@@ -1806,7 +3090,17 @@ async function verifyLeafSource(
  * outcome and is never another row's under a borrowed name; which action it was
  * is the same distinction as which branch ran.
  */
-export type UpsertedLeaf = SubmissionLeaf & { auditTrail: AuditRowOutcome };
+/**
+ * What a leaf write returns. `auditTrail` is the §11.10(e) outcome of the write
+ * made. A write that changed nothing (`unchanged`, see upsertLeaf) made no audit
+ * row, so it carries none (null) and must not be read as an unpersisted audit.
+ */
+export type UpsertedLeaf = SubmissionLeaf & {
+  auditTrail: AuditRowOutcome | null;
+  unchanged?: true;
+  /** Set when the write returned a Validated sequence to Assembling. */
+  sequenceStatusChanged?: LeafWriteSequenceChange;
+};
 
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
 /**
@@ -1901,6 +3195,43 @@ async function leafSourceProgram(documentTable: string, ref: LeafRef, organizati
 type LeafWriteTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /**
+ * The live leaf of this sequence that already names this document in this
+ * section, or null. Compared by document identity (table plus uuid or id) and by
+ * section, case- and space-insensitively, the way the lifecycle keys compare
+ * sections (sharedLifecycleKeys). Reads only live leaves: a removed leaf does not
+ * count as a placement.
+ */
+async function sameDocumentLeafInSection(
+  executor: Pick<LeafWriteTx, 'select'>,
+  input: UpsertLeafInput,
+  organizationId: number,
+): Promise<SubmissionLeaf | null> {
+  if (!input.documentTable) return null;
+  const document =
+    input.documentUuid != null
+      ? eq(submissionLeaves.documentUuid, input.documentUuid)
+      : input.documentId != null
+        ? eq(submissionLeaves.documentId, input.documentId)
+        : null;
+  if (!document) return null;
+  const [row] = await executor
+    .select()
+    .from(submissionLeaves)
+    .where(
+      and(
+        eq(submissionLeaves.sequenceId, input.sequenceId),
+        eq(submissionLeaves.organizationId, organizationId),
+        isNull(submissionLeaves.deletedAt),
+        eq(submissionLeaves.documentTable, input.documentTable),
+        document,
+        sql`lower(btrim(${submissionLeaves.sectionCode})) = lower(btrim(${input.sectionCode}))`,
+      ),
+    )
+    .limit(1);
+  return (row as SubmissionLeaf | undefined) ?? null;
+}
+
+/**
  * Run a leaf write in one transaction holding the sequence row lock
  * (SELECT … FOR UPDATE) — the lock the governed freeze/dispatch takes before
  * its compare-and-set — and re-check, UNDER that lock, that the sequence is not
@@ -1927,7 +3258,9 @@ async function lockSequenceForLeafWrite<T>(
   sequenceId: number,
   ctx: { organizationId: number },
   write: (tx: LeafWriteTx) => Promise<T>,
-): Promise<T> {
+  /** Whether `write`'s result changed a leaf. A no-op leaves Validated standing. */
+  changed: (result: T) => boolean = () => true,
+): Promise<{ value: T; revertedFromValidated: boolean }> {
   return db.transaction(async (tx) => {
     const locked = await tx.execute(sql`
       SELECT status FROM ectd_sequences
@@ -1938,8 +3271,42 @@ async function lockSequenceForLeafWrite<T>(
     if (isSequenceLocked(row.status)) {
       throw new SubmissionError('INVALID_STATE', `Sequence is ${row.status}; its leaves are immutable.`);
     }
-    return write(tx);
+    const value = await write(tx);
+    /* QA 2026-10-08 (j6, finding 3): a leaf placed into a Validated sequence
+       left it Validated, so the status claimed a validation of content that
+       had changed. A leaf change now returns the sequence to Assembling and
+       clears its recorded verdict, in the same transaction and under the same
+       lock as the write, so no reader sees the new leaf beside the old claim. */
+    const revertedFromValidated = row.status === 'validated' && changed(value);
+    if (revertedFromValidated) {
+      await tx.execute(sql`
+        UPDATE ectd_sequences SET status = 'assembling', validation_status = NULL, updated_at = NOW()
+         WHERE id = ${sequenceId} AND organization_id = ${ctx.organizationId} AND status = 'validated'`);
+    }
+    return { value, revertedFromValidated };
   });
+}
+
+/** What a leaf write did to its sequence's status, when it changed it, and
+ *  what became of the §11.10(e) row recording that. */
+export type LeafWriteSequenceChange = { from: 'validated'; to: 'assembling'; auditTrail: AuditRowOutcome };
+
+/** The §11.10(e) row for a sequence a leaf write returned to Assembling. The
+ *  move is committed with the leaf; a lost row is reported, never undone. */
+async function recordRevertedValidation(
+  sequenceId: number,
+  leafId: number,
+  ctx: { organizationId: number; userId: number },
+): Promise<LeafWriteSequenceChange> {
+  const auditTrail = await recordAuditRow({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: 'SEQUENCE_TRANSITIONED',
+    resourceType: 'ectd_sequence',
+    resourceId: sequenceId,
+    details: { from: 'validated', to: 'assembling', cause: 'leaf_changed', leafId },
+  });
+  return { from: 'validated', to: 'assembling', auditTrail };
 }
 
 export async function upsertLeaf(
@@ -2078,6 +3445,19 @@ export async function upsertLeaf(
       'This document belongs to another project. A filing can hold only its own project’s documents.',
     );
   }
+  /* P-14 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08): a program's document
+     is placed only into a submission anchored to that program. A submission
+     that records no program is an unknown dossier, so the placement cannot be
+     judged and fails closed; this used to be allowed and only recorded. A
+     document whose store records no program is not judged here. */
+  if (!submissionProgramId && documentProgramId) {
+    throw new SubmissionError(
+      'UNANCHORED_SUBMISSION',
+      'This submission is not anchored to a project, and this document belongs to one. A project’s document is placed ' +
+        'only into a submission anchored to that project, so anchor the submission first: in Submission Center, open ' +
+        'this submission and choose “Anchor to a project”. Nothing was placed.',
+    );
+  }
   /* What the ledger records about the document placed (LX-11): which document,
      the pin it took, and both projects. The row said only the sequence, the
      section and a reason. */
@@ -2086,6 +3466,7 @@ export async function upsertLeaf(
     documentId: input.documentId ?? null,
     documentUuid: input.documentUuid ?? null,
     documentContentSha256,
+    documentStatus: await placedCopyStatus(input.documentTable, input.documentId, ctx.organizationId),
     programId: submissionProgramId,
     documentProgramId,
   };
@@ -2119,8 +3500,27 @@ export async function upsertLeaf(
 
   if (input.leafId) {
     const leafId = input.leafId;
+    const leafWhere = and(
+      eq(submissionLeaves.id, leafId),
+      eq(submissionLeaves.sequenceId, input.sequenceId),
+      eq(submissionLeaves.organizationId, ctx.organizationId)
+    );
     // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
-    const [row] = await lockSequenceForLeafWrite(input.sequenceId, ctx, (tx) => tx
+    /* The document the leaf pointed at before this write (PF-11): the ledger
+       named only the new one, so a re-point left no record of what it replaced.
+       Read in the same locked transaction, by the UPDATE's own WHERE. */
+    const { value: { previous, rows: updated }, revertedFromValidated } = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
+      const [prev] = await tx
+        .select({
+          documentTable: submissionLeaves.documentTable,
+          documentId: submissionLeaves.documentId,
+          documentUuid: submissionLeaves.documentUuid,
+          documentContentSha256: submissionLeaves.documentContentSha256,
+        })
+        .from(submissionLeaves)
+        .where(leafWhere)
+        .for('update');
+      const rows = await tx
       .update(submissionLeaves)
       .set({
         sectionCode: input.sectionCode,
@@ -2141,15 +3541,26 @@ export async function upsertLeaf(
         documentPinnedAt: documentContentSha256 ? new Date() : null,
         updatedAt: new Date(),
       })
-      .where(
-        and(
-          eq(submissionLeaves.id, leafId),
-          eq(submissionLeaves.sequenceId, input.sequenceId),
-          eq(submissionLeaves.organizationId, ctx.organizationId)
-        )
-      )
-      .returning());
+      .where(leafWhere)
+      .returning();
+      return { previous: prev ?? null, rows };
+    }, (r) => r.rows.length > 0);
+    const [row] = updated;
     if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
+    const previousDocument = previous
+      ? {
+          documentTable: previous.documentTable ?? null,
+          documentId: previous.documentId ?? null,
+          documentUuid: previous.documentUuid ?? null,
+          documentContentSha256: previous.documentContentSha256 ?? null,
+        }
+      : null;
+    const documentChanged =
+      previousDocument == null ||
+      previousDocument.documentTable !== placedDocument.documentTable ||
+      previousDocument.documentId !== placedDocument.documentId ||
+      previousDocument.documentUuid !== placedDocument.documentUuid ||
+      previousDocument.documentContentSha256 !== placedDocument.documentContentSha256;
     // Part 11 §11.10(e). The UPDATE above is committed (and NOT_FOUND has already
     // been thrown if it matched nothing), so the re-placement is never undone
     // over a lost log row — reverting the pointer would leave the leaf attesting
@@ -2165,33 +3576,53 @@ export async function upsertLeaf(
         sectionCode: input.sectionCode,
         lifecycleOp: input.lifecycleOp,
         ...placedDocument,
+        previousDocument,
+        documentChanged,
         ...(input.reason ? { reason: input.reason } : {}),
       },
     });
-    return { ...(row as SubmissionLeaf), auditTrail };
+    const sequenceStatusChanged = revertedFromValidated
+      ? await recordRevertedValidation(input.sequenceId, input.leafId, ctx)
+      : undefined;
+    return { ...(row as SubmissionLeaf), auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
   }
 
-  // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
-  const [row] = await lockSequenceForLeafWrite(input.sequenceId, ctx, (tx) => tx
-    .insert(submissionLeaves)
-    .values({
-      sequenceId: input.sequenceId,
-      sectionCode: input.sectionCode,
-      title: input.title,
-      granularity: input.granularity ?? null,
-      lifecycleOp: input.lifecycleOp ?? 'new',
-      documentTable: input.documentTable ?? null,
-      documentId: input.documentId ?? null,
-      documentUuid: input.documentUuid ?? null,
-      documentType: input.documentType ?? null,
-      parentLeafId: input.parentLeafId ?? null,
-      checksum: input.checksum ?? null,
-      documentContentSha256,
-      documentPinnedAt: documentContentSha256 ? new Date() : null,
-      organizationId: ctx.organizationId,
-      createdBy: ctx.userId,
-    })
-    .returning());
+  /* One live leaf per document per section, in one sequence (QA j3 finding (a),
+     2026-10-08). The same file placed twice under one section became two leaves
+     the packager names one output file for, and the placement dialog gave no
+     notice. Judged INSIDE the sequence lock, so two identical placements racing
+     cannot both insert.
+
+     A DIFFERENT document may still share a section: several New leaves in one
+     section is a readiness INFO (dispatch-readiness DUPLICATE_NEW_SECTION, "without
+     erroring"), not a refusal, so it is not judged here. */
+  const { value: placed, revertedFromValidated } = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
+    const live = await sameDocumentLeafInSection(tx, input, ctx.organizationId);
+    if (live) return { kind: 'live' as const, live };
+    const [inserted] = await tx
+      .insert(submissionLeaves)
+      .values({
+        sequenceId: input.sequenceId,
+        sectionCode: input.sectionCode,
+        title: input.title,
+        granularity: input.granularity ?? null,
+        lifecycleOp: input.lifecycleOp ?? 'new',
+        documentTable: input.documentTable ?? null,
+        documentId: input.documentId ?? null,
+        documentUuid: input.documentUuid ?? null,
+        documentType: input.documentType ?? null,
+        parentLeafId: input.parentLeafId ?? null,
+        checksum: input.checksum ?? null,
+        documentContentSha256,
+        documentPinnedAt: documentContentSha256 ? new Date() : null,
+        organizationId: ctx.organizationId,
+        createdBy: ctx.userId,
+      })
+      .returning();
+    return { kind: 'inserted' as const, inserted };
+  }, (r) => r.kind === 'inserted');
+  if (placed.kind === 'live') return alreadyPlaced(placed.live, input, documentContentSha256);
+  const row = placed.inserted;
   // Part 11 §11.10(e), on the same terms as the update branch: the INSERT above
   // is committed, the placement stands, and the outcome rides out on the row.
   const auditTrail = await recordAuditRow({
@@ -2207,7 +3638,45 @@ export async function upsertLeaf(
       ...(input.reason ? { reason: input.reason } : {}),
     },
   });
-  return { ...(row as SubmissionLeaf), auditTrail };
+  const sequenceStatusChanged = revertedFromValidated
+    ? await recordRevertedValidation(input.sequenceId, row.id, ctx)
+    : undefined;
+  return { ...(row as SubmissionLeaf), auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
+}
+
+/**
+ * The answer to a new placement of a document that is already live in the
+ * section. The same operation is a no-op: the existing leaf comes back, nothing
+ * is written and nothing is audited. A different operation is refused by name,
+ * because handing back a leaf the caller did not ask for would read as a
+ * placement that did not happen.
+ *
+ * 2026-10-08 (QA walk 2, j4 blocker): "unchanged" also means the leaf's pin
+ * still matches the document. A document whose content changed after its leaf
+ * pinned it was answered `unchanged: true`, and the placement dialog said
+ * "Already placed … holds this document. Nothing was written" over a leaf that
+ * no longer held what the document says. That placement is refused by name
+ * too; nothing is written, and re-pinning stays an explicit act (remove the
+ * leaf and place again).
+ */
+function alreadyPlaced(live: SubmissionLeaf, input: UpsertLeafInput, currentSha256: string | null): UpsertedLeaf {
+  const requested = input.lifecycleOp ?? 'new';
+  if ((live.lifecycleOp ?? 'new') !== requested) {
+    throw new SubmissionError(
+      'ALREADY_PLACED',
+      `This document is already placed at ${live.sectionCode} in this sequence as ${live.lifecycleOp} (leaf ${live.id}). ` +
+        'Nothing was written. To change its operation, remove that leaf first.',
+    );
+  }
+  if ((live.documentContentSha256 ?? null) !== currentSha256) {
+    throw new SubmissionError(
+      'ALREADY_PLACED',
+      `This document is already placed at ${live.sectionCode} in this sequence (leaf ${live.id}), and its content has ` +
+        'changed since that leaf pinned it. Nothing was written. To file the content as it is now, remove that leaf, ' +
+        'then place the document again.',
+    );
+  }
+  return { ...live, auditTrail: null, unchanged: true };
 }
 
 /**
@@ -2239,12 +3708,20 @@ export async function upsertLeaf(
  * empty body today and therefore does not yet forward this; carrying it into the
  * response is a change to that route, not to this service.
  */
-export type RemovedLeaf = { leafId: number; auditTrail: AuditRowOutcome };
+export type RemovedLeaf = {
+  leafId: number;
+  auditTrail: AuditRowOutcome;
+  /** Set when the removal returned a Validated sequence to Assembling. */
+  sequenceStatusChanged?: LeafWriteSequenceChange;
+};
 
 export async function removeLeaf(
   leafId: number,
   sequenceId: number,
-  ctx: { organizationId: number; userId: number }
+  ctx: { organizationId: number; userId: number },
+  /** Why the leaf is removed, recorded on the LEAF_REMOVED row exactly as
+   *  given (the human door requires it, as it does for a placement). */
+  reason?: string | null,
 ): Promise<RemovedLeaf> {
   const seq = await getSequence(sequenceId, ctx);
   if (isSequenceLocked(seq.status)) {
@@ -2270,7 +3747,7 @@ export async function removeLeaf(
   }
 
   // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
-  const [row] = await lockSequenceForLeafWrite(sequenceId, ctx, (tx) => tx
+  const { value: [row], revertedFromValidated } = await lockSequenceForLeafWrite(sequenceId, ctx, (tx) => tx
     .update(submissionLeaves)
     .set({ deletedAt: new Date(), updatedAt: new Date() })
     .where(
@@ -2281,7 +3758,7 @@ export async function removeLeaf(
         isNull(submissionLeaves.deletedAt)
       )
     )
-    .returning());
+    .returning(), (rows) => rows.length > 0);
   if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
 
   // Part 11 §11.10(e). The soft delete above is committed and is not reinstated
@@ -2294,9 +3771,10 @@ export async function removeLeaf(
     action: 'LEAF_REMOVED',
     resourceType: 'submission_leaf',
     resourceId: leafId,
-    details: { sequenceId, sectionCode: row.sectionCode },
+    details: { sequenceId, sectionCode: row.sectionCode, ...(reason ? { reason } : {}) },
   });
-  return { leafId, auditTrail };
+  const sequenceStatusChanged = revertedFromValidated ? await recordRevertedValidation(sequenceId, leafId, ctx) : undefined;
+  return { leafId, auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
 }
 
 export default {

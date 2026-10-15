@@ -1,0 +1,16 @@
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > renders the real milestones with due date, regulatory basis and owner role 341ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > shows no fabricated date for a milestone whose due date is not set 273ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > reports a slipped milestone with its real slip, not a progress bar 156ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > summarizes completed milestones instead of listing them as upcoming 177ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > renders the honest empty state with only real affordances, and wires the AnA prompt 436ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > generates via the REAL POST endpoint and reloads the schedule 124ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (numeric-keyed project) > distinguishes a failed read from "no schedule generated" 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (UUID program) > reads the schedule by the program UUID and renders its milestones 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSchedule.test.tsx > ProjectHome — schedule of events (UUID program) > a program with no project record says so, offers no generate, and is not an error 126ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > reads the work view by the program UUID and lists its items with their store 358ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > says the counts are a floor when a store could not be read 162ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > an empty work view is an honest empty, not a failure 119ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > a program with no project record says so, not "no tasks" and not an error 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Review stage: the program’s tasks and approvals > a failed read is an error, never an empty list 92ms
+ Test Files  2 passed (2)
+      Tests  14 passed (14)

@@ -8,7 +8,8 @@
  * submission threads ethics approval into the clinical conduct record and forward
  * to Module 5 via provenance_links.
  *
- * Grounded in the revised Common Rule (45 CFR 46), FDA 21 CFR 56, and ICH E6(R2).
+ * Grounded in the revised Common Rule (45 CFR 46), FDA 21 CFR 56, and
+ * ICH E6(R3) Annex 1 §1 (IRB/IEC).
  * Conventions match the platform; status/type columns are CHECK-constrained.
  * Mutations are governed + audited.
  *
@@ -54,7 +55,9 @@ export const irbSubmissions = pgTable(
     title: text('title').notNull(),
     reviewType: text('review_type').$type<IrbReviewType>(),
     riskLevel: text('risk_level').$type<IrbRiskLevel>().notNull().default('minimal'),
-    involvesVulnerablePopulations: boolean('involves_vulnerable_populations').notNull().default(false),
+    /** 45 CFR 46.111(b). NULL means not recorded, NOT "none involved" (2026-10-15: was NOT NULL DEFAULT false, so
+     *  an unasked question read as "no" and the safeguards check never fired; migrations/20260610_irb_submissions.sql). */
+    involvesVulnerablePopulations: boolean('involves_vulnerable_populations'),
     vulnerablePopulationProtections: text('vulnerable_population_protections'),
     /** Single IRB of record for a multi-site study (revised Common Rule sIRB mandate). */
     isSingleIrb: boolean('is_single_irb').notNull().default(false),
@@ -69,8 +72,9 @@ export const irbSubmissions = pgTable(
      * `undetermined` and names the field that would settle it).
      *
      * Do NOT add `.notNull().default(false)` to any of the four, however much
-     * the sibling columns directly above invite it. Those siblings drive no
-     * not_required branch; these do. A default here turns "nobody answered"
+     * the NOT NULL sibling columns directly above invite it. Those siblings drive
+     * no not_required branch; these do. (involves_vulnerable_populations was one
+     * of those siblings until 2026-10-15; its default hid the 46.111(b) check.) A default here turns "nobody answered"
      * into "the sponsor said no" and drops Form FDA 1572 out of a board's
      * package on a claim nobody made. Pinned by
      * `server/services/irb/__tests__/submission-context-columns.pglite.integration.test.ts`

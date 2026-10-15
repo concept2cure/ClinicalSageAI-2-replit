@@ -1,0 +1,22 @@
+Red first: round 3's unit, route and dialog suites run against the tree before the change (trunk 962f15f7f).
+tests/services/proposal-check.test.ts fails to load (the module does not exist yet); 5 of the other 9 tests fail. Each test that passes pins a negative (no prose, no check; a malformed check is none): its red is its mutant (mutants/).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run tests/services/proposal-check.test.ts server/routes/ana-ri/__tests__/stream-proposal-check.test.ts client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > reads it with the strip's own reader 8ms
+   → expected undefined to deeply equal [ { kind: 'figure', text: '31%' } ]
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a malformed check is no check, and the prompt still opens 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a frame with no check opens the prompt with none 0ms
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 47ms
+   → Unable to find an element with the text: /What this draft states, checked against this turn's sources/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows no check when the proposal carried none 6ms
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows a list by its items' titles, not as "N items" 7ms
+   → Unable to find an element with the text: Efficacy · Safety. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > the approval frame and the held approval carry the check of the draft against what AnA consulted 40ms
+   → Cannot read properties of undefined (reading 'engine')
+ × server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a draft written before anything was consulted is not checked — never found 6ms
+   → Cannot read properties of undefined (reading 'basis')
+ ✓ server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a proposal that stores no prose carries no check 5ms
+Error: Cannot find module '../../server/services/ana/proposal-check' imported from <repo>/tests/services/proposal-check.test.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  5 failed | 4 passed (9)

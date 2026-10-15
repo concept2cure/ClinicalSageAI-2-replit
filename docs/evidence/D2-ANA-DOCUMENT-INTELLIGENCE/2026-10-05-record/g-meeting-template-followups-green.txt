@@ -1,0 +1,819 @@
+=== new test ===
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > holds the six PDUFA meeting types with their schedule and package deadlines 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > labels every figure not read in FDA text as recall 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > every row names the basis of its package deadline, and that basis is one of its cited sources 2ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > a deadline read only from recall is said to be recall where it is stated (F18) 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > timing is 70 days to the meeting and the package 50 calendar days before it 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > no EOP2 component tells the sponsor the package is due 30 days ahead 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_ind_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_nda_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_bla_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_ind_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > end_of_phase_2_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_nda_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_bla_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > a pre-IND meeting package carries the CMC summary and no "accompanies the request" claim 5ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > an EOP2 briefing document gets the EOP2 components and the 50-day package deadline 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "end of phase 1 meeting" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "EOP1 meeting package" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "draft the pre-NDA meeting package" gets the pre_nda_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "prepare our pre-BLA meeting briefing document" gets the pre_bla_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > no meeting template is a hand-kept heading list 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > its sections are the meeting-package core, not one lifecycle entry's wording 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > no section guidance names one meeting type or one meeting 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > the request-letter section says which meeting types take the package with the request, from the table 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > its instructions state every meeting type's schedule and package deadline from the table 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > an EOP1 request is told its package deadline is 30 or 50 days by product, not given the pre-IND wording 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > dsur sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_ind_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_eop_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_nda_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_bla_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_formal_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > some component asks for E2F Section 19 (Summary of Important Risks) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > no component calls Section 19 the conclusions 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > the conclusions are E2F Section 20 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > interval line listings are of serious adverse reactions (E2F 7.2), tabulations of SAEs (7.3) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > exports the E2F outline once, every heading cited 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block carries §16, §19 and §20 under their E2F numbers 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every E2F section is required: E2F says complete all of them, stating when there is nothing to report 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block lists the E2F headings in E2F order, none of them optional 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > no detection pattern carries a form feed 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every DSUR and meeting detection pattern matches a request it is written for 0ms
+
+ Test Files  1 passed (1)
+      Tests  41 passed (41)
+   Start at  04:22:29
+   Duration  2.03s (transform 1.35s, setup 237ms, import 1.34s, tests 32ms, environment 0ms)
+
+
+=== every test file importing the changed modules (20 files) ===
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 9ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 8ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 6ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 0ms
+ × tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 101ms
+   → expected { …(621) } to deeply equal { …(621) }
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CTD code from the section brief, naming the entry and how it matched 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a CSR alias from the ICH E3 outline, with the basis the outline carries 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > answers a lifecycle document type by id, case-insensitively 5ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > says what it does not index, and never answers from another entry 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > is the only dispatch: the tool delegates and keeps no copy of the rule 1ms
+ ✓ tests/regulatory/requirements-resolver.test.ts > resolveRequirements — the one dispatch > imports the brief renderers and is imported by none of them 0ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no regulator URL is bound to two top-level declarations 1405ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 4.2.3 is titled 4.2.3, not "4.2.3.1 Single-Dose Toxicity" 7ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 4.2.3 lists every registered section it contains, 4.2.3.1 through 4.2.3.7, with canonical titles 1ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > a parent prompt carries no single child's must-contain list 11ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > every one of the 19 IND sections is titled with its own code 7ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > every listed heading sits under the requested code or another listed heading (no orphaned children) 10ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > 5.3 lists 5.3.5 (by code only, no invented title) before 5.3.5.1, and nests 5.3.5.x under it, not under 5.3.4 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > headings carry no platform qualifier (' — Overview', a trailing bracketed disambiguation) 1ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > a section the material says does not apply may be stated not applicable with its reason; a placeholder is for unknown data 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > a parent code is briefed as the parent, never as its first child > the auto-draft and route path (getGenerationPrompt) is titled with the requested code too 12ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > an exact entry is briefed from that entry, with its title and must-contain list 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > a code deeper than any entry names the open section and says whose requirements follow 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > a code nothing registers gets no prompt 0ms
+ ✓ tests/regulatory/ind-generation-prompt.test.ts > exact, ancestor and unknown codes > project context is still interpolated 0ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > each shared constant is declared only in regulatory-basis.ts, and the retired duplicate names nowhere 111ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no file in ind/ctd keeps a local recall()/practice() helper 67ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and e3SectionBasis 1ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > exports every shared basis constant, well formed under the shared rules 3ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > cfr201_57, recall and practice build well-formed bases of the stated confidence 1ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > FDA_E3 is ICH E3 itself, not FDA’s E3 Q&A (R1) 0ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > nothing in ind/ctd binds the E3 Q&A URL to a basis that is not the Q&A 51ms
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > readers hold the one object, not a copy > the submission chain, the technical rules and the E3 overlay cite the exported constants 7ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > has at least 10 registered document types 2ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_2_introduction — required fields present 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_3_qos — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_4_nonclinical_overview — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_5_clinical_overview — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_7_3_efficacy_summary — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_7_4_safety_summary — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ind_investigator_brochure — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ind_phase1_protocol — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > cmc_drug_substance — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > cmc_drug_product — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_510k_se_statement — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > pma_summary_safety_effectiveness — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > clinical_study_report — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > dsur — required fields present 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_pre_ind_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_eop_meeting_package — required fields present 2ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_pre_nda_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_pre_bla_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_formal_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > psur_pbrer — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > safety_narrative — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_information_request_response — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > every template has at least one required section with heading and guidance 5ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Clinical Overview 5ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Clinical Overview section 3ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > QOS 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > QOS section ref 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Nonclinical Overview 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Efficacy Summary 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Efficacy Summary section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Summary 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Summary section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC Drug Substance 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC 3.2.S 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC Drug Product 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC 3.2.P 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Investigator's Brochure 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Phase 1 Protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > FIH Protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > 510(k) SE 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > PMA SSED 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CSR 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > DSUR 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Type B Meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP2 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP2 abbreviation 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-Phase 3 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP1 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP1 abbreviation 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-IND meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-NDA meeting 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-BLA meeting 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > PBRER 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Narrative 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > FDA IR Response 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: What are the risks of this drug? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Can you audit my submission? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Help me improve this section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Run a war game on this protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: What is the regulatory strategy for our IND? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: draft 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: clinical 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > clinical overview wins when section 2.5 is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > efficacy summary wins when section 2.7.3 is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > CMC drug substance wins when 3.2.S is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > CMC drug product wins when 3.2.P is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > returns a non-empty block with required structural elements 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes all required section headings for the matched template 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes regulatory references when present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes word count targets in the section outline 0ms
+stderr | server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed
+{
+  "timestamp": "2026-10-05T04:22:38.595Z",
+  "level": "error",
+  "message": "[regulatory-knowledge-tools] plan_submission_from_database_lock failed",
+  "context": {
+    "err": "relation \"vault.documents\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > answers a CSR heading, a CTD section and a document type from the canonical record 3ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > says what it does not index, and lists what it does 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > fits the result budget for every section, document type and E3 heading it knows 66ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > without a project, gives the plan and says there is no standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > with an organization but no open project, says so rather than reading another project 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the open project’s Vault, scoped by organization and program, and decides the standing 3ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a step the Vault cannot hold is never reported missing, and never as what a step waits on 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed 10ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a read cut short says so, and claims nothing is missing 17ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > gives one step in full, with its checked sources 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > fits the result budget, with and without a standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > lists every rule in brief with what the platform checks, and what FDA has said about Elsa 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the pdf rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the ectd rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the study-data rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the content rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > refuses an area it does not have 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > the E3 node exists and lists the narrative elements 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > every element the E3 §12.3.2 node lists is in the block AnA receives 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names post-mortem findings 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names countermeasures 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names the sponsor's opinion on causality 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > names the disease being treated and its duration 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > carries the reviewer deficiencies the node records 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > safety_narrative carries what ICH E3 §12.3.2 asks a narrative to carry > labels the E3 basis honestly (the node is recall until a verbatim check is filed) 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > causality: the investigator and the sponsor, in the study's own terms > imposes no five-point scale ending in "definitely related" 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > causality: the investigator and the sponsor, in the study's own terms > the causality section asks for the investigator's and the sponsor's assessments 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > detection reads "causal", not "casual" > "causal assessment" reaches the safety narrative template 12ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > detection reads "causal", not "casual" > no detection pattern spells "casual" 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > the template derives from the node, and fails closed without it > a change to the E3 node reaches the template 53ms
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts > the template derives from the node, and fails closed without it > a missing E3 node says the content is not encoded instead of inventing it 46ms
+ ✓ tests/schema-contract/one-normalize-ctd-code.contract.test.ts > normalizeCtdCode has one definition > is defined only in the shared section-code module 2051ms
+ ✓ tests/schema-contract/one-normalize-ctd-code.contract.test.ts > normalizeCtdCode has one definition > is re-exported only where it was imported from the shared module 1096ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > holds the six PDUFA meeting types with their schedule and package deadlines 19ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > labels every figure not read in FDA text as recall 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > every row names the basis of its package deadline, and that basis is one of its cited sources 2ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > a deadline read only from recall is said to be recall where it is stated (F18) 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > timing is 70 days to the meeting and the package 50 calendar days before it 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > no EOP2 component tells the sponsor the package is due 30 days ahead 19ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_ind_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_nda_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_bla_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_ind_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > end_of_phase_2_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_nda_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_bla_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > a pre-IND meeting package carries the CMC summary and no "accompanies the request" claim 17ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > an EOP2 briefing document gets the EOP2 components and the 50-day package deadline 13ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "end of phase 1 meeting" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "EOP1 meeting package" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "draft the pre-NDA meeting package" gets the pre_nda_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "prepare our pre-BLA meeting briefing document" gets the pre_bla_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > no meeting template is a hand-kept heading list 9ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > its sections are the meeting-package core, not one lifecycle entry's wording 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > no section guidance names one meeting type or one meeting 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > the request-letter section says which meeting types take the package with the request, from the table 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > its instructions state every meeting type's schedule and package deadline from the table 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the generic FDA formal-meeting package is meeting-type neutral (F17) > an EOP1 request is told its package deadline is 30 or 50 days by product, not given the pre-IND wording 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > dsur sections have no targetWords 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_ind_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_eop_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_nda_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_bla_meeting_package sections have no targetWords 17ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_formal_meeting_package sections have no targetWords 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > some component asks for E2F Section 19 (Summary of Important Risks) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > no component calls Section 19 the conclusions 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > the conclusions are E2F Section 20 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > interval line listings are of serious adverse reactions (E2F 7.2), tabulations of SAEs (7.3) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > exports the E2F outline once, every heading cited 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block carries §16, §19 and §20 under their E2F numbers 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every E2F section is required: E2F says complete all of them, stating when there is nothing to report 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block lists the E2F headings in E2F order, none of them optional 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > no detection pattern carries a form feed 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every DSUR and meeting detection pattern matches a request it is written for 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > registers guidance for every core CTD leaf section 7ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > every guidance entry is industry-grade (real prose + concrete content elements) 19ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > drug-substance and drug-product sections require CMC across IND/NDA/BLA 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — marketing blueprint is deep > an NDA blueprint exposes drug-substance and clinical leaves as first-class sections 27ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > covers the full IND->NDA/BLA lifecycle spine 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > every document type carries real components and regulatory basis 13ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > the NDA document type resolves deep CTD sections from the shared overlay 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > links document types to the canonical taxonomy so the catalog can reach deep guidance 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > meeting packages are flagged and the ISS/ISE integrated summaries exist 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — prompt generation > drafts a deep leaf code against its real guidance 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — prompt generation > every registered guidance code has a non-empty title and module 1-5 16ms
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > 2.7.3: the requirements are the Summary of Clinical Efficacy brief, exact
+{
+  "timestamp": "2026-10-05T04:22:41.443Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a code nothing indexes: the requirements say so, source none
+{
+  "timestamp": "2026-10-05T04:22:41.477Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "9.9",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a container code: source parent
+{
+  "timestamp": "2026-10-05T04:22:41.479Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a sub-section deeper than any entry: source ancestor
+{
+  "timestamp": "2026-10-05T04:22:41.479Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.5.4.xxx",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > section-generation@v1.1 at the gateway, on the draft and in the audit row, with the source
+{
+  "timestamp": "2026-10-05T04:22:41.481Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > the system prompt asks for the impersonal register, labelled platform convention, not second person
+{
+  "timestamp": "2026-10-05T04:22:41.481Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > 2.7.3: the requirements are the Summary of Clinical Efficacy brief, exact 43ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a code nothing indexes: the requirements say so, source none 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a container code: source parent 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a sub-section deeper than any entry: source ancestor 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > section-generation@v1.1 at the gateway, on the draft and in the audit row, with the source 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > the system prompt asks for the impersonal register, labelled platform convention, not second person 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.9 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.12.14 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.1.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.4.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.4.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.20 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.A 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.P 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.R 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.S 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.A 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.8 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.R 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.3 2ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.4 0ms
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T04:22:43.522Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T04:22:43.523Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T04:22:43.523Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T04:22:43.707Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T04:22:43.708Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T04:22:43.708Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | tests/regulatory/submission-chain.test.ts
+{
+  "timestamp": "2026-10-05T04:22:43.994Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T04:22:43.997Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/submission-chain.test.ts
+{
+  "timestamp": "2026-10-05T04:22:43.997Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/submission-chain.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | tests/regulatory/submission-chain.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | tests/regulatory/submission-chain.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > lists each step after every step it is written from 9ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > csr is written from tlf 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > tlf is written from adam 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > adam is written from sdtm 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > sdtm is written from database_lock 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > database_lock is written from sap_final 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > iss is written from csr 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > ise is written from csr 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > iss is written from integrated_data 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_7_3 is written from ise 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_7_4 is written from iss 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_5 is written from m2_7_3 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_5 is written from m2_7_4 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > labeling is written from m2_5 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > ectd_assembly is written from sdtm 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > transmission is written from technical_validation 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > every step rests on a basis, and every checked source names its URL and date 7ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > a step the platform cannot see is never treated as missing or as done 4ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > a classifier’s proposal is not a filing 3ms
+ ✓ tests/regulatory/submission-chain.test.ts > the NDA workflow AnA is given follows the chain > every chain edge between two workflow steps is an edge of the workflow 1ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.3 / 2.7.4 prompts agree with their own guidance: the ISE / ISS are filed in 5.3.5.3 > 2.7.3 drafting prompt does not say the section houses the integrated summary 5ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.3 / 2.7.4 prompts agree with their own guidance: the ISE / ISS are filed in 5.3.5.3 > 2.7.4 drafting prompt does not say the section houses the integrated summary 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.4 references where death / SAE narratives are; it does not send them to 2.7.6 > no field ties narratives to 2.7.6 1ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.4 references where death / SAE narratives are; it does not send them to 2.7.6 > names 2.7.4.2.2 and the study reports as the narratives’ home 1ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > states that synopses are not repeated in Module 2 in eCTD and are hyperlinked 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > keeps the EU nuance: copies are also accepted 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > no longer routes SAE/death narratives through 2.7.6 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > every sentence that says PREA does not apply to orphan indications also states the exception 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > names the 505B(k)(2) molecular-target exception, and the drafting prompt carries it 3ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > requiredFor stays NDA/BLA: an iPSP is not owed by every IND 1ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > no field places the IB at 1.4.1; 1.4.1 appears only named as the letter of authorization 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > cites E6(R3) Appendix A, and "Section 7" only as the E6(R2) location 3ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > reference safety information carries the frequency and nature of expected serious adverse reactions 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > the drafting prompt drafts the IB at 1.14.4.1, not a 1.4.1 reference stub 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 4ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 5ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 8ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 1ms
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T04:22:44.716Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > no text in the flow cites the field-alert paragraph 314.81(b)(1) 2ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > the guidance cites 314.50(d)(5)(vi)(b) and names its three filing points 1ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > keeps the regulation's waiver qualifier on the case report forms 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > the guidance does not present the BLA safety update as the NDA regulation 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > briefing book: the 120-day safety update cites 314.50(d)(5)(vi)(b) > the missing-update issue cites 314.50(d)(5)(vi)(b) in its message and reference 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > never ties the deadline to the meeting request 1ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > states 60 calendar days after the end-of-phase 2 meeting in guidance, help and issue 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > attributes the requirement to FD&C Act 505B(e) (FDASIA 2012), not FDARA 2017 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > gives the 210-day agreement cycle as FDA 90, sponsor 90, FDA 30 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > does not say orphan designation exempts every drug from PREA 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > NDA flow: the iPSP is due 60 calendar days after the EOP2 meeting, under 505B(e) > limits the RACE for Children Act exception to an original application for a new active ingredient 4ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > cites 21 CFR 314.60 and drops the review-timeline and CRL-guidance citations 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > keeps FDA's option under 314.60(b)(1) to defer a late major amendment to the next cycle 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > no longer claims 510(k) under the drug amendment basis 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > says a 510(k) additional-information request is out of its scope 0ms
+ ✓ tests/regulatory/post-filing-citations.test.ts > ana-ri IR response template cites 314.60 and claims no device scope > is still what an IR-response request routes to 12ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16 2ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > every section says what it is for, and §14 is the displays NOT in the text 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > carries every numbered section in order 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > §12–§19 carry the E2C(R2) headings 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > is not served for CTD 1.1 (FDA Forms) 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > carries no single CTD code, and its basis names FDA 1.2 and EU 1.0 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — unaffected lookups (guard) > Clinical Overview stays at 2.5 and the QOS still resolves by 2.3 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-EFF 1ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-SAFETY 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-EFF 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-SAFETY 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.1 5ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.2 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.3 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.4 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > names every heading in the content elements and the generation prompt 1ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > ties the headings to FDA's Benefit-Risk Framework and fits the brief's caps 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > warns against product data in the Therapeutic Context 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > reaches the section brief with every heading, including from a child code 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > regulatoryBasis names the ST&F and the OCMQs as reviewer practice, voluntary for sponsors 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > ISS-AE groups terms by OCMQ and anticipates the ST&F layout 4ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > ISS-LAB anticipates the kidney- and muscle-injury Targeted Analysis Guides 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the E3 overlay cites the ST&F IG and OCMQs at 12.2.2 / 12.2.3 > 12.2.2 carries the ST&F IG and OCMQ bases as regulator-text and frames the layout as anticipation 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the E3 overlay cites the ST&F IG and OCMQs at 12.2.2 / 12.2.3 > 12.2.3 names the grouped-term pitfall and has a basis 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > CTD 2.7.4 anticipates grouped-term (OCMQ) review > expectedData or commonPitfalls mention OCMQ 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > the surfaces mention OCMQ at all (so the guards below are not vacuous) 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > no "required" / "must" within a clause of an OCMQ or ST&F mention 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > the OCMQ count and MedDRA version are not fixed in the record 1ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND initial · Introductory Statement: country-withdrawal disclosure cites 312.23(a)(3)(iii), not (a)(3)(iv) 2ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · safety summary: cites 312.33(b)(1)-(4), not (b)(1)-(2) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · IND changes: cites (b)(6) preclinical, (b)(7) manufacturing, (e) Phase 1 mods — not (b)(3)-(5) 1ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · admin section: no Part 56 obligation asserted; cites 312.33(f) and (g) 1ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · regulatoryBasis: no phantom Part 56 element 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > Pre-NDA meeting · 312.47(b)(2) is glossed as "Other meetings", not end-of-Phase-2 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.2 · is the cover letter, and no Module 1 guidance claims a table-of-contents heading (the eCTD backbone is the index) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.20 · general investigational plan cites 312.23(a)(3) and files at FDA heading 1.20 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.14.4.1 · IB: 312.23(a)(5) enumerates content; 312.55 is the separate furnishing duty 0ms
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+Loaded 0 academic documents
+
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy 2ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.2 is Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a code nothing registers gets no line rather than a guessed one 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code 5ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > keeps the module playbooks the overlay does not model 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3 8ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4 summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD primary code is named for that code 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 does not claim to be the ISE 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.4 does not claim to be the ISS 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 states FDA’s own description of the summary 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted
+AssertionError: expected { …(621) } to deeply equal { …(621) }
+
+- Expected
++ Received
+
+@@ -356,13 +356,13 @@
+    "{\"document\":\"csr\",\"section\":\"11.4.7\"}": "d44ac9d72f4eeadc",
+    "{\"document\":\"csr\",\"section\":\"12\"}": "208fc22b9dbcecf6",
+    "{\"document\":\"csr\",\"section\":\"12.1\"}": "d10bf2c0d92839e3",
+    "{\"document\":\"csr\",\"section\":\"12.2\"}": "7437010924e1da0a",
+    "{\"document\":\"csr\",\"section\":\"12.2.1\"}": "d7f61c0ff3b3210b",
+-   "{\"document\":\"csr\",\"section\":\"12.2.2\"}": "162ff3d74dadd86b",
++   "{\"document\":\"csr\",\"section\":\"12.2.2\"}": "8e3ece46df563829",
+    "{\"document\":\"csr\",\"section\":\"12.2.3\"}": "a85ec3f6d39257a5",
+-   "{\"document\":\"csr\",\"section\":\"12.2.4\"}": "e05f120b379dbd59",
++   "{\"document\":\"csr\",\"section\":\"12.2.4\"}": "4f7ba8aef2927bc0",
+    "{\"document\":\"csr\",\"section\":\"12.3\"}": "e5654fec7f407f33",
+    "{\"document\":\"csr\",\"section\":\"12.3.1\"}": "0c3f066c84902e57",
+    "{\"document\":\"csr\",\"section\":\"12.3.1.1\"}": "38712a7d1958f36f",
+    "{\"document\":\"csr\",\"section\":\"12.3.1.2\"}": "71dbc6f04b128d43",
+    "{\"document\":\"csr\",\"section\":\"12.3.1.3\"}": "5bf28a5001083da4",
+@@ -379,37 +379,37 @@
+    "{\"document\":\"csr\",\"section\":\"13\"}": "566cb465bad35586",
+    "{\"document\":\"csr\",\"section\":\"14\"}": "8509f7e9592b2634",
+    "{\"document\":\"csr\",\"section\":\"14.1\"}": "6c79ba735508c1ca",
+    "{\"document\":\"csr\",\"section\":\"14.2\"}": "0be7c9aff4291250",
+    "{\"document\":\"csr\",\"section\":\"14.3\"}": "1f025864991ed654",
+-   "{\"document\":\"csr\",\"section\":\"14.3.1\"}": "9a27b73210254720",
++   "{\"document\":\"csr\",\"section\":\"14.3.1\"}": "ff028736bad7b2a3",
+    "{\"document\":\"csr\",\"section\":\"14.3.2\"}": "c538ba30d42cbf37",
+    "{\"document\":\"csr\",\"section\":\"14.3.3\"}": "bf0fdf211e750fff",
+-   "{\"document\":\"csr\",\"section\":\"14.3.4\"}": "4ec827663dd95710",
+-   "{\"document\":\"csr\",\"section\":\"15\"}": "3ed23f86ca4176bc",
++   "{\"document\":\"csr\",\"section\":\"14.3.4\"}": "e9f1d86faeda86f6",
++   "{\"document\":\"csr\",\"section\":\"15\"}": "17d2237b4b08db76",
+    "{\"document\":\"csr\",\"section\":\"16\"}": "51a23c82db218e4f",
+    "{\"document\":\"csr\",\"section\":\"16.1\"}": "f3d5ef49c239b7fd",
+    "{\"document\":\"csr\",\"section\":\"16.1.1\"}": "7c5b4ef49efcb310",
+    "{\"document\":\"csr\",\"section\":\"16.1.10\"}": "a1c0a527969e6594",
+-   "{\"document\":\"csr\",\"section\":\"16.1.11\"}": "7e1ec29b39aad2e9",
+-   "{\"document\":\"csr\",\"section\":\"16.1.12\"}": "1118ca07d985ada2",
++   "{\"document\":\"csr\",\"section\":\"16.1.11\"}": "f000049df2783a25",
++   "{\"document\":\"csr\",\"section\":\"16.1.12\"}": "8965e52f2cc36c49",
+    "{\"document\":\"csr\",\"section\":\"16.1.2\"}": "a61e747f98d18223",
+    "{\"document\":\"csr\",\"section\":\"16.1.3\"}": "f61b94b430af7a9e",
+    "{\"document\":\"csr\",\"section\":\"16.1.4\"}": "c85b998830e8592c",
+    "{\"document\":\"csr\",\"section\":\"16.1.5\"}": "e90474baec998f11",
+    "{\"document\":\"csr\",\"section\":\"16.1.6\"}": "40f02f3b76432a67",
+    "{\"document\":\"csr\",\"section\":\"16.1.7\"}": "b1f57f8af456640c",
+    "{\"document\":\"csr\",\"section\":\"16.1.8\"}": "b4f5daee30accf16",
+-   "{\"document\":\"csr\",\"section\":\"16.1.9\"}": "3f7fcf636c42caf7",
++   "{\"document\":\"csr\",\"section\":\"16.1.9\"}": "1eaf1d57d483e0d1",
+    "{\"document\":\"csr\",\"section\":\"16.2\"}": "2b14a76f86a14c29",
+    "{\"document\":\"csr\",\"section\":\"16.2.1\"}": "b9de12c431283619",
+    "{\"document\":\"csr\",\"section\":\"16.2.2\"}": "8f5333cf8409d23b",
+    "{\"document\":\"csr\",\"section\":\"16.2.3\"}": "d7798332af27dd44",
+    "{\"document\":\"csr\",\"section\":\"16.2.4\"}": "3b7f99d5d5c24451",
+    "{\"document\":\"csr\",\"section\":\"16.2.5\"}": "0a448f9c2ca59f5d",
+    "{\"document\":\"csr\",\"section\":\"16.2.6\"}": "24f3fd57d9bc5158",
+-   "{\"document\":\"csr\",\"section\":\"16.2.7\"}": "6f1951f6b788396b",
++   "{\"document\":\"csr\",\"section\":\"16.2.7\"}": "ac8b9ed8e8ce55d0",
+    "{\"document\":\"csr\",\"section\":\"16.2.8\"}": "1ef11a0577697e16",
+    "{\"document\":\"csr\",\"section\":\"16.3\"}": "7602e727296c9374",
+    "{\"document\":\"csr\",\"section\":\"16.3.1\"}": "dc6eb3b41c016a77",
+    "{\"document\":\"csr\",\"section\":\"16.3.2\"}": "b88469d325da4e13",
+    "{\"document\":\"csr\",\"section\":\"16.4\"}": "a8aa1a3c3b4b479e",
+
+ ❯ tests/regulatory/requirements-resolver.test.ts:92:17
+     90|     }
+     91|     expect(Object.keys(now).length).toBe(Object.keys(PINNED).length);
+     92|     expect(now).toEqual(PINNED);
+       |                 ^
+     93|   });
+     94| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 19 passed (20)
+      Tests  1 failed | 449 passed (450)
+   Start at  04:22:33
+   Duration  16.97s (transform 12.14s, setup 1.40s, import 25.38s, tests 5.91s, environment 22ms)
+
+
+=== requirements-resolver.test.ts R2 snapshot: not this step ===
+The one failure above (9 csr section hashes, no meeting or DSUR key) fails identically with this step's two source files put back to HEAD and every other working-tree file as found (another lane's uncommitted edits, e.g. server/services/ind/ctd/fda-technical-rules.ts):
+ × tests/regulatory/requirements-resolver.test.ts > get_document_section_requirements — R2 regression snapshot > answers every input exactly as it did before the resolver was extracted 62ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+The meeting and DSUR keys of the snapshot (pre_ind_meeting, end_of_phase_2_meeting, pre_nda_meeting, pre_bla_meeting, dsur) are unchanged by this step.
+
+=== F20 guard shown failing by mutation (reverted) ===
+-- e2fTemplateSection given targetWords [200,400]:
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > dsur sections have no targetWords 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed | 35 skipped (41)
+-- lifecycleTemplateSection given targetWords [100,200]:
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_ind_meeting_package sections have no targetWords 8ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_eop_meeting_package sections have no targetWords 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_nda_meeting_package sections have no targetWords 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_pre_bla_meeting_package sections have no targetWords 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > no meeting or DSUR section carries a word target: neither FDA nor ICH E2F gives one (F20) > fda_formal_meeting_package sections have no targetWords 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 1 passed | 35 skipped (41)

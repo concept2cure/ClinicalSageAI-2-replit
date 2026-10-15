@@ -2,20 +2,28 @@
 /**
  * Cleanup Fixtures (UAT reset)
  *
- * Deletes a UAT-scoped Authoring document (product_code must start with UAT-)
- * and prunes a Stability study (results -> timepoints -> conditions -> tests),
- * then attempts to archive the study if hard delete is unavailable.
+ * Deletes an Authoring document and prunes a Stability study (results ->
+ * timepoints -> conditions -> tests), then attempts to archive the study if
+ * hard delete is unavailable.
+ *
+ * The Authoring delete is the governed one (DP-33, 2026-10-01): the signed-in
+ * session of an owner, admin or manager of the document's organisation, and a
+ * stated reason, recorded with the actor on the audit chain. The static
+ * x-admin-token / ADMIN_TOKEN door it used is removed. AUTH_TOKEN is that
+ * person's access token; REASON is required and is recorded as given.
  *
  * Usage examples:
- *   BASE_URL="http://localhost:5000" ADMIN_TOKEN="secret" DOC_ID="<uuid>" node scripts/cleanup-fixtures.mjs
+ *   BASE_URL="http://localhost:5000" AUTH_TOKEN="<access token>" REASON="UAT run 12 fixture removed" DOC_ID="<uuid>" node scripts/cleanup-fixtures.mjs
  *   BASE_URL="http://localhost:5000" STUDY_ID="<uuid>" node scripts/cleanup-fixtures.mjs
- *   BASE_URL="http://localhost:5000" ADMIN_TOKEN="secret" DOC_ID="<uuid>" STUDY_ID="<uuid>" node scripts/cleanup-fixtures.mjs
  */
 
 const BASE_URL    = process.env.BASE_URL || "http://localhost:5000";
 const DOC_ID      = process.env.DOC_ID || null;
 const STUDY_ID    = process.env.STUDY_ID || null;
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || null;
+const AUTH_TOKEN  = process.env.AUTH_TOKEN || null;
+const REASON      = process.env.REASON || null;
+// This script never defined the logger it calls; the console is what it meant.
+const logger = console;
 
 async function j(url, opts = {}) {
   const r = await fetch(url, opts);
@@ -32,11 +40,13 @@ async function j(url, opts = {}) {
 
 async function deleteAuthoringDoc() {
   if (!DOC_ID) return;
-  if (!ADMIN_TOKEN) throw new Error("ADMIN_TOKEN required to delete Authoring docs");
-  logger.info(`- Deleting Authoring doc ${DOC_ID} (requires UAT product_code + admin token)…`);
+  if (!AUTH_TOKEN) throw new Error("AUTH_TOKEN (an owner, admin or manager's access token) is required to delete an Authoring document");
+  if (!REASON) throw new Error("REASON is required to delete an Authoring document; it is recorded on the audit chain as given");
+  logger.info(`- Deleting Authoring doc ${DOC_ID} (governed delete: session role + reason, audited)…`);
   const res = await fetch(`${BASE_URL}/api/authoring/docs/${DOC_ID}`, {
     method: "DELETE",
-    headers: { "x-admin-token": ADMIN_TOKEN }
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: REASON })
   });
   if (!res.ok) {
     const text = await res.text();

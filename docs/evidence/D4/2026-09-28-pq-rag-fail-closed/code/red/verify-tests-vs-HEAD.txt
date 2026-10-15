@@ -1,0 +1,7 @@
+# node --test tests/ops/verify-rag-corpus.test.mjs
+# against HEAD eb62b566c scripts/verify-rag-corpus.mjs (swapped in, restored after, sha256 checked)
+# SyntaxError: The requested module '../../scripts/verify-rag-corpus.mjs' does not provide an export named 'EVAL_CORPUS_PREDICATES'
+not ok 1 - tests/ops/verify-rag-corpus.test.mjs
+# tests 1
+# pass 0
+# fail 1

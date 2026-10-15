@@ -159,6 +159,10 @@ means it is an inference to confirm at plan or apply time.
   (`ci:client-ip-single-source`, F-24).
 
 ### B10 — pinned RDS minor `engine_version = "15.4"` (unverified)
+- **Resolved 2026-10-01** (`../2026-10-01-b10-rds-engine-version/`): 15.4 is deprecated on RDS, so it
+  could not be created. The stack now takes the major version only (`"15"`), with minor patches
+  in the maintenance window and no automatic major upgrade. A pinned minor is refused by
+  validation, shown red then green.
 - Old minors are retired from RDS on a schedule. Confirm "15.4" is still
   creatable in `us-east-1` at plan time.
 - Otherwise pin a supported 15.x (or 16.x, matching the CI images: pgvector

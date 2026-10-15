@@ -1,0 +1,12 @@
+Mutant R79-unreadable-not-basis: an unreadable source does not count as consulted (successor of M09)
+
+--- server/services/ana/answer-grounding.ts
+- basis: sources.length > 0 || unreadable.length > 0 ? 'sources' : 'no_sources',
++ basis: sources.length > 0 ? 'sources' : 'no_sources',
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check.test.ts > checkAnswer — the basis > a source the check cannot read is named, not counted as read 6ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

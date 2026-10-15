@@ -28,7 +28,7 @@
 | The purge deletes through the door and erases the bytes it reports. A database with the vault but no door refuses the purge (`VAULT_PURGE_UNAVAILABLE`); it does not skip the vault. | `server/services/tenant/tenant-offboarding.ts` (`purgeVaultVersions` replaces the generic delete and the pre-read) |
 | A retention policy that asks for destruction leaves the record untouched (no archive, no tombstone) and is reported as `destructionRefused`, until founder decision FD3. | `server/jobs/retentionCron.ts` |
 | Required at boot, in the security health check and in the daily sweep | `server/services/audit/audit-immutability-triggers.ts` |
-| Reviewed definer entry (`reviewed-risk`: the caller chooses the organization) | `scripts/ci/security-definer-baseline.json` |
+| Reviewed definer entry (`reviewed-risk`: the caller chooses the organization) | `scripts/ci/security-definer-baseline.json (since 2026-09-30 `scripts/db/security-definer-allowlist.json`)` |
 | Policy row | `docs/compliance/part11-immutability-record-class-policy.md` |
 
 ## Verified by making it fail

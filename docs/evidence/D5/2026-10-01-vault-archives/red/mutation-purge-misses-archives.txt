@@ -1,0 +1,9 @@
+# mutation: the purge function no longer deletes the organisation's archives
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > its creating migration is in the deploy set 74ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the retention job's write still works in the organisation's scope (control) 1449ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > an archive cannot be changed, deleted or truncated 16ms
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > another organisation cannot read it 9ms
+ × tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the tenant purge erases the organisation's archives, and no one else's 20ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)

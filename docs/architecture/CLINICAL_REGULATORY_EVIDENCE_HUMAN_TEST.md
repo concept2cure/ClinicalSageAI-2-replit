@@ -45,24 +45,20 @@ export ENABLE_CLINICAL_REGULATORY_GRAPH=true
 `?crl-graph=0` / `'0'` turns it back off. The client flag is a rendering gate only;
 with the server flag off you get honest error states, never another tenant's data.
 
-## 3. Seed demo evidence
+## 3. Put real evidence in the tenant
 
-Populate ONE tenant with clearly-labelled, tenant-private demo evidence (a `[DEMO]`
-CRL with three findings + a verified outcome, a `[DEMO]` CSR + study, and a governed
-design lesson). It also folds the tenant's own `csr_reports` into the spine (the P0b
-projection path).
+There is no demo seed. `scripts/cre/seed-demo-evidence.ts` wrote fictional
+`[DEMO]` records (a CRL, its findings and outcome, a CSR and a design lesson)
+into a tenant's own evidence tables. It was removed on 2026-10-08 under the
+standing rule that no fixture data enters a governed path. Test with real
+evidence instead:
 
-```bash
-# by org id
-DATABASE_URL='postgres://…' npm run cre:seed-demo -- --org <ORG_ID>
-# or by org name (defaults to concept2cure)
-DATABASE_URL='postgres://…' npm run cre:seed-demo -- --org-name concept2cure
-# idempotent; re-run with --verify to print corpus counts
-DATABASE_URL='postgres://…' npm run cre:seed-demo -- --org <ORG_ID> --verify
-```
-
-Nothing is written global-public; the demo never leaks to another tenant and never
-poses as a real FDA record.
+- **The tenant's own CSRs.** `npm run cre:atoms -- --org <ORG_ID>` (below) runs
+  the same P0b projection the seed ran (`projectOrgCsrReports`), folding the
+  tenant's own `csr_reports` into the spine.
+- **A real FDA CRL.** A platform admin ingests it through the live route in
+  section 7. It goes to the shared global-public corpus, as a real FDA record
+  should.
 
 Optional — materialize retrieval atoms (semantic search over the evidence):
 
@@ -72,7 +68,7 @@ DATABASE_URL='postgres://…' npm run cre:atoms -- --org <ORG_ID>
 
 ## 4. Exercise the AnA tools (always on)
 
-In the assistant, as a user of the seeded tenant:
+In the assistant, as a user of that tenant:
 
 | Ask | Tool | Expect |
 |---|---|---|
@@ -95,7 +91,7 @@ approval probability, or binary FDA verdict.
   coverage strip; the **Regulatory outcome** card now resolves the application from
   the findings and shows the verified CRL outcome (it reads "Not verified" only when
   there is genuinely no verified outcome — never inferred from trial completion).
-- **Study Design coverage strip** — counts the structured `csr` sources the seed +
+- **Study Design coverage strip** — counts the structured `csr` sources the
   projection produced.
 
 ## 6. Known honest-empty (not bugs)
@@ -125,14 +121,12 @@ tenant cannot mint cross-tenant FDA evidence.
 
 ## 8. Verify
 
-```bash
-DATABASE_URL='postgres://…' npm run cre:seed-demo -- --org <ORG_ID> --verify
-# → "CRE corpus for org N: X sources, Y findings, Z studies, … design lessons."
-```
-
-Route smoke test (flag on, authenticated):
+Route smoke test (flag on, authenticated), against the evidence put in at
+sections 3 and 7:
 
 ```bash
 curl -sS "$BASE/api/clinical-regulatory-evidence/findings?limit=25" -H "authorization: Bearer $JWT"
-curl -sS "$BASE/api/clinical-regulatory-evidence/outcome?applicationNumber=NDA-DEMO-CRE-001" -H "authorization: Bearer $JWT"
+curl -sS "$BASE/api/clinical-regulatory-evidence/outcome?applicationNumber=<the CRL's application number>" -H "authorization: Bearer $JWT"
 ```
+
+An empty answer is honest: it means no evidence has been put in yet.

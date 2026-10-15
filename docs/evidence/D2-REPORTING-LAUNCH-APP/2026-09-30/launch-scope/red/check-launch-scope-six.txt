@@ -1,0 +1,6 @@
+# ci:launch-scope with the seventh app added to launch-scope.ts and the gate still expecting six
+[ci:launch-scope] 7 apps · 41 surfaces · 20 modules · 36 surface files checked for fixture imports
+  ✗ shape: expected 6 launch apps, parsed 7
+  ✗ registered: launch surface 'compliance-reports' is not in UI_SURFACES
+❌ 2 finding(s)
+exit=0

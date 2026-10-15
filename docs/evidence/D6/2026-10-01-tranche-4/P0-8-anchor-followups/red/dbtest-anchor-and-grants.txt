@@ -1,0 +1,208 @@
+# HEAD 0812a990, 2026-10-01T14:38:25Z. PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1). Final test files against the unfixed code; app_service as HEAD's recipe left it.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 27ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 210ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 45ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 23ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 17ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 9ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 24ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 8ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot turn a truncated head into "archived" 20ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot turn a truncated head into "archived" 27ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot excuse rows removed before an intact head 27ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot excuse rows removed before an intact head 18ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 11. a ledger row that keeps the door's own rules still never excuses a head inside the 24-month window 20ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 12. a head older than the 24-month floor, removed through the door, is archived: not tampering, not verified 13ms
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01) > 13. a truncated chain: the head verdict is broken for that organisation only, and the ops script exits 1 115ms
+   → verifyChainHead is not a function
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01) > 14. no anchor store: the walk passes, and every verdict says the head was not verified against the anchor 14ms
+   → verifyChainHead is not a function
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the stores exist on this database > every append-only store this file names is present (a missing one would make the rest vacuous) 2ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT 13ms
+   → expected [ 'public.audit_log_archives: INSERT' ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not 2ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store 38ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the governed revocation statement still runs (its columns only) 2ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back 5ms
+   → expected [ …(2) ] to deeply equal [ 'public.audit_logs: DELETE' ]
+ × tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied 45ms
+   → expected [ { …(2) } ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name 68ms
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store 3ms
+   → expected [ 'public.audit_log_archives: INSERT' ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger 13ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row 5ms
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501) 4ms
+   → expected 'ran (1 row(s))' to match /^42501 permission denied for table au…/
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the archive door still deletes for app_service, and records the batch in its ledger 8ms
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store 24ms
+   → expected [] to deeply equal [ 'public.audit_log_archives: INSERT' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT
+AssertionError: expected [ 'public.audit_log_archives: INSERT' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.audit_log_archives: INSERT",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:210:46
+    208| describe('the grant recipe (provisionAppServiceRole) on a per-run role…
+    209|   it('withholds UPDATE, DELETE and TRUNCATE on every append-only store…
+    210|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+       |                                              ^
+    211|     const held = await privileges(runtimeRole);
+    212|     for (const { store } of present) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back
+AssertionError: expected [ …(2) ] to deeply equal [ 'public.audit_logs: DELETE' ]
+
+- Expected
++ Received
+
+  [
++   "public.audit_log_archives: INSERT",
+    "public.audit_logs: DELETE",
+  ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:245:46
+    243|   it('a re-run of the recipe takes a hand GRANT of DELETE on audit_log…
+    244|     await owner.query(`GRANT DELETE ON public.audit_logs TO ${runtimeR…
+    245|     expect(await beyondCeiling(runtimeRole)).toEqual(['public.audit_lo…
+       |                                              ^
+    246|     await refreshRuntimeRoleGrants(owner, { role: runtimeRole });
+    247|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied
+AssertionError: expected [ { …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "held": [
++       "DELETE",
++     ],
++     "relation": "public.audit_logs",
++   },
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:255:43
+    253|     const audit = await auditRuntimeRoleGrants(owner, runtimeRole);
+    254|     const onStores = (r: { relation: string }) => (STORES as readonly …
+    255|     expect(audit.excess.filter(onStores)).toEqual([]);
+       |                                           ^
+    256|     expect(audit.denied.filter(onStores)).toEqual([]);
+    257|     expect(audit.ownedAppendOnly).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store
+AssertionError: expected [ 'public.audit_log_archives: INSERT' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.audit_log_archives: INSERT",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:287:43
+    285| describe(`${APP_ROLE}, as deploy-migrate step 4/5 leaves it`, () => {
+    286|   it('holds no UPDATE, DELETE or TRUNCATE on any append-only store', a…
+    287|     expect(await beyondCeiling(APP_ROLE)).toEqual([]);
+       |                                           ^
+    288|   });
+    289|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501)
+AssertionError: expected 'ran (1 row(s))' to match /^42501 permission denied for table au…/
+
+- Expected:
+/^42501 permission denied for table audit_log_archives/
+
++ Received:
+"ran (1 row(s))"
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:329:29
+    327|       ),
+    328|     );
+    329|     expect(outcome(forged)).toMatch(/^42501 permission denied for tabl…
+       |                             ^
+    330|   });
+    331|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store
+AssertionError: expected [] to deeply equal [ 'public.audit_log_archives: INSERT' ]
+
+- Expected
++ Received
+
+- [
+-   "public.audit_log_archives: INSERT",
+- ]
++ []
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:353:22
+    351|       .map((e: { relation: string; held: string[] }) => `${e.relation}…
+    352|       .sort();
+    353|     expect(reported).toEqual(await beyondCeiling(APP_ROLE));
+       |                      ^
+    354|     expect(reported).toEqual([]);
+    355|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01) > 13. a truncated chain: the head verdict is broken for that organisation only, and the ops script exits 1
+TypeError: verifyChainHead is not a function
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:452:36
+    450|
+    451|     const missing = { organizationId: 7, rowId: seven[3], kind: 'head_…
+    452|     expect(await withClient((c) => verifyChainHead(c, { store }))).toM…
+       |                                    ^
+    453|     expect(await withClient((c) => verifyChainHead(c, { store, organiz…
+    454|     expect(await withClient((c) => verifyChainHead(c, { store, organiz…
+ ❯ withClient server/services/audit/__tests__/chain-anchor.dbtest.ts:164:18
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:452:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01) > 14. no anchor store: the walk passes, and every verdict says the head was not verified against the anchor
+TypeError: verifyChainHead is not a function
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:468:42
+    466|     expect(await tamper('DELETE FROM audit_logs WHERE id = ANY($1::uui…
+    467|
+    468|     const head = await withClient((c) => verifyChainHead(c, { store: n…
+       |                                          ^
+    469|     expect(head).toMatchObject({ verified: false, status: 'not_configu…
+    470|     expect(head.reason).toMatch(/^head not verified against the anchor…
+ ❯ withClient server/services/audit/__tests__/chain-anchor.dbtest.ts:164:18
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:468:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  8 failed | 22 passed (30)
+   Start at  14:38:26
+   Duration  2.37s (transform 304ms, setup 118ms, import 198ms, tests 1.53s, environment 0ms)
+

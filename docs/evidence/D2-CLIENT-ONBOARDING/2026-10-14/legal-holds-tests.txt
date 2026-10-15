@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+·········································stderr | server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > fails closed with an honest response when ownership cannot be read, without opening a transaction
+{
+  "timestamp": "2026-10-14T03:20:12.793Z",
+  "level": "error",
+  "message": "[vault-legal-holds] Legal hold could not be placed",
+  "context": {
+    "orgId": 7,
+    "error": "program ownership check could not be run: target database unavailable"
+  }
+}
+
+stderr | server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > rolls the hold back when its audit row cannot be written (500): a hold nobody can account for is not placed
+{
+  "timestamp": "2026-10-14T03:20:12.808Z",
+  "level": "error",
+  "message": "[vault-legal-holds] Legal hold could not be placed",
+  "context": {
+    "orgId": 7,
+    "error": "chain unavailable"
+  }
+}
+
+···················
+
+ Test Files  6 passed (6)
+      Tests  60 passed (60)
+   Start at  03:20:00
+   Duration  12.71s (transform 2.14s, setup 366ms, import 4.47s, tests 5.68s, environment 1.35s)
+

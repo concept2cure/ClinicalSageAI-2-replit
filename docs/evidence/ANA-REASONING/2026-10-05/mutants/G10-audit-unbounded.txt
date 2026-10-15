@@ -1,0 +1,12 @@
+Mutant G10-audit-unbounded: a long draft writes an unbounded audit row
+
+--- server/routes/ana-ri/governed-execution-audit.ts
+- items.slice(0, MAX_ROW_TEXTS).map((c) => c.text.slice(0, MAX_ROW_TEXT_CHARS));
++ items.map((c) => c.text);
+
+Tests run: server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/governed-action-proposal-check.test.ts > the sign-off row names what the approver was shown about the draft > keeps the row bounded: at most twenty texts of each list, each at most 200 characters 7ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

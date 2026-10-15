@@ -1,0 +1,16 @@
+Mutant B14-proposer-unbound: AnA stays the verified proposer of words her turn did not write
+
+--- server/routes/authoring.router.ts
+- if (proposer.proposedByVerified && source?.verified !== true) proposer.proposedByVerified = false;
++ 
+
+Tests run: server/routes/__tests__/authoring-decision-source.pglite.test.ts server/routes/__tests__/authoring-record-decisions.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: words the turn never wrote → unverified, and AnA is not the verified proposer 182ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > bulk: each change is held to its own words — the turn’s are verified, others are not 57ms
+ × server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 2 — "Accept all" records every change > 25 changes → 25 upserts, ONE trail row carrying all 25 texts whole with their hashes, one chain entry 166ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: a decision that names a turn and no words is not vouched for 56ms
+ × server/routes/__tests__/authoring-decision-source.pglite.test.ts > the words decided must be words the named turn wrote > single: a record that does not verify vouches for nothing, even for its own words 40ms
+      Tests  5 failed | 15 passed (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯

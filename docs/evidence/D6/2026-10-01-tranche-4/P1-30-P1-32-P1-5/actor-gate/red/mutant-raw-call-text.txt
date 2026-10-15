@@ -1,0 +1,54 @@
+# mutant: the actor test reads the raw call text (strings, comments, nested objects) instead of argumentText
+[ci:regulated-delete-audit:selftest] testing /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/54adf5a4-792f-5e11-8798-ae17682e5284/scratchpad/mutant-raw-text.mjs (SELFTEST_GATE_PATH)
+  ✓ FAILS on the 2026-09-23 CTQ-factor hard delete — any member, no reason, no ledger row
+  ✓ FAILS on the pre-governed QMP delete, `.delete(<Table>)` on its own line of a chain
+  ✓ FAILS on a raw-SQL IND delete with no audit_events row, even inside a transaction
+  ✓ FAILS on lower-case SQL in a nested router directory
+  ✓ FAILS on every regulated table, Drizzle and SQL spellings (a table off the list reports green)
+  ✓ FAILS when a comment names the audit writers and a log line says "audit" — neither is an audit
+  ✓ FAILS on an unaudited handler far below an audited one — an audit covers its window, not the file
+  ✓ FAILS on a delete after governedQmsWrite(...) closes; the one inside it stays covered
+  ✓ FAILS in --json mode too: ok:false, the site, exit 1
+  ✓ FAILS on the DP-33 UAT delete: an auditService.logAction row that names no user is not attributable
+  ✓ FAILS when the actor key is there and empty (userId: undefined)
+  ✓ FAILS on an audit_events INSERT with no user_id column
+  ✓ FAILS on writeMutation with null in the actor's position
+  ✗ FAILS when the actor only inside a nested object (the subject, not the operator)
+      expected exit 1, got 0
+      output lacked: "FAIL — 1 unaudited"
+      output lacked: "server/routes/authoring.router.ts:2"
+      output lacked: "names no actor"
+      | [regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+  ✗ FAILS when the word userId only inside a string
+      expected exit 1, got 0
+      output lacked: "FAIL — 1 unaudited"
+      output lacked: "server/routes/authoring.router.ts:2"
+      output lacked: "names no actor"
+      | [regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+  ✗ FAILS when the actor only inside a comment
+      expected exit 1, got 0
+      output lacked: "FAIL — 1 unaudited"
+      output lacked: "server/routes/authoring.router.ts:2"
+      output lacked: "names no actor"
+      | [regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+  ✗ FAILS when userId: 'system'
+      expected exit 1, got 0
+      output lacked: "FAIL — 1 unaudited"
+      output lacked: "server/routes/authoring.router.ts:2"
+      output lacked: "names no actor"
+      | [regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+  ✓ FAILS when userId: (null)
+  ✓ FAILS when the only auditService call beside the delete is a read
+  ✓ quiet — an allow-list entry with a written justification suppresses its file
+  ✓ FAILS on a file the allow-list does not name — an entry covers its own file only
+  ✓ FAILS when the allow-list entry carries an empty justification
+  ✓ quiet — ind.ts as shipped: audit_events INSERT in the delete transaction (after the delete)
+  ✓ quiet — authoring governed delete with writeChainedAuditRow (2026-10-01)
+  ✓ quiet — coauthor delete with recordCoauthorDocumentEvent
+  ✓ quiet — c2c evidence unlink with writeMutation on the same client
+  ✓ quiet — a delete inside governedQmsWrite's callback, no audit call in its window, ')' in a string and a comment
+  ✓ quiet — route registrations, SELECTs, comments and look-alike tables are not regulated deletes
+  ✓ quiet — test fixtures under __tests__/ and *.test.ts are not scanned
+
+[ci:regulated-delete-audit:selftest] FAIL — 4/29 case(s) did not hold (1.6s).
+exit 1

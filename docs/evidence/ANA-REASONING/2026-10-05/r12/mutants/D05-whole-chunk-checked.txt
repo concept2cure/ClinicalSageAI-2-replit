@@ -1,0 +1,12 @@
+Mutant D05-whole-chunk-checked: the check reads the whole chunk, not what the model was shown
+
+--- server/routes/authoring.router.ts
+- shownEvidence: retrievalStatus === 'ok' ? evidenceShown(evidenceBlock) : null,
++ shownEvidence: retrievalStatus === 'ok' ? retrievedChunks.map((c) => c.content).join('\n') : null,
+
+Tests run: server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+Result: KILLED
+
+ × server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a figure past the 600-character cut is not found: the model was never shown it 23ms
+      Tests  1 failed | 8 passed (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

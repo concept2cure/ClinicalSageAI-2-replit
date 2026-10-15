@@ -1,0 +1,9 @@
+## GREEN: tests/db/cre-capture-immutability.dbtest.ts after deploy-migrate applied 20261001_cre_evidence_sources_capture_immutability.sql (applied twice: replay)
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a recorded checksum cannot be changed or cleared; a missing one can be set once 2059ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a revision link, a project scope, the organization and the source type do not change 15ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a superseded capture cannot be made current again 7ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a capture cannot be deleted, and the record cannot be truncated 10ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > createSupersedingSource retires the predecessor and links the revision 58ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > a mutable column still changes 5ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

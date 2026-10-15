@@ -1,0 +1,607 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+{
+  "timestamp": "2026-09-29T01:48:48.828Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T01:48:48.993Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:48:48.999Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T01:48:49.000Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T01:48:49.354Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-09-29T01:48:49.338Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:48:49.339Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-09-29T01:48:49.339Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > commits the record, every text it references and a chain row carrying its hash 92ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > leaves nothing behind when the chain write fails 24ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > stores a repeated text once — turn 40 references the history, it does not copy it 45ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_turn_records SET outcome = 'failed' 27ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_turn_records 11ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_turn_records 20ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_record_blobs SET chars = 0 28ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_record_blobs 14ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_record_blobs 34ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > refuses a record or a text stored under a hash that is not its own 4ms
+stdout | server/services/ana/__tests__/turn-record.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-09-29T01:48:56.524Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a record rewritten with a consistent hash no longer matches the chain 38ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a text that is missing is named 1ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > controls that could not be read are recorded as unknown, not as none 1ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > numbers model calls in order, and gives each later call the input staged for it 5ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes 144ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists 110ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record 59ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed 87ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact 34ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+[turn-records] tenant chain walk failed: no admin scope
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+[turn-records] export not recorded: simulated failure
+
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline 49ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed 67ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves 59ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it 50ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing 18ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written 27ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over 45ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain 42ms
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts
+{
+  "timestamp": "2026-09-29T01:48:58.572Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 118ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 10ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 15ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 33ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing 12ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason 6ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > accepts a completed draft that reports its finish reason 35ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > the batch records what it produced: one turn record holding the draft, its id and hash on the result 26ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a forged claim with no record behind it yields no accepted_machine_draft span, and the claim is disclosed 23ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a real record id does not launder the accepter's own text as AnA's 58ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a draft accepted with its record id is AnA's, accepted by this person, under the record's model 56ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a model named in the body is ignored; the model comes from the record 42ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record from another tenant does not verify 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record that no longer verifies whole does not verify a claim 72ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of "not-a-uuid" is disclosed as malformed_turn_record_id, not answered with a 500 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of 12345 is disclosed as no_turn_record_id, not answered with a 500 16ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of {"id":"3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b"} is disclosed as no_turn_record_id, not answered with a 500 20ms
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T01:49:00.305Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ai_generation ai_drafting_surface",
+  "context": {
+    "userId": 501,
+    "tenantId": 77,
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T01:49:00.318Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:417:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T01:49:00.320Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T01:49:00.322Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:397:36",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+    at TamperProofAuditLog.log (./server/lib/tamper-proof-audit.ts:430:39)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at AuditService.logAction (./server/services/auditService.ts:455:9)
+    at ./server/routes/ana-intelligence.ts:105:7
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T01:49:00.325Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > selects numberless sections independently 160ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > the accepter's own words, stored in the record as their request, do not verify as AnA's 35ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one verified claim does not carry a forged one: only the recorded draft is AnA's 33ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept 65ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > renders one card per document, not one card for the shared number 124ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-A: words typed inside < … > into the draft: does not verify, and every clause is the accepter's 45ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the recorded draft and the accepter's own paragraph, as one claim: does not verify, and every clause is the accepter's 44ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > accepts each card into its OWN document 107ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > marks the card accepted and reports the version its content superseded 73ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > the draft with an asterisk AnA never wrote: does not verify, and every clause is the accepter's 62ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > PROBE-B: words typed inside < … > into a verified draft are the accepter's, not AnA's 38ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > a draft recorded as markdown verifies as the text it shows 49ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a claim with no record behind it: the audit reason, the version summary and lastDraftSource say what verified 18ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > no claim at all: the audit reason, the version summary and lastDraftSource say what verified 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft: the audit reason, the version summary and lastDraftSource say what verified 41ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft beside a forged paragraph: the audit reason, the version summary and lastDraftSource say what verified 35ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does NOT mark the card accepted when the write fails, and says why 71ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does not treat a 200 carrying success:false as a write 73ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does not send a second write while the first is in flight 72ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > records the framework the prose was actually drafted against 47ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the accept names the turn record the draft came from, not a model > sends the turn record id the batch returned, and no model 87ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > refuses to draft, and says why, instead of producing sample cards 17ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > refuses an image that is not an uploaded figure, and writes nothing 479ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > accepts an uploaded figure reference 38ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > produces no cards and sends no drafting request even when run() is invoked 912ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a recorded turn carries its id and hash from post_done 87ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a failed turn keeps the status the error event carried
+[useAnaChat] stream failed: An error occurred while generating the response
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a turn that was not recorded carries the reason 56ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > never renders the fabricated prose, by any label 922ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a failed turn keeps the status the error event carried 58ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a server that says nothing leaves nothing on the turn 54ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > does not offer acceptance, and does not call anything accepted 916ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > says the service is unreachable in the header, not that this is a preview 22ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > presets the framework the documents recorded 20ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > stays blank when the documents record nothing 20ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > stays blank for a framework this build has no option for 21ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > renders a spine with no framework field at all — an older server is not an error 15ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > a turn that ended here before the server spoke for it > after Stop, asks for the record by run id and shows what the server filed 1788ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > drops anything it cannot read, and never reads it as recorded 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > keeps an unexplained refusal as a refusal 5ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > found a substantial number of source files 3ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > includes the surfaces that carried the defect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API has no remaining reads anywhere 81ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED has no remaining reads anywhere 66ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING has no remaining reads anywhere 73ms
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+{
+  "timestamp": "2026-09-29T01:49:05.304Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API is not assigned either — it stays a non-thing 79ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED is not assigned either — it stays a non-thing 89ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING is not assigned either — it stays a non-thing 74ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never written 89ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never read either — it stays a non-thing 64ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > the shared handoff POSTs a document and a section 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx hands off through saveToAuthoring 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx hands off through saveToAuthoring 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcModule.tsx hands off through saveToAuthoring 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx does not navigate when the handoff failed 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx does not navigate when the handoff failed 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcModule.tsx does not navigate when the handoff failed 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/BatchDraft.tsx reads no ghost channel at all 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/AnaVerbs.tsx reads no ghost channel at all 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > __C2C_DOC_ID is read nowhere, so it needs no fence 63ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/LicensingSurface.tsx goes through dataConnect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/ReportEngine.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/AnaMemory.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > liveMutateOrNull exists and returns null rather than a fixture 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > AnaMemory reports what actually happened instead of always claiming success 0ms
+stdout | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+{
+  "timestamp": "2026-09-29T01:49:06.183Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:49:06.183Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+{
+  "timestamp": "2026-09-29T01:49:06.183Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects the empty-list-for-an-object case that caused the crashes 15ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > names the path in the error, so the failing route is identifiable from a log 2ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a JSON scalar 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a bare array 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects an object missing a required key 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > rejects a 200 carrying an error body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — rejects what is not the contract > reports the HTTP status alongside the rejection 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > accepts the well-formed payload (the guard did not gut the happy path) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > accepts present-but-null fields — "no program selected yet" is real data 2ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > does not guard an ABSENT payload — that is the honest empty state 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > does not guard a 204 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > is unchanged when no guard is passed (the 100+ existing call sites) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > hasKeys / isRowsWith > hasKeys rejects arrays and null, accepts an object with the keys 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > hasKeys / isRowsWith > isRowsWith accepts an EMPTY array — zero rows is a real answer 0ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveData surfaces a shape rejection as error, not as data 87ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveRows reports a non-array as an error instead of a false empty state 69ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > useLiveRows still reports a genuinely empty list as empty 56ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > the hooks carry the guard through > an INLINE guard does not re-trigger the fetch on every render 62ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > a guarded surface reports instead of crashing > BatchDraft renders its error state for the payload that used to crash it 119ms
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > a guarded surface reports instead of crashing > BatchDraft still renders its real content for a well-formed spine 36ms
+stdout | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+Loaded 0 academic documents
+
+stdout | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+{
+  "timestamp": "2026-09-29T01:49:09.947Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:49:09.949Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+{
+  "timestamp": "2026-09-29T01:49:09.950Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+[database] Database connection successful
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step, the answer, and what the door cannot report 39ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > a turn with no organization is not recorded, and says why 5ms
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+[Claude Agent] Tool: lookup_regulation [ 'cfr' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+stdout | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+[Claude Agent] Tool: project_knowledge_search [ 'query' ]
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+[Claude Intelligence] Agent error: gateway down
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+{
+  "timestamp": "2026-09-29T01:49:10.652Z",
+  "level": "error",
+  "message": "[ana-intelligence] running the agent failed",
+  "context": {
+    "err": "gateway down",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > reports a fault that is not the gateway's as a failure result too — without leaking the internals
+{
+  "timestamp": "2026-09-29T01:49:10.689Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "broken",
+    "err": "relation \"prompt_versions\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > returns a result for every section, keeping the successful drafts when one section cannot be drafted 24ms
+ ✓ server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > reports a fault that is not the gateway's as a failure result too — without leaking the internals 2ms
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done
+{
+  "timestamp": "2026-09-29T01:49:10.786Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted
+{
+  "timestamp": "2026-09-29T01:49:10.813Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status 56ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId 24ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool 13ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn 24ms
+stderr | server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error
+{
+  "timestamp": "2026-09-29T01:49:10.838Z",
+  "level": "error",
+  "message": "[feature-toggle] read failed — reporting the feature DISABLED",
+  "context": {
+    "featureKey": "ana.document_catalog",
+    "organizationId": 7,
+    "reason": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done 156ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted 23ms
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error 25ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > never emits an angle bracket from entity-escaped input 2ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > strips raw angle brackets too, not just entity-encoded ones 1ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > double-encoding cannot smuggle a bracket through 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > still decodes the entities that matter for readability 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > returns null rather than a fabricated summary for empty content 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 2 — bdSample escapes interpolated server data > renders a hostile preview as visible text, not markup 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 2 — bdSample escapes interpolated server data > escapes the ampersand first so escaping is not itself bypassable 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 2 — bdSample escapes interpolated server data > handles null and undefined without emitting "null" 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > strips an event handler that reached the sink unescaped 22ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > strips script tags 8ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > strips javascript: URLs 4ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > leaves legitimate draft markup intact, including citation spans 8ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > renders the placeholder unchanged 5ms
+ ✓ tests/security/batch-draft-xss.test.ts > end to end — stored payload cannot reach the DOM as markup > survives the full stored -> preview -> bdSample -> sink path inert 17ms
+ ✓ tests/security/batch-draft-xss.test.ts > end to end — stored payload cannot reach the DOM as markup > is closed even if the preview layer alone were reverted 4ms
+ ✓ tests/security/batch-draft-xss.test.ts > end to end — stored payload cannot reach the DOM as markup > is closed even if the escaping layer alone were reverted 3ms
+ ✓ tests/security/batch-draft-xss.test.ts > end to end — stored payload cannot reach the DOM as markup > the assertion itself is not vacuous — it fails on genuinely live markup 9ms
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer
+[AnA RI Stream] Assistant persist failed: db down
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it
+[AnA RI Stream] Post-processing failed: socket hiccup
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it
+[AnA RI Stream] Post-processing failed: Cannot read properties of null (reading 'filter')
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered 7000ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it 1ms
+stdout | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-09-29T01:49:12.470Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:49:12.472Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-09-29T01:49:12.472Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-identity.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-09-29T01:49:12.542Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/rls-scoped-route-mounts-tranche2.contract.test.ts > RLS-scoped route mounts — tranche 2 > register-project-routes imports requireTenantContext 2ms
+ ✓ tests/rls-scoped-route-mounts-tranche2.contract.test.ts > RLS-scoped route mounts — tranche 2 > register-inline-routes imports requireTenantContext 1ms
+ ✓ tests/rls-scoped-route-mounts-tranche2.contract.test.ts > RLS-scoped route mounts — tranche 2 > /api/quality is mounted in a mountAll call gated by requireTenantContext 0ms
+ ✓ tests/rls-scoped-route-mounts-tranche2.contract.test.ts > RLS-scoped route mounts — tranche 2 > /api/quality is NOT left in an ungated mountAll group 1ms
+ ✓ tests/rls-scoped-route-mounts-tranche2.contract.test.ts > RLS-scoped route mounts — tranche 2 > /api/mdx/ana-drafts is gated, and mdxAnaDraftsRoutes serves nothing outside it 1ms
+ ✓ tests/rls-scoped-route-mounts-tranche2.contract.test.ts > RLS-scoped route mounts — tranche 2 > /api/mdx/vault is gated, and mdxVaultRoutes serves nothing outside it 1ms
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body 30ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached 5ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant 24ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/cerv2-sections is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 2ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/batch-draft is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 1ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/ivd-completeness is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 1ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/task-management is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 0ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/review is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 0ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > both bootstrap files import requireTenantContext 1ms
+stdout | server/routes/__tests__/batch-draft-accept.test.ts
+{
+  "timestamp": "2026-09-29T01:49:13.084Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:49:13.086Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept.test.ts
+{
+  "timestamp": "2026-09-29T01:49:13.086Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept.test.ts
+{
+  "timestamp": "2026-09-29T01:49:13.134Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > returns the framework when every document that records one agrees 2ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > returns null when two documents disagree — a mixed dossier has no single answer 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > ignores documents that record nothing — a half-drafted dossier still has one filing type 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > returns null for a dossier that has never been drafted 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > ignores non-string and blank values rather than coercing them 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > trims, so a stored " ich_clinical " matches the picker option 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > tolerates a metadata column that is not an object at all 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the framework allowlist has not drifted from the drafting service > matches RegulatoryFramework exactly 1ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the framework allowlist has not drifted from the drafting service > rejects a value the drafting service has no expectations for 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > is a real route, not a placeholder 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > snapshots the replaced content into coauthor_document_versions 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > locks the row it is about to read-then-overwrite 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > writes an audit event for the change, in the same transaction 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > rolls back rather than leaving a half-applied acceptance 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > scopes both the read and the write to the authenticated organization 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > merges metadata instead of replacing it 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > never takes the actor from the request body 0ms
+
+ Test Files  15 passed (15)
+      Tests  198 passed (198)
+   Start at  01:48:45
+   Duration  28.26s (transform 17.00s, setup 1.03s, import 30.59s, tests 42.52s, environment 3.19s)
+

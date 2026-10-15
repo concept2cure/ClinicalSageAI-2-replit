@@ -1,0 +1,56 @@
+# 2026-10-01T13:59:51Z apply migrations/20261001_compliance_review_records.sql + the tenant sweep through applyMigrationFiles, twice (CLAUDE.md Rule 1), on c2c_testdb
+## run 1
+    [NOTICE] trigger "trg_compliance_review_records_guard" for relation "public.compliance_review_records" does not exist, skipping
+    [NOTICE] trigger "trg_compliance_review_records_no_truncate" for relation "public.compliance_review_records" does not exist, skipping
+    [NOTICE] trigger "trg_compliance_review_records_signed_ins" for relation "public.compliance_review_records" does not exist, skipping
+    [NOTICE] trigger "trg_compliance_review_records_signed_upd" for relation "public.compliance_review_records" does not exist, skipping
+✓ applied: migrations/20261001_compliance_review_records.sql
+    [NOTICE] [rls-sweep] tenant_isolation_policy applied to 1 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+✓ applied: db/migrations/20260801_tenant_isolation_sweep.sql
+{"applied":["migrations/20261001_compliance_review_records.sql","db/migrations/20260801_tenant_isolation_sweep.sql"],"failures":[]}
+exit 0
+## run 2 (replay)
+✓ applied: migrations/20261001_compliance_review_records.sql
+    [NOTICE] [rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+✓ applied: db/migrations/20260801_tenant_isolation_sweep.sql
+{"applied":["migrations/20261001_compliance_review_records.sql","db/migrations/20260801_tenant_isolation_sweep.sql"],"failures":[]}
+exit 0
+## the table as the deploy leaves it
+          relname          | relrowsecurity | relforcerowsecurity 
+---------------------------+----------------+---------------------
+ compliance_review_records | t              | t
+(1 row)
+
+         polname         |                                                                                                                                                                                                      using                                                                                                                                                                                                       
+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ tenant_isolation_policy | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+(1 row)
+
+                  tgname                   | tgenabled | tgdeferrable | tginitdeferred 
+-------------------------------------------+-----------+--------------+----------------
+ trg_compliance_review_records_guard       | O         | f            | f
+ trg_compliance_review_records_no_truncate | O         | f            | f
+ trg_compliance_review_records_signed_ins  | O         | t            | t
+ trg_compliance_review_records_signed_upd  | O         | t            | t
+(4 rows)
+
+                  conname                  | contype 
+-------------------------------------------+---------
+ compliance_review_records_kind            | c
+ compliance_review_records_organization_fk | f
+ compliance_review_records_period          | c
+ compliance_review_records_pkey            | p
+ compliance_review_records_reviewer_fk     | f
+ compliance_review_records_shapes          | c
+ compliance_review_records_signature_fk    | f
+ compliance_review_records_signed_state    | c
+ compliance_review_records_status          | c
+ trg_compliance_review_records_signed_ins  | t
+ trg_compliance_review_records_signed_upd  | t
+(11 rows)
+
+ app_service_dml 
+-----------------
+ t
+(1 row)
+

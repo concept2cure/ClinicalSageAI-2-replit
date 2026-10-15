@@ -1,0 +1,26 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <scratch>/review-figure
+
+stdout | canvas-pre.probe.test.ts > canvas view of the probe inputs > pre holding a valid inline figure
+CANVAS [pre holding a valid inline figure] blocks=["paragraph","codeBlock","image"] images=["data:image/png;base64,iVBORw0KGgoAAAANSU…60e6kgAAAABJRU5ErkJggg=="] lossy(source mode)=false
+
+stdout | canvas-pre.probe.test.ts > canvas view of the probe inputs > bogus comment hiding an inline figure
+CANVAS [bogus comment hiding an inline figure] blocks=["paragraph"] images=[] lossy(source mode)=false
+
+stdout | canvas-pre.probe.test.ts > canvas view of the probe inputs > template hiding an inline figure
+CANVAS [template hiding an inline figure] blocks=["paragraph"] images=[] lossy(source mode)=false
+
+ ✓ canvas-pre.probe.test.ts > canvas view of the probe inputs > pre holding a valid inline figure 83ms
+ ✓ canvas-pre.probe.test.ts > canvas view of the probe inputs > bogus comment hiding an inline figure 13ms
+stdout | canvas-pre.probe.test.ts > canvas view of the probe inputs > duplicate src, second in upper case
+CANVAS [duplicate src, second in upper case] blocks=["paragraph","image"] images=["data:image/png;base64,iVBORw0KGgoAAAANSU…60e6kgAAAABJRU5ErkJggg=="] lossy(source mode)=false
+
+ ✓ canvas-pre.probe.test.ts > canvas view of the probe inputs > template hiding an inline figure 15ms
+ ✓ canvas-pre.probe.test.ts > canvas view of the probe inputs > duplicate src, second in upper case 15ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:53:30
+   Duration  1.03s (transform 154ms, setup 113ms, import 573ms, tests 130ms, environment 0ms)
+

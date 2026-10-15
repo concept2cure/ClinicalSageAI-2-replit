@@ -1,0 +1,126 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 401 without exposing server details
+[useAnaChat] loadThread non-ok: 401
+[useAnaChat] loadThread failed: loadThread 401
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 403 without exposing server details
+[useAnaChat] loadThread non-ok: 403
+[useAnaChat] loadThread failed: loadThread 403
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 404 without exposing server details
+[useAnaChat] loadThread non-ok: 404
+[useAnaChat] loadThread failed: loadThread 404
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 429 without exposing server details
+[useAnaChat] loadThread non-ok: 429
+[useAnaChat] loadThread failed: loadThread 429
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: {} 20ms
+   → expected undefined to be an instance of Error
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { messages: null } 3ms
+   → expected undefined to be an instance of Error
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { messages: 'unavailable' } 3ms
+   → expected undefined to be an instance of Error
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { error: { message: 'internal failure details' } } 2ms
+   → expected undefined to be an instance of Error
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > accepts an explicitly empty list and clears a prior failed read on retry 4ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 401 without exposing server details 6ms
+   → expected 'This conversation couldn\'t load. Ret…' to contain 'Sign in again, then retry loading thi…'
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 403 without exposing server details 4ms
+   → expected 'This conversation couldn\'t load. Ret…' to contain 'You do not have access to this conver…'
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 404 without exposing server details 3ms
+   → expected 'This conversation couldn\'t load. Ret…' to contain 'This conversation is no longer availa…'
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 429 without exposing server details 3ms
+   → expected 'This conversation couldn\'t load. Ret…' to contain 'Too many conversation requests. Wait …'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: {}
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { messages: null }
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { messages: 'unavailable' }
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { error: { message: 'internal failure details' } }
+AssertionError: expected undefined to be an instance of Error
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts:21:21
+     19|   it.each([{}, { messages: null }, { messages: 'unavailable' }, { erro…
+     20|     const { result, failure } = await failedLoad(200, body);
+     21|     expect(failure).toBeInstanceOf(Error);
+       |                     ^
+     22|     expect(result.current.threadLoadError).toMatchObject({ threadId: '…
+     23|     expect(result.current.threadId).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 401 without exposing server details
+AssertionError: expected 'This conversation couldn\'t load. Ret…' to contain 'Sign in again, then retry loading thi…'
+
+Expected: "Sign in again, then retry loading this conversation."
+Received: "This conversation couldn't load. Retry, or start a new conversation. Your question has not been sent."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts:48:53
+     46|   ])('explains recovery for HTTP %s without exposing server details', …
+     47|     const { result } = await failedLoad(Number(status), { error: 'inte…
+     48|     expect(result.current.threadLoadError?.message).toContain(recovery…
+       |                                                     ^
+     49|     expect(result.current.threadLoadError?.message).toContain('Your qu…
+     50|     expect(result.current.threadLoadError?.message).not.toContain('int…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 403 without exposing server details
+AssertionError: expected 'This conversation couldn\'t load. Ret…' to contain 'You do not have access to this conver…'
+
+Expected: "You do not have access to this conversation. Select another conversation or ask an administrator to review your access."
+Received: "This conversation couldn't load. Retry, or start a new conversation. Your question has not been sent."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts:48:53
+     46|   ])('explains recovery for HTTP %s without exposing server details', …
+     47|     const { result } = await failedLoad(Number(status), { error: 'inte…
+     48|     expect(result.current.threadLoadError?.message).toContain(recovery…
+       |                                                     ^
+     49|     expect(result.current.threadLoadError?.message).toContain('Your qu…
+     50|     expect(result.current.threadLoadError?.message).not.toContain('int…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 404 without exposing server details
+AssertionError: expected 'This conversation couldn\'t load. Ret…' to contain 'This conversation is no longer availa…'
+
+Expected: "This conversation is no longer available. Select another conversation or start a new one."
+Received: "This conversation couldn't load. Retry, or start a new conversation. Your question has not been sent."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts:48:53
+     46|   ])('explains recovery for HTTP %s without exposing server details', …
+     47|     const { result } = await failedLoad(Number(status), { error: 'inte…
+     48|     expect(result.current.threadLoadError?.message).toContain(recovery…
+       |                                                     ^
+     49|     expect(result.current.threadLoadError?.message).toContain('Your qu…
+     50|     expect(result.current.threadLoadError?.message).not.toContain('int…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 429 without exposing server details
+AssertionError: expected 'This conversation couldn\'t load. Ret…' to contain 'Too many conversation requests. Wait …'
+
+Expected: "Too many conversation requests. Wait a moment, then retry loading this conversation."
+Received: "This conversation couldn't load. Retry, or start a new conversation. Your question has not been sent."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts:48:53
+     46|   ])('explains recovery for HTTP %s without exposing server details', …
+     47|     const { result } = await failedLoad(Number(status), { error: 'inte…
+     48|     expect(result.current.threadLoadError?.message).toContain(recovery…
+       |                                                     ^
+     49|     expect(result.current.threadLoadError?.message).toContain('Your qu…
+     50|     expect(result.current.threadLoadError?.message).not.toContain('int…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  02:50:57
+   Duration  1.14s (transform 282ms, setup 128ms, import 346ms, tests 51ms, environment 455ms)
+

@@ -1,0 +1,230 @@
+[
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-before-canonical-sync/browser-final-checks.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-before-canonical-sync/browser-final-checks.json:generic-api-key:3",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "verified artifact SHA-256 checksum",
+          "json_property": "apiContractSha256",
+          "referenced_source": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json",
+          "same_commit_checksum_matches": true,
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-before-canonical-sync/browser-summary.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-before-canonical-sync/browser-summary.json:generic-api-key:5",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "verified artifact SHA-256 checksum",
+          "json_property": "apiContractSha256",
+          "referenced_source": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json",
+          "same_commit_checksum_matches": true,
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-final-checks.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-final-checks.json:generic-api-key:3",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "verified artifact SHA-256 checksum",
+          "json_property": "apiContractSha256",
+          "referenced_source": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json",
+          "same_commit_checksum_matches": true,
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-summary.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-summary.json:generic-api-key:5",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "verified artifact SHA-256 checksum",
+          "json_property": "apiContractSha256",
+          "referenced_source": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json",
+          "same_commit_checksum_matches": true,
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:10167",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "static regulatory prose",
+          "canonical_source": "server/services/ind/ctd/authoring-guidance.ts",
+          "matched_span_verbatim_in_canonical_source": true,
+          "json_properties": [
+            ".templates[2].sections[51].guidance.guidance_text",
+            ".templates[64].sections[26].guidance.guidance_text",
+            ".templates[70].sections[0].guidance.guidance_text",
+            ".templates[134].sections[26].guidance.guidance_text"
+          ],
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:28292",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "static regulatory prose",
+          "canonical_source": "server/services/ind/ctd/authoring-guidance.ts",
+          "matched_span_verbatim_in_canonical_source": true,
+          "json_properties": [
+            ".templates[2].sections[51].guidance.guidance_text",
+            ".templates[64].sections[26].guidance.guidance_text",
+            ".templates[70].sections[0].guidance.guidance_text",
+            ".templates[134].sections[26].guidance.guidance_text"
+          ],
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:29293",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "static regulatory prose",
+          "canonical_source": "server/services/ind/ctd/authoring-guidance.ts",
+          "matched_span_verbatim_in_canonical_source": true,
+          "json_properties": [
+            ".templates[2].sections[51].guidance.guidance_text",
+            ".templates[64].sections[26].guidance.guidance_text",
+            ".templates[70].sections[0].guidance.guidance_text",
+            ".templates[134].sections[26].guidance.guidance_text"
+          ],
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:51945",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "static regulatory prose",
+          "canonical_source": "server/services/ind/ctd/authoring-guidance.ts",
+          "matched_span_verbatim_in_canonical_source": true,
+          "json_properties": [
+            ".templates[2].sections[51].guidance.guidance_text",
+            ".templates[64].sections[26].guidance.guidance_text",
+            ".templates[70].sections[0].guidance.guidance_text",
+            ".templates[134].sections[26].guidance.guidance_text"
+          ],
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "rule": "generic-api-key",
+    "file": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-fixture/catalogue.json",
+    "commit": "49dba3d214da2f50872d2c7b889a7abb8fc82678",
+    "fingerprint": "49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-fixture/catalogue.json:generic-api-key:1",
+    "classification": {
+      "occurrences": [
+        {
+          "kind": "static regulatory reference prose spanning adjacent JSON scalar values",
+          "historical_blob_identity_verified": true,
+          "property_keys_excluded": true,
+          "scalar_proofs": [
+            {
+              "decoded_scalar_matches_static_source": true,
+              "source_locations": [
+                {
+                  "source": "services/regulatory/ind-ectd-sections.ts",
+                  "line": 878
+                }
+              ]
+            },
+            {
+              "decoded_scalar_matches_static_source": true,
+              "source_locations": [
+                {
+                  "source": "server/services/ind/ctd/authoring-guidance.ts",
+                  "line": 3359
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "static regulatory prose",
+          "canonical_source": "server/services/ind/ctd/authoring-guidance.ts",
+          "matched_span_verbatim_in_canonical_source": true,
+          "json_properties": [
+            ".templates[2].sections[51].guidance.compliance_checklist[5]",
+            ".templates[64].sections[26].guidance.compliance_checklist[5]",
+            ".templates[70].sections[0].guidance.compliance_checklist[5]",
+            ".templates[134].sections[26].guidance.compliance_checklist[5]"
+          ],
+          "historical_blob_identity_verified": true
+        },
+        {
+          "kind": "static regulatory prose",
+          "canonical_source": "server/services/ind/ctd/authoring-guidance.ts",
+          "matched_span_verbatim_in_canonical_source": true,
+          "json_properties": [
+            ".templates[2].sections[51].guidance.compliance_checklist[5]",
+            ".templates[64].sections[26].guidance.compliance_checklist[5]",
+            ".templates[70].sections[0].guidance.compliance_checklist[5]",
+            ".templates[134].sections[26].guidance.compliance_checklist[5]"
+          ],
+          "historical_blob_identity_verified": true
+        },
+        {
+          "kind": "static regulatory prose",
+          "canonical_source": "server/services/ind/ctd/authoring-guidance.ts",
+          "matched_span_verbatim_in_canonical_source": true,
+          "json_properties": [
+            ".templates[2].sections[52].guidance.guidance_text",
+            ".templates[64].sections[27].guidance.guidance_text",
+            ".templates[71].sections[0].guidance.guidance_text",
+            ".templates[134].sections[27].guidance.guidance_text",
+            ".templates[139].sections[0].guidance.guidance_text"
+          ],
+          "historical_blob_identity_verified": true
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,248 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 72ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > protocol reads the existing ICH_PROTOCOL project blueprint rather than another heading tree 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the existing ICH_M3_DS project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the existing ICH_M3_DP project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > the protocol says its E6(R2) outline is legacy and requires current regional/template review 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped EU_CTA scaffolds pending regional/content review 8ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA scaffolds pending regional/content review 8ms
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA_A scaffolds pending regional/content review 17ms
+   → expected { id: 'CA_CTA_A', …(7) } to be undefined
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped JP_CTN scaffolds pending regional/content review 5ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped ICH_NONCLIN_SUMMARY scaffolds pending regional/content review 5ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists every active biotech entry once and says explicitly which outlines remain unavailable 20ms
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T01:53:25.250Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T01:53:25.252Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T01:53:25.253Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_DSUR is a harmonised document, not a filing to ICH 4ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_SAP is a harmonised document, not a filing to ICH 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_PROTOCOL is a harmonised document, not a filing to ICH 2ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous CTA needs jurisdiction before drafting to a trial route 2ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous  cta  needs jurisdiction before drafting to a trial route 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > exact regional trial identity still delivers the applicable context 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > DSUR section drafting uses the corrected E2F record through section 20 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > EU_CTA cannot draft against a known wrong or fallback scaffold 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA cannot draft against a known wrong or fallback scaffold 1ms
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A cannot draft against a known wrong or fallback scaffold 12ms
+   → expected 'blueprint+record:ctd-section:3.2.S:pa…' to contain 'not-indexed'
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > JP_CTN cannot draft against a known wrong or fallback scaffold 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY cannot draft against a known wrong or fallback scaffold 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > US_IND_AMENDMENT cannot draft against a known wrong or fallback scaffold 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A cannot draft against a known wrong or fallback scaffold
+AssertionError: expected 'blueprint+record:ctd-section:3.2.S:pa…' to contain 'not-indexed'
+
+Expected: "not-indexed"
+Received: "blueprint+record:ctd-section:3.2.S:parent"
+
+ ❯ server/services/ana/__tests__/drafting-regional-context.test.ts:33:34
+     31|   it.each(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'ICH_NONCLIN_SUMM…
+     32|     const r = resolveDraftingRequirements(type, '3.2.S');
+     33|     expect(r.requirementsSource).toContain('not-indexed');
+       |                                  ^
+     34|     expect(r.requirements).toContain('current agency/client template');
+     35|     expect(r.requirements).not.toContain('Governing standard: ICH M4Q'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > withholds known mis-scoped CA_CTA_A scaffolds pending regional/content review
+AssertionError: expected { id: 'CA_CTA_A', …(7) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "basis": {
+    "confidence": "platform-convention",
+    "note": "Headings and scaffold expectations read from shared/regulatory/project-bootstrap.ts; not independently verified current regional requirements.",
+    "ref": "Concept2Cure existing project blueprint ca_cta_a_sections",
+  },
+  "families": [
+    "ectd",
+  ],
+  "id": "CA_CTA_A",
+  "outlineLimitations": [
+    "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+    "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+  ],
+  "outlineSource": {
+    "blueprintId": "ca_cta_a_sections",
+    "kind": "project-blueprint",
+    "registryId": "CA_CTA_A",
+  },
+  "regulatoryBasis": "Concept2Cure existing project blueprint ca_cta_a_sections (platform convention — not a regulatory requirement)",
+  "sections": [
+    {
+      "heading": "Cover Letter",
+      "number": "1.1",
+      "purpose": "Populate Cover Letter from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.",
+      "required": true,
+    },
+    {
+      "heading": "Administrative Forms",
+      "number": "1.2",
+      "purpose": "Populate Administrative Forms from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.",
+      "required": true,
+    },
+    {
+      "heading": "Table of Contents",
+      "number": "1.5",
+      "purpose": "Populate Table of Contents from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.",
+      "required": true,
+    },
+    {
+      "heading": "Introduction",
+      "number": "2.2",
+      "purpose": "Introduction. The existing scaffold cites ICH M4; confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Quality Overall Summary",
+      "number": "2.3",
+      "purpose": "Quality Overall Summary. The existing scaffold cites ICH M4Q(R1); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Nonclinical Overview",
+      "number": "2.4",
+      "purpose": "Nonclinical Overview. The existing scaffold cites ICH M4S(R2); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Clinical Overview",
+      "number": "2.5",
+      "purpose": "Clinical Overview. The existing scaffold cites ICH M4E(R2); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Nonclinical Summaries",
+      "number": "2.6",
+      "purpose": "Nonclinical Summaries. The existing scaffold cites ICH M4S(R2); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Clinical Summary",
+      "number": "2.7",
+      "purpose": "Clinical Summary. The existing scaffold cites ICH M4E(R2); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": false,
+    },
+    {
+      "heading": "Drug Substance",
+      "number": "3.2.S",
+      "purpose": "Drug Substance. The existing scaffold cites ICH M4Q(R1); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Drug Product",
+      "number": "3.2.P",
+      "purpose": "Drug Product. The existing scaffold cites ICH M4Q(R1); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Appendices",
+      "number": "3.2.A",
+      "purpose": "Populate Appendices from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.",
+      "required": false,
+    },
+    {
+      "heading": "Pharmacology",
+      "number": "4.2.1",
+      "purpose": "Pharmacology. The existing scaffold cites ICH S7A/S7B; confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Pharmacokinetics",
+      "number": "4.2.2",
+      "purpose": "Pharmacokinetics. The existing scaffold cites ICH S3A/S3B; confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Toxicology",
+      "number": "4.2.3",
+      "purpose": "Toxicology. The existing scaffold cites ICH M3(R2); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+      "heading": "Clinical Study Reports",
+      "number": "5.3",
+      "purpose": "Clinical Study Reports. The existing scaffold cites ICH E3; confirm the current applicable guidance and populate from sponsor source records.",
+      "required": false,
+    },
+    {
+      "heading": "Literature References",
+      "number": "5.4",
+      "purpose": "Populate Literature References from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.",
+      "required": true,
+    },
+  ],
+  "title": "Clinical Trial Application Amendment",
+}
+
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:274:59
+    272|
+    273|   it.each(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'ICH_NONCLIN_SUMM…
+    274|     expect(await getRegistryDocumentTemplate(registryId)).toBeUndefine…
+       |                                                           ^
+    275|     expect((await registryDocumentTemplateCoverage()).find((r) => r.re…
+    276|       outlineAvailable: false, reason: 'existing_blueprint_requires_re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 45 passed (47)
+   Start at  21:53:19
+   Duration  8.75s (transform 4.77s, setup 143ms, import 7.75s, tests 213ms, environment 0ms)
+

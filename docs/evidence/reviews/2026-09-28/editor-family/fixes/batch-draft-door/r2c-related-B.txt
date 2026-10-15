@@ -1,0 +1,144 @@
+[reduced to its test-result lines; the full run is kept outside the repository]
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > writes the text into the governed section 64ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > the governed outline now reports the section as written 2ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > a re-save enters the Part 11 ledger ATTRIBUTED to the real actor 38ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > and the working copy still holds the text too 1ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a content save with no reason, and writes nothing 18ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > still records a real reason verbatim when the save gives one 65ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a whitespace-only reason as no reason at all 25ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes a chained, sealed row for the save 63ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes exactly ONE chained row per save, not one per ledger 47ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one 249ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written 104ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the c2c section save records provenance > writes spans covering the saved text 3371ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections 227ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > records WHY in the version ledger — a mechanism naming itself 2ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename 26ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a RENAME, naming what moved, and creates NO content revision 43ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > reaches the hash-chained ledger, not only the soft table 1ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a TRACK_CHANGES toggle 49ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > does not audit a metadata PATCH that changes nothing 36ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document 20ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > refuses a code change, and changes nothing 18ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a title-only rename — the code is present but unchanged 15ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break 63ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many 77ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided 74ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent 117ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands 90ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with no ceremony at all 100ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > does not invent a section the rule pack does not define 30ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing 85ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the two stores move together or neither does > a filing write that cannot happen takes the authored write down with it 31ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the c2c section save records provenance > attributes every span to the saving user as an author assertion 3151ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the c2c section save records provenance > replaces prior spans on re-save rather than accumulating them 4020ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 309ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 77ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 17ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 5ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 8ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 5ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 6ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 10ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 207ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the gate is not vacuous > refuses content that has no spans recorded for it 2511ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it 135ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 201ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 196ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 53ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 90ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 192ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 197ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the gate is not vacuous > refuses when the spans cover only part of the content 2626ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > partitions the document by character, and the parts sum exactly 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > counts characters, not spans — the figure span counts would get wrong 37ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > counts overlapping citations once rather than over-crediting the document 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports the WEAKER claim where two kinds cover the same characters 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports stale citations as stale AND still sourced, never as unattributed 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > clips a span that reaches past the end of the current text 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports a document with no lineage as fully unattributed, not as covered 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > projects the spans for painting — clipped, ordered, and without the checksum 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > marks a span whose source moved as stale for the painter too 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports empty content as empty rather than dividing by zero 1ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > lineage commits with the content, or not at all > spans written inside a transaction disappear when it rolls back 2458ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 3856ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 36ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 33ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt 31ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 113ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 1ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 1ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the jsonb -> text serialisation is single-valued > is deterministic for the same content 2492ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > resolves an evidence_source_id only when it exists in the tenant, and an artifact_id through the same resolver 17ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > is empty, not an error, when the tool call carried no sources 1ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > drives the same gate as the human accept: the verbatim clause lands on the source, the rest on the author 24ms
+ ✓ server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts > resolveDraftSources > says so when sources were cited but nothing quotes them 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordSourceSpan — citing a Data Room source > records the span and captures the source checksum at cite time 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordSourceSpan — citing a Data Room source > is idempotent — re-persisting the same span reconciles instead of duplicating 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordSourceSpan — citing a Data Room source > refuses a source belonging to another tenant 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordSourceSpan — citing a Data Room source > refuses an empty span and an unknown usage verb before touching the database 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordAuthorSpan — original prose > records the author as the span's provenance 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordAuthorSpan — original prose > requires an author 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > the three reads > forward — what backs this document, in document order 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > the three reads > backward — where is this source used, across documents 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > the three reads > propagation — a source that moved makes its spans stale, provably 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > the three reads > does not leak another tenant's spans 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > writes the whole set on first save 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > retires spans the edited text no longer contains 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > retires by soft delete — the record of what was asserted survives 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > leaves source citations alone when the prose is re-saved 24ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > retires everything when the document is emptied 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > passes when the spans cover the content end to end 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > throws when the content extends past the last span 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > names the unattributed ranges so the failure is actionable 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > throws when there is a hole in the middle 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > throws when a document has no lineage at all 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > passes trivially for empty content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > ignores whitespace between spans — the gate must be satisfiable 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > still fails when the gap contains real characters 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > does not count another tenant's spans as coverage 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > sees uncommitted rows when run on the same connection as the write 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > sets up a document with a cited span and an authored span 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > returns spans that OVERLAP the selection, not only those contained by it 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > reports gaps clipped to the selection, not to the whole document 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > reports a wholly unattributed selection honestly 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > carries source title, locator and usage through for the panel 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > marks an origin stale when its source has moved 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > does not answer for another tenant 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > rejects a collapsed selection 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > findUncoveredRanges — what has no lineage yet > reports the gaps between covered spans 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > findUncoveredRanges — what has no lineage yet > treats overlapping spans as one covered run, not a gap 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > findUncoveredRanges — what has no lineage yet > reports the whole document when nothing is attributed 1ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the jsonb -> text serialisation is single-valued > ignores paragraphs with no usable text instead of emitting "undefined" 3545ms
+ ✓ server/services/ana/__tests__/write-section-source-lineage.test.ts > write_q_sub_section > records the resolvable sources through the source-and-author gate and NAMES the one it dropped 10ms
+ ✓ server/services/ana/__tests__/write-section-source-lineage.test.ts > write_q_sub_section > without sources, every clause is the author's assertion — the author-only gate, and the result says so 2ms
+ ✓ server/services/ana/__tests__/write-section-source-lineage.test.ts > write_kit_section > refuses without an identified author, before touching the database 1ms
+ ✓ server/services/ana/__tests__/write-section-source-lineage.test.ts > write_kit_section > runs the source-and-author gate against the kit section row inside the write transaction 11ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body 35ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached 5ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant 28ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — SQL ↔ Drizzle column parity > the parsers actually found something 5ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — SQL ↔ Drizzle column parity > every SQL column exists in the Drizzle definition 3ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — SQL ↔ Drizzle column parity > every Drizzle column exists in the SQL 32ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — the constraints that make a row meaningful > a span must be non-empty and non-negative 1ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — the constraints that make a row meaningful > each provenance kind must carry its own evidence 1ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — the constraints that make a row meaningful > the unique index gives ON CONFLICT something to conflict on 0ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — the constraints that make a row meaningful > both read directions are indexed 0ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — apply-set position > is registered in the apply set 0ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > document_span_lineage — apply-set position > is registered BEFORE the tenant-isolation sweep 1ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > the accepted_machine_draft widening (migrations/20260907) > is registered in the apply set, after the table it widens 0ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > the accepted_machine_draft widening (migrations/20260907) > is registered BEFORE the tenant-isolation sweep 0ms
+ ✓ tests/schema-contract/document-span-lineage.contract.test.ts > the accepted_machine_draft widening (migrations/20260907) > widens both CHECKs with the replay-safe DROP IF EXISTS / ADD idiom and names all three kinds 0ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the jsonb -> text serialisation is single-valued > returns empty only for shapes that carry no body at all 2193ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > is registered 2ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors on an empty sections array 3ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors above the 20-section cap 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > drafts valid sections in parallel and shapes the result 4ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > drops sections missing section_type or instructions, keeps the valid ones 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors when every section is invalid 0ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the jsonb -> text serialisation is single-valued > serialises every shape the reader accepts, not just paragraphs 2042ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the jsonb -> text serialisation is single-valued > paragraph serialisation is byte-identical to what it always was 1864ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the jsonb -> text serialisation is single-valued > precedence matches the reader when a row carries more than one key 2238ms
+ ✓ tests/schema-contract/c2c-section-lineage-gate.contract.test.ts > the lineage gate now actually runs for the shape the editor saves > a { text } save records spans and satisfies the coverage assertion 1928ms
+ Test Files  11 passed (11)
+      Tests  141 passed (141)

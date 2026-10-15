@@ -1,0 +1,198 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > asks three decisive questions and never certifies readiness 5ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > continues an interview without re-asking answered topics or promoting them to evidence 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps all discussion markers from becoming a filing-ready verdict 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps an EU CTA on CTIS, with national documents and disclosure questions 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not confuse Canada CTA with a full marketing dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not re-label a Japanese trial notification as a marketing eCTD 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > makes Japanese language and ethnic evidence conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps pediatric and advanced-therapy overlays conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not infer an application from an ambiguous alias or an unknown id 2ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects contradictory market and filing identity 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not assume a drug pathway for a device entry 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > routes all four marketing regions with independent regional requirements 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses document-specific questions, not trial results for every build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses the shared component mapping for registry-only protocol and SAP builds 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses device component preparation without requiring a registry id 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses smpc as a direct non-EU build 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses impd as a direct non-EU build 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses risk_management_plan as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses rmp as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > keeps safety messages and datasets outside generic prose build claims 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects unrecognized topics instead of silently skipping questions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_DMF about access rights and confidential quality records, not trial outcomes 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_ASMF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks CA_MF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks JP_MF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > resolves US_IND_AMENDMENT change scope and agency issues before generic scientific drafting 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > resolves CA_CTA_A change scope and agency issues before generic scientific drafting 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_NDA_SUPP approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_BLA_SUPP approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_CBE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_SUPAC approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_IA approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_IB approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_II approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_LINE_EXTENSION approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes CA_SNDS approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes CA_SANDS approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes JP_PARTIAL_CHANGE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes JP_MINOR_CHANGE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_PRE_IND around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_A_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_B_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_C_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares EU_SCIENTIFIC_ADVICE around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares CA_PRESUB_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares JP_PRE_CONSULT around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_PSP about age groups, extrapolation and existing plan decisions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_PIP about age groups, extrapolation and existing plan decisions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_ORPHAN for regional rarity evidence and a defensible condition definition 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_ORPHAN for regional rarity evidence and a defensible condition definition 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_351K for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_BIOSIMILAR_MAA for reference-product comparative evidence without prescribing a universal study 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks JP_BIOSIMILAR for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares ICH_ICSR as a reconciled safety case, not an aggregate efficacy report 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares ICH_SUSAR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_ICSR_15DAY as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares EU_EUDRAVIGILANCE_ICSR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_IND_SR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_IND_ANNUAL about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_NDA_ANNUAL about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_PSUR about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_PADER about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares post-marketing studies from the actual obligation and milestone record 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_COMPARABILITY for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_STABILITY_PROTOCOL for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_CTD_M3 for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_NONCLIN_SUMMARY about nonclinical findings and their translational limits 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_CTD_M4 about nonclinical findings and their translational limits 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > keeps a selected protocol interview scientific even when the filing context is an amendment 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > rejects a global device clinical-investigation entry instead of treating its family as a medicinal product 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > does not turn complete lifecycle discussion markers into qualified evidence 0ms
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > keeps IND aggregate safety assessment available alongside individual cases 7ms
+   → expected 'What initial receipt/awareness and fo…' to match /aggregate/
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_CTN 1ms
+   → expected 'Which countries, languages, ethics/si…' not to match /English-application/
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MF 1ms
+   → expected 'Which countries, languages, ethics/si…' not to match /English-application/
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MINOR_CHANGE 1ms
+   → expected 'Which countries, languages, ethics/si…' not to match /English-application/
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_PRE_CONSULT 1ms
+   → expected 'Which countries, languages, ethics/si…' not to match /English-application/
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not turn an integral-device opinion into a medicines meeting package 4ms
+   → expected 'agency_commitments' to be 'quality' // Object.is equality
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks US_REMS about risk controls and their assessment, not just adverse events 1ms
+   → expected 'What exposure, serious events, deaths…' to match /risk.minimi|risk.control/
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks EU_RMP about risk controls and their assessment, not just adverse events 1ms
+   → expected 'What exposure, serious events, deaths…' to match /risk.minimi|risk.control/
+ × server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > requires reviewed signal evidence and alternative explanations before concluding a risk 1ms
+   → expected 'What exposure, serious events, deaths…' to match /alternative explanations/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > keeps IND aggregate safety assessment available alongside individual cases
+AssertionError: expected 'What initial receipt/awareness and fo…' to match /aggregate/
+
+- Expected:
+/aggregate/
+
++ Received:
+"What initial receipt/awareness and follow-up records identify this case, duplicate status, suspect products, seriousness, expectedness and causal assessment?"
+
+ ❯ server/services/market-specs/__tests__/document-preparation.test.ts:213:37
+    211|   it('keeps IND aggregate safety assessment available alongside indivi…
+    212|     const p = buildDocumentPreparation({ registryId: 'US_IND_SR', disc…
+    213|     expect(p.questions[0].question).toMatch(/aggregate/);
+       |                                     ^
+    214|     expect(p.questions[0].requestedEvidence).toMatch(/comparison|aggre…
+    215|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_CTN
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MF
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MINOR_CHANGE
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_PRE_CONSULT
+AssertionError: expected 'Which countries, languages, ethics/si…' not to match /English-application/
+
+- Expected:
+/English-application/
+
++ Received:
+"Which countries, languages, ethics/site requirements and publication or redaction obligations apply? For Japan, confirm whether the English-application trial measure is applicable and advance PMDA consultation is documented."
+
+ ❯ server/services/market-specs/__tests__/document-preparation.test.ts:218:60
+    216|   it.each(['JP_CTN', 'JP_MF', 'JP_MINOR_CHANGE', 'JP_PRE_CONSULT'])('d…
+    217|     const p = buildDocumentPreparation({ registryId, discussedTopics: …
+    218|     expect(p.questions.map(q => q.question).join(' ')).not.toMatch(/En…
+       |                                                            ^
+    219|     expect(p.regionalEvidenceSources.map(s => s.url)).not.toContain('h…
+    220|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not turn an integral-device opinion into a medicines meeting package
+AssertionError: expected 'agency_commitments' to be 'quality' // Object.is equality
+
+Expected: "quality"
+Received: "agency_commitments"
+
+ ❯ server/services/market-specs/__tests__/document-preparation.test.ts:223:34
+    221|   it('does not turn an integral-device opinion into a medicines meetin…
+    222|     const p = buildDocumentPreparation({ registryId: 'EU_MDR_ART117_NB…
+    223|     expect(p.questions[0].topic).toBe('quality');
+       |                                  ^
+    224|     expect(p.questions[0].question).toMatch(/device part|integral devi…
+    225|     expect(p.questions[0].requestedEvidence).toMatch(/Notified Body/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks US_REMS about risk controls and their assessment, not just adverse events
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks EU_RMP about risk controls and their assessment, not just adverse events
+AssertionError: expected 'What exposure, serious events, deaths…' to match /risk.minimi|risk.control/
+
+- Expected:
+/risk.minimi|risk.control/
+
++ Received:
+"What exposure, serious events, deaths, discontinuations, emerging signals and reference safety information support the safety assessment?"
+
+ ❯ server/services/market-specs/__tests__/document-preparation.test.ts:230:37
+    228|     const p = buildDocumentPreparation({ registryId, discussedTopics: …
+    229|     expect(p.questions[0].topic).toBe('safety');
+    230|     expect(p.questions[0].question).toMatch(/risk.minimi|risk.control/…
+       |                                     ^
+    231|     expect(p.questions[0].requestedEvidence).toMatch(/effectiveness|as…
+    232|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > requires reviewed signal evidence and alternative explanations before concluding a risk
+AssertionError: expected 'What exposure, serious events, deaths…' to match /alternative explanations/
+
+- Expected:
+/alternative explanations/
+
++ Received:
+"What exposure, serious events, deaths, discontinuations, emerging signals and reference safety information support the safety assessment?"
+
+ ❯ server/services/market-specs/__tests__/document-preparation.test.ts:236:37
+    234|     const p = buildDocumentPreparation({ registryId: 'ICH_SIGNAL', dis…
+    235|     expect(p.questions[0].topic).toBe('safety');
+    236|     expect(p.questions[0].question).toMatch(/alternative explanations/…
+       |                                     ^
+    237|     expect(p.questions[0].requestedEvidence).toMatch(/medical review/);
+    238|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 71 passed (80)
+   Start at  22:47:42
+   Duration  1.78s (transform 955ms, setup 114ms, import 1.03s, tests 51ms, environment 0ms)
+

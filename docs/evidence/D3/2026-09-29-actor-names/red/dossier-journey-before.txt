@@ -1,0 +1,88 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-04T20:54:50.014Z","pid":5277,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-04T20:54:50.015Z","pid":5277,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-04T20:54:50.015Z","pid":5277,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-displays.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-displays.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/actor-displays.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-04T20:54:52.836Z","pid":5277,"hostname":"vm","context":{"userId":53,"tenantId":90301,"resourceId":"26:m2.5-actor-displays"},"msg":"[audit-service] [AUDIT] data_modify project_section"}
+{"level":30,"time":"2026-10-04T20:54:52.854Z","pid":5277,"hostname":"vm","context":{"userId":53,"tenantId":90301,"resourceId":"bdf5202a-a6d0-42a1-a625-8d5a0aa6a43f"},"msg":"[audit-service] [AUDIT] data_modify regulatory_programs"}
+stdout | tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the comment thread keeps every comment, named where A knows the author
+[database] Database connection successful { timestamp: '2026-10-04T20:54:52.891Z', poolSize: 1 }
+
+stdout | tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it
+[database] Database connection successful { timestamp: '2026-10-04T20:54:52.926Z', poolSize: 2 }
+
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the comment thread keeps every comment, named where A knows the author 44ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it 14ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the team workload keeps sections assigned to people who left 11ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section list names the leaver as assignee 303ms
+ ✓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > the lead who left is still named on the program 7ms
+ ✓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > activity names the editor, and never calls a person "System" 7ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers 28ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx audit list names the leaver's audit entries 14ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx admin audit band names the leaver, not 'Unknown account' 18ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the c2c program portfolio names the lead who left 12ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the collaborator list names a collaborator who left, so they can be removed 25ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a section's revision history names a reviser who left, and a non-numeric author is no error 9ms
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a dossier section's version history names the author who left 18ms
+   → expected [ [ 53, null ] ] to deeply equal [ [ 53, 'WO03 displays-leaver' ] ]
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the document journey names the creator and reviser who left 10ms
+   → expected '[{"id":"created","label":"Created","i…' to contain 'WO03 displays-leaver'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a dossier section's version history names the author who left
+AssertionError: expected [ [ 53, null ] ] to deeply equal [ [ 53, 'WO03 displays-leaver' ] ]
+
+- Expected
++ Received
+
+  [
+    [
+      53,
+-     "WO03 displays-leaver",
++     null,
+    ],
+  ]
+
+ ❯ tests/db/actor-displays.dbtest.ts:349:124
+    347|     const res = await request(app).get(`/api/c2c/documents/${dossierDo…
+    348|     expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(20…
+    349|     expect((res.body.data as Array<{ authorId: number; authorName: str…
+       |                                                                                                                            ^
+    350|       [leaver, leaverName],
+    351|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the document journey names the creator and reviser who left
+AssertionError: expected '[{"id":"created","label":"Created","i…' to contain 'WO03 displays-leaver'
+
+Expected: "WO03 displays-leaver"
+Received: "[{"id":"created","label":"Created","ic":"sparkles","when":"Oct 4","who":"53","ver":"—","done":true,"active":false,"sub":"Draft started","kind":"brief","snap":{"mode":"brief","title":"Document","lines":[["Document","wo03_5277_muuauo9y-displays-doc"],["Module","—"],["Product","—"],["Status","draft"],["Created by","53"],["Created","Oct 4"]]},"doc":{"title":"wo03_5277_muuauo9y-displays-doc","module":null,"productCode":null,"version":"—"}},{"id":"authoring","label":"Authoring","ic":"penLine","when":"Oct 4","who":"system · 53","ver":"—","done":false,"active":true,"sub":"2 revisions · 1 section","kind":"draft","snap":{"mode":"doc","wm":"DRAFT —","heading":"Section","body":["by a non-numeric author"],"prov":"Latest revision by system · Oct 4"},"doc":{"title":"wo03_5277_muuauo9y-displays-doc","module":null,"productCode":null,"version":"—"}}]"
+
+ ❯ tests/db/actor-displays.dbtest.ts:359:36
+    357|       () => assembleOrgDocJourney(ORG_A)
+    358|     );
+    359|     expect(JSON.stringify(stages)).toContain(leaverName);
+       |                                    ^
+    360|   });
+    361| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  20:54:48
+   Duration  5.33s (transform 2.47s, setup 68ms, import 4.16s, tests 851ms, environment 0ms)
+

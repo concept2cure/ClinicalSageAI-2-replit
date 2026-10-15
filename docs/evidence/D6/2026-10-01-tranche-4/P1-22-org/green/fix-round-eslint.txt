@@ -1,0 +1,9 @@
+
+/home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ts
+  704:1  warning  File has too many lines (854). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+
+HEAD max-lines for shared/constants/ui-surface-registry.ts: 854 (same as working tree) — pre-existing, not introduced by this round.
+--- npx eslint tests/db/org-retention-period.dbtest.ts
+exit=0

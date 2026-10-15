@@ -28,6 +28,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { SourceTracer } from '../surfaces/SourceTracer';
+import { useActiveSurfaceContext } from '../surfaceContext';
+
+function ContextProbe({ onContext }: { onContext: (context: unknown) => void }) {
+  onContext(useActiveSurfaceContext('source-tracer'));
+  return null;
+}
 
 function ok(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
@@ -69,7 +75,7 @@ function mockSections(sections: unknown[], status = 200) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url === '/api/source-tracer/sections') {
       return status < 400
-        ? ok({ success: true, data: { sections, total: (sections as unknown[]).length } })
+        ? ok({ success: true, data: { sections, total: (sections as unknown[]).length, scope: 'verified-accessible-authoring-sections' } })
         : ok({ success: false, error: 'CITATION_STORE_MISSING' }, status);
     }
     return ok({});
@@ -114,8 +120,8 @@ describe('SourceTracer — recorded lineage', () => {
     mockSections([section({ sources: [citedSource({ state: 'unresolved', sourceId: null, sourceTitle: null, currentChecksum: null })] })]);
     render(<SourceTracer {...props()} />);
 
-    expect(await screen.findByText('source no longer available')).toBeTruthy();
-    expect(screen.getByText('Source no longer resolvable')).toBeTruthy();
+    expect(await screen.findByText('source unavailable with current access')).toBeTruthy();
+    expect(screen.getByText('Source unavailable to this read')).toBeTruthy();
   });
 
   it('makes no claim for a citation that was never checked', async () => {
@@ -139,7 +145,8 @@ describe('SourceTracer — recorded lineage', () => {
   it('states the contract honestly when nothing is recorded yet', async () => {
     mockSections([]);
     render(<SourceTracer {...props()} />);
-    expect(await screen.findByText('No recorded source citations yet')).toBeTruthy();
+    expect(await screen.findByText('No accessible source citations')).toBeTruthy();
+    expect(screen.getByText(/Only citations visible with your current access/)).toBeTruthy();
     expect(screen.getByText(/nothing is inferred from text similarity/i)).toBeTruthy();
   });
 
@@ -147,7 +154,31 @@ describe('SourceTracer — recorded lineage', () => {
     mockSections([], 503);
     render(<SourceTracer {...props()} />);
     expect(await screen.findByText(/Couldn't load source lineage/)).toBeTruthy();
-    expect(screen.queryByText('No recorded source citations yet')).toBeNull();
+    expect(screen.queryByText('No accessible source citations')).toBeNull();
+  });
+
+  it.each([
+    null,
+    { sections: [], total: 0 },
+    { sections: [], total: 0, scope: 'organization-wide' },
+    { sections: {}, total: 0, scope: 'verified-accessible-authoring-sections' },
+  ])('does not turn an unverified/malformed read into an accessible zero: %j', async data => {
+    apiRequest.mockReset();apiRequest.mockResolvedValue(ok({ success: true, data }));
+    let latest: any = null;
+    render(<><SourceTracer {...props()} /><ContextProbe onContext={context => { latest = context; }} /></>);
+    expect(await screen.findByText("Couldn't load source lineage")).toBeTruthy();
+    expect(screen.queryByText('No accessible source citations')).toBeNull();
+    expect(latest?.facts?.sectionCount).toBeUndefined();
+    expect(latest?.summary).not.toMatch(/no.*citations|0 section/i);
+  });
+
+  it('publishes the verified accessible scope without claiming the organization has no citations', async () => {
+    mockSections([]);let latest: any = null;
+    render(<><SourceTracer {...props()} /><ContextProbe onContext={context => { latest = context; }} /></>);
+    await screen.findByText('No accessible source citations');
+    expect(latest?.facts?.scope).toBe('verified-accessible-authoring-sections');
+    expect(latest?.summary).toMatch(/visible with your current access/);
+    expect(latest?.summary).not.toMatch(/for this organization/);
   });
 
   it('hands unrecorded-claim analysis to AnA without inventing citations', async () => {

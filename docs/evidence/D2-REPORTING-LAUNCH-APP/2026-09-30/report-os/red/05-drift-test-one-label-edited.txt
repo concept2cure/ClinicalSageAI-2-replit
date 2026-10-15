@@ -1,0 +1,66 @@
+$ cp migrations/20260930_report_type_registry_seed.sql <scratch>/seed.sql.bak; sed -i "s/'Executive Readiness Digest'/'Executive Readiness Digest (edited)'/" migrations/20260930_report_type_registry_seed.sql   # one label edited
+$ diff <scratch>/seed.sql.bak migrations/20260930_report_type_registry_seed.sql | cut -c1-200
+50c50
+<   ('readiness.executive_digest', 'Executive Readiness Digest', 'readiness', '["program","project","submission"]'::json, '["executive","ra_lead","pm"]'::json, '["pharma","device","biotech"]'::json, '
+---
+>   ('readiness.executive_digest', 'Executive Readiness Digest (edited)', 'readiness', '["program","project","submission"]'::json, '["executive","ra_lead","pm"]'::json, '["pharma","device","biotech"]'
+
+$ NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/report-os/__tests__/report-type-registry-seed.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > is byte-identical to what the generator writes from the in-code report types 10ms
+   → expected '-- ==================================…' to be '-- ==================================…' // Object.is equality
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > seeds every in-code report type, base, global and prediction, once each 3ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refreshes every descriptive column on conflict and never touches enabled 4ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > writes each json column as the JSON text drizzle sends for it 4ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > raises on a missing table and on a short registry 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > a copy with one label changed does not match 1ms
+ ✓ server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > refuses a duplicated type id and a missing column instead of writing a file that fails on deploy 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/__tests__/report-type-registry-seed.test.ts > report type registry seed migration > is byte-identical to what the generator writes from the in-code report types
+AssertionError: expected '-- ==================================…' to be '-- ==================================…' // Object.is equality
+
+- Expected
++ Received
+
+@@ -45,11 +45,11 @@
+  END $$;
+
+  INSERT INTO public.report_type_registry
+    (type_id, label, family, allowed_scopes, allowed_personas, allowed_client_segments, data_dependencies, artifact_dependencies, workflow_dependencies, ana_modules, export_template, governance_requirements, truthfulness_rules)
+  VALUES
+-   ('readiness.executive_digest', 'Executive Readiness Digest', 'readiness', '["program","project","submission"]'::json, '["executive","ra_lead","pm"]'::json, '["pharma","device","biotech"]'::json, '["submission_readiness","section_status","artifact_lifecycle"]'::json, '["concept2cure_artifacts"]'::json, '["project_sections","submission_ops"]'::json, '["ana-ri","foresight_risk_synthesis"]'::json, 'executive-board-pack', '{"part11":true,"auditTrail":true}'::json, '{"allowPartial":true,"requireBlockers":true,"forbidFinalIfMissingCritical":true}'::json),
++   ('readiness.executive_digest', 'Executive Readiness Digest (edited)', 'readiness', '["program","project","submission"]'::json, '["executive","ra_lead","pm"]'::json, '["pharma","device","biotech"]'::json, '["submission_readiness","section_status","artifact_lifecycle"]'::json, '["concept2cure_artifacts"]'::json, '["project_sections","submission_ops"]'::json, '["ana-ri","foresight_risk_synthesis"]'::json, 'executive-board-pack', '{"part11":true,"auditTrail":true}'::json, '{"allowPartial":true,"requireBlockers":true,"forbidFinalIfMissingCritical":true}'::json),
+    ('provenance.evidence_trace_report', 'Evidence & Provenance Trace Report', 'evidence_provenance', '["project","submission","document"]'::json, '["ra_lead","medical_writer","qa"]'::json, '["pharma","device","biotech"]'::json, '["provenance_map","cross_refs","evidence_links"]'::json, '["concept2cure_artifacts","immutable_report_records"]'::json, '["editor_verify_panels"]'::json, '["ana-ri"]'::json, 'evidence-provenance-pack', '{"part11":true,"provenanceCompleteness":true}'::json, '{"allowPartial":true,"requireConfidence":true}'::json),
+    ('compliance.audit_assurance_pack', 'Compliance & Audit Assurance Pack', 'compliance_audit', '["project","submission","document"]'::json, '["qa","ra_lead","auditor"]'::json, '["pharma","device","biotech"]'::json, '["audit_events","signature_chain","compliance_scan"]'::json, '["immutable_report_records","report_seal_events"]'::json, '["signature_workflow","governance_boundary"]'::json, '["ana-ri"]'::json, 'qa-audit-pack', '{"part11":true,"signatureChain":true}'::json, '{"allowPartial":true,"requireExplicitGaps":true}'::json),
+    ('usa_fda.pma_submission_readiness', 'FDA PMA Submission Readiness Pack', 'usa_fda_pma', '["project","submission"]'::json, '["ra_lead","medical_writer","executive"]'::json, '["device","biotech"]'::json, '["submission_readiness","clinical_evidence","device_safety_summary"]'::json, '["concept2cure_artifacts","immutable_report_records"]'::json, '["submission_ops","governance_boundary"]'::json, '["ana-ri","foresight_risk_synthesis"]'::json, 'fda-pma-readiness-pack', '{"part11":true,"auditTrail":true,"region":"USA_FDA"}'::json, '{"allowPartial":true,"requireBlockers":true,"requireConfidence":true}'::json),
+    ('usa_fda.estar_510k_equivalence_matrix', 'FDA eSTAR / 510(k) Equivalence Matrix', 'usa_fda_510k', '["project","submission","document"]'::json, '["ra_lead","qa"]'::json, '["device"]'::json, '["predicate_mapping","substantial_equivalence","testing_coverage"]'::json, '["concept2cure_artifacts"]'::json, '["submission_ops","project_sections"]'::json, '["ana-ri"]'::json, 'fda-510k-equivalence-pack', '{"part11":true,"auditTrail":true,"region":"USA_FDA"}'::json, '{"allowPartial":true,"requireExplicitGaps":true,"requireConfidence":true}'::json),
+    ('usa_fda.deficiency_response_intelligence', 'FDA Deficiency Response Intelligence Report', 'usa_fda_response', '["project","submission","document"]'::json, '["ra_lead","qa","medical_writer"]'::json, '["pharma","device","biotech"]'::json, '["correspondence_issues","response_actions","risk_register"]'::json, '["concept2cure_artifacts"]'::json, '["submission_ops","governance_boundary"]'::json, '["ana-ri","foresight_risk_synthesis"]'::json, 'fda-deficiency-response-pack', '{"part11":true,"auditTrail":true,"region":"USA_FDA"}'::json, '{"allowPartial":false,"requireBlockers":true,"requireExplicitGaps":true}'::json),
+
+ ❯ server/services/report-os/__tests__/report-type-registry-seed.test.ts:30:25
+     28| describe('report type registry seed migration', () => {
+     29|   it('is byte-identical to what the generator writes from the in-code …
+     30|     expect(committed()).toBe(buildReportTypeRegistrySeedSql());
+       |                         ^
+     31|   });
+     32|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  00:16:45
+   Duration  728ms (transform 235ms, setup 133ms, import 140ms, tests 29ms, environment 0ms)
+
+exit=1
+
+$ npx tsx scripts/db/generate-report-type-registry-seed.ts --check
+migrations/20260930_report_type_registry_seed.sql does not match the in-code report types. Regenerate it.
+exit=1
+
+# restored with: npx tsx scripts/db/generate-report-type-registry-seed.ts (byte-identical to the backup: cmp exit 0)

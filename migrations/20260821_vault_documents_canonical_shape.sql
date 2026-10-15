@@ -1,3 +1,18 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Reconcile vault.documents onto one canonical shape.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - AMENDED IN PLACE 2026-10-15 (D2): the s3_bucket / s3_key backfill that
+--     invented a storage locator for a row with none is removed; see the note
+--     where it stood. CLAUDE.md RULE 1 — this file re-runs on every deploy.
+-- =============================================================================
 -- W0-6 — reconcile vault.documents onto ONE shape, so ingestion can happen at all.
 --
 -- ── The defect ──────────────────────────────────────────────────────────────
@@ -141,8 +156,20 @@ BEGIN
   END IF;
   UPDATE vault.documents SET document_code = id::text WHERE document_code IS NULL;
   UPDATE vault.documents SET document_type = 'OTHER'  WHERE document_type IS NULL;
-  UPDATE vault.documents SET s3_bucket = 'local'      WHERE s3_bucket IS NULL;
-  UPDATE vault.documents SET s3_key = id::text        WHERE s3_key IS NULL;
+  /* AMENDED IN PLACE 2026-10-15 (D2): no storage locator is invented. Two
+     UPDATEs stood here, s3_bucket = 'local' and s3_key = id::text on every
+     row with none — a locator for bytes nobody wrote there (the old ingest
+     stored a relative path under uploads/, never the row id). A row with no
+     locator stays without one, and readers say so: NO_STORED_FILE
+     (routes/c2c/project-vault.ts, vault-fixity.ts, storage-migration.service.ts).
+
+     Locators these UPDATEs already wrote are NOT withdrawn here. From
+     migrations/20260926_vault_documents_record_immutability.sql on,
+     vault.documents_record_guard refuses clearing s3_key or s3_bucket, so a
+     withdrawal in this file would fail every deploy on a provisioned
+     database; and clearing a field of a Part 11 record is a governed
+     correction, not a migration's call. They read as NO_STORED_FILE already:
+     a bare uuid key resolves outside uploads/ and is refused. */
 
   -- The legacy identity columns stop BLOCKING the canonical ones.
   --

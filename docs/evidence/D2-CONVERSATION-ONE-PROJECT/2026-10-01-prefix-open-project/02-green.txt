@@ -1,0 +1,189 @@
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a driving turn that starts a demonstration announces the promotion as promoted
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a turn that began as a demonstration is not promoted, and its one drive_state is unmarked
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > frames the report as an observation and announces only the steer as the person steering
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > a report alone announces nothing
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > navigations: the two AnA could not make are chips, ahead of the six she made
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > actions: the one past the budget is the first chip
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a move she made and re-asked for past the budget is offered once, not twice
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > past chip room she is told the move is not offered either — never promised a chip that is dropped
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a turn that does not drive reaches the same chip derivation, unchanged
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > names each move, so the screen can report it back
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > holds her next round until the move lands — and a landing puts nothing in front of her
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move that did not land reaches the round she writes next
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move still unsettled at the ceiling is told to her as not confirmed, never as done
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a client that does not report its moves is not waited on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > is accepted with the move it settles
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > needs a move id, and refuses one that is not a move id
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > a screen report can name the move it is about
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > is accepted as its own action, not as a steer
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > needs something to report
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > an empty steer is still refused, and an unknown action still is
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history saved in the thread: the answer at the far edge is dropped, not opened on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history sent by the client (no saved thread yet): the answer at the far edge is dropped, not opened on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > a thread whose pairs are intact is passed through unchanged
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > narration — each round starts its own paragraph > a stop narrated after the last one is not run on from it
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > does not report blocked:false when a blocker source did not run
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > names every source that failed, not just a count
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > gives a real verdict when every source ran
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > builds the readiness payload with the canonical resolver, org-scoped
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > actually collects readiness blockers now that the call succeeds
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > refuses a numeric project of another organization the same way — 404, nothing written (PF-03)
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > with no project open, the file stays a conversation file: no Data Room source (PF-07)
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > resolves identity within the project, never across the organization (PF-07 / VR-10)
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > delegates to the gateway and maps the response to CouncilLLMResult
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > routes prose agents as document_drafting (jsonMode off)
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > threads correlationId + operation into the gateway audit metadata
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > throws SERVICE_DEGRADED (without calling the gateway) when the feature is gated off
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > converts a gateway failure into a recoverable CouncilError and audits it
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > prepends the intelligence prefix to the system turn when org/project context is present
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > does not fetch an intelligence prefix when no org/project context is given
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > routes the reviewing agents as regulatory_review, with jsonMode on (not structured_output)
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > DRAFTER is routed as document_drafting whatever its output format
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > STATISTICIAN is routed as regulatory_review whatever its output format
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > CRITIC is routed as regulatory_review whatever its output format
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > SYNTHESIZER is routed as document_drafting whatever its output format
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a governance refusal is final and not audited as an outage
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > a tenant placement refusal is final, named for what it is, and not audited as an outage (D6)
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — task routing and governance refusals > withRetry does not retry an error marked unrecoverable, and does retry a recoverable one
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a claim that matches the data is VERIFIED; one that differs is a DISCREPANCY corrected to the data
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own VERIFIED is not a verdict: no matching binding means UNVERIFIABLE
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > the model's own correction is not a figure: it is dropped when no data answered
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a binding that returns nothing is UNVERIFIABLE, not a DISCREPANCY corrected to an empty string
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > a count of 0 read from the data is a value, and verifies a claim of 0
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (prose) fails, and is not recorded as zero claims
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (JSON without a verifications list) fails, and is not recorded as zero claims
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an unreadable reply (an empty reply) fails, and is not recorded as zero claims
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Statistician — only bound data decides a claim > an empty verifications list is a real answer — a draft with no numerical claims
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > unreadable → fails and records nothing
+ ✓ server/services/__tests__/multi-agent-council.test.ts > Critic — an unreadable review is not "no issues" > a readable review keeps its issues and its assessment; an unknown assessment is the cautious REVISE
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > a session is created for an organization, and records it
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > a session with no organization is refused, and nothing is written
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > every agent's model call names the session's organization
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > all four agents pass it, not only the one exercised above
+ ✓ server/services/__tests__/multi-agent-council.test.ts > the council is bound to its tenant > an execution row and a verification row take their tenant from the session's row
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+ ✓ tests/routes/chat-upload-wiring.test.ts > the parser enforces its limits > rejects a file type outside the allowlist with 415, not 500
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a held governed call records the same: the only path a confirm-class draft takes in production
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > when the thread could not be persisted, the held call names no conversation — never the client's thread id
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > composes chat, artifact and switch blocks, each headed once
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > states every chat-register rule the founder asked for
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > keeps the artifact register and the chat-voice-interjection rule
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > renders a tool result as a sentence plus the figures, never a section
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > holds the voice floor itself (no exclamation, no emoji)
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > carries the register exactly once
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > carries the register under every role and lens overlay
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Structure responses with headers, bullets, and bold key terms"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Clear headers and section structure"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Always greet users by name"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "offer 2-3 specific things you can help with"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "After every substantive response"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "suggest the logical next step"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Use bullet points heavily"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Structured responses with clear headings"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Greet them as \""
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Don't just say hello back"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "give them a status check and a recommended next action"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## How to Communicate"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Conversation Style"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Momentum"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Formatting"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Your Voice"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Communication Principles"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Personality & Tone"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "I don't see a specific document status"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Prefix proactive insights with a subtle marker"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "This recommendation has moderate confidence"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Only surface if confidence > 70%"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "lead with what's missing before addressing the user's question"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "Would you like me to run an FDA War Game simulation"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "mention you can \"walk through a guided questionnaire\""
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the register-contradicting instruction "**Action:** [what was done]"
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > says how to talk while working through several steps
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one formatting section: no second one survives in the core
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one tone section (ANA_PERSONALITY_CORE), not a duplicate in the core
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > keeps the substance the founder wants: warmth, project awareness, one-line risk flags, evidence
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > keeps every governance anchor the register refers to
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > document-state behaviour still reaches the prompt — from the orchestrator, only when a status exists
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > cortex-unified: BASE_SYSTEM_PROMPT
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > ana-cortex: ANA_SYSTEM_PROMPT and ANA_COMPACT_PROMPT
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > lumen-context-builder user-identity overlay no longer forces bullets, headings or a greeting
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_510k/se asserts no conclusion and stays catchably incomplete
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_510k/concl asserts no conclusion and stays catchably incomplete
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_pma/risk asserts no conclusion and stays catchably incomplete
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_cer/benefitrisk asserts no conclusion and stays catchably incomplete
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_cer/gspr asserts no conclusion and stays catchably incomplete
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > 510(k) SE conclusion leaves the determination to FDA as a placeholder
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > CER GSPR table no longer pre-fills a compliant status for every requirement
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_510k/se template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_510k/se_discussion template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_510k/concl template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_510k/conclusion template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_pma/risk template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_pma/risk_analysis template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/benefitrisk template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/residual_risks template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/gspr template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/gspr_overview template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/concl template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/overall_conclusion template asserts no conclusion
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > PMA "clin" fallback: no bare fabricated stats, has catchable placeholders, and validateSectionServer flags it incomplete
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > PMA "risk" fallback: no bare fabricated stats, has catchable placeholders, and validateSectionServer flags it incomplete
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > CER "benefitrisk" fallback: no bare fabricated stats, has catchable placeholders, and validateSectionServer flags it incomplete
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > placeholder tokens used by the fallback are actually matched by PLACEHOLDER_REGEX (regression guard against too-short tokens like "[N]")
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > ctx-derived deviceName is still interpolated, unlike the bracketed statistical unknowns
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no asserted test results > 510(k) "testing" fallback states no result, is all placeholders, and is flagged incomplete
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no asserted test results > no section in any fallback template asserts a passed test or a met requirement
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program UUID beginning with digits loads its anchor row's intelligence, never the integer its digits spell
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program with no anchor row loads no project intelligence
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a legacy integer project loads its own intelligence
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a malformed project id loads none
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > a program and the integer its digits spell are different cache entries
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > invalidating a program by its UUID clears its entry
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > reports compliance and consistency as unassessed for an empty project
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > scores an empty project 0 / not_started rather than 15 / in_progress
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > renormalises the weights over the assessed dimensions only
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > still reports a number for a dimension that really was measured
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > marks only the dimension that was not assessed
+ ✓ tests/routes/chat-governed-upload.test.ts > chat upload governance > returns GOVERNED_CONTRACT_INVALID when governed context fails
+ ✓ tests/routes/ana-ri-resilience.test.ts > AnA RI resilience > returns degraded mode response when gateway is unavailable
+ Test Files  15 passed (15)
+      Tests  187 passed (187)

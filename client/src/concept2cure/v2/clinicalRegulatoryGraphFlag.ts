@@ -55,3 +55,15 @@ export function isClinicalRegulatoryGraphEnabled(): boolean {
   if (override !== null) return override;
   return isFeatureEnabled('ENABLE_CLINICAL_REGULATORY_GRAPH');
 }
+
+/**
+ * Whether this flag lets a surface be offered. False only for `crl-library`
+ * while the graph is off: its API is not mounted then, so an entry for it opens
+ * an error over a 404. Every place that offers surfaces as destinations reads
+ * this one predicate — the rail (Shell.tsx) and Project home's tool grids — so
+ * none can offer the library while the other hides it (QA 2026-10-08, j1: the
+ * rail hid it, the project's Workspace grid offered it on every project).
+ */
+export function flagAllowsSurface(surfaceId: string): boolean {
+  return surfaceId !== 'crl-library' || isClinicalRegulatoryGraphEnabled();
+}

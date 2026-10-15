@@ -1,0 +1,172 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts
+{
+  "timestamp": "2026-10-05T02:12:03.753Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:12:03.754Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts
+{
+  "timestamp": "2026-10-05T02:12:03.755Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts
+{
+  "timestamp": "2026-10-05T02:12:04.291Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > a model not approved for regulatory drafting cannot propose a governed artifact
+{
+  "timestamp": "2026-10-05T02:12:07.800Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/ana-ri/mdx-tool-policy.ts:92:31",
+    "queryPreview": "SELECT settings FROM organizations WHERE id = $1 LIMIT 1",
+    "enforcement": "on"
+  }
+}
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > a model not approved for regulatory drafting cannot propose a governed artifact
+[AnA Command] Refused create_artifact: MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > an approved model's proposal carries a seal that names it and its gateway request
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > the seal restores nothing for changed content, another person, or another command
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > a person's own command (no serving model) is proposed as before, unsealed
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a sealed proposal, confirmed unchanged: the command runs with the proposing model, the seal removed
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a sealed proposal, confirmed unchanged: the command runs with the proposing model, the seal removed
+{
+  "timestamp": "2026-10-05T02:12:07.958Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a sealed proposal, confirmed unchanged: the command runs with the proposing model, the seal removed
+{
+  "timestamp": "2026-10-05T02:12:07.957Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:12:07.957Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a sealed proposal, confirmed unchanged: the command runs with the proposing model, the seal removed
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a sealed proposal, confirmed unchanged: the command runs with the proposing model, the seal removed
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a sealed proposal, confirmed unchanged: the command runs with the proposing model, the seal removed
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > a model not approved for regulatory drafting cannot propose a governed artifact 19ms
+ ✓ server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > an approved model's proposal carries a seal that names it and its gateway request 6ms
+ ✓ server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > the seal restores nothing for changed content, another person, or another command 4ms
+ ✓ server/services/ana-ri/__tests__/proposal-provenance.test.ts > a create_artifact proposal: the approved-models check and the seal > a person's own command (no serving model) is proposed as before, unsealed 1ms
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a sealed proposal, confirmed unchanged: the command runs with the proposing model, the seal removed
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a seal minted for an unapproved model is refused at the write, not run
+{
+  "timestamp": "2026-10-05T02:12:10.602Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:12:10.603Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a seal minted for an unapproved model is refused at the write, not run
+{
+  "timestamp": "2026-10-05T02:12:10.603Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a seal minted for an unapproved model is refused at the write, not run
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a seal minted for an unapproved model is refused at the write, not run
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a seal minted for an unapproved model is refused at the write, not run
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a sealed proposal, confirmed unchanged: the command runs with the proposing model, the seal removed 2677ms
+stdout | server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a seal minted for an unapproved model is refused at the write, not run
+Loaded 0 academic documents
+
+ ✓ server/services/ana-ri/__tests__/proposal-provenance.test.ts > POST /api/ana-ri/governed-action: the confirmed artifact records its proposer > a seal minted for an unapproved model is refused at the write, not run 260ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  02:12:01
+   Duration  8.77s (transform 5.38s, setup 82ms, import 5.45s, tests 2.97s, environment 0ms)
+

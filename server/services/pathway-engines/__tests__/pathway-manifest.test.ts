@@ -51,12 +51,14 @@ describe('buildPathwayManifest — flat pathways', () => {
   it('marks a slot present (with sources) once a matching leaf exists', () => {
     const r = assessPathwayReadiness({
       pathway: 'pmda_shonin',
-      leaves: [{ sectionCode: 'sted', title: 'Summary Technical Documentation', documentType: 'sted' }],
+      // The STED is the structure the Shōnin slots sit in, not a slot of its own
+      // (e6f80d75); a device-description leaf fills the first STED slot.
+      leaves: [{ sectionCode: 'sted-1', title: 'Device description and intended use', documentType: 'device_description' }],
     });
     const m = buildPathwayManifest('pmda_shonin', r.detail);
-    const sted = m.entries.find((e) => e.id === 'sted');
-    expect(sted?.status).toBe('present');
-    expect(sted?.sources.length).toBeGreaterThan(0);
+    const slot = m.entries.find((e) => e.id === 'device-description');
+    expect(slot?.status).toBe('present');
+    expect(slot?.sources.length).toBeGreaterThan(0);
     expect(m.totals.requiredPresent).toBeGreaterThan(0);
   });
 });

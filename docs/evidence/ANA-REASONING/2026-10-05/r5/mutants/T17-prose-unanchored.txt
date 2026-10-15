@@ -1,0 +1,12 @@
+Mutant T17-prose-unanchored: a finding ('No issues found') is named as returning nothing
+
+--- server/services/ana/tool-outcome.ts
+- (?:passages?|documents?|results?|records?|matches|studies|articles|trials)
++ \w+
+
+Tests run: tests/services/tool-outcome.test.ts
+Result: KILLED
+
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a sentence that is a finding, or an analysis that opens with one, is a result 6ms
+      Tests  1 failed | 10 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

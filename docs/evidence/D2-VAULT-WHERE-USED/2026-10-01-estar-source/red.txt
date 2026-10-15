@@ -1,0 +1,96 @@
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fills the official eSTAR AcroForm when template + verified field map are present 50ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > REFUSES when a key of the registered map has no measured rebuild outcome 8ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > a CALLER-SUPPLIED map is the caller's vocabulary and is not measured against the table 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fails closed (no fabricated PDF) when the official template is not vendored 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fails closed when the field map is not populated/verified 5ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > skips+warns for canonical keys with no data, still producing the PDF 8ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > produces a filled official eSTAR with no blockers, via the XFA layer 171ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > writes each value at the SOM path it was mapped to 194ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > still fails closed when the template is missing 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > fails closed for a descriptor with no verified field map 16ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > enumerates AcroForm fields into a skeleton map from inline template bytes 44ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > fails closed (422) when no template is available to scaffold against 24ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > honest fail-closed (no template / empty map) > returns 422 with blockers and officialEstarPdf:false; never persists 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > end-to-end official PDF when template + verified map present > produces a real PDF and asserts officialEstarPdf:true truthfully 15ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > De Novo and PMA are ready on this template: vendored AND mapped (the readiness route's gate) 197ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > a fill that writes nothing is not a filled form: no blank official eSTAR 115ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > not ready (no template / empty map) > reports ready:false with blockers and persists nothing 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > ready (template + verified map present) > reports ready:true with no blockers 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'device', descriptorId: 'pma-device' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'q_sub', variant: 'device', descriptorId: 'q_sub-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'ide', variant: 'ivd', descriptorId: 'ide-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: '513g', variant: 'device', descriptorId: '513g-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > governed wins, request fills the gap, blanks + ignored keys are reported, provenance is persisted 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > without useProgramData the loader is never consulted and the response carries no fieldReport 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > with nothing governed and nothing requested no official eSTAR is produced at all 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: the Phase 3 homes are sourced when the program and registration rows hold them 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 404 when the ident resolves to nothing in this organization — and reads no governed data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 400 on a bad query (missing ident / unknown variant) 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > says plainly when a legacy project has no vault, and still delivers 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.0 > one real value is enough to be a filled form 106ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'de_novo-device' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'pma-device' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'de_novo-ivd' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'pma-ivd' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > de_novo-device never addresses the 510(k) Summary page, the predicate fields or the known-classification block 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > pma-device never addresses the 510(k) Summary page, the predicate fields or the known-classification block 5ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > de_novo-ivd never addresses the 510(k) Summary page, the predicate fields or the known-classification block 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > pma-ivd never addresses the 510(k) Summary page, the predicate fields or the known-classification block 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > the IVD maps omit indicationsForUseCitation (the IVD template does not declare LBTextField130) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > each descriptor owns its map object (mutating one cannot change another) 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > names the erased keys in the 200 body AND in the registered metadata 148ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed) 123ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official nIVD eSTAR v7.0 (same vendored file as 510(k)) > de_novo-device fills the shared administrative fields and reads them back at their SOM paths 185ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official nIVD eSTAR v7.0 (same vendored file as 510(k)) > pma-device fills the shared administrative fields and reads them back at their SOM paths 189ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official IVD eSTAR v7.0 (same vendored file as 510(k)) > de_novo-ivd is ready and fills the shared fields (minus the IFU citation the IVD template lacks) 171ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 when every written value is one the form erases (P3) 158ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 on the reviewer's non-string declaring entity (P1, over HTTP) 16ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (governed path) > says the same thing beside the fieldReport, and in the metadata 5ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went 367ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official IVD eSTAR v7.0 (same vendored file as 510(k)) > pma-ivd is ready and fills the shared fields (minus the IFU citation the IVD template lacks) 176ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > refuses a file with the right NAME whose bytes do not match its pin 20ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > isUsableEstarTemplate refuses a mismatch and allows verified or unpinned 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > a swapped template is excluded from the list a caller judges availability from 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > the committed templates match the checksums pinned for them 24ms
+ × tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form 336ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > writes the manifest token into the form the applicant opens 453ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body 368ms
+ × server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > reports what was filed, where, and under what hash 339ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with 389ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > embeds the bytes, under a name-tree key the eSTAR will not delete 341ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable 249ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > the file the manifest routes is the file that is in the document 402ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare 254ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > rejects a malformed attachment request at the schema, before any work 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one 345ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for 133ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > is byte-identical across two runs with the same inputs 548ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still parses as a PDF to a reader that has never seen this code 251ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > refuses the WHOLE export when one requested document cannot be filed 192ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > refuses a blank official form with files stapled to it 244ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > changes nothing when no attachment is requested 258ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > refuses an oversized submission as a sentence, not an exception 326ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > delivers when the output fits, and the ceiling is opt-in 591ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > still says how many were requested when the template itself refuses 485ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > is a caller bug, not a regulatory refusal, to ask for attachments with no resolver 22ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.0 > files into several slots at once, each under its own chapter 354ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to deeply equal { kind: 'authored_section', …(1) }
+- Expected:
++ Received:
+AssertionError: expected { requested: 1, …(3) } to deeply equal { requested: 1, refused: [], …(2) }
+- Expected
++ Received
+ Test Files  2 failed (2)
+      Tests  2 failed | 85 passed (87)

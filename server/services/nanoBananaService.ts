@@ -20,6 +20,7 @@ import {
   type GenerateContentResult,
   type Part,
 } from '@google/generative-ai';
+import JSZip from 'jszip';
 import { generatePptxBuffer } from './pptxGenerator';
 import { aiComplete } from '../lib/unified-ai-client';
 
@@ -79,8 +80,22 @@ export interface NanoBananaPresentationRequest {
 export interface NanoBananaPresentationResult {
   pptxBuffer: Buffer;
   filename: string;
+  /** Slides in pptxBuffer, counted from the file — not the number requested. */
   slideCount: number;
   coverImage?: { base64: string; mimeType: string };
+}
+
+/**
+ * The image model answered without an image. Until 2026-10-15 generateImage
+ * returned `images: []` here, which the routes answered as `success: true` and
+ * the chat as "Here's the image I generated".
+ */
+export class NoImageReturnedError extends Error {
+  readonly code = 'NO_IMAGE_RETURNED';
+  constructor(model: string, attempts: number) {
+    super(`The image model (${model}) returned no image in ${attempts} attempt(s).`);
+    this.name = 'NoImageReturnedError';
+  }
 }
 
 // ─── Safety settings (allow medical/scientific content) ───────────────────────
@@ -162,6 +177,8 @@ export async function generateImage(
     }
   }
 
+  if (images.length === 0) throw new NoImageReturnedError(modelName, count);
+
   return {
     images,
     prompt: req.prompt,
@@ -170,12 +187,18 @@ export async function generateImage(
   };
 }
 
+/** Slides in a .pptx, counted from its own slide parts (ppt/slides/slideN.xml). */
+async function countPptxSlides(pptx: Buffer): Promise<number> {
+  const zip = await JSZip.loadAsync(pptx);
+  return Object.keys(zip.files).filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name)).length;
+}
+
 // ─── Generate Presentation with Nano Banana visuals ───────────────────────────
 
 export async function generatePresentation(
   req: NanoBananaPresentationRequest
 ): Promise<NanoBananaPresentationResult> {
-  const slideCount = req.slideCount || 5;
+  const requestedSlides = req.slideCount || 5;
   const audience = req.audience || 'scientific';
 
   // Step 1: generate the slide content as markdown.
@@ -196,7 +219,7 @@ export async function generatePresentation(
   // them on a slide for a life-sciences audience, in a deck the user then
   // downloads as a .pptx. Replaced with the opposite instruction.
   const contentPrompt = `You are a presentation expert for the life sciences / pharma / regulatory industry.
-Create a ${slideCount}-slide presentation about: "${req.topic}"
+Create a ${requestedSlides}-slide presentation about: "${req.topic}"
 Target audience: ${audience}
 
 Format each slide using this markdown convention:
@@ -247,6 +270,10 @@ useful; one with invented metrics is worse than no deck.`;
 
   // Step 3: Build PPTX using existing generator
   const pptxBuffer = await generatePptxBuffer(req.topic, markdownContent);
+  // Counted from the file (2026-10-15). This returned req.slideCount, the number
+  // asked of the model, which the route sent as X-Slide-Count and the chat as
+  // "an N-slide presentation" whatever the deck held.
+  const slideCount = await countPptxSlides(pptxBuffer);
 
   // Sanitize filename
   const safeName = req.topic

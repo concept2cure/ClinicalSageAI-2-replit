@@ -4,6 +4,8 @@ import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
   classifyRegister,
+  deriveRoom,
+  findCatchphrases,
   lintArtifactRegister,
   lintChatRegister,
   measureRegister,
@@ -138,5 +140,70 @@ describe('register linter — mechanics', () => {
     expect(s.violationsByRule.exclamation).toBe(1);
     expect(s.meanScore).toBeLessThan(1);
     expect(summarizeRegisterLint([]).count).toBe(0);
+  });
+});
+
+describe('exclamation marks and emoji — earned in a light moment, never in a serious room (2026-10-01)', () => {
+  const rules = (text: string, o: RegisterLintOptions = {}) => lintChatRegister(text, o).violations.map(v => v.rule);
+
+  it('lets one earned exclamation stand on real news in an open room', () => {
+    const win = 'Congratulations, Dana, that is a big one! The CMC section you rebuilt in August is a large part of why it went through clean.';
+    expect(rules(win, { userText: 'IND cleared, no hold' })).toEqual([]);
+  });
+
+  it('refuses any exclamation in a serious room, derived or labelled', () => {
+    const reply = 'Good catch! It may well be data entry, but it needs checking as if it is not.';
+    expect(rules(reply, { userText: 'site 12 logged 4 hepatic adverse events this month' })).toContain('exclamation');
+    expect(rules('Let us take the tables first, then the narrative!', { room: 'serious' })).toContain('exclamation');
+  });
+
+  it('refuses more than one, a stacked one, one on a ritual, and one on a figure', () => {
+    expect(rules('That is wonderful! Truly!')).toContain('exclamation');
+    expect(rules('That went through clean?!')).toContain('exclamation');
+    expect(rules('Hi! The section is ready.', { firstTurn: true })).toContain('exclamation');
+    expect(rules('The review clock stopped at day 87!')).toContain('exclamation');
+  });
+
+  it('does not count `!=` in inline code as a feeling', () => {
+    expect(rules('Filter with `status != closed` and the list is empty.')).toEqual([]);
+  });
+
+  it('lets an emoji mirror the person in a light moment, and only then', () => {
+    const reply = 'Thirty days of quiet from FDA has never sounded so good 🎉';
+    expect(rules(reply, { userUsedEmoji: true })).toEqual([]);
+    expect(rules(reply)).toContain('emoji');
+    expect(rules('Two for you 🎉🎉', { userUsedEmoji: true })).toContain('emoji');
+    expect(rules('The rate ratio is 9.1 🎉', { userUsedEmoji: true })).toContain('emoji');
+    expect(rules('On it 👍', { userUsedEmoji: true, userText: 'we got a deficiency letter' })).toContain('emoji');
+  });
+
+  it('derives the serious room fail-closed, and honours a labeller who knows better', () => {
+    expect(deriveRoom('Your 483 response is due Friday.')).toBe('serious');
+    expect(deriveRoom('Morning.', { userText: 'the clinical hold letter just came in' })).toBe('serious');
+    expect(deriveRoom('Morning, Priya.', { userText: 'good morning' })).toBe('open');
+    expect(deriveRoom('Morning, Priya.', { userText: 'good morning', room: 'serious' })).toBe('serious');
+  });
+
+  it('fails any exclamation mark or emoji inside an artifact', () => {
+    const artifact = '## 2.5.1 Product Development Rationale\n\nThe sponsor selected the dose based on exposure!\n\n## 2.5.2 Overview';
+    expect(lintArtifactRegister(artifact).violations.map(v => v.rule)).toContain('exclamation');
+    const withEmoji = '## 2.5.1 Product Development Rationale\n\nThe sponsor selected the dose ✅\n\n## 2.5.2 Overview';
+    expect(lintArtifactRegister(withEmoji).violations.map(v => v.rule)).toContain('emoji');
+  });
+
+  it('reports how often replies carry one, so "most have none" is measurable', () => {
+    const s = summarizeRegisterLint([lintChatRegister('Fine.'), lintChatRegister('That is great news!'), lintChatRegister('Done.')]);
+    expect(s.exclamationTurnRate).toBe(0.33);
+    expect(s.emojiTurnRate).toBe(0);
+  });
+
+  it('finds a playful line that repeats, because repetition turns charm into a tic', () => {
+    const turns = [
+      { conversationId: 'c1', text: 'Done. Another one bites the dust!' },
+      { conversationId: 'c1', text: 'Section 3 is clean. Another one bites the dust!' },
+      { conversationId: 'c1', text: 'That one is real news!' },
+    ];
+    expect(findCatchphrases(turns)).toEqual([{ phrase: 'another one bites the dust', count: 2 }]);
+    expect(findCatchphrases([{ conversationId: 'c1', text: 'Plain.' }])).toEqual([]);
   });
 });

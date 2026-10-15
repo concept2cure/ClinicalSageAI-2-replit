@@ -1,0 +1,11 @@
+server/routes/biosketch.ts:158  governed-helper  no signer re-verification, no signature row
+server/routes/committees.ts:265  governed-helper  no signer re-verification, no signature row
+server/routes/coverage-analysis.ts:244  governed-helper  no signer re-verification, no signature row
+server/routes/dmsp.ts:160  governed-helper  no signer re-verification, no signature row
+server/routes/effort-certification.ts:38  governed-helper  no signer re-verification, no signature row
+server/routes/export-control.ts:137  governed-helper  no signer re-verification, no signature row
+server/routes/grants.ts:289  governed-helper  no signer re-verification, no signature row
+server/routes/grants.ts:402  governed-helper  no signer re-verification, no signature row
+server/routes/grants.ts:503  governed-helper  no signer re-verification, no signature row
+server/routes/other-support.ts:186  governed-helper  no signer re-verification, no signature row
+server/routes/research-agreements.ts:154  governed-helper  no signer re-verification, no signature row

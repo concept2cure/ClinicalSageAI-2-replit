@@ -17,7 +17,7 @@
  * Idempotent by title: every title starts with DEMO_PREFIX.biotech and the pack
  * looks each record up before creating it, so a second run creates nothing and
  * reports what it found (`tally` in the manifest). Steps that need the second
- * signer (QMS approval, the authoring e-signature) run only when
+ * signer (QMS approval, the authoring freeze and e-signature) run only when
  * OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD are supplied (lib.mjs `connectSigner`);
  * otherwise they are recorded as "not executed — signer credential not
  * supplied" and everything else completes.
@@ -257,7 +257,7 @@ async function purgeLeaves({ api, run, tally }) {
     if (r.status !== 204) throw new Error(`delete leaf ${l.id}: HTTP ${r.status} ${String(r.text).slice(0, 200)}`);
     tally.created('purged-leaf');
   }
-  run.note('Program, vault documents, authoring documents, protocol document, submission and sequence have no delete or archive route for a signed-in author (authoring DELETE /docs/:id needs ADMIN_TOKEN; the others have none), so they remain and are reported here rather than removed by SQL.');
+  run.note('Program, vault documents, authoring documents, protocol document, submission and sequence remain and are reported here rather than removed by SQL: the others have no delete or archive route, and the governed authoring DELETE /docs/:id (owner, admin or manager, with a reason) refuses with 409 any document with revision history, a signature or a seal, which every demo document has.');
   return `${leaves.length} leaves removed`;
 }
 

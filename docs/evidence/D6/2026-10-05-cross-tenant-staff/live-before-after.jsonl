@@ -1,0 +1,54 @@
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/organizations","status":200,"organisations":2}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/organizations/<Northwind>","status":200}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/tenant-config/<Northwind>/settings","status":200}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/tenant-users/<Northwind>","status":200}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/clients/<Northwind workspace>","status":404}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/tenants","status":200,"tenants":1}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/tenants/<Northwind>/users","status":403}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/audit/chain-monitor/status","status":403}
+{"code":"head","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/part11/audit-trail/seal-integrity","status":503}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/organizations","status":200,"organisations":2}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/organizations/<Northwind>","status":200}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/tenant-config/<Northwind>/settings","status":403}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/tenant-users/<Northwind>","status":403}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/clients/<Northwind workspace>","status":404}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/tenants","status":200,"tenants":1}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/tenants/<Northwind>/users","status":403}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/audit/chain-monitor/status","status":403}
+{"code":"head","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/part11/audit-trail/seal-integrity","status":503}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/organizations","status":200,"organisations":1}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/organizations/<Northwind>","status":403}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/tenant-config/<Northwind>/settings","status":403}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/tenant-users/<Northwind>","status":403}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/clients/<Northwind workspace>","status":404}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/tenants","status":200,"tenants":1}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/tenants/<Northwind>/users","status":403}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/audit/chain-monitor/status","status":403}
+{"code":"head","who":"plain member holding an active super_admin platform grant","path":"GET /api/part11/audit-trail/seal-integrity","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/organizations","status":200,"organisations":1}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/organizations/<Northwind>","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/tenant-config/<Northwind>/settings","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/tenant-users/<Northwind>","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/clients/<Northwind workspace>","status":404}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/tenants","status":200,"tenants":1}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/tenants/<Northwind>/users","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/audit/chain-monitor/status","status":403}
+{"code":"fixed","who":"member whose membership row says super_admin, no platform grant","path":"GET /api/part11/audit-trail/seal-integrity","status":403}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/organizations","status":200,"organisations":1}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/organizations/<Northwind>","status":403}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/tenant-config/<Northwind>/settings","status":403}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/tenant-users/<Northwind>","status":403}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/clients/<Northwind workspace>","status":404}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/tenants","status":200,"tenants":1}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/tenants/<Northwind>/users","status":403}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/audit/chain-monitor/status","status":403}
+{"code":"fixed","who":"member whose membership row says platform_admin, no platform grant","path":"GET /api/part11/audit-trail/seal-integrity","status":403}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/organizations","status":200,"organisations":2}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/organizations/<Northwind>","status":200}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/tenant-config/<Northwind>/settings","status":200}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/tenant-users/<Northwind>","status":200}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/clients/<Northwind workspace>","status":404}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/tenants","status":200,"tenants":2}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/tenants/<Northwind>/users","status":200}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/audit/chain-monitor/status","status":200}
+{"code":"fixed","who":"plain member holding an active super_admin platform grant","path":"GET /api/part11/audit-trail/seal-integrity","status":503}

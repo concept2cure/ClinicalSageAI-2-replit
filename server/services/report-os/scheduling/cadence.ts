@@ -1,97 +1,91 @@
-/**
- * Deterministic next-run computation for constrained cadence presets.
- *
- * Pure, no cron library, no IO. All arithmetic is performed in UTC for
- * determinism; `schedule.timeZoneOffsetMinutes` is intentionally ignored here
- * and is expected to be applied by the caller when presenting times to users.
- */
-
+/** Calendar recurrence in the schedule's local timezone; no cron dependency.
+ * DST gaps move forward by the gap and folds use the earlier occurrence, once.
+ * Legacy offsets are minutes east of UTC; an IANA timezone takes precedence. */
 import type { ReportSchedule } from './types';
 
-/** A sentinel "distant past" used when there is no recorded last run. */
-const DISTANT_PAST = new Date(0);
-
-/** Clamp a monthly day-of-month into the 1..28 range valid in every month. */
-function clampDayOfMonth(day: number | undefined): number {
-  if (typeof day !== 'number' || Number.isNaN(day)) return 1;
-  if (day < 1) return 1;
-  if (day > 28) return 28;
-  return Math.floor(day);
+const formatters = new Map<string, Intl.DateTimeFormat>();
+function formatter(zone: string): Intl.DateTimeFormat {
+  let result = formatters.get(zone);
+  if (!result) {
+    result = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    });
+    formatters.set(zone, result);
+  }
+  return result;
 }
 
-/** Normalize a day-of-week into 0..6 (0=Sun). Defaults to Monday (1). */
-function normalizeDayOfWeek(day: number | undefined): number {
-  if (typeof day !== 'number' || Number.isNaN(day)) return 1;
-  const mod = ((Math.floor(day) % 7) + 7) % 7;
-  return mod;
+/** Invalid timezone claims must not silently become UTC schedules. */
+export function isValidTimeZone(zone: string): boolean {
+  try { formatter(zone).format(new Date(0)); return true; } catch { return false; }
 }
 
-/** Build a UTC Date at the given calendar position and the schedule's time. */
-function utcAt(
-  year: number,
-  month: number,
-  day: number,
-  hour: number,
-  minute: number,
-): Date {
-  return new Date(Date.UTC(year, month, day, hour, minute, 0, 0));
+function localStamp(at: number, schedule: ReportSchedule): number {
+  if (!schedule.timeZone) return at + (schedule.timeZoneOffsetMinutes ?? 0) * 60_000;
+  const parts = Object.fromEntries(formatter(schedule.timeZone).formatToParts(new Date(at)).map(p => [p.type, p.value]));
+  return Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second));
 }
 
-/**
- * Compute the next occurrence of `schedule` strictly AFTER `from`.
- *
- * The returned Date is always strictly greater than `from`.
- */
+function instantForLocal(local: number, schedule: ReportSchedule): number {
+  if (!schedule.timeZone) return local - (schedule.timeZoneOffsetMinutes ?? 0) * 60_000;
+  // Sample both sides of any timezone transition surrounding this civil date.
+  const offsets = new Set<number>();
+  for (let hours = -48; hours <= 48; hours += 12) {
+    const sample = local + hours * 3_600_000;
+    offsets.add(localStamp(sample, schedule) - sample);
+  }
+  const candidates = [...offsets].map(offset => ({ instant: local - offset, civil: localStamp(local - offset, schedule) }));
+  const exact = candidates.filter(c => c.civil === local).map(c => c.instant);
+  if (exact.length) return Math.min(...exact);
+  // A nonexistent wall-clock time: choose the nearest forward projection.
+  const after = candidates.filter(c => c.civil > local).sort((a, b) => a.civil - b.civil || a.instant - b.instant);
+  if (!after.length) throw new Error('Unable to resolve report schedule timezone');
+  return after[0].instant;
+}
+
+function validateSchedule(schedule: ReportSchedule, from: Date): void {
+  if (!Number.isFinite(from.getTime())) throw new Error('Invalid report schedule anchor');
+  if (!Number.isInteger(schedule.hour) || schedule.hour < 0 || schedule.hour > 23 ||
+      !Number.isInteger(schedule.minute ?? 0) || (schedule.minute ?? 0) < 0 || (schedule.minute ?? 0) > 59) {
+    throw new Error('Invalid report schedule time');
+  }
+  if (schedule.timeZone && !isValidTimeZone(schedule.timeZone)) throw new Error('Invalid report schedule timezone');
+  if (schedule.timeZoneOffsetMinutes != null && (!Number.isInteger(schedule.timeZoneOffsetMinutes) || Math.abs(schedule.timeZoneOffsetMinutes) > 840)) {
+    throw new Error('Invalid report schedule offset');
+  }
+  if ((schedule.dayOfWeek != null && !Number.isFinite(schedule.dayOfWeek)) ||
+      (schedule.dayOfMonth != null && !Number.isFinite(schedule.dayOfMonth))) {
+    throw new Error('Invalid report schedule calendar day');
+  }
+}
+
+/** Compute one occurrence strictly after from, using the local calendar. */
 export function computeNextRun(schedule: ReportSchedule, from: Date): Date {
-  const hour = schedule.hour;
-  const minute = schedule.minute ?? 0;
-
-  const year = from.getUTCFullYear();
-  const month = from.getUTCMonth();
-  const date = from.getUTCDate();
-
+  validateSchedule(schedule, from);
+  const local = new Date(localStamp(from.getTime(), schedule));
+  const year = local.getUTCFullYear(), month = local.getUTCMonth(), day = local.getUTCDate();
+  const hour = schedule.hour, minute = schedule.minute ?? 0;
+  const dow = ((Math.floor(schedule.dayOfWeek ?? 1) % 7) + 7) % 7;
+  const dom = Math.max(1, Math.min(28, Math.floor(schedule.dayOfMonth ?? 1)));
+  let civil: number;
+  let advance: () => void;
   if (schedule.cadence === 'daily') {
-    let candidate = utcAt(year, month, date, hour, minute);
-    if (candidate.getTime() <= from.getTime()) {
-      candidate = utcAt(year, month, date + 1, hour, minute);
-    }
-    return candidate;
-  }
-
-  if (schedule.cadence === 'weekly') {
-    const targetDow = normalizeDayOfWeek(schedule.dayOfWeek);
-    const currentDow = from.getUTCDay();
-    const deltaDays = (targetDow - currentDow + 7) % 7;
-    let candidate = utcAt(year, month, date + deltaDays, hour, minute);
-    if (candidate.getTime() <= from.getTime()) {
-      // Same weekday today but the time has already passed (deltaDays === 0),
-      // so roll forward a full week.
-      candidate = utcAt(year, month, date + deltaDays + 7, hour, minute);
-    }
-    return candidate;
-  }
-
-  // monthly
-  const targetDom = clampDayOfMonth(schedule.dayOfMonth);
-  let candidate = utcAt(year, month, targetDom, hour, minute);
-  if (candidate.getTime() <= from.getTime()) {
-    candidate = utcAt(year, month + 1, targetDom, hour, minute);
-  }
-  return candidate;
+    civil = Date.UTC(year, month, day, hour, minute);
+    advance = () => { civil += 86_400_000; };
+  } else if (schedule.cadence === 'weekly') {
+    civil = Date.UTC(year, month, day + (dow - local.getUTCDay() + 7) % 7, hour, minute);
+    advance = () => { civil += 7 * 86_400_000; };
+  } else if (schedule.cadence === 'monthly') {
+    civil = Date.UTC(year, month, dom, hour, minute);
+    advance = () => { const d = new Date(civil); civil = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, dom, hour, minute); };
+  } else throw new Error('Invalid report schedule cadence');
+  let instant = instantForLocal(civil, schedule);
+  while (instant <= from.getTime()) { advance(); instant = instantForLocal(civil, schedule); }
+  return new Date(instant);
 }
 
-/**
- * Whether the schedule is due to run at `now`, given the last run time.
- *
- * True when `now` is at or past the next run computed from `lastRunAt`
- * (or from a distant past when there has been no prior run).
- */
-export function isDue(
-  schedule: ReportSchedule,
-  lastRunAt: Date | null,
-  now: Date,
-): boolean {
-  const anchor = lastRunAt ?? DISTANT_PAST;
-  const next = computeNextRun(schedule, anchor);
-  return now.getTime() >= next.getTime();
+/** Legacy helper. A row's persisted nextRunAt is authoritative in due scans. */
+export function isDue(schedule: ReportSchedule, anchor: Date, now: Date): boolean {
+  return now.getTime() >= computeNextRun(schedule, anchor).getTime();
 }

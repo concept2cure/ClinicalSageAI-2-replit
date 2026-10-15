@@ -1,0 +1,65 @@
+# Red: fix round, licensing panel (DP-71 a). Unfixed LicensingHistoryPanel.tsx, 2026-10-01T15:47:11Z
+# npx vitest run client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > shows what changed, on which workspace and module, by whom, when, and why 92ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > names an action it has never heard of, instead of dropping or dumping it 27ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > filters to one workspace and one module 88ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > says how much of the record this page is NOT showing 187ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > says a complete page is complete 38ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > flags entries it could not fully read, and still lists them 21ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > a failed read renders an error, never an empty history 38ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > shows the honest empty state only when the service reports nothing 16ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > shows a verified row as verified when the chain AND the seal were checked 21ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > does not imply a seal check that could not happen 19ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > claims no verification at all when none was performed 17ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > reports a broken chain, and does not vouch for what follows the break 24ms
+ × client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says plainly that the end of the chain does not match its anchor, not that the check failed 23ms
+   → expected 'A break was found in the record chain…' to contain 'The end of the record chain does not …'
+ × client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says when the newest entries were not checked against the anchor 28ms
+   → expected 'Record chain and seals verifiedEvery …' to contain 'The newest entries were not checked a…'
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > adds no such caveat when the newest entries were checked 22ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says when an entry was never committed to the chain 26ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says plainly that the end of the chain does not match its anchor, not that the check failed
+AssertionError: expected 'A break was found in the record chain…' to contain 'The end of the record chain does not …'
+
+Expected: "The end of the record chain does not match its anchor"
+Received: "A break was found in the record chainThe verification could not be completed. The entries below are shown without a verification result.12 entries checked at Aug 24, 2026, 9:00 AM."
+
+ ❯ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx:345:19
+    343|     await screen.findByText('Module tier changed');
+    344|     const block = screen.getByTestId('lh-integrity').textContent ?? '';
+    345|     expect(block).toContain('The end of the record chain does not matc…
+       |                   ^
+    346|     expect(block).toContain('entries may have been removed or rewritte…
+    347|     // Neither the "could not be completed" default nor the mid-chain …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says when the newest entries were not checked against the anchor
+AssertionError: expected 'Record chain and seals verifiedEvery …' to contain 'The newest entries were not checked a…'
+
+Expected: "The newest entries were not checked against the copy kept outside the database"
+Received: "Record chain and seals verifiedEvery entry was re-derived from the one before it and its seal was checked.12 entries checked at Aug 24, 2026, 9:00 AM."
+
+ ❯ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx:369:19
+    367|     const block = screen.getByTestId('lh-integrity').textContent ?? '';
+    368|     expect(block).toContain('Record chain and seals verified');
+    369|     expect(block).toContain('The newest entries were not checked again…
+       |                   ^
+    370|   });
+    371|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  15:47:12
+   Duration  2.22s (transform 366ms, setup 186ms, import 458ms, tests 693ms, environment 668ms)
+

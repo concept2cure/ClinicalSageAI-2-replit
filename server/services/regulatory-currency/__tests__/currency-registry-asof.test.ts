@@ -206,3 +206,16 @@ describe('isVerificationStale', () => {
     expect(overdue.map((f) => f.id)).toEqual([]);
   });
 });
+
+describe('topic search matches whole words, plurals included', () => {
+  it('finds the void LDT rule for the plural spellings people write', () => {
+    for (const topic of ['laboratory developed tests', 'LDTs', 'LDT']) {
+      expect(findFacts({ topic }).map((f) => f.id), topic).toContain('us-ldt-final-rule-void');
+    }
+  });
+
+  it('does not match a keyword inside another word', () => {
+    expect(findFacts({ topic: 'training requirements' })).toEqual([]);
+  });
+});
+

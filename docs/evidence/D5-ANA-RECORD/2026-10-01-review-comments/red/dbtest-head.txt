@@ -1,0 +1,10 @@
+# tests/db/review-comments-record.dbtest.ts with server/routes/c2c/reviews.ts as at HEAD and the two guard triggers dropped (the database as it was before this change)
+ × tests/db/review-comments-record.dbtest.ts > posting > commits the comment with a chained row carrying its words and their sha256 138ms
+ × tests/db/review-comments-record.dbtest.ts > posting > writes neither when the chained row cannot be written 41ms
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > refuses another tenant's caller on this thread 21ms
+ × tests/db/review-comments-record.dbtest.ts > the words are fixed > PATCH is refused with COMMENT_TEXT_FIXED, and the words are unchanged 46ms
+ × tests/db/review-comments-record.dbtest.ts > the words are fixed > the database refuses a rewrite, a direct delete and a truncate from the owner 53ms
+ × tests/db/review-comments-record.dbtest.ts > retraction > hides the comment, keeps its words, and chains who retracted it and why 61ms
+ × tests/db/review-comments-record.dbtest.ts > a comment goes only with what it belongs to > deleting its thread removes it (the cascade), and the chained rows remain 57ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 1 passed (7)

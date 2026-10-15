@@ -1,0 +1,7 @@
+[ci:model-migration] Drizzle models vs migration lineage
+  models parsed              : 702
+  tables CREATEd by both     : 394
+  divergent tables           : 12
+  baselined (known, unfixed) : 28
+
+✅ no new divergence. 28 baselined and awaiting burn-down.

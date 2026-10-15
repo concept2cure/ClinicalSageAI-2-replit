@@ -1,0 +1,3 @@
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (37 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] 8 previously-flagged finding(s) resolved — consider re-running with --write-baseline to ratchet down.
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 8 baseline)

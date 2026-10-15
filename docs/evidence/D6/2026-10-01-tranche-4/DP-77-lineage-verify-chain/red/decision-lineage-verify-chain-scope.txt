@@ -1,0 +1,188 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member gets their own organisation's chain verdict, and the estate verifier does not run 25ms
+   → the estate verifier ran for a member: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a break in the member's chain is reported, and another organisation's break is not named 8ms
+   → expected 'VERIFIED' to be 'INTEGRITY_FAILURE' // Object.is equality
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE) 7ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member with no organisation is refused, and nothing runs 5ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > control: a platform administrator gets the estate verdict 8ms
+   → expected { chainIntegrity: 'VERIFIED', …(4) } to match object { scope: 'estate', …(2) }
+(3 matching properties omitted from actual)
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member's report states their organisation's chain, and the estate verifier does not run 5ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member with no organisation gets no report across every organisation 5ms
+   → expected 200 to be 403 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member gets their own organisation's chain verdict, and the estate verifier does not run
+AssertionError: the estate verifier ran for a member: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts:60:71
+     58|     const res = await request(appFor(7)).get('/api/decision-lineage/ve…
+     59|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+     60|     expect(h.verifyChain, 'the estate verifier ran for a member').not.…
+       |                                                                       ^
+     61|     expect(h.tenantVerdict).toHaveBeenCalledWith(7);
+     62|     expect(res.body).toMatchObject({ scope: 'organization', chainInteg…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a break in the member's chain is reported, and another organisation's break is not named
+AssertionError: expected 'VERIFIED' to be 'INTEGRITY_FAILURE' // Object.is equality
+
+Expected: "INTEGRITY_FAILURE"
+Received: "VERIFIED"
+
+ ❯ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts:75:37
+     73|     });
+     74|     const res = await request(appFor(7)).get('/api/decision-lineage/ve…
+     75|     expect(res.body.chainIntegrity).toBe('INTEGRITY_FAILURE');
+       |                                     ^
+     76|     expect(JSON.stringify(res.body)).not.toContain('row-9');
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE)
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts:82:24
+     80|     h.tenantVerdict.mockResolvedValue({ ok: null, rowsChecked: 12, leg…
+     81|     const res = await request(appFor(7)).get('/api/decision-lineage/ve…
+     82|     expect(res.status).toBe(503);
+       |                        ^
+     83|     expect(res.body.chainIntegrity).toBe('UNVERIFIABLE');
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member with no organisation is refused, and nothing runs
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts:88:24
+     86|   it('a member with no organisation is refused, and nothing runs', asy…
+     87|     const res = await request(appFor(null)).get('/api/decision-lineage…
+     88|     expect(res.status).toBe(403);
+       |                        ^
+     89|     expect(h.verifyChain).not.toHaveBeenCalled();
+     90|     expect(h.tenantVerdict).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > control: a platform administrator gets the estate verdict
+AssertionError: expected { chainIntegrity: 'VERIFIED', …(4) } to match object { scope: 'estate', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "chainIntegrity": "VERIFIED",
+    "entriesVerified": 90000,
+-   "scope": "estate",
+  }
+
+ ❯ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts:98:22
+     96|     expect(res.status).toBe(200);
+     97|     expect(h.verifyChain).toHaveBeenCalled();
+     98|     expect(res.body).toMatchObject({ scope: 'estate', chainIntegrity: …
+       |                      ^
+     99|   });
+    100| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member's report states their organisation's chain, and the estate verifier does not run
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts:106:31
+    104|     const res = await request(appFor(7)).get('/api/decision-lineage/co…
+    105|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    106|     expect(h.verifyChain).not.toHaveBeenCalled();
+       |                               ^
+    107|     expect(res.body.chainIntegrity).toMatchObject({ scope: 'organizati…
+    108|     expect(res.body.organizationId).toBe(7);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member with no organisation gets no report across every organisation
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts:113:24
+    111|   it('a member with no organisation gets no report across every organi…
+    112|     const res = await request(appFor(null)).get('/api/decision-lineage…
+    113|     expect(res.status).toBe(403);
+       |                        ^
+    114|     expect(h.queryDecisions).not.toHaveBeenCalled();
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  21:09:47
+   Duration  693ms (transform 131ms, setup 89ms, import 221ms, tests 68ms, environment 0ms)
+

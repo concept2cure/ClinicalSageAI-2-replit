@@ -1,0 +1,11 @@
+mutant M-leaf-escapes-all: server/services/ectd/leaf-pdf-renderer.ts
+-   return looksLikeHtml(content) ? content : plainTextToHtml(content);
++   return plainTextToHtml(content);
+
+ × server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — list nesting reaches the page > draws each nesting level further from the margin than the one above it 215ms
+   → actual value must be number or bigint, received "undefined"
+ × server/services/ectd/__tests__/leaf-pdf-renderer.test.ts > renderLeafPdf — content with no known tag is read as the editor reads it > content holding a known tag is still read as HTML (guard) 9ms
+   → expected 'T  <p>Assay <b>within</b> limits.</p>' to contain 'Assay within limits.'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 50 passed (52)

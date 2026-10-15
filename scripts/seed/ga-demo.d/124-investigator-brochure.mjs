@@ -1,5 +1,5 @@
 /**
- * Wave-3 domain seed — Investigator's Brochure (ICH E6(R2) §7) readiness evidence.
+ * Wave-3 domain seed — Investigator's Brochure (ICH E6(R3) Appendix A) readiness evidence.
  *
  * The IB has NO authored instance table: the v2 InvestigatorBrochure surface's
  * per-section readiness is *assembled* from the REAL, org-scoped upstream evidence

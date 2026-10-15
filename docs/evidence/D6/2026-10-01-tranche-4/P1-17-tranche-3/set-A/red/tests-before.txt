@@ -1,0 +1,1095 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET / 49ms
+   → expected '{"error":"Tenant export failed","deta…' not to match /SENTINEL-DB-DETAIL|tenant_export_rece…/
+ × server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /full 15ms
+   → expected '{"error":"Tenant full export failed",…' not to match /SENTINEL-DB-DETAIL|tenant_export_rece…/
+ × server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /attestation 9ms
+   → expected '{"error":"Attestation failed","detail…' not to match /SENTINEL-DB-DETAIL|tenant_export_rece…/
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > leaves the 404 and the 503 answers unchanged 12ms
+ × server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/ready — a throwing probe answers 500 with the envelope 25ms
+   → expected '{"status":"error","timestamp":"2026-1…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed database probe degrades to 503 without the driver text 13ms
+   → expected '{"status":"degraded","timestamp":"202…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed SagePlus probe degrades to 503 without the thrower text 15ms
+   → expected '{"status":"degraded","timestamp":"202…' not to match /SENTINEL-SAGE-DETAIL|sage-plus\.inter…/
+ × server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed latency probe keeps status ok and drops the thrower text 6ms
+   → expected '{"status":"ok","timestamp":"2026-10-0…' not to contain 'SENTINEL-LATENCY-DETAIL'
+ ✓ server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > leaves the healthy answers unchanged 6ms
+ × server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a failed program-access read answers 500 with the envelope 54ms
+   → expected '{"error":"Program access check failed…' not to match /SENTINEL-DB-DETAIL|regulatory_program…/
+ × server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > an unreachable shadow service answers 502 with its sentence and no detail 6ms
+   → expected 'SENTINEL-UPSTREAM-DETAIL connect ECON…' to be undefined
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > leaves the 403 and 422 answers unchanged 8ms
+ × server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > GET /api/reports/download/:personaId/:filename 64ms
+   → expected '{"success":false,"message":"Error dow…' not to match /SENTINEL-FS-DETAIL|\/srv\/app|Can…/srv\
+ × server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > GET /api/reports/preview/:personaId/:imageFile 9ms
+   → expected '{"success":false,"message":"Error ser…' not to match /SENTINEL-FS-DETAIL|\/srv\/app|Can…/srv\
+ × server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > POST /api/reports/generate/:personaId 7ms
+   → expected '{"success":false,"message":"Error gen…' not to match /SENTINEL-FS-DETAIL|\/srv\/app|Can…/srv\
+ × server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > POST /api/reports/subscribe/:personaId 5ms
+   → expected '{"success":false,"message":"Error sub…' not to match /SENTINEL-FS-DETAIL|\/srv\/app|Can…/srv\
+ ✓ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > creates no directories when they already exist, and leaves the 404 unchanged 5ms
+ × server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > FAERS 503: the outage is stated, the transport text is logged > POST /faers 50ms
+   → expected 'openFDA request failed: SENTINEL-TRAN…' to be 'openFDA request failed' // Object.is equality
+ × server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > FAERS 503: the outage is stated, the transport text is logged > POST /signal-detection 5ms
+   → expected 'openFDA request failed: SENTINEL-TRAN…' to be 'openFDA request failed' // Object.is equality
+ × server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > study 501: the unconfigured source is named, the deployment variable is not > POST /query with no FHIR source connected 10ms
+   → expected 'No FHIR data source is connected (FHI…' to match /not configured/
+ ✓ server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > study 501: the unconfigured source is named, the deployment variable is not > POST /query with a licensed vendor source 4ms
+ × server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > POST /programs/:programId/assess 60ms
+   → expected '{"error":"Assessment failed","detail"…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > GET /programs/:programId/assessments 9ms
+   → expected '{"error":"List failed","detail":"SENT…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > GET /assessments/:id 11ms
+   → expected '{"error":"Fetch failed","detail":"SEN…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > leaves the 422 and 404 answers unchanged 13ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-sap 51ms
+   → expected '{"success":false,"error":"SENTINEL-FS…' not to contain 'SENTINEL-'
+ × server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-ind 5ms
+   → expected '{"success":false,"error":"SENTINEL-FS…' not to contain 'SENTINEL-'
+ × server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-summary 6ms
+   → expected '{"success":false,"error":"SENTINEL-FS…' not to contain 'SENTINEL-'
+ × server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-ind 4ms
+   → expected '{"success":false,"error":"SENTINEL-CT…' not to contain 'SENTINEL-'
+ × server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-sap 4ms
+   → expected '{"success":false,"error":"SENTINEL-CT…' not to contain 'SENTINEL-'
+ × server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-summary 17ms
+   → expected '{"success":false,"error":"SENTINEL-CT…' not to contain 'SENTINEL-'
+ ✓ server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > leaves the 400 answers unchanged 5ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged
+[eCTD History] query failed for Project 42: SENTINEL-DB-DETAIL relation "ectd_required_sections" does not exist
+
+ × tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile 10ms
+   → expected '{"error":"Compilation failed","messag…' not to contain 'SENTINEL-DB-DETAIL'
+ × tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status 4ms
+   → expected '{"error":"Failed to get compilation s…' not to contain 'SENTINEL-DB-DETAIL'
+ × tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate 4ms
+   → expected '{"error":"Validation failed","message…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged 2ms
+ × server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > GET /signatures/:signatureId/manifest — a non-schema query failure 45ms
+   → expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > GET /audit-trail/seal-integrity — a verifier failure (platform admin) 7ms
+   → expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > leaves the 503 for an unprovisioned store and the 403 for an org admin unchanged 7ms
+ × tests/routes/project-modules-5xx-containment.test.ts > project-modules 500s: envelope out, detail to the log > POST /:projectId/modules 10ms
+   → expected '{"error":"SENTINEL-DB-DETAIL duplicat…' not to contain 'SENTINEL-DB-DETAIL'
+ × tests/routes/project-modules-5xx-containment.test.ts > project-modules 500s: envelope out, detail to the log > POST /:projectId/modules/bulk 2ms
+   → expected '{"error":"SENTINEL-DB-DETAIL duplicat…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ tests/routes/project-modules-5xx-containment.test.ts > project-modules 500s: envelope out, detail to the log > leaves the Zod 400 unchanged 2ms
+ × server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts > platform AI-provider 500s: envelope out, detail to the log > GET /ai-providers 35ms
+   → expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts > platform AI-provider 500s: envelope out, detail to the log > PUT /ai-providers/preference 18ms
+   → expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts > platform AI-provider 500s: envelope out, detail to the log > leaves the 400 and 501 answers unchanged 9ms
+ × server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /suggestions 57ms
+   → expected '{"error":"Failed to generate section …' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /analyze-document 8ms
+   → expected '{"error":"Failed to analyze document"…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /update-context 5ms
+   → expected '{"error":"Failed to update context","…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > GET /completion-status/:submissionType 7ms
+   → expected '{"error":"Failed to get completion st…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > leaves the 400 answer unchanged 8ms
+stderr | server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/:projectId/generate-documents
+Document generation error: Error: SENTINEL-DB-DETAIL relation "fda_510k_documents" does not exist
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:69:57
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/documents/:documentId/lock
+Document lock error: Error: SENTINEL-DB-DETAIL relation "fda_510k_documents" does not exist
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:76:40
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/documents/:documentId/version
+Document versioning error: Error: SENTINEL-DB-DETAIL relation "fda_510k_documents" does not exist
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:81:49
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ × server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/:projectId/generate-documents 44ms
+   → expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/documents/:documentId/lock 6ms
+   → expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/documents/:documentId/version 5ms
+   → expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > leaves the 401 for a missing actor unchanged 8ms
+ × server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /generate 38ms
+   → expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+ × server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /edit 6ms
+   → expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+ × server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /presentation 7ms
+   → expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+ × server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /chat 4ms
+   → expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+ ✓ server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > leaves the 400 answers unchanged 6ms
+stderr | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /personas 34ms
+   → expected '{"success":false,"message":"Error fet…' not to contain 'SENTINEL-FS-DETAIL'
+ × server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /persona/:personaId 7ms
+   → expected '{"success":false,"message":"Error fet…' not to contain 'SENTINEL-FS-DETAIL'
+ × server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /launch-config 8ms
+   → expected '{"success":false,"message":"Error fet…' not to contain 'SENTINEL-FS-DETAIL'
+ × server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /index 9ms
+   → expected '{"success":false,"message":"Error fet…' not to contain 'SENTINEL-FS-DETAIL'
+ ✓ server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > leaves the 404 answer unchanged 5ms
+ × server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /generate 63ms
+   → expected '{"success":false,"error":"SENTINEL-FS…' not to match /SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/…/tmp\
+ × server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /download/:format 6ms
+   → expected '{"success":false,"error":"SENTINEL-FS…' not to match /SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/…/tmp\
+ × server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /multi-download 6ms
+   → expected '{"success":false,"error":"SENTINEL-FS…' not to match /SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/…/tmp\
+ ✓ server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > leaves the 400 answers unchanged 3ms
+ × server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /search-connectors 85ms
+   → expected 'SENTINEL-UPSTREAM-DETAIL connect ECON…' to be undefined
+ × server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > POST /upload 89ms
+   → expected 'SENTINEL-UPSTREAM-DETAIL connect ECON…' to be undefined
+ × server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /context/:projectId 5ms
+   → expected 'SENTINEL-UPSTREAM-DETAIL connect ECON…' to be undefined
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > leaves the 422 answer unchanged 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 55 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile
+AssertionError: expected '{"error":"Compilation failed","messag…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Compilation failed","message":"SENTINEL-DB-DETAIL relation \"ectd_required_sections\" does not exist"}"
+
+ ❯ expectContained tests/routes/ectd-compile-5xx-containment.test.ts:62:36
+     60|   expect(res.status).toHaveBeenCalledWith(500);
+     61|   const body = res.json.mock.calls[0][0];
+     62|   expect(JSON.stringify(body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                    ^
+     63|   expect(JSON.stringify(body)).not.toMatch(/ectd_required_sections|doe…
+     64|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ tests/routes/ectd-compile-5xx-containment.test.ts:80:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/55]⎯
+
+ FAIL  tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status
+AssertionError: expected '{"error":"Failed to get compilation s…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Failed to get compilation status","message":"SENTINEL-DB-DETAIL relation \"ectd_required_sections\" does not exist"}"
+
+ ❯ expectContained tests/routes/ectd-compile-5xx-containment.test.ts:62:36
+     60|   expect(res.status).toHaveBeenCalledWith(500);
+     61|   const body = res.json.mock.calls[0][0];
+     62|   expect(JSON.stringify(body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                    ^
+     63|   expect(JSON.stringify(body)).not.toMatch(/ectd_required_sections|doe…
+     64|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ tests/routes/ectd-compile-5xx-containment.test.ts:87:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/55]⎯
+
+ FAIL  tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate
+AssertionError: expected '{"error":"Validation failed","message…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Validation failed","message":"SENTINEL-DB-DETAIL relation \"ectd_required_sections\" does not exist"}"
+
+ ❯ expectContained tests/routes/ectd-compile-5xx-containment.test.ts:62:36
+     60|   expect(res.status).toHaveBeenCalledWith(500);
+     61|   const body = res.json.mock.calls[0][0];
+     62|   expect(JSON.stringify(body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                    ^
+     63|   expect(JSON.stringify(body)).not.toMatch(/ectd_required_sections|doe…
+     64|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ tests/routes/ectd-compile-5xx-containment.test.ts:93:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/55]⎯
+
+ FAIL  tests/routes/project-modules-5xx-containment.test.ts > project-modules 500s: envelope out, detail to the log > POST /:projectId/modules
+AssertionError: expected '{"error":"SENTINEL-DB-DETAIL duplicat…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"SENTINEL-DB-DETAIL duplicate key value violates unique constraint \"project_module_links_project_id_module_type_key\""}"
+
+ ❯ expectContained tests/routes/project-modules-5xx-containment.test.ts:55:36
+     53|   expect(res.status).toHaveBeenCalledWith(500);
+     54|   const body = res.json.mock.calls[0][0];
+     55|   expect(JSON.stringify(body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                    ^
+     56|   expect(JSON.stringify(body)).not.toContain('project_module_links');
+     57|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ tests/routes/project-modules-5xx-containment.test.ts:71:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/55]⎯
+
+ FAIL  tests/routes/project-modules-5xx-containment.test.ts > project-modules 500s: envelope out, detail to the log > POST /:projectId/modules/bulk
+AssertionError: expected '{"error":"SENTINEL-DB-DETAIL duplicat…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"SENTINEL-DB-DETAIL duplicate key value violates unique constraint \"project_module_links_project_id_module_type_key\""}"
+
+ ❯ expectContained tests/routes/project-modules-5xx-containment.test.ts:55:36
+     53|   expect(res.status).toHaveBeenCalledWith(500);
+     54|   const body = res.json.mock.calls[0][0];
+     55|   expect(JSON.stringify(body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                    ^
+     56|   expect(JSON.stringify(body)).not.toContain('project_module_links');
+     57|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ tests/routes/project-modules-5xx-containment.test.ts:79:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/55]⎯
+
+ FAIL  server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/:projectId/generate-documents
+AssertionError: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-DB-DETAIL relation \"fda_510k_documents\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:59:40
+     57| function expectContained(res: request.Response) {
+     58|   expect(res.status).toBe(500);
+     59|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     60|   expect(JSON.stringify(res.body)).not.toMatch(/fda_510k_documents|doe…
+     61|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:71:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/55]⎯
+
+ FAIL  server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/documents/:documentId/lock
+AssertionError: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-DB-DETAIL relation \"fda_510k_documents\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:59:40
+     57| function expectContained(res: request.Response) {
+     58|   expect(res.status).toBe(500);
+     59|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     60|   expect(JSON.stringify(res.body)).not.toMatch(/fda_510k_documents|doe…
+     61|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:77:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/55]⎯
+
+ FAIL  server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/documents/:documentId/version
+AssertionError: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-DB-DETAIL relation \"fda_510k_documents\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:59:40
+     57| function expectContained(res: request.Response) {
+     58|   expect(res.status).toBe(500);
+     59|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     60|   expect(JSON.stringify(res.body)).not.toMatch(/fda_510k_documents|doe…
+     61|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts:82:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/55]⎯
+
+ FAIL  server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > POST /programs/:programId/assess
+AssertionError: expected '{"error":"Assessment failed","detail"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Assessment failed","detail":"SENTINEL-DB-DETAIL column \"verdict\" of relation \"evidence_sufficiency_assessments\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts:64:40
+     62| function expectContained(res: request.Response) {
+     63|   expect(res.status).toBe(500);
+     64|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     65|   expect(JSON.stringify(res.body)).not.toMatch(/evidence_sufficiency_a…
+     66|   expect(res.body.detail).toBeUndefined();
+ ❯ server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts:79:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/55]⎯
+
+ FAIL  server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > GET /programs/:programId/assessments
+AssertionError: expected '{"error":"List failed","detail":"SENT…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"List failed","detail":"SENTINEL-DB-DETAIL column \"verdict\" of relation \"evidence_sufficiency_assessments\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts:64:40
+     62| function expectContained(res: request.Response) {
+     63|   expect(res.status).toBe(500);
+     64|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     65|   expect(JSON.stringify(res.body)).not.toMatch(/evidence_sufficiency_a…
+     66|   expect(res.body.detail).toBeUndefined();
+ ❯ server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts:85:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/55]⎯
+
+ FAIL  server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > GET /assessments/:id
+AssertionError: expected '{"error":"Fetch failed","detail":"SEN…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Fetch failed","detail":"SENTINEL-DB-DETAIL column \"verdict\" of relation \"evidence_sufficiency_assessments\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts:64:40
+     62| function expectContained(res: request.Response) {
+     63|   expect(res.status).toBe(500);
+     64|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     65|   expect(JSON.stringify(res.body)).not.toMatch(/evidence_sufficiency_a…
+     66|   expect(res.body.detail).toBeUndefined();
+ ❯ server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts:90:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/55]⎯
+
+ FAIL  server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/ready — a throwing probe answers 500 with the envelope
+AssertionError: expected '{"status":"error","timestamp":"2026-1…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"status":"error","timestamp":"2026-10-01T03:30:56.560Z","error":"SENTINEL-DB-DETAIL connect ECONNREFUSED 10.20.30.40:5432"}"
+
+ ❯ server/routes/__tests__/health-5xx-containment.test.ts:66:42
+     64|     const res = await request(app()).get('/health/ready');
+     65|     expect(res.status).toBe(500);
+     66|     expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL…
+       |                                          ^
+     67|     expect(JSON.stringify(res.body)).not.toContain('10.20.30.40');
+     68|     expect(res.body.error).toBe('INTERNAL_ERROR');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/55]⎯
+
+ FAIL  server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed database probe degrades to 503 without the driver text
+AssertionError: expected '{"status":"degraded","timestamp":"202…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"status":"degraded","timestamp":"2026-10-01T03:30:56.575Z","uptime":0.915810084,"responseTime":0,"services":{"database":{"status":"error","error":"SENTINEL-DB-DETAIL connect ECONNREFUSED 10.20.30.40:5432","latency":0},"sagePlus":{"status":"operational","databaseConnected":true,"latency":0},"circuitBreakers":{"validator":"CLOSED","openai":"CLOSED","database":"CLOSED"}},"system":{"memory":{"rss":81,"heapTotal":32,"heapUsed":15,"external":3,"units":"MB"},"nodeVersion":"v22.22.2","platform":"linux"}}"
+
+ ❯ server/routes/__tests__/health-5xx-containment.test.ts:79:42
+     77|     expect(res.body.status).toBe('degraded');
+     78|     expect(res.body.services.database.status).toBe('error');
+     79|     expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL…
+       |                                          ^
+     80|     expect(JSON.stringify(res.body)).not.toContain('10.20.30.40');
+     81|     expect(JSON.stringify([...logWarn.mock.calls, ...logError.mock.cal…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/55]⎯
+
+ FAIL  server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed SagePlus probe degrades to 503 without the thrower text
+AssertionError: expected '{"status":"degraded","timestamp":"202…' not to match /SENTINEL-SAGE-DETAIL|sage-plus\.inter…/
+
+- Expected:
+/SENTINEL-SAGE-DETAIL|sage-plus\.internal/
+
++ Received:
+"{\"status\":\"degraded\",\"timestamp\":\"2026-10-01T03:30:56.592Z\",\"uptime\":0.932640767,\"responseTime\":0,\"services\":{\"database\":{\"status\":\"ok\",\"connections\":1,\"waiting\":0,\"latency\":0},\"sagePlus\":{\"status\":\"error\",\"error\":\"SENTINEL-SAGE-DETAIL getaddrinfo ENOTFOUND sage-plus.internal\",\"latency\":0},\"circuitBreakers\":{\"validator\":\"CLOSED\",\"openai\":\"CLOSED\",\"database\":\"CLOSED\"}},\"system\":{\"memory\":{\"rss\":82,\"heapTotal\":32,\"heapUsed\":16,\"external\":3,\"units\":\"MB\"},\"nodeVersion\":\"v22.22.2\",\"platform\":\"linux\"}}"
+
+ ❯ server/routes/__tests__/health-5xx-containment.test.ts:89:42
+     87|     expect(res.status).toBe(503);
+     88|     expect(res.body.services.sagePlus.status).toBe('error');
+     89|     expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-SAGE-DETAIL…
+       |                                          ^
+     90|   });
+     91|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/55]⎯
+
+ FAIL  server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed latency probe keeps status ok and drops the thrower text
+AssertionError: expected '{"status":"ok","timestamp":"2026-10-0…' not to contain 'SENTINEL-LATENCY-DETAIL'
+
+Expected: "SENTINEL-LATENCY-DETAIL"
+Received: "{"status":"ok","timestamp":"2026-10-01T03:30:56.604Z","uptime":0.944168086,"responseTime":2,"services":{"database":{"status":"ok","connections":1,"waiting":0,"latency":0,"latencyError":"SENTINEL-LATENCY-DETAIL timeout exceeded when trying to connect"},"sagePlus":{"status":"operational","databaseConnected":true,"latency":0},"circuitBreakers":{"validator":"CLOSED","openai":"CLOSED","database":"CLOSED"}},"system":{"memory":{"rss":82,"heapTotal":32,"heapUsed":16,"external":3,"units":"MB"},"nodeVersion":"v22.22.2","platform":"linux"}}"
+
+ ❯ server/routes/__tests__/health-5xx-containment.test.ts:97:42
+     95|     expect(res.status).toBe(200);
+     96|     expect(res.body.services.database.status).toBe('ok');
+     97|     expect(JSON.stringify(res.body)).not.toContain('SENTINEL-LATENCY-D…
+       |                                          ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/55]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /search-connectors
+AssertionError: expected 'SENTINEL-UPSTREAM-DETAIL connect ECON…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"SENTINEL-UPSTREAM-DETAIL connect ECONNREFUSED 10.0.4.17:8001"
+
+ ❯ expectContained server/routes/__tests__/knowledge-base-5xx-containment.test.ts:54:27
+     52|   expect(res.status).toBe(502);
+     53|   expect(res.body.error).toBe(sentence);
+     54|   expect(res.body.detail).toBeUndefined();
+       |                           ^
+     55|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-UPSTREAM-DETA…
+     56|   expect(JSON.stringify(logError.mock.calls)).toContain('SENTINEL-UPST…
+ ❯ server/routes/__tests__/knowledge-base-5xx-containment.test.ts:68:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/55]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > POST /upload
+AssertionError: expected 'SENTINEL-UPSTREAM-DETAIL connect ECON…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"SENTINEL-UPSTREAM-DETAIL connect ECONNREFUSED 10.0.4.17:8001"
+
+ ❯ expectContained server/routes/__tests__/knowledge-base-5xx-containment.test.ts:54:27
+     52|   expect(res.status).toBe(502);
+     53|   expect(res.body.error).toBe(sentence);
+     54|   expect(res.body.detail).toBeUndefined();
+       |                           ^
+     55|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-UPSTREAM-DETA…
+     56|   expect(JSON.stringify(logError.mock.calls)).toContain('SENTINEL-UPST…
+ ❯ server/routes/__tests__/knowledge-base-5xx-containment.test.ts:79:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/55]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /context/:projectId
+AssertionError: expected 'SENTINEL-UPSTREAM-DETAIL connect ECON…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"SENTINEL-UPSTREAM-DETAIL connect ECONNREFUSED 10.0.4.17:8001"
+
+ ❯ expectContained server/routes/__tests__/knowledge-base-5xx-containment.test.ts:54:27
+     52|   expect(res.status).toBe(502);
+     53|   expect(res.body.error).toBe(sentence);
+     54|   expect(res.body.detail).toBeUndefined();
+       |                           ^
+     55|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-UPSTREAM-DETA…
+     56|   expect(JSON.stringify(logError.mock.calls)).toContain('SENTINEL-UPST…
+ ❯ server/routes/__tests__/knowledge-base-5xx-containment.test.ts:84:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/55]⎯
+
+ FAIL  server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /personas
+AssertionError: expected '{"success":false,"message":"Error fet…' not to contain 'SENTINEL-FS-DETAIL'
+
+Expected: "SENTINEL-FS-DETAIL"
+Received: "{"success":false,"message":"Error fetching report personas: SENTINEL-FS-DETAIL EACCES: permission denied, open '/srv/app/attached_assets/report_index.json'"}"
+
+ ❯ expectContained server/routes/__tests__/manifest-routes-5xx-containment.test.ts:49:40
+     47| function expectContained(res: request.Response) {
+     48|   expect(res.status).toBe(500);
+     49|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-FS-DETAIL');
+       |                                        ^
+     50|   expect(JSON.stringify(res.body)).not.toContain('/srv/app');
+     51|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/manifest-routes-5xx-containment.test.ts:67:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/55]⎯
+
+ FAIL  server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /persona/:personaId
+AssertionError: expected '{"success":false,"message":"Error fet…' not to contain 'SENTINEL-FS-DETAIL'
+
+Expected: "SENTINEL-FS-DETAIL"
+Received: "{"success":false,"message":"Error fetching persona manifest: SENTINEL-FS-DETAIL EACCES: permission denied, open '/srv/app/attached_assets/report_index.json'"}"
+
+ ❯ expectContained server/routes/__tests__/manifest-routes-5xx-containment.test.ts:49:40
+     47| function expectContained(res: request.Response) {
+     48|   expect(res.status).toBe(500);
+     49|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-FS-DETAIL');
+       |                                        ^
+     50|   expect(JSON.stringify(res.body)).not.toContain('/srv/app');
+     51|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/manifest-routes-5xx-containment.test.ts:72:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/55]⎯
+
+ FAIL  server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /launch-config
+AssertionError: expected '{"success":false,"message":"Error fet…' not to contain 'SENTINEL-FS-DETAIL'
+
+Expected: "SENTINEL-FS-DETAIL"
+Received: "{"success":false,"message":"Error fetching launch configuration: SENTINEL-FS-DETAIL EACCES: permission denied, open '/srv/app/attached_assets/report_index.json'"}"
+
+ ❯ expectContained server/routes/__tests__/manifest-routes-5xx-containment.test.ts:49:40
+     47| function expectContained(res: request.Response) {
+     48|   expect(res.status).toBe(500);
+     49|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-FS-DETAIL');
+       |                                        ^
+     50|   expect(JSON.stringify(res.body)).not.toContain('/srv/app');
+     51|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/manifest-routes-5xx-containment.test.ts:76:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/55]⎯
+
+ FAIL  server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /index
+AssertionError: expected '{"success":false,"message":"Error fet…' not to contain 'SENTINEL-FS-DETAIL'
+
+Expected: "SENTINEL-FS-DETAIL"
+Received: "{"success":false,"message":"Error fetching report index: SENTINEL-FS-DETAIL EACCES: permission denied, open '/srv/app/attached_assets/report_index.json'"}"
+
+ ❯ expectContained server/routes/__tests__/manifest-routes-5xx-containment.test.ts:49:40
+     47| function expectContained(res: request.Response) {
+     48|   expect(res.status).toBe(500);
+     49|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-FS-DETAIL');
+       |                                        ^
+     50|   expect(JSON.stringify(res.body)).not.toContain('/srv/app');
+     51|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/manifest-routes-5xx-containment.test.ts:80:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/55]⎯
+
+ FAIL  server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /generate
+AssertionError: expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+
+Expected: "SENTINEL-PROVIDER-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-PROVIDER-DETAIL GOOGLE_GEMINI_API_KEY is required"}"
+
+ ❯ expectContained server/routes/__tests__/nanoBanana-5xx-containment.test.ts:54:40
+     52| function expectContained(res: request.Response) {
+     53|   expect(res.status).toBe(500);
+     54|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-PROVIDER-DE…
+       |                                        ^
+     55|   expect(JSON.stringify(res.body)).not.toContain('GOOGLE_GEMINI_API_KE…
+     56|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/nanoBanana-5xx-containment.test.ts:68:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/55]⎯
+
+ FAIL  server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /edit
+AssertionError: expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+
+Expected: "SENTINEL-PROVIDER-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-PROVIDER-DETAIL GOOGLE_GEMINI_API_KEY is required"}"
+
+ ❯ expectContained server/routes/__tests__/nanoBanana-5xx-containment.test.ts:54:40
+     52| function expectContained(res: request.Response) {
+     53|   expect(res.status).toBe(500);
+     54|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-PROVIDER-DE…
+       |                                        ^
+     55|   expect(JSON.stringify(res.body)).not.toContain('GOOGLE_GEMINI_API_KE…
+     56|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/nanoBanana-5xx-containment.test.ts:74:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/55]⎯
+
+ FAIL  server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /presentation
+AssertionError: expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+
+Expected: "SENTINEL-PROVIDER-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-PROVIDER-DETAIL GOOGLE_GEMINI_API_KEY is required"}"
+
+ ❯ expectContained server/routes/__tests__/nanoBanana-5xx-containment.test.ts:54:40
+     52| function expectContained(res: request.Response) {
+     53|   expect(res.status).toBe(500);
+     54|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-PROVIDER-DE…
+       |                                        ^
+     55|   expect(JSON.stringify(res.body)).not.toContain('GOOGLE_GEMINI_API_KE…
+     56|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/nanoBanana-5xx-containment.test.ts:81:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/55]⎯
+
+ FAIL  server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /chat
+AssertionError: expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+
+Expected: "SENTINEL-PROVIDER-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-PROVIDER-DETAIL GOOGLE_GEMINI_API_KEY is required"}"
+
+ ❯ expectContained server/routes/__tests__/nanoBanana-5xx-containment.test.ts:54:40
+     52| function expectContained(res: request.Response) {
+     53|   expect(res.status).toBe(500);
+     54|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-PROVIDER-DE…
+       |                                        ^
+     55|   expect(JSON.stringify(res.body)).not.toContain('GOOGLE_GEMINI_API_KE…
+     56|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/nanoBanana-5xx-containment.test.ts:86:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/55]⎯
+
+ FAIL  server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > GET /signatures/:signatureId/manifest — a non-schema query failure
+AssertionError: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-DB-DETAIL canceling statement due to statement timeout on \"electronic_signatures\""}"
+
+ ❯ expectContained server/routes/__tests__/part11-compliance-5xx-containment.test.ts:52:40
+     50| function expectContained(res: request.Response) {
+     51|   expect(res.status).toBe(500);
+     52|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     53|   expect(JSON.stringify(res.body)).not.toMatch(/electronic_signatures|…
+     54|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/part11-compliance-5xx-containment.test.ts:68:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/55]⎯
+
+ FAIL  server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > GET /audit-trail/seal-integrity — a verifier failure (platform admin)
+AssertionError: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-DB-DETAIL canceling statement due to statement timeout on \"electronic_signatures\""}"
+
+ ❯ expectContained server/routes/__tests__/part11-compliance-5xx-containment.test.ts:52:40
+     50| function expectContained(res: request.Response) {
+     51|   expect(res.status).toBe(500);
+     52|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     53|   expect(JSON.stringify(res.body)).not.toMatch(/electronic_signatures|…
+     54|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/part11-compliance-5xx-containment.test.ts:75:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/55]⎯
+
+ FAIL  server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-sap
+ FAIL  server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-ind
+ FAIL  server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-summary
+AssertionError: expected '{"success":false,"error":"SENTINEL-FS…' not to contain 'SENTINEL-'
+
+Expected: "SENTINEL-"
+Received: "{"success":false,"error":"SENTINEL-FS-DETAIL EACCES: permission denied, open '/srv/app/exports/sap_x.pdf'"}"
+
+ ❯ expectContained server/routes/__tests__/planner-routes-5xx-containment.test.ts:53:40
+     51| function expectContained(res: request.Response) {
+     52|   expect(res.status).toBe(500);
+     53|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-');
+       |                                        ^
+     54|   expect(JSON.stringify(res.body)).not.toContain('/srv/app/exports');
+     55|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/planner-routes-5xx-containment.test.ts:81:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/55]⎯
+
+ FAIL  server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-ind
+ FAIL  server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-sap
+ FAIL  server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-summary
+AssertionError: expected '{"success":false,"error":"SENTINEL-CT…' not to contain 'SENTINEL-'
+
+Expected: "SENTINEL-"
+Received: "{"success":false,"error":"SENTINEL-CTX-DETAIL relation \"csr_semantic_index\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/planner-routes-5xx-containment.test.ts:53:40
+     51| function expectContained(res: request.Response) {
+     52|   expect(res.status).toBe(500);
+     53|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-');
+       |                                        ^
+     54|   expect(JSON.stringify(res.body)).not.toContain('/srv/app/exports');
+     55|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/planner-routes-5xx-containment.test.ts:97:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/55]⎯
+
+ FAIL  server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts > platform AI-provider 500s: envelope out, detail to the log > GET /ai-providers
+AssertionError: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL relation \"tenant_ai_provider_preferences\" does not exist"}}"
+
+ ❯ expectContained server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts:57:40
+     55| function expectContained(res: request.Response) {
+     56|   expect(res.status).toBe(500);
+     57|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     58|   expect(JSON.stringify(res.body)).not.toMatch(/tenant_ai_provider_pre…
+     59|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts:71:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/55]⎯
+
+ FAIL  server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts > platform AI-provider 500s: envelope out, detail to the log > PUT /ai-providers/preference
+AssertionError: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL relation \"tenant_ai_provider_preferences\" does not exist"}}"
+
+ ❯ expectContained server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts:57:40
+     55| function expectContained(res: request.Response) {
+     56|   expect(res.status).toBe(500);
+     57|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     58|   expect(JSON.stringify(res.body)).not.toMatch(/tenant_ai_provider_pre…
+     59|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts:77:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/55]⎯
+
+ FAIL  server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /suggestions
+AssertionError: expected '{"error":"Failed to generate section …' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Failed to generate section suggestions","message":"SENTINEL-DB-DETAIL relation \"section_patterns\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/predictive-sections-5xx-containment.test.ts:47:40
+     45| function expectContained(res: request.Response) {
+     46|   expect(res.status).toBe(500);
+     47|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     48|   expect(JSON.stringify(res.body)).not.toMatch(/section_patterns|does …
+     49|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/predictive-sections-5xx-containment.test.ts:61:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/55]⎯
+
+ FAIL  server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /analyze-document
+AssertionError: expected '{"error":"Failed to analyze document"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Failed to analyze document","message":"SENTINEL-DB-DETAIL relation \"section_patterns\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/predictive-sections-5xx-containment.test.ts:47:40
+     45| function expectContained(res: request.Response) {
+     46|   expect(res.status).toBe(500);
+     47|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     48|   expect(JSON.stringify(res.body)).not.toMatch(/section_patterns|does …
+     49|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/predictive-sections-5xx-containment.test.ts:70:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/55]⎯
+
+ FAIL  server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /update-context
+AssertionError: expected '{"error":"Failed to update context","…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Failed to update context","message":"SENTINEL-DB-DETAIL relation \"section_patterns\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/predictive-sections-5xx-containment.test.ts:47:40
+     45| function expectContained(res: request.Response) {
+     46|   expect(res.status).toBe(500);
+     47|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     48|   expect(JSON.stringify(res.body)).not.toMatch(/section_patterns|does …
+     49|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/predictive-sections-5xx-containment.test.ts:76:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/55]⎯
+
+ FAIL  server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > GET /completion-status/:submissionType
+AssertionError: expected '{"error":"Failed to get completion st…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"Failed to get completion status","message":"SENTINEL-DB-DETAIL relation \"section_patterns\" does not exist"}"
+
+ ❯ expectContained server/routes/__tests__/predictive-sections-5xx-containment.test.ts:47:40
+     45| function expectContained(res: request.Response) {
+     46|   expect(res.status).toBe(500);
+     47|   expect(JSON.stringify(res.body)).not.toContain('SENTINEL-DB-DETAIL');
+       |                                        ^
+     48|   expect(JSON.stringify(res.body)).not.toMatch(/section_patterns|does …
+     49|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/predictive-sections-5xx-containment.test.ts:84:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/55]⎯
+
+ FAIL  server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > FAERS 503: the outage is stated, the transport text is logged > POST /faers
+ FAIL  server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > FAERS 503: the outage is stated, the transport text is logged > POST /signal-detection
+AssertionError: expected 'openFDA request failed: SENTINEL-TRAN…' to be 'openFDA request failed' // Object.is equality
+
+Expected: "openFDA request failed"
+Received: "openFDA request failed: SENTINEL-TRANSPORT-DETAIL connect ECONNREFUSED 10.9.8.7:3128"
+
+ ❯ server/routes/__tests__/real-world-evidence-5xx-containment.test.ts:66:37
+     64|       expect(res.body.error.code).toBe('FAERS_UNAVAILABLE');
+     65|       expect(res.body.error.message).toContain('not a finding of no si…
+     66|       expect(res.body.error.detail).toBe('openFDA request failed');
+       |                                     ^
+     67|       expect(res.body.data).toBeUndefined();
+     68|       expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-TRANSPORT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/55]⎯
+
+ FAIL  server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > study 501: the unconfigured source is named, the deployment variable is not > POST /query with no FHIR source connected
+AssertionError: expected 'No FHIR data source is connected (FHI…' to match /not configured/
+
+- Expected:
+/not configured/
+
++ Received:
+"No FHIR data source is connected (FHIR_BASE_URL not set)."
+
+ ❯ server/routes/__tests__/real-world-evidence-5xx-containment.test.ts:85:36
+     83|     expect(res.body.error.code).toBe('source_not_configured');
+     84|     expect(res.body.error.dataSource).toBe('fhir');
+     85|     expect(res.body.error.message).toMatch(/not configured/);
+       |                                    ^
+     86|     expect(JSON.stringify(res.body)).not.toContain('FHIR_BASE_URL');
+     87|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/55]⎯
+
+ FAIL  server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a failed program-access read answers 500 with the envelope
+AssertionError: expected '{"error":"Program access check failed…' not to match /SENTINEL-DB-DETAIL|regulatory_program…/
+
+- Expected:
+/SENTINEL-DB-DETAIL|regulatory_programs|does not exist/
+
++ Received:
+"{\"error\":\"Program access check failed\",\"detail\":\"SENTINEL-DB-DETAIL relation \\\"regulatory_programs\\\" does not exist\"}"
+
+ ❯ server/routes/__tests__/se-matrix-5xx-containment.test.ts:73:42
+     71|     const res = await request(app()).post(RENDER).send({ selectedPredi…
+     72|     expect(res.status).toBe(500);
+     73|     expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-DB-DETAIL|r…
+       |                                          ^
+     74|     expect(res.body.detail).toBeUndefined();
+     75|     expect(res.body.error).toBe('INTERNAL_ERROR');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/55]⎯
+
+ FAIL  server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > an unreachable shadow service answers 502 with its sentence and no detail
+AssertionError: expected 'SENTINEL-UPSTREAM-DETAIL connect ECON…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"SENTINEL-UPSTREAM-DETAIL connect ECONNREFUSED 10.0.4.17:8001"
+
+ ❯ server/routes/__tests__/se-matrix-5xx-containment.test.ts:85:29
+     83|     expect(res.status).toBe(502);
+     84|     expect(res.body.error).toBe('Shadow service unavailable');
+     85|     expect(res.body.detail).toBeUndefined();
+       |                             ^
+     86|     expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-UPSTREAM-DE…
+     87|     expect(JSON.stringify(logError.mock.calls)).toContain('SENTINEL-UP…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/55]⎯
+
+ FAIL  server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > GET /api/reports/download/:personaId/:filename
+AssertionError: expected '{"success":false,"message":"Error dow…' not to match /SENTINEL-FS-DETAIL|\/srv\/app|Can…/srv\
+
+- Expected:
+/SENTINEL-FS-DETAIL|\/srv\/app|Cannot destructure|req\.body/
+
++ Received:
+"{\"success\":false,\"message\":\"Error downloading report file: SENTINEL-FS-DETAIL EACCES: permission denied, open '/srv/app/lumen_reports_backend/static/x.pdf'\"}"
+
+ ❯ expectContained server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts:67:20
+     65|   expect(res.status).toBe(500);
+     66|   const text = String(res.body);
+     67|   expect(text).not.toMatch(/SENTINEL-FS-DETAIL|\/srv\/app|Cannot destr…
+       |                    ^
+     68|   const body = JSON.parse(text);
+     69|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts:85:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/55]⎯
+
+ FAIL  server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > GET /api/reports/preview/:personaId/:imageFile
+AssertionError: expected '{"success":false,"message":"Error ser…' not to match /SENTINEL-FS-DETAIL|\/srv\/app|Can…/srv\
+
+- Expected:
+/SENTINEL-FS-DETAIL|\/srv\/app|Cannot destructure|req\.body/
+
++ Received:
+"{\"success\":false,\"message\":\"Error serving preview image: SENTINEL-FS-DETAIL EACCES: permission denied, open '/srv/app/lumen_reports_backend/static/x.pdf'\"}"
+
+ ❯ expectContained server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts:67:20
+     65|   expect(res.status).toBe(500);
+     66|   const text = String(res.body);
+     67|   expect(text).not.toMatch(/SENTINEL-FS-DETAIL|\/srv\/app|Cannot destr…
+       |                    ^
+     68|   const body = JSON.parse(text);
+     69|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts:90:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/55]⎯
+
+ FAIL  server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > POST /api/reports/generate/:personaId
+AssertionError: expected '{"success":false,"message":"Error gen…' not to match /SENTINEL-FS-DETAIL|\/srv\/app|Can…/srv\
+
+- Expected:
+/SENTINEL-FS-DETAIL|\/srv\/app|Cannot destructure|req\.body/
+
++ Received:
+"{\"success\":false,\"message\":\"Error generating custom report: Cannot destructure property 'customization' of 'req.body' as it is undefined.\"}"
+
+ ❯ expectContained server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts:67:20
+     65|   expect(res.status).toBe(500);
+     66|   const text = String(res.body);
+     67|   expect(text).not.toMatch(/SENTINEL-FS-DETAIL|\/srv\/app|Cannot destr…
+       |                    ^
+     68|   const body = JSON.parse(text);
+     69|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts:94:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/55]⎯
+
+ FAIL  server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > POST /api/reports/subscribe/:personaId
+AssertionError: expected '{"success":false,"message":"Error sub…' not to match /SENTINEL-FS-DETAIL|\/srv\/app|Can…/srv\
+
+- Expected:
+/SENTINEL-FS-DETAIL|\/srv\/app|Cannot destructure|req\.body/
+
++ Received:
+"{\"success\":false,\"message\":\"Error subscribing to report bundle: Cannot destructure property 'email' of 'req.body' as it is undefined.\"}"
+
+ ❯ expectContained server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts:67:20
+     65|   expect(res.status).toBe(500);
+     66|   const text = String(res.body);
+     67|   expect(text).not.toMatch(/SENTINEL-FS-DETAIL|\/srv\/app|Cannot destr…
+       |                    ^
+     68|   const body = JSON.parse(text);
+     69|   expect(body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts:98:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/55]⎯
+
+ FAIL  server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /
+AssertionError: expected '{"error":"Tenant export failed","deta…' not to match /SENTINEL-DB-DETAIL|tenant_export_rece…/
+
+- Expected:
+/SENTINEL-DB-DETAIL|tenant_export_receipts|permission denied/
+
++ Received:
+"{\"error\":\"Tenant export failed\",\"detail\":\"SENTINEL-DB-DETAIL permission denied for table tenant_export_receipts\"}"
+
+ ❯ expectContained server/routes/__tests__/tenant-export-5xx-containment.test.ts:73:40
+     71| function expectContained(res: request.Response) {
+     72|   expect(res.status).toBe(500);
+     73|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-DB-DETAIL|ten…
+       |                                        ^
+     74|   expect(res.body.detail).toBeUndefined();
+     75|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/tenant-export-5xx-containment.test.ts:84:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/55]⎯
+
+ FAIL  server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /full
+AssertionError: expected '{"error":"Tenant full export failed",…' not to match /SENTINEL-DB-DETAIL|tenant_export_rece…/
+
+- Expected:
+/SENTINEL-DB-DETAIL|tenant_export_receipts|permission denied/
+
++ Received:
+"{\"error\":\"Tenant full export failed\",\"detail\":\"SENTINEL-DB-DETAIL permission denied for table tenant_export_receipts\"}"
+
+ ❯ expectContained server/routes/__tests__/tenant-export-5xx-containment.test.ts:73:40
+     71| function expectContained(res: request.Response) {
+     72|   expect(res.status).toBe(500);
+     73|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-DB-DETAIL|ten…
+       |                                        ^
+     74|   expect(res.body.detail).toBeUndefined();
+     75|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/tenant-export-5xx-containment.test.ts:90:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/55]⎯
+
+ FAIL  server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /attestation
+AssertionError: expected '{"error":"Attestation failed","detail…' not to match /SENTINEL-DB-DETAIL|tenant_export_rece…/
+
+- Expected:
+/SENTINEL-DB-DETAIL|tenant_export_receipts|permission denied/
+
++ Received:
+"{\"error\":\"Attestation failed\",\"detail\":\"SENTINEL-DB-DETAIL permission denied for table tenant_export_receipts\"}"
+
+ ❯ expectContained server/routes/__tests__/tenant-export-5xx-containment.test.ts:73:40
+     71| function expectContained(res: request.Response) {
+     72|   expect(res.status).toBe(500);
+     73|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-DB-DETAIL|ten…
+       |                                        ^
+     74|   expect(res.body.detail).toBeUndefined();
+     75|   expect(res.body.error).toBe('INTERNAL_ERROR');
+ ❯ server/routes/__tests__/tenant-export-5xx-containment.test.ts:95:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/55]⎯
+
+ FAIL  server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /generate
+AssertionError: expected '{"success":false,"error":"SENTINEL-FS…' not to match /SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/…/tmp\
+
+- Expected:
+/SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/packager/
+
++ Received:
+"{\"success\":false,\"error\":\"SENTINEL-FS-DETAIL ENOSPC: no space left on device, write '/tmp/packager-7f3a/out.docx'\"}"
+
+ ❯ expectContained server/routes/__tests__/universal-packager-5xx-containment.test.ts:45:40
+     43| function expectContained(res: request.Response) {
+     44|   expect(res.status).toBe(500);
+     45|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-FS-DETAIL|ENO…
+       |                                        ^
+     46|   expect(res.body.error).toBe('INTERNAL_ERROR');
+     47|   expect(res.body.correlationId).toBe('req-set-a-packager');
+ ❯ server/routes/__tests__/universal-packager-5xx-containment.test.ts:59:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/55]⎯
+
+ FAIL  server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /download/:format
+AssertionError: expected '{"success":false,"error":"SENTINEL-FS…' not to match /SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/…/tmp\
+
+- Expected:
+/SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/packager/
+
++ Received:
+"{\"success\":false,\"error\":\"SENTINEL-FS-DETAIL ENOSPC: no space left on device, write '/tmp/packager-7f3a/out.docx'\"}"
+
+ ❯ expectContained server/routes/__tests__/universal-packager-5xx-containment.test.ts:45:40
+     43| function expectContained(res: request.Response) {
+     44|   expect(res.status).toBe(500);
+     45|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-FS-DETAIL|ENO…
+       |                                        ^
+     46|   expect(res.body.error).toBe('INTERNAL_ERROR');
+     47|   expect(res.body.correlationId).toBe('req-set-a-packager');
+ ❯ server/routes/__tests__/universal-packager-5xx-containment.test.ts:64:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/55]⎯
+
+ FAIL  server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /multi-download
+AssertionError: expected '{"success":false,"error":"SENTINEL-FS…' not to match /SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/…/tmp\
+
+- Expected:
+/SENTINEL-FS-DETAIL|ENOSPC|\/tmp\/packager/
+
++ Received:
+"{\"success\":false,\"error\":\"SENTINEL-FS-DETAIL ENOSPC: no space left on device, write '/tmp/packager-7f3a/out.docx'\"}"
+
+ ❯ expectContained server/routes/__tests__/universal-packager-5xx-containment.test.ts:45:40
+     43| function expectContained(res: request.Response) {
+     44|   expect(res.status).toBe(500);
+     45|   expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-FS-DETAIL|ENO…
+       |                                        ^
+     46|   expect(res.body.error).toBe('INTERNAL_ERROR');
+     47|   expect(res.body.correlationId).toBe('req-set-a-packager');
+ ❯ server/routes/__tests__/universal-packager-5xx-containment.test.ts:68:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/55]⎯
+
+
+ Test Files  17 failed (17)
+      Tests  55 failed | 17 passed (72)
+   Start at  03:30:55
+   Duration  6.93s (transform 4.16s, setup 774ms, import 13.87s, tests 1.37s, environment 2ms)
+

@@ -1,0 +1,536 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+{
+  "timestamp": "2026-10-01T19:13:28.249Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T19:13:28.250Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+{
+  "timestamp": "2026-10-01T19:13:28.251Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T19:13:28.293Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating security settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T19:13:28.301Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T19:13:28.306Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error resetting settings for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT 1313ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention 9ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > a stored secret in a section that is value-audited is still not carried 7ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values 7ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text 9ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text 6ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > an unknown tenant is 404, rolled back, and nothing is recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a reset restores the defaults and keeps the tool policy and the session limit 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the administrator is told they can change it 1344ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > the administrator of this organization is told they can change it 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > an owner of this organization is told they can change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a manager is refused with 403, and nothing is written or recorded 14ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a member is refused with 403, and nothing is written or recorded 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a viewer is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's administrator is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's owner is refused with 403, and nothing is written or recorded 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > an owner, if one is ever provisioned, changes it too 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator enables it: one transaction, the setting and its chained audit row with the value before and after 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator disables it, and the row records true → false 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {} is refused with 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written 5ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a PATCH of one field of a section keeps the section's other fields 10ms
+stderr | server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved
+{
+  "timestamp": "2026-10-01T19:13:28.336Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error changing the connector setting for tenant 900",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of null is refused with 400 and nothing is written 8ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role admin → 403, nothing written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role owner → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role super_admin → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role member → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > control: PATCH /settings without it still writes 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings/claudeConnector is not a section the section door writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > a reset keeps the stored connector setting: it is not a default to restore 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it on is refused: rolled back before the UPDATE, nothing recorded 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it off is refused too: only its own door changes it, either way 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > nulling it is refused (a null reads as off, so it would turn it off) 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > erasing it is refused (a door that replaces the settings whole and leaves the key out) 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: a general write that leaves it as stored is written, and keeps it 12ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: the connector's own door changes it 4ms
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T19:13:28.581Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform update_settings failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T19:13:28.586Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform toggle_module failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T19:13:28.590Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform configure_ai failed",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > rejects org id from query/body fallback when auth tenant context is missing 1595ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control route org binding > returns entitlements when tenant context provides organization id 7ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /settings is refused before the controller runs 10ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /modules/toggle is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /projects is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /projects/7 is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /ai-config is refused before the controller runs 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member patch /compliance is refused before the controller runs 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /onboard is refused before the controller runs 8ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member post /execute is refused before the controller runs 7ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > an admin may still change settings 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: writes need the owner or admin role > a member may still read settings 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: the request reaches the controller 13ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: the request reaches the controller 4ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: the request reaches the controller 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /settings: a refused write is a 500 with no detail, never a success 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /modules/toggle: a refused write is a 500 with no detail, never a success 5ms
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T19:13:28.597Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform set_compliance_defaults failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T19:13:28.600Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform onboard failed",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: a refused write is a 500 with no detail, never a success
+{
+  "timestamp": "2026-10-01T19:13:28.602Z",
+  "level": "error",
+  "message": "[ana-platform-control] AnA platform execute failed",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /ai-config: a refused write is a 500 with no detail, never a success 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > patch /compliance: a refused write is a 500 with no detail, never a success 5ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /onboard: a refused write is a 500 with no detail, never a success 3ms
+ ✓ server/__tests__/routes/ana-platform-control.test.ts > AnA platform control: a settings write that is refused is not reported as saved > post /execute: a refused write is a 500 with no detail, never a success 3ms
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write leaves the cached membership alone (nothing changed)
+{
+  "timestamp": "2026-10-01T19:13:29.110Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text
+{
+  "timestamp": "2026-10-01T19:13:29.119Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing written 288ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > an empty reason: 400 REASON_REQUIRED and nothing written 13ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing written 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > writes one chained row on the change transaction, before COMMIT, with roles, member and reason 8ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > revokes the cached membership once the change commits, so a demotion takes effect on the next request 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write leaves the cached membership alone (nothing changed) 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > the action it writes is one the administrative changes report reads 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a role set to the one the member already holds writes nothing and records nothing 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a member not in the organisation is 404 and nothing is recorded 7ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no body: 400 REASON_REQUIRED and nothing removed 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing removed 4ms
+stderr | server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched
+{
+  "timestamp": "2026-10-01T19:13:29.157Z",
+  "level": "error",
+  "message": "[tenant-users] Error removing user from organization:",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing removed 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > writes one chained row on the removal transaction, before COMMIT, then revokes the cached membership 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched 4ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 when no organization context 145ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 for non-admin 9ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns empty policy when none configured 11ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns existing policy when configured 7ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects allow as non-array 15ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects deny with non-string entries 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects unknown keys (typo defense) 5ms
+stderr | server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: when the loader itself throws, the text stays in the log and the client gets the envelope
+{
+  "timestamp": "2026-10-01T19:13:29.231Z",
+  "level": "error",
+  "message": "[ana-tool-policy] loading the tool policy failed",
+  "context": {
+    "err": "relation \"organizations\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": "42P01"
+  }
+}
+
+stderr | server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope
+{
+  "timestamp": "2026-10-01T19:13:29.239Z",
+  "level": "error",
+  "message": "[ana-tool-policy] updating the tool policy failed",
+  "context": {
+    "err": "relation \"organizations\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": "42P01"
+  }
+}
+
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > persists through the one settings writer, recorded as ana_tool_policy.update 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > keeps every other setting as the writer read it under its lock (R7) 7ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > never writes organizations.settings itself 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > round-trips: PUT then GET returns the same shape 6ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: a failed settings read is fail-soft — 200 and an empty policy, no error text 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: when the loader itself throws, the text stays in the log and the client gets the envelope 8ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope 8ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-01T19:13:29.350Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 23ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 7ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 3ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('x') 2ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(v) 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('pdfkit' as any) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > /* prose mentioning /*) inside */ await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > const s = 'has /* inside'; await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > // await import(v)
+await import('y') 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(`../routes/${n}`) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > sees the whole of the largest bootstrap file 5ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > no guarded file imports a module by computed specifier 25ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > the families that were missing are imported statically by name 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > every regional blueprint is imported statically by both catalogs 1ms
+stdout | server/services/audit/compliance-reports/__tests__/catalog.test.ts
+{
+  "timestamp": "2026-10-01T19:13:30.585Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T19:13:30.586Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/catalog.test.ts
+{
+  "timestamp": "2026-10-01T19:13:30.587Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T19:13:30.597Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T19:13:30.599Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T19:13:30.599Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/catalog.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/audit/compliance-reports/__tests__/catalog.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/audit/compliance-reports/__tests__/catalog.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/audit/compliance-reports/__tests__/catalog.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/compliance-reports/__tests__/catalog.test.ts
+{
+  "timestamp": "2026-10-01T19:13:30.728Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-01T19:13:30.748Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > lists the eight reports in catalog order, each id once 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > access-review has a title, a one-sentence purpose, a basis, sections and what is not recorded 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > authentication-events has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > administrative-changes has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > electronic-signatures has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail-integrity has a title, a one-sentence purpose, a basis, sections and what is not recorded 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > retention-legal-holds has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > controlled-documents has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > access-review is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > authentication-events is run here, and every section names its columns once 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > administrative-changes is run here, and every section names its columns once 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > electronic-signatures is run here, and every section names its columns once 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail-integrity is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > retention-legal-holds is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > controlled-documents is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > the full audit trail is an entry only: its run is the existing signed export 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > states the periods the brief fixes 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > an unknown id is not a report 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > the summary a client receives carries the contract fields and nothing executable 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > copy is calm: no exclamation marks and no route names in what a reader sees 7ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the handler records each role change, through the canonical membership writer 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap while the handler writes no row, and stops once it writes one 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the administrative changes report says how a SCIM-group role change is listed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+stdout | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T19:13:31.069Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T19:13:31.071Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T19:13:31.071Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T19:13:31.335Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/command-rbac.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > DENIES a dispatchable-looking command that carries no authorization metadata 2ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > allows a read-only command without consulting RBAC 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a non-MDX write that the tenant deny-list names 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a READ the tenant deny-list names (deny outranks the degraded-read path) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a command absent from a non-empty allow-list (whitelist actually constrains) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > ALLOWS a command that is on the allow-list, and when no policy is set 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation when the caller lacks the required role (viewer) 2ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > ALLOWS a mutation when the caller holds the required role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > demands the manager tier for Part 11 record-altering commands 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES when the RBAC lookup throws (fail closed, never fail open) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with non-numeric userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with zero organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a viewer (RBAC_DENIED), naming the manager tier 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a member (RBAC_DENIED), naming the manager tier 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a manager 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a admin 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES when the role lookup throws (fail closed) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES without a provable identity, before any role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > a self-asserted ctx.userRole does not stand in for the RBAC lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > stays a read: the tier is checked while governance is unresolved, and a manager is still admitted 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > leaves untiered reads open to every member without a role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS every mutation when tenant governance config could not be resolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS a Part 11 governed mutation when governance config is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > keeps READ-ONLY commands available while governance is unresolved (documented degraded mode) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > lets the central gate through so the handler can apply the self-service rule 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > still demands provable identity for the GDPR commands 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > blocks the erase mutation when governance is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for manager+ in the organization 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for a dedicated privacy role that has no hierarchy level 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false for an ordinary member and never trusts ctx.userRole 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false when the role lookup throws 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false without a provable identity 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > classifies EVERY dispatchable command 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > has no authorization entry for a command that is not dispatchable 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > gives every mutation-capable command a role tier or an explicit handler carve-out 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > puts a role tier on a read only where the read returns the audit trail (audit.explain, manager) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > marks every dispatchable Part 11 governed command as a manager-tier write 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > mirrors the Part 11 e-signature subset exactly 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > never marks a Part 11 governed command as read-only 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > refuses a hidden-app command in production, read or write, whatever the role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > leaves in-scope commands to the normal checks 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > with launch scope off (a development server), a hidden-app command reaches the normal checks 0ms
+
+ Test Files  10 passed (10)
+      Tests  212 passed (212)
+   Start at  19:13:26
+   Duration  9.35s (transform 6.36s, setup 399ms, import 10.12s, tests 5.93s, environment 1ms)
+
+exit 0

@@ -1,0 +1,84 @@
+# Green: npx vitest run authoringCreateExport.test.tsx workbenchExportRecovery.test.tsx authoringAnaPane.test.tsx (adapted to the Download menu)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > "Draft with AnA" opens the pane and shows the request in it
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > "Draft with AnA" opens the pane and shows the request in it 1103ms
+stderr | client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > an empty section shows BOTH draft controls, and the toolbar one still asks for the section
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > an empty section shows BOTH draft controls, and the toolbar one still asks for the section 617ms
+stderr | client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > the pane composer sends into the same conversation
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > the pane composer sends into the same conversation 492ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows real work, evidence, and follow-up actions from AnA 737ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the editor answers its own asks > shows an honest empty pane rather than pretending a conversation exists 1093ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a lost reply is unknown, blocks repeat export, and offers the existing history 606ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an untyped 502 does not assert that nothing was recorded 101ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an untyped 500 does not assert that nothing was recorded 49ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a body-read failure after success refreshes the real record without claiming delivery 45ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an empty body is not passed to the download primitive 55ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a typed rendering failure is retryable without an unknown-outcome claim 136ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > the server’s confirmed-record delivery failure refreshes history 64ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > does not overlap export requests across formats 97ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > a delayed old document export cannot download or refresh the new document 74ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after document round-trip 87ms
+stderr | client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > with no project open, New document is disabled, says why, and nothing is posted
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after project switch 98ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after unmount 86ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > with no project open, New document is disabled, says why, and nothing is posted 12ms
+stderr | client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the event path opens the form when a project is open
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the empty states’ New document (the event path) does not open a form that can only be refused 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the event path opens the form when a project is open 9ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > creates the document in the open project 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a document via POST /docs and adopts the server row 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > tells the user when the new document is not bound to a filing 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > does not cry unbound when the document IS bound 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a section via POST /sections in the open document 28ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports the assembled document as Word via POST /docs/:id/export 57ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports a real PDF via POST /docs/:id/export {format: pdf} 42ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a download the browser blocks is never reported as exported to the device 38ms
+stderr | client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > offers no controlled export on a draft document, and says why beside it
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a governance refusal (409, not frozen) is not blamed on the connection 81ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > offers no controlled export on a draft document, and says why beside it 29ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx > recovers a recorded export through the existing history without creating another export 1274ms
+
+ Test Files  3 passed (3)
+      Tests  31 passed (31)
+   Start at  06:03:35
+   Duration  15.48s (transform 3.04s, setup 402ms, import 4.93s, tests 7.19s, environment 2.31s)
+

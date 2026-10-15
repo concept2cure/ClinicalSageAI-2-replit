@@ -1,0 +1,886 @@
+FIX-UP HANDON, WIDER: every suite in server/export/__tests__ plus the export route suites, with the handOn edit swapped in (vitest.handon.config.ts).
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > keeps table cells, list numbering, figures and entities readable 266ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > renders a placeholder rather than an empty page for empty input 15ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is deterministic for identical input 20ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > says on the page that it is a plain-text rendering 9ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > puts the notice before the content, not after it 9ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > does not alter the content it is warning about 9ms
+stderr | server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is the renderer actually in use unless a Puppeteer driver is installed
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is the renderer actually in use unless a Puppeteer driver is installed 251ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > WebP: the PDF names its kind and prints no base64 13ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > an upper-case PNG type: the PDF names its kind and prints no base64 4ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > SVG: the PDF names its kind and prints no base64 4ms
+stderr | server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > an upload that did not resolve, by its reference, which the rule keeps short
+{
+  "timestamp": "2026-09-28T19:26:33.277Z",
+  "level": "warn",
+  "message": "[authoring-images] export image ref did not resolve",
+  "context": {
+    "fileId": "file_1727500000000_k3v9qa",
+    "reason": "not in this test"
+  }
+}
+
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > WebP: the Word file names its kind and prints no base64 82ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > an upper-case PNG type: the Word file names its kind and prints no base64 17ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > an inline image the export declines, with no alt text > a figure in a table cell is named the same way 7ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > the author's alt text, when there is one 9ms
+ ✓ server/export/__tests__/authoring-figure-placeholder.test.ts > what the placeholder still says (guards) > an upload that did not resolve, by its reference, which the rule keeps short 21ms
+stderr | server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts
+{
+  "timestamp": "2026-09-28T19:26:33.856Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX 238ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a subscript reads as the conventional formula 19ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > an unresolved tracked change stays unresolved 26ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > table cells keep a delimiter instead of running together 19ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a figure leaves a trace instead of disappearing 12ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > the DOCX branch still produces a document for the same input 66ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > caption parsing > carries the object’s identity and its words, and no ordinal anywhere 14ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > caption parsing > recognises a table by its caption and a figure by its alt text 3ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > caption parsing > does not make an UNCAPTIONED table a numbered object 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > caption parsing > offers only the objects that can be pointed at as reference targets 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > prints the number in the caption position, tables and figures counted separately 2ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > leaves the figure’s alt text as the author’s words, without the number 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > makes the caption the anchor a reference to the object lands on 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > resolves a cross-reference to a TABLE through the same mechanism as a section 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > prints the caption words alongside the number for a code-title reference 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > INSERTING A TABLE EARLIER RENUMBERS THE REST, with the stored content untouched 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > an uncaptioned table consumes no ordinal, so the numbers have no gap 0ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > states a reference to a DELETED table, and never a plausible number 2ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > still files the author’s caption when the caller supplied no numbering 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > HTML/PDF rendering > does not number a figure that sits inside a table cell 1ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > DOCX rendering > files the numbered caption, and bookmarks it so a REF field can cite it 190ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > DOCX rendering > emits a real Word REF field from a reference to a table 47ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > DOCX rendering > INSERTING A TABLE EARLIER RENUMBERS THE FILED WORD DOCUMENT 52ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > DOCX rendering > states a reference to a deleted table, and emits no field for it 36ms
+ ✓ server/export/__tests__/authoring-captions.test.ts > the two filed formats agree > numbers the same object the same way in DOCX and in HTML 16ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > keeps the source id off the run, never a number 8ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > leaves an ordinary anchor alone — a link is not a citation 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > does not merge two citations of DIFFERENT sources into one run 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > does not merge two citations of the SAME source at different pinpoints 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > keeps a block whose only content is a citation 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > citation parsing > lists the cited source ids so an export knows what to look up 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > prints a number derived from position and links it to the reference list 2ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > assembles the reference list from the citations actually used, in first-appearance order 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > gives a source cited three times ONE number and ONE entry 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > leaves an UNCITED source out of the reference list entirely 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > emits no reference list at all when nothing is cited 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering > INSERTING A CITATION EARLIER RENUMBERS THE REST, with the stored content untouched 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > never prints the editor’s cached name in place of a number 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > states an unknown source rather than printing a number or nothing 1ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > an unresolved citation consumes NO number, so the list has no gap 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > treats a source with nothing printable as unresolved, not as an empty entry 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > resolves a citation written inside a table cell 2ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > HTML/PDF rendering — unresolved and renamed sources > does not silently drop a citation when no registry is supplied 0ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > emits the number as a real Word internal hyperlink into the reference list 157ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > files a reference list built from the citations actually used 22ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > INSERTING A CITATION EARLIER RENUMBERS THE WORD TEXT, stored content untouched 28ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > states an unknown source in the filed document, and emits no link for it 25ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > does not silently drop a citation when no registry is supplied 33ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > DOCX rendering > carries a citation out of a TABLE CELL 18ms
+ ✓ server/export/__tests__/authoring-citations.test.ts > the two filed formats agree > numbers the same sources identically in DOCX and in HTML 9ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > cross-reference parsing > keeps the target id off the run, not the printed number 10ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > cross-reference parsing > leaves an ordinary anchor alone — a link is not a cross-reference 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > cross-reference parsing > does not merge two references to DIFFERENT sections into one run 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > cross-reference parsing > keeps a block whose only content is a reference 2ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > prints the target’s CURRENT code and title, and links to it 2ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > RENUMBERING THE TARGET CHANGES THE RENDERED TEXT, with the stored content untouched 2ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > never prints the editor’s cached number, even when it is stale 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > states a dangling reference rather than printing a number or nothing 1ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > HTML/PDF rendering > resolves a reference written inside a table cell 4ms
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+{
+  "timestamp": "2026-09-28T19:26:36.400Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:36.401Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+{
+  "timestamp": "2026-09-28T19:26:36.402Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+{
+  "timestamp": "2026-09-28T19:26:36.402Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+{
+  "timestamp": "2026-09-28T19:26:36.402Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > emits a real Word REF field pointing at the target’s bookmark 167ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > writes the bookmark the field cites onto the section heading 17ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > RENUMBERING THE TARGET CHANGES THE WORD TEXT, with the stored content untouched 36ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > states a dangling reference in the filed document, and emits no field for it 31ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > DOCX rendering > does not silently drop the reference when no directory is supplied 39ms
+ ✓ server/export/__tests__/authoring-cross-references.test.ts > the two filed formats agree > renders the same resolved text in DOCX and in HTML 11ms
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+{
+  "timestamp": "2026-09-28T19:26:36.618Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:36.618Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+{
+  "timestamp": "2026-09-28T19:26:36.619Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+{
+  "timestamp": "2026-09-28T19:26:36.620Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+{
+  "timestamp": "2026-09-28T19:26:36.620Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+{
+  "timestamp": "2026-09-28T19:26:36.648Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:36.648Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+{
+  "timestamp": "2026-09-28T19:26:36.651Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+{
+  "timestamp": "2026-09-28T19:26:36.651Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+{
+  "timestamp": "2026-09-28T19:26:36.652Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+{
+  "timestamp": "2026-09-28T19:26:36.673Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:36.673Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+{
+  "timestamp": "2026-09-28T19:26:36.673Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+{
+  "timestamp": "2026-09-28T19:26:36.674Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+{
+  "timestamp": "2026-09-28T19:26:36.674Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+{
+  "timestamp": "2026-09-28T19:26:36.681Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:36.681Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+{
+  "timestamp": "2026-09-28T19:26:36.682Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+{
+  "timestamp": "2026-09-28T19:26:36.682Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+{
+  "timestamp": "2026-09-28T19:26:36.683Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+{
+  "timestamp": "2026-09-28T19:26:36.688Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:36.688Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+{
+  "timestamp": "2026-09-28T19:26:36.688Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+{
+  "timestamp": "2026-09-28T19:26:36.689Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+{
+  "timestamp": "2026-09-28T19:26:36.690Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time 263ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures 30ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes 27ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines 8ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did 8ms
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+{
+  "timestamp": "2026-09-28T19:26:36.721Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:36.721Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+{
+  "timestamp": "2026-09-28T19:26:36.722Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+{
+  "timestamp": "2026-09-28T19:26:36.722Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+{
+  "timestamp": "2026-09-28T19:26:36.722Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser 29ms
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+{
+  "timestamp": "2026-09-28T19:26:37.056Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:37.056Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+{
+  "timestamp": "2026-09-28T19:26:37.057Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+{
+  "timestamp": "2026-09-28T19:26:37.058Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+{
+  "timestamp": "2026-09-28T19:26:37.059Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts
+{
+  "timestamp": "2026-09-28T19:26:37.080Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+{
+  "timestamp": "2026-09-28T19:26:37.107Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:37.107Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+{
+  "timestamp": "2026-09-28T19:26:37.113Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+{
+  "timestamp": "2026-09-28T19:26:37.114Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+{
+  "timestamp": "2026-09-28T19:26:37.114Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html 333ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > the dead renderer is gone > buildDocx no longer exists to be mistaken for the live path 4ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content 30ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > refuses the export when NO signature covers the content being filed 17ms
+stdout | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+{
+  "timestamp": "2026-09-28T19:26:37.168Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:37.169Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+{
+  "timestamp": "2026-09-28T19:26:37.169Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+{
+  "timestamp": "2026-09-28T19:26:37.171Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+{
+  "timestamp": "2026-09-28T19:26:37.171Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it 65ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse 59ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > parses to a table block rather than tab-separated paragraphs 13ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > emits a real w:tbl with every row, cell and value intact 109ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > is falsifiable: prose with no table produces no w:tbl 17ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > carries merged header cells rather than silently unmerging them 38ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a table authored in the editor survives export to Word > keeps a caption with its table 23ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a Module 3.2.P.8.3 stability table — the biopharma wave gate > round-trips 10 rows x 7 columns into the .docx as a real table 41ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > a Module 3.2.P.8.3 stability table — the biopharma wave gate > keeps every cell reachable as text, so nothing is lost to consumers that only read text 2ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > ordered lists keep their numbers > marks ol items ordered and ul items not 1ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > ordered lists keep their numbers > exports an ordered list against a real numbering definition, not as a bullet 13ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > ordered lists keep their numbers > counts unresolved suggestions inside table cells 1ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > emits a real HTML table with header cells and every value 2ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > groups consecutive items into one real ol or ul, not a run of paragraphs 0ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > escapes text and never passes stored markup through raw 1ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > carries a pending suggestion into the PDF as redline, not as a settled edit 1ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > agrees with the DOCX branch on table shape — the two formats cannot drift 14ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > superscript and subscript reach the DOCX as vertical alignment, not flattened text (BP-W1-1) 27ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > superscript and subscript survive the HTML/PDF branch too 0ms
+ ✓ server/export/__tests__/authoring-table-export.test.ts > the PDF branch renders the same structure as the DOCX branch > sup/sub inside a table cell keep their alignment in the DOCX 17ms
+stdout | server/routes/__tests__/authoringExportDocx.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+{
+  "timestamp": "2026-09-28T19:26:38.410Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:38.411Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+{
+  "timestamp": "2026-09-28T19:26:38.411Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+{
+  "timestamp": "2026-09-28T19:26:38.412Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+{
+  "timestamp": "2026-09-28T19:26:38.413Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content 230ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a nested procedure keeps its ranks through the parse > records the depth of every item instead of flattening them 10ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a nested procedure keeps its ranks through the parse > keeps the kind of each rank, so notes under a step stay bulleted 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a nested procedure keeps its ranks through the parse > leaves a flat list exactly as it was — the fix adds nothing to it 0ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a nested procedure keeps its ranks through the parse > treats an li with no list around it as a top-level item, not a drop 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the DOCX files the sub-steps at their own rank > emits w:ilvl 1 for the sub-steps and 0 for the steps 65ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the DOCX files the sub-steps at their own rank > declares a numbering format for every rank it can emit 21ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the DOCX files the sub-steps at their own rank > clamps a depth beyond the declared ranks rather than emitting an unnumbered step 22ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > opens the sub-list inside the step it belongs to 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > closes every list and item it opens, at any depth 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > numbers each rank as the DOCX does, so the two renditions agree 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > does not wrap a flat list in anything new 0ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > the PDF branch nests the same ranks, and numbers them the same way > starts a new list when the kind changes at the same rank 0ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > parses to a table that keeps both figures (the old failure returned nothing) 3ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > files a real w:tbl with both images embedded as media parts 17ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > states an unresolvable figure in the cell rather than filing an empty one 14ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > renders the figures into the PDF branch cells too 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > survives with NO text anywhere — two photographs side by side 1ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > keeps a genuinely empty table out — emptiness is having no cells 0ms
+ ✓ server/export/__tests__/authoring-list-depth-export.test.ts > a table whose cells hold figures is not deleted > leaves an all-text table exactly as it was 1ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > emits w:ins for an insertion, attributed to its author and time 74ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > emits w:del with delText for a deletion 24ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > does not fall back to colouring the text 22ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > gives every revision a unique id, as Word requires 12ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > falls back to a named-but-unattributed revision when the mark carries no author 15ms
+ ✓ server/export/__tests__/authoring-tracked-changes-export.test.ts > tracked changes reach Word as revisions a reviewer can accept > leaves settled text alone — no revision markup on an ordinary paragraph 22ms
+ ✓ server/export/__tests__/authoring-footnotes-docx.test.ts > footnotes in a packed .docx > emits a real w:footnoteReference, not a superscript run 63ms
+ ✓ server/export/__tests__/authoring-footnotes-docx.test.ts > footnotes in a packed .docx > writes the note text into footnotes.xml under the id that cites it 26ms
+ ✓ server/export/__tests__/authoring-footnotes-docx.test.ts > footnotes in a packed .docx > carries a footnote out of a TABLE CELL — the case the feature exists for 17ms
+ ✓ server/export/__tests__/authoring-footnotes-docx.test.ts > footnotes in a packed .docx > degrades to text rather than vanishing when no sink is supplied 13ms
+stderr | server/routes/__tests__/authoringExportPdf.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts
+{
+  "timestamp": "2026-09-28T19:26:40.088Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > an <img> becomes an image block instead of vanishing (the old failure) 14ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > image-only content is not dropped by the whitespace filter (the trap) 4ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > collectImageSrcs > finds and deduplicates refs across sections 2ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > sniffImageDimensions > reads PNG, GIF and JPEG headers; refuses garbage 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > embeds the resolved figure as a data URI with its caption 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > states an unresolved figure instead of dropping it 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > the figure is REALLY in the filed .docx — a drawing plus its media part 82ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > an unresolved figure files a stated placeholder, never silence 34ms
+stdout | server/routes/__tests__/authoringExportPdf.test.ts
+✅ Template tables initialized
+
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a dot segment after a real id: the loader is not called and nothing resolves 9ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a query after a real id: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > an id the store never minted: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > percent-encoded dot segments: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > a reference padded with spaces: the loader is not called and nothing resolves 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline an upper-case type: not decoded, not filed 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline WebP, which Word cannot hold: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline SVG, a script container: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline TIFF: not decoded, not filed 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > inline a PNG whose payload holds a newline: not decoded, not filed 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > an image outside the figure rule is never fetched and never filed > the PDF of a section holding an inline WebP states it instead of embedding it 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > reads srcs the way the export parser does: character references, unquoted and upper-case 3ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > still files a governed reference and an inline PNG (guard) 2ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > a figure resolves under the src its image block carries > files an inline JPEG and GIF under their own types (guard) 1ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > the author's alt text, as written 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline WebP, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upper-case PNG type, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an inline PNG whose bytes did not decode, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an external address, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > a path out of the image route, in words 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > an upload that did not resolve, by its reference 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > no src at all 0ms
+ ✓ server/export/__tests__/authoring-images-figure-rule.test.ts > unfiledFigureLabel > never carries a data: payload, whatever its length 0ms
+stdout | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+{
+  "timestamp": "2026-09-28T19:26:41.199Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:26:41.199Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "a***@test.co",
+    "tenantId": 7,
+    "resourceId": "D1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+{
+  "timestamp": "2026-09-28T19:26:41.200Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+{
+  "timestamp": "2026-09-28T19:26:41.200Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+{
+  "timestamp": "2026-09-28T19:26:41.201Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX)
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > decodes each entity exactly once 2ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > decodes the comparators specifications are written with 1ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > decodes numeric references, decimal and hex 0ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > leaves an unrecognised entity written out rather than dropping it 0ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > leaves a bare ampersand alone 0ms
+ ✓ server/export/__tests__/decode-html-entities.test.ts > decodeHtmlEntities > does not touch markup — it runs after the strip, never before 0ms
+ ✓ server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX) 93ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > plain textarea-era text: one block per line, nothing invented 4ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > prose with a tag-shaped token stays literal plain text 5ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > editor HTML: headings, formatting and lists map to typed runs 16ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > unresolved suggestions survive as redline runs with a countable census 2ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > comment-anchor spans keep their words and lose their dressing 1ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > execCommand-era markup (div soup, provenance strip) loses no words 1ms
+ ✓ server/export/__tests__/authoring-section-content.test.ts > sectionContentToBlocks > empty and null content yield no blocks (honest empty, nothing fabricated) 1ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > keeps a superscript as a magnitude, not a concatenated digit 2ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > marks both sides of an unresolved change 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > tolerates the attributes the editor actually writes 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > leaves subscript alone — dropping it changes nothing a reader misreads 1ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > leaves every other tag untouched for the caller to handle 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > inlineMarksToText > changes nothing when there are no marks 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the eCTD leaf PDF renderer > does not fuse a pending change 5ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the eCTD leaf PDF renderer > does not drop an exponent 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the eCTD leaf PDF renderer > does not accept a proposed deletion 1ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the master DOCX builder > does not fuse a pending change 1ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the master DOCX builder > does not drop an exponent 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the master DOCX builder > does not accept a proposed deletion 0ms
+ ✓ server/export/__tests__/inline-marks-to-text.test.ts > both pipelines actually call it > the master DOCX builder > still builds ordinary settled prose unchanged 0ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > parses a note off its reference rather than dropping it 7ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > leaves ordinary superscript alone — cm², t½ are not footnotes 1ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > letters the markers by position and collects the notes after the content 3ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > gives the same note text ONE letter, however often it is cited 1ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > emits no notes block at all when nothing cites one 0ms
+ ✓ server/export/__tests__/authoring-footnotes.test.ts > footnotes > does not merge two references to DIFFERENT notes into one run 1ms
+ ✓ server/export/__tests__/authoring-heading-depth.test.ts > heading depth — CTD nests deeper than three > keeps every level through the parse instead of clamping at 3 8ms
+ ✓ server/export/__tests__/authoring-heading-depth.test.ts > heading depth — CTD nests deeper than three > renders each level as its own rank in HTML, offset below the section title 2ms
+ ✓ server/export/__tests__/authoring-heading-depth.test.ts > heading depth — CTD nests deeper than three > never emits a heading above h6, whatever the input claims 1ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: keeps the limit, the criterion, and the text between them 3ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > eCTD leaf: same document, same text 5ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a decoded entity is never re-read as a tag 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a real tag is still stripped, and its content kept 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: an entity inside a heading survives too 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: &amp; decodes exactly once 0ms
+
+ Test Files  21 passed (21)
+      Tests  213 passed (213)
+   Start at  19:26:31
+   Duration  11.01s (transform 3.58s, setup 561ms, import 23.65s, tests 4.44s, environment 4ms)
+

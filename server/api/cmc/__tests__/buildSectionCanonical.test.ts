@@ -41,6 +41,9 @@ vi.mock('../../../services/cmc/module3-compile', () => ({
 }));
 
 const clientQuery = vi.fn();
+/* The project guard (PF-15) admits this suite's fixture project; its refusals
+   are in module3ProjectScope.test.ts. */
+vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));
 vi.mock('../../../db', () => ({
   db: {},
   getDb: () => ({}),

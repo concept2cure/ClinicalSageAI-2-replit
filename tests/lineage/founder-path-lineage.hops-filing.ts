@@ -13,8 +13,51 @@ import type { PoolClient } from 'pg';
 import type { Queryable as SpanQueryable } from '../../server/services/clinical-regulatory-evidence/span-lineage.service';
 import { REPO_ROOT } from '../golden-journeys/harness';
 import { Hop, ORG_A, AUTHOR, PASSWORD, SHA256_X, HEX64, sha256, json, asPrincipal, type World } from './founder-path-lineage.world';
+import { requiredModule1Codes } from '../../server/services/ectd/assess-dispatch-readiness';
 
 type Row = Record<string, unknown>;
+
+/**
+ * 6b · The Vault copy is reviewed and approved (VR-13, VR-14; FD5 (c)).
+ *
+ * Since 2026-10-01 only an approved, current Vault version is transmitted
+ * (leaf-source-resolver.ts, vaultVersionNotTransmittable). Under FD5 (c) an
+ * Authoring approval carries to the Vault copy only after an independent
+ * Authoring review (authoring-approval-carryover.ts). This document was
+ * frozen by its author and approved, never reviewed, so hop 6 records that it
+ * did not carry, and the export is approved in the Vault: its filer starts
+ * the record and sends it for review, a reviewer signs, the approver approves.
+ * POST /api/regulatory/documents (document-lifecycle.ts) and /:id/advance, /:id/sign.
+ */
+export async function hopVaultApproval(w: World): Promise<void> {
+  const { k, q } = w;
+  const hop = new Hop('vault-approval');
+  const as = (user: number) => asPrincipal(ORG_A, user);
+  const lifecycle = (user: number, p: string, body: object) =>
+    as(user)(request(w.app).post(`/api/regulatory/documents${p}`)).send(body);
+  const signed = { password: PASSWORD, mfaToken: '000000' };
+
+  const start = await lifecycle(3, '', { sources: { vault_documents: { nativeId: k.vaultDocumentId, role: 'artifact' } } });
+  expect(start.status, JSON.stringify(start.body)).toBe(201);
+  const canonicalId = String(start.body.canonicalId);
+  const toReview = await lifecycle(3, `/${canonicalId}/advance`, { to: 'in_review', ...signed, reason: 'Send the sealed export for review' });
+  expect(toReview.status, JSON.stringify(toReview.body)).toBe(200);
+  const reviewed = await lifecycle(5, `/${canonicalId}/sign`, { meaning: 'reviewed', ...signed, reason: 'Reviewed against the sealed document' });
+  expect(reviewed.status, JSON.stringify(reviewed.body)).toBe(200);
+  const approved = await lifecycle(4, `/${canonicalId}/advance`, { to: 'approved', ...signed, reason: 'Approved for the C2C-101 IND original sequence' });
+  expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+
+  await hop.check('vault-copy-approved-for-its-bytes', 'the Vault copy\'s lifecycle record is approved, for the bytes the Vault holds', async (observe) => {
+    const [row] = await q<{ stage: string; content_hash: string; vault_hash: string }>(
+      `SELECT c.stage, c.content_hash, d.content_hash AS vault_hash
+         FROM canonical_documents c JOIN vault.documents d ON d.id::text = c.source_refs -> 'vault_documents' ->> 'nativeId'
+        WHERE c.canonical_id = $1`, [canonicalId]);
+    observe(row?.stage);
+    expect(row).toMatchObject({ stage: 'approved' });
+    expect(row.content_hash).toBe(row.vault_hash);
+  });
+  hop.verdict();
+}
 
 /**
  * 7 · takeAuthoringSnapshot — the service behind POST /api/coauthor/documents
@@ -46,6 +89,23 @@ export async function hopPlace(w: World): Promise<void> {
   expect(l1.status, JSON.stringify(l1.body)).toBe(200);
   expect(l2.status, JSON.stringify(l2.body)).toBe(200);
   k.leafIds = [Number(l1.body.id), Number(l2.body.id)];
+  // An original IND sequence is held to the Module 1 the regional record
+  // requires (QA 2026-10-08, j7, d155ef099): each heading gets an approved
+  // document through the same placement route, read from the same function the
+  // readiness engine uses, so the path to transmit stays the product's.
+  const [{ application_type: appType }] = await w.q<{ application_type: string }>(
+    'SELECT application_type FROM submissions WHERE id = $1', [k.submissionId]);
+  for (const code of requiredModule1Codes('fda', appType)) {
+    const [doc] = await w.q<{ id: number }>(
+      `INSERT INTO coauthor_documents (organization_id, title, content, module_number, status)
+       VALUES ($1, $2, $3, $4, 'approved') RETURNING id`,
+      [ORG_A, `Module ${code}`, `<h1>Module ${code}</h1><p>Founder-path Module 1 content.</p>`, code]);
+    const m1 = await place({
+      sectionCode: code, title: `Module ${code}`, lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: doc.id,
+      reason: 'Placing the Module 1 the original IND requires.',
+    });
+    expect(m1.status, JSON.stringify(m1.body)).toBe(200);
+  }
 
   await hop.check('filing-copy-names-seal', 'the filing copy is aliased to the authoring document and names the seal it was taken under', async (observe) => {
     const [c] = await q<{ status: string; metadata: unknown }>('SELECT status, metadata FROM coauthor_documents WHERE id = $1', [k.coauthorId]);
@@ -91,6 +151,8 @@ function configureStubEsg(w: World): void {
   const env: Record<string, string> = {
     FDA_ESG_STAGING_URL: 'https://esg-staging.fda.example/as2',
     FDA_ESG_STAGING_AS2_FROM: 'C2C-SPONSOR',
+    // FDA's AS2 identifier has no default (2026-10-01, W5/D7, sweep F16).
+    FDA_ESG_STAGING_AS2_TO: 'FDA-AS2-ID-TEST',
     FDA_ESG_STAGING_CERT_PATH: path.join(creds, 'cert.pem'),
     FDA_ESG_STAGING_KEY_PATH: path.join(creds, 'key.pem'),
     FDA_ESG_STAGING_FDA_CERT_PATH: path.join(creds, 'fda.pem'),
@@ -106,14 +168,55 @@ function configureStubEsg(w: World): void {
  * freeze, dispatch and transmit, each on its own Part 11 sign by the approver
  * (separation of duties: the author created the sequence). Routes:
  * submissions.ts:890, :1674, :1690, :1718; c2c/actions.ts:777.
+ *
+ * Marking an ORIGINAL IND Validated also asks for its Module 3 (D2,
+ * 2026-10-11). This journey's sequence 0000 carries one clinical document, so
+ * the refusal is asserted and then cleared the second way 21 CFR 312.23(b)
+ * allows — a Drug Master File on the Module 1.4 register, its Letter of
+ * Authorization on file.
  */
 async function freezeDispatchTransmit(w: World): Promise<request.Response> {
   const seqId = w.k.sequenceId!;
   const as = (userId: number) => asPrincipal(ORG_A, userId);
-  for (const status of ['assembling', 'validated']) {
-    const t = await as(3)(request(w.app).post(`/api/submissions/sequences/${seqId}/transition`)).send({ status });
-    expect(t.status, JSON.stringify(t.body)).toBe(200);
+  const transition = (status: string) =>
+    as(3)(request(w.app).post(`/api/submissions/sequences/${seqId}/transition`)).send({ status });
+
+  const assembling = await transition('assembling');
+  expect(assembling.status, JSON.stringify(assembling.body)).toBe(200);
+
+  /* Since 2026-10-11 (D2, 4ad6118fc) Submission Readiness asks an ORIGINAL IND
+     for its Module 3 content: 21 CFR 312.23(a)(7). This journey files one
+     clinical document into 2.5, so sequence 0000 carries no 3.2.S or 3.2.P
+     leaf, and the product refuses to mark it Validated. That refusal is this
+     journey's subject too — it is asserted here, naming both headings, before
+     the journey takes the second route 21 CFR 312.23(b) allows. */
+  const refusedForModule3 = await transition('validated');
+  expect(refusedForModule3.status, JSON.stringify(refusedForModule3.body)).toBe(422);
+  for (const code of ['3.2.S', '3.2.P']) {
+    expect(JSON.stringify(refusedForModule3.body), `the refusal names ${code}`).toContain(code);
   }
+
+  /* The route the refusal itself names: record the Drug Master File that holds
+     the chemistry, naming the sections it covers, with its Letter of
+     Authorization on file (Module 1.4.1). This is the real service behind
+     POST /api/ind-lifecycle/submission/:id/cross-references
+     (registers.routes.ts:72), called as hops 3 and 7 call their services. */
+  const { createCrossReference } = await import('../../server/services/ind-lifecycle/ind-cross-reference-persistence');
+  await createCrossReference(
+    {
+      submissionId: w.k.submissionId!,
+      referencedFileType: 'DMF',
+      referencedFileNumber: 'MF-034512',
+      subjectName: 'C2C-101 drug substance and drug product',
+      authorizedSections: ['3.2.S', '3.2.P'],
+      loaOnFile: true,
+      loaLeafSection: 'm1.4.1',
+    },
+    { organizationId: ORG_A, userId: 3 },
+  );
+
+  const validated = await transition('validated');
+  expect(validated.status, JSON.stringify(validated.body)).toBe(200);
   // Seeded, not run: POST /sequences/:id/shadow-review calls a model (see the test file's header).
   await w.jdb.pool.query(
     `INSERT INTO shadow_review_runs (sequence_id, organization_id, region, lens, status, summary, created_by)
@@ -135,7 +238,8 @@ async function freezeDispatchTransmit(w: World): Promise<request.Response> {
     expect(r.status, JSON.stringify(r.body)).toBe(200);
   }
   return as(4)(request(w.app).post(`/api/submissions/sequences/${seqId}/transmit`)).send({
-    signatureActionId: await sign('transmit'), environment: 'staging', applicationId: '123456', sponsorId: 'C2C-SPONSOR', sponsorName: 'Founder Org',
+    // No sponsorName: the package names the organisation's recorded name (QA j6).
+    signatureActionId: await sign('transmit'), environment: 'staging', applicationId: '123456', sponsorId: 'C2C-SPONSOR',
   });
 }
 
@@ -223,10 +327,13 @@ export async function walkBack(w: World): Promise<void> {
     trail.sequenceId = Number(rows[0].record_id);
   });
   await hop.check('sequence-to-pinned-leaves', 'the sequence’s leaves each name a document and pin its digest', async (observe) => {
-    trail.leaves = await q('SELECT * FROM submission_leaves WHERE sequence_id = $1 AND deleted_at IS NULL ORDER BY id', [trail.sequenceId]);
+    const all = await q('SELECT * FROM submission_leaves WHERE sequence_id = $1 AND deleted_at IS NULL ORDER BY id', [trail.sequenceId]);
+    // Every leaf pins its digest, the required Module 1 included; the walk back
+    // follows the founder's own two (the filing copy and the Vault copy).
+    for (const l of all) expect(String(l.document_content_sha256)).toMatch(HEX64);
+    trail.leaves = all.filter((l) => k.leafIds!.includes(Number(l.id)));
     observe(trail.leaves.map((l) => l.document_table));
     expect(trail.leaves).toHaveLength(2);
-    for (const l of trail.leaves) expect(String(l.document_content_sha256)).toMatch(HEX64);
   });
   await hop.check('leaves-to-project', 'each leaf reaches the project: the filing copy through its alias, the Vault copy through its program', async (observe) => {
     const programIds = new Set<string>();
@@ -391,6 +498,52 @@ export async function hopRetention(w: World): Promise<void> {
     expect(Object.keys(res.body.holds)).toEqual(expect.arrayContaining(['filed', 'transmitted']));
     expect(p.deleted_at).toBeNull();
   });
+  /* PF-08: the legacy project delete is a HARD delete, and the program's
+     documents hang from its anchor row by ON DELETE CASCADE. The program's own
+     delete is refused above; this route did not ask. */
+  await hop.check('anchor-row-not-hard-deleted', "the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive", async (observe) => {
+    const [anchor] = await q<{ id: number }>('SELECT id FROM projects WHERE regulatory_program_id = $1', [k.programId]);
+    // An approved document of the program, keyed to its anchor row as the artifact registry keys them.
+    await q(
+      `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content, status)
+       VALUES ('pf08-approved', $1, $2, 'document', 'regulatory', 'Approved protocol', 'x', 'approved')`,
+      [anchor.id, ORG_A],
+    );
+    const count = async () => (await q<{ n: number }>('SELECT count(*)::int AS n FROM concept2cure_artifacts WHERE project_id = $1', [anchor.id]))[0].n;
+    const before = await count();
+    const res = await as3(request(w.app).delete(`/api/projects/${anchor.id}`));
+    const kept = await q('SELECT 1 FROM projects WHERE id = $1', [anchor.id]);
+    const after = await count();
+    observe({ status: res.status, error: res.body?.error, anchorKept: kept.length, documentsBefore: before, documentsAfter: after });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('PROJECT_IS_PROGRAM_ANCHOR');
+    expect(res.body.programIds).toEqual([k.programId]);
+    expect(kept).toHaveLength(1);
+    expect(before).toBeGreaterThan(0);
+    expect(after).toBe(before);
+  });
+  await hop.check('legacy-delete-needs-writing-role', 'the legacy project delete answers 403 to a viewer, and deletes nothing', async (observe) => {
+    const [anchor] = await q<{ id: number }>('SELECT id FROM projects WHERE regulatory_program_id = $1', [k.programId]);
+    const res = await asPrincipal(ORG_A, 3, 'viewer')(request(w.app).delete(`/api/projects/${anchor.id}`));
+    const kept = await q('SELECT 1 FROM projects WHERE id = $1', [anchor.id]);
+    observe({ status: res.status, kept: kept.length });
+    expect(res.status).toBe(403);
+    expect(kept).toHaveLength(1);
+  });
+  await hop.check('legacy-draft-project-deleted', 'a legacy project holding only drafts is still deleted by the same route', async (observe) => {
+    const [ws] = await q<{ client_workspace_id: number }>('SELECT client_workspace_id FROM projects WHERE regulatory_program_id = $1', [k.programId]);
+    const [p] = await q<{ id: number }>(
+      `INSERT INTO projects (organization_id, client_workspace_id, name, type, status) VALUES ($1, $2, 'Scratch', 'ind', 'planning') RETURNING id`,
+      [ORG_A, ws.client_workspace_id],
+    );
+    const res = await as3(request(w.app).delete(`/api/projects/${p.id}`));
+    const gone = await q('SELECT 1 FROM projects WHERE id = $1', [p.id]);
+    const audit = await q(`SELECT 1 FROM audit_events WHERE event_type = 'project_delete' AND entity_id = $1`, [String(p.id)]);
+    observe({ status: res.status, remaining: gone.length, audited: audit.length });
+    expect(res.status).toBe(200);
+    expect(gone).toHaveLength(0);
+    expect(audit).toHaveLength(1);
+  });
   await hop.check('filed-project-archived', 'the same project can be archived, and its records still read from it', async (observe) => {
     const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({});
     const records = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
@@ -411,6 +564,18 @@ export async function hopRetention(w: World): Promise<void> {
     expect(created.status).toBe(201);
     expect(deleted.status).toBe(200);
     expect(audit).toHaveLength(1);
+    k.deletedProgramId = id;
+  });
+  /* PF-11: the project's source-change report checked the program inline, with
+     no deleted_at, and sent a non-UUID id to a uuid column (a 500). */
+  await hop.check('source-changes-of-a-deleted-or-malformed-project', "a deleted project's source changes, and a malformed id's, are not found", async (observe) => {
+    const deleted = await as3(request(w.app).get(`/api/c2c/projects/${k.deletedProgramId}/source-changes`));
+    const malformed = await as3(request(w.app).get('/api/c2c/projects/not-a-project/source-changes'));
+    const live = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/source-changes`));
+    observe({ deleted: deleted.status, malformed: malformed.status, live: live.status });
+    expect(deleted.status).toBe(404);
+    expect(malformed.status).toBe(404);
+    expect(live.status).toBe(200);
   });
   hop.verdict();
 }

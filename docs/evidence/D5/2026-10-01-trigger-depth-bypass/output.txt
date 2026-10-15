@@ -1,0 +1,11 @@
+      ?column?      
+--------------------
+ comments before: 1
+(1 row)
+
+psql:probe-sql.txt:29: NOTICE:  direct DELETE: refused (IMMUTABILITY_VIOLATION: review comment depth-probe-c is part)
+                 ?column?                 
+------------------------------------------
+ comments after a session-made trigger: 0
+(1 row)
+

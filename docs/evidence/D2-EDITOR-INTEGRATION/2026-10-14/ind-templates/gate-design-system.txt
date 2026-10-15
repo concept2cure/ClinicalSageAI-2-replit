@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:design-system
+> node scripts/ci/check-design-system-compliance.mjs
+
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.

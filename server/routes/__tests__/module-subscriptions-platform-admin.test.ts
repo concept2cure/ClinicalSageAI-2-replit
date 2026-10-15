@@ -134,14 +134,18 @@ describe('GET /navigation — platformAdmin agrees with requirePlatformAdmin', (
     expect(consoleStatus).toBe(403);
   });
 
-  it('a super_admin: platformAdmin true, and the console admits them', async () => {
+  // Inverted 2026-10-05 (D6): the request role is the tenant membership role; standing is a platform grant — docs/evidence/D6/2026-10-05-platform-standing/
+  // (was: 'a super_admin: platformAdmin true, and the console admits them'; the
+  // grant-holding super_admin is the "in-app super_admin designation" case below.)
+  it('a membership role of super_admin with no grant: platformAdmin false, and the console refuses them', async () => {
     const { nav, consoleStatus } = await bothAnswers({
       userId: 2,
       email: 'owner@example.com',
       role: 'super_admin',
     });
-    expect(nav.body.platformAdmin).toBe(true);
-    expect(consoleStatus).toBe(200);
+    expect(nav.body.platformAdmin).toBe(false);
+    expect(nav.body.masterAdmin).toBe(false);
+    expect(consoleStatus).toBe(403);
   });
 
   it('an email on PLATFORM_ADMIN_EMAILS: platformAdmin true, and the console admits them', async () => {

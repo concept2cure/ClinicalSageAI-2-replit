@@ -1,0 +1,6 @@
+ × client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > offers the open project's submissions and unanchored ones, and says how many it does not offer 86ms
+ × client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > when every submission is another project's, the empty state says so — not 'none in this organization' 5016ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > with no project open, every submission is offered, as before 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)

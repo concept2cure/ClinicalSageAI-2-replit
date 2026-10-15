@@ -28,9 +28,11 @@
  *     section approval).
  *   - `persistGovernedSignatureRevocation(client, params)` closes the §11.70
  *     supersession chain for the governed `revoke-signature` action: it resolves
- *     the live signature on that target (org-scoped), records the revocation as
- *     its own attributable row, and points the revoked row's `superseded_by` at
- *     it. A revocation that cannot resolve what it revokes REFUSES.
+ *     the ONE live signature on that target (org-scoped) that the payload names
+ *     — by `signatureId`, `signatureActionId` or `intent` — records the
+ *     revocation as its own attributable row, and points the revoked row's
+ *     `superseded_by` at it. A revocation that resolves nothing, or more than
+ *     one signature, REFUSES.
  *
  * Ledger L37 folded the LAST remaining second INSERT in.
  * `part11ComplianceService.createElectronicSignature` — the writer behind
@@ -60,7 +62,14 @@ import { createHash } from 'crypto';
 import type { SQL } from 'drizzle-orm';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
-import { GOVERNED_SIGN_MEANINGS, isGovernedSignMeaning, type GovernedSignMeaning } from './signature-meanings.js';
+import { GOVERNED_SIGN_MEANINGS, signMeaningRefusal, type GovernedSignMeaning } from './signature-meanings.js';
+import { CONTENT_BINDERS } from './governed-target-binders.js';
+import {
+  chooseSignatureToRevoke,
+  revocationCandidateOf,
+  revocationSelectorOf,
+  SignatureRevocationUnresolvedError,
+} from './revocation-selection.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
 export interface SignatureDbClient {
@@ -114,6 +123,18 @@ export const BINDING_BASIS = {
   /** sha256 over the certified financial-disclosure snapshot (21 CFR 54 Form 3454/3455). */
   FINANCIAL_DISCLOSURE_CONTENT: 'financial-disclosure-content-sha256',
   /**
+   * sha256 over the interim data snapshot an adaptive decision is taken on:
+   * the look number, information fraction, enrolment, summary statistics, test
+   * statistic, conditional and predictive power, and the boundary at that look.
+   *
+   * An IDMC does not approve "a decision"; it approves a decision ABOUT a
+   * specific interim look, so that look's data is what the signature binds
+   * (§11.70). Added 2026-10-13, when the adaptive decision stopped being a
+   * Drizzle insert that stamped `approved_by` from the session user with no
+   * ceremony at all.
+   */
+  INTERIM_SNAPSHOT_CONTENT: 'interim-snapshot-content-sha256',
+  /**
    * sha256 over the eCTD release package the submission orchestrator assembled:
    * leaf-manifest digest || validator-outcome digest || tenant-scoped submission
    * identity (see submission-package-orchestrator.computeBoundPayloadDigest).
@@ -148,6 +169,34 @@ export const BINDING_BASIS = {
    */
   C2C_ARTIFACT_VERSION_CONTENT: 'c2c-artifact-version-content-sha256',
   /**
+   * sha256 of one Vault version's bytes: the `vault.documents.content_hash` of
+   * the version a lifecycle document is sourced from, read in the signing
+   * transaction (FOR SHARE), never from the client. The row's hash is frozen
+   * (migrations/20260926_vault_documents_record_immutability.sql), so the
+   * digest re-derives from the stored row. Added 2026-09-29 with
+   * server/services/regulatory/lifecycle-signature.ts (VR-12).
+   */
+  VAULT_DOCUMENT_VERSION: 'vault-document-version-sha256',
+  /**
+   * sha256 content hash of a Report OS run's seal (buildSealedRecord,
+   * services/report-os/sealing/seal.ts: the rendered report's canonical blocks
+   * and provenance atoms), read from the run's latest snapshot in the signing
+   * transaction, where the finalize has just written it. Added 2026-10-01 with
+   * P1-44b: a final report's signature binds what it sealed. binding_basis is
+   * free TEXT (migrations/20260813d, no CHECK), so no migration is needed.
+   */
+  REPORT_RUN_SEAL: 'report-run-seal-sha256',
+  /**
+   * sha256 of a Vault version's bytes that are a RENDERING of Authoring content
+   * a signature covers (FD5 (c), 2026-10-01). The Authoring signature covers the
+   * sections digest; the filing rendered exactly those sections (digest
+   * recomputed over the rows rendered) into these bytes. Recorded on a Vault
+   * lifecycle sign-off that names the Authoring signature
+   * (server/services/regulatory/authoring-approval-carryover.ts); no
+   * electronic_signatures row carries it, because nothing is signed again.
+   */
+  AUTHORING_RENDITION: 'authoring-rendition-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target
@@ -166,6 +215,13 @@ export const GOVERNED_REVOCATION_SIGNATURE_TYPE = 'governed-revocation';
 
 /** verification_status stamped on a signature a governed revocation supersedes. */
 export const REVOKED_VERIFICATION_STATUS = 'revoked';
+
+/**
+ * verification_status stamped on a signature whose act the server refused
+ * (voidSignatureForRefusedAct, P-23). Distinct from 'revoked': nobody withdrew
+ * it; the act it was given for did not happen.
+ */
+export const VOIDED_VERIFICATION_STATUS = 'voided';
 
 /**
  * Whether a signature row has been taken out of force.
@@ -188,11 +244,55 @@ export function isSignatureWithdrawn(row: {
   superseded_by?: unknown;
   is_valid?: unknown;
 }): boolean {
+  const status = String(row.verification_status ?? '');
   return (
-    String(row.verification_status ?? '') === REVOKED_VERIFICATION_STATUS ||
+    status === REVOKED_VERIFICATION_STATUS ||
+    status === VOIDED_VERIFICATION_STATUS ||
     row.superseded_by != null ||
     row.is_valid === false
   );
+}
+
+/**
+ * Take a signature out of force because the act it was given for was refused
+ * (P-23, docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08: a signature serves only
+ * the act it was given for). Returns the voided row's id, or null when no live
+ * signature row is bound to `actionId` on `target` (none was persisted, or it is
+ * already out of force).
+ *
+ * Only the Verification column group changes, as in a revocation: `is_valid`,
+ * `verification_status = 'voided'` (which says WHY is_valid is false, so the row
+ * is never misread as "the signing factors failed") and `verification_date`.
+ * The signer's identity, signature_hash, signature_manifest, bound_payload_digest
+ * and binding_basis are left byte-identical (§11.70). No successor row is
+ * written: nobody signed the void. Its cause, the refusal, is recorded on the
+ * audit row the caller writes. One statement, so it needs no transaction; the
+ * predicate makes it a compare-and-set, and a second void of the same row
+ * matches nothing. The immutability trigger permits exactly this transition and
+ * freezes the row after it (db/migrations/20260730_esign_audit_db_level_immutability.sql,
+ * amended 2026-10-15: until then it refused the statement, so the void reached
+ * the audit chain only and the row kept reading is_valid = true).
+ */
+export async function voidSignatureForRefusedAct(
+  client: SignatureDbClient,
+  params: { orgId: number; target: string; actionId: string; occurredAt: Date },
+): Promise<number | null> {
+  const voided = await client.query(
+    `UPDATE electronic_signatures
+        SET is_valid = false,
+            verification_status = $1,
+            verification_date = $2,
+            updated_at = now()
+      WHERE organization_id = $3
+        AND signed_target = $4
+        AND (signature_manifest::jsonb ->> 'actionId') = $5
+        AND superseded_by IS NULL
+        AND is_valid IS DISTINCT FROM false
+      RETURNING id`,
+    [VOIDED_VERIFICATION_STATUS, params.occurredAt, params.orgId, params.target, params.actionId],
+  );
+  const id = Number(voided.rows[0]?.id);
+  return Number.isFinite(id) && id > 0 ? id : null;
 }
 
 export type BindingBasis = (typeof BINDING_BASIS)[keyof typeof BINDING_BASIS];
@@ -287,9 +387,10 @@ export interface ElectronicSignatureRecord {
  * Insert ONE electronic_signatures row on the supplied client. When the client
  * is a transaction client, the row commits/rolls back with the transaction.
  *
- * Fail-closed: throws on a missing anchor, missing signer identity, or a
- * missing attribution hash. Database errors propagate untouched (callers
- * decide how to map 42P01 etc. — this function never swallows them).
+ * Fail-closed: throws on a missing anchor, missing signer identity, a missing
+ * attribution hash, or a meaning outside the closed vocabulary
+ * (assertRecordedMeaning). Database errors propagate untouched (callers decide
+ * how to map 42P01 etc. — this function never swallows them).
  */
 export async function persistElectronicSignature(
   client: SignatureDbClient,
@@ -303,6 +404,7 @@ export async function persistElectronicSignature(
       'electronic_signatures: refusing anchorless signature — need (documentId AND versionId) or a signedTarget (§11.70).',
     );
   }
+  assertRecordedMeaning(record);
   if (!Number.isFinite(record.signerId)) {
     throw new Error('electronic_signatures: signerId is required (§11.100).');
   }
@@ -357,7 +459,7 @@ export async function persistElectronicSignature(
       record.authenticationTimestamp,
       record.secondFactorVerified,
       record.signatureHash,
-      record.signatureMeaning ?? null,
+      record.signatureMeaning ?? null, // null only on a governed revocation (assertRecordedMeaning)
       JSON.stringify(record.signatureManifest),
       record.isValid,
       record.verificationStatus ?? null,
@@ -371,6 +473,27 @@ export async function persistElectronicSignature(
     ],
   );
   return { id: result.rows[0].id as number, signedAt: result.rows[0].signed_at as Date };
+}
+
+/**
+ * §11.50(a)(3) at the one writer (security audit 2026-09-24 DP-55, plan P1-42):
+ * every row states a meaning from the closed vocabulary (GOVERNED_SIGN_MEANINGS),
+ * or nothing is inserted. The column is nullable and this writer used to store
+ * `signatureMeaning ?? null`, so POST /api/esignature/sign — which took the
+ * meaning as optional free text — recorded signatures that said nothing about
+ * what they meant. Routes refuse first (signMeaningRefusal, before
+ * re-authentication); this is the floor for every current and future caller.
+ *
+ * The one row that may carry none is a governed revocation: it withdraws a
+ * signature rather than asserting a meaning, and its manifest
+ * (kind 'governed-revoke-signature') records the act. Every caller was checked
+ * on 2026-10-01: the document path, the release path ('approval', OQ-8), the
+ * governed sign (asserted in persistGovernedActionSignature) and the QMS
+ * approve/retire writers ('APPROVED') all pass a vocabulary meaning.
+ */
+function assertRecordedMeaning(record: ElectronicSignatureRecord): void {
+  if (record.signatureType === GOVERNED_REVOCATION_SIGNATURE_TYPE && record.signatureMeaning == null) return;
+  assertGovernedSignMeaning(record.signatureMeaning);
 }
 
 // ── Governed-target content-binding derivation ───────────────────────────────
@@ -537,13 +660,15 @@ export async function deriveGovernedTargetBinding(
           note: 'sha256 over the section content + version at signing time.',
         };
       }
-      case 'protocol-document':
-      case 'protocol-review-assignment':
-        // `return await`, not `return`: the helper's queries must reject INSIDE
-        // this try so a 42P01 still falls back to the ledger basis below.
-        return await protocolContentBinding(client, prefix, rest, orgId, ledgerFallback);
-      default:
-        return ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
+      default: {
+        // A type whose binder lives in governed-target-binders.ts. `return
+        // await`, not `return`: its queries must reject INSIDE this try so a
+        // 42P01 still falls back to the ledger basis below.
+        const binder = CONTENT_BINDERS[prefix];
+        return binder
+          ? await binder(client, rest, orgId, ledgerFallback)
+          : ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
+      }
     }
   } catch (err: any) {
     // Table absent in this environment (pre-migration) — the target's content is
@@ -554,68 +679,6 @@ export async function deriveGovernedTargetBinding(
     // Any other DB error is real — fail closed (roll back the whole sign).
     throw err;
   }
-}
-
-/**
- * The protocol-document / protocol-review-assignment case of
- * deriveGovernedTargetBinding. Errors propagate to that function's catch,
- * which owns the 42P01 ledger fallback and the fail-closed rethrow.
- */
-async function protocolContentBinding(
-  client: SignatureDbClient,
-  prefix: 'protocol-document' | 'protocol-review-assignment',
-  rest: string,
-  orgId: number,
-  ledgerFallback: (why: string) => GovernedBinding,
-): Promise<GovernedBinding> {
-  // A disposition is a signature over the protocol the reviewer read, so
-  // it binds that protocol's content, not the assignment row.
-  //
-  // CONTENT ONLY. No version, no workflow status, no timestamps: finalize
-  // bumps the version and moves section status, and a reviewer's
-  // signature taken before that must still re-derive afterwards when no
-  // content changed (the ectd-sequence lesson in deriveGovernedTargetBinding).
-  // And ALL of the content, not just the prose: the cover page, synopsis,
-  // objectives, eligibility, schedule of visits, schedule of assessments
-  // and study team are what a reviewer approves too.
-  if (!/^\d+$/.test(rest)) return ledgerFallback('malformed protocol pointer');
-  let docId = rest;
-  if (prefix === 'protocol-review-assignment') {
-    const a = await client.query(
-      `SELECT protocol_document_id FROM protocol_review_assignments
-        WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-        LIMIT 1`,
-      [rest, orgId],
-    );
-    if (a.rows.length === 0) return ledgerFallback('review assignment not readable at signing time');
-    docId = String(a.rows[0].protocol_document_id);
-  }
-  const doc = await client.query(
-    `SELECT id, protocol_kind, protocol_number, title, design_type, phase, therapeutic_area,
-            synopsis, sponsor, principal_investigator
-       FROM protocol_documents
-      WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-      LIMIT 1`,
-    [docId, orgId],
-  );
-  if (doc.rows.length === 0) return ledgerFallback('protocol document not readable at signing time');
-  const rows = async (sql: string) => (await client.query(sql, [docId, orgId])).rows;
-  const live = 'protocol_document_id = $1::int AND organization_id = $2';
-  const content = {
-    protocol: doc.rows[0],
-    sections: await rows(`SELECT section_key, title, content, required, order_index FROM protocol_sections WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, section_key`),
-    objectives: await rows(`SELECT objective_type, objective, endpoint, timepoint, order_index FROM protocol_objectives WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-    eligibility: await rows(`SELECT kind, criterion, order_index FROM protocol_eligibility_criteria WHERE ${live} AND deleted_at IS NULL ORDER BY kind, order_index, id`),
-    visits: await rows(`SELECT id, visit_name, timepoint, procedures, order_index FROM protocol_schedule_visits WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-    assessments: await rows(`SELECT id, name, category, order_index FROM protocol_soa_assessments WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-    cells: await rows(`SELECT assessment_id, visit_id, required, notes FROM protocol_soa_cells WHERE ${live} ORDER BY assessment_id, visit_id`),
-    team: await rows(`SELECT member_name, role, responsibilities, personnel_id, user_id FROM protocol_team_members WHERE ${live} AND deleted_at IS NULL ORDER BY id`),
-  };
-  return {
-    digest: sha256Hex(canonicalJson(content)),
-    basis: BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT,
-    note: `sha256 over the protocol's content at signing time: cover page and synopsis (protocol_documents), ${content.sections.length} section(s), ${content.objectives.length} objective(s), ${content.eligibility.length} eligibility criteria, ${content.visits.length} visit(s), ${content.assessments.length} SoA assessment(s) and ${content.cells.length} cell(s), ${content.team.length} team member(s). No version, workflow status or timestamp is bound.`,
-  };
 }
 
 // ── Governed sign composition ────────────────────────────────────────────────
@@ -686,20 +749,20 @@ export class SignatureMeaningError extends Error {
 /**
  * The §11.50(a)(3) rule for a governed sign: the declared meaning is a string
  * from the closed vocabulary. The value is not echoed back (it is caller
- * text); the message names what is accepted instead.
+ * text); the message names what is accepted instead. Which refusal applies is
+ * decided once, by signMeaningRefusal — the same function the routes call
+ * before re-authentication — so the routes and this writer cannot disagree
+ * about what is "missing" and what is "unknown" (P1-42).
  */
 export function assertGovernedSignMeaning(meaning: unknown): asserts meaning is GovernedSignMeaning {
-  if (isGovernedSignMeaning(meaning)) return;
+  const refused = signMeaningRefusal(meaning);
+  if (!refused) return;
   const accepted = GOVERNED_SIGN_MEANINGS.join(', ');
-  if (typeof meaning !== 'string' || meaning.length === 0) {
-    throw new SignatureMeaningError(
-      'SIGNATURE_MEANING_REQUIRED',
-      `A signature meaning is required, one of: ${accepted}. Nothing was signed.`,
-    );
-  }
   throw new SignatureMeaningError(
-    'SIGNATURE_MEANING_UNKNOWN',
-    `The declared meaning is not a signature meaning; use one of: ${accepted}. Nothing was signed.`,
+    refused.error,
+    refused.error === 'SIGNATURE_MEANING_REQUIRED'
+      ? `A signature meaning is required, one of: ${accepted}. Nothing was signed.`
+      : `The declared meaning is not a signature meaning; use one of: ${accepted}. Nothing was signed.`,
   );
 }
 
@@ -735,10 +798,8 @@ export async function persistGovernedActionSignature(
 
   // §11.50 meaning: only what the signer actually declared (the sign modal sends
   // payload.meaning). Never fabricate a meaning that was not declared.
-  const declaredMeaning =
-    typeof params.payload?.meaning === 'string' && params.payload.meaning.length > 0
-      ? (params.payload.meaning as string)
-      : null;
+  const declared = params.payload?.meaning;
+  const declaredMeaning = typeof declared === 'string' && declared.length > 0 ? declared : null;
 
   const signedAtIso = params.occurredAt.toISOString();
 
@@ -811,20 +872,6 @@ export async function persistGovernedSignSignature(
 // ── §11.70 supersession (governed revoke-signature) ──────────────────────────
 
 /**
- * A governed revocation could not identify the signature it revokes. Fail
- * closed: a revocation that cannot name what it revokes revokes nothing, and
- * recording it would leave the supersession chain claiming an act that never
- * landed.
- */
-export class SignatureRevocationUnresolvedError extends Error {
-  readonly code = 'REVOCATION_TARGET_UNRESOLVED';
-  constructor(message: string) {
-    super(message);
-    this.name = 'SignatureRevocationUnresolvedError';
-  }
-}
-
-/**
  * Persist the §11.70 supersession for a governed `revoke-signature` action, on
  * the SAME client/transaction as the revocation's ledger write.
  *
@@ -861,32 +908,53 @@ export class SignatureRevocationUnresolvedError extends Error {
  * revoked target's content digest — otherwise it would collide with the
  * (organization_id, bound_payload_digest, superseded_by IS NULL) lookup and a
  * revoked release would read as freshly signed.
+ *
+ * WHICH SIGNATURE (amended 2026-10-15, row D5). This resolved "the newest live
+ * row on the target", whatever it was given for. Since P-34 a sequence carries
+ * live signatures for several acts at once — freeze, dispatch, transmit, a
+ * Shadow Review waiver and, per P-35, one disposition per critical finding — so
+ * a revocation meant for the release could withdraw the waiver, or the
+ * reverse, and this row would then name the wrong signature as revoked
+ * (§11.10(e), §11.70). The payload now names the signature: `signatureId`,
+ * `signatureActionId` or `intent` (RevocationSelector), and exactly one live
+ * signature must answer, or nothing is written (chooseSignatureToRevoke) —
+ * on every target, whether or not its signatures declare an intent.
  */
 export async function persistGovernedSignatureRevocation(
   client: SignatureDbClient,
   params: GovernedSignParams,
 ): Promise<{ revocationId: number; revokedSignatureId: number }> {
-  // Resolve the signature under revocation: org-scoped, anchored on the same
-  // governed target the ledger records, still live. Revocation rows themselves
-  // are excluded — a revocation is not a signature that can be revoked.
+  // A malformed name refuses before any query (SignatureRevocationSelectorError).
+  const selector = revocationSelectorOf(params.payload);
+
+  // The signatures on the target — org-scoped, anchored on the same governed
+  // target the ledger records, not superseded, newest first — each with the
+  // intent its sign action declared. Revocation rows themselves are excluded:
+  // a revocation is not a signature that can be revoked. One voided for a
+  // refused act (P-23) is out of force too, by the canonical predicate.
   const found = await client.query(
-    `SELECT id, signature_hash, signature_type, signed_at, signer_id
-       FROM electronic_signatures
-      WHERE organization_id = $1
-        AND signed_target = $2
-        AND signature_type <> $3
-        AND superseded_by IS NULL
-      ORDER BY signed_at DESC, id DESC
-      LIMIT 1`,
+    `SELECT es.id, es.signature_hash, es.signature_type, es.signed_at, es.signer_id,
+            es.superseded_by, es.is_valid, es.verification_status,
+            (es.signature_manifest::jsonb ->> 'actionId') AS action_id,
+            (a.payload ->> 'intent') AS intent
+       FROM electronic_signatures es
+       LEFT JOIN c2c_ana_actions a
+         ON a.id = (es.signature_manifest::jsonb ->> 'actionId')
+        AND a.org_id = es.organization_id
+      WHERE es.organization_id = $1
+        AND es.signed_target = $2
+        AND es.signature_type <> $3
+        AND es.superseded_by IS NULL
+      ORDER BY es.signed_at DESC, es.id DESC`,
     [params.orgId, params.target, GOVERNED_REVOCATION_SIGNATURE_TYPE],
   );
-  if (found.rows.length === 0) {
-    throw new SignatureRevocationUnresolvedError(
-      `revoke-signature: no active electronic signature is anchored to target '${params.target}' in organization ${params.orgId} — refusing to record a revocation of nothing (§11.70).`,
-    );
-  }
-  const revoked = found.rows[0];
-  const revokedId = Number(revoked.id);
+  const liveRows = found.rows.filter((r) => !isSignatureWithdrawn(r));
+  const chosen = chooseSignatureToRevoke(liveRows.map(revocationCandidateOf), selector, {
+    target: params.target,
+    orgId: params.orgId,
+  });
+  const revoked = liveRows.find((r) => Number(r.id) === chosen.signatureId);
+  const revokedId = chosen.signatureId;
 
   const revocation = await persistGovernedActionSignature(client, {
     ...params,
@@ -906,9 +974,13 @@ export async function persistGovernedSignatureRevocation(
       '(21 CFR Part 11 §11.50/§11.70/§11.200); the superseded signature is retained unaltered and linked via superseded_by.',
     extraManifest: {
       revokedSignatureId: revokedId,
-      revokedSignatureHash: revoked.signature_hash ?? null,
-      revokedSignatureType: revoked.signature_type ?? null,
-      revokedSignatureSignerId: revoked.signer_id == null ? null : Number(revoked.signer_id),
+      revokedSignatureHash: revoked?.signature_hash ?? null,
+      revokedSignatureType: revoked?.signature_type ?? null,
+      revokedSignatureSignerId: revoked?.signer_id == null ? null : Number(revoked.signer_id),
+      // What the signature was given for, so the record states which act's
+      // authorization was withdrawn (§11.10(e)).
+      revokedSignatureActionId: chosen.signatureActionId,
+      revokedSignatureIntent: chosen.intent,
     },
   });
 

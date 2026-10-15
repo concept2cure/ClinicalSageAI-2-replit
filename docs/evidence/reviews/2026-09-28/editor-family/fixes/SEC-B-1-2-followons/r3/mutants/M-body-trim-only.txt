@@ -1,0 +1,15 @@
+mutant M-body-trim-only: server/services/authoring/section-generation-service.ts
+- const body = /[\p{L}\p{N}]/u.test(modelBody) ? plainTextToHtml(modelBody) : '';
++ const body = modelBody.trim() ? plainTextToHtml(modelBody) : '';
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a zero-width space before the trailer': the draft and the result body are "", and the trailer is still read 6ms
+   → expected '<p>​</p>' to be '' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a zero-width joiner': the draft and the result body are "", and the trailer is still read 1ms
+   → expected '<p>\u200d</p>' to be '' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a soft hyphen': the draft and the result body are "", and the trailer is still read 1ms
+   → expected '<p>\u00ad</p>' to be '' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a word joiner and a byte-order mark': the draft and the result body are "", and the trailer is still read 1ms
+   → expected '<p>\u2060</p>' to be '' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 19 passed (23)

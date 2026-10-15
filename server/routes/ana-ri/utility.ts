@@ -9,6 +9,7 @@
  */
 
 import type { Request, Response, Router } from 'express';
+import { confirmedToolContext } from '../../services/ana/turn-tool-context.js';
 
 import { evaluateResponse } from '../../services/ana-ri/evaluation.js';
 import {
@@ -22,17 +23,21 @@ import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
   governedTierOf,
+  requiredSignatureMeaning,
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
 import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
 import { TOOL_REGISTER, toolAuthorizationOf } from '../../services/ana/tool-authorization.js';
+import { registeredToolTier } from '../../services/ana/governed-tool-gate.js';
+import { personsReasonFor } from './persons-reason.js';
 import { verifyGovernedESignature } from './governed-esignature.js';
 import {
   readPendingApproval,
+  isRunAwaitingApproval,
   recordApprovalDecision,
 } from '../../services/ana/run-control.js';
 import { resolveOrgId } from '../../types/auth-request.js';
-import { requestPgClient } from '../../db/requestDb';
+import { requestPgClient, type RequestSqlClient } from '../../db/requestDb';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
 import { governedActionTrace, recordGovernedExecution, withAuditTrail } from './governed-execution-audit.js';
@@ -45,6 +50,7 @@ import {
   extractRequestContext,
 } from './shared.js';
 import { clientIpOf } from '../../utils/client-ip';
+import { proposalAsConfirmed } from './proposal-as-confirmed.js';
 
 const log = createScopedLogger('ana-ri/utility');
 
@@ -63,12 +69,18 @@ const log = createScopedLogger('ana-ri/utility');
  * is precisely what breaks run ownership, so if they differ here the lookup
  * finds nothing and the request fails closed rather than guessing.
  *
+ * Only the person who asked (ana_runs.user_id) may approve or decline: any org
+ * member who knew a toolUseId could once decide a colleague's held step. A
+ * colleague gets 403 NOT_RUN_OWNER before anything is audited, written or run —
+ * decline included — and no admin override (see readPendingApproval).
+ *
  * Without a runId this is the original behaviour: the body is the request, as
  * it has always been for a client re-submitting a blocked chat command.
  */
 async function resolveAuthorisedAction(
   req: Request,
   body: Record<string, any>,
+  userId: number,
 ): Promise<
   | { error: string; status: number; code: string }
   | {
@@ -93,8 +105,12 @@ async function resolveAuthorisedAction(
   }
 
   const runOrgId = resolveOrgId(req);
-  const pendingForRun = runOrgId === null ? null : await readPendingApproval(requestPgClient(req), runId, runOrgId);
+  // Owner-scoped in the SQL. Another org still gets the 404: the 403 check is org-scoped too.
+  const pendingForRun = runOrgId === null ? null : await readPendingApproval(requestPgClient(req), runId, runOrgId, userId);
   if (!pendingForRun) {
+    if (runOrgId !== null && (await isRunAwaitingApproval(requestPgClient(req), runId, runOrgId))) {
+      return { error: 'Only the person who asked AnA for this step can approve or decline it', status: 403, code: 'NOT_RUN_OWNER' };
+    }
     return {
       error: 'That run is not waiting on an approval',
       status: 404,
@@ -223,19 +239,17 @@ async function runConfirmedTool(
   name: string,
   params: Record<string, unknown>,
   held: NonNullable<Awaited<ReturnType<typeof readPendingApproval>>>,
-  organizationId: number,
-  userId: number,
+  principal: { organizationId: number; userId: number; sqlClient: RequestSqlClient },
 ): Promise<unknown> {
+  const { organizationId, userId, sqlClient } = principal;
   const { getToolHandler } = await import('../../services/ana/AnaToolExecutor.js');
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`${name} is not an available tool`);
-  const recorded = held.toolContext;
+  // The context the turn held it with, and the person's yes: the same
+  // conversation, turn and model the dispatch would have named (PF-10 S5).
   const out = await handler(params, {
-    organizationId,
-    userId,
-    projectId: recorded?.projectId ?? null,
-    projectRef: recorded?.projectRef ?? null,
-    servingModel: recorded?.servingModel ?? null,
+    ...confirmedToolContext(held.toolContext, organizationId, userId),
+    sqlClient,
     humanConfirmed: true,
   });
   try {
@@ -304,6 +318,20 @@ async function declineHeldAction(
 }
 
 /** Register utility endpoints on the given router. */
+/**
+ * resolveAuthorisedAction, with the params opened and the proposing model
+ * named (proposal-as-confirmed.ts, D5 MC-RL-4): model-authored text from a
+ * model not qualified for high-risk drafting is refused here, before the route
+ * reads anything.
+ */
+async function resolveConfirmedAction(req: Request, body: Record<string, any>, organizationId: number, userId: number) {
+  const authorised = await resolveAuthorisedAction(req, body, userId);
+  if ('error' in authorised) return authorised;
+  const { params, proposer, refused } = proposalAsConfirmed(authorised, organizationId, userId);
+  if (refused) return { error: refused, status: 403, code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE' };
+  return { ...authorised, params, proposer };
+}
+
 export function mountUtilityRoutes(router: Router): void {
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/health — AnA runtime readiness snapshot
@@ -565,12 +593,11 @@ export function mountUtilityRoutes(router: Router): void {
 
     // What is being authorised. When the client names a run, this is read from
     // the ROW rather than the body — see resolveAuthorisedAction.
-    const authorised = await resolveAuthorisedAction(req, body);
+    const authorised = await resolveConfirmedAction(req, body, numericOrgId, userId);
     if ('error' in authorised) {
       return sendError(res, authorised.status, authorised.error, null, authorised.code);
     }
-    const { pendingForRun, runId, toolUseId, command, params } = authorised;
-
+    const { pendingForRun, runId, toolUseId, command, params, proposer } = authorised;
     // A person's no to an action AnA is holding a turn on. Checked before any
     // tier rule: declining asks for nothing, whatever the tier.
     if (body.decision === 'decline') {
@@ -588,7 +615,7 @@ export function mountUtilityRoutes(router: Router): void {
     if (!command || !(isProposeOnlyCommand(command) || isTool)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
     }
-    const tier = governedTierOf(command);
+    const tier = isTool ? registeredToolTier(command) : governedTierOf(command, params);
     if (tier === 'confirm') {
       if (body.confirm !== true) {
         return sendError(res, 400, 'Confirm the proposed action to run it', null, 'CONFIRMATION_REQUIRED');
@@ -608,9 +635,12 @@ export function mountUtilityRoutes(router: Router): void {
     // re-verify the signer server-side for the e-sign tier (never a client flag).
     const eSignRequired = tier === 'esignature';
 
-    // The signer's declared §11.50 meaning, then re-verification (§11.200), in
-    // that order and before the audit row — see governed-esignature.ts.
-    const esign = eSignRequired ? await verifyGovernedESignature(userId, body) : undefined;
+    // The signer's declared §11.50 meaning, then signing authority (§11.10(g)),
+    // then re-verification (§11.200), in that order and before the audit row —
+    // see governed-esignature.ts. An act
+    // that fixes its meaning (approving or locking an artifact) refuses any
+    // other before the password is checked.
+    const esign = eSignRequired ? await verifyGovernedESignature(userId, numericOrgId, body, isTool ? null : requiredSignatureMeaning(command, params)) : undefined;
     if (esign && !esign.ok) return sendError(res, esign.status, esign.error, esign.details, esign.code);
     const signatureMeaning = esign?.meaning;
     const secondFactorVerified = esign?.secondFactorVerified ?? false;
@@ -629,6 +659,7 @@ export function mountUtilityRoutes(router: Router): void {
     // logAction returns AuditWriteResult, so the refusal can be real: read
     // `persisted` and abort on it.
     const trace = governedActionTrace(runId, toolUseId, pendingForRun, params);
+    const personsReason = isTool && tier === 'reason' ? personsReasonFor(command, params, reasonForChange) : null;
     const signoffAudit = await auditService.logAction({
       tenantId: numericOrgId,
       userId,
@@ -639,7 +670,7 @@ export function mountUtilityRoutes(router: Router): void {
       userAgent: req.headers['user-agent'] as string | undefined,
       // With the declared §11.50 meaning on the e-signature tier; absent otherwise,
       // and the trace of what was authorised (governedActionTrace).
-      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }), ...trace },
+      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }), ...personsReason?.audit, ...trace },
     });
     if (!signoffAudit.persisted) {
       log.error('Governed action aborted: sign-off audit row was not persisted', {
@@ -656,11 +687,9 @@ export function mountUtilityRoutes(router: Router): void {
       userId,
       organizationId: numericOrgId,
       part11Enforce: true,
-      // The model call that proposed the action, from the held ROW, never the
-      // body: agentAuditDetails writes its gateway request id and model into the
-      // Part 11 row (D6). A command posted without its run has no recorded
-      // proposer, and records null rather than a claim.
-      servingModel: pendingForRun?.proposedBy ?? null,
+      // The proposing model call, into the Part 11 row (D6): the held row's or the
+      // server's seal's (proposal-as-confirmed.ts), never the body's; else null.
+      servingModel: proposer,
       // ONE OF THE TWO ASSIGNMENTS OF THIS FIELD, BOTH IN THIS ROUTE (the other
       // is runConfirmedTool's, for the tools that write on their own handlers).
       //
@@ -701,7 +730,7 @@ export function mountUtilityRoutes(router: Router): void {
     };
     const executedRow = { organizationId: numericOrgId, userId, command, trace, startedAt: Date.now() };
     try {
-      const [ran] = isTool ? [await runConfirmedTool(command, params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
+      const [ran] = isTool ? [await runConfirmedTool(command, personsReason?.params ?? params, pendingForRun!, { organizationId: numericOrgId, userId, sqlClient: requestPgClient(req) })] : await executeCommands([{ command, params } as any], ctx);
       const result = withAuditTrail(ran, await recordGovernedExecution(executedRow, { result: ran }));
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command

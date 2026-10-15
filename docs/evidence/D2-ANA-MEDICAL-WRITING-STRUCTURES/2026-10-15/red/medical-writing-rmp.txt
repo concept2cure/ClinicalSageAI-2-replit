@@ -1,0 +1,45 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/medical-writing-rmp.test.ts > the medical-writing RMP structure > is the GVP Module V parts from the library, in order 10ms
+   → expected [ 'Product overview', …(4) ] to deeply equal [ 'Part I Product Overview', …(6) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/medical-writing-rmp.test.ts > the medical-writing RMP structure > is the GVP Module V parts from the library, in order
+AssertionError: expected [ 'Product overview', …(4) ] to deeply equal [ 'Part I Product Overview', …(6) ]
+
+- Expected
++ Received
+
+  [
+-   "Part I Product Overview",
+-   "Part II Safety Specification",
+-   "Part III Pharmacovigilance Plan",
+-   "Part IV Plans for Post-Authorisation Efficacy Studies",
+-   "Part V Risk Minimisation Measures",
+-   "Part VI Summary of the Risk Management Plan",
+-   "Part VII Annexes",
++   "Product overview",
++   "Safety specification (important identified/potential risks, missing information)",
++   "Pharmacovigilance plan",
++   "Risk-minimization measures",
++   "Summary of activities",
+  ]
+
+ ❯ tests/regulatory/medical-writing-rmp.test.ts:14:55
+     12|   it('is the GVP Module V parts from the library, in order', () => {
+     13|     const lib = getDocumentTemplate('risk_management_plan')!;
+     14|     expect(getDocumentTypeStandard('rmp')!.structure).toEqual(lib.sect…
+       |                                                       ^
+     15|   });
+     16| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:40:39
+   Duration  1.54s (transform 993ms, setup 106ms, import 1.08s, tests 14ms, environment 0ms)
+

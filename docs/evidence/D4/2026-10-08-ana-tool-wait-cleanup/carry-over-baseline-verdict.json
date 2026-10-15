@@ -1,0 +1,25 @@
+{
+  "baseline": "b0b1694aa00ee991b6792edab530f9fa59f1df93",
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-tool-wait-cleanup/carry-over-baseline.json"
+  ],
+  "exit_code": 1,
+  "elapsed_seconds": 7.29,
+  "passed_tests": 11,
+  "failed_tests": 1,
+  "total_tests": 12,
+  "temporarily_restored_production_paths": [
+    "server/services/ana/agentic-loop.ts",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/routes/ana-ri/stream.ts"
+  ],
+  "existing_test_unchanged": true
+}

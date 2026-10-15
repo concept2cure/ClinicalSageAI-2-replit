@@ -1,0 +1,12 @@
+Mutant R06-unverified-dropped: a bulk decision silently drops the changes whose turn does not verify
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- const unverified = sources.filter((src) => src.verified === false && typeof src.claimed === 'string');
++ const unverified: Record<string, unknown>[] = [];
+
+Tests run: client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a bulk decision counts the changes, the ones a model may not write, and the ones that do not verify 9ms
+      Tests  1 failed | 34 passed (35)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

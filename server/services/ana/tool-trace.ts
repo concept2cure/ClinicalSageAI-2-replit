@@ -16,17 +16,36 @@
  */
 
 import { isTruncated } from '../ai-gateway/finish-reason.js';
-import type { HumanControlEvent, TurnStoppedReason } from './run-status.js';
+import { parseRunPolicy, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from './run-status.js';
+import { AUTO_TIME_WORDS, PAUSE_WORDS, isPolicyHoldOutcome, stepLabels } from '@shared/ana/run-policy';
 import type { TurnPlanStep } from './turn-plan.js';
+import { agentResultSummary, agentTraceStatus } from './sub-agent-result.js';
+import { RUN_AGENT_TOOL } from '@shared/ana/run-control-limits';
+import type { StepFact, StepSource } from '@shared/ana/step-verbs';
 
 export interface ToolTraceEntry {
   tool: string;
   /** Human-readable step label (from describeToolPlan). */
   label: string;
-  /** 'cancelled' — the person stopped the run before this step finished. */
-  status: 'success' | 'error' | 'not_found' | 'cancelled';
+  /**
+   * 'cancelled' — the person stopped the run before this step finished.
+   * 'incomplete' — a sub-agent (run_agent only) stopped at its budget: what it
+   * found is usable, and it is not a failure to retry (row 74, S5).
+   */
+  status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete';
   /** One-line summary of the tool's result. */
   resultSummary: string;
+  /*
+   * How the step read when it finished (ANA-SUMMARY S3, step-presentation.ts),
+   * kept so a reopened turn reads the same as the live one. Absent from traces
+   * written before S3. Never rendered from resultSummary.
+   */
+  source?: StepSource;
+  preview?: string | null;
+  facts?: StepFact[];
+  usedModel?: boolean | null;
+  /** The server's status sentence for a step that did not succeed (stepMessage). */
+  message?: string;
 }
 
 function truncate(s: string, max: number): string {
@@ -34,12 +53,36 @@ function truncate(s: string, max: number): string {
   return t.length > max ? t.slice(0, max - 1) + '…' : t;
 }
 
+/** The refusal's sentence when the tool gave none of its own. */
+export const NO_REFUSAL_SENTENCE = 'The step answered that it did not do what was asked, and gave no reason.';
+
 /**
- * The refusal a handler returned instead of throwing: a JSON object whose own
- * top-level `error` is a non-empty string. Handlers across the tool set say "I
- * could not do this" that way (`{ error: 'needs an open project …' }`), and a
- * step that did not happen must not be reported — or drawn with a check mark —
- * as one that did. Anything else, including a non-JSON result, is null.
+ * Fields with which a result carries the work its `ok` is a verdict on: a
+ * check's findings (check_grounding's `ungroundedClaims`, validate_docx's
+ * `validation`, verify_docx_against_source's `missingRequiredStrings`), an
+ * insertion's `applied` list, a script's `stdout`. Such a result did what it
+ * was asked; `ok: false` there says what it found, not that it refused.
+ */
+const VERDICT_FIELDS = ['ungroundedClaims', 'validation', 'missingRequiredStrings', 'applied', 'stdout'] as const;
+
+const sentence = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+/**
+ * The refusal a handler returned instead of throwing, in its own words, or
+ * null. A step that did not happen must not be reported — or drawn with a
+ * check mark — as one that did. Handlers say "I could not do this" three ways:
+ *
+ *   `{ error: '…' }`                    the sentence is `error`
+ *   `{ refused: true | '<code>', … }`   the sentence is `reason`, then `message`
+ *   `{ ok: false, … }`                  likewise, unless the result carries the
+ *                                       work its `ok` judges (VERDICT_FIELDS)
+ *
+ * The second and third were read as successes until ANA-SUMMARY S4: 36
+ * refusals under server/services/ana answer `{ ok: false, reason | message }`
+ * with no `error` (a filing only a person confirms, a signature AnA cannot
+ * give, a document with no extracted text), and each was recorded, noted to
+ * the model and counted as a step that worked. One that gives no sentence
+ * reads NO_REFUSAL_SENTENCE. Anything else, including a non-JSON result, is null.
  */
 export function refusalOf(resultContent: string): string | null {
   let parsed: unknown;
@@ -49,8 +92,13 @@ export function refusalOf(resultContent: string): string | null {
     return null;
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-  const error = (parsed as { error?: unknown }).error;
-  return typeof error === 'string' && error.trim() ? error.trim() : null;
+  const r = parsed as Record<string, unknown>;
+  const error = sentence(r.error);
+  if (error) return error;
+  const refused = r.refused === true || Boolean(sentence(r.refused));
+  const notOk = r.ok === false && !VERDICT_FIELDS.some(f => f in r);
+  if (!refused && !notOk) return null;
+  return sentence(r.reason) ?? sentence(r.message) ?? NO_REFUSAL_SENTENCE;
 }
 
 /**
@@ -69,6 +117,21 @@ export function summarizeToolResult(content: string, max = 180): string {
 
   if (parsed.error) return truncate(`error: ${parsed.error}`, max);
   if (parsed.note && Object.keys(parsed).length <= 2) return truncate(String(parsed.note), max);
+
+  /* A result that names the authoring document a step built keeps the ids
+     whole, first, whatever else the result held. A reopened conversation finds
+     its documents in this summary (ConversationThread authoringDocFromToolResult);
+     the 180-character cut of the raw JSON dropped the id whenever the tool put
+     other fields (its source references) ahead of it, and the reopened
+     conversation then showed no document at all (real-browser capture,
+     docs/evidence/D2-ONE-ANA/2026-10-08/ana-1-canvas-opens/screens/). */
+  if (typeof parsed.authoringDocId === 'string' && parsed.authoringDocId) {
+    const kept: Record<string, string> = { authoringDocId: parsed.authoringDocId };
+    if (typeof parsed.programId === 'string' && parsed.programId) kept.programId = parsed.programId;
+    if (typeof parsed.status === 'string' && parsed.status) kept.status = parsed.status;
+    if (typeof parsed.title === 'string' && parsed.title) kept.title = truncate(parsed.title, 80);
+    return JSON.stringify(kept);
+  }
 
   const bits: string[] = [];
   if (typeof parsed.totalMatches === 'number') {
@@ -100,6 +163,12 @@ export function buildTraceEntry(
   status: ToolTraceEntry['status'],
   resultContent: string,
 ): ToolTraceEntry {
+  if (tool === RUN_AGENT_TOOL) {
+    // The agent's own outcome refines a mechanical success (agentTraceStatus);
+    // a status already refined is kept.
+    const refined = status === 'incomplete' ? status : agentTraceStatus(status, resultContent);
+    return { tool, label, status: refined, resultSummary: agentResultSummary(resultContent) };
+  }
   return { tool, label, status, resultSummary: summarizeToolResult(resultContent) };
 }
 
@@ -134,6 +203,20 @@ export function collectTracesFromHistory(history: HistoryMessage[], maxEntries =
 }
 
 /**
+ * The tools earlier turns ran successfully, most recent first, each once: what
+ * a follow-up's tool selection carries (TP-RL-3, tool-selection.ts). A step a
+ * person declined is recorded as an error, so it is never carried; neither is
+ * one that failed or was stopped.
+ */
+export function carriedToolsFrom(entries: ToolTraceEntry[]): string[] {
+  const names: string[] = [];
+  for (const e of [...entries].reverse()) {
+    if (e.status === 'success' && e.tool && !names.includes(e.tool)) names.push(e.tool);
+  }
+  return names;
+}
+
+/**
  * Format collected traces into a compact continuity note injected into AnA's
  * context next turn. Returns '' when there is nothing to carry forward.
  *
@@ -147,7 +230,8 @@ export function collectTracesFromHistory(history: HistoryMessage[], maxEntries =
 export function formatTraceForContext(entries: ToolTraceEntry[]): string {
   if (entries.length === 0) return '';
   const succeeded = entries.filter(e => e.status === 'success');
-  const failed = entries.filter(e => e.status !== 'success');
+  const stopped = entries.filter(e => e.status === 'incomplete');
+  const failed = entries.filter(e => e.status !== 'success' && e.status !== 'incomplete');
   const sections: string[] = [];
 
   if (succeeded.length > 0) {
@@ -155,6 +239,16 @@ export function formatTraceForContext(entries: ToolTraceEntry[]): string {
       'Tools you have already run earlier in this conversation (reuse these ' +
         'findings; do not repeat them needlessly):\n' +
         succeeded.map(e => `- ${e.label}: ${e.resultSummary}`).join('\n')
+    );
+  }
+
+  if (stopped.length > 0) {
+    // Not with the failures: "retry with a changed approach" would invite a
+    // second agent on the same brief (row 74, S5).
+    sections.push(
+      'Agents that stopped at a budget (partial results: use what they found, ' +
+        'do not re-run the same brief):\n' +
+        stopped.map(e => `- ${e.label}: ${e.resultSummary}`).join('\n')
     );
   }
 
@@ -211,12 +305,42 @@ export interface AssistantMessageMetadata {
   stoppedReason?: TurnStoppedReason;
   /** Tool rounds the turn ran. Kept only when there was at least one. */
   rounds?: number;
+  /** The run policy the turn ran under (row 74). Absent for a turn that sent none. */
+  runPolicy?: AnaRunPolicy;
+  /**
+   * The steps she had chosen that did not run because the turn stopped first
+   * (a Manual hold nobody answered, or Manual that could not hold), by label.
+   */
+  pendingSteps?: string[];
+  /**
+   * AnA's own holds under Manual, kept apart from `humanControls`: the pause
+   * was the policy's, the resume after it the person's. The lineage dossier
+   * reads both.
+   */
+  policyHolds?: PolicyHold[];
 }
 
 /** How the turn's agentic loop ended, as the stream observed it. */
 export interface TurnEnding {
   stoppedReason?: TurnStoppedReason | null;
   rounds?: number | null;
+  runPolicy?: AnaRunPolicy | null;
+  pendingSteps?: readonly string[] | null;
+  policyHolds?: readonly PolicyHold[] | null;
+}
+
+/** A policy hold as the stream wrote it; anything malformed is dropped rather than stored. */
+function isPolicyHold(raw: unknown): raw is PolicyHold {
+  const h = raw as Partial<PolicyHold> | null;
+  return (
+    !!h &&
+    typeof h === 'object' &&
+    Number.isInteger(h.round) &&
+    h.reason === 'manual' &&
+    Array.isArray(h.next) &&
+    isPolicyHoldOutcome(h.outcome) &&
+    typeof h.at === 'string'
+  );
 }
 
 /** Cap on persisted reasoning so a pathological turn can't bloat a message row. */
@@ -278,7 +402,27 @@ export function withTurnEnding(
   if (reason && reason !== 'no_more_tools') out.stoppedReason = reason;
   const rounds = ending?.rounds;
   if (typeof rounds === 'number' && Number.isInteger(rounds) && rounds > 0) out.rounds = rounds;
+  withPolicyEnding(out, ending);
   return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** The run policy's part of the ending (row 74): the policy, the steps not run, her own holds. Only well-formed values. */
+function withPolicyEnding(out: AssistantMessageMetadata, ending: TurnEnding | null | undefined): void {
+  const runPolicy = parseRunPolicy(ending?.runPolicy);
+  if (runPolicy) out.runPolicy = runPolicy;
+  const pending = stepLabels(ending?.pendingSteps);
+  if (pending.length > 0) out.pendingSteps = pending;
+  const holds = (ending?.policyHolds ?? []).filter(isPolicyHold);
+  if (holds.length > 0) out.policyHolds = holds.map(h => ({ ...h, next: stepLabels(h.next) }));
+}
+
+/** How the turn record names a policy. */
+const POLICY_NAME: Record<AnaRunPolicy, string> = { manual: 'Manual', auto: 'Auto' };
+
+/** The steps a stop left unrun, as the record says them. */
+function notRunSentence(pendingSteps: readonly string[] | null | undefined): string {
+  const steps = stepLabels(pendingSteps);
+  return steps.length > 0 ? ` Steps not run: ${steps.join('; ')}.` : '';
 }
 
 /**
@@ -288,7 +432,36 @@ export function withTurnEnding(
  * does not read it as a concluded analysis. '' for `no_more_tools`, which is
  * not a stop anyone needs warning of.
  */
-export function turnStopWarning(reason: TurnStoppedReason, rounds: number): string {
+export function turnStopWarning(
+  reason: TurnStoppedReason,
+  rounds: number,
+  context?: {
+    runPolicy?: AnaRunPolicy | null;
+    pendingSteps?: readonly string[] | null;
+    /** Her own holds this turn: an expired one means SHE was waiting, not a person's pause. */
+    policyHolds?: readonly PolicyHold[] | null;
+  },
+): string {
+  const heldByHer = (context?.policyHolds ?? []).some(h => h.outcome === 'expired');
+  const words = stopWords(reason, rounds, context?.pendingSteps, heldByHer);
+  const policy = parseRunPolicy(context?.runPolicy);
+  return words && policy ? `${words} Run policy: ${POLICY_NAME[policy]}.` : words;
+}
+
+/** The record's words for a hold that expired: hers under Manual, or a person's own pause. */
+function expiredWords(ran: string, heldByHer: boolean): string {
+  return heldByHer
+    ? `Manual: AnA waited ${PAUSE_WORDS} for the person before her next step and nobody answered, so the turn ended${ran}`
+    : `Manual: the run was paused and nobody resumed it within ${PAUSE_WORDS}, so the turn ended${ran}`;
+}
+
+/** The record's words for a stop, before the policy is named. */
+function stopWords(
+  reason: TurnStoppedReason,
+  rounds: number,
+  pendingSteps?: readonly string[] | null,
+  heldByHer = false,
+): string {
   // The round limit and the repeat guard fire only after a round has run
   // (agentic-loop: round++ precedes both). A cancel can land at the first
   // checkpoint, before any round — so "after N rounds" is said only when
@@ -302,24 +475,75 @@ export function turnStopWarning(reason: TurnStoppedReason, rounds: number): stri
     case 'duplicate_thrash':
       return `The turn stopped${ran} because AnA was repeating the same step. The answer was written from the work done up to that point.`;
     case 'cancelled':
-      return rounds > 0
-        ? `The run was stopped between rounds${ran}, before AnA said she was done.`
-        : 'The run was stopped before its first tool round.';
+      return (
+        (rounds > 0
+          ? `The run was stopped between rounds${ran}, before AnA said she was done.`
+          : 'The run was stopped before its first tool round.') + notRunSentence(pendingSteps)
+      );
+    case 'budget_exhausted':
+      return (
+        `The turn stopped at its time limit${ran} (${AUTO_TIME_WORDS}), before AnA ` +
+        'said she was done. The answer was written from the work done up to that point.'
+      );
+    case 'approval_timeout':
+      return (
+        `The turn stopped${ran} because an approval AnA asked for was not answered within ${PAUSE_WORDS}. ` +
+        'That action was not taken; the answer was written from the work done up to that point.'
+      );
+    case 'hold_expired':
+      return `${expiredWords(ran, heldByHer)}, before she said she was done.${notRunSentence(pendingSteps)}`;
+    case 'hold_unavailable':
+      return (
+        `Manual was asked for, but run control was not available for this turn, so AnA stopped${ran} ` +
+        `where she would have asked the person.${notRunSentence(pendingSteps)}`
+      );
     case 'answer_cut_off':
       return `The answer was cut off${ran}, before AnA finished writing it. What the person saw ends where it stopped.`;
+    case 'client_disconnected':
+      return (
+        `The page lost its connection${ran}, before AnA said she was done, so the run was stopped. ` +
+        `The answer is what she had written by then.${notRunSentence(pendingSteps)}`
+      );
     default:
-      // A reserved run-policy reason: nothing produces one yet. Said plainly
-      // rather than dropped, so a record can never be silent about a stop.
+      // A reason this module has no words for. Said plainly rather than
+      // dropped, so a record can never be silent about a stop.
       return `The turn stopped (${reason})${ran}, before AnA said she was done.`;
+  }
+}
+
+/**
+ * The turn record's line for one of AnA's own holds under Manual: what she
+ * held before, and what the person did. The pause is the policy's, so it is
+ * not in the record's controls; this is where it is written down.
+ */
+export function policyHoldWarning(hold: PolicyHold): string {
+  const next = stepLabels(hold.next);
+  const steps = next.length > 0 ? ` (${next.join('; ')})` : '';
+  const before = `Manual: AnA stopped before round ${hold.round}${steps}`;
+  switch (hold.outcome) {
+    case 'continued':
+      return `${before} and waited; the person said to run it.`;
+    case 'redirected':
+      return `${before}; the person replaced the step with an instruction, and it was not run.`;
+    case 'superseded':
+      // Not a hold: nothing paused and no Next was shown. Never "she stopped".
+      return (
+        `Manual: before round ${hold.round}, a steer the person sent while AnA was working replaced her next ` +
+        `step${steps} before it was shown; it was not run.`
+      );
+    case 'expired':
+      return `${before} and nobody answered within ${PAUSE_WORDS}, so the turn ended there.`;
+    case 'stopped':
+      return `${before}; the run was stopped while she waited, and the step was not run.`;
+    case 'disconnected':
+      return `${before}; the page was closed while she waited, and the step was not run.`;
   }
 }
 
 /**
  * The stops that leave a turn's work unfinished, in the words the next turn is
  * told. `no_more_tools` (she said she was done) and `cancelled` (the person
- * stopped it, and asks again if they want more) are not here. The reserved
- * run-policy reasons are not here either: nothing produces them yet, and each
- * gets its words with the change that does.
+ * stopped it, and asks again if they want more) are not here.
  *
  * A Map, not an object literal: the reason is read back from a stored row, and
  * a string naming an Object.prototype member (`constructor`, `toString`) would
@@ -331,7 +555,14 @@ const UNFINISHED_STOP: ReadonlyMap<string, (rounds: number | null) => string> = 
 >([
   ['max_rounds', (rounds) => `stopped at the round limit${rounds ? ` (${rounds} rounds)` : ''}`],
   ['duplicate_thrash', () => 'was stopped because it was repeating the same step,'],
+  // The run policy's stops (row 74, S4).
+  ['budget_exhausted', () => 'stopped at its time limit'],
+  ['approval_timeout', () => 'stopped when an approval you asked for went unanswered, so that action was not taken,'],
+  ['hold_expired', () => `stopped after waiting ${PAUSE_WORDS} for the person to say whether to go on,`],
+  ['hold_unavailable', () => 'stopped where it would have asked the person (Manual could not hold this turn)'],
   ['answer_cut_off', () => 'had its answer cut off'],
+  // The page lost its connection (a phone locked, a tab closed): Continue picks it up (S4).
+  ['client_disconnected', () => 'was stopped when the page lost its connection,'],
 ]);
 
 /**
@@ -379,13 +610,18 @@ export function formatStoppedTurnNote(history: HistoryMessage[]): string {
       break;
     }
   }
-  const meta = last?.metadata as { stoppedReason?: unknown; rounds?: unknown } | null | undefined;
+  const meta = last?.metadata as { stoppedReason?: unknown; rounds?: unknown; pendingSteps?: unknown } | null | undefined;
   const reason = typeof meta?.stoppedReason === 'string' ? meta.stoppedReason : null;
   const words = reason ? UNFINISHED_STOP.get(reason) : undefined;
   if (!words) return '';
   const rounds = typeof meta?.rounds === 'number' && Number.isInteger(meta.rounds) && meta.rounds > 0 ? meta.rounds : null;
+  const pending = stepLabels(meta?.pendingSteps);
+  const unrun =
+    pending.length > 0
+      ? ` Steps you had chosen that did not run: ${pending.join('; ')}. Nothing from them was used.`
+      : '';
   return (
-    `Your previous turn ${words(rounds)} before it was finished. Its answer was ` +
+    `Your previous turn ${words(rounds)} before it was finished.${unrun} Its answer was ` +
     'written from the work done up to that point. Do not reuse that turn\'s ' +
     'findings as complete or present its answer as a finished analysis: say ' +
     'what it did not cover, and if the person asks you to continue, pick up ' +

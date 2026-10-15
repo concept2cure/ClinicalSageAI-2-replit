@@ -156,8 +156,9 @@ describe('transparency labels', () => {
       { id: '1', name: 'start_deep_investigation', input: { question: 'predicate landscape for X' } },
       { id: '2', name: 'check_deep_investigation', input: {} },
     ]);
-    expect(start.label).toBe('Starting a background deep investigation — "predicate landscape for X"');
-    expect(check.label).toBe('Checking on the background investigation');
+    // From their register entries (ANA-SUMMARY S3); the question is not in the label.
+    expect(start.label).toBe('Starting a background investigation');
+    expect(check.label).toBe('Checking the background investigation');
   });
 });
 

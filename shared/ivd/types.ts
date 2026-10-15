@@ -7,6 +7,8 @@
  * '@shared/ivd/types' — so server and UI never drift.
  */
 
+import type { RegulatoryBasis, RegulatoryConfidence } from '../regulatory/regulatory-basis';
+
 export type KnowledgeDomain = 'regulatory' | 'scientific' | 'legal' | 'standard';
 
 export type Jurisdiction =
@@ -30,6 +32,15 @@ export interface Citation {
   source: string;
   /** Stable canonical URL when one is known. Optional by design. */
   url?: string;
+  /**
+   * Whether the pin-cite was checked against the regulator's own text
+   * (shared/regulatory/regulatory-basis.ts). Absent means not yet assessed,
+   * which a reader treats as recall. `regulator-text` requires `url` on a
+   * regulator host and `checked` (see `basisProblems`).
+   */
+  confidence?: RegulatoryConfidence;
+  /** ISO date (YYYY-MM-DD) the wording was checked against `url`. */
+  checked?: RegulatoryBasis['checked'];
 }
 
 /** A quantitative or design expectation (used mostly by scientific entries). */

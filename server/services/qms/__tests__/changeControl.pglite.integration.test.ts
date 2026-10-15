@@ -120,6 +120,44 @@ describe('GA demo seed → service reads (real Postgres)', () => {
     expect(s.open).toBe(5);                   // all but the closed one
   });
 
+  /* QA walk 2026-10-08 (J8): the "Overdue · Past target date" tile said 2
+     while five unclosed changes were past target, because it counted only
+     approved and in-implementation rows; and the row flags compared against a
+     hard-coded '2026-07-24' in the browser. Overdue now means: past its target
+     implementation date and implementation not finished (proposed, under
+     assessment, approved or in implementation), judged against the database's
+     CURRENT_DATE, one predicate for the tile and the rows. Every seeded target
+     is before 2026-10-02, so from that day on the answer is fixed: CC-2026-014
+     (under assessment), -012 (in implementation), -006 (approved) and -001
+     (proposed); not -009 (verification: implemented) nor -002 (closed). */
+  it('counts every change past its target whose implementation is unfinished, whatever its stage', async () => {
+    const s = await svc.changeControlSummary(ORG);
+    expect(s.overdueImplementation).toBe(4);
+  });
+
+  it('flags each such change on the register from the server’s date, with the same predicate', async () => {
+    const changes = await svc.listChanges(ORG);
+    const flagged = changes.filter((c) => c.implementation_overdue === true).map((c) => c.change_number).sort();
+    expect(flagged).toEqual(['CC-2026-001', 'CC-2026-006', 'CC-2026-012', 'CC-2026-014']);
+    expect(changes.find((c) => c.change_number === 'CC-2026-009')!.implementation_overdue).toBe(false);
+    expect(changes.find((c) => c.change_number === 'CC-2026-002')!.implementation_overdue).toBe(false);
+  });
+
+  /* QA walk 2026-10-08 (J8): every change showed 0 links and "No linked
+     records yet" while qms_change_links held 9 rows — the register read
+     returned no links. They are read for the whole register in one query. */
+  it('reads every change’s linked records for the register in one org-scoped query', async () => {
+    const changes = await svc.listChanges(ORG);
+    const byChange = await svc.listLinksForChanges(ORG, changes.map((c) => c.id));
+    const total = [...byChange.values()].reduce((n, l) => n + l.length, 0);
+    expect(total).toBe(9);
+    const cc014 = changes.find((c) => c.change_number === 'CC-2026-014')!;
+    expect(byChange.get(cc014.id)!.map((l) => l.linked_ref).sort()).toEqual(['DEV-2026-041', 'SUP-118', 'VP-7']);
+    // Another organisation's ids return nothing.
+    expect((await svc.listLinksForChanges(ORG + 1, changes.map((c) => c.id))).size).toBe(0);
+    expect((await svc.listLinksForChanges(ORG, [])).size).toBe(0);
+  });
+
   it('links a change to its deviation and validation records', async () => {
     const changes = await svc.listChanges(ORG, { status: 'under_assessment' });
     const cc014 = changes.find((c) => c.change_number === 'CC-2026-014')!;
@@ -130,14 +168,14 @@ describe('GA demo seed → service reads (real Postgres)', () => {
     expect(links.find((l) => l.linked_ref === 'DEV-2026-041')!.relationship).toBe('triggered_by');
   });
 
-  it('training compliance has a real (partial) roster number', async () => {
-    // One member is intentionally left short, so an effective trainable doc is < roster.
-    const r = await pglite.query(
-      `SELECT count(DISTINCT user_id)::int AS n FROM qms_training_records t
-         JOIN qms_documents d ON d.id = t.document_id
-        WHERE d.doc_number = 'SOP-820-100'`,
-    );
-    expect((r.rows[0] as { n: number }).n).toBe(2); // 3 in roster, 1 left short
+  it('seeds no effective document and no training against one: approval is a signature the seed cannot give', async () => {
+    // P0-18 (2026-10-01): a document becomes effective only with a signed
+    // approval in the same transaction. The seed has no signer, so every
+    // document is in review and nothing is acknowledged as read yet.
+    const effective = await pglite.query(`SELECT count(*)::int AS n FROM qms_documents WHERE status = 'effective'`);
+    expect((effective.rows[0] as { n: number }).n).toBe(0);
+    const trained = await pglite.query(`SELECT count(*)::int AS n FROM qms_training_records`);
+    expect((trained.rows[0] as { n: number }).n).toBe(0);
   });
 });
 

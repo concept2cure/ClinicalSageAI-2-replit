@@ -1,0 +1,36 @@
+(node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made
+{
+  "timestamp": "2026-10-08T14:37:09.885Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] internal stop failed for run_missing: unreachable",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > reaps under the system scope even when called from inside a tenant request 4ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > does not inherit the caller tenant — the bug this replaces 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > scopes the disconnect write to the run own organization 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made 2ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > request-time reads inherit the caller scope rather than widening it > reads a run under the request own tenant 0ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > overlapping estate-wide sweeps share pending work > bounds twenty overlapping calls to one query, shares its count, then sweeps afresh 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > overlapping estate-wide sweeps share pending work > shares across tenant callers while the actual query carries system scope 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > overlapping estate-wide sweeps share pending work > propagates a shared asynchronous rejection and admits a retry 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > overlapping estate-wide sweeps share pending work > shares a synchronous query throw and clears admission for retry 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > sweep admission preserves the existing query contract > keeps separate database pools independent 0ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > sweep admission preserves the existing query contract > keeps distinct effective stale thresholds independent 0ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > sweep admission preserves the existing query contract > shares thresholds that round to the same existing SQL parameter 0ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > sweep admission preserves the existing query contract > shares a null row count as zero without retaining a settled result 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > sweep admission preserves the existing query contract > registers admission before a query callback can reenter the sweep 0ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  22:37:09
+   Duration  457ms (transform 129ms, setup 76ms, import 87ms, tests 18ms, environment 0ms)

@@ -6,7 +6,7 @@
  * Tabs: Workspace · Audit trail · Correspondence · Approvals · Files.
  * The host surface passes its existing content as `workspace`; the other tabs
  * render live backend data through DataGate (honest loading / error / empty
- * states), with the kit fixtures reachable only in explicit sample mode. The
+ * states). The
  * drawer is a preview surface — "Open in editor" hands off to the existing
  * route.
  */
@@ -19,18 +19,19 @@ import {
   auditChipMeta,
   unclassifiedFilterCaveat,
 } from '../../data/pathwayTabs';
-import { useVaultUpload } from '../../../v2/useVaultUpload';
+import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../../../v2/useVaultUpload';
 import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { useSectionVersions } from '../../hooks/useSectionVersions';
 import { DossierStore, useSection } from '../../store/dossierStore';
 import { DataGate } from '../../components/DataGate';
 import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
-import { CORRESP_DETAIL } from '../../data/correspondenceDetail';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
 import { useSectionSave, type SaveState } from '../../hooks/useSectionSave';
 import { useElectronicSignature } from '../../hooks/useElectronicSignature';
+import { ESIGN_MEANINGS, isEsignMeaning } from '../../../_shared/esignMeanings';
+import type { EsigMeaning } from '../../../hooks/useEsignature';
 import type {
   Approval,
   AuditEvent,
@@ -146,9 +147,7 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
 
   const selected = events.find((e) => e.id === selectedId) || filtered[0];
 
-  /* Fixtures carry a synthesized chain and no `chain` field, so they count as
-     chained — they are only ever reachable through the explicit sample-mode
-     boundary, where the surface is already labelled as sample content. */
+  /* A row counts as unchained only when the feed marks it `chain: 'unchained'`. */
   const unchainedCount = events.filter((e) => e.chain === 'unchained').length;
 
   /* Rows whose recorded action this client has no category for. The kind
@@ -563,11 +562,13 @@ function ApprovalsPane({ approvals, onOpenSection, currentUser = 'You' }: { appr
   );
 }
 
-function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; onOpenSection: OpenSection }) {
+export function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; onOpenSection: OpenSection }) {
   const [signing, setSigning] = React.useState(false);
   const [pwd, setPwd] = React.useState('');
   const [mfa, setMfa] = React.useState('');
-  const [meaning, setMeaning] = React.useState(a.meaning || '');
+  /* The meaning is one of the closed vocabulary the server accepts
+     (§11.50(a)(3)); free text from the approval feed is not a meaning. */
+  const [meaning, setMeaning] = React.useState<EsigMeaning>(isEsignMeaning(a.meaning) ? a.meaning : 'approval');
   const esig = useElectronicSignature();
 
   const days = daysUntil(a.due);
@@ -584,7 +585,7 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
     await esig.sign({
       documentId: a.document_id as number,
       versionId: a.version_id as number,
-      signatureMeaning: meaning.trim(),
+      signatureMeaning: meaning,
       signaturePurpose: 'approval',
       action: 'approved',
       password: pwd,
@@ -610,7 +611,7 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
         </div>
         <div className="ap-card-target">{a.target}</div>
         <div className="ap-card-meta">
-          Acknowledged: &quot;{meaning}&quot; · signature{' '}
+          Acknowledged: &quot;{ESIGN_MEANINGS.find((m) => m.id === meaning)?.label ?? meaning}&quot; · signature{' '}
           <span className="mono">#{esig.receipt.signatureId}</span> ·{' '}
           <span className="mono" title={esig.receipt.signatureHash}>
             {esig.receipt.signatureHash.slice(0, 12)}…
@@ -674,8 +675,19 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
       {mine && signing && (
         <div className="ap-sign-form">
           <div className="ap-sign-attest">
-            <span className="ap-sign-attest-label">Meaning of signature</span>
-            <input className="ap-sign-input" value={meaning} onChange={(e) => setMeaning(e.target.value)} placeholder="e.g. Reviewed and approved" />
+            <label className="ap-sign-attest-label" htmlFor={`ap-meaning-${a.id}`}>Meaning of signature</label>
+            <select
+              id={`ap-meaning-${a.id}`}
+              className="ap-sign-input"
+              value={meaning}
+              onChange={(e) => {
+                if (isEsignMeaning(e.target.value)) setMeaning(e.target.value);
+              }}
+            >
+              {ESIGN_MEANINGS.map((m) => (
+                <option key={m.id} value={m.id}>{m.label} — {m.desc}</option>
+              ))}
+            </select>
           </div>
           <div className="ap-sign-creds">
             <input
@@ -700,7 +712,7 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
             <button
               className="ap-sign-confirm"
               disabled={
-                esig.submitting || pwd.length < 6 || meaning.trim().length === 0
+                esig.submitting || pwd.length < 6
               }
               onClick={applySignature}
             >
@@ -1039,6 +1051,7 @@ function DDAttachmentsTab({ attachments, onAttach }: { attachments: DossierAttac
         <input
           ref={inputRef}
           type="file"
+          accept={VAULT_UPLOAD_ACCEPT}
           multiple
           style={{ display: 'none' }}
           onChange={(e) => { if (e.target.files) onAttach(e.target.files); e.target.value = ''; }}
@@ -1140,17 +1153,9 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
   const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
-  // Live backend data (audit / correspondence / approvals); fixtures only in
-  // explicit sample mode, honest empty states otherwise.
+  // Live backend data (audit / correspondence / approvals), honest empty
+  // states otherwise.
   const data = usePathwayTabsData(pathway, programId);
-  /* Sample content handed to DataGate's `sample` prop — rendered solely when
-     the user has switched sample mode on, and always under the standing banner.
-     CORRESPONDENCE ONLY. The audit and approvals bundles were a synthesized
-     Part 11 hash-chain and a set of fabricated signed approvals; they are
-     deleted, and `PathwayTabsBundle` no longer declares the fields, so a
-     `sample={fixtures.audit}` here is now a compile error rather than a
-     judgement call. Those two panes render live rows or an honest empty. */
-  const fixtures = PATHWAY_TABS_DATA[pathway];
   // Async-seed the dossier store (Files tree + drawer) from the real backend.
   const dossier = useDossierHydration(pathway, programId);
 
@@ -1172,6 +1177,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
         pathway={pathway}
         onClose={() => setDrafterCorr(null)}
         onOpenSection={(t) => { setDrafterCorr(null); setDrawerTarget(t); }}
+        onAskAna={onAskAna}
       />
     );
   }
@@ -1197,17 +1203,15 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             state={data.states.correspondence}
             label="correspondence"
             onRetry={data.refresh.correspondence}
-            sample={fixtures.correspondence}
             emptyHint="Agency and notified-body letters appear here once received for this program."
           >
             {(items) => {
-              /* Only hand a letter to AnaDrafter when a structured decomposition
-                 of it actually exists. Passing this unconditionally shadowed
-                 CorrDetail's real-AnA fallback, so on live correspondence the
-                 primary action opened a workspace that could only say "No
-                 structured letter on file" — a dead button on the one screen
-                 where a response to an agency is written. Live letters now
-                 reach AnA. */
+              /* Every live letter opens the drafter now. It used to open only
+                 for the ids of four invented letters (CORRESP_DETAIL), which a
+                 live letter never matched — so live letters fell through to a
+                 bare AnA prompt, and the drafter only ever showed fiction. It
+                 reads the letter's own record and parsed issues, and hands
+                 drafting to AnA with that real content. */
               return (
               <CorrespondencePane
                 pathway={pathway}
@@ -1215,7 +1219,6 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                 onOpenSection={openSection}
                 onAskAna={onAskAna}
                 onDraftResponse={c => {
-                  if (!CORRESP_DETAIL[c.id]) return false;
                   setDrafterCorr(c);
                   return true;
                 }}
@@ -1254,7 +1257,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                 /* Kept verbatim: it is the honest half of the old copy, and on
                    a governed surface "we did not quietly show you something
                    else instead" is worth saying. */
-                message="Sample evidence has not been substituted."
+                message="Nothing else has been shown in its place."
                 retry={dossier.refresh}
                 testId="dossier-unavailable"
               />
@@ -1280,7 +1283,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                 testId="dossier-empty"
               />
             )}
-            {(dossier.status === 'live-data' || dossier.status === 'sample') && (
+            {dossier.status === 'live-data' && (
               <FilesTreePane
                 key={`ftp-${pathway}-${dossier.version}`}
                 pathway={pathway}

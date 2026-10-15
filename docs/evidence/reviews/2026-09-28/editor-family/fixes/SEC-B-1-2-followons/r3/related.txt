@@ -1,0 +1,9 @@
+ ✓ server/services/ectd/__tests__/regional-backbone-readiness.test.ts > evaluateRegionalBackboneGate > FAILS CLOSED: blocks a production transmit of a placeholder OR a flat backbone when enforcement is on 0ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > hmac posture: seal only, no envelope, and an absent envelope is "unsigned" 2ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: the envelope is written BESIDE the seal and both verify 29ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: a tampered envelope, or one from another org, fails closed 39ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a stored envelope with the posture downgraded to hmac is "failed", never accepted 65ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a malformed posture throws (the boot gate, seen from the seam) 1ms
+  "message": "[ectd-validator-hardening] SEQ_QUERY_FAILED — sequence history query rejected",
+ Test Files  115 passed (115)
+      Tests  1442 passed (1442)

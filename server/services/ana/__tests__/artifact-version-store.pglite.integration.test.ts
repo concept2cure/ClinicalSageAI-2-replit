@@ -14,7 +14,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
-import { upsertDocumentArtifactVersionTx } from '../artifactVersionStore.js';
+import { ArtifactProjectNotFoundError, upsertDocumentArtifactVersionTx } from '../artifactVersionStore.js';
 
 // Minimal DDL mirroring the columns the store writes/reads on the canonical
 // artifacts identity (full DDL lives in the core schema / migration 20260311).
@@ -90,6 +90,8 @@ beforeAll(async () => {
   // The lineage gate the artifact writer now enlists (ledger L160): a real
   // organizations row for the FK, the evidence spine and the span-lineage store.
   await pg.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
+  // The draft's project, a projects row of its organization (PF-03): the store checks it first.
+  await pg.exec(`CREATE TABLE IF NOT EXISTS regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL, deleted_at timestamp); CREATE TABLE IF NOT EXISTS projects (id integer PRIMARY KEY, organization_id integer NOT NULL); INSERT INTO projects (id, organization_id) VALUES (10, 1) ON CONFLICT DO NOTHING;`);
   await pg.exec(`INSERT INTO organizations (id, name) VALUES (1, 'org-1') ON CONFLICT DO NOTHING;`);
   for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql']) {
     await pg.exec(fs.readFileSync(path.resolve(__dirname, '../../../../', rel), 'utf8'));
@@ -156,5 +158,21 @@ describe('upsertDocumentArtifactVersionTx against real Postgres', () => {
     });
     expect(r.created).toBe(true);
     expect(r.version).toBe(4); // appended to the original lineage, not a new one
+  });
+
+  it("refuses a project of another organization, or none, before anything is written (PF-03)", async () => {
+    await pg.exec(`INSERT INTO projects (id, organization_id) VALUES (11, 2) ON CONFLICT DO NOTHING`);
+    const before = await pg.query<{ a: number; v: number }>(
+      `SELECT (SELECT count(*)::int FROM concept2cure_artifacts) AS a, (SELECT count(*)::int FROM concept2cure_artifact_versions) AS v`,
+    );
+    for (const projectId of [11, 999]) {
+      await expect(
+        upsertDocumentArtifactVersionTx(client as any, { ...base, projectId, anaThreadId: 'thread-foreign', content: 'x' }),
+      ).rejects.toBeInstanceOf(ArtifactProjectNotFoundError);
+    }
+    const after = await pg.query<{ a: number; v: number }>(
+      `SELECT (SELECT count(*)::int FROM concept2cure_artifacts) AS a, (SELECT count(*)::int FROM concept2cure_artifact_versions) AS v`,
+    );
+    expect(after.rows[0]).toEqual(before.rows[0]);
   });
 });

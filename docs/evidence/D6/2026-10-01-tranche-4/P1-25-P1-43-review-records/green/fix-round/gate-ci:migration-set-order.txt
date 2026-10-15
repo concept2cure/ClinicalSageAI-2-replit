@@ -1,0 +1,2 @@
+[ci:migration-set-order] OK — 349 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit 0

@@ -1,0 +1,4 @@
+[ci:upload-guards] server/routes/authoring.router.ts: no unguarded site remains (drop the entry)
+[ci:upload-guards] server/routes/chat.ts: no unguarded site remains (drop the entry)
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 19 file(s) build uploads.
+exit=0

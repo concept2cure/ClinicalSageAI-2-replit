@@ -1,0 +1,104 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+{
+  "timestamp": "2026-10-05T01:32:10.782Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T01:32:10.783Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+{
+  "timestamp": "2026-10-05T01:32:10.783Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is not sent back to the model as a failure to work around 45ms
+   → the model was told to try an alternative: expected true to be false // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is shown to the person as their decision, not as AnA failing 8ms
+   → expected 'AnA couldn\'t finish saving the docum…' not to match /couldn't finish/i
+ × server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > nobody answering in time is not a failure to work around either 6ms
+   → expected true to be false // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > control: an approved action that then fails is still a failure > stays in the adaptation note, so a real error is not hidden 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is not sent back to the model as a failure to work around
+AssertionError: the model was told to try an alternative: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts:87:78
+     85|     expect(h.state.handlerCalls.save_document_to_vault, 'the declined …
+     86|     expect(h.state.requests.length).toBeGreaterThan(1);
+     87|     expect(adaptationNoteSent(), 'the model was told to try an alterna…
+       |                                                                              ^
+     88|   });
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > is shown to the person as their decision, not as AnA failing
+AssertionError: expected 'AnA couldn\'t finish saving the docum…' not to match /couldn't finish/i
+
+- Expected:
+/couldn't finish/i
+
++ Received:
+"AnA couldn't finish saving the document to the vault. She'll continue with what she has."
+
+ ❯ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts:94:34
+     92|     const events = await turn();
+     93|     const r = resultFor(events, 'tu_s');
+     94|     expect(r?.message ?? '').not.toMatch(/couldn't finish/i);
+       |                                  ^
+     95|     expect(r?.message ?? '').toMatch(/declined/i);
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts > a person declining a governed action > nobody answering in time is not a failure to work around either
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/ana-ri/__tests__/stream-declined-not-a-failure.test.ts:102:34
+    100|     await turn();
+    101|     expect(h.state.handlerCalls.save_document_to_vault).toBeUndefined(…
+    102|     expect(adaptationNoteSent()).toBe(false);
+       |                                  ^
+    103|   });
+    104| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  01:32:08
+   Duration  6.82s (transform 3.95s, setup 77ms, import 6.43s, tests 68ms, environment 0ms)
+

@@ -315,9 +315,10 @@ describe('2 — "Accept all" records every change', () => {
       expect(r.changeType).toBe(changes[i].changeType);
       expect(r.text).toBe(changes[i].text);
       expect(r.textSha256).toBe(sha256(changes[i].text));
-      // The machine author's canonical name, not the one the client sent.
+      // The machine author's canonical name, not the one the client sent —
+      // but not verified: these changes name no turn record (DP-43).
       expect(r.proposedBy).toBe('AnA (AI draft)');
-      expect(r.proposedByVerified).toBe(true);
+      expect(r.proposedByVerified).toBe(false);
     });
 
     expect(chain).toHaveLength(1);
@@ -354,6 +355,7 @@ describe('3 — the AnA turn a suggestion came from is verified in the tenant', 
       turnRecordId: ownTurn.id,
       turnRecordSha256: ownTurn.sha256,
       outcome: 'answered',
+      servedBy: [{ provider: 'anthropic', model: 'model-x', qualified: false, approvedForHighRisk: null, pq: null }], // round 10
     });
   }, T);
 
@@ -394,7 +396,7 @@ describe('3 — the AnA turn a suggestion came from is verified in the tenant', 
   it('bulk: each change is resolved on its own — own, foreign, non-id and none', async () => {
     const { docId } = await seedDoc();
     const changes = [
-      { changeId: 'b-own', changeType: 'insertion', text: 'From our turn.', authorId: 'ana', sourceRecord: ownTurn.id },
+      { changeId: 'b-own', changeType: 'insertion', text: 'Draft paragraph for 2.5.4.', authorId: 'ana', sourceRecord: ownTurn.id },
       { changeId: 'b-foreign', changeType: 'insertion', text: 'From their turn.', authorId: 'ana', sourceRecord: foreignTurn.id },
       { changeId: 'b-bogus', changeType: 'insertion', text: 'From nowhere.', authorId: 'ana', sourceRecord: 'not-a-uuid' },
       { changeId: 'b-none', changeType: 'deletion', text: 'Typed by a person.', authorId: 'kim@sponsor.test', authorName: 'Kim' },
@@ -410,6 +412,7 @@ describe('3 — the AnA turn a suggestion came from is verified in the tenant', 
       turnRecordId: ownTurn.id,
       turnRecordSha256: ownTurn.sha256,
       outcome: 'answered',
+      servedBy: [{ provider: 'anthropic', model: 'model-x', qualified: false, approvedForHighRisk: null, pq: null }], // round 10
     });
     expect(byId['b-foreign'].source).toEqual({
       verified: false,

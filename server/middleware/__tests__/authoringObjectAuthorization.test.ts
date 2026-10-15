@@ -244,6 +244,32 @@ describe('mandatory authoring object authorization middleware', () => {
     expect(deniedRes.statusCode).toBe(403);
   });
 
+  /* QA 2026-10-08 (browser walk j4-authoring). Every /e-sign was classed as an
+     approval, so a reviewer holding the REVIEWER role on a document could not
+     apply the REVIEW signature the Vault carry-over requires ("a REVIEWER
+     signature … by a different person"). The review signature is a 'review'
+     act; an approval (and an authorship signature, and a freeze) stays 'approve'. */
+  it('lets a REVIEWER apply the review signature, and nothing more', async () => {
+    const reviewer = { ...author, id: 'reviewer-user', userId: 'reviewer-user', email: 'reviewer@example.com' };
+    const sign = async (roles: string[], body: Record<string, unknown>, route = 'e-sign') => {
+      installQueryBehavior({ status: 'draft', roles });
+      const res = response();
+      const next = vi.fn();
+      await authoringObjectAuthorization(
+        request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/${route}`, user: reviewer, body }),
+        res,
+        next,
+      );
+      return { allowed: next.mock.calls.length === 1, status: res.statusCode };
+    };
+    expect(await sign(['REVIEWER'], { meaning: 'REVIEWER' })).toEqual({ allowed: true, status: undefined });
+    expect(await sign(['REVIEWER'], { meaning: 'APPROVER' })).toEqual({ allowed: false, status: 403 });
+    expect(await sign(['REVIEWER'], { meaning: 'AUTHOR' })).toEqual({ allowed: false, status: 403 });
+    expect(await sign(['VIEWER'], { meaning: 'REVIEWER' })).toEqual({ allowed: false, status: 403 });
+    // A freeze seals the document whatever meaning it carries: still an approval act.
+    expect(await sign(['REVIEWER'], { meaning: 'REVIEWER' }, 'freeze')).toEqual({ allowed: false, status: 403 });
+  });
+
   /* 2026-09-28. Export, file-to-vault and send-to-packager read the document
      and produce the record elsewhere (the export ledger, the project vault, the
      eCTD packager); none writes the document. They fell through to `edit`, and
@@ -252,7 +278,7 @@ describe('mandatory authoring object authorization middleware', () => {
      filing artifact, filed to the vault as a sealed record, or sent to the
      packager. They are now the `export` action: any status, and a grant that
      produces the record (OWNER, AUTHOR, APPROVER). */
-  it.each(['export', 'file-to-vault', 'send-to-packager'])(
+  it.each(['export', 'file-to-vault', 'send-to-packager', 'working-copy'])(
     'lets the record be produced from a FROZEN document: POST /docs/:id/%s',
     async route => {
       for (const role of ['OWNER', 'AUTHOR', 'APPROVER']) {
@@ -269,7 +295,7 @@ describe('mandatory authoring object authorization middleware', () => {
     },
   );
 
-  it.each(['export', 'file-to-vault', 'send-to-packager'])(
+  it.each(['export', 'file-to-vault', 'send-to-packager', 'working-copy'])(
     'still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/%s',
     async route => {
       for (const role of ['REVIEWER', 'VIEWER']) {
@@ -441,15 +467,13 @@ describe('the tracked-change-decision routes — the regex miss that let them ru
     expect((res.body as any).error.code).toBe('AUTHORING_DOCUMENT_IMMUTABLE');
   });
 
-  it('does not match a document id that merely starts with "docs" or an unrelated /documents/ route', async () => {
-    // Sanity check on the regex's boundaries: it must not swallow neighbouring
-    // routes this fix deliberately leaves alone (see the production comment —
-    // /documents/:id/review and /request-review have different, incompatible
-    // role requirements and must keep going through their own route RBAC).
+  it('does not impose review policy on an unrelated /documents/ route', async () => {
+    // Review, requests and saved review reads now have explicit classifications.
+    // The narrow patterns still leave unrelated documents routes to their policy.
     installQueryBehavior({ roles: [] });
     const req = request({
       method: 'POST',
-      path: `/authoring/documents/${DOC_ID}/review`,
+      path: `/authoring/documents/${DOC_ID}/unrelated-operation`,
       user: { ...author, id: 'user-outsider', userId: 'user-outsider' },
     });
     const res = response();
@@ -461,4 +485,42 @@ describe('the tracked-change-decision routes — the regex miss that let them ru
     expect(next).toHaveBeenCalledOnce();
     expect(h.query).not.toHaveBeenCalled();
   });
+});
+
+describe('native bound human review object authorization', () => {
+  beforeEach(() => h.query.mockReset());
+  it.each(['/authoring/documents/', '/Authoring/Documents/'])(
+    'requires full-document view for native saved review reads (%s)', async prefix => {
+      const path = `${prefix}${DOC_ID}/Reviews/`;
+      const reviewer = { ...author, id: 'reviewer-user', userId: 'reviewer-user' };
+      installQueryBehavior({ roles: [] });
+      const denied = response();
+      const next = vi.fn();
+      await authoringObjectAuthorization(request({ method: 'GET', path, user: reviewer }), denied, next);
+      expect(denied.statusCode).toBe(403);
+      expect(next).not.toHaveBeenCalled();
+      installQueryBehavior({ roles: ['VIEWER'] });
+      const allowed = response();
+      await authoringObjectAuthorization(request({ method: 'GET', path, user: reviewer }), allowed, next);
+      expect(next).toHaveBeenCalledOnce();
+      expect(allowed.locals.authoringAuthorization.action).toBe('view');
+    },
+  );
+
+  it('classifies native verdicts as review and refuses a viewer', async () => {
+    const reviewer = { ...author, id: 'reviewer-user', userId: 'reviewer-user' };
+    const req = request({ method: 'POST', path: `/Authoring/Documents/${DOC_ID}/Review/`, user: reviewer });
+    installQueryBehavior({ roles: ['VIEWER'] });
+    const denied = response();
+    const next = vi.fn();
+    await authoringObjectAuthorization(req, denied, next);
+    expect(denied.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+    installQueryBehavior({ roles: ['REVIEWER'] });
+    const allowed = response();
+    await authoringObjectAuthorization(req, allowed, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(allowed.locals.authoringAuthorization.action).toBe('review');
+  });
+
 });

@@ -83,6 +83,45 @@ describe('strict access-token requirement: requireAccessTokenReason', () => {
   });
 });
 
+/*
+ * A token the connector's authorization server issued to a third-party client
+ * (server/mcp/auth/platform-token.ts, mintAccessToken) is `type: 'access'` so
+ * that the connector's verifier shares this rule, and it carries
+ * `token_use: 'mcp'`. Nothing read that claim, so every first-party
+ * authenticator took a token consented for `c2c:read` as a full session
+ * (security audit 2026-09-24, IAM-02, P0-2 part a; row D8,
+ * server/mcp/__tests__/mcp-account-standing.dbtest.ts).
+ */
+describe('delegated-token rule: a connector-issued token is not a first-party session', () => {
+  const connectorToken = { type: 'access', token_use: 'mcp' };
+
+  it('every first-party authenticator refuses it, on either entry point', () => {
+    expect(requireAccessTokenReason(connectorToken)).toBe('delegated_token');
+    expect(nonAccessTokenReason(connectorToken)).toBe('delegated_token');
+  });
+
+  it('refuses any delegated use, known or unknown, and whatever the type claim says', () => {
+    expect(requireAccessTokenReason({ type: 'access', token_use: 'something-else' })).toBe('delegated_token');
+    expect(nonAccessTokenReason({ token_use: 'mcp' })).toBe('delegated_token');
+  });
+
+  it('the connector, and only a caller naming that use, accepts its own tokens', () => {
+    expect(requireAccessTokenReason(connectorToken, { delegatedUse: 'mcp' })).toBeNull();
+    // Naming a use admits that use and no other.
+    expect(requireAccessTokenReason({ type: 'access', token_use: 'other' }, { delegatedUse: 'mcp' })).toBe('delegated_token');
+    // It admits nothing the rule otherwise refuses.
+    expect(requireAccessTokenReason({ type: 'refresh', token_use: 'mcp' }, { delegatedUse: 'mcp' })).toBe('refresh');
+    expect(requireAccessTokenReason({ token_use: 'mcp' }, { delegatedUse: 'mcp' })).toBe('missing_token_type');
+    // A first-party session still passes where the connector is the verifier.
+    expect(requireAccessTokenReason({ type: 'access' }, { delegatedUse: 'mcp' })).toBeNull();
+  });
+
+  it('an absent or null claim is not a delegated token', () => {
+    expect(requireAccessTokenReason({ type: 'access', token_use: undefined })).toBeNull();
+    expect(requireAccessTokenReason({ type: 'access', token_use: null })).toBeNull();
+  });
+});
+
 describe('SQLi guard: buildRegionArray', () => {
   it('accepts valid regions without throwing', () => {
     expect(() => buildRegionArray(['US_EAST', 'EU_WEST'])).not.toThrow();

@@ -1,0 +1,19 @@
+=== server/export/authoring-images.ts (working tree)
+./server/export/authoring-images.ts
+  75:1  warning  Function 'jpegSize' has a complexity of 16. Maximum allowed is 15  complexity
+✖ 1 problem (0 errors, 1 warning)
+=== server/export/authoring-images.ts (HEAD)
+./server/export/authoring-images.ts
+  64:1  warning  Function 'jpegSize' has a complexity of 16. Maximum allowed is 15  complexity
+✖ 1 problem (0 errors, 1 warning)
+=== server/services/authoring/authoring-documents.ts (working tree)
+=== server/services/authoring/authoring-documents.ts (HEAD)
+=== server/services/authoring/section-generation-service.ts (working tree)
+=== server/services/authoring/section-generation-service.ts (HEAD)
+=== server/services/authoring/authoring-html-sanitizer.ts (working tree)
+=== server/services/authoring/authoring-html-sanitizer.ts (HEAD)
+=== server/routes/__tests__/authoring-section-figure-refs.test.ts (working tree)
+=== server/routes/__tests__/authoring-section-figure-refs.test.ts (HEAD)
+=== server/export/__tests__/authoring-figure-placeholder.test.ts (new)
+=== server/export/__tests__/authoring-images-figure-rule.test.ts (new)
+=== server/services/authoring/__tests__/section-generation-figures.test.ts (new)

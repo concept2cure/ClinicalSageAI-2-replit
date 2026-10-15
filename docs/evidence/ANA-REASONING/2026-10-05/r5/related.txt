@@ -1,0 +1,22 @@
+Every suite of the modules rounds 1-5 touch, on the round-5 tree (merged with trunk b2e745744).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <round 4's related set, plus tests/services/tool-outcome.test.ts>
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 443 passed | 1 skipped (446)
+      Tests  16 failed | 6206 passed | 3 skipped (6225)
+
+Two failing files, neither this round's, the same two as round 4 (../r4/related.txt):
+
+1. server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts (15): needs a CONNECTOR_ENCRYPTION_KEY this container does not set:
+→ handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+
+2. server/services/ana/__tests__/governed-reason-not-invented.test.ts (1): 'registered tools the scan never read: draft_quality_overall_summary_m2_3', a tool trunk added in 881945fe5 (the CMC lane). Handed on: docs/work-orders/README.md, item 24.
+AssertionError: registered tools the scan never read: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "draft_quality_overall_summary_m2_3",
++ ]

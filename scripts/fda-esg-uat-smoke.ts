@@ -13,7 +13,8 @@
  *   2. Validates the cert-pair modulus match without shelling out to openssl.
  *
  *   3. Builds the AS2 envelope headers exactly the way buildAs2Headers does
- *      (fda-esg.ts:142–156) — same Message-ID shape, same AS2-To default,
+ *      (fda-esg.ts:142–156) — same Message-ID shape, same AS2-To (FDA's AS2
+ *      identifier for the environment, never defaulted),
  *      same Disposition-Notification-To — and pretty-prints them. NO network
  *      call. This is the closest thing to a "dry run" the gateway supports.
  *
@@ -170,7 +171,7 @@ interface EnvSet {
   prefix:           string;
   endpointUrl?:     string;
   as2From?:         string;
-  as2To:            string;      // defaults to FDA-CESUB per fda-esg.ts:77
+  as2To?:           string;      // FDA's AS2 identifier for this environment, as issued at ESG registration; never defaulted
   certPath?:        string;
   keyPath?:         string;
   fdaCertPath?:     string;
@@ -188,7 +189,7 @@ function readEnvSet(prod: boolean): EnvSet {
     prefix,
     endpointUrl:  e('URL'),
     as2From:      e('AS2_FROM'),
-    as2To:        e('AS2_TO') ?? 'FDA-CESUB',
+    as2To:        e('AS2_TO'),
     certPath:     e('CERT_PATH'),
     keyPath:      e('KEY_PATH'),
     fdaCertPath:  e('FDA_CERT_PATH'),
@@ -199,6 +200,7 @@ function readEnvSet(prod: boolean): EnvSet {
   };
   if (!set.endpointUrl) set.missing.push(prefix + 'URL');
   if (!set.as2From)     set.missing.push(prefix + 'AS2_FROM');
+  if (!set.as2To)       set.missing.push(prefix + 'AS2_TO');
   if (!set.certPath)    set.missing.push(prefix + 'CERT_PATH');
   if (!set.keyPath)     set.missing.push(prefix + 'KEY_PATH');
   if (!set.fdaCertPath) set.missing.push(prefix + 'FDA_CERT_PATH');
@@ -254,7 +256,7 @@ function buildAs2HeadersPreview(env: EnvSet): Record<string, string> {
   return {
     'Message-ID':                       messageId,
     'AS2-From':                         env.as2From ?? '<missing>',
-    'AS2-To':                           env.as2To,
+    'AS2-To':                           env.as2To ?? '<missing>',
     'AS2-Version':                      '1.2',
     'Disposition-Notification-To':      env.as2From ?? '<missing>',
     'Disposition-Notification-Options': 'signed-receipt-protocol=optional, pkcs7-signature; signed-receipt-micalg=optional, sha-256',
@@ -280,7 +282,7 @@ async function main(): Promise<void> {
   row('Variable prefix', envSet.prefix);
   row(envSet.prefix + 'URL',           envSet.endpointUrl   ?? '<unset>', envSet.endpointUrl   ? 'ok' : 'err');
   row(envSet.prefix + 'AS2_FROM',      envSet.as2From       ?? '<unset>', envSet.as2From       ? 'ok' : 'err');
-  row(envSet.prefix + 'AS2_TO',        envSet.as2To + (envSet.as2To === 'FDA-CESUB' && !process.env[envSet.prefix + 'AS2_TO'] ? dim('  (default)') : ''));
+  row(envSet.prefix + 'AS2_TO',        envSet.as2To         ?? '<unset>', envSet.as2To         ? 'ok' : 'err');
   row(envSet.prefix + 'CERT_PATH',     envSet.certPath      ?? '<unset>', envSet.certPath      ? 'ok' : 'err');
   row(envSet.prefix + 'KEY_PATH',      envSet.keyPath       ?? '<unset>', envSet.keyPath       ? 'ok' : 'err');
   row(envSet.prefix + 'FDA_CERT_PATH', envSet.fdaCertPath   ?? '<unset>', envSet.fdaCertPath   ? 'ok' : 'err');

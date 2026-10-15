@@ -75,6 +75,15 @@
  *   - Sections are ordered order_index, created_at, id — the editor's order —
  *     by the assembler (services/ana/authoring-canonical-bridge.ts) and by the
  *     router's seal queries alike.
+ *
+ * 2026-10-08 (QA walk 2, j4 blocker). "A second placement re-takes the SAME
+ * copy" rewrote a copy a submission leaf had already filed: an edited document
+ * placed again replaced leaf #81's text, its pin no longer matched, and the
+ * dialog said nothing was written. A copy that a live leaf points at is now the
+ * filed record — its text and title are never rewritten, and its status only
+ * moves forward with the text unchanged (services/coauthor/filing-copy-pins.ts);
+ * otherwise the re-take is refused 409 FILING_COPY_PINNED, naming the leaves,
+ * and nothing is written. Every outcome now says whether it wrote (`written`).
  */
 import { createHash } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
@@ -87,29 +96,30 @@ import {
   type AuthoringDocumentSnapshot,
   type AuthoringSectionRow,
 } from '../ana/authoring-canonical-bridge.js';
-import { recordCoauthorDocumentEvent, type CoauthorAuditActor } from './coauthor-audit.js';
+import {
+  recordCoauthorDocumentEvent,
+  versionReplacedCoauthorContent,
+  type CoauthorAuditActor,
+} from './coauthor-audit.js';
+import { filingCopyPins, pinnedCopyAccepts, pinnedCopyRefusal, retakeChanges } from './filing-copy-pins.js';
+import { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
+import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from '../authoring/workflow-import-governance';
+import { SavedDraftSourceError, verifySavedDraftSourceReferences } from '../authoring/draft-source-references';
 
 type CoauthorRow = typeof coauthorDocuments.$inferSelect;
 
-/**
- * The copy's status, from the source's governed state. Claims nothing the
- * source has not earned:
- *   APPROVED  -> 'approved'   an APPROVER e-signature was applied
- *   FROZEN    -> 'finalized'  content snapshotted, hash-sealed and locked
- *   anything else -> 'draft'  which correctly fails completeness
- */
-export function snapshotStatusFor(sourceStatus: string | null | undefined): 'approved' | 'finalized' | 'draft' {
-  const state = String(sourceStatus ?? '').toUpperCase();
-  return state === 'APPROVED' ? 'approved' : state === 'FROZEN' ? 'finalized' : 'draft';
-}
+/* The copy's status, from the source's governed state: one rule, shared with
+   the placement dialog that states it before placing (FILING_SPINE.md F17). */
+export { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
 
-type SnapshotRefusal = { ok: false; httpStatus: 404 | 409 | 422; body: Record<string, unknown> };
+type SnapshotRefusal = { ok: false; httpStatus: 400 | 403 | 404 | 409 | 422 | 503; body: Record<string, unknown> };
 
 export type SnapshotOutcome =
-  | { ok: true; created: boolean; document: CoauthorRow; aliasRecorded: boolean }
+  /** `written`: whether this placement wrote the copy (created, updated or re-created). */
+  | { ok: true; created: boolean; written: boolean; document: CoauthorRow; aliasRecorded: boolean }
   | SnapshotRefusal;
 
-const refuse = (httpStatus: 404 | 409 | 422, error: string, message: string): SnapshotRefusal => ({
+const refuse = (httpStatus: SnapshotRefusal['httpStatus'], error: string, message: string): SnapshotRefusal => ({
   ok: false,
   httpStatus,
   body: { error, message },
@@ -238,15 +248,19 @@ function parseSealBody(frozenContent: string): SealBody | null {
  * copy's text — must file exactly as the sealed ones would: same headings, same
  * text, same order, same document title.
  */
-async function checkAgainstSeal(
+export async function checkAgainstSeal(
   q: DrizzleQueryable,
-  args: { sourceId: string; organizationId: number; live: SectionRow[]; title: string; verdict: string },
+  args: { sourceId: string; organizationId: number; live: SectionRow[]; title: string; verdict: string; sealVersion?: string },
 ): Promise<{ ok: true; seal: Seal } | SnapshotRefusal> {
   const r = await q.query<{ version: string; frozen_content: string; content_hash: string }>(
-    `SELECT version, frozen_content, content_hash FROM frozen_documents
+    args.sealVersion === undefined
+      ? `SELECT version, frozen_content, content_hash FROM frozen_documents
       WHERE document_id = $1 AND tenant_id = $2
+      ORDER BY frozen_at DESC, id DESC LIMIT 1`
+      : `SELECT version, frozen_content, content_hash FROM frozen_documents
+      WHERE document_id = $1 AND tenant_id = $2 AND version = $3
       ORDER BY frozen_at DESC, id DESC LIMIT 1`,
-    [args.sourceId, args.organizationId],
+    args.sealVersion === undefined ? [args.sourceId, args.organizationId] : [args.sourceId, args.organizationId, args.sealVersion],
   );
   const notSealed = (): SnapshotRefusal =>
     refuse(
@@ -296,7 +310,7 @@ async function checkAgainstSeal(
  */
 async function readSourceForFiling(
   q: DrizzleQueryable,
-  args: { sourceId: string; organizationId: number; readState: string; status: ReturnType<typeof snapshotStatusFor> },
+  args: { sourceId: string; organizationId: number; readState: string; status: ReturnType<typeof snapshotStatusFor>; actor: CoauthorAuditActor },
 ): Promise<{ ok: true; body: AuthoringDocumentSnapshot; seal: Seal | null } | SnapshotRefusal> {
   const { sourceId, organizationId, readState, status } = args;
   /* The source is locked for the rest of the placement, and must still be in
@@ -317,6 +331,19 @@ async function readSourceForFiling(
     );
   }
 
+  const details = await q.query(`SELECT d.*, to_jsonb(d)->'provenance' AS provenance,
+    to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d
+    WHERE d.id=$1 AND d.tenant_id=$2`, [sourceId, organizationId]);
+  const currentActor = { id: String(args.actor.userId ?? ''), email: null };
+  try {
+    // A grant to the retained copy cannot replace current access to its exact
+    // private binary source. Refuse before the assembler reads saved prose.
+    await verifySavedDraftSourceReferences(details.rows[0], q, organizationId, currentActor);
+  } catch (error) {
+    if (error instanceof SavedDraftSourceError) return refuse(409, error.code, error.message);
+    throw error;
+  }
+
   /* 2026-09-23 (repair 2): the sections are read here, on the placement's
      transaction, for two rules. Some section must carry text — the rule
      AuthoringPlaceIntoFiling applies; this replaced a test of the assembled
@@ -334,6 +361,14 @@ async function readSourceForFiling(
     );
   }
   const live: SectionRow[] = body.sections ?? [];
+  try {
+    await assertWorkflowImportRelease(q, { organizationId, doc: { ...details.rows[0], id: sourceId },
+      sections: live.map(section => ({ id: String(section.id), code: String(section.code), title: section.title, content: section.content == null ? null : String(section.content) })),
+      actor: currentActor });
+  } catch (error) {
+    if (error instanceof WorkflowImportGovernanceError) return refuse(error.status, error.code, error.message);
+    throw error;
+  }
   if (!live.some((sec) => String(sec.content ?? '').trim() !== '')) {
     return refuse(
       422,
@@ -365,7 +400,9 @@ async function retakeAliasedCopy(
     templateId: number | null;
     createdBy: string | null;
     provenance: Record<string, unknown>;
-    retaken: (id: number, before: CoauthorRow | null) => Promise<void>;
+    /** Who is placing it, as the version row records the author of a replacement. */
+    replacedBy: string;
+    retaken: (id: number, before: CoauthorRow | null, supersededVersion?: number | null) => Promise<void>;
   },
 ): Promise<SnapshotOutcome> {
   const { id, organizationId, derived, moduleNumber, templateId, createdBy, provenance, retaken } = args;
@@ -380,7 +417,25 @@ async function retakeAliasedCopy(
       existing.status === derived.status &&
       existing.content === derived.content &&
       existing.title === derived.title;
-    if (unchanged) return { ok: true, created: false, document: existing, aliasRecorded: true };
+    if (unchanged) return { ok: true, created: false, written: false, document: existing, aliasRecorded: true };
+    /* 2026-10-08 (QA walk 2, j4): a copy a live leaf files is never rewritten. */
+    const changes = retakeChanges(existing, derived);
+    if (!pinnedCopyAccepts(changes)) {
+      const pins = await filingCopyPins(q, { copyId: id, organizationId });
+      if (pins.length > 0) return { ok: false, httpStatus: 409, body: pinnedCopyRefusal(id, pins, changes) };
+    }
+    /* 2026-10-01 (D5, P11-B-1): the text this replaces — on a draft copy, an
+       author's saved co-author edits — is kept as the copy's next version, as
+       every writer of this column now does; the event kept only its digest. */
+    const supersededVersion =
+      existing.content !== derived.content
+        ? await versionReplacedCoauthorContent(q, {
+            documentId: id,
+            previousContent: existing.content,
+            createdBy: args.replacedBy,
+            changeSummary: 'Replaced when this filing copy was re-taken from its source authoring document',
+          })
+        : null;
     const [document] = await tx
       .update(coauthorDocuments)
       .set({
@@ -391,8 +446,8 @@ async function retakeAliasedCopy(
       })
       .where(and(eq(coauthorDocuments.id, id), eq(coauthorDocuments.organizationId, organizationId)))
       .returning();
-    await retaken(id, existing);
-    return { ok: true, created: false, document, aliasRecorded: true };
+    await retaken(id, existing, supersededVersion);
+    return { ok: true, created: false, written: true, document, aliasRecorded: true };
   }
   /* The copy was deleted and its identity is still recorded (DELETE does
      not remove the alias). It is re-created under that id, so the alias
@@ -411,7 +466,7 @@ async function retakeAliasedCopy(
     .values({ id, organizationId, ...derived, moduleNumber, templateId, createdBy, metadata: provenance })
     .returning();
   await retaken(id, null);
-  return { ok: true, created: true, document, aliasRecorded: true };
+  return { ok: true, created: true, written: true, document, aliasRecorded: true };
 }
 
 /**
@@ -428,8 +483,10 @@ export async function takeAuthoringSnapshot(args: {
   createdBy: string | null;
   /** Who is placing it; recorded when an existing copy is re-taken. */
   actor: CoauthorAuditActor;
+  /** The person's stated reason, validated by the route (governed-reason.ts). */
+  reason: string;
 }): Promise<SnapshotOutcome> {
-  const { organizationId, moduleNumber, templateId, createdBy, actor } = args;
+  const { organizationId, moduleNumber, templateId, createdBy, actor, reason } = args;
   const sourceId = String(args.sourceAuthoringDocId);
 
   const src = await pool.query<{ status: string | null }>(
@@ -448,7 +505,7 @@ export async function takeAuthoringSnapshot(args: {
 
   return db.transaction(async (tx): Promise<SnapshotOutcome> => {
     const q = queryableFromDrizzle(tx);
-    const source = await readSourceForFiling(q, { sourceId, organizationId, readState, status });
+    const source = await readSourceForFiling(q, { sourceId, organizationId, readState, status, actor });
     if (!source.ok) return source;
     const { body, seal } = source;
     const provenance = {
@@ -457,15 +514,16 @@ export async function takeAuthoringSnapshot(args: {
       status: readState || 'UNKNOWN',
       ...(seal ? { sealVersion: seal.version, sealContentHash: seal.contentHash } : {}),
     };
-    const retaken = (id: number, before: CoauthorRow | null) =>
+    const retaken = (id: number, before: CoauthorRow | null, supersededVersion: number | null = null) =>
       recordCoauthorDocumentEvent(q, {
         organizationId,
         documentId: id,
         eventType: 'coauthor_document.retaken',
         actor,
-        reason: before
-          ? 'filing copy re-taken from its source authoring document'
-          : 'deleted filing copy re-created from its source authoring document',
+        /* The person's stated reason (2026-10-08, filing-spine design review,
+           Part 11 lens). These were sentences the code composed; what the
+           system did is in the fields below (recreated, before, after). */
+        reason,
         metadata: {
           sourceAuthoringDocId: sourceId,
           recreated: before === null,
@@ -473,6 +531,7 @@ export async function takeAuthoringSnapshot(args: {
             ? { status: before.status, title: before.title, contentSha256: sha256(before.content ?? '') }
             : null,
           after: { status, title: body.title, contentSha256: sha256(body.content) },
+          supersededVersion,
           ...(seal ? { sealVersion: seal.version, sealContentHash: seal.contentHash } : {}),
         },
       });
@@ -492,6 +551,7 @@ export async function takeAuthoringSnapshot(args: {
         templateId,
         createdBy,
         provenance,
+        replacedBy: actor.name,
         retaken,
       });
     }
@@ -509,8 +569,9 @@ export async function takeAuthoringSnapshot(args: {
     return {
       ok: true,
       created: true,
+      written: true,
       document,
       aliasRecorded: !(!alias.recorded && alias.reason === 'relation_absent'),
     };
-  });
+  }, { isolationLevel: 'repeatable read' });
 }

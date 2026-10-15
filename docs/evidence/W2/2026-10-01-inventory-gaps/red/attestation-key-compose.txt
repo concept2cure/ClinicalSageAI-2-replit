@@ -1,0 +1,5 @@
+$ node scripts/ci/check-compose-boot-contract.mjs   # preflight names AUDIT_ATTESTATION_KEY; nothing provides it yet
+docker-compose.beta.yml: service "app": AUDIT_ATTESTATION_KEY is not passed to the app
+docker-compose.yml: service "app": AUDIT_ATTESTATION_KEY is not passed to the app
+[ci:compose-boot-contract] 2 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (23 names) plus ALLOWED_ORIGINS.
+exit=1

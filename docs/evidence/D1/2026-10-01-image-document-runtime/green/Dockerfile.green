@@ -1,0 +1,21 @@
+# The production stage's document-runtime step, verbatim, on Debian's Python
+# 3.11 (python:3.11-slim stands in for node:22-slim + apt python3/python3-venv,
+# whose apt mirrors this sandbox's proxy refuses). The proxy CA is trusted for
+# the build only.
+FROM python:3.11-slim
+ARG HTTPS_PROXY
+ENV PIP_CERT=/tmp/proxy-ca.crt
+COPY proxy-ca.crt /tmp/proxy-ca.crt
+COPY requirements.txt /tmp/requirements.txt
+RUN python3 -m venv /opt/docx-runtime && \
+    /opt/docx-runtime/bin/pip install --no-cache-dir \
+      $(grep -E '^(python-docx|lxml)==' /tmp/requirements.txt | cut -d' ' -f1) && \
+    /opt/docx-runtime/bin/python -c "import docx, lxml.etree; print('document runtime: lxml', lxml.etree.__version__)" && \
+    rm /tmp/requirements.txt
+ENV ANA_DOCX_PYTHON=/opt/docx-runtime/bin/python
+WORKDIR /app
+COPY artifact-compute ./workers/artifact-compute
+# Each runtime's imports resolve under the virtualenv's interpreter.
+RUN for f in workers/artifact-compute/*.py; do \
+      "$ANA_DOCX_PYTHON" -c "import ast,sys,importlib; t=ast.parse(open('$f').read()); [importlib.import_module(n.names[0].name if isinstance(n, ast.Import) else n.module) for n in t.body if isinstance(n,(ast.Import,ast.ImportFrom))]; print('imports ok:', '$f')"; \
+    done

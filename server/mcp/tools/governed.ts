@@ -72,13 +72,18 @@ export const fileDraftForReview = defineTool({
       const sequence = await svc.getSequence(input.sequence_id, { organizationId: orgId });
       const signOffUrl = `${ctx.config.appBaseUrl}/concept2cure/submission-center`;
       return ok(
-        `Draft leaf #${leaf.id} filed at ${leaf.sectionCode} ("${leaf.title}") in sequence ${sequence.sequenceNumber} (status ${sequence.status}). ` +
-          `It is a DRAFT placement: review, freeze and Part 11 sign-off happen at ${signOffUrl}. Audit row ${leaf.auditTrail.persisted ? 'persisted' : 'NOT persisted'}.`,
+        `${leaf.unchanged
+          ? `Leaf #${leaf.id} already holds this document at ${leaf.sectionCode} ("${leaf.title}"), so nothing was written. `
+          : `Draft leaf #${leaf.id} filed at ${leaf.sectionCode} ("${leaf.title}") `}in sequence ${sequence.sequenceNumber} (status ${sequence.status}). ` +
+          `It is a DRAFT placement: review, freeze and Part 11 sign-off happen at ${signOffUrl}. ${leaf.unchanged
+            ? 'No audit row was written, because nothing changed.'
+            : `Audit row ${leaf.auditTrail?.persisted ? 'persisted' : 'NOT persisted'}.`}`,
         {
           status: 'draft',
           leaf: { id: leaf.id, sequenceId: leaf.sequenceId, sectionCode: leaf.sectionCode, title: leaf.title, lifecycleOp: leaf.lifecycleOp, documentTable: leaf.documentTable, documentId: leaf.documentId, documentUuid: (leaf as { documentUuid?: string | null }).documentUuid ?? null },
           sequence: { id: sequence.id, submissionId: sequence.submissionId, sequenceNumber: sequence.sequenceNumber, status: sequence.status },
-          auditTrail: leaf.auditTrail,
+          auditTrail: leaf.auditTrail ?? null,
+          unchanged: leaf.unchanged === true,
           reason: input.reason,
           signOff: {
             url: signOffUrl,

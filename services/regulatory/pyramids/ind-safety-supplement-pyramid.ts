@@ -1,6 +1,9 @@
 import type { BaseTask, SubmissionPyramid } from './types.js';
 import { buildPhase } from './types.js';
 
+/* See ind-amendment-pyramid.ts: E6(R3) supersedes E6(R2) (Step 4, 2025-01-06). */
+const GCP = 'ICH E6(R3)';
+
 export function buildIndSafetySupplementPyramid(): SubmissionPyramid {
   const phases: SubmissionPyramid['phases'] = [];
 
@@ -176,7 +179,7 @@ export function buildIndSafetySupplementPyramid(): SubmissionPyramid {
       role: 'medical_monitor',
       description: 'Assess whether the safety event warrants an update to the Investigator\'s Brochure Reference Safety Information or requires a protocol amendment (e.g., new exclusion criterion, additional monitoring, dose modification).',
       risk: { severity: 'high', probability: 0.3, impact: 'Failure to update IB or protocol when warranted may affect future expectedness classifications and investigator/subject safety', mitigations: ['Evaluate event against cumulative safety profile', 'Convene safety review committee for significant findings', 'Track IB update history and amendment triggers'] },
-      guidance: { cfrReference: '21 CFR 312.32(d)', ichGuideline: 'ICH E2F, ICH E6(R2)', keyConsiderations: ['IB must be updated at least annually, but safety signals may require interim updates', 'Protocol amendment required if safety finding changes benefit-risk', 'IB update changes the expectedness baseline for future events'] },
+      guidance: { cfrReference: '21 CFR 312.32(d)', ichGuideline: `ICH E2F, ${GCP}`, keyConsiderations: ['IB must be updated at least annually, but safety signals may require interim updates', 'Protocol amendment required if safety finding changes benefit-risk', 'IB update changes the expectedness baseline for future events'] },
       timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
       deliverables: ['IB update assessment', 'Protocol amendment recommendation (if applicable)'],
     },

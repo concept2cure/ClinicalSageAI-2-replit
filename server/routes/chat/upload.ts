@@ -25,14 +25,10 @@ import { resolveGovernedContext } from '../../services/concept2cure/governedDocu
 import { recordArtifactProvenance } from '../../services/provenance/artifact-provenance';
 import { sha256, sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { verifyFileSignature } from '../../utils/fileSignature';
-import { scanBuffer as scanForViruses } from '../../utils/virusScan';
 import { sha256Hex } from '../../services/ana/uploaded-file-access';
-// Pure, dependency-free (no db import), so it is safe to load statically —
-// unlike the evidence spine below, which is imported lazily so a database
-// without the cre_* tables cannot break the route's module graph.
-import { determineSourceVersion } from '../../services/clinical-regulatory-evidence/source-version.js';
 import { programInOrganization } from '../../services/c2c/program-access.js';
+import { projectBelongsToTenant } from '../../services/cmc/project-membership.js';
+import type { SourceProcessingResult } from '../../services/clinical-regulatory-evidence/data-room-processing.js';
 
 const logger = createScopedLogger('chat-upload');
 
@@ -60,6 +56,21 @@ function resolveProjectScope(
   return Number.isFinite(numeric)
     ? { programId: null, workspaceId: numeric }
     : { programId: null, workspaceId: null };
+}
+
+/** The capture stands when its later derived processing is unavailable. */
+async function processUploadCapture(orgId: number, sourceId: number,
+  input: Parameters<typeof import('../../services/clinical-regulatory-evidence/data-room-processing.js').processCapturedSource>[2],
+): Promise<Omit<SourceProcessingResult, 'extracted'>> {
+  try {
+    const { processCapturedSource } = await import('../../services/clinical-regulatory-evidence/data-room-processing.js');
+    const done = await processCapturedSource(orgId, sourceId, input);
+    return { ok: done.ok, processed: done.processed, status: done.status,
+      ...(done.reasonCode ? { reasonCode: done.reasonCode } : {}) };
+  } catch (err) {
+    logger.warn('Captured upload processing unavailable', { sourceId, err: err instanceof Error ? err.message : String(err) });
+    return { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' };
+  }
 }
 
 export const uploadHandler = async (req: Request, res: Response) => {
@@ -104,56 +115,10 @@ export const uploadHandler = async (req: Request, res: Response) => {
     const userId = (req as any).user?.id || null;
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
-    // SECURITY: verify the actual file bytes match the declared MIME
-    // type. multer's `file.mimetype` comes from the request's
-    // Content-Type header — an attacker can set it to anything. The
-    // magic-number check catches an executable uploaded as
-    // `application/pdf`, an HTML phishing payload uploaded as
-    // `image/png`, etc. Only applied when we have a real buffer
-    // (memory-storage uploads); body-only requests skip this gate.
-    if (fileBuffer && fileBuffer.length > 0) {
-      const sig = verifyFileSignature(fileBuffer, mimeType);
-      if (!sig.ok) {
-        logger.warn('Upload rejected by signature check', {
-          fileName,
-          declaredMime: mimeType,
-          reason: sig.reason,
-        });
-        return res.status(400).json({
-          error: 'File content does not match declared type',
-          code: 'FILE_SIGNATURE_MISMATCH',
-        });
-      }
-
-      // Antivirus scan. No-op when CLAMAV_HOST is unset (returns
-      // scanned=false, clean=true) — production must set the env var
-      // for the scanner to engage. When the scan finds something,
-      // reject with a generic 400 and a specific log entry. We do
-      // NOT echo the signature name back to the client (it would
-      // help an attacker craft a payload that evades the scanner).
-      const scan = await scanForViruses(fileBuffer);
-      if (!scan.clean) {
-        logger.warn('Upload rejected by virus scanner', {
-          fileName,
-          declaredMime: mimeType,
-          signature: scan.signature,
-          orgId,
-        });
-        return res.status(400).json({
-          error: 'File rejected by content scan',
-          code: 'FILE_SCAN_REJECTED',
-        });
-      }
-      if (!scan.scanned) {
-        // Fail-open path: we let the upload through but record the
-        // miss so ops can monitor scanner reachability. Log volume
-        // is bounded by upload volume.
-        logger.warn('Virus scan bypassed', {
-          fileName,
-          reason: scan.reason,
-        });
-      }
-    }
+    // The bytes were verified before this handler ran: signature, name binding
+    // and the content scan (fail-closed in production), by assertUploadSafe in
+    // server/routes/chat.ts (assertEvidenceSafe). This handler kept its own
+    // copy of the first and the last, and its scan failed OPEN.
 
     // Which project id-space this upload arrived with, resolved once and used
     // by the ownership check here, the governed-artifact block and the source
@@ -169,6 +134,17 @@ export const uploadHandler = async (req: Request, res: Response) => {
     if (projectScope.programId != null && !(await programInOrganization(pool, projectScope.programId, Number(orgId)))) {
       return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
     }
+    // The legacy numeric id-space holds to the same rule (PF-03): a projects
+    // row of the uploader's organization. The number was taken as given, and
+    // it keys the governed artifact row and the source identity below, so a
+    // file could be filed under another organization's project. A lookup that
+    // cannot complete throws to the outer catch: nothing is written.
+    if (
+      projectScope.workspaceId != null &&
+      !(await projectBelongsToTenant({ organizationId: Number(orgId), projectId: String(projectScope.workspaceId) }, pool))
+    ) {
+      return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+    }
 
     // SECURITY: tenant-scoped storage path. The legacy `uploads/${fileId}`
     // flat layout meant any process that read by file id alone could
@@ -182,21 +158,22 @@ export const uploadHandler = async (req: Request, res: Response) => {
     const orgSegment = orgId != null ? `org-${Number(orgId)}` : 'unscoped';
     const storagePath = `uploads/${orgSegment}/${fileId}`;
 
-    // Persist the bytes so downstream paths (e.g. ANA PDF intake via
-    // readLocalUploadBuffer) can re-read the file. Previously only metadata
-    // was stored, leaving storage_path dangling. Best-effort: a write
-    // failure must not fail the upload — the metadata row is still useful.
-    if (fileBuffer && fileBuffer.length > 0) {
-      try {
-        const resolved = path.resolve(process.cwd(), storagePath);
-        await fs.mkdir(path.dirname(resolved), { recursive: true });
-        await fs.writeFile(resolved, fileBuffer);
-      } catch (err) {
-        logger.warn('Upload byte persistence failed (non-fatal)', {
-          fileId,
-          reason: err instanceof Error ? err.message : 'unknown',
-        });
-      }
+    // Store the original bytes before metadata, extraction or Data Room
+    // capture. A failed write must not leave a record claiming usable evidence
+    // at a dangling storage_path. Missing/empty buffers were refused above.
+    try {
+      const resolved = path.resolve(process.cwd(), storagePath);
+      await fs.mkdir(path.dirname(resolved), { recursive: true });
+      await fs.writeFile(resolved, fileBuffer);
+    } catch (err) {
+      logger.warn('Upload rejected — original bytes could not be stored', {
+        fileId,
+        reason: err instanceof Error ? err.message : 'unknown',
+      });
+      return res.status(503).json({
+        error: 'The file could not be stored. Try again.',
+        code: 'UPLOAD_STORAGE_FAILED',
+      });
     }
 
     // Save metadata to DB.
@@ -238,19 +215,19 @@ export const uploadHandler = async (req: Request, res: Response) => {
     let extractionMethod: string | null = null;
     let extractionWords = 0;
     let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
-    if (fileBuffer && fileBuffer.length > 0) {
-      try {
-        const { extractDocumentText } = await import('../../services/ocr/index.js');
-        const extracted = await extractDocumentText(fileBuffer, mimeType, fileName);
-        if (extracted.text && extracted.text.trim().length > 0) {
-          extractedText = extracted.text;
-          extractionMethod = extracted.method;
-          extractionWords = extracted.text.trim().split(/\s+/).length;
-          logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
-        }
-      } catch (extractErr: any) {
-        logger.warn('Upload text extraction failed (non-fatal)', { err: extractErr?.message, fileId });
-      }
+    // The one Data Room processing step reads the bytes for every capture path
+    // (data-room-processing.ts); the upload reads them here, once.
+    const { extractCapture, describeCapture } = await import(
+      '../../services/clinical-regulatory-evidence/data-room-processing.js'
+    );
+    const extracted = fileBuffer && fileBuffer.length > 0 ? await extractCapture(fileBuffer, mimeType, fileName) : null;
+    if (extracted?.text) {
+      extractedText = extracted.text;
+      extractionMethod = extracted.method;
+      extractionWords = extracted.words;
+      logger.info('Upload text extracted', { fileId, method: extracted.method, chars: extracted.text.length });
+    } else if (extracted?.error) {
+      logger.warn('Upload text extraction failed (non-fatal)', { err: extracted.error, fileId });
     }
 
     // ── Data Room convergence: create artifact + embed for retrieval ──
@@ -429,6 +406,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // (below): the bytes are stored, and the answer says the Data Room does not
     // hold them. It used to answer 200 "ready" with sourceId null.
     let sourceId: number | null = null;
+    let processing: Omit<SourceProcessingResult, 'extracted'> | null = null;
     let sourceWriteFailed = false;
     const scopedToProject = projectScope.programId != null || projectScope.workspaceId != null;
     // The org must resolve to a real numeric id. `tenantContext.organizationId`
@@ -477,43 +455,21 @@ export const uploadHandler = async (req: Request, res: Response) => {
           // whichever we actually got rather than assuming one.
           const scope = projectScope;
 
-          // ── Dossier classification (capture → classify) ────────────────────
+          // ── Dossier classification (capture → classify) and declared version ──
           // The same deterministic classifier the Vault ingest runs, stamped
           // into the source's metadata so the Data Room can show WHAT this is
-          // and WHERE it likely belongs the moment it lands — the 'classified'
-          // stage of the capture→classify→file pipeline. A proposal, never a
-          // commitment: filing into the vault stays a governed act. Failure to
-          // classify must never fail the capture.
-          let dossier: Record<string, unknown> | null = null;
-          try {
-            const { classifyForFiling, resolveVaultView, resolveOrgVaultView } = await import(
-              '../../services/vault/vault-filing.service.js'
-            );
-            const view = scope.programId
-              ? await resolveVaultView(scope.programId, numericOrgId)
-              : await resolveOrgVaultView(numericOrgId);
-            const c = classifyForFiling({
-              fileName,
-              title: fileName,
-              mimeType,
-              extractedText: extractionMethod ? extractedText : null,
-              view,
-            });
-            dossier = {
-              view,
-              evidenceKind: c.evidenceKind,
-              suggestedFolder: c.folderId,
-              ctdSection: c.ctdSection,
-              confidence: c.confidence,
-              needsReview: c.needsReview,
-              rationale: c.rationale,
-            };
-          } catch (classifyErr: any) {
-            logger.warn('Upload dossier classification failed (non-fatal)', {
-              err: classifyErr?.message,
-              fileId,
-            });
-          }
+          // and WHERE it likely belongs the moment it lands. A proposal, never a
+          // commitment: filing into the vault stays a governed act. The version
+          // is only ever one the document DECLARES (ledger L21), never a count
+          // of uploads. Both live in data-room-processing.ts, shared with adopt
+          // and the spreadsheet edit.
+          const { dossier, versionDetermination } = await describeCapture(numericOrgId, scope.programId ?? null, {
+            fileName,
+            mimeType,
+            // The filename placeholder built when extraction fails is metadata,
+            // not document text.
+            text: extractionMethod ? extractedText : null,
+          });
           // Is this a REVISION of a document this project already holds?
           //
           // A new checksum means new bytes, and until now that was the end of
@@ -542,30 +498,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
             });
           }
 
-          // What version of this document is it? (ledger L21)
-          //
-          // `cre_evidence_sources.version` has existed since the spine
-          // migration and NOTHING has ever passed it, so every row reads NULL
-          // and no fact can be told which revision of a protocol it rests on.
-          //
-          // The value written is only ever one the document DECLARES — read off
-          // its title page, or off its filename — never this system's count of
-          // how many times a file with that name has been uploaded. A sponsor's
-          // first upload into a new project is routinely revision 4 of a
-          // protocol that lived in email for a year; stamping `1` on it would
-          // put a number in a provenance column indistinguishable from a real
-          // one. When nothing declares a version, `version` stays NULL and the
-          // determination itself is recorded, so a reviewer can tell "this
-          // document is unversioned" from "nobody looked".
-          const versionDetermination = determineSourceVersion({
-            // The filename placeholder built when extraction fails is metadata,
-            // not document text — the same distinction the classifier draws
-            // above. Reading a version out of it would be reading it out of the
-            // filename twice.
-            documentText: extractionMethod ? extractedText : null,
-            fileName,
-          });
-
           // Typed against createSource's parameter so pulling the literal out of
           // the call keeps its string-union fields (sourceType, visibilityClass,
           // the two statuses) instead of widening them to string.
@@ -584,10 +516,10 @@ export const uploadHandler = async (req: Request, res: Response) => {
             // Null unless the document actually declares one; the determination
             // travels in provenance either way.
             version: versionDetermination.version,
-            // The bytes are stored and were read at ingest, so neither status
-            // is 'pending' — reporting otherwise would misstate the corpus.
+            // Capture is durable; derived text/facts are still pending until
+            // the bound processor commits them on this source.
             ingestionStatus: 'ingested',
-            extractionStatus: extractionMethod ? 'extracted' : 'failed',
+            extractionStatus: 'pending',
             provenance: {
               origin: 'chat_upload',
               fileUploadId: fileId,
@@ -656,6 +588,16 @@ export const uploadHandler = async (req: Request, res: Response) => {
         fileId,
       });
     }
+    // Both a new capture and a same-byte duplicate use the bound orchestration.
+    // The processor verifies the recorded original upload; this new upload ID
+    // never replaces an existing source's original provenance.
+    if (scopedToProject && sourceId != null) {
+      processing = await processUploadCapture(numericOrgId, sourceId, {
+        bytes: fileBuffer, fileName, mimeType, programId: projectScope.programId,
+        expectedWorkspaceId: projectScope.workspaceId, processedBy: 'chat_upload ingest',
+        ...(extracted ? { preExtracted: extracted } : {}),
+      });
+    }
 
     // ── Retrieval embedding for program-scoped (UUID) uploads ──────────────
     //
@@ -714,7 +656,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
       // Whether the Data Room holds this file (PF-07). With no project open it
       // stays in the conversation until it is adopted into a project.
       dataRoom: scopedToProject && sourceId != null
-        ? { recorded: true }
+        ? { recorded: true, readable: processing?.processed === true, processing }
         : {
             recorded: false,
             reason: scopedToProject
@@ -722,7 +664,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
               : 'No project was open, so this file stays in the conversation. Adopt it into a project to add it to that project’s Data Room.',
           },
       // Extraction summary for the chat UI: which method read the file and how
-      // many words landed in memory (null/0 when unscoped or extraction failed).
+      // many words this extraction attempt read. Committed Data Room
+      // readability is reported separately above.
       extractionMethod,
       extractionWords,
       /* What the retrieval corpus actually holds. An upload's atom is ONE

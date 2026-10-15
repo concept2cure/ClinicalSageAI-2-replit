@@ -1,0 +1,128 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-01T06:45:52.081Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:45:52.082Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-01T06:45:52.083Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-01T06:45:52.569Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers a failed purge (its audit row refused) with 500 and no error text
+{
+  "timestamp": "2026-10-01T06:45:52.610Z",
+  "level": "error",
+  "message": "[tenants-simple] Error purging organization:",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent 3063ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers an unattributable purge as a refusal (403), not a conflict 6ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers a failed purge (its audit row refused) with 500 and no error text 9ms
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+{
+  "timestamp": "2026-10-01T06:45:52.812Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted
+{
+  "timestamp": "2026-10-01T06:45:52.817Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded
+{
+  "timestamp": "2026-10-01T06:45:52.821Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT 16ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted 4ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > a refused audit row rolls the purge back: ROLLBACK, no COMMIT, and the purge rejects 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > refuses a purge it cannot attribute to a person, before anything is touched 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > lists neither the audit trail nor the export receipt it relied on 0ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  06:45:48
+   Duration  4.48s (transform 3.15s, setup 424ms, import 4.00s, tests 3.12s, environment 0ms)
+

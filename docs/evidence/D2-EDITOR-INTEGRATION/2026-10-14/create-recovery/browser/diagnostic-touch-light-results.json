@@ -1,0 +1,380 @@
+{
+  "label": "diagnostic-touch-light",
+  "width": 390,
+  "height": 844,
+  "theme": "light",
+  "cases": [
+    {
+      "kind": "document",
+      "label": "diagnostic-touch-light-unknown",
+      "status": "fail",
+      "stages": [
+        {
+          "name": "pending",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 14
+          },
+          "notices": []
+        }
+      ],
+      "error": "Error: Recovery notice lies outside the viewport\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:51:5)\n    at async assertRecovery (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs:26:3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs:50:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:68:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:40:58)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19",
+      "body": "New document\nNew section\nDownload\nCould not confirm whether the document was created. Check working documents before creating another.Check working documents",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        },
+        {
+          "method": "POST",
+          "path": "/api/authoring/docs",
+          "query": ""
+        }
+      ],
+      "mutations": [
+        {
+          "method": "POST",
+          "path": "/api/authoring/docs",
+          "body": {
+            "title": "Synthetic created document",
+            "module": "M3",
+            "client_program_id": "bbbbbbbb-0000-4000-8000-000000000093"
+          }
+        }
+      ],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [],
+        "receipts": [],
+        "navigation": [],
+        "toasts": [
+          {
+            "message": "Could not confirm whether the document was created. Check working documents before creating another.",
+            "tone": "error"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "section",
+      "label": "diagnostic-touch-light-unknown",
+      "status": "fail",
+      "stages": [
+        {
+          "name": "pending",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 14
+          },
+          "notices": []
+        }
+      ],
+      "error": "Error: Recovery notice lies outside the viewport\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:51:5)\n    at async assertRecovery (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs:26:3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs:50:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:68:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:40:58)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19",
+      "body": "New document\nNew section\nDownload\nCould not confirm whether the section was created. Check document sections before creating another.Check document sections",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        },
+        {
+          "method": "POST",
+          "path": "/api/authoring/sections",
+          "query": ""
+        }
+      ],
+      "mutations": [
+        {
+          "method": "POST",
+          "path": "/api/authoring/sections",
+          "body": {
+            "code": "3.2.S.2",
+            "title": "Synthetic created section",
+            "doc_id": "dddddddd-0000-4000-8000-000000000093",
+            "content": ""
+          }
+        }
+      ],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [],
+        "receipts": [],
+        "navigation": [],
+        "toasts": [
+          {
+            "message": "Could not confirm whether the section was created. Check document sections before creating another.",
+            "tone": "error"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "document",
+      "label": "diagnostic-touch-light-native",
+      "status": "fail",
+      "stages": [],
+      "error": "Error: Recovery notice lies outside the viewport\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:51:5)\n    at async cancelAndRetry (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:17:3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:48:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:68:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:41:58)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19",
+      "body": "Synthetic existing working document\n1 document · all\nall\ndraft\nin review\napproved\nfrozen\nThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.\nM3\nSynthetic existing working document\n1\n3.2.S.1\nSynthetic saved section\nSynthetic creation recovery project\n›\nM3\n›\nSynthetic existing working document\n›\n3.2.S.1\nRequired to save: at least 8 characters, recorded with the revision.\nSave\nFreeze\nE-sign\nPlace into filing\nNew document\nNew section\nDownload\nDocument created · Synthetic created document Not bound to a filing — Explicitly synthetic working copyOpen created document\nSection\nDocument\nComments\nHistory 1\nSources\nSignatures\nAudit\nExports\nProject files\nTasks\nAccess\nSend for review\nFile to vault\nDraft with AnA\nDraft from sources\nReview with AnA\n\nAnA reviews the saved record. Your unsaved changes are not included.\n\n3.2.S.1\nSynthetic saved section\nRename\nCheck\nSynthetic existing working document · 1 revisions · unsaved changes — on this device only\nParagraph\nHeading 1\nHeading 2\nHeading 3\nHeading 4\nHeading 5\nB\nI\nU\nx2\nx2\nab\n§ Ref\nCite\nTable\nCaption\nΩ…\n±\n°\nµ\n≤\n≥\n×\n≈\n½\nα\nβ\nγ\nΔ\nAsk for a source\nComment\nTrack changes\n\nSynthetic unsaved paragraph held while creation completes.\n\n0% of this document has a recorded origin\n0 of 62 characters\nNo recorded origin — 100% (62 characters)\nnothing records where this text came from\nUnsaved changes — cached on this device\n·\n7 words\nUnsaved changes in 3.2.S.1\n\nYour edits to 3.2.S.1 Synthetic saved section are cached on this device and are not in the record. Opening another document closes this section.\n\nSaving records an auditable revision attributed to you. Leaving keeps the edits on this device only — this browser, on this machine — and offers them back when you return to the section.\n\nCancel\nLeave without saving\nSave and continue\nDocument created · Synthetic created document Not bound to a filing — Explicitly synthetic working copy",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/documents",
+          "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000093",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000093/sources",
+          "query": "?limit=200&offset=0"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/citations",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/data-origins/document",
+          "query": "?documentTable=authoring_sections&documentId=eeeeeeee-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/sections/eeeeeeee-0000-4000-8000-000000000093/sources",
+          "query": ""
+        },
+        {
+          "method": "POST",
+          "path": "/api/authoring/docs",
+          "query": ""
+        }
+      ],
+      "mutations": [
+        {
+          "method": "POST",
+          "path": "/api/authoring/docs",
+          "body": {
+            "title": "Synthetic created document",
+            "module": "M3",
+            "client_program_id": "bbbbbbbb-0000-4000-8000-000000000093"
+          }
+        }
+      ],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [],
+        "receipts": [],
+        "navigation": [],
+        "bridge": {
+          "docId": "dddddddd-0000-4000-8000-000000000093",
+          "sectionId": "eeeeeeee-0000-4000-8000-000000000093",
+          "editable": true
+        },
+        "toasts": []
+      }
+    },
+    {
+      "kind": "section",
+      "label": "diagnostic-touch-light-native",
+      "status": "fail",
+      "stages": [],
+      "error": "Error: Recovery notice lies outside the viewport\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:6:59)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:51:5)\n    at async cancelAndRetry (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:17:3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs:48:5\n    at async finishCase (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs:68:5)\n    at async runContext (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:41:58)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser.mjs:50:19",
+      "body": "Synthetic existing working document\n1 document · all\nall\ndraft\nin review\napproved\nfrozen\nThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.\nM3\nSynthetic existing working document\n1\n3.2.S.1\nSynthetic saved section\n3.2.S.2\nSynthetic created section\nSynthetic creation recovery project\n›\nM3\n›\nSynthetic existing working document\n›\n3.2.S.1\nRequired to save: at least 8 characters, recorded with the revision.\nSave\nFreeze\nE-sign\nPlace into filing\nNew document\nNew section\nDownload\nSection created · 3.2.S.2 (initial revision recorded)Open created section\nSection\nDocument\nComments\nHistory 1\nSources\nSignatures\nAudit\nExports\nProject files\nTasks\nAccess\nSend for review\nFile to vault\nDraft with AnA\nDraft from sources\nReview with AnA\n\nAnA reviews the saved record. Your unsaved changes are not included.\n\n3.2.S.1\nSynthetic saved section\nRename\nCheck\nSynthetic existing working document · 1 revisions · unsaved changes — on this device only\nParagraph\nHeading 1\nHeading 2\nHeading 3\nHeading 4\nHeading 5\nB\nI\nU\nx2\nx2\nab\n§ Ref\nCite\nTable\nCaption\nΩ…\n±\n°\nµ\n≤\n≥\n×\n≈\n½\nα\nβ\nγ\nΔ\nAsk for a source\nComment\nTrack changes\n\nSynthetic unsaved paragraph held while creation completes.\n\n0% of this document has a recorded origin\n0 of 62 characters\nNo recorded origin — 100% (62 characters)\nnothing records where this text came from\nUnsaved changes — cached on this device\n·\n7 words\nUnsaved changes in 3.2.S.1\n\nYour edits to 3.2.S.1 Synthetic saved section are cached on this device and are not in the record. Opening 3.2.S.2 closes this section.\n\nSaving records an auditable revision attributed to you. Leaving keeps the edits on this device only — this browser, on this machine — and offers them back when you return to the section.\n\nCancel\nLeave without saving\nSave and continue\nSection created · 3.2.S.2 (initial revision recorded)",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/documents",
+          "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000093",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000093/sources",
+          "query": "?limit=200&offset=0"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/citations",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/data-origins/document",
+          "query": "?documentTable=authoring_sections&documentId=eeeeeeee-0000-4000-8000-000000000093"
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/sections/eeeeeeee-0000-4000-8000-000000000093/sources",
+          "query": ""
+        },
+        {
+          "method": "POST",
+          "path": "/api/authoring/sections",
+          "query": ""
+        },
+        {
+          "method": "GET",
+          "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000093/sections",
+          "query": ""
+        }
+      ],
+      "mutations": [
+        {
+          "method": "POST",
+          "path": "/api/authoring/sections",
+          "body": {
+            "code": "3.2.S.2",
+            "title": "Synthetic created section",
+            "doc_id": "dddddddd-0000-4000-8000-000000000093",
+            "content": ""
+          }
+        }
+      ],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [],
+        "receipts": [],
+        "navigation": [],
+        "bridge": {
+          "docId": "dddddddd-0000-4000-8000-000000000093",
+          "sectionId": "eeeeeeee-0000-4000-8000-000000000093",
+          "editable": true
+        },
+        "toasts": []
+      }
+    },
+    {
+      "kind": "document",
+      "label": "diagnostic-touch-light-held",
+      "status": "pass",
+      "stages": [
+        {
+          "name": "held-project",
+          "metrics": {
+            "visibleEditableViewport": null,
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "page": {
+              "clientWidth": 390,
+              "scrollWidth": 390
+            },
+            "canvas": null,
+            "editor": null,
+            "documentScroll": null,
+            "editorScroll": null,
+            "sectionHeading": null,
+            "editorCount": 0
+          },
+          "axe": {
+            "violations": [],
+            "incomplete": [],
+            "passes": 12
+          },
+          "notices": []
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/authoring/templates",
+          "query": ""
+        }
+      ],
+      "mutations": [],
+      "unexpected": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "callbacks": {
+        "checks": [],
+        "receipts": [],
+        "navigation": [],
+        "toasts": []
+      }
+    }
+  ],
+  "status": "fail"
+}

@@ -1,0 +1,1899 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > shows the client-type welcome, and a starter starts a conversation with it
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > is not shown once dismissed
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home's quick actions > offer no destination this release does not carry
+An update to HomeLeadProgram inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > shows the client-type welcome, and a starter starts a conversation with it 66ms
+   → Unable to find an element by: [data-testid="home-welcome"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"landing"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"landing-center"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"landing-greet"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"landing-mark"[39m
+          [36m>[39m
+            [0m✻[0m
+          [36m</span>[39m
+          [36m<h1>[39m
+            [0mGood morning[0m
+            [0m, [0m
+            [0mDana[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"landing-segctx"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"landing-segctx-top"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"landing-segctx-cat"[39m
+            [36m>[39m
+              [0mBiotech & Pharma[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"landing-segctx-prog"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mLoading your programs…[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-newproj"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-plus"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [0mStart a new [0m
+            [0mBiotech & Pharma[0m
+            [0m project[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"landing-composer"[39m
+        [36m>[39m
+          [36m<textarea[39m
+            [33maria-autocomplete[39m=[32m"list"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"landing-input"[39m
+            [33mplaceholder[39m=[32m"How can I help you today? Type @ to name an app."[39m
+            [33mrows[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<input[39m
+            [33maccept[39m=[32m".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.xml,.png,.jpg,.jpeg,.gif,.doc,.xls,.webp"[39m
+            [33maria-label[39m=[32m"Attach files for AnA to read"[39m
+            [33mclass[39m=[32m"ana-hidden-input"[39m
+            [33mmultiple[39m=[32m""[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"landing-crow"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"landing-crow-l"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"true"[39m
+                [33maria-label[39m=[32m"Attach files"[39m
+                [33mclass[39m=[32m"landing-tool"[39m
+                [33mtitle[39m=[32m"Attach files"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-plus"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"landing-crow-r"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"dialog"[39m
+                [33mclass[39m=[32m"landing-engine"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"landing-eng-ana"[39m
+                [36m>[39m
+                  [0mAnA[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mBalanced[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"landing-eng-mode"[39m
+                [36m>[39m
+                  [0mStandard[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"landing-eng-chev"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Send"[39m
+                [33mclass[39m=[32m"landing-send"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtitle[39m=[32m"Send"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"landing-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-workflow"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"8"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"8"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"8"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"8"[39m
+                  [33mx[39m=[32m"13"[39m
+                  [33my[39m=[32m"13"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mProgram journey[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 20h9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mDraft Clinical Overview[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-beaker"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4.5 3h15"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 14h12"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mCMC Module 3[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-rocket"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mSubmission readiness[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"landing-browse"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mBrowse all capabilities[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > is not shown once dismissed 11ms
+stderr | client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home's quick actions > offer no destination this release does not carry 24ms
+   → expected [ 'program-journey', 'cmc' ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell 320ms
+   → Unable to find an accessible element with the role "button" and name `/Engine: Balanced/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Project":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-back"[39m
+  [36m/>[39m
+
+  Name "New conversation":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-head-open"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Progress· AnA's progress":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_9_"[39m
+    [33maria-expanded[39m=[32m"true"[39m
+    [33mclass[39m=[32m"ana-step-chip"[39m
+    [33mdata-live[39m=[32m"false"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "What can you help me with in this workspace?":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-empty-chip"[39m
+  [36m/>[39m
+
+  Name "What does this workspace hold so far?":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-empty-chip"[39m
+  [36m/>[39m
+
+  Name "How does a regulatory submission come together here?":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-empty-chip"[39m
+  [36m/>[39m
+
+  Name "Attach a document for AnA to use":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Attach a document for AnA to use"[39m
+    [33mclass[39m=[32m"ct-comp-attach"[39m
+    [33mdata-testid[39m=[32m"ct-attach-button"[39m
+    [33mtitle[39m=[32m"Attach a document for AnA to use"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Send message to AnA":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Send message to AnA"[39m
+    [33mclass[39m=[32m"ct-comp-send"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Close progress":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close progress"[39m
+    [33mclass[39m=[32m"ana-work-close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Talk to AnA":
+  [36m<h2 />[39m
+
+  Name "Progress":
+  [36m<h2[39m
+    [33mclass[39m=[32m"ana-work-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"ana-work-empty"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"ct-ready-doc"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Reply to AnA":
+  [36m<textarea[39m
+    [33maria-autocomplete[39m=[32m"list"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-label[39m=[32m"Reply to AnA"[39m
+    [33mplaceholder[39m=[32m"Reply to AnA — ask, request a draft, or type @ to name an app..."[39m
+    [33mrows[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Project[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-mid"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-t"[39m
+          [36m>[39m
+            [0mNew conversation[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-m"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Conversation[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-r"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ct-head-model"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-zap"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m AnA[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New conversation[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_9_"[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33mclass[39m=[32m"ana-step-chip"[39m
+            [33mdata-live[39m=[32m"false"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"ana-step-chip-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [0mProgress[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"sr-only"[39m
+            [36m>[39m
+              [0m · AnA's progress[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-main"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-conv"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ct-col"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ct-empty"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ct-empty-mk"[39m
+                [36m>[39m
+                  [0m✻[0m
+                [36m</div>[39m
+                [36m<h2>[39m
+                  [0mTalk to AnA[0m
+                [36m</h2>[39m
+                [36m<p>[39m
+                  [0mAsk a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ct-empty-chips"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"ct-empty-chip"[39m
+                  [36m>[39m
+                    [0mWhat can you help me with in this workspace?[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"ct-empty-chip"[39m
+                  [36m>[39m
+                    [0mWhat does this workspace hold so far?[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"ct-empty-chip"[39m
+                  [36m>[39m
+                    [0mHow does a regulatory submission come together here?[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"ct-ready-doc"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-composer-wrap"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ct-composer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-label[39m=[32m"Attach a document for AnA to read"[39m
+                [33mclass[39m=[32m"ana-hidden-input"[39m
+                [33mdata-testid[39m=[32m"ct-attach-input"[39m
+                [33mmultiple[39m=[32m""[39m
+                [33mtype[39m=[32m"file"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Attach a document for AnA to use"[39m
+                [33mclass[39m=[32m"ct-comp-attach"[39m
+                [33mdata-testid[39m=[32m"ct-attach-button"[39m
+                [33mtitle[39m=[32m"Attach a document for AnA to use"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-paperclip"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+              [36m<textarea[39m
+                [33maria-autocomplete[39m=[32m"list"[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-label[39m=[32m"Reply to AnA"[39m
+                [33mplaceholder[39m=[32m"Reply to AnA — ask, request a draft, or type @ to name an app..."[39m
+                [33mrows[39m=[32m"1"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Send message to AnA"[39m
+                [33mclass[39m=[32m"ct-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"sr-only"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ct-comp-foot"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ct-comp-foot"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-lock"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"11"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mry[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"11"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-canvas-pane"[39m
+          [33mdata-testid[39m=[32m"ct-canvas-pane"[39m
+          [33mhidden[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-side"[39m
+          [33mdata-artifacts[39m=[32m"false"[39m
+          [33mid[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-side-work"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ana-work"[39m
+              [33mdata-live[39m=[32m"false"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ana-work-hdr"[39m
+              [36m>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"ana-work-title"[39m
+                [36m>[39m
+                  [0mProgress[0m
+                [36m</h2>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Close progress"[39m
+                  [33mclass[39m=[32m"ana-work-close"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-x"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 6 6 18"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 6 12 12"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"ana-work-empty"[39m
+              [36m>[39m
+                [0mAnA has not started a turn in this conversation. Ask something and her plan and steps appear here as she works.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > shows the client-type welcome, and a starter starts a conversation with it
+TestingLibraryElementError: Unable to find an element by: [data-testid="home-welcome"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"landing"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"landing-center"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"landing-greet"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"landing-mark"[39m
+          [36m>[39m
+            [0m✻[0m
+          [36m</span>[39m
+          [36m<h1>[39m
+            [0mGood morning[0m
+            [0m, [0m
+            [0mDana[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"landing-segctx"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"landing-segctx-top"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"landing-segctx-cat"[39m
+            [36m>[39m
+              [0mBiotech & Pharma[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"landing-segctx-prog"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mLoading your programs…[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-newproj"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-plus"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [0mStart a new [0m
+            [0mBiotech & Pharma[0m
+            [0m project[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"landing-composer"[39m
+        [36m>[39m
+          [36m<textarea[39m
+            [33maria-autocomplete[39m=[32m"list"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"landing-input"[39m
+            [33mplaceholder[39m=[32m"How can I help you today? Type @ to name an app."[39m
+            [33mrows[39m=[32m"3"[39m
+          [36m/>[39m
+          [36m<input[39m
+            [33maccept[39m=[32m".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.xml,.png,.jpg,.jpeg,.gif,.doc,.xls,.webp"[39m
+            [33maria-label[39m=[32m"Attach files for AnA to read"[39m
+            [33mclass[39m=[32m"ana-hidden-input"[39m
+            [33mmultiple[39m=[32m""[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"landing-crow"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"landing-crow-l"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"true"[39m
+                [33maria-label[39m=[32m"Attach files"[39m
+                [33mclass[39m=[32m"landing-tool"[39m
+                [33mtitle[39m=[32m"Attach files"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-plus"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"landing-crow-r"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"dialog"[39m
+                [33mclass[39m=[32m"landing-engine"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"landing-eng-ana"[39m
+                [36m>[39m
+                  [0mAnA[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mBalanced[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"landing-eng-mode"[39m
+                [36m>[39m
+                  [0mStandard[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"landing-eng-chev"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Send"[39m
+                [33mclass[39m=[32m"landing-send"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtitle[39m=[32m"Send"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"landing-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-workflow"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"8"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"8"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"8"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"8"[39m
+                  [33mx[39m=[32m"13"[39m
+                  [33my[39m=[32m"13"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mProgram journey[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-pen-line"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 20h9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mDraft Clinical Overview[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-beaker"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4.5 3h15"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 14h12"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mCMC Module 3[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"landing-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ico"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-rocket"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mSubmission readiness[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"landing-browse"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mBrowse all capabilities[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx:68:19
+     66|     const welcome = welcomeFor('biotech', 'Dana');
+     67|     render(<Home onNav={onNav} onAsk={vi.fn()} segment="biotech" welco…
+     68|     expect(screen.getByTestId('home-welcome')).toBeTruthy();
+       |                   ^
+     69|     const starter = welcome.starters.find((s) => !s.navTo)!;
+     70|     fireEvent.click(screen.getByRole('button', { name: starter.label }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home's quick actions > offer no destination this release does not carry
+AssertionError: expected [ 'program-journey', 'cmc' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "program-journey",
++   "cmc",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx:87:57
+     85|     for (const b of Array.from(document.querySelectorAll('.landing-act…
+     86|     const opened = onNav.mock.calls.map((c) => c[0] as string);
+     87|     expect(opened.filter((id) => !isLaunchSurface(id))).toEqual([]);
+       |                                                         ^
+     88|   });
+     89| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Engine: Balanced/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Project":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-back"[39m
+  [36m/>[39m
+
+  Name "New conversation":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-head-open"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Progress· AnA's progress":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_9_"[39m
+    [33maria-expanded[39m=[32m"true"[39m
+    [33mclass[39m=[32m"ana-step-chip"[39m
+    [33mdata-live[39m=[32m"false"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "What can you help me with in this workspace?":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-empty-chip"[39m
+  [36m/>[39m
+
+  Name "What does this workspace hold so far?":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-empty-chip"[39m
+  [36m/>[39m
+
+  Name "How does a regulatory submission come together here?":
+  [36m<button[39m
+    [33mclass[39m=[32m"ct-empty-chip"[39m
+  [36m/>[39m
+
+  Name "Attach a document for AnA to use":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Attach a document for AnA to use"[39m
+    [33mclass[39m=[32m"ct-comp-attach"[39m
+    [33mdata-testid[39m=[32m"ct-attach-button"[39m
+    [33mtitle[39m=[32m"Attach a document for AnA to use"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Send message to AnA":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Send message to AnA"[39m
+    [33mclass[39m=[32m"ct-comp-send"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Close progress":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Close progress"[39m
+    [33mclass[39m=[32m"ana-work-close"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Talk to AnA":
+  [36m<h2 />[39m
+
+  Name "Progress":
+  [36m<h2[39m
+    [33mclass[39m=[32m"ana-work-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"ana-work-empty"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"ct-ready-doc"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Reply to AnA":
+  [36m<textarea[39m
+    [33maria-autocomplete[39m=[32m"list"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-label[39m=[32m"Reply to AnA"[39m
+    [33mplaceholder[39m=[32m"Reply to AnA — ask, request a draft, or type @ to name an app..."[39m
+    [33mrows[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ct-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-thread-head"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"ct-back"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 19-7-7 7-7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 12H5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Project[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-mid"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-t"[39m
+          [36m>[39m
+            [0mNew conversation[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-head-m"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Conversation[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-head-r"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"ct-head-model"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-zap"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m AnA[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"ct-head-open"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New conversation[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_9_"[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33mclass[39m=[32m"ana-step-chip"[39m
+            [33mdata-live[39m=[32m"false"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"ana-step-chip-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [0mProgress[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"sr-only"[39m
+            [36m>[39m
+              [0m · AnA's progress[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ct-main"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-conv"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ct-col"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ct-empty"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ct-empty-mk"[39m
+                [36m>[39m
+                  [0m✻[0m
+                [36m</div>[39m
+                [36m<h2>[39m
+                  [0mTalk to AnA[0m
+                [36m</h2>[39m
+                [36m<p>[39m
+                  [0mAsk a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ct-empty-chips"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"ct-empty-chip"[39m
+                  [36m>[39m
+                    [0mWhat can you help me with in this workspace?[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"ct-empty-chip"[39m
+                  [36m>[39m
+                    [0mWhat does this workspace hold so far?[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"ct-empty-chip"[39m
+                  [36m>[39m
+                    [0mHow does a regulatory submission come together here?[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"ct-ready-doc"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-composer-wrap"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ct-composer"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33maria-label[39m=[32m"Attach a document for AnA to read"[39m
+                [33mclass[39m=[32m"ana-hidden-input"[39m
+                [33mdata-testid[39m=[32m"ct-attach-input"[39m
+                [33mmultiple[39m=[32m""[39m
+                [33mtype[39m=[32m"file"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Attach a document for AnA to use"[39m
+                [33mclass[39m=[32m"ct-comp-attach"[39m
+                [33mdata-testid[39m=[32m"ct-attach-button"[39m
+                [33mtitle[39m=[32m"Attach a document for AnA to use"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-paperclip"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+              [36m<textarea[39m
+                [33maria-autocomplete[39m=[32m"list"[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-label[39m=[32m"Reply to AnA"[39m
+                [33mplaceholder[39m=[32m"Reply to AnA — ask, request a draft, or type @ to name an app..."[39m
+                [33mrows[39m=[32m"1"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Send message to AnA"[39m
+                [33mclass[39m=[32m"ct-comp-send"[39m
+                [33mdisabled[39m=[32m""[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 19V5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mclass[39m=[32m"sr-only"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ct-comp-foot"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ct-comp-foot"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-lock"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"11"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mry[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"11"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-canvas-pane"[39m
+          [33mdata-testid[39m=[32m"ct-canvas-pane"[39m
+          [33mhidden[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ct-side"[39m
+          [33mdata-artifacts[39m=[32m"false"[39m
+          [33mid[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ct-side-work"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ana-work"[39m
+              [33mdata-live[39m=[32m"false"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ana-work-hdr"[39m
+              [36m>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"ana-work-title"[39m
+                [36m>[39m
+                  [0mProgress[0m
+                [36m</h2>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Close progress"[39m
+                  [33mclass[39m=[32m"ana-work-close"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-x"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18 6 6 18"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 6 12 12"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"ana-work-empty"[39m
+              [36m>[39m
+                [0mAnA has not started a turn in this conversation. Ask something and her plan and steps appear here as she works.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx:104:25
+    102|       />,
+    103|     );
+    104|     const pill = screen.getByRole('button', { name: new RegExp(`Engine…
+       |                         ^
+    105|     fireEvent.click(pill);
+    106|     fireEvent.click(screen.getByRole('radio', { name: new RegExp(other…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  02:08:02
+   Duration  3.39s (transform 1.68s, setup 140ms, import 2.16s, tests 427ms, environment 487ms)
+

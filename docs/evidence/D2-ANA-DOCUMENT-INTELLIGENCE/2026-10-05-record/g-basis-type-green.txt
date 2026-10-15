@@ -1,0 +1,960 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/schema-contract/one-normalize-ctd-code.contract.test.ts > normalizeCtdCode has one definition > is defined only in the shared section-code module 401ms
+ ✓ tests/schema-contract/one-normalize-ctd-code.contract.test.ts > normalizeCtdCode has one definition > is re-exported only where it was imported from the shared module 266ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > chains classification, study design, review, sensitivity, and timeline 29ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > executive summary top next actions come from the sensitivity tornado 20ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > a complete dossier yields a high readiness summary 15ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > all aggregated citations resolve to real corpus entries 18ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > compareProgramScenarios > ranks a well-evidenced scenario above a bare one 27ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > has a substantial, growing corpus 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > every entry has stable id, required fields, and at least one citation 41ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > entry ids are unique 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > every related reference resolves to a real entry (no dangling links) 6ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > covers all four domains 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > finds the IVDR Annex VIII classification entry 10ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > finds the LDT entry by topical query 4ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > finds detection-capability for LoD/LoB/LoQ 3ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > respects the domain filter 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > respects the jurisdiction filter 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > honors the limit 3ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > ranks title/tag matches above detail-only matches 2ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > listEntriesPaged returns total + window and is stable across offsets 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > listEntriesPaged total reflects filters, not the page size 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > searchPaged total counts all matches; window respects offset/limit 9ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > gets an entry by id and resolves its related entries 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > returns null for an unknown id 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > listEntries filters by topic 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > lists domains and topics 1ms
+stderr | server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed
+{
+  "timestamp": "2026-10-05T02:24:01.840Z",
+  "level": "error",
+  "message": "[regulatory-knowledge-tools] plan_submission_from_database_lock failed",
+  "context": {
+    "err": "relation \"vault.documents\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > answers a CSR heading, a CTD section and a document type from the canonical record 3ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > says what it does not index, and lists what it does 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > fits the result budget for every section, document type and E3 heading it knows 20ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > without a project, gives the plan and says there is no standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > with an organization but no open project, says so rather than reading another project 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the open project’s Vault, scoped by organization and program, and decides the standing 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a step the Vault cannot hold is never reported missing, and never as what a step waits on 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a read cut short says so, and claims nothing is missing 17ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > gives one step in full, with its checked sources 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > fits the result budget, with and without a standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > lists every rule in brief with what the platform checks, and what FDA has said about Elsa 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the pdf rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the ectd rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the study-data rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the content rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > refuses an area it does not have 0ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > returns grounded, citation-backed entries for a real IVD query 12ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > honestly reports no match for an unrelated query (nothing invented) 9ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > respects the limit (capped at 15) and a domain filter 2ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > caps an over-large limit at 15 10ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > carries corpus version + provenance 3ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > exposes a well-formed tool spec 0ms
+stdout | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+{
+  "timestamp": "2026-10-05T02:24:02.352Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:24:02.353Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+{
+  "timestamp": "2026-10-05T02:24:02.354Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-05T02:24:02.368Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:24:02.369Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-05T02:24:02.369Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/writing-gate-regulatory-register.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA context-of-use list carries the Module 1 headings this contract is derived from 2ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the deep IND eCTD map (project bootstrap / readiness / checklist) files Module 1 where FDA does 3ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the IND section registry (AnA plans, coverage, chat) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the CTD authoring guidance (AnA drafting prompts) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack (the editor outline) files Module 1 where FDA does 22ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack carries the Module 1 content an initial IND must file 16ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the submission workflows AnA is guided by file Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the global-RI FDA Module 1 requirements file where FDA does 2ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the reference FDA backbone template files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the required-artifact matrix (IND / NDA / BLA project bootstrap) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the Module 1 authoring-surface structure (M1/M2 build state) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template (dispatch-readiness required sections) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template requires of an IND only what an IND files, and of an NDA only what an NDA files 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the compile gate baseline (unknown program type) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the compile gate requires of an IND (the live rule pack) is what the seeded IND tree creates 27ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > registers guidance for every core CTD leaf section 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > every guidance entry is industry-grade (real prose + concrete content elements) 5ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > drug-substance and drug-product sections require CMC across IND/NDA/BLA 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — marketing blueprint is deep > an NDA blueprint exposes drug-substance and clinical leaves as first-class sections 7ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > covers the full IND->NDA/BLA lifecycle spine 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > every document type carries real components and regulatory basis 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > the NDA document type resolves deep CTD sections from the shared overlay 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > links document types to the canonical taxonomy so the catalog can reach deep guidance 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > meeting packages are flagged and the ISS/ISE integrated summaries exist 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — prompt generation > drafts a deep leaf code against its real guidance 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — prompt generation > every registered guidance code has a non-empty title and module 1-5 4ms
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T02:24:03.630Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:24:03.631Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T02:24:03.631Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-05T02:24:04.372Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T02:24:04.544Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:24:04.555Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T02:24:04.555Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 4ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 3ms
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > 2.7.3: the requirements are the Summary of Clinical Efficacy brief, exact
+{
+  "timestamp": "2026-10-05T02:24:06.101Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a code nothing indexes: the requirements say so, source none
+{
+  "timestamp": "2026-10-05T02:24:06.107Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "9.9",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a container code: source parent
+{
+  "timestamp": "2026-10-05T02:24:06.108Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a sub-section deeper than any entry: source ancestor
+{
+  "timestamp": "2026-10-05T02:24:06.109Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.5.4.xxx",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > section-generation@v1.1 at the gateway, on the draft and in the audit row, with the source
+{
+  "timestamp": "2026-10-05T02:24:06.110Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > the system prompt asks for the impersonal register, labelled platform convention, not second person
+{
+  "timestamp": "2026-10-05T02:24:06.111Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > 2.7.3: the requirements are the Summary of Clinical Efficacy brief, exact 11ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a code nothing indexes: the requirements say so, source none 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a container code: source parent 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a sub-section deeper than any entry: source ancestor 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > section-generation@v1.1 at the gateway, on the draft and in the audit row, with the source 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > the system prompt asks for the impersonal register, labelled platform convention, not second person 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.9 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.12.14 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.1.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.4.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.4.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.20 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.A 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.P 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.R 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.S 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.A 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.8 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.R 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.2 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.4 0ms
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/ana/__tests__/clinical-arithmetic.test.ts
+{
+  "timestamp": "2026-10-05T02:24:07.147Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:24:07.151Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/clinical-arithmetic.test.ts
+{
+  "timestamp": "2026-10-05T02:24:07.152Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/clinical-arithmetic.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/clinical-arithmetic.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/clinical-arithmetic.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > flags a percentage that does not match its own n/N, with the recomputed value 4ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > accepts a percentage that rounds correctly at its stated precision 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > judges an integer percentage at integer precision (USPI §6 convention) 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > reads the n/N (x%) order and thousands separators 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > still recomputes a pair whose N merely falls in the year range 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > accepts an exact half either way 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > skips bounded percentages, impossible pairs and a pair the parenthesis does not close on 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > flags arm counts that do not sum to the randomized total 2ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > reads the total after the verb and the "<arm> (n=<int>)" form 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > accepts arms that add up, including treated totals and thousands separators 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > raises no finding on a randomization ratio or a parenthetical that is not an arm list 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (610 in the FAS and 598 in the PP population). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (610 received at least one dose and 598 received all doses). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: 612 subjects were randomized (612 in the ITT and 600 in the safety set). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (306 to drug and 300 in the per-protocol set). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: 612 patients were enrolled (612 in the mITT population, 590 completed the study). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: Of the 612 subjects randomized, 610 received at least one dose (305 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: A total of 612 subjects were randomized, and 598 completed the study (300 in Drug X and 298 in placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized; 610 were treated (305 to Drug X and 305 to placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: Of 612 patients randomized, 600 were treated (300 received Drug X and 300 received placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized and those completing the study were analysed (300 in Drug X and 298 in placebo). 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > compares the arm list with the count immediately before it 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > reads the "<arm>, n=<int>" form 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkTerminologyConsistency — arithmetic > fails a draft whose percentage does not match its own n/N 3ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkTerminologyConsistency — arithmetic > stays ok on arithmetic that holds 2ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > holds the six PDUFA meeting types with their schedule and package deadlines 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > FDA formal-meeting timelines come from one table > labels every figure not read in FDA text as recall 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > timing is 70 days to the meeting and the package 50 calendar days before it 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > no EOP2 component tells the sponsor the package is due 30 days ahead 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_ind_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_nda_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the end-of-Phase-2 meeting is a Type B(EOP) meeting > pre_bla_meeting keeps the plain Type B 60/30 timing 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_ind_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > end_of_phase_2_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_nda_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > meeting entries cite the final formal-meetings guidance > pre_bla_meeting carries no 2017 citation 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > a pre-IND meeting package carries the CMC summary and no "accompanies the request" claim 5ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > an EOP2 briefing document gets the EOP2 components and the 50-day package deadline 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "end of phase 1 meeting" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "EOP1 meeting package" is not served the EOP2 (Type B(EOP)) template 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "draft the pre-NDA meeting package" gets the pre_nda_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "prepare our pre-BLA meeting briefing document" gets the pre_bla_meeting components 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > no meeting template is a hand-kept heading list 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > some component asks for E2F Section 19 (Summary of Important Risks) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > no component calls Section 19 the conclusions 3ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > the conclusions are E2F Section 20 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > interval line listings are of serious adverse reactions (E2F 7.2), tabulations of SAEs (7.3) 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclusions > exports the E2F outline once, every heading cited 1ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block carries §16, §19 and §20 under their E2F numbers 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every E2F section is required: E2F says complete all of them, stating when there is nothing to report 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block lists the E2F headings in E2F order, none of them optional 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > no detection pattern carries a form feed 0ms
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > an IND annual report request is not served the DSUR template 0ms
+stdout | tests/regulatory/submission-chain.test.ts
+{
+  "timestamp": "2026-10-05T02:24:08.579Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:24:08.580Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/submission-chain.test.ts
+{
+  "timestamp": "2026-10-05T02:24:08.580Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/submission-chain.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/submission-chain.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/submission-chain.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > lists each step after every step it is written from 4ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > csr is written from tlf 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > tlf is written from adam 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > adam is written from sdtm 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > sdtm is written from database_lock 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > database_lock is written from sap_final 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > iss is written from csr 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > ise is written from csr 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > iss is written from integrated_data 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_7_3 is written from ise 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_7_4 is written from iss 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_5 is written from m2_7_3 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > m2_5 is written from m2_7_4 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > labeling is written from m2_5 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > ectd_assembly is written from sdtm 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > transmission is written from technical_validation 0ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > every step rests on a basis, and every checked source names its URL and date 2ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > a step the platform cannot see is never treated as missing or as done 2ms
+ ✓ tests/regulatory/submission-chain.test.ts > the chain from database lock to a filed application > a classifier’s proposal is not a filing 1ms
+ ✓ tests/regulatory/submission-chain.test.ts > the NDA workflow AnA is given follows the chain > every chain edge between two workflow steps is an edge of the workflow 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > imports nothing, so client and server can both use it 2ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > lists exactly the regulator hosts the record accepts 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts regulator-text with a regulator URL (subdomains included) and a checked date 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts regulator-text read from a vendored regulator artifact with a checked date 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text without a checked date 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text with neither a URL nor a vendored artifact 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text whose URL is not on a regulator host, including look-alikes 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a URL that does not parse or is not http(s) 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a checked value that is not a real ISO calendar date 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a vendored path that is absolute or leaves the repository 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses an empty ref and an unknown confidence 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts recall and platform convention with no URL or date, and with a secondary-source URL 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > says a recalled fact was not checked against the regulator text 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > says a platform convention is not a regulatory requirement 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > gives the checked date for well-formed regulator text 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > never presents a malformed regulator-text claim as checked 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > ind/ctd/types.ts declares no provenance type of its own 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > the types are identical 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > every basis constant the CSR record ships is well formed under the shared rules 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > the IVD Citation carries provenance from the same type > confidence and checked are typed from shared/regulatory/regulatory-basis 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > quantitative assay recommends the full CLSI EP analytical set 2ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > NGS assay recommends panel + bioinformatics + reference materials + variant classification 1ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > ctDNA specimen adds the ultra-low-LoD / CHIP study 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > CDx intended use adds a bridging study and a contemporaneous-review note 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > euIvdr flag pulls in the performance-evaluation framing and ISO 20916 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > every cited knowledge id resolves to a real corpus entry 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy 2ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.2 is Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a code nothing registers gets no line rather than a guessed one 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code 10ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code 5ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > keeps the module playbooks the overlay does not model 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3 8ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3 8ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4 summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD primary code is named for that code 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 does not claim to be the ISE 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.4 does not claim to be the ISS 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 states FDA’s own description of the summary 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND initial · Introductory Statement: country-withdrawal disclosure cites 312.23(a)(3)(iii), not (a)(3)(iv) 1ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · safety summary: cites 312.33(b)(1)-(4), not (b)(1)-(2) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · IND changes: cites (b)(6) preclinical, (b)(7) manufacturing, (e) Phase 1 mods — not (b)(3)-(5) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · admin section: no Part 56 obligation asserted; cites 312.33(f) and (g) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · regulatoryBasis: no phantom Part 56 element 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > Pre-NDA meeting · 312.47(b)(2) is glossed as "Other meetings", not end-of-Phase-2 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.2 · is the cover letter, and no Module 1 guidance claims a table-of-contents heading (the eCTD backbone is the index) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.20 · general investigational plan cites 312.23(a)(3) and files at FDA heading 1.20 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.14.4.1 · IB: 312.23(a)(5) enumerates content; 312.55 is the separate furnishing duty 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A1 ICH E3 §5.3 consent statement gives no claims finding 16ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A2 statutory designation gives no claims finding 6ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A3 superiority hypothesis gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A4 antibacterial endpoint gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A5 PK elimination gives no claims finding 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A6 AE outcome gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A7 dose optimization gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > best supportive care gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > BCVA endpoint gives no claims finding 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > RECIST best overall response gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > eligibility term gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > microbiological eradication gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > follow-up census gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > site-qualified consent gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > renal elimination gives no claims finding 2ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > tested superiority hypothesis gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > powered superiority hypothesis gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > disposition census gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > AE outcome with a time point gives no claims finding 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > AE outcome at clause end gives no claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > reports the register and the basis of each exemption it applied 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > exempts only the term of art, not another over-claim in the same sentence 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > flags a predicted approval and trial success as high regulatory_outcome findings 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the standard protocol statement about IRB approval 2ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: Any protocol amendment will be approved by the sponsor before implementation. 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: Dose escalation will be approved by the Safety Review Committee. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The protocol will be approved by the local ethics committee before enrolment. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The protocol will be approved by each site IRB before enrolment. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The Medical Monitor will approve each dose escalation decision. 2ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: The protocol will be approved by the IRB and submitted to FDA with the IND. 6ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the governance step: Each amendment will be approved by the sponsor and the IEC before implementation. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved for this indication. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by FDA in 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The sponsor expects that FDA will approve drug X. 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The marketing authorisation application is likely to be approved by the European Commission. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the end of 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by Q3 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: We expect that drug X will be approved by year-end. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Food and Drug Administration in 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by MHLW in Japan. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Ministry of Health, Labour and Welfare. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by CDER. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by Swissmedic. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The Food and Drug Administration will approve drug X. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: MHLW will approve drug X next year. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: The protocol and drug X will be approved by the IRB and FDA. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor and the European Medicines Agency. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: FDA and the sponsor will approve the label. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the IRB, then by FDA. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the Steering Committee and then by FDA. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor's target date of 2027. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor-requested action date. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > still flags the regulatory-decision prediction: Drug X will be approved by the sponsor (FDA) next year. 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > the promotional register does not add the governance lexicon 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients responded to treatment. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The drug works in all patients. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The treatment cures the disease and eliminates recurrence. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X is the best option. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Our breakthrough therapy is the most effective option. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The objective response rate with drug X was superior to that with docetaxel. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Our objective is simple: drug X is superior to every competitor. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients responded to treatment and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients achieved complete remission and received follow-up. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Every patient treated with drug X was cured and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients in Arm A responded and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X eliminated tumour recurrence in patients with renal impairment. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X eliminates the disease and has low hepatic clearance. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X is a clinical cure for hepatitis C. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Bacterial infections are eradicated by drug X. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: These results continue to demonstrate that drug X is superior to standard of care. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients completed treatment without relapse. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients in the study were treated successfully. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients completed treatment with no relapse. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and improved. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and benefited. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients received drug X and none relapsed. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X completely resolved the disease. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Treatment with drug X completely resolved the infection. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X resolved completely the symptoms of psoriasis. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X completely resolved psoriasis in the majority of patients. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The infection was completely resolved by drug X. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients responded to treatment. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The drug works in all patients. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The treatment cures the disease and eliminates recurrence. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X is the best option. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Our breakthrough therapy is the most effective option. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The objective response rate with drug X was superior to that with docetaxel. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Our objective is simple: drug X is superior to every competitor. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients responded to treatment and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients achieved complete remission and received follow-up. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Every patient treated with drug X was cured and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients in Arm A responded and completed the study. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X eliminated tumour recurrence in patients with renal impairment. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X eliminates the disease and has low hepatic clearance. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X is a clinical cure for hepatitis C. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Bacterial infections are eradicated by drug X. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: These results continue to demonstrate that drug X is superior to standard of care. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients completed treatment without relapse. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients in the study were treated successfully. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients completed treatment with no relapse. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and improved. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and benefited. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients received drug X and none relapsed. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X completely resolved the disease. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Treatment with drug X completely resolved the infection. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X resolved completely the symptoms of psoriasis. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X completely resolved psoriasis in the majority of patients. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The infection was completely resolved by drug X. keeps a high claims finding 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > promotional register (screen_promotional_language default) is unchanged > still flags "All patients" in the consent statement 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > verifyRevision and critiqueDocument use the submission register by default 1ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > each tool declares the register input 0ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > critique_draft reports the register it applied and honours an explicit one 2ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > verify_revision and critique_document report the register 2ms
+ ✓ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > the submission register stays linear on a CSR-sized text > screens 300 KB in well under a second, with the same verdicts 24ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > an empty-evidence quantitative 510(k) is not substantially complete with majors 2ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > a complete quantitative dossier reaches likely acceptance 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > IVDR pathway flags a missing PMPF plan 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > NGS assay flags bioinformatics + software + cybersecurity 1ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > a recognized biomarker downgrades the scientific-validity finding to minor 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > every finding cites a real corpus entry 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > drops the wrong type size, paragraph citations and conditions 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > states the 20-line boxed-warning limit, (d)(6) type size and (d)(8) length 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > Recent Major Changes is conditional, listed for at least 1 year 2ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > the Highlights boxed warning carries the 20-line limit 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > lists the 201.57 format rules, each sourced to eCFR 3ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > limits Recent Major Changes to the five sections (a)(5) names 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > puts the omitted-sections asterisk on the Contents heading, not on an omitted heading (b) 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > keeps the unfiltered brief and the labeling area within the result budget 4ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > US section guard requires Highlights and Contents > requires the Highlights heading, its verbatim statements and Contents 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > US section guard requires Highlights and Contents > fails a PI that has every FPI section but no Highlights or Contents 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records Elsa 4.0 and HALO from FDA’s May 2026 announcement 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records FDA’s use of Elsa for protocol reviews and inspection targets 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > rests the image-only PDF consequence on the specification, not a tool limit 0ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > still says FDA has published no acceptance criteria for Elsa 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.3 / 2.7.4 prompts agree with their own guidance: the ISE / ISS are filed in 5.3.5.3 > 2.7.3 drafting prompt does not say the section houses the integrated summary 2ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.3 / 2.7.4 prompts agree with their own guidance: the ISE / ISS are filed in 5.3.5.3 > 2.7.4 drafting prompt does not say the section houses the integrated summary 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.4 references where death / SAE narratives are; it does not send them to 2.7.6 > no field ties narratives to 2.7.6 1ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.4 references where death / SAE narratives are; it does not send them to 2.7.6 > names 2.7.4.2.2 and the study reports as the narratives’ home 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > states that synopses are not repeated in Module 2 in eCTD and are hyperlinked 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > keeps the EU nuance: copies are also accepted 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 2.7.6 lists the studies and hyperlinks their Module 5 synopses > no longer routes SAE/death narratives through 2.7.6 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > every sentence that says PREA does not apply to orphan indications also states the exception 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > names the 505B(k)(2) molecular-target exception, and the drafting prompt carries it 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.9 PREA: orphan designation does not exempt a molecularly targeted adult-cancer drug > requiredFor stays NDA/BLA: an iPSP is not owed by every IND 1ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > no field places the IB at 1.4.1; 1.4.1 appears only named as the letter of authorization 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > cites E6(R3) Appendix A, and "Section 7" only as the E6(R2) location 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > reference safety information carries the frequency and nature of expected serious adverse reactions 0ms
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts > 1.14.4.1 is the Investigator’s Brochure, filed at 1.14.4.1, built to E6(R3) Appendix A > the drafting prompt drafts the IB at 1.14.4.1, not a 1.4.1 reference stub 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > every FDA rule the platform enforces maps to a corpus rule that is not "external" 2ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > no corpus rule claims a check the FDA registry says nothing runs 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY is answered as checked by the platform, not by the agency validator 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY names each enforcement point, and each one refuses a secured leaf 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > blood-screening transmissible-agent test is Class D (Rule 1) 2ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > companion diagnostic is Class C (Rule 3a) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > cancer detection is Class C (Rule 3b) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > a self-test is Class C under Rule 4(a) when criticality is not stated 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > takes the Rule 4(a) Class B exception only on an explicitly low-risk result, and says it did 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > near-patient testing sets no class of its own (Rule 4(b)) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > a device matching no rule is Class B by the Rule 6 catch-all, and needs a notified body 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > never awards Class A, and explains that Rule 5 is the manufacturer's to assert 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > highest applicable class wins (CDx + cancer + near-patient → C) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > blood grouping by intended purpose is Class D (Rule 2) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > emits the complete Annex VIII rule set, all seven rules 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > every knowledge ref resolves to a real corpus entry 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > regulatoryBasis names the ST&F and the OCMQs as reviewer practice, voluntary for sponsors 5ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > ISS-AE groups terms by OCMQ and anticipates the ST&F layout 4ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the standalone ISS anticipates FDA ST&F and OCMQ review > ISS-LAB anticipates the kidney- and muscle-injury Targeted Analysis Guides 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the E3 overlay cites the ST&F IG and OCMQs at 12.2.2 / 12.2.3 > 12.2.2 carries the ST&F IG and OCMQ bases as regulator-text and frames the layout as anticipation 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > the E3 overlay cites the ST&F IG and OCMQs at 12.2.2 / 12.2.3 > 12.2.3 names the grouped-term pitfall and has a basis 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > CTD 2.7.4 anticipates grouped-term (OCMQ) review > expectedData or commonPitfalls mention OCMQ 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > the surfaces mention OCMQ at all (so the guards below are not vacuous) 0ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > no "required" / "must" within a clause of an OCMQ or ST&F mention 1ms
+ ✓ tests/regulatory/fda-safety-presentation.test.ts > reviewer tools are never presented as sponsor requirements > the OCMQ count and MedDRA version are not fixed in the record 3ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-EFF 2ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-SAFETY 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-EFF 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-SAFETY 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.1 1ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.2 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.3 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.4 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > names every heading in the content elements and the generation prompt 1ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > ties the headings to FDA's Benefit-Risk Framework and fits the brief's caps 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > warns against product data in the Therapeutic Context 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > reaches the section brief with every heading, including from a child code 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16 2ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > every section says what it is for, and §14 is the displays NOT in the text 1ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > carries every numbered section in order 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — PBRER outline is ICH E2C(R2) §1–§19 > §12–§19 carry the E2C(R2) headings 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > is not served for CTD 1.1 (FDA Forms) 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — cover letter placement is regional > carries no single CTD code, and its basis names FDA 1.2 and EU 1.0 0ms
+ ✓ tests/regulatory/template-library-truth.test.ts > template library — unaffected lookups (guard) > Clinical Overview stays at 2.5 and the QOS still resolves by 2.3 0ms
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T02:24:10.556Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:24:10.558Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T02:24:10.558Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves a known biomarker by alias 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves HER2 via the erbb2 alias 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves KRAS G12C to the KRAS entry 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > does not recognize an unknown marker 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > a recognized biomarker satisfies the biomarkerDefined element and surfaces citations 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > an unknown biomarker yields a scientific-validity recommendation and no linkage 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > flags missing clinical validation and contemporaneous review 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > every knowledge ref resolves to a real corpus entry 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+stdout | server/services/regulatory/__tests__/ivd-assessments.test.ts
+{
+  "timestamp": "2026-10-05T02:24:11.357Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T02:24:11.358Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/ivd-assessments.test.ts
+{
+  "timestamp": "2026-10-05T02:24:11.359Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/ivd-assessments.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/ivd-assessments.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/ivd-assessments.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > accepts known assessment types 1ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > accepts known document types 0ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > covers every calculator family that can be saved 1ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > corpusVersion > is stable across calls and well-formed 1ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > corpusVersion > encodes the corpus entry count 0ms
+
+ Test Files  28 passed (28)
+      Tests  566 passed (566)
+   Start at  02:23:59
+   Duration  11.99s (transform 13.52s, setup 648ms, import 27.70s, tests 1.49s, environment 2ms)
+

@@ -1,0 +1,459 @@
+{
+  "scope": "Root-authorized lightweight SQL-only migration qualification; local owned fresh QA, not hosted CI",
+  "source": {
+    "path": "/workspace/ClinicalSageAI-2-replit/migrations/20260928_platform_role_grants_platform_writes.sql",
+    "sha256": "e55d4c0ed08368020687f728837468611e34cc00cc5ddebf53998c9e51af255e"
+  },
+  "database": "platform_ci_fresh_verify_20261014_beb73055",
+  "rowDmlExecuted": false,
+  "roleGrantsExecuted": false,
+  "historyDeleted": false,
+  "nativeApiExecuted": false,
+  "installerExecuted": false,
+  "compilerExecuted": false,
+  "duplicateNegative": {
+    "executed": false,
+    "reason": "No fixture-row mutation authorized; existing duplicate counts and physical uniqueness only are qualified."
+  },
+  "before": {
+    "rows": {
+      "count": 0,
+      "content_md5": "d751713988987e9331980363e24189ce"
+    },
+    "policies": [
+      {
+        "policyname": "platform_role_grants_platform_delete",
+        "permissive": "PERMISSIVE",
+        "roles": "{public}",
+        "cmd": "DELETE",
+        "qual": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+        "with_check": null
+      },
+      {
+        "policyname": "platform_role_grants_platform_insert",
+        "permissive": "PERMISSIVE",
+        "roles": "{public}",
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))"
+      },
+      {
+        "policyname": "platform_role_grants_platform_update",
+        "permissive": "PERMISSIVE",
+        "roles": "{public}",
+        "cmd": "UPDATE",
+        "qual": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+        "with_check": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))"
+      },
+      {
+        "policyname": "platform_role_grants_read",
+        "permissive": "PERMISSIVE",
+        "roles": "{public}",
+        "cmd": "SELECT",
+        "qual": "true",
+        "with_check": null
+      }
+    ],
+    "triggers": [
+      {
+        "tgname": "RI_ConstraintTrigger_c_178811",
+        "tgenabled": "O",
+        "tgisinternal": true,
+        "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_178811\" AFTER INSERT ON public.platform_role_grants FROM users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_ins\"()"
+      },
+      {
+        "tgname": "RI_ConstraintTrigger_c_178812",
+        "tgenabled": "O",
+        "tgisinternal": true,
+        "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_178812\" AFTER UPDATE ON public.platform_role_grants FROM users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_upd\"()"
+      }
+    ],
+    "table": {
+      "relrowsecurity": true,
+      "relforcerowsecurity": true,
+      "relfilenode": 172953
+    },
+    "sequence": {
+      "last_value": "1",
+      "is_called": false
+    },
+    "constraints": [
+      {
+        "conname": "platform_role_grants_pkey",
+        "contype": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "conname": "platform_role_grants_user_id_users_id_fk",
+        "contype": "f",
+        "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+      }
+    ],
+    "duplicates": {
+      "duplicate_groups": 0,
+      "excess_rows": 0
+    },
+    "indexes": [
+      {
+        "relname": "platform_role_grants_pkey",
+        "oid": "172960",
+        "indisunique": true,
+        "indisvalid": true,
+        "indisready": true,
+        "indimmediate": true,
+        "predicate": null,
+        "definition": "CREATE UNIQUE INDEX platform_role_grants_pkey ON public.platform_role_grants USING btree (id)"
+      }
+    ]
+  },
+  "malformedName": {
+    "executed": true,
+    "refused": true,
+    "sqlstate": "P0001",
+    "rollback": "Transient nonunique wrong-key index rolled back; no DROP or row mutation."
+  },
+  "afterMalformedRollback": {
+    "rows": {
+      "count": 0,
+      "content_md5": "d751713988987e9331980363e24189ce"
+    },
+    "policies": [
+      {
+        "policyname": "platform_role_grants_platform_delete",
+        "permissive": "PERMISSIVE",
+        "roles": "{public}",
+        "cmd": "DELETE",
+        "qual": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+        "with_check": null
+      },
+      {
+        "policyname": "platform_role_grants_platform_insert",
+        "permissive": "PERMISSIVE",
+        "roles": "{public}",
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))"
+      },
+      {
+        "policyname": "platform_role_grants_platform_update",
+        "permissive": "PERMISSIVE",
+        "roles": "{public}",
+        "cmd": "UPDATE",
+        "qual": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+        "with_check": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))"
+      },
+      {
+        "policyname": "platform_role_grants_read",
+        "permissive": "PERMISSIVE",
+        "roles": "{public}",
+        "cmd": "SELECT",
+        "qual": "true",
+        "with_check": null
+      }
+    ],
+    "triggers": [
+      {
+        "tgname": "RI_ConstraintTrigger_c_178811",
+        "tgenabled": "O",
+        "tgisinternal": true,
+        "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_178811\" AFTER INSERT ON public.platform_role_grants FROM users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_ins\"()"
+      },
+      {
+        "tgname": "RI_ConstraintTrigger_c_178812",
+        "tgenabled": "O",
+        "tgisinternal": true,
+        "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_178812\" AFTER UPDATE ON public.platform_role_grants FROM users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_upd\"()"
+      }
+    ],
+    "table": {
+      "relrowsecurity": true,
+      "relforcerowsecurity": true,
+      "relfilenode": 172953
+    },
+    "sequence": {
+      "last_value": "1",
+      "is_called": false
+    },
+    "constraints": [
+      {
+        "conname": "platform_role_grants_pkey",
+        "contype": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "conname": "platform_role_grants_user_id_users_id_fk",
+        "contype": "f",
+        "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+      }
+    ],
+    "duplicates": {
+      "duplicate_groups": 0,
+      "excess_rows": 0
+    },
+    "indexes": [
+      {
+        "relname": "platform_role_grants_pkey",
+        "oid": "172960",
+        "indisunique": true,
+        "indisvalid": true,
+        "indisready": true,
+        "indimmediate": true,
+        "predicate": null,
+        "definition": "CREATE UNIQUE INDEX platform_role_grants_pkey ON public.platform_role_grants USING btree (id)"
+      }
+    ]
+  },
+  "replays": [
+    {
+      "pass": 1,
+      "snapshot": {
+        "rows": {
+          "count": 0,
+          "content_md5": "d751713988987e9331980363e24189ce"
+        },
+        "policies": [
+          {
+            "policyname": "platform_role_grants_platform_delete",
+            "permissive": "PERMISSIVE",
+            "roles": "{public}",
+            "cmd": "DELETE",
+            "qual": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+            "with_check": null
+          },
+          {
+            "policyname": "platform_role_grants_platform_insert",
+            "permissive": "PERMISSIVE",
+            "roles": "{public}",
+            "cmd": "INSERT",
+            "qual": null,
+            "with_check": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))"
+          },
+          {
+            "policyname": "platform_role_grants_platform_update",
+            "permissive": "PERMISSIVE",
+            "roles": "{public}",
+            "cmd": "UPDATE",
+            "qual": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+            "with_check": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))"
+          },
+          {
+            "policyname": "platform_role_grants_read",
+            "permissive": "PERMISSIVE",
+            "roles": "{public}",
+            "cmd": "SELECT",
+            "qual": "true",
+            "with_check": null
+          }
+        ],
+        "triggers": [
+          {
+            "tgname": "RI_ConstraintTrigger_c_178811",
+            "tgenabled": "O",
+            "tgisinternal": true,
+            "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_178811\" AFTER INSERT ON public.platform_role_grants FROM users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_ins\"()"
+          },
+          {
+            "tgname": "RI_ConstraintTrigger_c_178812",
+            "tgenabled": "O",
+            "tgisinternal": true,
+            "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_178812\" AFTER UPDATE ON public.platform_role_grants FROM users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_upd\"()"
+          }
+        ],
+        "table": {
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "relfilenode": 172953
+        },
+        "sequence": {
+          "last_value": "1",
+          "is_called": false
+        },
+        "constraints": [
+          {
+            "conname": "platform_role_grants_pkey",
+            "contype": "p",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "conname": "platform_role_grants_user_id_users_id_fk",
+            "contype": "f",
+            "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+          }
+        ],
+        "duplicates": {
+          "duplicate_groups": 0,
+          "excess_rows": 0
+        },
+        "indexes": [
+          {
+            "relname": "platform_role_grants_pkey",
+            "oid": "172960",
+            "indisunique": true,
+            "indisvalid": true,
+            "indisready": true,
+            "indimmediate": true,
+            "predicate": null,
+            "definition": "CREATE UNIQUE INDEX platform_role_grants_pkey ON public.platform_role_grants USING btree (id)"
+          },
+          {
+            "relname": "platform_role_grants_user_role_idx",
+            "oid": "202844",
+            "indisunique": true,
+            "indisvalid": true,
+            "indisready": true,
+            "indimmediate": true,
+            "predicate": null,
+            "definition": "CREATE UNIQUE INDEX platform_role_grants_user_role_idx ON public.platform_role_grants USING btree (user_id, role)"
+          }
+        ]
+      },
+      "plan": [
+        {
+          "QUERY PLAN": "Insert on public.platform_role_grants"
+        },
+        {
+          "QUERY PLAN": "  Output: platform_role_grants.id, platform_role_grants.user_id, platform_role_grants.role, platform_role_grants.granted_by, platform_role_grants.granted_at, platform_role_grants.reason"
+        },
+        {
+          "QUERY PLAN": "  Conflict Resolution: UPDATE"
+        },
+        {
+          "QUERY PLAN": "  Conflict Arbiter Indexes: platform_role_grants_user_role_idx"
+        },
+        {
+          "QUERY PLAN": "  ->  Result"
+        },
+        {
+          "QUERY PLAN": "        Output: nextval('platform_role_grants_id_seq'::regclass), 1, 'support'::text, 'SQL-only QA planner'::text, now(), NULL::timestamp without time zone, NULL::text, 'No grant executed.'::text"
+        }
+      ],
+      "historyUnchanged": true
+    },
+    {
+      "pass": 2,
+      "snapshot": {
+        "rows": {
+          "count": 0,
+          "content_md5": "d751713988987e9331980363e24189ce"
+        },
+        "policies": [
+          {
+            "policyname": "platform_role_grants_platform_delete",
+            "permissive": "PERMISSIVE",
+            "roles": "{public}",
+            "cmd": "DELETE",
+            "qual": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+            "with_check": null
+          },
+          {
+            "policyname": "platform_role_grants_platform_insert",
+            "permissive": "PERMISSIVE",
+            "roles": "{public}",
+            "cmd": "INSERT",
+            "qual": null,
+            "with_check": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))"
+          },
+          {
+            "policyname": "platform_role_grants_platform_update",
+            "permissive": "PERMISSIVE",
+            "roles": "{public}",
+            "cmd": "UPDATE",
+            "qual": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))",
+            "with_check": "((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))"
+          },
+          {
+            "policyname": "platform_role_grants_read",
+            "permissive": "PERMISSIVE",
+            "roles": "{public}",
+            "cmd": "SELECT",
+            "qual": "true",
+            "with_check": null
+          }
+        ],
+        "triggers": [
+          {
+            "tgname": "RI_ConstraintTrigger_c_178811",
+            "tgenabled": "O",
+            "tgisinternal": true,
+            "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_178811\" AFTER INSERT ON public.platform_role_grants FROM users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_ins\"()"
+          },
+          {
+            "tgname": "RI_ConstraintTrigger_c_178812",
+            "tgenabled": "O",
+            "tgisinternal": true,
+            "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_178812\" AFTER UPDATE ON public.platform_role_grants FROM users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_upd\"()"
+          }
+        ],
+        "table": {
+          "relrowsecurity": true,
+          "relforcerowsecurity": true,
+          "relfilenode": 172953
+        },
+        "sequence": {
+          "last_value": "1",
+          "is_called": false
+        },
+        "constraints": [
+          {
+            "conname": "platform_role_grants_pkey",
+            "contype": "p",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "conname": "platform_role_grants_user_id_users_id_fk",
+            "contype": "f",
+            "definition": "FOREIGN KEY (user_id) REFERENCES users(id)"
+          }
+        ],
+        "duplicates": {
+          "duplicate_groups": 0,
+          "excess_rows": 0
+        },
+        "indexes": [
+          {
+            "relname": "platform_role_grants_pkey",
+            "oid": "172960",
+            "indisunique": true,
+            "indisvalid": true,
+            "indisready": true,
+            "indimmediate": true,
+            "predicate": null,
+            "definition": "CREATE UNIQUE INDEX platform_role_grants_pkey ON public.platform_role_grants USING btree (id)"
+          },
+          {
+            "relname": "platform_role_grants_user_role_idx",
+            "oid": "202844",
+            "indisunique": true,
+            "indisvalid": true,
+            "indisready": true,
+            "indimmediate": true,
+            "predicate": null,
+            "definition": "CREATE UNIQUE INDEX platform_role_grants_user_role_idx ON public.platform_role_grants USING btree (user_id, role)"
+          }
+        ]
+      },
+      "plan": [
+        {
+          "QUERY PLAN": "Insert on public.platform_role_grants"
+        },
+        {
+          "QUERY PLAN": "  Output: platform_role_grants.id, platform_role_grants.user_id, platform_role_grants.role, platform_role_grants.granted_by, platform_role_grants.granted_at, platform_role_grants.reason"
+        },
+        {
+          "QUERY PLAN": "  Conflict Resolution: UPDATE"
+        },
+        {
+          "QUERY PLAN": "  Conflict Arbiter Indexes: platform_role_grants_user_role_idx"
+        },
+        {
+          "QUERY PLAN": "  ->  Result"
+        },
+        {
+          "QUERY PLAN": "        Output: nextval('platform_role_grants_id_seq'::regclass), 1, 'support'::text, 'SQL-only QA planner'::text, now(), NULL::timestamp without time zone, NULL::text, 'No grant executed.'::text"
+        }
+      ],
+      "historyUnchanged": true
+    }
+  ],
+  "status": "qualified SQL-only creation/replay, malformed-name refusal and unchanged history; duplicate negative/native API pending"
+}

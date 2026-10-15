@@ -25,6 +25,7 @@
 
 import type { AIRequest, AIResponse } from './aiProviderRouter.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { refuseModelCallHere } from './ai-gateway/model-call-scope.js';
 
 const log = createScopedLogger('rag-reranker');
 
@@ -191,6 +192,9 @@ export class CrossEncoderReranker implements Reranker {
 
   async score(query: string, docs: RerankDocument[]): Promise<RerankScores> {
     if (docs.length === 0) return { scores: [], tokensUsed: 0 };
+    // A rerank model reached by fetch, not gateway.route(). The pipeline keeps
+    // the embedding order when a reranker throws.
+    await refuseModelCallHere('cross-encoder reranker');
 
     const documents = docs.map(d => d.content.slice(0, this.maxDocChars));
     const controller = new AbortController();

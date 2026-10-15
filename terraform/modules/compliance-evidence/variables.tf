@@ -17,6 +17,12 @@ variable "retention_days" {
   default = 2555
 }
 
+variable "anchor_writer_role_arn" {
+  type        = string
+  default     = ""
+  description = "The role that writes and reads the audit-chain anchors under anchors/ (security plan P0-8): the application task role. Empty grants nothing."
+}
+
 variable "tags" {
   type    = map(string)
   default = { Project = "ros-staging" }

@@ -1,0 +1,155 @@
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 24ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 29ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 11ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 11ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 9ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 2ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 9ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 9ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 24ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":2,"role":"member","organizationId":7} 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":3,"role":"admin","organizationId":9} 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":21,"role":"super_admin","organizationId":9} 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > allows verified platform staff through the existing system scope 8ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 0 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 1 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 2 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 3 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 0 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 1 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 2 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 3 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 4 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 5 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 6 2ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > returns a refused audit transaction as failure without claiming discovery saved
+Error updating organization settings: chained audit unavailable
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-14T03:00:30.209Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 7 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > stores reviewed answers, preserves other settings, and grants or enforces nothing 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > reviewed discovery answers use the governed organization settings door > returns a refused audit transaction as failure without claiming discovery saved 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 75ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 24ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 5ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > leaves unknown client context unstated and creates independent editable forms 2ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > preserves stated goals, guidance and launch use cases without inventing account access 1ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: undefined 23ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: null 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: {} 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: {"schemaVersion":2,"company":{"goals":"","useCases":[],"therapeuticAreas":[],"markets":[],"pathways":[]},"user":{"workingRole":"","sophistication":"not_stated","preferredGuidance":"not_stated"},"project":{"name":"","goals":"","productType":"not_stated","lifecycleStage":"","indication":"","targetDate":"","predicateDevice":"","assayContext":""},"setup":{"teamSize":null,"needs":[],"approvalRigor":null}} 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2027-02-29 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-02-30 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-13-01 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-10-14T12:00:00Z 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 10/14/2026 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > asks for device and IVD context without applying it to a drug project 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 0 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 1 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 2 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 3 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 4 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 5 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 6 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 7 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 8 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 9 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 10 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 11 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 12 0ms
+
+ Test Files  2 passed (2)
+      Tests  77 passed (77)
+   Start at  03:00:28
+   Duration  2.14s (transform 663ms, setup 146ms, import 361ms, tests 1.20s, environment 0ms)
+
+
+Focused test-file extraction verification:
+stderr | server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > returns a refused audit transaction as failure without claiming discovery saved
+Error updating organization settings: chained audit unavailable
+
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":2,"role":"member","organizationId":7} 15ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":3,"role":"admin","organizationId":9} 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > keeps the membership and tenant boundaries for {"id":21,"role":"super_admin","organizationId":9} 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > allows verified platform staff through the existing system scope 3ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 0 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 1 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 2 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > requires a bounded human reason and the governed body 3 1ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 0 3ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 1 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 2 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 3 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 4 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 5 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 6 1ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > refuses an invalid discovery snapshot and changes no other section 7 1ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > stores reviewed answers, preserves other settings, and grants or enforces nothing 2ms
+ ✓ server/routes/__tests__/organizations-onboarding-discovery.test.ts > reviewed discovery answers use the governed organization settings door > returns a refused audit transaction as failure without claiming discovery saved 2ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > leaves unknown client context unstated and creates independent editable forms 2ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > preserves stated goals, guidance and launch use cases without inventing account access 1ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: undefined 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: null 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: {} 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > does not guess absent, incomplete or newer-version answers: {"schemaVersion":2,"company":{"goals":"","useCases":[],"therapeuticAreas":[],"markets":[],"pathways":[]},"user":{"workingRole":"","sophistication":"not_stated","preferredGuidance":"not_stated"},"project":{"name":"","goals":"","productType":"not_stated","lifecycleStage":"","indication":"","targetDate":"","predicateDevice":"","assayContext":""},"setup":{"teamSize":null,"needs":[],"approvalRigor":null}} 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2027-02-29 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-02-30 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-13-01 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 2026-10-14T12:00:00Z 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses an impossible or non-calendar milestone: 10/14/2026 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > asks for device and IVD context without applying it to a drug project 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 0 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 1 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 2 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 3 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 4 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 5 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 6 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 7 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 8 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 9 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 10 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 11 0ms
+ ✓ shared/types/__tests__/onboarding-discovery.test.ts > reviewed onboarding discovery contract > refuses out-of-scope claims, overlong or ambiguous answers 12 0ms
+
+ Test Files  3 passed (3)
+      Tests  77 passed (77)
+   Start at  03:02:11
+   Duration  1.21s (transform 191ms, setup 71ms, import 222ms, tests 589ms, environment 0ms)

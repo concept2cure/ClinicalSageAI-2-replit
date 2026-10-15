@@ -1,0 +1,26 @@
+## router guard removed: RED
+ × server/services/__tests__/model-call-chokepoints.test.ts > AIProviderRouter.route > refuses inside the scope before the LiteLLM branch and before the gateway 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+
+## reranker guard removed: RED
+ × server/services/__tests__/model-call-chokepoints.test.ts > CrossEncoderReranker.score > refuses inside the scope with no fetch 40ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+
+## cache guard removed: RED
+ × server/services/__tests__/model-call-chokepoints.test.ts > AdvancedRAGPipeline.routeCached > refuses a cache HIT inside the scope: cached model output is model output 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+
+## cache guard after the hit: RED
+ × server/services/__tests__/model-call-chokepoints.test.ts > AdvancedRAGPipeline.routeCached > refuses a cache HIT inside the scope: cached model output is model output 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+
+## helper never refuses: RED
+ × server/services/__tests__/model-call-chokepoints.test.ts > AIProviderRouter.route > refuses inside the scope before the LiteLLM branch and before the gateway 15ms
+ × server/services/__tests__/model-call-chokepoints.test.ts > CrossEncoderReranker.score > refuses inside the scope with no fetch 44ms
+ × server/services/__tests__/model-call-chokepoints.test.ts > AdvancedRAGPipeline.routeCached > refuses a cache HIT inside the scope: cached model output is model output 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 3 passed (6)

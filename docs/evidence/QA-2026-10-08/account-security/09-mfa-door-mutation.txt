@@ -1,0 +1,8 @@
+# Item 3 MUTATION — the enrolment doors keyed by the body's challenge first (secondFactorAccountKey(req.body) ?? session)
+# Expect exactly the 'whatever challenge the body names' case to fail: a session moves its guesses onto other accounts.
+ × server/routes/__tests__/auth-sign-in-limits.test.ts > confirming or removing an authenticator counts wrong codes per account > a session's guesses are counted against its own account, whatever challenge the body names 39ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 429 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+restored byte-identical

@@ -1,0 +1,50 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/w2
+
+ ✓ server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > admits a session whose tenant is allowlisted (positive control) 3ms
+ ✓ server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > refuses a session whose tenant is not allowlisted, whatever the header names 2ms
+ × server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > refuses a request with no session, even when its header names an allowlisted tenant 5ms
+   → admitted on x-tenant-id: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ✓ server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > stands down when no allowlist is configured 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > refuses a request with no session, even when its header names an allowlisted tenant
+AssertionError: admitted on x-tenant-id: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ server/middleware/__tests__/tenantAuth.test.ts:56:49
+     54|     for (const header of ['x-tenant-id', 'x-tenant']) {
+     55|       const { res, next } = run({ headers: { [header]: '7' } });
+     56|       expect(next, `admitted on ${header}`).not.toHaveBeenCalled();
+       |                                                 ^
+     57|       expect(res.statusCode).toBe(403);
+     58|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  20:09:13
+   Duration  848ms (transform 163ms, setup 157ms, import 48ms, tests 15ms, environment 0ms)
+

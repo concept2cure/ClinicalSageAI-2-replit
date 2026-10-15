@@ -1,0 +1,10 @@
+# ESLint on this item's files (repo config), after the change. The one warning is the pre-existing describe in the sweep test: 175 lines at HEAD, 153 now (its setup moved into setUpSweep; the anchor cases are their own describe).
+# 2026-10-01T07:00:11Z
+$ npx eslint server/services/audit/chain-anchor.ts server/services/storage/s3-client.ts server/services/storage/s3-provider.ts server/jobs/auditChainIntegritySweep.ts server/services/audit/chain.ts server/jobs/__tests__/auditChainIntegritySweep.test.ts server/services/audit/__tests__/chain-anchor.test.ts server/services/audit/__tests__/chain-anchor.dbtest.ts
+
+/home/user/ClinicalSageAI-2-replit/server/jobs/__tests__/auditChainIntegritySweep.test.ts
+  196:71  warning  Arrow function has too many lines (153). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)
+
+exit=0

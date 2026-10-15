@@ -1,0 +1,20 @@
+== server/routes/report-os.ts
+
+/home/user/ClinicalSageAI-2-replit/server/routes/report-os.ts
+   281:23  warning  Unexpected control character(s) in regular expression: \x09, \x0a, \x0d        no-control-regex
+   614:1   warning  File has too many lines (2108). Maximum allowed is 500                         max-lines
+  1445:58  warning  Async arrow function has too many lines (173). Maximum allowed is 100          max-lines-per-function
+  1445:58  warning  Async arrow function has a complexity of 25. Maximum allowed is 15             complexity
+  1765:1   warning  Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15  complexity
+  2059:11  warning  The value assigned to 'compare' is not used in subsequent statements           no-useless-assignment
+  2488:60  warning  Async arrow function has a complexity of 16. Maximum allowed is 15             complexity
+
+✖ 7 problems (0 errors, 7 warnings)
+
+== server/services/report-os/scheduling/delivery.ts
+== server/services/report-os/scheduling/types.ts
+== server/services/report-os/scheduling/__tests__/scheduling.test.ts
+== server/routes/__tests__/report-os-audit-recording.test.ts
+== server/routes/__tests__/report-os-delivery-recording.test.ts
+== tests/db/report-os-registry-seed.dbtest.ts
+== tests/db/report-os-delivery-recording.dbtest.ts

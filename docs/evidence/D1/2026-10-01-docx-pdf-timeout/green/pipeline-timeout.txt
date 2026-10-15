@@ -1,0 +1,27 @@
+# green at e000003b + the timeout
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > surfaces compressionSkipped when Ghostscript was unavailable 3ms
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > returns compression details when the pass ran 1ms
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > rejects when the pipeline exits non-zero 2ms
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > passes --compress and --quality through to the script 1ms
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > stops a conversion that runs past its time limit, the whole process group, and says so 4ms
+ ✓ server/services/__tests__/docx-pdf-pipeline.test.ts > runDocxPdfPipeline > rejects when the converter cannot be started at all 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > writes a PNG of the page asked for, and succeeds only when it exists 326ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a page the document does not have, naming how many it has 4ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a path outside the tenant's workspace without opening it 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses another tenant's file 0ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > converts a DOCX through the one DOCX→PDF pipeline first 29ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > reports a failed conversion as a failure 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > caps the pixels it renders, lowering the dpi and saying so, instead of exhausting memory 10ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > renders an upload stored without an extension, by what its bytes are 32ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > reads a page number given as a numeral string, and refuses one that is not a page 26ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > says the image is a server file that nobody is shown 25ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > says it is unavailable and writes nothing, instead of reporting overlays queued 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > answers unavailable to an unapproved model too, rather than inviting a retry that cannot succeed 0ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > does not offer signatures or approval stamps in its definition 0ms
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+
+# the mechanism, real processes: a detached group with two children, killed by -pid
+{"sleepsBefore":2,"sleepsAfterGroupKill":0}
+
+# not run: a real LibreOffice conversion — soffice in this container produces no PDF, identically on trunk (RuntimeError: DOCX→PDF conversion did not produce output PDF.)

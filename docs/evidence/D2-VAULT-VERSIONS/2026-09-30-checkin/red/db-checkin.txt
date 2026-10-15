@@ -1,0 +1,24 @@
+ × tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was 3260ms
+   → expected { …(12) } to match object { …(8) }
+ × tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses a check-in against a version that already has a successor, naming the current one 23ms
+   → expected 201 to be 409 // Object.is equality
+ × tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses bytes that are already a version of the document, naming it 2ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > assigns the version: a client-sent version with a check-in is a 400 1ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > invents no version for a head whose version is not a number 25ms
+   → expected 'VERSION_CONTENT_CONFLICT' to be 'VERSION_SCHEME_UNKNOWN' // Object.is equality
+ × tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything 43ms
+   → expected 409 to be 404 // Object.is equality
+ × tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > a viewer is refused before any byte is stored 2ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head 60ms
+   → expected [ 409, 409 ] to deeply equal [ 201, 409 ]
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a raw INSERT that names another program's document as its predecessor 5ms
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor 4ms
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+ × tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third 4ms
+   → trigger "vault_documents_lineage_guard" for table "documents" does not exist
+ Test Files  1 failed (1)
+      Tests  11 failed (11)

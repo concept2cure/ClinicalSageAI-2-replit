@@ -1,0 +1,175 @@
+The 'authoring AI-draft accept' block of machine-attribution-readers.test.ts, run against HEAD's machine-attribution.ts (a copy whose relative imports point at the repository). Test source below the run.
+
+
+ RUN  v4.1.7 <scratch>/r4work
+
+stdout | aidraft-head.explore.test.ts
+{
+  "timestamp": "2026-10-04T20:42:26.468Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T20:42:26.470Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | aidraft-head.explore.test.ts
+{
+  "timestamp": "2026-10-04T20:42:26.470Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | aidraft-head.explore.test.ts
+[database] Database connection successful
+
+stderr | aidraft-head.explore.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | aidraft-head.explore.test.ts
+{
+  "timestamp": "2026-10-04T20:42:26.665Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D2: a token the leaf prints: that clause is the member's 10ms
+   → expected [ …(2) ] to not include 'The study drug was well <b"3 patients…'
+ × aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D3: words the leaf drops: that clause is the member's 2ms
+   → expected [ Array(1) ] to not include '<p>The study drug was <template>not <…'
+ × aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D4: attribute words source mode shows: that clause is the member's 1ms
+   → expected [ Array(1) ] to not include '<p>The study drug was well <b 3 patie…'
+ × aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D5: an alt the leaf prints: that clause is the member's 1ms
+   → expected [ Array(1) ] to not include '<p>The study drug was well <img src="…'
+ × aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D6: a footnote the export prints: that clause is the member's 1ms
+   → expected [ Array(1) ] to not include '<p>The study drug was well <sup data-…'
+ × aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D7: two tokens joined: that clause is the member's 1ms
+   → expected [ Array(1) ] to not include '<p>At Week 2<b>4</b> patients reporte…'
+ ✓ aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > a draft accepted as generated is AnA's, every clause (guard) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D2: a token the leaf prints: that clause is the member's
+AssertionError: expected [ …(2) ] to not include 'The study drug was well <b"3 patients…'
+ ❯ aidraft-head.explore.test.ts:29:45
+     27|     ['D7: two tokens joined', WEEK, '<p>At Week 2<b>4</b> patients rep…
+     28|   ])('%s: that clause is the member\'s', (_, generated, edited) => {
+     29|     expect(credited(edited, generated)).not.toContain(detectSpans(edit…
+       |                                             ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D3: words the leaf drops: that clause is the member's
+AssertionError: expected [ Array(1) ] to not include '<p>The study drug was <template>not <…'
+ ❯ aidraft-head.explore.test.ts:29:45
+     27|     ['D7: two tokens joined', WEEK, '<p>At Week 2<b>4</b> patients rep…
+     28|   ])('%s: that clause is the member\'s', (_, generated, edited) => {
+     29|     expect(credited(edited, generated)).not.toContain(detectSpans(edit…
+       |                                             ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D4: attribute words source mode shows: that clause is the member's
+AssertionError: expected [ Array(1) ] to not include '<p>The study drug was well <b 3 patie…'
+ ❯ aidraft-head.explore.test.ts:29:45
+     27|     ['D7: two tokens joined', WEEK, '<p>At Week 2<b>4</b> patients rep…
+     28|   ])('%s: that clause is the member\'s', (_, generated, edited) => {
+     29|     expect(credited(edited, generated)).not.toContain(detectSpans(edit…
+       |                                             ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D5: an alt the leaf prints: that clause is the member's
+AssertionError: expected [ Array(1) ] to not include '<p>The study drug was well <img src="…'
+ ❯ aidraft-head.explore.test.ts:29:45
+     27|     ['D7: two tokens joined', WEEK, '<p>At Week 2<b>4</b> patients rep…
+     28|   ])('%s: that clause is the member\'s', (_, generated, edited) => {
+     29|     expect(credited(edited, generated)).not.toContain(detectSpans(edit…
+       |                                             ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D6: a footnote the export prints: that clause is the member's
+AssertionError: expected [ Array(1) ] to not include '<p>The study drug was well <sup data-…'
+ ❯ aidraft-head.explore.test.ts:29:45
+     27|     ['D7: two tokens joined', WEEK, '<p>At Week 2<b>4</b> patients rep…
+     28|   ])('%s: that clause is the member\'s', (_, generated, edited) => {
+     29|     expect(credited(edited, generated)).not.toContain(detectSpans(edit…
+       |                                             ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  aidraft-head.explore.test.ts > the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules > D7: two tokens joined: that clause is the member's
+AssertionError: expected [ Array(1) ] to not include '<p>At Week 2<b>4</b> patients reporte…'
+ ❯ aidraft-head.explore.test.ts:29:45
+     27|     ['D7: two tokens joined', WEEK, '<p>At Week 2<b>4</b> patients rep…
+     28|   ])('%s: that clause is the member\'s', (_, generated, edited) => {
+     29|     expect(credited(edited, generated)).not.toContain(detectSpans(edit…
+       |                                             ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  20:42:24
+   Duration  2.84s (transform 1.53s, setup 102ms, import 2.53s, tests 21ms, environment 0ms)
+
+
+--- test source run ---
+/** The AI-draft door block of machine-attribution-readers.test.ts, run against HEAD's (283fe08c4…f2d3fed2c) machine-attribution.ts. */
+import { describe, it, expect } from 'vitest';
+import { attributeMachineSpans } from './headmod/machine-attribution.head';
+import { detectSpans } from '<repo>/server/services/sentenceTraceabilityService';
+const SENTENCE = 'The study drug was well tolerated in all cohorts.';
+const SHOWN = '3 patients died';
+function credited(content: string, accepted: string): string[] {
+  return attributeMachineSpans(detectSpans(content, 'clause'), { accepted: [{ authorId: 'ana', text: accepted }], live: [], actor: '501', content })
+    .filter((s) => s.inAcceptedText).map((s) => s.spanText);
+}
+describe('the authoring AI-draft accept (POST …/ai/draft/accept) reaches the same rules', () => {
+  /* Its lineage: enforceSourceAndAuthorLineage, the draft as generated as the
+     accepted text (ANA_MACHINE_AUTHOR_ID) and the member's edit as the content.
+     With no source quoted, its machine pass runs over detectSpans(content),
+     as `credited` does. Each draft is plain prose; each edit is a reviewer's
+     case typed into it. */
+  const DRAFT = `${SENTENCE} No new safety signal was identified in any prespecified subgroup.`;
+  const NEGATED = 'The study drug was not effective in reducing mortality.';
+  const WEEK = 'At Week 2 4 patients reported headache.';
+
+  it.each([
+    ['D2: a token the leaf prints', DRAFT, `The study drug was well <b"${SHOWN}"> tolerated in all cohorts. No new safety signal was identified in any prespecified subgroup.`],
+    ['D3: words the leaf drops', NEGATED, '<p>The study drug was <template>not </template>effective in reducing mortality.</p>'],
+    ['D4: attribute words source mode shows', DRAFT, `<p>The study drug was well <b ${SHOWN}>tolerated</b> in all cohorts.</p>`],
+    ['D5: an alt the leaf prints', DRAFT, `<p>The study drug was well <img src="data:image/png;base64,iVBORw0KGgo=" alt="${SHOWN}"> tolerated in all cohorts.</p>`],
+    ['D6: a footnote the export prints', DRAFT, `<p>The study drug was well <sup data-note="${SHOWN}">tolerated</sup> in all cohorts.</p>`],
+    ['D7: two tokens joined', WEEK, '<p>At Week 2<b>4</b> patients reported headache.</p>'],
+  ])('%s: that clause is the member\'s', (_, generated, edited) => {
+    expect(credited(edited, generated)).not.toContain(detectSpans(edited, 'clause')[0].text);
+  });
+
+  it('a draft accepted as generated is AnA\'s, every clause (guard)', () => {
+    expect(credited(DRAFT, DRAFT)).toHaveLength(detectSpans(DRAFT, 'clause').length);
+  });
+});
+

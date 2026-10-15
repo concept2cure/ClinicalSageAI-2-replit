@@ -1,0 +1,1199 @@
+# RED: the S3 tests run against HEAD's source (546a989e7) for the 12 changed source files below; the two new modules (shared/ana/step-verbs.ts, server/services/ana/step-presentation.ts) stay present, unused by HEAD's code. 2026-10-08T11:27:46Z
+# Files set to HEAD: server/routes/ana-ri/stream.ts server/services/ana/agentic-loop.ts server/services/ana/server-tool-steps.ts server/services/ana/tool-trace.ts server/services/ana/tool-authorization.ts server/services/ana/tool-authorization.register.json client/src/concept2cure/components/ana/useAnaChat.ts client/src/concept2cure/components/ana/useAnaChat.types.ts client/src/concept2cure/v2/AnaActivity.tsx client/src/concept2cure/components/ana/anaProgress.ts client/src/concept2cure/v2/anaWorkModel.ts client/src/concept2cure/v2/AnaWorkSections.tsx
+# Also run: the two suites with a pre-existing failure (stream-tool-carry-over, useAnaChat-progress), to show it at HEAD.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 1 — redaction: no id in a step's opened details > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} shows no uuid anywhere 97ms
+   → an id in the opened details: expected 'Took 2.4s{\n  "document_id": "3f2b8c1…' not to match /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-…/i
+   → an id anywhere in the record: expected 'Created an authoring document2.4sTook…' not to match /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-…/i
+   → a raw payload block: expected <pre class="ana-activity-pre" …(3)></pre> to be null
+   → expected 'Took 2.4s{\n  "document_id": "3f2b8c1…' to contain 'Took: 2.4s'
+ × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 3 — no tool names on screen > a step with no label reads "Ran a step" in its row and its details, never "sentinel" 320ms
+   → Unable to find an accessible element with the role "button" and name `/Ran a step/`
+
+Here are the accessible roles:
+
+  list:
+
+  Name "":
+  [36m<ol[39m
+    [33mclass[39m=[32m"ana-activity-list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"ana-activity-step is-success"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "sentinel_tool_xyz900 ms":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_5_"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ana-activity-row"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ana-activity"[39m
+      [33mdata-streaming[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ana-activity-body"[39m
+        [33mid[39m=[32m"_r_3_"[39m
+      [36m>[39m
+        [36m<ol[39m
+          [33mclass[39m=[32m"ana-activity-list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"ana-activity-step is-success"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"ana-activity-glyph"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_5_"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"ana-activity-row"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ana-activity-text"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ana-activity-verb"[39m
+                [36m>[39m
+                  [0msentinel_tool_xyz[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ana-activity-t"[39m
+              [36m>[39m
+                [0m900 ms[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"ana-activity-chev"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ana-activity-detail"[39m
+              [33mhidden[39m=[32m""[39m
+              [33mid[39m=[32m"_r_5_"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ana-activity-kv"[39m
+              [36m>[39m
+                [0mTook [0m
+                [0m900 ms[0m
+              [36m</div>[39m
+              [36m<pre[39m
+                [33maria-label[39m=[32m"Inputs AnA passed to this step"[39m
+                [33mclass[39m=[32m"ana-activity-pre"[39m
+                [33mrole[39m=[32m"region"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [0m{
+  "q": "x"
+}[0m
+              [36m</pre>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 3 — no tool names on screen > a running step with no label reads "Running a step" 9ms
+   → expected 'sentinel_tool_xyzrunning' to contain 'Running a step'
+ × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 — the row: the server's label on line one, the preview muted beneath > reads "Searched the Vault" with "shelf life" beneath it, and opens to the facts 46ms
+   → expected undefined to be 'shelf life' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 — the row: the server's label on line one, the preview muted beneath > a step that did not succeed shows the server's sentence, never folded 14ms
+ × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > a step whose handler made a generation has no engine glyph, and says a model wrote part of it 3ms
+   → showsEngineGlyph is not a function
+ × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > control: the same step whose capture saw no model shows the engine glyph 10ms
+   → expected '<svg xmlns="http://www.w3.org/2000/sv…' to be '<svg xmlns="http://www.w3.org/2000/sv…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > shows only for a successful engine step whose capture saw none; unknown is not none 2ms
+   → showsEngineGlyph is not a function
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: a frame with no label reads "Running a step", never the tool's name 108ms
+   → expected 'Sentinel tool xyz' to be 'Running a step' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: the finished frame's "Ran a step" replaces the announced label 57ms
+   → expected 'Running a step' to be 'Ran a step' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 4: a live step reads in the doing form and the finished one in the done form, with its facts 61ms
+   → expected { …(7) } to match object { label: 'Searching the Vault', …(3) }
+(6 matching properties omitted from actual)
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > a reopened trace > S3 test 3: an entry with no label reads "Ran a step", never the tool's name 2ms
+   → expected 'Sentinel tool xyz' to be 'Ran a step' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > a reopened trace > carries the presentation the server recorded, and its sentence for a step that did not succeed 2ms
+   → expected { …(4) } to match object { label: 'Searched the Vault', …(4) }
+(3 matching properties omitted from actual)
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-08T11:27:55.995Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T11:27:55.996Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-08T11:27:55.996Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true
+[AnA RI] Intelligence prefix failed: recall unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[AnA RI Stream] Conversation preparation failed: database unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[AnA RI Stream] Refused caller-supplied thread id: undefined
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 35ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 10ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 12ms
+   → expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 4ms
+ × server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > names a document of the open project 19ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to a document of another project of the same organisation 7ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to another organisation's document, even with no project open 5ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > with no project open, names any document of the organisation (as the read allows) 4ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to a deleted document or one whose data was removed 7ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > a scope that refuses the read gives no title and runs no query 2ms
+   → stepPresentationOf is not a function
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > keeps every phase in order, times the steps, and closes on post_done 115ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > records a stopped turn as stopped in the phase it was cut short 81ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed 91ms
+   → expected [ 'Focus on the safety endpoints' ] to deeply equal []
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > drops a steer the run never reached when the run ends 58ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > maps the persisted tool trace and steers back onto the turn 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > hydrates nothing from a turn that has no trace 0ms
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-08T11:28:08.264Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T11:28:08.265Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+{
+  "timestamp": "2026-10-08T11:28:08.266Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 4. tense: the live step reads "Searching the Vault", the finished one "Searched the Vault", with "shelf life" beneath 45ms
+   → expected { type: 'tool_use', round: 1, …(4) } to match object { label: 'Searching the Vault', …(2) }
+(6 matching properties omitted from actual)
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a read is announced by the title of its document, scoped to the open project 13ms
+   → expected 'Reading the document in full' to be 'Reading "Stability report 2025"' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a document id outside the open project yields no title 7ms
+   → expected 'Reading the document in full' to be 'Reading a Vault document' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a project with no program (the read would be refused) yields no title at all 7ms
+   → expected 'Reading the document in full' to be 'Reading a Vault document' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 3. a tool with no register entry never reaches a frame by its name 8ms
+   → expected 'Sentinel tool xyz' to be 'Running a step' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. a step whose handler made a model generation carries usedModel: true and the Model fact 6ms
+   → expected undefined to be 'engine' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. control: the same engine step with no generation carries usedModel: false and no Model fact 5ms
+   → expected undefined to be false // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 1. (server half) no id reaches what a row is built from 6ms
+   → expected '{"label":"Searching the project files…' not to match /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-…/i
+ × server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > a tool with no entry reads "Running a step" live and "Ran a step" finished 6ms
+   → stepPresentationOf is not a function
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > the unknown-step words are the shared table's, both halves 1ms
+ × server/services/ana/__tests__/step-presentation.test.ts > tense > a live step reads in the doing form, a finished one in the done form 1ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-presentation.test.ts > tense > a step that did not succeed keeps the doing form: a failed validation never reads "Validated" 1ms
+   → stepPresentationOf is not a function
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > every verb has both forms, and they differ 9ms
+ × server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > previews the query beneath "Searched the Vault" 1ms
+   → stepPresentationOf is not a function
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > drops a value that looks like a uuid or a long hex string, keeps numbers 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > caps a preview at 80 characters and never lets a double quote split the label 0ms
+ × server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} carries no uuid 1ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > counts are read from allow-listed numeric fields and nothing else 1ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a listing states the scope's total, not the page it returned; the Vault search counts its hits 1ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a read states the Vault title and the characters it delivered 0ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-presentation.test.ts > document titles (S3 test 5, presentation half) > names the document when the stream resolved its title, and reads generically when it did not 0ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-presentation.test.ts > connected systems > one system searched reads as that system; the reasons are said in words, never as tool names 0ms
+   → stepPresentationOf is not a function
+ × server/services/ana/__tests__/step-presentation.test.ts > connected systems > several systems read as "connected" 0ms
+   → stepPresentationOf is not a function
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > true when the capture noted a generation, false when none, null when the handler ran elsewhere 0ms
+ × server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims 0ms
+   → stepPresentationOf is not a function
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_found (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > cancelled (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: declined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: no decision within the approval window) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_run (held back: false, why: manual hold) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > success (held back: false, why: undefined) 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 40 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 4. tense: the live step reads "Searching the Vault", the finished one "Searched the Vault", with "shelf life" beneath
+AssertionError: expected { type: 'tool_use', round: 1, …(4) } to match object { label: 'Searching the Vault', …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "label": "Searching the Vault",
+-   "preview": "shelf life",
+-   "source": "vault",
++   "label": "Searching the project files for \"shelf life\"",
+  }
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:120:35
+    118|     h.state.script = [[{ id: 'tu_s', name: 'search_project_documents',…
+    119|     const events = await turn();
+    120|     expect(useOf(events, 'tu_s')).toMatchObject({ label: 'Searching th…
+       |                                   ^
+    121|     const r = resultOf(events, 'tu_s');
+    122|     expect(r).toMatchObject({ label: 'Searched the Vault', source: 'va…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/43]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a read is announced by the title of its document, scoped to the open project
+AssertionError: expected 'Reading the document in full' to be 'Reading "Stability report 2025"' // Object.is equality
+
+Expected: "Reading "Stability report 2025""
+Received: "Reading the document in full"
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:136:42
+    134|     h.state.script = [[{ id: 'tu_r', name: 'read_project_document', in…
+    135|     const events = await turn();
+    136|     expect(useOf(events, 'tu_r')?.label).toBe('Reading "Stability repo…
+       |                                          ^
+    137|     expect(resultOf(events, 'tu_r')?.label).toBe('Read "Stability repo…
+    138|     const plan = events.find(e => e.type === 'step')?.plan;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/43]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a document id outside the open project yields no title
+AssertionError: expected 'Reading the document in full' to be 'Reading a Vault document' // Object.is equality
+
+Expected: "Reading a Vault document"
+Received: "Reading the document in full"
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:148:42
+    146|     h.state.script = [[{ id: 'tu_o', name: 'read_project_document', in…
+    147|     const events = await turn();
+    148|     expect(useOf(events, 'tu_o')?.label).toBe('Reading a Vault documen…
+       |                                          ^
+    149|     expect(shown(useOf(events, 'tu_o'))).not.toContain('Other project …
+    150|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/43]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a project with no program (the read would be refused) yields no title at all
+AssertionError: expected 'Reading the document in full' to be 'Reading a Vault document' // Object.is equality
+
+Expected: "Reading a Vault document"
+Received: "Reading the document in full"
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:156:42
+    154|     h.state.script = [[{ id: 'tu_n', name: 'read_project_document', in…
+    155|     const events = await turn();
+    156|     expect(useOf(events, 'tu_n')?.label).toBe('Reading a Vault documen…
+       |                                          ^
+    157|     expect(titleQueries).toHaveLength(0);
+    158|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/43]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 3. a tool with no register entry never reaches a frame by its name
+AssertionError: expected 'Sentinel tool xyz' to be 'Running a step' // Object.is equality
+
+Expected: "Running a step"
+Received: "Sentinel tool xyz"
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:168:24
+    166|     const use = useOf(events, 'tu_x');
+    167|     const result = resultOf(events, 'tu_x');
+    168|     expect(use?.label).toBe('Running a step');
+       |                        ^
+    169|     expect(result?.label).toBe('Ran a step');
+    170|     const plan = events.find(e => e.type === 'step')?.plan;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/43]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. a step whose handler made a model generation carries usedModel: true and the Model fact
+AssertionError: expected undefined to be 'engine' // Object.is equality
+
+- Expected:
+"engine"
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:185:23
+    183|     const events = await turn();
+    184|     const r = resultOf(events, 'tu_m');
+    185|     expect(r?.source).toBe('engine');
+       |                       ^
+    186|     expect(r?.usedModel).toBe(true);
+    187|     expect(r?.facts).toContainEqual({ name: 'Model', value: 'a model w…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/43]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. control: the same engine step with no generation carries usedModel: false and no Model fact
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:195:26
+    193|     const events = await turn();
+    194|     const r = resultOf(events, 'tu_e');
+    195|     expect(r?.usedModel).toBe(false);
+       |                          ^
+    196|     expect(r?.label).toBe('Computed the sample size');
+    197|     expect(JSON.stringify(r?.facts)).not.toContain('Model');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/43]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 1. (server half) no id reaches what a row is built from
+AssertionError: expected '{"label":"Searching the project files…' not to match /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-…/i
+
+- Expected:
+/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+
++ Received:
+"{\"label\":\"Searching the project files for \\\"3f2b8c1e-9d4a-4e6b-8c2f-1a5d7e9b0c3d\\\"\"}"
+
+ ❯ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts:205:46
+    203|     h.state.script = [[{ id: 'tu_i', name: 'search_project_documents',…
+    204|     const events = await turn();
+    205|     expect(shown(useOf(events, 'tu_i'))).not.toMatch(UUID_RE);
+       |                                              ^
+    206|     expect(shown(resultOf(events, 'tu_i'))).not.toMatch(UUID_RE);
+    207|     expect(resultOf(events, 'tu_i')?.facts).toEqual(expect.arrayContai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/43]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was
+AssertionError: expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:379:47
+    377|     thread([{ tool: 'get_cmc_requirements', status: 'error' }], 'and f…
+    378|     await turn('and for the EU?');
+    379|     expect(h.state.gatewayCalls[0].tools).not.toContain('get_cmc_requi…
+       |                                               ^
+    380|
+    381|     h.state.gatewayCalls = [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > names a document of the open project
+TypeError: stepPresentationOf is not a function
+ ❯ server/services/ana/step-presentation.ts:398:25
+    396|       calls
+    397|         .map(c => {
+    398|           const entry = stepPresentationOf(c.name);
+       |                         ^
+    399|           return entry ? stepDocumentId(entry, asInput(c.input)) : nul…
+    400|         })
+ ❯ resolveStepDocumentTitles server/services/ana/step-presentation.ts:397:10
+ ❯ server/services/ana/__tests__/step-document-titles.pglite.test.ts:62:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to a document of another project of the same organisation
+TypeError: stepPresentationOf is not a function
+ ❯ server/services/ana/step-presentation.ts:398:25
+    396|       calls
+    397|         .map(c => {
+    398|           const entry = stepPresentationOf(c.name);
+       |                         ^
+    399|           return entry ? stepDocumentId(entry, asInput(c.input)) : nul…
+    400|         })
+ ❯ resolveStepDocumentTitles server/services/ana/step-presentation.ts:397:10
+ ❯ server/services/ana/__tests__/step-document-titles.pglite.test.ts:69:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to another organisation's document, even with no project open
+TypeError: stepPresentationOf is not a function
+ ❯ server/services/ana/step-presentation.ts:398:25
+    396|       calls
+    397|         .map(c => {
+    398|           const entry = stepPresentationOf(c.name);
+       |                         ^
+    399|           return entry ? stepDocumentId(entry, asInput(c.input)) : nul…
+    400|         })
+ ❯ resolveStepDocumentTitles server/services/ana/step-presentation.ts:397:10
+ ❯ server/services/ana/__tests__/step-document-titles.pglite.test.ts:76:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > with no project open, names any document of the organisation (as the read allows)
+TypeError: stepPresentationOf is not a function
+ ❯ server/services/ana/step-presentation.ts:398:25
+    396|       calls
+    397|         .map(c => {
+    398|           const entry = stepPresentationOf(c.name);
+       |                         ^
+    399|           return entry ? stepDocumentId(entry, asInput(c.input)) : nul…
+    400|         })
+ ❯ resolveStepDocumentTitles server/services/ana/step-presentation.ts:397:10
+ ❯ server/services/ana/__tests__/step-document-titles.pglite.test.ts:84:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to a deleted document or one whose data was removed
+TypeError: stepPresentationOf is not a function
+ ❯ server/services/ana/step-presentation.ts:398:25
+    396|       calls
+    397|         .map(c => {
+    398|           const entry = stepPresentationOf(c.name);
+       |                         ^
+    399|           return entry ? stepDocumentId(entry, asInput(c.input)) : nul…
+    400|         })
+ ❯ resolveStepDocumentTitles server/services/ana/step-presentation.ts:397:10
+ ❯ server/services/ana/__tests__/step-document-titles.pglite.test.ts:106:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > a scope that refuses the read gives no title and runs no query
+TypeError: stepPresentationOf is not a function
+ ❯ server/services/ana/step-presentation.ts:398:25
+    396|       calls
+    397|         .map(c => {
+    398|           const entry = stepPresentationOf(c.name);
+       |                         ^
+    399|           return entry ? stepDocumentId(entry, asInput(c.input)) : nul…
+    400|         })
+ ❯ resolveStepDocumentTitles server/services/ana/step-presentation.ts:397:10
+ ❯ server/services/ana/__tests__/step-document-titles.pglite.test.ts:113:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > a tool with no entry reads "Running a step" live and "Ran a step" finished
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:23:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > tense > a live step reads in the doing form, a finished one in the done form
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:42:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > tense > a step that did not succeed keeps the doing form: a failed validation never reads "Validated"
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:55:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > previews the query beneath "Searched the Vault"
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:70:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} carries no uuid
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:99:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > counts are read from allow-listed numeric fields and nothing else
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:108:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a listing states the scope's total, not the page it returned; the Vault search counts its hits
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:119:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a read states the Vault title and the characters it delivered
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:133:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > document titles (S3 test 5, presentation half) > names the document when the stream resolved its title, and reads generically when it did not
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:147:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > connected systems > one system searched reads as that system; the reasons are said in words, never as tool names
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:167:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > connected systems > several systems read as "connected"
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:180:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/43]⎯
+
+ FAIL  server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims
+TypeError: stepPresentationOf is not a function
+ ❯ presentStep server/services/ana/step-presentation.ts:279:17
+    277|   outcome?: StepOutcome,
+    278| ): PresentedStep {
+    279|   const entry = stepPresentationOf(tool) ?? UNKNOWN_STEP;
+       |                 ^
+    280|   const input = asInput(rawInput);
+    281|   const parsed = parseResult(outcome?.result);
+ ❯ server/services/ana/__tests__/step-presentation.test.ts:197:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 1 — redaction: no id in a step's opened details > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} shows no uuid anywhere
+AssertionError: an id in the opened details: expected 'Took 2.4s{\n  "document_id": "3f2b8c1…' not to match /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-…/i
+
+- Expected:
+/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+
++ Received:
+"Took 2.4s{
+  \"document_id\": \"3f2b8c1e-9d4a-4e6b-8c2f-1a5d7e9b0c3d\",
+  \"title\": \"Clinical Overview\"
+}"
+
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:49:61
+     47|     const { container } = render(<AnaActivity streaming toolCalls={[st…
+     48|     const details = openedDetails(container);
+     49|     expect.soft(details, 'an id in the opened details').not.toMatch(UU…
+       |                                                             ^
+     50|     expect.soft(container.textContent, 'an id anywhere in the record')…
+     51|     expect.soft(container.querySelector('pre'), 'a raw payload block')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 1 — redaction: no id in a step's opened details > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} shows no uuid anywhere
+AssertionError: an id anywhere in the record: expected 'Created an authoring document2.4sTook…' not to match /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-…/i
+
+- Expected:
+/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+
++ Received:
+"Created an authoring document2.4sTook 2.4s{
+  \"document_id\": \"3f2b8c1e-9d4a-4e6b-8c2f-1a5d7e9b0c3d\",
+  \"title\": \"Clinical Overview\"
+}"
+
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:50:76
+     48|     const details = openedDetails(container);
+     49|     expect.soft(details, 'an id in the opened details').not.toMatch(UU…
+     50|     expect.soft(container.textContent, 'an id anywhere in the record')…
+       |                                                                            ^
+     51|     expect.soft(container.querySelector('pre'), 'a raw payload block')…
+     52|     expect(details).toContain('Took: 2.4s');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 1 — redaction: no id in a step's opened details > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} shows no uuid anywhere
+AssertionError: a raw payload block: expected <pre class="ana-activity-pre" …(3)></pre> to be null
+
+- Expected:
+null
+
++ Received:
+<pre
+  aria-label="Inputs AnA passed to this step"
+  class="ana-activity-pre"
+  role="region"
+  tabindex="0"
+>
+  {
+  "document_id": "3f2b8c1e-9d4a-4e6b-8c2f-1a5d7e9b0c3d",
+  "title": "Clinical Overview"
+}
+</pre>
+
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:51:72
+     49|     expect.soft(details, 'an id in the opened details').not.toMatch(UU…
+     50|     expect.soft(container.textContent, 'an id anywhere in the record')…
+     51|     expect.soft(container.querySelector('pre'), 'a raw payload block')…
+       |                                                                        ^
+     52|     expect(details).toContain('Took: 2.4s');
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 1 — redaction: no id in a step's opened details > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} shows no uuid anywhere
+AssertionError: expected 'Took 2.4s{\n  "document_id": "3f2b8c1…' to contain 'Took: 2.4s'
+
+- Expected
++ Received
+
+- Took: 2.4s
++ Took 2.4s{
++   "document_id": "3f2b8c1e-9d4a-4e6b-8c2f-1a5d7e9b0c3d",
++   "title": "Clinical Overview"
++ }
+
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:52:21
+     50|     expect.soft(container.textContent, 'an id anywhere in the record')…
+     51|     expect.soft(container.querySelector('pre'), 'a raw payload block')…
+     52|     expect(details).toContain('Took: 2.4s');
+       |                     ^
+     53|   });
+     54| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 3 — no tool names on screen > a step with no label reads "Ran a step" in its row and its details, never "sentinel"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Ran a step/`
+
+Here are the accessible roles:
+
+  list:
+
+  Name "":
+  [36m<ol[39m
+    [33mclass[39m=[32m"ana-activity-list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"ana-activity-step is-success"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "sentinel_tool_xyz900 ms":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_5_"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ana-activity-row"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ana-activity"[39m
+      [33mdata-streaming[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ana-activity-body"[39m
+        [33mid[39m=[32m"_r_3_"[39m
+      [36m>[39m
+        [36m<ol[39m
+          [33mclass[39m=[32m"ana-activity-list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"ana-activity-step is-success"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"ana-activity-glyph"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_5_"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"ana-activity-row"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ana-activity-text"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ana-activity-verb"[39m
+                [36m>[39m
+                  [0msentinel_tool_xyz[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ana-activity-t"[39m
+              [36m>[39m
+                [0m900 ms[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"ana-activity-chev"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ana-activity-detail"[39m
+              [33mhidden[39m=[32m""[39m
+              [33mid[39m=[32m"_r_5_"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ana-activity-kv"[39m
+              [36m>[39m
+                [0mTook [0m
+                [0m900 ms[0m
+              [36m</div>[39m
+              [36m<pre[39m
+                [33maria-label[39m=[32m"Inputs AnA passed to this step"[39m
+                [33mclass[39m=[32m"ana-activity-pre"[39m
+                [33mrole[39m=[32m"region"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [0m{
+  "q": "x"
+}[0m
+              [36m</pre>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:64:19
+     62|       />,
+     63|     );
+     64|     expect(screen.getByRole('button', { name: /Ran a step/ })).toBeTru…
+       |                   ^
+     65|     const details = openedDetails(container);
+     66|     expect(`${container.textContent}\n${details}`).not.toMatch(/sentin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 3 — no tool names on screen > a running step with no label reads "Running a step"
+AssertionError: expected 'sentinel_tool_xyzrunning' to contain 'Running a step'
+
+Expected: "Running a step"
+Received: "sentinel_tool_xyzrunning"
+
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:71:35
+     69|   it('a running step with no label reads "Running a step"', () => {
+     70|     const { container } = render(<AnaActivity streaming toolCalls={[{ …
+     71|     expect(container.textContent).toContain('Running a step');
+       |                                   ^
+     72|     expect(container.textContent).not.toMatch(/sentinel/i);
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 — the row: the server's label on line one, the preview muted beneath > reads "Searched the Vault" with "shelf life" beneath it, and opens to the facts
+AssertionError: expected undefined to be 'shelf life' // Object.is equality
+
+- Expected:
+"shelf life"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:99:75
+     97|     );
+     98|     expect(screen.getByRole('button', { name: /Searched the Vault/ }))…
+     99|     expect(container.querySelector('.ana-activity-preview')?.textConte…
+       |                                                                           ^
+    100|     const details = openedDetails(container);
+    101|     expect(details).toContain('Searched for: shelf life');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > a step whose handler made a generation has no engine glyph, and says a model wrote part of it
+TypeError: showsEngineGlyph is not a function
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:147:12
+    145|   it('a step whose handler made a generation has no engine glyph, and …
+    146|     const glyph = engineGlyph();
+    147|     expect(showsEngineGlyph(engine(true))).toBe(false);
+       |            ^
+    148|     const { container } = render(<AnaActivity streaming toolCalls={[en…
+    149|     expect(glyphOf(container)).not.toBe(glyph);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > control: the same step whose capture saw no model shows the engine glyph
+AssertionError: expected '<svg xmlns="http://www.w3.org/2000/sv…' to be '<svg xmlns="http://www.w3.org/2000/sv…' // Object.is equality
+
+Expected: "<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-terminal" aria-hidden="true" focusable="false"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" x2="20" y1="19" y2="19"></line></svg>"
+Received: "<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>"
+
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:156:32
+    154|     const glyph = engineGlyph();
+    155|     const { container } = render(<AnaActivity streaming toolCalls={[en…
+    156|     expect(glyphOf(container)).toBe(glyph);
+       |                                ^
+    157|   });
+    158|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/43]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > shows only for a successful engine step whose capture saw none; unknown is not none
+TypeError: showsEngineGlyph is not a function
+ ❯ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx:160:12
+    158|
+    159|   it('shows only for a successful engine step whose capture saw none; …
+    160|     expect(showsEngineGlyph(engine(false))).toBe(true);
+       |            ^
+    161|     expect(showsEngineGlyph(engine(null))).toBe(false);
+    162|     expect(showsEngineGlyph(engine(undefined))).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/43]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed
+AssertionError: expected [ 'Focus on the safety endpoints' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Focus on the safety endpoints",
++ ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts:206:42
+    204|       await drain();
+    205|     });
+    206|     expect(result.current.pendingSteers).toEqual([]);
+       |                                          ^
+    207|     expect(lastAssistant(result).interjections).toEqual(['Focus on the…
+    208|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/43]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: a frame with no label reads "Running a step", never the tool's name
+AssertionError: expected 'Sentinel tool xyz' to be 'Running a step' // Object.is equality
+
+Expected: "Running a step"
+Received: "Sentinel tool xyz"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts:58:25
+     56|     });
+     57|     const call = lastAssistant(result).toolCalls?.[0];
+     58|     expect(call?.label).toBe('Running a step');
+       |                         ^
+     59|     expect(JSON.stringify({ label: call?.label, preview: call?.preview…
+     60|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/43]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: the finished frame's "Ran a step" replaces the announced label
+AssertionError: expected 'Running a step' to be 'Ran a step' // Object.is equality
+
+Expected: "Ran a step"
+Received: "Running a step"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts:69:56
+     67|       await drain();
+     68|     });
+     69|     expect(lastAssistant(result).toolCalls?.[0].label).toBe('Ran a ste…
+       |                                                        ^
+     70|   });
+     71|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/43]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 4: a live step reads in the doing form and the finished one in the done form, with its facts
+AssertionError: expected { …(7) } to match object { label: 'Searching the Vault', …(3) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "label": "Searching the Vault",
+-   "preview": "shelf life",
+-   "source": "vault",
+    "status": "running",
+  }
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts:84:50
+     82|       await drain();
+     83|     });
+     84|     expect(lastAssistant(result).toolCalls?.[0]).toMatchObject({ label…
+       |                                                  ^
+     85|     await act(async () => {
+     86|       ctl.enqueue(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/43]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > a reopened trace > S3 test 3: an entry with no label reads "Ran a step", never the tool's name
+AssertionError: expected 'Sentinel tool xyz' to be 'Ran a step' // Object.is equality
+
+Expected: "Ran a step"
+Received: "Sentinel tool xyz"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts:108:24
+    106|   it('S3 test 3: an entry with no label reads "Ran a step", never the …
+    107|     const [call] = hydrateToolTrace([{ tool: 'sentinel_tool_xyz', stat…
+    108|     expect(call.label).toBe('Ran a step');
+       |                        ^
+    109|     expect(call.label).not.toMatch(/sentinel/i);
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/43]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > a reopened trace > carries the presentation the server recorded, and its sentence for a step that did not succeed
+AssertionError: expected { …(4) } to match object { label: 'Searched the Vault', …(4) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "facts": [
+-     {
+-       "name": "Found",
+-       "value": "12 matches",
+-     },
+-   ],
+    "label": "Searched the Vault",
+-   "preview": "shelf life",
+-   "source": "vault",
+-   "usedModel": false,
+  }
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts:123:16
+    121|       },
+    122|     ]);
+    123|     expect(ok).toMatchObject({ label: 'Searched the Vault', source: 'v…
+       |                ^
+    124|     expect(failed.message).toBe("AnA couldn't finish validating the eC…
+    125|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/43]⎯
+
+
+ Test Files  7 failed (7)
+      Tests  40 failed | 29 passed (69)
+   Start at  11:27:47
+   Duration  22.27s (transform 6.90s, setup 471ms, import 14.55s, tests 4.10s, environment 1.65s)
+

@@ -1,0 +1,44 @@
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "evidence labels" doctrine
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "no fabrication" doctrine
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "constructive dissent" doctrine
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "context clarity (no hallucinated context)" doctrine
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "document consequence" doctrine
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "proactive foresight" doctrine
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "know your limits / hand off" doctrine
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "response grounding mode" doctrine
+ × server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > keeps the serious-room floor (no exclamation marks, no emoji where it counts)
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > every core doctrine survives into the assembled system prompt
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'caring'" trait
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'kind'" trait
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'warm / empathetic'" trait
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'intellectual'" trait
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'warm, and shows it'" trait
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'playful'" trait
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'serious where it counts'" trait
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'self-reflective'" trait
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > holds the guardrails that keep warmth from becoming performance
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > keeps play out of every room where it would cost the person
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > makes "cute" charm, never smallness, and never a scripted line
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > reads the humor dial, and no dial loosens a serious room
+ × server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > is a compression of the core, carrying the same named traits
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > stays short enough for a prompt already carrying a strict schema
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > subordinates itself to the output contract
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the RI system prompt embeds the full core block
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the RI system prompt keeps her personality under every role overlay
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the submission-chat prompt carries the brief
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the streaming submission-chat prompt carries the brief
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the submission-chat prompts still state their output contract
+ × server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > defines the requested traits
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the AnA RI system prompt
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the cortex prompts (single source of truth)
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > injects relational context when provided
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > renders nothing when no relational notes exist yet
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > injects the pre-fetched relational overlay and external intel block
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > omits both blocks when not provided
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > fires on emotional and corrective signals
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > stays quiet on neutral turns
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses RSS 2.0 items
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses Atom entries
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > registry covers regulatory agencies and knowledge centers (incl. SCDM)
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  11 failed | 31 passed (42)

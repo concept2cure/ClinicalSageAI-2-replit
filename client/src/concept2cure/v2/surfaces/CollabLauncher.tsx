@@ -146,7 +146,7 @@ let ctx: C2CContext = {
    and programme list as their own, with nothing marking it as sample data.
 
    Both are now read from the real, org-scoped backends:
-     GET /api/task-management/assignees -> { success, data: [{ id, name }] }
+     GET /api/task-management/assignees -> { success, data: [{ id, name, label }] }
        users ⨝ organization_users on organizationId (taskBoard.routes.ts), so no
        cross-org user can appear; fails closed to an empty roster.
      GET /api/projects -> Project[] (bare array, projects-management.ts), scoped
@@ -161,7 +161,7 @@ let team: Record<string, TeamMember> = {};
 let projects: ProjectEntry[] = [];
 let dirState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
 
-interface AssigneeRow { id: string; name: string }
+interface AssigneeRow { id: string; name: string; label?: string }
 interface ProjectRow { id: number | string; name?: string; code?: string; projectType?: string; status?: string }
 
 /** Load the org directory once per session. Re-entrant-safe; emits on settle. */
@@ -183,8 +183,10 @@ async function loadDirectory(): Promise<void> {
     if (!r || r.id == null) continue;
     // `t` is the secondary line the pickers show under a name. The assignees
     // endpoint returns no title/role, so it is left blank rather than filled
-    // with an invented discipline.
-    team[String(r.id)] = { n: r.name || String(r.id), t: '' };
+    // with an invented discipline. `label` is the name, with the address where
+    // two members share one: two "JM Smith" chips said nothing about which
+    // account either was (shared/utils/member-labels.ts).
+    team[String(r.id)] = { n: r.label || r.name || String(r.id), t: '' };
   }
 
   const progRows = Array.isArray(progs.data) ? progs.data : [];

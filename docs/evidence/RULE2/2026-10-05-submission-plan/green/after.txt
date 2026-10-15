@@ -1,0 +1,211 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/routes/global-markets.test.ts > GET /api/global-markets > lists the market registry for an authenticated tenant 2ms
+ ✓ tests/routes/global-markets.test.ts > GET /api/global-markets > rejects when tenant context is missing (403) 1ms
+ ✓ tests/routes/global-markets.test.ts > POST /api/global-markets/plan > returns a multi-market plan for an authenticated tenant 2ms
+ ✓ tests/routes/global-markets.test.ts > POST /api/global-markets/plan > rejects an invalid body (400) 1ms
+ ✓ tests/routes/global-markets.test.ts > POST /api/global-markets/plan > rejects when tenant context is missing (403) 0ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > resolves to an absolute directory that exists 1ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > contains every prompt the services load at runtime 1ms
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+{
+  "timestamp": "2026-10-05T03:01:13.332Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:01:13.333Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+{
+  "timestamp": "2026-10-05T03:01:13.333Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+{
+  "timestamp": "2026-10-05T03:01:13.342Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:01:13.343Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+{
+  "timestamp": "2026-10-05T03:01:13.343Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > the verdict is byte-identical with and without a provider
+{
+  "timestamp": "2026-10-05T03:01:13.455Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > with a provider: the narrative is present, labelled as model prose, and carries only prose
+{
+  "timestamp": "2026-10-05T03:01:13.456Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a model claiming cleared cannot clear a blocked verdict
+{
+  "timestamp": "2026-10-05T03:01:13.457Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a model claiming blocked cannot block a cleared verdict — its verdict is never read
+{
+  "timestamp": "2026-10-05T03:01:13.458Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stderr | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a non-JSON model response leaves the verdict intact and names why the narrative is absent
+{
+  "timestamp": "2026-10-05T03:01:13.459Z",
+  "level": "warn",
+  "message": "[submission-ai-service] dispatch-qc narrative unavailable; deterministic verdict returned without it",
+  "context": {
+    "organizationId": 2,
+    "submissionId": 37,
+    "code": "INVALID_AI_RESPONSE"
+  }
+}
+
+stderr | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a provider error leaves the verdict intact
+{
+  "timestamp": "2026-10-05T03:01:13.460Z",
+  "level": "warn",
+  "message": "[submission-ai-service] dispatch-qc narrative unavailable; deterministic verdict returned without it",
+  "context": {
+    "organizationId": 2,
+    "submissionId": 37,
+    "code": "PROVIDER_UNAVAILABLE"
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > the model is handed the deterministic verdict to narrate, not asked for one
+{
+  "timestamp": "2026-10-05T03:01:13.460Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "dispatch-qc",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > without a provider: returns the deterministic verdict, narrative null, and never calls the model 3ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > the verdict is byte-identical with and without a provider 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > with a provider: the narrative is present, labelled as model prose, and carries only prose 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a model claiming cleared cannot clear a blocked verdict 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a model claiming blocked cannot block a cleared verdict — its verdict is never read 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a non-JSON model response leaves the verdict intact and names why the narrative is absent 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > a provider error leaves the verdict intact 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > runDispatchQc — deterministic verdict, model narrates > the model is handed the deterministic verdict to narrate, not asked for one 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > without an assessment: the hard gate over the counts, and a warning naming what was not checked 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > with an assessment: the verdict IS the assessment dispatch gate, and the checklist reads off its parts 1ms
+ ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts > computeDispatchQcVerdict > with an assessment the client-supplied counts are ignored 0ms
+stdout | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > a model's timeline, module map and forms are dropped; its gaps and dependencies are labelled narrative
+{
+  "timestamp": "2026-10-05T03:01:13.540Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "submission-plan",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+stdout | server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > the model is given the structure to narrate, under prompt v1.1
+{
+  "timestamp": "2026-10-05T03:01:13.542Z",
+  "level": "info",
+  "message": "[submission-ai-service] Ran submission AI task",
+  "context": {
+    "task": "submission-plan",
+    "organizationId": 2,
+    "submissionId": 37
+  }
+}
+
+ ✓ server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > a model's timeline, module map and forms are dropped; its gaps and dependencies are labelled narrative 5ms
+ ✓ server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > the model is given the structure to narrate, under prompt v1.1 2ms
+ ✓ server/services/submission-ai/__tests__/submission-plan-deterministic.test.ts > the plan is the engine's structure; the model's figures are not in it > the plan stands when the model call fails (an unreadable reply) 1ms
+
+ Test Files  4 passed (4)
+      Tests  21 passed (21)
+   Start at  03:01:11
+   Duration  2.14s (transform 2.20s, setup 243ms, import 3.81s, tests 42ms, environment 0ms)
+

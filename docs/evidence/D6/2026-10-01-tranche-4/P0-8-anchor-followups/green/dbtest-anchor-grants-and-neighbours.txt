@@ -1,0 +1,52 @@
+# 2026-10-01T14:50:55Z, tree at HEAD 0812a990 plus this item. PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1). app_service in the new posture (green/deploy-step4-ensureRuntimeRole-app_service.txt).
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the stores exist on this database > every append-only store this file names is present (a missing one would make the rest vacuous) 2ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT 6ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not 1ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store 46ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the governed revocation statement still runs (its columns only) 3ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back 465ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied 62ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name 162ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store 5ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger 31ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row 5ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501) 2ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the archive door still deletes for app_service, and records the batch in its ledger 8ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store 40ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 53ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 324ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 63ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 27ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 34ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 8ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 60ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 24ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot turn a truncated head into "archived" 38ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot turn a truncated head into "archived" 37ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot excuse rows removed before an intact head 36ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot excuse rows removed before an intact head 54ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 11. a ledger row that keeps the door's own rules still never excuses a head inside the 24-month window 35ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 12. a head older than the 24-month floor, removed through the door, is archived: not tampering, not verified 33ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01) > 13. a truncated chain: the head verdict is broken for that organisation only, and the ops script exits 1 253ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01) > 14. no anchor store: the walk passes, and every verdict says the head was not verified against the anchor 46ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 1. eight concurrent writers of one tenant never fork the chain 124ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 2. chain order is commit order, not occurred_at order 48ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 3. tenant-scoped (RLS) and unscoped connections write one verifiable chain per tenant 81ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 4. a connection whose search_path puts another schema first still takes the head in chain order 58ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > is present after the migration — not created at runtime 3ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > types user_id and session_id as TEXT, so attributed writes are not rejected 4ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > accepts an attributed write keyed by an integer users.id 4ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > carries no CHECK constraint masquerading as immutability 1ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > immutability holds against the database, not by convention > refuses UPDATE even for the table owner 11ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > immutability holds against the database, not by convention > refuses DELETE even for the table owner 11ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > concurrent appends do not fork the hash chain > serializes writers so no two entries claim the same predecessor 99ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the runtime role can append and cannot rewrite > is granted exactly SELECT and INSERT when the role exists 9ms
+
+ Test Files  4 passed (4)
+      Tests  42 passed (42)
+   Start at  14:50:56
+   Duration  6.30s (transform 600ms, setup 208ms, import 987ms, tests 3.86s, environment 0ms)
+

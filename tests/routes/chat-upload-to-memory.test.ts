@@ -42,6 +42,14 @@ vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.servi
   createSupersedingSource: vi.fn(async () => ({ source: { id: 4242 } })),
 }));
 
+/* The numeric project's ownership (PF-03). Its SQL is proven in
+   server/services/cmc/__tests__/project-membership.pglite.test.ts; here project
+   12 is organization 5's, and any other numeric project is not. */
+const mockProjectBelongs = vi.hoisted(() =>
+  vi.fn(async (p: { organizationId: number; projectId: string }) => p.organizationId === 5 && p.projectId === '12'),
+);
+vi.mock('../../server/services/cmc/project-membership.js', () => ({ projectBelongsToTenant: mockProjectBelongs }));
+vi.mock('../../server/services/cmc/project-membership.ts', () => ({ projectBelongsToTenant: mockProjectBelongs }));
 vi.mock('../../server/db.js', () => {
   const poolStub = { query: mockPoolQuery };
   return { pool: poolStub, getPool: () => poolStub };

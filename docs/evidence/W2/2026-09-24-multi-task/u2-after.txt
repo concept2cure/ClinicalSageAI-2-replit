@@ -1,0 +1,3 @@
+ ✓ tests/services/scanned-pdf-native-canvas.test.ts > scanned PDF (a page that is an image) > is read by OCR and the process survives 3063ms
+ Test Files  3 passed (3)
+      Tests  12 passed (12)

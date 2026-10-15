@@ -1,0 +1,12 @@
+Mutant B07-env-ignored: qualification ignores the deployment it is read for
+
+--- server/services/ai-governance/approved-models.ts
+- qualified: isServedModelApprovedForHighRisk(s, env),
++ qualified: isServedModelApprovedForHighRisk(s),
+
+Tests run: server/services/ana/__tests__/turn-record-served-models.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > qualifyServedModels: RULE 2, per model > in production: only a passed PQ, so a PQ-pending approved model is not qualified 6ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,3 @@
+check-discarded-audit-write: no new occurrences. 117 baselined across 51 file(s).
+  3 baselined file(s) now below their count — run --write-baseline to shrink it.
+exit=0

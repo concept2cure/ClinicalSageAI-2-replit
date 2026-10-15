@@ -1,0 +1,1921 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click 615ms
+   → expected '/api/chat/threads?program_id=0f3c1a2b…' to be '/api/chat/threads?program_id=0f3c1a2b…' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > shows an honest empty when the program has no threads, and a failure as a failure 1412ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer leads the main column and the readiness ring sits in the aside 338ms
+ × client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > shows a screenful, then the older ones a screenful at a time, until there are none 596ms
+   → expected [ 'Conversation 1', …(8) ] to have a length of 8 but got 9
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > a screenful exactly offers nothing more 1954ms
+ × client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > an older read that fails says so, keeps what is shown, and can be tried again 6029ms
+   → Unable to find an accessible element with the role "button" and name "Show older conversations"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "All projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-back"[39m
+  [36m/>[39m
+
+  Name "Plan":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Strategy, precedent, agency meetings & timeline"[39m
+  [36m/>[39m
+
+  Name "Evidence":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Vault, RAG search & claim↔evidence linking"[39m
+  [36m/>[39m
+
+  Name "Author":
+  [36m<button[39m
+    [33maria-selected[39m=[32m"true"[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mdata-status[39m=[32m"active"[39m
+    [33mtitle[39m=[32m"Draft eCTD sections with AnA, track changes"[39m
+  [36m/>[39m
+
+  Name "Review":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Review, approve & e-sign"[39m
+  [36m/>[39m
+
+  Name "Submit":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Assemble eCTD, validate & transmit"[39m
+  [36m/>[39m
+
+  Name "Respond":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Health-authority questions & responses"[39m
+  [36m/>[39m
+
+  Name "Lifecycle":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Registrations, variations, market access & PV"[39m
+  [36m/>[39m
+
+  Name "Open full thread":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-convo-open"[39m
+  [36m/>[39m
+
+  Name "Send message to AnA":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Send message to AnA"[39m
+    [33mclass[39m=[32m"pj-comp-send"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Program journeyThe end-to-end biotech/pharma spine — concept to submission to lifecycle":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The end-to-end biotech/pharma spine — concept to submission to lifecycle. 9 lifecycle stages, each with its agency gate, deliverables and the deep-linked capabilities that serve it, plus program intelligence: CTD readiness, review clock, predicted HAQs, contradictions and blockers."[39m
+  [36m/>[39m
+
+  Name "AnA Authoring EngineEnd-to-end document suite for the whole CTD pyramid, raw data to final draft":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"End-to-end document suite for the whole CTD pyramid, raw data to final draft. An AI system per document type (no hallucinations, every required element), multi-modal (text/tables/figures/graphs), template-learning, and GxP automations whose non-AI validation logic runs as intended 100% of the time."[39m
+  [36m/>[39m
+
+  Name "Parallel draftingAnA drafts several dossier sections in parallel (batch_draft_sections) — one Accept card per section, each promoting through the same governed PATCH (saveSection · draftSource=ana)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"AnA drafts several dossier sections in parallel (batch_draft_sections) — one Accept card per section, each promoting through the same governed PATCH (saveSection · draftSource=ana). Fans out concurrent streamDraft SSE calls over the live per-section route."[39m
+  [36m/>[39m
+
+  Name "Inconsistency IntelligenceChange a governed value once and propagate it across every document that cites it":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved and locked sections are flagged for re-approval with a task, on the audit trail."[39m
+  [36m/>[39m
+
+  Name "Source TracerSentence-level provenance: every sentence carries a typed source (trial data, literature, regulatory guidance or internal data) with a confidence score, and untraced claims are surfaced":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Sentence-level provenance: every sentence carries a typed source (trial data, literature, regulatory guidance or internal data) with a confidence score, and untraced claims are surfaced. Literature citations are checked against PubMed and CrossRef — an unconfirmed citation is flagged, never assumed. Still sample-backed, and labelled as such until it is wired to live data."[39m
+  [36m/>[39m
+
+  Name "DossierDocument-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Document-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files."[39m
+  [36m/>[39m
+
+  Name "Document editor & authoringSection editor with tracked changes, threaded comments, version history and diff, approval routing, and e-signature manifestation (21 CFR §11.50).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Section editor with tracked changes, threaded comments, version history and diff, approval routing, and e-signature manifestation (21 CFR §11.50)."[39m
+  [36m/>[39m
+
+  Name "CMC / Module 3Module 3 operating system: registers, specifications, stability, batch records, build/compile, contradictions, Part 11 approval, export gate, and placement into the IND submission spine":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Module 3 operating system: registers, specifications, stability, batch records, build/compile, contradictions, Part 11 approval, export gate, and placement into the IND submission spine. Promoted to the rail (RAIL_SPECIALIST) 2026-08-23; entitlement-gated via the cmc catalog row."[39m
+  [36m/>[39m
+
+  Name "Nonclinical / Module 4IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies."[39m
+  [36m/>[39m
+
+  Name "CSR workflowICH E3 CSR builder + intelligence library.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"ICH E3 CSR builder + intelligence library."[39m
+  [36m/>[39m
+
+  Name "Prescribing informationUSPI (PLLR / 21 CFR 201.57), EU SmPC (QRD), SPL":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"USPI (PLLR / 21 CFR 201.57), EU SmPC (QRD), SPL. End-of-review agency labeling negotiation (sponsor vs FDA redline). The label as the document."[39m
+  [36m/>[39m
+
+  Name "Document journeyOne document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"One document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG). Document state visible at every stage."[39m
+  [36m/>[39m
+
+  Name "eCTD co-authoreCTD tree + section authoring":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade."[39m
+  [36m/>[39m
+
+  Name "Compile & export eCTDeCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id."[39m
+  [36m/>[39m
+
+  Name "Template libraryFull REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Full REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited. No UI yet — strongest backend without a surface."[39m
+  [36m/>[39m
+
+  Name "Vault (DMS)The program dossier tree (rule-pack builds) plus the filing cabinet: uploads are virus-scanned, SHA-256 hashed, auto-classified to a suggested dossier folder per the program's client-type taxonomy (CTD modules / device submission folders / TMF zones), and confirmed or moved via the governed, audited /file route":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The program dossier tree (rule-pack builds) plus the filing cabinet: uploads are virus-scanned, SHA-256 hashed, auto-classified to a suggested dossier folder per the program's client-type taxonomy (CTD modules / device submission folders / TMF zones), and confirmed or moved via the governed, audited /file route. Includes the data room lane — every captured source with its derived captured→classified→filed stage."[39m
+  [36m/>[39m
+
+  Name "Evidence search (RAG)Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks."[39m
+  [36m/>[39m
+
+  Name "Artifacts centerCross-project artifact library, version chain, provenance, signature status.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Cross-project artifact library, version chain, provenance, signature status."[39m
+  [36m/>[39m
+
+  Name "Decision lineageThe immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how). Answer-first defensibility read, then the readable chain of governed decisions (5 node types), then chain-integrity verify + compliance frameworks + eCTD-compatible export."[39m
+  [36m/>[39m
+
+  Name "Reporting & analyticsAnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"AnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs."[39m
+  [36m/>[39m
+
+  Name "Filings catalogThe canonical index of every regulatory filing type, across pharma/biotech, device, IVD and cross-cutting":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The canonical index of every regulatory filing type, across pharma/biotech, device, IVD and cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER). The count is computed from the registry and shown on the page."[39m
+  [36m/>[39m
+
+  Name "NDA / BLA filingNDA/BLA filing cockpit: CTD M1–5 readiness, Module 1 admin set (356h), PDUFA review clock, Refuse-to-File risk (shadow review).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"NDA/BLA filing cockpit: CTD M1–5 readiness, Module 1 admin set (356h), PDUFA review clock, Refuse-to-File risk (shadow review)."[39m
+  [36m/>[39m
+
+  Name "MAA Module 1 (Regional)Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine."[39m
+  [36m/>[39m
+
+  Name "IND lifecycleIND checklist, forms (1571/1572/3674), master data, amendments, annual reports, safety reports.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"IND checklist, forms (1571/1572/3674), master data, amendments, annual reports, safety reports."[39m
+  [36m/>[39m
+
+  Name "Submission centerPackage preview, eValidator pass, and the choice between an ESG submission and an eSTAR export.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Package preview, eValidator pass, and the choice between an ESG submission and an eSTAR export."[39m
+  [36m/>[39m
+
+  Name "Communication CenterThe regulated FDA↔client loop: agency communications (9 source types) auto-generating tasks, submission lifecycle incl":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The regulated FDA↔client loop: agency communications (9 source types) auto-generating tasks, submission lifecycle incl. CRL/RTF/denial (rejected_or_remediation) → response → resubmit, HA interactions + PMR/PMC/REMS commitments, authority profiles."[39m
+  [36m/>[39m
+
+  Name "Submission pyramidDeterministic submission work breakdown — submission-type selector, dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase-to-task drill-down with a full-metadata detail sheet (risk, CTD bindings, guidance, dependencies, deliverables), analytics (resources and bottlenecks, document coverage, critical path), and the global pyramid browser":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Deterministic submission work breakdown — submission-type selector, dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase-to-task drill-down with a full-metadata detail sheet (risk, CTD bindings, guidance, dependencies, deliverables), analytics (resources and bottlenecks, document coverage, critical path), and the global pyramid browser. Task status is the only state the browser owns."[39m
+  [36m/>[39m
+
+  Name "Dossier mapCTD/eCTD module map with completeness + readiness overlay.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"CTD/eCTD module map with completeness + readiness overlay."[39m
+  [36m/>[39m
+
+  Name "Product development (PDEV → IND)Activity → AI draft → evidence → confirm":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Activity → AI draft → evidence → confirm. State changes and evidence links carry a reason into the audit chain."[39m
+  [36m/>[39m
+
+  Name "Health authority questionsPost-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package."[39m
+  [36m/>[39m
+
+  Name "Orchestration & readinessPersisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing."[39m
+  [36m/>[39m
+
+  Name "Review & approvalReview queue, threaded comments (open/resolved/outdated), reject-with-reason, e-sign manifestation (21 CFR §11.50).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Review queue, threaded comments (open/resolved/outdated), reject-with-reason, e-sign manifestation (21 CFR §11.50)."[39m
+  [36m/>[39m
+
+  Name "Shadow reviewAnA simulates the reviewer who will read your submission (5 real lenses: FDA filing / EMA D120 / PMDA / MDR NB / IVDR NB) and scores the two gates that kill a filing — RTF (administrative) and CRL (substantive)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"AnA simulates the reviewer who will read your submission (5 real lenses: FDA filing / EMA D120 / PMDA / MDR NB / IVDR NB) and scores the two gates that kill a filing — RTF (administrative) and CRL (substantive). Findings are model_assisted; the risk aggregation is the verbatim deterministic aggregateRisk (a single critical saturates)."[39m
+  [36m/>[39m
+
+  Name "Dispatch readinessThe deterministic last gate before transmit":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The deterministic last gate before transmit. Composes structural validation, unacknowledged Shadow Review criticals and the external eValidator; every input is computed server-side, so the client cannot talk the verdict down. Flags the cleared-but-never-reviewed blind spot."[39m
+  [36m/>[39m
+
+  Name "Tasks & collaborationOrg-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray."[39m
+  [36m/>[39m
+
+  Name "Agency meetingsAgency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice. Briefing book document + questions, minutes + commitments back to the dossier."[39m
+  [36m/>[39m
+
+  Name "Audit trailLog entries, filters, signed PDF export":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Log entries, filters, signed PDF export. Immutable-history visual per regulatory-compliance-ux."[39m
+  [36m/>[39m
+
+  Name "Quality & AssuranceQuality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records)."[39m
+  [36m/>[39m
+
+  Name "BiostatisticsSAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC. Loads the program's persisted study designs through the biostatistics bridge: gaps, filing placement per application type, governed sample-size write-back and task raising."[39m
+  [36m/>[39m
+
+  Name "Biostat workbenchReal statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation."[39m
+  [36m/>[39m
+
+  Name "Risk-based monitoringICH E6(R3) RBQM domain shell — overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight and monitoring plan, read through one aggregated board":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"ICH E6(R3) RBQM domain shell — overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight and monitoring plan, read through one aggregated board. Every score is produced deterministically; assessment and plan approvals are Part 11 governed (reason-for-change plus e-signature). Every edit is a real write followed by a re-read — nothing is held optimistically in the browser."[39m
+  [36m/>[39m
+
+  Name "Clinical operationsClinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Clinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA. Structured data entry for sites and deviations."[39m
+  [36m/>[39m
+
+  Name "Safety narrative / PVSAE narrative generation, ICSR, signal handling.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"SAE narrative generation, ICSR, signal handling."[39m
+  [36m/>[39m
+
+  Name "PharmacovigilanceSafety surveillance: signal detection (PRR/FAERS/EudraVigilance), PSUR/PBRER aggregate-report cycles, expedited 7/15-day submissions across approved products.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Safety surveillance: signal detection (PRR/FAERS/EudraVigilance), PSUR/PBRER aggregate-report cycles, expedited 7/15-day submissions across approved products."[39m
+  [36m/>[39m
+
+  Name "PV cockpitSafety-surveillance workbench: KPIs, disproportionality screener (PRR/ROR/EBGM), expedited-reporting clock, regional compliance matrix.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Safety-surveillance workbench: KPIs, disproportionality screener (PRR/ROR/EBGM), expedited-reporting clock, regional compliance matrix."[39m
+  [36m/>[39m
+
+  Name "Precedent intelligencePast approvals search + decision rationale":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Past approvals search + decision rationale. Slots into 510(k) §12 substantial equivalence."[39m
+  [36m/>[39m
+
+  Name "Global regulatory intelligenceDeterministic regulatory capabilities, grouped by topic":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Deterministic regulatory capabilities, grouped by topic. The catalog drives both the navigation and the forms behind it."[39m
+  [36m/>[39m
+
+  Name "Intelligence catalogRead-only reference for the deterministic tools AnA can run, grouped by domain, with the determinism-pedigree trust system and the shared result-rendering pattern.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Read-only reference for the deterministic tools AnA can run, grouped by domain, with the determinism-pedigree trust system and the shared result-rendering pattern."[39m
+  [36m/>[39m
+
+  Name "Deep researchLong-running multi-source research (Opus)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Long-running multi-source research (Opus). Shares the AnA rail in deep-research mode."[39m
+  [36m/>[39m
+
+  Name "Lifecycle managementPost-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Post-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination)."[39m
+  [36m/>[39m
+
+  Name "Pediatric (PIP / PSP)FDA §505B PREA / iPSP and EMA PIP: plans, deferrals, waivers, extrapolation rationale and PREA milestones.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"FDA §505B PREA / iPSP and EMA PIP: plans, deferrals, waivers, extrapolation rationale and PREA milestones."[39m
+  [36m/>[39m
+
+  Name "Orphan & rareOrphan-drug / rare-disease designations across FDA/EMA/PMDA, RPD priority-review vouchers & grants, and patient-advocacy engagement.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Orphan-drug / rare-disease designations across FDA/EMA/PMDA, RPD priority-review vouchers & grants, and patient-advocacy engagement."[39m
+  [36m/>[39m
+
+  Name "RegistrationsGlobal registration lifecycle: market authorization status, agency review clocks, renewals/variations, HA commitments, reliance-pathway strategy.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Global registration lifecycle: market authorization status, agency review clocks, renewals/variations, HA commitments, reliance-pathway strategy."[39m
+  [36m/>[39m
+
+  Name "Market accessCommercial bridge: payer coverage (CMS NCD/LCD, private, HTA), value-dossier composer (AMCP/NICE/budget-impact), coding strategy (CPT/PLA/HCPCS), access sequencing.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Commercial bridge: payer coverage (CMS NCD/LCD, private, HTA), value-dossier composer (AMCP/NICE/budget-impact), coding strategy (CPT/PLA/HCPCS), access sequencing."[39m
+  [36m/>[39m
+
+  Name "Change assessmentChange impact engine: FDA "When to Submit a 510(k) for a Change" (2017) + EU MDR significant-change (MDCG 2020-3) determinations → new submission vs document-to-file.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Change impact engine: FDA \"When to Submit a 510(k) for a Change\" (2017) + EU MDR significant-change (MDCG 2020-3) determinations → new submission vs document-to-file."[39m
+  [36m/>[39m
+
+  Name "Regulatory change intelligencePortfolio horizon scan: monitors FDA guidance, ISO/IEC revisions, EU MDCG/MDR-IVDR and statutory changes; assesses impact and resolves each to an action document (gap analysis, transition plan, update task) — never a passive feed.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Portfolio horizon scan: monitors FDA guidance, ISO/IEC revisions, EU MDCG/MDR-IVDR and statutory changes; assesses impact and resolves each to an action document (gap analysis, transition plan, update task) — never a passive feed."[39m
+  [36m/>[39m
+
+  Name "Conversation 1 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 2 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 3 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 4 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 5 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 6 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 7 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 8 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 9 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Add sources to this project":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Add sources to this project"[39m
+    [33mclass[39m=[32m"pj-dropzone"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  Name "Trace a claim to its source":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"font-size: 12px; padding: 4px 12px;"[39m
+  [36m/>[39m
+
+  Name "Write from these sources":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"font-size: 12px; padding: 4px 12px;"[39m
+  [36m/>[39m
+
+  Name "Open task board":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"font-size: 12px; padding: 4px 12px;"[39m
+  [36m/>[39m
+
+  Name "Add document (opens the document workspace)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Add document (opens the document workspace)"[39m
+    [33mclass[39m=[32m"pj-edit"[39m
+    [33mtitle[39m=[32m"Add document (opens the document workspace)"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "BX-301":
+  [36m<h1[39m
+    [33mclass[39m=[32m"pj-title"[39m
+  [36m/>[39m
+
+  Name "Workspace":
+  [36m<h2 />[39m
+
+  Name "Conversations":
+  [36m<h2 />[39m
+
+  Name "Module completion":
+  [36m<h2 />[39m
+
+  Name "Data room":
+  [36m<h2 />[39m
+
+  Name "Tasks":
+  [36m<h2 />[39m
+
+  Name "Records in this project":
+  [36m<h2 />[39m
+
+  Name "Submissions not available":
+  [36m<h3 />[39m
+
+  Name "Data Room sources not available":
+  [36m<h3 />[39m
+
+  Name "Authoring documents not available":
+  [36m<h3 />[39m
+
+  Name "Vault documents not available":
+  [36m<h3 />[39m
+
+  Name "Study designs not available":
+  [36m<h3 />[39m
+
+  Name "Filing documents not available":
+  [36m<h3 />[39m
+
+  Name "Team & activity":
+  [36m<h2 />[39m
+
+  Name "Dossier readiness":
+  [36m<h3 />[39m
+
+  Name "Memory":
+  [36m<h3 />[39m
+
+  Name "Instructions":
+  [36m<h3 />[39m
+
+  Name "Recent drafts":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "Program identity":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Program identity"[39m
+    [33mclass[39m=[32m"pj-facts"[39m
+  [36m/>[39m
+
+  Name "Tasks":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Tasks"[39m
+    [33mclass[39m=[32m"pj-sec"[39m
+  [36m/>[39m
+
+  Name "Records in this project":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Records in this project"[39m
+    [33mclass[39m=[32m"pj-sec"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  term:
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  [36m<dd />[39m
+
+  Name "":
+  [36m<dd />[39m
+
+  Name "":
+  [36m<dd />[39m
+
+  Name "":
+  [36m<dd />[39m
+
+  --------------------------------------------------
+  tablist:
+
+  Name "Project lifecycle":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Project lifecycle"[39m
+    [33mclass[39m=[32m"pj-lc"[39m
+    [33mrole[39m=[32m"tablist"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Message AnA about this project":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"Message AnA about this project"[39m
+    [33mplaceholder[39m=[32m"Message AnA about BX-301…"[39m
+    [33mrows[39m=[32m"2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"pj-side"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-301[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-301[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m/>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mApplication number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Project lifecycle"[39m
+        [33mclass[39m=[32m"pj-lc"[39m
+        [33mrole[39m=[32m"tablist"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-lc-stage"[39m
+          [33mtitle[39m=[32m"Strategy, precedent, agency meetings & timeline"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-lc-node"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-lc-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-calendar"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M8 2v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 2v4"[39m
+                [36m/>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 10h18"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-lc-l"[39m
+          [36m>[39m
+            [0mPlan[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-lc-stage"[39m
+          [33mtitle[39m=[32m"Vault, RAG search & claim↔evidence linking"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-lc-node"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-lc-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"...
+stderr | server/routes/__tests__/chat-threads-program-paging.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/chat-threads-program-paging.test.ts
+{
+  "timestamp": "2026-10-08T03:09:36.763Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/chat-threads-program-paging.test.ts > a program’s conversations page past the first screenful > takes an offset, after the order, bound as a parameter 41ms
+   → expected 'SELECT t.id, t.created_at, t.updated_…' to match /ORDER BY COALESCE\(t\.updated_at, t\.…/
+ × server/routes/__tests__/chat-threads-program-paging.test.ts > a program’s conversations page past the first screenful > starts at the newest when no offset, or no usable one, is given 14ms
+   → none: expected undefined to be +0 // Object.is equality
+ ✓ server/routes/__tests__/chat-threads-program-paging.test.ts > a program’s conversations page past the first screenful > is still the caller’s own conversations in the program 23ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/chat-threads-program-paging.test.ts > a program’s conversations page past the first screenful > takes an offset, after the order, bound as a parameter
+AssertionError: expected 'SELECT t.id, t.created_at, t.updated_…' to match /ORDER BY COALESCE\(t\.updated_at, t\.…/
+
+- Expected:
+/ORDER BY COALESCE\(t\.updated_at, t\.created_at\) DESC, t\.id DESC\s+LIMIT \$3 OFFSET \$5/
+
++ Received:
+"SELECT t.id, t.created_at, t.updated_at, t.program_id,
+          (SELECT content FROM chat_messages
+            WHERE thread_id = t.id AND role = 'user'
+            ORDER BY created_at ASC LIMIT 1) AS title
+        FROM chat_threads t
+        WHERE t.organization_id = $1 AND t.program_id = $2 AND t.user_id = $4
+        ORDER BY COALESCE(t.updated_at, t.created_at) DESC
+        LIMIT $3"
+
+ ❯ server/routes/__tests__/chat-threads-program-paging.test.ts:46:17
+     44|     expect(res.status).toBe(200);
+     45|     const [sql, params] = lastCall();
+     46|     expect(sql).toMatch(/ORDER BY COALESCE\(t\.updated_at, t\.created_…
+       |                 ^
+     47|     expect(params).toEqual([1, PROGRAM, 9, 7, 8]);
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/__tests__/chat-threads-program-paging.test.ts > a program’s conversations page past the first screenful > starts at the newest when no offset, or no usable one, is given
+AssertionError: none: expected undefined to be +0 // Object.is equality
+
+- Expected:
+0
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/chat-threads-program-paging.test.ts:53:45
+     51|     for (const q of ['', '&offset=-4', '&offset=abc', '&offset=2.5']) {
+     52|       await request(app()).get(`/api/chat/threads?program_id=${PROGRAM…
+     53|       expect(lastCall()[1][4], q || 'none').toBe(0);
+       |                                             ^
+     54|     }
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click
+AssertionError: expected '/api/chat/threads?program_id=0f3c1a2b…' to be '/api/chat/threads?program_id=0f3c1a2b…' // Object.is equality
+
+Expected: "/api/chat/threads?program_id=0f3c1a2b-1111-4222-8333-444455556666&limit=9"
+Received: "/api/chat/threads?program_id=0f3c1a2b-1111-4222-8333-444455556666&limit=8"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx:57:22
+     55|     // and one more to know whether there are older ones.
+     56|     const call = apiRequest.mock.calls.find((c) => String(c[1]).starts…
+     57|     expect(call![1]).toBe(`/api/chat/threads?program_id=${PID}&limit=9…
+       |                      ^
+     58|     expect(screen.getByText('Untitled conversation')).toBeTruthy();
+     59|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > shows a screenful, then the older ones a screenful at a time, until there are none
+AssertionError: expected [ 'Conversation 1', …(8) ] to have a length of 8 but got 9
+
+- Expected
++ Received
+
+- 8
++ 9
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx:118:20
+    116|     render(<ProjectHome {...props()} />);
+    117|     await screen.findByText('Conversation 1');
+    118|     expect(rows()).toHaveLength(8);
+       |                    ^
+    119|     expect(rows()).not.toContain('Conversation 9');
+    120|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > an older read that fails says so, keeps what is shown, and can be tried again
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Show older conversations"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "All projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-back"[39m
+  [36m/>[39m
+
+  Name "Plan":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Strategy, precedent, agency meetings & timeline"[39m
+  [36m/>[39m
+
+  Name "Evidence":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Vault, RAG search & claim↔evidence linking"[39m
+  [36m/>[39m
+
+  Name "Author":
+  [36m<button[39m
+    [33maria-selected[39m=[32m"true"[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mdata-status[39m=[32m"active"[39m
+    [33mtitle[39m=[32m"Draft eCTD sections with AnA, track changes"[39m
+  [36m/>[39m
+
+  Name "Review":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Review, approve & e-sign"[39m
+  [36m/>[39m
+
+  Name "Submit":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Assemble eCTD, validate & transmit"[39m
+  [36m/>[39m
+
+  Name "Respond":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Health-authority questions & responses"[39m
+  [36m/>[39m
+
+  Name "Lifecycle":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-lc-stage"[39m
+    [33mtitle[39m=[32m"Registrations, variations, market access & PV"[39m
+  [36m/>[39m
+
+  Name "Open full thread":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-convo-open"[39m
+  [36m/>[39m
+
+  Name "Send message to AnA":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Send message to AnA"[39m
+    [33mclass[39m=[32m"pj-comp-send"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Program journeyThe end-to-end biotech/pharma spine — concept to submission to lifecycle":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The end-to-end biotech/pharma spine — concept to submission to lifecycle. 9 lifecycle stages, each with its agency gate, deliverables and the deep-linked capabilities that serve it, plus program intelligence: CTD readiness, review clock, predicted HAQs, contradictions and blockers."[39m
+  [36m/>[39m
+
+  Name "AnA Authoring EngineEnd-to-end document suite for the whole CTD pyramid, raw data to final draft":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"End-to-end document suite for the whole CTD pyramid, raw data to final draft. An AI system per document type (no hallucinations, every required element), multi-modal (text/tables/figures/graphs), template-learning, and GxP automations whose non-AI validation logic runs as intended 100% of the time."[39m
+  [36m/>[39m
+
+  Name "Parallel draftingAnA drafts several dossier sections in parallel (batch_draft_sections) — one Accept card per section, each promoting through the same governed PATCH (saveSection · draftSource=ana)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"AnA drafts several dossier sections in parallel (batch_draft_sections) — one Accept card per section, each promoting through the same governed PATCH (saveSection · draftSource=ana). Fans out concurrent streamDraft SSE calls over the live per-section route."[39m
+  [36m/>[39m
+
+  Name "Inconsistency IntelligenceChange a governed value once and propagate it across every document that cites it":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved and locked sections are flagged for re-approval with a task, on the audit trail."[39m
+  [36m/>[39m
+
+  Name "Source TracerSentence-level provenance: every sentence carries a typed source (trial data, literature, regulatory guidance or internal data) with a confidence score, and untraced claims are surfaced":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Sentence-level provenance: every sentence carries a typed source (trial data, literature, regulatory guidance or internal data) with a confidence score, and untraced claims are surfaced. Literature citations are checked against PubMed and CrossRef — an unconfirmed citation is flagged, never assumed. Still sample-backed, and labelled as such until it is wired to live data."[39m
+  [36m/>[39m
+
+  Name "DossierDocument-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Document-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files."[39m
+  [36m/>[39m
+
+  Name "Document editor & authoringSection editor with tracked changes, threaded comments, version history and diff, approval routing, and e-signature manifestation (21 CFR §11.50).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Section editor with tracked changes, threaded comments, version history and diff, approval routing, and e-signature manifestation (21 CFR §11.50)."[39m
+  [36m/>[39m
+
+  Name "CMC / Module 3Module 3 operating system: registers, specifications, stability, batch records, build/compile, contradictions, Part 11 approval, export gate, and placement into the IND submission spine":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Module 3 operating system: registers, specifications, stability, batch records, build/compile, contradictions, Part 11 approval, export gate, and placement into the IND submission spine. Promoted to the rail (RAIL_SPECIALIST) 2026-08-23; entitlement-gated via the cmc catalog row."[39m
+  [36m/>[39m
+
+  Name "Nonclinical / Module 4IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies."[39m
+  [36m/>[39m
+
+  Name "CSR workflowICH E3 CSR builder + intelligence library.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"ICH E3 CSR builder + intelligence library."[39m
+  [36m/>[39m
+
+  Name "Prescribing informationUSPI (PLLR / 21 CFR 201.57), EU SmPC (QRD), SPL":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"USPI (PLLR / 21 CFR 201.57), EU SmPC (QRD), SPL. End-of-review agency labeling negotiation (sponsor vs FDA redline). The label as the document."[39m
+  [36m/>[39m
+
+  Name "Document journeyOne document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"One document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG). Document state visible at every stage."[39m
+  [36m/>[39m
+
+  Name "eCTD co-authoreCTD tree + section authoring":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade."[39m
+  [36m/>[39m
+
+  Name "Compile & export eCTDeCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id."[39m
+  [36m/>[39m
+
+  Name "Template libraryFull REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Full REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited. No UI yet — strongest backend without a surface."[39m
+  [36m/>[39m
+
+  Name "Vault (DMS)The program dossier tree (rule-pack builds) plus the filing cabinet: uploads are virus-scanned, SHA-256 hashed, auto-classified to a suggested dossier folder per the program's client-type taxonomy (CTD modules / device submission folders / TMF zones), and confirmed or moved via the governed, audited /file route":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The program dossier tree (rule-pack builds) plus the filing cabinet: uploads are virus-scanned, SHA-256 hashed, auto-classified to a suggested dossier folder per the program's client-type taxonomy (CTD modules / device submission folders / TMF zones), and confirmed or moved via the governed, audited /file route. Includes the data room lane — every captured source with its derived captured→classified→filed stage."[39m
+  [36m/>[39m
+
+  Name "Evidence search (RAG)Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks."[39m
+  [36m/>[39m
+
+  Name "Artifacts centerCross-project artifact library, version chain, provenance, signature status.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Cross-project artifact library, version chain, provenance, signature status."[39m
+  [36m/>[39m
+
+  Name "Decision lineageThe immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how). Answer-first defensibility read, then the readable chain of governed decisions (5 node types), then chain-integrity verify + compliance frameworks + eCTD-compatible export."[39m
+  [36m/>[39m
+
+  Name "Reporting & analyticsAnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"AnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs."[39m
+  [36m/>[39m
+
+  Name "Filings catalogThe canonical index of every regulatory filing type, across pharma/biotech, device, IVD and cross-cutting":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The canonical index of every regulatory filing type, across pharma/biotech, device, IVD and cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER). The count is computed from the registry and shown on the page."[39m
+  [36m/>[39m
+
+  Name "NDA / BLA filingNDA/BLA filing cockpit: CTD M1–5 readiness, Module 1 admin set (356h), PDUFA review clock, Refuse-to-File risk (shadow review).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"NDA/BLA filing cockpit: CTD M1–5 readiness, Module 1 admin set (356h), PDUFA review clock, Refuse-to-File risk (shadow review)."[39m
+  [36m/>[39m
+
+  Name "MAA Module 1 (Regional)Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine."[39m
+  [36m/>[39m
+
+  Name "IND lifecycleIND checklist, forms (1571/1572/3674), master data, amendments, annual reports, safety reports.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"IND checklist, forms (1571/1572/3674), master data, amendments, annual reports, safety reports."[39m
+  [36m/>[39m
+
+  Name "Submission centerPackage preview, eValidator pass, and the choice between an ESG submission and an eSTAR export.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Package preview, eValidator pass, and the choice between an ESG submission and an eSTAR export."[39m
+  [36m/>[39m
+
+  Name "Communication CenterThe regulated FDA↔client loop: agency communications (9 source types) auto-generating tasks, submission lifecycle incl":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The regulated FDA↔client loop: agency communications (9 source types) auto-generating tasks, submission lifecycle incl. CRL/RTF/denial (rejected_or_remediation) → response → resubmit, HA interactions + PMR/PMC/REMS commitments, authority profiles."[39m
+  [36m/>[39m
+
+  Name "Submission pyramidDeterministic submission work breakdown — submission-type selector, dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase-to-task drill-down with a full-metadata detail sheet (risk, CTD bindings, guidance, dependencies, deliverables), analytics (resources and bottlenecks, document coverage, critical path), and the global pyramid browser":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Deterministic submission work breakdown — submission-type selector, dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase-to-task drill-down with a full-metadata detail sheet (risk, CTD bindings, guidance, dependencies, deliverables), analytics (resources and bottlenecks, document coverage, critical path), and the global pyramid browser. Task status is the only state the browser owns."[39m
+  [36m/>[39m
+
+  Name "Dossier mapCTD/eCTD module map with completeness + readiness overlay.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"CTD/eCTD module map with completeness + readiness overlay."[39m
+  [36m/>[39m
+
+  Name "Product development (PDEV → IND)Activity → AI draft → evidence → confirm":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Activity → AI draft → evidence → confirm. State changes and evidence links carry a reason into the audit chain."[39m
+  [36m/>[39m
+
+  Name "Health authority questionsPost-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package."[39m
+  [36m/>[39m
+
+  Name "Orchestration & readinessPersisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing."[39m
+  [36m/>[39m
+
+  Name "Review & approvalReview queue, threaded comments (open/resolved/outdated), reject-with-reason, e-sign manifestation (21 CFR §11.50).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Review queue, threaded comments (open/resolved/outdated), reject-with-reason, e-sign manifestation (21 CFR §11.50)."[39m
+  [36m/>[39m
+
+  Name "Shadow reviewAnA simulates the reviewer who will read your submission (5 real lenses: FDA filing / EMA D120 / PMDA / MDR NB / IVDR NB) and scores the two gates that kill a filing — RTF (administrative) and CRL (substantive)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"AnA simulates the reviewer who will read your submission (5 real lenses: FDA filing / EMA D120 / PMDA / MDR NB / IVDR NB) and scores the two gates that kill a filing — RTF (administrative) and CRL (substantive). Findings are model_assisted; the risk aggregation is the verbatim deterministic aggregateRisk (a single critical saturates)."[39m
+  [36m/>[39m
+
+  Name "Dispatch readinessThe deterministic last gate before transmit":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"The deterministic last gate before transmit. Composes structural validation, unacknowledged Shadow Review criticals and the external eValidator; every input is computed server-side, so the client cannot talk the verdict down. Flags the cleared-but-never-reviewed blind spot."[39m
+  [36m/>[39m
+
+  Name "Tasks & collaborationOrg-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray."[39m
+  [36m/>[39m
+
+  Name "Agency meetingsAgency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice. Briefing book document + questions, minutes + commitments back to the dossier."[39m
+  [36m/>[39m
+
+  Name "Audit trailLog entries, filters, signed PDF export":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Log entries, filters, signed PDF export. Immutable-history visual per regulatory-compliance-ux."[39m
+  [36m/>[39m
+
+  Name "Quality & AssuranceQuality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records)."[39m
+  [36m/>[39m
+
+  Name "BiostatisticsSAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC. Loads the program's persisted study designs through the biostatistics bridge: gaps, filing placement per application type, governed sample-size write-back and task raising."[39m
+  [36m/>[39m
+
+  Name "Biostat workbenchReal statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation."[39m
+  [36m/>[39m
+
+  Name "Risk-based monitoringICH E6(R3) RBQM domain shell — overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight and monitoring plan, read through one aggregated board":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"ICH E6(R3) RBQM domain shell — overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight and monitoring plan, read through one aggregated board. Every score is produced deterministically; assessment and plan approvals are Part 11 governed (reason-for-change plus e-signature). Every edit is a real write followed by a re-read — nothing is held optimistically in the browser."[39m
+  [36m/>[39m
+
+  Name "Clinical operationsClinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Clinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA. Structured data entry for sites and deviations."[39m
+  [36m/>[39m
+
+  Name "Safety narrative / PVSAE narrative generation, ICSR, signal handling.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"SAE narrative generation, ICSR, signal handling."[39m
+  [36m/>[39m
+
+  Name "PharmacovigilanceSafety surveillance: signal detection (PRR/FAERS/EudraVigilance), PSUR/PBRER aggregate-report cycles, expedited 7/15-day submissions across approved products.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Safety surveillance: signal detection (PRR/FAERS/EudraVigilance), PSUR/PBRER aggregate-report cycles, expedited 7/15-day submissions across approved products."[39m
+  [36m/>[39m
+
+  Name "PV cockpitSafety-surveillance workbench: KPIs, disproportionality screener (PRR/ROR/EBGM), expedited-reporting clock, regional compliance matrix.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Safety-surveillance workbench: KPIs, disproportionality screener (PRR/ROR/EBGM), expedited-reporting clock, regional compliance matrix."[39m
+  [36m/>[39m
+
+  Name "Precedent intelligencePast approvals search + decision rationale":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Past approvals search + decision rationale. Slots into 510(k) §12 substantial equivalence."[39m
+  [36m/>[39m
+
+  Name "Global regulatory intelligenceDeterministic regulatory capabilities, grouped by topic":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Deterministic regulatory capabilities, grouped by topic. The catalog drives both the navigation and the forms behind it."[39m
+  [36m/>[39m
+
+  Name "Intelligence catalogRead-only reference for the deterministic tools AnA can run, grouped by domain, with the determinism-pedigree trust system and the shared result-rendering pattern.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Read-only reference for the deterministic tools AnA can run, grouped by domain, with the determinism-pedigree trust system and the shared result-rendering pattern."[39m
+  [36m/>[39m
+
+  Name "Deep researchLong-running multi-source research (Opus)":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Long-running multi-source research (Opus). Shares the AnA rail in deep-research mode."[39m
+  [36m/>[39m
+
+  Name "Lifecycle managementPost-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination).":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Post-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination)."[39m
+  [36m/>[39m
+
+  Name "Pediatric (PIP / PSP)FDA §505B PREA / iPSP and EMA PIP: plans, deferrals, waivers, extrapolation rationale and PREA milestones.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"FDA §505B PREA / iPSP and EMA PIP: plans, deferrals, waivers, extrapolation rationale and PREA milestones."[39m
+  [36m/>[39m
+
+  Name "Orphan & rareOrphan-drug / rare-disease designations across FDA/EMA/PMDA, RPD priority-review vouchers & grants, and patient-advocacy engagement.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Orphan-drug / rare-disease designations across FDA/EMA/PMDA, RPD priority-review vouchers & grants, and patient-advocacy engagement."[39m
+  [36m/>[39m
+
+  Name "RegistrationsGlobal registration lifecycle: market authorization status, agency review clocks, renewals/variations, HA commitments, reliance-pathway strategy.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Global registration lifecycle: market authorization status, agency review clocks, renewals/variations, HA commitments, reliance-pathway strategy."[39m
+  [36m/>[39m
+
+  Name "Market accessCommercial bridge: payer coverage (CMS NCD/LCD, private, HTA), value-dossier composer (AMCP/NICE/budget-impact), coding strategy (CPT/PLA/HCPCS), access sequencing.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Commercial bridge: payer coverage (CMS NCD/LCD, private, HTA), value-dossier composer (AMCP/NICE/budget-impact), coding strategy (CPT/PLA/HCPCS), access sequencing."[39m
+  [36m/>[39m
+
+  Name "Change assessmentChange impact engine: FDA "When to Submit a 510(k) for a Change" (2017) + EU MDR significant-change (MDCG 2020-3) determinations → new submission vs document-to-file.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Change impact engine: FDA \"When to Submit a 510(k) for a Change\" (2017) + EU MDR significant-change (MDCG 2020-3) determinations → new submission vs document-to-file."[39m
+  [36m/>[39m
+
+  Name "Regulatory change intelligencePortfolio horizon scan: monitors FDA guidance, ISO/IEC revisions, EU MDCG/MDR-IVDR and statutory changes; assesses impact and resolves each to an action document (gap analysis, transition plan, update task) — never a passive feed.":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-tool"[39m
+    [33mtitle[39m=[32m"Portfolio horizon scan: monitors FDA guidance, ISO/IEC revisions, EU MDCG/MDR-IVDR and statutory changes; assesses impact and resolves each to an action document (gap analysis, transition plan, update task) — never a passive feed."[39m
+  [36m/>[39m
+
+  Name "Conversation 1 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 2 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 3 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 4 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 5 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 6 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 7 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 8 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Conversation 9 Oct 1 · Resume":
+  [36m<button[39m
+    [33mclass[39m=[32m"pj-file"[39m
+    [33mstyle[39m=[32m"width: 100%; text-align: left;"[39m
+    [33mtitle[39m=[32m"Resume this conversation"[39m
+  [36m/>[39m
+
+  Name "Add sources to this project":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Add sources to this project"[39m
+    [33mclass[39m=[32m"pj-dropzone"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  Name "Trace a claim to its source":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"font-size: 12px; padding: 4px 12px;"[39m
+  [36m/>[39m
+
+  Name "Write from these sources":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"font-size: 12px; padding: 4px 12px;"[39m
+  [36m/>[39m
+
+  Name "Open task board":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"font-size: 12px; padding: 4px 12px;"[39m
+  [36m/>[39m
+
+  Name "Add document (opens the document workspace)":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Add document (opens the document workspace)"[39m
+    [33mclass[39m=[32m"pj-edit"[39m
+    [33mtitle[39m=[32m"Add document (opens the document workspace)"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "BX-301":
+  [36m<h1[39m
+    [33mclass[39m=[32m"pj-title"[39m
+  [36m/>[39m
+
+  Name "Workspace":
+  [36m<h2 />[39m
+
+  Name "Conversations":
+  [36m<h2 />[39m
+
+  Name "Module completion":
+  [36m<h2 />[39m
+
+  Name "Data room":
+  [36m<h2 />[39m
+
+  Name "Tasks":
+  [36m<h2 />[39m
+
+  Name "Records in this project":
+  [36m<h2 />[39m
+
+  Name "Submissions not available":
+  [36m<h3 />[39m
+
+  Name "Data Room sources not available":
+  [36m<h3 />[39m
+
+  Name "Authoring documents not available":
+  [36m<h3 />[39m
+
+  Name "Vault documents not available":
+  [36m<h3 />[39m
+
+  Name "Study designs not available":
+  [36m<h3 />[39m
+
+  Name "Filing documents not available":
+  [36m<h3 />[39m
+
+  Name "Team & activity":
+  [36m<h2 />[39m
+
+  Name "Dossier readiness":
+  [36m<h3 />[39m
+
+  Name "Memory":
+  [36m<h3 />[39m
+
+  Name "Instructions":
+  [36m<h3 />[39m
+
+  Name "Recent drafts":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "Program identity":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Program identity"[39m
+    [33mclass[39m=[32m"pj-facts"[39m
+  [36m/>[39m
+
+  Name "Tasks":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Tasks"[39m
+    [33mclass[39m=[32m"pj-sec"[39m
+  [36m/>[39m
+
+  Name "Records in this project":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Records in this project"[39m
+    [33mclass[39m=[32m"pj-sec"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  term:
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  [36m<dd />[39m
+
+  Name "":
+  [36m<dd />[39m
+
+  Name "":
+  [36m<dd />[39m
+
+  Name "":
+  [36m<dd />[39m
+
+  --------------------------------------------------
+  tablist:
+
+  Name "Project lifecycle":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Project lifecycle"[39m
+    [33mclass[39m=[32m"pj-lc"[39m
+    [33mrole[39m=[32m"tablist"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Message AnA about this project":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"Message AnA about this project"[39m
+    [33mplaceholder[39m=[32m"Message AnA about BX-301…"[39m
+    [33mrows[39m=[32m"2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"assertive"[39m
+    [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"pj-side"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner pj"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"pj-back"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m12 19-7-7 7-7"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19 12H5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m All projects[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-crumb"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pj-crumb-i"[39m
+          [33mdata-cur[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-crumb-k"[39m
+          [36m>[39m
+            [0mProject[0m
+          [36m</span>[39m
+          [0mBX-301[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-top"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-top-l"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"pj-title"[39m
+          [36m>[39m
+            [0mBX-301[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-tags"[39m
+          [36m/>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Program identity"[39m
+            [33mclass[39m=[32m"pj-facts"[39m
+          [36m>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mSponsor[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mProduct[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mIndication[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot recorded[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"pj-fact"[39m
+            [36m>[39m
+              [36m<dt>[39m
+                [0mApplication number[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"pj-fact-none"[39m
+                [36m>[39m
+                  [0mnot assigned[0m
+                [36m</span>[39m
+              [36m</dd>[39m
+            [36m</dl>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Project lifecycle"[39m
+        [33mclass[39m=[32m"pj-lc"[39m
+        [33mrole[39m=[32m"tablist"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-lc-stage"[39m
+          [33mtitle[39m=[32m"Strategy, precedent, agency meetings & timeline"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-lc-node"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-lc-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-calendar"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M8 2v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 2v4"[39m
+                [36m/>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 10h18"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-lc-l"[39m
+          [36m>[39m
+            [0mPlan[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-lc-stage"[39m
+          [33mtitle[39m=[32m"Vault, RAG search & claim↔evidence linking"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-lc-node"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-lc-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx:147:28
+    145|     render(<ProjectHome {...props()} />);
+    146|     await screen.findByText('Conversation 1');
+    147|     fireEvent.click(screen.getByRole('button', { name: 'Show older con…
+       |                            ^
+    148|     expect(await screen.findByText(/Couldn.t load older conversations/…
+    149|     expect(rows()).toHaveLength(8);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 4 passed (9)
+   Start at  03:09:19
+   Duration  17.47s (transform 2.95s, setup 449ms, import 4.19s, tests 11.04s, environment 970ms)
+

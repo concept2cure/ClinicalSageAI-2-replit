@@ -1,0 +1,6 @@
+# 1. Beside the conversation — RED: the new thread test against the unchanged canvas and thread (7577725ea)
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 85ms
+   → a pane beside the conversation holds the editor: expected null not to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)

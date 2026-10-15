@@ -1,0 +1,105 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+xxxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx > governed figures use current viewer authorization > checks access again when a new viewer opens the same figure
+AssertionError: promise resolved "'blob:authorized-figure'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"blob:authorized-figure"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx:31:38
+     29|     await expect(resolveImageSrc(REF)).resolves.toBe('blob:authorized-…
+     30|     setAuthToken('viewer-two');
+     31|     await expect(resolveImageSrc(REF)).rejects.toThrow('HTTP 403');
+       |                                      ^
+     32|     expect(apiRequest).toHaveBeenCalledTimes(2);
+     33|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx > governed figures use current viewer authorization > checks the server again after project access is revoked in the same session
+AssertionError: promise resolved "'blob:authorized-figure'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"blob:authorized-figure"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx:38:38
+     36|     apiRequest.mockResolvedValueOnce(granted()).mockResolvedValueOnce(…
+     37|     await expect(resolveImageSrc(REF)).resolves.toBe('blob:authorized-…
+     38|     await expect(resolveImageSrc(REF)).rejects.toThrow('HTTP 403');
+       |                                      ^
+     39|     expect(apiRequest).toHaveBeenCalledTimes(2);
+     40|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx > governed figures use current viewer authorization > does not publish bytes from a request completing after logout
+AssertionError: promise resolved "'blob:authorized-figure'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"blob:authorized-figure"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx:47:25
+     45|     const pending = resolveImageSrc('/api/authoring/images/file_932_ab…
+     46|     clearAuthToken(); finish(granted());
+     47|     await expect(pending).rejects.toThrow(/session changed/i);
+       |                         ^
+     48|     expect(createUrl).not.toHaveBeenCalled();
+     49|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx > figure URLs belong to their mounted view > releases the editor figure when its node view is destroyed
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'blob:authorized-figure' ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx:59:23
+     57|     await waitFor(() => expect(host.querySelector('img')?.getAttribute…
+     58|     editor.destroy(); host.remove();
+     59|     expect(revokeUrl).toHaveBeenCalledWith('blob:authorized-figure');
+       |                       ^
+     60|   });
+     61|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx > figure URLs belong to their mounted view > releases read-only figure bytes and makes a fresh request on remount
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'blob:authorized-figure' ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/imageAuthorizationLifetime.test.tsx:68:23
+     66|     await waitFor(() => expect(first.container.querySelector('img')?.g…
+     67|     first.unmount();
+     68|     expect(revokeUrl).toHaveBeenCalledWith('blob:authorized-figure');
+       |                       ^
+     69|     const next = render(<AuthoredHtml html={html} />);
+     70|     await waitFor(() => expect(next.container.textContent).toContain('…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  22:00:43
+   Duration  1.26s (transform 186ms, setup 156ms, import 258ms, tests 155ms, environment 543ms)

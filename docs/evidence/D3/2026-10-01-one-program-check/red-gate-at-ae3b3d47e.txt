@@ -1,0 +1,55 @@
+[ci:program-ownership-single-source] 51 copy(ies) of the program-ownership check outside server/services/c2c/program-access.ts:
+  server/routes/c2c/actions.ts:158  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/project-vault.ts:1528  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/project-vault.ts:1734  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/projects.ts:1031  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/projects.ts:1077  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/projects.ts:1189  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/projects.ts:1303  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/projects.ts:1400  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/projects.ts:1514  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/c2c/projects.ts:1697  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/cerv2-document-routes.ts:103  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, programId), eq(r
+  server/routes/change-propagation.ts:129  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where(and(eq(regulatoryPrograms.id, programId), eq(reg
+  server/routes/defense-packet.ts:79  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and(eq(regulatoryPrograms.id, programId), eq(re
+  server/routes/docx-factory.ts:84  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and(eq(regulatoryPrograms.id, programId), eq(re
+  server/routes/dossier-map.routes.ts:69  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/evidence-fabric.ts:83  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and(eq(regulatoryPrograms.id, programId), eq(re
+  server/routes/evidence-sufficiency.ts:40  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and(eq(regulatoryPrograms.id, String(req.params
+  server/routes/gspr-postmarket.ts:104  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and(eq(regulatoryPrograms.id, String(req.params
+  server/routes/innovation-routes.ts:245  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id::text = $1 AND organization_id::text = $2
+  server/routes/innovation-routes.ts:255  a second program-ownership helper: async function programBelongsToOrg(
+  server/routes/ivdr-routes.ts:1374  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/ivdr-routes.ts:1617  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/mdx-engineering.ts:157  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/mdx-industry-context.ts:240  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where(and( eq(regulatoryPrograms.id, programId), eq(re
+  server/routes/mdx-ivdr.ts:56  a second program-ownership helper: async function ownsProgram(
+  server/routes/mdx-ivdr.ts:59  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/routes/misc-inline-routes.ts:430  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id::text = $1 AND organization_id = $2
+  server/routes/pccp.ts:62  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where(and(eq(regulatoryPrograms.id, String(req.params.
+  server/routes/pdev/pdev-routes.ts:142  a second program-ownership helper: async function programBelongsToOrg(
+  server/routes/pdev/pdev-routes.ts:144  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, programId), eq(r
+  server/routes/predicate-intelligence.ts:134  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and(eq(regulatoryPrograms.id, programId), eq(re
+  server/routes/regulatory-graph.ts:393  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where(and(eq(regulatoryPrograms.id, programId), eq(reg
+  server/routes/se-matrix.ts:70  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and(eq(regulatoryPrograms.id, programId), eq(re
+  server/routes/standards.ts:62  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where(and(eq(regulatoryPrograms.id, programId), eq(reg
+  server/routes/vault-legal-holds.ts:110  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/services/ana/AnaToolExecutor.ts:6606  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where(and(eq(regulatoryPrograms.id, programId), eq(reg
+  server/services/capa-mdr/capaMdr.service.ts:97  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, sql`${programId}
+  server/services/cmc/project-membership.ts:41  inline yes/no program-ownership query: SELECT 1 AS present FROM regulatory_programs WHERE id::text = $1 AND organization_id = $2
+  server/services/gspr-postmarket/pmcf-enrollment.service.ts:134  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, programId), eq(r
+  server/services/pdev/pdev-ectd-compile.ts:124  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, input.programId)
+  server/services/pdev/pdev-evidence-attach.ts:108  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, input.programId)
+  server/services/pdev/pdev-evidence-attach.ts:271  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, input.programId)
+  server/services/pdev/pdev-evidence-attach.ts:363  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, programId), eq(r
+  server/services/pdev/pdev-fda-feedback-rollup.ts:227  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, programId), eq(r
+  server/services/pdev/pdev-fda-feedback-rollup.ts:314  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, input.programId)
+  server/services/pdev/pdev-provenance-trace.ts:133  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, programId), eq(r
+  server/services/pdev/pdev-workflow-bridge.ts:404  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, programId), eq(r
+  server/services/q-sub/q-sub.service.ts:419  Drizzle yes/no program-ownership query: .select({ id: regulatoryPrograms.id }) .from(regulatoryPrograms) .where( and( eq(regulatoryPrograms.id, input.programId)
+  server/services/rbm/site-risk-engine.ts:156  a second program-ownership helper: async function programBelongsToOrg(
+  server/services/vault/vault-ingest.service.ts:213  inline yes/no program-ownership query: SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+  server/services/vault/vault-placement.service.ts:227  inline yes/no program-ownership query: SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2
+
+Call programInOrganization(db, programId, organizationId) instead. It is the one definition of a program
+the organization may act on: live, theirs, in regulatory_programs. A copy drifts — see this script's header.

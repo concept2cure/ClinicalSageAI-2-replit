@@ -23,6 +23,7 @@ import {
 } from '../services/pathway-engines/estar/estar-artifact-retention';
 import { governedSignatureSchema } from '../api/cmc/governance';
 import { verifyReauth } from './c2c/actions';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import {
   fillEstarSubmission,
   type EstarAttachmentReport,
@@ -39,7 +40,7 @@ import {
   type ResolvedOfficialEstarFields,
 } from '../services/pathway-engines/estar/estar-administrative-data';
 import type { OfficialPdfFieldMap } from '../services/forms/fill-official-pdf';
-import { assembleDeviceSubmission } from '../services/pathway-engines/device-assembly/assemble-device-submission';
+import { assembleProgramDeviceSubmission } from '../services/pathway-engines/device-assembly/assemble-device-submission';
 import {
   descriptorFor,
   isUsableEstarTemplate,
@@ -653,6 +654,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 
     if (anchor.anchorProjectId !== null) {
       const consequence = await createGovernedExportConsequence({
+        ipAddress: req.ip ?? null,
         organizationId: getOrganizationId(req),
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
@@ -1210,6 +1212,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
     if (anchor.anchorProjectId !== null) {
       const consequence = await createGovernedExportConsequence({
+        ipAddress: req.ip ?? null,
         organizationId: getOrganizationId(req),
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
@@ -1321,9 +1324,10 @@ const assembleSchema = z.object({
  * be produced for the caller org's REAL authored content (the program's
  * governed document, else cerv2_510k_sections → readiness leaves) against the
  * REAL vendored template drop-point. Pathway 'pma' scores the content against
- * the 21 CFR 814 modules (pma-mapper), never the 510(k) eSTAR slots — the same
- * deterministic engine the assemble_device_submission AnA tool uses, with the
- * inputs loaded server-side instead of caller-supplied. Returns the assembly
+ * the 21 CFR 814 modules (pma-mapper), never the 510(k) eSTAR slots. It runs
+ * assembleProgramDeviceSubmission (device-assembly/assemble-device-submission)
+ * — the same function the assemble_device_submission AnA tool runs for the
+ * open project — so the two cannot report different verdicts. Returns the assembly
  * result plus a validationReport whose errors are the blockers that prevent a
  * submittable official eSTAR. Read-only: renders and persists nothing.
  */
@@ -1335,38 +1339,21 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
   const { pathway, pmaSubmissionType, variant, documentId, programId, market } = validation.data;
 
   try {
-    const orgId = getOrganizationId(req);
-    const { scope, source } = await resolveDeviceContentScope(orgId, { programId, documentId });
-    const [leaves, vendored] = await Promise.all([
-      loadDeviceContentLeaves(orgId, scope),
-      listVendoredTemplates(),
-    ]);
-
-    // The device questions the program answered at intake. Without them every
-    // conditional section is undetermined and no program can report a
-    // producible official eSTAR.
-    const anchorProgramId = scope.programId ?? programId;
-    const storedDeviceFlags = anchorProgramId ? await loadProgramDeviceFlags(orgId, anchorProgramId) : undefined;
-    const result = assembleDeviceSubmission({
+    // One implementation, shared with the assemble_device_submission AnA tool:
+    // content, intake answers and verified templates are all loaded server-side.
+    const result = await assembleProgramDeviceSubmission(getOrganizationId(req), {
+      programId,
+      documentId,
       pathway,
       pmaSubmissionType: pmaSubmissionType as (typeof PMA_SUBMISSION_TYPES)[number]['value'] | undefined,
       variant,
-      leaves,
-      // A caller-stated answer wins; the program's intake answers are the fallback.
-      deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
-      /* By NAME was the bug: a file called eSTAR-510k-non-ivd.pdf whose bytes do
-         not match checksums.txt counted as present, so this route answered
-         "official eSTAR producible · 0 blockers" for a template the fill behind
-         the Generate button then refuses. Availability is the same question in
-         both places, so it gets the same answer. */
-      presentTemplates: vendored.filter(isUsableEstarTemplate).map((t) => t.fileName),
       market: market as never,
-      environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+      // A caller-stated answer wins; the program's intake answers are the fallback.
+      deviceFlags: validation.data.deviceFlags,
     });
 
     return res.status(200).json({
       ...result,
-      deviceContentSource: source,
       validationReport: {
         // Every blocker prevents a submittable official eSTAR — errors, not advice.
         errors: result.blockers,
@@ -1867,6 +1854,10 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
       deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
+      /* The FDA version of the file the fill would use, so a template FDA has
+         superseded blocks filing instead of reporting "Can file now". */
+      vendoredTemplateVersion: descriptorFor(entry.programType, templateVariant)?.version,
+      asOf: new Date().toISOString().slice(0, 10),
     });
 
     if (!result) {
@@ -2054,6 +2045,11 @@ router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req
        at signing time, never reused from the session (§11.200). */
     let signature: EstarFilingSignature | undefined;
     if (status === 'filed') {
+      /* §11.10(g), before the password: filing is an electronic signature, so
+         the filer's role must carry signing authority under the platform's one
+         policy. QA 2026-10-08 (j6 sweep): only the password was asked. */
+      const authority = await checkSigningAuthority(userId, getOrganizationId(req));
+      if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
       const reauthResult = await verifyReauth(userId, reauth);
       if (!reauthResult.ok) {
         res.setHeader('WWW-Authenticate', 'ReAuth required');

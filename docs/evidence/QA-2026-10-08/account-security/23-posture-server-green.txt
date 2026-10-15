@@ -1,0 +1,8 @@
+# (1) GREEN, server — signingPostureOf (reverify-signer.ts) on /session, /me, /mfa/verify and the two development sign-in payloads
+$ npx vitest run server/routes/__tests__/auth-session-roles.test.ts
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session states the signing posture > GET /session, production, no authenticator: required and not enrolled 3ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session states the signing posture > GET /session, production, an authenticator: required and enrolled 3ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session states the signing posture > GET /session, a declared test environment: not required 3ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session states the signing posture > GET /me carries the same posture 3ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)

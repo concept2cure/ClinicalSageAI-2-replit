@@ -8,7 +8,7 @@
  *   - listThreads          GET  /api/chat/threads
  *   - listThreadMessages   GET  /api/chat/threads/:threadId/messages
  *   - getThread            GET  /api/chat/thread/:threadId
- *   - patchThread          PATCH /api/chat/thread/:threadId
+ *   - patchThread          PATCH /api/chat/thread/:threadId (rename; the project is fixed)
  *   - deleteThread         DELETE /api/chat/thread/:threadId
  *
  * Handler bodies are copied verbatim from the original route registrations
@@ -17,7 +17,14 @@
 
 import type { Request, Response } from 'express';
 import { pool } from '../../db.js';
-import { deleteConversation, getThreadMessages, programIdForThread } from '../../services/chat-thread-helpers.js';
+import {
+  deleteConversation,
+  getThreadMessages,
+  programIdForThread,
+  resolveAccessibleThread,
+  resolveThreadStore,
+  ThreadAccessError,
+} from '../../services/chat-thread-helpers.js';
 
 /**
  * GET /api/chat/threads
@@ -30,30 +37,47 @@ export async function listThreads(req: Request, res: Response) {
     const programId = req.query.program_id as string | undefined;
     const limit = Math.min(parseInt((req.query.limit as string) || '10', 10), 50);
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    /* A conversation belongs to the person who started it: opening a
+       colleague's answers THREAD_FORBIDDEN (resolveAccessibleThread). Both
+       chat_threads lists were scoped to the organisation only, so each named a
+       colleague's conversation by its first message, a line the reader could
+       never open (docs/design/ONE_ANA_ONE_CANVAS.md, slice 3). They list the
+       caller's own. A thread with no recorded owner is not listed: it can still
+       be opened by its id, as before. No identified caller, no list. */
+    const me = (req as any).user?.id ?? (req as any).userId ?? null;
 
     let query: string;
     let params: unknown[];
 
     if (programId !== undefined) {
-      // The shell's project key (regulatory_programs UUID). Threads carry it in
-      // metadata.programId from the moment they are minted (chat-thread-helpers
-      // programIdForThread), so this is what "resume a project chat" lists.
-      // Org scope is required — the same rule as the global recents.
+      // The shell's project key (regulatory_programs UUID). A thread carries it
+      // in chat_threads.program_id from the moment it is minted, bound only to
+      // a program of its own organization (chat-thread-helpers getOrCreateThread,
+      // PF-10 S2), so this is what "resume a project chat" lists. Org scope is
+      // required — the same rule as the global recents.
       if (!orgId) return res.json({ threads: [] });
       const program = programIdForThread(programId);
       if (!program) {
         return res.status(400).json({ error: 'program_id must be a UUID', code: 'THREAD_PROGRAM_INVALID' });
       }
+      if (me === null) return res.json({ threads: [] });
+      /* Where in the list this read starts. The project page shows a
+         screenful and reads older ones on request; without a position the
+         ninth conversation and every one after it could not be opened from
+         the project (QA 2026-10-08, j5). A whole number only, else 0. The id
+         breaks ties, so a screenful never repeats or skips one. */
+      const rawOffset = String(req.query.offset ?? '');
+      const offset = /^\d{1,6}$/.test(rawOffset) ? Number(rawOffset) : 0;
       const result = await pool.query(
-        `SELECT t.id, t.created_at, t.updated_at, t.metadata->>'programId' AS program_id,
+        `SELECT t.id, t.created_at, t.updated_at, t.program_id,
           (SELECT content FROM chat_messages
             WHERE thread_id = t.id AND role = 'user'
             ORDER BY created_at ASC LIMIT 1) AS title
         FROM chat_threads t
-        WHERE t.organization_id = $1 AND t.metadata->>'programId' = $2
-        ORDER BY COALESCE(t.updated_at, t.created_at) DESC
-        LIMIT $3`,
-        [orgId, program, limit]
+        WHERE t.organization_id = $1 AND t.program_id = $2 AND t.user_id = $4
+        ORDER BY COALESCE(t.updated_at, t.created_at) DESC, t.id DESC
+        LIMIT $3 OFFSET $5`,
+        [orgId, program, limit, me, offset]
       );
       return res.json({ threads: result.rows });
     }
@@ -78,7 +102,7 @@ export async function listThreads(req: Request, res: Response) {
     } else {
       // Org scope is required for the global recents list — without it
       // we'd leak threads across tenants.
-      if (!orgId) {
+      if (!orgId || me === null) {
         return res.json({ threads: [] });
       }
       // Derive title from the first user message so the recents list shows
@@ -89,11 +113,11 @@ export async function listThreads(req: Request, res: Response) {
             WHERE thread_id = t.id AND role = 'user'
             ORDER BY created_at ASC LIMIT 1) AS title
         FROM chat_threads t
-        WHERE t.organization_id = $1
+        WHERE t.organization_id = $1 AND t.user_id = $3
         ORDER BY t.updated_at DESC
         LIMIT $2
       `;
-      params = [orgId, limit];
+      params = [orgId, limit, me];
     }
 
     const result = await pool.query(query, params);
@@ -134,19 +158,8 @@ export async function listThreads(req: Request, res: Response) {
    the jsdom test mocked the fetch and could not have seen it.
 
    So the store is RESOLVED, once, org-scoped, and each handler then acts on the
-   store that actually owns the thread. */
-type ThreadStore = 'chat' | 'ai';
-
-async function resolveThreadStore(threadId: string, orgId: unknown): Promise<ThreadStore | null> {
-  const { rows } = await pool.query(
-    `SELECT 'chat'::text AS store FROM chat_threads WHERE id = $1 AND organization_id = $2
-     UNION ALL
-     SELECT 'ai'::text AS store FROM ai_threads WHERE id = $1 AND organization_id = $2
-     LIMIT 1`,
-    [threadId, orgId],
-  );
-  return (rows[0]?.store as ThreadStore | undefined) ?? null;
-}
+   store that actually owns the thread (chat-thread-helpers.ts resolveThreadStore,
+   which is also who-may-read-a-transcript for a turn's Summary). */
 
 /** The `ai_threads` transcript. `chat_messages` is read by getThreadMessages. */
 async function getAiThreadMessages(threadId: string): Promise<Array<{ role: string; content: string }>> {
@@ -251,12 +264,26 @@ export async function getThread(req: Request, res: Response) {
 
 /**
  * PATCH /api/chat/thread/:threadId
- * Move a conversation to a different project or update thread metadata (E6)
+ * Rename a conversation. Its project cannot be changed (PF-10 S8).
+ *
+ * This route used to "move a conversation to a different project" (E6): it
+ * wrote `project_id` on either store, by thread id alone, for any caller in the
+ * organization. The founder decided on 2026-09-26 that a conversation belongs
+ * to one project, and that switching project forks it, with the old one
+ * staying bound to its own project. A re-home is the opposite of that rule,
+ * and nothing in the client calls it (no `chat/thread/` request in client/).
+ * So a project change is refused 409 THREAD_PROJECT_FIXED on both stores. The
+ * rename that remains is scoped to the organization and, on the AnA store
+ * (chat_threads), to the caller's own conversation. ai_threads (submission
+ * chat, project onboarding) has no owner model anywhere: every member of the
+ * organization already lists, reads and appends to it, so its rename stays
+ * organization-wide here. An owner model for that store is D3's (review
+ * wf_3b9a0148-a31).
  */
 export async function patchThread(req: Request, res: Response) {
   try {
     const threadId = String(req.params.threadId);
-    const { project_id, title } = req.body;
+    const { project_id, title } = req.body ?? {};
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
     if (!orgId) {
@@ -269,48 +296,40 @@ export async function patchThread(req: Request, res: Response) {
       return res.status(404).json({ ok: false, error: 'Thread not found' });
     }
 
-    /* `chat_threads.project_id` is INTEGER and `ai_threads.project_id` is TEXT.
-       Passing the shell's program UUID at the integer column threw 22P02 and
-       surfaced as a 500; the program key belongs in `metadata.programId`, which
-       is where getOrCreateThread writes it. Refuse it plainly instead. */
-    if (store === 'chat' && project_id !== undefined && project_id !== null && project_id !== '') {
-      /* Number(), not parseInt(): parseInt('0f3c1a2b-…') is 0, so a UUID would
-         pass the guard and then be written as project 0. */
-      const numericProject = typeof project_id === 'number' ? project_id : Number(String(project_id).trim());
-      if (!Number.isInteger(numericProject) || numericProject <= 0) {
-        return res.status(400).json({
-          ok: false,
-          error: 'project_id must be a numeric project for this conversation; the program key is set when the thread is created.',
-          code: 'THREAD_PROJECT_INVALID',
-        });
+    if (project_id !== undefined) {
+      return res.status(409).json({
+        ok: false,
+        error: 'A conversation stays in the project it was held in. Start a new conversation in the other project.',
+        code: 'THREAD_PROJECT_FIXED',
+      });
+    }
+
+    // A colleague's AnA conversation is not the caller's to rename: the same
+    // owner rule the stream applies before it appends to a thread.
+    if (store === 'chat') {
+      try {
+        await resolveAccessibleThread(threadId, Number(orgId), (req as any).user?.id ?? null);
+      } catch (e) {
+        if (e instanceof ThreadAccessError) {
+          return res.status(403).json({ ok: false, error: 'That conversation belongs to another user.', code: e.code });
+        }
+        throw e;
       }
     }
 
-    // Build dynamic SET clause
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIdx = 1;
-
-    if (project_id !== undefined) {
-      updates.push(`project_id = $${paramIdx++}`);
-      values.push(project_id || null);
-    }
-    if (title !== undefined) {
-      updates.push(`title = $${paramIdx++}`);
-      values.push(title);
-    }
-    updates.push(`updated_at = NOW()`);
-
-    values.push(threadId);
-
     // A closed set of two, chosen by the resolver — never a value from the request.
     const table = store === 'chat' ? 'chat_threads' : 'ai_threads';
-    await pool.query(
-      `UPDATE ${table} SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
-      values
-    );
+    if (title !== undefined) {
+      await pool.query(`UPDATE ${table} SET title = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`, [
+        title,
+        threadId,
+        orgId,
+      ]);
+    } else {
+      await pool.query(`UPDATE ${table} SET updated_at = NOW() WHERE id = $1 AND organization_id = $2`, [threadId, orgId]);
+    }
 
-    res.json({ ok: true, threadId, project_id: project_id ?? undefined });
+    res.json({ ok: true, threadId });
   } catch (error: any) {
     console.error('[AnA] Patch thread error:', error);
     res.status(500).json({ ok: false, error: 'Failed to update thread' });

@@ -1,0 +1,14 @@
+ FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts [ server/routes/__tests__/authoring-section-figure-refs.test.ts ]
+Error: [vitest] No "requireEditorAccess" export is defined on the "../../middleware/orgMembership" mock. Did you forget to return it from "vi.mock"?
+ FAIL  server/routes/__tests__/authoringApprovalNoWorkflow.test.ts [ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts ]
+Error: [vitest] No "requireEditorAccess" export is defined on the "../../middleware/orgMembership" mock. Did you forget to return it from "vi.mock"?
+ FAIL  server/routes/__tests__/authoringApprovalSealBinding.test.ts [ server/routes/__tests__/authoringApprovalSealBinding.test.ts ]
+Error: [vitest] No "requireEditorAccess" export is defined on the "../../middleware/orgMembership" mock. Did you forget to return it from "vi.mock"?
+ FAIL  server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts [ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts ]
+error: relation "authoring_export_history" already exists
+ FAIL  server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts [ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts ]
+Error: [vitest] No "requireEditorAccess" export is defined on the "../../middleware/orgMembership" mock. Did you forget to return it from "vi.mock"?
+ Test Files  5 failed (5)
+      Tests  6 skipped (6)
+   Start at  22:56:54
+   Duration  41.68s (transform 14.73s, setup 446ms, import 629ms, tests 3.92s, environment 1ms)

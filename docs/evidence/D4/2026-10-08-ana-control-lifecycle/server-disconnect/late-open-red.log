@@ -1,0 +1,74 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+{
+  "timestamp": "2026-10-08T05:14:43.790Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:14:43.791Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+{
+  "timestamp": "2026-10-08T05:14:43.791Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > aborts pending generation once after a dropped response without inventing a human cancel 29ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > ignores ordinary request completion and keeps its heartbeat active while generation waits 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > also aborts when an interrupted incoming request closes 3ms
+ × server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run > settles an already-dropped response when beginRun resumes (local-only=true) 8ms
+   → expected false to be true // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run > settles an already-dropped response when beginRun resumes (local-only=false) 4ms
+   → expected false to be true // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > does not abort a normally completed response (local-only=true) 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > does not abort a normally completed response (local-only=false) 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > keeps a durable disconnect distinct from a human control and settles it once 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run > settles an already-dropped response when beginRun resumes (local-only=true)
+ FAIL  server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run > settles an already-dropped response when beginRun resumes (local-only=false)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/ana-ri/__tests__/stream-disconnect.test.ts:225:34
+    223|       proceed.resolve();
+    224|       await pending.started;
+    225|       expect(io.signal?.aborted).toBe(true);
+       |                                  ^
+    226|       io.response!.emit('close');
+    227|       expect(io.humanControl).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  13:14:40
+   Duration  6.68s (transform 3.92s, setup 76ms, import 6.28s, tests 67ms, environment 0ms)

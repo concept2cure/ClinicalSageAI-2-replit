@@ -1,0 +1,550 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:21:50.358Z","pid":16965,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:21:50.360Z","pid":16965,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:21:50.360Z","pid":16965,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T03:21:50.661Z', poolSize: 1 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/domain-sign-ceremony.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 100ms
+   → irb signed with a session alone: {"id":790824908,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_5569417c2a114e4c832b91ac2758a633","auditId":"029d26b3-deff-4604-a011-09ee42000a32","sha256Chain":"c0bdfeb0f790e7a6615f407366eeb53a9ec047e1550f8f8ed5933dd28725484e"}: expected 201 to be 400 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a wrong password, and writes nothing 22ms
+   → irb accepted a wrong password: {"id":790824909,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_d7aa30c08d36432ba0e8e7024181abf9","auditId":"c617b0e0-0dbf-42f1-8c80-dcd53167ca71","sha256Chain":"5f2d0d2f093d431bf3d40e08ea29b298a1d91abd2fcb6cf25d101c51600f7b8d"}: expected 201 to be 401 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 23ms
+   → irb: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 20ms
+   → iacuc signed with a session alone: {"id":790824918,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_108313dc14474b64afb963f282968bbc","auditId":"9e86cc3f-5df2-48ea-95f7-f56667579fdc","sha256Chain":"1ebc7be3c48ac521611e1ed96fa0868abe54233b8434ec13ec805aea067ca9f4"}: expected 201 to be 400 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a wrong password, and writes nothing 17ms
+   → iacuc accepted a wrong password: {"id":790824919,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_1d02d9a1eb964a26954081e31492d043","auditId":"e88dca4f-082f-41c6-a782-168867b35b7e","sha256Chain":"2fdd02b8bb370f1a9a2c8715f3d9d3f72ec9ff3a7b00f1b2dd382f5d18658c45"}: expected 201 to be 401 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 20ms
+   → iacuc: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 20ms
+   → ibc signed with a session alone: {"id":790824928,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_7255bc34cf4745f4a8a550977fce2e6b","auditId":"a52d550a-9c84-4ee5-9516-3efbce22a873","sha256Chain":"1120bffeeb42471fff147bdfee6f05d4852ab98c6ca636fddbcdc233b8ea4d7b"}: expected 201 to be 400 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a wrong password, and writes nothing 16ms
+   → ibc accepted a wrong password: {"id":790824929,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_26acafb3f4a0415c8ee2d536eef095f8","auditId":"1c36be9e-4e8d-4def-8fdc-484060c31cff","sha256Chain":"0ddd041986e06bbb3cd78be48e6cb2ce75ea9db65bcc4a40e24dc19d17ff44e4"}: expected 201 to be 401 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 27ms
+   → ibc: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 16ms
+   → rim signed with a session alone: {"productId":790824938,"labelId":1,"supersededCount":0,"actionId":"act_d27c7a99451e41b5a735569c03c40ad3","auditId":"28a3ac37-e1e0-4e61-9ce6-26858ee3f55b","sha256Chain":"0e13c2ecab1ff18e0f03dc2592fec75b5603af5443cf414c4463f486d28339bf"}: expected 201 to be 400 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a wrong password, and writes nothing 13ms
+   → rim accepted a wrong password: {"productId":790824939,"labelId":1,"supersededCount":0,"actionId":"act_c41a403b0dd4487c8d7d70b51d11c5a6","auditId":"3ccbb6c6-70dd-469f-905f-658bb512812c","sha256Chain":"3ddb0dc68470e1078a946047be9e92c52877b0478d7a012465e4b35f81de935b"}: expected 201 to be 401 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 14ms
+   → rim: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 17ms
+   → consent signed with a session alone: {"formId":790824948,"approved":true,"completeness":{"requiredPresentPct":100},"actionId":"act_7deaa3710c6f415b9302625265048bd3","auditId":"a85eb905-a18b-4e52-9cb9-4903212080ca","sha256Chain":"408c6f299b073cd4053066b7e4a857317cd18ace50360ef29ccc67812e4834c7"}: expected 201 to be 400 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a wrong password, and writes nothing 13ms
+   → consent accepted a wrong password: {"formId":790824949,"approved":true,"completeness":{"requiredPresentPct":100},"actionId":"act_93a8d9e72a5f4c6493657d42d6a59d6a","auditId":"92a58f99-6391-4794-8d8d-76c80ff2685f","sha256Chain":"83944dc402206dbaa1b66f936ea6e38d9d37a7a0ba66b7d4b844d1a0336b40da"}: expected 201 to be 401 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 15ms
+   → consent: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 16ms
+   → deviations signed with a session alone: {"deviationId":790824958,"closed":true,"actionId":"act_70d0106cbddf451d8f5b0190054c74d8","auditId":"4aa440d3-15ed-4a1c-8bc3-7b39f1166c26","sha256Chain":"bdd8a229fe25b6e4b220534e7f19fe75e3918c919f86650d20808c0eb019647b"}: expected 201 to be 400 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a wrong password, and writes nothing 13ms
+   → deviations accepted a wrong password: {"deviationId":790824959,"closed":true,"actionId":"act_5bd18de549c441cda97f2facb02463de","auditId":"bb7c0865-3554-4629-864e-0046e64d57e6","sha256Chain":"11ab8cc60194d2991091c70a7829ac7afd99e95a951b2fce336891a46b873fc9"}: expected 201 to be 401 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 14ms
+   → deviations: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 15ms
+   → bla signed with a session alone: {"id":"53338a22-f95d-4f11-a2e2-cf7ad2d9afed","status":"signed","ledger":{"actionId":"act_b0f4e354d4b74a56b1baeb38a41024c4","auditId":"410a61d4-dac2-4bd6-80c0-b67d786d760a","sha256Chain":"135648ce5f5ab1bb42d6c3e81158671057e4bfd36104187dda6400e5e0699795"}}: expected 200 to be 400 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a wrong password, and writes nothing 14ms
+   → bla accepted a wrong password: {"id":"b885497c-462a-4f97-82ee-b81ec878227b","status":"signed","ledger":{"actionId":"act_86b29a2a57844009bb8d067bb0dc89b5","auditId":"cc243e85-2360-432b-9824-40c447867708","sha256Chain":"6638f9484e075b55a118e6ec184dba3bf72b143bd7cf16fcd2082ae93bf59921"}}: expected 200 to be 401 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 13ms
+   → {"id":"bb134bbd-a105-43cc-b88f-081964228f61","status":"signed","ledger":{"actionId":"act_ac399845793f47f6ab314427caea896e","auditId":"61ee1325-f292-4618-9190-b6e93a4dad5f","sha256Chain":"a35a496f24ef31b15d63fabd62719283278ba807ef9eaaf0be30fa3c55eb1ff5"}}: expected 200 to be 201 // Object.is equality
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a determination that is not an approval is not a signature > an IRB deferral is recorded under resolve, with no password and no signature row 20ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 11ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 24ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[CMC Batch] Release testing for batch e8516bd3-89a3-4c7d-95f5-b4c90ea22e9b: released
+
+ × tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 27ms
+   → batch: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 10ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 27ms
+ × tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 28ms
+   → spec: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 16ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 17ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[database] Database connection successful { timestamp: '2026-10-01T03:21:54.351Z', poolSize: 2 }
+
+ × tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 32ms
+   → closure: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a sign without credentials, and writes nothing
+AssertionError: irb signed with a session alone: {"id":790824908,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_5569417c2a114e4c832b91ac2758a633","auditId":"029d26b3-deff-4604-a011-09ee42000a32","sha256Chain":"c0bdfeb0f790e7a6615f407366eeb53a9ec047e1550f8f8ed5933dd28725484e"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:302:97
+    300|   it('refuses a sign without credentials, and writes nothing', async (…
+    301|     const res = await post(route, 'bare', {});
+    302|     expect(res.status, `${route.key} signed with a session alone: ${JS…
+       |                                                                                                 ^
+    303|     expect(res.body.error?.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    304|     await expectNothingWritten(route, 'bare');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a wrong password, and writes nothing
+AssertionError: irb accepted a wrong password: {"id":790824909,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_d7aa30c08d36432ba0e8e7024181abf9","auditId":"c617b0e0-0dbf-42f1-8c80-dcd53167ca71","sha256Chain":"5f2d0d2f093d431bf3d40e08ea29b298a1d91abd2fcb6cf25d101c51600f7b8d"}: expected 201 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:309:95
+    307|   it('refuses a wrong password, and writes nothing', async () => {
+    308|     const res = await post(route, 'wrong', { meaning: 'approval', pass…
+    309|     expect(res.status, `${route.key} accepted a wrong password: ${JSON…
+       |                                                                                               ^
+    310|     expect(res.body.error?.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    311|     await expectNothingWritten(route, 'wrong');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction
+AssertionError: irb: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:317:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing
+AssertionError: iacuc signed with a session alone: {"id":790824918,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_108313dc14474b64afb963f282968bbc","auditId":"9e86cc3f-5df2-48ea-95f7-f56667579fdc","sha256Chain":"1ebc7be3c48ac521611e1ed96fa0868abe54233b8434ec13ec805aea067ca9f4"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:302:97
+    300|   it('refuses a sign without credentials, and writes nothing', async (…
+    301|     const res = await post(route, 'bare', {});
+    302|     expect(res.status, `${route.key} signed with a session alone: ${JS…
+       |                                                                                                 ^
+    303|     expect(res.body.error?.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    304|     await expectNothingWritten(route, 'bare');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a wrong password, and writes nothing
+AssertionError: iacuc accepted a wrong password: {"id":790824919,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_1d02d9a1eb964a26954081e31492d043","auditId":"e88dca4f-082f-41c6-a782-168867b35b7e","sha256Chain":"2fdd02b8bb370f1a9a2c8715f3d9d3f72ec9ff3a7b00f1b2dd382f5d18658c45"}: expected 201 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:309:95
+    307|   it('refuses a wrong password, and writes nothing', async () => {
+    308|     const res = await post(route, 'wrong', { meaning: 'approval', pass…
+    309|     expect(res.status, `${route.key} accepted a wrong password: ${JSON…
+       |                                                                                               ^
+    310|     expect(res.body.error?.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    311|     await expectNothingWritten(route, 'wrong');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction
+AssertionError: iacuc: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:317:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing
+AssertionError: ibc signed with a session alone: {"id":790824928,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_7255bc34cf4745f4a8a550977fce2e6b","auditId":"a52d550a-9c84-4ee5-9516-3efbce22a873","sha256Chain":"1120bffeeb42471fff147bdfee6f05d4852ab98c6ca636fddbcdc233b8ea4d7b"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:302:97
+    300|   it('refuses a sign without credentials, and writes nothing', async (…
+    301|     const res = await post(route, 'bare', {});
+    302|     expect(res.status, `${route.key} signed with a session alone: ${JS…
+       |                                                                                                 ^
+    303|     expect(res.body.error?.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    304|     await expectNothingWritten(route, 'bare');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a wrong password, and writes nothing
+AssertionError: ibc accepted a wrong password: {"id":790824929,"reviewId":1,"expirationDate":null,"provenanceLinkId":null,"actionId":"act_26acafb3f4a0415c8ee2d536eef095f8","auditId":"1c36be9e-4e8d-4def-8fdc-484060c31cff","sha256Chain":"0ddd041986e06bbb3cd78be48e6cb2ce75ea9db65bcc4a40e24dc19d17ff44e4"}: expected 201 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:309:95
+    307|   it('refuses a wrong password, and writes nothing', async () => {
+    308|     const res = await post(route, 'wrong', { meaning: 'approval', pass…
+    309|     expect(res.status, `${route.key} accepted a wrong password: ${JSON…
+       |                                                                                               ^
+    310|     expect(res.body.error?.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    311|     await expectNothingWritten(route, 'wrong');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction
+AssertionError: ibc: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:317:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a sign without credentials, and writes nothing
+AssertionError: rim signed with a session alone: {"productId":790824938,"labelId":1,"supersededCount":0,"actionId":"act_d27c7a99451e41b5a735569c03c40ad3","auditId":"28a3ac37-e1e0-4e61-9ce6-26858ee3f55b","sha256Chain":"0e13c2ecab1ff18e0f03dc2592fec75b5603af5443cf414c4463f486d28339bf"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:302:97
+    300|   it('refuses a sign without credentials, and writes nothing', async (…
+    301|     const res = await post(route, 'bare', {});
+    302|     expect(res.status, `${route.key} signed with a session alone: ${JS…
+       |                                                                                                 ^
+    303|     expect(res.body.error?.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    304|     await expectNothingWritten(route, 'bare');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a wrong password, and writes nothing
+AssertionError: rim accepted a wrong password: {"productId":790824939,"labelId":1,"supersededCount":0,"actionId":"act_c41a403b0dd4487c8d7d70b51d11c5a6","auditId":"3ccbb6c6-70dd-469f-905f-658bb512812c","sha256Chain":"3ddb0dc68470e1078a946047be9e92c52877b0478d7a012465e4b35f81de935b"}: expected 201 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:309:95
+    307|   it('refuses a wrong password, and writes nothing', async () => {
+    308|     const res = await post(route, 'wrong', { meaning: 'approval', pass…
+    309|     expect(res.status, `${route.key} accepted a wrong password: ${JSON…
+       |                                                                                               ^
+    310|     expect(res.body.error?.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    311|     await expectNothingWritten(route, 'wrong');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction
+AssertionError: rim: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:317:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a sign without credentials, and writes nothing
+AssertionError: consent signed with a session alone: {"formId":790824948,"approved":true,"completeness":{"requiredPresentPct":100},"actionId":"act_7deaa3710c6f415b9302625265048bd3","auditId":"a85eb905-a18b-4e52-9cb9-4903212080ca","sha256Chain":"408c6f299b073cd4053066b7e4a857317cd18ace50360ef29ccc67812e4834c7"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:302:97
+    300|   it('refuses a sign without credentials, and writes nothing', async (…
+    301|     const res = await post(route, 'bare', {});
+    302|     expect(res.status, `${route.key} signed with a session alone: ${JS…
+       |                                                                                                 ^
+    303|     expect(res.body.error?.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    304|     await expectNothingWritten(route, 'bare');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a wrong password, and writes nothing
+AssertionError: consent accepted a wrong password: {"formId":790824949,"approved":true,"completeness":{"requiredPresentPct":100},"actionId":"act_93a8d9e72a5f4c6493657d42d6a59d6a","auditId":"92a58f99-6391-4794-8d8d-76c80ff2685f","sha256Chain":"83944dc402206dbaa1b66f936ea6e38d9d37a7a0ba66b7d4b844d1a0336b40da"}: expected 201 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:309:95
+    307|   it('refuses a wrong password, and writes nothing', async () => {
+    308|     const res = await post(route, 'wrong', { meaning: 'approval', pass…
+    309|     expect(res.status, `${route.key} accepted a wrong password: ${JSON…
+       |                                                                                               ^
+    310|     expect(res.body.error?.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    311|     await expectNothingWritten(route, 'wrong');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction
+AssertionError: consent: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:317:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a sign without credentials, and writes nothing
+AssertionError: deviations signed with a session alone: {"deviationId":790824958,"closed":true,"actionId":"act_70d0106cbddf451d8f5b0190054c74d8","auditId":"4aa440d3-15ed-4a1c-8bc3-7b39f1166c26","sha256Chain":"bdd8a229fe25b6e4b220534e7f19fe75e3918c919f86650d20808c0eb019647b"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:302:97
+    300|   it('refuses a sign without credentials, and writes nothing', async (…
+    301|     const res = await post(route, 'bare', {});
+    302|     expect(res.status, `${route.key} signed with a session alone: ${JS…
+       |                                                                                                 ^
+    303|     expect(res.body.error?.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    304|     await expectNothingWritten(route, 'bare');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a wrong password, and writes nothing
+AssertionError: deviations accepted a wrong password: {"deviationId":790824959,"closed":true,"actionId":"act_5bd18de549c441cda97f2facb02463de","auditId":"bb7c0865-3554-4629-864e-0046e64d57e6","sha256Chain":"11ab8cc60194d2991091c70a7829ac7afd99e95a951b2fce336891a46b873fc9"}: expected 201 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:309:95
+    307|   it('refuses a wrong password, and writes nothing', async () => {
+    308|     const res = await post(route, 'wrong', { meaning: 'approval', pass…
+    309|     expect(res.status, `${route.key} accepted a wrong password: ${JSON…
+       |                                                                                               ^
+    310|     expect(res.body.error?.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    311|     await expectNothingWritten(route, 'wrong');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction
+AssertionError: deviations: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:317:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a sign without credentials, and writes nothing
+AssertionError: bla signed with a session alone: {"id":"53338a22-f95d-4f11-a2e2-cf7ad2d9afed","status":"signed","ledger":{"actionId":"act_b0f4e354d4b74a56b1baeb38a41024c4","auditId":"410a61d4-dac2-4bd6-80c0-b67d786d760a","sha256Chain":"135648ce5f5ab1bb42d6c3e81158671057e4bfd36104187dda6400e5e0699795"}}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:302:97
+    300|   it('refuses a sign without credentials, and writes nothing', async (…
+    301|     const res = await post(route, 'bare', {});
+    302|     expect(res.status, `${route.key} signed with a session alone: ${JS…
+       |                                                                                                 ^
+    303|     expect(res.body.error?.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    304|     await expectNothingWritten(route, 'bare');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a wrong password, and writes nothing
+AssertionError: bla accepted a wrong password: {"id":"b885497c-462a-4f97-82ee-b81ec878227b","status":"signed","ledger":{"actionId":"act_86b29a2a57844009bb8d067bb0dc89b5","auditId":"cc243e85-2360-432b-9824-40c447867708","sha256Chain":"6638f9484e075b55a118e6ec184dba3bf72b143bd7cf16fcd2082ae93bf59921"}}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:309:95
+    307|   it('refuses a wrong password, and writes nothing', async () => {
+    308|     const res = await post(route, 'wrong', { meaning: 'approval', pass…
+    309|     expect(res.status, `${route.key} accepted a wrong password: ${JSON…
+       |                                                                                               ^
+    310|     expect(res.body.error?.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    311|     await expectNothingWritten(route, 'wrong');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction
+AssertionError: {"id":"bb134bbd-a105-43cc-b88f-081964228f61","status":"signed","ledger":{"actionId":"act_ac399845793f47f6ab314427caea896e","auditId":"61ee1325-f292-4618-9190-b6e93a4dad5f","sha256Chain":"a35a496f24ef31b15d63fabd62719283278ba807ef9eaaf0be30fa3c55eb1ff5"}}: expected 200 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 200
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:316:50
+    314|   it('with the ceremony, writes the act, the ledger pair and the signa…
+    315|     const res = await post(route, 'signed', { meaning: 'approval', pas…
+    316|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    317|     await expectSignedTogether(route, 'signed', 'approval');
+    318|     expect(res.body.signatureId).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+AssertionError: batch: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:358:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+AssertionError: spec: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:358:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/24]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+AssertionError: closure: the sign has no electronic_signatures row: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:235:86
+    233|   expect(rows.ledger.map((r) => r.command), `${route.key}: no sign led…
+    234|   expect(rows.audit, `${route.key}: no audit row`).toHaveLength(1);
+    235|   expect(rows.signatures, `${route.key}: the sign has no electronic_si…
+       |                                                                                      ^
+    236|   const [action] = rows.ledger;
+    237|   const [audit] = rows.audit;
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:358:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/24]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  24 failed | 7 passed (31)
+   Start at  03:21:47
+   Duration  6.45s (transform 3.81s, setup 81ms, import 227ms, tests 5.84s, environment 0ms)
+

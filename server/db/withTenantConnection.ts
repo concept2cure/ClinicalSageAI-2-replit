@@ -42,6 +42,7 @@ import type { PoolClient } from 'pg';
 import { getPool } from './runtime';
 import { runWithTenantScope, type TenantScope, type TenantScopeSource } from './tenantStore';
 import { createScopedLogger } from '../utils/logger';
+import { applySessionScope, clearSessionScope } from './sessionScope';
 
 const logger = createScopedLogger('with-tenant-connection');
 
@@ -75,6 +76,28 @@ export async function withTenantConnection<T>(
     caller: opts.caller,
   };
 
+  // The scope is entered BEFORE the checkout, and everything — connect,
+  // session setup, callback, cleanup — runs inside it.
+  //
+  // It used to be entered only around the callback, after `pool.connect()`.
+  // Under RLS_ENFORCE=on the instrumented pool refuses a checkout with no
+  // active scope ("FAIL-CLOSED: pool.connect"), so a caller that brings none —
+  // the nightly memory-consolidation job, a script — failed on every run.
+  // Callers already inside a scope (request paths) never noticed, because the
+  // checkout silently borrowed THEIR scope; that also meant a transaction opened
+  // in `fn` got the ambient request's LOCAL tenant vars instead of the ones
+  // this function was asked for. Entering `scope` first fixes both. For those
+  // request-path callers nothing else changes: `fn` already ran in `scope`, the
+  // session set_config/cleanup sequence is identical, and the ambient scope is
+  // back in force when this returns (AsyncLocalStorage nesting).
+  return runWithTenantScope(scope, () => runOnScopedClient(opts, tenantId, fn));
+}
+
+async function runOnScopedClient<T>(
+  opts: WithTenantConnectionOptions,
+  tenantId: string,
+  fn: (client: PoolClient) => Promise<T>
+): Promise<T> {
   const pool = getPool();
   const client = await pool.connect();
   let releaseError: Error | undefined;
@@ -85,11 +108,9 @@ export async function withTenantConnection<T>(
     // pattern in tenantContext middleware. They are cleared in the
     // `finally` below to be safe in case the connection comes back into
     // the pool (it does — release() returns it).
-    await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [tenantId]);
-    await client.query("SELECT set_config('app.current_org_id', $1, false)", [opts.orgUuid ?? '']);
-    await client.query("SELECT set_config('app.current_user_role', $1, false)", [opts.role ?? '']);
+    await applySessionScope(client, { tenantId, orgUuid: opts.orgUuid ?? '', role: opts.role ?? '' });
 
-    return await runWithTenantScope(scope, () => fn(client));
+    return await fn(client);
   } catch (error) {
     // The callback may fail without contaminating session state, but session
     // setup can fail partway through. Conservatively evict unless setup and
@@ -98,9 +119,7 @@ export async function withTenantConnection<T>(
     throw error;
   } finally {
     try {
-      await client.query("SELECT set_config('app.current_tenant_id', '', false)");
-      await client.query("SELECT set_config('app.current_org_id', '', false)");
-      await client.query("SELECT set_config('app.current_user_role', '', false)");
+      await clearSessionScope(client);
     } catch (cleanupErr) {
       releaseError = cleanupErr instanceof Error
         ? cleanupErr

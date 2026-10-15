@@ -1,8 +1,11 @@
 import { Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const reportsManifestRoutes = Router();
+const log = createScopedLogger('reports-manifest');
 const REPORTS_ROOT_DIR = 'attached_assets/example_reports';
 const LAUNCH_CONFIG_PATH = 'attached_assets/launch_config.json';
 
@@ -22,12 +25,8 @@ reportsManifestRoutes.get(['/personas', '/personas.json'], async (_req: Request,
 
     const reportIndex = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
     res.json(reportIndex);
-  } catch (error: any) {
-    console.error('Error fetching report personas:', error);
-    res.status(500).json({
-      success: false,
-      message: `Error fetching report personas: ${error.message}`,
-    });
+  } catch (error) {
+    return serverError(res, log, 'reading the report personas', error);
   }
 });
 
@@ -58,12 +57,8 @@ reportsManifestRoutes.get('/persona/:personaId', async (req: Request, res: Respo
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
     console.log(`Successfully loaded manifest for ${personaId}`);
     res.json(manifest);
-  } catch (error: any) {
-    console.error(`Error fetching persona manifest:`, error);
-    res.status(500).json({
-      success: false,
-      message: `Error fetching persona manifest: ${error.message}`,
-    });
+  } catch (error) {
+    return serverError(res, log, 'reading the persona manifest', error);
   }
 });
 
@@ -85,12 +80,8 @@ reportsManifestRoutes.get(
 
       const launchConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
       res.json(launchConfig);
-    } catch (error: any) {
-      console.error('Error fetching launch configuration:', error);
-      res.status(500).json({
-        success: false,
-        message: `Error fetching launch configuration: ${error.message}`,
-      });
+    } catch (error) {
+      return serverError(res, log, 'reading the launch configuration', error);
     }
   }
 );
@@ -161,12 +152,8 @@ reportsManifestRoutes.get(['/index', '/index.json'], async (_req: Request, res: 
 
     // Send the transformed data
     res.json(transformedIndex);
-  } catch (error: any) {
-    console.error('Error fetching report index:', error);
-    res.status(500).json({
-      success: false,
-      message: `Error fetching report index: ${error.message}`,
-    });
+  } catch (error) {
+    return serverError(res, log, 'reading the report index', error);
   }
 });
 

@@ -10,8 +10,11 @@ import { sql } from 'drizzle-orm';
 import predictiveSectionService from '../services/predictiveSectionService';
 import { requestDb } from '../db/requestDb';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('predictive-sections');
 
 /**
  * POST /api/predictive-sections/suggestions
@@ -47,12 +50,8 @@ router.post('/suggestions', async (req, res) => {
       data: predictions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
-    console.error('Error in predictive sections API:', error);
-    res.status(500).json({
-      error: 'Failed to generate section suggestions',
-      message: error.message,
-    });
+  } catch (error) {
+    return serverError(res, log, 'generating section suggestions', error);
   }
 });
 
@@ -95,12 +94,8 @@ router.post('/analyze-document', async (req, res) => {
       predictions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
-    console.error('Error analyzing document:', error);
-    res.status(500).json({
-      error: 'Failed to analyze document',
-      message: error.message,
-    });
+  } catch (error) {
+    return serverError(res, log, 'analyzing the document', error);
   }
 });
 
@@ -215,12 +210,8 @@ router.post('/update-context', async (req, res) => {
       predictions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
-    console.error('Error updating context:', error);
-    res.status(500).json({
-      error: 'Failed to update context',
-      message: error.message,
-    });
+  } catch (error) {
+    return serverError(res, log, 'updating the document context', error);
   }
 });
 
@@ -260,12 +251,8 @@ router.get('/completion-status/:submissionType', async (req, res) => {
       aiSuggestions: predictions.aiSuggestions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
-    console.error('Error getting completion status:', error);
-    res.status(500).json({
-      error: 'Failed to get completion status',
-      message: error.message,
-    });
+  } catch (error) {
+    return serverError(res, log, 'reading the completion status', error);
   }
 });
 

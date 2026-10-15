@@ -148,7 +148,7 @@ const chainRows = async (seqId: number) =>
   )).rows;
 
 beforeAll(async () => {
-  h = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  h = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
   holder.db = h.db;
   holder.pglite = h.pglite;
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
@@ -173,7 +173,10 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
       code: 'INVALID_STATE',
       message: expect.stringMatching(/leaves changed while this freeze was being checked/),
     });
-    expect((await statusOf(1)).status).toBe('validated');
+    // Not frozen. Since 2026-10-08 (QA j6) the leaf write itself returns a
+    // Validated sequence to Assembling, so it no longer reads 'validated' over
+    // content its validation never saw.
+    expect((await statusOf(1)).status).toBe('assembling');
   }, 120_000);
 
   it('refuses the freeze when a leaf is removed while the gate is assembling', async () => {
@@ -190,14 +193,20 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
       code: 'INVALID_STATE',
       message: expect.stringMatching(/leaves changed while this freeze was being checked/),
     });
-    expect((await statusOf(2)).status).toBe('validated');
-    expect(await chainRows(2), 'a refused freeze left a status transition in the audit chain').toEqual([]);
-    // With nothing moving, the same sequence freezes under a fresh signature —
-    // and the freeze commits with its chained §11.10(e) row, not without it.
+    // Not frozen; the removal returned it to Assembling (2026-10-08, QA j6).
+    expect((await statusOf(2)).status).toBe('assembling');
+    // The one transition on record is the removal's own return to Assembling,
+    // signed by no one; the refused freeze left none.
+    const afterRefusal = (await chainRows(2)) as Array<{ action: string; signature: string | null }>;
+    expect(afterRefusal.filter((r) => r.signature != null), 'a refused freeze left a status transition in the audit chain').toEqual([]);
+    expect(afterRefusal.map((r) => r.action)).toEqual(['SEQUENCE_TRANSITIONED']);
+    // With nothing moving, the same sequence — validated again — freezes under a
+    // fresh signature, and the freeze commits with its chained §11.10(e) row.
+    await h.pglite.query(`UPDATE ectd_sequences SET status = 'validated' WHERE id = 2`);
     const fresh = await sign(2, 'freeze');
     await freezeSequence(2, ctx, fresh);
     expect((await statusOf(2)).status).toBe('frozen');
-    expect(await chainRows(2), 'the freeze committed without the chained audit row it is written with').toEqual([
+    expect(((await chainRows(2)) as Array<{ action: string }>).filter((r) => r.action === 'SEQUENCE_FROZEN'), 'the freeze committed without the chained audit row it is written with').toEqual([
       { action: 'SEQUENCE_FROZEN', tenant_id: ORG, actor_id: USER, target: 'ectd_sequence:2', chained: true, signature: fresh },
     ]);
   }, 120_000);
@@ -633,4 +642,60 @@ describe('a withdrawal that names no document still binds the ordering rule by s
     expect(err.message).toMatch(/new sequence numbered after 0002/);
     expect((await statusOf(132)).status).toBe('validated');
   }, 180_000);
+});
+
+/**
+ * Separation of duties at the step itself. The sign route skips the
+ * author/signer check for an AUTHORSHIP meaning — correct for a document author
+ * signing as author — and the signing dialog offered "Authorship" for freeze
+ * and dispatch. Gate 1 checked intent and never meaning, so the sequence's
+ * creator could pick "Authorship", sign without the check ever running, and
+ * release their own submission. The step now refuses that signature whatever
+ * client recorded it.
+ */
+describe('freeze and dispatch refuse a signature that declares authorship', () => {
+  async function validatedSequence(id: number, submissionId: number) {
+    await h.pglite.exec(`
+      INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
+        VALUES (${submissionId}, 'sod ${id}', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status)
+        VALUES (${id}, ${submissionId}, 'fda', '0000', ${ORG}, ${USER}, 'validated');
+      INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by)
+        VALUES (${id}, 'm1.2', 'Cover letter', 'new', 'coauthor_documents', 310, ${ORG}, ${USER});
+    `);
+  }
+
+  it('refuses a freeze signed as "authorship", and accepts the same freeze signed as approval', async () => {
+    await validatedSequence(601, 601);
+    const err = await outcome(freezeSequence(601, ctx, await sign(601, 'freeze', 'authorship')));
+    expect(err, 'a freeze signed as authorship was accepted — the author/signer check never ran on it').toMatchObject({
+      code: 'GOVERNED_REQUIRED',
+      message: expect.stringMatching(/meaning 'authorship'/),
+    });
+    expect((await statusOf(601)).status).toBe('validated');
+
+    // Specific, not blanket: the same sequence freezes on an approval meaning.
+    await freezeSequence(601, ctx, await sign(601, 'freeze', 'approval'));
+    expect((await statusOf(601)).status).toBe('frozen');
+  });
+
+  it('refuses a dispatch signed as "author" (either spelling), and accepts it signed as release', async () => {
+    await validatedSequence(602, 602);
+    await freezeSequence(602, ctx, await sign(602, 'freeze', 'approval'));
+
+    const err = await outcome(dispatchSequence(602, ctx, await sign(602, 'dispatch', 'Author')));
+    expect(err, 'the creator released their own sequence by choosing "Author"').toMatchObject({ code: 'GOVERNED_REQUIRED' });
+    expect((await statusOf(602)).status).toBe('frozen');
+
+    await dispatchSequence(602, ctx, await sign(602, 'dispatch', 'release'));
+    expect((await statusOf(602)).status).toBe('dispatched');
+  });
+
+  it('a signature recording no meaning is unchanged — it was checked for independence when signed', async () => {
+    // The sign route requires independence whenever the meaning is not an
+    // authorship one, absent included. Every existing case above signs this way.
+    await validatedSequence(603, 603);
+    await freezeSequence(603, ctx, await sign(603, 'freeze'));
+    expect((await statusOf(603)).status).toBe('frozen');
+  });
 });

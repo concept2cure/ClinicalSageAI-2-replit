@@ -7,7 +7,7 @@
  * verbatim in shape: a `governed(req, res, 'sign', …)` call and nothing else.
  */
 import assert from 'node:assert/strict';
-import { evaluate, scanSource } from './check-sign-ceremony.mjs';
+import { evaluate, evaluateAuthority, scanAuthority, scanSource } from './check-sign-ceremony.mjs';
 
 let passed = 0;
 function test(name, fn) {
@@ -158,6 +158,143 @@ test('a baseline that allows more than exists is reported, so a fixed site canno
 test('a baseline entry without a written reason fails', () => {
   const r = evaluate(scan(PRE_FIX_FINALIZE), { files: { 'server/routes/x.ts': { count: 1, reason: '' } } });
   assert.deepEqual(r.unreasoned, ['server/routes/x.ts']);
+});
+
+
+// ── Approval stamps (2026-10-01) ─────────────────────────────────────────────
+// The two defects this widening exists for, as they stood before e1c224f69 and
+// 028a0c704: an approval stamped under command 'transition', no signature row.
+const PRE_FIX_QMS_TOOL = `
+registerToolHandler('approve_qms_document', async (input, ctx) => {
+  await client.query(\`UPDATE qms_documents SET status = 'effective', approver_id = $3, approved_at = NOW() WHERE id = $1\`, [id, org, ctx.userId]);
+  await recordGovernedAction(client, { orgId, userId, command: 'transition', target, reason, payload: { kind: 'approve' } });
+});
+`;
+const PRE_FIX_CHANGE_SERVICE = `
+export async function transitionChange(orgId, id, to, actor) {
+  if (to === 'approved') { sets.push('approved_at = now()'); add('approved_by', actor.userId); }
+  await pool.query(\`UPDATE qms_change_controls SET \${sets.join(', ')} WHERE id = $1\`, args);
+}
+`;
+const SIGNED_STAMP = `
+export async function approveQmsChangeSigned(client, params) {
+  await client.query(\`UPDATE qms_change_controls SET status = 'approved', approved_by = $3, approved_at = $4::timestamptz WHERE id = $1\`, args);
+  const gov = await recordGovernedAction(client, { command: 'approve', target, reason });
+  await persistGovernedActionSignature(client, { orgId, userId, target, reason });
+}
+`;
+
+test('an approval stamped under a non-sign verb fails the gate (the QMS AnA tool before e1c224f69)', () => {
+  const f = failsWith(PRE_FIX_QMS_TOOL);
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites.length, 1, 'approver_id and approved_at on one line are one stamp');
+  assert.equal(f[0].sites[0].kind, 'approval-stamp');
+});
+
+test('an approval stamp built up in a service fails the gate (transitionChange before 028a0c704)', () => {
+  const f = failsWith(PRE_FIX_CHANGE_SERVICE);
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites[0].kind, 'approval-stamp');
+});
+
+test('an approval stamp written beside its signature row passes', () => {
+  assert.equal(failsWith(SIGNED_STAMP).length, 0);
+});
+
+// Authoring's e-sign handler (QA 2026-10-08, j4): the approval stamp sits beside
+// the authoring_signatures write, on one transaction client.
+const AUTHORING_STAMP = (withSignature) => `router.post('/docs/:docId/e-sign', async (req, res) => {
+  const signer = await reverifyAuthoringSigner(req, res);
+  await client.query(\`UPDATE authoring_documents SET status = $1, approved_at = COALESCE(approved_at, NOW()) WHERE id = $2 AND tenant_id = $3\`, ['APPROVED', docId, tenantId]);
+  ${withSignature ? 'await insertAuthoringSignature(client, req, { id, docId });' : ''}
+});`;
+
+test('an authoring approval stamp beside its authoring_signatures write passes', () => {
+  assert.equal(failsWith(AUTHORING_STAMP(true)).length, 0);
+});
+
+test('the same authoring approval stamp with no signature write fails', () => {
+  const f = failsWith(AUTHORING_STAMP(false));
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites[0].kind, 'approval-stamp');
+});
+
+test('clearing an approval (a revision) is not a stamp', () => {
+  const src = "router.post('/x', async () => { await pool.query(`UPDATE qms_documents SET status = 'draft', approver_id = NULL, approved_at = NULL WHERE id = $1`, [id]); });";
+  assert.deepEqual(scanSource(src), []);
+});
+
+// ── Signing authority (2026-10-08, QA j6) ─────────────────────────────────────
+// The Gateway transmit as it stood: the editor gate, then the password, then the
+// governed transmit. Nothing asked whether the signer's role may sign.
+const PRE_FIX_TRANSMIT = (authority) => `
+router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (req, res) => {
+  const p = transmitBody.safeParse(req.body).data;
+  ${authority ? 'const authority = await checkSigningAuthority(userId, orgId);\n  if (authority) return signingAuthorityRefused(res, authority);' : ''}
+  const reauthResult = await verifyReauth(userId, p.reauth);
+  const outcome = await executeGovernedTransmit({ region, gateway, organizationId: orgId, userId, meaning: p.meaning });
+});`;
+const authorityFails = (src, section = { files: {} }) =>
+  evaluateAuthority({ 'server/routes/x.ts': scanAuthority(src) }, section).failures;
+
+test('the pre-fix Gateway transmit (re-authentication, no authority) fails the authority rule', () => {
+  const f = authorityFails(PRE_FIX_TRANSMIT(false));
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites[0].authority, false);
+});
+
+test('the same transmit asking checkSigningAuthority first passes', () => {
+  assert.equal(authorityFails(PRE_FIX_TRANSMIT(true)).length, 0);
+});
+
+test('reverifySigner is held to the rule too, and checkSigningAuthority satisfies it', () => {
+  const bare = "router.post('/s', async (req, res) => { const v = await reverifySigner(userId, creds, deps()); });";
+  assert.equal(authorityFails(bare).length, 1);
+  const asked = "router.post('/s', async (req, res) => { const a = await checkSigningAuthority(userId, orgId); if (a) return; const v = await reverifySigner(userId, creds, deps()); });";
+  assert.equal(authorityFails(asked).length, 0);
+});
+
+// P-27 (2026-10-08): one signing-authority policy. An inline copy of it — the
+// role read and the predicate written out in the handler, or a local wrapper
+// around them — does not satisfy the rule any more; only the gate does. Each
+// copy answered a failed role lookup its own way (500, a thrown error, or not
+// at all), and two read the role from the token instead of the membership row.
+test('an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule', () => {
+  const inline = "router.post('/s', async (req, res) => { if (!isSigningAuthorized(await resolveSignerOrgRole(userId, orgId))) return; const v = await reverifySigner(userId, creds, deps()); });";
+  assert.equal(authorityFails(inline).length, 1);
+});
+
+test('the retired local wrappers no longer satisfy the rule', () => {
+  for (const wrapper of ['signingAuthorityRefusal(command, userId, orgId)', 'assertSigningAuthority(req, res)', 'refusedWithoutSigningAuthority(res, { userId, orgId })']) {
+    const src = `router.post('/s', async (req, res) => { if (await ${wrapper}) return; await verifyReauth(userId, req.body.reauth); });`;
+    assert.equal(authorityFails(src).length, 1, wrapper);
+  }
+});
+
+test('an authority check in another handler does not count for this one', () => {
+  const src = `
+router.post('/a', async (req, res) => {
+  const authority = await checkSigningAuthority(userId, orgId);
+});
+router.post('/b', async (req, res) => {
+  await verifyReauth(userId, req.body.reauth);
+});`;
+  assert.equal(authorityFails(src).length, 1);
+});
+
+test('a declaration of the primitive is not a call; a commented check is not a check', () => {
+  assert.deepEqual(scanAuthority('export async function verifyReauth(userId: number, reauth: unknown) { return { ok: true }; }'), []);
+  const commented = "router.post('/c', async () => {\n  // await checkSigningAuthority(userId, orgId);\n  await verifyReauth(userId, reauth);\n});";
+  assert.equal(authorityFails(commented).length, 1);
+});
+
+test('an authority baseline entry is a ceiling with a written reason, as the sign baseline is', () => {
+  const reason = 'A rollback signs nothing: it writes no signature row.';
+  assert.equal(authorityFails(PRE_FIX_TRANSMIT(false), { files: { 'server/routes/x.ts': { count: 1, reason } } }).length, 0);
+  const unreasoned = evaluateAuthority({ 'server/routes/x.ts': scanAuthority(PRE_FIX_TRANSMIT(false)) }, { files: { 'server/routes/x.ts': { count: 1 } } });
+  assert.deepEqual(unreasoned.unreasoned, ['server/routes/x.ts']);
+  const loose = evaluateAuthority({ 'server/routes/x.ts': scanAuthority(PRE_FIX_TRANSMIT(true)) }, { files: { 'server/routes/x.ts': { count: 1, reason } } });
+  assert.equal(loose.shrinkable.length, 1, 'a freed allowance must be lowered, not kept for the next site');
 });
 
 console.log(`[ci:sign-ceremony:selftest] ${passed} passed — the gate fails on what it exists to catch.`);

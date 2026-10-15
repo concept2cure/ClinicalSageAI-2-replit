@@ -143,12 +143,32 @@ export interface PatientMetric {
 
 export type PatientStatus = 'normal' | 'review' | 'flagged';
 
+/**
+ * One dimension's contribution to a patient's anomaly score. Signed, because the
+ * direction is the finding: an AE count 4 sigma BELOW the cohort is
+ * under-reporting, one 4 sigma above may be a genuinely sick patient, and an
+ * absolute value alone cannot tell a monitor which they are looking at.
+ */
+export interface PatientDimensionScore {
+  dimension: string;
+  z: number;
+}
+
 export interface PatientAnomaly {
   subjectId: string;
   siteId: string | null;
   anomalyScore: number;       // max |robust z| across dimensions
   topDimension: string | null;
   status: PatientStatus;
+  /**
+   * Every dimension the patient was scorable on, most extreme first. This is the
+   * explanation of the score: a flag reading "4.8, top dimension: query rate" is
+   * not actionable on its own, and a monitor cannot tell a single bad dimension
+   * from a patient who is atypical across the board without it. Dimensions the
+   * cohort was too small to score (< MIN_COHORT) are absent rather than zero —
+   * "not comparable" is not "typical".
+   */
+  dimensions: PatientDimensionScore[];
 }
 
 /** Patient anomaly status from an absolute aggregate score. */
@@ -169,6 +189,10 @@ export function scorePatientCohort(patients: PatientMetric[]): PatientAnomaly[] 
   for (const p of patients) for (const k of Object.keys(p.metrics)) dims.add(k);
 
   const best = patients.map(() => ({ score: 0, dim: null as string | null }));
+  // The per-dimension breakdown, kept rather than discarded: it is the only thing
+  // that makes a score explainable, and it costs nothing here because every z is
+  // already computed on the way to finding the maximum.
+  const breakdown: PatientDimensionScore[][] = patients.map(() => []);
   for (const dim of dims) {
     const present = patients
       .map((p, i) => ({ i, v: p.metrics[dim] }))
@@ -176,9 +200,12 @@ export function scorePatientCohort(patients: PatientMetric[]): PatientAnomaly[] 
     if (present.length < MIN_COHORT) continue;
     const scores = scoreCohort(present.map(p => p.v));
     for (let k = 0; k < present.length; k++) {
-      const abs = Math.abs(scores[k].score);
-      const slot = best[present[k].i];
-      if (abs > Math.abs(slot.score)) { slot.score = scores[k].score; slot.dim = dim; }
+      const z = scores[k].score;
+      const abs = Math.abs(z);
+      const i = present[k].i;
+      breakdown[i].push({ dimension: dim, z: Math.round(z * 1000) / 1000 });
+      const slot = best[i];
+      if (abs > Math.abs(slot.score)) { slot.score = z; slot.dim = dim; }
     }
   }
 
@@ -188,5 +215,7 @@ export function scorePatientCohort(patients: PatientMetric[]): PatientAnomaly[] 
     anomalyScore: Math.round(Math.abs(best[i].score) * 1000) / 1000,
     topDimension: best[i].dim,
     status: patientStatusFromScore(Math.abs(best[i].score)),
+    // Most extreme first, so the reason for the flag reads off the top of the list.
+    dimensions: breakdown[i].sort((a, b) => Math.abs(b.z) - Math.abs(a.z)),
   }));
 }

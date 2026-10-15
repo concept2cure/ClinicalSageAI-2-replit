@@ -342,8 +342,21 @@ describe('proposedBy — a machine author is canonicalised, everything else is c
 
     const md = auditMetadata();
     expect(md.proposedBy).toBe('AnA (AI draft)');
-    expect(md.proposedByVerified).toBe(true);
+    // Canonical name, but the claim is the client's: no turn record vouches
+    // for it, so it is not verified (DP-43, 2026-09-29).
+    expect(md.proposedByVerified).toBe(false);
     expect(md.proposedBy).not.toBe('Someone Else Entirely');
+  });
+
+  it('an authorId that is a prototype key ("constructor") is not a machine author', async () => {
+    await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept', authorId: 'constructor' });
+
+    const md = auditMetadata();
+    expect(md.proposedBy).toBe('constructor');
+    expect(md.proposedByVerified).toBe(false);
   });
 
   it('an ordinary human proposer is recorded as unverified, caller-asserted text', async () => {
@@ -392,7 +405,7 @@ describe('proposedBy — a machine author is canonicalised, everything else is c
 
     expect(res.status).toBe(200);
     const md = auditMetadata();
-    expect(md.changes[0]).toMatchObject({ proposedBy: 'AnA (AI draft)', proposedByVerified: true });
+    expect(md.changes[0]).toMatchObject({ proposedBy: 'AnA (AI draft)', proposedByVerified: false });
     expect(md.changes[1]).toMatchObject({ proposedBy: 'R. Human', proposedByVerified: false });
   });
 });

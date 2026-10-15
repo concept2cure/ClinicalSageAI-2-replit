@@ -1,0 +1,186 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup 7ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording 3ms
+   → expected 'PRIVATE-SECRET source.' to be 'Allowed source evidence.' // Object.is equality
+ × server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt 1ms
+   → Cannot read properties of undefined (reading 'currentVersion')
+ × server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority 1ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts 3ms
+   → expected undefined to deeply equal { organizationId: 42, userId: 7, …(5) }
+ × server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts 1ms
+   → expected undefined to deeply equal { organizationId: 42, userId: 7, …(5) }
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > a scope denial never becomes an empty successful search 1ms
+ × server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources 3ms
+   → promise resolved "{ status: 'loaded', …(1) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/document-source-access-tools.test.ts:41:23
+     39|   it('requires identified server actor before any read facade or sourc…
+     40|     const result = await call('read_project_document', { document_id: …
+     41|     expect(result.ok).toBe(false); expect(result.code).toBe('SOURCE_AC…
+       |                       ^
+     42|     expect(h.raw).not.toHaveBeenCalled(); expect(h.actor).not.toHaveBe…
+     43|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/document-source-access-tools.test.ts:47:23
+     45|     h.actor.mockImplementation(async () => { throw new Error('SOURCE_A…
+     46|     const result = await call('read_project_document', { document_id: …
+     47|     expect(result.ok).toBe(false); expect(JSON.stringify(result)).not.…
+       |                       ^
+     48|     expect(h.actor).toHaveBeenCalledWith(expect.objectContaining({ org…
+     49|     expect(h.raw).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording
+AssertionError: expected 'PRIVATE-SECRET source.' to be 'Allowed source evidence.' // Object.is equality
+
+Expected: "Allowed source evidence."
+Received: "PRIVATE-SECRET source."
+
+ ❯ server/services/ana/__tests__/document-source-access-tools.test.ts:54:62
+     52|     const receipts = new Map();
+     53|     const result = await call('read_project_document', { document_id: …
+     54|     expect(result.ok).toBe(true); expect(result.window.text).toBe('All…
+       |                                                              ^
+     55|     expect(result.coverage.scope).toBe('legacy_byte_history'); expect(…
+     56|     expect(result.message).not.toMatch(/have now read|model received|s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt
+TypeError: Cannot read properties of undefined (reading 'currentVersion')
+ ❯ server/services/ana/__tests__/document-source-access-tools.test.ts:63:62
+     61|     const receipts = new Map();
+     62|     const result = await call('read_project_document', { document_id: …
+     63|     expect(result.ok).toBe(true); expect(result.sourceAccess.currentVe…
+       |                                                              ^
+     64|     expect(result.message).toContain('Historical version'); expect(rec…
+     65|     expect(result.coverage.prospective).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/document-source-access-tools.test.ts:69:70
+     67|   it('list uses actor facade and never treats request body actor as au…
+     68|     const result = await call('list_project_documents', { userId: 99, …
+     69|     expect(result.ok).toBe(true); expect(result.scope.actorFiltered).t…
+       |                                                                      ^
+     70|     expect(h.list).toHaveBeenCalledWith(expect.objectContaining({ orga…
+     71|     expect(h.uploads).toHaveBeenCalledWith(expect.objectContaining({ o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts
+ FAIL  server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts
+AssertionError: expected undefined to deeply equal { organizationId: 42, userId: 7, …(5) }
+
+- Expected:
+{
+  "accessibleProgramIds": [
+    "10000000-0000-4000-8000-000000000001",
+  ],
+  "actorFiltered": true,
+  "organizationId": 42,
+  "programId": "10000000-0000-4000-8000-000000000001",
+  "projectId": 1,
+  "role": "viewer",
+  "userId": 7,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/document-source-access-tools.test.ts:77:36
+     75|     expect(result.ok).toBe(true);
+     76|     const params = tool === 'search_project_documents' ? h.search.mock…
+     77|     expect(params.sourceReadScope).toEqual(admittedScope);
+       |                                    ^
+     78|     expect(params.allowedProgramIds).not.toEqual(['private']);
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources
+AssertionError: promise resolved "{ status: 'loaded', …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "sources": [
++     {
++       "completeText": true,
++       "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "disposition": null,
++       "documentId": "20000000-0000-4000-8000-000000000001",
++       "extractionConfidence": null,
++       "extractionMethod": "utf8",
++       "originalFileAvailable": true,
++       "programId": "10000000-0000-4000-8000-000000000001",
++       "sourceAvailability": "Original file available.",
++       "span": {
++         "end": 22,
++         "start": 0,
++         "totalChars": 22,
++       },
++       "text": "PRIVATE-SECRET source.",
++       "title": "PRIVATE-SECRET.txt",
++     },
++   ],
++   "status": "loaded",
+  }
+
+ ❯ server/services/ana/__tests__/document-source-access-tools.test.ts:87:60
+     85|   it('draft selections use actor facade before full extraction, refusi…
+     86|     h.actor.mockImplementation(async () => { throw new Error('SOURCE_A…
+     87|     await expect(loadDraftProjectSources([documentId], ctx)).rejects.t…
+       |                                                            ^
+     88|     expect(h.actor).toHaveBeenCalledWith(expect.objectContaining({ use…
+     89|     expect(h.raw).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  19:32:27
+   Duration  970ms (transform 554ms, setup 67ms, import 659ms, tests 24ms, environment 0ms)
+

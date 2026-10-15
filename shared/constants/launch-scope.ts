@@ -1,9 +1,16 @@
 /**
  * Launch scope — the one list of what ships in the launch catalog.
  *
- * `docs/LAUNCH_DEFINITION_OF_DONE.md` row D2: six apps on by default for a
- * new organisation, every other surface behind a flag that is off in
- * production. This file IS that flag's data. It is read by:
+ * `docs/LAUNCH_DEFINITION_OF_DONE.md` row D2: eight apps for a new
+ * organisation (six until 2026-09-30, when the founder made Reporting &
+ * analytics a launch app; seven until 2026-10-12, when CMC / Module 3 joined
+ * under decision P-28), every other surface behind a flag that is off in
+ * production. This file IS that flag's data.
+ *
+ * "On by default" is the modules list, not the app list: a launch app's
+ * SURFACES are inside the boundary, and its MODULES are what a new
+ * organisation is granted. CMC / Module 3 lists surfaces and no modules on
+ * purpose — see its entry. It is read by:
  *
  *   - server/services/entitlements/navigation-entitlements.ts — emits a
  *     `launch-scope` verdict for every surface outside the scope when
@@ -39,13 +46,18 @@ export interface LaunchApp {
   modules: readonly string[];
 }
 
-/** The six launch apps, in the order the definition of done lists them. */
+/** The eight launch apps, in the order the definition of done lists them. */
 export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'projects',
     label: 'Projects',
-    surfaces: ['projects', 'project-home', 'program-journey', 'filings-catalog', 'tasks'],
-    modules: ['projects', 'program-journey', 'filings-catalog', 'tasks'],
+    // CPO decision, 2026-10-08 (docs/SURFACE_DECISIONS_2026-10-08.md, under the
+    // founder's delegation of 2026-10-07): the program journey and the filings
+    // catalog left the app. The journey is empty for every program a client
+    // creates (only the demo seed fills it); the catalog's Start drops the
+    // choice, and the New project wizard already persists the filing type.
+    surfaces: ['projects', 'project-home', 'tasks'],
+    modules: ['projects', 'tasks'],
   },
   {
     id: 'vault',
@@ -58,9 +70,7 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     label: 'Authoring',
     surfaces: [
       'document-authoring',
-      'template-library',
       'review',
-      'regulatory-workspace',
       // Protocol development joined the launch catalog by founder decision on
       // 2026-09-21 (docs/evidence/WI/2026-09-21). It is the clinical protocol
       // authoring workspace — sections, objectives, eligibility, schedule of
@@ -75,28 +85,49 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
       // (No quoted ids in these comments: ci:launch-scope reads the array
       // text and would count one.)
       'protocol-dev',
+      // CPO decision, 2026-10-08: the template library and the regulatory
+      // workspace left the app. A saved template formats no authored document
+      // (export takes no template; Adjust and Apply only send a chat prompt),
+      // and the workspace is a fixed paragraph where the editor should be,
+      // over a store no program writes. The editor is the Authoring app.
     ],
-    modules: ['document-authoring', 'template-library', 'review', 'protocol-dev'],
+    modules: ['document-authoring', 'review', 'protocol-dev'],
   },
   {
     id: 'submission-center',
     label: 'Submission Center',
-    surfaces: [
-      'submission-center',
-      'dossier-map',
-      'ectd-compile',
-      'ectd-coauthor',
-      'ectd-publishing',
-      'gateway-transmittals',
-    ],
-    modules: [
-      'submission-center',
-      'dossier-map',
-      'ectd-compile',
-      'ectd-coauthor',
-      'ectd-publishing',
-      'gateway-transmittals',
-    ],
+    // CPO decision, 2026-10-08: three screens left the app. The co-author is a
+    // second editor over a second store, and its Validate and Compliance tabs
+    // report the same failure whatever the text says (they read section rows
+    // placement never writes); filing copies are placed from the Builder and
+    // edited in the Authoring editor. The dossier map reads a store programs
+    // created in the product never write, so it is always empty; Project home's
+    // dossier readiness is computed from the program's own sections. The
+    // publishing center is a reference page that publishes nothing.
+    //
+    // Decision P-32, 2026-10-15 (founder's delegation): the IND lifecycle and
+    // forms screen is a feature of this app. An amendment on a US commercial
+    // IND needs its 1571, its cover letter and often a Letter of
+    // Authorization, and the engines that build them sat behind a locked
+    // surface. The surface id is listed and the module list is NOT changed,
+    // as in P-28: listing a surface lifts the launch-scope lock, listing a
+    // module would write a grant for every new organisation and outrank the
+    // standard tier the product owner set
+    // (db/migrations/20260823_module_catalog_commercial_packaging.sql). The
+    // API claim is an allow-list of the paths that screen calls, in the
+    // surface registry. IND safety reporting (21 CFR 312.32) and ICSR
+    // transmission stay shut: their routes are claimed by the out-of-scope
+    // pharmacovigilance surface, and the IND screen hides the safety-report
+    // card (docs/LAUNCH_DEFINITION_OF_DONE.md, P-32).
+    //
+    // The agency-questions screen is NOT listed (coordinator decision on P-32,
+    // 2026-10-15). Its approve records a plain status change, with no Part 11
+    // signature, reason or role check, and the response package sent to FDA
+    // is assembled from those approvals; answers to FDA letters are also third
+    // in the beta's job order (docs/design/WORKFLOW_DECISION_2026-10-08.md §1).
+    // Agency questions open once approval is a signed act.
+    surfaces: ['submission-center', 'ectd-compile', 'gateway-transmittals', 'ind-checklist'],
+    modules: ['submission-center', 'ectd-compile', 'gateway-transmittals'],
   },
   {
     id: 'submission-readiness',
@@ -115,8 +146,50 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'qms',
     label: 'QMS controlled documents',
-    surfaces: ['quality', 'qmp'],
-    modules: ['quality', 'qmp'],
+    // CPO decision, 2026-10-08: quality-management plans left the app. A plan's
+    // gates and CTQ factors cannot be authored anywhere, and nothing reads them.
+    surfaces: ['quality'],
+    modules: ['quality'],
+  },
+  {
+    id: 'cmc',
+    label: 'CMC / Module 3',
+    /* Founder's delegation of 2026-10-07, decision P-28 (2026-10-05): the CMC
+       operating system ships in the launch catalog, with a composition
+       boundary — small-molecule Module 3 for a US IND
+       (services/cmc/composition-scope.ts). The one path is compile, approve
+       under Part 11, pass the final-export gate, place into the program's own
+       IND sequence.
+
+       `modules` IS DELIBERATELY EMPTY, and that is not an omission.
+       `provisionLaunchModules` writes an explicit grant for every module id
+       listed here, and a grant outranks tier permanently
+       (navigation-entitlements reads subscription state before tier). Listing
+       'cmc' would therefore hand the module to every new organisation and
+       silently overturn the professional band the product owner set on
+       2026-08-24 (db/migrations/20260824_cmc_professional_tier.sql), whose
+       grandfather grants already cover every organisation entitled then.
+       Pricing is the founder's call, not a side effect of a scope list.
+
+       Listing the SURFACE is what this entry is for, and it is enough:
+       `applyLaunchScope` "never widens anything" — it lifts the
+       'launch-scope' lock and leaves the catalog verdict, so the professional
+       band and any explicit grant still decide who sees it. Until this entry
+       the screen was refused to everyone, entitled or not, and every path
+       under /api/cmc was unattributed. */
+    surfaces: ['cmc'],
+    modules: [],
+  },
+  {
+    id: 'reporting',
+    label: 'Reporting & analytics',
+    // Founder decision, 2026-09-26: Reporting and analytics is a central service
+    // for every client type, like Vault, Projects, Submissions and Tasks, and
+    // belongs on the rail of every organisation. The canvas is the rail entry;
+    // the audit and compliance reports surface is reached from it and from the
+    // audit trail. Both were hidden in production because neither was listed here.
+    surfaces: ['insights', 'compliance-reports'],
+    modules: ['insights'],
   },
 ] as const;
 
@@ -129,8 +202,6 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   home: 'the shell landing surface; synthesised by V2App, has no registry row',
   apps: 'the Apps catalog — where a locked destination explains itself',
   'conversation-thread': 'AnA conversation; the product is chat-first',
-  'ana-command': 'AnA command surface',
-  'ana-memory': 'AnA memory; the user must be able to see what AnA remembers',
   'audit-trail': '21 CFR §11.10(e): the audit trail is never switchable',
   'part11-console': 'how Part 11 compliance is evidenced; never switchable',
   'admin-console': 'organisation administration',
@@ -142,11 +213,18 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   licensing: 'account administration — grants catalog entries',
   'master-licensing': 'platform-owner administration',
   'access-requests': 'how a member asks for a locked app',
-  training: 'account administration',
   'identity-console': 'SSO / SCIM; a security reviewer expects it (D6)',
 };
 
-/** Every surface id in the launch scope: the six apps plus the shell set. */
+// CPO decision, 2026-10-08: three shell entries left. AnA Command answers
+// only enterprise organisations and tells a client two of its runs are
+// recorded to the audit trail when they are not. AnA memory lists a store
+// nothing writes instead of the memory AnA loads each turn, so it tells a
+// client AnA remembers nothing; it returns reading that memory. Training has
+// no path, lesson or certification behind it; training of record is the QMS
+// read-and-understood record.
+
+/** Every surface id in the launch scope: the seven apps plus the shell set. */
 export const LAUNCH_SURFACE_IDS: ReadonlySet<string> = new Set([
   ...LAUNCH_APPS.flatMap((a) => a.surfaces),
   ...Object.keys(LAUNCH_SHELL_SURFACES),

@@ -1,0 +1,58 @@
+## integrity clean passes with nothing compared: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_numerical_integrity reader (real handler output) > every figure stated once is not assessed, though the handler says clean 11ms
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_numerical_integrity reader (real handler output) > forged: clean with no labelsCompared, or an unknown verdict, is never a pass 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 25 passed (27)
+
+## grounding reads ungroundedClaims as a count: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_grounding reader (real handler output) > an unmarked figure fails (ungroundedClaims is an array, not a count) 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+
+## dossier clean over zero documents passes: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > no other documents is not assessed, though the handler says clean 8ms
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > forged: clean with no draft figures, or over a truncated set, is not a pass 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 25 passed (27)
+
+## dossier needs_review is only see_result: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > forged: blocker and needs_review fail, minor_issues needs a reader 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+
+## dossier truncated clean passes: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > forged: clean with no draft figures, or over a truncated set, is not a pass 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+
+## dossier unknown verdict falls through as clean: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > forged: blocker and needs_review fail, minor_issues needs a reader 6ms
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > forged: clean with no draft figures, or over a truncated set, is not a pass 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 25 passed (27)
+
+## aggregate: pass outranks error: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > aggregateVerdict > an error or a result needing a reader is inconclusive 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+
+## aggregate: all not_assessed is clean: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > aggregateVerdict > nothing compared is nothing_checkable, never clean 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+
+## trace: unknown agent status is success: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentTraceStatus > a budget stop is incomplete; a refusal is an error; a cancelled child is cancelled 10ms
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentTraceStatus > an unreadable or unknown result is never success 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 25 passed (27)
+
+## trace: refusal is success: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentTraceStatus > a budget stop is incomplete; a refusal is an error; a cancelled child is cancelled 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+
+## handler drops labelsCompared: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_numerical_integrity reader (real handler output) > a figure stated twice with one value passes 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)

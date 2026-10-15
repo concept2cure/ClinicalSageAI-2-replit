@@ -1,0 +1,40 @@
+## npm run check:security-patterns
+check-security-patterns: 0 violations across 2955 file(s).
+exit=0
+
+## npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 48 baselined site(s) across 46 file(s); no file gained one.
+[ci:server-error-leaks] 48 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0
+
+## npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 117 baselined across 51 file(s).
+  3 baselined file(s) now below their count — run --write-baseline to shrink it.
+exit=0
+
+## npm run ci:duplicate-exported-types
+
+🚫 [ci:duplicate-exported-types] 3 NEW exported type name(s) now mean more than one thing:
+
+  CtqCategory
+      server/services/rbm/rbm-actuator.ts
+      server/services/study-design/ctq-derivation.ts
+  DocumentProvenance
+      server/services/ana-biostats/types.ts
+      server/services/authoring/authoring-from-draft.ts
+  EligibilityAssessment
+      server/services/market-specs/pathway-eligibility.ts
+      server/services/study-design/eligibility-model.ts
+
+Give each module's type the name of what it actually is. A reader who greps the noun
+must land on the module that owns it — that is the difference between a canonical
+claim and a canonical fact.
+
+exit=1
+
+## Note on ci:duplicate-exported-types
+The three names it reports (CtqCategory, DocumentProvenance, EligibilityAssessment) are each declared twice in committed files at HEAD 66e82a6d that this change does not touch:
+  CtqCategory: server/services/rbm/rbm-actuator.ts server/services/study-design/ctq-derivation.ts 
+  DocumentProvenance: server/services/ana-biostats/types.ts server/services/authoring/authoring-from-draft.ts 
+  EligibilityAssessment: server/services/market-specs/pathway-eligibility.ts server/services/study-design/eligibility-model.ts 
+This change adds no colliding name and REMOVES one: AnaActionResult is now declared only in server/services/ana-platform-controller.ts, so its baseline entry can be dropped at the next regeneration.

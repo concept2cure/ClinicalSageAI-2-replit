@@ -1,0 +1,8 @@
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 6. a gap is visible > a dropped batch shows as missing seqs in events and as highWater above the last row 20ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 10. nothing excluded leaks > sentinels in every excluded column appear in no payload, for the asker or an admin 31ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  21:04:16
+   Duration  6.30s (transform 1.40s, setup 105ms, import 3.10s, tests 2.75s, environment 0ms)
+

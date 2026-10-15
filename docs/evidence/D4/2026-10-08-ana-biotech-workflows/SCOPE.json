@@ -1,0 +1,1631 @@
+{
+  "sourceBase": "e7129de74f4f432d629a68b0fffa1a311f6a41a9",
+  "delivery": "W3/D4 existing AnA biotech workflow contracts",
+  "allowedCodePaths": [
+    "server/services/ana/tool-selection.ts",
+    "server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts",
+    "server/services/ana/__tests__/tool-selection-carry-over.test.ts",
+    "server/services/clinical-regulatory-evidence/retrieval-source-link.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts",
+    "server/services/ana-biostats/input-normalizer.ts",
+    "server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts"
+  ],
+  "otherAllowedPath": "docs/work-orders/README.md (own lane row only)",
+  "candidateSources": [
+    {
+      "path": "server/services/ana/tool-selection.ts",
+      "baseGitBlob": "58e6b11b9f1bfcfb5fa87e46905078062c236e51",
+      "candidateGitBlob": "c621c892a174d52eb80dca9aa90d34263bb1aab6"
+    },
+    {
+      "path": "server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts",
+      "baseGitBlob": null,
+      "candidateGitBlob": "7696b28004ecfb5a54d01fc00a77b8e603f2b24e"
+    },
+    {
+      "path": "server/services/ana/__tests__/tool-selection-carry-over.test.ts",
+      "baseGitBlob": "39201e7fcc3ab10916ed33226c9c42909f2fc68b",
+      "candidateGitBlob": "a0531e89ba7c9f4a2886103190be03c22bb82904"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/retrieval-source-link.ts",
+      "baseGitBlob": "e0bb96ed253405e214cbd0eed9d85f78b69b0df9",
+      "candidateGitBlob": "50f2a314efcb8f0823419c6714ccaf54b2232dcb"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts",
+      "baseGitBlob": "59061451d36138a5924e06efe8223af2f509923e",
+      "candidateGitBlob": "2c960b3c783ef2a5b3225f1250b12e11bd544f83"
+    },
+    {
+      "path": "server/services/ana-biostats/input-normalizer.ts",
+      "baseGitBlob": "d8ff60daa9236a291948a09332a7d3b9b13ea6d5",
+      "candidateGitBlob": "3c65a9a6a761d1a3f4f9c8058545f39867337417"
+    },
+    {
+      "path": "server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts",
+      "baseGitBlob": null,
+      "candidateGitBlob": "5a88484932961069e83ec958dd4bcc2e1545be0e"
+    }
+  ],
+  "protectedGitObjects": [
+    {
+      "path": ".github/workflows/c2c-agent.yml",
+      "gitObject": "64efb52753e4b19bf7e0beba1d19fea88ab7b137"
+    },
+    {
+      "path": ".github/workflows/cerv2-staging-deploy.yml",
+      "gitObject": "6746eb54a1692e31b4c15476001eaf7d1b55453c"
+    },
+    {
+      "path": ".github/workflows/ci-staging-integration.yml",
+      "gitObject": "ea850d98d865d3a62317500e638d92f87d07eb76"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "gitObject": "0bcde0d7cb8eddc4edaf0583b0064c6630df57eb"
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "gitObject": "b4833ac8b101e610c926a4784ca5e3a477b07696"
+    },
+    {
+      "path": ".github/workflows/danger.yml",
+      "gitObject": "265b87892e6edf3467b8ea00cff50fe7935d9cce"
+    },
+    {
+      "path": ".github/workflows/database-dr-restore-proof.yml",
+      "gitObject": "48555324823286ff63fba905f4b80d71173d11af"
+    },
+    {
+      "path": ".github/workflows/db-schema-validation.yml",
+      "gitObject": "493fec9f796f83609f6ba124f29c326c33839d9c"
+    },
+    {
+      "path": ".github/workflows/deploy-aws.yml",
+      "gitObject": "cc6454e8ae67325615966f296897587b20d619ab"
+    },
+    {
+      "path": ".github/workflows/neon-preview-db.yml",
+      "gitObject": "6e98ac23de2f0fdcf392a11e01b88e9297eece63"
+    },
+    {
+      "path": ".github/workflows/neon-provisioning.yml",
+      "gitObject": "94e7f78025fbcb85089b2c107c836bc37e68978e"
+    },
+    {
+      "path": ".github/workflows/ops-audit-plan.yml",
+      "gitObject": "a3f02cb1b98a8b1659feaab39fbb206f03da75ee"
+    },
+    {
+      "path": ".github/workflows/pr-checks.yml",
+      "gitObject": "93bbfea28b38fc23e064c0ac8ebfe3ca91dc01b4"
+    },
+    {
+      "path": ".github/workflows/provision-database.yml",
+      "gitObject": "4e5853a1f2ba7dfce7481c1f57f4e734cbea23d6"
+    },
+    {
+      "path": ".github/workflows/prune-agent-branches.yml",
+      "gitObject": "890b80fd6c816c141844e54f71eca8c263601498"
+    },
+    {
+      "path": ".github/workflows/release-evidence.yml",
+      "gitObject": "a2aa77097d72de5d6c2597a513bf71de66f5065b"
+    },
+    {
+      "path": ".github/workflows/repo-health-baseline-refresh.yml",
+      "gitObject": "8dde5a31e9e5b5c08f66211a95bfb4977e385129"
+    },
+    {
+      "path": ".github/workflows/semgrep.yml",
+      "gitObject": "531731830bf6c4a46ef90eb75eecf741bf70a505"
+    },
+    {
+      "path": ".github/workflows/terraform-compliance.yml",
+      "gitObject": "9e76054c705e6422b9943f1728f8b1d34c633ccd"
+    },
+    {
+      "path": ".github/workflows/terraform-tests.yml",
+      "gitObject": "365268aed12544b9e38a251ab15a50045066f6f0"
+    },
+    {
+      "path": ".github/workflows/test-assembly.yml",
+      "gitObject": "6dd75a5a0017bb2f8c588bc64714387a7c7f7bdf"
+    },
+    {
+      "path": ".github/workflows/tier5-browser-smoke.yml",
+      "gitObject": "53a8fe243a8b0a9e43f6b9816a63530f913312b4"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "gitObject": "73a7b0b59b71051eb914815a0c6533f810aa78cd"
+    },
+    {
+      "path": ".husky/pre-commit",
+      "gitObject": "f34550ef6bc560e191aa827b5f7dfee49734b56e"
+    },
+    {
+      "path": ".husky/pre-push",
+      "gitObject": "f46a7751b314f5e33c16cd9a8ac77d115d0d0305"
+    },
+    {
+      "path": ".typecheck-baseline.json",
+      "gitObject": "2a3cec07f7828f6765bd25c28f5a90acec581657"
+    },
+    {
+      "path": "package-lock.json",
+      "gitObject": "a4e96f97a62b2a6304968ef85a073a3e448b2cbd"
+    },
+    {
+      "path": "package.json",
+      "gitObject": "e4eedaafcb063557958f769ff7f697106d252fd0"
+    },
+    {
+      "path": "scripts/ci/__tests__/action-overclaim-strings.test.mjs",
+      "gitObject": "da4d8d77a3943b683ce0bc56ba4878c623717288"
+    },
+    {
+      "path": "scripts/ci/__tests__/bundle-reachability-strings.test.mjs",
+      "gitObject": "d13625f142a6e995d51f34cc3c0c464496d938a2"
+    },
+    {
+      "path": "scripts/ci/__tests__/canonicalizers-shape.test.mjs",
+      "gitObject": "661bb0a8298c463ae98d0eb87be6e560a9098a3a"
+    },
+    {
+      "path": "scripts/ci/__tests__/commonjs-require-strings.test.mjs",
+      "gitObject": "bbcb2cfd4c9fb7be891c8155b9b17347e158a708"
+    },
+    {
+      "path": "scripts/ci/__tests__/component-class-coverage.test.mjs",
+      "gitObject": "af56b031c9a49b496643f60869a53227cb44b8d5"
+    },
+    {
+      "path": "scripts/ci/__tests__/db-test-isolation.test.mjs",
+      "gitObject": "3d3ef8d746f7f61ace29e1d792337eeece6259a5"
+    },
+    {
+      "path": "scripts/ci/__tests__/dependency-risk-gate.test.mjs",
+      "gitObject": "0d8bc5cd2903cab4c62c32d9e5245a251813dd4e"
+    },
+    {
+      "path": "scripts/ci/__tests__/ecs-one-off-task.test.mjs",
+      "gitObject": "56c9f3af6c70f9af7f04c50daea5be108ef0e952"
+    },
+    {
+      "path": "scripts/ci/__tests__/empty-state-honesty-strings.test.mjs",
+      "gitObject": "fa471329291189ab98e0ed64389d4fe1f8ad84ea"
+    },
+    {
+      "path": "scripts/ci/__tests__/eslint-warning-ratchet.test.mjs",
+      "gitObject": "3995aa4ed5b4be13cb50eee8418627f45c3139d8"
+    },
+    {
+      "path": "scripts/ci/__tests__/fabricated-identity-strings.test.mjs",
+      "gitObject": "f2f145133d2cc2c3bd10580692030641c2457d5f"
+    },
+    {
+      "path": "scripts/ci/__tests__/helpers/scratch-repo-gate.mjs",
+      "gitObject": "b68b329e9644e9e70d6983388fcb0508f9d84e8d"
+    },
+    {
+      "path": "scripts/ci/__tests__/image-document-runtime.test.mjs",
+      "gitObject": "a3b7ab2699e0731d7757ea9ab69d33512a067b17"
+    },
+    {
+      "path": "scripts/ci/__tests__/internals-in-copy-strings.test.mjs",
+      "gitObject": "821b86357bf227e0cb45b60a6fdb8e927317b309"
+    },
+    {
+      "path": "scripts/ci/__tests__/lineage-save-gate-strings.test.mjs",
+      "gitObject": "c421d034adb49f06f56d0e65b743675ec0673398"
+    },
+    {
+      "path": "scripts/ci/__tests__/native-db-early-verdict.test.mjs",
+      "gitObject": "cfe6a5e5d5d09bfc651245d4f60217d7761fc432"
+    },
+    {
+      "path": "scripts/ci/__tests__/no-mock-in-prod-routes-strings.test.mjs",
+      "gitObject": "6c794ecb298f3fea02286559804df1e07b706596"
+    },
+    {
+      "path": "scripts/ci/__tests__/pushed-typecheck.test.mjs",
+      "gitObject": "fa47492cde956fb48be6573194b21ef47d33f5d0"
+    },
+    {
+      "path": "scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs",
+      "gitObject": "a1c570fa26239b039fd42dddcb71aa7cf266554f"
+    },
+    {
+      "path": "scripts/ci/__tests__/server-error-leaks-strings.test.mjs",
+      "gitObject": "219495551cd9326442edf591b9a4a6b86f3fba2f"
+    },
+    {
+      "path": "scripts/ci/__tests__/session-scoped-rls-bypass-strings.test.mjs",
+      "gitObject": "26c37017e7ec1b2f5106b25e944d39deeaf6bd7e"
+    },
+    {
+      "path": "scripts/ci/__tests__/strip-comments.test.mjs",
+      "gitObject": "2209f64bbf70ae0e2468f08b7416cf2854789cb0"
+    },
+    {
+      "path": "scripts/ci/__tests__/success-before-ok-strings.test.mjs",
+      "gitObject": "de9560204d7ba500a0246c8ea13e2be35e351cd0"
+    },
+    {
+      "path": "scripts/ci/__tests__/tenant-entry-points-code-only.test.mjs",
+      "gitObject": "5f8a354d44195cdceba1c02cd8f599bf30e76ebd"
+    },
+    {
+      "path": "scripts/ci/__tests__/unbacked-tables-strings.test.mjs",
+      "gitObject": "04924c7102e4d7391e0f5a0090d166e9220eb943"
+    },
+    {
+      "path": "scripts/ci/__tests__/ungated-fixture-fallback-strings.test.mjs",
+      "gitObject": "8b3a46638f32dedd468e054996804a505a2a7b4c"
+    },
+    {
+      "path": "scripts/ci/action-overclaim-baseline.json",
+      "gitObject": "046955d4b9cdd4a5e628876ee021d8cfc5cef348"
+    },
+    {
+      "path": "scripts/ci/audit-requestdb-coverage.mjs",
+      "gitObject": "a2a3be9206f22c8f92399b75ff0a44e1aa8e9cde"
+    },
+    {
+      "path": "scripts/ci/audit-route-mounts.mjs",
+      "gitObject": "21edb5ad8bd287b1ca02cc9a7edc5740930c8600"
+    },
+    {
+      "path": "scripts/ci/audit-route-mounts.selftest.mjs",
+      "gitObject": "4da978209149491e07bb71f8890291a67afb7d65"
+    },
+    {
+      "path": "scripts/ci/ban-new-pool.sh",
+      "gitObject": "1de085e9f99f99979e08a78ada429585dca51d7c"
+    },
+    {
+      "path": "scripts/ci/canonicalizers-baseline.json",
+      "gitObject": "8e9ca62150c7fc98c39d7e0d19805229d2ad80ae"
+    },
+    {
+      "path": "scripts/ci/check-action-overclaim.mjs",
+      "gitObject": "4d9d544bc6130a7dd14184a9826ea5abd71a4b6b"
+    },
+    {
+      "path": "scripts/ci/check-ai-tenant-binding.mjs",
+      "gitObject": "8b965ce94d21e36caf94658258654d19c4a17c46"
+    },
+    {
+      "path": "scripts/ci/check-ana-surface-context.mjs",
+      "gitObject": "b1f8eb1139ae25ed2a1449410b88735ac202ea9b"
+    },
+    {
+      "path": "scripts/ci/check-artifact-provenance.mjs",
+      "gitObject": "6d09fe04fd1e4c07b8a31e0bfaee8f38d990d1f3"
+    },
+    {
+      "path": "scripts/ci/check-audit-logs-fixture.mjs",
+      "gitObject": "d9530fad41b15bed58df80b059a2186d06b0685f"
+    },
+    {
+      "path": "scripts/ci/check-audit-logs-fixture.selftest.mjs",
+      "gitObject": "d3805170f34a6cdff49deb46e6865eb90b8aa67b"
+    },
+    {
+      "path": "scripts/ci/check-baseline-justifications.mjs",
+      "gitObject": "24a90b2dbc42ea6548e41ee69635b00439621e3f"
+    },
+    {
+      "path": "scripts/ci/check-baseline-justifications.selftest.mjs",
+      "gitObject": "d4c743d6b2caac9a71835707a192c2c5db665e00"
+    },
+    {
+      "path": "scripts/ci/check-biostat-calculator-keys.mjs",
+      "gitObject": "bcebc6534779e035044e1612465de3f333c4909b"
+    },
+    {
+      "path": "scripts/ci/check-bundle-reachability.mjs",
+      "gitObject": "47043a6e61c18bc24eac91136f06e364af1e1ccb"
+    },
+    {
+      "path": "scripts/ci/check-canonicalizers.mjs",
+      "gitObject": "746e409d9082499e21906c1a9d222af1df55d4c6"
+    },
+    {
+      "path": "scripts/ci/check-canvas-path.mjs",
+      "gitObject": "5d5edc629bbeb8911f81061a27559fc6bcd234e5"
+    },
+    {
+      "path": "scripts/ci/check-canvas-path.selftest.mjs",
+      "gitObject": "4f19f19c0a16320ce8390865b70a3eb4ad5cdd17"
+    },
+    {
+      "path": "scripts/ci/check-catalog-copy.mjs",
+      "gitObject": "e198cc31dd6978816c482a82f8e0f52f6b13eefc"
+    },
+    {
+      "path": "scripts/ci/check-chip-tones.mjs",
+      "gitObject": "0053b035676475d72a98c97655af32f19f1e1c7a"
+    },
+    {
+      "path": "scripts/ci/check-client-api-calls-resolve.mjs",
+      "gitObject": "a8b2b797ddc2d5b474898a4a0956702668431b52"
+    },
+    {
+      "path": "scripts/ci/check-client-ip-single-source.mjs",
+      "gitObject": "abcc524c5a1bf9bf32b10a57e1b98569299268ea"
+    },
+    {
+      "path": "scripts/ci/check-client-reachability.mjs",
+      "gitObject": "0a236e2fcfc9ea28bffdbab905376d5f8843e626"
+    },
+    {
+      "path": "scripts/ci/check-column-reachability.mjs",
+      "gitObject": "b98ac7ded474d7a556a61441983c8468a67f79cd"
+    },
+    {
+      "path": "scripts/ci/check-committed-secrets.mjs",
+      "gitObject": "12533073ece3b19a9c16aa2172caf056e8d57d74"
+    },
+    {
+      "path": "scripts/ci/check-committed-secrets.selftest.mjs",
+      "gitObject": "868108c16ae32aecf8a701fae53b452f5f99a832"
+    },
+    {
+      "path": "scripts/ci/check-commonjs-require.mjs",
+      "gitObject": "d46ee19bbeda918c55d1f430e372b6832e5a8050"
+    },
+    {
+      "path": "scripts/ci/check-compliance-claims.mjs",
+      "gitObject": "6b0b612833071b4d7a34f4db9b40772c8a51c26e"
+    },
+    {
+      "path": "scripts/ci/check-component-class-coverage.mjs",
+      "gitObject": "4a60be8966a1f00c636a72a4a3d4abab73a49758"
+    },
+    {
+      "path": "scripts/ci/check-compose-boot-contract.mjs",
+      "gitObject": "57b7a26221ebf8b4503878c2fd59bff411ed9cc1"
+    },
+    {
+      "path": "scripts/ci/check-coverage-ratchet.mjs",
+      "gitObject": "53fc842d4c62dc8771790eba53b32faa9ee9ef21"
+    },
+    {
+      "path": "scripts/ci/check-css-selector-shadowing.mjs",
+      "gitObject": "4ba19c0dba5b09f96624bf749a3a66809ee9308b"
+    },
+    {
+      "path": "scripts/ci/check-db-test-isolation.mjs",
+      "gitObject": "80df74b104212ddd6e8348728192a75ae04354c4"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-catch.mjs",
+      "gitObject": "d28458039f02575a24e09a43be6f59b25571f1db"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-tables.mjs",
+      "gitObject": "01ee6c55597a1b6f4e219dfc8ff1f686184e4922"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-tables.selftest.mjs",
+      "gitObject": "2e6518aefa2e85b99a474a2e41af2a395e097ebe"
+    },
+    {
+      "path": "scripts/ci/check-dependency-risk.mjs",
+      "gitObject": "d0e560b90c85f2e273cfb7b9cf2b1cdfed61649e"
+    },
+    {
+      "path": "scripts/ci/check-design-system-compliance.mjs",
+      "gitObject": "a18dcde7a64dc1ef249f4546db8005e83fef12d4"
+    },
+    {
+      "path": "scripts/ci/check-discarded-audit-write.mjs",
+      "gitObject": "f48f72581592138cb58bfa2a8fc253dcaae4ea64"
+    },
+    {
+      "path": "scripts/ci/check-document-alias-attribute-free.mjs",
+      "gitObject": "eee08326648ae793f7188492897c0b1e4466b75b"
+    },
+    {
+      "path": "scripts/ci/check-docx-runtime-canonicality.mjs",
+      "gitObject": "b0b94fb639681c4b9afc7065d7cfb1c7f8443816"
+    },
+    {
+      "path": "scripts/ci/check-drizzle-tenant-scope.mjs",
+      "gitObject": "93a4eaa2baa536e0e390cfa25157532d17efde22"
+    },
+    {
+      "path": "scripts/ci/check-drizzle-tenant-scope.selftest.mjs",
+      "gitObject": "9b17daa07f801f02be0ce5e1b9cde16acf6a61ed"
+    },
+    {
+      "path": "scripts/ci/check-duplicate-exported-types.mjs",
+      "gitObject": "5ac86ce79e4e3fb7816160281f44b30125bb0a2d"
+    },
+    {
+      "path": "scripts/ci/check-duplicate-table-ddl.mjs",
+      "gitObject": "dae7ef0927260f02b6006b3cd3e9aaedcd4a3781"
+    },
+    {
+      "path": "scripts/ci/check-editor-extension-integrity.mjs",
+      "gitObject": "d5cae128fa7411a41e8f1b989a77883e9ac9b949"
+    },
+    {
+      "path": "scripts/ci/check-embedding-runtime-canonicality.mjs",
+      "gitObject": "c7f3f716264a6ef8eac085a3e111f8446ce645c7"
+    },
+    {
+      "path": "scripts/ci/check-empty-state-honesty.mjs",
+      "gitObject": "0652349ba9a4e3efb5abce5722a5698abea2396b"
+    },
+    {
+      "path": "scripts/ci/check-env-var-docs.mjs",
+      "gitObject": "08ae7e65b2b743c0c0f2a244e83da38dee96352c"
+    },
+    {
+      "path": "scripts/ci/check-error-envelope-reads.mjs",
+      "gitObject": "2f1f05c3a762f2857890c3b9577567b1ebefb526"
+    },
+    {
+      "path": "scripts/ci/check-eslint-warning-ratchet.mjs",
+      "gitObject": "d2f80f34fed9d39fcedd1f5e81ee6d40680511a7"
+    },
+    {
+      "path": "scripts/ci/check-fabricated-identity.mjs",
+      "gitObject": "68c92c01e10315a221e3c9bba8ce531026cab5b1"
+    },
+    {
+      "path": "scripts/ci/check-frontend-sync-coverage.mjs",
+      "gitObject": "04422cfe40f2ddefa1f6c03fc7d6949e9d268f62"
+    },
+    {
+      "path": "scripts/ci/check-frozen-theme-aliases.mjs",
+      "gitObject": "5abb9edee50c04925ff57262ce61831b6a336bcb"
+    },
+    {
+      "path": "scripts/ci/check-gateway-bypass.mjs",
+      "gitObject": "44997e1b3f7e0f41e5dc55c023d6bf9d99ace99a"
+    },
+    {
+      "path": "scripts/ci/check-gateway-bypass.selftest.mjs",
+      "gitObject": "566fa0b797b98363ebdc7abbb36d927dd2aa22ad"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-consequence-shape.mjs",
+      "gitObject": "38855feca9e5f0ceb2ab3992e74a5f403d7b1a1d"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-consequence-shape.selftest.mjs",
+      "gitObject": "afe4b13f36aa8e0f742575b2b0f048155c2a1394"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-routes.mjs",
+      "gitObject": "2c8ba412dfcfa5041965a2cbb8e022668794cfae"
+    },
+    {
+      "path": "scripts/ci/check-i18n-integrity.mjs",
+      "gitObject": "8cf26771286f4e48a5ec770af5410c8e39f84293"
+    },
+    {
+      "path": "scripts/ci/check-image-document-runtime.mjs",
+      "gitObject": "dcbfcb15099bf9e6d85ff4a78d18f23182331c5b"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.mjs",
+      "gitObject": "1502df6f2b7f52393c0eea631c4a30d826a2682d"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.selftest.mjs",
+      "gitObject": "cf263439d3ac2da29216fcb9ca89e1094870e658"
+    },
+    {
+      "path": "scripts/ci/check-insert-columns-declared.mjs",
+      "gitObject": "b4a91dc320648ec679bc1f8cd2e198b5a2fe3239"
+    },
+    {
+      "path": "scripts/ci/check-insert-columns-declared.selftest.mjs",
+      "gitObject": "5437c75e3d318096f7941e3c2d8db401951ecc8d"
+    },
+    {
+      "path": "scripts/ci/check-internals-in-copy.mjs",
+      "gitObject": "126261c775a91ff8ed5554c63631763c0617f88a"
+    },
+    {
+      "path": "scripts/ci/check-journey-migration-reachability.mjs",
+      "gitObject": "9a5523b6ad07de04eeede32321e66b88c5825f81"
+    },
+    {
+      "path": "scripts/ci/check-js-ts-shadows.mjs",
+      "gitObject": "1b2571ec423952854fa01852b66250008d1153f6"
+    },
+    {
+      "path": "scripts/ci/check-json-operator-types.mjs",
+      "gitObject": "dcc463d2edbefb9ba8502cf5a2e5f9418713108b"
+    },
+    {
+      "path": "scripts/ci/check-jwt-verify-pinned.mjs",
+      "gitObject": "ee7922dc084dba374c2574d041652a723023154c"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope-api.ts",
+      "gitObject": "4297348b1a400b39c6182a2b540bd82a4b9020fe"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope.mjs",
+      "gitObject": "02e6a3baa9c6f8c383f09ca7d983a904714f2ecf"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope.selftest.mjs",
+      "gitObject": "1d6f9c5e386c21c74a029d7d7748f88ae0f41fee"
+    },
+    {
+      "path": "scripts/ci/check-legacy-dep-quarantine.mjs",
+      "gitObject": "2e8b8926698618483bbdfad8ff1003c5386fcc97"
+    },
+    {
+      "path": "scripts/ci/check-lineage-save-gate.mjs",
+      "gitObject": "3f33bf9a8cad50bb0f470a2aeae8c946ccd43a3c"
+    },
+    {
+      "path": "scripts/ci/check-microcopy.mjs",
+      "gitObject": "6553dfcacd734176949e3f6a50602b021ebb41de"
+    },
+    {
+      "path": "scripts/ci/check-migration-deploy-path.mjs",
+      "gitObject": "b790c764e3653f3b08dc25a95cda52e3808aa366"
+    },
+    {
+      "path": "scripts/ci/check-migration-drop-safety.mjs",
+      "gitObject": "065985dad5524a83fd17eef985956f54928ddae2"
+    },
+    {
+      "path": "scripts/ci/check-migration-drop-safety.selftest.mjs",
+      "gitObject": "25086c27e3dba9853f86938d9bac5e63dec6ad88"
+    },
+    {
+      "path": "scripts/ci/check-migration-prefix-collisions.mjs",
+      "gitObject": "461ffa9542ec0ac2058bc4209b3f4f90e82365cc"
+    },
+    {
+      "path": "scripts/ci/check-migration-reachability.mjs",
+      "gitObject": "faa632a95b952611ad0f9bc47672b898dbaac43c"
+    },
+    {
+      "path": "scripts/ci/check-migration-set-order.mjs",
+      "gitObject": "5bee90338c0be2527c450c18cf336dcd0961059e"
+    },
+    {
+      "path": "scripts/ci/check-model-migration-agreement.mjs",
+      "gitObject": "f033065a4c2e3139fce5e4a6a79fcfb59a205d59"
+    },
+    {
+      "path": "scripts/ci/check-no-dev-auth-in-prod.mjs",
+      "gitObject": "8b6a4bbcb7615c92c57c870c28ca68506621b354"
+    },
+    {
+      "path": "scripts/ci/check-no-dev-auth-in-prod.selftest.mjs",
+      "gitObject": "915b1581d9a9685a856f2245b01b9e9e16429276"
+    },
+    {
+      "path": "scripts/ci/check-no-mock-in-prod-routes.mjs",
+      "gitObject": "5d917329dd9d75f7aca429af7b5503b8c9c05a23"
+    },
+    {
+      "path": "scripts/ci/check-node-runtime.mjs",
+      "gitObject": "0a784607e4ec23b726ea94ce4682e0b88908bcfd"
+    },
+    {
+      "path": "scripts/ci/check-org-path-param-guards.mjs",
+      "gitObject": "33df4c7041de6899867832c8858b00b2e63a4b8d"
+    },
+    {
+      "path": "scripts/ci/check-org-path-param-guards.selftest.mjs",
+      "gitObject": "705df2c2a0c79e49609bd43ec5ea2543993991bd"
+    },
+    {
+      "path": "scripts/ci/check-orm-table-reachability.mjs",
+      "gitObject": "8ffaacebde0ee90e2b2151b12d1854ac7502860e"
+    },
+    {
+      "path": "scripts/ci/check-orphaned-stylesheets.mjs",
+      "gitObject": "49ec9ef8a4b6241dbfd7aca8a78aac4d31181eef"
+    },
+    {
+      "path": "scripts/ci/check-password-hygiene.mjs",
+      "gitObject": "45facc9deb7c05ba8e3b826c73d8bbd43b922162"
+    },
+    {
+      "path": "scripts/ci/check-password-hygiene.selftest.mjs",
+      "gitObject": "f8050199f901a523b074bdd843361e8102a739b5"
+    },
+    {
+      "path": "scripts/ci/check-path-containment.mjs",
+      "gitObject": "d5924525b44e8d134c0b37a324a47bf1cca1b173"
+    },
+    {
+      "path": "scripts/ci/check-pdf-runtime-canonicality.mjs",
+      "gitObject": "6ab8023b3fa8050063cac009f4dad4bd31d50405"
+    },
+    {
+      "path": "scripts/ci/check-phantom-tokens.mjs",
+      "gitObject": "105bf7a13c5001439058a35b48bb01415aafe1d8"
+    },
+    {
+      "path": "scripts/ci/check-pptx-image-reachability.mjs",
+      "gitObject": "f24337e77c4fb4e40eafe9fa5a99e600c5e18104"
+    },
+    {
+      "path": "scripts/ci/check-pq-evaluation-callers.mjs",
+      "gitObject": "30cdf892d54abeca218c66aa6560c2d6248ba339"
+    },
+    {
+      "path": "scripts/ci/check-program-ownership-single-source.mjs",
+      "gitObject": "8c9ac32eb25342becc69dc1632214ec13172caa5"
+    },
+    {
+      "path": "scripts/ci/check-proof-tier.mjs",
+      "gitObject": "c254d77d4637ec57bb32c3f79810d146320b8002"
+    },
+    {
+      "path": "scripts/ci/check-purge-coverage.mjs",
+      "gitObject": "d50d356dbf4352d4f862a4bdea7075e29513c236"
+    },
+    {
+      "path": "scripts/ci/check-purge-coverage.selftest.mjs",
+      "gitObject": "6eaa6ac8a6aec26e08f7febf5669d7d5279eec71"
+    },
+    {
+      "path": "scripts/ci/check-pushed-lint-errors.mjs",
+      "gitObject": "548a6b19fa0f70b714a4356774b2a79403f45d51"
+    },
+    {
+      "path": "scripts/ci/check-pushed-lint-warnings.mjs",
+      "gitObject": "04a7dd123d6c9178f76af863ef87cbd5675ef89b"
+    },
+    {
+      "path": "scripts/ci/check-pushed-typecheck.mjs",
+      "gitObject": "f6f18788c3e4f237c7fb2ac865199cdd1d1d5b32"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-ga-readiness.mjs",
+      "gitObject": "3b4b3e331ad5fdd36514dbfad7c5162c6e122c52"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-readiness-suite.mjs",
+      "gitObject": "10da331998c1d7004b6076dfe4bba7cb9fb633df"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-uat-evidence.mjs",
+      "gitObject": "4fb9951aac28a40918394b7f681d0f8a4f9bac0a"
+    },
+    {
+      "path": "scripts/ci/check-regulated-delete-audit.mjs",
+      "gitObject": "d78af8114d9a72c456038faf6955f54fe9fc4839"
+    },
+    {
+      "path": "scripts/ci/check-regulated-delete-audit.selftest.mjs",
+      "gitObject": "ce4e9ed42cea4f13ea7ba5f3a6a951004f237b92"
+    },
+    {
+      "path": "scripts/ci/check-regulatory-reference-data-single-copy.mjs",
+      "gitObject": "73cf82528758f65afc4745de22c9577edf2ce99e"
+    },
+    {
+      "path": "scripts/ci/check-replay-rebuilds-nothing.mjs",
+      "gitObject": "09063f7111c520e4a87319f7a64600ef162c6284"
+    },
+    {
+      "path": "scripts/ci/check-required-workflow-concurrency.mjs",
+      "gitObject": "3766749bf3d66ca488daaf30f1b983050cedb787"
+    },
+    {
+      "path": "scripts/ci/check-requirements-pins.mjs",
+      "gitObject": "6bc9a5bc4fecf17cf11d4949dd7b80f4fbef1ab0"
+    },
+    {
+      "path": "scripts/ci/check-rls-allowlist-sync.mjs",
+      "gitObject": "d9adf11cc0795735734238c276d241f213daea56"
+    },
+    {
+      "path": "scripts/ci/check-rls-allowlist-sync.selftest.mjs",
+      "gitObject": "a1ece1c8c0e9523c00b8d1dfce95ba4bf4abb436"
+    },
+    {
+      "path": "scripts/ci/check-route-collisions.mjs",
+      "gitObject": "396d094f0866cafed331fcc95783cb715d38e119"
+    },
+    {
+      "path": "scripts/ci/check-route-ownership-matrix.mjs",
+      "gitObject": "7a618cef7715b57514387cb771ad52c8f6c09605"
+    },
+    {
+      "path": "scripts/ci/check-route-ownership-matrix.selftest.mjs",
+      "gitObject": "91e452a7b667fc6033d84ef271ab0d1e7cb0cd31"
+    },
+    {
+      "path": "scripts/ci/check-rule-pack-provenance.mjs",
+      "gitObject": "d34b77bede4019cb420377f35bab9a002918c774"
+    },
+    {
+      "path": "scripts/ci/check-runtime-ddl.mjs",
+      "gitObject": "164efcd741730d7921280a975b4cd1f5defccc3a"
+    },
+    {
+      "path": "scripts/ci/check-runtime-ddl.selftest.mjs",
+      "gitObject": "03d8188b4f3fca33c1658174317ce40b94bb60e9"
+    },
+    {
+      "path": "scripts/ci/check-saml-fail-closed.mjs",
+      "gitObject": "3f01e7323c59668ddf62775945cc523cad623766"
+    },
+    {
+      "path": "scripts/ci/check-server-bundle-prod-imports.mjs",
+      "gitObject": "ae60e4c4cf9cc92c0487182f438e9a5fb9d16890"
+    },
+    {
+      "path": "scripts/ci/check-server-bundle-prod-imports.selftest.mjs",
+      "gitObject": "9f0e34a385e5180ee5d9caa5e400a04afaa426bf"
+    },
+    {
+      "path": "scripts/ci/check-server-error-leaks.mjs",
+      "gitObject": "974369356081d21bc0f337ddeaff54503172afb9"
+    },
+    {
+      "path": "scripts/ci/check-server-error-leaks.selftest.mjs",
+      "gitObject": "52f67db87537397abb01e14b20b73f31b69d9544"
+    },
+    {
+      "path": "scripts/ci/check-session-scoped-rls-bypass.mjs",
+      "gitObject": "5806dd0601bf8df5a2eb5ccdbf714547a55b5977"
+    },
+    {
+      "path": "scripts/ci/check-session-scoped-rls-bypass.selftest.mjs",
+      "gitObject": "873c548f31dd376742c31d0cd36b54bd9e5e8c08"
+    },
+    {
+      "path": "scripts/ci/check-shell-css-collisions.mjs",
+      "gitObject": "61f9a43bef7f8457a4ae3f4d8e76dc20d6036774"
+    },
+    {
+      "path": "scripts/ci/check-sign-ceremony.mjs",
+      "gitObject": "95b9d8e83882d669079968477d5f953e99f690dd"
+    },
+    {
+      "path": "scripts/ci/check-sign-ceremony.selftest.mjs",
+      "gitObject": "e2adead8855ab1785e3170f7b744602ddfa80470"
+    },
+    {
+      "path": "scripts/ci/check-single-native-canvas.mjs",
+      "gitObject": "2281942b60b41ea4b1c3c0cc18842eecdc08c62f"
+    },
+    {
+      "path": "scripts/ci/check-success-before-ok.mjs",
+      "gitObject": "28ac88955494938a7d4fda711203e3f4b588489a"
+    },
+    {
+      "path": "scripts/ci/check-surface-discoverability.mjs",
+      "gitObject": "e467cc4c3cc86a35b1f460cd1f31e0576ddec4fb"
+    },
+    {
+      "path": "scripts/ci/check-tables-against-live-schema.mjs",
+      "gitObject": "e53bfebf36f9571b139f10eb5cba107f02ec07f2"
+    },
+    {
+      "path": "scripts/ci/check-tenant-blind-models.mjs",
+      "gitObject": "312c54e1154dd4bf8d9e224fc0e885d9e0cdd851"
+    },
+    {
+      "path": "scripts/ci/check-tenant-blind-models.selftest.mjs",
+      "gitObject": "9bb98e483aa57b9d7e2c5285fcec7c856da19ae2"
+    },
+    {
+      "path": "scripts/ci/check-tenant-column-types.mjs",
+      "gitObject": "dc900178a8ccbb4be38b948f29bb22f6d100a721"
+    },
+    {
+      "path": "scripts/ci/check-tenant-column-types.selftest.mjs",
+      "gitObject": "3c83fbbd7de4bfd235a52463bb86e51e8be9bcfa"
+    },
+    {
+      "path": "scripts/ci/check-tenant-entry-points.mjs",
+      "gitObject": "ceaa24699eda07d735bbdde9957a6507d6a39276"
+    },
+    {
+      "path": "scripts/ci/check-tenant-entry-points.selftest.mjs",
+      "gitObject": "3208590b9bcd00d7901a3b2d934b4c145f9c2631"
+    },
+    {
+      "path": "scripts/ci/check-tenant-isolation.mjs",
+      "gitObject": "d1fdd54bb5d8e27a580d703c6a1637924c8d408b"
+    },
+    {
+      "path": "scripts/ci/check-tenant-isolation.selftest.mjs",
+      "gitObject": "4686d812fde60b86969a0de0fca7d05a3dcdd92b"
+    },
+    {
+      "path": "scripts/ci/check-tenant-resolvers.mjs",
+      "gitObject": "8383a8b55b8339151e81762903ffe4bc2bbd51c8"
+    },
+    {
+      "path": "scripts/ci/check-tenant-resolvers.selftest.mjs",
+      "gitObject": "f51bda10413de6bf0545c90067f662882ae3ad6c"
+    },
+    {
+      "path": "scripts/ci/check-test-imports.mjs",
+      "gitObject": "479a78bdd8f4f00ec6c0fc45211616ae7f888878"
+    },
+    {
+      "path": "scripts/ci/check-toast-canonicality.mjs",
+      "gitObject": "253f3ea69e87f00809d522a5f208c7269dd7708f"
+    },
+    {
+      "path": "scripts/ci/check-token-cascade.mjs",
+      "gitObject": "09b7060adc4eb9248758627a733c21fca6499e4f"
+    },
+    {
+      "path": "scripts/ci/check-token-contrast.mjs",
+      "gitObject": "99c06a070dad2e5dd4cc46dbdc3d73422f5d5766"
+    },
+    {
+      "path": "scripts/ci/check-trivy-inline-ignores.mjs",
+      "gitObject": "fbefb902d885b58931ccaf0c2434a73775099a58"
+    },
+    {
+      "path": "scripts/ci/check-trivyignore-hygiene.mjs",
+      "gitObject": "233b2c1b948ca4439a64a35a2e44fbc5e3656de8"
+    },
+    {
+      "path": "scripts/ci/check-unapproved-model-pins.mjs",
+      "gitObject": "8f048d57827f4673430382eb38684e107e46ff5f"
+    },
+    {
+      "path": "scripts/ci/check-unauthenticated-fetch.mjs",
+      "gitObject": "f9212772e648226b25799567b9d76a08facec481"
+    },
+    {
+      "path": "scripts/ci/check-unauthenticated-fetch.selftest.mjs",
+      "gitObject": "da8a39aa8d42fbdab73ad658447d2492079fd8ed"
+    },
+    {
+      "path": "scripts/ci/check-unbacked-tables.mjs",
+      "gitObject": "2c54a799c63e054cc7f061477d8197ae4158a8ee"
+    },
+    {
+      "path": "scripts/ci/check-undefined-css-classes.mjs",
+      "gitObject": "a094e2704d9b95b3164e60c05ec61a8428db63d7"
+    },
+    {
+      "path": "scripts/ci/check-undefined-css-classes.selftest.mjs",
+      "gitObject": "500f963d7cf145ce3452253896d6048ad383777c"
+    },
+    {
+      "path": "scripts/ci/check-ungated-fixture-fallback.mjs",
+      "gitObject": "53d077142d23815677f6911368666daf675bf963"
+    },
+    {
+      "path": "scripts/ci/check-unkeyed-request-tables.mjs",
+      "gitObject": "89ce7406bab33e9b5504e12afaae0b8ee7faad6f"
+    },
+    {
+      "path": "scripts/ci/check-unkeyed-request-tables.selftest.mjs",
+      "gitObject": "72ed7a6e682d5b6a0ff06867eb007dbb7ade871e"
+    },
+    {
+      "path": "scripts/ci/check-unreferenced-modules.mjs",
+      "gitObject": "78983fe5a2484a943940cc13c6d16c7446c69dcd"
+    },
+    {
+      "path": "scripts/ci/check-unrun-tests.mjs",
+      "gitObject": "d987ac747d2418ab5e310f6b40f245972ad8f6cc"
+    },
+    {
+      "path": "scripts/ci/check-untracked-imports.mjs",
+      "gitObject": "f2c77951bef8fb44b6de5e4bfafdea697929da40"
+    },
+    {
+      "path": "scripts/ci/check-untracked-imports.selftest.mjs",
+      "gitObject": "70e516eee111da931615ccc91f23a20b11bf1ef6"
+    },
+    {
+      "path": "scripts/ci/check-unverified-verdicts.mjs",
+      "gitObject": "a101a82dcbc40e1da5ef05919ef5d734a9e25352"
+    },
+    {
+      "path": "scripts/ci/check-upload-guards.mjs",
+      "gitObject": "4845d891d9630bc6e8e80f048ff24b68fe8fc9d8"
+    },
+    {
+      "path": "scripts/ci/check-validation-traceability.mjs",
+      "gitObject": "63d3f9d9b540733a591254482376128e0200c1ba"
+    },
+    {
+      "path": "scripts/ci/check-vault-document-writers.mjs",
+      "gitObject": "da57bbaf78f4ebbf2567357495b198cfd105f096"
+    },
+    {
+      "path": "scripts/ci/check-vault-document-writers.selftest.mjs",
+      "gitObject": "8392f34f25afdd35449f181d046dc85b50b2d0d3"
+    },
+    {
+      "path": "scripts/ci/check-workflow-targets.mjs",
+      "gitObject": "fe56f1ad3f3f6fc6e4320484b72c39044ddfd95f"
+    },
+    {
+      "path": "scripts/ci/check-writerless-stores.mjs",
+      "gitObject": "b2defca03b6913f1b728570bea3f6259fa12c8fa"
+    },
+    {
+      "path": "scripts/ci/client-reachability-baseline.json",
+      "gitObject": "ab2f44f8eda79f5f2d5fc14423374f22ad6584fd"
+    },
+    {
+      "path": "scripts/ci/column-reachability-baseline.json",
+      "gitObject": "02ca6b18dcec5290a56aa44c4932ce835eacb139"
+    },
+    {
+      "path": "scripts/ci/commonjs-require-baseline.json",
+      "gitObject": "b0ef15c86729f426da9c50e85ade7061273ea26c"
+    },
+    {
+      "path": "scripts/ci/compliance-claims.rules.mjs",
+      "gitObject": "61a90d5c2dcf014ebdd152d57e05d9b3028f0f16"
+    },
+    {
+      "path": "scripts/ci/component-class-coverage-baseline.json",
+      "gitObject": "544166f63a1784a66e7229094b169bf8f74f48c7"
+    },
+    {
+      "path": "scripts/ci/coverage-baseline.json",
+      "gitObject": "4e1643de6b9f4b18e2bd01e1c33743fcdda1a059"
+    },
+    {
+      "path": "scripts/ci/css-selector-shadowing-baseline.json",
+      "gitObject": "c6a438e9706bd618f30b1f9e2026cf203eb49ecb"
+    },
+    {
+      "path": "scripts/ci/dead-audit-catch-baseline.json",
+      "gitObject": "d946318dcb5cfd460d5597707c74c7dd893d997e"
+    },
+    {
+      "path": "scripts/ci/dead-audit-tables-baseline.json",
+      "gitObject": "0e70b63e06f50d2b14537a005e108cd9d506b74f"
+    },
+    {
+      "path": "scripts/ci/discarded-audit-write-baseline.json",
+      "gitObject": "28b634a173ac0113f925be06bd25fa3ae0b042b6"
+    },
+    {
+      "path": "scripts/ci/drizzle-tenant-scope-baseline.json",
+      "gitObject": "58b93701b62535fba454f4351a17ceea56a5e309"
+    },
+    {
+      "path": "scripts/ci/duplicate-exported-types-baseline.json",
+      "gitObject": "9cb666e70d6df1c267da3a762f52f72981eea9c1"
+    },
+    {
+      "path": "scripts/ci/duplicate-table-ddl-baseline.json",
+      "gitObject": "210fb603c0924d97e26bbd57ce6abdfa8aa611a1"
+    },
+    {
+      "path": "scripts/ci/empty-state-honesty-baseline.json",
+      "gitObject": "c6e1fe329b5fd4b31a53b30e6d34916848891475"
+    },
+    {
+      "path": "scripts/ci/error-envelope-reads-baseline.json",
+      "gitObject": "cd83cfb207b96491b48b46a0b8dc1b82c575da21"
+    },
+    {
+      "path": "scripts/ci/eslint-warning-baseline.json",
+      "gitObject": "14d6699d6db254304e3aed42c73499df4404b69a"
+    },
+    {
+      "path": "scripts/ci/fabricated-identity-baseline.json",
+      "gitObject": "01ae2ee3e091521c0295b421c79c1d5db365e09b"
+    },
+    {
+      "path": "scripts/ci/gateway-bypass-baseline.json",
+      "gitObject": "d8542a91f45f35d36a90ccf82fce2eec75c1bdbf"
+    },
+    {
+      "path": "scripts/ci/generate-test-summary.js",
+      "gitObject": "9c2efa9cba20da8c5bcee0b6914b4e6f336d4723"
+    },
+    {
+      "path": "scripts/ci/image-boot-signin.mjs",
+      "gitObject": "ac2460695c0288ce2914288a05be63e12ac35fad"
+    },
+    {
+      "path": "scripts/ci/insert-columns-baseline.json",
+      "gitObject": "5491e88079a19f9f15888cc8900c4cee780824c4"
+    },
+    {
+      "path": "scripts/ci/internals-in-copy-baseline.json",
+      "gitObject": "d946318dcb5cfd460d5597707c74c7dd893d997e"
+    },
+    {
+      "path": "scripts/ci/json-operator-types-baseline.json",
+      "gitObject": "36af1f754698f63c565dab4626e32fa6f48d8a8a"
+    },
+    {
+      "path": "scripts/ci/launch-scope-fixture-allowlist.json",
+      "gitObject": "a7d0c392709fa35ef1b7342c6f0162db0294c7b4"
+    },
+    {
+      "path": "scripts/ci/launch-scope-route-inventory.ts",
+      "gitObject": "e9a7f2ffaf958e11698a7b2d553a519282aff38c"
+    },
+    {
+      "path": "scripts/ci/lib/allowlist-paths.mjs",
+      "gitObject": "fd9210133ba4f9e8e69dedfa39d2b8f9d0849b6f"
+    },
+    {
+      "path": "scripts/ci/lib/baseline-drift.mjs",
+      "gitObject": "58f207e616dcc12f224bc3307fdbb2d4bd52d217"
+    },
+    {
+      "path": "scripts/ci/lib/extract-string-literals.mjs",
+      "gitObject": "cf4caa80169ee8cae0245a4014c8ea27d049fb6a"
+    },
+    {
+      "path": "scripts/ci/lib/inline-suppression.mjs",
+      "gitObject": "b5a3835a340b3f94934945dcdfc7b382abdc9dd4"
+    },
+    {
+      "path": "scripts/ci/lib/push-range.mjs",
+      "gitObject": "4c39c5b5951ba2504c2b24d1c38df78f41e38de7"
+    },
+    {
+      "path": "scripts/ci/lib/scan-roots.mjs",
+      "gitObject": "cd0cde89497c7e08279f4fd755656d62d11fd804"
+    },
+    {
+      "path": "scripts/ci/lib/sql-columns.mjs",
+      "gitObject": "4121040cc31a200a3497368f4f736e12c0c98fa8"
+    },
+    {
+      "path": "scripts/ci/lib/strip-comments.mjs",
+      "gitObject": "a364fbd256581fdf4071b782e3769567c661d9d6"
+    },
+    {
+      "path": "scripts/ci/lib/verdict-inspector.d.mts",
+      "gitObject": "f9b021ccfbcfe55cbe42a153a04572761b156911"
+    },
+    {
+      "path": "scripts/ci/lib/verdict-inspector.mjs",
+      "gitObject": "6a4f215445ec4b7a21b31d374afac5bdeda649ab"
+    },
+    {
+      "path": "scripts/ci/migration-deploy-path-baseline.json",
+      "gitObject": "a3945dc23293c07473294add3764f45dae285259"
+    },
+    {
+      "path": "scripts/ci/migration-drop-safety-baseline.json",
+      "gitObject": "91e49666834a1b20cc1b8cc8d8923d94ee1219d5"
+    },
+    {
+      "path": "scripts/ci/migration-reachability-baseline.json",
+      "gitObject": "daac3d253cceeb86b84254e47e32cc0e073d5fc4"
+    },
+    {
+      "path": "scripts/ci/model-migration-agreement-baseline.json",
+      "gitObject": "8ba60d785122266f7de5f1d56516ff06a2e5a3ca"
+    },
+    {
+      "path": "scripts/ci/orm-table-reachability-baseline.json",
+      "gitObject": "827b7d1211d2488b1744f6b88bc96f2b08719193"
+    },
+    {
+      "path": "scripts/ci/orphaned-stylesheets-baseline.json",
+      "gitObject": "6a305601de2458cba80710d4d2babc382b374850"
+    },
+    {
+      "path": "scripts/ci/phantom-tokens-baseline.json",
+      "gitObject": "c6d2c946688f199237722101f5bf751144ebdd53"
+    },
+    {
+      "path": "scripts/ci/proof-tier-baseline.json",
+      "gitObject": "adf5d88804868af84588aec7e00a1d6d83e2b822"
+    },
+    {
+      "path": "scripts/ci/prove-module-unused.mjs",
+      "gitObject": "79b43ee9eb18b5d9ab3b8850a534cef8b0afa79c"
+    },
+    {
+      "path": "scripts/ci/report-branch-drift.mjs",
+      "gitObject": "1ce26d2536284c3101f37b651bf16bccec8fe3ec"
+    },
+    {
+      "path": "scripts/ci/require-migration-headers.sh",
+      "gitObject": "aecc2523ca937b0920531fdb3db497a418a100c3"
+    },
+    {
+      "path": "scripts/ci/reseal-dependency-risk-ledger.mjs",
+      "gitObject": "6236eaf44b9db58606602611b74d555dfb2e0750"
+    },
+    {
+      "path": "scripts/ci/runtime-ddl-baseline.json",
+      "gitObject": "93446019f75cd1c58767e6c5eddf251649a910d1"
+    },
+    {
+      "path": "scripts/ci/server-error-leaks-baseline.json",
+      "gitObject": "e14ca5101049e2bbe1e549ddee6ebc4014240436"
+    },
+    {
+      "path": "scripts/ci/shell-css-collisions-baseline.json",
+      "gitObject": "aefb271ac8e3160523a4579339eba9385f45676c"
+    },
+    {
+      "path": "scripts/ci/sign-ceremony-baseline.json",
+      "gitObject": "5304f21db74fe9cee39fb1059b00587ece1e8e84"
+    },
+    {
+      "path": "scripts/ci/tables-live-schema-baseline.json",
+      "gitObject": "d9cdb02c571454e0d96dbeddd69ab16a263a7693"
+    },
+    {
+      "path": "scripts/ci/tenant-resolvers-baseline.json",
+      "gitObject": "985b012acc20bfce7dedc80aa78e71bbec730331"
+    },
+    {
+      "path": "scripts/ci/typecheck-no-regression.mjs",
+      "gitObject": "f4d812afe2285d9686a734dcbdd694130813fc35"
+    },
+    {
+      "path": "scripts/ci/unapproved-model-pins-baseline.json",
+      "gitObject": "0ceb2b0a8dfc87df1d228a9ac5290a4dfcdff7fd"
+    },
+    {
+      "path": "scripts/ci/unauthenticated-fetch-baseline.json",
+      "gitObject": "58e10c8797cdddc4f895e68c285e51a1225db146"
+    },
+    {
+      "path": "scripts/ci/unbacked-tables-baseline.json",
+      "gitObject": "a32c74c5072a2c3c57cd814a697ad67fa5f8f73e"
+    },
+    {
+      "path": "scripts/ci/undefined-css-classes-baseline.json",
+      "gitObject": "9343fbc6e42690ebf98dbdb3d0cf94af6bc32f23"
+    },
+    {
+      "path": "scripts/ci/unkeyed-request-tables-baseline.json",
+      "gitObject": "09e2d6daf9c79db8dc80d8b3ba4af30f07fb38ef"
+    },
+    {
+      "path": "scripts/ci/unreferenced-modules-baseline.json",
+      "gitObject": "67fa81cd878485a8ed91389d9ebe4da1eb2d2adc"
+    },
+    {
+      "path": "scripts/ci/upload-guards-baseline.json",
+      "gitObject": "7748e3846fb892dcb86912c90a6c7b5c25c2794b"
+    },
+    {
+      "path": "scripts/ci/writerless-stores-baseline.json",
+      "gitObject": "137acdb04a2f4cffc33fb4909e8d6806a43336de"
+    },
+    {
+      "path": "server/services/ana-biostats/__tests__/workflow-integrator-dossier-attach.test.ts",
+      "gitObject": "f21e707e8d197502899ed4de6deb7f94b997da7f"
+    },
+    {
+      "path": "server/services/ana-biostats/computation-engine.ts",
+      "gitObject": "9f61dac1194391703a208f214abc5db05bffffdd"
+    },
+    {
+      "path": "server/services/ana-biostats/document-generator.ts",
+      "gitObject": "bdda9f6453168c50d91f67f1dd95dd0872208618"
+    },
+    {
+      "path": "server/services/ana-biostats/domain-adapter.ts",
+      "gitObject": "b4969e915807a3cf177899a449103bd3968396eb"
+    },
+    {
+      "path": "server/services/ana-biostats/index.ts",
+      "gitObject": "618fa275af8e777b74c58997d402ec5fd3fe781d"
+    },
+    {
+      "path": "server/services/ana-biostats/judgment-engine.ts",
+      "gitObject": "854bd37d1b98887232e0078e76fe1e816f67ac93"
+    },
+    {
+      "path": "server/services/ana-biostats/orchestrator.ts",
+      "gitObject": "a48ac9a3f7fce0717d2cb76c262f7daa69e42071"
+    },
+    {
+      "path": "server/services/ana-biostats/regulatory-customizer.ts",
+      "gitObject": "7051d7f6c11978475960768dcea860cdce4b299b"
+    },
+    {
+      "path": "server/services/ana-biostats/sme-agents.ts",
+      "gitObject": "8c0d3e97401c58b89937003885e7aebd53268669"
+    },
+    {
+      "path": "server/services/ana-biostats/sme-router.ts",
+      "gitObject": "ab372435d30119317e23fce328adbc315a2f59f4"
+    },
+    {
+      "path": "server/services/ana-biostats/types.ts",
+      "gitObject": "3f9b5f1c5e8665c0c68dd148a66f5b5d3470dcba"
+    },
+    {
+      "path": "server/services/ana-biostats/workflow-integrator.ts",
+      "gitObject": "d18328ec5d286badbac9cfa3478b23f8448e654f"
+    },
+    {
+      "path": "server/services/ana-ri/persona.ts",
+      "gitObject": "6202619f245d6775569ccea9cb6728caa1613177"
+    },
+    {
+      "path": "server/services/ana/AnaToolDefinitions.ts",
+      "gitObject": "4a2264b37a02f9f18a9233964e0767f5fb1196b8"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "gitObject": "b7172d4129e7213e0c33ece5f39eb0252fd775dd"
+    },
+    {
+      "path": "server/services/ana/ana-launch-scope.inventory.json",
+      "gitObject": "2bcbe8ea3f1e020ff3b3c5bcb95900074a194312"
+    },
+    {
+      "path": "server/services/ana/ana-launch-scope.ts",
+      "gitObject": "51bb3494cc358cc1a0315ef13bbf7658f50cc133"
+    },
+    {
+      "path": "server/services/ana/cmc-knowledge-tools.ts",
+      "gitObject": "0c4909555b7741d6b4c415957e3ae2ef1e960e94"
+    },
+    {
+      "path": "server/services/ana/drafting-source-lineage.ts",
+      "gitObject": "6695cf132fb3936f65b9c9109a5f6e8dde87db22"
+    },
+    {
+      "path": "server/services/ana/governed-toolset.ts",
+      "gitObject": "a465a916059fe2e4fe88b0cae06dfc99c0d01660"
+    },
+    {
+      "path": "server/services/ana/tool-authorization.register.json",
+      "gitObject": "c11c440a6d8b37be9c41074be5e925b9b6e9f832"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts",
+      "gitObject": "4b5423912f710b4f77a35b096cc0b6c434c72420"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/coverageService.test.ts",
+      "gitObject": "979da1bc1408c4a2c497db1e0a8352c0012c95c1"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts",
+      "gitObject": "a44407219fcfa2c83d247e5a08c84596a3f73a27"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts",
+      "gitObject": "ec8760331b9305c96c9584f7e788c0df40e245c6"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts",
+      "gitObject": "085e7b23dcb742c22466dec7d44adf9bc1991a79"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts",
+      "gitObject": "9609112832a8ff9457ba22ea4f3e64339ebb5239"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+      "gitObject": "80fd940089ab96f67d5414a4494971baba161f9f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts",
+      "gitObject": "f305415dbd688e454818f8defc651c7d351bad57"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts",
+      "gitObject": "c486f6769b26dfe8c66a7027521f0e73812888a6"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/governance.test.ts",
+      "gitObject": "b90b109157f57b21d8c38b1c0ac3defe99e34a76"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/lineage-gate.pglite.integration.test.ts",
+      "gitObject": "64be2757f365774288dcf50e14f911ac596bf680"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts",
+      "gitObject": "717bb5ee49a9e781846fe7c8202056fde0658c55"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts",
+      "gitObject": "d5be9de26031b19200cdf260b140675b6688ac08"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/machine-draft-lineage.pglite.integration.test.ts",
+      "gitObject": "3c691e3db344a9e60b17fbf93952ae2cba22855d"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts",
+      "gitObject": "ce59eeb7a8ae8acb314a2f2f631ff6ece801f94a"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/program-scope-migration.pglite.integration.test.ts",
+      "gitObject": "94ddcd5d68a4bf6376f8225f76584d7332cc88e6"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/retrieval-atoms.pglite.integration.test.ts",
+      "gitObject": "afd9db0132f62017d3a6a7a16de9a5f5fdd120d6"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/retrieval-atoms.projections.test.ts",
+      "gitObject": "ff131e9c0cfef3f9dd2825a13cf56adaf49ea750"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-and-author-lineage.pglite.integration.test.ts",
+      "gitObject": "e73cc61edbbf9af006bb020ce01bcbb0a4757aef"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-attribution.pglite.integration.test.ts",
+      "gitObject": "488146f2e73d179f0ace8ecb24c231a3de36ae0d"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-attribution.test.ts",
+      "gitObject": "d77757bdcae95fc2d2ef97994bc0ae03fab9f373"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts",
+      "gitObject": "421427ae7d6d0b9a984cc098b09451afc5dc38e7"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "gitObject": "231a0ec593d640c943bcca8559e44d45952ccf3f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-version.test.ts",
+      "gitObject": "6b7d89ac9bdb8d2b87026d483891abf3413a15b7"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts",
+      "gitObject": "9d8af79d297487a9294f8e5eb3bd2d3ac6def925"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/span-lineage-backfill.pglite.integration.test.ts",
+      "gitObject": "2e840bc9159d2ead6417b8145ff7727823828859"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts",
+      "gitObject": "e5bd06ae602bf921ce1fda702395c3d434349eeb"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/span-retire-asserter.pglite.integration.test.ts",
+      "gitObject": "1bd8d409504b0fab0c928543d75b4f39621c61e3"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/study-design-evidence.pglite.integration.test.ts",
+      "gitObject": "d0755a0569396a1839fe8d994cfdf3206c484bdd"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/citation-ends.ts",
+      "gitObject": "06bae67170be38e9f54bb79afb74f115c39db328"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/coverage-service.ts",
+      "gitObject": "5980383d9727bfdc56fcc95430e1129174448ec8"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/crl-ingestion.service.ts",
+      "gitObject": "43d749196247c058b9543f571bd10fe0e8172f39"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/csr-adapter.service.ts",
+      "gitObject": "4abe81b2f4749c6e1d15c0f7191a1b21b8454771"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-origins-pdf.ts",
+      "gitObject": "45fe70ed80fc2d38cc470295c852a5091430c207"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-capture-audit.ts",
+      "gitObject": "3fcf933dec25eb422c5d32f84ffe31106ee08e67"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+      "gitObject": "361cbfdad9ef8b0a837de51bfbab48140278b0a0"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+      "gitObject": "f08c7c0005a4400384891cd9ade62d112a382615"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/governance.ts",
+      "gitObject": "8fe4b422bf6cd22b76519820c849d1c3fd29892c"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/index.ts",
+      "gitObject": "a738ef36deef6663f37a2a289e918d81ae1b2131"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/lineage-gate.ts",
+      "gitObject": "6daa7d56ea4833250c2add9bd36fcee7afae8b0a"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/machine-attribution.ts",
+      "gitObject": "f34b84cc79879e1c970e490cd83d94e90a5a139e"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/retained-source-context.ts",
+      "gitObject": "eb8ba4f933c32d6522d9473aca3869aeacf06b22"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/retrieval-atoms.service.ts",
+      "gitObject": "fd8f07f60e299ba84df09c9a00f1c90519dd3bde"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-attribution.ts",
+      "gitObject": "dc29ca5399eb9a96881609559831b57cc128907b"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+      "gitObject": "5e262f879f567be29469c75e0ba56962d8340bb0"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-version.ts",
+      "gitObject": "f84d5dd219ebcccb819ffcf21fb08dbde229db7e"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage-backfill.ts",
+      "gitObject": "827c4454d7681ad4ae4a288308bb0f62117cfead"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage.service.ts",
+      "gitObject": "8290622c2989d1fa507b7213767327315bfb5ae4"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/study-design-evidence.service.ts",
+      "gitObject": "ebafdc060bc055895823af4e1387e5240f81f8f5"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/types.ts",
+      "gitObject": "73ffffa489f06737f41517c9eb3f3d76d679a6c1"
+    },
+    {
+      "path": "server/services/cmc/knowledge/__tests__/cmc-regulatory-record.test.ts",
+      "gitObject": "57bd5127beec8edcc8da3056700902d61514d698"
+    },
+    {
+      "path": "server/services/cmc/knowledge/cmc-regulatory-record.json",
+      "gitObject": "2b09dae0e47e108a2e06ab91d320b35db2b54c73"
+    },
+    {
+      "path": "server/services/cmc/knowledge/index.ts",
+      "gitObject": "13517b8fff20a86896e911b6ad3cdfae42966dc2"
+    },
+    {
+      "path": "server/services/cmc/knowledge/types.ts",
+      "gitObject": "ea9ca6884f368d6c90dba28b74540cb4d030f19f"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/artifact-freeze.pglite.integration.test.ts",
+      "gitObject": "3e2c59aef588d3fbfe6e14ac4b0001c26bde197a"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+      "gitObject": "88023d32d69c9273230856baf8ea57128b72107a"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts",
+      "gitObject": "0c093c149ab180bad87c80da04a954e5594aee9a"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts",
+      "gitObject": "344f836c353c3e1f82564c6c231e1dc92b8bcc3f"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/disposition-fixture.ts",
+      "gitObject": "4fc5a69a56f03262185de91c4e58dee463224f0d"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts",
+      "gitObject": "0cddea9b0c95d50057bed496a17db4ef9e18d25a"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/eligibility.test.ts",
+      "gitObject": "dd042fe79c365651d91d6a2141f44efee9deb3de"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/lineage-downstream.pglite.integration.test.ts",
+      "gitObject": "240fe9edf7304ee6223f1dcfabd2e701f27c4b7e"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/lineage-stores-fixture.ts",
+      "gitObject": "2cbd90c5badba54de501565bb0777ba837d5c35b"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/program-lock.test.ts",
+      "gitObject": "fbb56f0c778b5dfc836a8a0ca5c63db0fea8f9a0"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "gitObject": "509e40619ffd2d981d3d7711fd9c6ac862ac6bbb"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/route-auth.test.ts",
+      "gitObject": "cf34bbdb73e1d7833c20ed35ff952e4b209fad66"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/runtime-role.pglite.integration.test.ts",
+      "gitObject": "3fcc51caaa8df8a6c117fc1bb096eeb373b00b50"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/saved-draft-impact.pglite.integration.test.ts",
+      "gitObject": "ed85c60453f2e41ca6a3f89ce408e4dc6b0367f7"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts",
+      "gitObject": "ac0d6dff45e0a303dbb9e4b62a159d7f85bc5616"
+    },
+    {
+      "path": "server/services/document-data-disposition/derived-impact.ts",
+      "gitObject": "d435e98135a57e3771e52fd3e9ce47df6286ec85"
+    },
+    {
+      "path": "server/services/document-data-disposition/eligibility.ts",
+      "gitObject": "4107151d39c29fd1f0f566676a3400db9e98de4e"
+    },
+    {
+      "path": "server/services/document-data-disposition/impact.ts",
+      "gitObject": "5a4f49fbe61dd96ea9342e41266e1120310ef510"
+    },
+    {
+      "path": "server/services/document-data-disposition/production-adapter.ts",
+      "gitObject": "17bde80f8c756e30eef7fcf8bb12f0e3d895a6b1"
+    },
+    {
+      "path": "server/services/document-data-disposition/program-lock.ts",
+      "gitObject": "e3f72726e35c4bdd8c7d5e3a50a7db03fc2f7057"
+    },
+    {
+      "path": "server/services/document-data-disposition/recorded-lineage.ts",
+      "gitObject": "a7427073a59cf765f5b24dbed9b1932ab52c520b"
+    },
+    {
+      "path": "server/services/document-data-disposition/service.ts",
+      "gitObject": "7027c62b731e21a080736106bf3339c85e4248e4"
+    },
+    {
+      "path": "server/services/document-data-disposition/tokens.ts",
+      "gitObject": "632f558f60c6a72fb255def7fcbdde9b76e0fbc7"
+    },
+    {
+      "path": "server/services/document-data-disposition/types.ts",
+      "gitObject": "da008aa99f0771adca7604682f0beb46311f199b"
+    },
+    {
+      "path": "shared/constants/launch-scope.ts",
+      "gitObject": "49f896b6ede5835845d3272c7ccd2a5b06cc9557"
+    },
+    {
+      "path": "vitest.config.ts",
+      "gitObject": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215"
+    }
+  ],
+  "allStatisticalComputationAndValidationBytesUnchanged": true,
+  "onlyAttritionDefaultAttributionPredicateChanged": true,
+  "everySelectorByteOutsideCoreDeclarationUnchanged": true,
+  "sourceLinkSqlAndTenantDispositionPredicatesByteIdentical": true,
+  "newToolDefinitions": 0,
+  "newModels": 0,
+  "newSurfaces": 0,
+  "toolBudget": 50,
+  "launchScopedPoolAtTestSnapshot": 608,
+  "routingSuites": 6,
+  "routingCases": 168,
+  "contractSuites": 9,
+  "contractCases": 207,
+  "focusedCasesTotal": 375,
+  "fullSemanticCompiler": "required exact-source remote gate; not run on local 8-GiB host",
+  "nativeDatabaseQualification": "PGlite engine boundary proof only; broader native gates remain independent",
+  "governanceAndSecurityBaselinesUnchanged": true,
+  "otherLaneRowsByteIdenticalToBase": true
+}

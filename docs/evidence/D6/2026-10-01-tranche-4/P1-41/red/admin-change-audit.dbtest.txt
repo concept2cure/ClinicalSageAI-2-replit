@@ -1,0 +1,209 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:09:09.250Z","pid":17686,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:09:09.251Z","pid":17686,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:09:09.251Z","pid":17686,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/admin-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful { timestamp: '2026-10-01T03:09:09.859Z', poolSize: 1 }
+
+ × tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded 102ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back 11ms
+   → expected 200 to be 500 // Object.is equality
+ × tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the reason 16ms
+   → one row for one change: expected [] to have a length of 1 but got +0
+stdout | tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after
+[database] Database connection successful { timestamp: '2026-10-01T03:09:09.987Z', poolSize: 2 }
+
+ × tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays 15ms
+   → expected 200 to be 500 // Object.is equality
+ × tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > writes one chained row with the role the member held 9ms
+   → {"error":"User not found in organization"}: expected 404 to be 200 // Object.is equality
+ × tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > when its audit row cannot be written, the settings stay as they were 31ms
+   → expected 200 to be 500 // Object.is equality
+ × tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after 35ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a notifications change names the webhook field and never records its address 29ms
+   → the notifications change was recorded: expected 0 to be greater than 0
+ × tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a reset writes one tenant_settings_reset row with the retention values 26ms
+   → expected [] to have a length of 1 but got +0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/db/admin-change-audit.dbtest.ts:169:24
+    167|   it('without a reason: 400, the role unchanged, nothing recorded', as…
+    168|     const res = await request(app).patch(`/api/tenant-users/${ORG_A}/$…
+    169|     expect(res.status).toBe(400);
+       |                        ^
+    170|     expect(res.body.error).toBe('REASON_REQUIRED');
+    171|     expect(await roleOf(member)).toBe('member');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/db/admin-change-audit.dbtest.ts:182:26
+    180|         .set(asAdmin())
+    181|         .send({ role: 'viewer', reason: REASON });
+    182|       expect(res.status).toBe(500);
+       |                          ^
+    183|       expect(JSON.stringify(res.body)).not.toContain('probe');
+    184|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the reason
+AssertionError: one row for one change: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/admin-change-audit.dbtest.ts:199:44
+    197|     expect(await roleOf(member)).toBe('viewer');
+    198|     const rows = await rowsByAdmin();
+    199|     expect(rows, 'one row for one change').toHaveLength(1);
+       |                                            ^
+    200|     expect(rows[0]).toMatchObject({
+    201|       action: 'member_role_changed',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/db/admin-change-audit.dbtest.ts:219:26
+    217|     try {
+    218|       const res = await request(app).delete(`/api/tenant-users/${ORG_A…
+    219|       expect(res.status).toBe(500);
+       |                          ^
+    220|     } finally {
+    221|       probe.refuseAudit = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > writes one chained row with the role the member held
+AssertionError: {"error":"User not found in organization"}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/admin-change-audit.dbtest.ts:229:50
+    227|   it('writes one chained row with the role the member held', async () …
+    228|     const res = await request(app).delete(`/api/tenant-users/${ORG_A}/…
+    229|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    230|     expect(await roleOf(member)).toBeNull();
+    231|     const rows = await rowsByAdmin('member_removed');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > when its audit row cannot be written, the settings stay as they were
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/db/admin-change-audit.dbtest.ts:251:26
+    249|         .set(asAdmin())
+    250|         .send({ mfaRequired: true, sessionTimeoutMinutes: 20 });
+    251|       expect(res.status).toBe(500);
+       |                          ^
+    252|     } finally {
+    253|       probe.refuseAudit = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/admin-change-audit.dbtest.ts:267:20
+    265|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+    266|       const rows = await rowsByAdmin('tenant_settings_changed');
+    267|       expect(rows).toHaveLength(1);
+       |                    ^
+    268|       expect(rows[0]).toMatchObject({
+    269|         table_name: 'organization_settings',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a notifications change names the webhook field and never records its address
+AssertionError: the notifications change was recorded: expected 0 to be greater than 0
+ ❯ tests/db/admin-change-audit.dbtest.ts:291:68
+    289|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+    290|       const rows = await rowsByAdmin('tenant_settings_changed');
+    291|       expect(rows.length, 'the notifications change was recorded').toB…
+       |                                                                    ^
+    292|       const row = rows[rows.length - 1];
+    293|       expect(row.new_values).toMatchObject({ sections: ['notifications…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a reset writes one tenant_settings_reset row with the retention values
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/admin-change-audit.dbtest.ts:307:20
+    305|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+    306|       const rows = await rowsByAdmin('tenant_settings_reset');
+    307|       expect(rows).toHaveLength(1);
+       |                    ^
+    308|       expect(rows[0].new_values.sections).toContain('qmp');
+    309|       expect(rows[0].new_values.values.qmp.after).toHaveProperty('audi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  03:09:06
+   Duration  3.34s (transform 1.37s, setup 105ms, import 2.31s, tests 588ms, environment 0ms)
+

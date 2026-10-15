@@ -1,0 +1,243 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the composer actually uploads the file > sends actual enrollment.csv bytes and project scope without claiming scientific validation 104ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the composer actually uploads the file > sends actual enrollment.xlsx bytes and project scope without claiming scientific validation 44ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the composer actually uploads the file > sends actual resource.json bytes and project scope without claiming scientific validation 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the composer actually uploads the file > sends actual define.xml bytes and project scope without claiming scientific validation 36ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the composer actually uploads the file > POSTs the real File to /api/chat/upload, not just its name 30ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > send tells the truth about what was attached > names the uploaded file in the message once it is ready 49ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > send tells the truth about what was attached > does NOT claim an attachment when the upload failed 41ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > send tells the truth about what was attached > refuses to send at all when only a failed upload is present 28ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > send tells the truth about what was attached > does not send while an upload is still in flight 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the chip states what actually happened > shows the extraction result once read 62ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the chip states what actually happened > shows the failure reason rather than a bare filename 22ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx > the chip states what actually happened > rejects an unsupported type without a network call 21ms
+ × tests/concept2cure/use-chat-upload.test.tsx > attachmentReadLabel > formats word counts as extracted text, and notes OCR 27ms
+   → expected 'read · 1,240 words' to be 'text extracted · 1,240 words' // Object.is equality
+ × tests/concept2cure/use-chat-upload.test.tsx > attachmentReadLabel > never says the file was read 2ms
+   → expected 'read · 20 words' not to match /\bread\b/
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > attachmentReadLabel > returns null when nothing was read 2ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > readyAttachmentLabel > says a ready file with no text was not read, never "read" 0ms
+ × tests/concept2cure/use-chat-upload.test.tsx > readyAttachmentLabel > is the read label when text was extracted 1ms
+   → expected 'read via OCR · 87 words' to be 'text extracted via OCR · 87 words' // Object.is equality
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > composeTurn > names and sends only the files the server confirmed 1ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > composeTurn > lets the attachment line be the message when there is no text 0ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > composeTurn > sends nothing extra when no file is ready 0ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > validateUploadFile > accepts a supported, reasonably-sized file 1ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > validateUploadFile > rejects an unsupported extension 1ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > validateUploadFile > rejects an oversized file 0ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > validateUploadFile > rejects an empty file 0ms
+ × tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > uploads a file, captures extraction metadata, and announces status 88ms
+   → expected 'enrollment.txt read · 1,240 words' to be 'enrollment.txt: text extracted · 1,24…' // Object.is equality
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > marks an attachment as error and announces failure on a bad response 62ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > rejects an invalid file as an error chip without calling the network 11ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > clear() empties attachments and the status message 12ms
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > does not call a file "read" when no text was extracted from it
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > still says how much text was extracted, without claiming AnA read it
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > does not call a file "read" when no text was extracted from it
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > still says how much text was extracted, without claiming AnA read it
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > does not call a file "read" when no text was extracted from it 127ms
+ × client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > still says how much text was extracted, without claiming AnA read it 35ms
+   → expected ' ProjectNew conversation Conversation…' to match /protocol\.docx\s*·\s*text extracted ·…/
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > does not call a file "read" when no text was extracted from it 59ms
+ × client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > still says how much text was extracted, without claiming AnA read it 39ms
+   → expected 'eCTD Co-Author ValidateeCTD backboneM…' to match /protocol\.docx\s*·\s*text extracted ·…/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/concept2cure/use-chat-upload.test.tsx > attachmentReadLabel > formats word counts as extracted text, and notes OCR
+AssertionError: expected 'read · 1,240 words' to be 'text extracted · 1,240 words' // Object.is equality
+
+Expected: "text extracted · 1,240 words"
+Received: "read · 1,240 words"
+
+ ❯ tests/concept2cure/use-chat-upload.test.tsx:49:47
+     47|      "Used in this session" says that, per turn). */
+     48|   it('formats word counts as extracted text, and notes OCR', () => {
+     49|     expect(attachmentReadLabel('utf8', 1240)).toBe('text extracted · 1…
+       |                                               ^
+     50|     expect(attachmentReadLabel('image-ocr', 87)).toBe('text extracted …
+     51|     expect(attachmentReadLabel('pdf-ocr', 1)).toBe('text extracted via…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/concept2cure/use-chat-upload.test.tsx > attachmentReadLabel > never says the file was read
+AssertionError: expected 'read · 20 words' not to match /\bread\b/
+
+- Expected:
+/\bread\b/
+
++ Received:
+"read · 20 words"
+
+ ❯ tests/concept2cure/use-chat-upload.test.tsx:55:45
+     53|   it('never says the file was read', () => {
+     54|     for (const [m, w] of [['utf8', 20], ['pdf-text', 3], ['image-ocr',…
+     55|       expect(attachmentReadLabel(m, w)).not.toMatch(/\bread\b/);
+       |                                             ^
+     56|     }
+     57|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/concept2cure/use-chat-upload.test.tsx > readyAttachmentLabel > is the read label when text was extracted
+AssertionError: expected 'read via OCR · 87 words' to be 'text extracted via OCR · 87 words' // Object.is equality
+
+Expected: "text extracted via OCR · 87 words"
+Received: "read via OCR · 87 words"
+
+ ❯ tests/concept2cure/use-chat-upload.test.tsx:70:49
+     68|   });
+     69|   it('is the read label when text was extracted', () => {
+     70|     expect(readyAttachmentLabel('pdf-ocr', 87)).toBe('text extracted v…
+       |                                                 ^
+     71|   });
+     72| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > uploads a file, captures extraction metadata, and announces status
+AssertionError: expected 'enrollment.txt read · 1,240 words' to be 'enrollment.txt: text extracted · 1,24…' // Object.is equality
+
+Expected: "enrollment.txt: text extracted · 1,240 words"
+Received: "enrollment.txt read · 1,240 words"
+
+ ❯ tests/concept2cure/use-chat-upload.test.tsx:133:42
+    131|     expect(a.extractionMethod).toBe('utf8');
+    132|     expect(a.extractionWords).toBe(1240);
+    133|     expect(result.current.statusMessage).toBe('enrollment.txt: text ex…
+       |                                          ^
+    134|
+    135|     // projectId was sent in the multipart body.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > still says how much text was extracted, without claiming AnA read it
+AssertionError: expected ' ProjectNew conversation Conversation…' to match /protocol\.docx\s*·\s*text extracted ·…/
+
+- Expected:
+/protocol\.docx\s*·\s*text extracted · 1,240 words/
+
++ Received:
+" ProjectNew conversation Conversation AnA New conversationProgress · AnA's progress✻Talk to AnAAsk a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.What can you help me with in this workspace?What does this workspace hold so far?How does a regulatory submission come together here? scan.pdf · no text extracted× protocol.docx · read · 1,240 words× Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.ProgressAnA has not started a turn in this conversation. Ask something and her plan and steps appear here as she works."
+
+ ❯ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx:65:41
+     63|   it('still says how much text was extracted, without claiming AnA rea…
+     64|     const { container } = render(<Component {...props} />);
+     65|     expect(container.textContent ?? '').toMatch(/protocol\.docx\s*·\s*…
+       |                                         ^
+     66|   });
+     67| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > still says how much text was extracted, without claiming AnA read it
+AssertionError: expected 'eCTD Co-Author ValidateeCTD backboneM…' to match /protocol\.docx\s*·\s*text extracted ·…/
+
+- Expected:
+/protocol\.docx\s*·\s*text extracted · 1,240 words/
+
++ Received:
+"eCTD Co-Author ValidateeCTD backboneM1–M5Loading eCTD documents…eCTD backboneReading…AnANo document openProgress · AnA's progressProgressAnA has not started a turn in this conversation. Ask something and her plan and steps appear here as she works.Used in this sessionContexteCTD co-authorAsk about this dossier — AnA answers here, grounded on the document you have open. Every turn is saved to your organization's governed conversation store. scan.pdf · no text extracted× protocol.docx · read · 1,240 words× SourceseCTD Co-AuthorNo document selectedDocumentValidationComplianceLoading eCTD documents…"
+
+ ❯ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx:65:41
+     63|   it('still says how much text was extracted, without claiming AnA rea…
+     64|     const { container } = render(<Component {...props} />);
+     65|     expect(container.textContent ?? '').toMatch(/protocol\.docx\s*·\s*…
+       |                                         ^
+     66|   });
+     67| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  6 failed | 26 passed (32)
+   Start at  03:15:11
+   Duration  8.90s (transform 3.35s, setup 521ms, import 4.43s, tests 1.01s, environment 2.22s)
+

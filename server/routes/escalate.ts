@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { escalateEngine } from '../services/escalate-engine';
 import { authMiddleware } from '../auth.js';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 
 const router = Router();
 const log = createScopedLogger('escalate-routes');
@@ -37,9 +38,8 @@ router.post('/evaluate', async (req: Request, res: Response) => {
     }
     const result = await escalateEngine.evaluate(parsed.data);
     res.json({ success: true, data: result });
-  } catch (err: any) {
-    log.error(`ESCALATE evaluation failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err) {
+    serverError(res, log, 'evaluating the escalation', err);
   }
 });
 

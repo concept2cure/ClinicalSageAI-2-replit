@@ -1,0 +1,38 @@
+ ✓ an image outside the figure rule is never fetched and never filed > a dot segment after a real id: the loader is not called and nothing resolves 460ms
+ ✓ an image outside the figure rule is never fetched and never filed > a query after a real id: the loader is not called and nothing resolves 4ms
+ ✓ an image outside the figure rule is never fetched and never filed > an id the store never minted: the loader is not called and nothing resolves 3ms
+ ✓ an image outside the figure rule is never fetched and never filed > percent-encoded dot segments: the loader is not called and nothing resolves 2ms
+ ✓ an image outside the figure rule is never fetched and never filed > a reference padded with spaces: the loader is not called and nothing resolves 7ms
+ ✓ an image outside the figure rule is never fetched and never filed > inline an upper-case type: not decoded, not filed 2ms
+ ✓ an image outside the figure rule is never fetched and never filed > inline WebP, which Word cannot hold: not decoded, not filed 2ms
+ ✓ an image outside the figure rule is never fetched and never filed > inline SVG, a script container: not decoded, not filed 2ms
+ ✓ an image outside the figure rule is never fetched and never filed > inline TIFF: not decoded, not filed 3ms
+ ✓ an image outside the figure rule is never fetched and never filed > inline a PNG whose payload holds a newline: not decoded, not filed 2ms
+ ✓ an image outside the figure rule is never fetched and never filed > the PDF of a section holding an inline WebP states it instead of embedding it 3ms
+ ✓ a figure resolves under the src its image block carries > reads srcs the way the export parser does: character references, unquoted and upper-case 5ms
+ ✓ a figure resolves under the src its image block carries > still files a governed reference and an inline PNG (guard) 4ms
+ ✓ a figure resolves under the src its image block carries > files an inline JPEG and GIF under their own types (guard) 3ms
+ ✓ unfiledFigureLabel > the author's alt text, as written 0ms
+ ✓ unfiledFigureLabel > an inline WebP, in words 0ms
+ ✓ unfiledFigureLabel > an upper-case PNG type, in words 0ms
+ ✓ unfiledFigureLabel > an inline PNG whose bytes did not decode, in words 0ms
+ ✓ unfiledFigureLabel > an external address, in words 0ms
+ ✓ unfiledFigureLabel > a path out of the image route, in words 0ms
+ ✓ unfiledFigureLabel > an upload that did not resolve, by its reference 0ms
+ ✓ unfiledFigureLabel > no src at all 0ms
+ ✓ unfiledFigureLabel > never carries a data: payload, whatever its length 1ms
+ ✓ the export files an image only where a browser shows the same one > a duplicated src: the browser shows the first, the parser files the last: nothing from the section is filed 1ms
+ ✓ the export files an image only where a browser shows the same one > the same, where the second is also shown elsewhere in the section: nothing from the section is filed 1ms
+ ✓ the export files an image only where a browser shows the same one > inside a bogus comment: nothing from the section is filed 2ms
+ ✓ the export files an image only where a browser shows the same one > inside a processing-instruction-shaped comment: nothing from the section is filed 1ms
+ ✓ the export files an image only where a browser shows the same one > inside a textarea: nothing from the section is filed 2ms
+ ✓ the export files an image only where a browser shows the same one > inside an xmp: nothing from the section is filed 1ms
+ ✓ the export files an image only where a browser shows the same one > inside a template: nothing from the section is filed 2ms
+ ✓ the export files an image only where a browser shows the same one > a governed reference behind a duplicated src is not even loaded 1ms
+ ✓ the export files an image only where a browser shows the same one > a source hidden or swapped in one section is filed for no other section of the export 2ms
+ ✓ the export files an image only where a browser shows the same one > a section both readers read alike still files every figure (guard) 3ms
+ ✓ a typeless data: URI is named without its payload > 0 0ms
+ ✓ a typeless data: URI is named without its payload > 1 0ms
+ ✓ a typeless data: URI is named without its payload > 2 0ms
+ ✓ a typeless data: URI is named without its payload > 3 0ms
+      Tests  37 passed (37)

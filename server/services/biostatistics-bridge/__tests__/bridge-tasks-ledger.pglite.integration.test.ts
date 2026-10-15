@@ -150,3 +150,34 @@ describe('tasks raised from a statistical assessment', () => {
     expect(await createRows(), 'a row outlived its task').toEqual([]);
   });
 });
+
+/**
+ * D5 (2026-10-01): with no `reason` in the request, every row used to record
+ * `Raised from the biostatistics assessment of "<title>" (<trigger>)` as the
+ * reason for change. It is now the payload's summary, and the reason is null.
+ */
+describe('the reason a raised task records', () => {
+  const reasons = async () =>
+    (await run(`SELECT a.decision_reason, a.payload, l.reason AS audit_reason
+                  FROM c2c_ana_actions a JOIN audit_logs l ON l.ana_action_id = a.id
+                 WHERE a.command = 'task.create' ORDER BY a.seq`)).rows;
+
+  it('is null when the request states none; what happened is the summary', async () => {
+    await createTasksForDesign({ organizationId: ORG, userId: USER, studyId: STUDY, keys: proposedKeys });
+
+    const rows = await reasons();
+    expect(rows).toHaveLength(proposedKeys.length);
+    for (const r of rows) {
+      expect(r.decision_reason).toBeNull();
+      expect(r.audit_reason).toBeNull();
+      expect(r.payload.summary).toMatch(/^Raised from the biostatistics assessment of "/);
+    }
+  });
+
+  it('is the stated reason, verbatim and trimmed', async () => {
+    await createTasksForDesign({ organizationId: ORG, userId: USER, studyId: STUDY, keys: proposedKeys, reason: '  Raised at the design review.  ' });
+
+    const rows = await reasons();
+    expect(rows.map(r => [r.decision_reason, r.audit_reason])).toEqual(rows.map(() => ['Raised at the design review.', 'Raised at the design review.']));
+  });
+});

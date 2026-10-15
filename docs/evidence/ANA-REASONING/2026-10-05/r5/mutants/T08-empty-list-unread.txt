@@ -1,0 +1,13 @@
+Mutant T08-empty-list-unread: an empty result list reads as a success
+
+--- server/services/ana/tool-outcome.ts
+- return zeroCount || lists.present ? { kind: 'empty' } : null;
++ return zeroCount ? { kind: 'empty' } : null;
+
+Tests run: tests/services/tool-outcome.test.ts server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts
+Result: KILLED
+
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a lookup or search that found nothing 5ms
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a vault passage search that matched nothing (document-passage-tools.ts) 1ms
+      Tests  2 failed | 11 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

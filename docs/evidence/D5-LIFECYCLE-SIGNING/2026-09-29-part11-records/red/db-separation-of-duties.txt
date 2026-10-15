@@ -1,0 +1,8 @@
+# The canonical_document authorship case removed from separation-of-duties.ts (the rest of VR-12 in place), on PostgreSQL as app_service
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > reads this organization's version under a share lock, and not another's 1480ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > binds the version hash, and refuses when the document recorded another 8ms
+ × tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the creator and the uploader are its authors; a third person may sign 23ms
+   → 7101: expected SeparationOfDutiesAuthorUnresolvedError: … { code: '…' } to be an instance of SeparationOfDutiesError
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the recorded creator cannot be reassigned 3ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)

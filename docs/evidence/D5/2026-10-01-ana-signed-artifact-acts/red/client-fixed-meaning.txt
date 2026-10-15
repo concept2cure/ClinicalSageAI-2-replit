@@ -1,0 +1,104 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > end of turn: extractPendingSignoffs keeps it 10ms
+   → expected undefined to be 'RELEASE' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > live: pendingSignoffFromApproval keeps it 2ms
+   → expected undefined to be 'RELEASE' // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > a value that is not a meaning the dialog has is dropped, not offered 1ms
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > offers that meaning only, already chosen 248ms
+   → expected [ 'Authorship', 'Review', 'Approval' ] to deeply equal [ 'Release' ]
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > signs with it: the reason and the password are all that is asked for 39ms
+   → expected true to be false // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > an act that fixes none still offers the three, and no Release 28ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > shows the statement of intent the server records with the signature 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > end of turn: extractPendingSignoffs keeps it
+AssertionError: expected undefined to be 'RELEASE' // Object.is equality
+
+- Expected:
+"RELEASE"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx:37:38
+     35|   it('end of turn: extractPendingSignoffs keeps it', () => {
+     36|     const [pending] = extractPendingSignoffs([lockProposal]);
+     37|     expect(pending.signatureMeaning).toBe('RELEASE');
+       |                                      ^
+     38|   });
+     39|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > live: pendingSignoffFromApproval keeps it
+AssertionError: expected undefined to be 'RELEASE' // Object.is equality
+
+- Expected:
+"RELEASE"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx:42:39
+     40|   it('live: pendingSignoffFromApproval keeps it', () => {
+     41|     const pending = pendingSignoffFromApproval({ ...lockProposal, type…
+     42|     expect(pending?.signatureMeaning).toBe('RELEASE');
+       |                                       ^
+     43|   });
+     44|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > offers that meaning only, already chosen
+AssertionError: expected [ 'Authorship', 'Review', 'Approval' ] to deeply equal [ 'Release' ]
+
+- Expected
++ Received
+
+  [
+-   "Release",
++   "Authorship",
++   "Review",
++   "Approval",
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx:70:44
+     68|     render(<GovernedActionSignoff signoff={lock} onResolved={() => {}}…
+     69|     const radios = screen.getAllByRole('radio');
+     70|     expect(radios.map(r => r.textContent)).toEqual(['Release']);
+       |                                            ^
+     71|     expect(radios[0].getAttribute('aria-checked')).toBe('true');
+     72|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > signs with it: the reason and the password are all that is asked for
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx:80:27
+     78|     fireEvent.change(screen.getByLabelText('Password (electronic signa…
+     79|     const sign = screen.getByRole('button', { name: 'Sign and run' }) …
+     80|     expect(sign.disabled).toBe(false);
+       |                           ^
+     81|
+     82|     fireEvent.click(sign);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  13:56:26
+   Duration  2.21s (transform 376ms, setup 226ms, import 389ms, tests 340ms, environment 1.04s)
+

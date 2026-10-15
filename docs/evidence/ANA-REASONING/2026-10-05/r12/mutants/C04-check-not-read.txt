@@ -1,0 +1,13 @@
+Mutant C04-check-not-read: the panel drops the check the server sent
+
+--- client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx
+- check: readAnswerCheck(json?.draft?.check) ?? null,
++ check: null,
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > shows the engine’s check of the draft before the accept: what was not found, and the verdict 35ms
+ × client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx > AuthoringAiDraft — what was checked about the draft (round 12) > once the author edits the draft, the check says the edits are not checked 43ms
+      Tests  2 failed | 22 passed (24)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

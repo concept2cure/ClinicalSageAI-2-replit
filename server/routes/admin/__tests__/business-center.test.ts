@@ -58,10 +58,13 @@ beforeEach(() => {
   logActionMock.mockReset();
   invoicedByOrgMock.mockReset();
   invoicedByOrgMock.mockImplementation(async () => new Map<number, number>());
-  queryMock.mockImplementation((sql: string) => {
-    // Guard's async grant fallback (when sync role/email checks fail): no grant,
-    // so support-user 403 cases stay 403.
-    if (/platform_role_grants/.test(sql)) return Promise.resolve({ rows: [] });
+  queryMock.mockImplementation((sql: string, params?: unknown[]) => {
+    // The guard's platform grant check. Standing is a platform_role_grants
+    // row (D6, 2026-10-05): the finance user (id 1) holds one, nobody else
+    // does. It used to come from the BIZ user's request role, which is the
+    // tenant membership role, and that was the defect.
+    if (/SELECT 1\s+FROM platform_role_grants/.test(sql))
+      return Promise.resolve({ rows: params?.[0] === 1 ? [{ ok: 1 }] : [] });
     if (/FROM platform_cost_rates/.test(sql)) return Promise.resolve({ rows: [] }); // use defaults
     if (/FROM tier_pricing/.test(sql)) return Promise.resolve({ rows: [] }); // use defaults
     if (/INSERT INTO platform_cost_rates/.test(sql))
@@ -283,6 +286,18 @@ describe('metering coverage (cost-accuracy audit)', () => {
   });
 });
 
+describe('a tenant owner is not platform standing (D6, 2026-10-05)', () => {
+  /* req.userRole is the tenant membership role, and `owner` is a tenant
+     administrative role. Cost and margin data for every client is not a
+     tenant's to read. */
+  const TENANT_OWNER = JSON.stringify({ id: 5, role: 'owner', email: 'founder@client.test' });
+
+  it.each(['cost-accounting', 'access'])('403s /%s for a tenant owner with no platform grant', async path => {
+    const res = await request(makeApp()).get(`/api/admin/business/${path}`).set('x-test-user', TENANT_OWNER);
+    expect(res.status).toBe(403);
+  });
+});
+
 describe('access roster (designated personnel)', () => {
   it('403s a support user', async () => {
     const res = await request(makeApp())
@@ -291,14 +306,18 @@ describe('access roster (designated personnel)', () => {
     expect(res.status).toBe(403);
   });
 
-  it('reports role holders + allowlist from the guard source of truth', async () => {
+  it('reports grant holders + allowlist from the guard source of truth', async () => {
     process.env.BUSINESS_CENTER_EMAILS = 'owner@x.io, finance@x.io';
-    queryMock.mockImplementation((sql: string) => {
-      if (/FROM organization_users/.test(sql))
+    queryMock.mockImplementation((sql: string, params?: unknown[]) => {
+      if (/SELECT 1\s+FROM platform_role_grants/.test(sql))
+        return Promise.resolve({ rows: params?.[0] === 1 ? [{ ok: 1 }] : [] });
+      // The roster reads what the guard reads: active platform grants. It used
+      // to list tenant membership roles, which the guard no longer honours.
+      if (/FROM platform_role_grants/.test(sql) && /revoked_at IS NULL/.test(sql) && !/FROM organization_users/.test(sql))
         return Promise.resolve({
-          rows: [{ id: 1, email: 'owner@x.io', name: 'Owner', status: 'active', role: 'business_admin', organization_name: 'Acme' }],
+          rows: [{ id: 1, email: 'owner@x.io', name: 'Owner', status: 'active', role: 'business_admin', granted_at: 'now', granted_by: 'founder' }],
         });
-      return Promise.resolve({ rows: [{}] });
+      return Promise.resolve({ rows: [] });
     });
     const res = await request(makeApp())
       .get('/api/admin/business/access')

@@ -5,6 +5,14 @@
 --
 -- This migration implements transfer learning: domain knowledge mapping,
 -- transfer viability assessment, adaptation tracking, and meta-learning.
+--
+-- AMENDED IN PLACE 2026-10-15 (D2, no invented figures): sections 10 and 11
+-- seeded complexity and data-richness scores for nine domains (which the
+-- generated maturity_level turns into "mature" / "developing" labels) and
+-- success rates of 0.75 / 0.7 / 0.65 for three transfer templates. Nothing
+-- measured any of them. Removed; the rows an earlier install wrote are
+-- withdrawn by migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql
+-- (deploy set).
 
 BEGIN;
 
@@ -777,83 +785,10 @@ COMMENT ON FUNCTION cortex.suggest_transfer_mapping IS
 Returns recommendation with estimated strength and risk.';
 
 -- ============================================================================
--- SECTION 10: SEED INITIAL DOMAIN KNOWLEDGE
+-- SECTIONS 10-11: SEED DOMAIN KNOWLEDGE AND TRANSFER TEMPLATES — REMOVED 2026-10-15
 -- ============================================================================
-
-INSERT INTO cortex.domain_knowledge (domain_type, domain_value, domain_hierarchy, key_concepts, complexity_score, data_richness_score)
-VALUES
-    ('therapeutic_area', 'oncology', ARRAY['oncology'], 
-     ARRAY['tumor response', 'overall survival', 'progression-free survival', 'biomarkers', 'combination therapy'],
-     0.85, 0.9),
-    ('therapeutic_area', 'neurology', ARRAY['neurology'], 
-     ARRAY['cognitive endpoints', 'neuroimaging', 'biomarkers', 'disease modification', 'symptomatic treatment'],
-     0.9, 0.7),
-    ('therapeutic_area', 'cardiology', ARRAY['cardiology'], 
-     ARRAY['MACE', 'cardiovascular outcomes', 'heart failure', 'arrhythmia', 'lipid endpoints'],
-     0.75, 0.8),
-    ('therapeutic_area', 'immunology', ARRAY['immunology'], 
-     ARRAY['autoimmune', 'inflammation markers', 'disease activity scores', 'remission', 'flare rates'],
-     0.8, 0.7),
-    ('therapeutic_area', 'rare_disease', ARRAY['rare_disease'], 
-     ARRAY['natural history', 'patient registries', 'biomarkers', 'functional endpoints', 'caregiver burden'],
-     0.85, 0.4),
-    ('submission_type', 'nda', ARRAY['submission', 'nda'], 
-     ARRAY['efficacy', 'safety', 'CMC', 'labeling', 'risk-benefit'],
-     0.7, 0.9),
-    ('submission_type', 'bla', ARRAY['submission', 'bla'], 
-     ARRAY['immunogenicity', 'manufacturing', 'potency', 'comparability', 'lot consistency'],
-     0.8, 0.7),
-    ('regulatory_pathway', 'accelerated_approval', ARRAY['pathway', 'accelerated'], 
-     ARRAY['surrogate endpoint', 'post-marketing', 'confirmatory trial', 'withdrawal risk'],
-     0.75, 0.6),
-    ('regulatory_pathway', 'breakthrough_therapy', ARRAY['pathway', 'breakthrough'], 
-     ARRAY['substantial improvement', 'intensive guidance', 'rolling review', 'organizational commitment'],
-     0.7, 0.5)
-ON CONFLICT DO NOTHING;
-
--- ============================================================================
--- SECTION 11: SEED INITIAL TRANSFER TEMPLATES
--- ============================================================================
-
-INSERT INTO cortex.transfer_templates (
-    template_name, template_description,
-    source_domain_types, target_domain_types, task_types,
-    adaptation_steps, avg_success_rate, is_active
-) VALUES
-    (
-        'Oncology to Rare Oncology',
-        'Transfer knowledge from common cancers to rare/orphan oncology indications',
-        ARRAY['therapeutic_area'], ARRAY['therapeutic_area'], ARRAY['prediction', 'recommendation'],
-        '[
-            {"step": 1, "action": "extract_efficacy_patterns", "params": {"endpoint_types": ["ORR", "PFS", "OS"]}},
-            {"step": 2, "action": "adjust_sample_size_expectations", "params": {"reduction_factor": 0.5}},
-            {"step": 3, "action": "apply_rare_disease_regulatory_context", "params": {}}
-        ]'::JSONB,
-        0.75, TRUE
-    ),
-    (
-        'NDA to BLA Adaptation',
-        'Transfer NDA submission knowledge to BLA submissions with biologics adjustments',
-        ARRAY['submission_type'], ARRAY['submission_type'], ARRAY['analysis', 'recommendation'],
-        '[
-            {"step": 1, "action": "map_cmc_concepts", "params": {"add_biologics_specific": true}},
-            {"step": 2, "action": "add_immunogenicity_context", "params": {}},
-            {"step": 3, "action": "adjust_manufacturing_expectations", "params": {}}
-        ]'::JSONB,
-        0.7, TRUE
-    ),
-    (
-        'Standard to Accelerated Pathway',
-        'Adapt standard approval knowledge to accelerated approval contexts',
-        ARRAY['regulatory_pathway'], ARRAY['regulatory_pathway'], ARRAY['prediction', 'analysis'],
-        '[
-            {"step": 1, "action": "identify_surrogate_endpoints", "params": {}},
-            {"step": 2, "action": "add_post_marketing_requirements", "params": {}},
-            {"step": 3, "action": "adjust_timeline_expectations", "params": {"factor": 0.7}}
-        ]'::JSONB,
-        0.65, TRUE
-    )
-ON CONFLICT DO NOTHING;
+-- Nine domains with complexity / data-richness scores and three templates with
+-- success rates, none measured. See the note at the top of this file.
 
 -- ============================================================================
 -- SECTION 12: TRIGGERS
@@ -890,6 +825,5 @@ BEGIN
     RAISE NOTICE 'Migration 078: Cross-Domain Knowledge Transfer complete';
     RAISE NOTICE 'Tables: domain_knowledge, transfer_mappings, transfer_episodes, meta_transfer_model, domain_similarity_cache, transfer_templates';
     RAISE NOTICE 'Functions: find_transfer_candidates, execute_transfer, record_transfer_outcome, compute_domain_similarity, suggest_transfer_mapping';
-    RAISE NOTICE 'Seeded 9 initial domains and 3 transfer templates';
     RAISE NOTICE 'RLS enabled on all tables';
 END $$;

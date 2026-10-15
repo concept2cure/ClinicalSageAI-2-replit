@@ -1,0 +1,280 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps dotted section codes and annex keys (it used to return only ["see"]) 9ms
+   → tokenize is not a function
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps eSTAR CH tokens whole, without a stray "05.06" fragment 2ms
+   → tokenize is not a function
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a code at the end of a sentence or in brackets without the punctuation 2ms
+   → tokenize is not a function
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > never emits the region acronyms eu, us or jp 1ms
+   → tokenize is not a function
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > is additive: the word tokens it produced before are unchanged 2ms
+   → tokenize is not a function
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > "2.5" reaches a tool describing 2.5, and never one describing only 12.5 or 2.5.1 4ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the description (+2) outranks one matching word (+1) 8ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the name (+3) outranks a code in the description (+2) 1ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > an annex key does not match inside a longer one ("ii.6.1" is not "iii.6.1") 1ms
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 13ms
+   → "draft_clinical_summary_m2_7" not offered for its own section code: expected false to be true // Object.is equality
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 4ms
+   → "draft_nonclinical_summaries_m2_6" not offered for its own section code: expected false to be true // Object.is equality
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 20ms
+   → "get_csr_template" not offered for its own section code: expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > every expected tool is in the launch-scoped pool (so the cases cannot pass vacuously) 0ms
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 2ms
+   → "draft_clinical_summary_m2_7" not offered for its own section code: expected false to be true // Object.is equality
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 2ms
+   → "draft_nonclinical_summaries_m2_6" not offered for its own section code: expected false to be true // Object.is equality
+ × server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 2ms
+   → "get_csr_template" not offered for its own section code: expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps dotted section codes and annex keys (it used to return only ["see"])
+TypeError: tokenize is not a function
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:25:19
+     23| describe('tokenize — section codes, annex keys and eSTAR CH tokens', (…
+     24|   it('keeps dotted section codes and annex keys (it used to return onl…
+     25|     const terms = tokenize('see 2.7.3 and II.6.1');
+       |                   ^
+     26|     expect(terms).toContain('see');
+     27|     expect(terms).toContain('2.7.3');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps eSTAR CH tokens whole, without a stray "05.06" fragment
+TypeError: tokenize is not a function
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:32:19
+     30|
+     31|   it('keeps eSTAR CH tokens whole, without a stray "05.06" fragment', …
+     32|     const terms = tokenize('what goes in CH3.05.06 of the eSTAR');
+       |                   ^
+     33|     expect(terms).toContain('ch3.05.06');
+     34|     expect(terms).not.toContain('05.06');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a code at the end of a sentence or in brackets without the punctuation
+TypeError: tokenize is not a function
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:38:12
+     36|
+     37|   it('takes a code at the end of a sentence or in brackets without the…
+     38|     expect(tokenize('Draft section 5.3.5.3.')).toContain('5.3.5.3');
+       |            ^
+     39|     expect(tokenize('the summary (2.7.4), please')).toContain('2.7.4');
+     40|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > never emits the region acronyms eu, us or jp
+TypeError: tokenize is not a function
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:43:19
+     41|
+     42|   it('never emits the region acronyms eu, us or jp', () => {
+     43|     const terms = tokenize('compare the EU, US and JP filings for us');
+       |                   ^
+     44|     for (const region of ['eu', 'us', 'jp']) expect(terms).not.toConta…
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > is additive: the word tokens it produced before are unchanged
+TypeError: tokenize is not a function
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:48:12
+     46|
+     47|   it('is additive: the word tokens it produced before are unchanged', …
+     48|     expect(tokenize('summary of clinical efficacy for the NDA')).toEqu…
+       |            ^
+     49|       expect.arrayContaining(['summary', 'clinical', 'efficacy', 'nda'…
+     50|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > "2.5" reaches a tool describing 2.5, and never one describing only 12.5 or 2.5.1
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:68:44
+     66|     ];
+     67|     const chosen = pick(pool, '2.5', 10);
+     68|     expect(chosen.has('section_two_five')).toBe(true);
+       |                                            ^
+     69|     expect(chosen.has('section_twelve_five')).toBe(false);
+     70|     expect(chosen.has('section_two_five_one')).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the description (+2) outranks one matching word (+1)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:80:37
+     78|     ];
+     79|     const chosen = pick(pool, 'efficacy 2.7.3', 1);
+     80|     expect(chosen.has('code_tool')).toBe(true);
+       |                                     ^
+     81|     expect(chosen.has('word_tool')).toBe(false);
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the name (+3) outranks a code in the description (+2)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:91:41
+     89|     ];
+     90|     const chosen = pick(pool, '2.7.3', 1);
+     91|     expect(chosen.has('section_2.7.3')).toBe(true);
+       |                                         ^
+     92|   });
+     93|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'"
+AssertionError: "draft_clinical_summary_m2_7" not offered for its own section code: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:119:79
+    117|   it.each(ROUTING)('offers "$expect" for: "$prompt"', ({ prompt, expec…
+    118|     const names = new Set(selectToolsForTurn(ALL_ANA_TOOLS, prompt, { …
+    119|     expect(names.has(tool), `"${tool}" not offered for its own section…
+       |                                                                               ^
+    120|   });
+    121| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'"
+AssertionError: "draft_nonclinical_summaries_m2_6" not offered for its own section code: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:119:79
+    117|   it.each(ROUTING)('offers "$expect" for: "$prompt"', ({ prompt, expec…
+    118|     const names = new Set(selectToolsForTurn(ALL_ANA_TOOLS, prompt, { …
+    119|     expect(names.has(tool), `"${tool}" not offered for its own section…
+       |                                                                               ^
+    120|   });
+    121| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'"
+AssertionError: "get_csr_template" not offered for its own section code: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:119:79
+    117|   it.each(ROUTING)('offers "$expect" for: "$prompt"', ({ prompt, expec…
+    118|     const names = new Set(selectToolsForTurn(ALL_ANA_TOOLS, prompt, { …
+    119|     expect(names.has(tool), `"${tool}" not offered for its own section…
+       |                                                                               ^
+    120|   });
+    121| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'"
+AssertionError: "draft_clinical_summary_m2_7" not offered for its own section code: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:135:79
+    133|       selectToolsForTurn(POOL, prompt, { maxTools: 50, pinned: [...SEL…
+    134|     );
+    135|     expect(names.has(tool), `"${tool}" not offered for its own section…
+       |                                                                               ^
+    136|   });
+    137| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'"
+AssertionError: "draft_nonclinical_summaries_m2_6" not offered for its own section code: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:135:79
+    133|       selectToolsForTurn(POOL, prompt, { maxTools: 50, pinned: [...SEL…
+    134|     );
+    135|     expect(names.has(tool), `"${tool}" not offered for its own section…
+       |                                                                               ^
+    136|   });
+    137| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'"
+AssertionError: "get_csr_template" not offered for its own section code: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/tool-selection-tokenize.test.ts:135:79
+    133|       selectToolsForTurn(POOL, prompt, { maxTools: 50, pinned: [...SEL…
+    134|     );
+    135|     expect(names.has(tool), `"${tool}" not offered for its own section…
+       |                                                                               ^
+    136|   });
+    137| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 8 passed (22)
+   Start at  03:09:02
+   Duration  4.15s (transform 2.99s, setup 217ms, import 3.31s, tests 106ms, environment 0ms)
+

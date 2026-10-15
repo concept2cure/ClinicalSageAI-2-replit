@@ -1,0 +1,203 @@
+# g-rmf-afap-policy fix round 1 — RED against the round-0 implementation (working copy before the round-1 fixes), 2026-10-05T03:04:10Z
+# Command: npx vitest run server/services/market-specs/__tests__/risk-management-structure.test.ts server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts --reporter=verbose
+# The 7 failures are the 7 tests added in round 1 for the review's issues (pharmaceutical scope, cost-only false positive, negation after ALARP, negation-window false negative, OTHER economic permission, FDA basis note, device-scoped EU statement).
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > has the core RMF sections with reviewer questions 9ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > asks about pre-defined acceptability criteria and foreseeable misuse 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > assesses completeness deterministically 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > looks up a section 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > EU MDR and EU IVDR require AFAP with no economic justification, citing Annex I §2 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA follows the manufacturer-defined ISO 14971:2019 criteria (clauses 4.2 and 4.4) 0ms
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > OTHER is not modelled and says so, asserting no economic permission it does not model 7ms
+   → expected true to be null
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA basis says ISO 14971:2019 leaves economic considerations to the manufacturer 1ms
+   → expected 'Clause 4.2: top management defines th…' to match /silent on economic considerations[^.…/i
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > the EU statement is scoped to devices 1ms
+   → expected 'EU MDR/IVDR: reduce every risk as far…' to match /^For EU devices \(MDR\/IVDR\)…/IVDR\): 
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > every basis is well formed and none is presented as checked regulator text 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > is exported from the default export 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP with a cost justification for the EU 2ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags the spelled-out phrase once, not again as "reasonably practicable" 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags "reasonably practicable" on its own 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags economic or disproportionate stopping rules near residual risk 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag AFAP language that rules economics out 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag the EU policy statement itself 0ms
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag a cost stated as a fact, with no stopping or justification cue 3ms
+   → expected [ { …(4) } ] to deeply equal []
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag ALARP that the sentence says was not applied 1ms
+   → expected [ { rule: 'alarp', …(3) } ] to deeply equal []
+ × server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP used as a criterion even when a negation sits earlier in the sentence 1ms
+   → expected [] to deeply equal [ 'alarp' ]
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for FDA and OTHER, where ISO 14971:2019 leaves the criteria to the manufacturer 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for empty input 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > offers AFAP and no ALARP option 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > relabels the stale "ISO 14971 Annex D" option to ISO/TR 24971:2020, keeping its stored value 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > does not claim ISO 14971:2019 requires ALARP, and carries the EU policy text 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > keeps the alarp_demonstration field id but relabels it, and its issue check, without ALARP 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > raises a critical regulatory_alignment finding for an EU program stating ALARP or cost 3ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > flags a legacy ich_q9_alarp acceptability criterion for an EU program 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU finding for a US-only program, or for clean AFAP text 0ms
+ × server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU device finding for a pharmaceutical programme, whose RMF is not under MDR/IVDR 5ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > no auditor text says ALARP is central to EU MDR or justifies stopping on cost-benefit 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > OTHER is not modelled and says so, asserting no economic permission it does not model
+AssertionError: expected true to be null
+
+- Expected:
+null
+
++ Received:
+true
+
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:70:46
+     68|     const p = riskAcceptabilityPolicy('OTHER');
+     69|     expect(p.modelled).toBe(false);
+     70|     expect(p.economicJustificationPermitted).toBeNull();
+       |                                              ^
+     71|     expect(riskAcceptabilityPolicy('EU_MDR').modelled).toBe(true);
+     72|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA basis says ISO 14971:2019 leaves economic considerations to the manufacturer
+AssertionError: expected 'Clause 4.2: top management defines th…' to match /silent on economic considerations[^.…/i
+
+- Expected:
+/silent on economic considerations[^.]*manufacturer/i
+
++ Received:
+"Clause 4.2: top management defines the policy for establishing criteria for risk acceptability. Clause 4.4: the risk management plan includes those criteria. Clause 7.4 is the benefit-risk analysis for a residual risk not judged acceptable by them. ISO 14971:2019 does not use ALARP; the former Annex D material is in ISO/TR 24971:2020. Not checked against the ISO text. FDA recognises ISO 14971:2019 as a consensus standard (recall)."
+
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:76:56
+     74|   it('FDA basis says ISO 14971:2019 leaves economic considerations to …
+     75|     const p = riskAcceptabilityPolicy('FDA');
+     76|     expect(p.basis.map((b) => b.note ?? '').join(' ')).toMatch(/silent…
+       |                                                        ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > the EU statement is scoped to devices
+AssertionError: expected 'EU MDR/IVDR: reduce every risk as far…' to match /^For EU devices \(MDR\/IVDR\)…/IVDR\): 
+
+- Expected:
+/^For EU devices \(MDR\/IVDR\): /
+
++ Received:
+"EU MDR/IVDR: reduce every risk as far as possible (AFAP) without adversely affecting the benefit-risk ratio, so that each residual risk and the overall residual risk are acceptable when weighed against the benefits. Cost or economic practicability is not a permitted reason to stop risk reduction."
+
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:80:57
+     78|
+     79|   it('the EU statement is scoped to devices', () => {
+     80|     expect(riskAcceptabilityPolicy('EU_MDR').statement).toMatch(/^For …
+       |                                                         ^
+     81|   });
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag a cost stated as a fact, with no stopping or justification cue
+AssertionError: expected [ { …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "index": 38,
++     "match": "cost",
++     "message": "Cites cost or economic practicability in a statement about risk. The EU does not permit economic considerations as a reason to stop risk reduction.",
++     "rule": "economic-justification",
++   },
++ ]
+
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:139:113
+    137|
+    138|   it('does not flag a cost stated as a fact, with no stopping or justi…
+    139|     expect(checkRmfAcceptabilityLanguage('The risk control was impleme…
+       |                                                                                                                 ^
+    140|   });
+    141|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag ALARP that the sentence says was not applied
+AssertionError: expected [ { rule: 'alarp', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "index": 0,
++     "match": "ALARP",
++     "message": "States the ALARP principle. The EU requires risks to be reduced as far as possible (AFAP), not as low as reasonably practicable.",
++     "rule": "alarp",
++   },
++ ]
+
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:143:89
+    141|
+    142|   it('does not flag ALARP that the sentence says was not applied', () …
+    143|     expect(checkRmfAcceptabilityLanguage('ALARP was not applied; AFAP …
+       |                                                                                         ^
+    144|     expect(checkRmfAcceptabilityLanguage('The ALARP principle is not u…
+    145|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP used as a criterion even when a negation sits earlier in the sentence
+AssertionError: expected [] to deeply equal [ 'alarp' ]
+
+- Expected
++ Received
+
+- [
+-   "alarp",
+- ]
++ []
+
+ ❯ server/services/market-specs/__tests__/risk-management-structure.test.ts:148:114
+    146|
+    147|   it('flags ALARP used as a criterion even when a negation sits earlie…
+    148|     expect(checkRmfAcceptabilityLanguage('Risks are not acceptable unl…
+       |                                                                                                                  ^
+    149|   });
+    150|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU device finding for a pharmaceutical programme, whose RMF is not under MDR/IVDR
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts:120:98
+    118|   it('does not raise the EU device finding for a pharmaceutical progra…
+    119|     const answers = { ...alarpCost, target_markets: ['eu'], alarp_demo…
+    120|     expect(run({ ...answers, product_category: 'pharmaceutical' }).som…
+       |                                                                                                  ^
+    121|     // Device categories, and an unanswered category, stay in scope.
+    122|     for (const product_category of ['medical_device', 'samd', 'combina…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 24 passed (31)
+   Start at  03:04:02
+   Duration  726ms (transform 445ms, setup 217ms, import 306ms, tests 56ms, environment 0ms)
+

@@ -1,0 +1,337 @@
+# CHECKS for task B (anchored proposal as tracked redline): typecheck, eslint on every changed/created file, the warning ratchet, and the neighbouring suites
+
+## 1. npx tsc --noEmit -p tsconfig.json
+# Exit 2, and every error is in a file this task did not create or edit: server/services/authoring/__tests__/authoring-read-fixture.ts is an untracked file another agent is writing concurrently in the same tree (task A, server read tools). Zero errors in client/ or in any file listed below.
+server/services/authoring/__tests__/authoring-read-fixture.ts(228,5): error TS2322: Type '({ s: FakeSection; d?: undefined; } | { s: FakeSection; d: FakeDoc; } | null)[]' is not assignable to type 'Row[]'.
+server/services/authoring/__tests__/authoring-read-fixture.ts(232,25): error TS2677: A type predicate's type must be assignable to its parameter's type.
+tsc exit 2
+# errors under client/: 0
+
+## 2. npx eslint on the 5 files (suggestions.ts, RichSectionEditor.tsx, DocumentWorkbench.tsx, __tests__/suggestionsPropose.test.tsx, __tests__/editorBridgePropose.test.tsx)
+# 0 errors. Every warning is on one of the three tracked files and pre-exists (section 3: no file changed its warning count since HEAD); the two new test files report nothing.
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+   293:8   warning  Function 'describeAuditMetadata' has a complexity of 36. Maximum allowed is 15                                                      complexity
+   776:8   warning  Function 'DocumentWorkbench' has too many lines (3759). Maximum allowed is 100                                                      max-lines-per-function
+   776:8   warning  Function 'DocumentWorkbench' has a complexity of 283. Maximum allowed is 15                                                         complexity
+   781:1   warning  File has too many lines (4329). Maximum allowed is 500                                                                              max-lines
+  1529:26  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1551:16  warning  Arrow function has a complexity of 18. Maximum allowed is 15                                                                        complexity
+  2288:50  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  2344:55  warning  Async arrow function has a complexity of 30. Maximum allowed is 15                                                                  complexity
+  2495:5   warning  React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  2853:43  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  3137:7   warning  'queueMicrotask' is not defined                                                                                                     no-undef
+  4467:39  warning  Arrow function has a complexity of 16. Maximum allowed is 15                                                                        complexity
+  5314:28  warning  Arrow function has too many lines (210). Maximum allowed is 100                                                                     max-lines-per-function
+  5314:28  warning  Arrow function has a complexity of 24. Maximum allowed is 15                                                                        complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+  507:3   warning  Function 'RichSectionEditor' has too many lines (1790). Maximum allowed is 100  max-lines-per-function
+  507:3   warning  Function 'RichSectionEditor' has a complexity of 173. Maximum allowed is 15     complexity
+  962:1   warning  File has too many lines (2034). Maximum allowed is 500                          max-lines
+  969:19  warning  The value assigned to 'drift' is not used in subsequent statements              no-useless-assignment
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/suggestions.ts
+   753:8   warning  Function 'rememberAcceptedAuthor' has too many parameters (6). Maximum allowed is 5  max-params
+   853:1   warning  File has too many lines (856). Maximum allowed is 500                                max-lines
+  1094:3   warning  Method 'addProseMirrorPlugins' has too many lines (104). Maximum allowed is 100      max-lines-per-function
+  1111:9   warning  Method 'appendTransaction' has a complexity of 17. Maximum allowed is 15             complexity
+  1172:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+  1178:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                               max-depth
+  1183:23  warning  Blocks are nested too deeply (7). Maximum allowed is 4                               max-depth
+  1198:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+
+✖ 26 problems (0 errors, 26 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+eslint exit 0
+
+## 3. node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD --gate
+[ci:eslint-warning-ratchet] --since HEAD (d10de752c) -- 3 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+ratchet exit 0
+
+## 4. Neighbouring suites
+# npx vitest run client/src/concept2cure/v2/editor/__tests__ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx client/src/concept2cure/v2/__tests__/documentCanvas client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts client/src/concept2cure/v2/__tests__/untrackedContentReplace.test.ts client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx
+# 24 files, 270 tests, all pass. Vitest exits 1 on ONE unhandled error, 'target.getClientRects is not a function', from conversationThreadCanvas.test.tsx (that file installs no getClientRects polyfill for jsdom). It PRE-EXISTS: the same file run with suggestions.ts, RichSectionEditor.tsx and DocumentWorkbench.tsx swapped back to HEAD shows the same error (excerpt at the end). Not fixed here: that test file is outside this task's edit list.
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the class namespace is its own > shares no class name with the Design Controls surface, whose stylesheet also owns a “.dc” family 97ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 179ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > a turn without a document gets no canvas 41ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > finds the document in a rehydrated turn’s tool trace, and never in prose 4ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > renders the record: title, type, project name and phase, provenance, first section, count, actions 266ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Show all" reveals every section, with an honest "Not drafted yet" for an empty one 148ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > a failed read is an error with a retry, never an empty document 60ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > names what the expand control does and what it controls, and moves focus into the region it opens 269ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place 162ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape collapses from anywhere in the expanded region — including with focus left on the body — and returns focus to the header control 240ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > says "Not filed under a program" when the draft carried no program 46ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Edit in Authoring" carries the document identity and the return route on the editor channel 23ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 376ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends 83ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape with a workbench rail open closes the rail first, then the canvas 625ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > offers no insert while no document is open 340ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > Open full editor mounts DocumentWorkbench for the same docId without navigating; Back collapses and keeps state; Escape collapses 929ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > offers exactly one way back while expanded 463ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > does not trap: every control in the collapsed card is reachable, and the card does not hold focus 35ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > File to vault: labelled, modal, focus trapped while open, focus restored on close 98ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > Assign review: labelled, modal, focus trapped while open, focus restored on close 60ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every transition and animation is at most 200ms and eases out — no spring, no bounce, no overshoot 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every animation and transition it declares is removed under prefers-reduced-motion 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never exclaims and never cheers 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never hedges in a user-facing string 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — acts the server will refuse > disables File to vault and Assign review with the reason as described text 26ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — acts the server will refuse > leaves them enabled when the document read returns no access 20ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > Escape inside the editor document or a text control belongs to it, not to the canvas 309ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > an ask from inside the workbench lands in the host composer, not a second AnA pane 476ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — accessibility smoke > is a labelled region whose controls have names, and the dialogs it opens are modal and labelled 63ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — a failed program read says so (GE-H-2, 2026-09-28) > after a 500 it does not claim the program is still being read 18ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — a failed program read says so (GE-H-2, 2026-09-28) > after a network failure it does not claim the program is still being read 19ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record 941ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > when the editor closes, the offer reopens it: the suggestion still lands where the person sees it 1134ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > reads a stored section’s tables and figures, in order 21ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > does not count an uncaptioned table, or a figure inside a cell 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > numbers tables and figures as two separate sequences 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > reading the document’s captioned objects > offers as reference targets only the objects that carry an identity 0ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA knows the document open beside the conversation (2026-10-01) > sends the open document and section with the turn, and nothing once the editor closes 398ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > a stored caption survives the editor > round-trips as a <caption>, and is NOT turned into a table row 360ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > stores the source’s identity and the pinpoint, not the number on screen 646ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > a stored caption survives the editor > keeps the section RICH-EDITABLE — the fidelity gate is not tripped by it 119ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > records the section→source link the platform already keeps 321ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > draws the number beside the caption, and stores no ordinal 100ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01) > names the frozen document on the turn but offers no insert into it 424ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > offers the document’s sources to pick from, and no field to type a number in 133ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > says so plainly when the document has no sources yet 133ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > continues the count from the sections above this one 103ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > inserting a citation > hides the capability entirely when the host supplies no library 117ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > numbers by position, in reading order 51ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > A CITATION APPEARING EARLIER RENUMBERS THIS ONE, with the stored content untouched 73ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > never shows the cached source name in place of the number 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > numbering in the canvas > says an unknown source is unknown, in place, and gives it no number 62ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the “Cite” label that cited nothing > the assistant control no longer claims to cite 101ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the “Cite” label that cited nothing > asks for a source instead of claiming to have cited one 81ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > numbering in the canvas > A TABLE ADDED EARLIER RENUMBERS THIS SECTION, with its stored content untouched 228ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the fidelity gate > still allows rich editing of a section that holds a citation 46ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > stores the words and mints an identity, and never a number 459ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citationsInCanvas.test.tsx > the fidelity gate > round-trips through parse, serialization and the governed save path 195ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > offers no way to type a number 166ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > captions a SELECTED FIGURE, keeping its identity across a rewording 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > writing a caption from the ribbon > changes nothing when the caret is on neither a table nor a figure 14ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a section not yet drafted is one ask away (2026-10-01) > opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section 1060ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > prints the table’s CURRENT number, not the cached one 67ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates the document from the draft, split at its headings, and opens it beside the conversation 259ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > follows the table when one is added above it, with no stored change 122ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > SAYS SO when the table it points at is gone 46ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > referencing a table from the canvas > offers this document’s tables and figures in the reference picker 137ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/captionsInCanvas.test.tsx > the order key > changes when a caption changes, so references repaint then and not per keystroke 25ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > opens the document already made from that turn instead of creating a second copy 321ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates nothing when it cannot check for an earlier copy, and says so 158ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed 23ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > activates on click, which is what Enter and Space dispatch 542ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > reports its pressed state as false rather than omitting it 112ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the ribbon is operable without a mouse > names its shortcut so it is discoverable 114ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the toolbar is not rebuilt on every render > defines its button at module scope, not inside the render body 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > the footer counts what is actually there > counts the source text when the fidelity gate drops to raw source 23ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > refuses in source mode, where the editor is not the document 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > refuses on a frozen section, whose save the server would refuse anyway 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > stores the target’s identity, not the number on screen 592ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > an AI draft is never reported as inserted when it is discarded > still inserts, and reports so, on an editable rich section 90ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses stale when the section was saved after AnA read it, and changes nothing 358ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > offers the document’s sections to pick from, by their current codes 141ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > redlines the open section when the base is the section as loaded 232ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > only a toggle reports a pressed state > leaves aria-pressed off one-shot commands 171ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > inserting a cross-reference > hides the capability entirely when the host supplies no directory 94ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > shows what the target is called NOW, never the cached number 72ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richSectionEditorOperable.test.tsx > only a toggle reports a pressed state > reports the header row state and leaves table commands untoggled 263ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > passes the editor’s own refusal through, and keeps the existing fields 173ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > RENUMBERING THE TARGET REPAINTS THE REFERENCE, with the stored content untouched 119ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > resolution in the canvas > says a dangling reference is dangling, in place 75ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses not-editable on a frozen document 139ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > the fidelity gate > still allows rich editing of a section that holds a reference 46ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx > the fidelity gate > round-trips through parse, serialization and the governed save path 295ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted 90ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back 15ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept all, then Undo: nothing returns to pending 20ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > an AnA draft inserted and accepted in this session is not removed by Undo 21ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > CONTROL: ordinary typing is still undoable 14ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an accepted text present, unmarked, in the document — across a formatting split 22ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is back under a pending insertion mark, and its author with it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is struck by a pending deletion 7ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text the document no longer holds 11ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an author while any one of their accepted texts survives 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > does not match a text across a paragraph boundary 18ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > names the document type in the type line 282ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after Accept leaves the decision, the canvas and the save in agreement 364ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > attributes nothing to AnA once the accepted text is gone from the section 81ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > answers the same whichever list the host reads first 76ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > leaves the selected text as AnA’s tracked deletion, then the insertion 180ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the text of every paragraph a selection spans, joining none of them 30ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > withdraws a pending insertion inside the selection, as a hand deletion does 23ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > a collapsed caret still inserts with nothing struck (the shipped behaviour) 71ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > strikes the single match and inserts the replacement after it, both AnA’s 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > reads the replacement as the markdown subset insertSuggestedContent reads 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > refuses not-found when the quote is not in the section, and changes nothing 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > refuses ambiguous when the quote occurs twice, and changes nothing 13ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > says an assumed module was assumed, and a chosen one plainly 104ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > outlines every section, drafted or not, with the count drafted 80ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > shows the section chosen in the outline 129ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > lets a suffix pick the occurrence it follows 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > lets a prefix pick the occurrence it precedes, across a paragraph break 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > an empty replacement is a deletion proposal only 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > refuses rather than restrike text that is already a pending suggestion 21ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > refuses not-editable on an editor that is not editable 12ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — keeps up while AnA works > re-reads on a new refreshKey and marks the sections whose text changed 114ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — keeps up while AnA works > a quiet re-read that fails keeps the document on screen and says the refresh failed 124ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > redlines an editable rich section 184ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable on a frozen section 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable in source mode, where the editor is not the document 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML saved under a .pdf name and served as text/html; it downloads it and says why 277ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML the server typed application/pdf 58ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — the failure this exists to end > the drafted table does NOT arrive as pipe characters in a paragraph 123ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > produces heading / paragraph / table / list nodes in document order 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > a markdown table becomes a real table node with a header row 36ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > insertSuggestedContent renders data-source-record on every insertion it creates 109ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > survives a save and reload: the HTML parses back to the same turn record 50ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > getHTML → setContent restores the attribute on the mark 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > frames %PDF bytes as application/pdf even when the server typed them text/html 52ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > still opens a real PDF in the viewer, with the served hash 62ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > ATX headings become headings, clamped to the schema levels (1–3) 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > bullet and ordered lists become list nodes with one item per line 49ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > inline **bold** and *italic* become marks, not literal asterisks 24ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — real structure > plain prose keeps today’s behaviour: blank lines split, single newlines collapse 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > opens a real PDF the server typed as octet-stream under a name without .pdf — the bytes decide 62ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > downloads a file that is not a PDF and does not claim to be, as before 37ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > parses stored section HTML written by an earlier session 11ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > a stored AnA insertion from before the attribute existed parses as sourceRecord null, never a guess 26ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > collectSuggestions keeps drafts from different turns apart > does NOT merge two adjacent AnA insertions from different turn records 16ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > collectSuggestions keeps drafts from different turns apart > does NOT merge an AnA insertion that names a turn with one that names none 28ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > collectSuggestions keeps drafts from different turns apart > does merge adjacent spans of the same turn into one suggestion 13ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > collectSuggestions keeps drafts from different turns apart > does merge same-turn spans parsed from stored HTML 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > every inserted text node is a pending insertion attributed to AnA 39ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > Accept all settles the text and keeps the structure 44ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > Reject all removes the draft including its structural husks 29ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > decisionOf copies sourceRecord from the range 25ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > decisionOf keeps null as null — an unknown turn is not invented 0ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > resolving one suggestion in the editor hands the host its turn record 38ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > "Reject all" hands the host one decision per turn, each naming its own 32ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > identical drafts from two turns in one minute are two changes 1ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > a human insertion names no turn record > typed text is tracked as the human author with sourceRecord null 30ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > a human insertion names no turn record > a human typing after an AnA draft that is resolved keeps no turn record 22ms
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > a human insertion names no turn record > a human typing at the end of a pending AnA draft is their own change, naming no turn 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > one suggestion can be rejected on its own without disturbing the rest 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — still a reviewable suggestion > the drafted structure and its attribution survive save + reload as HTML 89ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — conservative fallbacks (never lose text) > a pipe table with no separator row stays prose, pipes intact 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — conservative fallbacks (never lose text) > an unsupported construct is kept verbatim rather than dropped 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — conservative fallbacks (never lose text) > a ragged table is squared up rather than truncated 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts > AnA draft conversion — conservative fallbacks (never lose text) > empty or whitespace-only drafts are refused, as before 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > renders sanitized prose and keeps a governed figure, resolved to displayable bytes 51ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > states a failed reference instead of leaving a broken glyph 21ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > refuses a reference OUTSIDE the governed images route — no authenticated fetch fires 14ms
+ ✓ client/src/concept2cure/v2/__tests__/untrackedContentReplace.test.ts > setContentUntracked > puts the stored section back as it is: settled text stays settled, AnA’s suggestion stays AnA’s 104ms
+ ✓ client/src/concept2cure/v2/__tests__/untrackedContentReplace.test.ts > setContentUntracked > leaves tracking on: what the person types next is theirs 58ms
+ ✓ client/src/concept2cure/v2/__tests__/untrackedContentReplace.test.ts > RichSectionEditor replaces content only untracked > has no plain setContent: every wholesale replacement goes through setContentUntracked 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/../../tenant-export/full 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/%2e%2e/%2e%2e/users/me 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/..\..\tenant-export\full 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export 15ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a?download=1 26ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: https://collector.example/p.png?d=secret 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: //collector.example/p.png 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/svg+xml;base64,PHN2Zz4= 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/webp;base64,UklGRg== 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > displays an inline PNG as it is, with no request and no statement 3ms
+ ✓ client/src/concept2cure/v2/__tests__/insertReferenceText.test.tsx > insertReference > inserts a crafted vault title as the characters it contains 210ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > INCIDENT 1: a heading flattened by the pre-fix schema 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > INCIDENT 2: a caption reparented into a data cell by the pre-fix schema 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #1: an <h6> — above the schema ceiling — silently becomes a paragraph 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #2: a definition list — no schema node — is flagged 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must catch (text is identical; only structure drifts) > LIVE #3: a header row written with <td> in <thead> is demoted to data 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 1 fixed: an <h4> round-trips under the shipped schema 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > INCIDENT 2 fixed: a captioned table stays in rich mode 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > div→p and b→strong do not trip the gate 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > the execCommand provenance strip (1 div, 3 spans → paragraphs) is not refused 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — must NOT flag (the fix, and legitimate normalization) > a colspan cell counts as ONE declared cell on both sides — merged tables are not refused 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a ragged table (a short row) is refused — the editor would pad it 28ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a rowspan that overflows the table is refused — the editor would clamp it 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a well-formed rectangular table is NOT refused — fixTables leaves it alone 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — what the editor will ACTUALLY hold (fixTables) > a merged (colspan) table is NOT refused — declared cells agree, no fabrication 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a srcless <img> (its alt caption lost) is flagged: any <img> is counted 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/structuralFidelity.test.ts > structural fidelity — a dropped image is caught > a normal img[src] still round-trips — not a false positive 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anchorClickAndMarkerRoles.test.ts > a click on commented text opens its thread (A-B-2) > opens the thread the words carry 106ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anchorClickAndMarkerRoles.test.ts > a click on commented text opens its thread (A-B-2) > a click on a cross-reference inside the commented range opens it too 26ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anchorClickAndMarkerRoles.test.ts > a click on commented text opens its thread (A-B-2) > a click on plain text opens nothing and is not swallowed 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anchorClickAndMarkerRoles.test.ts > a click on commented text opens its thread (A-B-2) > with no host listener, the click is the editor’s own 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anchorClickAndMarkerRoles.test.ts > a marker that is not a link does not say it is one (A-B-3) > a cross-reference and a citation carry no link role 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > keeps the numbers the headings carry, drops the title heading, and files the opening text under the title 43ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > numbers sections in order, keeping each heading as the title, when the headings carry no numbers 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > numbers in order when two headings carry the same number 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > is one section when the draft has no headings, and splits HTML the same way as markdown 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > draftSections > splits at the top heading level present and keeps deeper headings inside their section 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > isProgramId > accepts a program UUID only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates through from-draft, recording the conversation and the turn, when no earlier copy exists 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > opens the document made from the same conversation and turn, and creates nothing 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates a new document when the same title came from another turn 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates nothing when the earlier-copy check cannot run 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > says what the server refused, and reports no document 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > reports the words the parse could not keep 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > stays quiet when the parse kept everything 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > does not cry wolf over a one-word tokenisation difference 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > reports a real loss on a long paste, where one word would be noise 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > ignores a plain-text paste, which has no structure to lose 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteFidelity.test.ts > assessPasteFidelity > is insensitive to reflowed whitespace 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor stores > keeps the source id and the pinpoint, and no number at all 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor stores > round-trips through serialization without losing the identity 21ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor stores > caches the source’s NAME as the element’s text, never the number 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor stores > does not capture an ordinary link 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > numbers by position in the document, not by position in the section 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > gives a source cited twice in one section ONE number 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > gives an unknown source NO number, so the list it points into has no gap 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > numbers nothing when the library is unavailable, rather than guessing 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > what the editor shows > changes its order key only when a citation moves, is added or is removed 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > reading the sections above this one > lists the source ids a stored section cites, in reading order 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > reading the sections above this one > returns nothing for content with no citations, and for empty content 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/citations.test.ts > reading the sections above this one > is not fooled by prose that merely looks like markup 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition list 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition term 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition detail 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > table caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > still refuses to treat a tag-shaped prose token as markup 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > does not report a glossary as faithfully editable in rich mode 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > reads a glossary as the words a reviewer sees, not as its tags 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still passes content the editor genuinely represents 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still catches real text loss 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the two allowlists agree > the server parser recognises exactly what the client does 3ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > is stable for the same change — the id must survive a round trip 2ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates two runs by the same author in the same minute 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates an insertion from a deletion of identical text 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates the same text proposed by different authors 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates the same text proposed in different minutes 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > carries its kind in the clear, so a row is legible without a join 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > tolerates a suggestion with no recorded author or timestamp 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > carries the text, because accepting a change destroys it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > records a rejection, which changes no text and is otherwise unrecorded 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > keeps the proposer distinct from the decider 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > never lets a failing recorder undo the edit the reviewer just made 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > hands the host a complete decision 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > is a no-op when no host is listening 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > reads a rejection back as a sentence naming what was refused 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > surfaces the model behind an accepted AI draft, and that it was edited 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > says so when an accepted draft names no generating model 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > leaves unrecognised metadata alone rather than dumping a payload 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > reads a bulk rejection back with its count and a sample 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > admits when the stored summary was capped 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > is null when the row carries no verdict or no count 0ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+ Test Files  24 passed (24)
+      Tests  270 passed (270)
+     Errors  1 error
+
+## 4a. conversationThreadCanvas.test.tsx against HEAD's three editor files (swapped in, run, restored, cmp-verified)
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+TypeError: target.getClientRects is not a function
+This error originated in "client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+      Tests  18 passed (18)
+     Errors  1 error

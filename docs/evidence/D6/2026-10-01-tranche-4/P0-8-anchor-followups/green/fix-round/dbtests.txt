@@ -1,0 +1,220 @@
+# 2026-10-01T15:53:10Z, fix round final code. PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1). The anchor, grants and verifier suites, and the purge-door neighbour. AUDIT_ANCHOR_BUCKET unset outside the suites that inject a store.
+$ TEST_DATABASE_URL=...c2c_testdb APP_DATABASE_URL=app_service@...c2c_testdb RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts server/services/audit/__tests__/chain-anchor.dbtest.ts tests/db/append-only-store-grants.dbtest.ts tests/db/licensing-history.dbtest.ts tests/db/actor-names.dbtest.ts tests/db/compliance-reports.dbtest.ts tests/db/turn-record-purge-door.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:53:13.803Z","pid":10864,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT (INSERT only where the store's ceiling allows it), and no UPDATE, DELETE or TRUNCATE, on every append-only table present 13ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 28ms
+{"level":30,"time":"2026-10-01T15:53:13.805Z","pid":10864,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:53:13.805Z","pid":10864,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 91ms
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 40ms
+   → expected [Function] to throw error matching /not pending deletion \(status active\)/ but got 'function public.purge_tenant_turn_rec…'
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 8ms
+   → function "public.purge_tenant_turn_records(integer)" does not exist
+ × tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 890ms
+   → This database has ana_turn_records and ana_record_blobs but not public.purge_tenant_turn_records; run node scripts/db/deploy-migrate.mjs. Nothing was purged.
+ × tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 13ms
+   → function public.purge_tenant_turn_records(integer) does not exist
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the stores exist on this database > every append-only store this file names is present (a missing one would make the rest vacuous) 2ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT 6ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not 2ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store 36ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the governed revocation statement still runs (its columns only) 4ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back 331ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied 31ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name 60ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store 2ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger 15ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row 6ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501) 3ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the archive door still deletes for app_service, and records the batch in its ledger 6ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store 18ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 32ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 177ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 48ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 24ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 28ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 15ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 32ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 15ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot turn a truncated head into "archived" 40ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 9. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot turn a truncated head into "archived" 27ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with a cutoff in the hot window (the reported forgery: cutoff 2100-01-01) cannot excuse rows removed before an intact head 33ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 10. a forged ledger row with an archived_at in the future, its cutoff 24 months before it cannot excuse rows removed before an intact head 28ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 11. a ledger row that keeps the door's own rules still never excuses a head inside the 24-month window 31ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the archive ledger excuses only what the archive door could have removed (DP-68) > 12. a head older than the 24-month floor, removed through the door, is archived: not tampering, not verified 28ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01) > 13. a truncated chain: the head verdict is broken for that organisation only, and the ops script exits 1 80ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the on-demand verifiers consult the anchor, or say they did not (P0-8 follow-up, 2026-10-01) > 14. no anchor store: the walk passes, and every verdict says the head was not verified against the anchor 24ms
+{"level":30,"time":"2026-10-01T15:53:18.786Z","pid":10912,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:53:18.787Z","pid":10912,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:53:18.787Z","pid":10912,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/licensing-history.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-10-01T15:53:19.004Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91500,"resourceId":"91500:dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:19.042Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91501,"resourceId":"91501:dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:19.094Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"resourceId":"dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_packaging"}
+{"level":30,"time":"2026-10-01T15:53:19.115Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91500,"resourceId":"91500:dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:19.158Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":0,"resourceId":"91500001"},"msg":"[audit-service] [AUDIT] data_modify user"}
+{"level":30,"time":"2026-10-01T15:53:19.177Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91500,"resourceId":"91500:dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:19.197Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91500,"resourceId":"91500:dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:19.230Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91501,"resourceId":"91501:dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:19.248Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91500,"resourceId":"91500:dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:19.267Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91500,"resourceId":"91500"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+{"level":30,"time":"2026-10-01T15:53:19.285Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"resourceId":"dbte_8f4muppr9xb_s"},"msg":"[audit-service] [AUDIT] data_modify module_packaging"}
+ ✓ tests/db/licensing-history.dbtest.ts > posture > the router runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope 27ms
+ ✓ tests/db/licensing-history.dbtest.ts > posture > the route's `query` is the production one (server/db.ts → db/runtime.ts), not the db.js wrapper 1ms
+ ✓ tests/db/licensing-history.dbtest.ts > posture > the seed went through the real writer: each row holds a per-tenant chain position 5ms
+ ✓ tests/db/licensing-history.dbtest.ts > what is listed > lists this run's decisions newest first, with who, where, which module and why 83ms
+ ✓ tests/db/licensing-history.dbtest.ts > what is listed > an action the route has never heard of is listed, with what it recorded 59ms
+ ✓ tests/db/licensing-history.dbtest.ts > what is listed > the estate-wide view lists every decision of this run and omits user.status_change and ungoverned rows 77ms
+ ✓ tests/db/licensing-history.dbtest.ts > pagination > total and hasMore are right on both sides of a page boundary 154ms
+ ✓ tests/db/licensing-history.dbtest.ts > pagination > the workspace total matches an independent owner-side count of the same predicate 39ms
+{"level":50,"time":"2026-10-01T15:53:19.937Z","pid":10912,"hostname":"vm","context":{"error":"audit chain: this connection is scoped to one tenant (app.rls_enforce=on without app_super_admin), so a verification of every tenant would silently check a subset. Verify one tenant ({ tenantId }) or use a super-admin scope.","stack":"Error: audit chain: this connection is scoped to one tenant (app.rls_enforce=on without app_super_admin), so a verification of every tenant would silently check a subset. Verify one tenant ({ tenantId }) or use a super-admin scope.\n    at readChainRows (/home/user/ClinicalSageAI-2-replit/server/services/audit/chain.ts:643:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at verifyAuditChain (/home/user/ClinicalSageAI-2-replit/server/services/audit/chain.ts:728:31)\n    at verifyAuditIntegrity (/home/user/ClinicalSageAI-2-replit/server/services/audit/audit-integrity-service.ts:46:17)\n    at verifyStore (/home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:392:22)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:569:23"},"msg":"[admin-licensing-history] audit integrity verification failed"}
+{"level":50,"time":"2026-10-01T15:53:19.950Z","pid":10912,"hostname":"vm","context":{"error":"audit chain: this connection is scoped to one tenant (app.rls_enforce=on without app_super_admin), so a verification of every tenant would silently check a subset. Verify one tenant ({ tenantId }) or use a super-admin scope.","stack":"Error: audit chain: this connection is scoped to one tenant (app.rls_enforce=on without app_super_admin), so a verification of every tenant would silently check a subset. Verify one tenant ({ tenantId }) or use a super-admin scope.\n    at readChainRows (/home/user/ClinicalSageAI-2-replit/server/services/audit/chain.ts:643:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at verifyAuditChain (/home/user/ClinicalSageAI-2-replit/server/services/audit/chain.ts:728:31)\n    at verifyAuditIntegrity (/home/user/ClinicalSageAI-2-replit/server/services/audit/audit-integrity-service.ts:46:17)\n    at verifyStore (/home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:392:22)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:569:23"},"msg":"[admin-licensing-history] audit integrity verification failed"}
+ ✓ tests/db/licensing-history.dbtest.ts > filters > organizationId narrows to one workspace; moduleId matches details.moduleId and the packaging record 161ms
+ ✓ tests/db/licensing-history.dbtest.ts > filters > the filter cannot widen past the connection's scope: a per-user scope sees only its own workspace 40ms
+ ✓ tests/db/licensing-history.dbtest.ts > filters > a malformed filter is refused, not silently dropped or reported as a failed read 77ms
+{"level":50,"time":"2026-10-01T15:53:20.124Z","pid":10912,"hostname":"vm","context":{"error":"audit chain: this connection is scoped to one tenant (app.rls_enforce=on without app_super_admin), so a verification of every tenant would silently check a subset. Verify one tenant ({ tenantId }) or use a super-admin scope.","stack":"Error: audit chain: this connection is scoped to one tenant (app.rls_enforce=on without app_super_admin), so a verification of every tenant would silently check a subset. Verify one tenant ({ tenantId }) or use a super-admin scope.\n    at readChainRows (/home/user/ClinicalSageAI-2-replit/server/services/audit/chain.ts:643:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at verifyAuditChain (/home/user/ClinicalSageAI-2-replit/server/services/audit/chain.ts:728:31)\n    at verifyAuditIntegrity (/home/user/ClinicalSageAI-2-replit/server/services/audit/audit-integrity-service.ts:46:17)\n    at verifyStore (/home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:392:22)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:569:23"},"msg":"[admin-licensing-history] audit integrity verification failed"}
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > rows the verifier walked are verified, unsealed on this deployment, and the walk covered every tenant 80ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > on a tenant-scoped connection the walk refuses rather than verifying a subset 15ms
+{"level":30,"time":"2026-10-01T15:53:20.250Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91502,"resourceId":"91502:dbte_8f4muppr9xb_c"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:20.250Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91502,"resourceId":"91502:dbte_8f4muppr9xb_c"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:20.250Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91502,"resourceId":"91502:dbte_8f4muppr9xb_c"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:20.250Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91502,"resourceId":"91502:dbte_8f4muppr9xb_c"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:20.250Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91502,"resourceId":"91502:dbte_8f4muppr9xb_c"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:20.250Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91502,"resourceId":"91502:dbte_8f4muppr9xb_c"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:20.250Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91502,"resourceId":"91502:dbte_8f4muppr9xb_c"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+{"level":30,"time":"2026-10-01T15:53:20.250Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91502,"resourceId":"91502:dbte_8f4muppr9xb_c"},"msg":"[audit-service] [AUDIT] data_modify module_subscription"}
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > a tampered row does not match; later rows of ITS chain cannot be proven; earlier rows and other tenants stay verified 123ms
+{"level":30,"time":"2026-10-01T15:53:20.457Z","pid":10912,"hostname":"vm","context":{"userId":91500001,"tenantId":91500,"resourceId":"91500"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > within one tenant, position is the chain order (chain_seq), not the timestamp 146ms
+{"level":50,"time":"2026-10-01T15:53:20.512Z","pid":10912,"hostname":"vm","context":{"error":"permission denied for table audit_logs","query":"SELECT a.id, a.occurred_at, a.created_at, a.tenant_id, a.user_id,\n              a.table_name, a.record_id, a.new_values, a.sha256_chain, a.hmac_seal,\n              a.chain_seq,\n              u.email AS actor_email,\n              o.name  AS organization_name,\n              am.name AS module_name,\n              COUNT(*) OVER() AS total_matching\n         FROM audit_logs a\n         LEFT JOIN users u          ON u.id = a.user_id\n         LEFT JOIN organizations o  ON o.id = a.tenant_id\n         LEFT JOIN available_modules am ON am.module_id = a.new_values->>'moduleId'\n        WHERE a.new_values->>'masterAdminAction' IS NOT NULL\n          AND a.new_values->>'masterAdminAction' <> ALL($1::text[])\n          AND ($2::int IS NULL OR a.tenant_id = $2)\n          AND ($3::text IS NULL\n               OR a.new_values->>'moduleId' = $3\n               OR (a.table_name = 'module_packaging' AND a.record_id = $3))\n        ORDER BY a.occurred_at DESC, a.id DESC\n        LIMIT $4 OFFSET $5","params":[["user.status_change","billing_alert.acknowledge"],null,"dbte_8f4muppr9xb_s",25,0]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-10-01T15:53:20.513Z","pid":10912,"hostname":"vm","context":{"error":"permission denied for table audit_logs","stack":"error: permission denied for table audit_logs\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:545:21"},"msg":"[admin-licensing-history] licensing history read failed"}
+{"level":40,"time":"2026-10-01T15:53:20.563Z","pid":10912,"hostname":"vm","context":{"op":"pool.query","caller":"server/routes/admin/licensing-history.ts:545:27","queryPreview":"SELECT a.id, a.occurred_at, a.created_at, a.tenant_id, a.user_id, a.table_name, a.record_id, a.new_values, a.sha256_chain, a.hmac_seal, a.chain_seq, u.email ...","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+{"level":50,"time":"2026-10-01T15:53:20.563Z","pid":10912,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","query":"SELECT a.id, a.occurred_at, a.created_at, a.tenant_id, a.user_id,\n              a.table_name, a.record_id, a.new_values, a.sha256_chain, a.hmac_seal,\n              a.chain_seq,\n              u.email AS actor_email,\n              o.name  AS organization_name,\n              am.name AS module_name,\n              COUNT(*) OVER() AS total_matching\n         FROM audit_logs a\n         LEFT JOIN users u          ON u.id = a.user_id\n         LEFT JOIN organizations o  ON o.id = a.tenant_id\n         LEFT JOIN available_modules am ON am.module_id = a.new_values->>'moduleId'\n        WHERE a.new_values->>'masterAdminAction' IS NOT NULL\n          AND a.new_values->>'masterAdminAction' <> ALL($1::text[])\n          AND ($2::int IS NULL OR a.tenant_id = $2)\n          AND ($3::text IS NULL\n               OR a.new_values->>'moduleId' = $3\n               OR (a.table_name = 'module_packaging' AND a.record_id = $3))\n        ORDER BY a.occurred_at DESC, a.id DESC\n        LIMIT $4 OFFSET $5","params":[["user.status_change","billing_alert.acknowledge"],null,"dbte_8f4muppr9xb_s",25,0]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-10-01T15:53:20.564Z","pid":10912,"hostname":"vm","context":{"error":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on","stack":"Error: [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on\n    at missingTenantScopeError (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:178:10)\n    at BoundPool.instrumentedQuery [as query] (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:372:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:31)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:545:27\n    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)\n    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)\n    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)\n    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)\n    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)\n    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15"},"msg":"[admin-licensing-history] licensing history read failed"}
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > a row written after the verification ran is never reported as verified by it 108ms
+ ✓ tests/db/licensing-history.dbtest.ts > a failed read > is a 500 with no entries when the store refuses the read 55ms
+ ✓ tests/db/licensing-history.dbtest.ts > a failed read > is a 500 when mounted with no tenant scope (the pool fails closed under RLS_ENFORCE=on) 6ms
+{"level":30,"time":"2026-10-01T15:53:22.433Z","pid":10935,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:53:22.434Z","pid":10935,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:53:22.434Z","pid":10935,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-reports.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 92ms
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows
+[database] Database connection successful { timestamp: '2026-10-01T15:53:23.772Z', poolSize: 1 }
+
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 57ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 25ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 24ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 24ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 33ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 32ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 26ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row 26ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not 51ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one 20ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 28ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 9ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only 25ms
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why 117ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 27ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's 28ms
+{"level":30,"time":"2026-10-01T15:53:25.670Z","pid":10953,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:53:25.672Z","pid":10953,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:53:25.672Z","pid":10953,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-names.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-10-01T15:53:26.060Z","pid":10953,"hostname":"vm","context":{"userId":3337,"tenantId":90301,"resourceId":"wo03_10953_mupprget-actor-names-record"},"msg":"[audit-service] [AUDIT] data_modify actor_names_contract"}
+ ✓ tests/db/actor-names.dbtest.ts > the audit trail after someone leaves the organization (D3) > names the person who acted, not only their id 15ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers nothing about an account that never belonged to or acted in A 3ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > answers name and email only — no credential column exists on it 4ms
+ ✓ tests/db/actor-names.dbtest.ts > the name lookup reaches nobody else (D3) > the users table itself still refuses the leaver's row to A 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold
+AssertionError: expected [Function] to throw error matching /not pending deletion \(status active\)/ but got 'function public.purge_tenant_turn_rec…'
+
+- Expected:
+/not pending deletion \(status active\)/
+
++ Received:
+"function public.purge_tenant_turn_records(unknown) does not exist"
+
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:153:63
+    151|     await recordTurn(KEEP, 'kept');
+    152|     const door = (c: PoolClient, org: number) => c.query('SELECT * FRO…
+    153|     await expect(asRuntimeRole(PLATFORM, (c) => door(c, KEEP))).reject…
+       |                                                               ^
+    154|     await expect(asRuntimeRole(TENANT, (c) => door(c, ORG))).rejects.t…
+    155|     await owner.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role
+error: function "public.purge_tenant_turn_records(integer)" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:165:22
+    163|
+    164|   it('is not executable by PUBLIC, and is owned by the NOLOGIN purger …
+    165|     const { rows } = await owner.query(
+       |                      ^
+    166|       `SELECT pg_get_userbyid(p.proowner) AS owner, p.prosecdef,
+    167|               has_function_privilege('public', p.oid, 'EXECUTE') AS pu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 132, severity: 'ERROR', code: '42883', detail: undefined, hint: undefined, position: '280', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'regproc.c', routine: 'regprocedurein' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row
+OffboardingStateError: This database has ana_turn_records and ana_record_blobs but not public.purge_tenant_turn_records; run node scripts/db/deploy-migrate.mjs. Nothing was purged.
+ ❯ eraseThroughDoor server/services/tenant/tenant-offboarding.ts:591:11
+    589|   if (!present.rows[0]?.present) return zero;
+    590|   if (!present.rows[0]?.door) {
+    591|     throw new OffboardingStateError(
+       |           ^
+    592|       door.unavailable,
+    593|       `This database has ${door.tables.join(' and ')} but not public.$…
+ ❯ deleteTenantRows server/services/tenant/tenant-offboarding.ts:654:24
+ ❯ purgeInOneTransaction server/services/tenant/tenant-offboarding.ts:734:21
+ ❯ purgeTenant server/services/tenant/tenant-offboarding.ts:799:17
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:198:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'TURN_RECORD_PURGE_UNAVAILABLE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing
+error: function public.purge_tenant_turn_records(integer) does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:226:5
+    224|     await recordTurn(ORG, 'door missing probe');
+    225|     const before = await count('ana_turn_records', ORG);
+    226|     await owner.query('ALTER FUNCTION public.purge_tenant_turn_records…
+       |     ^
+    227|     try {
+    228|       await expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 133, severity: 'ERROR', code: '42883', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_func.c', routine: 'LookupFuncWithArgs' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  4 failed | 72 passed (76)
+   Start at  15:53:11
+   Duration  15.12s (transform 2.33s, setup 269ms, import 5.61s, tests 8.04s, environment 1ms)
+

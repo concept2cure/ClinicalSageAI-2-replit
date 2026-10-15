@@ -1,0 +1,8 @@
+── 21c. Placing Module 3 again into the SAME sequence updates its leaves — never a second copy
+   ✓ re-placed: still 21 Module 3 leaves in sequence 50, each updated in place
+
+── 21d. A CMC amendment: sequence 0002 receives Module 3 as replace of what 0001 filed
+   ✓ sequence 0002 carries the Module 3 leaves as replace=21
+
+── 22. Governed change marked sections stale → gate refuses again (fail closed end-to-end)
+════ RESULT: 129 passed, 0 failed ════

@@ -1,0 +1,17 @@
+Mutant T05-entries-still-short: a result that returned records is named as returning nothing
+
+--- server/services/ana/tool-outcome.ts
+- if (lists.anyEntries) return null;
++ 
+
+Tests run: tests/services/tool-outcome.test.ts
+Result: KILLED
+
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a result that returned something is not a shortfall 6ms
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a CMC lookup that found nothing indexed says so as found: 0 (cmc-knowledge-tools.ts) 1ms
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > a vault passage search that matched nothing (document-passage-tools.ts) 1ms
+ × tests/services/tool-outcome.test.ts > what a tool result says about itself > records under a field this reader does not know still count as returned 1ms
+ × tests/services/tool-outcome.test.ts > the note the model reads after the round > names each step that returned nothing usable, and says what to do instead of presenting it as found 4ms
+ × tests/services/tool-outcome.test.ts > the note the model reads after the round > is empty when every step returned something, and ignores failed or held steps 2ms
+      Tests  6 failed | 5 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯

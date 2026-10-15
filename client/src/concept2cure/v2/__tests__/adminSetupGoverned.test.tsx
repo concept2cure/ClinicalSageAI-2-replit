@@ -335,6 +335,13 @@ describe('Admin → Setup governed save', () => {
 });
 
 describe('Admin → Setup claims no control it does not have', () => {
+  it('offers the existing Vault legal-hold controls beside the retention period', async () => {
+    const { container } = renderSurface();
+    await loaded(container);
+    expect(container.querySelector('[data-testid="legal-holds-card"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="retention-period-card"]')).not.toBeNull();
+  });
+
   it('has no switch for anything enforced elsewhere or per user', async () => {
     const { container } = renderSurface();
     await loaded(container);
@@ -347,6 +354,18 @@ describe('Admin → Setup claims no control it does not have', () => {
     ]) {
       expect(container.querySelector(`[aria-label="${label}"]`)).toBeNull();
     }
+  });
+
+  it('offers the agency gateway account choice (D7, founder decision 2026-10-01)', async () => {
+    const { container } = renderSurface();
+    await loaded(container);
+    expect(container.querySelector('[data-testid="gateway-accounts-setting"]')).not.toBeNull();
+  });
+
+  it('offers Require PDF/A, the organisation\'s own choice (D7, the PDF/A rule, 2026-10-01)', async () => {
+    const { container } = renderSurface();
+    await loaded(container);
+    expect(container.querySelector('[data-testid="pdfa-requirement-setting"]')).not.toBeNull();
   });
 
   it('states the approval guardrails as always enforced', async () => {

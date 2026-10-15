@@ -134,3 +134,32 @@ describe('an upload has no authoring completion, and says so', () => {
     expect(uploadLeaf('pharma', row({})).pct).toBeNull();
   });
 });
+
+describe('the type a leaf shows is the document type the document carries', () => {
+  // The tree, the list, the uploads lane and the header all read the leaf's
+  // `type`. It was the classifier's evidence kind whenever one existed, so a
+  // document Edit details had re-typed to Protocol still read "Test reports"
+  // everywhere except its Details block. The evidence kind stays on the filing
+  // block, where the "Looks like" line reads it.
+  it('an edited type wins over the classifier kind the upload arrived with', () => {
+    const leaf = uploadLeaf('pharma', row({ document_type: 'PROTOCOL', evidence_kind: 'report' }));
+    expect(leaf.type).toBe('Protocol');
+    expect(leaf.filing?.evidenceKind).toBe('report');
+  });
+
+  it('a recorded type shows when the classifier recorded no kind', () => {
+    expect(uploadLeaf('pharma', row({ document_type: 'MODULE_3', evidence_kind: null })).type).toBe('Module 3 · quality');
+  });
+
+  it('the classifier kind is the label while the type is the OTHER "not told" value', () => {
+    expect(uploadLeaf('pharma', row({ document_type: 'OTHER', evidence_kind: 'report' })).type).toBe('Test reports');
+  });
+
+  it('the classifier kind is the label when no type was recorded at all', () => {
+    expect(uploadLeaf('pharma', row({ document_type: null, evidence_kind: 'report' })).type).toBe('Test reports');
+  });
+
+  it('a file with neither a type nor a kind reads as File', () => {
+    expect(uploadLeaf('pharma', row({ document_type: 'OTHER', evidence_kind: null })).type).toBe('File');
+  });
+});

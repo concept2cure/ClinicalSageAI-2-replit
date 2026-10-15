@@ -1,0 +1,19 @@
+# this change, after deploy-migrate applied the migration set twice (replay)
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row 280ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a re-capture names what it supersedes, and the retired capture names its successor 18ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a failed audit write rolls the capture back 6ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > who captured a file, and where its bytes are stored, cannot be changed 10ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > control: a system source writes no data-room row and names no capturer 5ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > files new bytes, reports bytes already in the Vault, and refuses another organization’s source 1537ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > an antivirus refusal on one source leaves the other filed, and the batch is not complete 34ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses bytes that no longer match the checksum recorded at capture, storing nothing 15ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a viewer is refused before anything is filed 9ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > a superseded capture, another project’s capture and a source with no file are each refused with a reason 22ms
+ ✓ tests/db/vault-data-room-file.dbtest.ts > File into Vault from the data room (VR-11) > refuses an empty or oversized selection 7ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a recorded checksum cannot be changed or cleared; a missing one can be set once 687ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a revision link, a project scope, the organization and the source type do not change 15ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a superseded capture cannot be made current again 6ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a capture cannot be deleted, and the record cannot be truncated 8ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > createSupersedingSource retires the predecessor and links the revision 61ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > a mutable column still changes 5ms
+      Tests  17 passed (17)

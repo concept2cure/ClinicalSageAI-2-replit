@@ -7,7 +7,7 @@
  * Handlers live in AnaToolExecutor.ts and dynamic-import the knowledge module.
  *
  * Tools:
- *   classify_device                  — US (I/II/III) + EU MDR/IVDR classification
+ *   classify_medical_device          — classify_device's engine and definition (EU MDR/IVDR class, FDA pathway)
  *   select_device_pathway            — US pathway + EU conformity route
  *   assess_substantial_equivalence   — 510(k) substantial-equivalence analysis
  *   design_device_clinical_evidence  — clinical evidence strategy (US + EU)
@@ -18,6 +18,8 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
+import { CLASSIFY_DEVICE as CANONICAL_CLASSIFY_DEVICE } from './submission-center-tool-defs.js';
 
 const DETERMINISTIC_NOTE =
   'Deterministic — identical input always yields identical output. No LLM, no network. ' +
@@ -26,137 +28,19 @@ const DETERMINISTIC_NOTE =
   'or misattributed regulatory citation in a generic drug submission is a critical defect.';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. classify_device
+// 1. classify_medical_device — classify_device under a second name
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const CLASSIFY_DEVICE: AnaTool = {
-  name: 'classify_medical_device',
-  description:
-    'Classify a medical device or in-vitro diagnostic (IVD) into its US risk class (Class I/II/III ' +
-    'per 21 CFR 860.3) and its EU class (MDR Class I/IIa/IIb/III per Regulation (EU) 2017/745 Annex VIII, ' +
-    'or IVDR Class A/B/C/D per Regulation (EU) 2017/746 Annex VIII) from the intended use, risk level, ' +
-    'invasiveness, contact duration, and contact site. Returns the US class with rationale, the applicable ' +
-    'EU classification rule(s) (e.g., MDR Rule 8/11/14, IVDR Rule 1-6), whether general/special controls or ' +
-    'premarket approval apply, the EU conformity implications, and cross-cutting requirements (ISO 14971 risk ' +
-    'management, ISO 10993 biocompatibility, IEC 62304 software). Use when the user needs to know the ' +
-    'regulatory class of a device or IVD, which classification rule governs, or whether the device is ' +
-    'self-certified vs notified-body / PMA. ' + DETERMINISTIC_NOTE,
-  input_schema: {
-    type: 'object',
-    properties: {
-      deviceName: {
-        type: 'string',
-        description: 'Plain-language name of the device (optional, for labeling the result).',
-      },
-      intendedUse: {
-        type: 'string',
-        description:
-          'The intended use / indications-for-use statement. Drives both US classification and the ' +
-          'EU classification rule selection.',
-      },
-      isIVD: {
-        type: 'boolean',
-        description:
-          'Whether the device is an in-vitro diagnostic. If true, EU classification uses the IVDR ' +
-          'Annex VIII rules (Class A-D) instead of the MDR rules.',
-      },
-      isSoftware: {
-        type: 'boolean',
-        description:
-          'Whether the device incorporates software or is Software as a Medical Device (SaMD). ' +
-          'Triggers MDR Rule 11 in the EU and IEC 62304 life-cycle requirements.',
-      },
-      riskLevel: {
-        type: 'string',
-        enum: ['low', 'moderate', 'high'],
-        description:
-          'Level of patient harm if the device fails or is misused. The primary driver of US class ' +
-          'and a tie-breaker within EU rules.',
-      },
-      invasiveness: {
-        type: 'string',
-        enum: [
-          'non-invasive',
-          'invasive-body-orifice',
-          'surgically-invasive',
-          'implantable',
-          'active',
-          'active-implantable',
-        ],
-        description: 'Invasiveness category; the primary selector among MDR Annex VIII rules 1-13.',
-      },
-      contactDuration: {
-        type: 'string',
-        enum: ['transient', 'short-term', 'long-term'],
-        description:
-          'Duration of continuous body contact/use per MDR Annex VIII §1.1 (transient <60 min, ' +
-          'short-term <=30 days, long-term >30 days). Escalates several invasive-device rules.',
-      },
-      contactSite: {
-        type: 'string',
-        enum: ['skin-intact', 'mucosal', 'breached-skin', 'blood-indirect', 'circulatory-cns', 'none'],
-        description:
-          'Body contact site. "circulatory-cns" (heart, central circulatory system, or CNS) escalates ' +
-          'invasive devices to Class III; drives biocompatibility scope.',
-      },
-      implantable: { type: 'boolean', description: 'Whether the device is intended to be implanted.' },
-      lifeSustaining: {
-        type: 'boolean',
-        description: 'Whether the device is life-supporting or life-sustaining (drives US Class III).',
-      },
-      active: {
-        type: 'boolean',
-        description: 'Whether the device delivers/exchanges energy or substances to/from the body (active device).',
-      },
-      administersMedicine: {
-        type: 'boolean',
-        description: 'Whether the device administers or removes a medicinal product/fluid (MDR Rule 12).',
-      },
-      incorporatesMedicinalSubstance: {
-        type: 'boolean',
-        description:
-          'Whether the device incorporates a medicinal substance with ancillary action (MDR Rule 14 → Class III).',
-      },
-      absorbedSubstance: {
-        type: 'boolean',
-        description: 'Whether the device is composed of substances absorbed by the body (MDR Rule 21).',
-      },
-      animalOrHumanTissue: {
-        type: 'boolean',
-        description: 'Whether the device uses non-viable tissues/cells of human or animal origin (MDR Rule 18 → Class III).',
-      },
-      ivdHighRiskTransmissible: {
-        type: 'boolean',
-        description: 'IVD detects a transmissible agent with high propagation risk (IVDR Rule 1 → Class D).',
-      },
-      ivdDonorScreening: {
-        type: 'boolean',
-        description: 'IVD used for blood/organ donor screening or transmissible-agent compatibility (IVDR Rule 1 → Class D).',
-      },
-      ivdTransmissibleModerate: {
-        type: 'boolean',
-        description: 'IVD detects a transmissible agent of moderate public-health risk (IVDR Rule 2/3 → Class C).',
-      },
-      ivdCompanionDiagnostic: {
-        type: 'boolean',
-        description: 'IVD is a companion diagnostic (IVDR Rule 3(c) → Class C).',
-      },
-      ivdManagementCritical: {
-        type: 'boolean',
-        description: 'IVD informs disease staging/screening/management decisions (IVDR Rule 3 → Class C).',
-      },
-      ivdSelfTesting: {
-        type: 'boolean',
-        description: 'IVD is intended for self-testing (IVDR Rule 4 → generally Class C).',
-      },
-      ivdGeneralReagent: {
-        type: 'boolean',
-        description: 'IVD is a general reagent/instrument/buffer with no specific intended purpose (IVDR Rule 5 → Class A).',
-      },
-    },
-    required: ['intendedUse', 'riskLevel'],
-  },
-};
+/*
+ * 2026-10-15: this tool ran classifyDevice (medical-device-knowledge.ts), a second
+ * classification engine whose every branch fell through to the lowest class: with
+ * no device facts it stated US Class I and EU MDR Class I, "no notified body". It
+ * is now classify_device under its own name — the canonical definition here, the
+ * canonical handler in AnaToolExecutor.ts — so the fail-closed engine in
+ * market-specs/device-classification.ts answers it. The name stays because the
+ * tool register and the launch-scope inventory list it.
+ */
+export const CLASSIFY_DEVICE: AnaTool = { ...CANONICAL_CLASSIFY_DEVICE, name: 'classify_medical_device' };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. select_device_pathway
@@ -169,10 +53,12 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
     'Humanitarian Device Exemption (HDE), 510(k)-exempt, IDE-then-PMA, or BLA) and the EU conformity ' +
     'assessment route (self-certification vs notified-body involvement), with rationale, alternatives, ' +
     'and an approximate FDA review clock. Implements the decision logic of 21 CFR 807.81 (when a 510(k) is ' +
-    'required), 21 CFR 860.93 (De Novo), 21 CFR 814 (PMA/HDE), and MDR/IVDR conformity routing by class. ' +
-    'Handles HUD/HDE eligibility (<8,000 US patients/year), predicate availability, novel low/moderate-risk ' +
-    'devices, biologics, and EU Class I sterile/measuring/reusable-instrument special routes. Use when the ' +
-    'user needs to choose a regulatory filing pathway for a device or IVD. ' + DETERMINISTIC_NOTE,
+    'required), FD&C Act §513(f)(2) and 21 CFR 860 Subpart D (De Novo), 21 CFR 814 (PMA/HDE), and MDR/IVDR ' +
+    'conformity routing by class. Handles HUD/HDE eligibility (not more than 8,000 US patients/year, with an OOPD ' +
+    'HUD designation), predicate availability, 510(k) exemption by product code, novel low/moderate-risk ' +
+    'devices, biologics, and EU Class I sterile/measuring/reusable-instrument special routes. When the inputs ' +
+    'cannot decide the US pathway it returns "undetermined" with a NEEDS-INPUT finding naming what is missing. ' +
+    'Use when the user needs to choose a regulatory filing pathway for a device or IVD. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -195,11 +81,11 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
       },
       estimatedAnnualUSPopulation: {
         type: 'number',
-        description: 'Estimated US patient population per year. <8,000 supports HUD/HDE eligibility.',
+        description: 'Estimated US patient population per year. Not more than 8,000 supports HUD/HDE eligibility; without it HDE is undetermined.',
       },
       exempt: {
         type: 'boolean',
-        description: 'Whether the device/product code is 510(k)-exempt.',
+        description: 'Whether the product code\'s classification regulation exempts it from 510(k) with no .9 limitation applying. Without it a class I device is undetermined.',
       },
       isBiologic: {
         type: 'boolean',
@@ -213,12 +99,12 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
       },
       euIvdrClass: {
         type: 'string',
-        enum: ['A', 'B', 'C', 'D'],
+        enum: [...IVDR_CLASSES],
         description: 'EU IVDR class for conformity routing (provide for IVD EU products).',
       },
       sterile: {
         type: 'boolean',
-        description: 'Whether the device is supplied sterile (affects the EU Class I/A conformity route).',
+        description: 'Whether the device is supplied sterile (affects the EU Class I/A conformity route). Unstated, an IVDR Class A route is undetermined.',
       },
       measuringFunction: {
         type: 'boolean',
@@ -244,7 +130,10 @@ export const ASSESS_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
     'flowchart (2014 guidance) and 21 CFR 807.100(b): validate the predicate, confirm the same intended use, ' +
     'compare technological characteristics, decide whether different characteristics raise different questions ' +
     'of safety/effectiveness, and identify the performance data needed to show the device is as safe and ' +
-    'effective as the predicate. Returns the SE/NSE/indeterminate determination with a step-by-step decision ' +
+    'effective as the predicate. A step the flow reaches with no answer is refused (predicateIdentified, ' +
+    'sameIntendedUse, sameTechnologicalCharacteristics) or left open: with differentQuestionsOfSafetyEffectiveness ' +
+    'or performanceDataDemonstratesEquivalence unstated the determination is indeterminate, never SE. ' +
+    'Returns the SE/NSE/indeterminate determination with a step-by-step decision ' +
     'path, predicate adequacy, the specific performance data required (bench, biocompatibility, sterilization, ' +
     'software/cybersecurity, IVD analytical/clinical performance), and the recommended 510(k) submission type ' +
     '(Traditional/Special/Abbreviated) or a De Novo fallback when no valid predicate exists. Use when the user ' +
@@ -272,13 +161,15 @@ export const ASSESS_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
         type: 'boolean',
         description:
           'If technological characteristics differ, whether those differences raise DIFFERENT questions of ' +
-          'safety or effectiveness (which would make the device Not Substantially Equivalent).',
+          'safety or effectiveness (which would make the device Not Substantially Equivalent). Unstated, the ' +
+          'determination is indeterminate.',
       },
       performanceDataDemonstratesEquivalence: {
         type: 'boolean',
         description:
           'Whether available performance data demonstrate the device is as safe and effective as the predicate. ' +
-          'If false, the determination is indeterminate pending the identified testing.',
+          'If false, the determination is indeterminate pending the identified testing; unstated, it is ' +
+          'indeterminate too (SE is never assumed).',
       },
       predicateRecalledForSafety: {
         type: 'boolean',
@@ -308,6 +199,9 @@ export const DESIGN_DEVICE_CLINICAL_EVIDENCE: AnaTool = {
     'required, recommend the study type(s) (no clinical / literature & clinical evaluation / real-world ' +
     'evidence / feasibility-first-in-human / pivotal / IVD clinical performance), and scope the EU clinical ' +
     'evaluation (MDR Article 61 & Annex XIV, MEDDEV 2.7/1 rev 4) or IVDR performance evaluation (Annex XIII). ' +
+    'When a fact that decides it was not stated, clinicalDataRequired (or usIDERequired) is null and ' +
+    'missingFacts names what to ask for: say it is not determined; never report clinical data or an IDE as ' +
+    'not required. ' +
     'Returns whether a US IDE (21 CFR 812) is required for a significant-risk investigation, an evidence ' +
     'hierarchy, and benefit-risk framing per the FDA 2019 factors guidance. Use when the user must decide ' +
     'whether and how to generate clinical evidence for a device submission. ' + DETERMINISTIC_NOTE,
@@ -317,7 +211,7 @@ export const DESIGN_DEVICE_CLINICAL_EVIDENCE: AnaTool = {
       usClass: {
         type: 'string',
         enum: ['I', 'II', 'III', 'unclassified'],
-        description: 'US device class (Class III generally requires pivotal clinical evidence).',
+        description: 'US device class (Class III generally requires pivotal clinical evidence). Without it, "not required" is never answered.',
       },
       usPathway: {
         type: 'string',
@@ -326,14 +220,14 @@ export const DESIGN_DEVICE_CLINICAL_EVIDENCE: AnaTool = {
       },
       novelTechnology: {
         type: 'boolean',
-        description: 'Whether the device is first-of-a-kind technology or a new indication (raises clinical questions).',
+        description: 'Whether the device is first-of-a-kind technology or a new indication (raises clinical questions). State true or false: unstated leaves "not required" undetermined.',
       },
       clinicalDataNeededForSE: {
         type: 'boolean',
-        description: 'Whether a 510(k) raises questions answerable only with clinical data.',
+        description: 'Whether a 510(k) raises questions answerable only with clinical data. State true or false: unstated leaves "not required" undetermined.',
       },
-      implantable: { type: 'boolean', description: 'Whether the device is implantable.' },
-      lifeSustaining: { type: 'boolean', description: 'Whether the device is life-supporting/life-sustaining.' },
+      implantable: { type: 'boolean', description: 'Whether the device is implantable. State true or false: unstated leaves "not required" undetermined.' },
+      lifeSustaining: { type: 'boolean', description: 'Whether the device is life-supporting/life-sustaining. State true or false: unstated leaves "not required" undetermined.' },
       isIVD: {
         type: 'boolean',
         description: 'Whether the device is an IVD (selects an IVD clinical performance study and IVDR Annex XIII).',
@@ -354,7 +248,7 @@ export const DESIGN_DEVICE_CLINICAL_EVIDENCE: AnaTool = {
       },
       significantRisk: {
         type: 'boolean',
-        description: 'Whether the planned clinical investigation is a significant-risk study (US IDE trigger).',
+        description: 'Whether the planned clinical investigation is a significant-risk study (US IDE trigger). Unstated leaves usIDERequired null unless the device is class III, implanted or life-supporting.',
       },
     },
     required: ['usClass'],
@@ -373,9 +267,12 @@ export const ASSESS_ESSENTIAL_PRINCIPLES: AnaTool = {
     'whether it is applicable, the evidence/standard that demonstrates conformity (ISO 14971 risk management, ' +
     'ISO 13485 QMS, IEC 62304 software, IEC 60601-1 electrical safety, ISO 10993 biocompatibility, ISO 11135/' +
     '11137/11607 sterility, IEC 62366-1 usability, CLSI EP / ISO 17511 for IVDs), and whether it is addressed ' +
-    'or a gap. Returns the full conformity matrix, applicable/gap counts, a prioritized gap list, and an ' +
-    'overall conformity verdict (conforming / gaps-present / insufficient-information, the latter when no QMS ' +
-    'or risk-management file is in place). Use when the user needs a GSPR/essential-principles checklist or ' +
+    'or a gap. A requirement is addressed only by a stated input (a claimed standard, the QMS, the risk file); ' +
+    'one whose device property was not stated is not-assessed (applicable null), never "not applicable". ' +
+    'Returns the full conformity matrix, applicable/gap counts, a prioritized gap list, and an ' +
+    'overall verdict: gaps-present, or insufficient-information when no QMS or risk-management file is in ' +
+    'place or a row is not assessed. Nothing given here evidences lifetime, environment or labeling (GSPR 9, ' +
+    '14, 23), so it does not report "conforming". Use when the user needs a GSPR/essential-principles checklist or ' +
     'gap analysis for EU technical documentation. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -421,7 +318,7 @@ export const PLAN_DEVICE_SUBMISSION: AnaTool = {
   name: 'plan_device_submission',
   description:
     'Produce a submission plan for a medical device or IVD: the required content for the chosen US pathway ' +
-    '(eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860.93, PMA modules per 21 CFR ' +
+    '(eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860 Subpart D (860.220), PMA modules per 21 CFR ' +
     '814.20, HDE per 21 CFR 814.104, or general-controls file when exempt), the EU technical documentation ' +
     'set (MDR/IVDR Annex II/III: device description, labeling, design & manufacturing, GSPR checklist, ' +
     'benefit-risk, verification & validation, post-market surveillance), an indicative end-to-end timeline ' +
@@ -436,13 +333,13 @@ export const PLAN_DEVICE_SUBMISSION: AnaTool = {
         enum: ['510(k)', 'De Novo', 'PMA', 'HDE', 'exempt', 'IDE-then-PMA', 'BLA', 'undetermined'],
         description: 'Target US pathway (from select_device_pathway). Drives the section set and review clock.',
       },
-      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (adds analytical/clinical performance sections).' },
-      hasSoftware: { type: 'boolean', description: 'Whether the device contains software (adds software/cybersecurity section).' },
-      sterile: { type: 'boolean', description: 'Whether the device is sterile (adds sterilization/packaging section).' },
-      patientContacting: { type: 'boolean', description: 'Whether the device is patient-contacting (adds biocompatibility section).' },
+      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (adds analytical/clinical performance sections). Unstated, the section stays on the plan marked undetermined.' },
+      hasSoftware: { type: 'boolean', description: 'Whether the device contains software (adds software/cybersecurity section). Unstated, the section stays on the plan marked undetermined.' },
+      sterile: { type: 'boolean', description: 'Whether the device is sterile (adds sterilization/packaging section). Unstated, the section stays on the plan marked undetermined.' },
+      patientContacting: { type: 'boolean', description: 'Whether the device is patient-contacting (adds biocompatibility section). Unstated, the section stays on the plan marked undetermined.' },
       clinicalDataIncluded: {
         type: 'boolean',
-        description: 'Whether clinical data are part of the submission (adds clinical sections; lengthens the timeline).',
+        description: 'Whether clinical data are part of the submission (adds clinical sections; lengthens the timeline). Unstated, the testing phase is not estimated.',
       },
       euMarket: { type: 'boolean', description: 'Whether the device is also pursuing the EU market (adds EU technical documentation + NB phase).' },
       euMdrClass: {
@@ -452,16 +349,12 @@ export const PLAN_DEVICE_SUBMISSION: AnaTool = {
       },
       euIvdrClass: {
         type: 'string',
-        enum: ['A', 'B', 'C', 'D'],
+        enum: [...IVDR_CLASSES],
         description: 'EU IVDR class for technical-documentation scoping.',
       },
       preSubmissionDone: {
         type: 'boolean',
         description: 'Whether a Pre-Submission (Q-Sub) has already occurred (changes the timeline and Q-Sub strategy).',
-      },
-      useEStar: {
-        type: 'boolean',
-        description: 'Whether the submission will use the FDA eSTAR template (mandatory for 510(k)/De Novo).',
       },
     },
     required: ['usPathway'],

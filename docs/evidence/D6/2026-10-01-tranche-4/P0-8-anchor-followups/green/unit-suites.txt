@@ -1,0 +1,2126 @@
+# 2026-10-01T15:07:48Z, tree at HEAD 0812a990 plus this item (final code). This item's unit suites, and every neighbour that imports a changed module or mocks tenant-chain-verdict.
+$ npx vitest run server/services/audit/__tests__/chain-anchor.test.ts server/jobs/__tests__/auditChainIntegritySweep.test.ts server/services/audit/__tests__/chain-head-on-demand.test.ts server/db/__tests__/provision-app-role-append-only.test.ts server/db/__tests__/provision-app-role.test.ts server/db/__tests__/provision-app-role-scram.test.ts server/db/__tests__/readiness-contract.test.ts server/services/storage/__tests__/ server/routes/admin/__tests__/licensing-history.test.ts server/routes/__tests__/part11-compliance-5xx-containment.test.ts server/routes/__tests__/part11TenantScoping.test.ts server/routes/__tests__/audit-compliance-reports.test.ts server/routes/__tests__/audit-export-tenant-scope.test.ts server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts server/routes/__tests__/authoring-record-export.pglite.test.ts server/routes/ana-ri/__tests__/turn-records.pglite.test.ts server/routes/__tests__/audit-trail-read-gate.test.ts server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts server/services/audit/__tests__/audit-archive.test.ts server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts server/routes/__tests__/part11-chain-empty-honesty.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/admin/__tests__/licensing-history.test.ts > honest about completeness > a failed read is a 500 — never an empty history
+{
+  "timestamp": "2026-10-01T15:07:50.887Z",
+  "level": "error",
+  "message": "[admin-licensing-history] licensing history read failed",
+  "context": {}
+}
+
+stderr | server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > checks nothing, and claims nothing, when verification could not run
+{
+  "timestamp": "2026-10-01T15:07:50.915Z",
+  "level": "error",
+  "message": "[admin-licensing-history] audit integrity verification failed",
+  "context": {}
+}
+
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > pure helpers > clamps the page size into range and falls back on nonsense 2ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > pure helpers > clamps the offset to a non-negative integer 1ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > pure helpers > reads a detail payload as an object, and reports one it cannot 1ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > GET /licensing/history — the decisions, newest first > returns what changed, on which workspace and module, by whom, and why 23ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > GET /licensing/history — the decisions, newest first > orders newest first and excludes the two non-licensing actions 5ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > GET /licensing/history — the decisions, newest first > renders an action it has never heard of, rather than dropping it 4ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > GET /licensing/history — the decisions, newest first > passes the workspace and module filters through to the read 5ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about completeness > says a page is truncated, with the size of the whole filtered set 5ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about completeness > says a page is complete when it is 4ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about completeness > returns a row whose recorded detail cannot be read, flagged and counted 4ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about completeness > a failed read is a 500 — never an empty history 5ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > reports a row verified only when the chain AND its seal were checked 9ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > does not call an unchecked seal verified when sealing is not configured 6ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > reports a row that was never committed to the chain as exactly that 7ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > checks nothing, and claims nothing, when verification could not run 6ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > does not walk a store larger than it verifies in one pass, and says so 4ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > places a break: rows before it stay verified, the break and after do not 6ms
+stderr | server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > claims nothing for a workspace whose own walk failed
+{
+  "timestamp": "2026-10-01T15:07:50.942Z",
+  "level": "warn",
+  "message": "[admin-licensing-history] tenant chain verification failed",
+  "context": {}
+}
+
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > places a row by its chain position, not its timestamp 6ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > does not mark another workspace after-break for a break outside its chain 5ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > claims nothing for a workspace whose own walk failed 4ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > honest about integrity — per row > walks again when a row has been appended since the memoised walk 11ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > rowIntegrity — the pure rule > claims nothing when no verification ran 1ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > rowIntegrity — the pure rule > falls back to not-checked when a break cannot be placed 0ms
+ ✓ server/routes/admin/__tests__/licensing-history.test.ts > rowIntegrity — the pure rule > breaks the tie on id when two rows share a timestamp 0ms
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts
+{
+  "timestamp": "2026-10-01T15:07:52.366Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:07:52.368Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts
+{
+  "timestamp": "2026-10-01T15:07:52.368Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled
+{
+  "timestamp": "2026-10-01T15:07:52.586Z",
+  "level": "info",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on
+{
+  "timestamp": "2026-10-01T15:07:52.589Z",
+  "level": "info",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset
+{
+  "timestamp": "2026-10-01T15:07:52.590Z",
+  "level": "info",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set
+{
+  "timestamp": "2026-10-01T15:07:52.591Z",
+  "level": "info",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "opt-in outside production (set ENABLE_AUDIT_CHAIN_CHECK=true or AUDIT_TRAIL_ENABLED=true)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured
+{
+  "timestamp": "2026-10-01T15:07:52.593Z",
+  "level": "info",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset
+{
+  "timestamp": "2026-10-01T15:07:52.594Z",
+  "level": "info",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false)
+{
+  "timestamp": "2026-10-01T15:07:52.595Z",
+  "level": "warn",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too
+{
+  "timestamp": "2026-10-01T15:07:52.596Z",
+  "level": "info",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies
+{
+  "timestamp": "2026-10-01T15:07:52.612Z",
+  "level": "info",
+  "context": {
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content
+{
+  "timestamp": "2026-10-01T15:07:52.618Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.seals"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "7",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.seals; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number
+{
+  "timestamp": "2026-10-01T15:07:52.623Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "broken",
+        "rowsChecked": 2,
+        "firstFailure": "2",
+        "reason": "Content tampered: content_hash mismatch at sequence 2"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit.tamper_proof_log; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id
+{
+  "timestamp": "2026-10-01T15:07:52.629Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_events.linkage"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "broken",
+        "rowsChecked": 2,
+        "firstFailure": "2",
+        "reason": "1 broken link(s)"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_events.linkage; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger
+{
+  "timestamp": "2026-10-01T15:07:52.634Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "immutability_triggers"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "missing",
+        "rowsChecked": 7,
+        "firstFailure": "public.audit_logs.trg_audit_logs_no_delete",
+        "reason": "missing: public.audit_logs.trg_audit_logs_no_delete"
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in immutability_triggers; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before
+{
+  "timestamp": "2026-10-01T15:07:52.636Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.chain"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "broken",
+        "rowsChecked": 12,
+        "firstFailure": "row-9",
+        "reason": "sha256_chain mismatch"
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.chain; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others
+{
+  "timestamp": "2026-10-01T15:07:52.640Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.seals",
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "0",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "error",
+        "reason": "boom"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.seals, audit.tamper_proof_log; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified
+{
+  "timestamp": "2026-10-01T15:07:52.643Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit.tamper_proof_log"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "unverifiable",
+        "rowsChecked": 0,
+        "reason": "no entries: there is no chain to verify"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "missing",
+        "reason": "table absent — db/migrations/20260813_audit_tamper_proof_log.sql has not been applied"
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit.tamper_proof_log; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert
+{
+  "timestamp": "2026-10-01T15:07:52.648Z",
+  "level": "warn",
+  "context": {
+    "unverifiable": [
+      "audit_logs.seals",
+      "audit_events.seals"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "unverifiable",
+        "reason": "AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified — integrity unverifiable."
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "unverifiable",
+        "reason": "AUDIT_HMAC_KEY not configured; HMAC seals cannot be verified"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified
+{
+  "timestamp": "2026-10-01T15:07:52.655Z",
+  "level": "warn",
+  "context": {
+    "unverifiable": [
+      "audit_events.linkage"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "unverifiable",
+        "rowsChecked": 2,
+        "reason": "no row carries a record_hash: the chain has never been hashed, so no link could be checked"
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable
+{
+  "timestamp": "2026-10-01T15:07:52.658Z",
+  "level": "error",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > in production without AUDIT_ANCHOR_BUCKET the anchor is "not configured": never ok, never written
+{
+  "timestamp": "2026-10-01T15:07:52.659Z",
+  "level": "warn",
+  "context": {
+    "unverifiable": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "unverifiable",
+        "reason": "anchor not configured: AUDIT_ANCHOR_BUCKET is unset, so nothing outside the database records the chain head and removal of the newest audit rows cannot be detected"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "anchor not configured: AUDIT_ANCHOR_BUCKET is unset, so nothing outside the database records the chain head and removal of the newest audit rows cannot be detected"
+    },
+    "anchorAge": null
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > verifies against the latest anchor FIRST, then writes the new anchor to the configured bucket
+{
+  "timestamp": "2026-10-01T15:07:52.661Z",
+  "level": "info",
+  "context": {
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a truncated chain after an anchor is an incident: alerted, and no new anchor papers over it
+{
+  "timestamp": "2026-10-01T15:07:52.674Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "broken",
+        "firstFailure": "6f1c0d2e-0000-4000-8000-000000000007",
+        "reason": "organization 7: head_missing (4 rows anchored at or before the head, 2 now)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.anchor; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > with no anchor written yet the head is "not verified" (unverifiable), and the first anchor is written
+{
+  "timestamp": "2026-10-01T15:07:52.677Z",
+  "level": "warn",
+  "context": {
+    "unverifiable": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "unverifiable",
+        "reason": "not verified: no anchor has been written to s3://c2c-prod-part11-evidence/anchors/audit-chain/"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": null
+  }
+}
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > the anchor cannot be read: an incident for that store, and nothing is anchored
+{
+  "timestamp": "2026-10-01T15:07:52.682Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "error",
+        "reason": "AccessDenied"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.anchor; the previous anchor stays the reference"
+    },
+    "anchorAge": null
+  }
+}
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+{
+  "timestamp": "2026-10-01T15:07:52.682Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > an incident in another store blocks the new anchor too: a tampered state is never anchored
+{
+  "timestamp": "2026-10-01T15:07:52.688Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.seals"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "3",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "ok",
+        "reason": "verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 37.1 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.seals; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false) 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies 19ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content 5ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number 7ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert 8ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > in production without AUDIT_ANCHOR_BUCKET the anchor is "not configured": never ok, never written 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > verifies against the latest anchor FIRST, then writes the new anchor to the configured bucket 12ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a truncated chain after an anchor is an incident: alerted, and no new anchor papers over it 3ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > with no anchor written yet the head is "not verified" (unverifiable), and the first anchor is written 3ms
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a failed anchor write is reported, not swallowed
+{
+  "timestamp": "2026-10-01T15:07:52.694Z",
+  "level": "error",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a failed anchor write is reported, not swallowed
+{
+  "timestamp": "2026-10-01T15:07:52.694Z",
+  "level": "info",
+  "context": {
+    "anchorWrite": {
+      "written": false,
+      "reason": "anchor write failed: SlowDown"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 37.1,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > reports the age on a clean run, and a 24-hour-old anchor is not an incident
+{
+  "timestamp": "2026-10-01T02:00:00.000Z",
+  "level": "info",
+  "context": {
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 24,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > at exactly 48 hours the anchor is not yet stale
+{
+  "timestamp": "2026-10-02T02:00:00.000Z",
+  "level": "info",
+  "context": {
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 48,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window
+{
+  "timestamp": "2026-10-02T03:00:00.000Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 49 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 49 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 49,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor that the database also breaks is broken, and nothing is anchored over it
+{
+  "timestamp": "2026-10-03T02:00:00.000Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "broken",
+        "firstFailure": "6f1c0d2e-0000-4000-8000-000000000007",
+        "reason": "organization 7: head_missing (4 rows anchored at or before the head, 2 now)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.anchor; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 72,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor beside another incident does not get a new anchor written over that incident
+{
+  "timestamp": "2026-10-02T03:00:00.000Z",
+  "level": "error",
+  "context": {
+    "failures": [
+      "audit_logs.seals",
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "broken",
+        "firstFailure": "3",
+        "reason": "hmac_seal does not verify"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "stale",
+        "reason": "latest anchor is 49 hour(s) old, past the 48-hour limit: rows written since 2026-09-30T02:00:00.000Z are covered by no anchor, so their removal would not be seen; verified against anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json (2 organisation(s), anchored 2026-09-30T02:00:00.000Z, 49 hour(s) old)"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": false,
+      "reason": "not written: the sweep found an incident in audit_logs.seals; the previous anchor stays the reference"
+    },
+    "anchorAge": {
+      "anchorKey": "anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json",
+      "anchoredAt": "2026-09-30T02:00:00.000Z",
+      "hours": 49,
+      "staleAfterHours": 48
+    }
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > with no anchor yet there is no age to report, and the run says so
+{
+  "timestamp": "2026-10-01T15:07:52.711Z",
+  "level": "warn",
+  "context": {
+    "unverifiable": [
+      "audit_logs.anchor"
+    ],
+    "stores": [
+      {
+        "store": "audit_logs.chain",
+        "status": "ok",
+        "rowsChecked": 12
+      },
+      {
+        "store": "audit_logs.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit_logs.anchor",
+        "status": "unverifiable",
+        "reason": "not verified: no anchor has been written to s3://c2c-prod-part11-evidence/anchors/audit-chain/"
+      },
+      {
+        "store": "audit_events.linkage",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "audit_events.seals",
+        "status": "ok"
+      },
+      {
+        "store": "audit.tamper_proof_log",
+        "status": "ok",
+        "rowsChecked": 2
+      },
+      {
+        "store": "immutability_triggers",
+        "status": "ok",
+        "rowsChecked": 8
+      }
+    ],
+    "anchorWrite": {
+      "written": true,
+      "key": "anchors/audit-chain/2026/10/01/new.json",
+      "organizations": 2
+    },
+    "anchorAge": null
+  }
+}
+
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > the anchor cannot be read: an incident for that store, and nothing is anchored 9ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > an incident in another store blocks the new anchor too: a tampered state is never anchored 6ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a failed anchor write is reported, not swallowed 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > reports the age on a clean run, and a 24-hour-old anchor is not an incident 6ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > at exactly 48 hours the anchor is not yet stale 4ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor that the database also breaks is broken, and nothing is anchored over it 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor beside another incident does not get a new anchor written over that incident 2ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > with no anchor yet there is no age to report, and the run says so 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /api/c2c/actions/verify-chain answers 409 and names the missing head 30ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity reports the integrity not ok, with the anchor break 8ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the licensing history reports the record store broken, not verified 8ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > npm run ops:verify-audit-chain reports public.audit_logs broken and exits 1 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain 10ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error, never a verdict > npm run ops:verify-audit-chain reports public.audit_logs unverifiable (exit 2), not ok 1ms
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > serves S3 when STORAGE_PROVIDER=s3 and a bucket is named 218ms
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T15:07:54.159Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > refuses an S3 selection that names no bucket 199ms
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > refuses a value it does not recognise instead of writing to local disk 288ms
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > still serves local disk by default outside production configuration 410ms
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses production with no STORAGE_PROVIDER 2ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses a provider it does not implement 1ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses S3 without a bucket, and accepts it with one 1ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses local disk unless the operator states it is durable 1ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > is a no-op outside production 0ms
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > the server configuration fires it on import > refuses to load production configuration that names no vault store 433ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > the server configuration fires it on import > loads it once the store is named 352ms
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+{
+  "timestamp": "2026-10-01T15:07:57.854Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > a plain DELETE as the runtime role is refused with the IMMUTABILITY_VIOLATION shape 22ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > SET LOCAL app.audit_archive_bypass = 'on' no longer opens the door for the runtime role (Phase A §9) 6ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the GUC does not open the door for the superuser session either 8ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service statement deletes an old, archived batch and writes the archive record 31ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch containing a row newer than the cutoff, and writes no record 7ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a cutoff inside the 24-month hot window even for old rows 8ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses an empty locator, an empty checksum and a checksum that is not a sha256 16ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch naming a row that is not in audit_logs, and an empty batch 15ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > EXECUTE is not public: a role without the grant cannot open the door 9ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the door is owned by audit_archiver, is SECURITY DEFINER, and audit_archiver cannot log in 3ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the archive record is itself append-only 24ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > UPDATE and TRUNCATE on audit_logs stay refused 5ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the migration replays cleanly (Rule 1): a second apply changes nothing and the door still works 33ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service issues only the door call: no bypass GUC, no raw DELETE, in its code 1ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 32ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > owner reads it 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > admin reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > manager reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > a viewer is refused 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 10ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-01T15:08:01.951Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T15:08:01.977Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc e0c0000a-0000-4000-8000-00000000000a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T15:08:02.023Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: tracked_change_decision on doc e0c0000a-0000-4000-8000-00000000000a by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at writeAuthoringAuditTrail (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:707:9)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3718:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T15:08:02.040Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "02041e75-ef13-4303-a366-6a28388347fc",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T15:08:02.081Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT 118ms
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the same steps catch a rewrite > (ii) the same offline steps catch a quoted passage rewritten past the table’s guard
+{
+  "timestamp": "2026-10-01T15:08:02.120Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc e0c0000c-0000-4000-8000-00000000000c by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+Error creating revision: Error: injected: INSERT INTO doc_revisions failed
+    at Object.query (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at createRevision (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:399:20)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3717:7
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T15:08:02.139Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "bb39cb89-1de4-4909-afb4-61b992e7428c",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO doc_revisions failed"
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (i) the export is recorded before it leaves > (i) writes exactly one chained "authoring.record.exported" row, committed before the response is sent 44ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the package verifies offline > (ii) every chained event in the package verifies offline by the package’s own steps 30ms
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts > (iii) no record, no export > (iii) when the export row cannot be written: 503 AUTHORING_RECORD_EXPORT_NOT_RECORDED, and no package leaves
+[audited-export] export not recorded: injected: INSERT INTO audit_logs failed
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T15:08:02.178Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 121ms
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts > (v) a chain walk that could not run > (v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true
+[audited-export] tenant chain walk failed: injected: no admin-scoped connection for the chain walk
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain
+{
+  "timestamp": "2026-10-01T15:08:02.230Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the same steps catch a rewrite > (ii) the same offline steps catch a quoted passage rewritten past the table’s guard 42ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iii) no record, no export > (iii) when the export row cannot be written: 503 AUTHORING_RECORD_EXPORT_NOT_RECORDED, and no package leaves 44ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) tenancy > (iv) another tenant’s document is 404 in both directions — nothing written, nothing sent 16ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) an id that is not a document id > is 404 on the read and the export — not the uuid cast's 500 — and nothing is written 6ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (v) a chain walk that could not run > (v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true 16ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-01T15:08:02.322Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 99ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain 70ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-01T15:08:02.382Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded 81ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded 42ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 1ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself
+{
+  "timestamp": "2026-10-01T15:08:02.890Z",
+  "level": "error",
+  "message": "[audit-trail-routes] recording the audit export could not be run",
+  "context": {
+    "reason": "audit-export record could not be run: INSERT returned no row id",
+    "correlationId": null
+  }
+}
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself 1084ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 17ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > the free-form default is not a type either: a body with no event type is refused 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > metadata must be an object, not a string of any length 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a vocabulary type with a reason is recorded, attributed to the caller 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a member may not record events at all 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > viewer: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 11ms
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row
+{
+  "timestamp": "2026-10-01T15:08:03.087Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:08:03.088Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row
+{
+  "timestamp": "2026-10-01T15:08:03.088Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 95ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > member: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 13ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard 7ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status
+{
+  "timestamp": "2026-10-01T15:08:03.224Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row 61ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > admin: records the non-authoritative marker (201), one signature.create row 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > manager: records the non-authoritative marker (201), one signature.create row 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > an owner still may not claim a binding signature here (forgery guard unchanged) 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > owner of an organisation cannot start the estate-wide check (403) or read its status 16ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > admin of an organisation cannot start the estate-wide check (403) or read its status 17ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > manager of an organisation cannot start the estate-wide check (403) or read its status 14ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > user of an organisation cannot start the estate-wide check (403) or read its status 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > viewer of an organisation cannot start the estate-wide check (403) or read its status 6ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text
+Chain integrity check failed: relation "audit_logs" does not exist
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status 20ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text 17ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+{
+  "timestamp": "2026-10-01T15:08:03.632Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T15:08:04.189Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:08:04.203Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T15:08:04.203Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > a member sees the catalog and that they cannot run it 56ms
+stdout | server/routes/__tests__/audit-export-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-01T15:08:05.072Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:08:05.076Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-01T15:08:05.076Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read
+{
+  "timestamp": "2026-10-01T15:08:05.162Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] compliance report refused: the audit export signing key is not available",
+  "context": {
+    "err": "[audit-export-key-posture] REFUSING TO BOOT: AUDIT_EXPORT_SIGNING_KEY is not configured in production. It signs the audit exports an inspector re-verifies (21 CFR Part 11 §11.10(e)); without it the export would be sealed under the JWT secret, the session-token key. Set it to a high-entropy secret held outside the database (KMS / secrets manager), with AUDIT_EXPORT_SIGNING_KEY_ID naming it. There is no accept flag for this posture."
+  }
+}
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > an administrator can run them; a platform administrator too 64ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > no organisation, no catalog 12ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a non-reader is refused 403 with the audit gate body, before any query 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a session without an organisation is refused 403 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > an unknown report is 404 UNKNOWN_REPORT 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > the full audit trail is 409 USE_SIGNED_EXPORT: its run is the signed export 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2026-09-30&to=2026-09-01) is 400 BAD_PERIOD 20ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (to=2026-02-30) is 400 BAD_PERIOD 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2024-01-01&to=2026-01-01) is 400 BAD_PERIOD 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — a run > reads in a tenant-stamped transaction, records the run, and sends an export that verifies 22ms
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent
+[audited-export] export not recorded: chain write refused
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back
+{
+  "timestamp": "2026-10-01T15:08:05.234Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] running the compliance report failed",
+  "context": {
+    "reportId": "access-review",
+    "err": "relation \"organization_users\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified
+[audited-export] tenant chain walk failed: admin scope unavailable
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails
+Failed to export audit logs: Error: boom
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-export-tenant-scope.test.ts:84:32
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails
+Failed to generate signed audit export: Error: boom
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-export-tenant-scope.test.ts:84:32
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > the existing verification endpoint verifies the package, and refuses it after a one-byte change 20ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > a CSV run is one file of titled sections 13ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > an unknown format is refused rather than read as JSON 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation is ok only when every check is intact, and false when any is broken 17ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation runs one report at a time: a second concurrent run is 429 REPORT_IN_PROGRESS 18ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier 26ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails 8ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > the signed export tells the inspector to use the key its manifest names 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > verification says which key vouched for the export 10ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > a manifest from before key ids verifies and says no key was named 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > report runs are rate limited per organisation and person: 429 REPORT_RATE_LIMITED 30ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 0 is not a tenant: 403 before anything 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of -3 is not a tenant: 403 before anything 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 7.5 is not a tenant: 403 before anything 34ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of "7abc" is not a tenant: 403 before anything 5ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > reads a tenant's document when other tenants' keys fill the first 1000 27ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > reads a tenant's 1,200th document 50ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > lists every document in a project, not the first 500 106ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > deletes a document past the first page, and it is then gone 31ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > never looks outside the requesting tenant's prefix, and never returns another tenant's document 1ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider reports a failure as a failure > rejects, rather than reporting the document missing, when S3 refuses 18ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider reports a failure as a failure > still reports a genuinely absent version as missing 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > archives rows past cutoff and removes them from hot through the door 26ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > calls the door once per batch with the ids, the sink locator, the stored checksum and the cutoff, after the sink confirmed 2ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > never opens the trigger with a session setting and never issues a raw DELETE 14ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a refusal by the door aborts the batch, is counted and reported, and leaves the rows in hot 2ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a door that reports a count other than the batch size is treated as a refusal 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > works on a Pool-shaped client without checking out a dedicated connection 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > does NOT call the door when the sink reports a checksum mismatch 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > aborts on sink throw and leaves rows in hot 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > chunks large datasets into multiple batches, one door call each 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > respects maxBatches as a time-box 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > returns zero work when nothing past cutoff 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > the default cutoff is never inside the 24-month floor the door enforces 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces the same hash for the same rows regardless of key order 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces different hashes for different content 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveAppServiceRole > defaults to app_service 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveAppServiceRole > honors a valid APP_SERVICE_DB_ROLE override 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveAppServiceRole > rejects an identifier that could carry quoting metacharacters 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > privilege model > defaults to full DML for application schemas 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > privilege model > overrides audit to APPEND-ONLY (no UPDATE/DELETE) for Part 11 tamper-evidence 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > privilege model > overrides extensions to READ-ONLY (SELECT) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > is a no-op when APP_SERVICE_DB_PASSWORD is unset (single-role compat) 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > rejects a too-short password rather than minting a weak role 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > CREATEs the role NOSUPERUSER + NOBYPASSRLS and grants least privilege 5ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > never sends the plaintext password: DDL carries its SCRAM verifier 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > ALTERs (not re-CREATEs) an existing role, rotating the password in place 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole > grants EVERY discovered application schema (no hardcoded allowlist gap) 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole as a non-superuser (the RDS master) > ALTERs as a non-superuser (the RDS master) without naming superuser-only attributes 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > provisionAppServiceRole as a non-superuser (the RDS master) > REFUSES an existing role a non-superuser cannot make safe, rather than reporting it minted 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > roleFromUrl > reads the login role out of a connection string, with or without the psql wrapper 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > roleFromUrl > falls back to a scheme scan when the WHATWG parser rejects the password 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > roleFromUrl > returns null when the string names no role 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > returns null for the single-role posture (runtime is the owner) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > identifies the DATABASE_URL login when DATABASE_OWNER_URL made another role the owner (the IQ-DEV-001 shape) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > prefers RUNTIME_DB_ROLE, then the mint switch, then APP_DATABASE_URL 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > refuses a RUNTIME_DB_ROLE that conflicts with the role the password would mint 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > resolveRuntimeRole > rejects a role name that could carry quoting metacharacters 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > refreshRuntimeRoleGrants / ensureRuntimeRole > grants an EXISTING role the same recipe without a password (no CREATE/ALTER ROLE) 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > refreshRuntimeRoleGrants / ensureRuntimeRole > fails closed when the identified role does not exist 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > refreshRuntimeRoleGrants / ensureRuntimeRole > ensureRuntimeRole: refreshes an identified role, mints when the password is set, no-ops single-role 7ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > APPEND_ONLY_TABLES > names the Part 11 store among the append-only stores (the full list: provision-app-role-append-only.test.ts) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > passes a recipe-shaped estate 1ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > reports a revoked privilege and a schema without USAGE as denied (the IQ-DEV-001 shape) 0ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > reports UPDATE/DELETE on a non-owned audit relation as EXCESS, and ownership of the store as a failure 2ms
+ ✓ server/db/__tests__/provision-app-role.test.ts > auditRuntimeRoleGrants > reports a role that does not exist without touching the catalog further 0ms
+stdout | server/routes/__tests__/part11TenantScoping.test.ts
+{
+  "timestamp": "2026-10-01T15:08:08.068Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:08:08.070Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/part11TenantScoping.test.ts
+{
+  "timestamp": "2026-10-01T15:08:08.070Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > resolveAuditAnchorStore > is null — not configured — without AUDIT_ANCHOR_BUCKET, or with a blank one 2ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > resolveAuditAnchorStore > names the bucket and the anchors/ prefix the task role is granted 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > puts one JSON object under the dated key, with an integrity checksum and the bucket default encryption 5ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > writes each key once: the put is conditional (If-None-Match *), so it never replaces an existing anchor 3ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > latest() follows the listing to its last page and returns the newest anchor 81ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > latest() is null when nothing has been anchored 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > a refused listing is an error, never "no anchor" 9ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > keys sort in time order, so the lexically last key is the newest anchor 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > accepts the document the writer produces 2ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses not JSON 9ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses another format 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses another store 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses no time 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses heads not a list 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a hash that is not sha-256 hex 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a row id that is not a uuid 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a chain_seq that is not a whole number 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a row count of zero 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses an organisation twice 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the archive hot window the verifier excuses nothing inside (DP-68) > is the archive door's own floor, so the verifier and the door cannot drift apart 1ms
+stderr | server/routes/__tests__/part11TenantScoping.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/part11TenantScoping.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/part11TenantScoping.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:documentId — scoped to the caller’s organization > filters on organization_id, bound to the org on the request 34ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:documentId — scoped to the caller’s organization > refuses when the request carries no organization, rather than reading unscoped 7ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:documentId — scoped to the caller’s organization > cannot be steered to another tenant by the path parameter 14ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:signatureId/manifest — the scope is mandatory now > refuses without an organization instead of reading by id alone 14ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /signatures/:signatureId/manifest — the scope is mandatory now > does not serve unattributed rows to every tenant 13ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /audit-trail/chain-integrity — already scoped, now connected > binds the chain read to the caller’s org 23ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /audit-trail/chain-integrity — already scoped, now connected > refuses without a tenant 4ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /audit-trail/seal-integrity — org admin is not a platform admin > refuses an org-scoped admin, which self-service signup mints for free 4ms
+ ✓ server/routes/__tests__/part11TenantScoping.test.ts > GET /audit-trail/seal-integrity — org admin is not a platform admin > still admits a genuine platform role 6ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > returns a tenant its OWN file 23ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > returns NULL for another tenant’s version id 4ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > reports a foreign id exactly like an id that never existed 7ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot destroy another tenant’s stored bytes > refuses a cross-tenant delete AND leaves the file readable 13ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot destroy another tenant’s stored bytes > allows a tenant to delete its own file 3ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects parent traversal 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects absolute path 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects empty 5ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects not a uuid 6ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects uuid with a suffix 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects a nonsense organization id rather than searching 10ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses a version directory whose recorded owner is a different org 5ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses to DELETE a relocated directory it does not own 4ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses a filename that is not its own basename 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > returns null on a corrupt sidecar rather than throwing 4ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a traversal into another tenant and writes nothing 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses an absolute path and writes nothing 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses the ownership sidecar and writes nothing 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a windows-style traversal and writes nothing 0ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a bare parent and writes nothing 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > still stores an ordinary name 2ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > names every append-only audit store, and the one governed UPDATE (revocation) by its columns 12ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > holds the archive ledger to SELECT: the door, not the runtime role, appends to it 9ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > covers every store whose immutability trigger the production boot requires, or says why not 13ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > after the blanket grants, from PUBLIC and the role, giving the revocation its columns back 4ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > withholds INSERT as well on a store whose ceiling is SELECT (the archive ledger) 3ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store > asks for every store with its carve-out, and withholds nothing on a store this edition lacks 2ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > UPDATE, DELETE and TRUNCATE on a public store are EXCESS, not required 2ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > INSERT on the archive ledger is EXCESS; SELECT alone is the recipe posture, not a denial 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > a store the role cannot append to is denied (from the grant-half commit 06152498) 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > TRUNCATE on an audit-schema relation is EXCESS too 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > a public store the runtime role OWNS is a failure (ownership confers every privilege) 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > the grant audit holds each store to SELECT, INSERT > electronic_signatures: the supersession columns are required, any other updatable column is EXCESS 1ms
+stderr | server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > a caller with NO ambient tenant scope (the nightly consolidation job) > CONTROL: the instrumented pool refuses an unscoped checkout under RLS_ENFORCE=on
+{
+  "timestamp": "2026-10-01T15:08:09.371Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts:78:29",
+    "enforcement": "on"
+  }
+}
+
+ ✓ server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > a caller with NO ambient tenant scope (the nightly consolidation job) > CONTROL: the instrumented pool refuses an unscoped checkout under RLS_ENFORCE=on 25ms
+ ✓ server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > a caller with NO ambient tenant scope (the nightly consolidation job) > gets a connection, runs the callback, and releases it 6ms
+ ✓ server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > the checkout carries the scope withTenantConnection was asked for > a transaction opened inside the callback gets the requested tenant, not the ambient one 2ms
+ ✓ server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > request-path callers that already hold a scope keep today's behaviour > same session set_config sequence, callback sees the requested scope, ambient scope restored 13ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes 94ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists 93ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record 61ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed 47ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact 19ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+[audited-export] tenant chain walk failed: no admin scope
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+[audited-export] export not recorded: simulated failure
+
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline 76ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed 70ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves 46ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it 45ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing 23ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written 19ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over 29ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain 117ms
+ ✓ server/db/__tests__/provision-app-role-scram.test.ts > scramSha256Verifier > produces the verifier RFC 7677 implies for its test vector 5ms
+ ✓ server/db/__tests__/provision-app-role-scram.test.ts > scramSha256Verifier > salts each verifier freshly 4ms
+ ✓ server/db/__tests__/provision-app-role-scram.test.ts > scramSha256Verifier > refuses a password outside printable ASCII rather than hash it unlike the server 2ms
+stdout | server/routes/__tests__/part11-chain-empty-honesty.test.ts
+{
+  "timestamp": "2026-10-01T15:08:11.230Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:08:11.232Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/part11-chain-empty-honesty.test.ts
+{
+  "timestamp": "2026-10-01T15:08:11.232Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/part11-chain-empty-honesty.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/part11-chain-empty-honesty.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/part11-chain-empty-honesty.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/part11-chain-empty-honesty.test.ts > chain-integrity — zero audit events is not a verified chain > reports the empty chain without an integrity verdict 27ms
+ ✓ server/routes/__tests__/part11-chain-empty-honesty.test.ts > chain-integrity — zero audit events is not a verified chain > claims no verdict anywhere in the empty-chain body 5ms
+ ✓ server/routes/__tests__/part11-chain-empty-honesty.test.ts > chain-integrity — zero audit events is not a verified chain > does not describe cryptographic linkage between entries that do not exist 3ms
+stderr | server/routes/__tests__/part11-compliance-5xx-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/part11-compliance-5xx-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/part11-compliance-5xx-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > GET /signatures/:signatureId/manifest — a non-schema query failure 32ms
+ ✓ server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > GET /audit-trail/seal-integrity — a verifier failure (platform admin) 8ms
+ ✓ server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > leaves the 503 for an unprovisioned store and the 403 for an org admin unchanged 10ms
+stdout | server/db/__tests__/readiness-contract.test.ts
+{
+  "timestamp": "2026-10-01T15:08:12.806Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:08:12.807Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/db/__tests__/readiness-contract.test.ts
+{
+  "timestamp": "2026-10-01T15:08:12.808Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/db/__tests__/readiness-contract.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/db/__tests__/readiness-contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/db/__tests__/readiness-contract.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+{
+  "timestamp": "2026-10-01T15:08:12.884Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:08:12.886Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+{
+  "timestamp": "2026-10-01T15:08:12.886Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > CRITICAL_TABLES agree with ensureCoreTables.ts 2ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > REQUIRED_SCHEMAS agree with ensureCoreTables.ts 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > SECURITY_CRITICAL_TABLES agree with startup/services.ts 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > demands the vector extension and the Part 11 audit store 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > base sentinels are a superset of the critical tables 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > passes on a complete contract 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing security-critical table (the licenses case) 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing Part 11 audit store 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names a missing schema and a missing extension 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > as the runtime role: refuses a superuser and an unreadable table 2ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > as the owner: does not check SELECT reach 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > passes when the named role reaches everything with the recipe privileges 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails on an application table outside the contract that the role cannot reach (the 183-table case) 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when the audit store is widened beyond append-only (UPDATE via a PUBLIC or hand grant) 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when a public append-only store is widened (DELETE on audit_logs, TRUNCATE on audit_events) 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when the runtime role owns the audit store 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > fails when the named role does not exist 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract — named runtime role (owner connection) and the grant audit > refuses a named superuser 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain states it as unknown, with the reason 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain still says ok over rows it checked 12ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the signed audit export states the audit_logs chain as unverified, not intact 5ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the integrity attestation says "not verified" for a walk of zero rows, even if handed ok: true 1ms
+
+ Test Files  25 passed (25)
+      Tests  336 passed (336)
+   Start at  15:07:49
+   Duration  23.27s (transform 8.80s, setup 979ms, import 25.99s, tests 34.43s, environment 3ms)
+

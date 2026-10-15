@@ -1,0 +1,22 @@
+ ✓ server/services/__tests__/enhancedEmbeddingService.policy-refusal.test.ts > embedBatch and a placement refusal > still retries a transient provider failure 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/enhancedEmbeddingService.policy-refusal.test.ts > embedBatch and a placement refusal > asks once and rethrows the refusal unchanged
+AssertionError: expected "vi.fn()" to be called 1 times, but got 3 times
+ ❯ server/services/__tests__/enhancedEmbeddingService.policy-refusal.test.ts:48:19
+     46|
+     47|     await expect(svc.embedBatch(['a protocol synopsis'])).rejects.toBe…
+     48|     expect(embed).toHaveBeenCalledTimes(1);
+       |                   ^
+     49|     expect((svc as any).sleep).not.toHaveBeenCalled();
+     50|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  08:47:42
+   Duration  707ms (transform 201ms, setup 110ms, import 136ms, tests 14ms, environment 0ms)
+

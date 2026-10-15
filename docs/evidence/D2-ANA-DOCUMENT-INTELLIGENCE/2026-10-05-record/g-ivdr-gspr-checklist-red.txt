@@ -1,0 +1,150 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 11ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 9ms
+   → gspr_checklist: expected true to be false // Object.is equality
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 1ms
+   → gspr_checklist: expected 'Regulation (EU) 2017/745 (MDR) Annex …' not to match /Requirement 23|Require…/745|is parallel
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 2ms
+   → expected [ 'eu_mdr', 'eu_ivdr' ] to deeply equal [ 'eu_mdr' ]
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 1ms
+   → ivdr_gspr_checklist exists: expected undefined to be defined
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 1ms
+   → Cannot read properties of undefined (reading 'sections')
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 2ms
+   → expected [ undefined, 'gspr_checklist', …(4) ] to include 'ivdr_gspr_checklist'
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 2ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering
+AssertionError: gspr_checklist: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:83:85
+     81|   it('no template serves both eu_mdr and eu_ivdr under one Annex I num…
+     82|     for (const t of DOCUMENT_TEMPLATES) {
+     83|       expect(t.families.includes('eu_mdr') && t.families.includes('eu_…
+       |                                                                                     ^
+     84|     }
+     85|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering
+AssertionError: gspr_checklist: expected 'Regulation (EU) 2017/745 (MDR) Annex …' not to match /Requirement 23|Require…/745|is parallel
+
+- Expected:
+/Requirement 23|Requirements? 1–9|Requirements? 10–22|2017\/745|is parallel/
+
++ Received:
+"Regulation (EU) 2017/745 (MDR) Annex I (IVDR Annex I is parallel) | Chapter I — General Requirements Requirements 1–9: safety/performance, risk management, risk-control, lifecycle risk. | Chapter II — Requirements Regarding Design and Manufacture Requirements 10–22: chemical/physical/biological properties, infection, construction, software, energy, etc. | Chapter III — Information Supplied with the Device Requirement 23: label and instructions for use."
+
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:90:30
+     88|     for (const t of templatesForFamily('eu_ivdr')) {
+     89|       const body = `${t.regulatoryBasis} | ${text(t)}`;
+     90|       expect(body, t.id).not.toMatch(/Requirement 23|Requirements? 1–9…
+       |                              ^
+     91|     }
+     92|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled
+AssertionError: expected [ 'eu_mdr', 'eu_ivdr' ] to deeply equal [ 'eu_mdr' ]
+
+- Expected
++ Received
+
+  [
+    "eu_mdr",
++   "eu_ivdr",
+  ]
+
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:96:26
+     94|   it('gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis…
+     95|     const mdr = getDocumentTemplate('gspr_checklist')!;
+     96|     expect(mdr.families).toEqual(['eu_mdr']);
+       |                          ^
+     97|     expect(mdr.regulatoryBasis).toMatch(/Regulation \(EU\) 2017\/745.*…
+     98|     expect(mdr.regulatoryBasis).not.toMatch(/IVDR|2017\/746|parallel/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4)
+AssertionError: ivdr_gspr_checklist exists: expected undefined to be defined
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:106:48
+    104|   it('ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, …
+    105|     const ivdr = getDocumentTemplate('ivdr_gspr_checklist');
+    106|     expect(ivdr, 'ivdr_gspr_checklist exists').toBeDefined();
+       |                                                ^
+    107|     expect(ivdr!.families).toEqual(['eu_ivdr']);
+    108|     expect(ivdr!.regulatoryBasis).toMatch(/Regulation \(EU\) 2017\/746…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section
+TypeError: Cannot read properties of undefined (reading 'sections')
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:131:58
+    129|     const section = /Section (\d+)\b/.exec(cited)?.[1];
+    130|     expect(section, 'the labelling record names an Annex I section').t…
+    131|     const iii = getDocumentTemplate('ivdr_gspr_checklist')!.sections.f…
+       |                                                          ^
+    132|     expect(iii.purpose).toMatch(new RegExp(`Section ${section}\\b`));
+    133|     expect(record.keyPoints.join(' ')).toMatch(/§20\.2.*label/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist
+AssertionError: expected [ undefined, 'gspr_checklist', …(4) ] to include 'ivdr_gspr_checklist'
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:147:84
+    145|       }
+    146|     }
+    147|     expect(getRequirements('ivdr_td')!.requiredDocuments.map((d) => d.…
+       |                                                                                    ^
+    148|     expect(getRequirements('mdr_td')!.requiredDocuments.map((d) => d.t…
+    149|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:157:26
+    155|     });
+    156|     const gspr = r.sections.find((s) => s.id === 'gspr')!;
+    157|     expect(gspr.present).toBe(true);
+       |                          ^
+    158|     expect(gspr.titleOnlyLeafIndices).toEqual([]);
+    159|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 9 passed (16)
+   Start at  12:38:08
+   Duration  1.97s (transform 1.26s, setup 134ms, import 1.29s, tests 36ms, environment 0ms)
+

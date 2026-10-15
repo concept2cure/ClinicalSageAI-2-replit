@@ -1,0 +1,554 @@
+# g-eu-postmarket-obligations — RED, 2026-10-05T03:41:12Z, working tree at HEAD 0c3dcab4 with only the new test applied
+# npx vitest run server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+{
+  "timestamp": "2026-10-05T03:41:06.215Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T03:41:06.216Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+{
+  "timestamp": "2026-10-05T03:41:06.216Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+
+stderr | server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+
+stderr | server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts
+{
+  "timestamp": "2026-10-05T03:41:06.475Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > reports the six MDR types, flagging required ones for a non-implantable Class IIb device 7ms
+   → expected undefined to be 'assessed' // Object.is equality
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > marks absent required documents as missing and not approved 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > uses the latest version per type and runs the real validation gate 1ms
+ ✓ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > an approved-but-incomplete document does NOT count as gate-passing 1ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > Class I owes a PMS plan and PMS report, and PMCF plan + evaluation unless justified 3ms
+   → expected [ 'pms_plan', 'pms_report' ] to deeply equal [ Array(4) ]
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > allRequiredApproved is true only when every required doc is approved AND passes the gate 1ms
+   → expected 2 to be 4 // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR Is is a Class I device and owes a PMS report under Art 85 1ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR Im is a Class I device and owes a PMS report under Art 85 1ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR Ir is a Class I device and owes a PMS report under Art 85 1ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR Class Is is a Class I device and owes a PMS report under Art 85 0ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR class im is a Class I device and owes a PMS report under Art 85 0ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > requires an SSCP for an implantable Class IIa device (Art 32 covers every implantable) 1ms
+   → expected false to be true // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > requires an SSCP for Class III and none for a custom-made Class III device 1ms
+   → expected true to be false // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > does not read "implantable" out of the class string 0ms
+   → expected undefined to be 'class_unrecognised' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > leaves the SSCP undetermined, and the set not approved, when implantable is not stated 1ms
+   → expected undefined to be 'undetermined' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > reports the six IVDR types: PMPF and SSP, not PMCF and SSCP 1ms
+   → expected [ Array(6) ] to deeply equal [ Array(6) ]
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class A owes a PMS report under Art 80 and no PSUR 0ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class B owes a PMS report under Art 80 and no PSUR 0ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class Class B owes a PMS report under Art 80 and no PSUR 0ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class C owes a PSUR (Art 81) and an SSP (Art 29), PMPF under Annex XIII Part B 4ms
+   → no ssp row in the report
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class D owes a PSUR (Art 81) and an SSP (Art 29), PMPF under Annex XIII Part B 0ms
+   → no ssp row in the report
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class D PSURs go to the notified body through EUDAMED; Class C PSURs are made available 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "X" under MDR → class_unrecognised, no required set, never approved 1ms
+   → expected undefined to be 'class_unrecognised' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "B" under MDR → class_unrecognised, no required set, never approved 0ms
+   → expected undefined to be 'class_unrecognised' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "IIa" under IVDR → class_unrecognised, no required set, never approved 0ms
+   → expected undefined to be 'class_unrecognised' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class null under MDR → class_unrecognised, no required set, never approved 0ms
+   → expected undefined to be 'class_unrecognised' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "" under IVDR → class_unrecognised, no required set, never approved 0ms
+   → expected undefined to be 'class_unrecognised' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > normalises the class vocabulary per regulation 0ms
+   → normaliseEuDeviceClass is not a function
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > every row carries a well-formed basis, an article, a cadence and a recipient 0ms
+   → Cannot read properties of undefined (reading 'length')
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > at most one row decides each document type for any class and implantable state 0ms
+   → expected undefined to be 'assessed' // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > the type vocabulary and the authoring registry include ssp, pmpf_plan and pmpf_evaluation 1ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > ssp: an empty document fails the gate 1ms
+   → expected true to be false // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > ssp: raw DRAFT scaffold fails the gate, the specialised document passes 0ms
+   → buildSspContent is not a function
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_plan: an empty document fails the gate 0ms
+   → expected true to be false // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_plan: raw DRAFT scaffold fails the gate, the specialised document passes 0ms
+   → buildPmpfPlanContent is not a function
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation: an empty document fails the gate 0ms
+   → expected true to be false // Object.is equality
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation: raw DRAFT scaffold fails the gate, the specialised document passes 0ms
+   → buildPmpfEvaluationContent is not a function
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation must declare a reporting period 0ms
+   → buildPmpfEvaluationContent is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 35 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > reports the six MDR types, flagging required ones for a non-implantable Class IIb device
+AssertionError: expected undefined to be 'assessed' // Object.is equality
+
+- Expected:
+"assessed"
+
++ Received:
+undefined
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:98:22
+     96|   it('reports the six MDR types, flagging required ones for a non-impl…
+     97|     const r = computeDocStatus([], 'IIb', 'MDR', 'p1', { implantable: …
+     98|     expect(r.status).toBe('assessed');
+       |                      ^
+     99|     expect(r.documents.map(d => d.documentType).sort()).toEqual(
+    100|       ['pmcf_evaluation', 'pmcf_plan', 'pms_plan', 'pms_report', 'psur…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > Class I owes a PMS plan and PMS report, and PMCF plan + evaluation unless justified
+AssertionError: expected [ 'pms_plan', 'pms_report' ] to deeply equal [ Array(4) ]
+
+- Expected
++ Received
+
+  [
+-   "pmcf_evaluation",
+-   "pmcf_plan",
+    "pms_plan",
+    "pms_report",
+  ]
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:144:40
+    142|   it('Class I owes a PMS plan and PMS report, and PMCF plan + evaluati…
+    143|     const r = computeDocStatus([], 'I', 'MDR', 'p1', { implantable: fa…
+    144|     expect([...requiredSet(r)].sort()).toEqual(
+       |                                        ^
+    145|       ['pmcf_evaluation', 'pmcf_plan', 'pms_plan', 'pms_report'].sort()
+    146|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > allRequiredApproved is true only when every required doc is approved AND passes the gate
+AssertionError: expected 2 to be 4 // Object.is equality
+
+- Expected
++ Received
+
+- 4
++ 2
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:160:39
+    158|       implantable: false,
+    159|     });
+    160|     expect(withoutPmcf.requiredTotal).toBe(4);
+       |                                       ^
+    161|     expect(withoutPmcf.allRequiredApproved).toBe(false);
+    162|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR Is is a Class I device and owes a PMS report under Art 85
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR Im is a Class I device and owes a PMS report under Art 85
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR Ir is a Class I device and owes a PMS report under Art 85
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR Class Is is a Class I device and owes a PMS report under Art 85
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > MDR class im is a Class I device and owes a PMS report under Art 85
+AssertionError: expected undefined to be 'assessed' // Object.is equality
+
+- Expected:
+"assessed"
+
++ Received:
+undefined
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:191:24
+    189|     cls => {
+    190|       const r = computeDocStatus([], cls, 'MDR', 'p1', { implantable: …
+    191|       expect(r.status).toBe('assessed');
+       |                        ^
+    192|       const pmsr = row(r, 'pms_report');
+    193|       expect(pmsr.required).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > requires an SSCP for an implantable Class IIa device (Art 32 covers every implantable)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:202:27
+    200|     const r = computeDocStatus([], 'IIa', 'MDR', 'p1', { implantable: …
+    201|     const sscp = row(r, 'sscp');
+    202|     expect(sscp.required).toBe(true);
+       |                           ^
+    203|     expect(sscp.basis[0].ref).toBe('MDR Art 32');
+    204|     // An implantable device's PSUR goes to the notified body through …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > requires an SSCP for Class III and none for a custom-made Class III device
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:213:7
+    211|     expect(
+    212|       row(computeDocStatus([], 'III', 'MDR', 'p1', { implantable: true…
+    213|     ).toBe(false);
+       |       ^
+    214|   });
+    215|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > does not read "implantable" out of the class string
+AssertionError: expected undefined to be 'class_unrecognised' // Object.is equality
+
+- Expected:
+"class_unrecognised"
+
++ Received:
+undefined
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:218:22
+    216|   it('does not read "implantable" out of the class string', () => {
+    217|     const r = computeDocStatus([], 'IIb implantable', 'MDR', 'p1');
+    218|     expect(r.status).toBe('class_unrecognised');
+       |                      ^
+    219|   });
+    220|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — MDR > leaves the SSCP undetermined, and the set not approved, when implantable is not stated
+AssertionError: expected undefined to be 'undetermined' // Object.is equality
+
+- Expected:
+"undetermined"
+
++ Received:
+undefined
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:224:29
+    222|     const r = computeDocStatus([], 'IIb', 'MDR', 'p1');
+    223|     const sscp = row(r, 'sscp');
+    224|     expect(sscp.obligation).toBe('undetermined');
+       |                             ^
+    225|     expect(sscp.required).toBe(false);
+    226|     expect(r.undeterminedTotal).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > reports the six IVDR types: PMPF and SSP, not PMCF and SSCP
+AssertionError: expected [ Array(6) ] to deeply equal [ Array(6) ]
+
+- Expected
++ Received
+
+  [
+-   "pmpf_evaluation",
+-   "pmpf_plan",
++   "pmcf_evaluation",
++   "pmcf_plan",
+    "pms_plan",
+    "pms_report",
+    "psur",
+-   "ssp",
++   "sscp",
+  ]
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:234:57
+    232|   it('reports the six IVDR types: PMPF and SSP, not PMCF and SSCP', ()…
+    233|     const r = computeDocStatus([], 'C', 'IVDR', 'p1');
+    234|     expect(r.documents.map(d => d.documentType).sort()).toEqual(
+       |                                                         ^
+    235|       ['pmpf_evaluation', 'pmpf_plan', 'pms_plan', 'pms_report', 'psur…
+    236|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class A owes a PMS report under Art 80 and no PSUR
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class B owes a PMS report under Art 80 and no PSUR
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class Class B owes a PMS report under Art 80 and no PSUR
+AssertionError: expected undefined to be 'assessed' // Object.is equality
+
+- Expected:
+"assessed"
+
++ Received:
+undefined
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:241:22
+    239|   it.each(['A', 'B', 'Class B'])('IVDR Class %s owes a PMS report unde…
+    240|     const r = computeDocStatus([], cls, 'IVDR', 'p');
+    241|     expect(r.status).toBe('assessed');
+       |                      ^
+    242|     expect(row(r, 'psur').required).toBe(false);
+    243|     const pmsr = row(r, 'pms_report');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class C owes a PSUR (Art 81) and an SSP (Art 29), PMPF under Annex XIII Part B
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class D owes a PSUR (Art 81) and an SSP (Art 29), PMPF under Annex XIII Part B
+Error: no ssp row in the report
+ ❯ row server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:79:21
+     77| function row(r: ReturnType<typeof computeDocStatus>, t: PostMarketDocu…
+     78|   const found = r.documents.find(d => d.documentType === t);
+     79|   if (!found) throw new Error(`no ${t} row in the report`);
+       |                     ^
+     80|   return found;
+     81| }
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:252:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — IVDR > IVDR Class D PSURs go to the notified body through EUDAMED; Class C PSURs are made available
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:268:75
+    266|
+    267|   it('IVDR Class D PSURs go to the notified body through EUDAMED; Clas…
+    268|     expect(row(computeDocStatus([], 'D', 'IVDR', 'p'), 'psur').recipie…
+       |                                                                           ^
+    269|     expect(row(computeDocStatus([], 'C', 'IVDR', 'p'), 'psur').recipie…
+    270|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "X" under MDR → class_unrecognised, no required set, never approved
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "B" under MDR → class_unrecognised, no required set, never approved
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "IIa" under IVDR → class_unrecognised, no required set, never approved
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class null under MDR → class_unrecognised, no required set, never approved
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > class "" under IVDR → class_unrecognised, no required set, never approved
+AssertionError: expected undefined to be 'class_unrecognised' // Object.is equality
+
+- Expected:
+"class_unrecognised"
+
++ Received:
+undefined
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:282:22
+    280|   ] as const)('class %j under %s → class_unrecognised, no required set…
+    281|     const r = computeDocStatus([approvedPmsReport()], cls, reg, 'p');
+    282|     expect(r.status).toBe('class_unrecognised');
+       |                      ^
+    283|     expect(r.normalisedClass).toBeNull();
+    284|     expect(r.classProblem).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > normalises the class vocabulary per regulation
+TypeError: normaliseEuDeviceClass is not a function
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:295:12
+    293| describe('EU_POSTMARKET_OBLIGATIONS', () => {
+    294|   it('normalises the class vocabulary per regulation', () => {
+    295|     expect(normaliseEuDeviceClass('Class IIb', 'MDR')).toBe('IIb');
+       |            ^
+    296|     expect(normaliseEuDeviceClass('iii', 'MDR')).toBe('III');
+    297|     expect(normaliseEuDeviceClass('IS', 'MDR')).toBe('Is');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > every row carries a well-formed basis, an article, a cadence and a recipient
+TypeError: Cannot read properties of undefined (reading 'length')
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:304:38
+    302|
+    303|   it('every row carries a well-formed basis, an article, a cadence and…
+    304|     expect(EU_POSTMARKET_OBLIGATIONS.length).toBeGreaterThan(0);
+       |                                      ^
+    305|     for (const o of EU_POSTMARKET_OBLIGATIONS) {
+    306|       expect(basisProblems(o.basis), o.id).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > EU_POSTMARKET_OBLIGATIONS > at most one row decides each document type for any class and implantable state
+AssertionError: expected undefined to be 'assessed' // Object.is equality
+
+- Expected:
+"assessed"
+
++ Received:
+undefined
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:323:28
+    321|         for (const implantable of [true, false]) {
+    322|           const r = computeDocStatus([], cls, reg, 'p', { implantable,…
+    323|           expect(r.status).toBe('assessed');
+       |                            ^
+    324|           expect(new Set(r.documents.map(d => d.documentType)).size).t…
+    325|           expect(r.documents.every(d => d.obligation !== 'undetermined…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > the type vocabulary and the authoring registry include ssp, pmpf_plan and pmpf_evaluation
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:335:42
+    333|   it('the type vocabulary and the authoring registry include ssp, pmpf…
+    334|     for (const t of ['ssp', 'pmpf_plan', 'pmpf_evaluation'] as const) {
+    335|       expect(POST_MARKET_DOCUMENT_TYPES).toContain(t);
+       |                                          ^
+    336|       expect(AUTHORABLE_DOCUMENT_TYPES).toContain(t);
+    337|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > ssp: an empty document fails the gate
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_plan: an empty document fails the gate
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation: an empty document fails the gate
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:354:28
+    352|     it(`${type}: an empty document fails the gate`, () => {
+    353|       const v = validateDocument(doc(type, { content: {}, ...period })…
+    354|       expect(v.passesGate).toBe(false);
+       |                            ^
+    355|       expect(v.findings.every(f => !/\bMDR\b/.test(f.citation))).toBe(…
+    356|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > ssp: raw DRAFT scaffold fails the gate, the specialised document passes
+TypeError: buildSspContent is not a function
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:343:19
+    341|   const ivdCtx = { deviceName: 'Acme HbA1c Assay', deviceClass: 'C', r…
+    342|   const cases = [
+    343|     ['ssp', () => buildSspContent(ivdCtx), false],
+       |                   ^
+    344|     ['pmpf_plan', () => buildPmpfPlanContent(ivdCtx), false],
+    345|     ['pmpf_evaluation', () => buildPmpfEvaluationContent(ivdCtx), true…
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:358:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_plan: raw DRAFT scaffold fails the gate, the specialised document passes
+TypeError: buildPmpfPlanContent is not a function
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:344:25
+    342|   const cases = [
+    343|     ['ssp', () => buildSspContent(ivdCtx), false],
+    344|     ['pmpf_plan', () => buildPmpfPlanContent(ivdCtx), false],
+       |                         ^
+    345|     ['pmpf_evaluation', () => buildPmpfEvaluationContent(ivdCtx), true…
+    346|   ] as const;
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:358:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation: raw DRAFT scaffold fails the gate, the specialised document passes
+TypeError: buildPmpfEvaluationContent is not a function
+ ❯ cases server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:345:31
+    343|     ['ssp', () => buildSspContent(ivdCtx), false],
+    344|     ['pmpf_plan', () => buildPmpfPlanContent(ivdCtx), false],
+    345|     ['pmpf_evaluation', () => buildPmpfEvaluationContent(ivdCtx), true…
+       |                               ^
+    346|   ] as const;
+    347|
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:358:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/35]⎯
+
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > IVDR document types are first-class post-market documents > pmpf_evaluation must declare a reporting period
+TypeError: buildPmpfEvaluationContent is not a function
+ ❯ server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts:365:78
+    363|
+    364|   it('pmpf_evaluation must declare a reporting period', () => {
+    365|     const v = validateDocument(doc('pmpf_evaluation', { content: speci…
+       |                                                                              ^
+    366|     expect(v.passesGate).toBe(false);
+    367|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/35]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  35 failed | 3 passed (38)
+   Start at  03:41:04
+   Duration  2.02s (transform 950ms, setup 95ms, import 1.57s, tests 35ms, environment 0ms)
+
+
+# Note: the 7 route tests (GET .../documentation-status) were added after this red run.
+# Their failure case is shown by mutation in g-eu-postmarket-obligations-green.txt.
+
+# ── FIX ROUND 1 — RED, 2026-10-05T04:49:39Z ──
+# New tests added to post-market-readiness.test.ts plus the new client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts,
+# run against the round-0 code (before the round-1 engine/authoring change). 10 failed | 56 passed (66).
+      Tests  10 failed | 56 passed (66)
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class I does not owe an SSCP and is not left undetermined
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Im does not owe an SSCP and is not left undetermined
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Ir does not owe an SSCP and is not left undetermined
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Is does not owe an SSCP and is not left undetermined
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > POST /api/post-market/programs/:id/documents/:type/generate > refuses a PMCF plan for an IVD class with 422 naming the PMPF plan
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > pmcf_plan with {"deviceClass":"IVD Class C"} is refused with PM_BAD_TYPE
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > sscp with {"deviceClass":"IVD Class D"} is refused with PM_BAD_TYPE
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > a US class under MDR keeps the class-independent obligations and leaves the rest undetermined
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > an unrecognised class is never all-approved, even with every class-independent document approved
+ FAIL  server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > an unset class under IVDR still owes the PMS plan and the PMPF plan/evaluation
+ Test Files  1 failed | 1 passed (2)
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class I does not owe an SSCP and is not left undetermined 1ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Im does not owe an SSCP and is not left undetermined 1ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Ir does not owe an SSCP and is not left undetermined 3ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > MDR SSCP and the implantable fact > Class Is does not owe an SSCP and is not left undetermined 1ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > POST /api/post-market/programs/:id/documents/:type/generate > refuses a PMCF plan for an IVD class with 422 naming the PMPF plan 142ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > pmcf_plan with {"deviceClass":"IVD Class C"} is refused with PM_BAD_TYPE 8ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > authoring refuses the other regulation’s instrument > sscp with {"deviceClass":"IVD Class D"} is refused with PM_BAD_TYPE 11ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > a US class under MDR keeps the class-independent obligations and leaves the rest undetermined 10ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > an unrecognised class is never all-approved, even with every class-independent document approved 2ms
+ × server/services/gspr-postmarket/__tests__/post-market-readiness.test.ts > computeDocStatus — fail closed on an unrecognised class > an unset class under IVDR still owes the PMS plan and the PMPF plan/evaluation 3ms
+AssertionError: expected 'undetermined' to be 'not-required' // Object.is equality
+AssertionError: expected 'undetermined' to be 'required' // Object.is equality
+AssertionError: expected +0 to be 3 // Object.is equality
+AssertionError: expected 500 to be 422 // Object.is equality
+AssertionError: expected TypeError: __vite_ssr_import_1__.db.inser… to match object { code: 'PM_BAD_TYPE', …(1) }
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+# PM-098 and postMarketStatusQuery tests pass on the round-0 code (the code already behaved);
+# their failing case is shown by mutation (green file, FIX ROUND 1 MUTATION).

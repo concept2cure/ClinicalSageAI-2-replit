@@ -1,0 +1,5 @@
+[terraform-preflight-proof] ok — preflight step found in job "migrate" (9562 bytes of shell)
+  Error: Test assertion failed
+  Error: Test assertion failed
+  Error: Test assertion failed
+[terraform-preflight-proof] FAIL — terraform test did not pass (fail).

@@ -12,7 +12,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'crypto';
-import { promises as fs } from 'fs';
+import { readFileSync, promises as fs } from 'fs';
 import JSZip from 'jszip';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
@@ -55,11 +55,20 @@ beforeAll(async () => {
       content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ,
       -- Last, so the positional INSERT below is unchanged. NULL: the reader
       -- (7fd5d6af) then asks getStorageProviderFor for the default store.
-      storage_provider TEXT
+      storage_provider TEXT,
+      -- VR-14: the version family the transmit rule reads (is this version
+      -- current?). Appended, so the positional INSERT below is unchanged.
+      organization_id INTEGER, supersedes_id UUID, document_code TEXT
     );
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}', ${ORG}, NULL);
     INSERT INTO vault.documents VALUES
       ('${VAULT_DOC}', '${PROGRAM}', 'ver-1', '${createHash('sha256').update(PDF).digest('hex')}', 'csr.pdf', NULL);
+    -- VR-14: a vault leaf is transmitted only when its version is approved on
+    -- its VR-13 lifecycle record, for these bytes.
+    INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs)
+    VALUES ('cd-vault', ${ORG}, '${PROGRAM}', 'csr.pdf', 'CSR', 'approved', true,
+            '${createHash('sha256').update(PDF).digest('hex')}',
+            '{"vault_documents":{"nativeId":"${VAULT_DOC}","role":"artifact"}}'::jsonb);
 
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
     VALUES (1, 'IND', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
@@ -70,12 +79,18 @@ beforeAll(async () => {
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
     VALUES (100, ${ORG}, 'Clinical Overview', '<p>body</p>', '2.5');
 
+    -- The 5.3.5.1 leaf carries its study and STF file-tag: a file in a Module 4/5 study section
+    -- must be referenced by a Study Tagging File or FDA rejects the sequence (validation 1789),
+    -- and the packager refuses to build one it would reject. 2.5 is not a study section.
     INSERT INTO submission_leaves
-      (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_uuid, organization_id, created_by)
+      (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_uuid, study_id, stf_file_tag, organization_id, created_by)
     VALUES
-      (1, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 100, NULL, ${ORG}, ${USER}),
-      (1, 'm5.3.5.1', 'CSR 201', 'new', 'vault_documents', NULL, '${VAULT_DOC}', ${ORG}, ${USER});
+      (1, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 100, NULL, NULL, NULL, ${ORG}, ${USER}),
+      (1, 'm5.3.5.1', 'CSR 201', 'new', 'vault_documents', NULL, '${VAULT_DOC}', 'STUDY-201', 'study-report-body', ${ORG}, ${USER});
   `);
+  // The real binary-availability predicate requires the existing disposition
+  // ledger; apply its canonical constraints and guards to exercise that read.
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
 });
 
 afterAll(async () => {

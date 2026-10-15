@@ -1,0 +1,4 @@
+
+[ci:surface-discoverability] OK — 123 renderable surface(s): 94 in the Apps catalog, 29 declared contextual.
+
+disc_exit=0

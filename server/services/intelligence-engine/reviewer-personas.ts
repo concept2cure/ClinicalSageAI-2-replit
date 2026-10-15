@@ -14,6 +14,12 @@
  */
 
 import { isIvdFamily } from '../../../shared/constants/domain/product-types.js';
+import { basisLabel } from '../../../shared/regulatory/regulatory-basis.js';
+import {
+  FDA_DOCUMENTATION_LEVEL_QUESTION,
+  describeFdaSoftwareDocumentation,
+  fdaDocumentationLevel,
+} from '../market-specs/software-lifecycle.js';
 import type {
   ReviewerPersonaCode,
   ReviewerQuestion,
@@ -238,7 +244,7 @@ const fdaPmaReviewer: ReviewerPersona = {
 const fdaSoftwareReviewer: ReviewerPersona = {
   code: 'fda_software_reviewer',
   name: 'FDA Software Reviewer',
-  scope: 'IEC 62304 lifecycle, software level of concern, validation',
+  scope: 'IEC 62304 lifecycle, FDA software Documentation Level (Basic/Enhanced), validation',
   appliesTo: p => p.isSoftware === true || p.isAiMl === true,
   rules: ({ packet }) => {
     const out: ReviewerQuestion[] = [];
@@ -247,9 +253,10 @@ const fdaSoftwareReviewer: ReviewerPersona = {
         'fda_software_reviewer',
         'methodology',
         'warning',
-        'What is the documented Software Level of Concern (basic / moderate / major), and does the submitted documentation set match the level required by the FDA guidance?',
+        `${FDA_DOCUMENTATION_LEVEL_QUESTION} Does the submitted documentation set match that level?`,
         'software flagged for program',
-        'FDA Guidance "Content of Premarket Submissions for Device Software Functions" (2023)'
+        fdaDocumentationLevel({}).basis.map(basisLabel).join('; '),
+        describeFdaSoftwareDocumentation('undetermined')
       )
     );
     if (packet?.topRisks.includes('SOFTWARE_PRESENT_NEW')) {
@@ -510,7 +517,9 @@ const preclinicalToxicologist: ReviewerPersona = {
           'Nonclinical study data has not been loaded for this program. The preclinical reviewer cannot assess Module 4 adequacy until ctd_nonclinical_studies is populated for the program.',
           'nonclinical_intel_missing',
           'ICH M3(R2)',
-          'Ingest the preclinical study reports via /api/preclinical/ingest, or attach nonclinical facts to the simulator request.'
+          // 2026-10-15: also offered "attach nonclinical facts to the simulator
+          // request", which the simulator now sets aside.
+          'Ingest the preclinical study reports via /api/preclinical/ingest and run the simulation with ctdProgramId.'
         )
       );
       return out;

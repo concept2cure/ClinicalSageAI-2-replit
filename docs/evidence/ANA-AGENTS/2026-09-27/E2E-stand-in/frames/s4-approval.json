@@ -1,0 +1,278 @@
+[
+ {
+  "t0": 1790620700843,
+  "body": {
+   "message": "Create a review task for the BX-512 stability protocol.",
+   "language": "en",
+   "context": {
+    "screen": "conversation-thread",
+    "screenName": "conversation-thread"
+   },
+   "conversation_history": [],
+   "effort_level": "balanced",
+   "run_policy": "auto",
+   "live_drive": true,
+   "drive_acks": true
+  },
+  "frames": [
+   {
+    "ms": 7,
+    "type": "run_started",
+    "runId": "run_f647d2fe-1a7d-4e4d-8540-492124e81293"
+   },
+   {
+    "ms": 7,
+    "type": "status",
+    "phase": "orchestrating",
+    "message": "Planning response…"
+   },
+   {
+    "ms": 7,
+    "type": "status",
+    "phase": "loading_context",
+    "message": "Loading project memory…"
+   },
+   {
+    "ms": 28,
+    "type": "drive_state",
+    "enabled": true,
+    "mode": "assist"
+   },
+   {
+    "ms": 59,
+    "type": "context_used",
+    "uploads": [],
+    "unresolvedUploads": 0,
+    "memory": [],
+    "memoryStatus": "unavailable"
+   },
+   {
+    "ms": 59,
+    "type": "status",
+    "phase": "generating",
+    "message": "Generating response…"
+   },
+   {
+    "ms": 59,
+    "type": "thread_id",
+    "thread_id": "ana-ri_1790620700860_c367z6suh"
+   },
+   {
+    "ms": 59,
+    "type": "orchestration",
+    "orchestration": {
+     "detectedIntent": {
+      "lens": "audit",
+      "confidence": 0.2,
+      "signals": [
+       "review"
+      ]
+     },
+     "detectedSubmissionType": null,
+     "detectedDocumentTemplate": null,
+     "appliedRole": "general",
+     "activeWorkstream": {
+      "stream": "evidence_development",
+      "phase": "execution",
+      "objective": "Create a review task for the BX-512 stability protocol.",
+      "currentFocus": "Evidence chain and support gaps",
+      "blockers": [],
+      "nextStep": "Build an evidence inventory, mark critical gaps, and decide what can be defended now versus what needs new support.",
+      "collaborationMode": "drive"
+     },
+     "workstreamHandoff": null,
+     "suggestedActions": [
+      "Create Evidence Memo",
+      "Create Deficiency Preemption Memo",
+      "Create Risk Memo",
+      "Create Reviewer Question Brief"
+     ]
+    }
+   },
+   {
+    "ms": 232,
+    "type": "status",
+    "phase": "running_tools",
+    "message": "Running 1 step…"
+   },
+   {
+    "ms": 232,
+    "type": "step",
+    "round": 1,
+    "tools": [
+     "execute_platform_command"
+    ],
+    "plan": [
+     {
+      "tool": "execute_platform_command",
+      "label": "Executing platform command: create_task"
+     }
+    ]
+   },
+   {
+    "ms": 232,
+    "type": "tool_use",
+    "round": 1,
+    "name": "execute_platform_command",
+    "toolUseId": "toolu_fake_49",
+    "label": "Executing platform command: create_task",
+    "input": {
+     "command": "create_task",
+     "params": {
+      "projectId": 1,
+      "title": "E2E stand-in: review the stability protocol",
+      "description": "Proposed by the scripted stand-in model.",
+      "priority": "medium"
+     }
+    }
+   },
+   {
+    "ms": 232,
+    "type": "approval_required",
+    "round": 1,
+    "runId": "run_f647d2fe-1a7d-4e4d-8540-492124e81293",
+    "toolUseId": "toolu_fake_49",
+    "action": "create_task",
+    "openModal": "esign",
+    "data": {
+     "tier": "confirm",
+     "reasonRequired": false,
+     "signatureRequired": false,
+     "proposedByAgent": true,
+     "retry": {
+      "command": "create_task",
+      "params": {
+       "projectId": 1,
+       "title": "E2E stand-in: review the stability protocol",
+       "description": "Proposed by the scripted stand-in model.",
+       "priority": "medium"
+      }
+     }
+    },
+    "message": "This action changes the record, so it is taken by a person rather than on your behalf. Review it and confirm to continue. AnA is waiting on this before she goes on."
+   },
+   {
+    "ms": 22491,
+    "type": "approval_decided",
+    "round": 1,
+    "toolUseId": "toolu_fake_49",
+    "decided": "denied"
+   },
+   {
+    "ms": 22492,
+    "type": "tool_result",
+    "round": 1,
+    "name": "execute_platform_command",
+    "toolUseId": "toolu_fake_49",
+    "label": "Executing platform command: create_task",
+    "status": "error",
+    "latencyMs": 0,
+    "message": "AnA couldn't finish executing platform command: create_task. She'll continue with what she has.",
+    "result": "{\"error\":\"HUMAN_CONFIRMATION_DECLINED\",\"action\":\"create_task\",\"message\":\"A person reviewed this and declined it, so it did not run.\",\"retry\":false}"
+   },
+   {
+    "ms": 22492,
+    "type": "status",
+    "phase": "reading_results",
+    "message": "Reading the results…"
+   },
+   {
+    "ms": 22701,
+    "type": "done",
+    "model": "claude-opus-5-5",
+    "provider": "anthropic",
+    "modelTier": "flagship",
+    "effortUsed": "balanced",
+    "usage": {
+     "inputTokens": 100,
+     "outputTokens": 20,
+     "totalTokens": 120,
+     "estimatedCostUsd": 0.0008
+    },
+    "latencyMs": 159,
+    "response": "I will propose the task; it needs your approval.Stand-in answer: the task outcome was HUMAN_CONFIRMATION_DECLINED — A person reviewed this and declined it, so it did not run.",
+    "telemetry": {
+     "phases": {
+      "orchestrationMs": 12,
+      "contextMs": 16,
+      "gatewayMs": 168,
+      "firstTokenMs": 185
+     },
+     "memory": {
+      "layerOutcomes": {
+       "workingMemory": "empty",
+       "clientMemory": "error",
+       "projectMemory": "skipped"
+      },
+      "workingMemoryMode": "none",
+      "semanticSearchMs": 15
+     }
+    },
+    "stoppedReason": "no_more_tools",
+    "rounds": 1,
+    "runPolicy": "auto"
+   },
+   {
+    "ms": 22701,
+    "type": "grounding_strip",
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "trust_summary": "Evidence check not run for this response — verify any regulatory claims before relying on them."
+   },
+   {
+    "ms": 22701,
+    "type": "post_done",
+    "cleanedResponse": "I will propose the task; it needs your approval.Stand-in answer: the task outcome was HUMAN_CONFIRMATION_DECLINED — A person reviewed this and declined it, so it did not run.",
+    "enrichmentMeta": {
+     "sourcesAttempted": 0,
+     "sourcesSucceeded": [],
+     "sourcesFailed": [],
+     "triggerType": "none",
+     "hasProjectContext": false
+    },
+    "evidence": {
+     "attempted": false,
+     "validated": false,
+     "source_count": 0,
+     "source_types": [],
+     "grounded_claim_count": 0,
+     "weak_or_ungrounded_claim_count": 0,
+     "missing_support_count": 0,
+     "provider": "ana-ri"
+    },
+    "evidenceDiscipline": {
+     "compliant": true,
+     "labels": 0,
+     "hasOverclaims": false
+    },
+    "structure": {
+     "valid": false,
+     "score": 0,
+     "maxScore": 6
+    },
+    "queueMeta": {
+     "thread_id": "ana-ri_1790620700860_c367z6suh",
+     "handoff_ready": true,
+     "turn_status": "completed",
+     "can_process_next": true,
+     "blocked_reason": null
+    },
+    "turnRecord": {
+     "status": "recorded",
+     "id": "1f529d2d-6e0e-4706-8b22-8d2dd5ffebab",
+     "sha256": "7382a438182113d3d73be9f82ee0c715f5a3d0fda0169647af210567158ee3b4"
+    }
+   }
+  ],
+  "deltas": 11,
+  "ended": 22701
+ }
+]

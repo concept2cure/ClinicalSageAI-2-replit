@@ -1,0 +1,28 @@
+Focused baseline Vitest output excerpt. Full local diagnostic: /tmp/biostat-ci-selectors-baseline-full.txt
+Exit status: 1
+
+ × client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > sends the engine its inputs and renders the deterministic verdict 150ms
+   → Found multiple elements with the text of: /^Indication$/
+ × client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > shows the engine’s not-computed sentence on screen 5111ms
+   → Found multiple elements with the text: /Interim look/
+ × client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > still shows the figures that WERE computed 5157ms
+   → Found multiple elements with the text: /Interim look/
+ × client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > keeps a long method string out of the rows, as before 5121ms
+   → Found multiple elements with the text: /Interim look/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > sends the engine its inputs and renders the deterministic verdict
+TestingLibraryElementError: Found multiple elements with the text of: /^Indication$/
+ ❯ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx:106:5
+ FAIL  client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > shows the engine’s not-computed sentence on screen
+TestingLibraryElementError: Found multiple elements with the text: /Interim look/
+ ❯ computeInterim client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx:84:32
+ FAIL  client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > still shows the figures that WERE computed
+TestingLibraryElementError: Found multiple elements with the text: /Interim look/
+ ❯ computeInterim client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx:84:32
+ FAIL  client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > keeps a long method string out of the rows, as before
+TestingLibraryElementError: Found multiple elements with the text: /Interim look/
+ ❯ computeInterim client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx:84:32
+ Test Files  2 failed (2)
+      Tests  4 failed | 86 passed (90)
+   Start at  22:59:51
+   Duration  27.98s (transform 1.10s, setup 333ms, import 1.65s, tests 24.02s, environment 1.38s)

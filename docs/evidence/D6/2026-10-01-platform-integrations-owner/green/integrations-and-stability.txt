@@ -1,0 +1,150 @@
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > serverFilterFragment > narrows to bioRxiv / medRxiv, or nothing for any
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > buildSearchUrl > restricts to preprints and clamps page size
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > buildSearchUrl > adds the server filter when requested and honors base-URL override
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > deriveServer > identifies bioRxiv / medRxiv from journal or DOI prefix
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > normalizePreprint > builds a citeable DOI URL and flags non-peer-review
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > normalizePreprint > falls back to a Europe PMC URL when no DOI
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > searchPreprints > returns normalized preprints and total count
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > searchPreprints > returns empty for a blank query without calling the network
+ ✓ server/services/integrations/__tests__/preprint-client.test.ts > preprint-client > searchPreprints > throws on HTTP error so the caller can degrade
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > maxPhaseLabel > maps numeric phases to labels
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > buildMoleculeSearchUrl > uses pref_name__icontains and clamps the limit
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > buildMoleculeSearchUrl > honors CHEMBL_API_BASE_URL override
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > buildMechanismUrl > filters by molecule_chembl_id
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > normalizeMolecule > extracts descriptors, SMILES, phase, and a citeable URL
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > normalizeMolecule > tolerates missing properties/structures
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > searchChemblCompounds > returns normalized molecules and total count
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > searchChemblCompounds > returns empty for a blank query without calling the network
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > searchChemblCompounds > throws on HTTP error so the caller can degrade
+ ✓ server/services/integrations/__tests__/chembl-client.test.ts > chembl-client > getChemblMechanisms > normalizes mechanism + target with a citeable target URL
+ ✓ server/services/integrations/__tests__/platform-integration-owner.test.ts > another organisation never reaches the deployment’s mailbox, calendar or CRM > another organisation: told none is connected, and the account is not reached
+ ✓ server/services/integrations/__tests__/platform-integration-owner.test.ts > another organisation never reaches the deployment’s mailbox, calendar or CRM > the estate-wide system scope: told none is connected, and the account is not reached
+ ✓ server/services/integrations/__tests__/platform-integration-owner.test.ts > another organisation never reaches the deployment’s mailbox, calendar or CRM > an unscoped call: told none is connected, and the account is not reached
+ ✓ server/services/integrations/__tests__/platform-integration-owner.test.ts > another organisation never reaches the deployment’s mailbox, calendar or CRM > with no owner named, no organisation reaches them
+ ✓ server/services/integrations/__tests__/platform-integration-owner.test.ts > the named organisation keeps them > reads its mailbox and writes its calendar
+ ✓ server/services/integrations/__tests__/platform-integration-owner.test.ts > AnA’s account of what it can do here says the same > reports them live for the named organisation only
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > builds a keyword query and clamps page size to [1,50]
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > maps a fixture device into the citeable shape
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > is defensive against missing fields
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > returns status ok with mapped devices on success and honors base-URL override
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > degrades to status unavailable on a network error (never throws)
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > degrades to status unavailable on a non-2xx response (never throws)
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eudamed-client > treats a 404 (zero matches) as an empty OK result
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > ema-epar-client > builds a searchTerm query
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > ema-epar-client > maps a fixture medicine and derives an EPAR url when none is provided
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > ema-epar-client > returns status ok with mapped medicines on success
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > ema-epar-client > degrades to status unavailable on a network error (never throws)
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eu-ctis-client > builds a POST search body with criteria and clamped page size
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eu-ctis-client > maps a fixture trial into the citeable shape
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eu-ctis-client > returns status ok with mapped trials and POSTs the request
+ ✓ server/services/integrations/__tests__/eu-data-clients.test.ts > eu-data clients > eu-ctis-client > degrades to status unavailable on a network error (never throws)
+ ✓ server/src/routes/__tests__/stability-calendar-owner.test.ts > the deployment's calendar is written for the organisation it belongs to only > another organisation: 503 CALENDAR_NOT_YOURS, no connection taken, the calendar not reached
+ ✓ server/src/routes/__tests__/stability-calendar-owner.test.ts > the deployment's calendar is written for the organisation it belongs to only > the organisation it belongs to still pushes its sampling dates
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > buildStudiesQuery > maps structured filters to v2 params
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > buildStudiesQuery > supports free-text query and multiple statuses
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > buildStudiesQuery > clamps pageSize to [1, 50]
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > normalizeStudy > flattens a v2 study into a citeable trial
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > normalizeStudy > is defensive against missing fields
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > searchTrials > returns normalized trials + totalCount on success
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > searchTrials > honors CTGOV_API_BASE_URL override
+ ✓ server/services/integrations/__tests__/clinicaltrials-client.test.ts > clinicaltrials-client > searchTrials > throws on a non-2xx response (caller degrades gracefully)
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > studyTypeFilter > maps known study types to publication-type fragments
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > parseDateRange > parses ranges and single years
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > buildEsearchParams > composes term with study-type filter and date range
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > buildEsearchParams > clamps retmax and omits filters when not provided
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > buildEsearchParams > always identifies the caller per NCBI usage policy (tool), email/api_key when set
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > searchPubmed > returns normalized, citeable articles + totalCount
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > searchPubmed > returns empty (no esummary call) when no ids match
+ ✓ server/services/integrations/__tests__/pubmed-client.test.ts > pubmed-client > searchPubmed > honors PUBMED_EUTILS_BASE_URL and throws on HTTP error
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > returns immediately on success (one call)
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > retries a transient 503 then succeeds
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > returns the last retryable response after exhausting retries (not throw)
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > does not retry a non-retryable status (404)
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > retries network errors, then throws if persistent
+ ✓ server/services/integrations/__tests__/http.test.ts > fetchWithRetry > recovers when a network error is followed by success
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > study status is the table's vocabulary > maps client words onto the constraint and defaults to the column default
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > study status is the table's vocabulary > refuses a state the table cannot hold rather than storing a different one
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > study status is the table's vocabulary > plans only the ICH Q1A conditions it has settings for
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > a create that cannot be recorded honestly is refused before any write > 400 for DRAFT, without taking a connection
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > a create that cannot be recorded honestly is refused before any write > 400 for a storage condition with no defined setting (no invented 5°C)
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > a create that cannot be recorded honestly is refused before any write > 401 without a verified actor, because the study could not be audited
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > updates that are not implemented say so > PUT /studies/:id is 501 and states nothing changed
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > updates that are not implemented say so > PATCH /studies/:id/status is 501, not "updated successfully"
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > a write and its audit record commit together or not at all > rolls the change back when its audit record cannot be written
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > a write and its audit record commit together or not at all > refuses an unsigned write of any kind before taking a connection
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > imports record what the file says, or nothing > refuses an excursion file whole when a row is unusable, before any write
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > imports record what the file says, or nothing > refuses a results file with no rows instead of reporting an empty success
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > routes whose columns no deployed database has say so > get /api/stability/studies/s1/results/pending is 501
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > routes whose columns no deployed database has say so > post /api/stability/results/r1/review is 501
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > routes whose columns no deployed database has say so > post /api/stability/studies/s1/results/link-sample is 501
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > routes whose columns no deployed database has say so > post /api/stability/studies/s1/results/link-by-code is 501
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > the chain-of-custody upload keeps no file it cannot keep > is 501, reads no file, writes nothing, and names Vault
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > study-scoped writes act only on the tenant's own study > is 404 for a study outside the tenant, and writes nothing — not even an audit record
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > study-scoped writes act only on the tenant's own study > checks the study before the write on every study-scoped route
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > attribution and governed content are not taken from the caller or a model > refuses a sample collected "by" someone other than the signed-in user
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > attribution and governed content are not taken from the caller or a model > no longer writes a model recommendation into label storage
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > child rows and model calls answer for what they are > edits a condition only after finding it under the tenant and locking its study
+ ✓ server/src/routes/__tests__/stability-router-honesty.test.ts > child rows and model calls answer for what they are > says nothing was generated when the model fails, instead of canned text
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > buildDrugApprovalSearch > uses application number, then brand/query, then generic
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > normalizeApproval > summarizes submissions (AP count, latest date) and names
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > searchDrugApprovals > queries drugsfda.json and normalizes results + total
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > searchDrugApprovals > treats 404 as empty and honors base-URL override
+ ✓ server/services/integrations/__tests__/drug-approvals-client.test.ts > drug-approvals-client > searchDrugApprovals > short-circuits with no term and throws on non-404 HTTP error
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > buildDrugLabelSearch > prefers brand/query, else generic, else empty
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > normalizeLabel > flattens openFDA SPL arrays and caps long sections
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > searchDrugLabels > queries drug/label.json and normalizes results + total
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > searchDrugLabels > treats a 404 as empty (zero matches), honors base-URL override
+ ✓ server/services/integrations/__tests__/drug-label-client.test.ts > drug-label-client > searchDrugLabels > short-circuits with no term, and throws on non-404 HTTP error
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > updates the tenant's own result in one transaction: read with the tenant predicate, write, audit with the previous value, COMMIT
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > is 404 for a result outside the tenant, and writes nothing
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > PATCH /results/:resultId > is 401 without a verified actor, before any connection is taken
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > deletes the tenant's own result and records what was deleted, in one transaction
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > is 404 for a result outside the tenant, and deletes nothing
+ ✓ server/src/routes/__tests__/stability-results-object-authz.test.ts > DELETE /results/:resultId > is 401 without a verified actor
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > extractItems > finds items across envelope shapes
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > buildViewerUrl > builds NCD and LCD viewer URLs, and falls back without an id
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > normalizeDoc > flattens a report item to a citeable doc
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > searchMedicareCoverage > hits the NCD endpoint and filters by keyword client-side
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > searchMedicareCoverage > uses the final-LCD endpoint for type=lcd and honors base-URL override
+ ✓ server/services/integrations/__tests__/cms-coverage-client.test.ts > cms-coverage-client > searchMedicareCoverage > throws on a non-2xx response (caller degrades gracefully)
+ ✓ server/services/integrations/__tests__/icd10-client.test.ts > parseClinicalTables > parses the [total, codes, _, display] shape
+ ✓ server/services/integrations/__tests__/icd10-client.test.ts > parseClinicalTables > falls back to the code list when display is empty, and is defensive on junk
+ ✓ server/services/integrations/__tests__/icd10-client.test.ts > lookupIcd10 > queries the search endpoint and returns normalized codes
+ ✓ server/services/integrations/__tests__/icd10-client.test.ts > lookupIcd10 > honors ICD10_API_BASE_URL override and throws on HTTP error
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > device domain queries trials + literature + coverage + device recalls only
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > drug domain queries trials + literature + coverage + drug labels + approvals only
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > auto domain includes both device and drug sources
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > isolates a failing source as an error without dropping the others
+ ✓ server/services/integrations/__tests__/landscape.test.ts > assessRegulatoryLandscape > clamps max_per_source and passes it to each source
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > searches only configured+healthy connectors and reports the rest as skipped
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > flags unknown requested connectors and short-circuits when none are usable
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > surfaces per-connector errors as skipped and clamps the limit
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > does not list a connector whose search failed as searched
+ ✓ server/services/integrations/__tests__/correspondence-search.test.ts > searchRegulatoryCorrespondence > returns a not-configured note (without calling Gmail) when unconfigured
+ ✓ server/services/integrations/__tests__/correspondence-search.test.ts > searchRegulatoryCorrespondence > filters by keyword across subject/sender/snippet/body and normalizes dates
+ ✓ server/services/integrations/__tests__/correspondence-search.test.ts > searchRegulatoryCorrespondence > returns the most recent (up to limit) when no keyword is given
+ ✓ server/services/integrations/__tests__/correspondence-search.test.ts > searchRegulatoryCorrespondence > widens the fetch window when filtering, then caps to limit
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > public APIs are always live; env-gated integrations reflect the env
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports env-gated integrations as live when their env is set, for the organisation they belong to
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > resolves org connectors when an organizationId is given (live names listed)
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > reports connectors as unknown without org context, and on catalog failure
+ ✓ server/services/integrations/__tests__/integration-status.test.ts > getIntegrationStatuses > summarizeStatuses counts live / notConfigured / unknown
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > recordTitle > derives a sensible title per object
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > buildRecordUrl > builds a record URL only when the portal id is set
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > isHubSpotConfigured > reflects the access token presence
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > searchHubSpotCrm > returns a not-configured note (no fetch) when the token is missing
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > searchHubSpotCrm > POSTs the search and normalizes results
+ ✓ server/services/integrations/__tests__/hubspot-client.test.ts > hubspot-client > searchHubSpotCrm > defaults to contacts, honors base-URL override, and throws on HTTP error
+ ✓ server/services/integrations/__tests__/calendar-event.test.ts > createCalendarEvent > rejects a missing summary and a malformed date without calling the calendar
+ ✓ server/services/integrations/__tests__/calendar-event.test.ts > createCalendarEvent > returns a not-connected note when the calendar is disabled
+ ✓ server/services/integrations/__tests__/calendar-event.test.ts > createCalendarEvent > creates the event and returns id + url on the happy path
+ ✓ server/services/integrations/__tests__/device-recalls.test.ts > device-recalls > buildDeviceRecallSearch > prefers device name / query (product_description), else firm
+ ✓ server/services/integrations/__tests__/device-recalls.test.ts > device-recalls > searchDeviceRecalls > fetches, normalizes, and summarizes recalls by classification
+ ✓ server/services/integrations/__tests__/device-recalls.test.ts > device-recalls > searchDeviceRecalls > short-circuits (no fetch) when no usable term is given
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a body over the size limit with 413 instead of buffering it
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses an executable named file whatever type it declares (415)
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses a declared type this router does not read (415)
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > refuses bytes that are not what the declared type says (the shared byte check)
+ ✓ server/src/routes/__tests__/stability-upload-guards.test.ts > POST …/results/import: the upload guard > control: a real CSV passes the guard and reaches the handler
+ Test Files  22 passed (22)
+      Tests  148 passed (148)

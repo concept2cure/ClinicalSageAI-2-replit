@@ -3,9 +3,16 @@
  * @module server/services/regional-ctd-templates
  *
  * Manages region-specific templates for CTD Module 1 across
- * FDA, EMA, PMDA, and NMPA. Each agency has unique requirements
+ * FDA, EMA, PMDA, NMPA and MFDS. Each agency has unique requirements
  * for Module 1 while Modules 2-5 follow ICH common format.
+ *
+ * FDA, EMA and PMDA Module 1 is not kept here: it is the regional Module 1
+ * record (shared/regulatory/regional-module1.ts), projected to `CTDSection` by
+ * `toCtdSection`. NMPA and MFDS Module 1 stay hand-kept here and are labelled
+ * `module1Record: 'not-modeled'`.
  */
+
+import { moduleOneTree, type RegionalHeading } from '../../shared/regulatory/regional-module1';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -14,6 +21,11 @@
 export interface RegionalTemplate {
   agency: string;
   region: string;
+  /**
+   * Where `module1Sections` comes from: the cited regional Module 1 record
+   * (FDA, EMA, PMDA), or a hand-kept tree the record does not model.
+   */
+  module1Record: 'regional-module1' | 'not-modeled';
   module1Sections: CTDSection[];
   forms: FormTemplate[];
   prescribingInfoTemplate: string;
@@ -38,6 +50,27 @@ export interface CTDSection {
   description: string;
   template?: string;
   childSections?: CTDSection[];
+}
+
+/**
+ * A record heading as a `CTDSection`. `required` is true when the heading is
+ * always required for some application kind; `requiredFor` names those kinds
+ * (absent when it is required for every kind). A conditional heading whose
+ * fact is unknown is not projected as required — `requiredModule1` reports it
+ * as undetermined.
+ */
+export function toCtdSection(h: RegionalHeading): CTDSection {
+  const always = h.applies.filter((a) => a.necessity === 'always');
+  const requiredFor = always.some((a) => !a.kinds) ? undefined : [...new Set(always.flatMap((a) => a.kinds ?? []))];
+  return {
+    number: h.number,
+    title: h.title,
+    ...(h.titleLocal !== undefined ? { titleLocal: h.titleLocal } : {}),
+    required: always.length > 0,
+    ...(requiredFor && requiredFor.length > 0 ? { requiredFor } : {}),
+    description: h.description,
+    ...(h.childSections?.length ? { childSections: h.childSections.map(toCtdSection) } : {}),
+  };
 }
 
 export interface FormTemplate {
@@ -72,64 +105,13 @@ export const FDA_TEMPLATE: RegionalTemplate = {
     'User fee (PDUFA) payment required',
     'English language required',
   ],
-  // FDA eCTD Module 1 Specification v2.3 headings — the same list the packager
-  // derives its us-regional.xml elements from (controlled-vocab/cv-v4-data.ts).
-  // Drives the dispatch-readiness required-section check for every FDA
-  // sequence, so an IND is asked for its plan and brochure, a marketing
-  // application for its debarment certification and draft labeling. Held to the
-  // FDA list by tests/regulatory/fda-module1-numbering.test.ts.
-  module1Sections: [
-    { number: '1.1', title: 'Forms', required: true, description: 'FDA forms filed under the forms heading: 1571 (IND), 356h (NDA/BLA/ANDA), 3674 (ClinicalTrials.gov certification), 3397 (user fee cover sheet), 2253' },
-    { number: '1.2', title: 'Cover Letter', required: true, description: 'Submission cover letter addressed to the appropriate FDA review division' },
-    {
-      number: '1.3', title: 'Administrative Information', required: true, description: 'Certifications, disclosures, patent and contact changes',
-      childSections: [
-        { number: '1.3.1', title: 'Contact/Sponsor/Applicant Information', required: false, description: 'Changes of address, contact agent, sponsor or ownership; transfer of obligation (1.3.1.1–1.3.1.5). Initial contact details travel on Form 1571 / 356h.' },
-        { number: '1.3.2', title: 'Field Copy Certification', required: false, description: 'Certification for field copy submissions' },
-        { number: '1.3.3', title: 'Debarment Certification', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Certification under 21 USC 335a — marketing applications' },
-        { number: '1.3.4', title: 'Financial Certification and Disclosure', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Forms FDA 3454/3455 for clinical investigators (21 CFR 54)' },
-        { number: '1.3.5', title: 'Patent and Exclusivity Information', required: false, description: '1.3.5.1 patent information, 1.3.5.2 patent certification, 1.3.5.3 exclusivity claim' },
-      ],
-    },
-    {
-      number: '1.4', title: 'References', required: false, description: 'Letters of authorization, right of reference, cross-references',
-      childSections: [
-        { number: '1.4.1', title: 'Letters of Authorization', required: false, description: 'Authorization to reference a DMF or another application' },
-        { number: '1.4.2', title: 'Statement of Right of Reference', required: false, description: 'Statement allowing FDA to access referenced data' },
-        { number: '1.4.3', title: 'List of Authorized Persons to Incorporate by Reference', required: false, description: 'Persons authorized to incorporate the file by reference' },
-        { number: '1.4.4', title: 'Cross Reference to Previously Submitted Information', required: false, description: 'Cross-reference to information in another application' },
-      ],
-    },
-    { number: '1.5', title: 'Application Status', required: false, description: 'Withdrawal, inactivation, reactivation and reinstatement requests' },
-    { number: '1.6', title: 'Meetings', required: false, description: 'Meeting requests, background materials and correspondence regarding meetings' },
-    { number: '1.9', title: 'Pediatric Administrative Information', required: false, description: 'Waiver, deferral and pediatric study plan requests and correspondence' },
-    {
-      number: '1.12', title: 'Other Correspondence', required: false, description: 'Pre-IND correspondence, requests and waivers, environmental analysis',
-      childSections: [
-        { number: '1.12.1', title: 'Pre-IND Correspondence', required: false, description: 'Pre-IND meeting materials carried into the application' },
-        { number: '1.12.14', title: 'Environmental Analysis', required: true, requiredFor: ['ind', 'nda', 'bla', 'anda'], description: 'Environmental assessment or claim of categorical exclusion (21 CFR 25.31)' },
-      ],
-    },
-    { number: '1.13', title: 'Annual Report', required: false, description: 'IND (21 CFR 312.33) and NDA/BLA (21 CFR 314.81) annual reports, DSUR' },
-    {
-      number: '1.14', title: 'Labeling', required: true, description: 'Draft, final, listed-drug and investigational labeling',
-      childSections: [
-        { number: '1.14.1', title: 'Draft Labeling', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Draft carton and container labels, annotated and clean draft labeling text (Prescribing Information, Medication Guide, PPI)' },
-        { number: '1.14.2', title: 'Final Labeling', required: false, description: 'Final carton/container labels, final package insert, final labeling text' },
-        { number: '1.14.3', title: 'Listed Drug Labeling', required: false, description: 'ANDA / 505(b)(2) annotated comparison with the reference listed drug' },
-        {
-          number: '1.14.4', title: 'Investigational Drug Labeling', required: true, requiredFor: ['ind'], description: "Investigator's brochure and investigational drug labeling for an IND",
-          childSections: [
-            { number: '1.14.4.1', title: "Investigator's Brochure", required: true, requiredFor: ['ind'], description: '21 CFR 312.23(a)(5)' },
-            { number: '1.14.4.2', title: 'Investigational Drug Labeling', required: true, requiredFor: ['ind'], description: '21 CFR 312.6; 312.23(a)(7)(iv)(d)' },
-          ],
-        },
-      ],
-    },
-    { number: '1.15', title: 'Promotional Material', required: false, description: 'Promotional labeling and advertising submissions (Form 2253 travels under 1.1)' },
-    { number: '1.16', title: 'Risk Management Plan / REMS', required: false, description: 'Risk management (non-REMS) and REMS documents' },
-    { number: '1.20', title: 'General Investigational Plan for Initial IND', required: true, requiredFor: ['ind'], description: 'Introductory statement and general investigational plan (21 CFR 312.23(a)(3))' },
-  ],
+  // FDA eCTD Module 1 headings: projected from the regional Module 1 record
+  // (shared/regulatory/regional-module1.ts), where each heading carries its
+  // basis, roles and applicability. Drives the dispatch-readiness
+  // required-section check for every FDA sequence. Held to the FDA list by
+  // tests/regulatory/fda-module1-numbering.test.ts.
+  module1Record: 'regional-module1',
+  module1Sections: moduleOneTree('US').map(toCtdSection),
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -155,57 +137,12 @@ export const EMA_TEMPLATE: RegionalTemplate = {
     'English preferred for centralised procedure',
     'Pharmacovigilance System Master File required',
   ],
-  // Module 1 per the authoritative EU Module 1 eCTD Specification (EMA eSubmission
-  // portal / Notice to Applicants). Verified headings: 1.0 Cover Letter, 1.1 TOC,
-  // 1.2 Application Form, 1.3 Product Information, 1.4 Experts, 1.5 Specific
-  // Requirements, 1.6 Environmental Risk Assessment, 1.7 Orphan Market Exclusivity,
-  // 1.8 Pharmacovigilance (1.8.1 PSMF / 1.8.2 RMP), 1.9 Clinical Trials, 1.10 Paediatrics.
-  module1Sections: [
-    { number: '1.0', title: 'Cover Letter', required: true, description: 'EU regional cover letter' },
-    { number: '1.1', title: 'Comprehensive Table of Contents', required: true, description: 'Table of contents covering Modules 1–5' },
-    { number: '1.2', title: 'Application Form', required: true, description: 'Completed EU application form' },
-    {
-      number: '1.3', title: 'Product Information', required: true, description: 'SmPC, labelling and package leaflet',
-      childSections: [
-        { number: '1.3.1', title: 'SmPC, Labelling and Package Leaflet', titleLocal: 'SmPC', required: true, description: 'Proposed Summary of Product Characteristics, labelling and package leaflet' },
-        { number: '1.3.2', title: 'Mock-up', required: false, description: 'Mock-ups of the outer/immediate packaging and the package leaflet' },
-        { number: '1.3.3', title: 'Specimen', required: false, description: 'Specimens of the packaging, where applicable' },
-        { number: '1.3.4', title: 'Consultation with Target Patient Groups', required: false, description: 'Package-leaflet readability / user-testing results' },
-      ],
-    },
-    {
-      number: '1.4', title: 'Information about the Experts', required: true, description: 'Expert declarations and signatures',
-      childSections: [
-        { number: '1.4.1', title: 'Quality', required: true, description: 'Quality expert declaration' },
-        { number: '1.4.2', title: 'Non-Clinical', required: true, description: 'Non-clinical expert declaration' },
-        { number: '1.4.3', title: 'Clinical', required: true, description: 'Clinical expert declaration' },
-      ],
-    },
-    {
-      number: '1.5', title: 'Specific Requirements for Different Types of Applications', required: false, description: 'Additional requirements by application type',
-      childSections: [
-        { number: '1.5.1', title: 'Information for Bibliographical Applications', required: false, description: 'Well-established use applications' },
-        { number: '1.5.2', title: 'Information for Generic, Hybrid or Bio-similar Applications', required: false, description: 'Generic / hybrid / biosimilar applications' },
-      ],
-    },
-    { number: '1.6', title: 'Environmental Risk Assessment', required: true, description: 'ERA (incl. GMO aspects where applicable)' },
-    {
-      number: '1.7', title: 'Information relating to Orphan Market Exclusivity', required: false, description: 'Orphan similarity and market exclusivity',
-      childSections: [
-        { number: '1.7.1', title: 'Similarity', required: false, description: 'Report on similarity with authorised orphan medicinal products' },
-        { number: '1.7.2', title: 'Market Exclusivity', required: false, description: 'Market-exclusivity considerations' },
-      ],
-    },
-    {
-      number: '1.8', title: 'Information relating to Pharmacovigilance', required: true, description: 'Pharmacovigilance system and risk management',
-      childSections: [
-        { number: '1.8.1', title: 'Pharmacovigilance System', required: true, description: 'Summary of the pharmacovigilance system (PSMF summary), incl. the QPPV' },
-        { number: '1.8.2', title: 'Risk Management System', required: true, description: 'EU Risk Management Plan (EU-RMP)' },
-      ],
-    },
-    { number: '1.9', title: 'Information relating to Clinical Trials', required: false, description: 'Statement on GCP compliance for clinical trials conducted outside the EU/EEA' },
-    { number: '1.10', title: 'Information relating to Paediatrics', required: false, description: 'PIP / PDCO decision, deferral or waiver information' },
-  ],
+  // EU Module 1 eCTD Specification headings: projected from the regional
+  // Module 1 record (shared/regulatory/regional-module1.ts). EU 1.1 is kept for
+  // non-eCTD submissions and is not required: in eCTD the XML backbone is the
+  // table of contents.
+  module1Record: 'regional-module1',
+  module1Sections: moduleOneTree('EU').map(toCtdSection),
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -235,25 +172,11 @@ export const PMDA_TEMPLATE: RegionalTemplate = {
     'Overseas sponsors without a Japanese MAH use the Foreign Special Approval system (外国特例承認) with a Designated MAH (選任製造販売業者 / D-MAH)',
     'NHI price listing (薬価収載) via Chuikyo (中医協) follows approval and gates reimbursement',
   ],
-  // Module 1 structure per the Japanese CTD framework (MHLW/PMDA CTD構成 notification
-  // and the JPMA eCTD 作成の手引き). Section numbers verified against authoritative JP
-  // guidance: 承認申請書 = 1.2, 同種同効品一覧表 = 1.7, 添付文書 = 1.8,
-  // 製造販売後調査基本計画書 = 1.11 (the J-RMP draft is submitted here), その他 = 1.13.
-  module1Sections: [
-    { number: '1.1', title: 'Table of Contents', titleLocal: '第1部（モジュール1）目次', required: true, description: 'Module 1 table of contents' },
-    { number: '1.2', title: 'Application Form', titleLocal: '承認申請書(写)', required: true, description: 'Copy of the marketing-approval application form (承認申請書)' },
-    { number: '1.3', title: 'Certificates', titleLocal: '証明書類', required: false, description: 'Certificates required for the application (e.g. GMP compliance, foreign approval)' },
-    { number: '1.4', title: 'Patent Status', titleLocal: '特許状況', required: false, description: 'Patent information relevant to the application' },
-    { number: '1.5', title: 'Origin / History of Discovery and Development', titleLocal: '起原又は発見の経緯及び開発の経緯', required: true, description: 'Background on the origin/discovery and the development history' },
-    { number: '1.6', title: 'Status of Use in Foreign Countries', titleLocal: '外国における使用状況等に関する資料', required: false, description: 'Approval and use status in other countries' },
-    { number: '1.7', title: 'List of Drugs with Similar Indications/Efficacy', titleLocal: '同種同効品一覧表', required: true, description: 'Comparison table of products with similar indications/efficacy in Japan' },
-    { number: '1.8', title: 'Package Insert (Draft)', titleLocal: '添付文書(案)', required: true, description: 'Draft Japanese Package Insert (添付文書 / JPI)' },
-    { number: '1.9', title: 'Documents on the Nonproprietary Name', titleLocal: '一般的名称に係る文書', required: false, description: 'Documents related to the Japanese Accepted Name (JAN), if applicable' },
-    { number: '1.10', title: 'Poisonous/Powerful Drug Designation Materials', titleLocal: '毒薬・劇薬等の指定審査資料のまとめ', required: false, description: 'Summary supporting poisonous/powerful-drug or related designations' },
-    { number: '1.11', title: 'Post-Marketing Surveillance Plan / Risk Management Plan', titleLocal: '製造販売後調査基本計画書(案)／医薬品リスク管理計画書(案)', required: false, description: 'Post-marketing surveillance basic plan; the J-RMP (医薬品リスク管理計画(案)) is submitted here for new drug applications' },
-    { number: '1.12', title: 'List of Attached Materials', titleLocal: '添付資料一覧', required: true, description: 'Index/list of all attached data and materials' },
-    { number: '1.13', title: 'Others', titleLocal: 'その他', required: false, description: 'Japan-specific items (e.g. 1.13.x: references to previously approved products, electronic study-data notices, and accelerated-review / SAKIGAKE / 先駆的医薬品 designation information)' },
-  ],
+  // Japanese CTD Module 1 (承認申請書 = 1.2, 添付文書(案) = 1.8, 医薬品リスク管理計画書(案)
+  // = 1.11): projected from the regional Module 1 record
+  // (shared/regulatory/regional-module1.ts).
+  module1Record: 'regional-module1',
+  module1Sections: moduleOneTree('JP').map(toCtdSection),
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -278,6 +201,9 @@ export const NMPA_TEMPLATE: RegionalTemplate = {
     'Drug MAH (Marketing Authorization Holder) system since 2019',
     'Drug agent in China required for overseas applicants',
   ],
+  // NOT MODELED by the regional Module 1 record (US, EU and JP only): this tree
+  // is hand-kept here and carries no basis per heading.
+  module1Record: 'not-modeled',
   // Module 1 per the authoritative NMPA M4 Module 1 — Administrative Documents and
   // Drug Information (行政文件和药品信息, NMPA notice 2019 No. 17, effective 1 July 2019;
   // nmpa.gov.cn). Verified headings: 1.0 说明函 Cover Letter, 1.1 目录 Table of
@@ -322,6 +248,9 @@ export const MFDS_TEMPLATE: RegionalTemplate = {
     'Local marketing-authorization holder or Korean agent required for foreign applicants',
     '⚠ APPROXIMATE: the Module 1 section numbering below reflects confirmed K-CTD content areas and general ICH M1 convention — verify against the official MFDS K-CTD guidance (의약품 국제공통기술문서(CTD) 해설서) before relying on exact numbers',
   ],
+  // NOT MODELED by the regional Module 1 record (US, EU and JP only): this tree
+  // is hand-kept here and carries no basis per heading.
+  module1Record: 'not-modeled',
   // NOTE: K-CTD Module 1 — Administrative Information and Prescribing Information.
   // The content areas (행정정보 / 표지문서 / 신청서 / 제품정보) are confirmed from MFDS
   // guidance, but the exact section numbering is not published in accessible English

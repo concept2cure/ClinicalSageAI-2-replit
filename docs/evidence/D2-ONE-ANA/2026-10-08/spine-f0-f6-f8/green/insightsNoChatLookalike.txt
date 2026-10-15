@@ -1,0 +1,18 @@
+# F6 green.
+# $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > is a labelled field with a Find button, not a composer that sends 334ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > carries no AnA mark anywhere on the screen 34ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > answers with one result, never a conversation, and keeps the words in the field 139ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > still runs the governed report the router matched, with a plain status while it runs 62ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > a run that cannot start never leaves "Running the …" beside the alert that says so 38ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > a run that completes says so, in place of "Running the …" 51ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > keeps the result's live region mounted from the start, so the first result is announced 53ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  07:52:33
+   Duration  2.46s (transform 616ms, setup 172ms, import 764ms, tests 715ms, environment 586ms)
+

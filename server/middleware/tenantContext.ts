@@ -10,6 +10,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from './tokenType';
 import { db } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
@@ -242,6 +243,11 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       organizationId: string;
       organizationUuid?: string;
     };
+    // IAM-23: a refresh, pre-MFA or connector token carries the same
+    // signature as an access token; only an access token opens a request.
+    if (requireAccessTokenReason(decoded as Parameters<typeof requireAccessTokenReason>[0])) {
+      return res.status(401).json({ error: 'Authentication required', message: 'Token is not valid for this operation' });
+    }
 
     const organizationId = decoded.organizationId?.toString();
     if (!organizationId) {

@@ -1,0 +1,6 @@
+# ci:untracked-imports --all, real index (before the new files are added):
+[ci:untracked-imports] FAIL — 12 import(s) resolve to a file that is on disk but NOT in git:
+  server/services/submission-package-orchestrator.ts:65  →  ./ectd/run-package-identity.js
+
+# same, scratch index with this change's six new files added (git add -N on a copy of .git/index), filtered to this change's files:
+(no import from this change's files resolves to an untracked file)

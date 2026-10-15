@@ -1,0 +1,65 @@
+== server/routes/batch-draft-routes.ts (now)
+
+server/routes/batch-draft-routes.ts
+  271:16  warning  Function 'createBatchDraftRoutes' has too many lines (243). Maximum allowed is 100  max-lines-per-function
+  409:76  warning  Async arrow function has too many lines (163). Maximum allowed is 100               max-lines-per-function
+  409:76  warning  Async arrow function has a complexity of 34. Maximum allowed is 15                  complexity
+
+✖ 3 problems (0 errors, 3 warnings)
+
+== server/routes/batch-draft-routes.ts (HEAD)
+
+server/routes/batch-draft-routes.ts
+  214:16  warning  Function 'createBatchDraftRoutes' has too many lines (235). Maximum allowed is 100  max-lines-per-function
+  352:76  warning  Async arrow function has too many lines (155). Maximum allowed is 100               max-lines-per-function
+  352:76  warning  Async arrow function has a complexity of 34. Maximum allowed is 15                  complexity
+
+✖ 3 problems (0 errors, 3 warnings)
+
+== server/routes/ana-intelligence.ts (now)
+
+server/routes/ana-intelligence.ts
+  567:21  warning  'framework' is assigned a value but never used                                           @typescript-eslint/no-unused-vars
+  632:11  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 2 problems (0 errors, 2 warnings)
+
+== server/routes/ana-intelligence.ts (HEAD)
+
+server/routes/ana-intelligence.ts
+  538:21  warning  'framework' is assigned a value but never used                                           @typescript-eslint/no-unused-vars
+  603:11  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 2 problems (0 errors, 2 warnings)
+
+== client/src/concept2cure/v2/surfaces/BatchDraft.tsx (now)
+
+client/src/concept2cure/v2/surfaces/BatchDraft.tsx
+  164:8   warning  Function 'BatchDraft' has too many lines (518). Maximum allowed is 100                                    max-lines-per-function
+  164:8   warning  Function 'BatchDraft' has a complexity of 50. Maximum allowed is 15                                       complexity
+  164:37  warning  'onNav' is defined but never used. Allowed unused args must match /^_/u                                   @typescript-eslint/no-unused-vars
+  440:38  warning  Async arrow function has a complexity of 22. Maximum allowed is 15                                        complexity
+  534:6   warning  React Hook useMemo has a missing dependency: 'selList'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  785:28  warning  Arrow function has a complexity of 23. Maximum allowed is 15                                              complexity
+  788:1   warning  File has too many lines (588). Maximum allowed is 500                                                     max-lines
+
+✖ 7 problems (0 errors, 7 warnings)
+
+== client/src/concept2cure/v2/surfaces/BatchDraft.tsx (HEAD)
+
+client/src/concept2cure/v2/surfaces/BatchDraft.tsx
+  157:8   warning  Function 'BatchDraft' has too many lines (515). Maximum allowed is 100                                    max-lines-per-function
+  157:8   warning  Function 'BatchDraft' has a complexity of 50. Maximum allowed is 15                                       complexity
+  157:37  warning  'onNav' is defined but never used. Allowed unused args must match /^_/u                                   @typescript-eslint/no-unused-vars
+  430:38  warning  Async arrow function has a complexity of 22. Maximum allowed is 15                                        complexity
+  522:6   warning  React Hook useMemo has a missing dependency: 'selList'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  773:28  warning  Arrow function has a complexity of 23. Maximum allowed is 15                                              complexity
+  781:1   warning  File has too many lines (583). Maximum allowed is 500                                                     max-lines
+
+✖ 7 problems (0 errors, 7 warnings)
+
+== server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts (now)
+== server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts (HEAD)
+== client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx (now)
+== client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx (HEAD)
+== server/services/authoring/machine-claim-verify.ts (new)

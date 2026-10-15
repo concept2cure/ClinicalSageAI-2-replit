@@ -1,0 +1,12 @@
+ESLint warnings/errors per file touched by round 8: on the round-8 tree (merged with trunk 6676dd69c), and warnings on trunk where the file exists there.
+Command: npx eslint --no-warn-ignored <file>
+working-memory.ts drops one: the write-back's complexity (20 on trunk) is now under the limit, its formatting a helper. post-processing.ts keeps trunk's four, runStreamPostProcessing at trunk's complexity (93). client/…/anaAnswerCheck.ts is outside ESLint's scope (eslint.config.js ignores client/src/concept2cure/* but v2/), as it was; the reader it re-exports is linted in shared/ana.
+
+server/services/working-memory.ts                                      round8=1/0      trunk=2
+server/routes/ana-ri/post-processing.ts                                round8=4/0      trunk=4
+shared/ana/answer-check-reader.ts                                      round8=0/0      trunk=new
+client/src/concept2cure/components/ana/anaAnswerCheck.ts               round8=ignored  trunk=ignored
+server/services/ana/memory-fact-check.ts                               round8=0/0      trunk=new
+server/services/ana/__tests__/memory-fact-check.test.ts                round8=0/0      trunk=new
+server/services/__tests__/working-memory-fact-check.test.ts            round8=0/0      trunk=new
+server/routes/ana-ri/__tests__/post-processing-memory-check.test.ts    round8=0/0      trunk=new

@@ -1,0 +1,22 @@
+{
+  "surface": "Task form (launcher, Task tab) › Assign to, on /concept2cure/projects",
+  "signedInAs": "the organisation admin (dev sign-in)",
+  "before": {
+    "code": "735c3c46^ (CollabLauncher.tsx, taskBoard.routes.ts)",
+    "chips": [
+      "Auto",
+      "JS JM Smith",
+      "JS JM Smith",
+      "DR Dana Reyes"
+    ]
+  },
+  "after": {
+    "code": "trunk",
+    "chips": [
+      "Auto",
+      "JS JM Smith · jm.smith@concept2cure.pro",
+      "JS JM Smith · jm.smith.qa@concept2cure.pro",
+      "DR Dana Reyes"
+    ]
+  }
+}

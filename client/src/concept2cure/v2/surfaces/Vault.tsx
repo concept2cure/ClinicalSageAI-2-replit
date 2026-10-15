@@ -1,13 +1,18 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useId } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
+import { VaultCatalogRecord } from './VaultCatalogRecord';
+import { VaultVersions } from './VaultVersions';
+import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
-import { useVaultUpload } from '../useVaultUpload';
+import { RecordHistory } from '../RecordHistory';
+import { useSurfaceAvailable } from '../surfaceAvailable';
+import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
   vaultDocKindLabel,
@@ -24,6 +29,14 @@ import {
   type VaultFolder,
 } from '../fixtures/vault-data';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
+import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
+import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
+import { VaultLibraryResults } from './VaultLibraryResults';
+import { VaultFixityCheck } from './VaultFixityCheck';
+import { VaultRelationships } from './VaultRelationships';
+import { VaultAnnotations } from './VaultAnnotations';
+import { DocumentDisposition } from './DocumentDisposition';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -32,6 +45,8 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
+import { locateVaultDocument, takeVaultTarget } from '../vaultTarget';
+import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import '../styles/project-home-v2.css';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
@@ -64,6 +79,8 @@ interface DataRoomRow {
   evidenceKind: string | null;
   confidence: string | null;
   needsReview: boolean;
+  /** Which Vault version its bytes became, and what replaced it (VR-16). Absent on an older server. */
+  filedAs?: { version: string | null; supersededBy: string | null } | null;
 }
 
 interface DataRoomBlock {
@@ -78,8 +95,9 @@ interface DataRoomBlock {
 }
 
 /** A count over a truncated window is a floor, and reads as one. */
-function roomCount(n: number, block: DataRoomBlock): string {
-  return block.window?.truncated ? `${n}+` : String(n);
+/** The server counts every current source of the project (2026-10-08): exact, never a floor. */
+function roomCount(n: number, _block: DataRoomBlock): string {
+  return String(n);
 }
 
 const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> = {
@@ -89,6 +107,19 @@ const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> 
   captured: { label: 'Captured', tone: 'idle' },
 };
 
+/**
+ * A data-room source's stage in words. A filed one names the Vault version its
+ * bytes are, and the version that replaced it (VR-16): "Filed as v1.0,
+ * superseded by v2.0". A filed file that is no longer current reads as such.
+ */
+export function roomStageLabel(s: Pick<DataRoomRow, 'stage' | 'filedAs'>): string {
+  const base = (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label;
+  if (s.stage !== 'filed' || !s.filedAs) return base;
+  const as = s.filedAs.version ? ` as v${s.filedAs.version}` : '';
+  const replaced = s.filedAs.supersededBy ? `, superseded by v${s.filedAs.supersededBy}` : '';
+  return `${base}${as}${replaced}`;
+}
+
 /** What the lane's counts cover, and what needs a person. */
 function RoomNotes({ block }: { block: DataRoomBlock }) {
   const review = block.needsReview ?? 0;
@@ -97,7 +128,7 @@ function RoomNotes({ block }: { block: DataRoomBlock }) {
   return (
     <span className="vd-dr-meta">
       {review > 0 ? `${review} need review — the classifier would not propose a folder. ` : ''}
-      {truncated ? `Counts cover the newest ${block.window?.shown ?? block.captured} sources; this project has more.` : ''}
+      {truncated ? `The list shows the newest ${block.window?.shown ?? block.sources.length} of ${block.captured}; search the project's Data Room for the rest.` : ''}
     </span>
   );
 }
@@ -118,6 +149,8 @@ interface VaultDisplayShape {
    *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
    *  a queue derived from the page below would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** Suggested filings no person has confirmed, program-wide (VR-11b). Absent on an older server. */
+  awaitingConfirmationCount?: number;
   /** How much of the filing cabinet the tree actually carries. The server caps
    *  that read (the vault is unbounded), so rendering the page without saying
    *  so would state a partial cabinet as the whole one. */
@@ -224,6 +257,59 @@ interface VaultTreeProps {
   toggle: (id: string) => void;
 }
 
+/**
+ * An upload's review stage beside its filing status (VR-13), where the server
+ * said it: tree leaves carry it, search hits do not, and a hit is never
+ * labelled "Not reviewed" for a stage nobody read.
+ */
+function reviewText(d: VaultDoc): string {
+  return d.src === 'upload' && d.lifecycleStage !== undefined ? ` · ${stageLabel(d.lifecycleStage)}` : '';
+}
+
+/** The review stage's chip tone: approved reads as settled, in review as pending, the rest as idle. */
+function stageTone(stage: string | null | undefined): string {
+  if (APPROVED_STAGES.includes(stage ?? '')) return 'ok';
+  return stage === 'in_review' ? 'ai' : 'idle';
+}
+
+const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * The header's document count, named by its parts.
+ *
+ * QA 2026-10-08 (j1): a program the wizard had just created read "1 document"
+ * above lanes saying "0 uploaded files" and "Captured 0". The one was the IND
+ * build the wizard scaffolds — an authored document, every section not started
+ * — and a bare "1 document" reads as a file someone put here. The read names
+ * its parts (`documentCounts`), so the header states them: authored documents,
+ * Module 3 artifacts when there are any, and uploads when that branch was read.
+ * A branch that could not be read (null) is left out rather than shown as 0;
+ * the read's `unavailable` list says why. Without the parts (the pending-store
+ * answer), the total stands as it was.
+ */
+export function vaultCountLabel(v: Pick<VaultDisplayShape, 'documentCount' | 'documentCounts'>): string {
+  const parts = v.documentCounts;
+  if (!parts) return plural(v.documentCount, 'document', 'documents');
+  return [
+    plural(parts.authored, 'authored document', 'authored documents'),
+    parts.cmcArtifacts ? plural(parts.cmcArtifacts, 'Module 3 artifact', 'Module 3 artifacts') : null,
+    parts.uploads == null ? null : plural(parts.uploads, 'uploaded file', 'uploaded files'),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/**
+ * Whether a document counts as settled in its folder's count. An upload is
+ * settled when its version is approved (VR-13; FD4's strict default): a
+ * confirmed filing says where it belongs, not that anyone approved it. An
+ * authored section keeps its own status.
+ */
+export function isSettled(d: VaultDoc): boolean {
+  if (d.src === 'upload') return APPROVED_STAGES.includes(d.lifecycleStage ?? '');
+  return ['final', 'approved', 'reviewed'].includes(d.status);
+}
+
 function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: VaultTreeProps) {
   return (
     <div>
@@ -232,11 +318,7 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
         const folder = n as VaultFolder;
         const docs = flattenDocs(folder.children);
         const isOpen = expanded[folder.id] !== false;
-        const ready = docs.filter((d) =>
-          // 'confirmed' = an upload a person filed; it counts as settled the
-          // way an approved authored section does.
-          ['final', 'approved', 'reviewed', 'confirmed'].includes(d.status),
-        ).length;
+        const ready = docs.filter(isSettled).length;
         return (
           <div key={folder.id}>
             <button
@@ -257,7 +339,16 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
               <span className="vd-flabel">
                 {folder.code ? <b>{folder.code}</b> : null} {folder.label}
               </span>
-              <span className="vd-fcount">
+              {/* Named, because a bare fraction beside the coverage panel's
+                  "Required sections: 0 of 36 have a confirmed document" read as
+                  a second, contradicting total (QA 2026-10-08, j1). This counts
+                  the folder's own items that are settled; coverage counts
+                  required CTD headings with a confirmed filing. */}
+              <span
+                className="vd-fcount"
+                title={`${ready} of ${docs.length} settled — approved, final or reviewed`}
+                aria-label={`${ready} of ${docs.length} settled — approved, final or reviewed`}
+              >
                 {ready}/{docs.length}
               </span>
             </button>
@@ -281,88 +372,13 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
 }
 
 /* ── Document history — this document's own audit trail (VR-01) ──
-   Every chained audit_logs row recorded against the document (ingest, filing
-   decisions, downloads), newest first, with the server's verdict on the
-   tenant's chain. Read from the one ledger; nothing here is derived on the
-   client. A failed read is shown as a failure: "no history" would tell an
-   inspector the document was never touched. */
-interface HistoryEntry {
-  id: string;
-  event: string;
-  actor: string;
-  at: string;
-  when: string;
-  hash: string;
-  seq: number | null;
-}
-interface HistoryShape {
-  entries: HistoryEntry[];
-  chain: { ok: boolean; rowsChecked: number; legacyRows: number; brokenAt?: string };
-}
-
-/** A body without an entries list and a chain verdict is a failed read, not an empty history. */
-const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
-  !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
-  !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
-
-function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
-  if (chain.ok) {
-    return (
-      <div className="vd-d-idx">
-        <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
-        {chain.legacyRows ? `, ${chain.legacyRows} recorded before sequencing` : ''}.
-      </div>
-    );
-  }
-  return (
-    <div className="vd-dr-err" role="alert">
-      {I.alertTriangle} Audit chain check failed{chain.brokenAt ? ` at ${chain.brokenAt}` : ''}. The entries below
-      are what is recorded; the chain that should prove them has a break.
-    </div>
-  );
-}
-
+   Rendered by the shared RecordHistory (moved there 2026-10-15, when the
+   Submission Center's Builder needed the same view of a sequence). */
 function DocumentHistory({ projectId, documentUuid }: { projectId: string; documentUuid: string }) {
   const path =
     '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
     '/documents/' + encodeURIComponent(documentUuid) + '/history';
-  const st = useLiveData<HistoryShape>(path, [path], isHistoryShape);
-  let body: React.ReactNode;
-  if (st.loading) body = <div className="vd-d-idx">Loading history…</div>;
-  else if (st.error || !st.data) {
-    /* 2026-09-28 (M-0928-3): was role="status" — a failed read announced
-       politely, unlike the ChainVerdict and Data room failures beside it. */
-    body = (
-      <div className="vd-dr-err" role="alert">
-        {I.alertTriangle} This document's history could not be read. Nothing is shown rather than an
-        incomplete history.
-      </div>
-    );
-  } else if (st.data.entries.length === 0) {
-    body = <div className="vd-d-idx">No recorded events for this document.</div>;
-  } else {
-    body = (
-      <>
-        <ChainVerdict chain={st.data.chain} />
-        <div className="vd-vers">
-          {st.data.entries.map((e) => (
-            <div key={e.id} className="vd-ver">
-              <span className="vd-ver-v">{e.event}</span>
-              <span className="vd-ver-m">
-                {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      </>
-    );
-  }
-  return (
-    <div data-testid="vault-document-history">
-      <div className="vd-d-seclbl">History</div>
-      {body}
-    </div>
-  );
+  return <RecordHistory path={path} subject="document" testId="vault-document-history" reasonTestId="vault-history-reason" />;
 }
 
 /* ── Data Room lane — the capture → classify → file pipeline ──
@@ -376,11 +392,14 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
 function DataRoomLane({
   block,
   unavailableReason,
+  filing,
 }: {
   block?: DataRoomBlock;
   /** The server's `unavailable` reason for the Data room branch, when it
    *  could not be served — rendered as a failure, never as an empty room. */
   unavailableReason?: string | null;
+  /** Selection and "File into Vault" (VR-11). */
+  filing: DataRoomFiling;
 }) {
   const [open, setOpen] = useState(false);
   if (unavailableReason) {
@@ -408,6 +427,8 @@ function DataRoomLane({
   }
   // Collapsed, the stage strip is the summary; expanding lists the sources.
   const rows = open ? block.sources : [];
+  const unfiledIds = block.sources.filter((s) => s.stage !== 'filed').map((s) => s.id);
+  const titleOf = (id: number) => block.sources.find((s) => s.id === id)?.title ?? `Source ${id}`;
   return (
     <div className="vd-dr" data-testid="vault-data-room">
       <div className="vd-dr-head">
@@ -433,10 +454,14 @@ function DataRoomLane({
           the filing cabinet and are listed under Uploaded files.
         </div>
       )}
+      {(open && unfiledIds.length > 0) || filing.outcome || filing.error ? (
+        <DataRoomFileBar filing={filing} unfiledIds={unfiledIds} titleOf={titleOf} />
+      ) : null}
       {rows.length > 0 && (
         <div className="vd-dr-rows">
           {rows.map((s) => (
             <div key={s.id} className="vd-dr-row">
+              <RoomPick id={s.id} title={s.title} filed={s.stage === 'filed'} filing={filing} />
               <span className="vd-dr-kind">{s.kind}</span>
               <span className="vd-dr-name" title={s.title}>{s.title}</span>
               <span className="vd-dr-detail">
@@ -448,7 +473,7 @@ function DataRoomLane({
                 </span>
               ) : null}
               <span className={'rd-chip tone-' + (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).tone}>
-                {(ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label}
+                {roomStageLabel(s)}
               </span>
             </div>
           ))}
@@ -566,6 +591,8 @@ function UploadsLane({
    the real count, not the page length, so the surface can say "12 of 340"
    instead of implying the page is everything. */
 interface VaultSearchHit {
+  originalFileAvailable?: boolean;
+  disposition?: VaultDoc['disposition'];
   id: string;
   title: string;
   fileName: string | null;
@@ -576,14 +603,26 @@ interface VaultSearchHit {
   placementStatus: string | null;
   /** A body excerpt when the match was in the content; null when it was not. */
   snippet: string | null;
+  /** The version, and whether it is the document's current one (VR-09). */
+  version?: string | null;
+  current?: boolean;
 }
 interface VaultSearchShape {
   query: string;
+  includeSuperseded?: boolean;
   total: number;
   limit: number;
   offset: number;
   results: VaultSearchHit[];
 }
+
+const isVaultSearchShape: ShapeGuard<VaultSearchShape> = (value): value is VaultSearchShape => {
+  if (!value || typeof value !== 'object') return false;
+  const read = value as Partial<VaultSearchShape>;
+  return Array.isArray(read.results) && Number.isSafeInteger(read.total) &&
+    typeof read.total === 'number' && read.total >= read.results.length &&
+    read.results.every(hit => hit && typeof hit.id === 'string' && typeof hit.title === 'string');
+};
 
 /** A search hit rendered in the same row component the tree uses. */
 function searchHitToDoc(h: VaultSearchHit): VaultDoc {
@@ -603,14 +642,18 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     status: h.placementStatus || 'unfiled',
     pct: null,
     owner: '',
-    ver: '',
+    ver: h.version ? `v${h.version}` : '',
     updated: '',
+    // Only listed when the search asked for earlier versions (VR-09).
+    earlierVersion: h.current === false,
     /* The server's ts_headline excerpt, with its <b> markers stripped: this is
        rendered as text, and a highlight that arrives as literal markup would
        read as corruption. */
     preview: (h.snippet || '').replace(/<\/?b>/g, ''),
     src: 'upload',
     docId: h.id,
+    originalFileAvailable: h.originalFileAvailable,
+    disposition: h.disposition,
     sizeLabel: h.size || undefined,
   };
 }
@@ -625,8 +668,29 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
  *  to operate, and "no documents" or "no such folder" would misstate why. */
 const NO_PROGRAM_OPEN = 'No program is open, so there is no vault here yet — open a program first.';
 
-export function Vault({ onAsk, onNav }: SurfaceViewProps) {
+/** Keep the recorded refusal with the action rather than only in a hover hint. */
+function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (source: VaultDoc) => void }) {
+  const reasonId = useId();
+  const unavailable = sourceImportUnavailableReason({ ...source, isCurrent: source.earlierVersion ? false : undefined });
+  return <div className="source-work-action">
+    <button type="button" className="sp-primary" disabled={Boolean(unavailable)} title={unavailable ?? undefined}
+      aria-describedby={unavailable ? reasonId : undefined} onClick={() => onPull(source)}>{I.penLine} Work on document</button>
+    {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
+  </div>;
+}
+
+/* The Vault for the project open now. The body is keyed by the project, so a
+   switch remounts it with no data: the read hook keeps the last payload while a
+   new path loads, and the previous project's documents must not stand in for the
+   new project's while it loads. */
+export function Vault(props: SurfaceViewProps) {
+  return <VaultForProject key={currentProjectId() ?? ''} {...props} />;
+}
+
+function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
+  const available = useSurfaceAvailable();
   const projectId = currentProjectId();
+  const [pullDoc, setPullDoc] = useState<VaultDoc | null>(null);
   const vaultPath = projectId
     ? '/api/c2c/project-vault/' + encodeURIComponent(projectId)
     : null;
@@ -634,7 +698,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      patched locally: what the Vault shows is what the Vault stored. */
   const [vaultEpoch, setVaultEpoch] = useState(0);
   const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch]);
+  // The placeholder shows only before there is data to show. A re-read after a change keeps the
+  // body mounted, so a confirmation held in it (a save, a post, a decision) stays on screen.
   const vault = vaultState.data;
+  /* The data room's "File into Vault" (VR-11): held here so its answer
+     survives the re-read that follows a filing. */
+  const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+  /* Confirm N suggested (VR-11b): held here for the same reason. */
+  const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+  const canWrite = useVaultCanWrite();
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
@@ -670,11 +742,38 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* What the user says the file is; travels with every file in the batch. */
   const [docType, setDocType] = useState<VaultIngestDocumentType>('OTHER');
 
+  /* A file refused because a different file is recorded at that name (409
+     VERSION_CONTENT_CONFLICT) is offered as the next version of that document
+     (VR-09), rather than left at a dead end. The document is the tree's leaf
+     with that code, which is its current version. */
+  const [checkInOffers, setCheckInOffers] = useState<Array<{ file: File; doc: VaultDoc }>>([]);
   const uploadFiles = async (files: FileList | null) => {
     const outcome = await upload(files, { documentType: docType });
+    setCheckInOffers(
+      outcome.conflicts.flatMap(({ name, file }) => {
+        const doc = allDocs.find((d) => d.src === 'upload' && d.docId && d.documentCode === name);
+        return doc ? [{ file, doc }] : [];
+      }),
+    );
     // Re-read the tree so what is shown is what the server stored.
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+  /** Add `file` as the next version of `doc`: the server numbers it and keeps the code and filing. */
+  const uploadNewVersion = async (file: File, doc: VaultDoc, currentId?: string) => {
+    if (!doc.docId) return;
+    const recordedType = doc.details?.documentType;
+    const outcome = await upload([file], {
+      documentType: (VAULT_INGEST_DOCUMENT_TYPES as readonly string[]).includes(recordedType ?? '')
+        ? (recordedType as VaultIngestDocumentType)
+        : docType,
+      newVersionOf: { documentId: currentId ?? doc.docId, title: doc.details?.documentTitle || doc.title },
+    });
+    // The offer stays until the version is recorded: a dropped connection must not lose the file.
+    if (outcome.succeeded.includes(file.name)) {
+      setCheckInOffers((offers) => offers.filter((o) => o.file !== file));
+      setVaultEpoch((n) => n + 1);
+    }
   };
 
   /* ── Filing decisions (confirm / move / unfile) ────────────────────────────
@@ -702,14 +801,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* Reported in the SAME banner the upload path uses, rather than a second
      notification mechanism on one surface. */
   const [downloadNote, setDownloadNote] = useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
-  const downloadVaultDoc = async (docId: string, title: string) => {
-    if (!projectId || downloading) return;
+  /* `programId`: a library hit downloads through the project that holds it. */
+  const downloadVaultDoc = async (docId: string, title: string, programId: string | null = projectId) => {
+    if (!programId || downloading) return;
     setDownloading(docId);
     setDownloadNote(null);
     try {
       const res = await apiRequest(
         'GET',
-        `/api/c2c/project-vault/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(docId)}/download`,
+        `/api/c2c/project-vault/${encodeURIComponent(programId)}/documents/${encodeURIComponent(docId)}/download`,
       );
       if (!res.ok) {
         const j = await res.json().catch(() => null);
@@ -842,6 +942,28 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
     if (docId) setSel(docId);
   };
+  /* "Open in Vault" after File to Vault names the document it filed
+     (vaultTarget.ts): open on that row, where "Place into filing…" is,
+     instead of the first node. A document this tree does not hold, or one
+     filed under another project, is said, not silently ignored. */
+  const [pendingTarget, setPendingTarget] = useState(() => takeVaultTarget(projectId));
+  const [missingTarget, setMissingTarget] = useState<string | null>(null);
+  const [otherProjectTarget] = useState(() => pendingTarget?.kind === 'other-project');
+  React.useEffect(() => {
+    if (!pendingTarget || !vault) return;
+    if (pendingTarget.kind === 'here') {
+      const at = locateVaultDocument(tree, pendingTarget.documentId);
+      if (at) {
+        setQ('');
+        setActiveFolder(at.folderId);
+        setExpanded((e) => ({ ...e, cabinet: true, [at.folderId]: true }));
+        setSel(at.rowId);
+      } else setMissingTarget(pendingTarget.documentId);
+    }
+    setPendingTarget(null);
+  }, [pendingTarget, vault, tree]);
+  // Derived, so a re-read that now holds the document retires the note.
+  const targetMissing = missingTarget !== null && locateVaultDocument(tree, missingTarget) === null;
 
   const findFolder = (
     nodes: (VaultDoc | VaultFolder)[],
@@ -954,33 +1076,48 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      GET /:id/search is ranked full text over title, file name and extracted
      body. The tree stays the browse view; this is the find view. */
   const trimmedQ = q.trim();
+  /* Current versions only unless asked (VR-09): an earlier version is the same
+     document, and listing it beside its successor reads as two. */
+  const [includeEarlier, setIncludeEarlier] = useState(false);
+  /* Library search: accessible projects' Vaults. While it is on,
+     the project search does not run; VaultLibraryResults reads the library. */
+  const [allProjects, setAllProjects] = useState(false);
+  const libraryMode = Boolean(trimmedQ) && allProjects;
   const searchPath =
-    projectId && trimmedQ ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
-      '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' : null;
-  const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath]);
+    projectId && trimmedQ && !allProjects ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+      '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' +
+      (includeEarlier ? '&includeSuperseded=true' : '') : null;
+  const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath], isVaultSearchShape);
+  const verifiedSearch = !searchState.loading && !searchState.error && searchState.data !== null;
+  const searchUnavailable = searching && !libraryMode && !searchState.loading && !verifiedSearch;
 
   const results = searching
-    ? (searchState.data?.results ?? []).map(searchHitToDoc)
+    ? (verifiedSearch ? searchState.data?.results ?? [] : []).map(searchHitToDoc)
     : folderDocs;
   /* The vault document currently being filed into a submission, if any. The
      tree id is `up-<uuid>`; the uuid is what a leaf names. */
   const [filingIntoSubmission, setFilingIntoSubmission] = React.useState<
-    { documentUuid: string; documentTitle: string; mimeType?: string | null } | null
+    {
+      documentUuid: string; documentTitle: string; mimeType?: string | null;
+      /** The document's filing, so the dialog can pre-fill a confirmed section. */
+      filing?: { ctdSection: string | null; placementStatus: string } | null;
+    } | null
   >(null);
 
   /* The tree's record of a document wins over a search hit for the same one:
-     it carries the filing block (Confirm, Move, Place into submission) that a
+     it carries the filing block (Confirm, Move, Place into filing) that a
      hit does not, and keeps the hit's matching excerpt. A document only the
      search found is shown as its hit. */
   const pick = (id: string | undefined): VaultDoc | undefined => {
     if (id === undefined) return undefined;
     const leaf = allDocs.find((d) => d.id === id);
     const hit = searching ? results.find((d) => d.id === id) : undefined;
+    if (searching && !hit) return undefined;
     if (!leaf) return hit;
     // While searching, the excerpt that matched is what the reader needs to see.
     return hit?.preview ? { ...leaf, preview: hit.preview } : leaf;
   };
-  const sel = pick(selId ?? undefined) || pick(results[0]?.id) || allDocs[0] || null;
+  const sel = pick(selId ?? undefined) || pick(results[0]?.id) || (searching ? null : allDocs[0]) || null;
 
   /* What AnA can see of this screen.
      Until now she knew the user was on "vault" and nothing else — not which
@@ -1003,6 +1140,25 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         availableActions: ['Retry the vault read'],
       };
     }
+    if (libraryMode) {
+      return {
+        summary: `An accessible-project search for "${trimmedQ}" is open. Its separate library panel must be read before describing matches; this context does not verify its result count.`,
+        facts: { searchQuery: trimmedQ, requestedSearchScope: 'accessible-projects' },
+      };
+    }
+    if (searching && searchState.loading) {
+      return {
+        summary: `The vault search is still loading for "${trimmedQ}"; no match count or selection is verified.`,
+        facts: { searchQuery: trimmedQ, searchState: 'loading' },
+      };
+    }
+    if (searchUnavailable) {
+      return {
+        summary: `The vault search for "${trimmedQ}" could not be verified; this is a failed read, not a result of zero matches.`,
+        facts: { searchQuery: trimmedQ, searchState: 'unavailable' },
+        availableActions: ['Retry the vault search'],
+      };
+    }
     const shown = results.length;
     return {
       summary:
@@ -1017,6 +1173,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         totalDocuments: vault?.documentCount ?? 0,
         documentCounts: vault?.documentCounts ?? null,
         unfiledUploads: vault?.unfiledCount ?? 0,
+        // Filed to a suggested folder that no person has confirmed (VR-11b); null from an older server.
+        awaitingConfirmation: vault?.awaitingConfirmationCount ?? null,
         // Required sections against confirmed filings (VR-15), as the server
         // counted them, or why there is no figure. Not a readiness figure.
         vaultCoverage: vault?.coverage ?? null,
@@ -1026,8 +1184,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               classified: vault.dataRoom.classified,
               filed: vault.dataRoom.filed,
               needsReview: vault.dataRoom.needsReview ?? null,
-              // When true, the three counts above cover the newest sources only.
-              truncated: vault.dataRoom.window?.truncated === true,
+              // The counts are exact; when true, only the list is the newest sources.
+              listTruncated: vault.dataRoom.window?.truncated === true,
             }
           : vault?.unavailable?.some((u) => u.branch === 'Data room')
             ? 'unavailable — counts unknown, not zero'
@@ -1057,7 +1215,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         'Confirm or move an upload’s suggested filing (governed, audited)',
       ],
     };
-  }, [vaultState.loading, vaultState.error, results.length, folder, searching, q, sel, vault]);
+  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, q, sel, vault]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -1128,29 +1286,43 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}
               {vault ? (
                 <>
-                  {vault.documentCount} document{vault.documentCount === 1 ? '' : 's'}
+                  {vaultCountLabel(vault)}
                 </>
               ) : null}
               {vault && (vault.unfiledCount ?? 0) > 0 ? (
                 <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
               ) : null}
+              {vault && (vault.awaitingConfirmationCount ?? 0) > 0 ? (
+                <> {I.dot} {vault.awaitingConfirmationCount} awaiting confirmation</>
+              ) : null}
             </span>
           </div>
         </div>
-        <button
-          className="sp-ask"
-          onClick={() => onNav && onNav('project-home')}
-          title="Open this project in Project management"
-        >
-          {I.folder} Open project
-        </button>
-        <button
-          className="sp-ask"
-          onClick={() => onNav && onNav('etmf')}
-          title="TMF inspection-readiness — completeness, timeliness & QC"
-        >
-          {I.shieldCheck} Inspection readiness
-        </button>
+        {/* Only with a project open: without one it led to Project home's "No
+            project selected", beside the panel's own "Go to Projects". */}
+        {projectId && (
+          <button
+            className="sp-ask"
+            onClick={() => onNav && onNav('project-home')}
+            title="Open this project in Project management"
+          >
+            {I.folder} Open project
+          </button>
+        )}
+        {/* Offered only where the eTMF can be opened: outside this release it
+            led to the locked panel (FILING_SPINE.md F16). */}
+        {available('etmf') && (
+          <button
+            className="sp-ask"
+            onClick={() => onNav && onNav('etmf')}
+            title="TMF inspection-readiness — completeness, timeliness & QC"
+          >
+            {I.shieldCheck} Inspection readiness
+          </button>
+        )}
+        {/* Uploading is an ingest, which admits the writing roles only (VaultViewOnly). */}
+        {canWrite ? (
+          <>
         {/* What the file IS — the ingest schema's own vocabulary, so the
             picker can never offer a type the server refuses. MODULE_3 is how
             an uploaded CMC document declares itself and gets handled as one
@@ -1184,7 +1356,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv,.md"
+          accept={VAULT_UPLOAD_ACCEPT}
           style={{ display: 'none' }}
           onChange={(e) => void uploadFiles(e.target.files)}
           /* Labelled even though it is visually hidden and driven by the button
@@ -1220,6 +1392,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         >
           {I.sparkles || I.plus} Ask AnA to import
         </button>
+          </>
+        ) : null}
       </div>
 
       {(uploadNote || downloadNote) && (
@@ -1235,12 +1409,38 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           {(downloadNote ?? uploadNote)!.text}
         </div>
       )}
+      {targetMissing && (
+        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-missing">
+          The document you just filed is not in this list. Search for it by title.
+        </div>
+      )}
+      {otherProjectTarget && (
+        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-other-project">
+          The document you just filed belongs to another project. Open that project to see it in its Vault.
+        </div>
+      )}
+      {checkInOffers.map(({ file, doc }) => (
+        <div key={`${file.name}-${doc.docId}`} className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
+          {file.name} was not uploaded: a different file is already recorded under this name as “{doc.title}”
+          ({doc.ver}). Added as a new version, it is numbered by the server, keeps the document's filing, and the
+          earlier versions stay in the Vault.{' '}
+          <button className="sp-ask" disabled={uploading} onClick={() => void uploadNewVersion(file, doc)}>
+            Upload as a new version of {doc.title}
+          </button>
+        </div>
+      ))}
 
       {filingIntoSubmission && (
         <VaultPlaceIntoSubmission
           documentUuid={filingIntoSubmission.documentUuid}
           documentTitle={filingIntoSubmission.documentTitle}
           mimeType={filingIntoSubmission.mimeType}
+          projectId={projectId ?? null}
+          filing={filingIntoSubmission.filing ?? null}
+          onNav={onNav}
+          /* A placement changes the version's "placed in" line, which reads the
+             versions list: re-read it, or the line stays "not placed" until reload. */
+          onPlaced={() => setVaultEpoch((n) => n + 1)}
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
@@ -1268,21 +1468,21 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
       ))}
 
       <div className="vd-coexist">
+        {/* It promised import with approval from Veeva Vault, SharePoint and
+            OneDrive, and its button only typed that request to AnA: no route
+            imports from a connector into the Vault (decision record
+            2026-10-08). What exists is AnA's search of connected
+            repositories, so that is what it offers. */}
         <span className="vd-coexist-txt">
-          {I.link || I.plug} Works alongside <b>Veeva Vault</b>,{' '}
-          <b>SharePoint</b> &amp; <b>OneDrive</b> — search in place, import
-          with approval (detect, classify, approve), export everything. No
-          rip-and-replace.
+          {I.link || I.plug} AnA can search your connected repositories (<b>Veeva Vault</b>,{' '}
+          <b>SharePoint</b>, <b>OneDrive</b>) in place. Importing from them into the
+          Vault comes in a later release; upload files here meanwhile.
         </span>
         <button
           className="vd-coexist-cta"
-          onClick={() =>
-            onAsk(
-              'Import documents from Veeva Vault into this project — run detect, classify to the dossier structure, and stage for approval.',
-            )
-          }
+          onClick={() => onAsk('Search my connected repositories for documents relevant to this project.')}
         >
-          Import from a connected source
+          Search connected sources
         </button>
       </div>
 
@@ -1294,10 +1494,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           <EmptyState
             icon={I.folder}
             title="Open a project to see its vault"
-            hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
+            hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine."
+            action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
           />
         </div>
-      ) : vaultState.loading ? (
+      ) : vaultState.loading && !vault ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 24px' }}>
           Loading the project vault…
         </div>
@@ -1319,6 +1520,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         <>
           <DataRoomLane
             block={vault?.dataRoom}
+            filing={roomFiling}
             unavailableReason={
               vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
             }
@@ -1344,6 +1546,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               onOpen={openUpload}
             />
           )}
+          {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
+          {!searching && vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
           {filingNote && (
             <div
               className="scaf-note"
@@ -1360,8 +1564,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 title="No documents in this project's vault yet"
                 hint={
                   vault?.pendingStore
-                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
-                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine, version-tracked."
+                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
+                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
                 }
               />
             </div>
@@ -1407,7 +1611,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                   <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
                   <span className="vd-crumb cur">
                     Search &quot;{q}&quot;
-                    {searchState.data && searchState.data.total > results.length
+                    {!libraryMode && verifiedSearch && searchState.data && searchState.data.total > results.length
                       ? ` — ${results.length} of ${searchState.data.total}`
                       : ''}
                   </span>
@@ -1428,21 +1632,47 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                   aria-label="Search this vault"
                 />
               </label>
+              <label className="vd-search">
+                <input
+                  type="checkbox"
+                  checked={includeEarlier}
+                  onChange={(e) => setIncludeEarlier(e.target.checked)}
+                />{' '}
+                Include earlier versions
+              </label>
+              <label className="vd-search">
+                <input
+                  type="checkbox"
+                  checked={allProjects}
+                  onChange={(e) => setAllProjects(e.target.checked)}
+                />{' '}
+                Accessible projects
+              </label>
             </div>
-            {searching && searchState.error && (
+            {searchUnavailable && (
               /* An error is not an empty result. Without this the screen reads
                  "no documents match your search", which is a different and
                  believable claim. */
               <div className="scaf-note" role="alert" style={{ margin: '8px 0 0', color: 'var(--error)' }}>
-                The vault could not be searched, so nothing was searched — this is
-                not a result of zero matches. {redactInternals(searchState.error, 'The search did not complete.')}
+                The vault search could not be verified — this is not a result of zero matches.
+                {' '}{redactInternals(searchState.error ?? '', 'The search did not complete.')}
               </div>
             )}
-            {searching && searchState.loading && !searchState.error && (
+            {searching && !libraryMode && searchState.loading && (
               <div className="scaf-note" role="status" style={{ margin: '8px 0 0' }}>
                 Searching…
               </div>
             )}
+            {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
+            {libraryMode ? (
+              <VaultLibraryResults
+                query={trimmedQ}
+                includeEarlier={includeEarlier}
+                currentProjectId={projectId ?? null}
+                onDownload={(docId, title, programId) => void downloadVaultDoc(docId, title, programId)}
+                downloadingId={downloading}
+              />
+            ) : (<>
             <div className="vd-cols">
               <span className="vd-col-name">Name</span>
               <span className="vd-col-type">Type</span>
@@ -1472,7 +1702,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     )}
                   </span>
-                  <span className="vd-col-type">{d.type}</span>
+                  <span className="vd-col-type" title={`${d.type}${reviewText(d)}`}>
+                    {d.type}
+                    {(d.versionCount ?? 1) > 1 ? ` · ${d.ver}, ${d.versionCount} versions` : ''}
+                    {d.earlierVersion ? ` · ${d.ver}, earlier version` : ''}
+                    {reviewText(d)}
+                  </span>
                   <span className="vd-col-owner">{d.owner}</span>
                   <span className="vd-col-mod">{d.updated}</span>
                   <span className="vd-col-status">
@@ -1482,13 +1717,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                   </span>
                 </button>
               ))}
-              {results.length === 0 && (
+              {results.length === 0 && (!searching || verifiedSearch) && (
                 <div className="vd-empty">
                   No documents
                   {searching ? ' match your search' : ' in this folder'}.
                 </div>
               )}
             </div>
+            </>)}
           </section>
 
           <aside className="vd-detail">
@@ -1499,7 +1735,20 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     {st(sel.status).label}
                   </span>
                   {sel.ver && sel.ver !== '—' && (
-                    <span className="vd-d-ver">{sel.ver}</span>
+                    <span className="vd-d-ver">
+                      {sel.ver}
+                      {(sel.versionCount ?? 1) > 1 ? ` · ${sel.versionCount} versions` : ''}
+                      {sel.earlierVersion ? ' · earlier version' : ''}
+                    </span>
+                  )}
+                  {sel.src === 'upload' && sel.lifecycleStage !== undefined && (
+                    <span
+                      className={'rd-chip tone-' + stageTone(sel.lifecycleStage)}
+                      title="Review and approval, apart from filing"
+                      aria-label={`Review and approval: ${stageLabel(sel.lifecycleStage)}`}
+                    >
+                      {stageLabel(sel.lifecycleStage)}
+                    </span>
                   )}
                 </div>
                 <div className="vd-d-title">
@@ -1517,6 +1766,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     {I.alertTriangle} {sel.flag}
                   </div>
                 )}
+
+                {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition
+                  key={`disposition-${sel.docId}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
+                  title={sel.title} existingChoice={sel.disposition} onChanged={() => setVaultEpoch(n => n + 1)}
+                />}
+                {sel.originalFileAvailable === false && <p className="sec-sub" role="status">Original file unavailable. Retained extracted data and its lineage remain accessible.</p>}
 
                 {sel.src === 'upload' && sel.filing ? (
                   <>
@@ -1554,11 +1809,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                                 documentUuid: sel.docId!,
                                 documentTitle: sel.title || sel.num || 'Vault document',
                                 mimeType: sel.mimeType,
+                                filing: sel.filing
+                                  ? { ctdSection: sel.filing.ctdSection ?? null, placementStatus: sel.filing.placementStatus ?? 'unfiled' }
+                                  : null,
                               })
                             }
                             data-testid="vault-place-into-submission"
                           >
-                            {I.folder} Place into submission…
+                            {I.folder} Place into filing…
                           </button>
                         </div>
                       )}
@@ -1598,7 +1856,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                           {sel.filing.rationale}
                         </div>
                       )}
-                      <div className="vd-d-filing-acts">
+                      {!canWrite ? <VaultViewOnly act="file, move or unfile it" testId="vault-filing-view-only" /> : null}
+                      {canWrite ? <div className="vd-d-filing-acts">
                         {sel.docId && (sel.filing.placementStatus === 'suggested' || cabinetFolders.length > 0) && (
                           <input
                             className="vd-d-filing-reason"
@@ -1657,15 +1916,32 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                             Unfile
                           </button>
                         )}
-                      </div>
+                      </div> : null}
                     </div>
 
                     {projectId && sel.docId && sel.details ? (
+                      /* Keyed by the document alone. A sibling DocumentHistory below
+                         is keyed `${docId}-${vaultEpoch}`: the same string twice in one
+                         fragment is a duplicate key, and React then leaves the Details
+                         block it mounted for the previous document in the DOM. Keyed
+                         by the epoch too, the block also remounts on every re-read, and
+                         the confirmation of a save is lost in the same render. */
                       <VaultEditDetails
-                        key={`${sel.docId}-${vaultEpoch}`}
+                        key={`details-${sel.docId}`}
                         projectId={projectId}
                         documentId={sel.docId}
                         details={sel.details}
+                        onSaved={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+
+                    {projectId && sel.docId ? (
+                      /* AnA's description of this version and a person's decision on it
+                         (S4). Keyed by the document alone, for the reason above. */
+                      <VaultCatalogRecord
+                        key={`catalog-${sel.docId}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
                         onSaved={() => setVaultEpoch((n) => n + 1)}
                       />
                     ) : null}
@@ -1678,10 +1954,6 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                           <span className="v">{sel.sizeLabel}</span>
                         </div>
                       )}
-                      <div className="vd-d-filing-row">
-                        <span className="k">Version</span>
-                        <span className="v mono">{sel.ver && sel.ver !== '—' ? sel.ver : '—'}</span>
-                      </div>
                       {sel.hash && (
                         <div className="vd-d-filing-row">
                           <span className="k">SHA-256</span>
@@ -1692,8 +1964,74 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       )}
                     </div>
                     {projectId && sel.docId ? (
+                      <VaultVersions
+                        key={`versions-${sel.docId}-${vaultEpoch}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        title={sel.title}
+                        onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
+                        downloadingId={downloading}
+                        onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
+                        uploading={uploading}
+                        onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
+                      <VaultAnnotations
+                        key={`annotations-${sel.docId}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        refreshKey={vaultEpoch}
+                        onChanged={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
+                      <VaultRelationships
+                        key={`relationships-${sel.docId}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        onChanged={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
                       <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                     ) : null}
+                  </>
+                ) : sel.src === 'upload' && sel.docId && projectId ? (
+                  /* A search hit the tree does not list: an earlier version, or a
+                     document outside the loaded window. Its versions and history
+                     are read as for any upload; the filing is the current version's. */
+                  <>
+                    {sel.earlierVersion && (
+                      <div className="vd-d-idx">
+                        An earlier version. The tree lists the current one, which carries the document's filing.
+                      </div>
+                    )}
+                    <VaultVersions
+                      key={`versions-${sel.docId}-${vaultEpoch}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      title={sel.title}
+                      onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
+                      downloadingId={downloading}
+                      onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
+                      uploading={uploading}
+                      onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                    />
+                    <VaultAnnotations
+                      key={`annotations-${sel.docId}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      refreshKey={vaultEpoch}
+                      onChanged={() => setVaultEpoch((n) => n + 1)}
+                    />
+                    <VaultRelationships
+                      key={`relationships-${sel.docId}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      onChanged={() => setVaultEpoch((n) => n + 1)}
+                    />
+                    <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                   </>
                 ) : (
                   <>
@@ -1708,10 +2046,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       <span>Indexing status isn't reported for this document yet.</span>
                     </div>
 
-                    {/* No version-history endpoint backs this surface: the read model
-                        returns each section's CURRENT version only, not a history
-                        list. Show the real current version honestly — don't
-                        synthesize a "history". */}
+                    {/* An authored section: the read model returns each section's
+                        CURRENT version only, not a history list. Show the real
+                        current version honestly — don't synthesize a "history".
+                        (Uploaded documents list every version: VaultVersions.) */}
                     <div className="vd-d-seclbl">Version</div>
                     <div className="vd-vers">
                       <div className="vd-ver">
@@ -1739,6 +2077,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 )}
 
                 <div className="vd-d-actions">
+                  {sel.src === 'upload' && sel.docId && projectId && <VaultSourceWorkButton source={sel} onPull={setPullDoc} />}
                   {sel.src !== 'upload' && (
                     <button
                       className="sp-primary"
@@ -1777,7 +2116,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     <button
                       className="sp-ask"
                       onClick={() => void downloadVaultDoc(sel.docId!, sel.title)}
-                      disabled={downloading === sel.docId}
+                      disabled={downloading === sel.docId || sel.originalFileAvailable === false}
+                      title={sel.originalFileAvailable === false ? 'The original file is unavailable after the recorded retention decision' : undefined}
                     >
                       {I.download} {downloading === sel.docId ? 'Downloading…' : 'Download'}
                     </button>
@@ -1798,6 +2138,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           )}
         </>
       )}
+      {projectId && pullDoc?.docId && <SourceImportDialog programId={projectId}
+        source={{ kind: 'vault', documentId: pullDoc.docId }} title={pullDoc.title}
+        onClose={() => setPullDoc(null)} onOpenDocument={docId => openImportedDocument(docId, projectId, onNav)} />}
     </div>
   );
 }

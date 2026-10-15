@@ -1,0 +1,228 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > has unique types, required fields, and at least one required document each 2ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > every referenced templateId resolves in the document template library 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > covers the major submission types 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports ready when all required documents and forms are present 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports the specific missing required documents and forms 1ms
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > does not let not-applicable documents block readiness once every deciding fact is known 6ms
+   → expected undefined to deeply equal []
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > returns undefined for an unknown submission type 0ms
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) with no labeling, IFU, T&A statement, biocompatibility or user fee is not ready 2ms
+   → expected true to be false // Object.is equality
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > the same gaps hold for a De Novo request 2ms
+   → expected 'Classification summary / risk-to-heal…' to match /Indications for use/i
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the 510k eSTAR registry is a required row, and nothing else is 2ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the de_novo eSTAR registry is a required row, and nothing else is 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > 510k is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee 2ms
+   → expected [ 'eSTAR 510(k) template' ] to deeply equal [ …(2) ]
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > de_novo is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee 1ms
+   → expected [ 'eSTAR De Novo template' ] to deeply equal [ …(2) ]
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) Statement satisfies the summary-or-statement requirement, and so does the summary template 1ms
+   → expected [ 'Cover letter', …(3) ] to include '510(k) Summary or 510(k) Statement'
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an unanswered device flag is undetermined and keeps ready false 1ms
+   → expected true to be false // Object.is equality
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a conditional section becomes required when its flag is set 1ms
+   → expected true to be false // Object.is equality
+ × server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an IVD 510(k) is held to the IVD registry: no analytical performance, not ready 1ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > does not let not-applicable documents block readiness once every deciding fact is known
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:79:28
+     77|     })!;
+     78|     expect(a.missingDocuments).toEqual([]);
+     79|     expect(a.undetermined).toEqual([]);
+       |                            ^
+     80|     expect(a.ready).toBe(true);
+     81|     expect(k.requiredDocuments.find((d) => /biocompatib/i.test(d.name)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) with no labeling, IFU, T&A statement, biocompatibility or user fee is not ready
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:114:21
+    112|   it('a 510(k) with no labeling, IFU, T&A statement, biocompatibility …
+    113|     const a = assessRequirements('510k', PROBE_510K)!;
+    114|     expect(a.ready).toBe(false);
+       |                     ^
+    115|     const missing = a.missingDocuments.join(' | ');
+    116|     expect(missing).toMatch(/Indications for use/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > the same gaps hold for a De Novo request
+AssertionError: expected 'Classification summary / risk-to-heal…' to match /Indications for use/i
+
+- Expected:
+/Indications for use/i
+
++ Received:
+"Classification summary / risk-to-health analysis | Special controls proposal"
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:131:21
+    129|     expect(a.ready).toBe(false);
+    130|     const missing = a.missingDocuments.join(' | ');
+    131|     expect(missing).toMatch(/Indications for use/i);
+       |                     ^
+    132|     expect(missing).toMatch(/Proposed labeling/i);
+    133|     expect(missing).toMatch(/Truthful and Accurate/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the 510k eSTAR registry is a required row, and nothing else is
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the de_novo eSTAR registry is a required row, and nothing else is
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:139:37
+    137|
+    138|   it.each(['510k', 'de_novo'] as const)('every always-slot of the %s e…
+    139|     expect(typeof estar.estarSlots).toBe('function');
+       |                                     ^
+    140|     const slots = estar.estarSlots(type);
+    141|     const rows = getRequirements(type)!.requiredDocuments;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > 510k is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee
+AssertionError: expected [ 'eSTAR 510(k) template' ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "eSTAR (submitted via CDRH Portal)",
+-   "FDA 3601",
++   "eSTAR 510(k) template",
+  ]
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:157:19
+    155|   it.each(['510k', 'de_novo'] as const)('%s is filed as an eSTAR throu…
+    156|     const forms = getRequirements(type)!.requiredForms;
+    157|     expect(forms).toEqual(['eSTAR (submitted via CDRH Portal)', 'FDA 3…
+       |                   ^
+    158|   });
+    159|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > de_novo is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee
+AssertionError: expected [ 'eSTAR De Novo template' ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "eSTAR (submitted via CDRH Portal)",
+-   "FDA 3601",
++   "eSTAR De Novo template",
+  ]
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:157:19
+    155|   it.each(['510k', 'de_novo'] as const)('%s is filed as an eSTAR throu…
+    156|     const forms = getRequirements(type)!.requiredForms;
+    157|     expect(forms).toEqual(['eSTAR (submitted via CDRH Portal)', 'FDA 3…
+       |                   ^
+    158|   });
+    159|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) Statement satisfies the summary-or-statement requirement, and so does the summary template
+AssertionError: expected [ 'Cover letter', …(3) ] to include '510(k) Summary or 510(k) Statement'
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:167:38
+    165|     expect(bySummary.missingDocuments).not.toContain(row);
+    166|     const neither = assessRequirements('510k', { documentNames: ['Devi…
+    167|     expect(neither.missingDocuments).toContain(row);
+       |                                      ^
+    168|   });
+    169|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an unanswered device flag is undetermined and keeps ready false
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:179:21
+    177|     const a = assessRequirements('510k', everyAlways)!;
+    178|     expect(a.missingDocuments).toEqual([]);
+    179|     expect(a.ready).toBe(false);
+       |                     ^
+    180|     expect(a.undetermined.join(' | ')).toMatch(/Sterilization/);
+    181|     expect(a.undetermined.join(' | ')).toMatch(/Cybersecurity/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a conditional section becomes required when its flag is set
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:192:21
+    190|       flags: { ...ALL_FLAGS_NO, sterile: true },
+    191|     })!;
+    192|     expect(a.ready).toBe(false);
+       |                     ^
+    193|     expect(a.missingDocuments).toEqual(['Sterilization, shelf life and…
+    194|     expect(a.totalRequiredCount).toBe(a.presentRequiredCount + 1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an IVD 510(k) is held to the IVD registry: no analytical performance, not ready
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/market-specs/__tests__/submission-requirements.test.ts:206:21
+    204|       variant: 'ivd',
+    205|     })!;
+    206|     expect(a.ready).toBe(false);
+       |                     ^
+    207|     expect(a.missingDocuments.join(' | ')).toMatch(/Analytical perform…
+    208|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 6 passed (17)
+   Start at  02:13:18
+   Duration  955ms (transform 557ms, setup 96ms, import 554ms, tests 27ms, environment 0ms)
+

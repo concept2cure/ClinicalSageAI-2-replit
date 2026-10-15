@@ -1,0 +1,12 @@
+Mutant P03-paste-takes-everyone: another person’s pasted suggestion becomes the paster’s
+
+--- client/src/concept2cure/v2/editor/suggestions.ts
+- if (mark.attrs.authorId !== ANA_SUGGESTION_AUTHOR_ID) return null;
++ 
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > a pasted person’s suggestion keeps its author (negative control) 44ms
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

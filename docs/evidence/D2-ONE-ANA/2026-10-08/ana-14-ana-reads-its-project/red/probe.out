@@ -1,0 +1,17 @@
+# Investigator's probe (scratchpad/context-warning/probe.ts) on HEAD, before the fix: enrichContextForChat against the local c2c_ui_screens database, org 1, program d6160c9f-... (no projects row links to it).
+[direct getProjectIntelligence(Number("d6160c9f-33d2-4be9-b779-eb27375f6e49"))] THREW in 30ms: code=22P02 cause=invalid input syntax for type integer: "NaN"
+[direct getProjectIntelligence(Number(1))] ok in 24ms -> profile 1
+[enrich turn1 uuid cold] 50ms unavailable=["project-profile"] failed=["project-profile"] sources=[]
+[enrich turn1 uuid warm] 38ms unavailable=["project-profile"] failed=["project-profile"] sources=[]
+[enrich turn2 uuid cold] 51ms unavailable=["project-profile"] failed=["ectd","project-profile"] sources=["doc-ctd_section"]
+[enrich turn2 uuid warm] 12ms unavailable=["project-profile"] failed=["ectd","project-profile"] sources=["doc-ctd_section"]
+[enrich turn2 int=1 cold] 13ms unavailable=[] failed=[] sources=["project-profile","ectd","doc-ctd_section"]
+[enrich turn2 int=1 warm] 4ms unavailable=[] failed=[] sources=["project-profile","ectd","doc-ctd_section"]
+[enrich greeting int=1 cold] 3ms unavailable=[] failed=[] sources=["project-profile"]
+[enrich greeting int=1 warm] 5ms unavailable=[] failed=[] sources=["project-profile"]
+[enrichment] Live recommendations failed, falling back to memory: Failed query: 
+[enrich /assess int=1 cold] 63ms unavailable=[] failed=["assess"] sources=["project-profile"]
+[enrichment] Live recommendations failed, falling back to memory: Failed query: 
+[enrich /assess int=1 warm] 33ms unavailable=[] failed=["assess"] sources=["project-profile"]
+[memory projectId="d6160c9f-33d2-4be9-b779-eb27375f6e49"] 1321ms outcomes={"workingMemory":"empty","clientMemory":"error","projectMemory":"error"} mode=none semanticMs=1321 read=0
+[memory projectId=1] 1425ms outcomes={"workingMemory":"empty","clientMemory":"error","projectMemory":"error"} mode=none semanticMs=1425 read=0

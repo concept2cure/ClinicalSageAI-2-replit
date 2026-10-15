@@ -1,0 +1,71 @@
+## a returned refusal counts as a good step again: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > a refused read is recorded not-ok, and is not evidence for the answer 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)
+
+## the child's loop runs in the parent's run scope: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > a child's own gateway calls are attributed to the child (review 2026-10-11) > a tool running inside the child sees the child run, with the parent named 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)
+
+## no run scope for the child at all: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > its tools get a read-only, model-refusing context with nothing of the parent spread in (D11) 30ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the child is governed > it is offered research tools the parent has, and nothing else: a write and run_agent are answered, not run 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > a verify agent: the verdict comes from the checks only > runs the checks on the text as given, read-only and model-refusing, before the child model 8ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError', code: 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' } gives AGENT_FAILED MODEL_NOT_APPROVED 3ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayModelDeclinedError' } gives AGENT_FAILED MODEL_DECLINED 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError' } gives AGENT_FAILED RATE_OR_POLICY_LIMIT 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > a failure after a call says it could not finish 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the seventh agent of a turn is refused, and a refusal changes no count 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > caps > the fifth in one round is refused; a later round may start 371ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the token budget stops the child, at most two calls past it (D23) 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the round limit stops the child as incomplete 5ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a pause before the start delays the first call; a run that will not resume starts nothing 22ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a run cancelled while the child waits between rounds is cancelled, not a time budget 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a hold that expires between rounds is cancelled, and says the run stayed paused 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a Stop mid-call is cancelled, not a failure 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a call still running at the active-time limit is aborted: incomplete, time budget 6ms
+ × server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > a refused read is recorded not-ok, and is not evidence for the answer 2ms
+ × server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > control: a real result is recorded ok, and is evidence 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > a child's own gateway calls are attributed to the child (review 2026-10-11) > a tool running inside the child sees the child run, with the parent named 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 1ms
+ × server/services/ana/__tests__/sub-agent.test.ts > the record and the view > frames: started, then steps, then finished 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  22 failed | 59 passed (81)
+
+## a cancelled step always credits the person: RED
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > an agent ended by an expired pause does not credit the person > says the run stayed paused, not that the person stopped it 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)
+
+## the agent is not asked why it stopped: RED
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > an agent ended by an expired pause does not credit the person > says the run stayed paused, not that the person stopped it 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)
+
+## a failure after real work still says did not run: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentResultSummary > a failure after the agent had started says it did not finish, not that it never ran 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)
+
+## a non-budget stop is not named: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentResultSummary > a stop with no budget names what stopped it 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)
+
+## a verdict travels without how much was compared: RED
+ × server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentResultSummary > a verify verdict says how many checks compared anything, so a bare verdict cannot overstate 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)
+
+# after the two tests were strengthened (they had built the result by hand)
+## the expiry is not named on the result: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > an expired hold stops the child, and says so 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)
+
+## an empty report is still called usable: RED
+ × server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a call still running at the active-time limit is aborted: incomplete, time budget 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 80 passed (81)

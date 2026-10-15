@@ -1,0 +1,186 @@
+{
+  "testedHead": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+  "completedAt": "2026-10-14T19:49:34.797Z",
+  "syntheticApisOnly": true,
+  "productionFrozenDuringCapture": true,
+  "sourceSha256": {
+    "client/src/concept2cure/v2/editor/DocumentCanvas.tsx": "8cbdc1534eceb26fb556e72dddd0a2f716fbbf287113952d5b91152275e7e192",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "e76d82aef95825210ba0467834c3a627bd19ec9feeb5be676970326e1ccd4c68",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/editor/TemplateGuidance.tsx": "eb92c3867ac1de640dc96f70d676f92d473a13c294f6fde6431c55ad0ec316a7",
+    "client/src/concept2cure/v2/editor/provenance.ts": "ec12f60d10ffaaa040b64003c15109cb673fe3767d12bbaf77d6f3278ec5f807",
+    "client/src/concept2cure/v2/editor/savedTemplateContext.ts": "433ead62982705de14125e676cf7e7cece3d6b99ad9d3c203dc62f2307d2d235",
+    "client/src/concept2cure/v2/editor/authoringOversight.ts": "5d2370efecd3981806b36dc25ce3fb84c9e776a005ba76d53757205114894307",
+    "shared/authoring/recorded-template-source.ts": "b60b8a69e8cac514656aac79220c4f3f06cc2110972e6617610241f6ab191912",
+    "server/services/ana/saved-document-critique.ts": "23a198966f7a327111fbc10c7621999f9c044ce81fa046d58feeb50364385b8e",
+    "server/services/ana/saved-template-review.ts": "d3bf39a482e1c74132e23ba171872db4b4242b1dca194a6c217c1c7ee75a279c",
+    "server/services/ana/writingQualityTools.ts": "0aae1ce44dd2a04abff390c16475999532c395fefc0f78875c231cf4006ffaf9",
+    "server/services/authoring/authoring-template-guidance.ts": "e7f225d845d590097135460a90257486490cc55a9e900dfe84ce5c5d6f042c1e",
+    "server/services/authoring/ind-authoring-templates.ts": "69f2e55d64cfe1c11e013287baf00a84aad9ee07a19a546544f62c169743cce4"
+  },
+  "fixtureSha256": {
+    "api-contract.json": "2c098b40a998b553406845095a37af30adb1188fb7ae48677cb991f90715db22",
+    "browser.mjs": "ed3a0f02c2436ea31bb320f3fb55b122890f4676acee150fb10a03fe9786ae60",
+    "generate.ts": "6ee318135e74bc2e1869cca11d204ee648391292b1d298032515e240df5e08c6",
+    "import-proof.mjs": "dcf74064d4ceef4acbee3ce5910cc00704c25c0b1452a4bae8bb770d876cc62f",
+    "index.html": "5f37f8c95c90ab9a2fcb92156929bdb35f582afe7dff98e0eb8dcc821c6eea27",
+    "mock-api.mjs": "abaf3a2338fecb2d2c532e6028da75972924e16c9ed70044e8b68a7c82439347",
+    "probe.tsx": "1e40f23ad50abe66329097deafc71829426b99bbb1a5932a58e64aedb6f1990e",
+    "server.mjs": "7e14cebcbf7c8ebf1cd4faba65182deb3a870dd3b9bb3e1cc669c437cdaeb214",
+    "visual-checks.mjs": "2c07fc6b5753491bd8bb4d2cacb8fdac5e900bcb6d01e619398cebd86d5b850f"
+  },
+  "apiContractSha256": "2c098b40a998b553406845095a37af30adb1188fb7ae48677cb991f90715db22",
+  "contexts": [
+    {
+      "label": "desktop-light",
+      "status": "pass",
+      "cases": [
+        {
+          "key": "M1-form",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M2-narrative",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M3-narrative",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M4-outline",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M4-GLP-record",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M5-listings",
+          "status": "pass",
+          "violations": 0
+        }
+      ]
+    },
+    {
+      "label": "desktop-dark",
+      "status": "pass",
+      "cases": [
+        {
+          "key": "M1-form",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M2-narrative",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M3-narrative",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M4-outline",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M4-GLP-record",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M5-listings",
+          "status": "pass",
+          "violations": 0
+        }
+      ]
+    },
+    {
+      "label": "touch-light",
+      "status": "pass",
+      "cases": [
+        {
+          "key": "M1-form",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M2-narrative",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M3-narrative",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M4-outline",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M4-GLP-record",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M5-listings",
+          "status": "pass",
+          "violations": 0
+        }
+      ]
+    },
+    {
+      "label": "touch-dark",
+      "status": "pass",
+      "cases": [
+        {
+          "key": "M1-form",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M2-narrative",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M3-narrative",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M4-outline",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M4-GLP-record",
+          "status": "pass",
+          "violations": 0
+        },
+        {
+          "key": "M5-listings",
+          "status": "pass",
+          "violations": 0
+        }
+      ]
+    }
+  ],
+  "status": "pass",
+  "limitations": [
+    "Synthetic browser fixtures qualify local UI and prefill callback wiring only, not live model behavior, backend authorization, RLS, database persistence, deployment or regulatory readiness.",
+    "The source-bound GLP deliverable has a null recorded module; its phase does not establish CTD placement.",
+    "The local host records the actual onAsk prefill boundary. Canonical conversation routing and saved-review paging are independently verified in UI and server suites.",
+    "Axe incomplete rules remain in individual stage metrics and require manual review."
+  ]
+}

@@ -1,13 +1,17 @@
 /**
  * Distributed Lock Service
  *
- * Prevents concurrent mutations on the same entity across multiple server
- * instances. Uses Redis SET NX EX (atomic lock acquisition with TTL).
+ * Prevents concurrent mutations on the same entity across every server
+ * process: a lease in Postgres (coordination-leases.ts), held in the acting
+ * organisation's scope. Production runs no Redis (decision B6, 2026-10-01);
+ * this was Redis with an in-memory fallback, so there two writes on one
+ * target from different API tasks both ran (U21).
  *
- * Falls back to in-memory Map when Redis is unavailable (single-node safe).
+ * Falls back to an in-memory Map when the store cannot be reached, or when no
+ * organisation is given (this process only).
  */
 
-import { getRedisClient } from './redis-manager';
+import { acquireLease, releaseLease } from './coordination-leases';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('distributed-lock');
@@ -67,61 +71,35 @@ export interface LockHandle {
 export async function acquireLock(
   resource: string,
   owner: string,
-  ttlMs = 30_000
+  ttlMs = 30_000,
+  organizationId?: number
 ): Promise<LockHandle | null> {
   const key = `${KEY_PREFIX}${resource}`;
-  const ttlSec = Math.min(Math.ceil(ttlMs / 1000), 120);
-
-  const redis = getRedisClient();
-
-  if (redis) {
-    try {
-      // SET key owner NX EX ttlSec — atomic acquire
-      const result = await redis.set(key, owner, 'EX', ttlSec, 'NX');
-      if (result !== 'OK') {
-        logger.debug(`Lock contention on ${resource}`, { owner });
-        return null;
-      }
-    } catch (err: any) {
-      logger.warn(`Redis lock failed, falling back to memory`, { error: err.message });
-      if (!memoryAcquire(key, owner, ttlMs)) return null;
-    }
-  } else {
-    if (!memoryAcquire(key, owner, ttlMs)) return null;
+  const leaseMs = Math.min(ttlMs, 120_000);
+  const taken = await acquireLease(organizationId, key, owner, leaseMs);
+  if (taken === false) {
+    logger.debug(`Lock contention on ${resource}`, { owner, organizationId });
+    return null;
   }
+  if (taken === null && !memoryAcquire(key, owner, leaseMs)) return null;
 
   return {
     key,
     owner,
-    release: () => releaseLock(resource, owner),
+    release: () => releaseLock(resource, owner, organizationId),
   };
 }
 
 /**
  * Release a distributed lock. Only the owner can release.
  */
-export async function releaseLock(resource: string, owner: string): Promise<boolean> {
+export async function releaseLock(resource: string, owner: string, organizationId?: number): Promise<boolean> {
   const key = `${KEY_PREFIX}${resource}`;
-  const redis = getRedisClient();
-
-  if (redis) {
-    try {
-      // Lua script for atomic compare-and-delete
-      const script = `
-        if redis.call("get", KEYS[1]) == ARGV[1] then
-          return redis.call("del", KEYS[1])
-        else
-          return 0
-        end
-      `;
-      const result = await redis.eval(script, 1, key, owner);
-      return result === 1;
-    } catch (err: any) {
-      logger.warn(`Redis unlock failed`, { error: err.message });
-      return memoryRelease(key, owner);
-    }
+  const released = await releaseLease(organizationId, key, owner);
+  if (released !== null) {
+    memoryRelease(key, owner);
+    return released;
   }
-
   return memoryRelease(key, owner);
 }
 
@@ -134,9 +112,10 @@ export async function withLock<T>(
   resource: string,
   owner: string,
   fn: () => Promise<T>,
-  ttlMs = 30_000
+  ttlMs = 30_000,
+  organizationId?: number
 ): Promise<T> {
-  const lock = await acquireLock(resource, owner, ttlMs);
+  const lock = await acquireLock(resource, owner, ttlMs, organizationId);
   if (!lock) {
     throw new Error(`Failed to acquire lock on '${resource}' — concurrent operation in progress`);
   }

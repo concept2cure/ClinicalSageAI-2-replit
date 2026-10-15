@@ -60,9 +60,10 @@ import {
   resolveFormTypeCode,
   resolveContactTypeCode,
   submissionTypeTerms,
-  usRegionalSectionElement,
+  usRegionalHeadingPlacement,
 } from '../ectd/controlled-vocab';
 import { generateStfFiles, type StfLeaf, type StfStudyMeta } from '../ectd/stf-generator';
+import { auditStfCoverage } from '../ectd/ectd4-validator';
 import {
   resolveCrossReferences,
   xrefRequiredFromEnv,
@@ -86,9 +87,9 @@ import { leafIdSlug, baseLeafId, createLeafIdAssigner } from './ectd-packager/le
 import { buildMd5Index } from './ectd-packager/md5-index';
 import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
 import { isPathWithin } from '../../utils/document-file-roots';
-import { buildIchModuleTree, findDroppedLeaves, type RenderedLeaf } from './ectd-packager/ich-headings';
+import { buildIchModuleTree, findDroppedLeaves, ECTD_XLINK_NS, type RenderedLeaf } from './ectd-packager/ich-headings';
 import { normalizeCtdCode } from '../ectd/section-to-ctd';
-import { ctdFolderSlug } from '../../../shared/regulatory/section-code';
+import { ctdFolderSlug, compareSectionCode } from '../../../shared/regulatory/section-code';
 
 // Re-export the public packager surface (barrel).
 export type { EctdLeaf, FdaApplicantContact, FdaFormLeaf, FdaRegionalAdmin };
@@ -202,7 +203,7 @@ export function leafPackagePath(
   }
   // Module 2-5 → shared folders; href relative to index.xml at the root.
   // Study-report leaves (studyId set) go under a per-study subfolder so each
-  // study owns its folder + its own stf.xml (FDA STF convention).
+  // study owns its folder + its own stf-<study-id>.xml (ICH STF convention).
   const studySub = leaf.studyId ? `/${studyFolderSlug(leaf.studyId)}` : '';
   const relPath = `m${section.charAt(0)}/${slug}${studySub}/${leaf.fileName}`;
   return { relPath, href: relPath, backboneDir: '' };
@@ -278,9 +279,14 @@ export interface PackagerInput {
   sequence: string;          // e.g. '0001'
   /** Submission type: 'original' | 'amendment' | 'response' | etc. */
   submissionType: string;
-  /** Sponsor identifier — DUNS for FDA, EMA org id, PMDA applicant id. */
+  /** Sponsor identifier — DUNS for FDA, EMA org id, PMDA applicant id. Written
+   *  exactly as given: for FDA it is the text of us-regional `<applicant-info><id>`
+   *  (since 2026-10-01; it reached no FDA file before). A caller that has none
+   *  passes its UNASSIGNED marker (scripts/ci/check-fabricated-identity.mjs);
+   *  the packager never substitutes a value. */
   sponsorId: string;
-  /** Human-readable sponsor name. */
+  /** Sponsor (company) name, written exactly as given: for FDA it is
+   *  us-regional `<applicant-info><company-name>`. Same UNASSIGNED rule. */
   sponsorName: string;
   /** Product / device name. */
   productName: string;
@@ -366,26 +372,47 @@ function leafElement(leaf: EctdLeaf, ref: LeafRef): string {
 </leaf>`;
 }
 
-/** Render the FDA applicant-contacts block from the admin metadata. */
-function fdaContactsBlock(contacts: FdaApplicantContact[]): string {
-  if (!contacts.length) return '      <applicant-info/>';
-  const rows = contacts
-    .map((c) => {
-      const code = resolveContactTypeCode(c.type) ?? 'fdaact1';
-      const telecom = [
-        c.email ? `          <email>${escapeXml(c.email)}</email>` : '',
-        c.phone ? `          <telephone>${escapeXml(c.phone)}</telephone>` : '',
-      ].filter(Boolean).join('\n');
-      return `        <applicant-contact>
-          <applicant-contact-name applicant-contact-type="${code}">${escapeXml(c.name)}</applicant-contact-name>${telecom ? '\n' + telecom : ''}
-        </applicant-contact>`;
-    })
-    .join('\n');
-  return `      <applicant-info>
-        <applicant-contacts>
-${rows}
-        </applicant-contacts>
-      </applicant-info>`;
+/**
+ * Render `<applicant-info>`: the applicant's `<id>` (the DUNS, as text) and
+ * `<company-name>`, then `<applicant-contacts>` only when contacts were supplied.
+ *
+ * 2026-10-01 (package-spine sweep F07): this wrote `<applicant-info/>` whenever
+ * no contacts were passed, which is every package-spine bundle, and never read
+ * sponsorId or sponsorName, so no file in an FDA bundle named the applicant.
+ * The identity is written exactly as the caller recorded it. An absent one
+ * arrives as the caller's UNASSIGNED marker (scripts/ci/check-fabricated-identity.mjs);
+ * nothing is invented here. With no contacts the element is left out rather
+ * than filled with a placeholder contact, and `fdaBackboneGaps` reports it.
+ */
+function fdaApplicantInfoBlock(input: PackagerInput, contacts: readonly FdaApplicantContact[]): string {
+  const contactsBlock = contacts.length
+    ? `\n      <applicant-contacts>\n${contacts.map(fdaApplicantContact).join('\n')}\n      </applicant-contacts>`
+    : '';
+  return `    <applicant-info>
+      <id>${escapeXml(input.sponsorId)}</id>
+      <company-name>${escapeXml(input.sponsorName)}</company-name>${contactsBlock}
+    </applicant-info>`;
+}
+
+/**
+ * One `<applicant-contact>`: its name, then `<telephones>`, then `<emails>`, each
+ * wrapper written only when the contact has that value. It used to write
+ * `<email>` and `<telephone>` straight under `<applicant-contact>`, email first.
+ *
+ * 2026-10-01: `<telephone>` carries no telephone-number-type. FDA's code list
+ * for it is not vendored in this repository (cv-v3-data.ts has none), so no
+ * code is guessed; `fdaBackboneGaps` reports the omission instead.
+ */
+function fdaApplicantContact(c: FdaApplicantContact): string {
+  const code = resolveContactTypeCode(c.type) ?? 'fdaact1';
+  const lines = [
+    '        <applicant-contact>',
+    `          <applicant-contact-name applicant-contact-type="${code}">${escapeXml(c.name)}</applicant-contact-name>`,
+  ];
+  if (c.phone) lines.push('          <telephones>', `            <telephone>${escapeXml(c.phone)}</telephone>`, '          </telephones>');
+  if (c.email) lines.push('          <emails>', `            <email>${escapeXml(c.email)}</email>`, '          </emails>');
+  lines.push('        </applicant-contact>');
+  return lines.join('\n');
 }
 
 /** Render the `<form>` elements nested under submission-information. */
@@ -401,8 +428,92 @@ ${leafElement(f.leaf, resolve(f.leaf)).split('\n').map((l) => '            ' + l
 }
 
 /**
- * FDA us-regional.xml backbone — conformant with the FDA eCTD Backbone Files
- * Specification for Module 1 (DTD version 3.3). Module 1 sits under m1/us/;
+ * The content of `<m1-regional>`: one heading element per FDA heading, holding
+ * that heading's leaves, in section order (1.1 < 1.2 < 1.3.3 < 1.12.1 <
+ * 1.14.4.1) whatever order the package lists its leaves in.
+ *
+ * 2026-10-01 (package-spine sweep F06): headings were written in the order the
+ * package listed them, so a package that listed its cover letter first wrote
+ * `<m1-2-cover-letters>` before `<m1-1-forms>`. Every heading is still written
+ * directly under `<m1-regional>`; `usRegionalHeadingPlacement` says why a deeper
+ * one is not nested, and `fdaBackboneGaps` reports each one that should be.
+ */
+function fdaModule1Block(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
+  const byHeading = new Map<string, { element: string; leaves: string[] }>();
+  for (const l of input.leaves.filter((x) => isModule1Section(x.ctdSection))) {
+    const { heading, element } = usRegionalHeadingPlacement(l.ctdSection);
+    const group = byHeading.get(heading) ?? { element, leaves: [] };
+    group.leaves.push(leafElement(l, resolve(l)));
+    byHeading.set(heading, group);
+  }
+  const indent = (xml: string) => xml.split('\n').map((y) => '      ' + y).join('\n');
+  return [...byHeading.keys()]
+    .sort(compareSectionCode)
+    .map((heading) => {
+      const { element, leaves } = byHeading.get(heading)!;
+      return `    <${element}>\n${leaves.map(indent).join('\n')}\n    </${element}>`;
+    })
+    .join('\n');
+}
+
+/**
+ * What `buildFdaBackbone` cannot stand behind in the backbone it writes for this
+ * input. `classifyRegionalBackbone` turns the list into `regionConformant`: true
+ * only when it is empty, never for the region alone (sweep F06, 2026-10-01).
+ * Each entry is a fact about the bytes the builder writes.
+ */
+function fdaBackboneGaps(input: PackagerInput): string[] {
+  const fda = input.fda ?? {};
+  const m1 = input.leaves.filter((l) => isModule1Section(l.ctdSection));
+  const headingGaps = new Map<string, string>();
+  for (const l of m1) {
+    const { heading, gap } = usRegionalHeadingPlacement(l.ctdSection);
+    if (gap) headingGaps.set(heading, gap);
+  }
+  return [...fdaContactGaps(fda.contacts ?? []), ...fdaFormGaps(m1, fda.forms ?? []), ...headingGaps.values()];
+}
+
+/** What `fdaApplicantInfoBlock` had to leave out of, or default in, the applicant contacts. */
+function fdaContactGaps(contacts: readonly FdaApplicantContact[]): string[] {
+  if (!contacts.length) return ['<applicant-info> has no <applicant-contacts>: no applicant contact was supplied'];
+  return contacts.flatMap((c) => {
+    const who = `applicant contact ${JSON.stringify(c.name)}`;
+    return [
+      resolveContactTypeCode(c.type) ? '' : `${who} has role ${JSON.stringify(c.type)}, which is not an applicant-contact-type code; it is written as fdaact1`,
+      c.phone
+        ? `${who}: <telephone> carries no telephone-number-type, whose FDA code list is not vendored here`
+        : `${who} has no telephone, so no <telephones>`,
+      c.email ? '' : `${who} has no email, so no <emails>`,
+    ].filter(Boolean);
+  });
+}
+
+/**
+ * The forms' gaps. A Module 1 leaf that is also declared under `fda.forms` (the
+ * same leaf object) is written by both `fdaFormsBlock` and `fdaModule1Block`,
+ * with one ID. A forms leaf (1.1, or a 1.1.x filed under it) that is not
+ * declared has no form type. Form handling itself is unchanged here: where a
+ * form belongs is an open question the repository does not settle.
+ */
+function fdaFormGaps(m1: readonly EctdLeaf[], forms: readonly FdaFormLeaf[]): string[] {
+  const unresolved = forms
+    .filter((f) => !resolveFormTypeCode(f.formType))
+    .map((f) => `form ${f.leaf.fileName} has form type ${JSON.stringify(f.formType)}, which is not a form-type code; it is written as fdaft2`);
+  const leafGaps = m1.flatMap((l) => {
+    const { heading, element } = usRegionalHeadingPlacement(l.ctdSection);
+    if (forms.some((f) => f.leaf === l)) {
+      return [`${l.fileName} is written twice, under <form> and under <${element}>, with one ID; leaf IDs must be unique in a backbone (ectd-packager/leaf-id.ts)`];
+    }
+    return heading === '1.1' ? [`Module 1 forms leaf ${l.fileName} (${l.ctdSection}) has no declared form type`] : [];
+  });
+  return [...unresolved, ...leafGaps];
+}
+
+/**
+ * FDA us-regional.xml backbone — written to the FDA eCTD Backbone Files
+ * Specification for Module 1 (DTD version 3.3) as far as this repository records
+ * it; what it cannot stand behind is listed by `fdaBackboneGaps` and decides the
+ * bundle's regionConformant. Module 1 sits under m1/us/;
  * the backbone declares `xmlns:fda-regional="http://www.ich.org/fda"`, carries
  * the coded admin block (application-type / submission-type / submission-sub-
  * type / form-type as `fdaXX` attributes), and nests content leaves under
@@ -500,31 +611,25 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
     resolveSubmissionSubTypeCode(fda.submissionSubType ?? 'original') ?? 'fdasst1';
   const submissionId = fda.submissionId ?? input.sequence;
 
-  const contacts = fdaContactsBlock(fda.contacts ?? []);
+  const applicantInfo = fdaApplicantInfoBlock(input, fda.contacts ?? []);
   const forms = fda.forms?.length ? '\n' + fdaFormsBlock(fda.forms, resolve) : '';
+  const m1Regional = fdaModule1Block(input, resolve);
 
-  // Group Module 1 content leaves under FDA section heading elements.
-  const bySection = new Map<string, string[]>();
-  for (const l of input.leaves.filter((x) => isModule1Section(x.ctdSection))) {
-    const el = usRegionalSectionElement(l.ctdSection);
-    const list = bySection.get(el) ?? [];
-    list.push(leafElement(l, resolve(l)));
-    bySection.set(el, list);
-  }
-  const m1Regional = [...bySection.entries()]
-    .map(([el, leaves]) => `    <${el}>\n${leaves.map((x) => x.split('\n').map((y) => '      ' + y).join('\n')).join('\n')}\n    </${el}>`)
-    .join('\n');
-
+  /* application-containing-files="true" (2026-10-01, sweep F07; the attribute was
+     absent): this backbone declares exactly one <application>, and it is the one
+     whose files this package carries. Every leaf it references with an href is
+     written into the same zip, and `resolve` refuses a referenced leaf (a form
+     leaf, say) that the package does not carry. */
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE fda-regional:fda-regional SYSTEM "../../util/dtd/us-regional-v3-3.dtd">
 <?xml-stylesheet type="text/xsl" href="../../util/style/us-regional.xsl"?>
 <fda-regional:fda-regional dtd-version="3.3" xml:lang="en"
     xmlns:fda-regional="http://www.ich.org/fda"
-    xmlns:xlink="http://www.w3.org/1999/xlink">
+    xmlns:xlink="${ECTD_XLINK_NS}">
   <admin>
-${contacts}
+${applicantInfo}
     <application-set>
-      <application>
+      <application application-containing-files="true">
         <application-information>
           <application-number application-type="${appTypeCode}">${escapeXml(input.applicationId)}</application-number>
         </application-information>
@@ -712,15 +817,14 @@ function buildIndexXml(
 <?xml-stylesheet type="text/xsl" href="util/style/ectd-2-0.xsl"?>
 <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
-           xmlns:xlink="http://www.w3.org/1999/xlink"
+           xmlns:xlink="${ECTD_XLINK_NS}"
            dtd-version="3.2">
 ${regional ? regionalBackboneReference(regional) : ''}${moduleBlocks}
 </ectd:ectd>`;
 }
 
 /**
- * Give every leaf its backbone ID, once per carrying backbone, after every leaf
- * (content, withdrawals, generated study tagging files) is known. The builders
+ * Give every leaf its backbone ID, once per carrying backbone. The builders
  * render the ID from the ref and the leaf manifest records the same value, so a
  * later sequence's modified-file names exactly the ID this backbone carries.
  *
@@ -728,9 +832,19 @@ ${regional ? regionalBackboneReference(regional) : ''}${moduleBlocks}
  * the result, so no later sequence could name a leaf, and modified-file carried
  * the file's path instead of the ID. A Module 1 leaf is carried by the regional
  * backbone; every other leaf by index.xml.
+ *
+ * `assigners` carries the per-backbone ID sets across calls. The packager
+ * assigns the input leaves' IDs before it writes the Study Tagging Files (each
+ * STF points at index.xml leaf IDs) and the STF leaves' IDs after, with the
+ * same sets, so the IDs are the ones a single pass would give and an STF leaf
+ * can never take an ID already used.
  */
-function assignBackboneIds(leaves: EctdLeaf[], refByLeaf: Map<EctdLeaf, LeafRef>, regionalBackbone: string): void {
-  const assigners = new Map<string, ReturnType<typeof createLeafIdAssigner>>();
+function assignBackboneIds(
+  leaves: EctdLeaf[],
+  refByLeaf: Map<EctdLeaf, LeafRef>,
+  regionalBackbone: string,
+  assigners: Map<string, ReturnType<typeof createLeafIdAssigner>> = new Map(),
+): void {
   for (const leaf of leaves) {
     const ref = refByLeaf.get(leaf);
     if (!ref || ref.id) continue;
@@ -799,6 +913,38 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const region = input.region;
   const backboneFileByRegion = REGIONAL_BACKBONE_BY_REGION;
 
+  /* FDA eCTD validation 1789 — every file in a Module 4/5 study section (all
+     but 4.3, 5.2, 5.3.6 and 5.4) must be referenced by a Study Tagging File,
+     so it needs a study id and an STF file-tag. Checked before any byte is
+     read, by the one coverage check (auditStfCoverage, ectd4-validator.ts).
+     A US sequence that breaks it is refused, naming every such file; another
+     region packages and the count is carried on bundle.stf.untagged.
+     2026-10-05 (g-stf-1789-fail-closed): the STF pass below kept only leaves
+     that already had both, so an untagged study report shipped with no STF,
+     `untagged` was always 0 and nothing reported the rejection FDA would
+     issue. */
+  const stfUncovered = input.leaves.flatMap((leaf) =>
+    auditStfCoverage(
+      [{
+        section: leaf.ctdSection, title: `${leaf.title} [${leaf.fileName}]`, operation: leaf.operation,
+        studyId: leaf.studyId, stfFileTag: leaf.stfFileTag,
+      }],
+      { region, fileTagModelled: true },
+    ).map((finding) => ({ leaf, finding })),
+  );
+  const stfRefusals = stfUncovered.filter((u) => u.finding.severity === 'error');
+  if (stfRefusals.length > 0) {
+    throw new ValidationError(
+      `FDA validation 1789 (technical rejection): ${stfRefusals.length} file(s) in Module 4/5 study sections ` +
+        `would be referenced by no Study Tagging File — ` +
+        stfRefusals.map((u) => `${u.leaf.fileName} (section ${u.leaf.ctdSection}, no ${u.finding.code === 'STF_MISSING_FILE_TAG' ? 'file-tag' : 'study id'})`).join('; ') +
+        `. Give each its study id and STF file-tag, or file it under 4.3, 5.2, 5.3.6 or 5.4 if that is where it belongs.`,
+      stfRefusals.map((u) => ({
+        ruleId: 'FDA-TRC-1789', severity: 'error', filePath: u.leaf.fileName, message: u.finding.message,
+      })),
+    );
+  }
+
   const zip = new JSZip();
   const checksums: ChecksumEntry[] = [];
   const grades: LeafGradeRecord[] = [];
@@ -808,7 +954,11 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
      `xlink:href`. eCTD requires the checksum in the backbone to match the bytes
      shipped; finalization can change the bytes, so it must happen before the
      backbone is built. */
-  interface PreparedLeaf { leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer; }
+  interface PreparedLeaf {
+    leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer;
+    /** md5 of the bytes this packager was HANDED, when finalization changed them. */
+    sourceMd5?: string;
+  }
   const prepared: PreparedLeaf[] = [];
   /** Backbone-only withdrawals: no bytes, but a filing act the manifest records. */
   const withdrawn: EctdLeaf[] = [];
@@ -916,13 +1066,23 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     // guards on the PDF/A-conversion branch. The bytes are already in memory, so
     // recomputing is free and makes the manifest correct by construction.
     const md5 = md5Override ?? createHash('md5').update(bytes).digest('hex');
+    /* The digest of what the caller HANDED us, recorded whenever finalization
+       changed the bytes (PDF/A conversion). The next sequence decides "did this
+       document change" by comparing the md5 its caller computed — over what it
+       rendered or staged, before this function runs — and that is only a
+       like-for-like comparison against THIS digest. Against `md5` it compares
+       two stages of one document, which Ghostscript makes differ on every run
+       (it stamps dates and a random document ID): with the toolchain in the
+       production image, every follow-up re-filed every unchanged document as
+       `replace`. `md5` stays what the backbone and index-md5 carry. */
+    const sourceMd5 = md5Override !== undefined ? createHash('md5').update(raw).digest('hex') : undefined;
 
     // Module, folder and carrying backbone — one canonicalising rule, shared
     // with the lifecycle-delete branch above (leafPackagePath).
     const { relPath, href, backboneDir } = leafPackagePath(leaf, region);
     const ref: LeafRef = { href, md5, backboneDir };
     refByLeaf.set(leaf, ref);
-    prepared.push({ leaf, relPath, ref, bytes });
+    prepared.push({ leaf, relPath, ref, bytes, ...(sourceMd5 && sourceMd5 !== md5 ? { sourceMd5 } : {}) });
   }
   const resolve = (l: EctdLeaf): LeafRef => {
     const ref = refByLeaf.get(l);
@@ -945,13 +1105,26 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     return ref;
   };
 
-  /* PASS 1.5 — Study Tagging Files (FDA STF v2.6.1, audit gap G5). For each
+  /* Backbone IDs for the input leaves first: each Study Tagging File points at
+     its study's leaves by their index.xml ID. The STF leaves get theirs from
+     the same per-backbone sets once they exist (assignBackboneIds). */
+  const backboneIdAssigners = new Map<string, ReturnType<typeof createLeafIdAssigner>>();
+  assignBackboneIds(input.leaves, refByLeaf, backboneFileByRegion[region], backboneIdAssigners);
+
+  /* PASS 1.5 — Study Tagging Files (ICH STF v2.6.1, audit gap G5). For each
      M4/M5 study (leaves carrying studyId + stfFileTag) generate a per-study
-     stf.xml that tags the study's leaves, place it in the study's folder,
-     reference it in index.xml, and checksum it. Graceful no-op when there are
-     no study leaves. */
+     stf-<study-id>.xml that tags the study's leaves by their index.xml leaf ID,
+     place it in the study's folder, reference it in index.xml, and checksum it.
+     Graceful no-op when there are no study leaves.
+     2026-10-05 (g-stf-name-tags-and-shape): every STF was written as 'stf.xml'
+     and pointed at the PDFs relative to the study folder; the name and the
+     doc-content -> index.xml#ID shape now come from stf-generator.ts. */
   const stfSyntheticLeaves: EctdLeaf[] = [];
-  let stfSummary: { studies: number; leaves: number; untagged: number } | undefined;
+  /* `untagged` is the 1789 coverage gap found above (stfUncovered): zero for a
+     US sequence, which is refused otherwise; for another region the files that
+     package with no STF. Absent when the sequence has no study files at all. */
+  let stfSummary: { studies: number; leaves: number; untagged: number } | undefined =
+    stfUncovered.length > 0 ? { studies: 0, leaves: 0, untagged: stfUncovered.length } : undefined;
   {
     const studyPrepared = prepared.filter(
       (p) => p.leaf.studyId && p.leaf.stfFileTag && !isModule1Section(p.leaf.ctdSection),
@@ -968,30 +1141,39 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       for (const [studyId, entries] of byStudy) {
         const folder = commonDir(entries.map((e) => e.relPath));
         studyFolder.set(studyId, folder);
+        // index.xml is at the sequence root: one '../' per folder level.
+        const indexRelPath = `${'../'.repeat(folder.split('/').filter(Boolean).length)}index.xml`;
         for (const e of entries) {
+          if (!e.ref.id || e.ref.backbone !== 'index.xml') {
+            throw new Error(
+              `regional-packager: study leaf "${e.leaf.fileName}" (section ${e.leaf.ctdSection}) has no index.xml leaf ID for its Study Tagging File to point at.`,
+            );
+          }
           stfLeaves.push({
             studyId,
             fileTag: e.leaf.stfFileTag!,
             ctdSection: e.leaf.ctdSection,
-            href: e.relPath.slice(folder.length + 1), // relative to the study folder
+            href: e.relPath,
             title: e.leaf.title,
             operation: e.leaf.operation,
+            indexLeafId: e.ref.id,
+            indexRelPath,
           });
         }
       }
       const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? []);
-      stfSummary = stfResult.summary;
+      stfSummary = { studies: stfResult.summary.studies, leaves: stfResult.summary.leaves, untagged: stfUncovered.length };
       for (const file of stfResult.files) {
         const folder = studyFolder.get(file.studyId)!;
-        const relPath = `${folder}/stf.xml`;
+        const relPath = `${folder}/${file.fileName}`;
         const bytes = Buffer.from(file.xml, 'utf8');
         const md5 = createHash('md5').update(bytes).digest('hex');
         const section = byStudy.get(file.studyId)![0].leaf.ctdSection;
         const synthetic: EctdLeaf = {
           ctdSection: section, operation: 'new', sourcePath: '',
-          fileName: 'stf.xml', title: `Study Tagging File — ${file.studyId}`,
+          fileName: file.fileName, title: `Study Tagging File — ${file.studyId}`,
         };
-        // A study tagging file lives under m5 and is referenced from index.xml
+        // A study tagging file lives under m4/m5 and is referenced from index.xml
         // at the root, so its href is already root-relative.
         const ref: LeafRef = { href: relPath, md5, backboneDir: '' };
         refByLeaf.set(synthetic, ref);
@@ -1001,7 +1183,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     }
   }
 
-  assignBackboneIds([...input.leaves, ...stfSyntheticLeaves], refByLeaf, backboneFileByRegion[region]);
+  assignBackboneIds(stfSyntheticLeaves, refByLeaf, backboneFileByRegion[region], backboneIdAssigners);
 
   const backboneByRegion: Record<Region, () => string> = {
     fda:  () => buildFdaBackbone(normalizedInput, resolve),
@@ -1033,7 +1215,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     checksums.push({ relPath: p.relPath, md5: p.ref.md5 });
   }
   // Module 2–5 leaves for index.xml, including the generated STF files so each
-  // stf.xml is a referenced leaf in the backbone (not an orphan file).
+  // Each stf-<study-id>.xml is a referenced leaf in the backbone (not an orphan file).
   const m2to5 = [
     ...input.leaves.filter((l) => !isModule1Section(l.ctdSection)),
     ...stfSyntheticLeaves,
@@ -1179,6 +1361,8 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       fileName: p.leaf.fileName,
       href: p.relPath,
       md5: p.ref.md5,
+      // What the next sequence's diff compares against; see PreparedLeaf.
+      ...(p.sourceMd5 ? { sourceMd5: p.sourceMd5 } : {}),
       ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
       ...(p.leaf.modifiedFile ? { modifiedFile: p.leaf.modifiedFile } : {}),
       ...(p.leaf.title ? { title: p.leaf.title } : {}),
@@ -1229,7 +1413,12 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     // Honest regional-M1 status: only fda/ema/pmda/ca have their own backbone
     // builder; the eight widened regions reuse the EMA structure, so their
     // `<cc>-regional.xml` is a PLACEHOLDER and must never read as conformant.
-    regionalBackbone: classifyRegionalBackbone(region, regionalPath),
+    // FDA's is judged on what its builder reports it could not stand behind.
+    regionalBackbone: classifyRegionalBackbone(
+      region,
+      regionalPath,
+      region === 'fda' ? fdaBackboneGaps(normalizedInput) : undefined,
+    ),
     ...(stfSummary ? { stf: stfSummary } : {}),
     ...(input.crossReferences?.length
       ? {

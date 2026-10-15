@@ -35,6 +35,12 @@ vi.mock('../../../db', () => ({
   },
   db: {},
 }));
+// The signer's role, as the ceremony reads it: the membership row (§11.10(g)),
+// here from the PGlite organization_users table (the real lookup is drizzle's).
+vi.mock('../../part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (userId: number, orgId: number) =>
+    (await holder.query('SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2', [userId, orgId])).rows[0]?.role ?? null,
+}));
 const ledger = vi.hoisted(() => ({ seq: 0 }));
 vi.mock('../../../routes/c2c/actions', () => ({
   verifyReauth: async () => ({ ok: true }),
@@ -48,8 +54,9 @@ import { assembleOrgPdevDocs } from '../pdev-view-assembler';
 import { finalizeProtocolTx } from '../protocol-development-service';
 import { signProtocolAct } from '../protocol-signature';
 import { setDispositionTx } from '../../protocol-reviews/protocol-reviews-service';
-import { persistGovernedSignatureRevocation } from '../../part11/signature-persistence';
+import { BINDING_BASIS, manifestSignatureHash, persistGovernedSignatureRevocation } from '../../part11/signature-persistence';
 import { getProtocolExport } from '../../protocol-export/protocol-export-service';
+import { ELECTRONIC_SIGNATURES_READ_FIXTURE_DDL } from './_protocol-signature-schema-fixture';
 
 const ORG = 42;
 const OTHER_ORG = 99;
@@ -67,47 +74,6 @@ const q = async (sql: string, params?: unknown[]) => {
 function migration(rel: string): string {
   return fs.readFileSync(path.resolve(__dirname, '../../../../', rel), 'utf8');
 }
-
-// shared/schema.ts electronicSignatures, as the Part 11 PGlite suites build it
-// (server/services/__tests__/part11-release-signature-single-write-path…).
-// FKs omitted: their referents are out of scope here.
-const ELECTRONIC_SIGNATURES = `
-CREATE TABLE electronic_signatures (
-  id                      SERIAL PRIMARY KEY,
-  document_id             INTEGER,
-  version_id              INTEGER,
-  signed_target           TEXT,
-  binding_basis           TEXT,
-  signature_type          VARCHAR(50) NOT NULL,
-  signature_purpose       TEXT NOT NULL,
-  signature_level         INTEGER DEFAULT 1,
-  signer_id               INTEGER NOT NULL,
-  signer_name             TEXT NOT NULL,
-  signer_title            TEXT,
-  signer_email            TEXT NOT NULL,
-  authentication_method   VARCHAR(50) NOT NULL,
-  authentication_timestamp TIMESTAMP NOT NULL,
-  second_factor_verified  BOOLEAN DEFAULT false,
-  signature_hash          VARCHAR(256) NOT NULL,
-  signature_meaning       TEXT,
-  signature_manifest      JSON,
-  is_valid                BOOLEAN DEFAULT true,
-  verification_status     VARCHAR(50),
-  verification_date       TIMESTAMP,
-  compliance_statement    TEXT,
-  legal_disclaimer        TEXT,
-  ip_address              VARCHAR(45),
-  device_info             JSON,
-  signed_at               TIMESTAMP NOT NULL DEFAULT now(),
-  created_at              TIMESTAMP NOT NULL DEFAULT now(),
-  updated_at              TIMESTAMP DEFAULT now(),
-  organization_id         INTEGER,
-  bound_payload_digest    TEXT NOT NULL DEFAULT '',
-  superseded_by           INTEGER,
-  CONSTRAINT electronic_signatures_anchor_ck CHECK (
-    (document_id IS NOT NULL AND version_id IS NOT NULL) OR signed_target IS NOT NULL
-  )
-);`;
 
 /** A clinical protocol that passes the completeness gate, built by CREATOR. */
 async function finalizable(title = 'A Phase 2 Study'): Promise<number> {
@@ -202,8 +168,10 @@ beforeAll(async () => {
     INSERT INTO users (id, email, name) VALUES
       (${CREATOR},'c@e.test','Dr Carla Creator'), (${APPROVER},'d@e.test','Dana Approver'),
       (${REVIEWER},'r@e.test','Dr Rui Reviewer'), (${STRANGER},'s@e.test','Stranger');
+    -- The signers hold the roles that may sign (P-18): the ceremony checks the
+    -- membership row before the password (§11.10(g), QA 2026-10-08).
     INSERT INTO organization_users (organization_id, user_id, role) VALUES
-      (${ORG},${CREATOR},'admin'), (${ORG},${APPROVER},'member'), (${ORG},${REVIEWER},'member'),
+      (${ORG},${CREATOR},'admin'), (${ORG},${APPROVER},'approver'), (${ORG},${REVIEWER},'reviewer'),
       (${OTHER_ORG},${STRANGER},'member');
   `);
   for (const m of [
@@ -223,7 +191,7 @@ beforeAll(async () => {
     'migrations/20260922e_amendment_declarations_nullable.sql',
     'migrations/20260922f_protocol_deviation_assessment.sql',
   ]) await pglite.exec(migration(m));
-  await pglite.exec(ELECTRONIC_SIGNATURES);
+  await pglite.exec(ELECTRONIC_SIGNATURES_READ_FIXTURE_DDL);
   holder.query = q;
 }, 120_000);
 
@@ -237,7 +205,7 @@ describe('the finalization signature, on the protocol read model', () => {
     const signed = await finalize(docId);
     const doc = await docById(docId);
     expect(doc.status).toBe('finalized');
-    expect(doc.finalization).toEqual({
+    expect(doc.finalization).toMatchObject({
       state: 'signed',
       signature: {
         signerName: 'Dana Approver',
@@ -271,6 +239,10 @@ describe('the finalization signature, on the protocol read model', () => {
     });
     const doc = await docById(docId);
     expect(doc.finalization.state).toBe('revoked');
+    expect(doc.finalization.qualification).toMatchObject({
+      contentBinding: 'unverified', historicalSigningPolicy: { state: 'unassessed' },
+      currentContentQualification: { state: 'held', reason: 'signature-revoked' },
+    });
     expect(doc.finalization.signature).toMatchObject({ signerName: 'Dana Approver', meaning: 'approval' });
   });
 
@@ -301,7 +273,7 @@ describe('a disposition’s signature, on its review row', () => {
     const signed = await signDisposition(aid, APPROVER, 'responsibility', 'Recording Dr Iyer’s emailed approval');
     const review = (await docById(docId)).reviews.find((r: any) => r.id === String(aid));
     expect(review.reviewer).toBe('Dr Iyer (external)');
-    expect(review.signature).toEqual({
+    expect(review.signature).toMatchObject({
       state: 'signed',
       signature: {
         signerName: 'Dana Approver',
@@ -359,7 +331,7 @@ describe('the protocol export carries the same manifestation', () => {
     const utc = new Date(String(signed.signedAt)).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
     expect(markdown).toContain('**Status:** Finalized');
     expect(markdown).toContain('- Signed by: Dana Approver');
-    expect(markdown).toContain('- Meaning: Approval');
+    expect(markdown).toContain('- Declared meaning: Approval');
     expect(markdown).toContain(`- Executed: ${utc}`);
     expect(markdown).toContain(`- Reason: ${FINALIZE_REASON}`);
   });
@@ -386,5 +358,177 @@ describe('the protocol export carries the same manifestation', () => {
     } finally {
       await q(`ALTER TABLE electronic_signatures_away RENAME TO electronic_signatures`);
     }
+  });
+});
+
+async function retained(target: string) {
+  return (await q(`SELECT * FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2 ORDER BY id`, [ORG, target])).rows;
+}
+
+
+describe('the read qualifies recorded meanings without rewriting historical signatures', () => {
+  it('reports a real matching approval signature as unassessed and preserves every stored field', async () => {
+    const docId = await finalizable();
+    await finalize(docId);
+    const target = `protocol-document:${docId}`;
+    const before = await retained(target);
+    const original = before[0];
+    const doc = await docById(docId);
+    const out = await getProtocolExport(ORG, docId);
+    expect(doc.finalization.state).toBe('signed');
+    expect(doc.finalization.qualification).toEqual({
+      contentBinding: 'matches',
+      historicalSigningPolicy: { state: 'unassessed', reason: 'signing-time-independence-evidence-not-recorded' },
+      currentContentQualification: { state: 'unassessed', reason: 'signing-time-independence-evidence-not-recorded' },
+      signatureReference: {
+        signatureId: original.id, signerId: original.signer_id, signatureHash: original.signature_hash,
+        bindingBasis: original.binding_basis, signedContentDigest: original.bound_payload_digest,
+      },
+    });
+    expect(out.document.finalization).toEqual(doc.finalization);
+    expect(out.markdown).toContain('- Declared meaning: Approval');
+    expect(out.markdown).toContain('- Signing-time independence evidence not recorded.');
+    expect(out.markdown).toContain('- Independent approval not verified from this signature record.');
+    expect(out.markdown).toContain(`- Signature hash: ${original.signature_hash}`);
+    expect(await retained(target)).toEqual(before);
+  });
+
+  it('does not infer a signing-time verdict from the current live author set', async () => {
+    const docId = await finalizable();
+    await finalize(docId);
+    // The author provenance is outside the content digest. A later author
+    // change supplies no evidence about the independent signing-time check.
+    await q('UPDATE protocol_documents SET created_by = $1 WHERE id = $2', [APPROVER, docId]);
+    const target = `protocol-document:${docId}`;
+    const before = await retained(target);
+    const out = await getProtocolExport(ORG, docId);
+    expect(out.document.finalization).toMatchObject({
+      state: 'signed', qualification: {
+        contentBinding: 'matches', historicalSigningPolicy: { state: 'unassessed' }, currentContentQualification: { state: 'unassessed' },
+      },
+    });
+    expect(out.markdown).toContain('Signing-time independence evidence not recorded');
+    expect(await retained(target)).toEqual(before);
+  });
+
+  it('authorship remains a declared authorship statement without independent approval assurance', async () => {
+    const docId = await finalizable();
+    await finalize(docId, CREATOR, 'authorship');
+    const out = await getProtocolExport(ORG, docId);
+    expect(out.document.finalization).toMatchObject({
+      state: 'signed', signature: { meaning: 'authorship' }, qualification: {
+        historicalSigningPolicy: { state: 'unassessed', reason: 'signing-time-authorship-evidence-not-recorded' },
+        currentContentQualification: { state: 'unassessed', reason: 'signing-time-authorship-evidence-not-recorded' },
+      },
+    });
+    expect(out.markdown).toContain('- Declared meaning: Authorship');
+    expect(out.markdown).toContain('- Signing-time authorship-check evidence not recorded.');
+    expect(out.markdown).not.toContain('- Signing-time independence evidence not recorded.');
+    expect(out.markdown).toContain('Independent approval not verified from this signature record');
+  });
+});
+
+describe('missing or changed binding remains held without rewriting historical signatures', () => {
+  it.each(['missing-digest', 'missing-basis', 'contradictory-basis'] as const)('holds %s while retaining the exact historical signature fields', async (fault) => {
+    const docId = await finalizable();
+    await finalize(docId);
+    const target = `protocol-document:${docId}`;
+    const original = (await retained(target))[0];
+    // Adversarial scratch construction happens before the retained-read
+    // baseline. No historical repair writer or native row mutation is implied.
+    if (fault === 'missing-digest') {
+      await q('UPDATE electronic_signatures SET bound_payload_digest = $1 WHERE id = $2', ['', original.id]);
+    } else {
+      await q('UPDATE electronic_signatures SET binding_basis = $1 WHERE id = $2',
+        [fault === 'missing-basis' ? null : BINDING_BASIS.DOCUMENT_VERSION_CONTENT, original.id]);
+    }
+    const before = await retained(target);
+    const doc = await docById(docId);
+    expect(doc.finalization).toMatchObject({
+      state: 'unverified', signature: { signerName: original.signer_name, meaning: original.signature_meaning },
+      qualification: {
+        contentBinding: 'unverified',
+        historicalSigningPolicy: { state: 'unassessed', reason: 'signing-time-independence-evidence-not-recorded' },
+        currentContentQualification: { state: 'held', reason: 'binding-unverified' },
+        signatureReference: {
+          signatureId: original.id, signerId: original.signer_id, signatureHash: original.signature_hash,
+          bindingBasis: before[0].binding_basis, signedContentDigest: before[0].bound_payload_digest,
+        },
+      },
+    });
+    await expect(getProtocolExport(ORG, docId)).rejects.toMatchObject({ code: 'SIGNATURE_VERIFICATION_UNAVAILABLE' });
+    expect(await retained(target)).toEqual(before);
+    expect((await retained(target))[0].signature_hash).toBe(original.signature_hash);
+  });
+
+  it('keeps content drift held while retaining the declared historical approval', async () => {
+    const docId = await finalizable();
+    await finalize(docId);
+    const target = `protocol-document:${docId}`;
+    const before = await retained(target);
+    await q('UPDATE protocol_sections SET content = $1 WHERE protocol_document_id = $2', ['Changed study design', docId]);
+    const doc = await docById(docId);
+    expect(doc.finalization).toMatchObject({
+      state: 'changed', signature: { signerName: 'Dana Approver', meaning: 'approval' },
+      qualification: {
+        contentBinding: 'changed', historicalSigningPolicy: { state: 'unassessed' },
+        currentContentQualification: { state: 'held', reason: 'content-changed' },
+      },
+    });
+    await expect(getProtocolExport(ORG, docId)).rejects.toMatchObject({ code: 'SIGNATURE_CONTENT_CHANGED' });
+    expect(await retained(target)).toEqual(before);
+  });
+});
+
+describe('unrecognized metadata and meanings do not supply historical policy assurance', () => {
+  it('a valid manifest hash and caller-shaped assurance metadata do not establish a historical independence check', async () => {
+    const docId = await finalizable();
+    await finalize(docId);
+    const target = `protocol-document:${docId}`;
+    const fixture = (await retained(target))[0];
+    // Adversarial PGlite fixture construction only, before the retained-read
+    // baseline; no production writer or historical repair path is introduced.
+    const manifest = { ...fixture.signature_manifest, signingAssurance: {
+      schema: 'protocol-signing-assurance-v1', decision: 'independence-checked',
+      organizationId: ORG, target, signerId: APPROVER, meaning: 'approval',
+      boundPayloadDigest: fixture.bound_payload_digest,
+    } };
+    await q('UPDATE electronic_signatures SET signature_manifest = $1::json, signature_hash = $2 WHERE id = $3',
+      [JSON.stringify(manifest), manifestSignatureHash(manifest), fixture.id]);
+    const before = await retained(target);
+    const out = await getProtocolExport(ORG, docId);
+    expect(out.document.finalization).toMatchObject({
+      state: 'signed', qualification: {
+        contentBinding: 'matches', historicalSigningPolicy: { state: 'unassessed' }, currentContentQualification: { state: 'unassessed' },
+      },
+    });
+    expect(out.markdown).toContain('Independent approval not verified from this signature record');
+    expect(out.markdown).not.toContain('Independence checked during signing');
+    expect(await retained(target)).toEqual(before);
+  });
+
+  it('keeps an unknown historical meaning as a generic unassessed policy fact', async () => {
+    const docId = await finalizable();
+    await finalize(docId);
+    const target = `protocol-document:${docId}`;
+    const fixture = (await retained(target))[0];
+    // The unknown-meaning adversarial fixture is constructed before baseline.
+    const manifest = { ...fixture.signature_manifest, meaning: 'APPROVED' };
+    await q('UPDATE electronic_signatures SET signature_meaning = $1, signature_manifest = $2::json, signature_hash = $3 WHERE id = $4',
+      ['APPROVED', JSON.stringify(manifest), manifestSignatureHash(manifest), fixture.id]);
+    const before = await retained(target);
+    const out = await getProtocolExport(ORG, docId);
+    expect(out.document.finalization).toMatchObject({
+      state: 'signed', signature: { meaning: 'APPROVED' }, qualification: {
+        contentBinding: 'matches',
+        historicalSigningPolicy: { state: 'unassessed', reason: 'signing-time-policy-evidence-not-recorded' },
+        currentContentQualification: { state: 'unassessed', reason: 'signing-time-policy-evidence-not-recorded' },
+      },
+    });
+    expect(out.markdown).toContain('- Declared meaning: APPROVED');
+    expect(out.markdown).toContain('- Signing-time policy-check evidence not recorded.');
+    expect(out.markdown).not.toContain('- Signing-time independence evidence not recorded.');
+    expect(out.markdown).toContain('Independent approval not verified from this signature record');
+    expect(await retained(target)).toEqual(before);
   });
 });

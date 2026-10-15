@@ -1,0 +1,9 @@
+# 3. The offer is withdrawn when the editor closes — RED with the canvas's `expanded` gate removed
+# DocumentCanvas.tsx: `onEditorBridge(docId, expanded ? bridge : null)` replaced by `onEditorBridge(docId, bridge)`
+# for this one run, then restored. The workbench stays mounted, hidden, after it is closed, so without the gate
+# a hidden editor would still be offered as an insert target.
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target 2497ms
+   → expected <button type="button" …(2)>…(2)</button> to be null
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target
+AssertionError: expected <button type="button" …(2)>…(2)</button> to be null
+      Tests  1 failed | 11 skipped (12)

@@ -309,7 +309,7 @@ describe('SUPAC / variations classifier', () => {
 
     it('adds method comparability for analytical method changes', () => {
       const r = classifyVariation(variation({ changeCategory: 'analytical_method' }));
-      expect(r.validationRequirements.some(s => s.includes('ICH Q2(R1)'))).toBe(true);
+      expect(r.validationRequirements.some(s => s.includes('ICH Q2(R2)'))).toBe(true);
     });
   });
 

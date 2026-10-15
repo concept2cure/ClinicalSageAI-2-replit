@@ -62,6 +62,10 @@ beforeAll(async () => {
       'db/migrations/20260725_submission_orchestrator_store_port.sql',
       'db/migrations/20260725_esig_gate_columns_port.sql',
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The account standing every authenticator and the signer re-verify read
+      // gained users.sessions_ended_at (P0-4b); without it every signature is
+      // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+      'migrations/20261001_users_sessions_ended_at.sql',
       'db/migrations/20260730_esign_audit_db_level_immutability.sql',
       'db/migrations/20260730_release_signature_uniqueness.sql',
       // D6 (single e-signature write path): signed_target/binding_basis columns
@@ -113,7 +117,7 @@ describe('e-signature verify round-trip (§11.70 integrity)', () => {
       documentId: 10,
       documentType: 'approval',
       signatureReason: 'approve',
-      signatureMeaning: 'I approve this content',
+      signatureMeaning: 'approval', // closed vocabulary (P1-42); the release path passes the same
       // What the caller's signing ceremony verified (reverify-signer.ts); the
       // service records it and checks no password of its own.
       reverified: { ok: true, authenticationMethod: 'password', secondFactorVerified: false },

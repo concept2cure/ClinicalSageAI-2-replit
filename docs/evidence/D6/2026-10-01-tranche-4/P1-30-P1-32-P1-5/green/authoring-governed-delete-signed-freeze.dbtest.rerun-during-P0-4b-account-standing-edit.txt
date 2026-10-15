@@ -1,0 +1,80 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:02:47.335Z","pid":22087,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:02:47.344Z","pid":22087,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:02:47.344Z","pid":22087,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 148ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 54ms
+{"level":30,"time":"2026-10-01T06:02:51.096Z","pid":22087,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 16eeccbf-fe21-474c-81d2-e34060735370 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T06:02:51.097Z","pid":22087,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"da9c97b6-d400-42f3-9e99-0f6c7be0400b"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record
+[part11] account status check failed during sign: column "sessions_ended_at" does not exist
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 85ms
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record 33ms
+   → {"error":"Signature rejected: unable to verify the account (§11.200).","code":"ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 29ms
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed
+[part11] account status check failed during sign: column "sessions_ended_at" does not exist
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 143ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 42ms
+ × tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 38ms
+   → {"error":"Signature rejected: unable to verify the account (§11.200).","code":"ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record
+AssertionError: {"error":"Signature rejected: unable to verify the account (§11.200).","code":"ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:216:50
+    214|       .set('Authorization', actors.admin.auth)
+    215|       .send({ meaning: 'AUTHOR', intent: 'dbtest-p130: authorship atte…
+    216|     expect(sig.status, JSON.stringify(sig.body)).toBe(200);
+       |                                                  ^
+    217|     const res = await request(actors.admin.app)
+    218|       .delete(`/api/authoring/docs/${id}`)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed
+AssertionError: {"error":"Signature rejected: unable to verify the account (§11.200).","code":"ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts:268:50
+    266|       .set('Authorization', actors.admin.auth)
+    267|       .send({ reason: 'dbtest-p130: sealed under the ceremony', meanin…
+    268|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    269|     expect(String((await docRow(id))?.status).toUpperCase()).toBe('FRO…
+    270|     const sig = await owner.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  06:02:43
+   Duration  7.50s (transform 3.52s, setup 89ms, import 280ms, tests 6.60s, environment 0ms)
+

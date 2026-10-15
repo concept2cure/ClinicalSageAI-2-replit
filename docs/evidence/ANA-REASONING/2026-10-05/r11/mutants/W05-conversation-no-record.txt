@@ -1,0 +1,14 @@
+Mutant W05-conversation-no-record: the conversation hands the bridge no record, so nothing it admits goes in
+
+--- client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+- turn.turnRecord,
+    );
++ );
+
+Tests run: client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record 1886ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > when the editor closes, the offer reopens it: the suggestion still lands where the person sees it 2128ms
+      Tests  2 failed | 19 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

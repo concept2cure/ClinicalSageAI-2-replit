@@ -1,0 +1,9 @@
+$ npx vitest run server/services/ana/intelligence-questions tests/ana-intelligence shared/regulatory/__tests__ client/.../anaQuestionCard.test.tsx
+ Test Files  43 passed (43)
+      Tests  721 passed (721)
+
+$ TYPECHECK_HEAP_MB=20480 npm run ci:typecheck:no-regression
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+
+$ node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.

@@ -1,0 +1,126 @@
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > asks regulatory_programs for a live program of this organization
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > is false when the query finds nothing
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > admits a deleted program only when the caller opts in by name
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "not-a-uuid" without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "" without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses 42 without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses null without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses undefined without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > reads a digit-string organization as that organization, and nothing else as one
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > throws VerificationUnavailableError, not false, when the query cannot run
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > resolves a connection given as a function inside the check, so "no pool" is "could not check"
+ ✓ server/routes/__tests__/ownership-check-unavailable.contract.test.ts > an innovation route distinguishes "not yours" from "could not check" > answers 503 — not 404 — when the check could not run
+ ✓ server/routes/__tests__/ownership-check-unavailable.contract.test.ts > an innovation route distinguishes "not yours" from "could not check" > answers 404 — a real deny — when the check ran and found nothing
+ ✓ server/routes/__tests__/ownership-check-unavailable.contract.test.ts > an innovation route distinguishes "not yours" from "could not check" > asks no registry but regulatory_programs, and lets the owner through
+ ✓ server/routes/__tests__/ownership-check-unavailable.contract.test.ts > an innovation route distinguishes "not yours" from "could not check" > denies caller garbage without asking the database, and without a 503
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > snapshotFromSiteRow > inverts high quality scores to low risk → reduced tier
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > snapshotFromSiteRow > derives composite from components when absent and flags high-risk drivers
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > snapshotFromSiteRow > reads the alternate schema variant (overall_score / compliance_score)
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > snapshotFromSiteRow > tolerates missing scores → null risks, reduced tier
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > refuses a program that is not a project of the organization
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > asks whether the organization OWNS the program, not whether it has RBM records naming it
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > reads sites only after ownership is proved
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > distinguishes a missing source from a study with no sites
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > names a schema mismatch rather than reporting no sites
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > reports an ownership check that could not run distinctly from a refusal
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > classifies an unexpected database error as source_error, not emptiness
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > has an operator-facing message for every failure, none of which says "no sites"
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > recomputeSiteRisk — one transaction, never error-as-empty > a refused program deletes nothing and writes nothing
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > recomputeSiteRisk — one transaction, never error-as-empty > a failed source read leaves the last snapshot untouched
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > recomputeSiteRisk — one transaction, never error-as-empty > replaces the snapshot inside BEGIN/COMMIT, delete before insert
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > recomputeSiteRisk — one transaction, never error-as-empty > a failure mid-write rolls back rather than leaving a partial snapshot
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > gspr.mapping.upsert reports the lost row in data and in the message
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > gspr.mapping.upsert says nothing about the audit row when it landed
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > gspr.mapping.upsert never puts the store's own error text on the wire
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.create reports the lost row in data and in the message
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.create says nothing about the audit row when it landed
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.create never puts the store's own error text on the wire
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.approve reports the lost row in data and in the message
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.approve says nothing about the audit row when it landed
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.approve never puts the store's own error text on the wire
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > evidence_sufficiency.assess reports the lost row in data and in the message
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > evidence_sufficiency.assess says nothing about the audit row when it landed
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > evidence_sufficiency.assess never puts the store's own error text on the wire
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > reviewer_simulation.run reports the lost row in data and in the message
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > reviewer_simulation.run says nothing about the audit row when it landed
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > reviewer_simulation.run never puts the store's own error text on the wire
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.update reports the lost row in data and in the message
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.update says nothing about the audit row when it landed
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.update never puts the store's own error text on the wire
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.validate reports the lost row in data and in the message
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.validate says nothing about the audit row when it landed
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.validate never puts the store's own error text on the wire
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.supersede reports the lost row in data and in the message
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.supersede says nothing about the audit row when it landed
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2-audit-outcome.test.ts > phase-2 MDX handlers: a lost §11.10(e) row is observable > post_market.document.supersede never puts the store's own error text on the wire
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > refuses without confirm
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > q_sub.create → agent.ana.q_sub.create
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > q_sub.commitment.set_rolled_in (true) → agent.ana.q_sub.commitment.rolled_in
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > q_sub.commitment.set_rolled_in (false) → agent.ana.q_sub.commitment.rolled_out
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > section.approve → agent.ana.section.approve
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > k510_workflow.transmit → agent.ana.k510_workflow.transmit
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > gspr.mapping.upsert → agent.ana.gspr.mapping.upsert
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > post_market.document.create → agent.ana.post_market.document.create
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > post_market.document.approve → agent.ana.post_market.document.approve
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > evidence_sufficiency.assess → agent.ana.evidence_sufficiency.assess
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > reviewer_simulation.run → agent.ana.reviewer_simulation.run
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > predicate.candidate.set_status → agent.ana.predicate.candidate.status
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > se_matrix.patch → agent.ana.se_matrix.patch
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > correspondence.ingest → agent.ana.correspondence.ingest
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > post_market.document.update → agent.ana.post_market.document.update
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > post_market.document.validate → agent.ana.post_market.document.validate
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > post_market.document.supersede → agent.ana.post_market.document.supersede
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > audit.explain → agent.ana.audit.explain
+ ✓ server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > AnA-MDX audit contract — every tool emits one agent.ana.* audit row > captures agentReason in details for confirm-required tools
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > refuses a program that is not the caller's, and writes nothing
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > says so when ownership could not be checked, and writes nothing
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > rejects non-uuid programId
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > audits agent.ana.gspr.mapping.upsert on success
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.create > rejects missing required fields
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.create > refuses a documentType the engine cannot author, and writes nothing
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.create > requires a device (deviceName or relatedCerReportId), and writes nothing
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.create > refuses a program that is not the caller's, and writes nothing
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.create > authors through the canonical engine (scaffold + version + validation), not a bare INSERT, and audits
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.approve > audits .approve on success
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.approve > audits .approve.blocked when service refuses
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > evidence_sufficiency.assess > rejects unknown pathway
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > evidence_sufficiency.assess > audits on success and tags trigger=ana
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > reviewer_simulation.run > rejects when program object missing
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > reviewer_simulation.run > audits on success with personaCount detail
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > lets through a call that names no program, without asking
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > lets through the caller's own program
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in program_id, without echoing it
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in programId, without echoing it
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in device_program_id, without echoing it
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > checks every program a call names
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses without an organization rather than guessing
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses when ownership cannot be checked, rather than passing
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > never runs a handler for another tenant's program
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > runs it for the caller's own
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > does not run it when ownership cannot be checked
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > covers the real tools too: a read for another tenant is refused before it reads
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > asks the ownership query for the named record, with the caller as organization
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > refuses another tenant's record
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > checks an assessment through the package that owns it
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > ignores an absent id and a tool with no scopes
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > refuses when the check cannot run
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > every scoped tool is registered and still declares the field it scopes
+ Test Files  7 passed (7)
+      Tests  124 passed (124)

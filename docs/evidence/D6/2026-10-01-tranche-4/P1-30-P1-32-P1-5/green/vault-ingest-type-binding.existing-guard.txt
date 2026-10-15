@@ -1,0 +1,61 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored
+{
+  "timestamp": "2026-10-01T06:04:40.892Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "report.pdf",
+    "declaredMime": "text/html",
+    "reason": "a .pdf file must be declared as application/pdf"
+  }
+}
+
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case
+{
+  "timestamp": "2026-10-01T06:04:40.910Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "notes.txt",
+    "declaredMime": "text/html",
+    "reason": "a .txt file must be declared as text/plain"
+  }
+}
+
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201
+{
+  "timestamp": "2026-10-01T06:04:40.917Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "report.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201
+{
+  "timestamp": "2026-10-01T06:04:40.919Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "RPT-1",
+    "size": 51,
+    "hasText": false
+  }
+}
+
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored 42ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case 9ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201 10ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  06:04:38
+   Duration  2.77s (transform 1.37s, setup 128ms, import 2.19s, tests 68ms, environment 0ms)
+

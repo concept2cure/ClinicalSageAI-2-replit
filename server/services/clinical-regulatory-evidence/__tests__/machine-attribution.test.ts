@@ -41,8 +41,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
-import { attributeMachineSpans, MIN_MACHINE_CLAUSE_CHARS } from '../machine-attribution';
-import type { SentenceSpan } from '../../sentenceTraceabilityService';
+import { attributeMachineSpans, comparableText, MIN_MACHINE_CLAUSE_CHARS, notComparedFrom } from '../machine-attribution';
+import { detectSpans, type SentenceSpan } from '../../sentenceTraceabilityService';
 
 const ACTOR = 'user-7';
 
@@ -71,6 +71,11 @@ function spansOf(parts: string[]): SentenceSpan[] {
   return out;
 }
 
+/** The content `spansOf` built its offsets from: the parts joined by single spaces. */
+function contentOf(spans: SentenceSpan[]): string {
+  return spans.map((s) => s.text).join(' ');
+}
+
 describe('two accepted insertions from the same machine author, in one save', () => {
   it('attributes BOTH to the machine, not just the one in the first accepted text', () => {
     const candidates = spansOf([M1, M2]);
@@ -84,6 +89,7 @@ describe('two accepted insertions from the same machine author, in one save', ()
       ],
       live: [],
       actor: ACTOR,
+      content: contentOf(candidates),
     });
 
     expect(
@@ -105,6 +111,7 @@ describe('two accepted insertions from the same machine author, in one save', ()
       ],
       live: [],
       actor: ACTOR,
+      content: contentOf(candidates),
     });
     expect(spans.map((s) => s.spanText)).toEqual([M1, M2]);
     expect(spans.some((s) => s.spanText === HUMAN)).toBe(false);
@@ -122,6 +129,7 @@ describe('two accepted insertions from the same machine author, in one save', ()
       accepted: [{ authorId: 'ana', text: NA }],
       live: [],
       actor: ACTOR,
+      content: contentOf(candidates),
     });
 
     expect(spans, 'one accepted occurrence claimed two clauses').toHaveLength(1);
@@ -141,8 +149,212 @@ describe('two accepted insertions from the same machine author, in one save', ()
       ],
       live: [],
       actor: ACTOR,
+      content: contentOf(candidates),
     });
 
     expect(spans).toHaveLength(2);
+  });
+});
+
+/* ── The comparison form (periodic review 2026-09-28, editor family, the
+   batch-draft accept, round 2) ──────────────────────────────────────────────
+   Tags were removed with /<[^>]+>/g. That also removed a `< … >` run a
+   browser shows as text (`<` followed by a space or a digit starts no tag),
+   so words typed inside one, in the middle of a clause the machine wrote,
+   were invisible to the match: the clause was recorded as the machine's with
+   them in it. The claim verifier (authoring/machine-claim-verify.ts) had its
+   own copy of the same strip. There is now one comparison form,
+   comparableText, and it removes only what a browser parses as a tag. */
+describe('comparableText: the words a browser shows are the words compared', () => {
+  const MACHINE = 'The primary endpoint was met at week twelve in the trial population.';
+  const machineSpansOf = (clause: string) =>
+    attributeMachineSpans(spansOf([clause]), { accepted: [{ authorId: 'ana', text: MACHINE }], live: [], actor: ACTOR, content: clause });
+
+  it.each([
+    ['words inside < … >', 'The primary endpoint was met < 3 patients died of hepatic failure > at week twelve in the trial population.'],
+    ['words inside an <xmp>, which shows its inside as text', 'The primary endpoint was <xmp><b NOT></xmp> met at week twelve in the trial population.'],
+    ['words inside a <textarea>, which shows its inside as text', 'The primary endpoint was <textarea><b NOT></textarea> met at week twelve in the trial population.'],
+    ['words after a <plaintext>, which shows the rest as text', 'The primary endpoint was <plaintext><b NOT> met at week twelve in the trial population.'],
+  ])('a clause with %s added is not the machine\'s', (_, clause) => {
+    expect(machineSpansOf(clause), 'words the machine never wrote were recorded as its').toEqual([]);
+  });
+
+  it('the machine\'s words inside the markup the editor writes are still the machine\'s', () => {
+    const clause =
+      'The <STRONG>primary</STRONG> endpoint was <span data-comment-id="c-1" class="rse-comment-anchor">met</span> at week<br/>twelve in the trial population.';
+    expect(machineSpansOf(clause).map((s) => s.spanText)).toEqual([clause]);
+  });
+
+  it('removes a tag every reader hides, and keeps every other `<` as written', () => {
+    expect(comparableText('<p>The <strong>endpoint</strong> was met.</p>')).toBe('the endpoint was met.');
+    // Each of these is text to a browser (or a comment it hides). Kept, it can
+    // only make a match fail.
+    for (const text of ['p<0.05 and hr>1', 'met < 3 patients died > at', 'a <3 b> c', 'a </ b> c', 'a <!-- b --> c', 'a <?b?> c']) {
+      expect(comparableText(text), text).toBe(text);
+    }
+    // A tag carrying an attribute the editor does not write keeps its text:
+    // source mode shows it (round 4, D4). So do the raw-text elements' tags,
+    // and the tags inside them.
+    expect(comparableText('<p>The <strong class="x">endpoint</strong> was met.</p>')).toBe('the <strong class="x">endpoint was met.');
+    expect(comparableText('a <xmp><b x></xmp> c')).toBe('a <xmp><b x></xmp> c');
+  });
+
+  it('reads markdown only when asked, as the turn record\'s side is: `\\|` is `|` and `*` is dropped', () => {
+    expect(comparableText('The **primary** endpoint \\| per protocol', { markdown: true })).toBe('the primary endpoint | per protocol');
+    expect(comparableText('The **primary** endpoint \\| per protocol')).toBe('the **primary** endpoint \\| per protocol');
+  });
+
+  it('scans a run of `<a` with no `>` once, not once for every `<`', () => {
+    // At /<[^>]+>/g this clause took seconds: every `<` rescanned to the end.
+    // The accept takes up to 400,000 characters and up to 32 claims.
+    const started = performance.now();
+    machineSpansOf('<a'.repeat(50_000));
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+});
+
+/* ── What is compared (periodic review 2026-09-28, editor family, the
+   batch-draft accept, rounds 3 and 4) ─────────────────────────────────────
+   The lineage runs comparableText per clause. A raw-text element's opening
+   tag can be in one clause and its words in another, where `<b …>` was
+   stripped as a tag though a reader shows it as text (PROBE-C). In HTML
+   content no clause at or after such an opener is compared. In content with
+   no known tag every reader shows every character, so every character is
+   compared (round 4: there is no region in plain text). The reader-by-reader
+   rules of round 4 are pinned in machine-attribution-readers.test.ts. */
+const TAMPERED = 'The primary endpoint was met <b 3 patients died of hepatic failure> at week twelve in the trial population.';
+/** Exactly the lineage gate's path: detectSpans(content, 'clause'), then attributeMachineSpans. */
+const machineClausesOf = (content: string, accepted = M1) =>
+  attributeMachineSpans(detectSpans(content, 'clause'), {
+    accepted: [{ authorId: 'ana', text: accepted }],
+    live: [],
+    actor: ACTOR,
+    content,
+  }).map((s) => s.spanText);
+
+describe('notComparedFrom: where, in HTML content, a browser may first read `<…>` as text', () => {
+  it.each([
+    ['<xmp>', '<p>a</p><xmp>b'],
+    ['upper case', '<p>a</p><XMP>b'],
+    ['an attribute', '<p>a</p><textarea rows="2">b'],
+    ['an attribute after a space', '<p>a</p><plaintext x>b'],
+    ['a self-closing slash', '<p>a</p><title/>b'],
+    ['a line break after the name', '<p>a</p><script\n>b'],
+    ['a CDATA section', '<p>a</p><![CDATA[b'],
+  ])('finds %s', (_, content) => {
+    expect(notComparedFrom(content)).toBe(8);
+  });
+
+  it.each([
+    ['another tag', '<p>a</p><p>b</p>'],
+    ['a longer name', '<p>a</p><xmpx>b'],
+    ['a space before the name', '<p>a</p>< xmp>b'],
+    ['a closing tag alone', '<p>a</p></xmp>b'],
+    ['escaped text', '<p>a</p>&lt;xmp&gt;b'],
+  ])('finds nothing in %s', (_, content) => {
+    expect(notComparedFrom(content)).toBe(-1);
+  });
+});
+
+describe('a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C)', () => {
+  it.each([
+    ['xmp, paragraph breaks', `<xmp>\n\n${TAMPERED}\n\n</xmp>`],
+    ['plaintext, a paragraph break', `<plaintext>\n\n${TAMPERED}`],
+    ['textarea, a comma clause break', `<textarea>Reviewer note, ${TAMPERED}\n\n</textarea>`],
+    ['CDATA in SVG, paragraph breaks', `<svg><text><![CDATA[\n\n${TAMPERED}\n\n]]></text></svg>`],
+    ['plaintext with an attribute (N1)', `<plaintext x>\n\n${TAMPERED}`],
+    ['xmp with a class, and a space in its end tag (N1)', `<xmp class="q">\n\n${TAMPERED}\n\n</xmp >`],
+    ['textarea with rows, and a space in its end tag (N1)', `<textarea rows="2">\n\n${TAMPERED}\n\n</textarea >`],
+  ])('%s: the clause holding the shown words is not the machine\'s', (_, content) => {
+    expect(machineClausesOf(content), 'words a reader is shown were credited to the machine').toEqual([]);
+  });
+
+  it.each([
+    ['plaintext with an attribute', 'The primary endpoint was met <plaintext x><b 3 patients died of hepatic failure> at week twelve in the trial population.'],
+    ['xmp with a class', 'The primary endpoint was met <xmp class="q"><b 3 patients died of hepatic failure></xmp > at week twelve in the trial population.'],
+    ['textarea with rows', 'The primary endpoint was met <textarea rows="2"><b 3 patients died of hepatic failure></textarea > at week twelve in the trial population.'],
+  ])('%s, inside the one clause: not the machine\'s', (_, content) => {
+    expect(machineClausesOf(content)).toEqual([]);
+  });
+
+  it('a clause before the first opener is still compared (guard)', () => {
+    expect(machineClausesOf(`${M1}\n\n<p>Note.</p><xmp>Reviewer note.</xmp>`)).toEqual([M1]);
+  });
+});
+
+describe('content read as plain text shows every `<…>`', () => {
+  const TOKENED = 'The primary endpoint was met <q 3 patients died of hepatic failure> at week twelve in the trial population.';
+
+  it('with no known tag in the content, a clause holding a tag-shaped token is not the machine\'s', () => {
+    expect(machineClausesOf(TOKENED), 'shown by the editor and the export, credited to the machine').toEqual([]);
+  });
+
+  it('with a known tag elsewhere, its attribute words are not the machine\'s either: source mode shows them (round 4, D4)', () => {
+    expect(machineClausesOf(`${TOKENED}\n\n<p>Reviewer note.</p>`)).toEqual([]);
+  });
+
+  it('an asterisk added to the machine\'s clause makes it not the machine\'s: content is never read as markdown (N5)', () => {
+    const M = 'The hazard ratio was 0.72 in the intent-to-treat population at week twelve.';
+    expect(machineClausesOf('The hazard ratio was 0.72* in the intent-to-treat population at week twelve.', M)).toEqual([]);
+  });
+});
+
+/** A live span over `text`, recorded by an earlier save at `charStart`. */
+function liveSpan(text: string, kind: 'accepted_machine_draft' | 'machine_draft', charStart: number) {
+  const accepted = kind === 'accepted_machine_draft';
+  return {
+    charStart,
+    charEnd: charStart + text.length,
+    spanTextSha256: createHash('sha256').update(text).digest('hex'),
+    provenanceKind: kind,
+    machineAuthorId: 'ana',
+    assertedBy: accepted ? 'user-3' : null,
+    assertedAt: accepted ? new Date('2026-09-20T10:00:00Z') : null,
+    signatureId: null,
+    createdBy: 'user-3',
+  };
+}
+
+describe('carry-forward meets a raw-text region in HTML content', () => {
+  const carried = (content: string, kind: 'accepted_machine_draft' | 'machine_draft') =>
+    attributeMachineSpans(detectSpans(content, 'clause'), {
+      accepted: [],
+      live: [liveSpan(M1, kind, content.indexOf(M1))],
+      actor: ACTOR,
+      content,
+    }).map((s) => s.spanText);
+
+  it('an accepted clause a later save put inside one is not carried: its words were matched with tags removed', () => {
+    expect(carried(`<p>Note.</p><xmp>\n\n${M1}\n\n</xmp>`, 'accepted_machine_draft')).toEqual([]);
+  });
+
+  it('an unaccepted machine draft is carried: it was never compared, every character is the machine\'s (guard)', () => {
+    expect(carried(`<p>Note.</p><xmp>\n\n${M1}\n\n</xmp>`, 'machine_draft')).toEqual([M1]);
+  });
+
+  it('outside any region, an accepted clause is carried as before (guard)', () => {
+    expect(carried(`${M1}\n\n<p>Other.</p>`, 'accepted_machine_draft')).toEqual([M1]);
+  });
+});
+
+describe('inAcceptedText: what this save accepted, not what the content carries', () => {
+  const content = `${M1}\n\n${M2}`;
+  const flags = (accepted: string[]) =>
+    attributeMachineSpans(detectSpans(content, 'clause'), {
+      accepted: accepted.map((text) => ({ authorId: 'ana', text })),
+      live: [liveSpan(M1, 'accepted_machine_draft', 0)],
+      actor: ACTOR,
+      content,
+    }).map((s) => [s.spanText, s.assertedBy, s.inAcceptedText]);
+
+  it('a clause carried forward and accepted again is in it, under its original acceptor', () => {
+    expect(flags([`${M1} ${M2}`])).toEqual([
+      [M1, 'user-3', true],
+      [M2, ACTOR, true],
+    ]);
+  });
+
+  it('a clause carried forward and not accepted again is not; a one-word claim accepts no clause', () => {
+    expect(flags(['primary'])).toEqual([[M1, 'user-3', false]]);
   });
 });

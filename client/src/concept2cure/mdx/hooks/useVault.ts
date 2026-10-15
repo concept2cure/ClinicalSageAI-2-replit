@@ -265,3 +265,36 @@ export function useVaultVersions(
   const versions = useMemo(() => selectVaultVersions(data), [data]);
   return { versions, loading, error };
 }
+
+/** One audit row, as GET /api/mdx/vault/:artifactId/audit returns it. */
+export interface VaultAuditEvent {
+  id: string;
+  when: string;
+  actor: string;
+  actorName: string;
+  action: string;
+}
+
+interface VaultAuditPayload {
+  data: { events: VaultAuditEvent[] } | null;
+}
+
+export interface UseVaultAuditTrailResult {
+  /** null while loading, on error, or with nothing selected. */
+  events: VaultAuditEvent[] | null;
+  loading: boolean;
+  error: string | null;
+}
+
+/**
+ * The selected artifact's own audit trail, under the Vault's own route. The
+ * drawer used to read GET /api/mdx/audit?record=<id>, which production
+ * refuses, and read it unfiltered when nothing was selected. Nothing is
+ * fetched without a selection.
+ */
+export function useVaultAuditTrail(artifactId: string | null): UseVaultAuditTrailResult {
+  const url = artifactId ? `/api/mdx/vault/${encodeURIComponent(artifactId)}/audit?limit=5` : null;
+  const { data, loading, error } = useFetchJson<VaultAuditPayload>(url);
+  const events = Array.isArray(data?.data?.events) ? data!.data!.events : null;
+  return { events, loading, error };
+}

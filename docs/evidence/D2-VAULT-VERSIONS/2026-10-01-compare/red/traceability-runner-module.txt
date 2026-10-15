@@ -1,0 +1,12 @@
+# ci:validation-traceability with steps OQ-VAULT-15..17 moved into tests/validation/oq/vault/steps-filing-compare.mjs, before the gate followed the runner's own step modules:
+✗ validation traceability: 3 step(s) recorded differently from their protocol
+  [unexecuted-step] OQ-VAULT-15: OQ-002-VAULT.md describes it; tests/validation/oq/vault/run.mjs does not execute it
+  [unexecuted-step] OQ-VAULT-16: OQ-002-VAULT.md describes it; tests/validation/oq/vault/run.mjs does not execute it
+  [unexecuted-step] OQ-VAULT-17: OQ-002-VAULT.md describes it; tests/validation/oq/vault/run.mjs does not execute it
+
+# after (runnerSource follows ./*.mjs imports):
+✓ validation traceability: every file cited by 6 URS document(s) resolves; every OQ step carries its protocol's kind
+  ✓ control — a step in a module the runner imports is executed
+  ✓ a step in a module the runner does not import is not executed
+
+✓ self-test: 17 cases, every mutation caught and the controls clean

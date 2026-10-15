@@ -22,7 +22,7 @@
  * @module server/services/ind-lifecycle/ind-cross-reference-service
  */
 
-import type { ReferencedFileType } from './ind-loa-service';
+import { SCOPE_PLACEHOLDER, statedSections, type ReferencedFileType } from './ind-loa-service';
 
 // ---------------------------------------------------------------------------
 // 1.4.2 — Statement of Right of Reference
@@ -36,7 +36,7 @@ export interface RightOfReferenceStatementInput {
   subjectName: string;
   /** The IND this statement supports. */
   indNumber?: string;
-  /** The specific sections relied upon (defaults to "in its entirety"). */
+  /** The specific sections relied upon. Required: absent → a gap and "[scope to be specified]". */
   authorizedSections?: string[];
   signatoryName: string;
   signatoryTitle?: string;
@@ -68,8 +68,14 @@ function present(v: unknown): boolean {
   return typeof v === 'string' ? v.trim().length > 0 : v !== undefined && v !== null;
 }
 
-function scopeOf(sections?: string[]): string {
-  return sections && sections.length > 0 ? sections.join('; ') : 'the file in its entirety';
+/**
+ * The recorded scope, or null when no section was recorded. 2026-10-15: an
+ * empty list used to read "the file in its entirety" in the statement and the
+ * register — a scope of reliance nobody recorded.
+ */
+function scopeOf(sections?: string[]): string | null {
+  const stated = statedSections(sections);
+  return stated.length > 0 ? stated.join('; ') : null;
 }
 
 /** Assemble the m1.4.2 Statement of Right of Reference model + gaps. Pure. */
@@ -84,6 +90,8 @@ export function assembleRightOfReferenceStatement(
     { key: 'signatoryName', label: 'signatory name' },
   ];
   const gaps = required.filter((f) => !present(input[f.key])).map((f) => f.label);
+  const scope = scopeOf(input.authorizedSections);
+  if (scope === null) gaps.push('authorized scope (sections relied upon)');
   const fileLabel = `${input.referencedFileType} ${input.referencedFileNumber}`.trim();
 
   const sections: CrossRefSection[] = [
@@ -94,7 +102,7 @@ export function assembleRightOfReferenceStatement(
         `${input.sponsorName || '[sponsor]'} confirms that it has been granted a right of reference to`,
         `${fileLabel} (${input.subjectName || '[subject]'})`,
         input.indNumber ? `in support of IND ${input.indNumber},` : 'in support of this IND,',
-        `covering ${scopeOf(input.authorizedSections)}, and relies upon that information in this submission.`,
+        `covering ${scope ?? SCOPE_PLACEHOLDER}, and relies upon that information in this submission.`,
       ].join(' '),
     },
     {
@@ -200,13 +208,14 @@ export interface CrossReferenceEntry {
 export interface CrossReferenceRegisterEntry extends CrossReferenceEntry {
   /** Stable label "TYPE NUMBER". */
   fileLabel: string;
-  scope: string;
+  /** The recorded authorized sections, joined; null when none were recorded (a SCOPE_NOT_SPECIFIED warning). */
+  scope: string | null;
 }
 
 export interface CrossReferenceFinding {
   fileLabel: string;
   severity: 'error' | 'warning';
-  /** MISSING_LOA / DUPLICATE. */
+  /** MISSING_LOA / DUPLICATE / SCOPE_NOT_SPECIFIED. */
   code: string;
   message: string;
 }
@@ -251,9 +260,19 @@ export function buildCrossReferenceRegister(references: CrossReferenceEntry[]): 
         message: `${e.fileLabel} (${e.subjectName}) has no Letter of Authorization on file; FDA cannot review it in support of the IND.`,
       });
     }
+
+    if (e.scope === null) {
+      findings.push({
+        fileLabel: e.fileLabel,
+        severity: 'warning',
+        code: 'SCOPE_NOT_SPECIFIED',
+        message: `${e.fileLabel} records no authorized sections, so the scope of the right of reference is not specified; record the sections relied upon (or "the file in its entirety" if that is what was granted).`,
+      });
+    }
   }
 
-  findings.sort((a, b) => (a.fileLabel === b.fileLabel ? (a.severity === 'error' ? -1 : 1) : a.fileLabel.localeCompare(b.fileLabel)));
+  const severityRank = (f: CrossReferenceFinding) => (f.severity === 'error' ? 0 : 1);
+  findings.sort((a, b) => a.fileLabel.localeCompare(b.fileLabel) || severityRank(a) - severityRank(b) || a.code.localeCompare(b.code));
   const missingLoa = entries.length - withLoa;
 
   return {

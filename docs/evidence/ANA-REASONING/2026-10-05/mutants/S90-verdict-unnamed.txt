@@ -1,0 +1,13 @@
+Mutant S90-verdict-unnamed: a verdict the text states is not named, in the strip or the dialog
+
+--- client/src/concept2cure/components/ana/AnswerCheckRows.tsx
+- {check.verdicts.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > names a verdict the answer states, and says where verdicts come from 14ms
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 58ms
+      Tests  2 failed | 27 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

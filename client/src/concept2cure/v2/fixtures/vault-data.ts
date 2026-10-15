@@ -48,6 +48,17 @@ export interface VaultDoc {
   /** The version's recorded title, type and classification (uploads only):
    *  what Edit details starts from. */
   details?: { documentTitle: string | null; documentType: string | null; classification: string | null };
+  /** How many versions the document has (uploads only, VR-09); the leaf is the current one. */
+  versionCount?: number;
+  /** vault.documents.document_code (uploads only): a refused upload at this code is offered as its next version. */
+  documentCode?: string | null;
+  /** This version's lifecycle stage (uploads only, VR-13): null when it has no record, i.e. not reviewed. */
+  lifecycleStage?: string | null;
+  /** A search hit for a version a later one supersedes (VR-09). */
+  earlierVersion?: boolean;
+  /** Original bytes availability after a recorded project file decision. */
+  originalFileAvailable?: boolean;
+  disposition?: import('@shared/document-data-disposition').DocumentDispositionChoice | null;
 }
 
 export interface VaultFolder {

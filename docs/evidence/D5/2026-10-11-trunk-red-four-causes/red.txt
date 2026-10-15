@@ -1,0 +1,32 @@
+# The 16 failures on the current head (56ceff4e), before this change.
+# Reproduce: npx vitest run <the 7 files>
+#
+# Four causes:
+#   (1) tests/schema-contract/biopharma-programs-router-columns.contract.test.ts
+#       error: column "sponsor_address" specified more than once
+#       -> the file throws at load; 6 cases never run; the gate guards nothing.
+#
+#   (2) server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+#       error: column c.catalog_state does not exist           (3 failures)
+#
+#   (3) server/routes/__tests__/report-os-audit-recording.test.ts       (3 failures)
+#       server/routes/__tests__/report-os-finalize-signature.test.ts    (3 failures)
+#       server/routes/__tests__/report-os-delivery-recording.test.ts    (2 failures)
+#       AssertionError: expected [ 'BEGIN', ...(1) ] to deeply equal [ 'BEGIN', ...(1) ]
+#       - "SELECT set_config('app.current_tenant_id', $1, true)"
+#       + "SELECT set_config('app.current_tenant_id', $1, true), set_config('app.rls_enforce', 'on', true), set_config('app.bypass_rls', '', true), set_config('app.is_admin', '', true)"
+#
+#   (4) client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx  (4 failures)
+#       TypeError: Cannot read properties of undefined (reading 'productType')
+#       TypeError: Cannot read properties of undefined (reading 'indication')
+#       server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts  (1 failure)
+#       AssertionError: expected [ '2.6.1', '2.6.2', '2.6.2.1', ...(11) ]
+#                       to deeply equal [ '2.6.1', '2.6.2', '2.6.3', ...(4) ]
+
+ Test Files  7 failed (7)
+      Tests  16 failed | 75 passed | 6 skipped (97)
+
+# Proof tier at the same head (the Lint job's failing step):
+ Test Files  1 failed | 120 passed (121)
+      Tests  1366 passed (1366)
+#   the one failure is cause (1), which throws before any test runs.

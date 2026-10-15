@@ -1,0 +1,4 @@
+# scripts/db/rls-coverage-check.sql at HEAD 3d562a7d, against a blank database after install-fresh + one deploy-migrate (the CI step 'RLS coverage after the FIRST deploy')
+$ psql "$DATABASE_URL" -tA -f scripts/db/rls-coverage-check.sql
+audit.tamper_proof_log (organization_id)
+exit: 0 (CI fails the step on any row)

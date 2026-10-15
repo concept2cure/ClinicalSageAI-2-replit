@@ -1,0 +1,8 @@
+ × server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > the handler is never called, and the model reads the lost-input result 9ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ ✓ server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > a tool outside the allowlist is still answered TOOL_NOT_OFFERED, not lost input 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > control: a call with no parse error and empty input still runs 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+     81|     const expected = JSON.stringify(
+      Tests  1 failed | 2 passed (3)

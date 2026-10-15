@@ -1,0 +1,15 @@
+# red, the naive flip: launch-scope.ts lists the two surfaces; both registries as at 18d58cbb2 (bare /api/ind-lifecycle claim)
+# npx vitest run --config vitest.config.ts server/middleware/__tests__/launch-scope-api-gate.test.ts
+ × launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 18ms
+   → expected [ Array(1) ] to deeply equal []
+ × launch-scope-api-gate.test.ts > the real registry with the IND and agency-question tools in Submission Center (P-32) > refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported 3ms
+   → expected { …(4) } to deeply equal { …(4) }
+ × launch-scope-api-gate.test.ts > the real registry with the IND and agency-question tools in Submission Center (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 2ms
+   → expected { …(4) } to deeply equal { …(4) }
+ × launch-scope-api-gate.test.ts > the real registry with the IND and agency-question tools in Submission Center (P-32) > every IND and HAQ path the two screens name answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+   → expected [ 'unmapped /api/ind-checklist' ] to deeply equal []
+ × launch-scope-api-gate.test.ts > the real registry with the IND and agency-question tools in Submission Center (P-32) > claims no IND or HAQ prefix the two screens do not call 1ms
+   → ind-checklist: expected [ '/api/ind-lifecycle' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 33 passed (38)

@@ -1,0 +1,10 @@
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > denies export when the current persisted version has no approval 31ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > fails closed by default in production 8ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > exports only after a persisted approval and labels the bytes and headers as draft 10ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > reports a current-version signature as recorded human review 5ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center persisted-review export gate > does not allow an approval of an older artifact version to authorize export 7ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 7ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > docx: delivers nothing when the record does not persist 5ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: records EXPORT_GENERATED with the SHA-256 of the delivered bytes 3ms
+ ✓ server/routes/__tests__/artifacts-center-export-governance.test.ts > Artifacts Center export is recorded before it is delivered > txt: delivers nothing when the record does not persist 7ms
+      Tests  9 passed (9)

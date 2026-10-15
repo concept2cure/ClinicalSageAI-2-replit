@@ -1,0 +1,13 @@
+ESLint warnings/errors per file touched by round 12, on the round-12 tree, and on trunk e78869eec where the file exists there.
+Command: npx eslint -f json <file> <trunk copy of the file beside it>
+No file gains a warning; the new files have none. Two rows were higher before they were fixed in this round: draft-candidate-store.ts (consumeDraftCandidate's complexity, now one reader helper) and run.mjs (OQ-AUTH-16's step, compacted).
+
+server/routes/authoring.router.ts                                                                    round12=24/0     trunk=24/0
+server/services/ana/turn-record-draft.ts                                                             round12=0/0      trunk=new
+server/services/ana/__tests__/turn-record-draft.pglite.test.ts                                       round12=0/0      trunk=new
+server/services/clinical-regulatory-evidence/draft-candidate-store.ts                                round12=1/0      trunk=1/0
+client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx                                             round12=5/0      trunk=5/0
+server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts                                     round12=0/0      trunk=new
+client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx                                       round12=2/0      trunk=2/0
+server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts round12=0/0      trunk=0/0
+tests/validation/oq/authoring/run.mjs                                                                round12=0/0      trunk=0/0

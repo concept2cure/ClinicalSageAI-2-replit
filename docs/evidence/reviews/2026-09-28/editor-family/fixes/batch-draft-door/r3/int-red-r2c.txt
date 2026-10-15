@@ -1,0 +1,30 @@
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 115ms
+   → words a reader is shown, typed into AnA's sentence, were credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > textarea, blank-line paragraphs: the clause holding the shown words is the accepter's, though the draft verified 40ms
+   → words a reader is shown, typed into AnA's sentence, were credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > plaintext after an earlier paragraph: the clause holding the shown words is the accepter's, though the draft verified 43ms
+   → words a reader is shown, typed into AnA's sentence, were credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > xmp, split at " and " (no blank line): the clause holding the shown words is the accepter's, though the draft verified 39ms
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it verifies, and still credits nothing 44ms
+   → expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > content read as plain text shows every `<…>` > a tag-shaped token typed into AnA's sentence, in content with no known tag, is not AnA's 32ms
+   → shown to the editor's reader, credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > a clause accepted as AnA's, carried into a raw-text region by a later save > loses AnA's name: the words the region now shows were never compared 48ms
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > an HTML draft (control): verifies, and its words are AnA's 27ms
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > markdown bold: verifies, and its words are AnA's 31ms
+   → AnA's own unedited draft did not verify: expected [ { chars: 149, …(4) } ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown bullet list: verifies, and its words are AnA's 31ms
+   → AnA's own unedited draft did not verify: expected [ { chars: 163, …(4) } ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > HTML with a footnote asterisk: verifies, and its words are AnA's 25ms
+   → AnA's own unedited draft did not verify: expected [ { chars: 113, …(4) } ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown table with an escaped pipe: verifies, and its words are AnA's 29ms
+   → AnA's own unedited draft did not verify: expected [ { chars: 116, …(4) } ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a verified claim of one word credits nothing, and the accept does not say AnA's text was accepted 30ms
+   → expected 'AnA batch draft accepted into document' to be 'Batch-draft text accepted into docume…' // Object.is equality
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > N8: a claim with no comparable text (`<p></p>`) verifies nothing 34ms
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > accepting the same draft again names AnA: its clauses are AnA's, carried forward and accepted again 49ms
+   → every clause carried forward was accepted again: expected +0 to be 1 // Object.is equality
+ ✓ server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a later accept that verifies nothing does not name AnA, though AnA's earlier clauses carry forward 46ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  11 failed | 5 passed (16)

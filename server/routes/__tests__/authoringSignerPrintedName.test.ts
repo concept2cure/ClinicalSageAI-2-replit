@@ -60,9 +60,10 @@ describe('§11.50(a)(1) — the signer name is a printed name, not an address', 
     expect(assignment).not.toMatch(/(^|\s)name\s*:/);
   });
 
-  it('both signing paths resolve the name from the user record', () => {
+  it('every signing path resolves the name from the user record', () => {
+    // /e-sign, /sign and — since DP-35 (2026-10-01) made a freeze a signature — /freeze.
     const calls = SRC.match(/await resolveSignerName\(/g) ?? [];
-    expect(calls.length, 'expected /e-sign and /sign to both resolve').toBe(2);
+    expect(calls.length, 'expected /e-sign, /sign and /freeze to each resolve').toBe(3);
   });
 
   it('the resolver reads users.name and returns NULL rather than the email', () => {

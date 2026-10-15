@@ -6,13 +6,17 @@
  * serving, never a captured candidate, and a record that carries its own
  * provenance. `evaluateModel` is the only thing replaced.
  */
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import type * as NodeFs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
-import { runPq } from '../run-pq';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { runPq, type RunPqOptions } from '../run-pq';
 import goldBank from '../../doc-quality/gold-tasks.json';
+import protocolJson from '../pq-protocol.json';
 import { APPROVED_MODELS } from '../../../services/ai-governance/approved-models';
+import type { GatewayResponse } from '../../../services/ai-gateway/types';
 
 /**
  * The version the model under qualification is pinned to, read from the same
@@ -65,27 +69,70 @@ function stub(served: string | ((i: number) => string | undefined), content: (pr
   return {
     calls,
     gateway: {
-      evaluateModel: async (modelId: string, req: { messages: Array<{ content: string }> }) => {
+      evaluateModel: async (modelId: string, req: { messages: Array<{ content: string }> }): Promise<GatewayResponse> => {
         calls.push(modelId);
         const prompt = req.messages[0].content;
         const n = i++;
         return {
           content: content(prompt),
-          provider: 'anthropic',
+          provider: 'anthropic', cached: false, deterministic: false, finishReason: 'stop',
           model: PINNED,
           resolvedModel: typeof served === 'function' ? served(n) : served,
-        } as never;
+          usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 },
+          latencyMs: 0, requestId: `fixture-${n}`,
+        };
       },
     },
   };
 }
 
+/**
+ * The protocol run-pq reads, redirected for the rag cases below.
+ *
+ * run-pq reads ./pq-protocol.json and nothing else: it takes no protocol path,
+ * so no caller can hand it an approved copy and get a PASS record out of it.
+ * These cases exercise protocol changes as DATA — an approved copy with rag
+ * flipped — by answering that one readFileSync with the copy's text. Every
+ * other read, and every read while `protocolText` is null, is the real file.
+ * The real pq-protocol.json is never edited.
+ */
+const fsRedirect = vi.hoisted(() => ({ protocolText: null as string | null }));
+vi.mock('node:fs', async (importOriginal) => {
+  const real = await importOriginal<typeof NodeFs>();
+  const readFileSync = ((file: unknown, ...rest: unknown[]) => {
+    if (
+      fsRedirect.protocolText !== null &&
+      typeof file === 'string' &&
+      file.replace(/\\/g, '/').endsWith('/server/eval/pq/pq-protocol.json')
+    ) {
+      return fsRedirect.protocolText;
+    }
+    return (real.readFileSync as (...a: unknown[]) => unknown)(file, ...rest);
+  }) as typeof real.readFileSync;
+  return { ...real, readFileSync, default: { ...real, readFileSync } };
+});
+
 const dirs: string[] = [];
 afterEach(() => {
+  fsRedirect.protocolText = null;
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
 });
 
 describe('run-pq live path', () => {
+  it.each(['max_tokens', 'tool_use', 'unknown', 'aborted'])('generation and extraction never score a partial provider output: %s', async finishReason => {
+    const s = stub(PINNED);
+    const gateway = { evaluateModel: async (id: string, req: { messages: Array<{ content: string }> }) => ({ ...await s.gateway.evaluateModel(id, req), finishReason }) };
+    const result = await runPq({ modelId: MODEL_ID, gateway });
+    expect(result.verdict).toBe('NOT_EXECUTED');
+    expect(result.generation.every(g => g.sectionCoverage === null && g.error && g.servedModel === PINNED)).toBe(true);
+    expect(result.extraction.every(e => e.f1 === null && e.error && e.servedModel === PINNED)).toBe(true);
+  });
+  it('raw provider errors are sanitized in drafting records and console findings', async () => {
+    const gateway = { evaluateModel: async () => { throw new Error('PRIVATE_API_KEY_123'); } };
+    const result = await runPq({ modelId: MODEL_ID, gateway });
+    expect(JSON.stringify(result)).not.toContain('PRIVATE_API_KEY_123');
+    expect(result.verdict).toBe('NOT_EXECUTED');
+  });
   it('sends every task to exactly the model under qualification', async () => {
     const s = stub(PINNED);
     await runPq({ modelId: MODEL_ID, gateway: s.gateway });
@@ -125,8 +172,9 @@ describe('run-pq live path', () => {
     const r = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway });
     expect(r.verdict).toBe('INCOMPLETE');
     const why = r.reasons.join(' ');
-    // What still blocks a PASS: rag cannot execute (ragQuery cannot pin a
-    // model), and the protocol is a draft nobody has approved.
+    // What still blocks a PASS: rag cannot execute (pq-protocol.json records
+    // why, and run-pq has no rag phase), and the protocol is a draft nobody has
+    // approved.
     expect(why).toMatch(/rag/);
     // Extraction used to be named here too, as a component that could not be
     // executed. It executes now and a perfect model passes it, so its absence
@@ -249,5 +297,89 @@ describe('run-pq live path', () => {
     const s = stub('x');
     await expect(runPq({ modelId: 'not-in-the-registry', gateway: s.gateway })).rejects.toThrow(/not an entry/);
     expect(s.calls).toEqual([]);
+  });
+});
+
+/**
+ * The rag component in the runner (D4 evidence
+ * docs/evidence/D4/2026-09-28-pq-rag-unblock-misdescribed/, finding E6;
+ * docs/evidence/D4/2026-09-28-pq-rag-fail-closed/code/).
+ *
+ * run-pq has no rag phase. Until one lands, the record has to SAY so, and an
+ * executable rag has to come out INCOMPLETE — never PASS — or flipping
+ * `components.rag.executable` would qualify a model on a component nothing ran.
+ */
+describe('run-pq rag component', () => {
+  const REAL_PROTOCOL_PATH = path.resolve(__dirname, '..', 'pq-protocol.json');
+  const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
+
+  /** An approved copy of the real protocol, changed as the case needs. */
+  function approvedCopy(mutate: (p: typeof protocolJson) => void): string {
+    const p = JSON.parse(JSON.stringify(protocolJson)) as typeof protocolJson;
+    p.status = 'approved';
+    (p as { approvedBy: string | null }).approvedBy = 'System owner (test copy)';
+    (p as { approvedOn: string | null }).approvedOn = '2026-09-28';
+    mutate(p);
+    return `${JSON.stringify(p, null, 2)}\n`;
+  }
+
+  it('the record says rag was not run, and why', async () => {
+    const out = mkdtempSync(path.join(os.tmpdir(), 'pq-record-'));
+    dirs.push(out);
+    const r = await runPq({ modelId: MODEL_ID, record: true, outDir: out, gateway: stub(PINNED).gateway });
+    expect(r.rag).toMatchObject({ ran: false, itemsScored: 0 });
+    expect(r.rag.items).toHaveLength(20);
+    expect(r.rag.plannedItemIds).toHaveLength(20);
+    expect(r.rag.notRunReason).toMatch(/tenant\/programme scope/);
+    const rec = JSON.parse(readFileSync(r.recordPath as string, 'utf8'));
+    expect(rec.rag).toEqual(r.rag);
+  });
+
+  it('control — the redirect works: an approved copy with rag not required lets a perfect model PASS', async () => {
+    // The real protocol is a draft and cannot PASS, so a PASS here proves the
+    // copy was what run-pq read — and that the stub is otherwise passing, so the
+    // E6 case below is INCOMPLETE because of rag and nothing else.
+    fsRedirect.protocolText = approvedCopy((p) => {
+      p.components.rag.required = false;
+    });
+    const r = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway });
+    expect(r.reasons).toEqual(['every required component executed and met approved criteria']);
+    expect(r.verdict).toBe('PASS');
+  });
+
+  it('E6 — an approved copy with rag flipped executable: a perfect model is NOT a PASS; it is INCOMPLETE naming rag', async () => {
+    fsRedirect.protocolText = approvedCopy((p) => {
+      p.components.rag.executable = true;
+    });
+    const r = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway });
+    // The fail-open, as it was: rag never ran, and the verdict said PASS.
+    expect(r.verdict).not.toBe('PASS');
+    expect(r.verdict).toBe('INCOMPLETE');
+    expect(r.reasons.join(' ')).toMatch(/"rag".*not run.*tenant\/programme scope/);
+  });
+
+  it('a caller cannot hand run-pq another protocol: a protocolPath is ignored, and the record hashes the real file', async () => {
+    // An injectable protocol path would let a programmatic caller write a
+    // genuine-looking PASS record against an approved copy with rag not
+    // required — a route to PASS with rag never run.
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'pq-protocol-'));
+    dirs.push(dir);
+    const copy = path.join(dir, 'pq-protocol.json');
+    writeFileSync(copy, approvedCopy((p) => {
+      p.components.rag.required = false;
+    }));
+    const out = mkdtempSync(path.join(os.tmpdir(), 'pq-record-'));
+    dirs.push(out);
+    const r = await runPq({
+      modelId: MODEL_ID,
+      record: true,
+      outDir: out,
+      gateway: stub(PINNED).gateway,
+      protocolPath: copy,
+    } as RunPqOptions);
+    expect(r.verdict).not.toBe('PASS');
+    const rec = JSON.parse(readFileSync(r.recordPath as string, 'utf8'));
+    expect(rec.protocolStatus).toBe('draft');
+    expect(rec.protocolSha256).toBe(sha256(readFileSync(REAL_PROTOCOL_PATH, 'utf8')));
   });
 });

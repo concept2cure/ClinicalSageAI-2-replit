@@ -1,0 +1,10 @@
+{"code":"head","who":"member whose membership row says owner, no platform grant","path":"/api/admin/business/cost-accounting","status":200}
+{"code":"head","who":"member whose membership row says owner, no platform grant","path":"/api/admin/business/access","status":200}
+{"code":"head","who":"member whose membership row says owner, no platform grant","path":"/api/admin/business/executive-summary","status":200}
+{"code":"head","who":"same account, now holding an active business_admin platform grant","path":"/api/admin/business/cost-accounting","status":200}
+{"code":"head","path":"/api/admin/business/access","roster":[{"name":"Dana Reyes","role":"owner","source":"organization_users"}]}
+{"code":"fixed","who":"member whose membership row says owner, no platform grant","path":"/api/admin/business/cost-accounting","status":403}
+{"code":"fixed","who":"member whose membership row says owner, no platform grant","path":"/api/admin/business/access","status":403}
+{"code":"fixed","who":"member whose membership row says owner, no platform grant","path":"/api/admin/business/executive-summary","status":403}
+{"code":"fixed","who":"same account, now holding an active business_admin platform grant","path":"/api/admin/business/cost-accounting","status":200}
+{"code":"fixed","path":"/api/admin/business/access","roster":[{"name":"Dana Reyes","role":"business_admin","source":"platform_role_grants"}]}

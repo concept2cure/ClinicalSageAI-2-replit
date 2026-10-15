@@ -1,0 +1,164 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/../../tenant-export/full 12ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/%2e%2e/%2e%2e/users/me 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/..\..\tenant-export\full 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/file_1_a?download=1 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: https://collector.example/p.png?d=secret 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: //collector.example/p.png 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/svg+xml;base64,PHN2Zz4= 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:text/html;base64,PHNjcmlwdD4= 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/webp;base64,UklGRg== 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: javascript:alert(1) 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > keeps a governed reference and an inline PNG exactly as written 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > finds the image wherever the parse puts it: inside a table cell, and in upper case 11ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > still strips scripts and handlers, and leaves the chat-safe rest alone 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > does not leave its image rule on the shared DOMPurify instance 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names nothing in prose, a governed reference, an inline PNG, or an image with no src 377ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/../../tenant-export/full 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/%2e%2e/%2e%2e/users/me 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/..\..\tenant-export\full 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/file_1_a?download=1 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: https://collector.example/p.png?d=secret 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: //collector.example/p.png 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/svg+xml;base64,PHN2Zz4= 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:text/html;base64,PHNjcmlwdD4= 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/webp;base64,UklGRg== 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: javascript:alert(1) 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > reads the markup the way a browser does 17ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > says which images, by position and kind, without echoing an application path 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a duplicated src: shown as the first, filed as the second 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a template 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a bogus comment 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a text box 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: a srcset on an image with no src 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: a picture source 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: an SVG image 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > two figures written plainly are refused for nothing (guard) 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > says what to do about a misread image, without the not-a-figure advice 0ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — a figure inside a <pre> is read alike by both readers (D2) > is not refused 2ms
+ ✓ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > an external image URL is not in the file; its placeholder is 1208ms
+ ✓ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > a WebP payload is not printed into the file 4ms
+ ✓ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > a figure is kept as written: a governed reference and an inline PNG 3ms
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-05T02:29:43.409Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 19b115f8-f9e2-4983-9074-96d8aca30ef0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-05T02:29:43.426Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 19b115f8-f9e2-4983-9074-96d8aca30ef0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-05T02:29:43.437Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 19b115f8-f9e2-4983-9074-96d8aca30ef0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-10-05T02:29:43.509Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b7f6a641-7562-4842-be1a-759509c84ee7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-05T02:29:43.545Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3f524a99-888a-4438-a111-4e2163a8e4ad by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-05T02:29:43.557Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3f524a99-888a-4438-a111-4e2163a8e4ad by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-05T02:29:43.566Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3f524a99-888a-4438-a111-4e2163a8e4ad by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 171ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 43ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+{
+  "timestamp": "2026-10-05T02:29:43.593Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 80c73e28-2a07-4c84-8e97-acbb2f89c975 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > an imported draft keeps its governed figure (a person placed it)
+{
+  "timestamp": "2026-10-05T02:29:43.624Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4fa3f04a-4a8d-42cb-afcd-4526eb30e215 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre> 56ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > a machine draft's section that held only an image is stored empty (a gap), not as <p></p> 27ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > an imported draft keeps its governed figure (a person placed it) 33ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 4ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 2ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 6ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 4ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-05T02:29:43.710Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bd4ca347-a627-4da7-8d5d-3f348a1850e3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-05T02:29:43.723Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bd4ca347-a627-4da7-8d5d-3f348a1850e3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-05T02:29:43.732Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bd4ca347-a627-4da7-8d5d-3f348a1850e3 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 89ms
+
+ Test Files  3 passed (3)
+      Tests  52 passed (52)
+   Start at  02:29:37
+   Duration  6.61s (transform 2.28s, setup 262ms, import 1.65s, tests 7.19s, environment 0ms)
+

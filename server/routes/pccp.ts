@@ -14,10 +14,9 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { db } from '../db';
-import { regulatoryPrograms } from '../../shared/schema/programs';
+import { db, pool } from '../db';
 import { aiMlPccpPlans, aiMlModifications } from '../../shared/schema/ai-ml-pccp';
 import { authenticateToken } from '../middleware/auth';
 import {
@@ -36,9 +35,9 @@ import { serverError } from '../lib/api-response';
 import { z } from 'zod';
 import { reverifySigner } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
-import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 
@@ -58,12 +57,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, String(req.params.programId)), eq(regulatoryPrograms.organizationId, orgId)))
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, String(req.params.programId), orgId))) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }
@@ -246,6 +240,16 @@ const approvePlanBody = z.object({
   mfaToken: z.string().optional(),
 });
 
+/** checkSigningAuthority's refusal in this route's envelope, with its own code for a role that may not sign. */
+function pccpSigningAuthorityRefused(res: Response, authority: SigningAuthorityRefusal): Response {
+  return authority.status === 403
+    ? res.status(403).json({
+        error: 'Your role does not permit approving this plan (21 CFR Part 11 §11.10(g)).',
+        code: 'PCCP_NO_SIGNING_AUTHORITY',
+      })
+    : res.status(authority.status).json({ error: authority.message, code: authority.code });
+}
+
 router.post('/plans/:planId/approve', requirePlanAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req)!;
   const parsed = approvePlanBody.safeParse(req.body ?? {});
@@ -260,19 +264,17 @@ router.post('/plans/:planId/approve', requirePlanAccess, async (req: Request, re
   if (!Number.isFinite(signerId)) {
     return res.status(401).json({ error: 'An authenticated signer is required to approve' });
   }
+  // §11.10(g) before §11.200, through the platform's one policy (P-27,
+  // 2026-10-08): it was asked after the password, so a role that may not sign
+  // could still test one here, and a role that could not be read threw.
+  const authority = await checkSigningAuthority(signerId, orgId);
+  if (authority) return pccpSigningAuthorityRefused(res, authority);
   const signoff = await reverifySigner(
     signerId,
     { password: parsed.data.password, mfaToken: parsed.data.mfaToken },
     signerReverificationDeps(),
   );
   if (!signoff.ok) return res.status(signoff.status).json({ error: signoff.error, code: signoff.code });
-  const signerRole = await resolveSignerOrgRole(signerId, orgId);
-  if (!isSigningAuthorized(signerRole)) {
-    return res.status(403).json({
-      error: 'Your role does not permit approving this plan (21 CFR Part 11 §11.10(g)).',
-      code: 'PCCP_NO_SIGNING_AUTHORITY',
-    });
-  }
   try {
     const result = await approvePlan({
       organizationId: orgId,

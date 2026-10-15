@@ -1,0 +1,11 @@
+# tests/routes/realtime-collab-lock-reason.test.ts with server/routes/realtime-collab.ts as at HEAD
+ × tests/routes/realtime-collab-lock-reason.test.ts > section-lock ledger rows > an acquire and a release with no reason record none, not a sentence 59ms
+ ✓ tests/routes/realtime-collab-lock-reason.test.ts > section-lock ledger rows > a takeover records the reason the person gave, trimmed 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Section lock acquired via realtime-co…' to be null
+      Tests  1 failed | 1 passed (2)
+
+# erase_personal_data case (its own describe) with the old line restored (params?.reason || 'GDPR Art. 17 erasure request')
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data records the reason the person stated > takes it from the sign-off, not from what AnA wrote 42ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 19 passed (20)

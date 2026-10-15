@@ -1,0 +1,45 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.70.0"
+  },
+  "ReportID": "01a1122d-804e-7402-b59e-6ba7ef54c50d",
+  "CreatedAt": "2026-10-06T13:05:34.286265745-04:00",
+  "ArtifactID": "sha256:e35844626d883ff6b09e29b0e90b8ffb1cbb73487a530688f6093a24fbb504ae",
+  "ArtifactName": ".",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "https://github.com/concept2cure/ClinicalSageAI-2-replit.git",
+    "Branch": "concept2cure-v2",
+    "Commit": "73a151ec663b52c0d0964e7ce802123328518b78",
+    "CommitMsg": "chore(repo-health): auto-refresh baseline after merge [skip ci]",
+    "Author": "github-actions[bot] \u003c41898282+github-actions[bot]@users.noreply.github.com\u003e",
+    "Committer": "github-actions[bot] \u003c41898282+github-actions[bot]@users.noreply.github.com\u003e"
+  },
+  "Results": [
+    {
+      "Target": "package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm"
+    },
+    {
+      "Target": "requirements.txt",
+      "Class": "lang-pkgs",
+      "Type": "pip"
+    },
+    {
+      "Target": "server/services/python/requirements.txt",
+      "Class": "lang-pkgs",
+      "Type": "pip"
+    },
+    {
+      "Target": "tests/validation/package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm"
+    },
+    {
+      "Target": "docs/evidence/D6/2026-09-25-p1/IAM-18-6/red/before-fix.txt",
+      "Class": "secret"
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-25T02:33:14.420Z","pid":1965,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-25T02:33:14.422Z","pid":1965,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-25T02:33:14.422Z","pid":1965,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-09-25T02:33:14.654Z","pid":1965,"hostname":"vm","context":{"resource":"http://localhost:36447/mcp","issuer":"http://localhost:36447/","resourceMetadataUrl":"http://localhost:36447/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-25T02:33:14.951Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 99ms
+{"level":30,"time":"2026-09-25T02:33:15.305Z","pid":1965,"hostname":"vm","context":{"userId":49,"tenantId":37,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 261ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 9ms
+   → a suspended account's session still opened the connector: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page 9ms
+   → a suspended account's session authorised a connector client: null: expected 302 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 6ms
+   → a deprovisioned account's session still opened the connector: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page 9ms
+   → a deprovisioned account's session authorised a connector client: null: expected 302 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 6ms
+   → a signed-out session still opened the connector: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 8ms
+   → a signed-out session authorised a connector client: null: expected 302 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code 37ms
+   → a suspended account's connector token still opened /mcp: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code 33ms
+   → a deprovisioned account's connector token still opened /mcp: expected 200 to be 401 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 21ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 28ms
+   → a connector token passed the global /api gate as a session: {"userId":49}: expected 200 to be 401 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why
+AssertionError: a suspended account's session still opened the connector: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:421:83
+    419|     it(`${key}: the session no longer opens /mcp, and says why`, async…
+    420|       const res = await mcp(members[key].session);
+    421|       expect(res.status, `a ${key} account's session still opened the …
+       |                                                                                   ^
+    422|       expect(res.challenge).toMatch(/invalid_token/);
+    423|       expect(res.challenge).toMatch(/not active/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page
+AssertionError: a suspended account's session authorised a connector client: null: expected 302 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 302
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:429:102
+    427|       const { challenge } = pkce();
+    428|       const c = await consent(await authorize(challenge), members[key]…
+    429|       expect(c.status, `a ${key} account's session authorised a connec…
+       |                                                                                                      ^
+    430|       expect(c.code, 'an authorization code was issued').toBeNull();
+    431|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why
+AssertionError: a deprovisioned account's session still opened the connector: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:421:83
+    419|     it(`${key}: the session no longer opens /mcp, and says why`, async…
+    420|       const res = await mcp(members[key].session);
+    421|       expect(res.status, `a ${key} account's session still opened the …
+       |                                                                                   ^
+    422|       expect(res.challenge).toMatch(/invalid_token/);
+    423|       expect(res.challenge).toMatch(/not active/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page
+AssertionError: a deprovisioned account's session authorised a connector client: null: expected 302 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 302
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:429:102
+    427|       const { challenge } = pkce();
+    428|       const c = await consent(await authorize(challenge), members[key]…
+    429|       expect(c.status, `a ${key} account's session authorised a connec…
+       |                                                                                                      ^
+    430|       expect(c.code, 'an authorization code was issued').toBeNull();
+    431|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp
+AssertionError: a signed-out session still opened the connector: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:438:75
+    436|   it('no longer opens /mcp', async () => {
+    437|     const res = await mcp(members.signedOut.session);
+    438|     expect(res.status, 'a signed-out session still opened the connecto…
+       |                                                                           ^
+    439|     expect(res.challenge).toMatch(/invalid_token/);
+    440|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page
+AssertionError: a signed-out session authorised a connector client: null: expected 302 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 302
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:445:94
+    443|     const { challenge } = pkce();
+    444|     const c = await consent(await authorize(challenge), members.signed…
+    445|     expect(c.status, `a signed-out session authorised a connector clie…
+       |                                                                                              ^
+    446|     expect(c.code).toBeNull();
+    447|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code
+AssertionError: a suspended account's connector token still opened /mcp: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:464:89
+    462|       try {
+    463|         const access = await mcp(g.access);
+    464|         expect(access.status, `a ${label} account's connector token st…
+       |                                                                                         ^
+    465|         expect(access.challenge).toMatch(/not active/);
+    466|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code
+AssertionError: a deprovisioned account's connector token still opened /mcp: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:464:89
+    462|       try {
+    463|         const access = await mcp(g.access);
+    464|         expect(access.status, `a ${label} account's connector token st…
+       |                                                                                         ^
+    465|         expect(access.challenge).toMatch(/not active/);
+    466|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither
+AssertionError: a connector token passed the global /api gate as a session: {"userId":49}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:501:108
+    499|     const g = await grant(members.active);
+    500|     const gate = await api('/api/dbd8/whoami', g.access);
+    501|     expect(gate.status, `a connector token passed the global /api gate…
+       |                                                                                                            ^
+    502|     const routed = await api('/dbd8/router-gate', g.access);
+    503|     expect(routed.status, `a connector token passed a router's own gat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 5 passed (14)
+   Start at  02:33:11
+   Duration  4.75s (transform 1.53s, setup 68ms, import 195ms, tests 4.22s, environment 0ms)
+

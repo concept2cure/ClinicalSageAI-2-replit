@@ -88,4 +88,13 @@ describe('searchConnectedRepositories', () => {
     expect(res.resultCount).toBe(1);
     expect(res.skipped).toEqual([{ connector: 'onedrive', reason: 'token expired' }]);
   });
+
+  it('does not list a connector whose search failed as searched', async () => {
+    const deps = makeDeps({
+      searchConnectors: vi.fn().mockResolvedValue([{ connectorId: 'google-drive', results: [], error: 'token expired' }]),
+    });
+    const res = await searchConnectedRepositories(1, { query: 'protocol' }, deps);
+    expect(res.searched).toEqual([]);
+    expect(res.skipped).toContainEqual({ connector: 'google-drive', reason: 'token expired' });
+  });
 });

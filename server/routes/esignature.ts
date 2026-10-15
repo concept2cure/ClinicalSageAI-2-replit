@@ -30,7 +30,7 @@ import { isTokenCurrentlyAcceptable, isMfaEnabled } from '../services/mfaService
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import { reverifySigner, verifySignerPassword } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { ACCOUNT_INACTIVE_MESSAGE } from '../services/account-standing.js';
@@ -40,6 +40,7 @@ import {
 } from '../services/part11/signature-persistence.js';
 import { clientIpOf } from '../utils/client-ip.js';
 import { resolveUserRole } from '../types/auth-request';
+import { signMeaningRefusal } from '../services/part11/signature-meanings.js';
 
 const router = Router();
 
@@ -157,12 +158,41 @@ router.post('/verify-mfa', signerCheckLimiter('mfa'), async (req: Request, res: 
 });
 
 /**
+ * The request-shape refusals for POST /sign, answered before anything is read:
+ * the version anchor, the purpose, the action, and the §11.50(a)(3) meaning.
+ *
+ * The meaning is the signer's statement of what the signature means, from the
+ * closed vocabulary every governed sign uses (services/part11/signature-meanings
+ * — the same `signMeaningRefusal` and the same two codes as
+ * /api/c2c/actions/sign and the disclosure certify route). Until P1-42
+ * (security audit 2026-09-24, DP-55) this route took it as optional free text
+ * and stored `signatureMeaning ?? null`, so a signature could say nothing about
+ * what it meant. Checked before re-verification, so no password is asked for a
+ * request that would be refused anyway; the caller's text is not echoed back.
+ */
+function signRequestRefusal(body: Record<string, unknown>): { error: string; code?: string } | null {
+  if (!Number.isFinite(Number(body.documentId)) || !Number.isFinite(Number(body.versionId))) {
+    return { error: 'documentId and versionId are required (numeric)' };
+  }
+  if (typeof body.signaturePurpose !== 'string' || !body.signaturePurpose) {
+    return { error: 'signaturePurpose is required' };
+  }
+  if (typeof body.action !== 'string' || !body.action) {
+    return { error: 'action is required' };
+  }
+  const meaning = signMeaningRefusal(body.signatureMeaning);
+  if (!meaning) return null;
+  const what = meaning.error === 'SIGNATURE_MEANING_REQUIRED' ? 'A signature meaning is required' : 'That is not a signature meaning';
+  return { error: `${what} (21 CFR Part 11 §11.50(a)(3)). ${meaning.detail} Nothing was signed.`, code: meaning.error };
+}
+
+/**
  * POST /api/esignature/sign
  * Body: {
  *   documentId: number,
  *   versionId: number,
  *   signaturePurpose: string,    // "approval" | "review" | "verification" | …
- *   signatureMeaning: string,    // human-readable declaration text
+ *   signatureMeaning: string,    // §11.50(a)(3), one of GOVERNED_SIGN_MEANINGS (required)
  *   action: string,              // "approved" | "reviewed" | "rejected" | …
  *   password: string,            // re-authenticated server-side (Part 11 §11.200)
  *   mfaToken?: string,           // required when the signer has MFA enabled
@@ -185,18 +215,27 @@ router.post('/sign', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
 
-  // 21 CFR Part 11 §11.10(g): identity is not authority. Even a fully
-  // re-authenticated signer (password + MFA below) may apply a signature only
-  // if their organization role carries signing authority. The policy lives in
-  // server/services/part11/signing-authority (the single source of truth every
-  // signing route shares).
-  const signerRole = resolveUserRole(req);
-  if (!isSigningAuthorized(signerRole)) {
+  // The organisation the signature is applied in: authority is a membership's.
+  const session = (req as any).user ?? {};
+  const orgId = Number(session.organizationId);
+  if (!Number.isFinite(orgId)) {
     return res.status(403).json({
-      error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-      code: 'ESIGNATURE_NO_AUTHORITY',
+      error: 'Organization context required to sign (§11.10).',
+      code: 'ESIGNATURE_ORG_REQUIRED',
     });
   }
+
+  // 21 CFR Part 11 §11.10(g): identity is not authority. Even a fully
+  // re-authenticated signer (password + MFA below) may apply a signature only
+  // if their organization role carries signing authority — the platform's one
+  // policy, checkSigningAuthority, which reads the role from the membership
+  // row. Until 2026-10-08 (P-27) this judged the request's role
+  // (resolveUserRole), so a request claiming a signing role signed.
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
+  // The role the signature manifest records, as before: the request's reading.
+  // It no longer decides whether the signer may sign.
+  const signerRole = resolveUserRole(req);
 
   const {
     documentId,
@@ -216,15 +255,8 @@ router.post('/sign', async (req: Request, res: Response) => {
     // server-side from the signer's own users row below.
   } = req.body ?? {};
 
-  if (!Number.isFinite(Number(documentId)) || !Number.isFinite(Number(versionId))) {
-    return res.status(400).json({ error: 'documentId and versionId are required (numeric)' });
-  }
-  if (typeof signaturePurpose !== 'string' || !signaturePurpose) {
-    return res.status(400).json({ error: 'signaturePurpose is required' });
-  }
-  if (typeof action !== 'string' || !action) {
-    return res.status(400).json({ error: 'action is required' });
-  }
+  const refused = signRequestRefusal(req.body ?? {});
+  if (refused) return res.status(400).json(refused);
 
   // signature_type is client-supplied and lands in a column the release-gate
   // uniqueness index keys on. Accept only the document-signing vocabulary and
@@ -270,14 +302,6 @@ router.post('/sign', async (req: Request, res: Response) => {
 
   // Load signer profile so signer_name / signer_email are denormalised on
   // the signature row (required for offline audit reproduction per Part 11).
-  const session = (req as any).user ?? {};
-  const orgId = Number(session.organizationId);
-  if (!Number.isFinite(orgId)) {
-    return res.status(403).json({
-      error: 'Organization context required to sign (§11.10).',
-      code: 'ESIGNATURE_ORG_REQUIRED',
-    });
-  }
 
   // §11.50 printed name, email and title — resolved from the membership record
   // through the shared Part 11 lookup, never from the session and never
@@ -321,23 +345,26 @@ router.post('/sign', async (req: Request, res: Response) => {
   try {
     // Tenant-scoped: the version is resolved only within the signer's org
     // (join documents.organization_id), so a signature can never be bound to
-    // another tenant's version by supplying a foreign versionId.
+    // another tenant's version by supplying a foreign versionId. And it must be
+    // a version OF the document the body names (§11.70): until 2026-10-01 the
+    // lookup ignored documentId, so a body naming document B with a version of
+    // document A was signed, the row saying B while the digest covered A.
     const ver = await pool.query(
       `SELECT dv.document_id, dv.version_number, dv.content
          FROM document_versions dv
          JOIN documents d ON d.id = dv.document_id
-        WHERE dv.id = $1 AND d.organization_id = $2
+        WHERE dv.id = $1 AND d.organization_id = $2 AND dv.document_id = $3
         LIMIT 1`,
-      [Number(versionId), orgId],
+      [Number(versionId), orgId, Number(documentId)],
     );
     if (ver.rows.length === 0) {
       return res.status(422).json({
-        error: 'Cannot sign: the referenced document version does not exist in your organization.',
+        error: 'Cannot sign: the referenced version is not a version of this document in your organization.',
         code: 'ESIGNATURE_VERSION_NOT_FOUND',
       });
     }
     boundPayloadDigest = buildVersionBindingDigest({
-      documentId: Number(ver.rows[0].document_id ?? documentId),
+      documentId: Number(documentId),
       versionId: Number(versionId),
       versionNumber: ver.rows[0].version_number ?? null,
       content: ver.rows[0].content,
@@ -368,7 +395,7 @@ router.post('/sign', async (req: Request, res: Response) => {
     documentId: Number(documentId),
     versionId: Number(versionId),
     signaturePurpose,
-    signatureMeaning: signatureMeaning ?? null,
+    signatureMeaning,
     action,
     signerId: userId,
     signerEmail,
@@ -415,7 +442,7 @@ router.post('/sign', async (req: Request, res: Response) => {
       authenticationTimestamp: signedAt,
       secondFactorVerified,
       signatureHash,
-      signatureMeaning: signatureMeaning ?? null,
+      signatureMeaning,
       signatureManifest,
       isValid: signatureIsValid,
       complianceStatement: complianceStatement ?? null,
@@ -452,7 +479,7 @@ router.post('/sign', async (req: Request, res: Response) => {
         documentId: Number(documentId),
         versionId: Number(versionId),
         signaturePurpose,
-        signatureMeaning: signatureMeaning ?? null,
+        signatureMeaning,
         action,
         signatureHash,
         secondFactorVerified,

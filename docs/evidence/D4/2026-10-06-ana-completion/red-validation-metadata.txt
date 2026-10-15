@@ -1,0 +1,90 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > uses the same files in the same order as the server 2ms
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > takes .env.local over .env for a key both define 2ms
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > lets the process environment beat both files, as the server does 1ms
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > reports what the files set without the process environment 1ms
+ ✓ tests/validation-iq-env-files.test.ts > the IQ runner reads env files the way the server does > is what run-iq.mjs uses, not a .env-only read of its own 1ms
+ × tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > uses the execution date instead of a fixed historical evidence folder 3ms
+   → resolveRunDate is not a function
+ × tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: 2026-02-30 3ms
+   → expected [Function] to throw error matching /calendar-valid/ but got 'resolveRunDate is not a function'
+ × tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: ../old-run 1ms
+   → expected [Function] to throw error matching /calendar-valid/ but got 'resolveRunDate is not a function'
+ × tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: 2026-10-06/extra 1ms
+   → expected [Function] to throw error matching /calendar-valid/ but got 'resolveRunDate is not a function'
+ × tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: not-a-date 1ms
+   → expected [Function] to throw error matching /calendar-valid/ but got 'resolveRunDate is not a function'
+ × tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > records effective process configuration without retaining credential values 1ms
+   → configurationPresence is not a function
+ × tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > does not treat a placeholder provider key as configured 0ms
+   → configurationPresence is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > uses the execution date instead of a fixed historical evidence folder
+TypeError: resolveRunDate is not a function
+ ❯ tests/validation-iq-env-files.test.ts:68:12
+     66|   it('uses the execution date instead of a fixed historical evidence f…
+     67|     const { resolveRunDate } = await import('../scripts/validation/env…
+     68|     expect(resolveRunDate(undefined, new Date('2026-10-06T16:00:00Z'))…
+       |            ^
+     69|     expect(resolveRunDate('2026-09-27', new Date('2026-10-06T16:00:00Z…
+     70|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: 2026-02-30
+ FAIL  tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: ../old-run
+ FAIL  tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: 2026-10-06/extra
+ FAIL  tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > rejects invalid or path-like run dates: not-a-date
+AssertionError: expected [Function] to throw error matching /calendar-valid/ but got 'resolveRunDate is not a function'
+
+- Expected:
+/calendar-valid/
+
++ Received:
+"resolveRunDate is not a function"
+
+ ❯ tests/validation-iq-env-files.test.ts:73:41
+     71|   it.each(['2026-02-30', '../old-run', '2026-10-06/extra', 'not-a-date…
+     72|     const { resolveRunDate } = await import('../scripts/validation/env…
+     73|     expect(() => resolveRunDate(value)).toThrow(/calendar-valid/);
+       |                                         ^
+     74|   });
+     75|   it('records effective process configuration without retaining creden…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > records effective process configuration without retaining credential values
+TypeError: configurationPresence is not a function
+ ❯ tests/validation-iq-env-files.test.ts:79:20
+     77|     const dir = root({ '.env': 'DATABASE_URL=file-database\n' });
+     78|     const env = resolveEnv(dir, { DATABASE_URL: 'process-database-priv…
+     79|     const report = configurationPresence(['DATABASE_URL', 'SESSION_SEC…
+       |                    ^
+     80|     expect(report).toEqual({ set: ['DATABASE_URL'], unset: ['SESSION_S…
+     81|     expect(JSON.stringify(report)).not.toMatch(/private|file-database/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/validation-iq-env-files.test.ts > validation execution metadata and configuration evidence > does not treat a placeholder provider key as configured
+TypeError: configurationPresence is not a function
+ ❯ tests/validation-iq-env-files.test.ts:85:12
+     83|   it('does not treat a placeholder provider key as configured', async …
+     84|     const { configurationPresence } = await import('../scripts/validat…
+     85|     expect(configurationPresence([], { OPENAI_API_KEY: 'sk-...' }).pro…
+       |            ^
+     86|   });
+     87| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 5 passed (12)
+   Start at  12:58:02
+   Duration  379ms (transform 84ms, setup 83ms, import 34ms, tests 20ms, environment 0ms)
+

@@ -1,0 +1,183 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > scores a linked project and lists its overdue milestone as a critical gap 19ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > scores a project with no linked program: no milestones, not an error 6ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > milestones feed the gap list only: the figure is the same with or without them 12ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > reads nothing for another organization, or for a soft-deleted program 21ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > turns the linked program’s overdue and due-soon milestones into recommendations 11ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > a project with no linked program yields no milestone recommendations, and no failure 5ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > reads nothing for another organization, or for a soft-deleted program 13ms
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > without a twin assessment, quality, consistency and compliance are null (they were 65, 70, 80) 21ms
+   → expected { completeness: +0, quality: 65, …(2) } to deeply equal { completeness: +0, …(3) }
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > an empty project scores 0, not 46 from the placeholders 26ms
+   → expected 46 to be +0 // Object.is equality
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the overall score covers only what was measured: document completeness 34ms
+   → expected 73 to be 75 // Object.is equality
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the trend is unknown with no recorded scores, not stable with a delta of 0 9ms
+   → expected { Object (direction, delta, ...) } to deeply equal { direction: 'unknown', …(2) }
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > a twin assessment supplies what it recorded; a column it left empty stays null 16ms
+   → expected { completeness: +0, quality: 80, …(2) } to deeply equal { completeness: +0, quality: 80, …(2) }
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > another organization reads no twin assessment for a program it does not own 12ms
+   → expected { completeness: +0, quality: 80, …(2) } to deeply equal { completeness: +0, …(3) }
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > with all four dimensions measured the overall score is the original weighted formula 1ms
+   → weightMeasured is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > without a twin assessment, quality, consistency and compliance are null (they were 65, 70, 80)
+AssertionError: expected { completeness: +0, quality: 65, …(2) } to deeply equal { completeness: +0, …(3) }
+
+- Expected
++ Received
+
+  {
+    "completeness": 0,
+-   "compliance": null,
+-   "consistency": null,
+-   "quality": null,
++   "compliance": 80,
++   "consistency": 70,
++   "quality": 65,
+  }
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:218:30
+    216|   it('without a twin assessment, quality, consistency and compliance a…
+    217|     const score = await computeReadinessScore({ organizationId: ORG, p…
+    218|     expect(score.dimensions).toEqual({ completeness: 0, quality: null,…
+       |                              ^
+    219|     expect(score.scoreBasis).toEqual({
+    220|       source: 'no_assessment_on_record',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > an empty project scores 0, not 46 from the placeholders
+AssertionError: expected 46 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 46
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:228:32
+    226|   it('an empty project scores 0, not 46 from the placeholders', async …
+    227|     const score = await computeReadinessScore({ organizationId: ORG, p…
+    228|     expect(score.overallScore).toBe(0);
+       |                                ^
+    229|   });
+    230|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the overall score covers only what was measured: document completeness
+AssertionError: expected 73 to be 75 // Object.is equality
+
+- Expected
++ Received
+
+- 75
++ 73
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:235:32
+    233|     const score = await computeReadinessScore({ organizationId: ORG, p…
+    234|     expect(score.dimensions.completeness).toBe(75);
+    235|     expect(score.overallScore).toBe(75);
+       |                                ^
+    236|   });
+    237|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the trend is unknown with no recorded scores, not stable with a delta of 0
+AssertionError: expected { Object (direction, delta, ...) } to deeply equal { direction: 'unknown', …(2) }
+
+- Expected
++ Received
+
+  {
+    "dataPoints": 0,
+-   "delta": null,
+-   "direction": "unknown",
++   "delta": 0,
++   "direction": "stable",
+  }
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:240:25
+    238|   it('the trend is unknown with no recorded scores, not stable with a …
+    239|     const score = await computeReadinessScore({ organizationId: ORG, p…
+    240|     expect(score.trend).toEqual({ direction: 'unknown', delta: null, d…
+       |                         ^
+    241|   });
+    242|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > a twin assessment supplies what it recorded; a column it left empty stays null
+AssertionError: expected { completeness: +0, quality: 80, …(2) } to deeply equal { completeness: +0, quality: 80, …(2) }
+
+- Expected
++ Received
+
+  {
+    "completeness": 0,
+    "compliance": 90,
+-   "consistency": null,
++   "consistency": 70,
+    "quality": 80,
+  }
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:245:30
+    243|   it('a twin assessment supplies what it recorded; a column it left em…
+    244|     const score = await computeReadinessScore({ organizationId: ORG, p…
+    245|     expect(score.dimensions).toEqual({ completeness: 0, quality: 80, c…
+       |                              ^
+    246|     expect(score.scoreBasis).toEqual({
+    247|       source: 'twin_assessment',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > another organization reads no twin assessment for a program it does not own
+AssertionError: expected { completeness: +0, quality: 80, …(2) } to deeply equal { completeness: +0, …(3) }
+
+- Expected
++ Received
+
+  {
+    "completeness": 0,
+-   "compliance": null,
+-   "consistency": null,
+-   "quality": null,
++   "compliance": 90,
++   "consistency": 70,
++   "quality": 80,
+  }
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:266:30
+    264|   it('another organization reads no twin assessment for a program it d…
+    265|     const score = await computeReadinessScore({ organizationId: OTHER_…
+    266|     expect(score.dimensions).toEqual({ completeness: 0, quality: null,…
+       |                              ^
+    267|     expect(score.scoreBasis.source).toBe('no_assessment_on_record');
+    268|     expect(score.predictions.basis).toBe('no_assessment_on_record');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > with all four dimensions measured the overall score is the original weighted formula
+TypeError: weightMeasured is not a function
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:273:14
+    271|   it('with all four dimensions measured the overall score is the origi…
+    272|     for (const [c, q, k, m] of [[0, 0, 0, 0], [100, 100, 100, 100], [7…
+    273|       expect(weightMeasured({ completeness: c, quality: q, consistency…
+       |              ^
+    274|         .toBe(Math.round(c * 0.35 + q * 0.25 + k * 0.20 + m * 0.20));
+    275|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 7 passed (14)
+   Start at  07:38:26
+   Duration  8.45s (transform 1.43s, setup 149ms, import 2.51s, tests 5.27s, environment 0ms)
+

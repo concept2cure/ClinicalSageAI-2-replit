@@ -1,0 +1,240 @@
+Concept2Cure.RI
+›
+Conversation
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+Project
+Survey every source you can for BX-512 stability evidence.
+Conversation
+AnA
+New conversation
+Progress
+· AnA's progress
+Survey every source you can for BX-512 stability evidence.
+✻
+AnA reached this turn's round limit (20 rounds) before she said she was done.
+20 steps completed · in 3s
+
+AnA reached this turn's round limit (20 rounds) before she said she was done.
+Continue
+
+Checking source 1.Checking source 2.Checking source 3.Checking source 4.Checking source 5.Checking source 6.Checking source 7.Checking source 8.Checking source 9.Checking source 10.Checking source 11.Checking source 12.Checking source 13.Checking source 14.Checking source 15.Checking source 16.Checking source 17.Checking source 18.Checking source 19.Checking source 20.Stand-in answer: I looked at 20 sources and had more to check when the turn was closed.
+
+AnA drives: on
+Demos
+Between steps
+Manual
+AnA takes one step, then waits for you to run the next, change it or stop. If nobody answers within 10 minutes, or the page is closed, she stops there. A demonstration you start runs through without stopping.
+Auto
+AnA keeps going, step after step, until she judges the task done — for up to 20 rounds whichever engine you chose, 15 minutes of work or 40 minutes in all. Anything that changes a record waits for you; if nobody answers within 10 minutes, it does not happen and she stops.
+She keeps going: up to 20 rounds, 15 minutes of work.
+Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.
+Progress
+Stopped at the round limit · 3s
+Planning response…
+— done
+49 ms
+Loading project memory…
+— done
+81 ms
+Generating response…
+— done
+151 ms
+Composing the answer…
+— done
+26 ms
+Running 1 step…
+— done
+25 ms
+Reading the results…
+— done
+94 ms
+Composing the answer…
+— done
+20 ms
+Round 2 — running 1 more step…
+— done
+27 ms
+Reading the results…
+— done
+95 ms
+Composing the answer…
+— done
+25 ms
+Round 3 — running 1 more step…
+— done
+38 ms
+Reading the results…
+— done
+75 ms
+Composing the answer…
+— done
+30 ms
+Round 4 — running 1 more step…
+— done
+1 ms
+Reading the results…
+— done
+104 ms
+Composing the answer…
+— done
+15 ms
+Round 5 — running 1 more step…
+— done
+14 ms
+Reading the results…
+— done
+107 ms
+Composing the answer…
+— done
+34 ms
+Round 6 — running 1 more step…
+— done
+1 ms
+Reading the results…
+— done
+102 ms
+Composing the answer…
+— done
+30 ms
+Round 7 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+104 ms
+Composing the answer…
+— done
+27 ms
+Round 8 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+107 ms
+Composing the answer…
+— done
+31 ms
+Round 9 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+104 ms
+Composing the answer…
+— done
+41 ms
+Round 10 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+92 ms
+Composing the answer…
+— done
+18 ms
+Round 11 — running 1 more step…
+— done
+14 ms
+Reading the results…
+— done
+102 ms
+Composing the answer…
+— done
+14 ms
+Round 12 — running 1 more step…
+— done
+19 ms
+Reading the results…
+— done
+99 ms
+Composing the answer…
+— done
+16 ms
+Round 13 — running 1 more step…
+— done
+9 ms
+Reading the results…
+— done
+107 ms
+Composing the answer…
+— done
+31 ms
+Round 14 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+106 ms
+Composing the answer…
+— done
+37 ms
+Round 15 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+100 ms
+Composing the answer…
+— done
+32 ms
+Round 16 — running 1 more step…
+— done
+0 ms
+Reading the results…
+— done
+105 ms
+Composing the answer…
+— done
+15 ms
+Round 17 — running 1 more step…
+— done
+14 ms
+Reading the results…
+— done
+103 ms
+Composing the answer…
+— done
+14 ms
+Round 18 — running 1 more step…
+— done
+21 ms
+Reading the results…
+— done
+101 ms
+Composing the answer…
+— done
+20 ms
+Round 19 — running 1 more step…
+— done
+11 ms
+Reading the results…
+— done
+102 ms
+Composing the answer…
+— done
+20 ms
+Round 20 — running 1 more step…
+— done
+12 ms
+Reading the results…
+— done
+111 ms
+Composing the answer…
+— done
+114 ms
+Checking evidence and recording the turn…
+— done
+2 ms
+Used in this session
+Memory
+Could not be read
+Tools
+Global search
+Context
+balanced effort

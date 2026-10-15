@@ -22,24 +22,32 @@
  * @module client/src/concept2cure/v2/surfaces/biostatBridge
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState, isRowsWith, useLiveRows, type ListState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import { readShellProject } from '../shellProject';
 import { stashNavParamsForTarget } from '../navParams';
+import {
+  EngineResultPanel,
+  StatisticalReviewTable,
+  computedTotalN,
+  engineFigureIsUsable,
+  muted,
+  pct,
+  readinessChecksOf,
+  type EngineResult,
+  type StatisticalReadiness,
+  type StatisticalReview,
+} from './biostatEngineResult';
+
+/* The engine-result half of this pair (biostatEngineResult.tsx) was split out
+   of this file, so its names are re-exported here: an importer should not have
+   to know which of the two halves a given name ended up in. */
+export * from './biostatEngineResult';
 
 // ─── Wire shapes (mirror server/services/biostatistics-bridge) ───────────────
 
-export interface ReadinessCheck { key: string; label: string; ok: boolean; hint?: string }
-export interface StatisticalReadiness {
-  percent: number;
-  checks: ReadinessCheck[];
-  plannedSampleSize: number | null;
-  power: number | null;
-  alpha: number | null;
-  primaryEndpoint: string | null;
-}
 export interface BridgeDesignRow {
   studyId: string;
   programId: string | null;
@@ -49,12 +57,6 @@ export interface BridgeDesignRow {
   status: string;
   updatedAt: string | null;
   readiness: StatisticalReadiness;
-}
-export interface DesignGap {
-  field: string;
-  message: string;
-  severity: 'blocking' | 'defaulted' | 'note';
-  designPath: string;
 }
 export interface BridgePlacement {
   deliverable: string;
@@ -74,20 +76,10 @@ export interface BridgeTaskBlueprint {
   trigger: string;
   deliverable?: string;
 }
-export interface ReviewRow {
-  element: string;
-  risk: 'low' | 'medium' | 'high' | 'critical';
-  finding: string;
-  action: string;
-  codes: string[];
-}
-export interface StatisticalReview {
-  rows: ReviewRow[];
-  verdict: { challengeLikelihood: 'low' | 'moderate' | 'high'; mostVulnerable: string | null; recommendedActions: string[] };
-  standardsChecked: string[];
-  overallRisk: 'low' | 'medium' | 'high' | 'critical';
-}
-export interface DesignAssessment {
+/* `EngineResult` carries the four fields the engine-result rendering reads —
+   adapter, computation, judgment, provenance — so they are declared once, in
+   the module that renders them, and this interface adds the rest. */
+export interface DesignAssessment extends EngineResult {
   studyId: string;
   title: string;
   readiness: StatisticalReadiness;
@@ -95,10 +87,6 @@ export interface DesignAssessment {
   validation?: { riskLevel: string; summary: string; counts: Record<string, number> };
   /** The reviewer's risk table and defensibility verdict. */
   review?: StatisticalReview;
-  adapter: { input: Record<string, unknown> | null; gaps: DesignGap[]; mapped: string[] };
-  computation: { method: string; sampleSize: { total: number; perGroup: number }; adjustedTotal?: number; power: number } | null;
-  judgment: { overallVerdict: string; overallRisk: string; actionRecommendation: string } | null;
-  provenance: { engine: string; engineVersion: string; inputsSha256: string | null };
   filing: { programId: string | null; programType: string | null; applicationType: string | null; projectId: number | null };
   placements: BridgePlacement[];
   existingDeliverables: string[];
@@ -197,13 +185,10 @@ export function openDesignInBiostatistics(studyId: string, onNav: (id: string) =
 
 // ─── Presentation helpers ────────────────────────────────────────────────────
 
-const pct = (v: number | null) => (v === null ? '—' : `${Math.round(v * 100)}%`);
 const readinessTone = (p: number) => (p >= 80 ? 'ok' : p >= 50 ? 'warn' : 'err');
-const riskTone = (r: string) => (r === 'low' ? 'ok' : r === 'medium' ? 'warn' : 'err');
 const gradeLabel: Record<BridgePlacement['required'], string> = {
   required: 'required', expected: 'expected', conditional: 'conditional', not_applicable: 'not filed',
 };
-const muted: React.CSSProperties = { fontSize: 11, color: 'var(--text-300,#6b6963)' };
 
 function scopeLabel(): string {
   const p = readShellProject();
@@ -253,6 +238,30 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
 
 // ─── Assessment panel (designer) ─────────────────────────────────────────────
 
+/**
+ * Where this design's statistical deliverables file — or why they cannot be
+ * placed. Its own component so the panel stays inside the repo's complexity
+ * budget rather than suppressing the rule.
+ */
+function FilingSentence({ filing }: { filing: DesignAssessment['filing'] }) {
+  const app = filing.applicationType;
+  if (app) {
+    return (
+      <div style={{ fontSize: 12 }}>
+        Files as a <b>{APP_LABELS[app] ?? app}</b>
+        {filing.projectId === null ? <span style={muted}> — the program has no project record, so tasks and documents cannot be bound to it yet</span> : null}.
+      </div>
+    );
+  }
+  return (
+    <div style={{ fontSize: 12, ...muted }}>
+      {filing.programId
+        ? `The program's type (${filing.programType ?? 'unknown'}) does not map to a filing type, so no placements are shown.`
+        : 'This design is not linked to a program, so filing placements and task binding are unavailable.'}
+    </div>
+  );
+}
+
 export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fireToast }: {
   state: AssessmentState;
   onNav: (id: string) => void;
@@ -268,45 +277,21 @@ export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fire
   }
   if (!a) return null;
 
-  const blocking = a.adapter.gaps.filter((g) => g.severity === 'blocking');
-  const defaulted = a.adapter.gaps.filter((g) => g.severity === 'defaulted');
-  const notes = a.adapter.gaps.filter((g) => g.severity === 'note');
-  const n = a.computation ? (a.computation.adjustedTotal ?? a.computation.sampleSize.total) : null;
-  const app = a.filing.applicationType;
   const openTasks = a.proposedTasks.filter((t) => !a.existingTaskKeys.includes(t.key));
 
   return (
     <div className="pj-card">
       <div className="pj-card-h"><span className="t">Design assessment</span><span className="s">{a.title}</span></div>
       <div className="pj-card-b" style={{ padding: 12, display: 'grid', gap: 10 }}>
-        {/* Verdict line — from the server's engines, provenance-stamped. */}
-        {a.computation && a.judgment ? (
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', fontSize: 12 }}>
-            <span><b>{n}</b> subjects</span>
-            <span><b>{pct(a.computation.power)}</b> power</span>
-            <span className={'rd-chip tone-' + (a.judgment.overallVerdict === 'adequate' ? 'ok' : a.judgment.overallVerdict === 'marginal' ? 'warn' : 'err')}>{a.judgment.overallVerdict.replace(/_/g, ' ')}</span>
-            <span style={muted}>{a.computation.method} · {a.provenance.engine} {a.provenance.engineVersion}{a.provenance.inputsSha256 ? ' · inputs ' + a.provenance.inputsSha256.slice(0, 12) : ''}</span>
-          </div>
-        ) : (
-          <div style={{ fontSize: 12 }}>
-            <b>Not sized.</b> The design is missing what the engine needs — resolve the blocking gaps below.
-          </div>
-        )}
-
-        {/* Readiness */}
+        {/* Readiness — the design record's own checks. */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12 }}>
           <span className={'rd-chip tone-' + readinessTone(a.readiness.percent)}>{a.readiness.percent}% ready</span>
-          <span style={muted}>{a.readiness.checks.filter((c) => c.ok).length} of {a.readiness.checks.length} statistical checks pass</span>
+          <span style={muted}>{readinessChecksOf(a.readiness).filter((c) => c.ok).length} of {readinessChecksOf(a.readiness).length} statistical checks pass</span>
         </div>
 
-        {/* Gaps */}
-        {(blocking.length > 0 || defaulted.length > 0 || notes.length > 0) && (
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, display: 'grid', gap: 4 }} aria-label="Design gaps">
-            {blocking.map((g) => <li key={'b' + g.field}><span className="rd-chip tone-err" style={{ marginRight: 6 }}>blocking</span>{g.message} <span style={muted}>({g.designPath})</span></li>)}
-            {defaulted.map((g) => <li key={'d' + g.field}><span className="rd-chip tone-warn" style={{ marginRight: 6 }}>assumed</span>{g.message}</li>)}
-            {notes.map((g) => <li key={'n' + g.field + g.message.length}><span className="rd-chip tone-idle" style={{ marginRight: 6 }}>note</span>{g.message}</li>)}
-          </ul>
-        )}
+        {/* The engines: the computation, its gaps and assumptions, the judgment
+            by dimension. The one rendering, shared with the Statistics tab. */}
+        <EngineResultPanel assessment={a} />
 
         {/* Statistical review — the gates' findings and the engine's judgment as
             one risk table with a verdict (biostatistics-engine review format).
@@ -314,20 +299,14 @@ export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fire
         {a.review && <StatisticalReviewTable review={a.review} />}
 
         {/* Filing */}
-        <div style={{ fontSize: 12 }}>
-          {app ? (
-            <>Files as a <b>{APP_LABELS[app] ?? app}</b>{a.filing.projectId === null ? <span style={muted}> — the program has no project record, so tasks and documents cannot be bound to it yet</span> : null}.</>
-          ) : a.filing.programId ? (
-            <span style={muted}>The program's type ({a.filing.programType ?? 'unknown'}) does not map to a filing type, so no placements are shown.</span>
-          ) : (
-            <span style={muted}>This design is not linked to a program, so filing placements and task binding are unavailable.</span>
-          )}
-        </div>
+        <FilingSentence filing={a.filing} />
 
         {/* Actions — governed writes open a reason form; nothing fires on the click itself. */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button className="btn primary" style={{ height: 30 }} disabled={!a.computation} onClick={() => setForm('apply')}
-            title={a.computation ? 'Write the computed sample size and power onto the design (governed)' : 'Resolve the blocking gaps first'}>
+          {/* The same gate as the Statistics tab's: the engine produced a total,
+              not merely a computation object. */}
+          <button className="btn primary" style={{ height: 30 }} disabled={!engineFigureIsUsable(a)} onClick={() => setForm('apply')}
+            title={engineFigureIsUsable(a) ? 'Write the computed sample size and power onto the design (governed)' : 'Resolve the blocking gaps first'}>
             {I.penLine} Apply sample size to design
           </button>
           <button className="btn" style={{ height: 30 }} disabled={openTasks.length === 0} onClick={() => setForm('tasks')}
@@ -356,49 +335,42 @@ export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fire
   );
 }
 
-// ─── Statistical review table ────────────────────────────────────────────────
+// ─── Governed forms ──────────────────────────────────────────────────────────
 
-export function StatisticalReviewTable({ review }: { review: StatisticalReview }) {
-  const [open, setOpen] = useState(review.overallRisk !== 'low');
-  const v = review.verdict;
-  return (
-    <div style={{ display: 'grid', gap: 6 }}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12 }}>
-        <span className={'rd-chip tone-' + riskTone(review.overallRisk)}>{review.overallRisk} statistical risk</span>
-        <span>Regulatory challenge likelihood: <b>{v.challengeLikelihood}</b>{v.mostVulnerable ? <> — most vulnerable: <b>{v.mostVulnerable}</b></> : null}</span>
-        <button className="btn" style={{ height: 24, fontSize: 11, marginLeft: 'auto' }} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-          {open ? 'Hide' : 'Show'} review
-        </button>
-      </div>
-      {open && (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="reg-tbl" aria-label="Statistical risk summary">
-            <thead><tr><th>Element</th><th>Risk</th><th>Finding</th><th>Action</th></tr></thead>
-            <tbody>
-              {review.rows.map((r) => (
-                <tr key={r.element}>
-                  <td style={{ whiteSpace: 'nowrap' }}>{r.element}{r.codes.length ? <span style={{ ...muted, display: 'block', fontFamily: 'var(--font-mono)' }}>{r.codes.join(' ')}</span> : null}</td>
-                  <td><span className={'rd-chip tone-' + riskTone(r.risk)}>{r.risk}</span></td>
-                  <td style={{ fontSize: 12 }}>{r.finding}</td>
-                  <td style={{ fontSize: 12 }}>{r.action}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {review.standardsChecked.length > 0 && <div style={muted}>Standards checked: {review.standardsChecked.join(' · ')}</div>}
-        </div>
-      )}
-    </div>
-  );
+/**
+ * The sentence the bridge actually sent with a refusal.
+ *
+ * Its route answers a refused write with the canonical error envelope
+ * `{ error: '<CODE>', details: { message: '<sentence>' } }` — `clientError` in
+ * server/lib/api-response, carrying `BridgeError.message`. `serverMessage`
+ * reads `error.message`, `message`, `detail`, and a bare `error` that is not an
+ * enum token; the bridge's sentence is at none of those, and `CANNOT_SIZE` IS
+ * an enum token, so every bridge refusal degraded to "HTTP 422". The one part
+ * an author can act on — the engine's own reason for refusing — was the part
+ * that got dropped.
+ *
+ * So this reads the bridge's shape too, preferring the canonical reader where
+ * it finds copy. `redactInternals` stays as the last gate: the sentence is copy
+ * the route wrote, but this must not become a new route for driver text onto a
+ * screen. With nothing usable it falls back to the status, which is at least
+ * true.
+ */
+function bridgeRefusal(body: unknown, status: number): string {
+  const detail = (body as { details?: { message?: unknown } } | null)?.details?.message;
+  const sentence =
+    serverMessage(body) ??
+    (typeof detail === 'string' && detail.trim() ? redactInternals(detail, '') : '');
+  return sentence || `the server returned HTTP ${status}`;
 }
 
-// ─── Governed forms ──────────────────────────────────────────────────────────
 
 function ApplySampleSizeForm({ assessment: a, onCancel, onDone, onError }: {
   assessment: DesignAssessment; onCancel: () => void; onDone: (msg: string) => void; onError: (msg: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const n = a.computation ? (a.computation.adjustedTotal ?? a.computation.sampleSize.total) : null;
+  // computedTotalN, not a third copy of it: it is the one definition of "the
+  // engine proposed a usable N", and it rejects a zero.
+  const n = computedTotalN(a.computation);
   const submit = async (v: Record<string, string>) => {
     if (busy) return;
     setBusy(true);
@@ -406,7 +378,7 @@ function ApplySampleSizeForm({ assessment: a, onCancel, onDone, onError }: {
       const res = await apiRequest('POST', `/api/biostat-bridge/designs/${encodeURIComponent(a.studyId)}/apply-sample-size`, { reason: v.reason ?? '' });
       const body = (await res.json().catch(() => null)) as { data?: { plannedSampleSize?: number; auditId?: string } } | null;
       if (!res.ok || !body?.data?.auditId) {
-        onError('The sample size was not applied — ' + (serverMessage(body) ?? `HTTP ${res.status}`) + '. The design is unchanged.');
+        onError('The sample size was not applied — ' + bridgeRefusal(body, res.status) + '. The design is unchanged.');
         return;
       }
       onDone(`Sample size ${body.data.plannedSampleSize} written to "${a.title}" — the write and its audit record committed together.`);
@@ -449,7 +421,7 @@ function RaiseTasksForm({ assessment: a, onCancel, onDone, onError }: {
       });
       const body = (await res.json().catch(() => null)) as { data?: { created?: unknown[]; skipped?: string[] } } | null;
       if (!res.ok || !Array.isArray(body?.data?.created)) {
-        onError('No tasks were raised — ' + (serverMessage(body) ?? `HTTP ${res.status}`) + '.');
+        onError('No tasks were raised — ' + bridgeRefusal(body, res.status) + '.');
         return;
       }
       const c = body!.data!.created!.length;
@@ -539,15 +511,39 @@ export function FilingPlacementNote({ placement }: { placement: BridgePlacement 
  * read failed (the server's own message), and bound-but-absent, which now means
  * the design genuinely is not readable for this tenant rather than "not in the
  * program you happen to have open".
+ *
+ * ── The third wrong answer: a read-only statistics tab ───────────────────────
+ *
+ * That assessment read carries the engines' whole answer — the computed N and
+ * power, the assumptions the sizing stood on, the gaps that stopped it, the
+ * judgment dimension by dimension — and the pane rendered four stored numbers
+ * out of it. The one action that computes and applies a sample size rendered
+ * only on the `biostatistics` surface, which is not in the launch catalog,
+ * while protocol development is. So a statistician in the launch Authoring app
+ * could read a sample size and had no way to produce one.
+ *
+ * It now mounts `EngineResultPanel` — the SAME rendering the designer's
+ * `DesignBridgePanel` mounts, not a second one — and the governed write beside
+ * it. The deep link stays, because the designer does more than size a study;
+ * it is no longer the only way to compute.
  */
-export function StudyDesignStatisticsTab({ onNav, boundStudyId }: { onNav: (id: string) => void; boundStudyId?: string | null }) {
+export function StudyDesignStatisticsTab({ onNav, boundStudyId, onChanged }: {
+  onNav: (id: string) => void;
+  boundStudyId?: string | null;
+  /** Re-read the protocol after a confirmed write to the design. The design
+   *  gates' findings this workspace shows elsewhere are computed from the
+   *  statistical plan the write just changed, so not re-reading would leave
+   *  the Study design tab reporting the previous plan as current. */
+  onChanged?: () => void;
+}) {
   const bound = (boundStudyId ?? '').trim();
-  const { assessment, loading, error } = useDesignAssessment(bound || null);
-  const readiness = assessment?.readiness;
+  const state = useDesignAssessment(bound || null);
+  const { assessment, loading, error, reload } = state;
+  const applied = useCallback(() => { reload(); onChanged?.(); }, [reload, onChanged]);
   return (
     <div className="pd-pane">
       <div className="pd-pane-h">
-        <div><h2 className="pd-pane-t">Statistics</h2><div className="pd-pane-s">Statistical readiness of the study design bound to this protocol — sample size, power, estimand and analysis plan, as the design record holds them.</div></div>
+        <div><h2 className="pd-pane-t">Statistics</h2><div className="pd-pane-s">The study design bound to this protocol: what the design record holds, what the deterministic engine computes for it, and the governed write that puts the computed size onto the design.</div></div>
       </div>
       {!bound ? (
         <div style={{ padding: 12 }}><EmptyState icon={I.fileText} title="No study design is bound to this protocol" hint="A protocol's statistics live on its study design (CDISC PRM). Bind one on the Study design tab and its readiness appears here. Other designs in this program are not shown, because they are not this protocol's." /></div>
@@ -555,26 +551,29 @@ export function StudyDesignStatisticsTab({ onNav, boundStudyId }: { onNav: (id: 
         <div role="status" className="scaf-note" style={{ margin: 12 }}>Loading the bound study design…</div>
       ) : error ? (
         <div style={{ padding: 12 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the bound study design" hint={error} /></div>
-      ) : !assessment || !readiness ? (
+      ) : !assessment || !assessment.readiness ? (
         <div style={{ padding: 12 }}><EmptyState tone="error" icon={I.alertTriangle} title="The bound study design could not be read" hint={`This protocol names study design ${bound}, but no design with that id is readable for this organization. The link is unresolved — this is not a protocol without a design, and no statistics are shown for it.`} /></div>
       ) : (
         <div style={{ display: 'grid', gap: 10, padding: 12 }}>
-          <BoundDesignCard studyId={bound} title={assessment.title || bound} readiness={readiness} onNav={onNav} />
+          <BoundDesignCard studyId={bound} assessment={assessment} onNav={onNav} onApplied={applied} />
         </div>
       )}
     </div>
   );
 }
 
-/** The bound design's readiness card. Extracted to keep the pane's branch
- *  count under the repo's complexity budget rather than suppressing it. */
-function BoundDesignCard({ studyId, title, readiness, onNav }: {
+/** The bound design's card: the record's figures, then the engine's. Extracted
+ *  to keep the pane's branch count under the repo's complexity budget rather
+ *  than suppressing it. */
+function BoundDesignCard({ studyId, assessment, onNav, onApplied }: {
   studyId: string;
-  title: string;
-  readiness: StatisticalReadiness;
+  assessment: DesignAssessment;
   onNav: (id: string) => void;
+  onApplied: () => void;
 }) {
-  const failed = (readiness.checks ?? []).filter((c) => !c.ok);
+  const readiness = assessment.readiness;
+  const failed = readinessChecksOf(readiness).filter((c) => !c.ok);
+  const title = assessment.title || studyId;
   return (
     <div className="pj-card">
       <div className="pj-card-h">
@@ -582,6 +581,7 @@ function BoundDesignCard({ studyId, title, readiness, onNav }: {
         <span className="s">{studyId}</span>
       </div>
       <div className="pj-card-b" style={{ padding: 12, display: 'grid', gap: 8 }}>
+        {/* What the design RECORDS. */}
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', fontSize: 12 }}>
           <span className={'rd-chip tone-' + readinessTone(readiness.percent)}>{readiness.percent}% ready</span>
           <span><b>{readiness.plannedSampleSize ?? '—'}</b> planned subjects</span>
@@ -594,12 +594,85 @@ function BoundDesignCard({ studyId, title, readiness, onNav }: {
             {failed.map((c) => <li key={c.key}>{c.label}{c.hint ? <span style={muted}> — {c.hint}</span> : null}</li>)}
           </ul>
         )}
-        <div>
-          <button className="btn primary" style={{ height: 28, fontSize: 12 }} onClick={() => openDesignInBiostatistics(studyId, onNav)}>
-            {I.sigma} Open in Biostatistics
-          </button>
+        {/* What the ENGINE computes for it — the same rendering the designer
+            shows, so the two surfaces cannot disagree about one design. */}
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, display: 'grid', gap: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>The engine's computation for this design</div>
+          <EngineResultPanel assessment={assessment} />
         </div>
+        <BoundDesignActions studyId={studyId} assessment={assessment} onNav={onNav} onApplied={onApplied} />
       </div>
     </div>
+  );
+}
+
+/**
+ * The two actions a statistician needs here: apply the engine's size to the
+ * design, and open the design in the full designer.
+ *
+ * ── Why the write is here and not only there ─────────────────────────────────
+ * Until 2026-10-11 "Apply sample size" rendered only on the `biostatistics`
+ * surface, and this tab's only action was the deep link into it. Protocol
+ * development is in the launch catalog and the biostatistics surfaces are not
+ * yet, so the one governed action that turns a computation into the protocol's
+ * sample size was not reachable from the launch app at all. The link stays —
+ * the designer does far more than size a study — but it is no longer the only
+ * way to compute.
+ *
+ * ── Why the outcome is a sentence in the pane ────────────────────────────────
+ * The designer reports this write through a toast, which it owns. This tab is
+ * mounted inside the protocol workspace, so a toast here would be the
+ * workspace's. The refusal is shown in the pane instead, as its own sentence
+ * and in the server's own words: a governed write that was refused must leave
+ * something a reviewer can still read after the moment has passed. The drawer
+ * closes on a refusal because a CANNOT_SIZE cannot be retried with a different
+ * reason — the design has to change first.
+ */
+function BoundDesignActions({ studyId, assessment, onNav, onApplied }: {
+  /** The id the protocol binds — the one the deep link must carry. */
+  studyId: string;
+  assessment: DesignAssessment;
+  onNav: (id: string) => void;
+  onApplied: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const sizable = engineFigureIsUsable(assessment);
+  return (
+    <>
+      {notice && (
+        <div
+          className={notice.tone === 'error' ? 'pde-refusal' : 'scaf-note'}
+          role={notice.tone === 'error' ? 'alert' : 'status'}
+          style={{ fontSize: 12 }}
+        >
+          {notice.text}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button
+          className="btn primary"
+          style={{ height: 28, fontSize: 12 }}
+          disabled={!sizable}
+          onClick={() => { setNotice(null); setOpen(true); }}
+          title={sizable
+            ? 'Write the engine’s computed sample size and power onto this design (governed)'
+            : 'The engine did not size this design — the fields it needs are named above'}
+        >
+          {I.penLine} Apply sample size to design
+        </button>
+        <button className="btn" style={{ height: 28, fontSize: 12 }} onClick={() => openDesignInBiostatistics(studyId, onNav)}>
+          {I.sigma} Open in Biostatistics
+        </button>
+      </div>
+      {open && (
+        <ApplySampleSizeForm
+          assessment={assessment}
+          onCancel={() => setOpen(false)}
+          onDone={(msg) => { setOpen(false); setNotice({ tone: 'ok', text: msg }); onApplied(); }}
+          onError={(msg) => { setOpen(false); setNotice({ tone: 'error', text: msg }); }}
+        />
+      )}
+    </>
   );
 }

@@ -21,6 +21,8 @@ import { getGateway } from '../ai-gateway';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
+import { plainTextToHtml } from '@shared/authoring/plain-text-html';
+import { renderSectionBrief, resolveSectionBriefSource } from '../ind/ctd/index.js';
 
 const logger = createScopedLogger('section-generation-service');
 
@@ -46,11 +48,26 @@ export interface GenerateSectionResult {
   ungrounded: string[];
 }
 
+/** Recorded at the gateway, on the stored draft and in the audit row. */
+const PROMPT_VERSION = 'section-generation@v1.1';
+
 let prompt: string | null = null;
 async function loadPrompt(): Promise<string> {
   if (prompt) return prompt;
-  prompt = await fs.readFile(path.join(PROMPTS_DIR, 'section-generation', 'v1.0.md'), 'utf8');
+  prompt = await fs.readFile(path.join(PROMPTS_DIR, 'section-generation', 'v1.1.md'), 'utf8');
   return prompt;
+}
+
+/**
+ * What the section must contain, from the canonical CTD overlay
+ * (server/services/ind/ctd/), never from the model's recall. A code nothing
+ * indexes is said to be unindexed, source 'none'; the prompt has the model
+ * report that in `ungrounded` rather than brief it from memory.
+ */
+function sectionRequirements(sectionCode: string): { requirements: string; requirementsSource: string } {
+  const requirementsSource = resolveSectionBriefSource(sectionCode)?.kind ?? 'none';
+  const requirements = renderSectionBrief(sectionCode) ?? `The platform has no requirements indexed for ${sectionCode}.`;
+  return { requirements, requirementsSource };
 }
 
 /** Split the streamed content into the markdown body and the trailing JSON. */
@@ -88,21 +105,22 @@ export async function generateSection(
   if (!submission) throw new AuthoringError('NOT_FOUND', 'Submission not found for this organization.');
 
   const systemPrompt = await loadPrompt();
+  const { requirements, requirementsSource } = sectionRequirements(params.sectionCode);
   let content: string;
   try {
     const response = await getGateway().route({
       taskType: 'document_drafting',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: JSON.stringify({ sectionCode: params.sectionCode, evidence: params.evidence, productContext: params.productContext }) },
+        { role: 'user', content: JSON.stringify({ sectionCode: params.sectionCode, evidence: params.evidence, productContext: params.productContext, requirements, requirementsSource }) },
       ],
       temperature: 0.3,
       maxTokens: 8000,
-      promptVersion: 'section-generation@v1.0',
+      promptVersion: PROMPT_VERSION,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       callerModule: 'section-generation-service',
-      metadata: { task: 'section-generation', submissionId: params.submissionId, sectionCode: params.sectionCode },
+      metadata: { task: 'section-generation', submissionId: params.submissionId, sectionCode: params.sectionCode, requirementsSource },
       stream: Boolean(onChunk),
       onStream: onChunk ? (chunk, meta) => { if (!meta || meta.type === 'text') onChunk(chunk); } : undefined,
     });
@@ -111,7 +129,27 @@ export async function generateSection(
     throw new AuthoringError('PROVIDER_UNAVAILABLE', `The AI request could not be completed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  const { body, citations, ungrounded } = splitBodyAndTrailer(content);
+  const { body: modelBody, citations, ungrounded } = splitBodyAndTrailer(content);
+  /* The model's body is stored as text (periodic review 2026-09-28, editor
+     family, SEC-B-1/2 follow-on b6). coauthor_documents.content is parsed as
+     HTML by the eCTD leaf renderer, and by the co-author editor whenever it
+     holds a known tag, so a body stored as it came back could carry an <img>,
+     which from a model is never an uploaded figure, to every later reader.
+     The prompt asks for markdown, which is text, so the body is stored as
+     plainTextToHtml writes it: escaped paragraphs. No model output becomes
+     markup, and <p> is a known tag, so the co-author editor reads the stored
+     value as HTML and shows the words as written. Escaped text with no tag
+     would be escaped a second time there ("R&amp;D" for "R&D"). Sanitizing
+     the body as HTML would delete the words after a `<` that starts a word:
+     "Impurity B was <LOQ in all 3 batches" would be stored as "Impurity B
+     was ". The result carries what was stored.
+     A body with no words stays "": an empty draft, which the eCTD leaf
+     resolver reports as a gap. "<p></p>" would pass its emptiness check and
+     be filed as a blank leaf. No words means no letter and no digit: trim()
+     keeps a zero-width space, a soft hyphen or a word joiner, which no reader
+     shows, and "<p>\u200b</p>" was filed as a blank leaf the same way
+     (refute-review of the figure rule, round 3: D4). */
+  const body = /[\p{L}\p{N}]/u.test(modelBody) ? plainTextToHtml(modelBody) : '';
 
   // Persist as a governed draft artifact (never loose chat text).
   const [doc] = await db
@@ -123,7 +161,7 @@ export async function generateSection(
       status: 'draft',
       createdBy: String(ctx.userId),
       moduleNumber: params.sectionCode,
-      metadata: { authoring: { promptVersion: 'section-generation@v1.0', citations, ungrounded, submissionId: params.submissionId } },
+      metadata: { authoring: { promptVersion: PROMPT_VERSION, requirementsSource, citations, ungrounded, submissionId: params.submissionId } },
     })
     .returning({ id: coauthorDocuments.id });
 
@@ -133,7 +171,7 @@ export async function generateSection(
     action: 'AI_GENERATE',
     resourceType: 'document',
     resourceId: doc.id,
-    details: { task: 'section-generation', promptVersion: 'section-generation@v1.0', submissionId: params.submissionId, sectionCode: params.sectionCode, citations: citations.length, ungrounded: ungrounded.length },
+    details: { task: 'section-generation', promptVersion: PROMPT_VERSION, requirementsSource, submissionId: params.submissionId, sectionCode: params.sectionCode, citations: citations.length, ungrounded: ungrounded.length },
   });
 
   logger.info('Generated section draft', { documentId: doc.id, sectionCode: params.sectionCode, organizationId: ctx.organizationId });

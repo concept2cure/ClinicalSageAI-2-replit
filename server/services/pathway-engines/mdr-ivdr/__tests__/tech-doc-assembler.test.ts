@@ -352,11 +352,19 @@ describe('assembleTechDoc — a slot names the leaves it matched by title only',
     expect(titleOnly([leaf({ sectionCode: '5.3.5.4', title: 'Clinical_Evaluation_Report_v2' })], 'clinical-evaluation')).toEqual([0]);
   });
 
-  it('a leaf matched by its outline key, its document type or its code prefix is not title-only', () => {
+  it('a leaf matched by its outline key or its document type is not title-only', () => {
     expect(titleOnly([leaf({ sectionCode: 'II.6.1.g', title: 'Clinical evaluation report' })], 'clinical-evaluation')).toEqual([]);
     expect(titleOnly([leaf({ sectionCode: '5.3.5.4', title: 'Clinical evaluation report', documentType: 'cer' })], 'clinical-evaluation')).toEqual([]);
-    // 'Preclinical bench testing' at 4.2.1 is matched by the '4' code prefix as well as its title.
-    expect(titleOnly([leaf({ sectionCode: '4.2.1', title: 'Preclinical bench testing' })], 'preclinical-clinical')).toEqual([]);
+  });
+
+  /*
+   * 2026-10-05 (g-shonin-and-techdoc-fail-closed): a CTD module prefix is not
+   * device evidence. 'Preclinical bench testing' at 4.2.1 was matched by the
+   * '4' code prefix as well as its title; it is now matched by its title only,
+   * and reported as such.
+   */
+  it("'Preclinical bench testing' at CTD 4.2.1 is a title-only V&V match (no code-prefix match)", () => {
+    expect(titleOnly([leaf({ sectionCode: '4.2.1', title: 'Preclinical bench testing' })], 'preclinical-clinical')).toEqual([0]);
   });
 
   it('a slot with a keyed and a title-only leaf names only the title-only one', () => {
@@ -413,5 +421,56 @@ describe('assembleTechDoc — a Vault-built IVDR file: stability, software and u
     const without = assembleTechDoc({ leaves: leaves.filter((l) => l.title !== 'Stability_report'), regulation: 'ivdr' });
     expect(without.summary.missingRequired).toEqual(['stability']);
     expect(without.summary.ready).toBe(false);
+  });
+});
+
+/*
+ * 2026-10-05 (g-shonin-and-techdoc-fail-closed). codeStarts('4', '5') filled
+ * the required Annex II 6 verification-and-validation slot with any drug CTD
+ * Module 4 or 5 leaf: a drug CSR at 5.3.5.1, or a PMS plan at 5.3.6.
+ */
+describe('assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence', () => {
+  const vv = (leaves: TechDocInputLeaf[]) =>
+    assembleTechDoc({ leaves, regulation: 'mdr' }).sections.find((s) => s.id === 'preclinical-clinical')!;
+
+  it("a drug CSR at 5.3.5.1 leaves 'preclinical-clinical' missing", () => {
+    const r = assembleTechDoc({ leaves: [leaf({ sectionCode: '5.3.5.1', title: 'CSR' })], regulation: 'mdr' });
+    expect(r.sections.find((s) => s.id === 'preclinical-clinical')!.present).toBe(false);
+    expect(r.summary.missingRequired).toContain('preclinical-clinical');
+  });
+
+  it('drug leaves 4.2.3.2 and 5.3.6 fill no V&V slot', () => {
+    expect(vv([leaf({ sectionCode: '4.2.3.2', title: 'Repeat-dose toxicity' }), leaf({ sectionCode: '5.3.6', title: 'PMS plan' })]).present).toBe(false);
+  });
+
+  it('a Vault V&V file named for its test still fills the slot, by title', () => {
+    for (const title of ['Bench_Test_Report_v3', 'Biocompatibility evaluation', 'Electrical safety report', 'Design verification summary']) {
+      const s = vv([leaf({ sectionCode: '4.2.1', title })]);
+      expect(s.present).toBe(true);
+      expect(s.titleOnlyLeafIndices).toEqual([0]);
+    }
+  });
+});
+
+/*
+ * Fix round 2 (review of g-shonin-and-techdoc-fail-closed). The V&V title
+ * phrases added this step also matched plans: 'Biocompatibility evaluation
+ * plan', 'Design verification plan' and 'Bench testing protocol' at 4.2.1
+ * each filled the required Annex II 6 slot. A plan is not the report it plans.
+ */
+describe('assembleTechDoc — a V&V plan or protocol is not V&V evidence', () => {
+  const vv = (title: string) =>
+    assembleTechDoc({ leaves: [leaf({ sectionCode: '4.2.1', title })], regulation: 'mdr' }).sections.find((s) => s.id === 'preclinical-clinical')!;
+
+  it('plans and protocols leave the slot missing', () => {
+    for (const title of ['Biocompatibility evaluation plan', 'Design verification plan', 'Bench testing protocol', 'Electrical_Safety_Test_Plan']) {
+      expect(vv(title).present, title).toBe(false);
+    }
+  });
+
+  it('a report that names its plan or protocol still fills it', () => {
+    for (const title of ['Design verification report per plan DVP-01', 'Bench testing protocol and results', 'Biocompatibility evaluation report']) {
+      expect(vv(title).present, title).toBe(true);
+    }
   });
 });

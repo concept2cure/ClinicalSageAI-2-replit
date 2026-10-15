@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > AnA modes display engine labels, never vendor/model names 7ms
+ × client/src/concept2cure/v2/__tests__/registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > each mode names its effort, in the words of the effort the server runs 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 17 passed (19)

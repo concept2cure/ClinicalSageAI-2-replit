@@ -10,6 +10,12 @@
  */
 
 import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
+import { basisLabel } from '../../../../../../shared/regulatory/regulatory-basis.js';
+import {
+  checkRmfAcceptabilityLanguage,
+  riskAcceptabilityPolicy,
+  type RmfAcceptabilityFinding,
+} from '../../../../market-specs/risk-management-structure.js';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -28,6 +34,24 @@ function numericVal(val: unknown): number | null {
   if (val === undefined || val === null) return null;
   const n = Number(val);
   return Number.isFinite(n) ? n : null;
+}
+
+/** True when the flow's target_markets answer includes the EU. */
+function targetsEu(val: unknown): boolean {
+  const markets = Array.isArray(val) ? val : typeof val === 'string' ? [val] : [];
+  return markets.some((m) => typeof m === 'string' && m.trim().toLowerCase() === 'eu');
+}
+
+/** The EU policy's bases (MDR and IVDR), each once, as a reader sees them. */
+function euAcceptabilityReference(): string {
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const b of [...riskAcceptabilityPolicy('EU_MDR').basis, ...riskAcceptabilityPolicy('EU_IVDR').basis]) {
+    if (seen.has(b.ref)) continue;
+    seen.add(b.ref);
+    labels.push(basisLabel(b));
+  }
+  return labels.join('; ');
 }
 
 function finding(
@@ -110,10 +134,10 @@ const rules: AuditRule[] = [
           'critical',
           this.title,
           this.question,
-          'No risk acceptability criteria (acceptable / ALARP / unacceptable thresholds) are defined in the risk management plan.',
+          'No risk acceptability criteria (acceptable / unacceptable thresholds) are defined in the risk management plan.',
           'ISO 14971:2019 Clause 4.4 requires the risk management plan to include criteria for risk acceptability based on the state of the art and known stakeholder concerns.',
           'ISO 14971:2019 Clause 4.4; ISO/TR 24971 Clause 4.4; ICH Q9(R1) Section 4.3',
-          'Define explicit risk acceptability criteria in the risk management plan, including the boundary between acceptable and unacceptable risk regions and the ALARP zone.',
+          'Define explicit risk acceptability criteria in the risk management plan, including the boundary between acceptable and unacceptable risk. For EU MDR/IVDR, the criteria must require risks to be reduced as far as possible (AFAP), with no economic stopping rule.',
           ['risk_acceptability_criteria', 'risk_management_plan'],
         );
       }
@@ -268,8 +292,8 @@ const rules: AuditRule[] = [
   {
     id: rid('alarp_not_demonstrated'),
     dimension: 'regulatory_alignment',
-    title: 'ALARP Principle Not Demonstrated',
-    question: 'The risk management file does not demonstrate that residual risks have been reduced to as low as reasonably practicable (ALARP). How does the manufacturer justify that no further risk reduction is feasible for risks in the ALARP region?',
+    title: 'Residual-Risk Reduction Not Demonstrated',
+    question: 'The risk management file does not show how residual risks were reduced or why each residual risk is acceptable. What further risk-control options were considered, and why was each residual risk judged acceptable?',
     check(answers) {
       if (isBlank(answers.alarp_demonstration)) {
         return finding(
@@ -278,14 +302,52 @@ const rules: AuditRule[] = [
           'warning',
           this.title,
           this.question,
-          'No evidence of ALARP demonstration is provided for risks falling in the conditionally acceptable region.',
-          'ISO 14971:2019 Clause 7.4 requires that when further risk reduction is practicable, it shall be implemented regardless of whether the risk is in an acceptable region. The ALARP principle is central to EU MDR expectations.',
-          'ISO 14971:2019 Clause 7.4; MDR 2017/745 Annex I Section 2; ISO/TR 24971 Clause 7',
-          'For each risk in the ALARP region, document the analysis of further risk reduction options, including why additional measures were deemed not reasonably practicable (cost-benefit analysis, state of the art review).',
+          'No residual-risk reduction demonstration is provided.',
+          'ISO 14971:2019 clause 7.3 requires each residual risk to be evaluated against the acceptability criteria, clause 7.4 a benefit-risk analysis for a residual risk those criteria do not accept, and clause 8 an evaluation of the overall residual risk. ' +
+            riskAcceptabilityPolicy('EU_MDR').statement,
+          'ISO 14971:2019 clauses 7.3, 7.4 and 8; MDR 2017/745 and IVDR 2017/746 Annex I §2 and §4; ISO/TR 24971:2020 clause 7',
+          'For each residual risk, document the further risk-control options analysed (inherently safe design, protective measures, information for safety), the state of the art considered, and why the residual risk is acceptable. For EU MDR/IVDR, show reduction as far as possible; do not cite cost or economic practicability as a reason to stop.',
           ['alarp_demonstration', 'residual_risks', 'risk_acceptability_criteria'],
         );
       }
       return null;
+    },
+  },
+  {
+    id: rid('eu_acceptability_not_afap'),
+    dimension: 'regulatory_alignment',
+    title: 'EU Risk Acceptability Not AFAP',
+    question: 'The risk management file for an EU MDR/IVDR device states an ALARP or cost-based acceptability policy. How does the manufacturer show that risks are reduced as far as possible without adversely affecting the benefit-risk ratio, with no economic stopping rule?',
+    check(answers) {
+      // MDR/IVDR Annex I governs devices. A pharmaceutical programme's RMF
+      // (ICH Q9) is not under it; device, SaMD, combination-product and
+      // unanswered categories stay in scope.
+      if (answers.product_category === 'pharmaceutical') return null;
+      if (!targetsEu(answers.target_markets)) return null;
+      const hits: Array<{ fieldId: string; finding: RmfAcceptabilityFinding }> = [];
+      for (const fieldId of ['alarp_demonstration', 'acceptable_risk_threshold']) {
+        const value = answers[fieldId];
+        if (typeof value !== 'string') continue;
+        for (const f of checkRmfAcceptabilityLanguage(value, 'EU_MDR')) hits.push({ fieldId, finding: f });
+      }
+      const legacyAlarp = answers.risk_acceptability_criteria === 'ich_q9_alarp';
+      if (hits.length === 0 && !legacyAlarp) return null;
+      const observations = hits.map((h) => `${h.fieldId}: "${h.finding.match}" — ${h.finding.message}`);
+      if (legacyAlarp) observations.unshift('risk_acceptability_criteria: the ALARP principle is selected as the acceptability criterion.');
+      const related = new Set(hits.map((h) => h.fieldId));
+      if (legacyAlarp) related.add('risk_acceptability_criteria');
+      return finding(
+        this.id,
+        this.dimension,
+        'critical',
+        this.title,
+        this.question,
+        observations.join(' '),
+        riskAcceptabilityPolicy('EU_MDR').statement,
+        euAcceptabilityReference(),
+        'Restate the risk-acceptability policy as AFAP: reduce each risk as far as possible without adversely affecting the benefit-risk ratio, and remove ALARP wording and any cost or economic justification for stopping risk reduction from the plan, the thresholds and the residual-risk justifications.',
+        [...related],
+      );
     },
   },
   {

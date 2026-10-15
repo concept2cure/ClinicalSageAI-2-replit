@@ -1,0 +1,5 @@
+# 8. An assumed module is said to be assumed — RED, new canvas case against the unchanged canvas
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > says an assumed module was assumed, and a chosen one plainly 210ms
+   → expected ' Document · Clinical overview · M2 · …' to contain 'M2 (assumed)'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 skipped (6)

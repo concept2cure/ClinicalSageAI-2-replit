@@ -23,6 +23,8 @@ import { readEnforcementMode } from './rlsEnforcement';
 import { tenantSessionVarMissing, tenantSessionVarPresent } from './tenantSessionMetrics';
 import { createScopedLogger } from '../utils/logger';
 
+import { CLEAR_SESSION_SCOPE_SQL, RESET_ENFORCEMENT_SQL, switchPinTerms } from './sessionScope';
+
 const logger = createScopedLogger('tenant-rls-observability');
 
 const WARN_RATE_LIMIT_MS = 30_000;
@@ -39,6 +41,9 @@ const INFRASTRUCTURE_QUERIES = new Set<string>([
   "SELECT set_config('app.current_tenant_id', '', false)",
   "SELECT set_config('app.current_user_role', '', false)",
   "SELECT set_config('app.current_org_id', '', false)",
+  // The release-time clear of sessionScope.ts: empties variables, reads nothing.
+  CLEAR_SESSION_SCOPE_SQL,
+  RESET_ENFORCEMENT_SQL,
 ]);
 
 // DELIBERATELY EXACT-MATCH ONLY. BEGIN/COMMIT/ROLLBACK and any set_config
@@ -152,14 +157,22 @@ function inferCaller(): string {
 // Postgres guarantee, not application discipline: cross-tenant reuse is
 // structurally impossible, even if a query throws.
 
-// One round-trip that sets all three vars LOCAL to the current transaction.
-const TENANT_SET_CONFIG_SQL =
+// One round-trip that sets all four vars LOCAL to the current transaction.
+// app.current_account_id is the account a pre-auth scope is bound to
+// (tenantStore.bindPreAuthAccount); empty otherwise. Written on every scoped
+// statement, so a connection never carries one request's account into another.
+// The isolation switches are pinned LOCAL in the same statement (sessionScope.ts):
+// a switch left on a pooled connection by any path does not reach this
+// transaction. This path runs only while enforcing, so the pin is 'on'.
+const tenantSetConfigSql = (): string =>
   "SELECT set_config('app.current_tenant_id', $1, true), " +
   "set_config('app.current_org_id', $2, true), " +
-  "set_config('app.current_user_role', $3, true)";
+  "set_config('app.current_user_role', $3, true), " +
+  "set_config('app.current_account_id', $4, true), " +
+  switchPinTerms(true);
 
-function scopeParams(scope: TenantScope): [string, string, string] {
-  return [scope.tenantId, scope.orgUuid ?? '', scope.role ?? ''];
+function scopeParams(scope: TenantScope): [string, string, string, string] {
+  return [scope.tenantId, scope.orgUuid ?? '', scope.role ?? '', scope.accountId != null ? String(scope.accountId) : ''];
 }
 
 /**
@@ -194,7 +207,7 @@ async function runQueryScoped(
   let releaseError: Error | undefined;
   try {
     await client.query('BEGIN');
-    await client.query(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+    await client.query(tenantSetConfigSql(), scopeParams(scope));
     const result = (await (client.query as any)(...args)) as QueryResult;
     await client.query('COMMIT');
     return result;
@@ -271,7 +284,7 @@ function wrapClientForScope(client: PoolClient, scope: TenantScope): PoolClient 
             return;
           }
           transactionOpen = true;
-          (originalClientQuery as any)(TENANT_SET_CONFIG_SQL, scopeParams(scope)).then(
+          (originalClientQuery as any)(tenantSetConfigSql(), scopeParams(scope)).then(
             () => callback(null, result),
             (error: unknown) => {
               poisonError = error instanceof Error
@@ -313,7 +326,7 @@ function wrapClientForScope(client: PoolClient, scope: TenantScope): PoolClient 
       async (res: QueryResult) => {
         transactionOpen = true;
         try {
-          await (originalClientQuery as any)(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+          await (originalClientQuery as any)(tenantSetConfigSql(), scopeParams(scope));
           return res;
         } catch (error) {
           poisonError = error instanceof Error

@@ -44,6 +44,7 @@ import {
   ok, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import { programIdForThread } from '../services/chat-thread-helpers';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
@@ -247,18 +248,22 @@ router.get('/ana/threads', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const parsed = threadListQuery.safeParse(req.query);
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const { program_id: pid, pinned, limit = 100 } = parsed.data;
+  const { program_id: rawPid, pinned, limit = 100 } = parsed.data;
+  // The program a thread was held in is chat_threads.program_id (PF-10 S2),
+  // bound at mint time only to a program of the thread's own organization.
+  const pid = rawPid === undefined ? undefined : programIdForThread(rawPid);
+  if (pid === null) return clientError(res, 422, 'program_id must be a UUID');
 
   const filters: string[] = [`organization_id = $1`];
   const args: unknown[] = [orgId];
-  if (pid)    { args.push(pid);     filters.push(`metadata->>'programId' = $${args.length}`); }
+  if (pid)    { args.push(pid);     filters.push(`program_id = $${args.length}`); }
   if (pinned === 'true')  filters.push(`(metadata->>'pinned')::boolean = true`);
   if (pinned === 'false') filters.push(`COALESCE((metadata->>'pinned')::boolean, false) = false`);
   args.push(limit);
 
   try {
     const { rows } = await pool.query(
-      `SELECT id, user_id, organization_id, title, metadata, created_at, updated_at
+      `SELECT id, user_id, organization_id, program_id, title, metadata, created_at, updated_at
          FROM chat_threads
         WHERE ${filters.join(' AND ')}
         ORDER BY (metadata->>'pinned')::boolean DESC NULLS LAST, updated_at DESC
@@ -269,9 +274,12 @@ router.get('/ana/threads', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
     if (code === '42P01' || code === '42703') {
-      /* chat_threads not provisioned, or the metadata projections aren't
-         present yet. Return empty so the surface still renders. */
-      return ok(res, [], { count: 0 });
+      /* chat_threads, or its program_id (20261001c), is not provisioned. This
+         answered an empty list, so "the store is missing" read as "this
+         project has no conversations". Said plainly instead, as
+         routes/chat/threads.ts does. */
+      log.error('list-threads: conversation store not provisioned', { code });
+      return res.status(503).json({ error: 'Conversation store is not provisioned', code: 'THREAD_STORE_UNPROVISIONED' });
     }
     return serverError(res, log, 'list-threads', err);
   }

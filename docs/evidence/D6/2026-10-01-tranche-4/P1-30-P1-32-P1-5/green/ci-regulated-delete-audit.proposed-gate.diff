@@ -1,0 +1,8 @@
+28c28
+< const ROOT = path.resolve(__dirname, '..', '..');
+---
+> const ROOT = process.env.GATE_ROOT || '/home/user/ClinicalSageAI-2-replit';
+58c58
+<   /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent)\s*\(|\bauditService\.|INSERT\s+INTO\s+audit_events\b/i;
+---
+>   /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent|writeChainedAuditRow)\s*\(|\bauditService\.|INSERT\s+INTO\s+audit_events\b/i;

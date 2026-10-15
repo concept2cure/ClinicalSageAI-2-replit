@@ -1,0 +1,211 @@
+# Neighbour unit suites with the fix — 2026-10-01T06:12:00Z; NODE_OPTIONS=--max-old-space-size=3072 npx vitest run <22 files>
+# The one failure (mcp-tenant-tool-policy 'refuses a tool the organization denied') is a 10 s timeout on its first test's cold import of
+# services/ana/AnaToolExecutor at load average 24 on a shared VM; neither the suite nor mcp/tools/runtime.ts imports enterprise-security.
+# Re-run alone with --testTimeout=60000: 3/3 passed (first test 12.08 s). Output of that re-run is appended at the end.
+
+ ✓ server/middleware/__tests__/chainIntegration.test.ts > chain composition: CSRF gates state-changing requests before auth > rejects a POST with no Origin, Referer or Bearer (CSRF runs first: 403, not 401) 69ms
+ ✓ server/middleware/__tests__/chainIntegration.test.ts > chain composition: CSRF gates state-changing requests before auth > rejects a POST from a foreign Origin even with a valid Bearer token 14ms
+ ✓ server/middleware/__tests__/chainIntegration.test.ts > chain composition: auth rejects subjectless / malformed JWTs > rejects a JWT with no subject claim even when CSRF is satisfied 42ms
+ ✓ server/middleware/__tests__/chainIntegration.test.ts > chain composition: auth rejects subjectless / malformed JWTs > rejects a malformed Authorization header that the old replace() would have mangled 10ms
+    "stack": "Error: pg: relation \"users\" does not exist at /app/server/db.ts:42\n    at /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/chainIntegration.test.ts:196:24\n    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)\n    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)\n    at /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/chainIntegration.test.ts:59:90\n    at /home/user/ClinicalSageAI-2-replit/server/middleware/auth.ts:289:46\n    at /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/chainIntegration.test.ts:59:90\n    at /home/user/ClinicalSageAI-2-replit/server/middleware/auth.ts:289:7\n    at /home/user/ClinicalSageAI-2-replit/server/middleware/__tests__/chainIntegration.test.ts:59:90\n    at /home/user/ClinicalSageAI-2-replit/server/middleware/auth.ts:288:5\n    at /home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:407:9",
+ ✓ server/middleware/__tests__/chainIntegration.test.ts > chain composition: prototype-pollution scrub on a real JSON body > strips __proto__ keys from the parsed body the handler receives, strings verbatim 364ms
+ ✓ server/middleware/__tests__/chainIntegration.test.ts > chain composition: errorHandler scrubs 5xx in production > does not leak handler-thrown error messages or details in production 47ms
+ ✓ server/middleware/__tests__/chainIntegration.test.ts > chain composition: requestId hardening > echoes a safe client-supplied request id through to the response 24ms
+ ✓ server/middleware/__tests__/chainIntegration.test.ts > chain composition: requestId hardening > replaces an unsafe client-supplied request id with a generated one 39ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients through authMiddleware 5381ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients/42 through authMiddleware 518ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/clients/42/security-settings through authMiddleware 505ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/ind/anything through authMiddleware 338ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/ind-submissions/SUB-1 through authMiddleware 450ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/documents/by-id/9 through authMiddleware 235ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/projects/1 through authMiddleware 213ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/cer/x through authMiddleware 872ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/manufacturing/y through authMiddleware 450ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 74ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 8ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/pharmacovigilance/z through authMiddleware 249ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 39ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 21ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 15ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 13ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — protected paths > routes unauthenticated /api/fda510k/abc through authMiddleware 191ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 712ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 1ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/auth/login (auth) 316ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/auth/signup (auth) 666ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/login (auth) 276ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/register (auth) 222ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/health (health) 334ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/metrics (metrics) 613ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/csp-report (csp-report) 762ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > documents:read is actually enforced > refuses a key WITHOUT documents:read on both routes 1746ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > documents:read is actually enforced > admits a key WITH documents:read 19ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > documents:read is actually enforced > scopes the query to the organization the key belongs to, never the caller’s input 8ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > an unavailable store is a 503, never an empty page > maps VaultStoreUnavailableError to 503 on list 8ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > an unavailable store is a 503, never an empty page > maps VaultStoreUnavailableError to 503 on fetch-by-id 6ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > an unavailable store is a 503, never an empty page > an unrelated failure is a 500, not a 503 and not an empty page 9ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses /api/v1/documents?programId=not-a-uuid with 400 before touching the store 8ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses /api/v1/documents?classification=SUPER_SECRET with 400 before touching the store 7ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses /api/v1/documents/not-a-uuid with 400 before touching the store 9ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses processingStatus by name instead of ignoring it 15ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > /docs does not advertise a processingStatus filter 5ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > accepts a valid classification case-insensitively 10ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > paging window > caps the page size at 200 and floors a negative offset at 0 6ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > paging window > reports the window so a short page is distinguishable from the end of the cabinet 36ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > fetch by id > 404s for a document that is missing or belongs to another tenant 7ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > fetch by id > returns the document when it resolves 4ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > every grantable scope is advertised and required by a listed endpoint 9ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > every listed endpoint REFUSES a key holding every scope but its own 26ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > every listed endpoint is served — the scope admits it to a real route 35ms
+ ✓ server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > /health reports the endpoint count /docs actually lists 9ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/billing/webhooks/stripe (webhook) 1310ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/billing/dtc-pricing (pricing) 891ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/v1/something (public-api) 542ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — public allowlist > does NOT invoke authMiddleware for /api/firecrawl-webhooks/x (firecrawl-webhook) 1091ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401) 2099ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/regulatory/pathways without an x-api-key (401) 4ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/endpoints/recommend without an x-api-key (401) 5ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/precedent/search without an x-api-key (401) 3ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/trial-design/suggest without an x-api-key (401) 11ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/documents without an x-api-key (401) 5ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/documents/2f1c9d8e-0b3a-4c5d-8e7f-a1b2c3d4e5f6 without an x-api-key (401) 4ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/csr/search when an invalid x-api-key is supplied (401) 6ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/regulatory/pathways when an invalid x-api-key is supplied (401) 8ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/endpoints/recommend when an invalid x-api-key is supplied (401) 5ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/precedent/search when an invalid x-api-key is supplied (401) 8ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/trial-design/suggest when an invalid x-api-key is supplied (401) 9ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/documents when an invalid x-api-key is supplied (401) 14ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/documents/2f1c9d8e-0b3a-4c5d-8e7f-a1b2c3d4e5f6 when an invalid x-api-key is supplied (401) 6ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > leaves /api/v1/health publicly reachable without a key 13ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > leaves /api/v1/docs publicly reachable without a key 4ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > lets an active tenant through 13ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > REFUSES a suspended organization even with a valid, active key 4ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > lets a past-due organization keep READING 6ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > fails CLOSED when the posture cannot be read 12ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > checks the posture on EVERY data route, not just one 20ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > treats /api/health-imposter as protected (not a prefix match) 847ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > matches /api/health/* as a public sub-path 578ms
+ ✓ server/bootstrap/__tests__/api-auth-gate.test.ts > global /api auth gate — boundary cases > treats /api/clients-foo as protected even though /api/auth exists 296ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP nonce + script-src hardening > emits a CSP header with a nonce in script-src 40ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP nonce + script-src hardening > drops unsafe-inline from script-src 6ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP nonce + script-src hardening > includes strict-dynamic in script-src 12ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP nonce + script-src hardening > issues a fresh nonce on every request 37ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP style-src split > emits style-src-elem and style-src-attr instead of style-src 11ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP style-src split > keeps unsafe-inline only on style-src-attr (covers React style={{}} props) 6ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP style-src split > requires a nonce in style-src-elem 10ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP violation reporting > includes report-uri pointing at /api/csp-report (legacy browsers) 12ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP violation reporting > includes report-to referencing the csp-endpoint group (modern API) 6ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP violation reporting > emits a Reporting-Endpoints header binding csp-endpoint to /api/csp-report 8ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP hardening directives > locks base-uri to self 6ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP hardening directives > restricts form-action to self 2ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > CSP hardening directives > sets frame-ancestors to self (clickjacking defense) 2ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > Permissions-Policy > emits a Permissions-Policy header 11ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > Permissions-Policy > denies camera, microphone, geolocation by default 18ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > a client that claims a new address on every attempt is still stopped at the limit 288ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > Permissions-Policy > allows clipboard-write on self (editor copy actions) 26ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > report-only CSP does not carry upgrade-insecure-requests > omits the directive in the development (report-only) policy 39ms
+ ✓ server/middleware/__tests__/csp-nonce.test.ts > report-only CSP does not carry upgrade-insecure-requests > keeps the directive in the enforcing production policy 11ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > control: different clients keep their own allowances 142ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: counts failures, so successful sign-in steps do not use up a shared edge > many viewers behind one CloudFront edge complete SSO steps without a refusal 327ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > exposes every audit-outcome header 5ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > every audit-outcome header actually set by a route is in the list above 89ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window 9ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h] 3ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL 2ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not 5ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in 2ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it 8ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a header naming the session's own organisation 1ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a request with no header 1ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > with no session it neither refuses nor adopts the header (the boundary already answered) 0ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > where it is mounted > applyAuthBoundary mounts the boundary and then the detector on /api 7ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > accepts a normal access token (returns null) 2ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (mfaPending claim) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (pending_mfa role) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects a refresh token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA challenge token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > is case-insensitive on the type claim 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects UNKNOWN explicit token classes (allow-list, not deny-list) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > accepts only an explicit access token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects a token with NO type claim (missing_token_type) 8ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects every non-access class, known or unknown 5ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > every first-party authenticator refuses it, on either entry point 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > refuses any delegated use, known or unknown, and whatever the type claim says 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > the connector, and only a caller naming that use, accepts its own tokens 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > an absent or null claim is not a delegated token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > accepts valid regions without throwing 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > defaults to US_EAST when empty/undefined 7ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects an unknown region 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects a SQL-injection payload that breaks out of the array literal 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > accepts valid snake_case field names 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > defaults to the standard PHI fields when empty/undefined 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects a field name containing a quote / injection characters 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects an uppercase / non-identifier field name 0ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session 22159ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session 54ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session 35ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session 38ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session 37ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend 19ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the /api/v1 drafting routes require a session of their own > POST /api/v1/drafting/start_task is refused without a session 93ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the /api/v1 drafting routes require a session of their own > GET /api/v1/drafting/task_status/task_1 is refused without a session 8ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > control: with the standing readable, the session opens the connector 169ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 125ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > control: with the standing readable, consent issues a code 88ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 66ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a refresh rotates and issues 6ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 2ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a code exchange issues 5ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 1ms
+ ✓ server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > a hundred colleagues sign in and twenty of them mistype a password first — nobody is refused 1704ms
+ ✓ server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > spraying from one address is still stopped, at the per-address failure ceiling 407ms
+ ✓ server/middleware/__tests__/sign-in-office-address.test.ts > production, one office address > the production numbers are the ones this change sets 1ms
+ ✓ server/middleware/__tests__/sanitizeInputOrdering.test.ts > sanitizeInput in the correct (post-parser) order > drops prototype-pollution keys from a real JSON body 123ms
+ ✓ server/middleware/__tests__/sanitizeInputOrdering.test.ts > sanitizeInput in the correct (post-parser) order > is a no-op when registered before the body parser (the bug this ordering prevents) 20ms
+ ✓ server/middleware/__tests__/sanitizeInputOrdering.test.ts > sanitizeInput in the correct (post-parser) order > scrubs query parameters regardless of body-parser position (Express 5 getter-backed req.query) 39ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput body walker (sanitizeObject) > strips __proto__ keys without copying them through 12ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput body walker (sanitizeObject) > strips constructor and prototype keys 4ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput body walker (sanitizeObject) > does NOT HTML-encode string values 1ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput body walker (sanitizeObject) > recurses into nested objects and arrays without HTML-encoding them 1ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput body walker (sanitizeObject) > passes through scalars unchanged 1ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput body walker (sanitizeObject) > stops at max depth instead of infinite recursion 6ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput middleware > scrubs the body in place and calls next() 6ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput middleware > scrubs query and params likewise 1ms
+ ✓ server/middleware/__tests__/sanitizeInput.test.ts > sanitizeInput middleware > does not throw on null/undefined fields 1ms
+ ✓ server/middleware/__tests__/requestId.test.ts > isValidClientRequestId > accepts conservative log-safe shapes 6ms
+ ✓ server/middleware/__tests__/requestId.test.ts > isValidClientRequestId > rejects values that could pollute log streams or correlation systems 1ms
+ ✓ server/middleware/__tests__/requestId.test.ts > isValidClientRequestId > rejects oversized values and empties 0ms
+ ✓ server/middleware/__tests__/requestId.test.ts > isValidClientRequestId > rejects non-strings 0ms
+ ✓ server/middleware/__tests__/requestId.test.ts > requestId middleware > keeps a client-supplied id that matches the safe pattern 6ms
+ ✓ server/middleware/__tests__/requestId.test.ts > requestId middleware > replaces an unsafe client-supplied id with a generated one 1ms
+ ✓ server/middleware/__tests__/requestId.test.ts > requestId middleware > generates an id when no header is supplied 0ms
+ ✓ server/middleware/__tests__/requestId.test.ts > requestId middleware > replaces oversized client-supplied ids 0ms
+ ✓ server/middleware/__tests__/sanitizeInputOrdering.test.ts > the production mount (server/startup/middleware.ts) > mountConcept2cureBodyParser scrubs the parsed Concept2Cure body 2343ms
+ ✓ server/middleware/__tests__/sanitizeInputOrdering.test.ts > the production mount (server/startup/middleware.ts) > mountPreAuthBodyParsers followed by the step-6b sanitizeInput mount scrubs /api bodies 17ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses a viewer before the tool runs, and records the denial 15ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses someone who is no longer a member before the tool runs, and records the denial 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > fails closed when the role cannot be read 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > lets an editor run the governed tool 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > does not ask for a role on a tool that is not governed 1ms
+ ✓ server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > allows http://127.0.0.1:5000 (the dev/E2E runner origin that used to 403) 3ms
+ ✓ server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > allows http://127.0.0.1:3000 (Vite alt dev port) 0ms
+ ✓ server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > still allows http://localhost:5000 (unchanged) 0ms
+ ✓ server/middleware/__tests__/enterprise-security-dev-origins.test.ts > dev CORS/CSRF origin allowlist — loopback IP parity (blank-page fix) > does NOT allow an unlisted origin (the guard still bites) 5ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-v1-mount.test.ts > applySecurityMiddleware: the sign-in limit > is mounted on /api/auth and on /api/v1/auth, the two mounts of the auth router 22ms
+ ✓ server/__tests__/security/auth-hardening.test.ts > auth hardening > rejects missing bearer token even when x-api-key is provided 4ms
+ ✓ server/__tests__/security/auth-hardening.test.ts > auth hardening > rejects malformed bearer header with missing token segment 1ms
+ ✓ server/__tests__/security/auth-hardening.test.ts > auth hardening > derives request actor from authenticated user context, not user-supplied headers 0ms
+ × server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied 10010ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > runs it for an organization that did not deny it 752ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied
+Error: Test timed out in 10000ms.
+ Test Files  1 failed | 21 passed (22)
+      Tests  1 failed | 193 passed (194)
+
+=== re-run: npx vitest run server/mcp/__tests__/mcp-tenant-tool-policy.test.ts --testTimeout=60000
+ ✓ refuses a tool the organization denied 12080ms
+ ✓ runs it for an organization that did not deny it 36ms
+ ✓ does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+      Tests  3 passed (3)

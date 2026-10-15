@@ -1,0 +1,68 @@
+## hosting path reads the soft loader: RED
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read error withholds run_agent; the rest is what the soft read gives 4ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read that resolves applies the deny list to the whole set 4ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a tenant that denies run_agent is never offered it 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 18 passed (21)
+
+## strict read error keeps run_agent: RED
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read error withholds run_agent; the rest is what the soft read gives 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 20 passed (21)
+
+## run_agent offered to every door: RED
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > a door that does not host agents is never offered it 9ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > the kill switch withholds it even from a hosting turn 2ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > in production it is withheld unless switched on (ADR-0015 §2) 1ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read error withholds run_agent; the rest is what the soft read gives 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 17 passed (21)
+
+## a non-hosting door reads strictly: RED
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > a door that does not host agents is never offered it 12ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > the kill switch withholds it even from a hosting turn 3ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > in production it is withheld unless switched on (ADR-0015 §2) 2ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > hosting reads the tenant policy strictly (D25) > a strict read error withholds run_agent; the rest is what the soft read gives 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 17 passed (21)
+
+## kill switch ignored: RED
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > the kill switch withholds it even from a hosting turn 4ms
+ × server/services/ana/__tests__/governed-toolset-sub-agents.test.ts > who is offered run_agent > in production it is withheld unless switched on (ADR-0015 §2) 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 19 passed (21)
+
+## incomplete listed with failures: RED
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > formatTraceForContext > lists a budget-stopped agent on its own, not among attempts to retry 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 20 passed (21)
+
+## agentTraceStatus refines non-success: RED
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a person's Stop stays cancelled; mechanical errors pass through 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 20 passed (21)
+
+## verify inconclusive marked incomplete: RED
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict inconclusive is a success 7ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict nothing_checkable is a success 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 19 passed (21)
+
+## summary from the JSON prefix: RED
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a budget stop is incomplete, and says which budget 20ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict inconclusive is a success 2ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict nothing_checkable is a success 1ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict issues_found is a success 3ms
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > AGENT_FAILED is an error 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 16 passed (21)
+
+## client incomplete branch removed: RED
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-incomplete-trace.test.ts > hydrateToolTrace > an incomplete agent says its result is incomplete, with the trace's summary 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 20 passed (21)
+
+## raw objective in the label: RED
+ × server/services/ana/__tests__/tool-trace-agent.test.ts > the run_agent step label (D21) > a quote inside the objective cannot open a second quoted span 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 20 passed (21)

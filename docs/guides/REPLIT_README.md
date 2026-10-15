@@ -164,32 +164,23 @@ Application logs are structured in JSON format and include:
 
 ### CI/CD Pipeline
 
-Continuous Integration is configured with `.replit-ci.yml`:
+CI runs in GitHub Actions (`.github/workflows/`). The production deploy is
+`.github/workflows/deploy-aws.yml`, onto the AWS stack in `terraform/` (see
+`terraform/README.md`). Its preflight refuses a task definition that lacks any
+part of the production boot contract, and `scripts/ops/terraform-preflight-proof.mjs`
+proves that preflight against what Terraform renders, in `terraform-tests.yml`.
+A single-server install uses `docker-compose.yml`, held to the same contract by
+`npm run ci:compose-boot-contract`.
 
-1. **Lint**: ESLint and Prettier checks
-2. **Type Check**: TypeScript validation
-3. **Test**: Unit and integration tests
-4. **Security**: Dependency and vulnerability checks
-5. **Build**: Application packaging
-6. **Deploy**: Environment-specific deployment
-
-### Deployment Environment
-
-Deployment scripts:
-
-- **Development**: `scripts/deploy-dev.sh`
-- **Staging**: `scripts/deploy-staging.sh`
-- **Production**: `scripts/deploy-prod.sh`
-
-_Note:_ Production deployments must run from the `main` branch and pass all tests and security checks.
+_Retired 2026-10-01:_ `.replit-ci.yml` (a GitLab CI file nothing ran) and
+`scripts/deploy-{dev,staging,prod}.sh`, which pushed a `main` branch to Replit
+remotes that do not exist and migrated with `db:push` instead of the migration
+set. `concept2cure-v2` is the only branch (`CLAUDE.md`, Rule 0).
 
 ### Branch Protection
 
-GitHub repository should have branch protection on:
-
-- `main` - Production code
-- `staging` - Staging code
-- `release/*` - Release branches
+`concept2cure-v2` is the only branch (`CLAUDE.md`, Rule 0), and it is the one
+to protect. There are no `main`, `staging` or `release/*` branches.
 
 Require:
 

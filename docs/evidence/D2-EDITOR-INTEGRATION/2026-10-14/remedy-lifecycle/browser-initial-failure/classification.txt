@@ -1,0 +1,5 @@
+Harness qualification before correction, not product regression evidence.
+The first summary was reconstructed from the recorded 07:05 tool output after an unchanged-source failure replay overwrote main files. The exact diagnostic JSON/screenshots reproduce the same causes before any fixture correction.
+Desktop: the existing creation picker preloads GET /api/authoring/templates, which the synthetic mock omitted. Rejection/retry/acceptance and distinct audit IDs themselves completed.
+Touch: this fixture denied all six unrelated governed acts using a repeated generic reason. Its header consumed most of the canvas; the document scroller was 85 px high. The stacked mobile fixture had not positioned the canvas fully into the viewport when the editing-body measurement was taken.
+The qualified working-owner lifecycle scenario will use the appropriate synthetic allowed-act profile and position the existing canvas in view; the >=250 px width and >=100 px height thresholds remain unchanged. Denial-profile layout is a bounded fixture-composition observation, not a lifecycle regression verdict.

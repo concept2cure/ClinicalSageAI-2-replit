@@ -1,0 +1,280 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued
+{
+  "timestamp": "2026-10-01T03:13:45.045Z",
+  "level": "error",
+  "message": "[auth] Password reset refused: no public origin configured",
+  "context": {
+    "err": "Emailed links need APP_URL, the deployment's public https origin: APP_URL is not set"
+  }
+}
+
+stderr | server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued
+{
+  "timestamp": "2026-10-01T03:13:45.049Z",
+  "level": "error",
+  "message": "[auth] Password reset refused: no public origin configured",
+  "context": {
+    "err": "Emailed links need APP_URL, the deployment's public https origin: APP_URL is not set"
+  }
+}
+
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records the request for a real account 41ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records an attempt against an address with no account 17ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > still says exactly the same thing either way 11ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production, a forged Host does not become the link the victim is emailed 5ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued 7ms
+stdout | server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line
+{
+  "timestamp": "2026-10-01T03:13:45.427Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 7
+  }
+}
+
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line 378ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > refuses, and records, a token another request used first — no second success 475ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records a token that matched no account 5ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records an expired token 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > does not audit a change it refused before looking anything up 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password while signed in is audited too (IAM-17) > records user_password_changed for the account holder, in the account tenant, without the password 438ms
+stdout | server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > setting its password through the activation link
+{
+  "timestamp": "2026-10-01T03:13:47.147Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 7
+  }
+}
+
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > setting its password through the activation link 796ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > an expired link 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a link another request used first 764ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > asking for a reset 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a wrong password 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the account is locked 9ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the address is not yet confirmed 9ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads) 6ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > changing its password while signed in 585ms
+stdout | server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > keeps the default organisation when the account is a member there
+{
+  "timestamp": "2026-10-01T03:13:49.172Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 7
+  }
+}
+
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > keeps the default organisation when the account is a member there 639ms
+stderr | server/routes/__tests__/esignature-audit-atomicity.contract.test.ts > C2C-ESIGN-001 — signature and its Part 11 audit row are atomic > writes both rows on the happy path
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 3554ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 52ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 22ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle 9ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 5ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 5ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > a signer who declared Authorship is recorded as Authorship on the ledger, the signature row and the transmittal 7ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > the dialog's raw token is not a meaning the signature writer accepts — the route's mapping is what makes it one 6ms
+ ✓ server/routes/__tests__/esignature-audit-atomicity.contract.test.ts > C2C-ESIGN-001 — signature and its Part 11 audit row are atomic > writes both rows on the happy path 30ms
+ ✓ server/routes/__tests__/esignature-audit-atomicity.contract.test.ts > C2C-ESIGN-001 — signature and its Part 11 audit row are atomic > binds the audit row to the signature it records 7ms
+ ✓ server/routes/__tests__/esignature-audit-atomicity.contract.test.ts > C2C-ESIGN-001 — signature and its Part 11 audit row are atomic > rolls back the signature when the audit row cannot be written 18ms
+ ✓ server/routes/__tests__/esignature-audit-atomicity.contract.test.ts > C2C-ESIGN-001 — signature and its Part 11 audit row are atomic > the failure is observable — the audit write rejects rather than resolving 44ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused 1241ms
+stderr | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing
+{
+  "timestamp": "2026-10-01T03:13:53.124Z",
+  "level": "error",
+  "message": "[auth] Sign-up refused: e-mail is not configured, so the verification link cannot be sent",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > failed passwords for one address signed in with are refused past the per-account limit — and nobody else is 119ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > wrong second-factor codes for one account are refused past the per-account limit — the next account is not 38ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > a successful sign-in spends none of the account’s allowance 118ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers without a token 1068ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 15ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > an unknown e-mail pays exactly one bcrypt comparison, at the stored hashes' cost, and is still 401 INVALID_CREDENTIALS 1698ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before) 669ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 60ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 69ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 12ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 16ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > a known account with no stored password pays the same one comparison, and is 401 605ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > control: a known account with the wrong password is compared against its own hash only, never the pad 6ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 170ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > re-issues a code for an account without an authenticator through the capped re-issue, never a fresh challenge 9ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > refuses a challenge that has had its limit of codes: 429 MFA_RESEND_LIMIT, no mail, one audit row 23ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login for a known account > control: issues a fresh challenge through createEmailOtp, never the capped re-issue, so the count of codes starts again with the password 89ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 1ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 93ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > address unconfirmed: the refusal names the organisation it belongs to 133ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > account out of use: the refusal names the organisation it belongs to 9ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > locked: the refusal names the organisation it belongs to 13ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > wrong password: the refusal names the organisation it belongs to 18ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > control: its default organisation, where it holds a membership, is named 7ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > the second-factor challenge names the organisation its sign-in lands in 7ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-mail is unknown 1265ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 16ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 10ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 41ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 8ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > the partial token and the challenge name a MEMBERSHIP, never a default the account does not belong to 42ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > with no membership at all, the default organisation is named 14ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: which organisation the sign-in lands in > an account with a membership and no default signs in, into its membership 24ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: which organisation the sign-in lands in > an account with no membership at all is refused, and the refusal is recorded 6ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 139ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 21ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 49ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 97ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > refuses a refresh token issued before password_changed_at: no new session, nothing rotated 124ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints from a refresh token issued after the change, and rotates it (existing behaviour) 18ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints for an account that never changed its password 16ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/logout > revokes the refresh token the client sends in the body, as well as the bearer 13ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > carries the membership role into the successor 215ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > mints nothing and revokes nothing once the account no longer belongs to it 22ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token 10ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a refresh token: nothing minted, nothing revoked 7ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa_challenge token: nothing minted, nothing revoked 4ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa-partial token: nothing minted, nothing revoked 3ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > cannot renew a session the password change ended (iat before password_changed_at) 21ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account is never verified by an emailed code: the emailed-code verifier is not called, and a wrong authenticator code is 401 61ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp 8ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with a recovery code, recorded as backup_code 8ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator is verified by its emailed code, recorded as email 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator whose emailed code is wrong is 401, after the authenticator verifier had its turn 6ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa issues a session only where the account is a member > carries the membership role into the session 5ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa issues a session only where the account is a member > refuses, and records it, when the account no longer belongs to the organisation — no invented role 5ms
+stdout | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+{
+  "timestamp": "2026-10-01T03:14:02.431Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:14:02.434Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+{
+  "timestamp": "2026-10-01T03:14:02.435Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+{
+  "timestamp": "2026-10-01T03:14:02.698Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read
+[part11] MFA enrolment check failed during sign: users table unreachable
+
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > an account taken out of use (VSR-001 F-28) > cannot sign a governed action, with the right password and code 50ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > cannot sign with the password alone 9ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > signs with the password and a current code 9ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused with a wrong code 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read 15ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > signs with the password alone 8ms
+stdout | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED)
+{
+  "timestamp": "2026-10-01T03:14:02.929Z",
+  "level": "info",
+  "message": "[session-inactivity] Sessions ended by a sign-in beyond the account limit",
+  "context": {
+    "account": "7",
+    "limit": 1,
+    "ended": 1
+  }
+}
+
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 110ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 11ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 20ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 29ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED) 28ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > is refused when it presents a code that does not verify — callers record a present code as verified 11ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is required 14ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > must verify 13ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is refused the same way when the signer has no stored password 2ms
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token 49ms
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-01T03:14:04.174Z",
+  "level": "info",
+  "message": "[audit] [AUDIT] authorization:organization_switch",
+  "context": {
+    "userId": "1",
+    "resourceType": "organization",
+    "resourceId": "7",
+    "success": true
+  }
+}
+
+stderr | Object.error (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:156:13)
+{
+  "timestamp": "2026-10-01T03:14:04.186Z",
+  "level": "error",
+  "message": "[audit] Audit event NOT persisted to the canonical store",
+  "context": {
+    "auditEventId": "audit_1790824444174_tpsgiiotz",
+    "action": "authorization.organization_switch",
+    "reason": "the canonical store returned no write result"
+  }
+}
+
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > passes the organization from the verified request, not the signature id alone 25ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > refuses when the request carries no organization 4ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > cannot be told which organization to read — the caller does not get a vote 3ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > rejects a non-numeric id instead of querying on NaN 3ms
+
+ Test Files  17 passed (17)
+      Tests  134 passed (134)
+   Start at  03:13:41
+   Duration  23.38s (transform 10.02s, setup 948ms, import 38.22s, tests 22.43s, environment 5ms)
+

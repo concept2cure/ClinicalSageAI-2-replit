@@ -1,0 +1,844 @@
+# Fix round RED — 2026-10-01T07:10:36Z, HEAD 0e58e794
+# Tree: the earlier round's change, plus a behaviour-preserving extraction of send-message's answer decision into settleActionBlocks (ana-guidance-executor.ts) so a test can drive it. post-processing.ts and every prompt file as before the fix round.
+# NODE_OPTIONS=--max-old-space-size=3072 npx vitest run chat-turn-proposals.test.ts ana-action-block-proposal.test.ts post-processing-action-block-proposal.test.ts action-prompts-propose-only.test.ts
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+{
+  "timestamp": "2026-10-01T07:10:12.840Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:10:12.842Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+{
+  "timestamp": "2026-10-01T07:10:12.842Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a reply of nothing but a provisional block: the draft stays on screen, marked not saved
+[AnA action blocks] 1 block(s); none proposed (provisional or uncertain only)
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+[AnA action blocks] 1 block(s); none proposed (no integer project in scope)
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > prose and a provisional block: the prose is kept and the block’s fate is stated, without repeating the draft
+[AnA action blocks] 1 block(s); none proposed (provisional or uncertain only)
+
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > is lifted as the executor built it 2ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a Part 11 signature demand is lifted too 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a command that ran, or was refused, is not a prompt 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a proposal without the command to retry is not a prompt (nothing to confirm) 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a tool that writes on its own handler is not lifted: it is confirmable only from a held run 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > an unreadable result is not a prompt 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > collects them from the loop’s tool results 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > puts them in executedCommands 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > a proposal: nothing has changed yet 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > only refusals: it does not say anything was executed 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > everything ran: it says so 0ms
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > nothing ran and nothing was proposed: the answer says so (fix round) > an empty list: nothing was changed 10ms
+   → expected 'Action executed successfully.' to be 'Nothing was changed.' // Object.is equality
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a reply of nothing but a provisional block: the draft stays on screen, marked not saved 3ms
+   → expected 'Action executed successfully.' not to match /executed successfully/i
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why 1ms
+   → expected 'Action executed successfully.' not to match /executed successfully/i
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > prose and a provisional block: the prose is kept and the block’s fate is stated, without repeating the draft 1ms
+   → expected 'The stability gap is real; here is ho…' to match /Risk Memo: Accelerated Stability.*Not…/
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a reply without blocks is returned exactly as written 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > send-message stores and returns what settleActionBlocks answers 1ms
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+{
+  "timestamp": "2026-10-01T07:10:16.170Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:10:16.171Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+{
+  "timestamp": "2026-10-01T07:10:16.172Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T07:10:16.382Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T07:10:16.384Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T07:10:16.980Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:10:16.980Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T07:10:16.980Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T07:10:17.028Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:10:17.029Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T07:10:17.029Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+{
+  "timestamp": "2026-10-01T07:10:17.779Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved
+[AnA action blocks] 1 block(s); none proposed (provisional or uncertain only)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+[AnA action blocks] 1 block(s); none proposed (no integer project in scope)
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a reply of nothing but a strong block shows the draft the person is asked to confirm
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a reply of nothing but a strong block shows the draft the person is asked to confirm
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing
+[AnA action blocks] 2 block(s); none proposed (provisional or uncertain only)
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it 7787ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals 4ms
+ × server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved 19ms
+   → expected 'Action executed successfully.' not to match /executed successfully/i
+ × server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why 7ms
+   → expected 'Action executed successfully.' not to match /executed successfully/i
+ × server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > an empty reply with only a navigation chip: nothing was changed 6ms
+   → expected 'Action executed successfully.' to be 'Nothing was changed.' // Object.is equality
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it
+[AnA Command] Blocked create_artifact: RBAC_DENIED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a refused block in a reply of nothing but blocks keeps the draft on screen
+[AnA Command] Blocked create_artifact: RBAC_DENIED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a refused block in a reply of nothing but blocks keeps the draft on screen
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one
+[AnA action blocks] 1 block(s); none proposed (no integer project in scope)
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+[AnA Command] Executed create_artifact: OK — Created "Risk Memo: Accelerated Stability" in section 3.2.S.7 — ID: 501, status: draft.
+
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created 40ms
+   → expected 'Here is the gap and what to do about …' to match /Risk Memo: Accelerated Stability.*pr…/i
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a reply of nothing but a strong block shows the draft the person is asked to confirm 7ms
+   → expected '' to contain '## Summary\nThe drug substance stabil…'
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name 3ms
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing 2ms
+   → expected 'Here is the gap and what to do about …' to match /Risk Memo: Accelerated Stability.*Not…/
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it 15ms
+   → expected 'Here is the gap and what to do about …' to contain 'Not saved. You do not have permission…'
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a refused block in a reply of nothing but blocks keeps the draft on screen 5ms
+   → expected '' to contain '## Summary\nThe drug substance stabil…'
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one 2ms
+   → expected 'Here is the gap and what to do about …' to match /Not saved\. This conversation is not …/
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content 12ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > the action-block module writes nothing itself 2ms
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > both chat paths hand the proposals to the response the sign-off prompt reads 13ms
+   → ana-ri/post-processing.ts calls settleActionBlocks: expected false to be true // Object.is equality
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > a document request is detected, so its prompt is checked 2ms
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > persona.ts (core prompt): nothing says the block saves, creates or executes on its own 8ms
+   → persona.ts (core prompt) still says: “evidence status: [DATA: source] or [PENDING: needs data]
+7. Auto-save as a governed artifact in the correct CTD module
+
+### How to Audit
+Whe”: expected 'Auto-save' to be null
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > the live stream’s assembled prompt (orchestrate): nothing says the block saves, creates or executes on its own 2ms
+   → the live stream’s assembled prompt (orchestrate) still says: “evidence status: [DATA: source] or [PENDING: needs data]
+7. Auto-save as a governed artifact in the correct CTD module
+
+### How to Audit
+Whe”: expected 'Auto-save' to be null
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > lumen-context/base-system-prompt.ts: nothing says the block saves, creates or executes on its own 1ms
+   → lumen-context/base-system-prompt.ts still says: “you MUST emit a structured action block so the platform can execute it automatically. This converts your guidance into real governed artifac”: expected 'execute it automatically' to be null
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > document-routing.ts (draft request): nothing says the block saves, creates or executes on its own 1ms
+   → document-routing.ts (draft request) still says: “MA compliance. When done, include an ```ana-action block to auto-save as a governed artifact.”: expected 'auto-save' to be null
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > persona.ts “Creating Artifacts”: the person confirms, and AnA does not say it was saved 1ms
+   → expected '## Creating Artifacts\n\nWhen you dra…' to match /the person confirms|until they (?:do…/i
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > base-system-prompt.ts “Guidance-to-Action Execution”: the person confirms, and AnA does not say it was created 1ms
+   → expected '## Guidance-to-Action Execution\n\nWh…' to match /the person confirms|until they (?:do…/i
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > document-routing.ts: the draft request asks for a proposal, not a save 1ms
+   → expected '\n\n## Document Generation Request De…' to match /propose saving it as a governed artif…/
+stdout | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > execute_platform_command: on a proposal, nothing ran, tell the person, do not re-issue
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > list_platform_commands: a write comes back as a proposal; a confirm flag is not a confirmation 5341ms
+   → expected 'Invoke any of these with execute_plat…' not to match /re-?issue[^.]*confirm|confirm\s*=\s*…/i
+ × server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > execute_platform_command: on a proposal, nothing ran, tell the person, do not re-issue 4ms
+   → expected 'Governed mutations require confirm + …' not to match /re-?issue[^.]*confirm|confirm\s*=\s*…/i
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved
+AssertionError: expected 'Action executed successfully.' not to match /executed successfully/i
+
+- Expected:
+/executed successfully/i
+
++ Received:
+"Action executed successfully."
+
+ ❯ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts:135:38
+    133|   it('a reply of nothing but a provisional block, beside a navigation …
+    134|     const done = await run(provisional, { collectedNavigation: NAV });
+    135|     expect(done.cleanedResponse).not.toMatch(/executed successfully/i);
+       |                                      ^
+    136|     expect(done.cleanedResponse).toContain(CONTENT);
+    137|     expect(done.cleanedResponse).toMatch(/Not saved\. AnA marked it pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/23]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+AssertionError: expected 'Action executed successfully.' not to match /executed successfully/i
+
+- Expected:
+/executed successfully/i
+
++ Received:
+"Action executed successfully."
+
+ ❯ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts:144:38
+    142|     const done = await run(BLOCK, { streamProjectId: '7abb1c22-1111-42…
+    143|     expect((done.executedCommands ?? []).length).toBe(0);
+    144|     expect(done.cleanedResponse).not.toMatch(/executed successfully/i);
+       |                                      ^
+    145|     expect(done.cleanedResponse).toContain(CONTENT);
+    146|     expect(done.cleanedResponse).toMatch(/Not saved\. This conversatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/23]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > an empty reply with only a navigation chip: nothing was changed
+AssertionError: expected 'Action executed successfully.' to be 'Nothing was changed.' // Object.is equality
+
+Expected: "Nothing was changed."
+Received: "Action executed successfully."
+
+ ❯ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts:151:34
+    149|   it('an empty reply with only a navigation chip: nothing was changed'…
+    150|     const done = await run('', { collectedNavigation: NAV });
+    151|     expect(done.cleanedResponse).toBe('Nothing was changed.');
+       |                                  ^
+    152|   });
+    153| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > persona.ts (core prompt): nothing says the block saves, creates or executes on its own
+AssertionError: persona.ts (core prompt) still says: “evidence status: [DATA: source] or [PENDING: needs data]
+7. Auto-save as a governed artifact in the correct CTD module
+
+### How to Audit
+Whe”: expected 'Auto-save' to be null
+
+- Expected:
+null
+
++ Received:
+"Auto-save"
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:75:131
+     73|     it(`${name}: nothing says the block saves, creates or executes on …
+     74|       const hit = prompt.match(SELF_SAVING);
+     75|       expect(hit?.[0] ?? null, `${name} still says: “${hit ? prompt.sl…
+       |                                                                                                                                   ^
+     76|     });
+     77|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > the live stream’s assembled prompt (orchestrate): nothing says the block saves, creates or executes on its own
+AssertionError: the live stream’s assembled prompt (orchestrate) still says: “evidence status: [DATA: source] or [PENDING: needs data]
+7. Auto-save as a governed artifact in the correct CTD module
+
+### How to Audit
+Whe”: expected 'Auto-save' to be null
+
+- Expected:
+null
+
++ Received:
+"Auto-save"
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:75:131
+     73|     it(`${name}: nothing says the block saves, creates or executes on …
+     74|       const hit = prompt.match(SELF_SAVING);
+     75|       expect(hit?.[0] ?? null, `${name} still says: “${hit ? prompt.sl…
+       |                                                                                                                                   ^
+     76|     });
+     77|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > lumen-context/base-system-prompt.ts: nothing says the block saves, creates or executes on its own
+AssertionError: lumen-context/base-system-prompt.ts still says: “you MUST emit a structured action block so the platform can execute it automatically. This converts your guidance into real governed artifac”: expected 'execute it automatically' to be null
+
+- Expected:
+null
+
++ Received:
+"execute it automatically"
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:75:131
+     73|     it(`${name}: nothing says the block saves, creates or executes on …
+     74|       const hit = prompt.match(SELF_SAVING);
+     75|       expect(hit?.[0] ?? null, `${name} still says: “${hit ? prompt.sl…
+       |                                                                                                                                   ^
+     76|     });
+     77|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > document-routing.ts (draft request): nothing says the block saves, creates or executes on its own
+AssertionError: document-routing.ts (draft request) still says: “MA compliance. When done, include an ```ana-action block to auto-save as a governed artifact.”: expected 'auto-save' to be null
+
+- Expected:
+null
+
++ Received:
+"auto-save"
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:75:131
+     73|     it(`${name}: nothing says the block saves, creates or executes on …
+     74|       const hit = prompt.match(SELF_SAVING);
+     75|       expect(hit?.[0] ?? null, `${name} still says: “${hit ? prompt.sl…
+       |                                                                                                                                   ^
+     76|     });
+     77|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > persona.ts “Creating Artifacts”: the person confirms, and AnA does not say it was saved
+AssertionError: expected '## Creating Artifacts\n\nWhen you dra…' to match /the person confirms|until they (?:do…/i
+
+- Expected:
+/the person confirms|until they (?:do|confirm)|only when they confirm/i
+
++ Received:
+"## Creating Artifacts
+
+When you draft substantial content that the user would want to save (a section draft, risk memo, strategy note, evidence memo, reviewer brief, or rewritten section), include an action signal block at the end of your response so the system can auto-save it.
+
+The block MUST be JSON and MUST include `content`:
+
+```ana-action
+{\"type\":\"memo|strategy_note|reviewer_brief|risk_log|rewrite|review_thread\",\"title\":\"Short descriptive title\",\"content\":\"Full markdown content to save as artifact\",\"confidence\":\"strong|moderate|provisional|uncertain\",\"sectionCode\":\"optional\",\"guidanceSummary\":\"optional\"}
+```
+
+Only include this when you've produced a substantive deliverable (not for casual conversation). The system will auto-create a project artifact from your response.
+"
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:81:15
+     79|   it('persona.ts “Creating Artifacts”: the person confirms, and AnA do…
+     80|     const s = sectionOf(getCorePrompt(), '## Creating Artifacts');
+     81|     expect(s).toMatch(PERSON_CONFIRMS);
+       |               ^
+     82|     expect(s).toMatch(/do not say it was saved|never say it was saved/…
+     83|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > base-system-prompt.ts “Guidance-to-Action Execution”: the person confirms, and AnA does not say it was created
+AssertionError: expected '## Guidance-to-Action Execution\n\nWh…' to match /the person confirms|until they (?:do…/i
+
+- Expected:
+/the person confirms|until they (?:do|confirm)|only when they confirm/i
+
++ Received:
+"## Guidance-to-Action Execution
+
+When your guidance has strong or moderate confidence AND the next step is a standard workflow action, you MUST emit a structured action block so the platform can execute it automatically. This converts your guidance into real governed artifacts.
+
+### Action Block Format
+When you recommend creating a memo, strategy note, reviewer brief, or review thread, emit a fenced block:
+
+```ana-action
+{
+  \"type\": \"memo\",
+  \"confidence\": \"strong\",
+  \"title\": \"Risk Memo: Missing Accelerated Stability Data\",
+  \"content\": \"## Summary\\nThe drug substance stability package lacks 6-month accelerated data required by ICH Q1A(R2)...\",
+  \"sectionCode\": \"3.2.S.7\",
+  \"decisionContext\": \"can_we_proceed\",
+  \"guidanceSummary\": \"RTF-level deficiency requiring resolution before submission\"
+}
+```
+
+### Supported Action Types
+- **memo** — Risk or decision memo for stakeholders
+- **strategy_note** — Strategic analysis with regulatory implications
+- **reviewer_brief** — Proactive response to anticipated reviewer questions
+- **review_thread** — Cross-functional review item requiring input
+- **rewrite** — Revised content for a specific section
+- **risk_log** — Risk register entry
+
+### When to Emit Actions
+- Confidence is strong or moderate (not provisional or uncertain)
+- The recommended action is standard (memo, brief, thread, rewrite)
+- The content is ready to be created (not just a recommendation to create it later)
+- You have enough context to produce the actual artifact content
+
+### When NOT to Emit Actions
+- Confidence is provisional or uncertain — recommend only, do not emit action block
+- The action requires human judgment that you cannot make (e.g., strategic direction)
+- You are uncertain about the correct content
+
+The action block will be automatically processed by the platform. The artifact will be created as a draft, version-tracked, and linked to the current project."
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:87:15
+     85|   it('base-system-prompt.ts “Guidance-to-Action Execution”: the person…
+     86|     const s = sectionOf(BASE_SYSTEM_PROMPT, '## Guidance-to-Action Exe…
+     87|     expect(s).toMatch(PERSON_CONFIRMS);
+       |               ^
+     88|     expect(s).toMatch(/never (?:tell|say)[^.]*(?:created|saved)/i);
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > document-routing.ts: the draft request asks for a proposal, not a save
+AssertionError: expected '\n\n## Document Generation Request De…' to match /propose saving it as a governed artif…/
+
+- Expected:
+/propose saving it as a governed artifact/
+
++ Received:
+"
+
+## Document Generation Request Detected
+**Type:** Nonclinical Overview
+**Category:** ctd_section
+**CTD Section:** 2.4
+**Module:** M2
+**Description:** Integrated nonclinical evaluation
+
+Generate this document NOW. Write complete, submission-ready content — not an outline, not a summary, not placeholders. Use proper regulatory prose with ICH/FDA/EMA compliance. When done, include an ```ana-action block to auto-save as a governed artifact."
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:92:50
+     90|
+     91|   it('document-routing.ts: the draft request asks for a proposal, not …
+     92|     expect(buildDocumentGenerationContext(doc!)).toMatch(/propose savi…
+       |                                                  ^
+     93|     expect(buildDocumentGenerationContext(doc!)).toMatch(PERSON_CONFIR…
+     94|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > list_platform_commands: a write comes back as a proposal; a confirm flag is not a confirmation
+AssertionError: expected 'Invoke any of these with execute_plat…' not to match /re-?issue[^.]*confirm|confirm\s*=\s*…/i
+
+- Expected:
+/re-?issue[^.]*confirm|confirm\s*=\s*true|need params\.confirm/i
+
++ Received:
+"Invoke any of these with execute_platform_command { command, params }. This is ANA's full platform command surface beyond the typed tools; governed mutations need params.confirm=true and params.reason."
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:106:33
+    104|   it('list_platform_commands: a write comes back as a proposal; a conf…
+    105|     const out = JSON.parse(await (await handler('list_platform_command…
+    106|     expect(out.instruction).not.toMatch(RE_ISSUE_WITH_CONFIRM);
+       |                                 ^
+    107|     expect(out.instruction).toMatch(/HUMAN_CONFIRMATION_REQUIRED/);
+    108|     expect(out.instruction).toMatch(/person/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > execute_platform_command: on a proposal, nothing ran, tell the person, do not re-issue
+AssertionError: expected 'Governed mutations require confirm + …' not to match /re-?issue[^.]*confirm|confirm\s*=\s*…/i
+
+- Expected:
+/re-?issue[^.]*confirm|confirm\s*=\s*true|need params\.confirm/i
+
++ Received:
+"Governed mutations require confirm + reason in params. If the result indicates confirmation is required, re-issue with params.confirm=true and params.reason set. Report the result message verbatim."
+
+ ❯ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts:119:33
+    117|     );
+    118|     expect(out.result).toMatchObject({ error: 'HUMAN_CONFIRMATION_REQU…
+    119|     expect(out.instruction).not.toMatch(RE_ISSUE_WITH_CONFIRM);
+       |                                 ^
+    120|     expect(out.instruction).toMatch(/nothing ran/i);
+    121|     expect(out.instruction).toMatch(/do not re-issue/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created
+AssertionError: expected 'Here is the gap and what to do about …' to match /Risk Memo: Accelerated Stability.*pr…/i
+
+- Expected:
+/Risk Memo: Accelerated Stability.*proposed for saving.*Nothing is saved until you confirm it/i
+
++ Received:
+"Here is the gap and what to do about it.
+
+
+
+I can draft the protocol amendment next."
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:113:29
+    111|     expect(out.cleanedText).toContain('I can draft the protocol amendm…
+    112|     // ...and the text says what became of it: proposed, nothing saved…
+    113|     expect(out.cleanedText).toMatch(/Risk Memo: Accelerated Stability.…
+       |                             ^
+    114|   });
+    115|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a reply of nothing but a strong block shows the draft the person is asked to confirm
+AssertionError: expected '' to contain '## Summary\nThe drug substance stabil…'
+
+- Expected
++ Received
+
+- ## Summary
+- The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+- ## Evidence
+- [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+- ## Recommendation
+- Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:120:29
+    118|     const out = await processResponseActions(block({}), turn);
+    119|     expect(proposalsOf(out)).toHaveLength(1);
+    120|     expect(out.cleanedText).toContain(CONTENT);
+       |                             ^
+    121|     expect(out.cleanedText).toMatch(/Nothing is saved until you confir…
+    122|     expect(out.cleanedText).not.toMatch(/executed successfully/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing
+AssertionError: expected 'Here is the gap and what to do about …' to match /Risk Memo: Accelerated Stability.*Not…/
+
+- Expected:
+/Risk Memo: Accelerated Stability.*Not saved\. AnA marked it provisional/
+
++ Received:
+"Here is the gap and what to do about it.
+
+
+
+
+
+I can draft the protocol amendment next."
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:146:29
+    144|     expect(writes.governed).not.toHaveBeenCalled();
+    145|     expect(writes.transaction).not.toHaveBeenCalled();
+    146|     expect(out.cleanedText).toMatch(/Risk Memo: Accelerated Stability.…
+       |                             ^
+    147|     expect(out.cleanedText).toMatch(/Other.*Not saved\. AnA marked it …
+    148|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it
+AssertionError: expected 'Here is the gap and what to do about …' to contain 'Not saved. You do not have permission…'
+
+- Expected
++ Received
+
+- Not saved. You do not have permission to perform 'create_artifact'. This action requires at least the 'member' role in this organization.
++ Here is the gap and what to do about it.
++
++
++
++ I can draft the protocol amendment next.
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:157:29
+    155|     expect(writes.governed).not.toHaveBeenCalled();
+    156|     // The answer says it was not saved, with the refusal — never that…
+    157|     expect(out.cleanedText).toContain(`Not saved. ${p.message}`);
+       |                             ^
+    158|   });
+    159|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a refused block in a reply of nothing but blocks keeps the draft on screen
+AssertionError: expected '' to contain '## Summary\nThe drug substance stabil…'
+
+- Expected
++ Received
+
+- ## Summary
+- The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+- ## Evidence
+- [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+- ## Recommendation
+- Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:163:29
+    161|     rbac.hasRole.mockResolvedValue(false);
+    162|     const out = await processResponseActions(block({}), turn);
+    163|     expect(out.cleanedText).toContain(CONTENT);
+       |                             ^
+    164|     expect(out.cleanedText).toMatch(/Not saved\./);
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one
+AssertionError: expected 'Here is the gap and what to do about …' to match /Not saved\. This conversation is not …/
+
+- Expected:
+/Not saved\. This conversation is not scoped to a project/
+
++ Received:
+"Here is the gap and what to do about it.
+
+
+
+I can draft the protocol amendment next."
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:172:29
+    170|     expect(proposalsOf(out)).toEqual([]);
+    171|     expect(writes.governed).not.toHaveBeenCalled();
+    172|     expect(out.cleanedText).toMatch(/Not saved\. This conversation is …
+       |                             ^
+    173|   });
+    174| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > both chat paths hand the proposals to the response the sign-off prompt reads
+AssertionError: ana-ri/post-processing.ts calls settleActionBlocks: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:209:85
+    207|       const s = read(file);
+    208|       // One answer for both paths: settleActionBlocks decides what th…
+    209|       expect(s.includes('settleActionBlocks('), `${file} calls settleA…
+       |                                                                                     ^
+    210|       expect(s.includes('processResponseActions('), `${file} settles t…
+    211|       expect(/\.proposals\b/.test(s), `${file} must return the proposa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > nothing ran and nothing was proposed: the answer says so (fix round) > an empty list: nothing was changed
+AssertionError: expected 'Action executed successfully.' to be 'Nothing was changed.' // Object.is equality
+
+Expected: "Nothing was changed."
+Received: "Action executed successfully."
+
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:120:34
+    118| describe('nothing ran and nothing was proposed: the answer says so (fi…
+    119|   it('an empty list: nothing was changed', () => {
+    120|     expect(blocksOnlyAnswer([])).toBe('Nothing was changed.');
+       |                                  ^
+    121|   });
+    122| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a reply of nothing but a provisional block: the draft stays on screen, marked not saved
+AssertionError: expected 'Action executed successfully.' not to match /executed successfully/i
+
+- Expected:
+/executed successfully/i
+
++ Received:
+"Action executed successfully."
+
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:141:24
+    139|     const { answer, proposals } = await settleActionBlocks(block({ con…
+    140|     expect(proposals).toEqual([]);
+    141|     expect(answer).not.toMatch(/executed successfully/i);
+       |                        ^
+    142|     expect(answer, 'the draft AnA wrote is dropped').toContain(CONTENT…
+    143|     expect(answer).toMatch(/Not saved\. AnA marked it provisional/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+AssertionError: expected 'Action executed successfully.' not to match /executed successfully/i
+
+- Expected:
+/executed successfully/i
+
++ Received:
+"Action executed successfully."
+
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:150:24
+    148|     const { answer, proposals } = await settleActionBlocks(block(), { …
+    149|     expect(proposals).toEqual([]);
+    150|     expect(answer).not.toMatch(/executed successfully/i);
+       |                        ^
+    151|     expect(answer).toContain(CONTENT);
+    152|     expect(answer).toMatch(/Not saved\. This conversation is not scope…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/23]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > prose and a provisional block: the prose is kept and the block’s fate is stated, without repeating the draft
+AssertionError: expected 'The stability gap is real; here is ho…' to match /Risk Memo: Accelerated Stability.*Not…/
+
+- Expected:
+/Risk Memo: Accelerated Stability.*Not saved\. AnA marked it uncertain/
+
++ Received:
+"The stability gap is real; here is how I would frame it."
+
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:159:20
+    157|     const { answer } = await settleActionBlocks(`${prose}\n\n${block({…
+    158|     expect(answer.startsWith(prose)).toBe(true);
+    159|     expect(answer).toMatch(/Risk Memo: Accelerated Stability.*Not save…
+       |                    ^
+    160|     expect(answer).not.toContain(CONTENT);
+    161|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/23]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  23 failed | 19 passed (42)
+   Start at  07:10:08
+   Duration  16.23s (transform 19.55s, setup 398ms, import 21.97s, tests 13.33s, environment 0ms)
+

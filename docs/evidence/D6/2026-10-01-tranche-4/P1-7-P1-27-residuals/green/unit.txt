@@ -1,0 +1,111 @@
+# working tree; the four new/rewritten unit suites
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > writes the organisation the writer names 13ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > takes the tenant from the request scope when the writer names none 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > a row written with no tenant (platform) is NULL, not absent 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > an explicit null inside a tenant scope writes a platform row 5ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > every row names its tenant > refuses to attribute a row to a tenant other than the session’s 2ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > the tenant is inside the hash, and the cut-over breaks nothing > moving a row to another tenant is detected as tampering 6ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > the tenant is inside the hash, and the cut-over breaks nothing > a row written before the column existed (no organization_id at all) still verifies 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > the tenant is inside the hash, and the cut-over breaks nothing > one chain across tenants and platform rows verifies end to end 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > the tenant is inside the hash, and the cut-over breaks nothing > the verifier’s own row is a platform row even when a tenant asked for it 6ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > search inside a tenant scope is that tenant’s rows only 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > search naming a tenant outside any scope (a job) filters on it 0ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > search naming another tenant from inside a scope is refused before it runs 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > getRecentEntries inside a tenant scope is that tenant’s rows only 0ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > per-tenant reads filter on the column > platform tooling outside any tenant scope still reads the whole store 3ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > boot says plainly when the column is missing > refuses to initialise a store without organization_id, naming the migration 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-tenant-column.test.ts > boot says plainly when the column is missing > initialises a store that has it 5ms
+stdout | server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > names the tenant the auth boundary resolved, not the one a header claims
+🔒 Tamper-proof audit trail middleware enabled (AUDIT_TRAIL_ENABLED=true)
+
+stdout | server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > a request with no tenant is an explicit platform row
+🔒 Tamper-proof audit trail middleware enabled (AUDIT_TRAIL_ENABLED=true)
+
+ ✓ server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > names the tenant the auth boundary resolved, not the one a header claims 84ms
+ ✓ server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > a request with no tenant is an explicit platform row 9ms
+ ✓ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > passes the tenant to the store as the filter 6ms
+ ✓ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > treats organizationId as the same scope request as tenantId 1ms
+ ✓ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > an UNSCOPED read names no tenant — the store applies the caller’s scope itself 7ms
+ ✓ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > a store failure is an error, not an empty audit trail 5ms
+ ✓ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > logAction names the tenant on the tamper-proof row > writes the entry’s tenant as the row’s organisation 2ms
+ ✓ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > logAction names the tenant on the tamper-proof row > a non-numeric or missing tenant is left to the store to resolve from the session 1ms
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:29:07.982Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:29:09.619Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:29:09.619Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:29:09.620Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+✅ Unified Cortex Query API initialized
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:29:14.454Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:29:14.454Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:29:14.461Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > keeps the session’s organisation uuid when the request names another tenant 41ms
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > never publishes a workspace taken from the x-client-workspace-id header 5ms
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > a session with no organisation uuid does not get one from the x-org-uuid header 5ms
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > the tenant-keyed query route refuses (403) a session with no tenant scope, header or not 14ms
+
+ Test Files  4 passed (4)
+      Tests  28 passed (28)
+   Start at  06:29:02
+   Duration  11.76s (transform 9.25s, setup 588ms, import 3.97s, tests 10.76s, environment 0ms)
+
+exit=0

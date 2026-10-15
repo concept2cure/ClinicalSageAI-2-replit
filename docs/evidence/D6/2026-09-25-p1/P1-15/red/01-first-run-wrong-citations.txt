@@ -1,0 +1,9 @@
+# First run of verify-scope-citations.sh against the document as first written (2026-09-26, trunk 6eeee017).
+# Three citations in the document were wrong (/api/qms is at :271; the MCP /register and /oauth/consent lines were relative offsets);
+# the fourth row asserts /socket.io/* is routed by CloudFront, which the document denies — the check fails on a claim the file does not carry.
+MOUNT NOT AT CITED LINE  '/api/qms'  server/bootstrap/register-document-routes.ts:270
+MOUNT NOT AT CITED LINE  '/register'  server/mcp/index.ts:63-65
+MOUNT NOT AT CITED LINE  '/oauth/consent'  server/mcp/index.ts:96-101
+MOUNT NOT AT CITED LINE  "/socket.io/*"  terraform/modules/cloudfront/main.tf:8-23
+citations checked: 43  mounts checked: 99  failures: 4
+exit=1

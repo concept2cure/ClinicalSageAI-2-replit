@@ -1,0 +1,23 @@
+# 2026-10-01T14:58:01Z. ci:compose-boot-contract reads the same preflight list (scripts/ci/check-compose-boot-contract.mjs) — NOT this item's file. Run on the tree with this item's deploy-aws.yml.
+$ npm run ci:compose-boot-contract:selftest; npm run ci:compose-boot-contract
+ok   a complete stack passes
+ok   SMTP_HOST absent
+ok   a bare ${ANTHROPIC_API_KEY}
+ok   an empty default
+ok   RLS_ENFORCE defaulting to off
+ok   hmac signer nobody accepted
+ok   s3 vault with no bucket
+ok   no ALLOWED_ORIGINS
+ok   list-form environment is read
+[ci:compose-boot-contract] self-test: every case behaves
+selftest exit=0
+docker-compose.beta.yml: service "app": AUDIT_ANCHOR_BUCKET is not passed to the app
+docker-compose.beta.yml: service "app": MCP_CLIENT_REDIRECT_ALLOWLIST is not passed to the app
+docker-compose.beta.yml: service "app": MCP_ENABLED is not passed to the app
+docker-compose.beta.yml: service "app": MCP_PUBLIC_URL is not passed to the app
+docker-compose.yml: service "app": AUDIT_ANCHOR_BUCKET is not passed to the app
+docker-compose.yml: service "app": MCP_CLIENT_REDIRECT_ALLOWLIST is not passed to the app
+docker-compose.yml: service "app": MCP_ENABLED is not passed to the app
+docker-compose.yml: service "app": MCP_PUBLIC_URL is not passed to the app
+[ci:compose-boot-contract] 8 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (27 names) plus ALLOWED_ORIGINS.
+exit=1

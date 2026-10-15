@@ -1,0 +1,15 @@
+{
+  "sha": "f787677197949cc83f55c1bfe9aeafa98d357370",
+  "command": [
+    "git",
+    "commit",
+    "-m",
+    "Reuse deficiency context within each AnA enrichment turn"
+  ],
+  "files": [
+    "server/services/ana-ri/context-enrichment.ts",
+    "server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 1.765
+}

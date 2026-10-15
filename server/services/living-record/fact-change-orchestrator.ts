@@ -50,7 +50,9 @@ import {
   classifyBindingImpact,
   factChangeFailure as fail,
   hasProposedValue,
+  isIdentifiedUser,
   isNoopChange,
+  livingRecordAuditActor,
   proposedFactView,
   summarizeImpacts,
   type BindingImpact,
@@ -164,6 +166,11 @@ export async function applyFactChange(
   if (!hasProposedValue(params.newValue)) {
     return fail('invalid', 'newValue must carry a numeric or text value');
   }
+  // 2026-10-15: a change with no actor was applied and audited as 'system' while
+  // its fact version said createdBy null. A governed value changes for a person.
+  if (!isIdentifiedUser(params.actor)) {
+    return fail('invalid', 'an identified user is required to change a governed value');
+  }
 
   const fact = await getFact(params.factId);
   if (!fact || fact.organizationId !== params.organizationId) {
@@ -188,8 +195,9 @@ export async function applyFactChange(
     valueText: nextView.valueText,
     unit: nextView.unit,
     valueType: nextView.valueType,
-    confidence: 1.0, // operator-asserted value
-    createdBy: params.actor ?? null,
+    // 2026-10-15: was 1.0 — an operator's edit is not a confidence score. Unscored.
+    confidence: null,
+    createdBy: params.actor,
   });
 
   const bindings = await listBindingsForFact(newFact.id);
@@ -222,7 +230,7 @@ export async function applyFactChange(
 
   const auditTrail = await recordAuditRow({
     tenantId: newFact.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.governed_change',
     resourceType: 'canonical_fact',
     resourceId: newFact.id,
@@ -423,6 +431,10 @@ export async function establishGovernedFact(
   if (!hasProposedValue(params.value)) {
     return fail('invalid', 'value must carry a numeric or text value');
   }
+  // 2026-10-15: as applyFactChange — a value declared by no one was audited as 'system'.
+  if (!isIdentifiedUser(params.actor)) {
+    return fail('invalid', 'an identified user is required to establish a governed value');
+  }
 
   const existing = await resolveActiveFact(params.programId, entity, field);
   if (existing) {
@@ -444,13 +456,14 @@ export async function establishGovernedFact(
     unit: params.value.unit ?? null,
     comparator: params.comparator,
     valueType: params.value.valueType,
-    confidence: params.confidence ?? 1.0,
+    // 2026-10-15: was `?? 1.0` — a value nobody scored was stored as certain.
+    confidence: params.confidence ?? null,
     createdBy: params.actor,
   });
 
   const auditTrail = await recordAuditRow({
     tenantId: params.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.established',
     resourceType: 'canonical_fact',
     resourceId: fact.id,

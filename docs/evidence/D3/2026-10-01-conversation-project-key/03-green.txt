@@ -1,0 +1,843 @@
+ ✓ server/db/__tests__/pglite-harness-schema-gaps.test.ts > recordSchemaGaps — one recorder at the PGlite seam > records a missing relation on pglite.query and rethrows the error unchanged
+ ✓ server/db/__tests__/pglite-harness-schema-gaps.test.ts > recordSchemaGaps — one recorder at the PGlite seam > records a missing column on pglite.exec
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is placed while the gate is assembling
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > upsertLeaf re-checks the status under the sequence row lock, not only before it
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > removeLeaf re-checks the status under the sequence row lock, not only before it
+ ✓ server/db/__tests__/pglite-harness-schema-gaps.test.ts > recordSchemaGaps — one recorder at the PGlite seam > sees a statement Drizzle issues directly — the path a pool shim never sees
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > does not refuse a sequence of only new leaves that shares no section with the unsent lower one
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a new leaf in a section the unsent lower sequence files (its operation derives from that filing)
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch on the same rule
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > refuses dispatch of a frozen lower sequence once a higher one acting on the same document is already filed
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the higher direction: a lower sequence is not filed behind a locked higher one it depends on > a dispatched, unsent higher sequence refuses the lower one with the remedy that works, not "send it first"
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a pre-existing pair of locked, unsent sequences in a shared section is not deadlocked > lets the lower one dispatch, and holds the higher one until it is sent
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule spans the regions of a submission, as the prior-state loader does > names the region of the sequence it waits on
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > writes the signature with the artifact target, meaning, content binding and verified factors
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > without a verified sign-off it places nothing and signs nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > a failed signature write rolls the placement back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > refuses an artifact outside the caller's organization, writing nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > writes the signature over the ledger, claiming no content hash
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > another organization's project is refused before anything is written, signature included (PF-03)
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > without a verified sign-off creates no package
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > a failed signature write rolls the package back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > writes the reverted content as a new version, bound to that content and version
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > without a verified sign-off writes no version
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > revert_to_version signs the new version in the transaction that writes it > a failed signature write rolls the new version back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > signs first: a self-erasure is signed under the pre-erasure name, bound to the ledger
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > retains regulated artifact content and reports it with the legal basis
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > without a verified sign-off erases nothing
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > a failed signature write rolls the whole erasure back
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > a failing redaction statement returns failure with nothing committed
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > an absent table is reported as not applicable, not as zero, and the erasure completes
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > the erasure record is not optional: a missing request table fails the erasure
+ ✓ server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > tagArtifact into a section that already has an artifact > updates that artifact, merging its metadata
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > IND sequences with their own 1571 and cover letter freeze and dispatch while the lower one is dispatched, not sent
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a replace of the SAME document the unsent lower sequence files is still refused, with the filing-order message
+ ✓ server/db/__tests__/pglite-harness-schema-gaps.test.ts > recordSchemaGaps — one recorder at the PGlite seam > sees a statement inside pglite.transaction, recorded exactly once
+ ✓ server/db/__tests__/pglite-harness-schema-gaps.test.ts > recordSchemaGaps — one recorder at the PGlite seam > sees a statement inside a Drizzle transaction, recorded exactly once
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the ordering rule binds on a shared lifecycle key, not a shared section > a lower IND sequence still freezes and dispatches after a higher one with its own transmittal pair is filed
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document binds by section: a dispatched, unsent one holds a higher sequence filing in that section
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > a withdrawal that names no document still binds the ordering rule by section > a withdrawal naming no document is refused behind a dispatched higher sequence that files in its section
+ ✓ server/db/__tests__/pglite-harness-schema-gaps.test.ts > recordSchemaGaps — one recorder at the PGlite seam > still records a failure the caller swallows — the case the recorder exists for
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > auth + RBAC > 401/403 unauthenticated or wrong role
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > GET / → 200 lists the supported form ids
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /FDA_1571/build → 200 returns a field map + missingRequired
+ ✓ server/db/__tests__/pglite-harness-schema-gaps.test.ts > recordSchemaGaps — one recorder at the PGlite seam > does not record errors that are not schema gaps
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /nope/build → 400 for an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 ready for a complete, consistent IND form set
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 not ready when sponsor name diverges
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 400 without forms[]
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_356H/pdf → X-Form-Required-Blank names the required boxes still empty
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → the header is present and EMPTY when none is blank
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /nope/pdf → 400 for an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /1572/pdf-all → 200 returns base64 PDFs per investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 with an empty documents array when none disclose
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > 401 when unauthenticated
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 200 PDF from stored sponsor
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1572/pdf-from-records → 200 with investigator records
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 404 for an unknown sponsor
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > does not load another org's sponsor (tenant scoping → 404)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 401 when unauthenticated
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 400 without a projectId (a governed artifact must associate with a project)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 404 for a project in another org (never create an artifact under another tenant)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 201 persists a governed form artifact (structured field map) the platform now knows exists
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists ONE governed artifact per investigator for 1572
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists one artifact per DISCLOSING investigator for 3455 (non-disclosing excluded)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 with an empty artifacts array for 3455 when no investigator discloses (certify none on 3454)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 400 for a form that is not per-investigator (use /:formId/artifact instead)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 404 for a project in another org (never create per-investigator artifacts under another tenant)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → the program record, what each form will produce, and nothing placed yet
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / without a program still lists the forms and their plans
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → 404 for a program that is not this organization's
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > POST /FDA_1571/build fills sponsor, drug, indication and IND number from the record — none of them typed
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a stated value wins over the record, and a blank one does not erase it
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a build that NAMES an unresolvable program is refused, not answered from typed fields
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > places the signed form as a Module 1 leaf pointing at the retained bytes
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > re-attaching a corrected signature replaces the leaf instead of filing the form twice
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > files the financial certification at its own catalogued section, not with the forms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses a file that is not a PDF by its bytes, whatever it claims to be
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses the BLANK official template — attaching it would file an unsigned form as a signed one
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not invent a sequence to file into
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not file into a program that has no submission record at all
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > never files into another organization's program
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the open program, and refuses an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the regulatory-author role
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the permission store is REAL, not a phantom > doc_permissions exists with the tenant-keyed shape the gate queries
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > a same-tenant member can still edit a DRAFT section (this is not a blanket deny)
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > a FROZEN document's section cannot be edited, flag off
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > an APPROVED document's section cannot be edited, flag off (status matched case-insensitively)
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > not even a QA principal may edit a FROZEN record
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > the lock covers every guarded section sub-route, not just content PATCH
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > an AI draft cannot be GENERATED into a frozen section
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > an AI draft cannot be ACCEPTED into a frozen section
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > the same AI routes are reachable on a DRAFT section (the gate is the seal, not a blanket deny)
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > a section in ANOTHER tenant is REFUSED by the gate, not merely missed by the handler
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > an unknown section id is refused rather than passed through
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > a NEW section cannot be added to a FROZEN document either
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > two simultaneous transmits: exactly one POST reaches the agency; the other is refused INVALID_STATE
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > a NEW section on a DRAFT document is still permitted
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > a NEW section against ANOTHER tenant's document is a 404, not an FK 500
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > record immutability is UNCONDITIONAL (flag OFF — the deployed default) > an unauthenticated section write is rejected before the gate runs
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a same-tenant member with no grant is DENIED 403 — not 500, not a hang
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a bare QA role does NOT authorise a section it holds no grant on
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a global ADMIN is authorised without a per-object grant, as it is at the gateway
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a revoked grant is not a grant
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > an AUTHOR granted on the document CAN edit its section
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a grant on a DIFFERENT document does NOT authorise this section
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > the doc-level branch stays anchored to the requested section (AND/OR precedence)
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a section-scoped grant authorises ONLY the section it names
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a REVIEWER may review, not edit — the role decides the action
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a valid grant still cannot edit a FROZEN record
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > the fine-grained matrix WORKS when enabled (flag ON) > a grant carrying the wrong tenant cannot be stored at all
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > a permission store that cannot be consulted DENIES > a store error is a 403, never a 500, a hang, or a pass-through
+ ✓ tests/schema-contract/authoring-section-gate.contract.test.ts > a permission store that cannot be consulted DENIES > the immutability lock still holds while the store is unreachable
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a second transmit while the first awaits the agency reads "transmitting", sends nothing and says a send is in progress
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — one send per prepared row, however many transmits race for it > a received transmit leaves the row transmitted with the MDN id
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > NOT_DELIVERED (client certificate refused): back to prepared, and a later transmit is sent
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > REFUSED_BY_AGENCY (HTTP 403): back to prepared
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > DELIVERED_UNCONFIRMED (HTTP 502): transmission_unconfirmed, never back to prepared
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > HTTP 502 from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the claim is released only when the agency cannot hold the report > a reset from a separate-process server that read the whole report, while this process is busy: transmission_unconfirmed, never prepared
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > a real accepting MDN whose 'transmitted' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+ ✓ server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts > ICSR transmit — the agency may hold the report but recording it fails: the row stays locked (MDN close) > DELIVERED_UNCONFIRMED (HTTP 502) whose 'transmission_unconfirmed' UPDATE fails: row 'transmitting', and a second transmit posts nothing
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > REFUSES to complete an approval-gated task
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > leaves BOTH tables untouched when it refuses
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > allows completion once the signature has already been recorded
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > does not gate a task that was never approval-gated
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > AnA update_task and the §11.50 approval gate > does not gate a non-completing transition on a gated task
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > refuses section.approve from the agent path
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > refuses post_market.document.approve from the agent path
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > refuses post_market.document.supersede from the agent path
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > is not satisfied by the model asserting confirmation in params
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > hands back the retry envelope the existing sign-off flow already consumes
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > refuses the e-sign tier too, before any tenant flag is consulted
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > lets a human-confirmed dispatch through the partition
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > treats ordinary agent work as a proposal at the confirm tier, and runs it once a person confirmed
+ ✓ server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts > AnA completes a task: its dependents move with it, on the ledger > unblocks the dependent and records its move, after the completion’s own row
+ ✓ server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts > AnA completes a task: its dependents move with it, on the ledger > a cascade that cannot finish takes the completion back with it, and says so
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > runs the spine authoring → approved with gates, re-verified signatures and a verified audit chain, and refuses to place without a sequence
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > scopes reads to the tenant — another org cannot see the document
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > instantiates the type's blueprint outline at creation (blueprints reach the document)
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > refuses a sign-off with no password, and with a wrong one
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > records the server role, never the one in the request body
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > approving signs: no password, no approval — and the stage does not move
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a signatureRef in the body is never cited: the approval carries a server-minted reference
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a role without signing authority cannot sign, even re-verified
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a viewer can create, sign and advance nothing
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > no user, no write: the actor is the authenticated user or nothing — never "unknown"
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > an illegal jump is refused by the gate and costs the signer no credential check
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the writer's refusals keep their status > a frozen sequence is a 409 in the orchestrator's shape, not a 500
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the writer's refusals keep their status > a sequence that does not exist is a 404
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a review sign-off is recorded once: a second is refused before the ceremony, and the first stands
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a review sign-off outside review is refused, before the ceremony
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > an approval is not recorded by /sign: approving is the transition, which signs
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a revision ends the review round: the next round needs its own sign-off, and the first stays in the trail
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > reading a document recomputes its hashes: an event edited in place reads as broken, at that event
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > request → list → submit → list, all 200 rather than 42P01
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > re-requesting the same reviewer updates the row instead of duplicating it
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > who requested the review comes from the JWT, not from x-user-name
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > an empty reviewer list is refused rather than silently doing nothing
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > another tenant cannot read this document's reviews
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the Part 11 audit read-back returns what the writers write > GET /docs/:docId/audit surfaces the ledger the mutations populate
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the Part 11 audit read-back returns what the writers write > another tenant's audit read returns nothing
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a comment carries its author, so the read path shows a person
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a reply threads to its parent
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > the comment lands in the audit trail, not a second activity table
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > resolving a comment returns 200 — it used to 500 after saving the change
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the deleted orphan surfaces stay deleted > no handler is registered for any of them
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the deleted orphan surfaces stay deleted > and their tables are named nowhere in the router
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > moves the board row with its task.transition ledger row
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names every authoring trigger file the registry names, literally
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table
+ ✓ tests/schema-contract/authoring-section-permissions.contract.test.ts > G-01: object-level section-permission enforcement > enforces least privilege on section edits and closes the OR-branch over-grant
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > commits the record, every text it references and a chain row carrying its hash
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > leaves nothing behind when the chain write fails
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > stores a repeated text once — turn 40 references the history, it does not copy it
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_turn_records SET outcome = 'failed'
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_turn_records
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_turn_records
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_record_blobs SET chars = 0
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_record_blobs
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_record_blobs
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > refuses a record or a text stored under a hash that is not its own
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a record rewritten with a consistent hash no longer matches the chain
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a text that is missing is named
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > controls that could not be read are recorded as unknown, not as none
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > numbers model calls in order, and gives each later call the input staged for it
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so
+ ✓ server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > shows a governed write the moment it is chained (audit_logs), labelled by source
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > never shows another tenant's governed writes (organisation from the verified JWT)
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > merges audit_events (SCIM / projects-management / IVDR) newest-first with their own chain values
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > applies limit across both stores
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the organisation
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses without tenant context (403) rather than reading anything
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 20260926b on the applier > runs after every file that creates what it keys, and before the tenant sweep
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 20260926b on the applier > the creators’ replayed comments name the key, not "no FK" (amended in place, Rule 1)
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'projects': ('regulatory_program_id', 'organization_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'authoring_documents': ('client_program_id', 'tenant_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cre_evidence_sources': ('client_program_id', 'organization_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'c2c_documents': ('project_id', 'org_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > holds one NOT VALID key with its delete action, after a replay
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > refuses another organization’s project and a missing one; admits its own, and none
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > keeps a legacy cross-organization row writable, but never re-keyed and never validated
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > 'cdisc_prm_studies': ('program_id', 'tenant_id') → regulatory_programs (id, organization_id) > the pre-flight lists exactly the rows the key does not cover
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > a GLOBAL_PUBLIC source (no organization) carries no project
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > a program its organization’s records name cannot be moved to another organization
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > fails closed (503, not an empty ledger) when the chained schema is missing
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy links > verifies a legacy row that linked to ANOTHER tenant's head (the pre-fix global recipe)
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > tells apart two accounts that share a display name
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > names the account on an audit_events entry too, and names none for the system
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a document e-sign: signed, by the signature the row records — for that document only
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > claims nothing it cannot link: no signature row, or another organisation’s, leaves the row unsigned
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > before any request: the board is an honest empty queue, not an error
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > the rest of the contract > adds the study-design key column where no applier ever did, once
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > a purge-shaped delete of an organization’s programs > is refused while c2c_documents still names them — both its keys are NO ACTION, whichever fires first
+ ✓ tests/schema-contract/program-same-org-keys.pglite.test.ts > a purge-shaped delete of an organization’s programs > in the operator’s order — clear what the pre-flight lists, delete c2c_documents, then the programs — each own record keeps its organization and loses only its key
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > 401 when unauthenticated (no user)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > 403 when the user lacks the regulatory-author role
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > admin role is allowed through
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 200 with a verdict
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 400 on a bad filingType
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 400 without receiptDate
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 200 with receiptDate
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 200 allows original first; blocks amendment-first
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 400 without required fields
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 200 valid history vs flagged amendment-first
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 400 without sequenceTypes
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio → 200 listing the seeded IND submission
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio/drift/csv → 200 text/csv attachment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 400 on a non-numeric id
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 404 for a missing submission
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 400 without required fields
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 200 E2B(R3) elements + completeness
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr?format=xml → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 400 without an event
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 200 transmittable message + readiness
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message?format=xml → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 400 without gateway/senderId/messageNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 200 with rows + tabulation
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing?format=csv → 200 text/csv attachment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 400 without events/period
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 200 with the LOA model + m1.4.1 leaf intent
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 400 without the required identifiers
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /right-of-reference → 200 with the m1.4.2 model
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /authorized-persons/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 200 not ready when an LOA is missing
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 400 without references[]
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /envelope → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > API discovery > GET /openapi.json → 200 with a generated OpenAPI 3.1 spec
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 201 creates an amendment sequence
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 400 without a 4-digit sequenceNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file with an ICSR → 201 also files a checksummed m5.3.5 leaf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > GET /sequence/:id/manifest → 200 with the filed leaf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate → 200 with a verdict
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/cockpit → 200 with per-sequence gates
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/dashboard → 200
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/drift → 200 with a digest
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > POST /safety-report/file places the Module 1 transmittal pair, and says the 1571 has no document without a sponsor
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > a DRAFT document still takes a template (the lock is the refusal, not the route)
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > tied sections created inside one millisecond: the real freeze seals them and the copy files (201)
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the same document with its two sections swapped after the seal is still refused (409, nothing written)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > POST /safety-report/file attaches the REAL filled Form 1571 to m1.1 when a sponsor is named
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > refuses to attach a Form 1571 that is missing required fields, naming them
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 201
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 400 on a bad file type
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > GET /submission/:id/cross-references → 200 includes the record
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > register is NOT ready while the LOA is not on file, then ready after PATCH
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 400 without a 4-digit sequenceNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 404 for an unknown cross-reference
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > does not leak another org's cross-references
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > PATCH unknown id → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > DELETE /cross-references/:id → 204 then absent
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /submission/:id/safety-reports → 201 drafts a tracked report
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /safety-reports → 422 for a non-reportable event
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/overdue → 200 includes the unfiled past-deadline draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > the cockpit counts the overdue safety report from the register, whatever the body says
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > refuses to file a draft that is not the draft being filed
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > filing with draftId marks it filed and drops it from overdue
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > does not leak another org's safety reports
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > refuses a report with no reporting period dates as 400 VALIDATION, not 500 and not 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /annual-reports → 400 without indNumber/productName
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > overdue with a far-future asOf includes it; filing then drops it
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /submission/:id/amendments → 201 drafts a tracked amendment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /amendments → 400 without indNumber/changedDocuments
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments/:amendmentId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > filing with draftId marks the amendment filed + links its sequence
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a simulated receipt handed back by the transport is never recorded as transmitted (503)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a study report with no study registration number is prepared but not transmit-ready
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > 400 without gateway; 404 transmitting an unknown id
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a seal the router wrote before it ordered ties (storage order) is read in the editor order, not refused
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a legacy seal with two ties inside one millisecond files them in the order sealed (201)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same legacy seal, with those two swapped after it, is refused (409, nothing written)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > sections created in one transaction under a legacy seal are filed, not refused as altered
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same document with the two sections' texts exchanged after the seal is refused (409, nothing written)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a section created later but placed first files where the seal placed it (order_index before created_at)
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply with no findings array instead of completing a run with 0 criticals
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply whose severity is not one the gate knows
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a lost row: the run completes and the result says the row is missing
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a written row says so
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction)
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction)
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > refuses moving an approved document to another module (it would land its verdict on another section)
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a refused status write neither bumps the version nor logs an update (its own approved-list branch is gone)
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a no-op restate logs no lifecycle event either
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program with the mandatory II.6.3.a places it in the stability slot and is ready, in the result, the ZIP and the audit row
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program without the mandatory II.6.3 stability group is not ready, and says the stability slot is missing
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 3 (bench first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 4 (CER first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no meaning: refused 400 before the password is checked, nothing written
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > free text: refused 400 before the password is checked, nothing written
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > another act’s meaning: refused 400 before the password is checked, nothing written
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > enrolled in TOTP: signed with password and a verified code; without the code, refused
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never approved unsigned
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and ledger row
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, nothing written
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > writes exactly one electronic_signatures row, bound to the Vault version, and one chained audit row
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > approving writes its own record, bound to the same content, with the approver named
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > a document with no source the server can read binds the ledger, and says so
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > the signature record refuses UPDATE (control: the §11.70 trigger is in force here)
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash: the stored hash is the Vault row's
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a document with no readable source
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a transition: the trail records the stored one
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > refuses a Vault source that is not this organization's, and records nothing
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot review it: 403 SELF_APPROVAL, before any credential check, and nothing is written
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the uploader of the Vault version cannot review it
+   ✓ ind authoring doc: "Control of Drug Substance (CTD 3.2.S.4)" seeded for BX-512 (3 sections, incl. 3.2.S.4.2; approval sealed)
+   ✓ ind authoring doc: already seeded for BX-512
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot approve it after someone else reviewed it
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator is recorded, and the record cannot be reassigned
+   ✓ ind authoring doc: already seeded for BX-512; its approval was unsealed — sealed now
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review covers the content it was signed over > after a revision that changed the content, the round-1 review does not satisfy the approval gate
+   ✓ ind authoring doc: already seeded for BX-512
+   ✓ ind authoring doc: already seeded for BX-512; its approval was unsealed — sealed now
+ ✓ server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201)
+ ✓ server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112 on a database the previous seed populated (APPROVED, no seal): a re-run seals it and it files as approved
+   ✓ ind authoring doc: already seeded for BX-512 (status DRAFT; not sealed)
+   ✓ ind authoring doc: already seeded for BX-512; its approval was unsealed — sealed now
+   ✓ doc journey: 1 document + 3 sections, 1 revision, 1 comment, 1 freeze seeded into the real authoring store (doc 5d9a1fa9-06f8-4d64-bf91-b77f133fe878)
+ ✓ server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112 does not seal an unsealed APPROVED document whose sections are not the text it seeded
+ ✓ server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112 does not seal an unsealed document that is no longer APPROVED
+ ✓ server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201)
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > with no agency number recorded, is the program's own code — never invented
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > for a submission with no program, says plainly that it is unassigned
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that contradicts the recorded one is refused
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied value that is not a usable identifier is refused, never written into a filename
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /unified: 403, no task, link or ledger row written
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /:id/link: 403, no task, link or ledger row written
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /sync/:module: 403, no task, link or ledger row written
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > PATCH /:id/status: 403, no task, link or ledger row written
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /unified: the task and its task.create row, on one transaction, as the session actor
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /unified: a failed ledger row takes the task with it — 500 AUDIT_WRITE_FAILED, no row
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts > assembleTechnicalFileFromCore multi-source resolution > materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: the link, both blocking arrays and the task.link row, on one transaction
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: a failed ledger row leaves no link and both arrays as they were
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: another organization’s task cannot be linked (404, nothing written)
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: every synced task and its task.create row, on one transaction — this org’s studies only
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: another organization’s task for the same source id does not hide this org’s
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: one failed ledger row rolls back the whole sync
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/Vault is refused (501) without reading another tenant’s approvals — nothing written
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked on X, and records A then B, C, D — all before COMMIT
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for B rolls back A’s completion and every unblocking: 500, nothing changed, nobody notified
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for A itself rolls A back too
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > addressed by its numeric id, the write and its row are keyed on the business key
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > another organization’s task is 404 and untouched
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a task archived after PATCH read it is not moved: nothing written, no ledger row
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a late signature on a completed task approves it with its ledger row, and keeps its completion time
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a second signature on a gate another signer cleared meanwhile does not stack: 409, nothing written
+ ✓ server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s Vault document that carries no organization attribution
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map)
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11)
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > an update that keeps the same document says so
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > allows a placement it cannot judge (the submission records no project), and records both sides
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > AnA memory migrations are on the durable apply path > all five are in C2C_MIGRATION_FILES
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > AnA memory migrations are on the durable apply path > 20260820 (owns the CREATE TABLE) runs before 20260602 (ALTERs it)
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > AnA memory migrations are on the durable apply path > all five run before the tenant-isolation sweep, which must stay last
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > AnA memory migrations are on the durable apply path > 20260602 guards its pgvector dependency with CREATE EXTENSION IF NOT EXISTS
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > annual-report filing flow against PGlite > creates a submission, files an annual sequence, and persists the m1.13 leaf + checksum
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > safety-report filing flow against PGlite > files the 312.32 amendment leaves (m1.12.4 + m5.3.5) with the safety-report checksum
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > IND portfolio against PGlite > lists only IND submissions for the org, with per-submission sequence rollups
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > the pgvector-free pair applies cleanly, twice, and yields the promised shape > conversation_working_memory exists with project attribution
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > the pgvector-free pair applies cleanly, twice, and yields the promised shape > ana_relational_profiles exists — AnA's relational memory has a home
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > the pgvector-free pair applies cleanly, twice, and yields the promised shape > the external-intelligence tables the nightly sweep writes exist
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > the pgvector-free pair applies cleanly, twice, and yields the promised shape > the RIM judgment tables exist — aggregate patterns plus their append-only trail
+ ✓ tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts > the pgvector-free pair applies cleanly, twice, and yields the promised shape > ana_outcome_log exists — the table session bootstrap reads for AnA's past lessons
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > refuses honestly when the program has no authored content in the caller organization
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > filters by the requested regulation — an mdr-only program has no ivdr technical file
+ ✓ tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally
+ ✓ tests/golden-journeys/submission-export-package.journey.test.ts > golden journey — eCTD export to submittable package (canonical) > produces a structurally valid, tenant-isolated, completeness-gated eCTD package
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > renders approved, locked and drafted sections to real PDFs; flags the draft as unfinalized
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never materializes an empty section — it is unresolved with an honest reason
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never renders a section whose parent document belongs to another organization
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step, the answer, and what the door cannot report
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > a turn with no organization is not recorded, and says why
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > the design proposes at least two tasks (the cases below need a selection of more than one)
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created"
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > a task that cannot be written takes the ones before it back: all or none
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > contains the Vault events, each with its chain hash, sequence and source
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > never carries another tenant's rows
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > still carries the audit_events rows it always did
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > narrows to one document when asked, and the manifest says so
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > verifies, and refuses after a one-byte change to a row
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > states the audit_logs chain verdict it was given — and never "intact" without one
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > auth + RBAC > 401 when unauthenticated
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > auth + RBAC > 403 with the wrong role
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > POST /sponsors → 201
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors → 200 includes the created sponsor
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors/:id → 200
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > PATCH /sponsors/:id → 200 updates
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > GET /sponsors/:id → 404 for an unknown id
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > sponsor CRUD lifecycle > cannot identity-spoof organizationId via the body
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > tenant isolation > does not return another org's records
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > agents + investigators > POST /agents → 201
+ ✓ server/routes/__tests__/ind-master-data.contract.integration.test.ts > agents + investigators > POST /investigators → 201
+ ✓ server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a coauthor_documents leaf to a real PDF (unchanged path)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > counts a materialized-but-draft source as unfinalized (approved is not counted)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a unified_documents leaf (latest version content) to a real PDF
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a coauthor_documents leaf with no content as UNRESOLVED, not a title-only leaf
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a unified_documents leaf with no version rows as UNRESOLVED, not a title-only leaf
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports an external vault_documents leaf as UNRESOLVED, never silently dropped
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > treats a prototype-key document_table as unknown, not as an external store
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a NON-PDF upload unresolved (no binary→PDF conversion)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF upload whose file is missing unresolved (fail closed)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a cross-tenant unified_documents leaf as UNRESOLVED (not dropped)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > resolves a MIXED set: coauthor + unified rendered, vault unresolved
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > deduplicates repeated table:id references (renders once)
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports the alias table as absent, not the leaf as sourceless
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports a row that was never aliased as canonicalId null
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > names the authoring document a snapshot represents
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > never crosses the tenant: another organization sees no alias for the same row
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 1 sequence (frozen) places nothing and reports the refusal
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into a 2 sequence (dispatched) places nothing and reports the refusal
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > into an open sequence places the leaf as before, and says so
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports another organization's sequence as a refusal, not as a silent skip
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > reports a section code the submission vocabulary refuses
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > never takes the placement outcome from the model
+ ✓ server/services/ingestion/__tests__/classify-placement.pglite.test.ts > classifyDocument places its leaf through upsertLeaf > does not swallow an error that is not a placement refusal
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > auth gating > 401 when no Authorization header is present
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > auth gating > 401 when the token fails verification
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > auth gating > 401 when the token carries no organizationId
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > auth gating > start route is also auth-gated (401 unauthenticated)
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > input validation (400) > POST /start → 400 without documentId/templateId
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > input validation (400) > POST /:id/reject → 400 without a rejection reason
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > input validation (400) > POST /:id/delegate → 400 without delegateTo
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > input validation (400) > POST /templates → 400 without name/moduleType/steps
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > input validation (400) > POST /start → 400 (error surfaced) for a template with no steps
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > happy path: start → approve → status > starts a workflow, advances on first approval, completes on the last, and reports status
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > happy path: start → approve → status > GET /:workflowId/status → 404 for an unknown workflow
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > happy path: start → approve → status > POST /:id/approve → 400 when the performer is not an assigned approver
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > reject behaviour > rejects the workflow at the current step and marks the document rejected
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > delegate behaviour > reassigns a pending approval to the delegate
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > pending approvals > GET /pending → 200 returns approvals assigned to the current user in their org
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > templates listing + org scoping > GET /templates → 200 lists active templates for the org with step counts
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > templates listing + org scoping > GET /templates does NOT leak another org's templates
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > templates listing + org scoping > GET /templates?moduleType=cer filters by module type
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > runs after the program keys and before the tenant sweep
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > a replay adds nothing: one NOT VALID key per table, ON DELETE CASCADE, ON UPDATE NO ACTION
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > the legacy cross-organization rows did not fail the deploy, and are listed by the preflight
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a legacy row still takes a change that is neither its project nor its organization
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project with records of its organization under it cannot be moved to another organization
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project delete still cascades its own artifacts, packages and conversations, as before
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > 401 when unauthenticated
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > POST file → 201 (org from session); 400 for an unknown artifact code
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > re-filing the same artifact is idempotent (updates, no duplicate)
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > GET completeness reflects stored artifacts (not ready until all essentials filed)
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > does not leak another org's artifacts
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > DELETE → 204 then absent; unknown id → 404
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > changes when a vault leaf is re-pointed at a different document
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > changes when the content pin changes
+ ✓ server/services/part11/__tests__/ectd-sequence-binding-document.pglite.test.ts > ectd-sequence signature binding > does not change for workflow columns the signature must survive
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > materializes the filed bytes and carries the md5 recorded at render time
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses another organization's rendered file — it reads as absent, not as content
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes that no longer match the digest recorded at render time
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses a non-PDF render — the ICSR XML is transmitted, never shipped as a leaf
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses when the object is gone — an unretrievable file is a gap, never an empty leaf
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes whose digest matches but which are not a PDF
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > resolves a vault leaf by its uuid and verifies the pin against content_hash
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > reports a pin that no longer matches the stored content as content_changed — never silently passed
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > is missing when the document belongs to another organization’s programme
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > is missing when no such document exists
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > a vault leaf carrying only an integer names nothing (no_pointer)
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > still resolves an integer-keyed leaf, pin verified against sha256(content)
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > resolves an unpinned leaf and says the pin was never taken
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > is missing for another organization’s document
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > a pinned leaf whose document content was emptied after filing is content_changed (unverifiable)
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > names an unplaceable table rather than looking it up
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > a leaf with no table is no_pointer
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > resolves a batch in input order, reading each distinct pointer once
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — unpinned first
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — fresh first
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > compareDocumentPin (pure) > unpinned / unverifiable / match / mismatch
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > drift guard — one vocabulary across write, read and assembly > looks up exactly the tables the write side verifies and the assembler materializes
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > drift guard — one vocabulary across write, read and assembly > the pure uuid-keyed set is the write side’s
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > each reach the board with a task.create row naming its creator, in the order they were seeded
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > seeded twice, the second run adds no task and no row
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > with no creator to name, nothing is seeded — no board task without its record
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > when the ledger cannot be written, no milestone stays on the board
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > a milestone that cannot be written takes the ones before it back: all or none
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes in a store this server cannot open are refused, and no other store is asked
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > adds chain_seq, the position trigger and the sequence, and replays without error
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > names the same announcement GUC the writer uses (one recipe)
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > assigns increasing chain_seq per tenant and the verifier walks it
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > verifies by commit order even when occurred_at runs backwards
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > refuses a row whose tenant_id differs from the position the writer took (fail closed)
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > records a chained row written without a position as legacy and still verifies it
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > records a row written outside a transaction as legacy (the lock and announcement end with their statement)
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > anchors a tenant's first sequenced row to its legacy head
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > detects a tampered sequenced row and names the segment
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > diagnoses the pre-fix fork: a legacy row committing to genesis instead of its predecessor
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > seals through the same walk: valid when intact, failing closed after a break
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > writes the embedding, so semantic recall (embedding IS NOT NULL) can see the memory
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > auth + validation > 401 when unauthenticated
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > auth + validation > 400 on a malformed create
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > assessment lifecycle > POST → 201 records a snapshot (org from session)
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > assessment lifecycle > records a second, different-type snapshot
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > assessment lifecycle > GET list → 200 newest first; ?type= filters
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > assessment lifecycle > GET /latest → 200 the most recent of a type
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > assessment lifecycle > GET /latest → 404 for a type never recorded
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > assessment lifecycle > GET /:id → 200; unknown id → 404
+ ✓ server/routes/__tests__/regulatory-assessments.routes.test.ts > assessment lifecycle > does not leak another org's assessments
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > safety-report register (312.32) against PGlite > persists a draft and reads it back with the jsonb payload intact
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > safety-report register (312.32) against PGlite > emits the canonical DRAFTED audit action with the persisted id
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > safety-report register (312.32) against PGlite > refuses to persist a non-reportable event (fail-closed) and audits nothing
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > safety-report register (312.32) against PGlite > does not leak or mutate across organizations
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > safety-report register (312.32) against PGlite > marks a draft filed (audited) and drops it from the overdue feed
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > annual-report register (312.33) against PGlite > persists a draft (with the 60-day due date) and reads it back
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > annual-report register (312.33) against PGlite > does not leak or mutate across organizations
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > annual-report register (312.33) against PGlite > overdue feed includes an unfiled past-due draft; filing (audited) drops it
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > annual-report register (312.33) against PGlite > refuses a draft with no reporting period dates (VALIDATION) and persists nothing
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > annual-report register (312.33) against PGlite > a draft without an indEffectiveDate has no due date, and the overdue feed says its deadline is unknown
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > amendment register (312.30/.31) against PGlite > plans + persists a draft and reads the stored plan back
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > amendment register (312.30/.31) against PGlite > does not leak or mutate across organizations
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > amendment register (312.30/.31) against PGlite > marks a draft filed and emits the canonical FILED audit action
+ ✓ server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts > amendment register (312.30/.31) against PGlite > rejects an empty amendment (nothing to file) without persisting
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s unified_documents id
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s ctd_onboarding_documents id
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses a c2c_document_sections row whose PARENT document belongs to another organization
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > persists NO leaf row for any of those refusals
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the latest workflow version for its own unified_documents leaf
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the section body for its own c2c_document_sections leaf
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > drift guard > the tenancy dispatch covers every table the read-side resolver can materialize
+ ✓ server/services/cro/__tests__/cro-portfolio-view-assembler.pglite.integration.test.ts > assembleOrgCroPortfolio > maps a real engagement into the CroSponsor shape with live SOW / gate / lead rollups
+ ✓ server/services/cro/__tests__/cro-portfolio-view-assembler.pglite.integration.test.ts > assembleOrgCroPortfolio > derives every SOW state from the real contract facts, roster in insertion order
+ ✓ server/services/cro/__tests__/cro-portfolio-view-assembler.pglite.integration.test.ts > assembleOrgCroPortfolio > rolls up gate clear / no gates, normalizes post-filing states, and honest-nulls gaps
+ ✓ server/services/cro/__tests__/cro-portfolio-view-assembler.pglite.integration.test.ts > assembleOrgCroPortfolio > resolves the engagement lead from the client-level primary active assignment
+ ✓ server/services/cro/__tests__/cro-portfolio-view-assembler.pglite.integration.test.ts > assembleOrgCroPortfolio > returns [] for an org with no clients and never crosses tenants (INTEGER org scope on every table)
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > is written as a sequenced row, not a legacy one
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > leaves the tenant chain verifiable
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > lists this document's events only, newest first, with who did them
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > names each row's predecessor in the TENANT chain, not the document's previous row
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > carries the tenant chain verdict, not a verdict of its own
+ ✓ server/routes/__tests__/coauthorDocumentsListTotal.test.ts > GET /api/coauthor/documents total > reports the organisation count when the page is capped by limit
+ ✓ server/routes/__tests__/coauthorDocumentsListTotal.test.ts > GET /api/coauthor/documents total > total equals the page length when every row fits, and excludes other organisations
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > is on the applier, after both tables it joins
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > backfills the one-to-one, same-tenant link from the creation audit row
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > leaves a submission two projects both claim unanchored — never resolved by guessing
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > does not anchor to another organization’s project, and reads only creation rows
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > refuses, at the database, a submission anchored to another organization’s project
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > replays cleanly, as every deploy does, and changes nothing it already decided
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > lets a program be deleted: the submission stays, its organization intact, un-anchored
+ ✓ server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts > master-data service against PGlite > creates and reads back a sponsor (org-scoped)
+ ✓ server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts > master-data service against PGlite > does not leak across organizations
+ ✓ server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts > dispatch-snapshot service against PGlite > persists a verdict and lists it newest-first
+ ✓ server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts > dispatch-snapshot service against PGlite > getLatestDispatchSnapshot returns null for a sequence with no snapshots
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > reports ok for an intact, sealed chain
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > detects a tampered row (broken sha256 chain)
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > fails closed (unverifiable, ok=false) when AUDIT_HMAC_KEY is absent
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > is ok for an empty log
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > promote routes the draft as governed drafting > asks for document_drafting and pins no model, on the first call and the retry
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > provider and model come from the response, and the mode is ai_generated
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > a retry that produced the stored text is the one recorded
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the record names the model that actually served > an empty retry keeps the first draft AND the first draft's model
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the conversation-export fallback is recorded as imported, with no model > when the gateway refuses, the stored text is the conversation and no model is named
+ ✓ server/routes/c2c/__tests__/promote-generation-provenance.test.ts > the conversation-export fallback is recorded as imported, with no model > no literal model name reaches the record on any path
+ ✓ tests/routes/concept2cure-project-collaborators.test.ts > Concept2Cure project collaborator routes > returns collaborators from project ownership settings
+ ✓ tests/routes/concept2cure-project-collaborators.test.ts > Concept2Cure project collaborator routes > rejects collaborator IDs outside tenant membership on update
+ ✓ tests/routes/concept2cure-conversation-project-scope.test.ts > Concept2Cure conversation routes enforce project scope > rejects rename when conversation does not belong to URL project
+ ✓ tests/routes/concept2cure-conversation-project-scope.test.ts > Concept2Cure conversation routes enforce project scope > rejects archive when conversation does not belong to URL project
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > a readable summary is stored
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > a model failure stores nothing and answers 503
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > an unreadable reply stores nothing and answers 503
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > an empty reply stores nothing and answers 503
+ ✓ server/routes/c2c/__tests__/summarize-fail-closed.test.ts > POST /conversations/:id/summarize > JSON with no objective stores nothing and answers 503
+ Test Files  79 passed | 1 skipped (80)
+      Tests  833 passed | 2 skipped (835)

@@ -1,0 +1,52 @@
+{
+  "source": "4d1252fde561c663ef6b018f65c918bd087ce91e",
+  "files": [
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 1
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 1
+      }
+    },
+    {
+      "path": "tests/db/master-enterprise-requests.dbtest.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 4
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 4
+      }
+    },
+    {
+      "path": "tests/db/organizations-writes.dbtest.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "errors": 0,
+  "warnings_before": 5,
+  "warnings_after": 5
+}

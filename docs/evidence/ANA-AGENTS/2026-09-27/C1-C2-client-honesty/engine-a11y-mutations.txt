@@ -1,0 +1,4 @@
+== M1 Home pill declares a menu again:       Tests  1 failed | 4 passed (5)
+== M2 selection not exposed:       Tests  3 failed | 2 passed (5)
+== M3 focus not returned:       Tests  1 failed | 4 passed (5)
+== M4 rail trigger names no popup:       Tests  1 failed | 4 passed (5)

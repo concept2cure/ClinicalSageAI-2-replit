@@ -1,0 +1,16 @@
+# 2026-10-08T06:31:40Z npx vitest run --config vitest.config.ts server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts
+# sources: working tree (the fix)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id NaN, never sending it 3ms
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id 0, never sending it 1ms
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id -1, never sending it 0ms
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id 1.5, never sending it 0ms
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > passes an integer project id through 1ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  06:31:41
+   Duration  683ms (transform 223ms, setup 116ms, import 145ms, tests 10ms, environment 0ms)
+

@@ -1,0 +1,45 @@
+# g-stf-name-tags-and-shape GREEN (step test 2026-10-05T12:10:32Z; fix round 1 2026-10-05T13:07:59Z)
+# 1) the step's test
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis 2ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves 9ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf> 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > escapes XML metacharacters in titles 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > skips and counts untagged (no studyId) leaves 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > throws when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order 6ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml 115ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list 7ms
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+
+# 2) fix round 1: hand-off parts (b)-(d) applied in tree (submission-center-tool-defs.ts, submission-center-tools.test.ts,
+#    stf-packaging.test.ts); part (a), the AnaToolExecutor.ts generate_stf mapping, is already in HEAD via 4b793d04.
+#    Every test importing regional-packager / stf-generator / the qualification harness, plus submission-center-tools:
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > slugifies study ids to folder-safe names 5ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > computes the common directory of package paths 1ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > generates a per-study stf-<study-id>.xml in each study folder, cross-linked to that study's leaves 217ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > is a no-op when there are no study leaves (bundle.stf undefined) 37ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a leaf has no index.xml leaf ID 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ Test Files  19 passed (19)
+      Tests  282 passed (282)
+
+# 3) full tsc --noEmit -p . (through the lock), fix round 1: 0 errors in the repo (was 1: AnaToolExecutor.ts TS2345, missing indexLeafId/indexRelPath)
+# 4) eslint, working copy vs HEAD (warning count): submission-center-tool-defs.ts 1/1, submission-center-tools.test.ts 2/2,
+#    stf-packaging.test.ts 0/0, regional-packager.ts 4/4. AnaToolExecutor.ts 101/100: the extra complexity warning is on
+#    assess_device_evidence_structure (another lane's uncommitted g-rmf-jurisdiction-input edit), not on generate_stf.

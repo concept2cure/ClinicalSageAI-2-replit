@@ -1,0 +1,258 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T19:35:20.155Z","pid":2522,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:35:20.156Z","pid":2522,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:35:20.156Z","pid":2522,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-review-fix-round.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-review-fix-round.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-review-fix-round.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T19:35:21.212Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-01T19:35:21.215Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.218Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.305Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stdout | tests/db/compliance-review-fix-round.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T19:35:21.306Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T19:35:21.308Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.357Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.360Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.373Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.375Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.393Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.395Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.408Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.410Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.427Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.429Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > probe (a) as found is refused, and no access review is recorded 41ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a period that ended more than three months ago is refused, naming the date it was due 20ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line for an account that is not a member of this organisation is refused 18ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a line that states a role the account does not hold is refused 20ms
+{"level":40,"time":"2026-10-01T19:35:21.447Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.449Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.461Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.463Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.476Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.478Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.491Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.493Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.516Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.518Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.530Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.531Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.540Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.543Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an export id this organisation never ran is refused 14ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > an access review that names a run of the other report is refused 15ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > a data hash that is not the run's is refused 14ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (a): an old period, a line for someone who is not a member, a run that never happened > another organisation's run is refused 39ms
+{"level":40,"time":"2026-10-01T19:35:21.569Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.572Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.581Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.585Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.622Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.624Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.658Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.660Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > probe (b) as found is refused, and the integrity attestation still says none 38ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (b): an audit-trail review of an old period, naming no run > an audit-trail review of the recent quarter that names no report run is refused 12ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69 (c): completeness is decided on current roles and memberships > probe (c) as found is refused, naming every account that holds a privileged role now 22ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce that has not been carried out is refused 29ms
+{"level":40,"time":"2026-10-01T19:35:21.685Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.686Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.697Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.699Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.719Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.721Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.739Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.741Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.764Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.767Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a reduce whose new role is in effect is accepted 35ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an active member is refused 12ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove the product recorded (member_removed) is accepted 21ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove whose recorded role is not the line's role is refused 19ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove SCIM provisioning recorded (scim.user.deactivated) is accepted 24ms
+{"level":40,"time":"2026-10-01T19:35:21.793Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.795Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.819Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.821Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.831Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.833Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.855Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.857Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.870Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.872Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of a member whose account is deactivated is accepted 28ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: a reduce or remove is recorded once it has been carried out > a remove of an account this organisation has no recorded removal of is refused 18ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a review signed today of a period that ended four months ago is overdue today 35ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period that leaves days unreviewed after the last signed review is refused, naming the day to start from 12ms
+{"level":40,"time":"2026-10-01T19:35:21.889Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.891Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.932Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.934Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.948Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.950Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.968Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:21.970Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: the clock runs from the end of the period reviewed > a period starting the day after it is accepted, signed, and current until three months after it ends 80ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a role changed after the draft refuses the signature, and nothing is signed 51ms
+{"level":40,"time":"2026-10-01T19:35:21.999Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:22.001Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:22.017Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:22.018Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:22.043Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:22.045Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:22.062Z","pid":2522,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:22.063Z","pid":2522,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft whose period is stale when it is signed is refused, and nothing is signed 41ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-69: signing checks the record again, as it then is > a draft that no longer meets the draft rules is refused at signing, and nothing is signed 42ms
+ ✓ tests/db/compliance-review-fix-round.dbtest.ts > DP-70: the review records are retained at offboarding, and the tenant export returns them > the tenant export carries the organisation's review records, signed ones included 865ms
+{"level":30,"time":"2026-10-01T19:35:24.236Z","pid":2541,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:35:24.238Z","pid":2541,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:35:24.238Z","pid":2541,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-review-records.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-review-records.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-review-records.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T19:35:24.603Z', poolSize: 1 }
+
+stdout | tests/db/compliance-review-records.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T19:35:24.607Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T19:35:24.607Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.610Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.658Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.661Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.705Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.706Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.744Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.746Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.805Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.806Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.822Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.824Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.862Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.864Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.883Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.886Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > drafts, then signs: record, signature and ledger pair in one transaction, bound to the content hash 107ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a review written through the ceremony > an audit-trail review is the same record, of the other kind 57ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > no password, no meaning: 400, the record stays a draft, nothing is signed 39ms
+{"level":40,"time":"2026-10-01T19:35:24.903Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.906Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.929Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.931Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.944Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.946Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.967Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:24.970Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a meaning other than review is refused before the password is checked 41ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a wrong password is refused, and nothing is written 55ms
+{"level":40,"time":"2026-10-01T19:35:24.997Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.000Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.020Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.021Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.046Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.048Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.070Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.073Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.085Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.087Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > only the reviewer who drafted it signs it 50ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > an access review that leaves a privileged account without a decision is refused 23ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > a member who is not an audit reader cannot draft one 14ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare UPDATE to signed is refused at COMMIT 35ms
+stdout | tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted
+[database] Database connection successful { timestamp: '2026-10-01T19:35:25.128Z', poolSize: 1 }
+
+stdout | tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted
+[database] Database connection successful { timestamp: '2026-10-01T19:35:25.129Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T19:35:25.131Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.133Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.163Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.164Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-records.dbtest.ts > signing without the ceremony is refused > as the runtime role, a bare INSERT of a signed row is refused at COMMIT 9ms
+{"level":40,"time":"2026-10-01T19:35:25.281Z","pid":2541,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:25.282Z","pid":2541,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its outcome is refused 11ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its decisions is refused 10ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: its signature is refused 5ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: back to draft is refused 6ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the runtime role: a delete is refused 6ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > as the table owner: an update, a delete and a truncate are refused 26ms
+ ✓ tests/db/compliance-review-records.dbtest.ts > a signed row cannot be updated or deleted > a second signature on the same record is refused 36ms
+{"level":30,"time":"2026-10-01T19:35:26.762Z","pid":2567,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:35:26.764Z","pid":2567,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:35:26.764Z","pid":2567,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-review-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-review-reports.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-review-reports.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T19:35:27.153Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-01T19:35:27.157Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stdout | tests/db/compliance-review-reports.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T19:35:27.158Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T19:35:27.160Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.213Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.215Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.254Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.256Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.277Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.280Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.305Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.307Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.346Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.348Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.375Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.377Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.443Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.445Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.470Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.472Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the user access review: "No access review recorded" 26ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the audit trail integrity attestation: "No audit trail review recorded" 27ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > with no review recorded, each report says so and gives no date > the review list says none for each kind 23ms
+{"level":40,"time":"2026-10-01T19:35:27.520Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.521Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.544Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.547Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.570Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.573Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.602Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.604Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the user access review as of today names the review signed today, current 26ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > as of yesterday the latest is the one signed four months ago, and it is overdue 26ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the audit trail integrity attestation names the audit-trail review, not the access review 32ms
+{"level":40,"time":"2026-10-01T19:35:27.629Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.631Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.643Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.644Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.662Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.663Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.673Z","pid":2567,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:35:27.674Z","pid":2567,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > organisation B's reports and list see none of A's reviews 42ms
+ ✓ tests/db/compliance-review-reports.dbtest.ts > after signed reviews, the reports name the latest and flag an overdue one > the review list names A's records and the status of each kind 40ms
+
+ Test Files  3 passed (3)
+      Tests  51 passed (51)
+   Start at  19:35:17
+   Duration  10.07s (transform 1.91s, setup 149ms, import 1.44s, tests 7.80s, environment 0ms)
+
+exit 0

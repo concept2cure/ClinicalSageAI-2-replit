@@ -1,0 +1,73 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a follow-up in the same conversation carries the turns before it
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled headers read and ignores its late result
+[useAnaChat] loadThread failed: History read aborted
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a follow-up in the same conversation carries the turns before it
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a new conversation started and asked in one tick carries none of the last one
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a new conversation started and asked in one tick carries none of the last one
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled body read and ignores its late result
+[useAnaChat] loadThread failed: History read aborted
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a conversation loaded and asked in one tick carries its own turns, not the one it replaced
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a conversation loaded and asked in one tick carries its own turns, not the one it replaced
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a follow-up in the same conversation carries the turns before it 21ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a new conversation started and asked in one tick carries none of the last one 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a conversation loaded and asked in one tick carries its own turns, not the one it replaced 5ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled headers read and ignores its late result 26ms
+   → expected DOMException{ stack: 'AbortError: Hi…', …(1) } to be an instance of Error
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled body read and ignores its late result 4ms
+   → expected DOMException{ stack: 'AbortError: Hi…', …(1) } to be an instance of Error
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > clears the deadline after a successful read 3ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > clears the previous transcript on switch and blocks a failed selection until retry succeeds
+[useAnaChat] loadThread non-ok: 503
+[useAnaChat] loadThread failed: loadThread 503
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > allows an explicit new conversation after a failed history read
+[useAnaChat] loadThread failed: Offline
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps the latest selected thread when an older response arrives last 26ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps loading and refuses send while the newer history is still pending 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > refuses a same-tick send and ignores a superseded response still reading its body 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > ignores an obsolete load failure without surfacing an error on the newer selection 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > reset cancels pending history so it cannot replace a newly asked conversation 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > unmount cancels a history read and ignores its late result 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > clears the previous transcript on switch and blocks a failed selection until retry succeeds 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > allows an explicit new conversation after a failed history read 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled headers read and ignores its late result
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled body read and ignores its late result
+AssertionError: expected DOMException{ stack: 'AbortError: Hi…', …(1) } to be an instance of Error
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts:34:21
+     32|     await act(async () => { await vi.advanceTimersByTimeAsync(15_000);…
+     33|     expect(finished).toBe(true);
+     34|     expect(failure).toBeInstanceOf(Error);
+       |                     ^
+     35|     expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
+     36|     expect(result.current.isLoadingThread).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 12 passed (14)
+   Start at  22:09:32
+   Duration  1.17s (transform 762ms, setup 447ms, import 913ms, tests 132ms, environment 1.48s)
+

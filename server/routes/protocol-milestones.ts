@@ -16,8 +16,11 @@ import { addMilestoneTx, setMilestoneStatusTx, listMilestones, getTimeline } fro
 import { recordProtocolMilestoneAdded, recordProtocolMilestoneStatus, recordProtocolTimelineView } from '../services/protocol-milestones-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('protocol-milestones');
 // A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
 router.use(requireEditorAccessForWrites);
 
@@ -37,7 +40,7 @@ const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, BAD_INPUT: 400 };
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) { res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } }); return; }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the protocol milestone request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 const MTYPE = z.enum(['protocol_approval', 'irb_submission', 'site_activation', 'first_subject', 'last_subject', 'enrollment_complete', 'database_lock', 'csr', 'closeout', 'other']);

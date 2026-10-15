@@ -351,7 +351,7 @@ export async function executeBundle(
 // ITEM EXECUTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type ItemExecutionResult =
+export type ItemExecutionResult =
   | { outcome: 'executed'; priorState: string; newState: string }
   | { outcome: 'prepared'; preparedAction: string; confidence: ResolutionConfidence }
   | { outcome: 'blocked'; reason: string };
@@ -387,7 +387,8 @@ async function executeItem(
 /**
  * Execute supersession: create a new version and mark the old one superseded.
  */
-async function executeSupersede(
+/** Exported for direct testing, as markObjectSuperseded and stageRewrite are. */
+export async function executeSupersede(
   organizationId: number,
   userId: number,
   bundle: ResolutionBundle,
@@ -396,6 +397,23 @@ async function executeSupersede(
   // Determine the prior state
   const priorState = await getObjectState(organizationId, item.objectType, item.objectId);
 
+  /* A state that could not be established is not permission. getObjectState
+     answers 'unknown' when its read FAILED, when the object is not found in
+     this tenant, and for a type it does not model — and this guard used to deny
+     only 'locked' and 'superseded', so all three fell through to a supersede.
+     A lock timeout on the read — which a deploy's unconditional ALTER TABLE
+     replay can produce — therefore let the executor supersede the very locked
+     record the next line exists to refuse. */
+  if (priorState === 'unknown') {
+    return {
+      outcome: 'blocked',
+      reason:
+        `Cannot supersede ${item.objectType} ${item.objectId} — its current state could not be ` +
+        'established (the read failed, or the object is not in this organization). ' +
+        'A lock that cannot be read is treated as a lock.',
+    };
+  }
+
   if (priorState === 'locked') {
     return {
       outcome: 'blocked',
@@ -403,39 +421,57 @@ async function executeSupersede(
     };
   }
 
-  if (priorState === 'superseded') {
+  /* For an artifact, superseded IS archived: markObjectSuperseded writes
+     status = 'archived', and getObjectState reads the status column back — so
+     an already-superseded artifact reads 'archived', never 'superseded', and
+     this check could not fire for the one type it mattered most for. */
+  if (priorState === 'superseded' || (item.objectType === 'artifact' && priorState === 'archived')) {
     return {
       outcome: 'blocked',
       reason: `Cannot supersede ${item.objectType} ${item.objectId} — object is already superseded.`,
     };
   }
 
-  // Record the supersession
+  /* Record, confirm and archive in ONE transaction. They were three separate
+     commits, and the archive swallowed its own failure, so a supersede could
+     leave a CONFIRMED supersession record beside an artifact that was never
+     archived — and report outcome 'executed'. The artifact then still counted
+     toward submission readiness (submission-ops readiness-engine counts
+     approved / locked as ready) while the resolution said it was replaced. */
   try {
-    const record = await recordSupersession(organizationId, userId, {
-      projectId: bundle.projectId,
-      supersededObjectType: item.objectType,
-      supersededObjectId: item.objectId,
-      supersededObjectTitle: item.objectTitle ?? undefined,
-      successorObjectType: item.objectType,
-      successorObjectId: `${item.objectId}-v2`,
-      successorObjectTitle: item.objectTitle ? `${item.objectTitle} (updated)` : undefined,
-      rationale: `Superseded as part of resolution bundle ${bundle.id}. ${item.actionDescription}`,
-      resolutionPlanId: bundle.planId ?? undefined,
-      bundleId: bundle.id,
+    return await db.transaction(async (tx) => {
+      const record = await recordSupersession(organizationId, userId, {
+        projectId: bundle.projectId,
+        supersededObjectType: item.objectType,
+        supersededObjectId: item.objectId,
+        supersededObjectTitle: item.objectTitle ?? undefined,
+        successorObjectType: item.objectType,
+        successorObjectId: `${item.objectId}-v2`,
+        successorObjectTitle: item.objectTitle ? `${item.objectTitle} (updated)` : undefined,
+        rationale: `Superseded as part of resolution bundle ${bundle.id}. ${item.actionDescription}`,
+        resolutionPlanId: bundle.planId ?? undefined,
+        bundleId: bundle.id,
+      }, tx);
+
+      // Confirm the supersession
+      await confirmSupersession(organizationId, userId, record.id, tx);
+
+      // Update the object state to reflect supersession. A write that changed
+      // nothing rolls the record and its confirmation back with it.
+      const archived = await markObjectSuperseded(organizationId, item.objectType, item.objectId, tx);
+      if (!archived) {
+        throw new Error(
+          `the ${item.objectType} was not archived — no row matched in this organization, ` +
+            'so the supersession record was rolled back rather than left confirmed',
+        );
+      }
+
+      return {
+        outcome: 'executed' as const,
+        priorState,
+        newState: 'superseded',
+      };
     });
-
-    // Confirm the supersession
-    await confirmSupersession(organizationId, userId, record.id);
-
-    // Update the object state to reflect supersession
-    await markObjectSuperseded(organizationId, item.objectType, item.objectId);
-
-    return {
-      outcome: 'executed',
-      priorState,
-      newState: 'superseded',
-    };
   } catch (error: any) {
     return {
       outcome: 'blocked',
@@ -689,22 +725,32 @@ async function getObjectState(
 export async function markObjectSuperseded(
   organizationId: number,
   objectType: string,
-  objectId: string
-): Promise<void> {
-  try {
-    if (objectType === 'artifact') {
-      await db.execute(sql`
-        UPDATE concept2cure_artifacts
-        SET status = 'archived', updated_at = now()
-        WHERE artifact_id::text = ${objectId}
-          AND organization_id = ${organizationId}
-      `);
-    }
-    // For assumptions/decisions, supersession is recorded in supersession_records
-    // (no separate status column to update)
-  } catch (err: unknown) {
-    console.warn(`[bundle-executor] markObjectSuperseded best-effort failed for ${objectType}:${objectId}:`, err instanceof Error ? err.message : err);
+  objectId: string,
+  executor: Pick<typeof db, 'execute'> = db,
+): Promise<boolean> {
+  /* Returns whether the object's state now reads superseded, and THROWS on a
+     failed write. It was Promise<void> with a console.warn-only catch, so a
+     failed or zero-row UPDATE was invisible and executeSupersede reported
+     'executed' regardless — the sibling of stageRewrite's ledger L173/L177
+     defect in this same file, which that fix did not reach. RETURNING id is
+     what makes the zero-row case visible. */
+  if (objectType === 'artifact') {
+    const result: any = await executor.execute(sql`
+      UPDATE concept2cure_artifacts
+      SET status = 'archived', updated_at = now()
+      WHERE artifact_id::text = ${objectId}
+        AND organization_id = ${organizationId}
+      RETURNING id
+    `);
+    const rows: unknown[] = Array.isArray(result) ? result : (result?.rows ?? []);
+    return rows.length > 0;
   }
+  // For every other type the confirmed supersession_records row IS the
+  // superseded state (assumptions and decisions have no status column; a
+  // document's status is not written here), so there is nothing further to
+  // write. A second supersede of the same object is refused by
+  // recordSupersession's duplicate-pair check, inside the same transaction.
+  return true;
 }
 
 /**

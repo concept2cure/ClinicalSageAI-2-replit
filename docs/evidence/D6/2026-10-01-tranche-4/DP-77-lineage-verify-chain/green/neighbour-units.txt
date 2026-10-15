@@ -1,0 +1,606 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T21:10:31.398Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+ ✓ server/services/workflow/__tests__/decision-lineage-view-assembler.pglite.integration.test.ts > assembleOrgDecisionLineage > enumerates only the org artifacts with a real trail, tagging artifactLabel 24ms
+ ✓ server/services/workflow/__tests__/decision-lineage-view-assembler.pglite.integration.test.ts > assembleOrgDecisionLineage > drops an artifact whose graph resolves to zero nodes (no empty cards) 11ms
+ ✓ server/services/workflow/__tests__/decision-lineage-view-assembler.pglite.integration.test.ts > assembleOrgDecisionLineage > returns [] for an org with no lineage artifacts 13ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+{
+  "timestamp": "2026-10-01T21:10:34.031Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+{
+  "timestamp": "2026-10-01T21:10:34.425Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T21:10:37.214Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc e0c0000a-0000-4000-8000-00000000000a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T21:10:37.241Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: tracked_change_decision on doc e0c0000a-0000-4000-8000-00000000000a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-01T21:10:37.267Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the same steps catch a rewrite > (ii) the same offline steps catch a quoted passage rewritten past the table’s guard
+{
+  "timestamp": "2026-10-01T21:10:37.353Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc e0c0000c-0000-4000-8000-00000000000c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (i) the export is recorded before it leaves > (i) writes exactly one chained "authoring.record.exported" row, committed before the response is sent 50ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the package verifies offline > (ii) every chained event in the package verifies offline by the package’s own steps 32ms
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at writeAuthoringAuditTrail (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:707:9)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3718:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T21:10:37.405Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "f3698806-f00f-402b-a607-4020f5c01965",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts > (iii) no record, no export > (iii) when the export row cannot be written: 503 AUTHORING_RECORD_EXPORT_NOT_RECORDED, and no package leaves
+[audited-export] export not recorded: injected: INSERT INTO audit_logs failed
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT 204ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T21:10:37.460Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the same steps catch a rewrite > (ii) the same offline steps catch a quoted passage rewritten past the table’s guard 42ms
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts > (v) a chain walk that could not run > (v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true
+[audited-export] tenant chain walk failed: injected: no admin-scoped connection for the chain walk
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+Error creating revision: Error: injected: INSERT INTO doc_revisions failed
+    at Object.query (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at createRevision (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:399:20)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3717:7
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T21:10:37.531Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "0b21b295-8caf-49fd-a70f-445fd51b6867",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO doc_revisions failed"
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iii) no record, no export > (iii) when the export row cannot be written: 503 AUTHORING_RECORD_EXPORT_NOT_RECORDED, and no package leaves 79ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) tenancy > (iv) another tenant’s document is 404 in both directions — nothing written, nothing sent 30ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) an id that is not a document id > is 404 on the read and the export — not the uuid cast's 500 — and nothing is written 13ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (v) a chain walk that could not run > (v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true 54ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 1ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T21:10:37.589Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 166ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain
+{
+  "timestamp": "2026-10-01T21:10:37.679Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 129ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-01T21:10:37.764Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-01T21:10:37.819Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain 123ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded 52ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded 46ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes 76ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 21ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > owner reads it 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > admin reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > manager reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > a viewer is refused 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 11ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a session whose organisation is 0 is refused before any read: 0 is not a tenant (SECURITY-9) 15ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists 45ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record 30ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed 23ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact 21ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+[audited-export] tenant chain walk failed: no admin scope
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+[audited-export] export not recorded: simulated failure
+
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline 32ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed 27ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves 25ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it 24ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing 6ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written 11ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over 36ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain 52ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself
+{
+  "timestamp": "2026-10-01T21:10:39.171Z",
+  "level": "error",
+  "message": "[audit-trail-routes] recording the audit export could not be run",
+  "context": {
+    "reason": "audit-export record could not be run: INSERT returned no row id",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a batch insert the database refuses is reported as insert_failed, with none of the database text (DP-63)
+{
+  "timestamp": "2026-10-01T21:10:39.265Z",
+  "level": "error",
+  "message": "[audit-trail-routes] Failed to insert batch audit event",
+  "context": {
+    "index": 0,
+    "error": "null value in column \"event_type\" of relation \"audit_events\" violates not-null constraint"
+  }
+}
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself 861ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 27ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > the free-form default is not a type either: a body with no event type is refused 47ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > metadata must be an object, not a string of any length 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a vocabulary type with a reason is recorded, attributed to the caller 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a batch insert the database refuses is reported as insert_failed, with none of the database text (DP-63) 5ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text
+Chain integrity check failed: relation "audit_logs" does not exist
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a member may not record events at all 10ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > viewer: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > member: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 2ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard 13ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > admin: records the non-authoritative marker (201), one signature.create row 2ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > manager: records the non-authoritative marker (201), one signature.create row 2ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > an owner still may not claim a binding signature here (forgery guard unchanged) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > owner of an organisation cannot start the estate-wide check (403) or read its status 13ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > admin of an organisation cannot start the estate-wide check (403) or read its status 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > manager of an organisation cannot start the estate-wide check (403) or read its status 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > user of an organisation cannot start the estate-wide check (403) or read its status 13ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > viewer of an organisation cannot start the estate-wide check (403) or read its status 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text 6ms
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T21:10:39.441Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:10:39.446Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T21:10:39.447Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+{
+  "timestamp": "2026-10-01T21:10:40.079Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > a member sees the catalog and that they cannot run it 36ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > an administrator can run them; a platform administrator too 19ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > no organisation, no catalog 10ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a non-reader is refused 403 with the audit gate body, before any query 19ms
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read
+{
+  "timestamp": "2026-10-01T21:10:40.485Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] compliance report refused: the audit export signing key is not available",
+  "context": {
+    "err": "[audit-export-key-posture] REFUSING TO BOOT: AUDIT_EXPORT_SIGNING_KEY is not configured in production. It signs the audit exports an inspector re-verifies (21 CFR Part 11 §11.10(e)); without it the export would be sealed under the JWT secret, the session-token key. Set it to a high-entropy secret held outside the database (KMS / secrets manager), with AUDIT_EXPORT_SIGNING_KEY_ID naming it. There is no accept flag for this posture."
+  }
+}
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a session without an organisation is refused 403 15ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > an unknown report is 404 UNKNOWN_REPORT 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > the full audit trail is 409 USE_SIGNED_EXPORT: its run is the signed export 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2026-09-30&to=2026-09-01) is 400 BAD_PERIOD 10ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (to=2026-02-30) is 400 BAD_PERIOD 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2024-01-01&to=2026-01-01) is 400 BAD_PERIOD 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — a run > reads in a tenant-stamped transaction, records the run, and sends an export that verifies 15ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > the existing verification endpoint verifies the package, and refuses it after a one-byte change 39ms
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent
+[audited-export] export not recorded: chain write refused
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back
+{
+  "timestamp": "2026-10-01T21:10:40.564Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] running the compliance report failed",
+  "context": {
+    "reportId": "access-review",
+    "err": "relation \"organization_users\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified
+[audited-export] tenant chain walk failed: admin scope unavailable
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > a CSV run is one file of titled sections 7ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > an unknown format is refused rather than read as JSON 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back 12ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified 10ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation is ok only when every check is intact, and false when any is broken 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation runs one report at a time: a second concurrent run is 429 REPORT_IN_PROGRESS 17ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > report runs are rate limited per organisation and person: 429 REPORT_RATE_LIMITED 36ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 0 is not a tenant: 403 before anything 7ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of -3 is not a tenant: 403 before anything 14ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 7.5 is not a tenant: 403 before anything 15ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of "7abc" is not a tenant: 403 before anything 7ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /api/c2c/actions/verify-chain answers 409 and names the missing head (a member of organisation 7) 30ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity reports the integrity not ok, with the anchor break 7ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the licensing history reports the record store broken, not verified 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > npm run ops:verify-audit-chain reports public.audit_logs broken and exits 1 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a member of organisation 7) 7ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a platform administrator, estate-wide) 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > npm run ops:verify-audit-chain reports public.audit_logs unverifiable (exit 2), not ok 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > an administrator of organisation 8 gets organisation 8's verdict, and nothing of organisation 7 9ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a break the walk finds in another organisation's row is said to be there, not named 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a platform administrator still gets the estate-wide verdict, every organisation's break included 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the ledger (meta.chain) 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > a document's history (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the export walk (turn-record and authoring exports) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the signed audit export's manifest 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the integrity attestation's chain row 13ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the ledger (meta.chain) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the export walk 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the signed audit export's manifest 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the integrity attestation's chain row 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > organisation 8's readers name nothing of organisation 7 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the tenant verdict is the walk, with the head unavailable and ok null (not ok, not broken) 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the ledger still returns its entries, and its verdict is unverified 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a document's history still returns its entries, unverified 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the export walk, the signed manifest and the attestation say not verified, with the reason 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a walk that fails still fails: only the head step is caught 2ms
+stdout | server/routes/__tests__/audit-export-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-01T21:10:40.877Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:10:40.879Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-01T21:10:40.879Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails
+Failed to export audit logs: Error: boom
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-export-tenant-scope.test.ts:84:32
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails
+Failed to generate signed audit export: Error: boom
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-export-tenant-scope.test.ts:84:32
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier 30ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters 6ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything 6ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails 10ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier 7ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > the signed export tells the inspector to use the key its manifest names 7ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > verification says which key vouched for the export 22ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > a manifest from before key ids verifies and says no key was named 8ms
+ ✓ server/routes/__tests__/decision-lineage-read.test.ts > GET /api/decision-lineage > 403 without org context 25ms
+ ✓ server/routes/__tests__/decision-lineage-read.test.ts > GET /api/decision-lineage > returns the real governed trails for the acting org, source = decision_lineage_service 8ms
+ ✓ server/routes/__tests__/decision-lineage-read.test.ts > GET /api/decision-lineage > honest empty list when the org has no recorded trail — no fallback data 4ms
+stderr | server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE)
+{
+  "timestamp": "2026-10-01T21:10:41.276Z",
+  "level": "error",
+  "message": "[decision-lineage-api] chain verification could not run",
+  "context": {
+    "scope": "organization",
+    "reason": "the chain head could not be checked"
+  }
+}
+
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member gets their own organisation's chain verdict, and the estate verifier does not run 26ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a break in the member's chain is reported, and another organisation's break is not named 6ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE) 6ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member with no organisation is refused, and nothing runs 4ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > control: a platform administrator gets the estate verdict 5ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member's report states their organisation's chain, and the estate verifier does not run 4ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member with no organisation gets no report across every organisation 4ms
+stderr | server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > a caller with NO ambient tenant scope (the nightly consolidation job) > CONTROL: the instrumented pool refuses an unscoped checkout under RLS_ENFORCE=on
+{
+  "timestamp": "2026-10-01T21:10:41.444Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts:78:29",
+    "enforcement": "on"
+  }
+}
+
+ ✓ server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > a caller with NO ambient tenant scope (the nightly consolidation job) > CONTROL: the instrumented pool refuses an unscoped checkout under RLS_ENFORCE=on 21ms
+ ✓ server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > a caller with NO ambient tenant scope (the nightly consolidation job) > gets a connection, runs the callback, and releases it 5ms
+ ✓ server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > the checkout carries the scope withTenantConnection was asked for > a transaction opened inside the callback gets the requested tenant, not the ambient one 2ms
+ ✓ server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts > request-path callers that already hold a scope keep today's behaviour > same session set_config sequence, callback sees the requested scope, ambient scope restored 3ms
+stdout | server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: an unattributed audit row names no actor > keeps the actor the caller named where the audit column cannot hold it
+{
+  "timestamp": "2026-10-01T21:10:42.282Z",
+  "level": "info",
+  "message": "[decision-lineage] Decision recorded: DEC-1790889042282-jilpzu [approve] on artifact:42",
+  "context": {}
+}
+
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: a pending approval is not reported as performed > leaves performedAt null rather than stamping the moment the graph was built 4ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: a pending approval is not reported as performed > does not report the assignee as the performer 2ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: a pending approval is not reported as performed > reports the recorded completer, not the assignee, for a decided approval 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: an unattributed audit row names no actor > never substitutes the literal "system" for a NULL user_id in the graph 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: an unattributed audit row names no actor > never substitutes "system" in queryDecisions either 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: an unattributed audit row names no actor > keeps the actor the caller named where the audit column cannot hold it 2ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: no node asserts Part 11 conformance nothing checked > carries no cfr11Compliant field at all 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: no node asserts Part 11 conformance nothing checked > reports instead which required record elements each node actually carries 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: no node asserts Part 11 conformance nothing checked > assessPart11Record is a pure function of the record, with no default pass 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage exports: the downloaded audit file repeats none of it > CSV prints the honest absence, not a substituted actor or time 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage exports: the downloaded audit file repeats none of it > XML marks the absent fields as absent rather than filling them 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage exports: the downloaded audit file repeats none of it > JSON carries null, not a stand-in a machine reader would trust 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: GxP relevance and signature status are read, never assumed > leaves gxpRelevant null for rows from tables that do not record it 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: GxP relevance and signature status are read, never assumed > reads gxpRelevant from the audit record where the record carries it 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: GxP relevance and signature status are read, never assumed > never reports an approved approval as signed 0ms
+ ✓ server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts > decision-lineage nodes: GxP relevance and signature status are read, never assumed > the exports print the absence rather than a Yes or a signature 2ms
+stdout | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-01T21:10:42.548Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:10:42.551Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-01T21:10:42.551Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts
+{
+  "timestamp": "2026-10-01T21:10:42.666Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > marks the two frameworks no check evaluates NOT_ASSESSED, in every chain state 4ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > follows the chain verifier for the three the chain actually supports 2ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > assessComplianceFrameworks: a framework nothing evaluates is never reported as met > agrees with the compliance report on that router, framework for framework 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > CSV never prints the five names as an unqualified compliance claim 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > XML attaches a status to every framework element and to the chain line 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > JSON carries objects a machine reader cannot mistake for a conformance list 1ms
+ ✓ server/services/workflow/__tests__/decision-lineage-export-frameworks.test.ts > decision-lineage exports: the downloaded file carries the status, not a bare list > a verified chain still does not promote the two nothing evaluates 0ms
+stdout | server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+{
+  "timestamp": "2026-10-01T21:10:42.786Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T21:10:42.788Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+{
+  "timestamp": "2026-10-01T21:10:42.789Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain states it as unknown, with the reason 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain still says ok over rows it checked 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the signed audit export states the audit_logs chain as unverified, not intact 5ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the integrity attestation says "not verified" for a walk of zero rows, even if handed ok: true 2ms
+
+ Test Files  14 passed (14)
+      Tests  172 passed (172)
+   Start at  21:10:28
+   Duration  14.34s (transform 6.25s, setup 492ms, import 15.08s, tests 23.39s, environment 2ms)
+

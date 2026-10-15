@@ -1,0 +1,13 @@
+{
+  "qualification_base": "b16ba9c75416bc7e35441dd8ac55a24abe471d5a",
+  "reason": "Native compiler invalidation and diagnostics after latest canonical gate/route changes, before full unchanged gate. No qualification claim from preparation.",
+  "helper_git_blob": "9866391314b83ebb762720141b584f350ecdace2",
+  "command": [
+    "python",
+    "/workspace/scratch/03341391a627/prepare-heartbeat-compiler-cache.py",
+    "post-lease-preparation"
+  ],
+  "heap_mb": 6656,
+  "soft_rss_mb": 6200,
+  "max_files_per_process": 3000
+}

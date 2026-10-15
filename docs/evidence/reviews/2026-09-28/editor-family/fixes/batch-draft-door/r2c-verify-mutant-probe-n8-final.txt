@@ -1,0 +1,54 @@
+# final code
+# exit 0
+
+ RUN  v4.1.7 ./
+
+stdout | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:14.601Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:45:14.602Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+[database] Database connection successful
+
+stdout | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts > N8 probe: a claim whose comparable form is empty verifies nothing > claim <p></p> with a real record id, own content: nothing verified, and the wording does not name AnA
+N8 {"reason":"Batch-draft text accepted into document; none of it verified as AnA's","model":null,"machineText":{"verified":[],"unverified":[{"chars":7,"reason":"text_not_in_record","authorId":"ana","textSha256":"fe04a9dc88d3f3be8d4f6bc63a9a80f45a4c6d8460e7551dab849457c091920a","turnRecordId":"7a8d709e-2d82-4776-9e04-31fa1660a1a8"}]},"lastDraftSource":"batch-unverified","lastDraftModel":null}
+
+ ✓ ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts > N8 probe: a claim whose comparable form is empty verifies nothing > claim <p></p> with a real record id, own content: nothing verified, and the wording does not name AnA 115ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:45:12
+   Duration  7.43s (transform 1.97s, setup 99ms, import 4.15s, tests 2.89s, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:14.603Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | ../../..<scratch>/fixes2/batch-draft/r2c-verify-probe/n8-probe.test.ts
+{
+  "timestamp": "2026-09-29T01:45:14.786Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+

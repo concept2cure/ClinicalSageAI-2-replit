@@ -94,6 +94,7 @@ const MIGRATIONS = [
   'migrations/20260728_authoring_document_governed_binding.sql',
   'db/migrations/20260730_authoring_comments_router_columns.sql',
   'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+  'db/migrations/20260725_authoring_audit_trail.sql',
   'migrations/20260728_authoring_comments_threading.sql',
   'migrations/20260814d_document_alias_map.sql',
 ];
@@ -171,7 +172,8 @@ async function expectRouterSeal(docId: string): Promise<void> {
 }
 
 const place = (docId: string, moduleNumber: string) =>
-  request(app).post('/api/coauthor/documents').send({ moduleNumber, sourceAuthoringDocId: docId });
+  // The stated reason a filing copy now requires (2026-10-08, filing-spine design review).
+  request(app).post('/api/coauthor/documents').send({ moduleNumber, sourceAuthoringDocId: docId, changeReason: 'Placing this document into the filing' });
 
 /** The authoring document a seed wrote, found by the title it gives it. */
 async function docByTitle(title: string): Promise<{ id: string; status: string }> {

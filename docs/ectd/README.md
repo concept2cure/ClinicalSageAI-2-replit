@@ -53,10 +53,14 @@ Environment flags:
 - `ECTD_REQUIRE_PDFA=true` — enforce PDF/A on production packages (needs
   Ghostscript/veraPDF; no‑op otherwise).
 - `ECTD_REQUIRE_REGIONAL_BACKBONE=true` — block a production transmit whose
-  regional Module 1 backbone is not built to the agency's structure. Only the FDA
-  backbone is; EMA / PMDA / Health Canada file Module 1 flat and the widened
-  regions reuse the EMA structure — always surfaced, blocking only under this flag
-  (see `docs/runbooks/ectd-transmit-path.md`).
+  regional Module 1 backbone is not built to the agency's structure. EMA / PMDA /
+  Health Canada file Module 1 flat and the widened regions reuse the EMA
+  structure. FDA groups Module 1 under the published headings, but since
+  2026-10-01 each build states what it cannot stand behind (no applicant contact,
+  an undeclared form, a heading whose parent element name is not recorded, the
+  unvendored telephone-number-type), so today no FDA package is conformant and
+  this flag blocks every production FDA transmit. Always surfaced, blocking only
+  under this flag (see `docs/runbooks/ectd-transmit-path.md`).
 - `EVALIDATOR_USE_FDA_CRITERIA_FALLBACK=true` — run the license‑free FDA‑criteria
   subset validator.
 - LORENZ eValidator wiring: see `server/services/ectd/external-validator/config.ts`

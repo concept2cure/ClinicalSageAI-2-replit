@@ -1,0 +1,14 @@
+ × server/services/integrations/__tests__/platform-integration-owner.test.ts > another organisation never reaches the deployment’s mailbox, calendar or CRM > another organisation: told none is connected, and the account is not reached
+   → expected { …(4) } to match object { configured: false, messages: [] }
+ × server/services/integrations/__tests__/platform-integration-owner.test.ts > another organisation never reaches the deployment’s mailbox, calendar or CRM > the estate-wide system scope: told none is connected, and the account is not reached
+   → expected { …(4) } to match object { configured: false, messages: [] }
+ × server/services/integrations/__tests__/platform-integration-owner.test.ts > another organisation never reaches the deployment’s mailbox, calendar or CRM > an unscoped call: told none is connected, and the account is not reached
+   → expected { …(4) } to match object { configured: false, messages: [] }
+ × server/services/integrations/__tests__/platform-integration-owner.test.ts > another organisation never reaches the deployment’s mailbox, calendar or CRM > with no owner named, no organisation reaches them
+   → expected true to be false // Object.is equality
+ ✓ server/services/integrations/__tests__/platform-integration-owner.test.ts > the named organisation keeps them > reads its mailbox and writes its calendar
+ × server/services/integrations/__tests__/platform-integration-owner.test.ts > AnA’s account of what it can do here says the same > reports them live for the named organisation only
+   → gmail for another organisation: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)

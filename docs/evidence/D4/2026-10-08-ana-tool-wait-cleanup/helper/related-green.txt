@@ -1,0 +1,69 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > returns immediately when the first turn has no tool calls 2ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > chains multiple rounds until the model stops calling tools 3ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > caps at maxRounds and forces a final answer (tools withdrawn on the last round) 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > detects thrashing (same call repeated) and withdraws tools to break the loop 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > continues when a tool result encodes an error (executor does not throw) 0ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > rejects a maxRounds below 1 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > returns short content unchanged 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > truncates oversized content but keeps the head, tail, and a marker 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > clamps an unreasonably small limit so it never produces a negative tail 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > grounds an answer against the capped view, not the omitted middle 23ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > preserves input order even when workers resolve out of order 31ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > never exceeds the concurrency limit 22ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > processes every item and handles the empty case 0ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > rejects a concurrency below 1 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > produces friendly labels for known tools, incorporating key args 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > truncates long argument values in the label 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > falls back to a humanized name for unknown tools 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > handles a missing query gracefully 0ms
+(node:36) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > rejects as soon as the run is cancelled 2ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > rejects immediately when the run was already cancelled 0ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > lets a handler that finishes first win 0ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > never settles without a signal, so an uncontrolled run is unchanged 11ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > does not reject on a signal that never fires 12ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > the cancelled result > names the tool and says the person stopped it 1ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > the cancelled result > tells the model not to read it as the tool having no answer 0ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > the cancelled result > does not claim the work was undone 1ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > a cancelled round still accounts for every call > produces one result per call, never an empty round 2ms
+(node:44) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > produces one entry per call, with the ids preserved 3ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > every entry SAYS it was cancelled rather than being empty 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > names the tool, so the record says WHICH step was stopped 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > its barge-in branch returns a mapped result, not an empty array 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > passes the abort signal to the gateway, not only to its own checks 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > forwards the round-boundary checkpoint the loop has always accepted 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > drains the queued operator turns into the next round 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > places them AFTER the tool results, as the streaming route does 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > is declared on the public options, beside the checkpoint it serves 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > races each handler against the signal 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > puts the signal INTO the handler context, not only around it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a CANCELLED tool is not reported as a FAILED tool 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a genuine tool failure still carries its errorMessage 1ms
+(node:53) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not accumulate listeners across sixteen successful tools on one live run 3ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > releases the listener while retaining the handler original error 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not create a cancellation wait before a synchronously throwing handler 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > disposes a completed sibling without removing active or unrelated listeners 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > is idempotent and disposal does not abort the signal or another wait 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > remains assignable to Promise and rejects with the existing cancellation class 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > rejects an already-aborted signal without registering a listener 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > retains never-settling no-signal behavior after disposal 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > observes a late handler rejection after Stop and cleans the listener 1ms
+
+ Test Files  4 passed (4)
+      Tests  49 passed (49)
+   Start at  15:21:29
+   Duration  1.12s (transform 240ms, setup 118ms, import 225ms, tests 145ms, environment 0ms)

@@ -13,6 +13,12 @@
  */
 
 import { pool } from '../../db';
+import { sourceProcessingSummary } from './data-room-processing-read.js';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { requireCurrentProgramAccess } from '../c2c/current-program-access';
+import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent, visibleSourceOrgSql, SourceReadAccessError } from './source-read-access';
+import { capturedDataEligibleSql, capturedBinaryAvailableSql, capturedDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
+import { captureActor, recordCapture, recordSupersession } from './data-room-capture-audit';
 import {
   SOURCE_TYPES, VISIBILITY_CLASSES, OUTCOME_TYPES, RELATIONSHIP_TYPES, ENTITY_TYPES,
   INGESTION_STATUSES, EXTRACTION_STATUSES,
@@ -32,6 +38,11 @@ export class EvidenceSpineError extends Error {}
  *  contract ended up with four different answers (see #1102). */
 export function visibleOrgClause(orgId: number, startIndex: number): { sql: string; param: number } {
   return { sql: `(organization_id IS NULL OR organization_id = $${startIndex})`, param: orgId };
+}
+
+/** Source rows explicitly recorded public; never use for relationships. */
+export function visibleSourceOrgClause(orgId: number, startIndex: number): {sql:string;param:number} {
+  return {sql:`(organization_id=$${startIndex} OR (organization_id IS NULL AND visibility_class='global_public'))`,param:orgId};
 }
 
 /** Resolve the organization_id a write is stamped with. A GLOBAL_PUBLIC write
@@ -96,6 +107,10 @@ export async function createSupersedingSource(
       );
     }
     const source = await createSource(orgId, { ...p, previousVersionId: predecessorId }, client);
+    // The retirement in the chain too (VR-16b), in this transaction.
+    if (p.sourceType === 'client_document') {
+      await recordSupersession(client, orgId, predecessorId, source, captureActor(p.createdBy, p.provenance));
+    }
     await client.query('COMMIT');
     return { source, supersededId: predecessorId };
   } catch (err) {
@@ -106,7 +121,40 @@ export async function createSupersedingSource(
   }
 }
 
-export async function createSource(orgId: number, p: {
+/** What createSource takes: one source's columns, as its writer states them. */
+export type CreateSourceParams = Parameters<typeof insertSource>[1];
+
+/**
+ * Record a source. A data-room capture (`client_document`) is a governed
+ * record (VR-16b): it carries who captured it (`created_by`), and its INSERT
+ * and its chained data_room.capture row commit together. On the caller's
+ * transaction when one is supplied (createSupersedingSource, the adopt);
+ * otherwise in a transaction of its own. Any other source is a single INSERT.
+ */
+export async function createSource(orgId: number, p: CreateSourceParams, exec?: SourceExecutor): Promise<EvidenceSource> {
+  if (p.sourceType !== 'client_document') return insertSource(orgId, p, exec ?? pool);
+  const actor = captureActor(p.createdBy, p.provenance);
+  const capture = async (q: SourceExecutor) => {
+    const source = await insertSource(orgId, { ...p, createdBy: actor }, q);
+    await recordCapture(q, orgId, source, { actorId: actor, provenance: p.provenance, supersedes: p.previousVersionId ?? null });
+    return source;
+  };
+  if (exec) return capture(exec);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const source = await capture(client);
+    await client.query('COMMIT');
+    return source;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+async function insertSource(orgId: number, p: {
   sourceType: SourceType; visibilityClass?: VisibilityClass; clientWorkspaceId?: number | null;
   /** regulatory_programs.id (UUID) — the project-management id-space. Set this
    *  OR clientWorkspaceId depending on which scope the caller actually has;
@@ -123,6 +171,9 @@ export async function createSource(orgId: number, p: {
   previousVersionId?: number | null;
   linkedCsrReportId?: number | null; linkedPrecedentId?: string | null;
   metadata?: Record<string, unknown> | null;
+  /** Who captured it (VR-16b). For a data-room capture createSource resolves it
+   *  (captureActor); null for a system write. Written once. */
+  createdBy?: number | null;
   /** Defaults to 'pending'. A source whose bytes are already stored and read is
    *  'ingested' at creation — leaving it 'pending' would misreport the corpus. */
   ingestionStatus?: IngestionStatus;
@@ -132,7 +183,7 @@ export async function createSource(orgId: number, p: {
 },
 /** Runs on the caller's transaction when one is supplied. createSupersedingSource
  *  needs the insert and the predecessor's retirement to land together. */
-exec: SourceExecutor = pool,
+exec: SourceExecutor,
 ): Promise<EvidenceSource> {
   assertOneOf(p.sourceType, SOURCE_TYPES, 'sourceType');
   const visibility = p.visibilityClass ?? 'tenant_private';
@@ -192,6 +243,14 @@ exec: SourceExecutor = pool,
     placeholders.push(`$${values.length}`);
   }
 
+  // `created_by` (VR-16b, migrations/20261001_cre_evidence_sources_capture_immutability.sql):
+  // named only when known, for the same reason as the two columns above.
+  if (p.createdBy != null) {
+    values.push(p.createdBy);
+    columns.push('created_by');
+    placeholders.push(`$${values.length}`);
+  }
+
   const { rows } = await exec.query(
     `INSERT INTO cre_evidence_sources (${columns.join(', ')})
      VALUES (${placeholders.join(',')})
@@ -215,41 +274,41 @@ exec: SourceExecutor = pool,
  * have. Unscoped tenant documents are opt-in via `includeUnscoped`, so they can
  * be surfaced for adoption into a project without being implied to belong to it.
  */
-export async function listClientDocuments(orgId: number, opts: {
+export async function listClientDocuments(q: RequestSqlClient, orgId: number, opts: {
+  userId: number | undefined;
   programId?: string | null;
   workspaceId?: number | null;
   includeUnscoped?: boolean;
-  /** Exclude sources a re-upload has superseded (is_current = FALSE). */
   currentOnly?: boolean;
+  dataEligibleOnly?: boolean;
   limit?: number;
-} = {}): Promise<EvidenceSource[]> {
-  const c = visibleOrgClause(orgId, 1);
-  const args: unknown[] = [c.param];
-  let where = `${c.sql} AND deleted_at IS NULL AND source_type = 'client_document'`;
-  if (opts.currentOnly) where += ` AND is_current IS NOT FALSE`;
-
+}): Promise<EvidenceSource[]> {
+  const target = opts.programId ? await requireCurrentProgramAccess(q,{organizationId:orgId,userId:opts.userId,programId:opts.programId}) : null;
+  if (opts.workspaceId!=null && target && opts.workspaceId!==target.clientWorkspaceId) {
+    throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_SCOPE_MISMATCH','The selected program and workspace do not agree.');
+  }
+  if (opts.workspaceId!=null && !target) {
+    // A numeric coincidence is not workspace admission. A future caller must
+    // supply an authoritative parent before a workspace-only read can proceed.
+    throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_ACCESS_UNRESOLVED','Select the recorded program before reading this workspace source scope.');
+  }
+  const readable = await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId});
+  const args: unknown[] = [orgId,readable.sourceIds];
+  let where = `${visibleSourceOrgSql('s',1)} AND s.id=ANY($2::int[])
+    AND s.deleted_at IS NULL AND s.source_type='client_document'`;
+  if (opts.currentOnly) where+=' AND s.is_current IS NOT FALSE';
+  if (opts.dataEligibleOnly) where+=` AND ${capturedDataEligibleSql('s')}`;
   const scopes: string[] = [];
-  if (opts.programId) {
-    args.push(opts.programId);
-    scopes.push(`client_program_id = $${args.length}`);
-  }
-  if (opts.workspaceId != null && Number.isFinite(opts.workspaceId)) {
-    args.push(opts.workspaceId);
-    scopes.push(`client_workspace_id = $${args.length}`);
-  }
-  if (opts.includeUnscoped) {
-    scopes.push(`(client_program_id IS NULL AND client_workspace_id IS NULL)`);
-  }
-  if (scopes.length > 0) where += ` AND (${scopes.join(' OR ')})`;
-
-  args.push(Math.min(Math.max(opts.limit ?? 200, 1), 500));
-  const { rows } = await pool.query(
-    `SELECT * FROM cre_evidence_sources
-      WHERE ${where}
-      ORDER BY created_at DESC
-      LIMIT $${args.length}`,
-    args,
-  );
+  if (target) {args.push(target.programId); scopes.push(`s.client_program_id=$${args.length}::uuid`);}
+  if (opts.includeUnscoped) scopes.push('(s.client_program_id IS NULL AND s.client_workspace_id IS NULL)');
+  if (scopes.length) where+=` AND (${scopes.join(' OR ')})`;
+  if (opts.workspaceId!=null) {args.push(opts.workspaceId); where+=` AND s.client_workspace_id=$${args.length}`;}
+  args.push(Math.min(Math.max(opts.limit ?? 200,1),500));
+  const {rows} = await q.query(`SELECT s.*, clock_timestamp() AS processing_observed_at, ${capturedDataEligibleSql('s')} AS data_eligible,
+    ${capturedBinaryAvailableSql('s')} AS original_file_available,
+    ${capturedDispositionChoiceSql('s')} AS disposition FROM cre_evidence_sources s
+    WHERE ${where} ORDER BY s.created_at DESC,s.id DESC LIMIT $${args.length}`,args);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},readable);
   return rows.map(adaptSource);
 }
 
@@ -275,26 +334,64 @@ export async function resolveSourceUploadIds(
   orgId: number,
   sourceIds: Array<number | string>,
 ): Promise<string[]> {
-  const ids = (Array.isArray(sourceIds) ? sourceIds : [])
-    .map((id) => Number(id))
-    .filter((id) => Number.isFinite(id) && id > 0);
-  if (ids.length === 0) return [];
-
-  const c = visibleOrgClause(orgId, 2);
-  const { rows } = await pool.query<{ id: number; file_upload_id: string | null }>(
-    `SELECT id, provenance->>'fileUploadId' AS file_upload_id
-       FROM cre_evidence_sources
-      WHERE id = ANY($1) AND ${c.sql} AND deleted_at IS NULL`,
-    [ids, c.param],
-  );
-
-  const byId = new Map(rows.map((r) => [Number(r.id), r.file_upload_id]));
+  const ids = sourceIdList(sourceIds);
+  const byId = new Map((await readSourceUploads(orgId, ids)).map((r) => [r.id, r.fileUploadId]));
   const ordered: string[] = [];
   for (const id of ids) {
     const uploadId = byId.get(id);
     if (uploadId && !ordered.includes(uploadId)) ordered.push(uploadId);
   }
   return ordered;
+}
+
+/** Positive integer source ids, in the order given. Anything else is dropped. */
+export function sourceIdList(sourceIds: unknown): number[] {
+  return (Array.isArray(sourceIds) ? sourceIds : [])
+    .map((id) => Number(id))
+    .filter((id) => Number.isSafeInteger(id) && id > 0);
+}
+
+/** One live source and the upload its bytes live in (see resolveSourceUploadIds). */
+export interface SourceUpload {
+  id: number;
+  organizationId: number | null;
+  sourceType: string;
+  clientProgramId: string | null;
+  isCurrent: boolean;
+  title: string | null;
+  checksum: string | null;
+  /** The `file_uploads` id from provenance; null when the source has no stored file. */
+  fileUploadId: string | null;
+}
+
+/**
+ * Each requested source the caller can see, with its upload. A source the
+ * caller does not own, or a deleted one, is simply absent. One query for the
+ * two readers: AnA's grounding (resolveSourceUploadIds) and the data room's
+ * "File into Vault" (server/services/vault/vault-data-room-filing.ts), which
+ * needs each source's own row to answer per item.
+ */
+export async function readSourceUploads(orgId: number, ids: number[]): Promise<SourceUpload[]> {
+  if (ids.length === 0) return [];
+  const c = visibleSourceOrgClause(orgId, 2);
+  const { rows } = await pool.query(
+    `SELECT id, organization_id, source_type, client_program_id, is_current, title, checksum,
+            provenance->>'fileUploadId' AS file_upload_id
+       FROM cre_evidence_sources s
+      WHERE id = ANY($1) AND ${c.sql} AND deleted_at IS NULL
+        AND ${capturedBinaryAvailableSql('s')}`,
+    [ids, c.param],
+  );
+  return rows.map((r: Record<string, unknown>) => ({
+    id: Number(r.id),
+    organizationId: r.organization_id == null ? null : Number(r.organization_id),
+    sourceType: String(r.source_type),
+    clientProgramId: r.client_program_id == null ? null : String(r.client_program_id),
+    isCurrent: r.is_current !== false,
+    title: (r.title as string | null) ?? null,
+    checksum: (r.checksum as string | null) ?? null,
+    fileUploadId: (r.file_upload_id as string | null) ?? null,
+  }));
 }
 
 /**
@@ -319,6 +416,7 @@ export async function findSourceByChecksum(
     clientProgramId?: string | null;
     clientWorkspaceId?: number | null;
   } = {},
+  exec?: SourceExecutor,
 ): Promise<EvidenceSource | null> {
   if (!checksum) return null;
   const c = visibleOrgClause(orgId, 2);
@@ -336,7 +434,7 @@ export async function findSourceByChecksum(
     args.push(opts.clientWorkspaceId);
     where += ` AND client_workspace_id IS NOT DISTINCT FROM $${args.length}::integer`;
   }
-  const { rows } = await pool.query(
+  const { rows } = await (exec ?? pool).query(
     `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at ASC LIMIT 1`,
     args,
   );
@@ -401,9 +499,12 @@ export async function findSupersededCandidate(
 }
 
 export async function getSource(orgId: number, id: number): Promise<EvidenceSource | null> {
-  const c = visibleOrgClause(orgId, 2);
+  const c = visibleSourceOrgClause(orgId, 2);
   const { rows } = await pool.query(
-    `SELECT * FROM cre_evidence_sources WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL`,
+    `SELECT s.*, ${capturedDataEligibleSql('s')} AS data_eligible,
+            ${capturedBinaryAvailableSql('s')} AS original_file_available,
+            ${capturedDispositionChoiceSql('s')} AS disposition
+       FROM cre_evidence_sources s WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL`,
     [id, c.param],
   );
   return rows[0] ? adaptSource(rows[0]) : null;
@@ -412,9 +513,9 @@ export async function getSource(orgId: number, id: number): Promise<EvidenceSour
 export async function listSources(orgId: number, opts: {
   sourceType?: SourceType; applicationNumber?: string; indication?: string; limit?: number;
 } = {}): Promise<EvidenceSource[]> {
-  const c = visibleOrgClause(orgId, 1);
+  const c = visibleSourceOrgClause(orgId, 1);
   const args: unknown[] = [c.param];
-  let where = `${c.sql} AND deleted_at IS NULL`;
+  let where = `${c.sql} AND deleted_at IS NULL AND ${capturedDataEligibleSql('cre_evidence_sources')}`;
   if (opts.sourceType) { args.push(opts.sourceType); where += ` AND source_type = $${args.length}`; }
   if (opts.applicationNumber) { args.push(opts.applicationNumber); where += ` AND application_number = $${args.length}`; }
   if (opts.indication) { args.push(opts.indication); where += ` AND indication = $${args.length}`; }
@@ -703,8 +804,11 @@ export async function listDesignLessons(orgId: number, opts: { humanReviewStatus
 const j = (v: any) => (v == null ? {} : typeof v === 'string' ? JSON.parse(v) : v);
 const arr = (v: any) => (v == null ? [] : typeof v === 'string' ? JSON.parse(v) : v);
 
-function adaptSource(r: any): EvidenceSource {
+export function adaptSource(r: any): EvidenceSource {
   return {
+    textAvailable: typeof r.text_available === 'boolean' ? r.text_available
+      : Object.hasOwn(r, 'extracted_text') ? typeof r.extracted_text === 'string' && r.extracted_text.trim().length > 0 : null,
+    processing: sourceProcessingSummary(j(r.metadata), processingObservation(r.processing_observed_at)),
     id: r.id, organizationId: r.organization_id, visibilityClass: r.visibility_class,
     clientWorkspaceId: r.client_workspace_id, clientProgramId: r.client_program_id ?? null,
     sourceType: r.source_type, agency: r.agency,
@@ -714,11 +818,18 @@ function adaptSource(r: any): EvidenceSource {
     trialRegistryIdentifier: r.trial_registry_identifier, documentDate: r.document_date,
     officialUrl: r.official_url, storedArtifactRef: r.stored_artifact_ref, checksum: r.checksum,
     version: r.version, isCurrent: r.is_current !== false,
+    dataEligible: r.data_eligible ?? true,
+    originalFileAvailable: r.original_file_available ?? true,
+    disposition: r.disposition ?? null,
     provenance: j(r.provenance), ingestionStatus: r.ingestion_status,
     extractionStatus: r.extraction_status, linkedCsrReportId: r.linked_csr_report_id,
     linkedPrecedentId: r.linked_precedent_id, metadata: j(r.metadata),
     createdAt: r.created_at, updatedAt: r.updated_at,
   };
+}
+function processingObservation(value: unknown): string | null {
+  if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString();
+  return typeof value === 'string' ? value : null;
 }
 function adaptStudy(r: any): ClinicalStudy {
   return {

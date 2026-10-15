@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/__tests__/persistence.test.ts > canonical report persistence > commits the run, snapshot, dependencies, chained audit and platform effect on one tenant connection 38ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > canonical report persistence > records a run with no dependencies without issuing an empty dependency insert 12ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects invalid organization before opening a transaction 2ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects cross-tenant snapshot before opening a transaction 1ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects cross-tenant dependency before opening a transaction 0ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects a different requesting actor before opening a transaction 0ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects a different snapshot actor before opening a transaction 0ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects contradictory snapshot scope before opening a transaction 1ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence identity validation > rejects contradictory snapshot scope type before opening a transaction 1ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back the whole run when the audit chain refuses it and never calls delivery 10ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back the run and its audit when platform delivery fails 13ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back a failed report_runs insert without recording or delivering 14ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back a failed report_snapshots insert without recording or delivering 121ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > rolls back a failed report_run_dependencies insert without recording or delivering 34ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > retains the audit failure type used by fail-closed HTTP callers 0ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > returns no success when COMMIT fails and rolls back before releasing the connection 21ms
+ ✓ server/services/report-os/__tests__/persistence.test.ts > report persistence rollback guarantees > destroys a connection whose rollback fails rather than returning an uncertain transaction to the pool 12ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  19:25:00
+   Duration  3.03s (transform 1.52s, setup 103ms, import 2.20s, tests 283ms, environment 0ms)

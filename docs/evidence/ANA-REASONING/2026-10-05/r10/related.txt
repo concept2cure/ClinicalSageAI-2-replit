@@ -1,0 +1,6 @@
+Every suite that imports a module round 10 changed (machine-claim-verify, authoring-record, approved-models, turn-record, the tracked-change decision routes, the batch-draft accept, the authoring applier), every authoring and authoring-record route suite, every authoring service suite and every route suite under ana-ri, on the round-10 tree (merged with trunk 9321255ef).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <those files> server/routes/ana-ri/__tests__/ server/routes/__tests__/authoring server/services/authoring/__tests__/
+
+ Test Files  149 passed (149)
+      Tests  2287 passed (2287)
+related exit=0

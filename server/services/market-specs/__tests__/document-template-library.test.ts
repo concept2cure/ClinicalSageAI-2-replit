@@ -9,7 +9,21 @@ import {
   templatesForFamily,
   templateForCtdSection,
   documentTemplateIds,
+  getRegistryDocumentTemplate,
+  registryDocumentTemplateCoverage,
 } from '../document-template-library';
+import { getRequirements } from '../submission-requirements';
+import { LABELING_RULES_KNOWLEDGE } from '../../ivd-knowledge/regulatory/labeling-rules';
+import { assembleTechDoc } from '../../pathway-engines/mdr-ivdr/tech-doc-assembler';
+import { getApplicationType, GLOBAL_REGISTRY } from '../../../../shared/regulatory/global-document-registry';
+import { getSectionBlueprintForEntry } from '../../../../shared/regulatory/project-bootstrap';
+import { ICH_E2F_DSUR_SECTIONS } from '../../ind/ctd/lifecycle-document-types';
+import { getLifecycleDocumentType } from '../../ind/ctd/index';
+import { getSectionBlueprint as getDedicatedSectionBlueprint } from '../../regulatory/sectionBlueprintCatalog';
+import { ICH_M11_PROTOCOL_SECTIONS } from '../../../../shared/regulatory/protocol-m11';
+import { ICH_M11_PROTOCOL_OUTLINE } from '../../ind/ctd/protocol-m11-guidance';
+import { renderOutlineBrief } from '../../ind/ctd/section-brief';
+import { basisProblems } from '../../../../shared/regulatory/regulatory-basis';
 
 describe('document template library — consistency', () => {
   it('has unique ids and at least one section per template', () => {
@@ -62,6 +76,109 @@ describe('document template library — canonical structures', () => {
   });
 });
 
+/**
+ * F73 part A (g-ivdr-gspr-checklist): the GSPR checklist was one template for
+ * eu_mdr and eu_ivdr, citing MDR Annex I numbering ("Requirement 23: label and
+ * IFU") for IVDs. IVDR Annex I numbers its chapters 1–8 / 9–19 / 20, so an IVD
+ * checklist drafted from it cited requirements the IVDR does not have. Each
+ * regulation now has its own checklist; both numberings are recall until EUR-Lex
+ * is re-read (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * g-ivdr-gspr-checklist-facts.md).
+ */
+describe('document template library — one GSPR checklist per EU device regulation', () => {
+  const text = (t: { sections: Array<{ heading: string; purpose: string }> }) =>
+    t.sections.map((s) => `${s.heading} ${s.purpose}`).join(' | ');
+
+  it('no template serves both eu_mdr and eu_ivdr under one Annex I numbering', () => {
+    for (const t of DOCUMENT_TEMPLATES) {
+      expect(t.families.includes('eu_mdr') && t.families.includes('eu_ivdr'), t.id).toBe(false);
+    }
+  });
+
+  it('no eu_ivdr template cites MDR Annex I numbering', () => {
+    for (const t of templatesForFamily('eu_ivdr')) {
+      const body = `${t.regulatoryBasis} | ${text(t)}`;
+      expect(body, t.id).not.toMatch(/Requirement 23|Requirements? 1–9|Requirements? 10–22|2017\/745|is parallel/);
+    }
+  });
+
+  it('gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled', () => {
+    const mdr = getDocumentTemplate('gspr_checklist')!;
+    expect(mdr.families).toEqual(['eu_mdr']);
+    expect(mdr.regulatoryBasis).toMatch(/Regulation \(EU\) 2017\/745.*Annex I\b/);
+    expect(mdr.regulatoryBasis).not.toMatch(/IVDR|2017\/746|parallel/);
+    expect(mdr.basis?.confidence).toBe('recall');
+    expect(mdr.regulatoryBasis).toMatch(/recall/);
+    expect(mdr.sections.find((s) => s.number === 'III')!.purpose).toMatch(/Section 23\b/);
+  });
+
+  it('ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4)', () => {
+    const ivdr = getDocumentTemplate('ivdr_gspr_checklist');
+    expect(ivdr, 'ivdr_gspr_checklist exists').toBeDefined();
+    expect(ivdr!.families).toEqual(['eu_ivdr']);
+    expect(ivdr!.regulatoryBasis).toMatch(/Regulation \(EU\) 2017\/746.*Annex I\b/);
+    expect(ivdr!.basis?.confidence).toBe('recall');
+    expect(ivdr!.regulatoryBasis).toMatch(/recall/);
+    expect(ivdr!.sections.map((s) => s.number)).toEqual(['I', 'II', 'III']);
+    const [i, ii, iii] = ivdr!.sections;
+    expect(i.heading).toMatch(/General requirements/i);
+    expect(i.purpose).toMatch(/Sections 1–8\b/);
+    expect(ii.heading).toMatch(/performance, design and manufacture/i);
+    expect(ii.purpose).toMatch(/Sections 9–19\b/);
+    expect(iii.heading).toMatch(/Information supplied with the device/i);
+    expect(iii.purpose).toMatch(/Section 20\b/);
+    expect(iii.purpose).toMatch(/20\.2\b.*label/i);
+    expect(iii.purpose).toMatch(/20\.4\b.*instructions for use/i);
+    expect(templatesForFamily('eu_ivdr').map((t) => t.id)).toContain('ivdr_gspr_checklist');
+    expect(templatesForFamily('eu_mdr').map((t) => t.id)).not.toContain('ivdr_gspr_checklist');
+  });
+
+  it("the IVDR checklist's Chapter III and the IVD labelling record cite the same section", () => {
+    const record = LABELING_RULES_KNOWLEDGE.find((e) => e.id === 'label.eu.ivdr-annex-i-ch3')!;
+    expect(record, 'label.eu.ivdr-annex-i-ch3').toBeDefined();
+    const cited = record.citations.map((c) => c.label).join(' | ');
+    const section = /Section (\d+)\b/.exec(cited)?.[1];
+    expect(section, 'the labelling record names an Annex I section').toBeDefined();
+    const iii = getDocumentTemplate('ivdr_gspr_checklist')!.sections.find((s) => s.number === 'III')!;
+    expect(iii.purpose).toMatch(new RegExp(`Section ${section}\\b`));
+    expect(record.keyPoints.join(' ')).toMatch(/§20\.2.*label/);
+    expect(record.keyPoints.join(' ')).toMatch(/§20\.4.*IFU/);
+  });
+
+  it('each EU device submission type points its GSPR row at its own regulation\'s checklist', () => {
+    for (const type of ['mdr_td', 'ivdr_td'] as const) {
+      const req = getRequirements(type)!;
+      for (const row of req.requiredDocuments) {
+        if (!row.templateId) continue;
+        const t = getDocumentTemplate(row.templateId);
+        expect(t, `${type} → ${row.templateId}`).toBeDefined();
+        expect(t!.families, `${type} → ${row.templateId}`).toContain(req.family);
+      }
+    }
+    expect(getRequirements('ivdr_td')!.requiredDocuments.map((d) => d.templateId)).toContain('ivdr_gspr_checklist');
+    expect(getRequirements('mdr_td')!.requiredDocuments.map((d) => d.templateId)).toContain('gspr_checklist');
+  });
+
+  it('the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot', () => {
+    const r = assembleTechDoc({
+      leaves: [{ sectionCode: 'x1', title: 'Annex I conformity table', documentType: 'ivdr_gspr_checklist' }],
+      regulation: 'ivdr',
+    });
+    const gspr = r.sections.find((s) => s.id === 'gspr')!;
+    expect(gspr.present).toBe(true);
+    expect(gspr.titleOnlyLeafIndices).toEqual([]);
+  });
+
+  it('the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type', () => {
+    const r = assembleTechDoc({
+      leaves: [{ sectionCode: 'x1', title: 'Annex I conformity table', documentType: 'ivdr_gspr_checklist' }],
+      regulation: 'mdr',
+    });
+    expect(r.sections.find((s) => s.id === 'gspr')!.present).toBe(false);
+    expect(r.summary.missingRequired).toContain('gspr');
+  });
+});
+
 describe('document template library — lookups', () => {
   it('filters by family', () => {
     const estar = templatesForFamily('estar');
@@ -79,5 +196,179 @@ describe('document template library — lookups', () => {
 
   it('returns undefined for an unknown id', () => {
     expect(getDocumentTemplate('nope')).toBeUndefined();
+  });
+});
+
+describe('document template library — existing biotech structures are reachable honestly', () => {
+  const projected = [
+    ['statistical_analysis_plan', 'ICH_SAP'],
+    ['informed_consent', 'ICH_ICF'],
+    ['drug_substance', 'ICH_M3_DS'],
+    ['drug_product', 'ICH_M3_DP'],
+  ] as const;
+
+  it.each(projected)('%s reads the existing %s project blueprint rather than another heading tree', (id, registryId) => {
+    const t = getDocumentTemplate(id);
+    expect(t, id).toBeDefined();
+    const entry = getApplicationType(registryId)!;
+    const blueprint = getSectionBlueprintForEntry(entry);
+    expect(t!.sections.map((s) => [s.number, s.heading, s.required])).toEqual(
+      blueprint.sections.map((s) => [s.code, s.title, s.required]),
+    );
+    expect(t!.outlineSource).toEqual({ kind: 'project-blueprint', registryId, blueprintId: blueprint.id });
+    expect(t!.basis?.confidence).toBe('platform-convention');
+    expect(t!.regulatoryBasis).toMatch(/platform convention/i);
+    expect(t!.outlineLimitations?.join(' ')).toMatch(/required.*scaffold/i);
+  });
+
+  it('clinical overview and summary registry ids share their existing component sections', async () => {
+    expect((await getRegistryDocumentTemplate('ICH_CLIN_OVERVIEW'))?.sections).toBe(getDocumentTemplate('clinical_overview')?.sections);
+    expect((await getRegistryDocumentTemplate('ICH_CLIN_SUMMARY'))?.sections).toBe(getDocumentTemplate('clinical_summary')?.sections);
+  });
+
+  it('aliases for existing IB and RMP resolve the very same template and never add a second outline', () => {
+    expect(getDocumentTemplate('investigator_brochure')).toBe(getDocumentTemplate('investigators_brochure'));
+    expect(getDocumentTemplate('rmp')).toBe(getDocumentTemplate('risk_management_plan'));
+    expect(documentTemplateIds()).not.toContain('investigator_brochure');
+    expect(documentTemplateIds()).not.toContain('rmp');
+  });
+
+  it('DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter', () => {
+    const t = getDocumentTemplate('dsur')!;
+    expect(t, 'dsur').toBeDefined();
+    expect(t.sections.map((s) => s.heading)).toEqual(ICH_E2F_DSUR_SECTIONS.map((s) => s.title));
+    expect(t.sections.filter((s) => /^\d+$/.test(s.number)).map((s) => s.number)).toEqual(
+      Array.from({ length: 20 }, (_, i) => String(i + 1)),
+    );
+    expect(t.sections.every((s) => s.required)).toBe(true);
+    expect(t.outlineSource).toMatchObject({ kind: 'lifecycle-record', registryId: 'ICH_DSUR', record: 'ICH_E2F_DSUR_SECTIONS' });
+    expect(t.basis?.confidence).toBe(ICH_E2F_DSUR_SECTIONS[0].basis[0].confidence);
+    expect(t.outlineLimitations?.join(' ')).toMatch(/region.*filing|filing.*region/i);
+  });
+
+  it('registry requests reuse the named canonical clinical and quality outlines', async () => {
+    for (const [id, registryId] of projected) expect((await getRegistryDocumentTemplate(registryId))?.sections).toBe(getDocumentTemplate(id)?.sections);
+    expect((await getRegistryDocumentTemplate('ICH_DSUR'))?.sections).toBe(getDocumentTemplate('dsur')?.sections);
+    expect((await getRegistryDocumentTemplate('ICH_CSR'))?.sections).toBe(getDocumentTemplate('clinical_study_report')?.sections);
+  });
+
+  it('a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding', async () => {
+    const t = (await getRegistryDocumentTemplate('CA_NDS'))!;
+    expect(t, 'CA_NDS has a dedicated existing scaffold').toBeDefined();
+    const entry = getApplicationType('CA_NDS')!;
+    const blueprint = (await getDedicatedSectionBlueprint(entry.id))!;
+    expect(t.id).toBe('CA_NDS');
+    expect(t.sections.map((s) => [s.number, s.heading, s.required])).toEqual(blueprint.sections.map((s) => [s.code, s.title, s.required]));
+    expect(t.basis?.confidence).toBe('platform-convention');
+    expect(t.outlineSource).toEqual({ kind: 'dedicated-blueprint', registryId: 'CA_NDS', blueprintId: blueprint.id });
+    expect(t.outlineLimitations?.join(' ')).toMatch(/not.*regional.*schema/i);
+  });
+
+  it('unknown or missing blueprints never fall back to a full CTD dossier', async () => {
+    expect(await getRegistryDocumentTemplate('no_such_registry_entry')).toBeUndefined();
+    // All current rows now have indexed scaffolds. Exercise a newly registered
+    // type with an unimplemented blueprint so the fallback guard remains tested.
+    const missing = { ...getApplicationType('US_IND_AMENDMENT')!, id: '__unimplemented_outline__', defaultSectionBlueprint: '__unimplemented_sections__' };
+    GLOBAL_REGISTRY.push(missing);
+    try {
+      expect(getSectionBlueprintForEntry(missing).id).not.toBe(missing.defaultSectionBlueprint);
+      expect(await getRegistryDocumentTemplate(missing.id)).toBeUndefined();
+      expect((await registryDocumentTemplateCoverage()).find(r => r.registryId === missing.id)).toMatchObject({ outlineAvailable: false, reason: 'no_dedicated_existing_outline' });
+    } finally {
+      GLOBAL_REGISTRY.splice(GLOBAL_REGISTRY.indexOf(missing), 1);
+    }
+  });
+
+  it.each(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'ICH_NONCLIN_SUMMARY', 'US_IND_AMENDMENT'])('exposes the corrected exact %s scaffold with its scope limitations', async (registryId) => {
+    const outline = await getRegistryDocumentTemplate(registryId);
+    expect(outline?.sections.length).toBeGreaterThan(0);
+    expect(outline?.outlineSource).toMatchObject({ registryId, kind: 'dedicated-blueprint' });
+    expect(outline?.outlineLimitations?.join(' ')).toMatch(/applicab|scope|scaffold/i);
+    expect((await registryDocumentTemplateCoverage()).find((r) => r.registryId === registryId)).toMatchObject({
+      outlineAvailable: true,
+    });
+  });
+
+  it('coverage lists every active biotech entry once and says explicitly which outlines remain unavailable', async () => {
+    const coverage = await registryDocumentTemplateCoverage();
+    expect(coverage.map((r) => r.registryId)).toEqual(GLOBAL_REGISTRY.filter((e) => e.active && e.segment === 'pharma_biotech').map((e) => e.id));
+    expect(new Set(coverage.map((r) => r.registryId)).size).toBe(coverage.length);
+    for (const row of coverage) {
+      expect(row.outlineAvailable, row.registryId).toBe(Boolean(await getRegistryDocumentTemplate(row.registryId)));
+      if (!row.outlineAvailable) expect(row.reason, row.registryId).toBeTruthy();
+    }
+    for (const region of ['US', 'EU', 'CA', 'JP']) expect(coverage.some((r) => r.region === region)).toBe(true);
+  });
+});
+
+
+describe('document template library — current canonical M11 protocol', () => {
+  it('the protocol projects the current M11 retained headings including estimands, immunogenicity and quality management', () => {
+    const t = getDocumentTemplate('protocol')!;
+    expect(t, 'protocol').toBeDefined();
+    expect(t.sections.find((s) => s.number === '3')?.heading).toBe('TRIAL OBJECTIVES AND ASSOCIATED ESTIMANDS');
+    expect(t.sections.find((s) => s.number === '8.7')?.heading).toBe('Immunogenicity Assessments');
+    expect(t.sections.find((s) => s.number === '11.6')?.heading).toBe('Risk-Based Quality Management');
+    expect(t.sections.filter((s) => /^\d+$/.test(s.number)).map((s) => s.number)).toEqual(Array.from({ length: 14 }, (_, i) => String(i + 1)));
+    expect(t.sections).toHaveLength(87);
+    expect(t.basis?.confidence).toBe('regulator-text');
+    expect(t.basis?.url).toBe('https://www.fda.gov/media/192647/download');
+    expect(t.outlineLimitations?.join(' ')).toMatch(/interventional/i);
+    expect(t.outlineLimitations?.join(' ')).toMatch(/technical.*exchange|exchange.*technical/i);
+  });
+
+  it('named, registry and project protocols share one current tree without a CTD module placement claim', async () => {
+    const t = getDocumentTemplate('protocol')!;
+    const entry = getApplicationType('ICH_PROTOCOL')!;
+    const blueprint = getSectionBlueprintForEntry(entry);
+    expect(blueprint.id).toBe('ich_protocol_sections');
+    expect(blueprint.sections.map((s) => [s.code, s.title])).toEqual(ICH_M11_PROTOCOL_SECTIONS.map((s) => [s.code, s.title]));
+    expect(blueprint.sections.every((s) => s.module === 0)).toBe(true);
+    expect((await getRegistryDocumentTemplate(entry.id))?.sections).toBe(t.sections);
+    expect(t.outlineSource).toEqual({ kind: 'document-outline', registryId: entry.id, record: 'ICH_M11_PROTOCOL_OUTLINE' });
+    expect(t.ctdSection).toBeUndefined();
+    expect(getDocumentTemplate('protocol-m11')).toBe(t);
+    expect(t.outlineLimitations?.join(' ')).toMatch(/Existing E6\(R2\).*reviewed mapping/);
+    expect(basisProblems(t.basis!)).toEqual([]);
+  });
+
+  it('the existing outline renderer explains heading retention, applicable content and deeper unmodelled fields', () => {
+    expect(ICH_M11_PROTOCOL_OUTLINE.owner).toBe('shared/regulatory/protocol-m11.ts');
+    const rendered = renderOutlineBrief(ICH_M11_PROTOCOL_OUTLINE, '8.7')!;
+    expect(rendered).toContain('Immunogenicity Assessments');
+    expect(rendered).toMatch(/assess whether its content applies/i);
+    expect(rendered).toMatch(/purposes are platform summaries/i);
+    expect(rendered).toMatch(/no technical exchange or filing approval assessment/i);
+    expect(rendered).toMatch(/checked against the regulator's text on 2026-10-07/);
+    expect(renderOutlineBrief(ICH_M11_PROTOCOL_OUTLINE, '8.7.1')).toBeNull();
+    expect(renderOutlineBrief(ICH_M11_PROTOCOL_OUTLINE, '15')).toBeNull();
+    expect(ICH_M11_PROTOCOL_OUTLINE.nodes.some((n) => n.number === '0')).toBe(false);
+  });
+});
+
+
+describe('document template library — subtype-scoped IND safety scaffold', () => {
+  it('keeps numeric compatibility keys without assigning all safety reports to Module 5 or requiring every case component', async () => {
+    const entry = getApplicationType('US_IND_SR')!;
+    const blueprint = getSectionBlueprintForEntry(entry);
+    const components = getLifecycleDocumentType('ind_safety_report')!.components;
+    expect(blueprint.sections.map(s => s.code)).toEqual(['1', '2', '3', '4', '5', '6']);
+    expect(blueprint.sections.every(s => s.module === 0)).toBe(true);
+    expect(blueprint.sections.map(s => s.title)).toEqual(components.map(c => c.title));
+    expect(blueprint.sections.map(s => s.required)).toEqual([true, false, false, false, false, false]);
+    const outline = await getRegistryDocumentTemplate(entry.id);
+    expect(outline?.sections.map(s => s.required)).toEqual([true, false, false, false, false, false]);
+    expect(outline?.sections[0].purpose).toContain('not a universal cover-letter');
+    expect(outline?.sections[1].purpose).toContain('not evidence that an ICSR is always required');
+    expect(outline?.outlineLimitations?.join(' ')).toMatch(/subtype/i);
+  });
+});
+
+
+describe('current protocol registry authority', () => {
+  it('identifies the current M11 structure and keeps the separate SAP discoverable', () => {
+    const protocol = GLOBAL_REGISTRY.find(e => e.id === 'ICH_PROTOCOL')!;
+    expect(protocol.moduleAuthority).toMatch(/M11.*May 2026/);
+    expect(protocol.synonyms).not.toContain('SAP');
   });
 });

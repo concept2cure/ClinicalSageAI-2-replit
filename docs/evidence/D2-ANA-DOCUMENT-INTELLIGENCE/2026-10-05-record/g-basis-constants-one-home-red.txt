@@ -1,0 +1,231 @@
+# g-basis-constants-one-home — RED, before the change (HEAD 9ccf42b3, 2026-10-05)
+# npx vitest run server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no regulator URL is bound to two top-level declarations 257ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > each shared constant is declared only in regulatory-basis.ts, and the retired duplicate names nowhere 67ms
+   → expected [ 'csr-e3-basis.ts:FDA_E3', …(17) ] to deeply equal []
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no file in ind/ctd keeps a local recall()/practice() helper 58ms
+   → expected [ …(3) ] to deeply equal []
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and e3SectionBasis 1ms
+   → expected [ 'CDISC_CONVENTION', …(10) ] to deeply equal [ Array(2) ]
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > exports every shared basis constant, well formed under the shared rules 9ms
+   → regulatory-basis.ts does not exist: expected null not to be null
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > cfr201_57, recall and practice build well-formed bases of the stated confidence 4ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > FDA_E3 is ICH E3 itself, not FDA’s E3 Q&A (R1) 1ms
+   → expected undefined to be 'https://www.fda.gov/media/71271/downl…' // Object.is equality
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > nothing in ind/ctd binds the E3 Q&A URL to a basis that is not the Q&A 63ms
+   → expected [ { file: 'csr-e3-basis.ts', …(2) } ] to deeply equal []
+ × server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > readers hold the one object, not a copy > the submission chain, the technical rules and the E3 overlay cite the exported constants 2ms
+   → expected null not to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no regulator URL is bound to two top-level declarations
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/placement-integrated-summaries-safety-and-effectiveness-issise-applications-submitted-ectd-format <- fda-technical-rules.ts:FDA_ISS_ISE, submission-chain.ts:FDA_ISS_ISE_PLACEMENT",
++   "https://www.fda.gov/media/93569/download <- fda-technical-rules.ts:M4E_R2, submission-chain.ts:M4E_R2",
++ ]
+
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:146:24
+    144|     }
+    145|     const duplicated = [...byUrl].filter(([, s]) => s.size > 1).map(([…
+    146|     expect(duplicated).toEqual([]);
+       |                        ^
+    147|   });
+    148|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > each shared constant is declared only in regulatory-basis.ts, and the retired duplicate names nowhere
+AssertionError: expected [ 'csr-e3-basis.ts:FDA_E3', …(17) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "csr-e3-basis.ts:FDA_E3",
++   "csr-e3-basis.ts:E3_QA_R1",
++   "csr-e3-basis.ts:FDA_PDF_SPECS",
++   "csr-e3-basis.ts:FDA_STUDY_DATA_TRC",
++   "csr-e3-basis.ts:FDA_SDTCG",
++   "csr-e3-basis.ts:CFR_314_50_F",
++   "csr-e3-basis.ts:FDA_STF_IG",
++   "csr-e3-basis.ts:FDA_OCMQ",
++   "fda-technical-rules.ts:FDA_ECTD_TCG",
++   "fda-technical-rules.ts:FDA_ISS_ISE",
++   "fda-technical-rules.ts:M4E_R2",
++   "fda-technical-rules.ts:CFR_314_101",
++   "fda-technical-rules.ts:cfr201_57",
++   "submission-chain.ts:FDA_ISS_ISE_PLACEMENT",
++   "submission-chain.ts:FDA_ISE_GUIDANCE",
++   "submission-chain.ts:M4E_R2",
++   "submission-chain.ts:RECALL",
++   "submission-chain.ts:PRACTICE",
++ ]
+
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:158:23
+    156|       }
+    157|     }
+    158|     expect(misplaced).toEqual([]);
+       |                       ^
+    159|   });
+    160|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > no file in ind/ctd keeps a local recall()/practice() helper
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "lifecycle-document-types.ts:recall",
++   "submission-chain.ts:RECALL",
++   "submission-chain.ts:PRACTICE",
++ ]
+
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:165:19
+    163|       .filter((f) => f !== 'regulatory-basis.ts')
+    164|       .flatMap((f) => declaredNames(f).filter((n) => /^(recall|practic…
+    165|     expect(local).toEqual([]);
+       |                   ^
+    166|   });
+    167|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > one regulator source, one declaration, across ind/ctd > csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and e3SectionBasis
+AssertionError: expected [ 'CDISC_CONVENTION', …(10) ] to deeply equal [ Array(2) ]
+
+- Expected
++ Received
+
+  [
+    "CDISC_CONVENTION",
++   "CFR_314_50_F",
++   "CHECKED",
++   "E3_QA_R1",
++   "FDA_E3",
++   "FDA_OCMQ",
++   "FDA_PDF_SPECS",
++   "FDA_SDTCG",
++   "FDA_STF_IG",
++   "FDA_STUDY_DATA_TRC",
+    "e3SectionBasis",
+  ]
+
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:169:53
+    167|
+    168|   it('csr-e3-basis.ts keeps only the E3-specific CDISC_CONVENTION and …
+    169|     expect(declaredNames('csr-e3-basis.ts').sort()).toEqual(['CDISC_CO…
+       |                                                     ^
+    170|   });
+    171| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > exports every shared basis constant, well formed under the shared rules
+AssertionError: regulatory-basis.ts does not exist: expected null not to be null
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:176:60
+    174|   it('exports every shared basis constant, well formed under the share…
+    175|     const home = await loadHome();
+    176|     expect(home, 'regulatory-basis.ts does not exist').not.toBeNull();
+       |                                                            ^
+    177|     for (const name of SHARED_CONSTANTS) {
+    178|       const b = home?.[name] as RegulatoryBasis | undefined;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > cfr201_57, recall and practice build well-formed bases of the stated confidence
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:190:30
+    188|     const recall = home?.recall as ((r: string) => RegulatoryBasis) | …
+    189|     const practice = home?.practice as ((r: string) => RegulatoryBasis…
+    190|     expect(typeof cfr201_57).toBe('function');
+       |                              ^
+    191|     expect(typeof recall).toBe('function');
+    192|     expect(typeof practice).toBe('function');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > FDA_E3 is ICH E3 itself, not FDA’s E3 Q&A (R1)
+AssertionError: expected undefined to be 'https://www.fda.gov/media/71271/downl…' // Object.is equality
+
+- Expected:
+"https://www.fda.gov/media/71271/download"
+
++ Received:
+undefined
+
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:203:21
+    201|     const home = await loadHome();
+    202|     const e3 = home?.FDA_E3 as RegulatoryBasis | undefined;
+    203|     expect(e3?.url).toBe(FDA_E3_URL);
+       |                     ^
+    204|     expect(e3?.ref).toMatch(/ICH E3/);
+    205|     expect(e3?.ref).not.toMatch(/Q&A|Questions and Answers/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > server/services/ind/ctd/regulatory-basis.ts > nothing in ind/ctd binds the E3 Q&A URL to a basis that is not the Q&A
+AssertionError: expected [ { file: 'csr-e3-basis.ts', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "file": "csr-e3-basis.ts",
++     "name": "FDA_E3",
++     "url": "https://www.fda.gov/media/84857/download",
++   },
++ ]
+
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:210:19
+    208|   it('nothing in ind/ctd binds the E3 Q&A URL to a basis that is not t…
+    209|     const wrong = basisUrlBindings().filter((b) => b.url === FDA_E3_QA…
+    210|     expect(wrong).toEqual([]);
+       |                   ^
+    211|   });
+    212| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts > readers hold the one object, not a copy > the submission chain, the technical rules and the E3 overlay cite the exported constants
+AssertionError: expected null not to be null
+ ❯ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts:217:22
+    215|   it('the submission chain, the technical rules and the E3 overlay cit…
+    216|     const home = await loadHome();
+    217|     expect(home).not.toBeNull();
+       |                      ^
+    218|     const { SUBMISSION_CHAIN } = await import('../submission-chain');
+    219|     const { FDA_TECHNICAL_RULES } = await import('../fda-technical-rul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  03:15:31
+   Duration  1.43s (transform 244ms, setup 77ms, import 589ms, tests 468ms, environment 0ms)
+

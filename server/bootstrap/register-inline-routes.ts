@@ -32,6 +32,7 @@ import predictiveSectionsRoutes from '../routes/predictive-sections';
 import { createCsrIntelligenceRoutes } from '../routes/csr-intelligence-routes';
 import csrAnalyticsRouter from '../routes/csr-analytics';
 import { createAuditTrailRoutes } from '../routes/audit-trail-routes';
+import { createComplianceReportRoutes } from '../routes/audit-compliance-reports';
 import { createAnaRiInlineRoutes } from '../routes/ana-ri-inline-routes';
 import evidenceAskRouter from '../routes/evidence-ask';
 import esignatureRouter from '../routes/esignature';
@@ -261,6 +262,7 @@ export function registerInlinePlatformFacadesRoutes({
 
   // Audit trail — append-only, signed exports, chain integrity (21 CFR Part 11).
   app.use('/api', createAuditTrailRoutes(pool));
+  app.use('/api', createComplianceReportRoutes(pool));
 
   // Evidence Ask — single-shot grounded Q&A over the Data Room
   // (Doc System Convergence Phase 4 — Ask-Data-Room flow).
@@ -595,7 +597,7 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol development routes:', error);
   }
 
-  // Protocol risk register — likelihood × impact risk assessment (ICH E6(R2) §5.0 / ISO 14971).
+  // Protocol risk register — likelihood × impact risk assessment (ICH E6(R3) Annex 1 §3.10.1 / ISO 14971).
   try {
     const protocolRisksModule = await import('../routes/protocol-risks');
     app.use('/api/protocol-risks', authMiddleware, protocolRisksModule.default);
@@ -845,7 +847,8 @@ export async function registerInlineAiWorkflowRoutes({
   // C2C Projects detail (Phase 10 — /api/c2c/projects/*).
   try {
     const c2cProjectsModule = await import('../routes/c2c/projects');
-    app.use('/api/c2c/projects', authMiddleware, c2cProjectsModule.default);
+    const dispositionsModule = await import('../routes/c2c/document-data-dispositions');
+    app.use('/api/c2c/projects', authMiddleware, dispositionsModule.default(), c2cProjectsModule.default);
     console.info('✅ C2C Projects routes mounted (/api/c2c/projects)');
   } catch (error) {
     console.error('❌ Failed to mount C2C Projects routes:', error);

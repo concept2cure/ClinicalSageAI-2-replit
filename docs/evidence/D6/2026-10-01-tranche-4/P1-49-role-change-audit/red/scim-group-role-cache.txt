@@ -1,0 +1,151 @@
+# command: npx vitest run server/__tests__/security/scim-group-role-cache.test.ts
+# tree: scim.ts with the user writes in-transaction (this item, partial) and the Groups PATCH still writing each role with a bare query and dropping the cache inside its loop, before any commit; run 2026-10-01T13:47:45Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > add: each change and its audit row in one transaction; each changed member dropped after COMMIT 161ms
+   → expected [ 'UPDATE 101 admin', …(3) ] to deeply equal [ 'BEGIN', 'UPDATE 101 admin', …(6) ]
+ × server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > replace: each change and its audit row in one transaction; each changed member dropped after COMMIT 7ms
+   → expected [ 'UPDATE 101 admin', …(3) ] to deeply equal [ 'BEGIN', 'UPDATE 101 admin', …(6) ]
+ × server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > remove: a member holding the group role is demoted to member, recorded, and dropped after COMMIT 5ms
+   → expected [ Array(2) ] to deeply equal [ 'BEGIN', 'UPDATE 103 member', …(3) ]
+ × server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a member already holding the role, or not holding the removed one, changes nothing and drops nothing 9ms
+   → expected [ 'UPDATE 103 admin', …(3) ] to deeply equal [ Array(4) ]
+ × server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a user who is not a member of this organisation is not given the role 4ms
+   → expected [ 'UPDATE 999 admin', …(1) ] to deeply equal [ 'BEGIN', 'COMMIT' ]
+ × server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a refused audit row rolls the whole request back: 500, nothing dropped, no detail leaked 5ms
+   → expected 200 to be 500 // Object.is equality
+ ✓ server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a group that names no member changes no role and drops nothing 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > add: each change and its audit row in one transaction; each changed member dropped after COMMIT
+ FAIL  server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > replace: each change and its audit row in one transaction; each changed member dropped after COMMIT
+AssertionError: expected [ 'UPDATE 101 admin', …(3) ] to deeply equal [ 'BEGIN', 'UPDATE 101 admin', …(6) ]
+
+- Expected
++ Received
+
+  [
+-   "BEGIN",
+    "UPDATE 101 admin",
+-   "AUDIT 101",
++   "INVALIDATE 101@7",
+    "UPDATE 102 admin",
+-   "AUDIT 102",
+-   "COMMIT",
+-   "INVALIDATE 101@7",
+    "INVALIDATE 102@7",
+  ]
+
+ ❯ server/__tests__/security/scim-group-role-cache.test.ts:126:21
+    124|       const res = await patchGroup('admin', op, [101, 102]);
+    125|       expect(res.status).toBe(200);
+    126|       expect(h.log).toEqual([
+       |                     ^
+    127|         'BEGIN',
+    128|         'UPDATE 101 admin',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > remove: a member holding the group role is demoted to member, recorded, and dropped after COMMIT
+AssertionError: expected [ Array(2) ] to deeply equal [ 'BEGIN', 'UPDATE 103 member', …(3) ]
+
+- Expected
++ Received
+
+  [
+-   "BEGIN",
+-   "UPDATE 103 member",
+-   "AUDIT 103",
+-   "COMMIT",
++   "UPDATE admin 7",
+    "INVALIDATE 103@7",
+  ]
+
+ ❯ server/__tests__/security/scim-group-role-cache.test.ts:152:19
+    150|     const res = await patchGroup('admin', 'remove', [103]);
+    151|     expect(res.status).toBe(200);
+    152|     expect(h.log).toEqual(['BEGIN', 'UPDATE 103 member', 'AUDIT 103', …
+       |                   ^
+    153|     expect(h.audits[0].entry.details).toMatchObject({ previousRole: 'a…
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a member already holding the role, or not holding the removed one, changes nothing and drops nothing
+AssertionError: expected [ 'UPDATE 103 admin', …(3) ] to deeply equal [ Array(4) ]
+
+- Expected
++ Received
+
+  [
+-   "BEGIN",
+-   "COMMIT",
+-   "BEGIN",
+-   "COMMIT",
++   "UPDATE 103 admin",
++   "INVALIDATE 103@7",
++   "UPDATE manager 7",
++   "INVALIDATE 101@7",
+  ]
+
+ ❯ server/__tests__/security/scim-group-role-cache.test.ts:159:19
+    157|     expect((await patchGroup('admin', 'add', [103])).status).toBe(200);
+    158|     expect((await patchGroup('manager', 'remove', [101])).status).toBe…
+    159|     expect(h.log).toEqual(['BEGIN', 'COMMIT', 'BEGIN', 'COMMIT']);
+       |                   ^
+    160|   });
+    161|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a user who is not a member of this organisation is not given the role
+AssertionError: expected [ 'UPDATE 999 admin', …(1) ] to deeply equal [ 'BEGIN', 'COMMIT' ]
+
+- Expected
++ Received
+
+  [
+-   "BEGIN",
+-   "COMMIT",
++   "UPDATE 999 admin",
++   "INVALIDATE 999@7",
+  ]
+
+ ❯ server/__tests__/security/scim-group-role-cache.test.ts:164:19
+    162|   it('a user who is not a member of this organisation is not given the…
+    163|     expect((await patchGroup('admin', 'add', [999])).status).toBe(200);
+    164|     expect(h.log).toEqual(['BEGIN', 'COMMIT']);
+       |                   ^
+    165|     expect(h.roles.has(999)).toBe(false);
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/__tests__/security/scim-group-role-cache.test.ts > a SCIM group role change: recorded in its transaction, then the cached role dropped > a refused audit row rolls the whole request back: 500, nothing dropped, no detail leaked
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/__tests__/security/scim-group-role-cache.test.ts:171:24
+    169|     h.auditFails = true;
+    170|     const res = await patchGroup('admin', 'add', [101, 102]);
+    171|     expect(res.status).toBe(500);
+       |                        ^
+    172|     expect(JSON.stringify(res.body)).not.toContain('probe');
+    173|     expect(h.log).toEqual(['BEGIN', 'UPDATE 101 admin', 'AUDIT 101', '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  13:47:46
+   Duration  727ms (transform 195ms, setup 109ms, import 134ms, tests 200ms, environment 0ms)
+

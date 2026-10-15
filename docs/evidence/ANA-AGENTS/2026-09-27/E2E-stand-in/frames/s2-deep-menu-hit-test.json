@@ -1,0 +1,23 @@
+[
+ {
+  "option": "Balanced | Chat, reasoning, quick answers",
+  "optionTop": 374,
+  "composerTop": 447,
+  "pointerReachesIt": false,
+  "elementAtItsCentre": "landing-segctx"
+ },
+ {
+  "option": "Maximum | Drafting, multi-step analysis, long-form",
+  "optionTop": 427,
+  "composerTop": 447,
+  "pointerReachesIt": true,
+  "elementAtItsCentre": "lm-desc"
+ },
+ {
+  "option": "Instant | Autocomplete, inline, classification · with Auto, up to 20 rounds",
+  "optionTop": 495,
+  "composerTop": 447,
+  "pointerReachesIt": true,
+  "elementAtItsCentre": "lm-desc"
+ }
+]

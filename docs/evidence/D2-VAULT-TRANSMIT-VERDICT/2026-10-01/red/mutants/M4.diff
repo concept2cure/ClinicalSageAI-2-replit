@@ -1,0 +1,13 @@
+diff --git a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+index c97221e55..eb40a408c 100644
+--- a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx
++++ b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+@@ -186,7 +186,7 @@ function StageNotice({ read, op }: { read: StageRead; op: string }) {
+     );
+   } else if (op === 'delete') {
+     body = <div className="de-desc">{"A Delete leaf ships no content, so this version's approval is not checked for it."}</div>;
+-  } else if (read.refusal === null) {
++  } else if (['approved', 'placed', 'packaged', 'submitted'].includes(read.stage ?? '')) {
+     body = <div className="de-desc">{`Review and approval: ${stageLabel(read.stage)}. This is the approved, current version.`}</div>;
+   } else {
+     body = (

@@ -10,8 +10,12 @@ import {
 } from '../services/compute/computeService';
 import { startGovernedWorkflow } from '../services/workflow/temporalBridge';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+import { governedActorId } from '../middleware/orgMembership';
 
 const router = Router();
+const log = createScopedLogger('compute-routes');
 
 const limiter = createRedisRateLimiter({
   rules: {
@@ -75,7 +79,12 @@ router.post(
     try {
       const projectId = Number(req.params.projectId);
       const organizationId = Number(req.tenantContext?.organizationId || req.tenantId);
-      const requestedById = Number(req.userId || 0);
+      // The artifact, its provenance and its audit row name who requested it;
+      // a request with no user was written as user 0.
+      const requestedById = governedActorId(req);
+      if (requestedById == null) {
+        return res.status(401).json({ success: false, error: 'A signed-in user is required to run a compute job' });
+      }
       const payload = createJobSchema.parse(req.body || {});
 
       const result = await enqueueAndRunComputeJob({
@@ -89,13 +98,12 @@ router.post(
         ctdSection: payload.ctdSection,
         format: payload.format,
         metadata: payload.metadata,
+        ipAddress: req.ip ?? null,
       });
 
       res.status(201).json({ success: true, data: result });
-    } catch (error: any) {
-      res
-        .status(500)
-        .json({ success: false, error: error?.message || 'Failed to execute compute job' });
+    } catch (error) {
+      return serverError(res, log, 'executing the compute job', error);
     }
   }
 );
@@ -128,8 +136,8 @@ router.post('/projects/:projectId/workflows', async (req, res) => {
     });
 
     return res.status(202).json({ success: true, data: workflow });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error?.message || 'Failed to start workflow' });
+  } catch (error) {
+    return serverError(res, log, 'starting the workflow', error);
   }
 });
 

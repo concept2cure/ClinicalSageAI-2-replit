@@ -23,6 +23,39 @@ export interface TokenClassClaims {
   type?: string;
   role?: string | null;
   mfaPending?: boolean;
+  /**
+   * Set only on a token issued to a third-party client by the connector's
+   * authorization server (server/mcp/auth/platform-token.ts). See
+   * `AccessTokenOptions` below.
+   */
+  token_use?: string | null;
+}
+
+/**
+ * ── Delegated tokens ────────────────────────────────────────────────────────
+ * A token the connector issues to a third-party client is `type: 'access'`, so
+ * the connector's verifier shares this rule, and carries `token_use`. It is
+ * bound to what its holder consented to (`c2c:read`, `c2c:file`) and to one
+ * resource. Until 2026-09-25 no authenticator read the claim, so every one of
+ * them took such a token as a full first-party session: the /api gates, the
+ * sockets, the collaboration server, and the enterprise route that mints a
+ * fresh session from the token it is shown (security audit 2026-09-24,
+ * IAM-02, P0-2 part a; row D8).
+ *
+ * So a token carrying any `token_use` is refused here by default, on both
+ * entry points, whatever its `type` says. The one caller that is the resource
+ * server for such a token names its use, and admits that use and no other:
+ * server/mcp/auth/platform-token.ts passes `{ delegatedUse: 'mcp' }`.
+ */
+export interface AccessTokenOptions {
+  /** The single `token_use` this caller is the resource server for. */
+  delegatedUse?: string;
+}
+
+function delegatedTokenReason(decoded: TokenClassClaims, options: AccessTokenOptions): string | null {
+  const use = decoded.token_use;
+  if (use === undefined || use === null) return null;
+  return options.delegatedUse !== undefined && use === options.delegatedUse ? null : 'delegated_token';
 }
 
 /**
@@ -41,9 +74,11 @@ export interface TokenClassClaims {
  * HTTP API middlewares must use `requireAccessTokenReason` below, which also
  * rejects the absent-type case.
  */
-export function nonAccessTokenReason(decoded: TokenClassClaims): string | null {
+export function nonAccessTokenReason(decoded: TokenClassClaims, options: AccessTokenOptions = {}): string | null {
   if (decoded.mfaPending === true) return 'mfa_partial_token';
   if (decoded.role === 'pending_mfa') return 'mfa_pending_role';
+  const delegated = delegatedTokenReason(decoded, options);
+  if (delegated) return delegated;
   const type = typeof decoded.type === 'string' ? decoded.type.toLowerCase() : null;
   if (type !== null && type !== 'access') {
     return type;
@@ -60,8 +95,8 @@ export function nonAccessTokenReason(decoded: TokenClassClaims): string | null {
  * refused. Returns a reason string when the token must be rejected, or null
  * when it is an acceptable access token.
  */
-export function requireAccessTokenReason(decoded: TokenClassClaims): string | null {
-  const nonAccess = nonAccessTokenReason(decoded);
+export function requireAccessTokenReason(decoded: TokenClassClaims, options: AccessTokenOptions = {}): string | null {
+  const nonAccess = nonAccessTokenReason(decoded, options);
   if (nonAccess) return nonAccess;
   const type = typeof decoded.type === 'string' ? decoded.type.toLowerCase() : null;
   if (type !== 'access') return 'missing_token_type';

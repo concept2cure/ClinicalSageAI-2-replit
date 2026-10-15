@@ -1,0 +1,45 @@
+# MUTANT (must fail): mutant-B-archive-excuses-any-missing-head
+# 2026-10-01T06:55:40.714310Z
+# file: server/services/audit/chain-anchor.ts
+# - "if ((b.kind === 'rows_missing' || oldHead) && shortfall <= budget) {"
+# + "if (b.kind === 'rows_missing' || b.kind === 'head_missing') {"
+$ npx vitest run --config vitest.db.config.ts server/services/audit/__tests__/chain-anchor.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 27ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 184ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 47ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 24ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 13ms
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 5ms
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 25ms
+   → expected 'unverifiable' to be 'broken' // Object.is equality
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 6ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  06:55:39
+   Duration  1.09s (transform 204ms, setup 107ms, import 138ms, tests 470ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks
+AssertionError: expected 'unverifiable' to be 'broken' // Object.is equality
+
+Expected: "broken"
+Received: "unverifiable"
+
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:288:36
+    286|     expect(await tamper('DELETE FROM audit_logs WHERE id = $1', [recen…
+    287|     const afterTruncation = await withClient((c) => verifyAuditChainAn…
+    288|     expect(afterTruncation.status).toBe('broken');
+       |                                    ^
+    289|     expect(afterTruncation.breaks).toEqual([
+    290|       { organizationId: 9, rowId: recent[1], kind: 'head_missing', anc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1

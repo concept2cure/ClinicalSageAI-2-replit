@@ -1,0 +1,12 @@
+Mutant B10-unknown-dropped: a call whose model is unknown drops out, so the turn reads as written by the known ones
+
+--- server/services/ana/turn-record-models.ts
+- out.push(served);
++ if (served.model) out.push(served);
+
+Tests run: server/services/ana/__tests__/turn-record-served-models.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > keeps a call whose model the gateway did not report: an unknown author is still an author 10ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

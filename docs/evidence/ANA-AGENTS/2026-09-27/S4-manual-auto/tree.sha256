@@ -1,0 +1,48 @@
+# sha256 of the S4 files in the tree the red, green and mutation runs were recorded against (HEAD 39b3027cc — identical to c82c056be for every file below — plus the S4 working tree after the review fixes, uncommitted when filed). Commit S4 by this pathspec, plus this folder, the S4 row of ../README.md and row 74 of docs/work-orders/README.md.
+# source (modified)
+52876cbec7fb818b4c25da4d1e983d734f9b877b92483bff511749d43b337f70  client/src/concept2cure/components/ana/anaProgress.ts
+549edd97023c3b69bb8a111845f521c5ccf30c32ed6af0a026ae2ad0432ceed0  client/src/concept2cure/components/ana/useAnaChat.ts
+373addff241d534e6ccde73cfd368937643c2711eff343a1cd795a315dc76483  client/src/concept2cure/components/ana/useAnaChat.types.ts
+fb17dafdcc08c10fdeacd02b4e966b28d12bcd3773f32c8215d6747499d491b3  client/src/concept2cure/v2/AnaActivity.tsx
+46defd6b3999a2c4a8a0f67ffc144ae23d1ed14be08295081b4aa12d828739b0  client/src/concept2cure/v2/AnaWorkPanel.tsx
+8fd92d3869619340309f71a625e5efc302b977619ad1cb596d927c31070a332b  client/src/concept2cure/v2/AnaWorkSections.tsx
+a35737d68d16cade78c39e9f5b04d0b030ce31c8b19ccaa16afe601e8aa1c5ba  client/src/concept2cure/v2/Shell.tsx
+80544bb62da91cba47f0240443958b1d3b32d65052da1ad5c22d269568b93aec  client/src/concept2cure/v2/V2App.tsx
+7f846729f51e28340a4fe89293ea10f8e7e3e6276b79c168ddc8b35d168fa7fb  client/src/concept2cure/v2/anaWorkModel.ts
+eea448cd827f72063cf282566fddd62e1cd7a2ec9d04820fbcd733939f14b3bc  client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+157783b7b79513d7e952bba4c246e48fb4bbb83087055ba18d752e8588456536  client/src/concept2cure/v2/registryModel.ts
+919e167971ee6914e2bdecfca763a6c85de45c35822bad87768a610732ca1e70  client/src/concept2cure/v2/styles/app-v2.css
+057fa71d4f72603b68bbe0c162232c9207497314a77eb5972681cb95b3a9a85f  client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+4381622e2f85c8cef113a6b5af2df15513c99745912076459bc102ac877c825b  client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx
+dd06e2aabdb9afcffa8741d5e2c1c47f4d33208b052c69e4dfd68c26e6d1af0b  client/src/concept2cure/v2/surfaces/RbmSurfaces.tsx
+76bb679652404a7235e90127cb39133889992527dfca22377625c7de9c62042b  client/src/concept2cure/v2/surfaces/Surfaces.tsx
+f3f0a8850a1ae5c0ae5afadd80d418e34c2b4b4cac14e40619cd081f2a396bb3  server/routes/ana-ri/post-processing.ts
+21cf90bbcac5b673c012ff0c1d96a721c07a62e9e4a49ff50dfd27729ce144c7  server/routes/ana-ri/stream.ts
+4d9e6dd3399c355d552c2afc0cda61818f3aa5f72f56abbc00e394e82ad8a120  server/services/ana/lineage-dossier-xml.ts
+4ee00a43b0885ff8969d543b1ec932949ae21839767f959fcbf670b1a76f5a2a  server/services/ana/lineage-dossier.ts
+c34e80a5017ed4ff9d2d21d23958116b6048a6deaa934251f64bc041f3f15132  server/services/ana/run-status.ts
+20b9fe7cd56cc76977db45ec9c3923145315ed3cfefbbf3d4a9ba03ee71262f0  server/services/ana/tool-trace.ts
+ec1f9284f2a7ab000546540ab7dc844272b30a7f611319820dbe02edbcba3406  server/services/report-os/lineage-trace-report.ts
+b4297924dd040878fe52adbc4ddeed0b9994f8d23ea0b00c434829dee7351f20  shared/ana/run-control-limits.ts
+# source (new)
+6f595b7d58c8e084faf1024c778bd0ec505b9c611ccbe9a5b43f94d5e1e41414  client/src/concept2cure/v2/RunPolicySwitch.tsx
+7b1e930ecc0377cb1b05ab32810ef1e0f1d56ae42134909f0822a50509d4e716  server/services/ana/lineage-dossier-holds.ts
+157521f83077d7029b5baff52b622ca5e3c6aa309108c3e2c9501305bbc4b74b  server/services/ana/turn-run-policy.ts
+37c97e6687d72b2648bf719d17aaa2285a2da947add90706327f867d67845627  shared/ana/run-policy.ts
+# tests (modified)
+c3bcbf58702a49063fc9fa38d5a602b3b68916527c27a8359c533c917f102c34  client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts
+08093c4da41f6cfa0b0d7d6076c9defe1c7bee2edde47e37227f1da0042c1a1d  server/routes/ana-ri/__tests__/stream-run-hold.test.ts
+29331152b5be1fa5837472b561d61ed6103b0febff562865bd6652f24794a97e  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts
+# tests (new) and test support
+518d8ac779b177e1c0c406e3504818aec57ec10a60751d05ba1a08ea53810394  client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+1b53435ac78dcebc2251ca32080bf14b37cb9f1cc4aea0f0353438ca9e850e5d  client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+acdcdb310cb93bb24e44db8e523a3e2ad8aa351e3f15cdb01beb4fd8c0786d6d  client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+94fc603973af3e5f1a994c13bcbc8334d60082a249a6ab7e9027a090e75486aa  client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx
+4b7ea4b410a22cb5dc71504fe8128a09fcc9e44c4f6e5ef9ab72b0dce7f2f171  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+03b96a48fe30cc525b54280c7b881958cc4bab80e7fa16fb6cc19a5239647920  server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+f0ad1f7d5c33cd13a7b62f6ac79fdea003ab2c3555cf2a150e5b205f5eacc7d7  server/routes/ana-ri/__tests__/support/stream-route-harness.ts
+6ec7b36e194934fde46522cda1546b2ac5668fa5687d6e2f38be7fadb66312ed  server/services/ana/__tests__/auto-never-approves.test.ts
+f1c754cdbea06a575a4655e0e4371082abfa3c1842e5d915d08df89634af6e94  server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts
+0072bde0a1497d62ea8728b0898f6a9d091c0649213a443899d1e1b966b754f2  server/services/ana/__tests__/run-status-policy.test.ts
+73f60b85adf687276a8fa5db6d2da00f137188a97f7ccf3dfefa5edda8a124b0  server/services/ana/__tests__/tool-trace-run-policy.test.ts
+437ba96604c5aadbc2750c7f102c5bce9fc17b31125f2db81236d9154b37eb8e  server/services/ana/__tests__/turn-run-policy.test.ts

@@ -18,15 +18,17 @@
  */
 
 import type { Request, Response, Router } from 'express';
+import { frameToolOutput } from '../../services/ana/tool-output-frame.js';
 
 import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
   resolveEffortLevel,
   resolveEffortStrategy,
-  resolveApiEffort,
+  resolveTurnApiEffort,
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
@@ -56,6 +58,7 @@ import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
+import { submissionContextBlockFor } from '../../services/ana/submission-context-block.js';
 import { getToolHandler, servedModelOf } from '../../services/ana/AnaToolExecutor.js';
 import { commandBlockProposer } from '../../services/ana/command-attribution.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
@@ -86,7 +89,7 @@ import type { SurfaceActionDirective } from '../../../shared/navigation/surface-
 import {
   runAgenticToolLoop,
   resolveMaxRounds,
-  resolveRoundExtension,
+  resolveRoundBudget,
   capToolResultForModel,
   assistantTurnContent,
   budgetToolResultsForModel,
@@ -102,36 +105,58 @@ import {
   type ModelTurn,
   type FailedToolCall,
 } from '../../services/ana/agentic-loop.js';
+import { guardReadResultsForHandoff, readReceiptContext, settleReadReceipts, withdrawSourceReadResult, type DeferredReadReceipts } from '../../services/ana/read-receipts.js';
 import { buildSteerMessage } from '../../services/ana/operator-channel.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
   buildTraceEntry,
+  carriedToolsFrom,
   collectTracesFromHistory,
   formatStoppedTurnNote,
   formatTraceForContext,
+  policyHoldWarning,
   refusalOf,
   turnEndingReason,
   turnStopWarning,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runWithRunScope } from '../../services/ai-gateway/run-scope.js';
-import { runStreamPostProcessing } from './post-processing.js';
 import {
+  newGenerationCapture,
+  runCapturingGenerations,
+  type GenerationCapture,
+} from '../../services/ai-gateway/generation-capture.js';
+import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
+import { RUN_AGENT_TOOL } from '@shared/ana/run-control-limits';
+import { agentTraceStatus } from '../../services/ana/sub-agent-result.js';
+import { newAgentTurnCounters } from '../../services/ana/sub-agent-limits.js';
+import { runAgentViewForModel } from '../../services/ana/sub-agent-shape.js';
+import { agentEvidenceEntries, agentProvenance, subAgentsHostable } from '../../services/ana/sub-agent-stream.js';
+import type { SubAgentHost } from '../../services/ana/sub-agent.js';
+import { checkProposal } from '../../services/ana/proposal-check.js';
+import { buildShortfallNote } from '../../services/ana/tool-outcome.js';
+import { persistStoppedAnswer, runStreamPostProcessing } from './post-processing.js';
+import { sealAfterMirror } from '../../services/ana/run-events.js';
+import {
+  callSent,
   canonicalJson,
   openTurnRecorder,
   writeTurnRecordSafely,
+  type CallSent,
   type TurnOutcome,
   type TurnRecorder,
   type TurnRecordStatus,
 } from '../../services/ana/turn-record.js';
+import { TurnTimeline } from '../../services/ana/turn-timeline-emitter.js';
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn, SELF_DRIVE_TOOLS } from '../../services/ana/tool-selection.js';
-import { recentTurns } from '../../services/ana/history-window.js';
+import { recentTurnWindow, conversationWindowNotice } from '../../services/ana/history-window.js';
+import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
-import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
+import { isPdfIntakeEnabled } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import {
@@ -141,6 +166,8 @@ import {
 import {
   enrichContextForChat,
   type EnrichmentResult,
+  type EnrichmentUnavailableReason,
+  type TurnProject,
 } from '../../services/ana-ri/context-enrichment.js';
 import {
   buildAuthoringContextBlock,
@@ -149,6 +176,7 @@ import {
   prefetchRouteIntelligenceContext,
   resolveProjectIdFromBody,
 } from '../../services/ana-ri/chat-context-builder.js';
+import { withStatedDocumentType } from '../../services/ana-ri/open-document.js';
 import { invokedAppHints, invokedAppPins } from '../../services/ana-ri/invoked-apps-block.js';
 import {
   sendError,
@@ -174,25 +202,42 @@ import {
   readApprovalDecision,
   stopRunInternally,
   resumeAbandonedRun,
+  holdForPerson,
+  endHeldRun,
   reapOrphanedRuns,
   type RunHandle,
 } from '../../services/ana/run-control.js';
 import {
   MAX_PAUSE_MS,
+  endStoppedReason,
+  isHoldable,
+  parseRunPolicy,
+  type AnaRunPolicy,
   type HumanControlEvent,
   type TurnStoppedReason,
 } from '../../services/ana/run-status.js';
 import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
-import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../services/ana/governed-tool-gate.js';
+import { TurnPolicy } from '../../services/ana/turn-run-policy.js';
+import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import { heldToolContext, turnToolContext } from '../../services/ana/turn-tool-context.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
   serverToolEvidence,
+  serverToolStepFields,
   summariseServerToolResult,
   serverToolStepIdField,
 } from '../../services/ana/server-tool-steps.js';
+import {
+  announcedStepFields,
+  finishedStep,
+  resolveStepDocumentTitles,
+  stepUsedModel,
+} from '../../services/ana/step-presentation.js';
 import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
+import { admitAnaProjectScope, AnaProjectScopeError, type AdmittedAnaProjectScope } from '../../services/ana/project-scope-admission';
+import { admitAnaSelectedSources, assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 import { clientIpOf } from '../../utils/client-ip';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
@@ -208,6 +253,29 @@ const dbPool = {
 const COMMAND_FENCE = /```command\s*\n/;
 
 /** The round's model call, if the round's own text holds a command block (commandBlockProposer). */
+/** What the person reads when beginRun refuses (AnA detach §2.8). Fixed copy; no model writes it. */
+const RUN_REFUSAL_COPY: Readonly<Record<'RUN_IN_PROGRESS' | 'RUN_LIMIT', string>> = {
+  RUN_IN_PROGRESS: 'AnA is still working on the last message in this conversation.',
+  RUN_LIMIT: 'You have three turns running. Stop one, or wait for one to finish.',
+};
+
+/**
+ * The frame for a beginRun refusal (run-control RunRefusedError), or null for
+ * any other failure. Read by name and code rather than `instanceof`, so the
+ * route does not hold a second import of the class for a test double to omit.
+ */
+function runRefusalFrame(err: unknown): { type: 'error'; code: string; error: string; runId?: string } | null {
+  const e = err as { name?: unknown; code?: unknown; runId?: unknown } | null;
+  if (!e || e.name !== 'RunRefusedError') return null;
+  if (e.code !== 'RUN_IN_PROGRESS' && e.code !== 'RUN_LIMIT') return null;
+  return {
+    type: 'error',
+    code: e.code,
+    error: RUN_REFUSAL_COPY[e.code],
+    ...(typeof e.runId === 'string' && e.runId ? { runId: e.runId } : {}),
+  };
+}
+
 function commandRoundOf<T>(roundText: string, served: T): T[] {
   return COMMAND_FENCE.test(roundText) ? [served] : [];
 }
@@ -283,25 +351,167 @@ export function buildUnconfirmedMovesTurn(moves: string[]): GatewayMessage | nul
 
 /** Register POST /stream on the given router. */
 /**
- * For a tool that writes on its own handler (anything but the command carrier),
- * the context the loop would have run it with — recorded on the held run so
- * the governed-action route runs the tool from it, never from the browser's
- * body. Undefined for a platform command, which JSON drops from the row.
+/**
+ * Why an approval nobody answered was refused — the approval gate's timeout
+ * branch returns it, and the run policy reads it AFTER the gate, from outside
+ * it (TurnPolicy.noteApprovals): a policy turn ends on an unanswered approval,
+ * a turn with none carries on without the action, as before. Either way the
+ * action was denied; nothing about the policy reaches the gate.
  */
-function heldToolContext(
-  toolName: string,
-  projectId: unknown,
-  servingModel:
-    | { provider?: string | null; model?: string | null; requestId?: string | null }
-    | null
-    | undefined
-) {
-  if (toolName === PLATFORM_COMMAND_TOOL) return undefined;
-  return {
-    projectId: projectId ? Number(projectId) || null : null,
-    projectRef: projectId ? String(projectId) : null,
-    servingModel: servingModel ?? null,
+export const APPROVAL_TIMEOUT_WHY = 'nobody decided in time';
+
+/**
+ * How a governed call came out of the approval gate. `heldBack` marks a call a
+ * person did not authorise — declined it, did not answer, could not be asked,
+ * or one only a person may take — as opposed to one authorised that then
+ * failed. A held-back call is not a failure for the model to work around
+ * (row 74, F1).
+ */
+type SettledApproval = { ok: boolean; result: unknown; why?: string; heldBack?: boolean };
+
+/**
+ * Mandatory project admission is bounded before any source context starts.
+ * A permission read that exceeds this deadline refuses the turn.
+ */
+export const TURN_PROJECT_DEADLINE_MS = 3000;
+const TURN_PROJECT_TIMED_OUT = new Error('project lookup deadline exceeded');
+
+/**
+ * Resolve and authorize the explicit project once for this turn. No scope
+ * remains valid for an organization conversation; an explicit malformed,
+ * unanchored or unreadable scope is refused before context and tool work.
+ */
+async function admitTurnProject(ref: unknown, organizationId: unknown, userId: unknown): Promise<AdmittedAnaProjectScope> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      admitAnaProjectScope(getPool(), { projectRef: ref, organizationId, userId }),
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(TURN_PROJECT_TIMED_OUT), TURN_PROJECT_DEADLINE_MS);
+      }),
+    ]);
+  } catch (error) {
+    if (error === TURN_PROJECT_TIMED_OUT) {
+      throw new AnaProjectScopeError(503, 'ANA_PROJECT_ACCESS_UNAVAILABLE', 'Current project access took too long to verify. AnA has not read its sources.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** A source's name in the person's words, and whether it reads as one thing or several. */
+type ContextSourceLabel = { text: string; plural: boolean };
+const single = (text: string): ContextSourceLabel => ({ text, plural: false });
+const several = (text: string): ContextSourceLabel => ({ text, plural: true });
+
+/**
+ * The person's words for every source context enrichment can report missing,
+ * keyed by the reader (context-enrichment.ts budget keys). A key the budget can
+ * record that is not here is reached through READER_FOR_KEY, or by its app or
+ * proactive prefix; anything else is "requested context", never the key.
+ */
+const CONTEXT_SOURCE_LABELS: Record<string, ContextSourceLabel> = {
+  'project-record': several('project records'),
+  'project-profile': single('project profile'),
+  workflow: single('submission workflow status'),
+  readiness: single('readiness score'),
+  recommendations: several('recommended next steps'),
+  signals: several('regulatory signals'),
+  foresight: several('risk forecasts'),
+  deficiency: several('deficiency patterns'),
+  deficiencies: single('deficiency taxonomy'),
+  precedent: several('precedents'),
+  claims: several('claims and evidence records'),
+  consistency: single('cross-module consistency check'),
+  knowledge: single('project knowledge base'),
+  decisions: several('decision records'),
+  biostatistics: several('biostatistics records'),
+  safety: several('safety records'),
+  cmc: several('CMC records'),
+  'cmc-build-state': single('Module 3 build state'),
+  csr: several('clinical study report records'),
+  device: several('device records'),
+  diagnostics: several('diagnostics records'),
+  cms: several('coverage and reimbursement records'),
+  ectd: several('eCTD records'),
+  amend: single('amendment history'),
+  'client-journey': single('client journey summary'),
+  'agent-activity': single('recent agent activity'),
+};
+
+/**
+ * Slash commands and natural-language triggers recorded under their own name,
+ * mapped to the reader they ran (context-enrichment.ts enrichMap and triggers).
+ */
+const READER_FOR_KEY: Record<string, string> = {
+  recommend: 'recommendations',
+  next: 'recommendations',
+  checklist: 'readiness',
+  simulate: 'deficiency',
+  simulation: 'deficiency',
+  brief: 'deficiency',
+  memo: 'foresight',
+  ask: 'knowledge',
+  sap: 'biostatistics',
+  power: 'biostatistics',
+  dose: 'biostatistics',
+  defensibility: 'biostatistics',
+  design: 'biostatistics',
+  narrative: 'safety',
+  iss: 'safety',
+  smpc: 'safety',
+  rmp: 'safety',
+  uspi: 'safety',
+  ise: 'claims',
+  freeze: 'ectd',
+  sign: 'ectd',
+};
+
+/** The person's words for a source key: `app:<id>/<source>` and `proactive-<source>` read as the source. */
+function contextSourceLabel(key: string): ContextSourceLabel {
+  const own = <T>(table: Record<string, T>, k: string): T | undefined =>
+    Object.prototype.hasOwnProperty.call(table, k) ? table[k] : undefined;
+  const bare = key.startsWith('app:') ? key.slice(key.indexOf('/') + 1) : key.replace(/^proactive-/, '');
+  return own(CONTEXT_SOURCE_LABELS, own(READER_FOR_KEY, bare) ?? bare) ?? single('requested context');
+}
+
+/**
+ * What the person reads when context this reply should have drawn on could not
+ * be read: which context, whether the read failed or took too long, and that
+ * the answer does not draw on it. It replaced one sentence for every case,
+ * "Some project context could not be loaded for this reply", which named
+ * nothing the person could check, and which every project-scoped turn showed
+ * while the cause was a wrong project id (ana-14).
+ */
+export function unavailableContextWarning(
+  sources: string[],
+  reasons?: Record<string, EnrichmentUnavailableReason>,
+): string {
+  const labelsFor = (reason: EnrichmentUnavailableReason) => {
+    const seen = new Map<string, ContextSourceLabel>();
+    for (const source of sources) {
+      if ((reasons?.[source] ?? 'error') !== reason) continue;
+      const label = contextSourceLabel(source);
+      if (!seen.has(label.text)) seen.set(label.text, label);
+    }
+    return [...seen.values()];
   };
+  const failed = labelsFor('error');
+  // A source both failed and timed out (two readers, one label) is named once, as failed.
+  const slow = labelsFor('timeout').filter(label => !failed.some(f => f.text === label.text));
+  const all = [...failed, ...slow];
+  const names = (labels: ContextSourceLabel[]) => labels.map(label => label.text).join(', ');
+  const tail = `The answer does not draw on ${all.length === 1 && !all[0].plural ? 'it' : 'them'}.`;
+  if (all.length === 1) {
+    return failed.length > 0
+      ? `Could not read the ${all[0].text} for this reply. ${tail}`
+      : `The ${all[0].text} took too long to read for this reply. ${tail}`;
+  }
+  const parts: string[] = [];
+  if (failed.length > 0) parts.push(`Could not read for this reply: ${names(failed)}.`);
+  if (slow.length > 0) parts.push(`${failed.length > 0 ? 'Took too long to read' : 'Took too long to read for this reply'}: ${names(slow)}.`);
+  return `${parts.join(' ')} ${tail}`;
 }
 
 /**
@@ -311,6 +521,11 @@ function heldToolContext(
  * boundary in one turn shares one pause clock and one paused/resumed pair.
  * Expiry 'resume' is that loop's behaviour: a pause nobody answers within
  * MAX_PAUSE_MS is resumed as abandoned (no control event, no user).
+ *
+ * A Manual turn's hold ENDS instead (row 74): its person asked to be asked,
+ * and resuming a hold nobody answered would carry on unattended — Manual
+ * silently become Auto. endHeldRun writes paused → finished ('hold_expired'),
+ * guarded, so a Continue that landed first wins.
  */
 function streamRunHold(run: {
   runId: string;
@@ -318,17 +533,19 @@ function streamRunHold(run: {
   runOrgId: number | null;
   res: Response;
   emit: (frame: Record<string, unknown>) => void;
+  policy: AnaRunPolicy | null;
 }): RunHold {
-  return createRunHold({
+  const common = {
     readStatus: () => readStatus(getPool(), run.runId),
-    wake: ms => run.handle.wake(ms),
+    wake: (ms: number) => run.handle.wake(ms),
     emit: run.emit,
     clientGone: () => run.res.writableEnded,
     stopForDisconnect: () =>
       stopRunInternally(getPool(), run.runId, 'client_disconnected', run.runOrgId ?? undefined),
-    expiry: 'resume',
-    resumeAbandoned: () => resumeAbandonedRun(getPool(), run.runId),
-  });
+  };
+  return run.policy === 'manual'
+    ? createRunHold({ ...common, expiry: 'end', endHeld: () => endHeldRun(getPool(), run.runId) })
+    : createRunHold({ ...common, expiry: 'resume', resumeAbandoned: () => resumeAbandonedRun(getPool(), run.runId) });
 }
 
 export function mountStreamRoute(router: Router): void {
@@ -360,16 +577,26 @@ export function mountStreamRoute(router: Router): void {
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
+    // The turn's policy once the request is read: the error path asks it why a stop ended the turn.
+    let turnPolicyOf: TurnPolicy | null = null;
     // The tenant the run row was stamped with, for the turn-end read-back.
     let runOrgIdForEvents: number | null = null;
-    // The round the keepalive stamps on each heartbeat. Updated at every
-    // checkpoint so a reaped-and-resumed row still reports where it got to.
-    let heartbeatRound = 0;
     // The retained record of this turn (services/ana/turn-record.ts): filled
     // as each fact becomes known, sealed and written once when the turn ends —
     // answered, stopped or failed — and chained. Undefined until the tenant is
     // known; null for a turn that has none, which cannot be filed.
     let turnRecorder: TurnRecorder | null | undefined;
+    // The Summary's events: each one appended to the recorder and written as a
+    // `timeline` frame, the one producer (turn-timeline-emitter.ts, S4).
+    const timeline = new TurnTimeline({
+      write: frame => {
+        if (!res.writableEnded) res.write(frame);
+      },
+      recorder: () => turnRecorder,
+      // The run's live mirror (AnA detach DT1): a durable run's handle carries
+      // one; a turn with no run row has nothing to mirror into.
+      mirror: () => runHandle?.events,
+    });
     /**
      * The human controls taken during this turn, read back from the run row
      * at turn end and projected onto the assistant message's metadata, which
@@ -405,20 +632,21 @@ export function mountStreamRoute(router: Router): void {
     };
     // Recorder calls from inside the agentic loop, as plain calls.
     const recordStreamed = (chunk: string): void => turnRecorder?.appendStreamed(chunk);
-    const recordServed = (
-      round: number,
-      served: { provider: string | null; model: string | null }
-    ): void => turnRecorder?.addServed(round, served);
+    const recordServed = (round: number, served: { provider: string | null; model: string | null }, sent?: CallSent): void =>
+      turnRecorder?.addServed(round, served, sent);
+    // Flush, then seal, then release (AnA detach §3.4): the mirror's guard
+    // refuses an insert once the record exists, so the record is written only
+    // after the mirror is flushed; its rows then leave through the release
+    // door, and released_at is written whatever came of the record.
     const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> =>
       turnRecorder === undefined
-        ? Promise.resolve({
-            status: 'not_recorded',
-            reason: 'This turn ended before its record was opened.',
-          })
-        : writeTurnRecordSafely(getPool(), turnRecorder, outcome, {
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent') ?? undefined,
-          });
+        ? Promise.resolve({ status: 'not_recorded', reason: 'This turn ended before its record was opened.' })
+        : sealAfterMirror(runHandle?.events, () =>
+            writeTurnRecordSafely(getPool(), turnRecorder ?? null, outcome, {
+              ipAddress: req.ip,
+              userAgent: req.get('user-agent') ?? undefined,
+            }),
+          );
     /**
      * Prompt-cache totals for the WHOLE turn, every model call included.
      *
@@ -477,43 +705,39 @@ export function mountStreamRoute(router: Router): void {
         turnRecorder?.addStep({
           round,
           tool: step.name,
-          label: describeServerToolStep(step),
+          label: describeServerToolStep(step, step.isError ? 'doing' : 'done'),
           status: step.isError ? 'error' : 'success',
           input: step.input ?? {},
           result: step.result === undefined ? null : canonicalJson(step.result),
           runBy: 'server',
         });
       }
+      steps.forEach((step, i) => timeline.serverStep(round, step, i));
       if (res.writableEnded) return;
       for (const step of steps) {
-        const label = describeServerToolStep(step);
+        // Source `web`, the query as preview, both tenses (server-tool-steps.ts).
+        const shown = serverToolStepFields(step);
         const status = step.isError ? 'error' : 'success';
         // The step's own id as the pairing key (see serverToolStepIdField).
         const stepId = serverToolStepIdField(step);
-        res.write(
-          `data: ${JSON.stringify({
-            type: 'tool_use',
-            round,
-            name: step.name,
-            ...stepId,
-            label,
-            input: step.input ?? {},
-          })}\n\n`
-        );
+        res.write(`data: ${JSON.stringify({ type: 'tool_use', round, name: step.name, ...stepId, ...shown.announced, input: step.input ?? {} })}\n\n`);
         res.write(
           `data: ${JSON.stringify({
             type: 'tool_result',
             round,
             name: step.name,
             ...stepId,
-            label,
+            ...shown.finished,
             status,
-            ...(step.isError ? { message: 'This search did not return results.' } : {}),
             result: JSON.stringify(summariseServerToolResult(step)),
           })}\n\n`
         );
       }
     };
+    /* The conversation this turn saved its question in, for the error path:
+       a Stop that aborts the model call ends there, and its answer is saved
+       as stopped (post-processing persistStoppedAnswer). */
+    let stoppedTurnThreadId: string | null = null;
     try {
       const {
         message,
@@ -530,6 +754,7 @@ export function mountStreamRoute(router: Router): void {
         language,
         model_override,
         effort_level,
+        run_policy,
         live_drive,
         drive_mode,
         locked_screens,
@@ -552,9 +777,10 @@ export function mountStreamRoute(router: Router): void {
       // Runs before the SSE headers are written so an enforced block returns a
       // clean 400 rather than a mid-stream error.
       const { orgId: guardOrgId, userId: guardUserId } = extractRequestContext(req);
+      const continuation = continuationContextMessage(message, req.body.continuation_context);
       let injectionGuard;
       try {
-        injectionGuard = await guardUserInput(message, {
+        injectionGuard = await guardUserInput(continuation ? `${continuation.content}\n\n${message}` : message, {
           organizationId: guardOrgId,
           userId: guardUserId,
           route: '/api/ana-ri/stream',
@@ -575,6 +801,20 @@ export function mountStreamRoute(router: Router): void {
         }
         throw guardErr;
       }
+
+      // Mandatory admission precedes the direct intelligence handler, every
+      // source-context reader, run creation and the first model request.
+      const requestedProjectRef = project_id ?? req.body.context?.projectId ?? project_context?.projectId;
+      let admittedProject: AdmittedAnaProjectScope;
+      try {
+        admittedProject = await admitTurnProject(requestedProjectRef, guardOrgId, guardUserId);
+        await admitAnaSelectedSources(getPool(), { organizationId: guardOrgId, userId: guardUserId, sourceIds: req.body.source_ids ?? [] });
+        await assertAnaUploadAccess(getPool(), { organizationId: guardOrgId, userId: guardUserId, fileIds: req.body.file_ids ?? [] });
+      } catch (error) {
+        if (error instanceof AnaProjectScopeError) return sendError(res, error.status, error.message, null, error.code);
+        throw error;
+      }
+      const streamProjectId = admittedProject.programId ?? admittedProject.projectId ?? undefined;
 
       const gw = ensureGateway();
       const deterministicMode = gw?.isDeterministic?.() || false;
@@ -614,20 +854,19 @@ export function mountStreamRoute(router: Router): void {
         } catch {
           clearInterval(streamKeepalive);
         }
-        // The run's heartbeat rides the keepalive that already exists rather
-        // than a second timer. It has to: the reaper's staleness ceiling
-        // (STALE_AFTER_MS, 5 min) is SHORTER than the pause ceiling
-        // (MAX_PAUSE_MS, 10 min), so a beat taken only at round boundaries left
-        // a paused run — or any single round over five minutes — to be marked
-        // failed/orphaned by another request's sweep while it was still
-        // running. Beating here covers every phase of the turn, including the
-        // final generation after the loop.
-        if (runId && runHandle) void runHandle.heartbeat(heartbeatRound);
+        // The run's heartbeat no longer rides this keepalive (AnA detach DT1,
+        // §2.3): the keepalive is cleared when the socket closes, so a run's
+        // beat depended on a page staying open. One process-wide interval in
+        // run-control.ts (beatOwnedRuns) beats every run this process owns,
+        // at the same 15 s, through every phase of the turn and with or
+        // without a socket. This ping stays for the proxies and touches no row.
       }, STREAM_KEEPALIVE_MS);
       const stopKeepalive = () => clearInterval(streamKeepalive);
       res.on('close', stopKeepalive);
       res.on('finish', stopKeepalive);
-      req.on('close', stopKeepalive);
+      // IncomingMessage also closes when its body is fully received. A normal
+      // request completion must not clear the response's in-flight heartbeat.
+      req.on('close', () => { if (req.aborted) stopKeepalive(); });
 
       // Open a durable control record for this turn (pause / steer / cancel).
       // The client uses the emitted runId to call
@@ -652,9 +891,11 @@ export function mountStreamRoute(router: Router): void {
             pool: getPool(),
             organizationId: runOrgId,
             userId: runUserId,
+            // Verified inside beginRun before it is stamped (AnA detach §2.8).
             threadId: typeof thread_id === 'string' ? thread_id : null,
             projectId: typeof project_id === 'string' ? project_id : null,
             surface: 'ana-ri-stream',
+            runPolicy: parseRunPolicy(run_policy),
           });
           runId = opened.runId;
           runHandle = opened.handle;
@@ -663,10 +904,23 @@ export function mountStreamRoute(router: Router): void {
           void reapOrphanedRuns(getPool()).catch(() => {});
           res.write(`data: ${JSON.stringify({ type: 'run_started', runId })}\n\n`);
         } catch (err: any) {
+          // A refusal is an answer, not an outage (AnA detach §2.8, D-3): this
+          // conversation already has a live run, or the person has three. Both
+          // come before the question is saved, so nothing of this turn exists
+          // yet to record or roll back.
+          const refusal = runRefusalFrame(err);
+          if (refusal) {
+            res.write(`data: ${JSON.stringify(refusal)}\n\n`);
+            stopKeepalive();
+            res.end();
+            return;
+          }
           // Control is an enhancement; the answer is the product. A run row we
           // could not open costs the person their controls, not their turn —
           // and because no `run_started` is emitted, the strip renders nothing
-          // rather than buttons that would 404.
+          // rather than buttons that would 404. A colleague's conversation
+          // (THREAD_FORBIDDEN) lands here too: no run is opened for it, and
+          // getOrCreateThread below refuses the turn as it always has.
           console.error('[AnA RI Stream] run control unavailable:', err?.message);
         }
       }
@@ -676,6 +930,16 @@ export function mountStreamRoute(router: Router): void {
       // client aborted its socket while the server generated on unseen, which
       // is the interface claiming something the server did not do.
       runHandle ??= localOnlyRunHandle();
+      /* The run policy (row 74): 'manual', 'auto', or none — today's
+         effort-bounded turn, for every door that sends nothing. Manual holds
+         only on a run a person can resume; otherwise it fails closed at the
+         first hold it would have made (TurnPolicy). */
+      const runPolicy = parseRunPolicy(run_policy);
+      const turnPolicy = (turnPolicyOf = new TurnPolicy({
+        runPolicy,
+        holdable: isHoldable({ runId, runUserId }),
+        startedAt: streamPhaseStart,
+      }));
       // Handed to the gateway and the tool dispatcher so a stop lands on work
       // already in flight, rather than waiting for the next round boundary.
       const runSignal = runHandle?.cancelSignal;
@@ -688,8 +952,18 @@ export function mountStreamRoute(router: Router): void {
       // Hence two conditions: the response must not have ended (a finished
       // response is not a dropped socket), and the run settles exactly once.
       const disconnectRun = () => {
-        if (!runId || runSettled || res.writableEnded) return;
+        if (runSettled || res.writableEnded) return;
         runSettled = true;
+        // Unless a person's Stop already landed, the turn stopped because the page left (S4).
+        if (!runHandle?.cancelSignal.aborted) turnPolicy.noteDisconnected();
+        if (!runId) {
+          // The existing local-only handle needs no row to abort the gateway
+          // and tools. Record the socket cause, without inventing a person's
+          // cancel or attempting a durable control/audit write for no run.
+          turnRecorder?.warn('The connection dropped before this turn completed.');
+          runHandle?.abortLocally?.();
+          return;
+        }
         // Pressing Stop sends the cancel AND drops the socket. Fired in
         // parallel, the close usually landed first, so a person's decision was
         // recorded as `client_disconnected` and their cancel then arrived at a
@@ -705,7 +979,7 @@ export function mountStreamRoute(router: Router): void {
         void stopRunInternally(getPool(), runId, 'client_disconnected', runOrgId ?? undefined);
       };
       res.on('close', disconnectRun);
-      req.on('close', disconnectRun);
+      req.on('close', () => { if (req.aborted) disconnectRun(); });
 
       // Status: orchestrating (planning the response, running route prefetch)
       res.write(
@@ -726,25 +1000,10 @@ export function mountStreamRoute(router: Router): void {
         projectId: project_id || resolveProjectIdFromBody(req.body),
         surface: req.body.context?.screenName,
       });
-      /* The tenant's permitted tool surface, resolved in parallel with context
-         assembly. Composed by governedToolsetFor so this path and
-         POST /api/chat/send-message cannot drift on whether the deny-list is
-         applied — which they had. */
-      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId));
-
-      // ── Live Drive (opt-in screen driving) ─────────────────────────────
-      // The client sends `live_drive: true` only while the person has the
-      // toggle on, plus `drive_mode: 'demo'` for an explicitly started
-      // demonstration (bigger budgets, demo prompt block — same entitlement).
-      // Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes) is resolved
-      // in parallel with context assembly; a deny is an honest `drive_state`
-      // event, never a dead turn. No request → zero queries.
-      const driveStatePromise = resolveDriveState(
-        live_drive === true,
-        orgId != null ? Number(orgId) : null,
-        { driveMode: drive_mode }
-      );
-
+      // The socket may have closed while beginRun was awaiting its row,
+      // before the disconnect listeners existed. Settle that missed close
+      // after opening the recorder so its cause is retained too.
+      if (res.destroyed || req.aborted) disconnectRun();
       // ── Intelligence answer fast-path ──────────────────────────────────
       // When the client submits a structured intelligence flow answer, skip
       // the full AI pipeline and call the tool handler directly.
@@ -774,13 +1033,13 @@ export function mountStreamRoute(router: Router): void {
           const payload = JSON.parse(message.slice(INTELLIGENCE_ANSWER_PREFIX.length));
           const handler = getToolHandler('answer_intelligence_question');
           if (!handler) throw new Error('answer_intelligence_question handler not registered');
-          const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
           const fastStart = Date.now();
           const resultStr = await handler(payload, {
+            sqlClient: requestPgClient(req),
             organizationId: orgId,
             userId: userId || null,
-            projectId: streamProjectId ? Number(streamProjectId) || null : null,
-            projectRef: streamProjectId ? String(streamProjectId) : null,
+            projectId: admittedProject.projectId,
+            projectRef: admittedProject.projectRef,
           });
           let parsed: any = null;
           try {
@@ -851,6 +1110,33 @@ export function mountStreamRoute(router: Router): void {
         return;
       }
 
+      // Only model turns use these reads. Direct interview answers above
+      // retain their registered handler gates without admitting unused work.
+      /* The tenant's permitted tool surface, resolved in parallel with context
+         assembly. Composed by governedToolsetFor so this path and
+         POST /api/chat/send-message cannot drift on whether the deny-list is
+         applied — which they had. */
+      /* Sub-agents (row 74, S5): hosted only on a turn that has a run row whose
+         organization is the request's — the person's pause and Stop, and the
+         ledger's parent link, all hang off that row. Hosting also makes the
+         tenant policy read STRICT, so an unreadable policy withholds run_agent
+         rather than offering every tool to an unattended child (governed-toolset.ts). */
+      const hostsSubAgents = subAgentsHostable({ runId, runOrgId, orgId });
+      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId), { hostsSubAgents });
+
+      // ── Live Drive (opt-in screen driving) ─────────────────────────────
+      // The client sends `live_drive: true` only while the person has the
+      // toggle on, plus `drive_mode: 'demo'` for an explicitly started
+      // demonstration (bigger budgets, demo prompt block — same entitlement).
+      // Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes) is resolved
+      // in parallel with context assembly; a deny is an honest `drive_state`
+      // event, never a dead turn. No request → zero queries.
+      const driveStatePromise = resolveDriveState(
+        live_drive === true,
+        orgId != null ? Number(orgId) : null,
+        { driveMode: drive_mode },
+      );
+
       const validatedLens: IntentLens | undefined =
         intent_lens && VALID_LENSES.has(intent_lens as IntentLens)
           ? (intent_lens as IntentLens)
@@ -872,20 +1158,156 @@ export function mountStreamRoute(router: Router): void {
       // Shared builder parity: keep authoring-context serialization identical across chat/stream.
       const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
-      const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
+      /* The verified integer projects.id is shared with every context reader;
+         the program UUID remains available to program-keyed readers. */
+      const streamProjectPromise: Promise<TurnProject> = Promise.resolve(admittedProject.projectId == null
+        ? { status: 'none' } : { status: 'linked', id: admittedProject.projectId });
       const streamAuthoringContext =
         authoring_context && typeof authoring_context === 'object'
           ? ({ ...authoring_context } as Record<string, unknown>)
           : undefined;
 
+      // Thread resolution (before private memory and server history).
+      //
+      // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
+      // it in the caller's organization and to the caller's own thread, or
+      // mints a fresh one; a colleague's thread id is refused outright. If the
+      // resolution, history read, or question write fails, the turn stops
+      // before a model or tool runs. A browser transcript cannot stand in for
+      // a stored conversation the platform failed to load.
+      let threadId: string | null = null;
+      const persistenceFailed = false;
+      let previousMsgs: Awaited<ReturnType<typeof getThreadMessages>> = [];
+      let conversationFailureCode = 'THREAD_UNAVAILABLE';
+      if (orgId) {
+        try {
+          threadId = await getOrCreateThread(
+            thread_id || null,
+            typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
+            'ana-ri',
+            Number(orgId),
+            // The program the shell has open (its regulatory_programs UUID), so
+            // the thread can be listed under — and resumed from — that project.
+            programIdForThread(project_id || resolveProjectIdFromBody(req.body))
+          );
+          turnRecorder?.setThread(threadId);
+          conversationFailureCode = 'HISTORY_UNAVAILABLE';
+          // Snapshot before saving this question. Removing the last row of a
+          // later read could remove a concurrent turn, leaving this question
+          // duplicated in the model context and dropping somebody else's turn.
+          previousMsgs = [...(await getThreadMessages(threadId))];
+          conversationFailureCode = 'CONVERSATION_UNAVAILABLE';
+          const userMessageId = await saveMessage(threadId, 'user', message);
+          turnRecorder?.setMessageIds({ user: userMessageId });
+          stoppedTurnThreadId = threadId;
+          // The verified (or just minted) conversation and the question, on
+          // the run, so another device can find it by thread (§2.8).
+          if (runHandle?.stampThread) {
+            await runHandle
+              .stampThread(threadId, typeof userMessageId === 'number' ? userMessageId : null)
+              .then(ok => {
+                if (!ok) console.warn('[AnA RI Stream] run not stamped with its conversation:', runId);
+              })
+              .catch((err: any) => console.error('[AnA RI Stream] run thread stamp failed:', err?.message));
+          }
+        } catch (e: any) {
+          /* Matched by code: a conversation bound to another project than the
+             one this turn names (chat-thread-helpers getOrCreateThread). */
+          if (e?.code === 'THREAD_PROJECT_MISMATCH') {
+            turnRecorder?.warn('Refused: this conversation belongs to another project than the one the turn named.');
+            streamFailed = true;
+            const turnRecord = await fileTurnRecord('failed');
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'error',
+                code: 'THREAD_PROJECT_MISMATCH',
+                error: 'This conversation belongs to another project. Start a new conversation in the project you have open.',
+                threadProgramId: typeof e.threadProgramId === 'string' ? e.threadProgramId : null,
+                turnRecord,
+              })}\n\n`
+            );
+            res.end();
+            return;
+          }
+          if (e instanceof ThreadAccessError) {
+            console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
+            // Refused before any model ran — still a turn someone attempted,
+            // and recorded as one.
+            turnRecorder?.warn('Refused: the conversation named in this turn belongs to another user.');
+            streamFailed = true;
+            const turnRecord = await fileTurnRecord('failed');
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'error',
+                code: e.code,
+                error: 'That conversation belongs to another user.',
+                turnRecord,
+              })}\n\n`
+            );
+            res.end();
+            return;
+          }
+          console.error('[AnA RI Stream] Conversation preparation failed:', e?.message);
+          const error = conversationFailureCode === 'HISTORY_UNAVAILABLE'
+            ? 'Earlier conversation could not be loaded. Please retry.'
+            : conversationFailureCode === 'THREAD_UNAVAILABLE'
+              ? 'This conversation could not be opened. Please retry.'
+              : 'Your question could not be saved. Please retry.';
+          streamFailed = true;
+          turnRecorder?.warn(error);
+          const turnRecord = await fileTurnRecord('failed');
+          res.write(`data: ${JSON.stringify({ type: 'error', code: conversationFailureCode, error, turnRecord })}\n\n`);
+          res.end();
+          return;
+        }
+      }
+
+      // One bounded transcript drives both routing and the model. Browser
+      // turns are accepted only when starting without a named conversation.
+      const browserTurns = Array.isArray(conversation_history) ? conversation_history : [];
+      const historyWindow = recentTurnWindow(
+        threadId && (thread_id || previousMsgs.length > 0) ? previousMsgs : browserTurns,
+        20,
+        50000,
+      );
+      const conversationTurns = historyWindow.turns.map(msg => ({ ...msg, role: msg.role as 'user' | 'assistant' }));
+      const historyNotice = conversationWindowNotice(historyWindow);
+      if (historyNotice) turnRecorder?.warn(historyNotice);
+
+      // Org/project intelligence is independent of route prefetch; overlap
+      // their existing budgets instead of paying both waits in sequence.
+      const intelligencePrefixPromise = getIntelligencePrefix(orgId ? Number(orgId) : undefined, streamProjectId).catch(err => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+        return '';
+      });
+      // Conversation admission and persistence are complete. Recall can now
+      // overlap independent optional route reads; handle rejection at startup
+      // so a quick memory failure is contained while prefetch is pending.
+      // It searches by the turn's integer project (ana-14): the client names a
+      // v2 project by its program UUID, which project memory cannot key on.
+      const memoryContextPromise = streamProjectPromise.then(project => buildMemoryContextForChat({
+        threadId: threadId || '',
+        organizationId: orgId ? Number(orgId) : undefined,
+        projectId: project.status === 'linked' ? project.id : undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      })).catch(err => {
+        console.warn('[AnA RI] Memory context failed:', err?.message);
+        return { memoryBlock: '', atoms: [], diagnostics: null };
+      });
+
+      const streamProject = await streamProjectPromise;
+      const streamProjectIdNumber = streamProject.status === 'linked' ? streamProject.id : null;
       const prefetchedStreamContext = await prefetchRouteIntelligenceContext({
         projectId: streamProjectId,
+        projectIdNumber: streamProjectIdNumber,
         organizationId: orgId,
-        authoringContext: streamAuthoringContext,
+        authoringContext: withStatedDocumentType(streamAuthoringContext, document_context),
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
         targetAgency:
           typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
-        sessionStart: !Array.isArray(conversation_history) || conversation_history.length === 0,
+        sessionStart: historyWindow.totalTurns === 0,
       });
       const streamDecisionContext = prefetchedStreamContext.decisionContext;
       const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
@@ -908,7 +1330,7 @@ export function mountStreamRoute(router: Router): void {
         projectContext: project_context,
         documentContext: document_context,
         submissionType: submission_type as SubmissionType | undefined,
-        conversationHistory: conversation_history,
+        conversationHistory: conversationTurns,
         authoringContext: streamOrchestratorAuthoringContext,
         _feedbackContext: streamFeedbackContext,
         _projectIntelligenceProfile: streamProjectProfile,
@@ -917,7 +1339,17 @@ export function mountStreamRoute(router: Router): void {
         _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
         _sessionBriefingBlock: prefetchedStreamContext.sessionBriefingBlock,
         _contradictionWatchBlock: prefetchedStreamContext.contradictionWatchBlock,
+        _openDocumentBlock: prefetchedStreamContext.openDocumentBlock,
       });
+      orchestration.systemPrompt += prefetchedStreamContext.contextAvailabilityBlock ?? '';
+      if (prefetchedStreamContext.unavailableSources?.length) {
+        const warning = `Optional context unavailable: ${prefetchedStreamContext.unavailableSources.join(', ')}.`;
+        turnRecorder?.warn(warning);
+        // Reviewed false positive: this route sets text/event-stream, JSON encodes
+        // the warning, and the client renders it as text; this cannot execute HTML.
+        // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write
+        res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
+      }
       streamOrchestrationMs = Date.now() - streamPhaseStart;
 
       const streamRouteBlock = buildRouteContextBlock(req.body.context);
@@ -938,6 +1370,13 @@ export function mountStreamRoute(router: Router): void {
         }
       }
 
+      // IND / NDA / BLA submission context — the same helper send-message calls
+      // (chat-path-parity.test.ts). '' for any other declared type.
+      orchestration.systemPrompt += submissionContextBlockFor({
+        submissionType: typeof submission_type === 'string' ? submission_type : null,
+        projectContext: req.body.context ?? null,
+      });
+
       // Status: loading_context (about to fetch intelligence prefix, memory atoms, enrichment)
       res.write(
         `data: ${JSON.stringify({
@@ -950,24 +1389,13 @@ export function mountStreamRoute(router: Router): void {
       // Intelligence + memory + enrichment — run in PARALLEL for speed
       const streamContextStart = Date.now();
       const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-        getIntelligencePrefix(orgId ? Number(orgId) : undefined, streamProjectId).catch(err => {
-          console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
-          return '';
-        }),
-        buildMemoryContextForChat({
-          threadId: thread_id || undefined,
-          organizationId: orgId ? Number(orgId) : undefined,
-          projectId: streamProjectId || undefined,
-          query: message,
-          limitPerLayer: 4,
-          maxChars: 3500,
-        }).catch(err => {
-          console.warn('[AnA RI] Memory context failed:', err?.message);
-          return { memoryBlock: '', atoms: [], diagnostics: null };
-        }),
+        intelligencePrefixPromise,
+        memoryContextPromise,
         enrichContextForChat({
           message,
           projectId: streamProjectId,
+          // Unresolved is reported there, as 'project-record', with why.
+          project: streamProject,
           organizationId: orgId ? Number(orgId) : undefined,
           submissionType: orchestration.detectedSubmissionType || undefined,
           userRole: effectiveRole,
@@ -977,6 +1405,15 @@ export function mountStreamRoute(router: Router): void {
         }),
       ]);
       streamContextMs = Date.now() - streamContextStart;
+
+      if (enrichment.enrichmentMeta?.unavailableSources?.length) {
+        const warning = unavailableContextWarning(
+          enrichment.enrichmentMeta.unavailableSources,
+          enrichment.enrichmentMeta.unavailableReasons,
+        );
+        turnRecorder?.warn(warning);
+        res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
+      }
 
       const memoryBlock = memoryResult.memoryBlock;
 
@@ -1006,59 +1443,33 @@ export function mountStreamRoute(router: Router): void {
           ? buildLiveDrivePromptBlock(driveState.mode)
           : buildOfferedMovesPromptBlock());
 
-      // Thread resolution (before message building so we can load server history).
-      //
-      // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
-      // it in the caller's organization and to the caller's own thread, or
-      // mints a fresh one; a colleague's thread id is refused outright. If the
-      // resolution fails for any other reason, `threadId` stays null so that
-      // NO history is loaded from an id nothing has verified — the previous
-      // shape kept the caller-supplied id and read its transcript into the
-      // model context even after persistence had failed.
-      let threadId: string | null = null;
-      let persistenceFailed = false;
-      if (orgId) {
-        try {
-          threadId = await getOrCreateThread(
-            thread_id || null,
-            typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
-            'ana-ri',
-            Number(orgId),
-            // The program the shell has open (its regulatory_programs UUID), so
-            // the thread can be listed under — and resumed from — that project.
-            programIdForThread(project_id || resolveProjectIdFromBody(req.body))
-          );
-          const userMessageId = await saveMessage(threadId, 'user', message);
-          turnRecorder?.setThread(threadId);
-          turnRecorder?.setMessageIds({ user: userMessageId });
-        } catch (e: any) {
-          if (e instanceof ThreadAccessError) {
-            console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
-            // Refused before any model ran — still a turn someone attempted,
-            // and recorded as one.
-            turnRecorder?.warn(
-              'Refused: the conversation named in this turn belongs to another user.'
-            );
-            streamFailed = true;
-            const turnRecord = await fileTurnRecord('failed');
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'error',
-                code: e.code,
-                error: 'That conversation belongs to another user.',
-                turnRecord,
-              })}\n\n`
-            );
-            res.end();
-            return;
-          }
-          console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
-          persistenceFailed = true;
-          threadId = null;
-        }
+      // What AnA was given this turn that her answer can be checked against
+      // (answer-grounding.ts): the person's own words, read as theirs and never
+      // as a source, and the project data the platform read for her. Not her
+      // persona, not the instruction overlays (the enrichment block's
+      // claim-grounding and agency-tactics text carries example figures and
+      // citations), not the intelligence prefix (custom and project
+      // instructions, and AnA's own answers promoted to memory after a week),
+      // and not her memory of earlier turns: none of those is a source
+      // (refute-review of a3775bcef, F5 and HS-1). Tool results and web steps
+      // join below.
+      const turnContextSources: EvidenceEntry[] = [{ source: 'person', content: message }];
+      const projectDataGiven = [
+        streamRimContext,
+        Array.isArray(streamDecisionContext) && streamDecisionContext.length > 0 ? JSON.stringify(streamDecisionContext) : '',
+        streamProjectProfile ? JSON.stringify(streamProjectProfile) : '',
+        prefetchedStreamContext.externalIntelBlock,
+        prefetchedStreamContext.deadlineRadarBlock,
+        prefetchedStreamContext.sessionBriefingBlock,
+        prefetchedStreamContext.contradictionWatchBlock,
+        authoringContextBlock,
+      ].filter((t) => typeof t === 'string' && t.trim().length > 0);
+      if (projectDataGiven.length > 0) {
+        turnContextSources.push({ source: 'context', content: projectDataGiven.join('\n\n') });
       }
 
-      // Build messages — prefer server thread history, fall back to client
+      // A named conversation uses its stored transcript, including an empty
+      // one. Client history is accepted only when starting without a thread.
       const messages: GatewayMessage[] = [
         { role: 'system', content: streamStablePrefix, cacheControl: true },
       ];
@@ -1066,60 +1477,22 @@ export function mountStreamRoute(router: Router): void {
         messages.push({ role: 'system', content: streamVolatileSuffix });
       }
 
-      let streamHistoryLoaded = false;
-      /* How many turns preceded this one. It decides whether this is the START
-         of a session, which is the only point the rehydration below fires. */
-      let streamPriorTurns = 0;
-      if (threadId) {
-        try {
-          const serverHistory = await getThreadMessages(threadId);
-          // Exclude the message we just saved (it's the current user message)
-          const previousMsgs = serverHistory.slice(0, -1);
-          streamPriorTurns = previousMsgs.length;
-          if (previousMsgs.length > 0) {
-            // Opens on a question: after an unanswered turn, the last twenty
-            // messages can start on an answer (services/ana/history-window.ts).
-            for (const msg of recentTurns(previousMsgs, 20)) {
-              messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
-            }
-            streamHistoryLoaded = true;
-            // Tool-trace memory: carry forward a compact summary of the tools AnA
-            // already ran in earlier turns (stored on each assistant message's
-            // metadata) so she reuses prior findings instead of re-running them.
-            const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));
-            // …except the work of a turn that did not finish. The trace note
-            // says "reuse these findings"; when the last turn was cut short by
-            // the round limit or the repeat guard, this one says its findings
-            // are not complete, so she neither presents them as settled nor
-            // starts over when asked to continue. Each is sent only when it
-            // has something to say.
-            const stoppedNote = formatStoppedTurnNote(previousMsgs);
-            messages.push(
-              ...[traceNote, stoppedNote]
-                .filter(Boolean)
-                .map(content => ({ role: 'system' as const, content }))
-            );
-          }
-        } catch {
-          /* fall through to client history */
-        }
+      const streamPriorTurns = historyWindow.totalTurns;
+      for (const msg of conversationTurns) {
+        messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
-      // Client history carries role and content, not the metadata a stop is
-      // stored in: a turn served from it gets neither the trace note nor the
-      // stopped-turn note, so a capped predecessor is not named here (a known
-      // limit, handed on with row 74 — the client does not send it).
-      if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
-        const MAX_HISTORY_MSGS = 20;
-        const MAX_MSG_LENGTH = 50000;
-        const clientTurns = conversation_history
-          .slice(-MAX_HISTORY_MSGS)
-          .filter(
-            (msg: any) => typeof msg?.content === 'string' && msg.content.length <= MAX_MSG_LENGTH
-          );
-        for (const msg of recentTurns(clientTurns, MAX_HISTORY_MSGS)) {
-          messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
-          streamPriorTurns += 1;
-        }
+      if (historyNotice) messages.push({ role: 'system', content: historyNotice });
+      // Only stored metadata can attest to tools previously run or a turn
+      // stopped early. Browser turns carry no such provenance.
+      let carriedTools: string[] = [];
+      if (previousMsgs.length > 0) {
+        const traces = collectTracesFromHistory(previousMsgs);
+        carriedTools = carriedToolsFrom(traces);
+        const traceNote = formatTraceForContext(traces);
+        const stoppedNote = formatStoppedTurnNote(previousMsgs);
+        messages.push(
+          ...[traceNote, stoppedNote].filter(Boolean).map((content) => ({ role: 'system' as const, content })),
+        );
       }
 
       /* Session-start rehydration — the same block POST /api/chat/send-message
@@ -1138,25 +1511,21 @@ export function mountStreamRoute(router: Router): void {
          rides as a system turn ahead of the user's message, exactly like the
          memory and enrichment blocks above. */
       const { sessionBootstrapBlockFor } = await import('../../services/ana-session-bootstrap.js');
-      /* streamProjectId is whatever the client sent — 'proj_7', '7', 7, or a
-         program UUID — and the project-atom loader takes the numeric projects.id.
-         Normalized here rather than passed through: a UUID reaching an integer
-         column raises 22P02, which the loader's own fault tolerance would
-         swallow into "this project has no memory". Anything that is not a
-         positive integer is simply omitted, and the org-level half of the
-         rehydration (client atoms, lessons, the vault files) still lands. */
-      const streamBootstrapProjectId = ((): number | undefined => {
-        const raw =
-          typeof streamProjectId === 'string'
-            ? streamProjectId.replace(/^proj_/, '')
-            : streamProjectId;
-        const n = Number(raw);
-        return Number.isInteger(n) && n > 0 ? n : undefined;
-      })();
+      /* The project-atom loader takes the numeric projects.id: the turn's
+         resolved one. A UUID reaching an integer column raises 22P02, which the
+         loader's own fault tolerance would swallow into "this project has no
+         memory". This used to normalize 'proj_7' and '7' here and drop a program
+         UUID, so a v2 project's atoms never loaded; a program now loads through
+         its linked project. Catalog recall keeps the original project reference
+         too, so a missing numeric anchor cannot widen an open project into the
+         library. */
       const streamBootstrapBlock = await sessionBootstrapBlockFor({
+        db: requestPgClient(req),
         priorMessageCount: streamPriorTurns,
         organizationId: orgId ? Number(orgId) : null,
-        projectId: streamBootstrapProjectId,
+        projectId: streamProjectIdNumber ?? undefined,
+        userId: guardUserId,
+        projectRef: admittedProject.projectRef,
         threadId: threadId ?? undefined,
         atomLimit: 6,
       });
@@ -1205,12 +1574,32 @@ export function mountStreamRoute(router: Router): void {
             Number(orgId),
             req.body.source_ids as Array<number | string>
           );
-          if (fromSources.length < req.body.source_ids.length) {
-            unreadableSources = req.body.source_ids.length - fromSources.length;
+          const { readRetainedSourceContexts } = await import(
+            '../../services/clinical-regulatory-evidence/retained-source-context.js'
+          );
+          const retained = await readRetainedSourceContexts(
+            Number(orgId), programIdForThread(streamProjectId), req.body.source_ids,
+          );
+          for (const source of retained) {
+            const identity = `cre_source:${source.sourceId}`;
+            messages.push({ role: 'user', content:
+              `[Selected retained source ${identity}; original SHA-256 ${source.sha256}; ` +
+              `stored representation ${source.representationId}; supplied text SHA-256 ${source.textSha256}. ` +
+              'Original file unavailable; extracted data retained. ' +
+              `${source.truncated ? 'This is a bounded excerpt, not a full-document read.' : 'Stored extracted text follows.'}]\n` +
+              source.text,
+            });
+            turnContextSources.push({ source: identity, content: source.text });
+            contextUploads.push({ fileId: identity, fileName: source.title, mimeType: 'text/plain', read: 'content' });
+            contentReadIds.add(identity);
+            uploadChecksums.set(identity, source.textSha256);
+          }
+          if (fromSources.length + retained.length < req.body.source_ids.length) {
+            unreadableSources = req.body.source_ids.length - fromSources.length - retained.length;
             // A selected source with no readable upload must not pass silently —
             // the user chose it expecting it to be read.
             console.warn(
-              `[AnA RI Stream] ${req.body.source_ids.length - fromSources.length} of ${
+              `[AnA RI Stream] ${unreadableSources} of ${
                 req.body.source_ids.length
               } selected source(s) have no readable upload`
             );
@@ -1234,7 +1623,8 @@ export function mountStreamRoute(router: Router): void {
           );
           const attachedFiles = await loadUploadedFileMetadata(
             streamFileIds,
-            orgId != null ? Number(orgId) : null
+            orgId != null ? Number(orgId) : null,
+            { userId: guardUserId },
           );
           if (attachedFiles.length < streamFileIds.length) {
             console.warn(
@@ -1277,7 +1667,10 @@ export function mountStreamRoute(router: Router): void {
                     ? 'text/plain'
                     : null;
                 if (!docMime || !f.storagePath) continue;
-                const buf = await readLocalUploadBuffer(f.storagePath);
+                // Recheck the disposition at the byte read too: the preview may
+                // have been confirmed after the earlier metadata lookup.
+                const { loadUploadedFile } = await import('../../services/ana/uploaded-file-access.js');
+                const buf = (await loadUploadedFile(f.fileId, Number(orgId), { userId: guardUserId })).buffer;
                 if (!buf || buf.length === 0 || buf.length > MAX_DOC_BYTES) continue;
                 messages.push({
                   role: 'user' as const,
@@ -1300,6 +1693,12 @@ export function mountStreamRoute(router: Router): void {
                   ],
                 });
                 contentReadIds.add(f.fileId);
+                // A text file the check can read; a PDF's bytes it cannot, and says so.
+                turnContextSources.push(
+                  docMime === 'text/plain'
+                    ? { source: `attachment:${f.fileName}`, content: buf.toString('utf8') }
+                    : { source: `attachment:${f.fileName}`, content: '', unreadable: true },
+                );
               }
             }
           }
@@ -1314,6 +1713,11 @@ export function mountStreamRoute(router: Router): void {
       // Default path uses `effectiveMessage` unchanged. Only when
       // PROMPT_INJECTION_ENCAPSULATE is enabled does the guard hand back the
       // injection-resistant encapsulated form for the model to see as data.
+      // An interrupted stream's visible words may never have been persisted.
+      // Explicit Continue carries them as client draft text, never tool evidence.
+      // When encapsulation is enabled the guarded text already includes the
+      // handoff; do not also add an unencapsulated copy alongside it.
+      if (continuation && !injectionGuard.encapsulated) messages.push(continuation);
       messages.push({
         role: 'user',
         content: injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage,
@@ -1322,7 +1726,7 @@ export function mountStreamRoute(router: Router): void {
       // What this turn read before answering — uploads and memory — so the
       // work panel's "Used in this session" states facts, not an attempt.
       const contextUsedEvent = buildContextUsedEvent({
-        requestedUploads: streamFileIds.length + unreadableSources,
+        requestedUploads: Math.max(streamFileIds.length, contextUploads.length) + unreadableSources,
         uploads: contextUploads.map(u =>
           contentReadIds.has(u.fileId) ? { ...u, read: 'content' as const } : u
         ),
@@ -1398,16 +1802,18 @@ export function mountStreamRoute(router: Router): void {
         submissionType: orchestration.detectedSubmissionType,
         requestedMaxTokens: resolveOutputBudget(effortUsed),
         requestsGovernedDraft: requestsGovernedDraft(message),
+        // The open section: a Module 2 summary is high-stakes however the question is worded (MC-RL-3).
+        openSectionCode: sectionCode,
       });
+      // How the turn was routed, and why, on its record (MC-RL-8).
+      turnRecorder?.setRouting(routingPlan);
 
-      // Standard chat is an interactive surface, not a background research
-      // job. Keep its answer and tool loop bounded so one exploratory turn
-      // cannot hold the composer for minutes. Full depth remains available for
-      // an explicit Thorough request, governed drafting, and high-risk work.
+      // Keep each standard-chat model response bounded. The agentic loop still
+      // follows its effort and run-policy ceilings below.
       const governedDraftRequested = requestsGovernedDraft(message);
-      const interactiveLatencyBound =
+      const interactiveTokenBound =
         !governedDraftRequested && effortUsed !== 'thorough' && routingPlan.riskTier !== 'high';
-      const streamMaxTokens = interactiveLatencyBound
+      const streamMaxTokens = interactiveTokenBound
         ? Math.min(routingPlan.maxTokens, effortUsed === 'fast' ? 1_024 : 2_048)
         : routingPlan.maxTokens;
 
@@ -1441,7 +1847,15 @@ export function mountStreamRoute(router: Router): void {
       // composer. When a policy hint is present the user's effort is not in
       // force, and sending its API effort would smuggle the override back in
       // through the other half of the control.
-      const apiEffort = policyHint?.preferredStrategy ? undefined : resolveApiEffort(effortUsed);
+      //
+      // A high-stakes turn runs at 'high' or above on every model, pinned or
+      // not (resolveTurnApiEffort, MC-RL-5): its thinking-budget floor never
+      // reached an adaptive model, which self-budgets.
+      const apiEffort = resolveTurnApiEffort({
+        effort: effortUsed,
+        riskTier: routingPlan.riskTier,
+        policyPinned: Boolean(policyHint?.preferredStrategy),
+      });
 
       // Optional explicit model override, pinned only when it is governed:
       // enabled in THIS tenant's model set, the registry row an approved-models
@@ -1545,17 +1959,19 @@ export function mountStreamRoute(router: Router): void {
       // the next model turn (then cleared) so a failed round becomes a course
       // correction instead of an identical retry the thrash guard has to kill.
       let pendingAdaptationNote = '';
-      // Raw tool output this turn — the evidence corpus the final answer is
-      // verified against in the self-verification round (see answer-grounding.ts).
-      const toolEvidenceCorpus: string[] = [];
+      // What the tools returned this turn, each entry named by its tool: the
+      // corpus the answer is checked against (answer-grounding.ts). A failed
+      // step, a governed write and what a model wrote inside a tool call are
+      // not entries (toolEvidence).
+      const toolEvidenceCorpus: EvidenceEntry[] = [];
       // Hosted web steps (Anthropic ran them inside a model call) are evidence
       // too: their sources and fetched text join the corpus the answer is
-      // grounded against, so a citation taken from one can be credited.
+      // checked against, so a citation taken from one can be credited.
       const recordServerToolEvidence = (response: unknown): void => {
         const steps = (response as AnaGatewayResponse | undefined)?.serverToolUses ?? [];
         for (const step of steps) {
           const evidence = serverToolEvidence(step);
-          if (evidence) toolEvidenceCorpus.push(evidence);
+          if (evidence) toolEvidenceCorpus.push({ source: 'web', content: evidence });
         }
       };
       // Provenance envelopes emitted by evidence tools this turn — persisted to the
@@ -1646,6 +2062,14 @@ export function mountStreamRoute(router: Router): void {
       const streamThinkingConfig = streamThinkingResolved.enabled
         ? streamThinkingResolved
         : undefined;
+      /**
+       * A follow-up round's thinking config (MC-RL-6): the turn's, as the first
+       * call's, except in a demonstration. A demo's talking points come back
+       * from those rounds as progress notes (progress-updates.ts), and a
+       * reasoning display would move them out of her words into the panel. Read
+       * per round: a turn becomes a demonstration when its script arrives.
+       */
+      const followUpThinking = () => (driveState.enabled && driveState.mode === 'demo' ? undefined : streamThinkingConfig);
       // Full tool suite on the streaming path: custom JSON-schema tools
       // (PubMed search, FDA guidance lookup, predicate device analysis, etc.)
       // plus any env-enabled Anthropic server tools (web_search, web_fetch,
@@ -1657,10 +2081,18 @@ export function mountStreamRoute(router: Router): void {
       // the assembled toolset so disabled tools are never offered to the
       // model. Loader is fail-open (default-allow) on any DB issue.
       const governedTools = await toolPolicyPromise;
+      /* run_agent is in THIS turn's governed set only when the turn hosts agents
+         and the tenant allows it. The stream dispatches any registered handler by
+         name, so the host below is lent only when this holds (brief D14): a tenant
+         deny of run_agent is a real kill switch, and it fails closed. */
+      const agentsOffered = governedTools.some(t => t.name === RUN_AGENT_TOOL);
+      /** This turn's agent counts: 6 per turn, 4 per round (sub-agent-limits.ts). */
+      const agentCounters = newAgentTurnCounters();
       // Governance first (tenant deny-list), then offer the subset relevant to this
-      // turn's intent + context. The platform command bridge is always retained, so
-      // intent selection never removes a capability — anything dropped stays
-      // reachable through execute_platform_command. User-pinned tools are honoured.
+      // turn's intent + context. The platform command bridge is always retained,
+      // but it reaches the command registry only — a typed tool dropped here is
+      // not reachable through it, which is why the tools earlier turns used are
+      // carried. User-pinned tools are honoured.
       const asStr = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
       const streamTools = selectToolsForTurn(
         governedTools,
@@ -1682,10 +2114,13 @@ export function mountStreamRoute(router: Router): void {
             // rather than always-on because voice and deep investigations
             // share the selector and can do neither (tool-selection.ts).
             ...SELF_DRIVE_TOOLS,
+            // Delegation survives relevance trimming on a turn that may use it.
+            ...(agentsOffered ? [RUN_AGENT_TOOL] : []),
           ],
           context: {
             projectType: asStr(submission_type),
-            documentType: asStr(document_context),
+            // The open document's type as the route resolved it; document_context is an object.
+            documentType: prefetchedStreamContext.openDocumentLabel ?? undefined,
             surface: asStr(intent_lens) ?? asStr(authoring_context),
             // The invoked app's id, label and words, so its tools survive the
             // relevance cap (shared/navigation/callable-apps).
@@ -1695,6 +2130,7 @@ export function mountStreamRoute(router: Router): void {
           // (the always-on core + platform bridge are unaffected). Per-tenant when an
           // org is in context, else the global view.
           deprioritize: new Set(getUnhealthyTools(3, orgId ?? undefined).map(t => t.tool)),
+          carriedTools,
         }
       );
 
@@ -1737,6 +2173,8 @@ export function mountStreamRoute(router: Router): void {
         apiEffort,
         ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
         ...(streamTools.length > 0 ? { tools: streamTools } : {}),
+        // Decision 3 (A): a call that offers tools has her notes as her words (gateway: progress-updates.ts).
+        notesBetweenTools: streamTools.length > 0,
         stream: true,
         onStream: (chunk: string, metadata?: any) => {
           // Cancelled mid-generation → stop emitting (and accumulating) at
@@ -1784,8 +2222,10 @@ export function mountStreamRoute(router: Router): void {
       // that wrote it: post-processing runs the blocks from the whole answer,
       // which joins every round's text (commandBlockProposer).
       const commandRounds = commandRoundOf(fullContent, lastServedModel);
-      turnRecorder?.addServed(1, lastServedModel);
+      turnRecorder?.addServed(1, lastServedModel, callSent({ apiEffort, thinking: streamThinkingConfig, tools: streamTools }));
       recordCacheUsage(gwResponse);
+      // Her words before round 1's steps, when the call also called tools (a note, S4).
+      timeline.noteFromCall(fullContent, gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
       emitServerToolSteps(gwResponse, 1);
       recordServerToolEvidence(gwResponse);
@@ -1833,8 +2273,35 @@ export function mountStreamRoute(router: Router): void {
         /** One hold per turn: the checkpoint's pause wait (run-hold.ts). None without a run row. */
         const runHold =
           runId && runHandle
-            ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl })
-            : null;
+              ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl, policy: runPolicy })
+              : null;
+
+        /**
+         * What a `run_agent` call is lent (row 74, S5): nothing unless this turn
+         * hosts agents, the tenant allowed the tool, and there is a run hold to
+         * wait on — the runner then answers AGENTS_NEED_A_LIVE_RUN, so nothing
+         * starts. The hold is bound to the PARENT's round, because `paused` and
+         * `resumed` name the round the person is watching; a child passing its
+         * own 0-6 would write its number into the person's frames. Frames leave
+         * as `agent_event` under the CALL's id, whatever the frame itself says,
+         * so a client pairs them with the step that started them.
+         */
+        const subAgentHostFor = (toolUseId: string, round: number): { subAgentHost?: SubAgentHost } => {
+          if (!agentsOffered || !runHold || !runId || orgId == null) return {};
+          return {
+            subAgentHost: {
+              organizationId: Number(orgId),
+              parentRunId: runId,
+              round,
+              governedTools,
+              agents: agentCounters,
+              hold: (announce, signal) => runHold.hold(round, announce, signal),
+              expiredSignal: runHold.expiredSignal,
+              heldMs: () => runHold.heldMs(),
+              emit: frame => emitControl({ ...frame, type: 'agent_event', toolUseId }),
+            },
+          };
+        };
 
         /**
          * Settle every tool call in this round that a person has to authorise.
@@ -1848,8 +2315,8 @@ export function mountStreamRoute(router: Router): void {
         const settleApprovals = async (
           calls: ToolCall[],
           round: number
-        ): Promise<Map<string, { ok: boolean; result: unknown; why?: string }>> => {
-          const out = new Map<string, { ok: boolean; result: unknown; why?: string }>();
+        ): Promise<Map<string, SettledApproval>> => {
+          const out = new Map<string, SettledApproval>();
           for (const toolUse of calls) {
             const verdict = classifyToolCall(toolUse);
             if (verdict.kind === 'UNGOVERNED') continue;
@@ -1857,7 +2324,7 @@ export function mountStreamRoute(router: Router): void {
             if (verdict.kind === 'REFUSED') {
               // A person's own act. Not put to anyone — a yes would not make
               // it hers to take — and not dispatched.
-              out.set(toolUse.id, { ok: false, why: verdict.why, result: verdict.result });
+              out.set(toolUse.id, { ok: false, why: verdict.why, result: verdict.result, heldBack: true });
               continue;
             }
 
@@ -1889,6 +2356,7 @@ export function mountStreamRoute(router: Router): void {
               // governed action with nobody having authorised it.
               out.set(toolUse.id, {
                 ok: false,
+                heldBack: true,
                 why: 'no controllable run',
                 result: {
                   error: 'HUMAN_CONFIRMATION_REQUIRED',
@@ -1907,6 +2375,18 @@ export function mountStreamRoute(router: Router): void {
           return out;
         };
 
+        /**
+         * The prose a held proposal would store, checked against what AnA
+         * consulted before she wrote it (GRD-2, proposal-check.ts), as the
+         * fields it adds to the held row and the approval frame: shown to the
+         * person who approves it, named on the sign-off row. Advisory: the
+         * person decides. None when it stores no prose.
+         */
+        const proposalCheckFields = (params: Record<string, unknown>) => {
+          const check = checkProposal(params, [...turnContextSources, ...toolEvidenceCorpus]);
+          return check ? { check } : {};
+        };
+
         /** Put one action to the person and hold the turn until they answer. */
         const awaitDecision = async (
           toolUse: ToolCall,
@@ -1914,9 +2394,10 @@ export function mountStreamRoute(router: Router): void {
           round: number,
           /** The run's own tenant. Every write to the run row is bound to it. */
           orgId: number
-        ): Promise<{ ok: boolean; result: unknown; why?: string }> => {
-          const refused = (why: string, message: string) => ({
+        ): Promise<SettledApproval> => {
+          const refused = (why: string, message: string, heldBack = true) => ({
             ok: false,
+            heldBack,
             why,
             result: {
               error: 'HUMAN_CONFIRMATION_DECLINED',
@@ -1929,17 +2410,22 @@ export function mountStreamRoute(router: Router): void {
             },
           });
 
+          const checked = proposalCheckFields(verdict.params);
           const opened = await requestApproval(getPool(), runId, {
             toolUseId: toolUse.id,
             command: verdict.command,
             params: verdict.params,
             tier: verdict.tier,
+            ...checked,
             requestedAt: new Date().toISOString(),
-            rationale:
-              typeof (verdict.params as any)?.reason === 'string'
-                ? String((verdict.params as any).reason)
-                : undefined,
-            toolContext: heldToolContext(toolUse.name, streamProjectId, lastServedModel),
+            rationale: typeof (verdict.params as any)?.reason === 'string'
+              ? String((verdict.params as any).reason)
+              : undefined,
+            toolContext: heldToolContext(toolUse.name, streamProjectId, {
+              threadId,
+              turnId: runId,
+              servingModel: lastServedModel,
+            }),
             // The model call that proposed it, for the Part 11 row (D6).
             proposedBy: lastServedModel,
           }).catch(() => false);
@@ -1956,7 +2442,7 @@ export function mountStreamRoute(router: Router): void {
           // the tier and what it asks for are said one way. GovernedActionSignoff
           // opens on it. runId + toolUseId are what let the decision
           // come back to THIS waiting turn instead of running on its own.
-          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params);
+          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params, verdict.tier);
           emitControl({
             type: 'approval_required',
             round,
@@ -1966,7 +2452,9 @@ export function mountStreamRoute(router: Router): void {
             openModal: proposal.openModal,
             data: proposal.data,
             message: `${proposal.message} AnA is waiting on this before she goes on.`,
+            ...checked,
           });
+          timeline.awaiting(round, toolUse);
 
           // The wait. Same machinery as pause: woken by the decision, with the
           // ceiling only bounding a wake that never arrives.
@@ -2003,7 +2491,10 @@ export function mountStreamRoute(router: Router): void {
                 decision.error ?? 'declined',
                 decision.error
                   ? `A person authorised this, but it did not complete: ${decision.error}`
-                  : 'A person reviewed this and declined it, so it did not run.'
+                  : 'A person reviewed this and declined it, so it did not run.',
+                // Authorised and then failed is a real failure; anything else
+                // is a person's no.
+                decision.decided !== 'approved',
               );
             }
             if (Date.now() - started > MAX_PAUSE_MS) {
@@ -2018,7 +2509,7 @@ export function mountStreamRoute(router: Router): void {
                 error: 'no decision within the approval window',
               }).catch(() => false);
               return refused(
-                'nobody decided in time',
+                APPROVAL_TIMEOUT_WHY,
                 'Nobody authorised this within the time allowed, so it did not run. Nothing was changed.'
               );
             }
@@ -2058,12 +2549,21 @@ export function mountStreamRoute(router: Router): void {
                   : `Round ${round} — running ${stepCount} more ${stepWord}…`,
             })}\n\n`
           );
+          // The round's Vault titles, resolved before anything is announced, so a
+          // read names its document from the start; scoped like the handler
+          // (step-presentation.ts resolveStepDocumentTitles).
+          const roundTitles = await resolveStepDocumentTitles(calls, {
+            sqlClient: requestPgClient(req),
+            organizationId: orgId,
+            ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
+            userId: guardUserId,
+          });
           res.write(
             `data: ${JSON.stringify({
               type: 'step',
               round,
               tools: calls.map(c => c.name),
-              plan: describeToolPlan(calls),
+              plan: calls.map(c => ({ tool: c.name, label: announcedStepFields(c, roundTitles).label })),
             })}\n\n`
           );
           // Announce all tool invocations in order, then run their handlers with
@@ -2071,6 +2571,7 @@ export function mountStreamRoute(router: Router): void {
           // run in parallel), and finally emit results in the original order so
           // the client UI stays deterministic.
           for (const toolUse of calls) {
+            const announced = announcedStepFields(toolUse, roundTitles);
             res.write(
               `data: ${JSON.stringify({
                 type: 'tool_use',
@@ -2080,10 +2581,12 @@ export function mountStreamRoute(router: Router): void {
                 // call that produced it. Several calls of one tool run in the
                 // same step, so a name cannot tell them apart (see tool_result).
                 toolUseId: toolUse.id,
-                label: describeToolPlan([toolUse])[0].label,
+                // Label, source, preview and facts: presentStep, never the tool's name.
+                ...announced,
                 input: toolUse.input,
               })}\n\n`
             );
+            timeline.announced(round, toolUse, announced);
           }
           // ── Anything that needs a person is settled FIRST, one at a time ──
           //
@@ -2097,16 +2600,35 @@ export function mountStreamRoute(router: Router): void {
           // one action at a time, and two gates open at once would mean
           // authorising one thing while the row described another. Everything
           // ungoverned still runs concurrently below.
+          const approvalsStarted = Date.now();
           const approvals = await settleApprovals(calls, round);
+          // Read by the run policy from OUT HERE, after the gate decided: the
+          // time spent waiting on a person is not Auto's work, and an approval
+          // nobody answered ends a policy turn (TurnPolicy.noteApprovals).
+          turnPolicy.noteApprovals(
+            Date.now() - approvalsStarted,
+            [...approvals.values()].some(a => a.why === APPROVAL_TIMEOUT_WHY),
+          );
 
+          // Reads' receipts wait here until the round is budgeted (read-receipts.ts).
+          const readReceipts: DeferredReadReceipts = new Map();
+          const toolActorId = userId || null;
+          const hostForTool = (name: string, id: string) => name === RUN_AGENT_TOOL ? subAgentHostFor(id, round) : {};
           const ran = await mapWithConcurrency(
             calls,
             async toolUse => {
               const handler = getToolHandler(toolUse.name);
               const toolStart = Date.now();
               let resultStr: string;
-              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' = 'success';
+              // 'incomplete': an agent that stopped at a budget (sub-agent-result.ts).
+              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete' = 'success';
               let toolErrorMessage: string | undefined;
+              // A person's no (or no answer): not a failure to work around.
+              let heldBack = false;
+              // What a model wrote while this call ran (generation-capture.ts).
+              // Null where the handler ran elsewhere — a person settled it in
+              // the governed-action route — so its generations are unknown.
+              let generated: GenerationCapture | null = null;
               const lostInput = lostToolInputResult(toolUse);
               const approval = approvals.get(toolUse.id);
               if (approval) {
@@ -2119,6 +2641,7 @@ export function mountStreamRoute(router: Router): void {
                 resultStr = JSON.stringify(approval.result);
                 toolStatus = approval.ok ? 'success' : 'error';
                 toolErrorMessage = approval.ok ? undefined : approval.why;
+                heldBack = approval.heldBack === true;
               } else if (runSignal?.aborted) {
                 // Stopped before this step got its turn. It never ran, and
                 // saying so is the honest record — a step that silently
@@ -2139,26 +2662,38 @@ export function mountStreamRoute(router: Router): void {
                   // the ROUND stops waiting for it, which is the difference
                   // between a stop that lands in a second and one that waits
                   // out a forty-second search.
-                  resultStr = await Promise.race([
-                    // Inside the run's scope, so the gateway calls the tool makes
-                    // are listed under this run on the ledger (D6).
+                  generated = newGenerationCapture();
+                  // Inside the run's scope, so the gateway calls the tool makes
+                  // are listed under this run on the ledger (D6); and inside a
+                  // capture, so what a model writes for it is known.
+                  const toolWork = runCapturingGenerations(generated, () =>
                     runWithRunScope({ runId }, () =>
                       handler(toolUse.input, {
-                        servingModel: lastServedModel,
+                        sqlClient: requestPgClient(req),
                         organizationId: orgId,
-                        userId: userId || null,
-                        projectId: streamProjectId ? Number(streamProjectId) || null : null,
-                        projectRef: streamProjectId ? String(streamProjectId) : null,
+                        userId: toolActorId,
+                        // The project, and the conversation, turn and model this
+                        // call serves (PF-10 S5): a document a tool creates
+                        // records them as its provenance.
+                        ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
                         // Lets navigate_to tell the model the truth about what its
                         // directive does this turn (applied live vs offered chip).
                         liveDrive: driveState.enabled,
                         lockedScreens,
                         turnState: driveTurnState,
                         signal: runSignal,
-                      })
+                        ...readReceiptContext(readReceipts, toolUse.id),
+                        // Only a run_agent call, and only on a hosting turn.
+                        ...hostForTool(toolUse.name, toolUse.id),
+                      }),
                     ),
-                    abortRace(runSignal),
-                  ]);
+                  );
+                  const cancellationWait = abortRace(runSignal);
+                  try {
+                    resultStr = await Promise.race([toolWork, cancellationWait]);
+                  } finally {
+                    cancellationWait.dispose();
+                  }
                 } catch (toolErr: any) {
                   if (toolErr instanceof ToolRunCancelled) {
                     // Not an error: the person stopped it. Falls through to
@@ -2168,12 +2703,13 @@ export function mountStreamRoute(router: Router): void {
                     toolStatus = 'cancelled';
                     toolErrorMessage = undefined;
                   } else {
+                    const executionFailure = toolErr?.message || 'unknown error';
                     resultStr = JSON.stringify({
-                      error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
+                      error: `Tool execution failed: ${executionFailure}`,
                       tool: toolUse.name,
                     });
                     toolStatus = 'error';
-                    toolErrorMessage = toolErr?.message || 'unknown error';
+                    toolErrorMessage = executionFailure;
                   }
                 }
               } else {
@@ -2190,14 +2726,26 @@ export function mountStreamRoute(router: Router): void {
                 toolStatus = 'error';
                 toolErrorMessage = refusal;
               }
+              // An agent's own outcome refines a mechanical success: a budget
+              // stop reads 'incomplete', a child the person stopped 'cancelled'
+              // (brief D16). Every other status is kept as it is.
+              if (toolUse.name === RUN_AGENT_TOOL) {
+                toolStatus = agentTraceStatus(toolStatus, resultStr);
+              }
               void logToolRun({
                 threadId: thread_id,
-                projectId: streamProjectId ? Number(streamProjectId) || null : null,
-                userId: userId || null,
+                projectId: streamProjectIdNumber,
+                userId: toolActorId,
                 organizationId: orgId,
                 toolName: toolUse.name,
                 arguments: (toolUse.input ?? {}) as Record<string, unknown>,
                 result: { resultBytes: resultStr.length },
+                /* The outcome the person's record carries, not a rounded one:
+                   an agent cut short at a budget recorded as a plain success
+                   left the ledger disagreeing with the record they can open,
+                   and nobody querying it could find which runs were cut short
+                   (review 2026-10-11; the column is free text, as
+                   toolRegistry.ts says of 'cancelled'). */
                 status: toolStatus,
                 errorMessage: toolErrorMessage,
                 latencyMs: Date.now() - toolStart,
@@ -2206,11 +2754,11 @@ export function mountStreamRoute(router: Router): void {
               // client's work panel can show how long each step really took
               // rather than timing the round-trip from its own side.
               return {
-                toolUse,
-                resultStr,
-                toolStatus,
-                toolErrorMessage,
-                latencyMs: Date.now() - toolStart,
+                toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs: Date.now() - toolStart, generated,
+                // Handler dispatch: the wait for a person settled before it (S4).
+                startedAt: toolStart,
+                // From the capture, never from a list of tools (generation-capture.ts).
+                usedModel: stepUsedModel(generated, approval !== undefined),
               };
             },
             4
@@ -2248,9 +2796,21 @@ export function mountStreamRoute(router: Router): void {
             });
           };
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs } of ran) {
-            entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
-            const stepLabel = describeToolPlan([toolUse])[0].label;
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs, usedModel, startedAt } of ran) {
+            /* An agent's full result keeps its whole trace — every child step, in
+               full — for the turn record. The model and the client read it
+               without that trace: it is the record's, not the conversation's. */
+            const isAgent = toolUse.name === RUN_AGENT_TOOL;
+            const shown = isAgent ? runAgentViewForModel(resultStr) : resultStr;
+            entries.push({ tool_use_id: toolUse.id, content: shown, name: toolUse.name });
+            // The finished step: its label in the right tense, its facts and the
+            // sentence for a step that did not succeed (step-presentation.ts).
+            const step = finishedStep(toolUse, roundTitles, {
+              status: toolStatus, heldBack, why: toolErrorMessage, result: resultStr, latencyMs, usedModel,
+            });
+            const stepLabel = step.label;
+            // On the timeline, and what the record adds to the step from it (/4).
+            const ended = timeline.finished(round, toolUse, { ...step.frame, status: toolStatus, heldBack, ms: latencyMs, startedAt });
             turnRecorder?.addStep({
               toolUseId: toolUse.id,
               round,
@@ -2261,37 +2821,30 @@ export function mountStreamRoute(router: Router): void {
               input: toolUse.input,
               result: resultStr,
               error: toolErrorMessage ?? null,
+              ...ended,
             });
             // Record this call in the turn's tool-trace memory + evidence corpus.
-            toolTrace.push(buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr));
+            toolTrace.push({ ...buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr), ...step.trace });
             // Failures collected for the round's adaptation note (see below).
             // A cancelled step is NOT a failure to adapt to: the note tells the
             // model "these did not work, try something else", and the run is
             // ending — there is no next attempt to steer, and telling her to
             // work around a step the person stopped would invite her to do the
             // very thing she was stopped from doing.
-            if (toolStatus !== 'success' && toolStatus !== 'cancelled') {
+            // A step a person declined, left unanswered, or that only a person
+            // may take is not one either (row 74, F1): the note would tell the
+            // model to find another way to do what a person just said no to.
+            // Nor is an agent that stopped at a budget: what it found is usable,
+            // and "try an alternative" would start the same brief over (D16).
+            if (toolStatus !== 'success' && toolStatus !== 'cancelled' && toolStatus !== 'incomplete' && !heldBack) {
               roundFailures.push({
                 name: toolUse.name,
-                label: stepLabel,
+                label: step.doing,
                 error:
                   toolErrorMessage ||
                   (toolStatus === 'not_found' ? 'no handler available' : undefined),
               });
             }
-            // Calm, human-facing message for a non-success step so the client can
-            // render an honest state ("AnA couldn't finish X") instead of a raw
-            // error string — trust is the interface, including when something
-            // fails. The lower-cased label reads naturally mid-sentence.
-            const humanStep = stepLabel.charAt(0).toLowerCase() + stepLabel.slice(1);
-            const humanMessage =
-              toolStatus === 'error'
-                ? `AnA couldn't finish ${humanStep}. She'll continue with what she has.`
-                : toolStatus === 'not_found'
-                ? `This step (${humanStep}) isn't available here. AnA will work around it.`
-                : toolStatus === 'cancelled'
-                ? `You stopped ${humanStep} before it finished.`
-                : undefined;
             res.write(
               `data: ${JSON.stringify({
                 type: 'tool_result',
@@ -2303,11 +2856,11 @@ export function mountStreamRoute(router: Router): void {
                    same-named calls in one step were swapped every time, each
                    query shown against the other's results. The id ends that. */
                 toolUseId: toolUse.id,
-                label: stepLabel,
+                // Label, source, preview, facts, usedModel and the status sentence.
+                ...step.frame,
                 status: toolStatus,
                 latencyMs,
-                ...(humanMessage ? { message: humanMessage } : {}),
-                result: resultStr,
+                result: shown,
               })}\n\n`
             );
             // The plan AnA declared, from the handler's NORMALISED result — the
@@ -2317,8 +2870,19 @@ export function mountStreamRoute(router: Router): void {
               lastPlan = planEvent.steps;
               turnRecorder?.addPlan(round, planEvent.steps);
               res.write(`data: ${JSON.stringify(planEvent)}\n\n`);
+              timeline.planned(round, planEvent.steps);
             }
-            if (toolStatus === 'success') {
+            /* An agent's provenance is its tools' own, for a completed agent and
+               one that stopped at a budget alike. A failed agent's is dropped:
+               nothing it did is evidence. The parsed-result block below reads
+               directives and drafts, which no agent produces. */
+            if (isAgent && (toolStatus === 'success' || toolStatus === 'incomplete')) {
+              for (const p of agentProvenance(resultStr)) {
+                if (collectedProvenance.length >= PROVENANCE_CAP) break;
+                collectedProvenance.push(p as ProvenanceRecord);
+              }
+            }
+            if (toolStatus === 'success' && !isAgent) {
               try {
                 const parsed = JSON.parse(resultStr);
                 // Accumulate any provenance envelope this evidence tool emitted, for
@@ -2548,8 +3112,14 @@ export function mountStreamRoute(router: Router): void {
           // Budget the whole round's results before they reach the model, so a
           // many-tool round can't bloat every later round's context (deep loops
           // carry all prior results forward). Small rounds pass through under the
-          // classic per-result caps, byte-identical to before.
-          const budgeted = budgetToolResultsForModel(entries);
+          // classic per-result caps, byte-identical to before. A read goes whole
+          // or not at all, and its receipt is written only if it went whole.
+          const staged = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
+          const budgeted = await guardReadResultsForHandoff(entries, staged, readReceipts, { signal: runSignal });
+          const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
+          await settleReadReceipts(entries, budgeted, readReceipts, undefined, {
+            signal: runSignal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(budgeted, id, { signal: runSignal })),
+          });
           // What the model will read of each result, where the budget or the
           // drive-budget amendment changed it from what the tool returned.
           turnRecorder?.setSentToModel(budgeted);
@@ -2558,10 +3128,43 @@ export function mountStreamRoute(router: Router): void {
           // was fed, a claim sitting in the truncated-away middle would be marked
           // "grounded" though the model never read it — a false pass in the one
           // direction that lets a fabrication through. The corpus therefore gets
-          // exactly the budgeted strings the model gets.
-          for (const b of budgeted) toolEvidenceCorpus.push(b.content);
-          // Failure guidance for the next model turn (cleared after use).
-          pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
+          // exactly the budgeted strings the model gets, each with the call's
+          // status, input and the generations its handler made.
+          const outcomes = new Map(ran.map(r => [r.toolUse.id, r]));
+          for (const b of budgeted) {
+            const r = outcomes.get(b.tool_use_id);
+            if (r?.toolUse.name === RUN_AGENT_TOOL) {
+              /* An agent is evidence only through its tools' results, as the
+                 child read them — never its report, never the checks' echo of
+                 the text the parent gave it, never its notes (brief D19). */
+              if (r.toolStatus === 'success' || r.toolStatus === 'incomplete') {
+                toolEvidenceCorpus.push(...agentEvidenceEntries(r.resultStr));
+              }
+              continue;
+            }
+            const entry = r
+              ? toolEvidence(r.toolUse.name, {
+                  status: r.toolStatus,
+                  input: r.toolUse.input,
+                  content: b.content,
+                  generated: r.generated,
+                })
+              : null;
+            if (entry) toolEvidenceCorpus.push(entry);
+          }
+          // Failure guidance for the next model turn (cleared after use): the
+          // steps that failed, then the steps that returned nothing usable — a
+          // search with no hits, a service that could not be reached, a tool
+          // that needs input it was not given (tool-outcome.ts, TP-RL-4).
+          pendingAdaptationNote = [
+            buildAdaptationNote(roundFailures, calls.length),
+            buildShortfallNote(
+              ran.map(r => ({ label: describeToolPlan([r.toolUse])[0].label, status: r.toolStatus, heldBack: r.heldBack, result: r.resultStr })),
+              calls.length,
+            ),
+          ]
+            .filter(Boolean)
+            .join('\n');
           /* The round is done and the loop is about to hand these results back to
            * the model. That is a genuinely different activity from running the
            * tools, and it is the moment AnA decides whether she has enough or
@@ -2610,8 +3213,8 @@ export function mountStreamRoute(router: Router): void {
               results
                 .map(
                   tr =>
-                    `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(
-                      tr.content
+                    `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${frameToolOutput(
+                      capToolResultForModel(tr.content)
                     )}`
                 )
                 .join('\n\n') + adaptationSuffix,
@@ -2629,13 +3232,22 @@ export function mountStreamRoute(router: Router): void {
           turnRecorder?.addRoundInput(round, loopMessages.slice(stagedFrom));
         };
 
+        /** Decision 3 (A): a round that offers tools asks for her notes as her words (gateway: progress-updates.ts). */
+        const notesBetweenTools = (includeTools: boolean): boolean => includeTools && streamTools.length > 0;
+
+        /** What a follow-up round sends, for its record (MC-RL-8): the closing round is told to call no tool. */
+        const roundSent = (thinking: ReturnType<typeof followUpThinking>, includeTools: boolean): CallSent =>
+          callSent({ apiEffort, thinking, tools: streamTools, toolChoice: includeTools ? null : 'none' });
+
         const callModel = async (
           results: ToolResultEntry[],
           priorText: string,
           round: number,
           includeTools: boolean
         ): Promise<ModelTurn> => {
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           await settleMoves(round);
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           stageRound(results, priorText, round);
 
           // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
@@ -2653,6 +3265,9 @@ export function mountStreamRoute(router: Router): void {
               : selectedStrategy;
 
           let roundText = '';
+          // What this round sends, kept for its record (MC-RL-8).
+          const roundThinking = followUpThinking();
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           const roundResponse = await gw.route({
             taskType: routingPlan.taskType,
             // Every agentic round is bound to the same tenant as the first.
@@ -2676,6 +3291,12 @@ export function mountStreamRoute(router: Router): void {
             // invalidates the messages cache, and the follow-up rounds are the
             // same piece of work as the first.
             apiEffort,
+            // The turn's thinking config, as the first call's (MC-RL-6). These
+            // are the calls that read the tool results and write the answer:
+            // without it they did not reason on the legacy surface, and on the
+            // adaptive one their reasoning was never shown or kept. Tool turns
+            // travel as prose, so no thinking block needs replaying.
+            thinking: roundThinking,
             // The tools array stays on the request for EVERY round, including
             // the terminal one. Withdrawing it is what the terminal round used
             // to do, and it cost the whole prompt cache once per turn:
@@ -2691,6 +3312,8 @@ export function mountStreamRoute(router: Router): void {
             // outcome, one cache tier instead of none.
             ...(streamTools.length > 0 ? { tools: streamTools } : {}),
             ...(includeTools ? {} : { toolChoice: 'none' as const }),
+            // Decision 3 (A): a tool round has her notes as her words; the closing round keeps the summary.
+            notesBetweenTools: notesBetweenTools(includeTools),
             stream: true,
             onStream: (chunk: string, metadata?: any) => {
               if (runHandle?.cancelSignal.aborted) return;
@@ -2724,11 +3347,13 @@ export function mountStreamRoute(router: Router): void {
           }
           recordCacheUsage(roundResponse);
           lastFinishReason = roundResponse.finishReason;
+          // Her words before the next round's steps, when this call also called tools (a note, S4).
+          timeline.noteFromCall(roundText, roundResponse);
           emitServerToolSteps(roundResponse, round);
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
           commandRounds.push(...commandRoundOf(roundText, lastServedModel));
-          recordServed(round, lastServedModel);
+          recordServed(round, lastServedModel, roundSent(roundThinking, includeTools));
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
         };
@@ -2827,53 +3452,55 @@ export function mountStreamRoute(router: Router): void {
           }
         };
 
-        const checkpoint = async (upcomingRound: number): Promise<'continue' | 'abort'> => {
-          if (!runId || !runHandle || !runHold) return 'continue';
-          if (runHandle.cancelSignal.aborted) {
-            emitControl({ type: 'cancelled', round: upcomingRound });
-            return 'abort';
-          }
-          heartbeatRound = upcomingRound;
-          void runHandle.heartbeat(upcomingRound);
-
-          // Pause: hold at the round boundary until resumed / cancelled. The
-          // wait — woken by the control write, announced once as paused and
-          // once as resumed, resumed as abandoned past MAX_PAUSE_MS — is the
-          // turn's shared hold (services/ana/run-hold.ts), where it moved.
-          const held = await runHold.hold(upcomingRound);
-
-          // Steers and screen reports: splice each into the next model turn.
-          // The drain is atomic and covers both, so neither can be applied
-          // twice.
-          const drainedSteers = spliceQueued(await consumeInterjections(getPool(), runId));
-
-          if (runHandle.cancelSignal.aborted || held === 'cancelled') {
-            emitControl({ type: 'cancelled', round: upcomingRound });
-            return 'abort';
-          }
-
-          /* `interjected` is announced AFTER the cancel check, not beside the
-             drain above.
-
-             The client renders this event as "You steered AnA:" on the turn.
-             Emitted at drain time it could say so and then be immediately
-             followed by an abort on the very next line — the steer drained out
-             of the queue, never reached a model turn, and the transcript
-             claimed it had. Cancel is the one outcome reachable between the two
-             points, so moving the announcement past it removes that window
-             entirely rather than retracting the claim afterwards.
-
-             This is an announcement of delivery-to-the-next-turn, which is what
-             the person is told. The AUDIT record is a different thing and is
-             written elsewhere, at queue time by the control endpoint
-             (services/ana/run-control.ts queueSteer) — where it means "the
-             operator submitted this steer", which is true whether or not the
-             run went on to consume it. The two must not be conflated. */
-          for (const inj of drainedSteers) {
-            emitControl({ type: 'interjected', round: upcomingRound, message: inj });
-          }
-          return 'continue';
-        };
+        /* The round-boundary checkpoint: hold while a person paused, splice
+           queued steers, abort on cancel — and, under Manual, stop before each
+           further step until the person says Run this step or Do this instead
+           (services/ana/turn-run-policy.ts, where it moved in row 74's S4; its
+           order and frames without a policy are the ones it had here). */
+        const manualDemoExempt = driveState.enabled && driveState.mode === 'demo';
+        const checkpoint = turnPolicy.checkpoint({
+          run:
+            runId && runHandle && runHold
+              ? {
+                  hold: runHold,
+                  cancelSignal: runHandle.cancelSignal,
+                  cancelled: () => runHandle!.cancelSignal.aborted,
+                  heartbeat: (round: number) => {
+                    void runHandle!.heartbeat(round);
+                  },
+                  // Steers and screen reports: the drain is atomic and covers
+                  // both, so neither can be applied twice.
+                  drainSteers: async () => spliceQueued(await consumeInterjections(getPool(), runId)),
+                  holdForPerson: () => holdForPerson(getPool(), runId),
+                  status: () => readStatus(getPool(), runId),
+                }
+              : null,
+          // Latched as the turn began: a demonstration the person started
+          // runs through, but one the model starts mid-turn (start_product_demo
+          // promotes the turn) must not switch Manual's holds off.
+          demo: () => manualDemoExempt,
+          isUngoverned: call => classifyToolCall(call).kind === 'UNGOVERNED',
+          label: call => describeToolPlan([call])[0].label,
+          emit: emitControl,
+          // A step she chose that never ran is still a step of this turn: the
+          // record says so, with no result ("A step with no recorded result
+          // says so").
+          notRun: (call, round, why) => {
+            // On the timeline whether or not the turn has a record (S4).
+            const ended = timeline.notRun(round, call, why);
+            turnRecorder?.addStep({
+              toolUseId: call.id,
+              round,
+              tool: call.name,
+              label: describeToolPlan([call])[0].label,
+              status: 'not_run',
+              input: call.input,
+              result: null,
+              error: why,
+              ...ended,
+            });
+          },
+        });
 
         // Kept for endRun: until 2026-09-26 the result was discarded and every
         // run was recorded as ending for want of tools, including one stopped
@@ -2886,24 +3513,35 @@ export function mountStreamRoute(router: Router): void {
           // The ceiling is soft — a loop still discovering novel ground earns up
           // to resolveRoundExtension() extra rounds; a circling loop never does.
           {
-            // Demo mode raises (never lowers) the ceiling: a narrated tour
+            // Demo mode raises (never lowers) the base: a narrated tour
             // spends roughly one round per stop, so a full script must not be
-            // cut off at the effort ceiling mid-demonstration.
-            maxRounds:
+            // cut off at the effort ceiling mid-demonstration. The run policy
+            // then shapes the budget: Auto may run on past the effort ceiling
+            // while each round is new, to an absolute AUTO_MAX_ROUNDS that a
+            // demo promotion cannot lift; Manual and no policy keep today's.
+            ...resolveRoundBudget(
+              effortUsed,
+              runPolicy,
               driveState.enabled && driveState.mode === 'demo'
                 ? Math.max(resolveMaxRounds(effortUsed), DEMO_MAX_ROUNDS)
-                : interactiveLatencyBound
-                ? 1
                 : resolveMaxRounds(effortUsed),
+            ),
             // A turn promoted to demo mode mid-way gets the demo ceiling from
             // that point on (read every round).
             maxRoundsFloor: () =>
               driveState.enabled && driveState.mode === 'demo' ? DEMO_MAX_ROUNDS : 0,
-            progressExtension: interactiveLatencyBound ? 0 : resolveRoundExtension(effortUsed),
+            // Stop during a tool halts before another gateway call.
+            // An expired hold halts; a policy turn ends on an unanswered
+            // approval; Auto ends at its time ceilings. Never for a turn with
+            // no policy (run-status.ts policyStopDirective).
+            stopWhen: () => (runSignal?.aborted ? 'halt' : turnPolicy.stopWhen()),
           }
         );
         loopStoppedReason = loopResult.stoppedReason;
         loopRounds = loopResult.rounds;
+        // Then the turn's reason, not only the loop's: a hold that expired or
+        // could not be made ended it, where the loop saw an abort.
+        loopStoppedReason = turnPolicy.stoppedReason(loopStoppedReason);
       }
       // The answer she was writing was cut off — the length limit, or a stream
       // that stalled mid-answer: the turn did not finish, whatever the loop saw.
@@ -2963,6 +3601,9 @@ export function mountStreamRoute(router: Router): void {
         thinkingEnabled: !!streamThinkingConfig,
       });
 
+      // The Summary's closing row: how the turn ended, and why it stopped (S4).
+      timeline.end(runSignal?.aborted ? 'stopped' : 'answered', endStoppedReason(Boolean(runSignal?.aborted), loopStoppedReason));
+
       // Emit `done` as soon as the last token is out. Carries the minimal
       // metadata the client needs to close the assistant turn. Heavier
       // post-processing (guidance + command executors, persistence, evidence,
@@ -2988,11 +3629,13 @@ export function mountStreamRoute(router: Router): void {
           // were sent, a turn the round cap or the repeat guard cut short was
           // indistinguishable on the client from one she finished: the work
           // panel said "Finished in" and the transcript showed an ordinary
-          // answer. `runPolicy` is reserved for the run-policy work (row 74)
-          // and is null until a turn can carry one. Additive fields.
+          // answer. `runPolicy` is the policy the turn ran under (null when
+          // none was sent), and `pendingSteps` the steps a Manual stop left
+          // unrun (row 74). Additive fields.
           stoppedReason: loopStoppedReason,
           rounds: loopRounds,
-          runPolicy: null,
+          runPolicy,
+          ...(turnPolicy.pendingSteps.length > 0 ? { pendingSteps: turnPolicy.pendingSteps } : {}),
         })}\n\n`
       );
 
@@ -3001,7 +3644,7 @@ export function mountStreamRoute(router: Router): void {
       void reflectAfterTurn({
         organizationId: orgId ? Number(orgId) : null,
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
-        projectId: streamProjectId != null ? Number(streamProjectId) : null,
+        projectId: streamProjectIdNumber,
         userMessage: message,
         assistantMessage: fullContent,
       }).catch(() => {});
@@ -3022,8 +3665,17 @@ export function mountStreamRoute(router: Router): void {
       // repeat guard) or the run was stopped between rounds; an inspector
       // reading the record must not take it for a concluded analysis.
       if (loopStoppedReason !== 'no_more_tools') {
-        turnRecorder?.warn(turnStopWarning(loopStoppedReason, loopRounds));
+        turnRecorder?.warn(
+          turnStopWarning(loopStoppedReason, loopRounds, {
+            runPolicy,
+            pendingSteps: turnPolicy.pendingSteps,
+            policyHolds: turnPolicy.policyHolds,
+          }),
+        );
       }
+      // AnA's own Manual holds are not controls (nobody pressed Pause), so the
+      // record's controls do not show them; each is written down here.
+      for (const hold of turnPolicy.policyHolds) turnRecorder?.warn(policyHoldWarning(hold));
       void runStreamPostProcessing({
         res,
         fullContent,
@@ -3041,7 +3693,10 @@ export function mountStreamRoute(router: Router): void {
         plan: lastPlan,
         stoppedReason: loopStoppedReason,
         rounds: loopRounds,
-        toolEvidenceCorpus,
+        runPolicy,
+        pendingSteps: turnPolicy.pendingSteps,
+        policyHolds: turnPolicy.policyHolds,
+        toolEvidenceCorpus: [...turnContextSources, ...toolEvidenceCorpus],
         collectedProvenance,
         // The moves Live Drive could not make lead, so they are the chips the
         // cap keeps; the one chip derivation (toNavigationActions and its
@@ -3070,17 +3725,26 @@ export function mountStreamRoute(router: Router): void {
       // The turn is recorded as it ended: with the part of the answer the
       // person saw, and why it stopped. A stop that aborted the model call
       // lands here too, and is recorded as stopped, not failed.
-      const stoppedByPerson = Boolean(runHandle?.cancelSignal.aborted);
+      const stopped = Boolean(runHandle?.cancelSignal.aborted);
       if (turnRecorder) {
         turnRecorder.setAnswer({ streamed: turnRecorder.streamedText });
         turnRecorder.setControls(await readControlEvents());
-        if (!stoppedByPerson) {
-          turnRecorder.warn(
-            `The turn ended with an error: ${String(error?.message ?? error).slice(0, 500)}`
-          );
+        if (!stopped) {
+          turnRecorder.warn(`The turn ended with an error: ${String(error?.message ?? error).slice(0, 500)}`);
         }
       }
-      const turnRecord = await fileTurnRecord(stoppedByPerson ? 'stopped' : 'failed');
+      // The stop is saved in the conversation as well as the record, with what
+      // had streamed: otherwise the question stood alone (QA 2026-10-08, j5).
+      if (stopped && stoppedTurnThreadId) {
+        try {
+          const answerId = await persistStoppedAnswer(stoppedTurnThreadId, turnRecorder?.streamedText ?? '', turnPolicyOf?.stoppedReason('cancelled'));
+          turnRecorder?.setMessageIds({ assistant: answerId });
+        } catch (saveErr: any) {
+          console.error('[AnA RI Stream] Stopped answer persist failed:', saveErr?.message);
+        }
+      }
+      timeline.end(stopped ? 'stopped' : 'failed', stopped ? endStoppedReason(true, turnPolicyOf?.stoppedReason('cancelled')) : null);
+      const turnRecord = await fileTurnRecord(stopped ? 'stopped' : 'failed');
       if (res.headersSent) {
         res.write(
           `data: ${JSON.stringify({

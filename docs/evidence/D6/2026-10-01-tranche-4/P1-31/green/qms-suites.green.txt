@@ -1,0 +1,209 @@
+# working tree on HEAD 747f7c68 with the P1-31 change; 2026-10-01T03:10:26Z
+# NODE_OPTIONS=--max-old-space-size=2560 npx vitest run server/routes/__tests__/qms-legacy-api-retired.test.ts server/routes/__tests__/qms-effective-only-by-signature.test.ts server/routes/__tests__/qms-governed-writes-audited.test.ts server/routes/__tests__/mdx-qms-retire.test.ts server/routes/__tests__/qms-document-approval-signature.test.ts server/routes/__tests__/qms-changes.test.ts server/routes/__tests__/qms-change-approval-signature.test.ts server/routes/__tests__/mdx-qms-readiness.test.ts server/middleware/__tests__/launch-scope-api-gate.test.ts server/bootstrap/__tests__/routes-reach-the-bundle.test.ts client/src/lib/__tests__/audit-row-not-persisted.test.ts server/services/ana/__tests__/ana-cannot-sign.test.ts server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts server/services/ana/__tests__/revise-qms-document-role.test.ts server/services/ana/__tests__/qms-change-tools.test.ts
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a viewer before touching the database or the signer (403) 46ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > a reason alone does not retire: 400 ESIGNATURE_COMPONENT_MISSING naming password and meaning; nothing verified, nothing written 13ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > an empty body names every missing component 9ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a reason shorter than the floor (8) before verifying anything 14ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a meaning other than APPROVED 7ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at 5ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing 6ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared 5ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled 14ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back 7ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT 9ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 8ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: execute, templates, the package model, tasks, dispatch readiness 10ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 17ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call 21ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 7ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 27ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 8ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 9ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it 62ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > requires change_number and title 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > advances a change through the lifecycle with a reason (Part 11) 7ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > refuses a transition without a reason-for-change 5ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > cannot approve a change from chat, and the change stays under assessment 15ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > does not offer AnA an approval, and says where a change is approved 2ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > rejects an illegal transition 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > links a change to a deviation 11ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > carries a recorded row out as auditTrail 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > create: says the record was not written when it was not 5ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > transition: says the record was not written when it was not 14ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > link: says the record was not written when it was not 9ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > opens a controlled revision (bumps version, back to draft, clears approval) 10ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to revise 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > a revision reason under 8 characters is refused and nothing is written 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > without a reason: refuses, nothing is written and no placeholder reaches the ledger 2ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > with a reason: still refuses — retirement is signed from the Quality register 3ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all) 442ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > FAILS CLOSED — a broken audit write rolls the document back 18ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses without a verified actor (no anonymous controlled-document creation) 5ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > approve_qms_document — AnA cannot make a document effective > writes nothing and hands the approval to the person 6ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > bumps the version AND writes the audit row in one transaction 21ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > FAILS CLOSED — a broken audit write rolls the revision back 24ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > retire_qms_document — AnA cannot retire a controlled document > writes nothing and hands the retirement to the person 6ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > writes the artifact, its immutable version AND the audit row 74ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > REFUSES without a project — a vault document belonging to no project is an orphaned capture 6ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > save_document_to_vault — vault artifact + version + audit are one transaction > FAILS CLOSED — a broken audit write rolls back the artifact AND its version 25ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > writes v2 AND the audit row 44ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > FAILS CLOSED — a broken audit write rolls the new version back 33ms
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input 13ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an empty body with 400 naming the missing signature components, and writes nothing 31ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a meaning other than APPROVED — an approval means one thing 5ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a signer whose org role carries no signing authority with 403, before checking the password 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a wrong password with 401, counts it against the account, and writes nothing 5ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a locked account with 423 before its password is compared (F-27) 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an account that is not active before its password is compared (F-28) 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the password alone from a signer with an authenticator enrolled 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the author approving their own document with 403 and rolls back 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a document that is not draft/in_review with 409 5ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > 404s a document outside the tenant 3ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT 5ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor 2ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=effective on a document in review and changes nothing 32ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=retired on a document in review and changes nothing 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=superseded on a document in review and changes nothing 3ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=retired on an effective document: retirement is the signed retire route 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > refuses status=effective before any write 5ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > still creates a draft 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses status=effective before any write 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses to edit an effective document: that is a revision 6ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > still edits a draft and routes it for review 10ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > says a missing document is missing, not controlled 5ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('x') 3ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(v) 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('pdfkit' as any) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > /* prose mentioning /*) inside */ await import(v) 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > const s = 'has /* inside'; await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > // await import(v)
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(`../routes/${n}`) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > sees the whole of the largest bootstrap file 15ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > no guarded file imports a module by computed specifier 14ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > the families that were missing are imported statically by name 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > every regional blueprint is imported statically by both catalogs 3ms
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > transition {to:"approved"} is refused 428 and writes nothing 69ms
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > an illegal move is still named as one (closed → approved is 409) 5ms
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 400 on an empty body, naming the missing components; nothing verified 5ms
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 without signing authority, before the password is looked at 4ms
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 401 on a wrong password; nothing written 5ms
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 QMS_SELF_APPROVAL when the proposer signs; rolled back 6ms
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 409 when the change is not under assessment; rolled back 3ms
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > a valid signing stamps the approval, writes one ledger row and one digest-bound signature, and commits 7ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > finds the outcome at the top level, under meta, under details, and nested in data 4ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > reads the header pair a 204 or a proxied body carries 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > stays silent for a persisted row, a true header, and an unrelated `persisted: false` 1ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > findUnpersistedAuditRow — the one reader of both wire signals > terminates on a cyclic body 0ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a 200 PATCH carrying auditTrail.persisted=false raises it, and the caller still reads the body 11ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a 204 DELETE carrying the header raises it 2ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > an upload whose row was lost raises it 53ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts > apiRequest / apiUpload raise the notice for a saved change with no audit row > a persisted row, and a GET, raise nothing 22ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document writes an audit row 62ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document carries the row's outcome in the envelope 7ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document writes an audit row 6ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document carries the row's outcome in the envelope 9ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier writes an audit row 8ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier carries the row's outcome in the envelope 5ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit writes an audit row 6ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit carries the row's outcome in the envelope 3ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit writes an audit row 6ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit carries the row's outcome in the envelope 4ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product writes an audit row 3ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product carries the row's outcome in the envelope 2ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan writes nothing and hands the act to the person 6ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > retire_qms_document writes nothing and hands the act to the person 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_dms_plan is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > certify_other_support is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_biosketch is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_export_control_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_research_agreement is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_committee_determination is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > finalize_grant_closeout is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > execute_subaward is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_no_cost_extension is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document is described as a hand-off, not an act 0ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > retire_qms_document is described as a hand-off, not an act 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > approve_rbm_assessment writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > approve_rbm_plan writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > transmit_submission writes nothing, even on a confirmation 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > retire_qms_document refuses as a signature and points to the Retire action 1ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts > the register lets a handler refuse only where the handler is pinned > every handler-refused tool in the register is pinned here or named 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > 403 without org context 24ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > lists the register, org-scoped 7ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > fails closed to an empty list when the store is missing (42P01) 6ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > creates a change request and returns the row 13ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 422 on invalid body (missing title) 5ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 409 on duplicate change number (23505) 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment) 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved) 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 428 for approval through the transition route, whoever asks 9ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > links a change to a deviation 15ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 on an invalid link type 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot retire an effective document through POST /api/qms/documents/11/transition 6726ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot supersede an effective document through POST /api/qms/documents/11/transition 6ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot revoke a supplier through POST /api/qms/suppliers/12/approval 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > a viewer cannot disposition nonconforming product through POST /api/qms/nonconformances/13/disposition 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > an editor cannot either: the door is gone, not narrowed 5ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > /api/qms is not mounted: a viewer reaches no QMS write through it (P1-31 / DP-34) > none of its reads answer either 11ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot requalify or revoke a supplier through PATCH /api/mdx/qms/suppliers/12 72ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot disposition nonconforming product through PATCH /api/mdx/qms/nonconforming/13/disposition 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot qualify a supplier through POST /api/mdx/qms/suppliers 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot record a nonconformance through POST /api/mdx/qms/nonconforming 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot log an internal audit through POST /api/mdx/qms/internal-audits 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot close out an internal audit through PATCH /api/mdx/qms/internal-audits/14 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot sign off a management review through POST /api/mdx/qms/management-reviews 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer cannot retire a document (already gated by 6582e3a3) through POST /api/mdx/qms/documents/11/retire 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still revokes a supplier, and the change is audited 4ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a member still dispositions nonconforming product, and the change is audited 3ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a manager still routes a draft for review: the twin of transition to=in_review 2ms
+ ✓ server/routes/__tests__/qms-legacy-api-retired.test.ts > the canonical twins on /api/mdx/qms refuse a viewer and still serve an editor > a viewer still acknowledges training on a procedure: that is their own record, not a governed change 2ms
+ ✓ server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > 403 without org context 23ms
+ ✓ server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > returns all five blocks with camelCase counts and org scope 6ms
+ ✓ server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > marks a block unavailable when its table is absent, instead of zeroing it 5ms
+ ✓ server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > survives every table being absent — a 200 of unavailable blocks, not a 500 4ms
+ ✓ server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > scopes every block query to the caller organization 5ms
+ ✓ server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > reports an empty-but-present QMS as zeros with available: true 3ms
+ ✓ server/services/ana/__tests__/revise-qms-document-role.test.ts > revise_qms_document refuses a caller who may not edit > viewer: nothing is opened and nothing is recorded 5ms
+ ✓ server/services/ana/__tests__/revise-qms-document-role.test.ts > revise_qms_document refuses a caller who may not edit > not a member of the organization: nothing is opened and nothing is recorded 1ms
+ ✓ server/services/ana/__tests__/revise-qms-document-role.test.ts > revise_qms_document refuses a caller who may not edit > an unknown role: nothing is opened and nothing is recorded 1ms
+ ✓ server/services/ana/__tests__/revise-qms-document-role.test.ts > revise_qms_document refuses a caller who may not edit > reads the role for the verified principal, not for anything in the input 1ms
+ ✓ server/services/ana/__tests__/revise-qms-document-role.test.ts > revise_qms_document refuses a caller who may not edit > a reason under QMS_REASON_MIN (8) is refused, even for an editor 2ms
+ ✓ server/services/ana/__tests__/revise-qms-document-role.test.ts > revise_qms_document runs for an editor-capable role > admin opens the revision and records it 2ms
+ ✓ server/services/ana/__tests__/revise-qms-document-role.test.ts > revise_qms_document runs for an editor-capable role > manager opens the revision and records it 1ms
+ ✓ server/services/ana/__tests__/revise-qms-document-role.test.ts > revise_qms_document runs for an editor-capable role > member opens the revision and records it 1ms
+ Test Files  15 passed (15)
+      Tests  204 passed (204)
+   Duration  22.83s (transform 27.96s, setup 796ms, import 42.53s, tests 18.96s, environment 707ms)

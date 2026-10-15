@@ -2,7 +2,11 @@
  * regulatoryAIServicePhase3 — Minimal stub + tenant-scoped dead-letter queue
  *
  * Provides the interface expected by phase3-routes.js and semanticEmbeddingService.js.
- * AI methods return safe empty/defaults so the server boots without errors.
+ * The AI methods are not implemented and say so: each throws NOT_IMPLEMENTED.
+ * Until 2026-10-04 they returned defaults — no entities, an empty vector, and
+ * `compliant: true, score: 1.0` for any Module 2/3 pair — which a caller cannot
+ * tell from a result. A consistency verdict nobody computed is a fabricated
+ * one; an extraction that did not run is not "nothing found".
  *
  * The dead-letter queue is a real (bounded, in-memory) store for failed AI
  * operations. SECURITY: every entry is tagged with the owning organizationId
@@ -56,6 +60,13 @@ function visibleEntries(scope = {}) {
   return deadLetterQueue.filter(entry => entry.organizationId === orgId);
 }
 
+/** The refusal every unimplemented AI method throws. */
+function notImplemented(what) {
+  return Object.assign(new Error(`${what} is not implemented. Nothing was run.`), {
+    code: 'NOT_IMPLEMENTED',
+  });
+}
+
 const regulatoryAIPhase3 = {
   getFeatureFlags() {
     return {
@@ -67,15 +78,15 @@ const regulatoryAIPhase3 = {
   },
 
   async extractNamedEntities(_text, _context) {
-    return { entities: [], confidence: 0 };
+    throw notImplemented('Named-entity extraction');
   },
 
   async generateEmbedding(_text) {
-    return { embedding: [], dimensions: 0 };
+    throw notImplemented('Embedding generation');
   },
 
   async checkCompliance(_text, _framework, _options) {
-    return { compliant: true, findings: [], score: 1.0 };
+    throw notImplemented('Module 2/3 consistency checking');
   },
 
   getTokenBudgetStatus() {

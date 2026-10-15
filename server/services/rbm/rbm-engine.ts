@@ -80,24 +80,92 @@ export function kriStatus(
 }
 
 /**
- * QTL status. A breach is value beyond the primary threshold; "approaching" is
- * beyond the secondary (early-warning) limit, conventionally 50–75% of the
- * primary per TransCelerate. Assumes a higher value is worse.
+ * Which way a tolerance limit bites.
+ *
+ * `upper` — worse as the value rises (important protocol deviations, dropout).
+ * `lower` — worse as the value falls (primary-endpoint data completeness,
+ *           consent documentation, enrollment against target).
+ * `two_sided` — an acceptable range, breached at either end (randomisation
+ *           ratio, dosing compliance bands).
+ */
+export type QtlDirection = 'upper' | 'lower' | 'two_sided';
+export const QTL_DIRECTIONS: readonly QtlDirection[] = ['upper', 'lower', 'two_sided'];
+
+export interface QtlLimits {
+  /** The bound in the declared direction. For two_sided, the upper bound. */
+  threshold: number | null | undefined;
+  /** Early-warning limit inside `threshold`, conventionally 50–75% of it. */
+  secondaryLimit?: number | null;
+  direction?: QtlDirection;
+  /** two_sided only: the lower bound and its early-warning limit. */
+  thresholdLower?: number | null;
+  secondaryLimitLower?: number | null;
+}
+
+/**
+ * QTL status. A breach is a value beyond the tolerance limit in the direction
+ * that limit bites; "approaching" is beyond the secondary (early-warning) limit
+ * on the same side.
+ *
+ * Direction is explicit because assuming "higher is worse" silently inverts
+ * every attainment parameter: a limit of "endpoint completeness >= 90%" sitting
+ * at 40% would evaluate as within tolerance, reporting control at the exact
+ * point of losing it.
  *
  * Returns `not_evaluated` when the parameter has no current value, or no
  * tolerance limit to compare it against: an unmeasured QTL has not been shown
  * to be within tolerance, and reporting it as `within` would overstate the
- * study's demonstrated quality.
+ * study's demonstrated quality. A two_sided limit with only one bound is also
+ * not evaluated — half a range cannot say whether a value sits inside it.
  */
-export function qtlStatus(
-  value: number | null | undefined,
-  threshold: number | null | undefined,
-  secondaryLimit: number | null | undefined,
-): QtlStatus {
-  if (value == null || threshold == null) return 'not_evaluated';
+export function qtlStatus(value: number | null | undefined, limits: QtlLimits): QtlStatus {
+  const direction = limits.direction ?? 'upper';
+  const { threshold, secondaryLimit, thresholdLower, secondaryLimitLower } = limits;
+  if (value == null) return 'not_evaluated';
+
+  if (direction === 'two_sided') {
+    if (threshold == null || thresholdLower == null) return 'not_evaluated';
+    if (value >= threshold || value <= thresholdLower) return 'breached';
+    if (secondaryLimit != null && value >= secondaryLimit) return 'approaching';
+    if (secondaryLimitLower != null && value <= secondaryLimitLower) return 'approaching';
+    return 'within';
+  }
+
+  if (threshold == null) return 'not_evaluated';
+
+  if (direction === 'lower') {
+    if (value <= threshold) return 'breached';
+    if (secondaryLimit != null && value <= secondaryLimit) return 'approaching';
+    return 'within';
+  }
+
   if (value >= threshold) return 'breached';
   if (secondaryLimit != null && value >= secondaryLimit) return 'approaching';
   return 'within';
+}
+
+/**
+ * Reject a two-sided limit that is not a usable range, rather than storing it.
+ *
+ * With one bound missing the engine cannot say whether a value sits inside the
+ * range, and with the bounds inverted no value ever does — either way the QTL
+ * would read `not_evaluated` or `breached` permanently, and the operator would
+ * have no indication the limit itself is the problem. Upper and lower limits
+ * need only their single `threshold`, which may legitimately be set later.
+ */
+export function qtlRangeError(l: {
+  direction?: string | null;
+  threshold?: number | null;
+  thresholdLower?: number | null;
+}): string | null {
+  if ((l.direction ?? 'upper') !== 'two_sided') return null;
+  if (l.threshold == null || l.thresholdLower == null) {
+    return 'A two-sided tolerance limit requires both bounds: threshold (upper) and thresholdLower (lower).';
+  }
+  if (l.thresholdLower >= l.threshold) {
+    return 'thresholdLower must be below threshold for a two-sided tolerance limit.';
+  }
+  return null;
 }
 
 /**

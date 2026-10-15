@@ -1,0 +1,12 @@
+Mutant S05-carry-unhealthy: a tool observed failing is carried ahead of healthy ones
+
+--- server/services/ana/tool-selection.ts
+- name => alwaysNames.has(name) || Boolean(deprioritize?.has(name)),
++ name => alwaysNames.has(name),
+
+Tests run: server/services/ana/__tests__/tool-selection-carry-over.test.ts server/services/ana/__tests__/tool-selection-context.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > never offers a carried name outside the governed set, nor carries an unhealthy one ahead 7ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,7 @@
+# 2026-10-01T15:05:36Z. Targeted typecheck (never the full project): a scratch tsconfig (deleted after) extending tsconfig.json; files = this item's TypeScript files, plus the repo's ambient declarations (server/types, shared/types) and server/middleware/auth.ts for its Express Request augmentation; imports are checked transitively. tsc Version 5.6.3.
+$ npx tsc -p tsconfig.p08f-scratch.json --pretty false
+server/middleware/establishRequestTenantScope.ts(163,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(165,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(58,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+exit=2

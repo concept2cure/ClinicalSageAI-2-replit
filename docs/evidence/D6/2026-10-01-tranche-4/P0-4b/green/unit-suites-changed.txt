@@ -1,0 +1,96 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > accepts a whole-document name and a section name 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses an unknown resource kind rather than defaulting to permitted 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses a malformed id before it can reach Postgres 3ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > does not treat a SQL-injection attempt as a document id 35ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member of the document owning tenant 243ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member for a section of their own document 33ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a missing token 6ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token signed with the wrong secret — no fallback identity 3ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an expired token 7ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03) 26ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an account taken out of use since its token was issued (F-29) 64ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (refresh) 30ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_challenge) 19ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_partial) 41ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfaPending flag) 9ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (pending_mfa role) 8ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a valid token whose organization membership has been revoked 18ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no tenant claim 14ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no usable subject claim 12ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open another tenant's document 33ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open a section of another tenant's document 10ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses another tenant's section even when paired with an owned document id 19ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a document that does not exist at all 16ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > is symmetric — the other tenant is refused in the other direction 108ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > reports an unwritten document as absent, not as an error 12ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > survives a restart: a fresh Y.Doc reloads what the first one wrote 16ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > preserves concurrent edits rather than last-write-wins 11ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > replaces rather than appends on a second store 11ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > does not serve one tenant the bytes another tenant stored under the same name 33ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > cascades the CRDT state away with the document it belongs to 15ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field with NO credential is rejected (401), not executed 90ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness with NO credential is rejected (401) 4ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /subscribe with NO credential is rejected (401) 4ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field against ANOTHER org's project returns 404, not a write 148ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness for ANOTHER org's project returns 404 47ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /subscribe for ANOTHER org's project returns 403 before any stream opens 23ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > a refresh token cannot open the SSE stream (non-access token rejected) 16ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > the caller's OWN project is still permitted (the fix is not a blanket deny) 59ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-003: task/notification/compliance/timer events never cross tenants > two organizations connected => ZERO cross-tenant receipt across all 11 events, intra-tenant delivery preserved 938ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects actor spoofing: the collaborator and the edit are attributed to the authenticated user 183ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document 4269ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > admits a member of an ACTIVE tenant (the baseline) 26ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > REFUSES a member of a suspended tenant 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > DOWNGRADES a read-only tenant to a view-only socket rather than refusing 17ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses a read-only tenant when the socket cannot be downgraded 18ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses fail-closed when the posture cannot be read 19ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > checks the posture AFTER membership — a revoked user never reveals tenant state 8ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects lock theft: a non-holder cannot release another user's section lock 451ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects events aimed at a document the socket did not join 413ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > answers 401 SESSION_ENDED for a bearer issued before password_changed_at, and the handler never runs 252ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > admits a bearer issued after the change 3ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > admits a bearer for an account that never changed its password 2ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > outside production, admits a bearer that carries no iat (fixtures build claims by hand); production refuses it — pinned on the rule in account-standing 1ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > still answers 401 ACCOUNT_INACTIVE for an account out of use (F-29 unchanged) 8ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects joining a document owned by another organization, and an id that does not exist 472ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects join-room smuggling into a document room the caller was never authorized for 601ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > refuses collaboration events from a socket that never joined a document 432ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a connection with no token 67ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a token with no organization claim 85ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a refresh token (non-access token class) 98ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects an MFA-partial token 78ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > refuses a refresh token issued before password_changed_at: no new session, nothing rotated 133ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints from a refresh token issued after the change, and rotates it (existing behaviour) 18ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints for an account that never changed its password 12ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > refuses a refresh token whose session began before it, even one rotated after it 7ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > mints for a session that began after it 23ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/logout > revokes the refresh token the client sends in the body, as well as the bearer 7ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a session issued before the change predates it; at or after does not 6ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > an account that never changed its password ends no session 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a token with no iat is refused in production only (no first-party issuer omits it; test fixtures do) 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionEndedByStanding — both stamps, measured from the session start (P0-4b) > the later of the password change and the end of every session is the one that counts 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionEndedByStanding — both stamps, measured from the session start (P0-4b) > a session that began before a sign-out everywhere is over, whenever its token was minted 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionEndedByStanding — both stamps, measured from the session start (P0-4b) > a token without a session start is measured from its iat, as before 8ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > issuedAtOfClaims > reads a numeric iat as whole seconds and nothing else 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > returns the status and the password-change second, parsing the bigint pg hands back as text 6ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > keeps the statement the request-path doubles recognise, and isAccountActive stays a boolean 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > isSessionCurrent > is false for a session issued before the password change and true after 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > throws SessionEndedError for an access token whose iat precedes password_changed_at 120ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > admits an access token issued after the change, and one for an account that never changed its password 6ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > refuses a session begun before a sign-out everywhere, even through a token rotated after it 16ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > still refuses an account out of use, whichever way its session was issued (F-29 unchanged) 6ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 45ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 9ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 7ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 12ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED) 10ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > answers 401 SESSION_ENDED for a bearer issued before password_changed_at; the handler never runs and the membership is never read 88ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > admits a bearer issued after the change 5ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > admits a bearer issued in the same second as the change (whole-second rule: the sign-in that follows a change is current) 2ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > admits a bearer for an account that never changed its password 2ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > outside production, admits a bearer that carries no iat (fixtures build claims by hand); production refuses it — pinned on the rule in account-standing 4ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > still answers 401 ACCOUNT_INACTIVE for an account out of use, before the password rule (F-29 unchanged) 2ms
+ ✓ server/__tests__/security/auth-middleware-session-currency.test.ts > authMiddleware — a session the password change ended > still answers 503 SESSION_UNCHECKED when the standing cannot be read (never a pass) 4ms
+ Test Files  8 passed (8)
+      Tests  93 passed (93)

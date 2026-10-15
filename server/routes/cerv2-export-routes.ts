@@ -43,6 +43,7 @@ import {
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
+  exportReviewAttestation,
 } from '../services/export/exportReviewGate';
 import type { ExportSourceType } from '../services/export/governedExportConsequence';
 import { requestDb } from '../db/requestDb';
@@ -56,6 +57,7 @@ import {
 
 import { createScopedLogger } from '../utils/logger.js';
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('cerv2-export-routes');
 
@@ -504,7 +506,8 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const { docType, meta } = validation.data;
-    if (!validateExportGovernance(req, res)) return;
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
 
     const resolved = await resolveExportRequest(req, res, validation.data);
     if (!resolved) return;
@@ -536,6 +539,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
       docType,
       format: 'pdf',
       programId: resolved.programUuid ?? undefined,
+      reviewAttestation: exportReviewAttestation(governance, getUserId(req)),
     };
 
     if (resolved.anchorProjectId === null) {
@@ -552,6 +556,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),
@@ -568,12 +573,14 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     });
 
     return res.status(200).json(consequence);
-  } catch (err: any) {
+  } catch (err) {
+    /* The code stays machine-readable (a caller and its tests branch on it);
+       the sentence is static and the thrown text is in the log line above. */
     logger.error('PDF error', { err: err instanceof Error ? err.message : String(err) });
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: err.message || 'Governed PDF export failed before consequence persistence',
+        message: 'Governed PDF export failed before consequence persistence',
       });
     }
   }
@@ -590,7 +597,8 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const { docType, meta } = validation.data;
-    if (!validateExportGovernance(req, res)) return;
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
 
     const resolved = await resolveExportRequest(req, res, validation.data);
     if (!resolved) return;
@@ -621,6 +629,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
       docType,
       format: 'docx',
       programId: resolved.programUuid ?? undefined,
+      reviewAttestation: exportReviewAttestation(governance, getUserId(req)),
     };
 
     if (resolved.anchorProjectId === null) {
@@ -637,6 +646,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),
@@ -653,12 +663,12 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     });
 
     return res.status(200).json(consequence);
-  } catch (err: any) {
+  } catch (err) {
     logger.error('DOCX error', { err: err instanceof Error ? err.message : String(err) });
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: err.message || 'Governed DOCX export failed before consequence persistence',
+        message: 'Governed DOCX export failed before consequence persistence',
       });
     }
   }
@@ -675,7 +685,8 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const { docType, meta, attachments = [] } = validation.data;
-    if (!validateExportGovernance(req, res)) return;
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
     const title = sanitizeFilename(meta?.title || meta?.id || docType);
 
     const resolved = await resolveExportRequest(req, res, validation.data);
@@ -701,6 +712,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
       format: 'zip',
       attachmentCount: attachments.length,
       programId: resolved.programUuid ?? undefined,
+      reviewAttestation: exportReviewAttestation(governance, getUserId(req)),
     };
 
     if (resolved.anchorProjectId === null) {
@@ -717,6 +729,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),
@@ -733,12 +746,12 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     });
 
     return res.status(200).json(consequence);
-  } catch (err: any) {
+  } catch (err) {
     logger.error('ZIP error', { err: err instanceof Error ? err.message : String(err) });
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: err.message || 'Governed ZIP export failed before consequence persistence',
+        message: 'Governed ZIP export failed before consequence persistence',
       });
     }
   }
@@ -893,9 +906,8 @@ router.post(
         sectionCount: Object.keys(sections).length,
         nodeCount: contentNodes.length,
       });
-    } catch (err: any) {
-      logger.error('AI-to-editor error', { err: err instanceof Error ? err.message : String(err) });
-      res.status(500).json({ error: 'AI-to-editor conversion failed', message: err.message });
+    } catch (err) {
+      return serverError(res, logger, 'converting the AI output for the editor', err);
     }
   }
 );
@@ -968,9 +980,8 @@ router.post(
           indexXmlPreview: ectdResult.indexXml.slice(0, 500) + '...',
         },
       });
-    } catch (err: any) {
-      logger.error('eCTD assembly error', { err: err instanceof Error ? err.message : String(err) });
-      res.status(500).json({ error: 'eCTD package assembly failed', message: err.message });
+    } catch (err) {
+      return serverError(res, logger, 'assembling the eCTD package', err);
     }
   }
 );

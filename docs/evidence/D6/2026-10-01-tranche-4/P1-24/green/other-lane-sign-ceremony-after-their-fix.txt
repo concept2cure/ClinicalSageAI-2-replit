@@ -1,0 +1,107 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T05:57:44.143Z","pid":12597,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T05:57:44.145Z","pid":12597,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T05:57:44.145Z","pid":12597,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/research-admin-sign-ceremony.dbtest.ts
+[mfa] MFA enabled for user 319
+
+stdout | tests/db/research-admin-sign-ceremony.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/research-admin-sign-ceremony.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'biosketch': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 133ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'biosketch': the sign is an electronic signature > refuses a wrong password, and writes nothing 23ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'biosketch': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 147ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'committees': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 18ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'committees': the sign is an electronic signature > refuses a wrong password, and writes nothing 22ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'committees': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 43ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'coverage': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 14ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'coverage': the sign is an electronic signature > refuses a wrong password, and writes nothing 24ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'coverage': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 30ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'dmsp': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 28ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'dmsp': the sign is an electronic signature > refuses a wrong password, and writes nothing 30ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'dmsp': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 27ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'effort': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 12ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'effort': the sign is an electronic signature > refuses a wrong password, and writes nothing 22ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'effort': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 25ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'export': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 14ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'export': the sign is an electronic signature > refuses a wrong password, and writes nothing 22ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'export': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 30ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'closeout': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 15ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'closeout': the sign is an electronic signature > refuses a wrong password, and writes nothing 23ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'closeout': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 35ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'subaward': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 13ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'subaward': the sign is an electronic signature > refuses a wrong password, and writes nothing 23ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'subaward': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 38ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'nce': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 18ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'nce': the sign is an electronic signature > refuses a wrong password, and writes nothing 32ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'nce': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 28ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'other-support': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 24ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'other-support': the sign is an electronic signature > refuses a wrong password, and writes nothing 31ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'other-support': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 33ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'agreements': the sign is an electronic signature > refuses a sign without credentials, and writes nothing 17ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'agreements': the sign is an electronic signature > refuses a wrong password, and writes nothing 27ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > 'agreements': the sign is an electronic signature > with the ceremony, writes the ledger pair and the signature row in one transaction 52ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > the ceremony refuses before it writes > a meaning outside the closed vocabulary is refused before the password is checked 20ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > the ceremony refuses before it writes > a domain refusal after the credential rolls the whole sign back 25ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > a signer with an enrolled second factor > cannot sign with the password alone 30ms
+ ✓ tests/db/research-admin-sign-ceremony.dbtest.ts > a signer with an enrolled second factor > signs with the password and a current code, and the row says both were verified 38ms
+{"level":30,"time":"2026-10-01T05:57:48.568Z","pid":12860,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T05:57:48.569Z","pid":12860,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T05:57:48.569Z","pid":12860,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T05:57:48.653Z', poolSize: 1 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/domain-sign-ceremony.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 91ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a wrong password, and writes nothing 30ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 40ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 18ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a wrong password, and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 25ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 13ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a wrong password, and writes nothing 21ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 40ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a wrong password, and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 30ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 14ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a wrong password, and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 27ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 12ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a wrong password, and writes nothing 20ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 13ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a wrong password, and writes nothing 25ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[CMC Batch] Release testing for batch 9f6fa52d-6acf-4d13-b8db-1e21280f497a: released
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 37ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a determination that is not an approval is not a signature > an IRB deferral is recorded under resolve, with no password and no signature row 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 14ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 31ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 26ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 11ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 27ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 13ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 25ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[database] Database connection successful { timestamp: '2026-10-01T05:57:51.390Z', poolSize: 2 }
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 38ms
+
+ Test Files  2 passed (2)
+      Tests  68 passed (68)
+   Start at  05:57:41
+   Duration  9.79s (transform 3.83s, setup 112ms, import 471ms, tests 8.67s, environment 0ms)
+

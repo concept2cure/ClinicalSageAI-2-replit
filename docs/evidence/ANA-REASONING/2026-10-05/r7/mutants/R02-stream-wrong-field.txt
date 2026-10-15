@@ -1,0 +1,13 @@
+Mutant R02-stream-wrong-field: the route hands the kernel the section title, not its code
+
+--- server/routes/ana-ri/stream.ts
+- openSectionCode: sectionCode,
++ openSectionCode: authoring_context?.sectionTitle,
+
+Tests run: server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > a plain question in the Summary of Clinical Safety is served as high-stakes on every call 51ms
+ × server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts > the open section decides how a turn is served (MC-RL-3) > Fast stays fast there: no thinking and low effort, though the gateway is told the turn is high-stakes 7ms
+      Tests  2 failed | 1 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

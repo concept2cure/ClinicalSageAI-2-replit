@@ -1,0 +1,241 @@
+{
+  "capturedAt": "2026-10-14 01:15:27 UTC",
+  "repo": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "runId": 38490851867,
+  "runAttempt": 1,
+  "runSha": "317831f4596b966d4e4a857c4686fe8d119ad605",
+  "runUrl": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867",
+  "localBaselineSha": "920b230bd1509a41347fe653605babdabea2ae78",
+  "scope": "read-only remote CI triage; no external writes, retries, workflow edits, code edits, or test edits",
+  "jobs": [
+    {
+      "id": 115615422619,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115615422619",
+      "failedSteps": [],
+      "skippedSteps": []
+    },
+    {
+      "id": 115615422809,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115615422809",
+      "failedSteps": [
+        {
+          "number": 4,
+          "name": "Scan every commit on this branch"
+        }
+      ],
+      "skippedSteps": []
+    },
+    {
+      "id": 115615422868,
+      "name": "Lint",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115615422868",
+      "failedSteps": [
+        {
+          "number": 33,
+          "name": "Proof tier — schema contracts + golden journeys + export contracts"
+        },
+        {
+          "number": 64,
+          "name": "Guardrails — audit_logs fixtures accept the audit writer's columns"
+        },
+        {
+          "number": 73,
+          "name": "Guardrails — the generated text ramp matches the stylesheets"
+        }
+      ],
+      "skippedSteps": []
+    },
+    {
+      "id": 115615422899,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115615422899",
+      "failedSteps": [],
+      "skippedSteps": []
+    },
+    {
+      "id": 115615424146,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115615424146",
+      "failedSteps": [],
+      "skippedSteps": []
+    },
+    {
+      "id": 115621021152,
+      "name": "Integration Tests",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115621021152",
+      "failedSteps": [
+        {
+          "number": 9,
+          "name": "Provision a deploy-shaped database for the real-database tests"
+        }
+      ],
+      "skippedSteps": [
+        "Run real-database tests (unmocked pg, RLS_ENFORCE=on)"
+      ]
+    },
+    {
+      "id": 115621021157,
+      "name": "Coverage (ratchet)",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115621021157",
+      "failedSteps": [],
+      "skippedSteps": []
+    },
+    {
+      "id": 115621021164,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115621021164",
+      "failedSteps": [
+        {
+          "number": 5,
+          "name": "Provision the empty database with the provision image"
+        }
+      ],
+      "skippedSteps": [
+        "Start the production image and require /healthz and /readyz = 200",
+        "Sign a person in to the running image, second factor included"
+      ]
+    },
+    {
+      "id": 115621021181,
+      "name": "Test",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115621021181",
+      "failedSteps": [],
+      "skippedSteps": []
+    },
+    {
+      "id": 115621021185,
+      "name": "AnA Readiness Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115621021185",
+      "failedSteps": [],
+      "skippedSteps": []
+    },
+    {
+      "id": 115621021190,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115621021190",
+      "failedSteps": [
+        {
+          "number": 7,
+          "name": "Provision the schema from scratch (owner connection)"
+        }
+      ],
+      "skippedSteps": [
+        "Build the production bundle",
+        "Boot in production mode and require /readyz=200"
+      ]
+    },
+    {
+      "id": 115621021207,
+      "name": "AIOS Audit Assets",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115621021207",
+      "failedSteps": [],
+      "skippedSteps": []
+    },
+    {
+      "id": 115621021280,
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38490851867/job/115621021280",
+      "failedSteps": [
+        {
+          "number": 9,
+          "name": "Provision from scratch"
+        }
+      ],
+      "skippedSteps": [
+        "Deploy migration succeeds on the provisioned database",
+        "RLS coverage after the FIRST deploy (a new database is isolated before any re-run)",
+        "Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)",
+        "RLS coverage — every org-keyed table carries the tenant policy",
+        "RLS parent-scope delegates exist (the coverage gate depends on them)",
+        "Server SQL resolves against the LIVE provisioned schema (ratchet)"
+      ]
+    }
+  ],
+  "observedTestLogs": {
+    "Test": {
+      "logStatus": "Unavailable: connector transport closed on two attempts; gh fallback returned no decoded log.",
+      "failureMarkers": null,
+      "finalSummary": null
+    },
+    "Coverage (ratchet)": {
+      "logStatus": "Decoded partial logs; current measure-coverage step still in progress.",
+      "lastLogTimestamp": "2026-10-14T01:10:42.5971630Z",
+      "failureMarkers": 18,
+      "failedFiles": {
+        "tests/lineage/founder-path-lineage.pglite.test.ts": 12,
+        "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts": 6
+      },
+      "finalSummary": null
+    },
+    "Integration Tests": {
+      "logStatus": "Decoded partial logs; current integration test step still in progress.",
+      "lastLogTimestamp": "2026-10-14T01:07:51.6575427Z",
+      "failureMarkers": 18,
+      "failedFiles": {
+        "tests/lineage/founder-path-lineage.pglite.test.ts": 12,
+        "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts": 6
+      },
+      "finalSummary": null
+    }
+  },
+  "findings": [
+    {
+      "file": "tests/lineage/founder-path-lineage.pglite.test.ts",
+      "observedFailuresPerDecodedJob": 12,
+      "firstFailure": "hop 3 ana-draft: Current project access could not be verified. Nothing was changed.",
+      "recordedSchemaGap": "[42P01] relation \"project_visibility_settings\" does not exist",
+      "canonicalCreator": "db/migrations/20260401_project_sharing_visibility.sql",
+      "assessment": "Failure starts before draft creation; later missing document/sequence/Vault records cascade. Align fixture with current project-sharing persistence and re-run before reassessing lineage/retention assertions. Do not enlarge baseline or weaken access."
+    },
+    {
+      "file": "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts",
+      "observedFailuresPerDecodedJob": 6,
+      "firstFailure": "The saved workflow source could not be verified. Nothing was imported.",
+      "localWorkingDiff": "Fixture adds document_span_lineage.usage default derived and confidence columns; controlled export test expects SIGNATURE_UNREADABLE.",
+      "assessment": "Already edited by current owner. Remote run predates these local changes; owner must cite green local/current-source test evidence. Do not count as a newly unrepaired production defect."
+    },
+    {
+      "job": "Integration Tests",
+      "step": "Provision a deploy-shaped database for the real-database tests",
+      "error": "Install failed: required object contract not met: immutable_report_records incomplete — missing index on organization_id (Report OS sealed records (Part 11 immutable report spine))",
+      "exitCode": 1,
+      "assessment": "Matches root's existing canonical irr_org_idx install repair. Real-database step was skipped in this remote run; remote RLS execution is not proved."
+    }
+  ],
+  "limitations": [
+    "Decoded logs are partial. Failure markers are observations, not final test totals or assertions about final job conclusions.",
+    "Coverage step uses continue-on-error by workflow design. Test assertion failures do not by themselves prove the coverage ratchet failed; ratchet step pending.",
+    "Local source is newer and has extensive authorized uncommitted changes. This remote run cannot certify the current working tree.",
+    "Only first-attempt current run inspected. No rerun, cancellation, annotation, or external modification performed.",
+    "No raw CI logs, credentials, sensitive env output, SQL params, or arbitrary application payloads are persisted in this evidence."
+  ]
+}

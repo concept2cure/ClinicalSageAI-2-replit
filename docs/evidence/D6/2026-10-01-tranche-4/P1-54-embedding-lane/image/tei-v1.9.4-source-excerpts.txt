@@ -1,0 +1,166 @@
+# Text Embeddings Inference v1.9.4: the source the module's settings rest on.
+# Fetched 2026-10-01T14:25:51Z from raw.githubusercontent.com/huggingface/text-embeddings-inference/v1.9.4/
+
+## Dockerfile (CPU image), runtime stages: base image, curl present (used by the container health check), PORT, entrypoint/CMD
+FROM debian:bookworm-slim AS base
+
+ENV HUGGINGFACE_HUB_CACHE=/data \
+    PORT=80 \
+    MKL_ENABLE_INSTRUCTIONS=AVX512_E4 \
+    RAYON_NUM_THREADS=8 \
+    LD_PRELOAD=/usr/local/libfakeintel.so \
+    LD_LIBRARY_PATH=/usr/local/lib
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    libomp-dev \
+    ca-certificates \
+    libssl-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy a lot of the Intel shared objects because of the mkl_serv_intel_cpu_true patch...
+COPY --from=builder /usr/src/libfakeintel.so /usr/local/libfakeintel.so
+
+FROM base AS grpc
+
+COPY --from=grpc-builder /usr/src/target/release/text-embeddings-router /usr/local/bin/text-embeddings-router
+
+ENTRYPOINT ["text-embeddings-router"]
+CMD ["--json-output"]
+
+FROM base AS http
+
+COPY --from=http-builder /usr/src/target/release/text-embeddings-router /usr/local/bin/text-embeddings-router
+
+ENTRYPOINT ["text-embeddings-router"]
+CMD ["--json-output"]
+
+## router/src/main.rs: every setting is also an environment variable (clap 'env'); the module sets MODEL_ID, REVISION, PORT, MAX_CLIENT_BATCH_SIZE, PAYLOAD_LIMIT
+14:#[clap(author, version, about, long_about = None)]
+23:    #[clap(long, env)]
+25:    model_id: String,
+29:    #[clap(long, env)]
+30:    revision: Option<String>,
+35:    #[clap(long, env)]
+36:    tokenization_workers: Option<usize>,
+39:    #[clap(long, env, value_enum)]
+40:    dtype: Option<DType>,
+44:    #[clap(long, env)]
+45:    served_model_name: Option<String>,
+53:    #[clap(long, env, value_enum)]
+54:    pooling: Option<text_embeddings_backend::Pool>,
+59:    #[clap(default_value = "512", long, env)]
+60:    max_concurrent_requests: usize,
+73:    #[clap(default_value = "16384", long, env)]
+74:    max_batch_tokens: usize,
+77:    #[clap(long, env)]
+78:    max_batch_requests: Option<usize>,
+81:    #[clap(default_value = "32", long, env)]
+82:    max_client_batch_size: usize,
+90:    #[clap(long, env, default_value = "true", num_args = 0..=1, default_missing_value = "true")]
+91:    auto_truncate: bool,
+105:    #[clap(long, env, conflicts_with = "default_prompt")]
+106:    default_prompt_name: Option<String>,
+117:    #[clap(long, env, conflicts_with = "default_prompt_name")]
+118:    default_prompt: Option<String>,
+131:    #[clap(long, env)]
+132:    dense_path: Option<String>,
+135:    #[clap(long, env, hide = true)]
+137:    hf_api_token: Option<String>,
+142:    #[clap(long, env, conflicts_with = "hf_api_token")]
+144:    hf_token: Option<String>,
+147:    #[clap(default_value = "0.0.0.0", long, env)]
+148:    hostname: String,
+151:    #[clap(default_value = "3000", long, short, env)]
+152:    port: u16,
+156:    #[clap(default_value = "/tmp/text-embeddings-inference-server", long, env)]
+157:    uds_path: String,
+161:    #[clap(long, env)]
+162:    huggingface_hub_cache: Option<String>,
+167:    #[clap(default_value = "2000000", long, env)]
+168:    payload_limit: usize,
+173:    #[clap(long, env)]
+174:    api_key: Option<String>,
+177:    #[clap(long, env)]
+178:    json_output: bool,
+181:    #[clap(long, env)]
+182:    disable_spans: bool,
+186:    #[clap(long, env)]
+187:    otlp_endpoint: Option<String>,
+191:    #[clap(default_value = "text-embeddings-inference.server", long, env)]
+192:    otlp_service_name: String,
+195:    #[clap(default_value = "9000", long, env)]
+196:    prometheus_port: u16,
+199:    #[clap(long, env)]
+200:    cors_allow_origin: Option<Vec<String>>,
+216:    tracing::info!("{args:?}");
+222:    tokio::spawn(async move {
+243:    text_embeddings_router::run(
+
+## router/src/http/server.rs: the OpenAI-compatible route and the health route
+1107:path = "/v1/embeddings",
+1771:        .route("/embeddings", post(openai_embed))
+1772:        .route("/v1/embeddings", post(openai_embed))
+1779:        .route("/health", get(health))
+
+## router/src/http/types.rs: the OpenAI request carries 'dimensions'
+317:pub(crate) struct OpenAICompatRequest {
+318-    pub input: Input,
+319-    #[allow(dead_code)]
+320-    #[schema(nullable = true, example = "null")]
+321-    pub model: Option<String>,
+322-    #[allow(dead_code)]
+323-    #[schema(nullable = true, example = "null")]
+324-    pub user: Option<String>,
+325-    #[schema(default = "float", example = "float")]
+326-    #[serde(default)]
+327-    pub encoding_format: EncodingFormat,
+328-    #[schema(default = "null", example = "null", nullable = true)]
+329-    pub dimensions: Option<usize>,
+330-}
+
+## core/src/infer.rs: 'dimensions' larger than the model's output is refused (422 validation), never padded
+        if let Some(mrl_dimensions) = dimensions {
+            if mrl_dimensions > response.results.len() {
+                metrics::counter!("te_request_failure", "err" => "validation").increment(1);
+
+                let message =
+                    "`dimensions` should be smaller than the maximum embedding dimension."
+                        .to_string();
+                tracing::error!("{message}");
+
+                return Err(TextEmbeddingsError::Validation(message));
+            }
+
+            response.results.truncate(mrl_dimensions);
+        }
+
+## router/src/http/server.rs (openai_embed): a request with more inputs than max_client_batch_size (default 32) is refused
+1223:             }
+1224: 
+1225:             let batch_size = inputs.len();
+1226:             if batch_size > info.max_client_batch_size {
+1227:                 let message = format!(
+1228:                     "batch size {batch_size} > maximum allowed batch size {}",
+1229:                     info.max_client_batch_size
+1230:                 );
+1231:                 tracing::error!("{message}");
+1232:                 let err = ErrorResponse {
+1233:                     error: message,
+1234:                     error_type: ErrorType::Validation,
+1235:                 };
+1236:                 let counter = metrics::counter!("te_request_failure", "err" => "batch_size");
+
+## router/src/http/server.rs (openai_embed): the span skips the handler's arguments, so request text is not a log field
+1123: #[instrument(
+1124:     skip_all,
+1125:     fields(total_time, tokenization_time, queue_time, inference_time,)
+1126: )]
+1127: async fn openai_embed(
+1128:     infer: Extension<Infer>,
+1129:     info: Extension<Info>,
+1130:     Extension(context): Extension<Option<opentelemetry::Context>>,
+1131:     Json(req): Json<OpenAICompatRequest>,
+1132: ) -> Result<(HeaderMap, Json<OpenAICompatResponse>), (StatusCode, Json<OpenAICompatErrorResponse>)>
+1133: {
+1316:     tracing::info!("Success");

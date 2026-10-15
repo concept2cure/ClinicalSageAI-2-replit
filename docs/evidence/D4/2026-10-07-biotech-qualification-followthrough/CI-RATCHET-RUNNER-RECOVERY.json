@@ -1,0 +1,60 @@
+{
+  "base": "714506d7cd8ac499e07450542b74e72ec5630a5c",
+  "standalone_warning_comparison_exit": 0,
+  "first_pre_push_prefix_exit": 1,
+  "demonstrated_failure": "Refused pre-existing __eslint_ratchet_prev__ files, not a measured warning increase.",
+  "recovery": "All ten original-version scratch copies were Git-blob verified and moved outside the repository before retry; no qualified source, baseline, suppression or gate changed.",
+  "copies": [
+    {
+      "path": "server/services/ectd/__tests__/__eslint_ratchet_prev__.assemble-from-core.vault-uuid.pglite.test.ts",
+      "original_path": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "verified_original_blob": "68c8f2912896aab734a88e076b4b6017e9d37518"
+    },
+    {
+      "path": "server/services/ectd/__tests__/__eslint_ratchet_prev__.leaf-source-resolver-vault.test.ts",
+      "original_path": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+      "verified_original_blob": "cdefd73f8c0964a28823f8968065ea9b423f7daf"
+    },
+    {
+      "path": "server/services/ectd/__tests__/__eslint_ratchet_prev__.leaf-source-resolver-vault-finalized.test.ts",
+      "original_path": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "verified_original_blob": "cf7e222e6ea8223eca495c2562a4a626cc0a6dd5"
+    },
+    {
+      "path": "server/services/audit/__tests__/__eslint_ratchet_prev__.audit-immutability-triggers.pglite.test.ts",
+      "original_path": "server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts",
+      "verified_original_blob": "4e3aed1e1536fe59c891650eebb39af761c17d8a"
+    },
+    {
+      "path": "server/services/ana-ri/__tests__/__eslint_ratchet_prev__.mdx-esg-transmit-gateway.test.ts",
+      "original_path": "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts",
+      "verified_original_blob": "2c29e4ee1c3d16d389f4f9956ba88099e6195973"
+    },
+    {
+      "path": "server/services/ana/__tests__/__eslint_ratchet_prev__.draft-authoring-document-tool.pglite.integration.test.ts",
+      "original_path": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "verified_original_blob": "a60870974805d8c37a2b3bc13c7e30b5572ee175"
+    },
+    {
+      "path": "server/services/pathway-engines/mdr-ivdr/__tests__/__eslint_ratchet_prev__.assemble-technical-file-vault-uuid.pglite.test.ts",
+      "original_path": "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts",
+      "verified_original_blob": "02134595a2c8348b912e497fdefcf3d1de887b17"
+    },
+    {
+      "path": "server/services/intelligence/__tests__/__eslint_ratchet_prev__.regulatory-intelligence-integration.test.ts",
+      "original_path": "server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts",
+      "verified_original_blob": "af9034bcdf340128051842ce1e69fec41784ae2f"
+    },
+    {
+      "path": "server/routes/__tests__/__eslint_ratchet_prev__.authoringWritesBoundAndAudited.pglite.integration.test.ts",
+      "original_path": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+      "verified_original_blob": "d95a5eecbd5f3ccc279df4a8aae11350f3a7b875"
+    },
+    {
+      "path": "tests/regulatory/__eslint_ratchet_prev__.regulatory-basis.test.ts",
+      "original_path": "tests/regulatory/regulatory-basis.test.ts",
+      "verified_original_blob": "0c26647665afeb398e7273adc532d212f1008a49"
+    }
+  ],
+  "leftover_creation_or_cleanup_cause": "Not established by these receipts."
+}

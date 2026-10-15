@@ -1,0 +1,15 @@
+The first run of round 4's mutants left one alive. Its line from that run, verbatim:
+
+E05-max-lowered: SURVIVED — a turn at 'max' is lowered to 'high' by the floor (0 failing)
+
+--- server/services/ai-gateway/effort.ts
+- return chosen === 'max' ? 'max' : 'high';
++ return 'high';
+
+Why it survived: no effort maps to 'max' (EFFORT_TO_API_EFFORT: fast low,
+balanced medium, thorough high), so `chosen` could never be 'max' and the
+branch was unreachable. A branch no input reaches cannot be tested, so it was
+removed (the mutant's own text is now the code), and the assumption it
+guarded is pinned instead: turn-api-effort.test.ts "the floor only ever
+raises: no effort maps above high". Its mutant, E05-max-mapped (thorough
+mapped to 'max'), is killed in the final run.

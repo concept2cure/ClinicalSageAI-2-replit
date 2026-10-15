@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T22:52:12.440Z","pid":60500,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T22:52:12.444Z","pid":60500,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T22:52:12.445Z","pid":60500,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-program group tenancy on native PostgreSQL > has non-null integer tenant identity and both immediate validated composite foreign keys 15ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-program group tenancy on native PostgreSQL > uses the configured actual non-owner NOSUPERUSER NOBYPASSRLS runtime with FORCE RLS 27ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-program group tenancy on native PostgreSQL > filters real links by tenant and refuses mutation of the foreign tenant link 47ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-program group tenancy on native PostgreSQL > permits an actual runtime same-org link and records its exact tenant identity 6ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-program group tenancy on native PostgreSQL > refuses a foreign group even through the migration owner's otherwise unrestricted connection 6ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-program group tenancy on native PostgreSQL > refuses a foreign project even through the migration owner's otherwise unrestricted connection 15ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-program group tenancy on native PostgreSQL > refuses a forged foreign runtime tenant and a foreign-project link inside the current tenant 6ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-program group tenancy on native PostgreSQL > replays the canonical foundation and policy installers without changing retained links or constraints 847ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-group legacy migration preflight > backfills only an unambiguous NULL legacy tenant from two same-org parents 14ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-group legacy migration preflight > refuses conflicting legacy parents without deleting, relabeling or backfilling any link 8ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-group legacy migration preflight > refuses an already populated but incorrect legacy tenant key instead of overwriting it 7ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-group legacy migration preflight > refuses an orphaned legacy parent with the same named reconciliation requirement 11ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-group legacy migration preflight > refuses a same-name wrong-shape constraint rather than silently replacing it 10ms
+ ✓ tests/db/report-program-group-tenancy.dbtest.ts > canonical report-group legacy migration preflight > validates a correctly shaped existing NOT VALID key without replacing its identity 11ms
+{"level":30,"time":"2026-10-13T22:52:18.280Z","pid":60561,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T22:52:18.282Z","pid":60561,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T22:52:18.282Z","pid":60561,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-tenant-from-session.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-13T22:52:18.478Z', poolSize: 1 }
+
+stdout | tests/db/report-os-tenant-from-session.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-tenant-from-session.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 127ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 39ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 323ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 19ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 36ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 21ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 74ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 94ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 59ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 93ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 25ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 45ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > the removed correspondence capture door writes nothing 16ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  22:52:07
+   Duration  15.88s (transform 5.06s, setup 382ms, import 9.87s, tests 4.97s, environment 0ms)

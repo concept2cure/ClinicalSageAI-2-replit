@@ -1,0 +1,4 @@
+ × server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 5ms
+   → expected [ 'pdf', 'ectd', 'study-data', …(1) ] to include 'labeling'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)

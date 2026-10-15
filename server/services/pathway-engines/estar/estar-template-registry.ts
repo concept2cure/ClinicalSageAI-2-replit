@@ -23,7 +23,7 @@ import { createHash } from 'node:crypto';
 import * as path from 'path';
 
 import {
-  currentVersionFor,
+  templateVersionCurrency,
   type EstarProgramSubmissionType,
   type EstarTemplateFamily,
 } from './estar-versions';
@@ -117,8 +117,14 @@ export interface EstarTemplateDescriptor {
  * descriptors (510k/de_novo/pma × device) share `eSTAR-510k-non-ivd.pdf` and the
  * three IVD descriptors share `eSTAR-510k-ivd.pdf`. The descriptor ids stay
  * distinct because each pathway carries its OWN field map (the 510(k) Summary
- * page and predicate fields are 510(k)-only). The PreSTAR2 (v3.0) descriptors
- * stay `'unset'`: that template is not vendored.
+ * page and predicate fields are 510(k)-only). The PreSTAR descriptors stay
+ * `'unset'`: that template is not vendored.
+ *
+ * The vendored files are v7.0 (2026-06-01, read from their XFA template
+ * packet); FDA's eSTAR Program page now names 7.1 (estar-versions.ts). Until the
+ * 7.1 PDFs are re-vendored and the field map re-enumerated — an ops change —
+ * filing readiness reports the mismatch as a blocker. Do not bump `version`
+ * here without replacing the bytes: it is the version of the file, not FDA's.
  */
 export const ESTAR_TEMPLATE_MANIFEST: EstarTemplateDescriptor[] = [
   // nIVD / IVD eSTAR — marketing pathways
@@ -197,8 +203,16 @@ export interface EstarTemplateReadinessResult {
   /** The descriptor required for this pathway+variant, if the manifest knows it. */
   descriptor?: EstarTemplateDescriptor;
   requiredFileName?: string;
-  /** The current FDA program version recommended for this family (e.g. "7.0"). */
+  /** The current FDA program version recommended for this family (e.g. "7.1"). */
   programVersion?: string;
+  /** The FDA version the descriptor pins for the vendored file; undefined when unset. */
+  vendoredVersion?: string;
+  /**
+   * True only when the vendored file's pinned version is FDA's current one
+   * (estar-versions.templateVersionCurrency). Report-only here: filing
+   * readiness is where a stale template blocks filing.
+   */
+  versionCurrent: boolean;
   present: string[];
   /** True when the required official template is available to fill. */
   available: boolean;
@@ -234,10 +248,14 @@ export function assessEstarTemplateReadiness(
     );
   }
 
+  const currency = descriptor ? templateVersionCurrency(descriptor.family, descriptor.version) : undefined;
+
   return {
     descriptor,
     requiredFileName,
-    programVersion: descriptor ? currentVersionFor(descriptor.family)?.version : undefined,
+    programVersion: currency?.currentVersion ?? undefined,
+    vendoredVersion: currency?.vendoredVersion ?? undefined,
+    versionCurrent: currency?.current ?? false,
     present: input.present,
     // `available` is the TRUTH signal — whether the official FDA eSTAR template
     // is actually present so the platform can produce the official PDF. Every

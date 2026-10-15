@@ -1,0 +1,115 @@
+# 2026-10-08T06:32:33Z npx vitest run --config vitest.config.ts server/services/c2c/__tests__/project-ref-anchor-read.test.ts
+# sources: before review: the implementer's stream.ts and context-enrichment.ts, program-project-anchor.ts at HEAD (chat-context-builder.ts and relational-profile-service.ts are the same in both)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > a database without the anchor column is no project
+{
+  "timestamp": "2026-10-08T06:32:36.769Z",
+  "level": "warn",
+  "message": "[program-project-anchor] projects.regulatory_program_id absent — program exports stay registry-unplaced (apply migrations/20260814_projects_regulatory_program_anchor.sql)",
+  "context": {
+    "context": "test"
+  }
+}
+
+stderr | server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > any other failed lookup is no project here (not strict), and is rethrown where strict is asked for
+{
+  "timestamp": "2026-10-08T06:32:36.777Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "test",
+    "err": "terminating connection"
+  }
+}
+
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > an integer, or proj_ and an integer, is itself, with no read 2ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > a linked program UUID is its lowest-id projects row, read lower-cased and org-scoped 2ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > an unlinked program UUID is no project 2ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > a database without the anchor column is no project 7ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > any other failed lookup is no project here (not strict), and is rethrown where strict is asked for 5ms
+ ✓ server/services/c2c/__tests__/project-ref-anchor-read.test.ts > integerProjectForRef with the real anchor reader > never the integer a UUID starts with, and nothing else is read 1ms
+ × server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > answers as integerProjectForRef does for every ref, linked and unlinked 3ms
+   → strictProjectRowForRef is not a function
+ × server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a database without the anchor column is still no project: no anchor can exist 1ms
+   → strictProjectRowForRef is not a function
+ × server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a lookup that could not complete throws, where integerProjectForRef answers no project 1ms
+   → strictProjectRowForRef is not a function
+ × server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a program with no organization to scope it throws and reads nothing; an integer needs no organization 1ms
+   → strictProjectRowForRef is not a function
+ × server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > takes a loader, and loads only for a program UUID 1ms
+   → strictProjectRowForRef is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > answers as integerProjectForRef does for every ref, linked and unlinked
+TypeError: strictProjectRowForRef is not a function
+ ❯ strict server/services/c2c/__tests__/project-ref-anchor-read.test.ts:68:47
+     66|
+     67| describe('strictProjectRowForRef: the same answer, except that could-n…
+     68|   const strict = (ref: unknown, orgId = 7) => strictProjectRowForRef(D…
+       |                                               ^
+     69|   const REFS: unknown[] = [42, '42', 'proj_42', PROGRAM, '7abb1c22', '…
+     70|
+ ❯ server/services/c2c/__tests__/project-ref-anchor-read.test.ts:74:44
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a database without the anchor column is still no project: no anchor can exist
+TypeError: strictProjectRowForRef is not a function
+ ❯ strict server/services/c2c/__tests__/project-ref-anchor-read.test.ts:68:47
+     66|
+     67| describe('strictProjectRowForRef: the same answer, except that could-n…
+     68|   const strict = (ref: unknown, orgId = 7) => strictProjectRowForRef(D…
+       |                                               ^
+     69|   const REFS: unknown[] = [42, '42', 'proj_42', PROGRAM, '7abb1c22', '…
+     70|
+ ❯ server/services/c2c/__tests__/project-ref-anchor-read.test.ts:80:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a lookup that could not complete throws, where integerProjectForRef answers no project
+TypeError: strictProjectRowForRef is not a function
+ ❯ strict server/services/c2c/__tests__/project-ref-anchor-read.test.ts:68:47
+     66|
+     67| describe('strictProjectRowForRef: the same answer, except that could-n…
+     68|   const strict = (ref: unknown, orgId = 7) => strictProjectRowForRef(D…
+       |                                               ^
+     69|   const REFS: unknown[] = [42, '42', 'proj_42', PROGRAM, '7abb1c22', '…
+     70|
+ ❯ server/services/c2c/__tests__/project-ref-anchor-read.test.ts:85:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > a program with no organization to scope it throws and reads nothing; an integer needs no organization
+TypeError: strictProjectRowForRef is not a function
+ ❯ strict server/services/c2c/__tests__/project-ref-anchor-read.test.ts:68:47
+     66|
+     67| describe('strictProjectRowForRef: the same answer, except that could-n…
+     68|   const strict = (ref: unknown, orgId = 7) => strictProjectRowForRef(D…
+       |                                               ^
+     69|   const REFS: unknown[] = [42, '42', 'proj_42', PROGRAM, '7abb1c22', '…
+     70|
+ ❯ server/services/c2c/__tests__/project-ref-anchor-read.test.ts:90:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/c2c/__tests__/project-ref-anchor-read.test.ts > strictProjectRowForRef: the same answer, except that could-not-tell throws > takes a loader, and loads only for a program UUID
+TypeError: strictProjectRowForRef is not a function
+ ❯ server/services/c2c/__tests__/project-ref-anchor-read.test.ts:97:18
+     95|   it('takes a loader, and loads only for a program UUID', async () => {
+     96|     const load = vi.fn(async () => DB);
+     97|     expect(await strictProjectRowForRef(load, { ref: 42, orgId: 7, con…
+       |                  ^
+     98|     expect(load).not.toHaveBeenCalled();
+     99|     expect(await strictProjectRowForRef(load, { ref: PROGRAM, orgId: 7…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+   Start at  06:32:34
+   Duration  2.26s (transform 1.07s, setup 94ms, import 1.74s, tests 32ms, environment 0ms)
+

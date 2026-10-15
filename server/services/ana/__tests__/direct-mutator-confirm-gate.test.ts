@@ -50,13 +50,23 @@ describe('the tool gate puts each one to a person', () => {
     for (const tool of FIVE) expect(toolAuthorizationOf(tool, {}).class, tool).toBe('confirm');
   });
 
-  it.each(FIVE)('%s is proposed at the confirm tier, carrying what it would do', tool => {
+  /* Each is put to a person. The three that record the person's reason for
+     change (REASON_REQUIRED_TOOLS) are put at the reason tier: the person types
+     the reason, or adopts AnA's wording, at confirmation (D5, 2026-09-29). */
+  const TIER: Record<(typeof FIVE)[number], 'confirm' | 'reason'> = {
+    save_document_to_vault: 'reason',
+    update_vault_document: 'reason',
+    file_chat_upload_to_vault: 'confirm',
+    seed_tmf: 'reason',
+    save_report_definition: 'confirm',
+  };
+  it.each(FIVE)('%s is proposed to a person, carrying what it would do', tool => {
     const input = { title: 'Stability summary', reason: 'Filing the 24-month data' };
     expect(classifyToolCall({ name: tool, input })).toEqual({
       kind: 'NEEDS_APPROVAL',
       command: tool,
       params: input,
-      tier: 'confirm',
+      tier: TIER[tool],
     });
   });
 

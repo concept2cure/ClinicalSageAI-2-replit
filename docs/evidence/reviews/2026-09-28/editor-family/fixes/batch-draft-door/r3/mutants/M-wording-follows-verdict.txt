@@ -1,0 +1,11 @@
+mutant M-wording-follows-verdict: server/routes/batch-draft-routes.ts
+- const credited = lineage.clausesInAcceptedText > 0;
++ const credited = machineText.verified.length > 0;
+
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-C: a raw-text element whose opening tag is in another clause > the claim may be the tampered sentence itself: it verifies, and still credits nothing 113ms
+   → the accept said AnA's text was accepted, over none: expected 'ana-batch' not to be 'ana-batch' // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a verified claim of one word credits nothing, and the accept does not say AnA's text was accepted 33ms
+   → expected 'AnA batch draft accepted into document' to be 'Batch-draft text accepted into docume…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 49 passed (51)

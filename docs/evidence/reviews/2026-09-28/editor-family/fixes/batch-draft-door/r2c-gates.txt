@@ -1,0 +1,61 @@
+# r2c CI gates on the final bytes. One exits 1, not on a lane file:
+#  - check-duplicate-exported-types: CtqCategory, DocumentProvenance, EligibilityAssessment (pre-existing; the round-2 reviewer saw the same three).
+#  An earlier run in this round also saw check-discarded-audit-write exit 1 on server/services/ingestion/ingestion-service.ts:767,
+#  another lane's uncommitted change; on this run it exits 0.
+
+== node scripts/ci/check-lineage-save-gate.mjs
+[ci:lineage-save-gate] ok  server/routes/batch-draft-routes.ts
+[ci:lineage-save-gate] ok  server/services/cerv2/kit-section-write.ts
+[ci:lineage-save-gate] ok  server/routes/c2c/artifacts.ts
+[ci:lineage-save-gate] ok  server/services/ana/AnaToolExecutor.ts
+[ci:lineage-save-gate] ok  server/services/ana/submission-chat-apply-rewrite.ts
+[ci:lineage-save-gate] ok  server/services/ai-actions/handlers/refine-with-validation.ts
+[ci:lineage-save-gate] ok  server/services/module3-convergence-service.ts
+[ci:lineage-save-gate] ok  server/routes/q-sub.ts
+[ci:lineage-save-gate] ok  server/services/labeling/labeling-pi-service.ts
+[ci:lineage-save-gate] ok  server/services/compute/artifactWriteback.ts
+[ci:lineage-save-gate] ok  server/services/ana/verifiedSealService.ts
+[ci:lineage-save-gate] ok  server/services/resolution/bundle-executor.ts
+[ci:lineage-save-gate] ok  server/services/protocol-templates/protocol-templates-service.ts
+[ci:lineage-save-gate] OK — 21 guarded path(s) enforce lineage on save.
+exit=0
+
+== node scripts/ci/check-migration-reachability.mjs
+[ci:migration-reachability] 1345 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+exit=0
+
+== node scripts/ci/check-unbacked-tables.mjs
+[ci:unbacked-tables] 1472 tables/views created across migrations, drizzle and runtime DDL; 728 referenced in server SQL; 25 unbacked; 27 baselined
+[ci:unbacked-tables] ✅ no new references to tables nothing creates.
+exit=0
+
+== node scripts/ci/check-server-error-leaks.mjs
+[ci:server-error-leaks] OK — 117 baselined site(s) across 75 file(s); no file gained one.
+exit=0
+
+== node scripts/ci/check-fabricated-identity.mjs
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+exit=0
+
+== node scripts/ci/check-discarded-audit-write.mjs
+check-discarded-audit-write: no new occurrences. 124 baselined across 55 file(s).
+exit=0
+
+== node scripts/ci/check-duplicate-exported-types.mjs
+  CtqCategory
+      server/services/rbm/rbm-actuator.ts
+      server/services/study-design/ctq-derivation.ts
+  DocumentProvenance
+      server/services/ana-biostats/types.ts
+      server/services/authoring/authoring-from-draft.ts
+  EligibilityAssessment
+      server/services/market-specs/pathway-eligibility.ts
+      server/services/study-design/eligibility-model.ts
+
+Give each module's type the name of what it actually is. A reader who greps the noun
+must land on the module that owns it — that is the difference between a canonical
+claim and a canonical fact.
+
+exit=1
+

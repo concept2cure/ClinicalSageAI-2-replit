@@ -1,0 +1,69 @@
+Concept2Cure.RI
+›
+Conversation
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+3
+Project
+Create a review task for the BX-512 stability protocol.
+Conversation
+AnA
+New conversation
+Progress
+· AnA's progress
+Create a review task for the BX-512 stability protocol.
+✻
+1 step did not complete
+1 step completed · 1 failed · reasoning · in 22s
+
+I will propose the task; it needs your approval.Stand-in answer: the task outcome was HUMAN_CONFIRMATION_DECLINED — A person reviewed this and declined it, so it did not run.
+
+AnA drives: on
+Demos
+Between steps
+Manual
+AnA takes one step, then waits for you to run the next, change it or stop. If nobody answers within 10 minutes, or the page is closed, she stops there. A demonstration you start runs through without stopping.
+Auto
+AnA keeps going, step after step, until she judges the task done — for up to 20 rounds whichever engine you chose, 15 minutes of work or 40 minutes in all. Anything that changes a record waits for you; if nobody answers within 10 minutes, it does not happen and she stops.
+She keeps going: up to 20 rounds, 15 minutes of work.
+Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.
+Progress
+Finished in 22s
+Planning response…
+— done
+0 ms
+Loading project memory…
+— done
+51 ms
+Generating response…
+— done
+117 ms
+Reasoning through the question…
+— done
+0 ms
+Composing the answer…
+— done
+57 ms
+Running 1 step…
+— done
+22s
+Reading the results…
+— done
+115 ms
+Composing the answer…
+— done
+94 ms
+Checking evidence and recording the turn…
+— done
+2 ms
+Used in this session
+Memory
+Could not be read
+Tools
+Executing platform command: create_task
+Context
+balanced effort

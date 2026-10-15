@@ -1,0 +1,2 @@
+without the partial blocker: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+without the partial blocker:       Tests  1 failed | 6 passed (7)

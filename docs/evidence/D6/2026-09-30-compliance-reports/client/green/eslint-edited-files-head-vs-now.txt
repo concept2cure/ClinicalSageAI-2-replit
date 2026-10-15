@@ -1,0 +1,4 @@
+client/src/concept2cure/v2/surfaces/Insights.tsx HEAD=0e/9w ["complexity","max-lines","max-lines-per-function"]
+client/src/concept2cure/v2/surfaces/Insights.tsx NOW =0e/9w ["complexity","max-lines","max-lines-per-function"]
+client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx HEAD=0e/17w ["max-lines-per-function","complexity","max-lines","@typescript-eslint/no-unused-vars","react-hooks/exhaustive-deps"]
+client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx NOW =0e/17w ["max-lines-per-function","complexity","max-lines","@typescript-eslint/no-unused-vars","react-hooks/exhaustive-deps"]

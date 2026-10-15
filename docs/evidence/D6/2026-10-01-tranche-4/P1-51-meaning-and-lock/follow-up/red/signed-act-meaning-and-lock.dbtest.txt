@@ -1,0 +1,65 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T21:13:31.749Z","pid":2554,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T21:13:31.753Z","pid":2554,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T21:13:31.753Z","pid":2554,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/signed-act-meaning-and-lock.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T21:13:32.031Z', poolSize: 1 }
+
+stdout | tests/db/signed-act-meaning-and-lock.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/signed-act-meaning-and-lock.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T21:13:33.354Z","pid":2554,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.356Z","pid":2554,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > runs as a role RLS applies to (not the owner, not BYPASSRLS) 8ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses a biosketch finalized "as review" before the password, and writes nothing 106ms
+{"level":40,"time":"2026-10-01T21:13:33.393Z","pid":2554,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.396Z","pid":2554,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.415Z","pid":2554,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.416Z","pid":2554,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.475Z","pid":2554,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.477Z","pid":2554,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses "release" too: nothing is released by finalizing a biosketch 21ms
+ × tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses "authorship": nothing checks that the signer wrote the biosketch (DP-76) 62ms
+   → a finalize signed as authorship: {"biosketchId":27,"finalized":true,"completeness":{"addressedPct":100,"requiredTotal":1,"requiredAddressed":1,"missing":[],"findings":[],"readyToFinalize":true},"actionId":"act_20a3dae096a848fba4e5f1a0793d7bd2","auditId":"3bd76913-1d88-49c0-b368-0c487227ea29","sha256Chain":"8f88f11bec89c1035583b3e061a77d8a40c2108e92f8b8bc5dcb8a8ff605126f","signatureId":1048,"signedAt":"2026-10-01T21:13:33.448Z","meaning":"authorship"}: expected 201 to be 400 // Object.is equality
+stdout | tests/db/signed-act-meaning-and-lock.dbtest.ts > one record is signed once (DP-65) > two concurrent finalizations of one biosketch: one 201, one 409, one signature
+[database] Database connection successful { timestamp: '2026-10-01T21:13:33.523Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T21:13:33.527Z","pid":2554,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.529Z","pid":2554,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.536Z","pid":2554,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T21:13:33.538Z","pid":2554,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > control: the investigator finalizes "as responsibility", and the signature row says so 44ms
+ ✓ tests/db/signed-act-meaning-and-lock.dbtest.ts > one record is signed once (DP-65) > two concurrent finalizations of one biosketch: one 201, one 409, one signature 102ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/signed-act-meaning-and-lock.dbtest.ts > a signed act carries a meaning true of the act (DP-64) > refuses "authorship": nothing checks that the signer wrote the biosketch (DP-76)
+AssertionError: a finalize signed as authorship: {"biosketchId":27,"finalized":true,"completeness":{"addressedPct":100,"requiredTotal":1,"requiredAddressed":1,"missing":[],"findings":[],"readyToFinalize":true},"actionId":"act_20a3dae096a848fba4e5f1a0793d7bd2","auditId":"3bd76913-1d88-49c0-b368-0c487227ea29","sha256Chain":"8f88f11bec89c1035583b3e061a77d8a40c2108e92f8b8bc5dcb8a8ff605126f","signatureId":1048,"signedAt":"2026-10-01T21:13:33.448Z","meaning":"authorship"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/signed-act-meaning-and-lock.dbtest.ts:183:88
+    181|     const id = await draftBiosketch();
+    182|     const res = await finalize(id, 'authorship');
+    183|     expect(res.status, `a finalize signed as authorship: ${JSON.string…
+       |                                                                                        ^
+    184|     expect(res.body.error?.code).toBe('MEANING_NOT_ALLOWED');
+    185|     expect(await signaturesOf(id)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  21:13:29
+   Duration  4.00s (transform 1.97s, setup 77ms, import 226ms, tests 3.39s, environment 0ms)
+

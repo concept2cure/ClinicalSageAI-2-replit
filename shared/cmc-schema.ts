@@ -178,7 +178,8 @@ export const complianceTracking = pgTable('compliance_tracking', {
   id: uuid('id').defaultRandom().primaryKey(),
   // The physical column has always existed (db/migrations/
   // 20260402_cmc_runtime_ddl_to_migration.sql:23) and shared/schema.ts maps it,
-  // but THIS model — the one server/api/cmc/projectRoutes.ts binds — did not.
+  // but THIS model — the one server/api/cmc/projectRoutes.ts bound (retired
+  // 2026-10-05, no caller) — did not.
   // So every row the product wrote carried organization_id NULL, and the
   // check-rules read had to widen to `OR organization_id IS NULL` to find any
   // of them, which served each sponsor's compliance findings to every other.

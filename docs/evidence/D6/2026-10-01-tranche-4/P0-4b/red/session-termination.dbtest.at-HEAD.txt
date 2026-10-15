@@ -1,0 +1,222 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:00:04.523Z","pid":17287,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:00:04.528Z","pid":17287,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:00:04.528Z","pid":17287,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:00:05.254Z', poolSize: 1 }
+
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/session-termination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/session-termination.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/session-termination.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 501
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 502
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 503
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 504
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 505
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 506
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 507
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 508
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 509
+
+{"level":30,"time":"2026-10-01T05:00:35.000Z","pid":17287,"hostname":"vm","context":{"userId":501,"tenantId":93330,"resourceId":"501"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+{"level":30,"time":"2026-10-01T05:00:35.000Z","pid":17287,"hostname":"vm","context":{"userId":501,"tenantId":"93330","resourceId":"501"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:01:05.000Z","pid":17287,"hostname":"vm","context":{"userId":501,"tenantId":93330,"resourceId":"501"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:01:05.000Z","pid":17287,"hostname":"vm","context":{"userId":501,"tenantId":"93330","resourceId":"501"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:01:35.000Z","pid":17287,"hostname":"vm","context":{"userId":501,"tenantId":93330,"resourceId":"501"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+stdout | tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one
+[database] Database connection successful { timestamp: '2026-10-01T05:01:35.000Z', poolSize: 2 }
+
+{"level":30,"time":"2026-10-01T05:02:05.000Z","pid":17287,"hostname":"vm","context":{"userId":501,"tenantId":93330,"resourceId":"501"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:02:05.000Z","pid":17287,"hostname":"vm","context":{"userId":501,"tenantId":"93330","resourceId":"501"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one 1315ms
+{"level":30,"time":"2026-10-01T05:02:35.000Z","pid":17287,"hostname":"vm","context":{"userId":502,"tenantId":93330,"resourceId":"502"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:02:35.000Z","pid":17287,"hostname":"vm","context":{"userId":502,"tenantId":"93330","resourceId":"502"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:03:05.000Z","pid":17287,"hostname":"vm","context":{"userId":502,"tenantId":93330,"resourceId":"502"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+stdout | tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held
+{
+  "timestamp": "2026-10-01T05:03:05.000Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 502
+  }
+}
+
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held 554ms
+{"level":30,"time":"2026-10-01T05:03:35.000Z","pid":17287,"hostname":"vm","context":{"userId":503,"tenantId":93330,"resourceId":"503"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:03:35.000Z","pid":17287,"hostname":"vm","context":{"userId":503,"tenantId":"93330","resourceId":"503"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:04:05.000Z","pid":17287,"hostname":"vm","context":{"userId":503,"tenantId":93330,"resourceId":"503"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:04:05.000Z","pid":17287,"hostname":"vm","context":{"userId":503,"tenantId":"93330","resourceId":"503"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:04:35.700Z","pid":17287,"hostname":"vm","context":{"userId":503,"tenantId":93330,"resourceId":"503"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T05:05:05.000Z","pid":17287,"hostname":"vm","context":{"userId":504,"tenantId":93330,"resourceId":"504"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:05:05.000Z","pid":17287,"hostname":"vm","context":{"userId":504,"tenantId":"93330","resourceId":"504"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:05:35.000Z","pid":17287,"hostname":"vm","context":{"userId":504,"tenantId":93330,"resourceId":"504"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ × tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it 655ms
+   → a session rotated in the second of the password change: the /api gate still admitted it: {"userId":503,"role":"admin"}: expected 200 to be 401 // Object.is equality
+{"level":30,"time":"2026-10-01T05:05:35.000Z","pid":17287,"hostname":"vm","context":{"userId":504,"tenantId":"93330","resourceId":"504"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:06:05.000Z","pid":17287,"hostname":"vm","context":{"userId":"504","tenantId":"93330","resourceId":"504"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-10-01T05:06:35.000Z","pid":17287,"hostname":"vm","context":{"userId":505,"tenantId":93330,"resourceId":"505"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:06:35.000Z","pid":17287,"hostname":"vm","context":{"userId":505,"tenantId":"93330","resourceId":"505"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:07:05.000Z","pid":17287,"hostname":"vm","context":{"userId":505,"tenantId":93330,"resourceId":"505"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ × tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door 245ms
+   → a session a sign-out everywhere should have ended: the /api gate still admitted it: {"userId":504,"role":"admin"}: expected 200 to be 401 // Object.is equality
+{"level":30,"time":"2026-10-01T05:07:05.000Z","pid":17287,"hostname":"vm","context":{"userId":505,"tenantId":"93330","resourceId":"505"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T05:07:35.000Z","pid":17287,"hostname":"vm","context":{"userId":"505","tenantId":"93330","resourceId":"505"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-10-01T05:07:35.000Z","pid":17287,"hostname":"vm","context":{"userId":"505","tenantId":"93330","resourceId":"505"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-10-01T05:08:05.000Z","pid":17287,"hostname":"vm","context":{"userId":506,"tenantId":93330,"resourceId":"506"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:08:05.000Z","pid":17287,"hostname":"vm","context":{"userId":506,"tenantId":"93330","resourceId":"506"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so 196ms
+   → a signed-out token was answered as if every session had ended: {"success":true,"message":"Logged out successfully. Tokens invalidated."}: expected 200 to be 401 // Object.is equality
+{"level":30,"time":"2026-10-01T05:08:35.000Z","pid":17287,"hostname":"vm","context":{"userId":507,"tenantId":93330,"resourceId":"507"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T05:08:35.000Z","pid":17287,"hostname":"vm","context":{"userId":507,"tenantId":"93330","resourceId":"507"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended 156ms
+   → a session held across a suspension: the /api gate still admitted it: {"userId":506,"role":"admin"}: expected 200 to be 401 // Object.is equality
+{"level":30,"time":"2026-10-01T06:11:05.000Z","pid":17287,"hostname":"vm","context":{"userId":506,"tenantId":93330,"resourceId":"506"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T06:11:05.000Z","pid":17287,"hostname":"vm","context":{"userId":506,"tenantId":"93330","resourceId":"506"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended 130ms
+   → a session held across a deprovisioning: the /api gate still admitted it: {"userId":507,"role":"admin"}: expected 200 to be 401 // Object.is equality
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh 98ms
+{"level":30,"time":"2026-10-01T06:11:35.000Z","pid":17287,"hostname":"vm","context":{"userId":508,"tenantId":93330,"resourceId":"508"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T06:11:35.000Z","pid":17287,"hostname":"vm","context":{"userId":508,"tenantId":"93330","resourceId":"508"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":40,"time":"2026-10-01T06:11:35.000Z","pid":17287,"hostname":"vm","context":{"userId":508,"organizationId":93330},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing 185ms
+{"level":30,"time":"2026-10-01T06:12:05.000Z","pid":17287,"hostname":"vm","context":{"userId":509,"tenantId":93330,"resourceId":"509"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T06:12:05.000Z","pid":17287,"hostname":"vm","context":{"userId":509,"tenantId":"93330","resourceId":"509"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate and every successor token carry 166ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it
+AssertionError: a session rotated in the second of the password change: the /api gate still admitted it: {"userId":503,"role":"admin"}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ expectEnded tests/db/session-termination.dbtest.ts:129:92
+    127|
+    128| function expectEnded(d: Awaited<ReturnType<typeof doors>>, what: strin…
+    129|   expect(d.gate.status, `${what}: the /api gate still admitted it: ${s…
+       |                                                                                            ^
+    130|   expect(d.routerGate.status, `${what}: a router's own gate still admi…
+    131|   expect(d.probe.status, `${what}: the session probe still reported it…
+ ❯ tests/db/session-termination.dbtest.ts:338:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door
+AssertionError: a session a sign-out everywhere should have ended: the /api gate still admitted it: {"userId":504,"role":"admin"}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ expectEnded tests/db/session-termination.dbtest.ts:129:92
+    127|
+    128| function expectEnded(d: Awaited<ReturnType<typeof doors>>, what: strin…
+    129|   expect(d.gate.status, `${what}: the /api gate still admitted it: ${s…
+       |                                                                                            ^
+    130|   expect(d.routerGate.status, `${what}: a router's own gate still admi…
+    131|   expect(d.probe.status, `${what}: the session probe still reported it…
+ ❯ tests/db/session-termination.dbtest.ts:356:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so
+AssertionError: a signed-out token was answered as if every session had ended: {"success":true,"message":"Logged out successfully. Tokens invalidated."}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ tests/db/session-termination.dbtest.ts:374:109
+    372|       .set(ended.bearer)
+    373|       .send({ terminateAllSessions: true });
+    374|     expect(out.status, `a signed-out token was answered as if every se…
+       |                                                                                                             ^
+    375|     expect(out.body.success).toBe(false);
+    376|     expect((await request(app).get('/api/dbste/whoami').set(live.beare…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended
+AssertionError: a session held across a suspension: the /api gate still admitted it: {"userId":506,"role":"admin"}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ expectEnded tests/db/session-termination.dbtest.ts:129:92
+    127|
+    128| function expectEnded(d: Awaited<ReturnType<typeof doors>>, what: strin…
+    129|   expect(d.gate.status, `${what}: the /api gate still admitted it: ${s…
+       |                                                                                            ^
+    130|   expect(d.routerGate.status, `${what}: a router's own gate still admi…
+    131|   expect(d.probe.status, `${what}: the session probe still reported it…
+ ❯ tests/db/session-termination.dbtest.ts:394:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended
+AssertionError: a session held across a deprovisioning: the /api gate still admitted it: {"userId":507,"role":"admin"}: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ expectEnded tests/db/session-termination.dbtest.ts:129:92
+    127|
+    128| function expectEnded(d: Awaited<ReturnType<typeof doors>>, what: strin…
+    129|   expect(d.gate.status, `${what}: the /api gate still admitted it: ${s…
+       |                                                                                            ^
+    130|   expect(d.routerGate.status, `${what}: a router's own gate still admi…
+    131|   expect(d.probe.status, `${what}: the session probe still reported it…
+ ❯ tests/db/session-termination.dbtest.ts:403:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+   Start at  05:59:59
+   Duration  13.10s (transform 4.02s, setup 128ms, import 424ms, tests 12.00s, environment 0ms)
+

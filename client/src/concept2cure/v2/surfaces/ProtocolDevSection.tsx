@@ -34,7 +34,7 @@
  * which is reported here as a refusal with the draft left on screen. It is
  * never reported as a save, and never swallowed.
  */
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as PG from './ProtocolGov';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import { ProtocolSectionConflict, saveProtocolSection } from './ProtocolDevWrites';
@@ -51,6 +51,7 @@ export interface ProtocolSectionPaneProps {
   onAsk: (prompt: string) => void;
   /** Fires only after the server confirms the write — the host re-reads. */
   onSaved: () => void;
+  onPendingChange?: (pending: boolean) => void;
 }
 
 /** The section's stored body, as the read model carries it. */
@@ -67,7 +68,7 @@ function refusalText(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-export function ProtocolSectionPane({ doc, sec, canWrite, onAsk, onSaved }: ProtocolSectionPaneProps) {
+export function ProtocolSectionPane({ doc, sec, canWrite, onAsk, onSaved, onPendingChange }: ProtocolSectionPaneProps) {
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
   const [reason, setReason] = useState('');
   const [dirty, setDirty] = useState(false);
@@ -88,6 +89,7 @@ export function ProtocolSectionPane({ doc, sec, canWrite, onAsk, onSaved }: Prot
   const statusChanged = status !== ((STATUSES as string[]).includes(String(sec.status)) ? sec.status : 'not_started');
   const reasonOk = reason.trim().length >= MIN_REASON;
   const hasChange = dirty || statusChanged;
+  useEffect(() => { onPendingChange?.(hasChange || busy); return () => onPendingChange?.(false); }, [hasChange, busy, onPendingChange]);
   const canSave = writable && reasonOk && hasChange && !busy;
 
   /* The editor's write-through. It throws on refusal, which is what

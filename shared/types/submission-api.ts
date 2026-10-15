@@ -42,8 +42,14 @@ export interface CreateSequenceRequest {
 export interface TransitionSequenceRequest {
   status: 'draft' | 'assembling' | 'validated' | 'frozen' | 'dispatched';
 }
-export type SequenceResponse = EctdSequence;
-export type SequenceListResponse = EctdSequence[];
+export interface SubmissionDeliverablesAvailability {
+  available: boolean;
+  compatiblePathways: Pathway[];
+  recordedPathway: Pathway | null;
+  reasonCode: string | null;
+}
+export type SequenceResponse = EctdSequence & { deliverables?: SubmissionDeliverablesAvailability };
+export type SequenceListResponse = SequenceResponse[];
 
 // ── Builder leaves ───────────────────────────────────────────────────────────
 export interface UpsertLeafRequest {
@@ -106,24 +112,6 @@ export interface ValidationExplainResponse {
   explained: Array<{ ruleId: string | null; severity: string; leaf: string | null; cause: string; fix: string }>;
   summary: string;
   blocking: boolean;
-}
-
-// ── Cross-region gap (AI) ────────────────────────────────────────────────────
-export interface CrossRegionRequest {
-  sourceRegion: 'fda' | 'eu' | 'jp';
-  targetRegions: Array<'fda' | 'eu' | 'jp'>;
-  applicationType: string;
-  sectionsPresent?: string[];
-}
-export interface CrossRegionResponse {
-  perRegion: Array<{
-    region: string;
-    module1Deltas: string[];
-    bridgingNeeded: boolean;
-    bridgingRationale: string | null;
-    translationScope: string;
-    formatConversion: string;
-  }>;
 }
 
 // ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
@@ -236,7 +224,6 @@ export interface CapabilitiesResponse {
     sequences: boolean;
     validation: boolean;
     'shadow-review': boolean;
-    'cross-region': boolean;
     dispatch: boolean;
   };
   // Capability flags that are not workspaces.
@@ -254,7 +241,75 @@ export interface CapabilitiesResponse {
 }
 
 // ── Pathway readiness (GET /api/submissions/sequences/:seqId/pathway-readiness) ─
-export type Pathway = 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin';
+export const SUBMISSION_DELIVERABLE_PATHWAYS = ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin',
+  'pma', 'prestar_q_sub', 'prestar_ide', 'prestar_513g'] as const;
+export type Pathway = typeof SUBMISSION_DELIVERABLE_PATHWAYS[number];
+/** ISO country codes used as exact CTIS Part II source-state identities. */
+export const CTIS_MEMBER_STATE_CODES = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR',
+  'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'] as const;
+
+/** The retained record and exact inputs this coverage read actually evaluated.
+ * Structural/content coverage is separate from governed dispatch admission. */
+export interface DeliverableEvaluationScope {
+  organizationId: number;
+  programId: string;
+  programCode?: string;
+  programTitle?: string;
+  projectId: number;
+  submissionId: number;
+  sequenceId: number;
+  sequenceRegion: string;
+  recordedApplicationType: string;
+  recordedPathway: string | null;
+  evaluatedPathway: Pathway;
+  memberStates: string[];
+  regulation: 'mdr' | 'ivdr' | null;
+  inputOrigin: 'recorded' | 'explicit-compatible';
+  evaluation: 'retained-placement-content-coverage';
+  dispatchReadiness: 'separate-governed-assessment';
+}
+
+export type DeliverableDocumentTable = 'coauthor_documents' | 'unified_documents'
+  | 'ctd_onboarding_documents' | 'rendered_leaf_files' | 'c2c_document_sections' | 'vault_documents';
+export interface DeliverableSourceEvidence {
+  content: 'substantive' | 'non-substantive' | 'undetermined';
+  pin: 'match' | 'mismatch' | 'unpinned' | 'unverifiable';
+  lifecycle: 'finalized' | 'draft' | 'unverified' | 'not-applicable';
+  reasonCode: string | null;
+}
+/** Exact retained placement/source reference. programId/projectId identify the
+ * admitted placement container. They do not prove an unbound source's origin;
+ * SOURCE_PARENT_UNVERIFIED stays explicit and has no guessed label/editor.
+ * Labels never supply an identity, parent, or content verdict. */
+export interface DeliverableSourceRef {
+  leafId: number;
+  sequenceId: number;
+  submissionId: number;
+  programId: string;
+  projectId: number;
+  /** Actual retained source label, read only after its parent/object admission. */
+  label?: string;
+  document: { table: Exclude<DeliverableDocumentTable, 'vault_documents'>; keyKind: 'integer'; id: number }
+    | { table: 'vault_documents'; keyKind: 'uuid'; id: string } | null;
+  section: { id: string; code: string | null } | null;
+  editor: { kind: 'authoring-document'; documentId: string; programId: string; sectionCode: string | null } | null;
+  evidence: DeliverableSourceEvidence;
+}
+export interface DeliverableSourceIssue {
+  leafId: number;
+  code: string;
+  /** A fixed safe explanation; never a database error or source prose. */
+  message: string;
+}
+/** Opt-in canonical mapper input for the request-owned deliverables reader. */
+export interface SourceAwarePathwayLeaf {
+  sectionCode: string;
+  title: string;
+  documentType?: string;
+  substantive?: boolean;
+  sourceRef?: DeliverableSourceRef;
+  contentEvidence?: DeliverableSourceEvidence;
+}
 export interface PathwayReadinessResponse {
   pathway: Pathway;
   ready: boolean;
@@ -262,6 +317,8 @@ export interface PathwayReadinessResponse {
   missingRequired: string[];
   /** Full engine result (section/slot breakdown) — shape varies by pathway. */
   detail: unknown;
+  scope: DeliverableEvaluationScope;
+  sourceIssues: DeliverableSourceIssue[];
 }
 
 // ── Validation rule corpus (GET /api/submissions/validation-rules?region=) ───
@@ -492,16 +549,25 @@ export interface PathwayManifestEntry {
   label: string;
   group: string; // annex / "eSTAR" / "Part I" / "Part II — DE" / "STED"
   required: boolean;
-  status: 'present' | 'missing' | 'optional-absent';
+  status: 'present' | 'missing' | 'optional-absent' | 'undetermined' | 'not-applicable';
   sources: string[];
+  sourceRefs: DeliverableSourceRef[];
+  /** Preserve the engine's conditional/manual applicability separately. */
+  applicability?: string;
+  checkApplicability?: boolean;
+  contentUndetermined?: boolean;
 }
 export interface PathwayManifestResponse {
   pathway: Pathway;
   framework: string;
   generatedFrom: 'canonical-core';
   ready: boolean;
-  totals: { sections: number; requiredPresent: number; requiredMissing: number };
+  totals: { sections: number; requiredPresent: number; requiredMissing: number; undetermined: number };
   entries: PathwayManifestEntry[];
+  scope: DeliverableEvaluationScope;
+  sourceIssues: DeliverableSourceIssue[];
+  contradictions?: Array<{ section: string; flag: string; sources: string[] }>;
+  checkApplicability?: string[];
 }
 
 // ── Device technical file (GET /sequences/:seqId/technical-file?regulation=mdr|ivdr) ─
@@ -513,8 +579,9 @@ export interface TechnicalFileEntry {
   label: string;
   annex: string;
   required: boolean;
-  status: 'present' | 'missing' | 'optional-absent';
+  status: 'present' | 'missing' | 'optional-absent' | 'undetermined' | 'not-applicable';
   sources: string[];
+  sourceRefs: DeliverableSourceRef[];
 }
 export interface TechnicalFileResponse {
   regulation: 'mdr' | 'ivdr';
@@ -523,8 +590,10 @@ export interface TechnicalFileResponse {
   manufacturer?: string;
   generatedFrom: 'canonical-core';
   ready: boolean;
-  totals: { sections: number; requiredPresent: number; requiredMissing: number };
+  totals: { sections: number; requiredPresent: number; requiredMissing: number; undetermined: number };
   entries: TechnicalFileEntry[];
+  scope: DeliverableEvaluationScope;
+  sourceIssues: DeliverableSourceIssue[];
 }
 
 // ── Device technical-file ASSEMBLE (POST .../technical-file/assemble) ─────────

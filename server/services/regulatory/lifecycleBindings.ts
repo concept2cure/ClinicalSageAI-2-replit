@@ -4,24 +4,26 @@
  * documentLifecycleOrchestrator). The orchestrator stays pure and DB-free; this
  * adapter is where the real db/tenant/user are available.
  *
- * Two bindings are wired to their canonical authorities directly:
- *   - `audit`  → auditService.logAction (the org-wide append-only trail).
- *   - each transition also records a REAL, persisted canonical effect (the
- *     signature record, the leaf id, the package hash) through the store, so the
- *     pipeline is genuinely gated + audited + persisted end to end.
+ * Every default write runs on `deps.client`, the caller's transaction (VR-12):
+ * `audit` and `registerGovernedDocument` write one sha256-chained, sealed
+ * audit_logs row each (writeChainedAuditRow), and a failure propagates, so the
+ * stage change rolls back with it. With no client they refuse rather than
+ * write somewhere else.
  *
- * The heavy facet writes (unified_documents promotion, the part11
- * electronic_signatures row, the submission_leaf, the eCTD package) are the
- * documented delegation points: pass overrides in `deps` to wire
- * ModuleIntegrationService.registerDocument, the esignature /sign path,
- * submission-service.upsertLeaf, and assemble-from-core.assembleSequence when a
- * full submission context is attached. Defaults keep the spine self-contained
- * and testable; they never silently no-op a governed step.
+ * Before 2026-09-29 both went through auditService.logAction, which runs on its
+ * own connection and swallows a failure, so a transition could commit with no
+ * audit row. (It would now also wait on the tenant's chain position that the
+ * signing transaction holds.)
+ *
+ * `applySignature` has no default. It returned a `csig:<uuid>` JSON object: no
+ * signature record, no printed name, bound to nothing. The lifecycle route
+ * supplies the real one (a Part 11 electronic_signatures record, written beside
+ * the signer's re-verification), and without it approving is refused.
  *
  * @module server/services/regulatory/lifecycleBindings
  */
-import { randomUUID } from 'crypto';
-import auditService from '../auditService';
+import { writeChainedAuditRow } from '../auditService';
+import type { SignatureDbClient } from '../part11/signature-persistence';
 import type {
   AdvanceContext,
   LifecycleBindings,
@@ -35,10 +37,10 @@ import type { CanonicalDocument } from '../../../shared/regulatory/canonical-doc
 
 export interface LifecycleBindingDeps {
   organizationId: number;
-  /** Actor id/name for the audit trail and signatures. */
+  /** Actor id for the audit trail. */
   actor: string;
-  /** Signer role recorded on Part 11 signatures. */
-  signerRole?: string;
+  /** The transaction every default write runs on. */
+  client?: SignatureDbClient;
   // Optional overrides to delegate a facet to its heavy service.
   audit?: (event: DocumentAuditEvent) => Promise<void>;
   registerGovernedDocument?: (doc: CanonicalDocument, ctx: AdvanceContext) => Promise<void>;
@@ -53,23 +55,29 @@ export interface LifecycleBindingDeps {
 
 /** Construct the concrete LifecycleBindings the orchestrator calls. */
 export function buildLifecycleBindings(deps: LifecycleBindingDeps): LifecycleBindings {
-  const { organizationId, actor, signerRole = 'regulatory' } = deps;
+  const { organizationId, actor } = deps;
+  const onTransaction = (binding: string): SignatureDbClient => {
+    if (!deps.client) {
+      throw new Error(
+        `LIFECYCLE_TRANSACTION_REQUIRED: the ${binding} binding writes on the transaction that records the transition, and none was given.`,
+      );
+    }
+    return deps.client;
+  };
 
   return {
     audit:
       deps.audit ??
       (async (event: DocumentAuditEvent) => {
         // The org-wide, hash-chained authority (audit_logs). The per-document
-        // chain is written by canonicalDocumentStore.persistState; this is the
-        // portfolio trail every governed mutation lands on.
-        await auditService.logAction({
+        // chain is written by canonicalDocumentStore.persistState.
+        await writeChainedAuditRow(onTransaction('audit'), {
           organizationId,
           userId: actor,
-          // A sign-off is recorded at the current stage (from === to; no legal
-          // transition is a self-loop), so it is named as what it is.
-          action: event.from === event.to ? 'regulated_document.signed' : `regulated_document.${event.to}`,
+          action: `regulated_document.${event.to}`,
           resourceType: 'canonical_document',
           resourceId: event.documentId,
+          reason: event.reason ?? null,
           details: {
             from: event.from,
             to: event.to,
@@ -87,7 +95,7 @@ export function buildLifecycleBindings(deps: LifecycleBindingDeps): LifecycleBin
         // Canonical-level promotion: the document is now an approved governed
         // record. Deep write to unified_documents is delegated via
         // deps.registerGovernedDocument → ModuleIntegrationService.registerDocument.
-        await auditService.logAction({
+        await writeChainedAuditRow(onTransaction('registerGovernedDocument'), {
           organizationId,
           userId: actor,
           action: 'regulated_document.registered',
@@ -99,21 +107,10 @@ export function buildLifecycleBindings(deps: LifecycleBindingDeps): LifecycleBin
 
     applySignature:
       deps.applySignature ??
-      (async (
-        _doc: CanonicalDocument,
-        meaning: ApprovalSignature['meaning'],
-        ctx: AdvanceContext,
-      ): Promise<ApprovalSignature> => {
-        // A real, referenceable Part 11 signature record. The manifest reference
-        // (never key material) is what the audit trail carries; the deep
-        // electronic_signatures row is delegated via deps.applySignature.
-        return {
-          actor,
-          role: signerRole,
-          signatureRef: ctx.signatureRef ?? `csig:${randomUUID()}`,
-          signedAt: ctx.at,
-          meaning,
-        };
+      (async (): Promise<ApprovalSignature> => {
+        throw new Error(
+          'LIFECYCLE_SIGNATURE_NOT_WIRED: approving writes a Part 11 signature record, and no signer was given. Nothing was signed.',
+        );
       }),
 
     /* No fallbacks for the two filing-side bindings, deliberately.

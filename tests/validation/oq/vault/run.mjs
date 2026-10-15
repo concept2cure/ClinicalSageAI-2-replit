@@ -3,7 +3,10 @@
  * Protocol: docs/validation/OQ-002-VAULT.md. Requirements: docs/validation/URS-002-VAULT.md.
  */
 import { createRun, helpers } from '../../lib/harness.mjs';
-import { createProgram, ingestPdf, sha256 } from '../../lib/fixtures.mjs';
+import { createProgram, ingestPdf, makePdfBuffer, sha256 } from '../../lib/fixtures.mjs';
+import { requireApprover, requireSigner, signerCode } from '../../lib/credentials.mjs';
+import { runFilingAndCompareSteps } from './steps-filing-compare.mjs';
+import { runAnnotationSteps } from './steps-annotations.mjs';
 
 const run = await createRun({
   app: 'VAULT',
@@ -250,6 +253,206 @@ await step(
     return 'HTTP 404';
   },
 );
+
+await step(
+  {
+    id: 'OQ-VAULT-11',
+    urs: ['URS-VAULT-011'],
+    title: 'A new version of a document is checked in, numbered and linked by the server',
+    action:
+      'POST /api/vault/ingest with supersedesDocumentId = the OQ-VAULT-03 document and new bytes; then the same ' +
+      'bytes again against the new version; then new bytes against the OQ-VAULT-03 document again',
+    expected:
+      'HTTP 201 with version 2.0 and the OQ-VAULT-03 document code; then 409 CONTENT_ALREADY_A_VERSION; ' +
+      'then 409 VERSION_NOT_CURRENT naming 2.0',
+    dependsOn: ['OQ-VAULT-03'],
+  },
+  async ({ api, expect }) => {
+    const send = async (headId, text) => {
+      const form = new FormData();
+      form.append('file', new Blob([makePdfBuffer(text)], { type: 'application/pdf' }), 'next-version.pdf');
+      form.append('programId', state.programId);
+      form.append('documentCode', 'ignored-for-a-new-version');
+      form.append('documentTitle', state.docTitle);
+      form.append('documentType', 'PROTOCOL');
+      form.append('supersedesDocumentId', headId);
+      return api('POST', '/api/vault/ingest', form);
+    };
+    const next = await send(state.doc.id, `${state.docTitle} revision 2`);
+    expect(next.status === 201, `expected 201, got ${next.status}`, next.json);
+    expect(next.json.document.version === '2.0', `version ${next.json.document.version}, expected 2.0`, next.json.document);
+    expect(next.json.document.documentCode === state.doc.documentCode, 'document code changed', next.json.document);
+    state.v2 = next.json.document;
+    const again = await send(next.json.document.id, `${state.docTitle} revision 2`);
+    expect(again.status === 409 && again.json?.error?.code === 'CONTENT_ALREADY_A_VERSION', `expected 409 CONTENT_ALREADY_A_VERSION, got ${again.status}`, again.json);
+    const stale = await send(state.doc.id, `${state.docTitle} revision 3`);
+    expect(stale.status === 409 && stale.json?.error?.code === 'VERSION_NOT_CURRENT', `expected 409 VERSION_NOT_CURRENT, got ${stale.status}`, stale.json);
+    expect(/2\.0/.test(stale.json.error.message ?? ''), 'the refusal does not name the current version', stale.json);
+    return `version ${next.json.document.version} (${next.json.document.id}) of ${next.json.document.documentCode}; known bytes refused; stale head refused`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-VAULT-12',
+    urs: ['URS-VAULT-012'],
+    title: 'A document is listed once, and every version of it is listed, downloadable and in its history',
+    action:
+      'GET /api/c2c/project-vault/:programId; GET …/documents/<OQ-VAULT-03 id>/versions; GET …/documents/<OQ-VAULT-03 id>/download; ' +
+      'GET …/documents/<version 2.0 id>/history; GET …/search?q=<title> without and with includeSuperseded=true',
+    expected:
+      'The tree has one leaf for the document, version 2.0, with versionCount 2, and no leaf for 1.0; the versions list is ' +
+      '[2.0 current, 1.0 earlier] with the OQ-VAULT-03 SHA-256 on 1.0; version 1.0 downloads with that SHA-256; the history ' +
+      'carries entries for both versions; search returns 2.0 and not 1.0 unless includeSuperseded=true',
+    dependsOn: ['OQ-VAULT-11'],
+  },
+  async ({ api, baseUrl, auth, expect, attach }) => {
+    const v1 = state.doc.id;
+    const v2 = state.v2.id;
+    const tree = await api('GET', `/api/c2c/project-vault/${state.programId}`);
+    expect(tree.status === 200, `tree: expected 200, got ${tree.status}`, tree.json);
+    const leaves = [];
+    const walk = (n) => {
+      if (Array.isArray(n)) return n.forEach(walk);
+      if (n && typeof n === 'object') { if (n.src === 'upload') leaves.push(n); if (n.children) walk(n.children); }
+    };
+    walk(tree.json.data.tree);
+    const family = leaves.filter((l) => l.docId === v1 || l.docId === v2);
+    expect(family.length === 1 && family[0].docId === v2 && family[0].versionCount === 2,
+      'the tree does not list the document once, at 2.0 with 2 versions', family);
+
+    const vs = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${v1}/versions`);
+    expect(vs.status === 200, `versions: expected 200, got ${vs.status}`, vs.json);
+    const list = vs.json.data.versions;
+    attach('versions.json', list);
+    expect(list.length === 2 && list[0].id === v2 && list[0].current === true && list[1].id === v1 && list[1].current === false,
+      'the versions list is not [2.0 current, 1.0 earlier]', list);
+    expect(list[1].contentHash === state.bytesSha, 'version 1.0 does not carry the OQ-VAULT-03 SHA-256', list[1]);
+
+    const res = await fetch(`${baseUrl}/api/c2c/project-vault/${state.programId}/documents/${v1}/download`, {
+      headers: { Authorization: `Bearer ${auth.accessToken}`, Origin: baseUrl },
+    });
+    const got = sha256(Buffer.from(await res.arrayBuffer()));
+    expect(res.status === 200 && got === state.bytesSha, `version 1.0 download: HTTP ${res.status}, sha256 ${got}`);
+
+    const h = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${v2}/history`);
+    expect(h.status === 200, `history: expected 200, got ${h.status}`, h.json);
+    const seen = new Set((h.json.data.entries ?? []).map((e) => e.version));
+    expect(seen.has('1.0') && seen.has('2.0'), 'the history does not span both versions', [...seen]);
+
+    const q = encodeURIComponent(state.docTitle);
+    const plain = await api('GET', `/api/c2c/project-vault/${state.programId}/search?q=${q}`);
+    const all = await api('GET', `/api/c2c/project-vault/${state.programId}/search?q=${q}&includeSuperseded=true`);
+    const ids = (r) => (r.json?.data?.results ?? []).map((x) => x.id);
+    expect(ids(plain).includes(v2) && !ids(plain).includes(v1), 'search does not list the current version alone', ids(plain));
+    expect(ids(all).includes(v1) && ids(all).includes(v2), 'search with includeSuperseded does not list both versions', ids(all));
+    return `one leaf (2.0, 2 versions); versions [2.0, 1.0]; 1.0 downloads with sha256 ${got.slice(0, 12)}…; history spans ${[...seen].join(', ')}; search 1 / ${ids(all).length}`;
+  },
+);
+
+/** Start a version's lifecycle record (or find it), and send it for review, as the run identity. */
+async function sendForReview(api, expect, vaultId) {
+  const start = await api('POST', '/api/regulatory/documents', { sources: { vault_documents: { nativeId: vaultId, role: 'artifact' } } });
+  expect([200, 201].includes(start.status), `start: expected 201, got ${start.status}`, start.json);
+  const cid = start.json.canonicalId;
+  const sent = await api('POST', `/api/regulatory/documents/${cid}/advance`, { to: 'in_review' });
+  expect(sent.status === 200 && sent.json.stage === 'in_review', `send for review: expected 200 in_review, got ${sent.status}`, sent.json);
+  return cid;
+}
+
+/** Sign as `who` (a credentialed identity): its password, and its code when a factor is enrolled. */
+async function signAs(apiAs, who, path, body) {
+  const code = await signerCode(who);
+  return apiAs(who.session)('POST', path, { ...body, password: who.password, ...(code ? { mfaToken: code } : {}) });
+}
+
+await step(
+  {
+    id: 'OQ-VAULT-13',
+    urs: ['URS-VAULT-013'],
+    title: 'CREDENTIALED: a version is sent for review; the uploader may not review it; a second identity signs the review over its bytes; the reviewer may not approve it',
+    action:
+      'POST /api/regulatory/documents naming the OQ-VAULT-11 version, twice; POST …/:id/advance {to:"in_review"}; as the run identity (the uploader) POST …/:id/sign {meaning:"reviewed", reason}; ' +
+      'as OQ_SIGNER POST …/:id/sign {meaning:"reviewed", reason, password, mfaToken?}; as OQ_SIGNER POST …/:id/advance {to:"approved", reason, password, mfaToken?}; GET …/documents/:id/versions',
+    expected:
+      'One lifecycle record (the second start returns it, created:false), in_review; the uploader\'s review 403 SELF_APPROVAL; the signer\'s review 200 with boundContentHash equal to the version\'s SHA-256; ' +
+      'the signer\'s approval 403 SELF_APPROVAL; the versions list shows the version In review with the review\'s printed name. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
+    dependsOn: ['OQ-VAULT-11'],
+  },
+  async (ctx) => {
+    const { api, apiAs, expect, auth, baseUrl } = ctx;
+    const v2 = state.v2;
+    const cid = await sendForReview(api, expect, v2.id);
+    const again = await api('POST', '/api/regulatory/documents', { sources: { vault_documents: { nativeId: v2.id, role: 'artifact' } } });
+    expect(again.status === 200 && again.json.canonicalId === cid && again.json.created === false, 'a second start made a second record', again.json);
+    const self = await api('POST', `/api/regulatory/documents/${cid}/sign`, { meaning: 'reviewed', reason: 'OQ-002 step 13: the uploader must not review' });
+    expect(self.status === 403 && self.json?.error === 'SELF_APPROVAL', `the uploader's review: expected 403 SELF_APPROVAL, got ${self.status}`, self.json);
+    const signer = await requireSigner(ctx, baseUrl, auth.user.email);
+    state.signer = signer;
+    const review = await signAs(apiAs, signer, `/api/regulatory/documents/${cid}/sign`, { meaning: 'reviewed', reason: 'OQ-002 step 13: reviewed for validation' });
+    expect(review.status === 200, `the signer's review: expected 200, got ${review.status}`, review.json);
+    expect(review.json.signature.boundContentHash === v2.contentHash, 'the review is not bound to the version\'s SHA-256', review.json.signature);
+    const own = await signAs(apiAs, signer, `/api/regulatory/documents/${cid}/advance`, { to: 'approved', reason: 'OQ-002 step 13: the reviewer must not approve' });
+    expect(own.status === 403 && own.json?.error === 'SELF_APPROVAL', `the reviewer's approval: expected 403 SELF_APPROVAL, got ${own.status}`, own.json);
+    const vs = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${v2.id}/versions`);
+    const lc = (vs.json?.data?.versions ?? []).find((v) => v.id === v2.id)?.lifecycle;
+    expect(lc?.stage === 'in_review' && Boolean(lc?.review?.printedName), 'the versions list does not show the review', lc);
+    return `record ${cid}: uploader refused; reviewed by ${lc.review.printedName}, bound to ${v2.contentHash.slice(0, 12)}…; reviewer's approval refused`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-VAULT-14',
+    urs: ['URS-VAULT-013'],
+    title: 'CREDENTIALED: a third identity approves v1, then v2; approving v2 supersedes v1; the approved version\'s details cannot be edited',
+    action:
+      'Ingest a new document (v1.0); send it for review; OQ_SIGNER signs the review; OQ_APPROVER advances it to approved. Check in v2.0 and repeat. GET …/documents/:v2/versions. ' +
+      'POST …/documents/:v2/details {documentTitle, reason}',
+    expected:
+      'Each approval 200, bound to that version\'s SHA-256; v2\'s approval answers superseded:[v1\'s record]; the versions list shows v2.0 Approved (the approver\'s printed name) and v1.0 Superseded; ' +
+      'the edit 409 APPROVED_VERSION_IMMUTABLE. Without OQ_APPROVER_EMAIL / OQ_APPROVER_PASSWORD (a third identity) the step is recorded "not executed — credential not supplied".',
+    dependsOn: ['OQ-VAULT-13'],
+  },
+  async (ctx) => {
+    const { api, apiAs, expect, auth, baseUrl, attach } = ctx;
+    const approver = await requireApprover(ctx, baseUrl, [auth.user.email, state.signer.email]);
+    const title = `OQ-002 Approval family ${stamp}`;
+    const first = await ingestPdf(api, expect, { programId: state.programId, title });
+    const approveVersion = async (vaultId) => {
+      const cid = await sendForReview(api, expect, vaultId);
+      const r = await signAs(apiAs, state.signer, `/api/regulatory/documents/${cid}/sign`, { meaning: 'reviewed', reason: 'OQ-002 step 14: reviewed for validation' });
+      expect(r.status === 200, `review: expected 200, got ${r.status}`, r.json);
+      const a = await signAs(apiAs, approver, `/api/regulatory/documents/${cid}/advance`, { to: 'approved', reason: 'OQ-002 step 14: approved for validation' });
+      expect(a.status === 200 && a.json.stage === 'approved', `approval: expected 200 approved, got ${a.status}`, a.json);
+      return { cid, approval: a.json };
+    };
+    const one = await approveVersion(first.document.id);
+    const form = new FormData();
+    form.append('file', new Blob([makePdfBuffer(`${title} revision 2`)], { type: 'application/pdf' }), 'approval-v2.pdf');
+    form.append('programId', state.programId);
+    form.append('documentTitle', title);
+    form.append('documentType', 'PROTOCOL');
+    form.append('supersedesDocumentId', first.document.id);
+    const next = await api('POST', '/api/vault/ingest', form);
+    expect(next.status === 201, `check-in: expected 201, got ${next.status}`, next.json);
+    const two = await approveVersion(next.json.document.id);
+    expect(JSON.stringify(two.approval.superseded) === JSON.stringify([one.cid]), 'approving v2.0 did not supersede v1.0', two.approval);
+    const vs = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${next.json.document.id}/versions`);
+    const list = vs.json?.data?.versions ?? [];
+    attach('versions.json', list);
+    expect(list[0]?.lifecycle?.stage === 'approved' && Boolean(list[0]?.lifecycle?.approval?.printedName), 'v2.0 is not shown approved', list[0]);
+    expect(list[1]?.lifecycle?.stage === 'superseded', 'v1.0 is not shown superseded', list[1]);
+    const edit = await api('POST', `/api/c2c/project-vault/${state.programId}/documents/${next.json.document.id}/details`, {
+      documentTitle: `${title} renamed`, reason: 'OQ-002 step 14: an approved version must not change',
+    });
+    expect(edit.status === 409 && JSON.stringify(edit.json).includes('APPROVED_VERSION_IMMUTABLE'), `edit: expected 409 APPROVED_VERSION_IMMUTABLE, got ${edit.status}`, edit.json);
+    return `v1.0 approved, then superseded by v2.0 (approved by ${list[0].lifecycle.approval.printedName}); the approved version's edit refused`;
+  },
+);
+
+await runFilingAndCompareSteps({ step, state, stamp });
+await runAnnotationSteps({ step, state, stamp });
 
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

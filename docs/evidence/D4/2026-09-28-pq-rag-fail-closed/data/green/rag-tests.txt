@@ -1,0 +1,31 @@
+# npx vitest run server/eval/rag/__tests__/rag-metrics.test.ts server/eval/rag/__tests__/run-eval-attribution.test.ts --maxWorkers=2
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > returns 0 for an empty list
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > mean > averages values
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 1 when an expected id is within top-k
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when the expected id is below the cutoff
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > hitAtK > is 0 when there are no expected ids
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > is the fraction of expected ids found in top-k
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > recallAtK > respects the k cutoff
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is the fraction of top-k that are relevant
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > precisionAtK > is 0 for k <= 0
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1 when the first result is relevant
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 1/rank of the first relevant result
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > reciprocalRank > is 0 when nothing relevant is retrieved
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > scores the fraction of expected substrings present, case-insensitively
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > answerContainsScore > is 0 when no expected substrings are given
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > detects the pipeline refusal phrasing
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > isGroundedRefusal > is false for a substantive answer
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > parses a bare numeric judge response and clamps to [0,1]
+ ✓ server/eval/rag/__tests__/rag-metrics.test.ts > rag eval metrics > judgeFaithfulness > returns 0 when the judge emits no number
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports no gaps when the generator and a different judge are both pinned
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned generator — the answer is unattributable
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses a run with no pinned judge — an unpinned model graded it
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > refuses self-grading: the same model cannot answer and judge
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > reports BOTH gaps for a bare run — the default invocation
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > pqAttributionGaps > does not treat an empty string as a pin
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --model to the retrieval/generation call
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model entirely when unpinned, rather than sending undefined
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > forwards --judge-model to the judge call
+ ✓ server/eval/rag/__tests__/run-eval-attribution.test.ts > the pinned model reaches the call it is supposed to pin > omits model from the judge call when unpinned
+ Test Files  2 passed (2)
+      Tests  28 passed (28)

@@ -1,0 +1,12 @@
+Mutant R35-interval-far-apart: an interval is found through two bounds anywhere in one record
+
+--- server/services/ana/answer-check-figures.ts
+- const close = a.field && b.field ? Math.abs(gap) <= 3 : gap > 0 && gap <= 30;
++ const close = true;
+
+Tests run: tests/services/answer-check-r2.test.ts tests/services/answer-check.test.ts
+Result: KILLED
+
+ × tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two bounds far apart in one text are not an interval 9ms
+      Tests  1 failed | 88 passed (89)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

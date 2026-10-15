@@ -13,19 +13,10 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
-import {
-  ANL_ANA_USAGE,
-  ANL_BLOCKERS,
-  ANL_CYCLE_PHASES,
-  ANL_KPIS,
-  ANL_PACE_24M,
-  ANL_REVIEWERS,
-} from '../data/analytics';
 import { ANL_DOC_FRAMEWORKS } from '../data/analytics-docs';
 import { useAnalytics, type AnalyticsPathway } from '../hooks/useAnalytics';
-import { SampleDataBanner } from '../components/SampleDataBanner';
+import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
-import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface AnalyticsSurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
@@ -44,12 +35,14 @@ const EMPTY_DOCS: KitDocument[] = [];
 export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
   const [pathway, setPathway] = React.useState<AnalyticsPathway>('all');
   const live = useAnalytics(pathway);
-  const kpis = useSampleRows(live.kpis, ANL_KPIS);
-  const phases = useSampleRows(live.phases, ANL_CYCLE_PHASES);
-  const blockers = useSampleRows(live.blockers, ANL_BLOCKERS);
-  const reviewers = useSampleRows(live.reviewers, ANL_REVIEWERS);
-  const usage = useSampleRows(live.anaUsage, ANL_ANA_USAGE);
-  const pace = useSampleRows(live.pace24m, ANL_PACE_24M);
+  /* The organization's own figures, or nothing. These used to resolve through
+     useSampleRows to the kit's example portfolio under sample mode. */
+  const kpis = live.kpis ?? [];
+  const phases = live.phases ?? [];
+  const blockers = live.blockers ?? [];
+  const reviewers = live.reviewers ?? [];
+  const usage = live.anaUsage ?? [];
+  const pace = live.pace24m ?? [];
   // Documents/frameworks have no live feed yet. They were the ONE panel on
   // this surface wired to fixtures unconditionally — example artifacts
   // rendered as real in production while every sibling panel honored the
@@ -111,7 +104,15 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
         </div>
       </div>
 
-      <SampleDataBanner show={live.phases === null} loading={live.loading} label="cycle-time analytics" />
+      {/* Which of loading / failed / not-yet-recorded the panels below are in.
+          A failed read is never drawn as empty panels. */}
+      {live.loading && live.phases === null ? (
+        <EmptyState icon={I.database} busy title="Loading portfolio analytics" testId="analytics-loading" />
+      ) : live.error ? (
+        <ErrorState variant="panel" title="Could not load portfolio analytics" message={live.error} retry={live.refresh} testId="analytics-error" />
+      ) : live.phases === null ? (
+        <EmptyState icon={I.database} title="No portfolio analytics yet" hint="Figures appear here once programs have recorded milestones." testId="analytics-empty" />
+      ) : null}
 
       <div className="metrics-row">
         {kpis.map((k, i) => (

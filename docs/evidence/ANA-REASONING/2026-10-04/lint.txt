@@ -1,0 +1,26 @@
+server/services/ai-gateway/generation-capture.ts  head(w e)=new  now(w e)=0 0
+server/services/ai-gateway/gateway.ts  head(w e)=26 0  now(w e)=26 0
+server/services/ai-gateway/__tests__/generation-capture.test.ts  head(w e)=new  now(w e)=0 0
+server/services/ana/answer-grounding.ts  head(w e)=1 0  now(w e)=0 0
+server/services/ana/turn-verification.ts  head(w e)=new  now(w e)=0 0
+server/services/ana/turn-record.ts  head(w e)=0 0  now(w e)=0 0
+server/services/clinical-regulatory-evidence/governance.ts  head(w e)=0 0  now(w e)=0 0
+server/services/ana-ri/evidence-validation.ts  head(w e)=1 0  now(w e)=1 0
+server/services/ana-ri/response-contract.ts  head(w e)=0 0  now(w e)=0 0
+server/services/ana-ri/__tests__/evidence-validation.test.ts  head(w e)=0 0  now(w e)=0 0
+server/services/__tests__/ana-trust-summary.test.ts  head(w e)=0 0  now(w e)=0 0
+server/services/evidence/grounding-eval.ts  head(w e)=0 0  now(w e)=0 0
+server/routes/ana-ri/post-processing.ts  head(w e)=4 0  now(w e)=4 0
+server/routes/ana-ri/stream.ts  head(w e)=24 0  now(w e)=24 0
+server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts  head(w e)=new  now(w e)=0 0
+server/routes/ana-ri/__tests__/stream-answer-sources.test.ts  head(w e)=new  now(w e)=0 0
+tests/services/answer-check.test.ts  head(w e)=new  now(w e)=0 0
+client/src/concept2cure/components/ana/anaAnswerCheck.ts  head(w e)=new  now(w e)=1 0
+client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts  head(w e)=new  now(w e)=1 0
+client/src/concept2cure/components/ana/useAnaChat.ts  head(w e)=1 0  now(w e)=1 0
+client/src/concept2cure/components/ana/useAnaChat.types.ts  head(w e)=1 0  now(w e)=1 0
+client/src/concept2cure/v2/AnaGrounding.tsx  head(w e)=0 0  now(w e)=1 0
+client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx  head(w e)=0 0  now(w e)=0 0
+client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx  head(w e)=1 0  now(w e)=1 0
+client/src/concept2cure/v2/surfaces/ConversationThread.tsx  head(w e)=6 0  now(w e)=6 0
+client/src/concept2cure/v2/fixtures/conversation-thread-data.ts  head(w e)=0 0  now(w e)=0 0

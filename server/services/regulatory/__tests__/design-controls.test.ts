@@ -62,10 +62,12 @@ describe('assessDhfCompleteness', () => {
     expect(c.auditReady).toBe(true);
   });
 
-  it('blocks when no design review has an independent reviewer', () => {
+  // QSR 820.30(e) only: from 2026-02-02 (QMSR) this is an advisory, see
+  // design-controls-qmsr.test.ts.
+  it('blocks when no design review has an independent reviewer (QSR, before 2026-02-02)', () => {
     const dhf = fullDhf();
     dhf.reviews = [{ id: 'dr1', phase: 'final', independentReviewerPresent: false, actionItemsOpen: 0 }];
-    const c = assessDhfCompleteness(dhf);
+    const c = assessDhfCompleteness(dhf, '2026-01-15');
     expect(c.auditReady).toBe(false);
     expect(c.blockers.some(b => b.includes('independent reviewer'))).toBe(true);
   });

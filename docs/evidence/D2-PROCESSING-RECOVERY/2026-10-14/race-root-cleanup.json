@@ -1,0 +1,9 @@
+{
+  "name": "c2c-d2-race-87e4e894-cba",
+  "containerId": "d8d4d0d23bdcf895edaeb18a71cf22c3c2d57c48ebd40fb6eb53f80d258f94fd",
+  "phase": "cleaned",
+  "cleanup": "Root removed exact verified owned container after resumed environment; fixture launcher had not completed its deadline cleanup.",
+  "cleanupVerified": true,
+  "finishedAt": "2026-10-14T04:48:50.465210+00:00",
+  "stopReason": "final authorized local-fixture cleanup after environment resume"
+}

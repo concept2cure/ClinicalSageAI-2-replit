@@ -22,7 +22,7 @@
  * is an EXPLAINED unresolved leaf rather than a silent drop.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import { promises as fs } from 'fs';
+import { readFileSync, promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import { createHash } from 'crypto';
@@ -108,6 +108,14 @@ async function seedVaultDoc(opts: {
       opts.storageProvider ?? null,
     ],
   );
+  // VR-14: the version is approved on its lifecycle record, for these bytes, so
+  // the cases here are about materializing, not about approval
+  // (leaf-source-resolver-vault-finalized.test.ts pins that).
+  await harness.pglite.query(
+    `INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs)
+     VALUES ($1, $2, $3, 'csr-201', 'CSR', 'approved', true, $4, $5::jsonb)`,
+    [`cd-${id}`, ORG, opts.program ?? PROGRAM, sha(bytes), JSON.stringify({ vault_documents: { nativeId: id, role: 'artifact' } })],
+  );
   return id;
 }
 
@@ -132,9 +140,16 @@ beforeAll(async () => {
       storage_provider TEXT,
       content_hash TEXT,
       file_name TEXT,
-      deleted_at TIMESTAMPTZ
+      deleted_at TIMESTAMPTZ,
+      -- VR-14: the version family the transmit rule reads (is this version current?).
+      organization_id INTEGER,
+      supersedes_id UUID,
+      document_code TEXT
     );
   `);
+  // The real binary-availability predicate requires the existing disposition
+  // ledger; apply its canonical constraints and guards to exercise that read.
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
   await harness.pglite.query(
     `INSERT INTO regulatory_programs (id, organization_id) VALUES ($1::uuid,$2),($3::uuid,$4)
      ON CONFLICT (id) DO NOTHING`,

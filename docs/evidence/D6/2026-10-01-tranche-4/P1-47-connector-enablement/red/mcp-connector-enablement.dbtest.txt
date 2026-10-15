@@ -1,0 +1,313 @@
+# git HEAD: c81212ac (working tree: unchanged server code; only the new test file added)
+# command: TEST_DATABASE_URL=… APP_DATABASE_URL=… RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts server/mcp/__tests__/mcp-connector-enablement.dbtest.ts
+# (structured JSON log lines filtered out)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row
+[database] Database connection successful { timestamp: '2026-10-01T09:01:53.779Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > the organization starts with no connector setting (absent means disabled) 4ms
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row 97ms
+   → expected { status: 302, codeIssued: true, …(1) } to deeply equal { Object (status, codeIssued, ...) }
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > a connector token minted for the organization is refused at /mcp 51ms
+   → a token of an organization that has not enabled the connector opened /mcp: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > the member's own session is refused at /mcp too 25ms
+   → expected 200 to be 401 // Object.is equality
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > PATCH /api/tenant-config/:id/settings/claudeConnector → refused
+[database] Database connection successful { timestamp: '2026-10-01T09:01:54.066Z', poolSize: 2 }
+
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > every member sees it is off; only the owner is told they can change it 33ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > PUT /api/tenant-config/:id/claude-connector → 403 14ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > PATCH /api/tenant-config/:id/settings naming the connector → 403 59ms
+   → {}: expected 200 to be 403 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > PATCH /api/tenant-config/:id/settings/claudeConnector → refused 71ms
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > PATCH /api/organizations/:id/settings naming the connector → 403 43ms
+   → {"success":true,"message":"Organization settings updated successfully","settings":{"claudeConnector":{"enabled":true}},"auditTrail":{"persisted":true,"chained":true}}: expected 200 to be 403 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > nothing was stored and nothing was recorded as a change 2ms
+   → expected { enabled: true } to be null
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner enables it > PUT by the owner: 200, stored, and one chained audit row naming the owner, the value before and after 14ms
+   → {}: expected 404 to be 200 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner enables it > the same connector token is now admitted at /mcp 20ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner enables it > a member can now consent, and the grant opens /mcp 72ms
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > PUT {enabled:false} by the owner: 200 and a second audit row 7ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > the same connector token is refused at /mcp again 13ms
+   → expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > the refresh token of a grant made while it was enabled is refused at /token 18ms
+   → {"access_token":"<redacted>","token_type":"bearer","expires_in":3600,"scope":"c2c:read","refresh_token":"<redacted>"}: expected 200 to be 400 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > a member is refused at consent again 43ms
+   → expected 302 to be 403 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row
+AssertionError: expected { status: 302, codeIssued: true, …(1) } to deeply equal { Object (status, codeIssued, ...) }
+
+- Expected
++ Received
+
+  {
+-   "codeIssued": false,
+-   "codeRowsAdded": 0,
+-   "status": 403,
++   "codeIssued": true,
++   "codeRowsAdded": 1,
++   "status": 302,
+  }
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:341:123
+    339|     const before = await codeRows();
+    340|     const g = await grantFor(sessions.member);
+    341|     expect({ status: g.consent.status, codeIssued: g.consent.code !== …
+       |                                                                                                                           ^
+    342|       status: 403,
+    343|       codeIssued: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > a connector token minted for the organization is refused at /mcp
+AssertionError: a token of an organization that has not enabled the connector opened /mcp: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:352:99
+    350|   it('a connector token minted for the organization is refused at /mcp…
+    351|     const r = await mcpInitialize(connectorToken);
+    352|     expect(r.status, 'a token of an organization that has not enabled …
+       |                                                                                                   ^
+    353|     expect(r.challenge).toContain('invalid_token');
+    354|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > the member's own session is refused at /mcp too
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:357:59
+    355|
+    356|   it("the member's own session is refused at /mcp too", async () => {
+    357|     expect((await mcpInitialize(sessions.member)).status).toBe(401);
+       |                                                           ^
+    358|   });
+    359|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > every member sees it is off; only the owner is told they can change it
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:362:51
+    360|   it('every member sees it is off; only the owner is told they can cha…
+    361|     const asMember = await api('GET', connectorPath(), sessions.member…
+    362|     expect(asMember.status, shown(asMember.body)).toBe(200);
+       |                                                   ^
+    363|     expect(asMember.body).toEqual({ connector: { enabled: false, canCh…
+    364|     const asOwner = await api('GET', connectorPath(), sessions.owner);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > PUT /api/tenant-config/:id/claude-connector → 403
+AssertionError: {}: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:372:37
+    370|   it('PUT /api/tenant-config/:id/claude-connector → 403', async () => {
+    371|     const r = await setConnector('admin', true);
+    372|     expect(r.status, shown(r.body)).toBe(403);
+       |                                     ^
+    373|   });
+    374|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > PATCH /api/tenant-config/:id/settings naming the connector → 403
+AssertionError: {}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:377:37
+    375|   it('PATCH /api/tenant-config/:id/settings naming the connector → 403…
+    376|     const r = await api('PATCH', `/api/tenant-config/${orgId}/settings…
+    377|     expect(r.status, shown(r.body)).toBe(403);
+       |                                     ^
+    378|   });
+    379|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > PATCH /api/organizations/:id/settings naming the connector → 403
+AssertionError: {"success":true,"message":"Organization settings updated successfully","settings":{"claudeConnector":{"enabled":true}},"auditTrail":{"persisted":true,"chained":true}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:390:37
+    388|       reason: 'P1-47 administrator attempt',
+    389|     });
+    390|     expect(r.status, shown(r.body)).toBe(403);
+       |                                     ^
+    391|   });
+    392|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through any settings door > nothing was stored and nothing was recorded as a change
+AssertionError: expected { enabled: true } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "enabled": true,
+}
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:394:35
+    392|
+    393|   it('nothing was stored and nothing was recorded as a change', async …
+    394|     expect(await storedSetting()).toBeNull();
+       |                                   ^
+    395|     expect(await settingsAuditRows()).toEqual([]);
+    396|     expect((await mcpInitialize(connectorToken)).status).toBe(401);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner enables it > PUT by the owner: 200, stored, and one chained audit row naming the owner, the value before and after
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:403:37
+    401|   it('PUT by the owner: 200, stored, and one chained audit row naming …
+    402|     const r = await setConnector('owner', true);
+    403|     expect(r.status, shown(r.body)).toBe(200);
+       |                                     ^
+    404|     expect(r.body).toEqual({ connector: { enabled: true, canChange: tr…
+    405|     expect(await storedSetting()).toEqual({ enabled: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > PUT {enabled:false} by the owner: 200 and a second audit row
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:434:37
+    432|   it('PUT {enabled:false} by the owner: 200 and a second audit row', a…
+    433|     const r = await setConnector('owner', false);
+    434|     expect(r.status, shown(r.body)).toBe(200);
+       |                                     ^
+    435|     expect(await storedSetting()).toEqual({ enabled: false });
+    436|     const rows = await settingsAuditRows();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > the same connector token is refused at /mcp again
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:442:58
+    440|
+    441|   it('the same connector token is refused at /mcp again', async () => {
+    442|     expect((await mcpInitialize(connectorToken)).status).toBe(401);
+       |                                                          ^
+    443|   });
+    444|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > the refresh token of a grant made while it was enabled is refused at /token
+AssertionError: {"access_token":"<redacted>","token_type":"bearer","expires_in":3600,"scope":"c2c:read","refresh_token":"<redacted>"}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:447:37
+    445|   it('the refresh token of a grant made while it was enabled is refuse…
+    446|     const t = await token({ grant_type: 'refresh_token', refresh_token…
+    447|     expect(t.status, shown(t.body)).toBe(400);
+       |                                     ^
+    448|     expect(t.body.error).toBe('invalid_grant');
+    449|     expect(String(t.body.error_description)).toMatch(/connector for Cl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > a member is refused at consent again
+AssertionError: expected 302 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 302
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts:458:62
+    456|
+    457|   it('a member is refused at consent again', async () => {
+    458|     expect((await grantFor(sessions.member)).consent.status).toBe(403);
+       |                                                              ^
+    459|   });
+    460| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 5 passed (18)
+   Start at  09:01:49
+   Duration  5.96s (transform 1.97s, setup 94ms, import 293ms, tests 5.11s, environment 0ms)
+

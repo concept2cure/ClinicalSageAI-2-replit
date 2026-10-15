@@ -11,7 +11,12 @@ import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer
 import { markSafetyReportFiled, getSafetyReport, SafetyReportError } from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import { markAnnualReportFiled, getAnnualReport, AnnualReportError } from '../../services/ind-lifecycle/ind-annual-report-persistence';
 import { markAmendmentFiled, getAmendment, AmendmentError } from '../../services/ind-lifecycle/ind-amendment-persistence';
-import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
+import {
+  assembleIndAnnualReport,
+  parseAnnualReportInput,
+  type AnnualReportGap,
+  type IndAnnualReportModel,
+} from '../../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import {
   renderIndSafetyReportPdf,
@@ -180,7 +185,10 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
       now: b.now ? new Date(b.now) : undefined,
     });
     if (!amendmentIntent) {
-      return res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
+      // P-20: no verdict is not "not reportable" — say which one this is.
+      return document.obligation === 'NOT_DETERMINED'
+        ? res.status(422).json({ error: { code: 'NOT_DETERMINED', message: 'The expedited-reporting verdict is not determined: expectedness not assessed. Record expectedness against the IB / Reference Safety Information first; nothing was filed.' } })
+        : res.status(422).json({ error: { code: 'NOT_REPORTABLE', message: 'Event is not an expedited IND safety report; nothing to file.' } });
     }
     if (b.draftId) {
       const loaded = await loadDraft(() => getSafetyReport(String(b.draftId), ctx), (e) => e instanceof SafetyReportError && e.code === 'NOT_FOUND');
@@ -249,10 +257,24 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
   }
 });
 
+/** The open 312.33 sections of a report the filer has not acknowledged by section key (`acknowledgedGaps`). */
+function unacknowledgedGaps(gaps: AnnualReportGap[], acknowledged: unknown): AnnualReportGap[] {
+  const ack = new Set(Array.isArray(acknowledged) ? acknowledged.map(String) : []);
+  return gaps.filter((g) => !ack.has(g.sectionKey));
+}
+
 /**
  * File a 312.33 IND Annual Report as an `annual` eCTD sequence + m1.13 leaf.
- * Body: { submissionId, sequenceNumber }. When the report content is supplied,
- * the PDF is rendered, retained, and referenced by the leaf.
+ * Body: { submissionId, sequenceNumber } and EITHER draftId (the tracked draft;
+ * its stored report is what is filed) OR the report itself (productName,
+ * indNumber, reporting period, …). An open 312.33 section is filed only when
+ * acknowledged: by its section key in acknowledgedGaps (or, for a draft,
+ * acknowledgeGaps: true), and the response names the sections filed open.
+ *
+ * 2026-10-15: without a draft the body's report was filed with its open
+ * sections unacknowledged — or, lacking productName / indNumber, an annual
+ * sequence with no report at all; with a draft, the PDF was rendered from the
+ * body rather than from the draft that had been gated.
  */
 router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -262,34 +284,55 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'submissionId (int) and 4-digit sequenceNumber are required.' } });
   }
   try {
+    let report: IndAnnualReportModel;
     if (b.draftId) {
       const loaded = await loadDraft(() => getAnnualReport(String(b.draftId), ctx), (e) => e instanceof AnnualReportError && e.code === 'NOT_FOUND');
       if ('refusal' in loaded) return draftRefusal(res, loaded.refusal);
       if (loaded.draft.status === 'filed') return draftRefusal(res, ALREADY_FILED);
       if (Number(loaded.draft.submissionId) !== Number(b.submissionId)) return draftRefusal(res, mismatch('submission'));
       if (b.indNumber && String(loaded.draft.indNumber) !== String(b.indNumber)) return draftRefusal(res, mismatch('IND'));
+      report = loaded.draft.model as unknown as IndAnnualReportModel;
+      if (!Array.isArray(report?.sections) || !Array.isArray(report?.gaps)) {
+        throw new Error('The named annual-report draft holds no readable 312.33 section model.');
+      }
       // A draft whose required 312.33 sections are still open is not filed
       // silently. The caller may file it anyway by acknowledging the gaps,
       // and the response records that it did.
-      if (Number(loaded.draft.gapCount) > 0 && b.acknowledgeGaps !== true) {
-        return res.status(409).json({ error: { code: 'DRAFT_INCOMPLETE', message: `The named draft has ${loaded.draft.gapCount} open 312.33 section(s). Complete them, or file with acknowledgeGaps: true to record that they were filed open.`, gapCount: loaded.draft.gapCount } });
+      if (report.gaps.length > 0 && b.acknowledgeGaps !== true && unacknowledgedGaps(report.gaps, b.acknowledgedGaps).length > 0) {
+        return res.status(409).json({ error: { code: 'DRAFT_INCOMPLETE', message: `The named draft has ${report.gaps.length} open 312.33 section(s). Complete them, or acknowledge each one (acknowledgedGaps, by section key) to record that they were filed open.`, gapCount: report.gaps.length } });
+      }
+    } else {
+      if (!b.productName || !b.indNumber) {
+        return res.status(400).json({ error: { code: 'VALIDATION', message: 'Name the tracked draft (draftId), or supply the report to file: productName, indNumber and the reporting period are required. Nothing was filed.' } });
+      }
+      report = assembleIndAnnualReport(parseAnnualReportInput(b));
+      const open = unacknowledgedGaps(report.gaps, b.acknowledgedGaps);
+      if (open.length > 0) {
+        return res.status(409).json({
+          error: {
+            code: 'GAPS_NOT_ACKNOWLEDGED',
+            message:
+              `${open.length} open 312.33 section(s) of this report are not acknowledged: ` +
+              `${open.map((g) => `${g.heading} (${g.cfrRef})`).join('; ')}. Complete them, or acknowledge each one ` +
+              '(acknowledgedGaps, by section key) to record that it is filed open. Nothing was filed.',
+            openGaps: open.map(({ sectionKey, heading, cfrRef }) => ({ sectionKey, heading, cfrRef })),
+          },
+        });
       }
     }
-    const sources: LeafSourceBySection = {};
-    if (b.productName && b.indNumber) {
-      const pdf = await renderIndAnnualReportPdf(assembleIndAnnualReport(b));
-      sources['m1.13'] = leafSourceFor(
+    const sources: LeafSourceBySection = {
+      'm1.13': leafSourceFor(
         await storeRenderedLeafFile({
           organizationId: ctx.organizationId,
           userId: ctx.userId,
-          bytes: pdf,
+          bytes: await renderIndAnnualReportPdf(report),
           mime: 'application/pdf',
           fileName: 'ind-annual-report.pdf',
           renderedFrom: 'ind_annual_report',
           sectionCode: 'm1.13',
         }),
-      );
-    }
+      ),
+    };
     const form1571 = await form1571LeafSource(b, ctx);
     if (form1571.source) sources['m1.1'] = form1571.source;
     const filed = await persistAnnualReport(Number(b.submissionId), String(b.sequenceNumber), ctx, sources);
@@ -302,9 +345,14 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
         if (!(e instanceof AnnualReportError)) throw e; // unknown/foreign draft id is non-fatal
       }
     }
-    // Filing a draft with open 312.33 sections is recorded on the response.
-    const filedWithOpenGaps = draft && Number(draft.gapCount) > 0 ? Number(draft.gapCount) : undefined;
-    res.status(201).json({ ...filed, form1571, ...(draft ? { draft } : {}), ...(filedWithOpenGaps ? { filedWithOpenGaps } : {}) });
+    // The open 312.33 sections filed (acknowledged above) are recorded on the response.
+    const openSectionsFiled = report.gaps.map((g) => g.sectionKey);
+    res.status(201).json({
+      ...filed,
+      form1571,
+      ...(draft ? { draft } : {}),
+      ...(openSectionsFiled.length > 0 ? { filedWithOpenGaps: openSectionsFiled.length, openSectionsFiled } : {}),
+    });
   } catch (err) {
     fail(res, err);
   }

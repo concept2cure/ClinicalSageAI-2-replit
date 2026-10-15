@@ -1,0 +1,15 @@
+ ✓ CMC data cannot be supplied in the request > refuses inline cmcSources on POST /runs, before anything is read or written 60ms
+ ✓ CMC data cannot be supplied in the request > refuses it on the regenerate route too — the same door one level down 7ms
+ ✓ CMC data cannot be supplied in the request > does not refuse an EMPTY array — it carries no Module 3 either way 8ms
+ ✓ CMC data cannot be supplied in the request > keeps the fixture door open in development 6ms
+ ✓ Mode A carries Module 3 only when the program’s export gate is open > asks the gate for THIS program, under THIS organization, and carries the sources when it opens 9ms
+ ✓ Mode A carries Module 3 only when the program’s export gate is open > carries NO Module 3 when the gate refuses, and never reads the sources 5ms
+ ✓ Mode A carries Module 3 only when the program’s export gate is open > says WHY it carried none, in the gate’s own words 5ms
+ ✓ Mode A carries Module 3 only when the program’s export gate is open > hands the refusal to the run, so m3.compose records WHY it skipped 5ms
+ ✓ Mode A carries Module 3 only when the program’s export gate is open > hands no refusal when the gate opened — the step has nothing to explain 8ms
+ ✓ Mode A carries Module 3 only when the program’s export gate is open > a gate that cannot be evaluated carries none and reads as unknown, never as an empty program 6ms
+ ✓ Mode A carries Module 3 only when the program’s export gate is open > does not ask the gate at all when no CMC program is named 4ms
+ ✓ the standalone QOS route is gone > POST /m2/qos is not routed — the QOS is composed from records, not from a request body 4ms
+ ✓ m3.refine’s model path is unreachable from a request > useAI cannot be set through the run route 4ms
+ Test Files  1 passed (1)
+      Tests  13 passed (13)

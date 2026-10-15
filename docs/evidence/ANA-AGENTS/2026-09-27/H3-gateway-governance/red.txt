@@ -1,0 +1,466 @@
+# Track GW (H3) — red records. ANSI stripped. See README.md "Proof".
+
+Every red here is a test failing for the reason it names. Tests that pass at HEAD or at the pre-review build are the controls, the parity table, the lockfile invariant, the source scan, and the re-scoped PQ-runner claim [7]; each is listed with ✓.
+
+
+## Part 0 — the review tests AS FIRST WRITTEN, against the pre-review build, before any review fix
+
+(six new or extended files; recorded before the fixes were written)
+
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > holds for the governed lockfile 2ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on two entries of one provider pinning one version 1ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on an id equal to another entry's pinned version under the same provider, in either order 1ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on a duplicate id 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > an entry whose id is its own pinned version is not an ambiguity 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > the cross-provider gpt-4o pair resolves to one entry per provider 0ms
+ × server/services/ai-governance/__tests__/approved-models-invariant.test.ts > the governed list cannot be changed at runtime > APPROVED_MODELS is frozen, and so is every entry and its PQ record 6ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > holds for server/, shared/ and scripts/ 788ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > fails on each way to do it 1ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > does not fire on a comparison or a read 0ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > AI_GATEWAY_DETERMINISTIC=true: high-risk drafting is refused in plain words, not answered with fixture text 15ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > DETERMINISTIC_MODE=true: high-risk drafting is refused in plain words, not answered with fixture text 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > switched on at runtime (setDeterministicMode), the same 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > with no provider configured at all (the CI boot smoke), high-risk drafting is still refused 1ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > control: production deterministic chat is still the fixture (the boot smoke runs on it) 1ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > control: outside production, deterministic drafting is the fixture, as before 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > its code is MODEL_NOT_PQ_QUALIFIED: not "not approved", which would be false of an approved model 9ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > strategy: each withheld row is recorded with its pinned version, PQ status and its own reason 5ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > explicit: a model withheld because it is not approved for high risk is recorded as that, not as a PQ fault 4ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > no capable model configured is its own ledger reason, distinguishable from the control withholding one 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > the PQ refusal is MODEL_NOT_QUALIFIED at 403, in the plain words — not a 503 outage 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > an unknown model says the platform does not have it, not that a real model "would have served it" 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > a model with no approved entry is MODEL_NOT_QUALIFIED at 403 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > the high-risk approval refusal no longer says "try again shortly": nothing changes until a model is approved 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > a rate-limit refusal carries its code and is answered 429 RATE_LIMITED, as the ledger records it 4ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [24] a call with no tenant is refused as a platform fault, not as the organization's policy > its reason code and words name the missing binding; no administrator is sent to fix a policy 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [24] a call with no tenant is refused as a platform fault, not as the organization's policy > its ledger row names tenant binding, and files no PII finding 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > 0: refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "undefined": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > null: refused at admission in production 7ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > -3: refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "1.5": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "org-uuid-1": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > with an ambient tenant, the call binds to it and is charged to it 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > control: a numeric string id is a binding 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [6] production is read one way across the gateway (NODE_ENV "Production") > a keyless deploy refuses instead of serving demo content 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [6] production is read one way across the gateway (NODE_ENV "Production") > placement is enforced: a tenant whose policy could not be read is refused a tenant payload 4ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > an ambient-bound served call is metered under the ambient tenant 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > control: an explicit organizationId is metered as before 2ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > control: an unbound call (outside production) is not metered to anyone 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > is refused, terminal, naming the provider; nothing is dispatched 2ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > control (known gap [8]): a known provider that is not configured still falls through to strategy 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [3] one tenant, one bucket, measured at the default limit (100 a minute per process) > an Auto turn at its 20-round ceiling has 80 calls left for its tools that minute; the 101st is refused 18ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [7] the PQ runner's own request shape (run-pq.ts: no organizationId, callerModule pq-runner) > runs on a PQ-pending model in a validation environment (NODE_ENV=staging) 2ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [7] the PQ runner's own request shape (run-pq.ts: no organizationId, callerModule pq-runner) > is refused under NODE_ENV=production, before the wire, for want of a tenant (a validation run is not a production run) 2ms
+ × server/services/__tests__/pq-refusal-consumers.test.ts > the drafting council > tells the author no performance-qualified model is available — not that none is approved "right now" 25ms
+ × server/services/__tests__/pq-refusal-consumers.test.ts > the Module 3 builder > records the fallback as model_not_pq_qualified, not model_not_approved 12ms
+ × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > in production it is refused in plain words; nothing is dispatched 29ms
+ × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > outside production it is document_drafting with no pin, served by an approved model 9ms
+ ✓ server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > control: with no framework it is a quick general completion on Sonnet, as before 3ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses a write produced by an approved but PQ-pending model; nothing is stored 23ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses every governed-write tool the same way 4ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > control: outside production the same confirmed write reaches its handler 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > in production it needs approvedForHighRisk AND a passed PQ 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > outside production approvedForHighRisk is enough, as before 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > the served-model check the gate calls reads it: false in production today, true outside 1ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > governedMatch withholds local-default instead of serving it 11ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > ANA_TIER_ECONOMY_MODEL=local-default pins no model; the gateway selects by strategy 1ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > a caller cannot pin it 1ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > the picker does not offer it 2ms
+ ✓ server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > controls > outside production every resolver still reaches it, as before 2ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > controls > in production, every other row resolves exactly as outside it 2ms
+
+Test Files  6 failed (6)
+Tests  42 failed | 21 passed (63)
+
+
+## Part A — final tests against HEAD source (git show HEAD:<path>; model-governance.ts absent at HEAD)
+
+  server/services/ai-gateway/gateway.ts: swapped, sha256 cd88d53ad9be0ece…
+  server/services/ai-gateway/policy.ts: swapped, sha256 49a43d99d3e6c7e4…
+  server/services/ai-gateway/gateway-error-map.ts: swapped, sha256 4dbc68e82970458c…
+  server/services/ai-gateway/model-governance.ts: absent (moved aside)
+  server/services/ai-governance/approved-models.ts: swapped, sha256 615c8137d651c01e…
+  server/services/ai-gateway/effort.ts: swapped, sha256 2fac0d717e1ba8d8…
+  server/services/ana/AnaDocumentDraftingService.ts: swapped, sha256 1819b90335cfffca…
+  server/services/multi-agent-council.ts: swapped, sha256 870ecfad8266e4f8…
+  server/services/cmc/module3-narrative-builder.ts: swapped, sha256 eab869ea6592f40f…
+  server/routes/ana-intelligence.ts: swapped, sha256 9288bf39621c6a37…
+  scripts/ci/check-pq-evaluation-callers.mjs: swapped, sha256 2b2efde028336078…
+  scripts/ops/ga-readiness-report.mjs: swapped, sha256 32f2e675ab2ca83a…
+  .env.example: swapped, sha256 586f5bf97ec478d8…
+
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > holds for the governed lockfile 2ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on two entries of one provider pinning one version 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on an id equal to another entry's pinned version under the same provider, in either order 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on a duplicate id 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > an entry whose id is its own pinned version is not an ambiguity 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > the cross-provider gpt-4o pair resolves to one entry per provider 0ms
+ × server/services/ai-governance/__tests__/approved-models-invariant.test.ts > the governed list cannot be changed at runtime > APPROVED_MODELS is frozen, and so is every entry and its PQ record 7ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > holds for server/, shared/ and scripts/ 774ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > fails on each way to do it 1ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > does not fire on a comparison or a read 0ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > AI_GATEWAY_DETERMINISTIC=true: high-risk drafting is refused in plain words, not answered with fixture text 14ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > DETERMINISTIC_MODE=true: high-risk drafting is refused in plain words, not answered with fixture text 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > switched on at runtime (setDeterministicMode), the same 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > with no provider configured at all (the CI boot smoke), high-risk drafting is still refused 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > the admission refusal runs before it too: an unbound call is refused, not answered with fixture text 6ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > control: production deterministic chat is still the fixture (the boot smoke runs on it) 0ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > control: outside production, deterministic drafting is the fixture, as before 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > its code is MODEL_NOT_PQ_QUALIFIED: not "not approved", which would be false of an approved model 7ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > strategy: each withheld row is recorded with its pinned version, PQ status and its own reason 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > explicit: a model withheld because it is not approved for high risk is recorded as that, not as a PQ fault 10ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > no capable model configured is its own ledger reason, distinguishable from the control withholding one 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > the PQ refusal is MODEL_NOT_QUALIFIED at 403, in the plain words — not a 503 outage 4ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > an unknown model says the platform does not have it, not that a real model "would have served it" 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > a model with no approved entry is MODEL_NOT_QUALIFIED at 403 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > the high-risk approval refusal no longer says "try again shortly": nothing changes until a model is approved 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > a rate-limit refusal carries its code and is answered 429 RATE_LIMITED, as the ledger records it 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [24] a call with no tenant is refused as a platform fault, not as the organization's policy > its reason code and words name the missing binding; no administrator is sent to fix a policy 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [24] a call with no tenant is refused as a platform fault, not as the organization's policy > its ledger row names tenant binding, and files no PII finding 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > 0: refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "undefined": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > null: refused at admission in production 8ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > -3: refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "1.5": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "org-uuid-1": refused at admission in production 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > with an ambient tenant, the call binds to it and is charged to it 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > control: a numeric string id is a binding 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [6] production is read one way across the gateway (NODE_ENV "Production") > a keyless deploy refuses instead of serving demo content 1ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [6] production is read one way across the gateway (NODE_ENV "Production") > placement is enforced: a tenant whose policy could not be read is refused a tenant payload 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > an ambient-bound served call is metered under the ambient tenant 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > control: an explicit organizationId is metered as before 1ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > control: an unbound call (outside production) is not metered to anyone 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > is refused, terminal, naming the provider; nothing is dispatched 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > control (known gap [8]): a known provider that is not configured still falls through to strategy 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [3] one tenant, one bucket, measured at the default limit (100 a minute per process) > an Auto turn at its 20-round ceiling has 80 calls left for its tools that minute; the 101st is refused 16ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [7] the PQ runner's own request shape (run-pq.ts: no organizationId, callerModule pq-runner) > runs on a PQ-pending model in a validation environment (NODE_ENV=staging) 2ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [7] the PQ runner's own request shape (run-pq.ts: no organizationId, callerModule pq-runner) > is refused under NODE_ENV=production, before the wire, for want of a tenant (a validation run is not a production run) 1ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > the golden table is the real one: every path, task and tier, and all 16 rows by id 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > outside production, every cell is served exactly as before 749ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > in production, every cell but drafting and the self-hosted lane is served exactly as before 444ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first 24ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over 4ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails 5ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted 6ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served 3ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why 10ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to 3ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before 2ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it 4ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production 8ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder 3ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production 3ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > strategy: refused in plain words, terminal, nothing dispatched 27ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > explicit: naming the flagship does not reach it 4ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > with no approved model configured at all, the refusal is the same plain statement 8ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > every declared risk tier: drafting is high-risk at all of them 3ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > no environment variable turns it off in production 3ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > the refusal is ledgered as a governance refusal, and the author reads the plain statement 6ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > outside production, drafting is served by the flagship as before 3ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, high-risk review runs on a PQ-pending approved model 4ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, drafting is served by a model whose entry records a passed PQ 3ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, the fallback ladder does not walk from a qualified model to a PQ-pending one 6ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — the drafting set, from the existing taxonomy > is exactly document_drafting, at every declared tier; review and analysis are not drafting 8ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is refused even for a public payload, and nothing is dispatched 20ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is not charged to the shared bucket: platform work after it still has the whole of it 16ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > leaves one ledger row saying it was refused at admission for want of a tenant 11ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: platform work in the explicit system scope is served in production 3ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: outside production an unbound call is served, as before 3ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate budget 3ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket 5ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit 4ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope 4ms
+ × server/services/__tests__/pq-refusal-consumers.test.ts > the drafting council > tells the author no performance-qualified model is available — not that none is approved "right now" 22ms
+ × server/services/__tests__/pq-refusal-consumers.test.ts > the Module 3 builder > records the fallback as model_not_pq_qualified, not model_not_approved 5ms
+ × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > in production it is refused in plain words; nothing is dispatched 20ms
+ × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > outside production it is document_drafting with no pin, served by an approved model 8ms
+ ✓ server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > control: with no framework it is a quick general completion on Sonnet, as before 3ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > governedMatch withholds local-default instead of serving it 7ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > ANA_TIER_ECONOMY_MODEL=local-default pins no model; the gateway selects by strategy 1ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > a caller cannot pin it 1ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > the picker does not offer it 3ms
+ ✓ server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > controls > outside production every resolver still reaches it, as before 2ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > controls > in production, every other row resolves exactly as outside it 2ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses a write produced by an approved but PQ-pending model; nothing is stored 15ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses every governed-write tool the same way 4ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > control: outside production the same confirmed write reaches its handler 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > in production it needs approvedForHighRisk AND a passed PQ 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > outside production approvedForHighRisk is enough, as before 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > the served-model check the gate calls reads it: false in production today, true outside 1ms
+ × tests/audit-ai-gateway-keyless-prod.test.ts > AI gateway fails closed on keyless production > throws in production when no provider is available, before any demo fallback 9ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /generate-blueprint > is drafted as document_drafting with no model pinned, for the caller's tenant 31ms
+ × server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /generate-blueprint > a refusal is answered as one, and creates no project 14ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /generate-blueprint > an empty draft is not a strategy: 503, no project 4ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /playbook/ai-tools/execute > is drafted as document_drafting with no model pinned, and records who drafted it 4ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /playbook/ai-tools/execute > a failed draft is recorded as failed and answered as an error, never "completed successfully" 14ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /playbook/ai-tools/execute > an empty draft is a failed one 3ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > a tenant restricted to self_hosted is served only on the self-hosted lane 24ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > with no permitted lane the request is refused as a tenant-policy decision and no SDK is called 5ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the vendor allow-list is honoured on every rung: Kimi is never reached when the tenant lists only Claude and OpenAI 5ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the fallback ladder never crosses into a substrate the tenant has not allowed 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request zeroDataRetention:false does not defeat the org zero-retention floor 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request residency that contradicts the tenant residency is refused, not silently honoured 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > binds the tenant from the ambient request scope when organizationId is omitted 2ms
+ × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > under enforcement, a call with no tenant binding at all is refused for a tenant payload 6ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > platform work in the explicit system scope is not refused (it carries no tenant) 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > under enforcement, a policy lookup failure refuses the tenant payload 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > outside enforcement, a lookup failure is recorded and the request still runs 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > an on-prem tenant with no self-hosted lane gets a placement refusal, not "No AI provider is configured" 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > refuses a disallowed substrate even when selection is bypassed 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > performance qualification resolves the tenant floor before it reaches a model 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — embeddings are held to the same floor > refuses to embed a self_hosted-only tenant on a shared embedding service 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > without the opt-in, a public payload stays on the tenant's allowed lane 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > with the opt-in, a public payload may reach a shared frontier API 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > the opt-in never opens the shared API to a tenant payload 7ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stage 4ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > route() refuses a disallowed lane when piiDetection is off 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > the last mile refuses a disallowed lane when piiDetection is off, even if selection is bypassed 1ms
+
+Test Files  12 failed | 1 passed (13)
+Tests  73 failed | 58 passed (131)
+
+node scripts/ci/check-pq-evaluation-callers.mjs --self-test  (exit 0)
+    ✓ control — the PQ runner calls it
+    ✓ control — a test calls it
+    ✓ control — a doc comment names it
+    ✓ a route handler calls it
+    ✓ a service calls it across a line break
+  ✓ self-test: 5 cases, every violation caught and the controls clean
+
+restored: server/services/ai-gateway/gateway.ts 3e92cd275099, server/services/ai-gateway/policy.ts 057a27cd2cfb, server/services/ai-gateway/gateway-error-map.ts 8cc63a5b7510, server/services/ai-gateway/model-governance.ts c2898c5edb1b, server/services/ai-governance/approved-models.ts 0da5c9704ea8, server/services/ai-gateway/effort.ts 468e6c52a4ee, server/services/ana/AnaDocumentDraftingService.ts ced44a386db2, server/services/multi-agent-council.ts 0004b7cecc34, server/services/cmc/module3-narrative-builder.ts 323fd223e885, server/routes/ana-intelligence.ts c465136147dd, scripts/ci/check-pq-evaluation-callers.mjs c0e4bd152088, scripts/ops/ga-readiness-report.mjs 0f53bd2688f3, .env.example e16bd9449491
+every restore verified by sha256
+A exit 0
+
+
+
+## Part B — final tests against the pre-review build source (scratchpad/gw/prereview/)
+
+  server/services/ai-gateway/gateway.ts: swapped, sha256 02e8a15a592a5946…
+  server/services/ai-gateway/policy.ts: swapped, sha256 7fc59e914095ca36…
+  server/services/ai-gateway/gateway-error-map.ts: swapped, sha256 6ac5b8cad0522461…
+  server/services/ai-gateway/model-governance.ts: swapped, sha256 ecf920923636da68…
+  server/services/ai-governance/approved-models.ts: swapped, sha256 fa0018efdced990b…
+  server/services/ai-gateway/effort.ts: swapped, sha256 2fac0d717e1ba8d8…
+  server/services/ana/AnaDocumentDraftingService.ts: swapped, sha256 1819b90335cfffca…
+  server/services/multi-agent-council.ts: swapped, sha256 870ecfad8266e4f8…
+  server/services/cmc/module3-narrative-builder.ts: swapped, sha256 eab869ea6592f40f…
+  server/routes/ana-intelligence.ts: swapped, sha256 9288bf39621c6a37…
+  scripts/ci/check-pq-evaluation-callers.mjs: swapped, sha256 2b2efde028336078…
+  scripts/ops/ga-readiness-report.mjs: swapped, sha256 0a6e43f2161e1215…
+  .env.example: swapped, sha256 586f5bf97ec478d8…
+
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > holds for the governed lockfile 2ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on two entries of one provider pinning one version 1ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on an id equal to another entry's pinned version under the same provider, in either order 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on a duplicate id 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > an entry whose id is its own pinned version is not an ambiguity 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > the cross-provider gpt-4o pair resolves to one entry per provider 0ms
+ × server/services/ai-governance/__tests__/approved-models-invariant.test.ts > the governed list cannot be changed at runtime > APPROVED_MODELS is frozen, and so is every entry and its PQ record 8ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > holds for server/, shared/ and scripts/ 757ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > fails on each way to do it 1ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > no code outside the tests writes governed approval data > does not fire on a comparison or a read 0ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > AI_GATEWAY_DETERMINISTIC=true: high-risk drafting is refused in plain words, not answered with fixture text 16ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > DETERMINISTIC_MODE=true: high-risk drafting is refused in plain words, not answered with fixture text 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > switched on at runtime (setDeterministicMode), the same 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > with no provider configured at all (the CI boot smoke), high-risk drafting is still refused 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > the admission refusal runs before it too: an unbound call is refused, not answered with fixture text 10ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > control: production deterministic chat is still the fixture (the boot smoke runs on it) 1ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [2]/[11] deterministic mode does not switch the §3 refusal off in production > control: outside production, deterministic drafting is the fixture, as before 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > its code is MODEL_NOT_PQ_QUALIFIED: not "not approved", which would be false of an approved model 6ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > strategy: each withheld row is recorded with its pinned version, PQ status and its own reason 5ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > explicit: a model withheld because it is not approved for high risk is recorded as that, not as a PQ fault 4ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [21]/[22] the PQ refusal has its own code, and its ledger row says why each model was withheld > no capable model configured is its own ledger reason, distinguishable from the control withholding one 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > the PQ refusal is MODEL_NOT_QUALIFIED at 403, in the plain words — not a 503 outage 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > an unknown model says the platform does not have it, not that a real model "would have served it" 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > a model with no approved entry is MODEL_NOT_QUALIFIED at 403 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > the high-risk approval refusal no longer says "try again shortly": nothing changes until a model is approved 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [5]/[23]/[25]/[26] a refusal is classified as what it is > a rate-limit refusal carries its code and is answered 429 RATE_LIMITED, as the ledger records it 7ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [24] a call with no tenant is refused as a platform fault, not as the organization's policy > its reason code and words name the missing binding; no administrator is sent to fix a policy 5ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [24] a call with no tenant is refused as a platform fault, not as the organization's policy > its ledger row names tenant binding, and files no PII finding 5ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "": refused at admission in production 3ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > 0: refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "undefined": refused at admission in production 8ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > null: refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > -3: refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "1.5": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > "org-uuid-1": refused at admission in production 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > with an ambient tenant, the call binds to it and is charged to it 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [13] a malformed organizationId is not a tenant binding > control: a numeric string id is a binding 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [6] production is read one way across the gateway (NODE_ENV "Production") > a keyless deploy refuses instead of serving demo content 2ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [6] production is read one way across the gateway (NODE_ENV "Production") > placement is enforced: a tenant whose policy could not be read is refused a tenant payload 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > an ambient-bound served call is metered under the ambient tenant 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > control: an explicit organizationId is metered as before 2ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [12] a call is metered to the tenant it is bound to > control: an unbound call (outside production) is not metered to anyone 1ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > is refused, terminal, naming the provider; nothing is dispatched 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [16] a request naming a provider the registry has no row for is refused, not substituted > control (known gap [8]): a known provider that is not configured still falls through to strategy 2ms
+ × server/services/ai-gateway/__tests__/governance-review.test.ts > [3] one tenant, one bucket, measured at the default limit (100 a minute per process) > an Auto turn at its 20-round ceiling has 80 calls left for its tools that minute; the 101st is refused 11ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [7] the PQ runner's own request shape (run-pq.ts: no organizationId, callerModule pq-runner) > runs on a PQ-pending model in a validation environment (NODE_ENV=staging) 2ms
+ ✓ server/services/ai-gateway/__tests__/governance-review.test.ts > [7] the PQ runner's own request shape (run-pq.ts: no organizationId, callerModule pq-runner) > is refused under NODE_ENV=production, before the wire, for want of a tenant (a validation run is not a production run) 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first 13ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over 10ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production 17ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before 11ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production 3ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > strategy: refused in plain words, terminal, nothing dispatched 21ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > explicit: naming the flagship does not reach it 3ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > with no approved model configured at all, the refusal is the same plain statement 2ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > every declared risk tier: drafting is high-risk at all of them 8ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > no environment variable turns it off in production 2ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > the refusal is ledgered as a governance refusal, and the author reads the plain statement 6ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > outside production, drafting is served by the flagship as before 11ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, high-risk review runs on a PQ-pending approved model 5ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, drafting is served by a model whose entry records a passed PQ 4ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, the fallback ladder does not walk from a qualified model to a PQ-pending one 18ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — the drafting set, from the existing taxonomy > is exactly document_drafting, at every declared tier; review and analysis are not drafting 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > a tenant restricted to self_hosted is served only on the self-hosted lane 24ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > with no permitted lane the request is refused as a tenant-policy decision and no SDK is called 6ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the vendor allow-list is honoured on every rung: Kimi is never reached when the tenant lists only Claude and OpenAI 5ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the fallback ladder never crosses into a substrate the tenant has not allowed 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request zeroDataRetention:false does not defeat the org zero-retention floor 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request residency that contradicts the tenant residency is refused, not silently honoured 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > binds the tenant from the ambient request scope when organizationId is omitted 2ms
+ × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > under enforcement, a call with no tenant binding at all is refused for a tenant payload 7ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > platform work in the explicit system scope is not refused (it carries no tenant) 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > under enforcement, a policy lookup failure refuses the tenant payload 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > outside enforcement, a lookup failure is recorded and the request still runs 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > an on-prem tenant with no self-hosted lane gets a placement refusal, not "No AI provider is configured" 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > refuses a disallowed substrate even when selection is bypassed 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > performance qualification resolves the tenant floor before it reaches a model 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — embeddings are held to the same floor > refuses to embed a self_hosted-only tenant on a shared embedding service 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > without the opt-in, a public payload stays on the tenant's allowed lane 7ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > with the opt-in, a public payload may reach a shared frontier API 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > the opt-in never opens the shared API to a tenant payload 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stage 4ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > route() refuses a disallowed lane when piiDetection is off 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > the last mile refuses a disallowed lane when piiDetection is off, even if selection is bypassed 1ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /generate-blueprint > is drafted as document_drafting with no model pinned, for the caller's tenant 43ms
+ × server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /generate-blueprint > a refusal is answered as one, and creates no project 21ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /generate-blueprint > an empty draft is not a strategy: 503, no project 6ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /playbook/ai-tools/execute > is drafted as document_drafting with no model pinned, and records who drafted it 6ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /playbook/ai-tools/execute > a failed draft is recorded as failed and answered as an error, never "completed successfully" 12ms
+ ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts > POST /playbook/ai-tools/execute > an empty draft is a failed one 5ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is refused even for a public payload, and nothing is dispatched 18ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is not charged to the shared bucket: platform work after it still has the whole of it 9ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > leaves one ledger row saying it was refused at admission for want of a tenant 6ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: platform work in the explicit system scope is served in production 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: outside production an unbound call is served, as before 3ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate budget 3ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket 11ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit 5ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope 3ms
+ × server/services/__tests__/pq-refusal-consumers.test.ts > the drafting council > tells the author no performance-qualified model is available — not that none is approved "right now" 29ms
+ × server/services/__tests__/pq-refusal-consumers.test.ts > the Module 3 builder > records the fallback as model_not_pq_qualified, not model_not_approved 9ms
+ × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > in production it is refused in plain words; nothing is dispatched 24ms
+ × server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > outside production it is document_drafting with no pin, served by an approved model 13ms
+ ✓ server/services/ana/__tests__/quick-complete-governance.test.ts > quickComplete with a framework is regulatory drafting > control: with no framework it is a quick general completion on Sonnet, as before 3ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > governedMatch withholds local-default instead of serving it 8ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > ANA_TIER_ECONOMY_MODEL=local-default pins no model; the gateway selects by strategy 1ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > a caller cannot pin it 1ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > in production > the picker does not offer it 2ms
+ ✓ server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > controls > outside production every resolver still reaches it, as before 2ms
+ × server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts > controls > in production, every other row resolves exactly as outside it 2ms
+ × tests/audit-ai-gateway-keyless-prod.test.ts > AI gateway fails closed on keyless production > throws in production when no provider is available, before any demo fallback 8ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses a write produced by an approved but PQ-pending model; nothing is stored 17ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses every governed-write tool the same way 5ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > control: outside production the same confirmed write reaches its handler 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > in production it needs approvedForHighRisk AND a passed PQ 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > outside production approvedForHighRisk is enough, as before 1ms
+ × server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > the served-model check the gate calls reads it: false in production today, true outside 2ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > the golden table is the real one: every path, task and tier, and all 16 rows by id 3ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > outside production, every cell is served exactly as before 749ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > in production, every cell but drafting and the self-hosted lane is served exactly as before 551ms
+
+Test Files  11 failed | 2 passed (13)
+Tests  50 failed | 81 passed (131)
+
+node scripts/ci/check-pq-evaluation-callers.mjs --self-test  (exit 0)
+    ✓ control — the PQ runner calls it
+    ✓ control — a test calls it
+    ✓ control — a doc comment names it
+    ✓ a route handler calls it
+    ✓ a service calls it across a line break
+  ✓ self-test: 5 cases, every violation caught and the controls clean
+
+restored: server/services/ai-gateway/gateway.ts 3e92cd275099, server/services/ai-gateway/policy.ts 057a27cd2cfb, server/services/ai-gateway/gateway-error-map.ts 8cc63a5b7510, server/services/ai-gateway/model-governance.ts c2898c5edb1b, server/services/ai-governance/approved-models.ts 0da5c9704ea8, server/services/ai-gateway/effort.ts 468e6c52a4ee, server/services/ana/AnaDocumentDraftingService.ts ced44a386db2, server/services/multi-agent-council.ts 0004b7cecc34, server/services/cmc/module3-narrative-builder.ts 323fd223e885, server/routes/ana-intelligence.ts c465136147dd, scripts/ci/check-pq-evaluation-callers.mjs c0e4bd152088, scripts/ops/ga-readiness-report.mjs 0f53bd2688f3, .env.example e16bd9449491
+every restore verified by sha256
+B exit 0
+0
+
+
+## Part C — review [14]: the PQ callers gate self-test with its three new cases, against the pre-review regex
+
+The gate script carries its own self-test, so swapping the whole script back (Parts A and B) also removes the new cases. The red is the new cases against the old matcher, recorded twice: once before the fix (the cases were added first), and as mutation R28.
+
+R28 [14] PQ callers gate back to `.evaluateModel(` only: RED (self-test exit 1)  [scripts/ci/check-pq-evaluation-callers.mjs]
+    ✗ a service reaches it by bracket access  — NOT CAUGHT
+    ✗ a service destructures it  — NOT CAUGHT
+    ✗ a service binds it  — NOT CAUGHT
+    ✗ self-test: 3 case(s) wrong
+
+## Part D — the build's own red record (before the review), for the track as a whole
+
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > strategy: refused in plain words, terminal, nothing dispatched 90ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > explicit: naming the flagship does not reach it 5ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > with no approved model configured at all, the refusal is the same plain statement 13ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > every declared risk tier: drafting is high-risk at all of them 6ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > no environment variable turns it off in production 3ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — production refuses high-risk drafting on a model without a passed PQ > the refusal is ledgered as a governance refusal, and the author reads the plain statement 6ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > outside production, drafting is served by the flagship as before 3ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, high-risk review runs on a PQ-pending approved model 5ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, drafting is served by a model whose entry records a passed PQ 4ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > in production, the fallback ladder does not walk from a qualified model to a PQ-pending one 25ms
+ ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — what is still served > the PQ runner still executes: evaluateModel is not a selection point, even in production 2ms
+ × server/services/ai-gateway/__tests__/pq-production-gate.test.ts > §3 — the drafting set, from the existing taxonomy > is exactly document_drafting, at every declared tier; review and analysis are not drafting 5ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > the golden table is the real one: every path, task and tier, and all 16 rows by id 8ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first 20ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over 5ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails 5ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted 7ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served 5ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why 18ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to 3ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before 3ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it 7ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production 3ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder 8ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder 8ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production 10ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > outside production, every cell is served exactly as before 1221ms
+ ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts > selection parity over the real registry > in production, every cell but drafting and the self-hosted lane is served exactly as before 855ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > holds for the governed lockfile 2ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on two entries of one provider pinning one version 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on an id equal to another entry's pinned version under the same provider, in either order 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > fails on a duplicate id 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > an entry whose id is its own pinned version is not an ambiguity 0ms
+ ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts > approved-models lockfile invariant > the cross-provider gpt-4o pair resolves to one entry per provider 0ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is refused even for a public payload, and nothing is dispatched 20ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is not charged to the shared bucket: platform work after it still has the whole of it 14ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > leaves one ledger row saying it was refused at admission for want of a tenant 5ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: platform work in the explicit system scope is served in production 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: outside production an unbound call is served, as before 4ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate budget 3ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket 6ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit 4ms
+ × server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope 4ms
+ Test Files  3 failed | 2 passed (5)
+      Tests  27 failed | 18 passed (45)

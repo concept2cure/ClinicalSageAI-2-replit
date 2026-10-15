@@ -28,31 +28,45 @@ vi.mock('../../../services/audit/chain.js', () => ({
   hashPayload: () => 'payload-hash-test',
   computeAuditChainSealed: async () => ({ sha256Chain: 'chain-test', hmacSeal: 'seal-test' }),
 }));
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
 
 import projectsRouter from '../projects';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
 
 const ID = 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05';
 const ORG = 7;
 const LEAD = 3;
 const OTHER = 99;
 
+/** The caller is a current member holding `role`; the route's own role checks still decide. */
 function appAs(userId: number, role: string) {
+  seatMember(ORG, userId, role);
   const app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
     const r = req as unknown as Record<string, unknown>;
     r.organizationId = ORG; r.userId = userId; r.userRole = role;
+    r.dbClient = { query: (...a: unknown[]) => query(...a) }; // the request's own connection
     next();
   });
   app.use('/api/c2c/projects', projectsRouter);
   return app;
 }
 
-/** BEGIN, then the locking pre-read returning the program's current state. */
+/**
+ * The admission gate's lead read (a write needs canMutateProgram before the
+ * route runs), BEGIN, the locking pre-read returning the program's current
+ * state, then the in-transaction re-admission's FOR SHARE lead read.
+ */
 function programState(status: string, deletedAt: string | null = null, lead: number | null = LEAD) {
   query
+    .mockResolvedValueOnce({ rows: [{ lead_user_id: lead }] })                         // gate: lead
     .mockResolvedValueOnce({ rows: [] })                                              // BEGIN
-    .mockResolvedValueOnce({ rows: [{ lead_user_id: lead, status, deleted_at: deletedAt }] });
+    .mockResolvedValueOnce({ rows: [{ lead_user_id: lead, status, deleted_at: deletedAt }] })
+    .mockResolvedValueOnce({ rows: [{ lead_user_id: lead }] });                       // FOR SHARE re-read
 }
 
 const sqlCalls = () => query.mock.calls.map((c) => String(c[0]));
@@ -62,6 +76,8 @@ beforeEach(() => {
   release.mockReset();
   query.mockResolvedValue({ rows: [] });
   delete process.env.PROGRAM_AUTHZ_MODE;
+  clearSeats();
+  seatProgram(ORG, ID);
 });
 
 describe('POST /:id/archive', () => {
@@ -98,10 +114,13 @@ describe('POST /:id/archive', () => {
     programState('active');
     const res = await request(appAs(OTHER, 'member')).post(`/api/c2c/projects/${ID}/archive`);
     expect(res.status).toBe(403);
+    expect(res.body.error).toBe('PROJECT_WRITE_ACCESS_DENIED');
     const sql = sqlCalls();
     expect(sql.some((s) => s.includes("status = 'archived'"))).toBe(false);
     expect(sql.some((s) => s.includes('INSERT INTO audit_logs'))).toBe(false);
-    expect(sql).toContain('ROLLBACK');
+    // Since 14362ef00 the route admission gate refuses before the close-out
+    // opens a transaction at all, so there is no BEGIN to roll back.
+    expect(sql).not.toContain('BEGIN');
   });
 
   it('allows an org manager who does not lead the program', async () => {
@@ -124,9 +143,10 @@ describe('POST /:id/archive', () => {
   });
 
   it('404s a program outside the caller org, without revealing it exists', async () => {
-    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] }); // BEGIN, empty read
+    clearSeats(); // the program is not in ORG, so the current-access gate answers 404 first
     const res = await request(appAs(LEAD, 'member')).post(`/api/c2c/projects/${ID}/archive`);
     expect(res.status).toBe(404);
+    expect(sqlCalls().some((q) => q.includes('BEGIN'))).toBe(false);
   });
 });
 

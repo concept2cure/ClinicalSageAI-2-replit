@@ -1,0 +1,77 @@
+=== 1. the original defect: an SOP register falling back to example rows
+file: client/src/concept2cure/quality/SopRegister.tsx (sha256 before: 8f0f4891c685038a)
+injected line:   const docs = reg.docs ?? FIXTURE_DOCS;
+--- npm run --silent ci:fixture-fallback (the command .husky/pre-push runs)
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 1
+  baselined (known, unfixed) : 0
+
+❌ 1 new ungated fixture fallback(s):
+
+  client/src/concept2cure/quality/SopRegister.tsx:127  ?? FIXTURE_DOCS
+
+  This puts example content where a tenant's own data belongs — on exactly
+  the occasions they cannot detect it (an empty tenant, an expired token, a
+  500, a fetch that has not started), or behind a sample mode.
+
+  There is no sample mode and no example dataset to fall back to: render the
+  read's own state — DataGate's loading / error / idle / empty, or an
+  EmptyState / ErrorState. A test that needs rows serves live-shaped rows
+  through its own mocked read.
+exit code: 1
+restored: sha256 after: 8f0f4891c685038a (byte-identical)
+
+=== 2. a fixture routed through the removed sample-mode hook
+file: client/src/concept2cure/mdx/surfaces/AnalyticsSurface.tsx (sha256 before: 963582478d8b6339)
+injected line:   const kpis = useSampleRows(live.kpis, ANL_KPIS);
+--- npm run --silent ci:fixture-fallback (the command .husky/pre-push runs)
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 1
+  baselined (known, unfixed) : 0
+
+❌ 1 new ungated fixture fallback(s):
+
+  client/src/concept2cure/mdx/surfaces/AnalyticsSurface.tsx:40  sample-mode useSampleRows
+
+  This puts example content where a tenant's own data belongs — on exactly
+  the occasions they cannot detect it (an empty tenant, an expired token, a
+  500, a fetch that has not started), or behind a sample mode.
+
+  There is no sample mode and no example dataset to fall back to: render the
+  read's own state — DataGate's loading / error / idle / empty, or an
+  EmptyState / ErrorState. A test that needs rows serves live-shaped rows
+  through its own mocked read.
+exit code: 1
+restored: sha256 after: 963582478d8b6339 (byte-identical)
+
+=== 3. a DataGate handed sample={…} again
+file: client/src/concept2cure/mdx/surfaces/UdiSurface.tsx (sha256 before: 1f58fa0e9cc25c1c)
+injected line:         sample={UDI_DEVICES}
+        label="
+--- npm run --silent ci:fixture-fallback (the command .husky/pre-push runs)
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 1
+  baselined (known, unfixed) : 0
+
+❌ 1 new ungated fixture fallback(s):
+
+  client/src/concept2cure/mdx/surfaces/UdiSurface.tsx:212  sample-mode sample={…}
+
+  This puts example content where a tenant's own data belongs — on exactly
+  the occasions they cannot detect it (an empty tenant, an expired token, a
+  500, a fetch that has not started), or behind a sample mode.
+
+  There is no sample mode and no example dataset to fall back to: render the
+  read's own state — DataGate's loading / error / idle / empty, or an
+  EmptyState / ErrorState. A test that needs rows serves live-shaped rows
+  through its own mocked read.
+exit code: 1
+restored: sha256 after: 1f58fa0e9cc25c1c (byte-identical)
+
+=== 4. control: the tree as committed
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+exit code: 0

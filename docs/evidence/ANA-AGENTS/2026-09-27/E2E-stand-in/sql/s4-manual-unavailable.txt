@@ -1,0 +1,67 @@
+# s4-manual-unavailable — rows in postgresql://127.0.0.1:5432/ana_e2e_2
+# runs: (none: no run_started on the stream)
+# threads: ana-ri_1790620440944_wmodbm8id
+
+## ana_runs
+(no run_started frame: the turn opened no run row)
+ runs_created_during_the_turn 
+------------------------------
+                            0
+(1 row)
+
+
+## chat_messages (the saved turn; metadata fields S1/S4 write)
+ id |   role    |                 content                 |  stopped_reason  | rounds | run_policy |   pending_steps   
+----+-----------+-----------------------------------------+------------------+--------+------------+-------------------
+  7 | user      | Check two readiness sources for BX-256. |                  |        |            | 
+  8 | assistant | Source 1 of 2.Source 2 of 2.            | hold_unavailable | 1      | manual     | ["Global search"]
+(2 rows)
+
+
+## chat_messages.metadata policyHolds / humanControls / warnings (assistant rows)
+ id |              jsonb_pretty               
+----+-----------------------------------------
+  8 | {                                      +
+    |     "stoppedReason": "hold_unavailable"+
+    | }
+(1 row)
+
+
+## ana_turn_records 8485c2bd-a642-46b7-8d43-508cf160ce0d (row columns, then the record's own fields)
+ run_id | outcome  |  schema_version   | hash_ok 
+--------+----------+-------------------+---------
+        | answered | ana-turn-record/1 | t
+(1 row)
+
+{
+ "model": {
+  "effort": "balanced",
+  "model": "claude-opus-5-5",
+  "calls": 2
+ },
+ "turn": {
+  "runId": null,
+  "outcome": "answered",
+  "surface": "conversation-thread"
+ },
+ "warnings": [
+  "Manual was asked for, but run control was not available for this turn, so AnA stopped after 1 round where she would have asked the person. Steps not run: Global search. Run policy: Manual."
+ ],
+ "controls": [],
+ "steps": [
+  {
+   "round": 1,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "success",
+   "error": null
+  },
+  {
+   "round": 2,
+   "tool": "global_search",
+   "label": "Global search",
+   "status": "not_run",
+   "error": "Manual could not hold this turn, so AnA stopped before this step; it was not run."
+  }
+ ]
+}

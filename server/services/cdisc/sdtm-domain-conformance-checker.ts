@@ -12,6 +12,15 @@
  *   - CM (Concomitant/Prior Medications, SDTM-IG v3.4 §6.1) — one record per medication.
  *   - DS (Disposition, SDTM-IG v3.4 §6.2) — one record per disposition event.
  *   - EX (Exposure, SDTM-IG v3.4 §6.1) — one record per protocol-specified study treatment.
+ *   - TS (Trial Summary, SDTM-IG v3.4 trial design model) — one record per parameter
+ *     value. FDA's Technical Rejection Criteria for Study Data (1734) require a
+ *     ts.xpt for every study, so a package cannot be checked without it. Both
+ *     the full SDTM-IG form and FDA's four-variable "simplified ts.xpt"
+ *     (STUDYID, TSPARMCD, TSVAL, TSVALNF) are accepted; see the spec below.
+ *
+ * Every other SDTM-IG domain is known (SDTM_KNOWN_DOMAINS) but has no
+ * reference spec here. Such a domain is reported NOT_CONFORMANCE_CHECKED: it is
+ * recognised, never called conformant, and never `ready`.
  *
  * It checks what an FDA/PMDA reviewer (and Pinnacle 21 / the FDA Study Data
  * Technical Conformance Guide) would flag at the structural level:
@@ -20,13 +29,16 @@
  *   - TYPE_MISMATCH       — a variable's Char/Num type disagrees with the IG (error).
  *   - CODELIST_VIOLATION  — a supplied value is outside the variable's controlled
  *                           terminology (CDISC CT) (error).
- *   - UNKNOWN_DOMAIN      — the domain is not a recognized spec (error; not ready).
+ *   - UNKNOWN_DOMAIN      — the domain is not an SDTM-IG domain at all (error; not ready).
+ *   - NOT_CONFORMANCE_CHECKED — a known SDTM-IG domain with no reference spec
+ *                           here (warning; not ready, because nothing was checked).
  *   - EXTRA_VARIABLE      — a variable not in the reference spec (warning,
  *                           informational — sponsors legitimately add Perm
  *                           variables and SUPP-- linkage).
  *
- * The verdict is honest-by-construction: `ready` is true only when there are no
- * error-severity findings. Pure / deterministic — no DB, no I/O; findings are
+ * The verdict is honest-by-construction: `ready` is true only when the domain
+ * was conformance-checked against a spec and there are no error-severity
+ * findings. Pure / deterministic — no DB, no I/O; findings are
  * sorted by variable name then severity for stable output.
  *
  * @module server/services/cdisc/sdtm-domain-conformance-checker
@@ -51,6 +63,13 @@ export interface SdtmVariableSpec {
   codelist?: string;
   /** Allowed (case-insensitive) controlled-terminology values, when `codelist` is set. */
   allowedValues?: readonly string[];
+  /**
+   * False when a Req variable's absence is not raised as MISSING_REQUIRED,
+   * because a form the regulator accepts omits it (TS: FDA's simplified
+   * ts.xpt). Defaults to enforced. A type or codelist error is still raised
+   * when the variable is present.
+   */
+  presenceEnforced?: false;
 }
 
 /** A reference spec for one SDTM domain. */
@@ -61,10 +80,50 @@ export interface SdtmDomainSpec {
   label: string;
   /** The reference variables for the domain. */
   variables: readonly SdtmVariableSpec[];
+  /** Where the spec's content comes from, when it is not plain SDTM-IG v3.4 text. */
+  note?: string;
 }
 
 /**
- * SDTM-IG v3.4 reference specifications for DM, AE, LB, VS, CM, DS and EX.
+ * Every SDTM-IG domain code this checker knows, whether or not it has a
+ * reference spec in SDTM_DOMAIN_SPECS. The one list of known SDTM domains:
+ * a domain here without a spec is reported NOT_CONFORMANCE_CHECKED, and a code
+ * outside it UNKNOWN_DOMAIN.
+ *
+ * Basis: recall of the SDTM-IG v3.4 domain models (special-purpose,
+ * interventions, events, findings, findings-about, trial design and
+ * relationship datasets), plus the domains SDTM-IG v3.4 cross-references from
+ * the pharmacogenomics and medical-device implementation guides. Not checked
+ * against CDISC text on 2026-10-05; a code missing here is reported
+ * UNKNOWN_DOMAIN, which is never ready, so an omission fails closed.
+ */
+export const SDTM_KNOWN_DOMAINS: readonly string[] = [
+  // Special-purpose
+  'CO', 'DM', 'SE', 'SM', 'SV',
+  // Interventions
+  'AG', 'CM', 'EC', 'EX', 'ML', 'PR', 'SU',
+  // Events
+  'AE', 'BE', 'CE', 'DS', 'DV', 'HO', 'MH',
+  // Findings and findings-about
+  'BS', 'CP', 'CV', 'DA', 'DD', 'EG', 'FA', 'FT', 'GF', 'IE', 'IS', 'LB', 'MB', 'MI',
+  'MK', 'MS', 'NV', 'OE', 'PC', 'PE', 'PP', 'QS', 'RE', 'RP', 'RS', 'SC', 'SR', 'SS',
+  'TR', 'TU', 'UR', 'VS', 'OI',
+  // Trial design
+  'TA', 'TD', 'TE', 'TI', 'TM', 'TS', 'TV',
+  // Relationship datasets
+  'RELREC', 'SUPPQUAL',
+];
+
+const KNOWN_DOMAIN_SET = new Set(SDTM_KNOWN_DOMAINS);
+
+/** Whether `code` is a known SDTM-IG domain; SUPP-- (e.g. SUPPAE) counts as SUPPQUAL. */
+export function isKnownSdtmDomain(code: string): boolean {
+  const c = (code ?? '').trim().toUpperCase();
+  return KNOWN_DOMAIN_SET.has(c) || (/^SUPP[A-Z]{2}$/.test(c) && KNOWN_DOMAIN_SET.has(c.slice(4)));
+}
+
+/**
+ * SDTM-IG v3.4 reference specifications for DM, AE, LB, VS, CM, DS, EX and TS.
  *
  * Variable selection, Core designations, types and codelists follow CDISC
  * SDTM-IG v3.4 (final, 2021) and the corresponding CDISC Controlled
@@ -238,6 +297,31 @@ export const SDTM_DOMAIN_SPECS: Readonly<Record<string, SdtmDomainSpec>> = {
       { name: 'EXENDTC', dataType: 'Char', core: 'Exp', label: 'End Date/Time of Treatment (ISO 8601)' },
     ],
   },
+  TS: {
+    domain: 'TS',
+    label: 'Trial Summary',
+    note:
+      "Accepts SDTM-IG's full TS and FDA's simplified ts.xpt (STUDYID, TSPARMCD, TSVAL, TSVALNF), "
+      + 'which FDA accepts for studies that started before its study-data requirements applied. '
+      + 'Only STUDYID and TSPARMCD, present in both forms, are enforced. DOMAIN, TSSEQ and TSPARM '
+      + 'are Req in the full form by recall of SDTM-IG v3.4 and are not enforced, because the '
+      + 'simplified form omits them; the Core designations below are recall, not checked against '
+      + 'CDISC text. The study start date (TSPARMCD SSTDTC) is a package requirement '
+      + '(TRC_1734_SSTDTC in cdisc-package-readiness), not a variable.',
+    variables: [
+      { name: 'STUDYID', dataType: 'Char', core: 'Req', label: 'Study Identifier' },
+      { name: 'DOMAIN', dataType: 'Char', core: 'Req', label: 'Domain Abbreviation', presenceEnforced: false },
+      { name: 'TSSEQ', dataType: 'Num', core: 'Req', label: 'Sequence Number', presenceEnforced: false },
+      { name: 'TSGRPID', dataType: 'Char', core: 'Perm', label: 'Group ID' },
+      { name: 'TSPARMCD', dataType: 'Char', core: 'Req', label: 'Trial Summary Parameter Short Name' },
+      { name: 'TSPARM', dataType: 'Char', core: 'Req', label: 'Trial Summary Parameter', presenceEnforced: false },
+      { name: 'TSVAL', dataType: 'Char', core: 'Exp', label: 'Parameter Value' },
+      { name: 'TSVALNF', dataType: 'Char', core: 'Perm', label: 'Parameter Null Flavor' },
+      { name: 'TSVALCD', dataType: 'Char', core: 'Exp', label: 'Parameter Value Code' },
+      { name: 'TSVCDREF', dataType: 'Char', core: 'Exp', label: 'Name of the Reference Terminology' },
+      { name: 'TSVCDVER', dataType: 'Char', core: 'Exp', label: 'Version of the Reference Terminology' },
+    ],
+  },
 } as const;
 
 export type SdtmConformanceSeverity = 'error' | 'warning';
@@ -246,7 +330,7 @@ export interface SdtmFinding {
   /** The variable the finding concerns, or '*' for a domain-level finding. */
   variable: string;
   severity: SdtmConformanceSeverity;
-  /** MISSING_REQUIRED / TYPE_MISMATCH / CODELIST_VIOLATION / UNKNOWN_DOMAIN / EXTRA_VARIABLE. */
+  /** MISSING_REQUIRED / TYPE_MISMATCH / CODELIST_VIOLATION / UNKNOWN_DOMAIN / NOT_CONFORMANCE_CHECKED / EXTRA_VARIABLE. */
   code: string;
   message: string;
 }
@@ -272,8 +356,10 @@ export interface SdtmConformanceResult {
   ready: boolean;
   /** Echoed (normalized, uppercased) domain code. */
   domain: string;
-  /** Whether the domain matched a known SDTM-IG spec. */
+  /** Whether the domain is a known SDTM-IG domain (SDTM_KNOWN_DOMAINS). */
   recognized: boolean;
+  /** Whether the domain had a reference spec and was checked against it. */
+  conformanceChecked: boolean;
   /** Required (Core=Req) variables absent from the dataset. */
   missingRequired: string[];
   findings: SdtmFinding[];
@@ -285,6 +371,40 @@ function severityRank(s: SdtmConformanceSeverity): number {
 }
 
 /**
+ * The result for a domain with no reference spec: NOT_CONFORMANCE_CHECKED for a
+ * known SDTM-IG domain (recognised, nothing checked, never ready), and
+ * UNKNOWN_DOMAIN for anything else.
+ */
+function noSpecResult(domain: string): SdtmConformanceResult {
+  const specs = Object.keys(SDTM_DOMAIN_SPECS).join(', ');
+  const base = { ready: false, domain, conformanceChecked: false, missingRequired: [] as string[] };
+  if (isKnownSdtmDomain(domain)) {
+    return {
+      ...base,
+      recognized: true,
+      findings: [{
+        variable: '*',
+        severity: 'warning',
+        code: 'NOT_CONFORMANCE_CHECKED',
+        message: `Domain ${domain} is an SDTM-IG domain, but this checker has no reference spec for it (specs: ${specs}); its variables were not conformance-checked.`,
+      }],
+      counts: { errors: 0, warnings: 1 },
+    };
+  }
+  return {
+    ...base,
+    recognized: false,
+    findings: [{
+      variable: '*',
+      severity: 'error',
+      code: 'UNKNOWN_DOMAIN',
+      message: `Domain "${domain || '(empty)'}" is not a recognized SDTM-IG v3.4 domain (specs: ${specs}).`,
+    }],
+    counts: { errors: 1, warnings: 0 },
+  };
+}
+
+/**
  * Check a submitted SDTM domain dataset's variable metadata against the
  * SDTM-IG v3.4 reference spec. Pure / deterministic; findings ordered by
  * variable name then severity.
@@ -292,25 +412,9 @@ function severityRank(s: SdtmConformanceSeverity): number {
 export function checkSdtmDomainConformance(input: SdtmConformanceInput): SdtmConformanceResult {
   const domain = (input.domain ?? '').trim().toUpperCase();
   const spec = SDTM_DOMAIN_SPECS[domain];
+  // No reference spec: NOT_CONFORMANCE_CHECKED (known domain) or UNKNOWN_DOMAIN.
+  if (!spec) return noSpecResult(domain);
   const findings: SdtmFinding[] = [];
-
-  // UNKNOWN_DOMAIN — no reference spec; cannot conform.
-  if (!spec) {
-    findings.push({
-      variable: '*',
-      severity: 'error',
-      code: 'UNKNOWN_DOMAIN',
-      message: `Domain "${domain || '(empty)'}" is not a recognized SDTM-IG v3.4 spec (supported: ${Object.keys(SDTM_DOMAIN_SPECS).join(', ')}).`,
-    });
-    return {
-      ready: false,
-      domain,
-      recognized: false,
-      missingRequired: [],
-      findings,
-      counts: { errors: 1, warnings: 0 },
-    };
-  }
 
   const suppliedByName = new Map<string, SdtmVariableInput>();
   for (const v of input.variables ?? []) {
@@ -326,7 +430,7 @@ export function checkSdtmDomainConformance(input: SdtmConformanceInput): SdtmCon
     const supplied = suppliedByName.get(sv.name);
 
     if (!supplied) {
-      if (sv.core === 'Req') {
+      if (sv.core === 'Req' && sv.presenceEnforced !== false) {
         missingRequired.push(sv.name);
         findings.push({
           variable: sv.name,
@@ -389,6 +493,7 @@ export function checkSdtmDomainConformance(input: SdtmConformanceInput): SdtmCon
     ready: errors === 0,
     domain,
     recognized: true,
+    conformanceChecked: true,
     missingRequired,
     findings,
     counts: { errors, warnings },

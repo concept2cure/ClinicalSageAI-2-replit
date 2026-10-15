@@ -1,0 +1,135 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-30T23:40:42.690Z","pid":7447,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-30T23:40:42.691Z","pid":7447,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-30T23:40:42.691Z","pid":7447,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-09-30T23:40:43.032Z","pid":7447,"hostname":"vm","context":{"resource":"http://localhost:41903/mcp","issuer":"http://localhost:41903/","resourceMetadataUrl":"http://localhost:41903/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-30T23:40:43.298Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 3ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 150ms
+{"level":30,"time":"2026-09-30T23:40:43.799Z","pid":7447,"hostname":"vm","context":{"userId":47,"tenantId":11,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 361ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 15ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 8ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 12ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code 138ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code 94ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 22ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 46ms
+{"level":30,"time":"2026-09-30T23:40:46.744Z","pid":7465,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-30T23:40:46.745Z","pid":7465,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-30T23:40:46.745Z","pid":7465,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-09-30T23:40:46.830Z","pid":7465,"hostname":"vm","context":{"resource":"http://localhost:38909/mcp","issuer":"http://localhost:38909/","resourceMetadataUrl":"http://localhost:38909/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful { timestamp: '2026-09-30T23:40:46.936Z', poolSize: 1 }
+
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful { timestamp: '2026-09-30T23:40:46.938Z', poolSize: 2 }
+
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful
+
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 43ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client 122ms
+{"level":30,"time":"2026-09-30T23:40:47.152Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-30T23:40:47.183Z","pid":7465,"hostname":"vm","context":{"userId":53,"tenantId":13,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 156ms
+{"level":30,"time":"2026-09-30T23:40:47.315Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_list_vault_documents"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-09-30T23:40:47.336Z","pid":7465,"hostname":"vm","context":{"userId":53,"tenantId":13,"resourceId":"c2c_list_vault_documents"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 152ms
+{"level":30,"time":"2026-09-30T23:40:49.719Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_assess_sequence_readiness"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-09-30T23:40:49.739Z","pid":7465,"hostname":"vm","context":{"userId":53,"tenantId":13,"resourceId":"c2c_assess_sequence_readiness"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-09-30T23:40:49.833Z","pid":7465,"hostname":"vm","context":{"userId":53,"tenantId":13,"resourceId":"c2c_list_sequences"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 2495ms
+{"level":30,"time":"2026-09-30T23:40:49.877Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-09-30T23:40:49.898Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+{"level":30,"time":"2026-09-30T23:40:49.970Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"2"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-09-30T23:40:49.978Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > is denied to a connector token without c2c:file 65ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 86ms
+{"level":30,"time":"2026-09-30T23:40:50.042Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+{"level":30,"time":"2026-09-30T23:40:50.086Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_draft_agency_response"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 59ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 45ms
+{"level":30,"time":"2026-09-30T23:40:54.605Z","pid":7465,"hostname":"vm","context":{"userId":52,"tenantId":12,"resourceId":"c2c_lookup_ich_guideline"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 4527ms
+{"level":30,"time":"2026-09-30T23:40:56.781Z","pid":7482,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-30T23:40:56.782Z","pid":7482,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-30T23:40:56.783Z","pid":7482,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-30T23:40:56.972Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 54
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 55
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 56
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 57
+
+{"level":30,"time":"2026-09-30T23:42:05.000Z","pid":7482,"hostname":"vm","context":{"userId":54,"tenantId":92100,"resourceId":"54"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-30T23:42:05.000Z","pid":7482,"hostname":"vm","context":{"userId":54,"tenantId":"92100","resourceId":"54"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 7ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 44ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 3ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 178ms
+{"level":30,"time":"2026-09-30T23:42:05.000Z","pid":7482,"hostname":"vm","context":{"userId":55,"tenantId":92100,"resourceId":"55"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-30T23:42:05.000Z","pid":7482,"hostname":"vm","context":{"userId":56,"tenantId":92100,"resourceId":"56"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-30T23:42:35.000Z","pid":7482,"hostname":"vm","context":{"userId":57,"tenantId":92100,"resourceId":"57"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-30T23:42:35.000Z","pid":7482,"hostname":"vm","context":{"userId":57,"tenantId":"92100","resourceId":"57"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 31ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 30ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 43ms
+{"level":30,"time":"2026-09-30T23:43:05.000Z","pid":7482,"hostname":"vm","context":{"userId":57,"tenantId":92100,"resourceId":"57"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-30T23:43:05.000Z","pid":7482,"hostname":"vm","context":{"userId":57,"tenantId":"92100","resourceId":"57"},"msg":"[audit-service] [AUDIT] user_login user"}
+stdout | tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why
+[database] Database connection successful { timestamp: '2026-09-30T23:43:05.000Z', poolSize: 2 }
+
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 133ms
+{"level":30,"time":"2026-09-30T23:43:35.000Z","pid":7482,"hostname":"vm","context":{"userId":57,"tenantId":92100,"resourceId":"57"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-30T23:43:35.000Z","pid":7482,"hostname":"vm","context":{"userId":57,"tenantId":"92100","resourceId":"57"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-30T23:44:05.000Z","pid":7482,"hostname":"vm","context":{"userId":57,"tenantId":92100,"resourceId":"57"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 77ms
+{"level":30,"time":"2026-09-30T23:44:05.000Z","pid":7482,"hostname":"vm","context":{"userId":57,"tenantId":"92100","resourceId":"57"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 86ms
+
+ Test Files  3 passed (3)
+      Tests  37 passed (37)
+   Start at  23:40:39
+   Duration  19.87s (transform 7.76s, setup 194ms, import 836ms, tests 18.02s, environment 0ms)
+

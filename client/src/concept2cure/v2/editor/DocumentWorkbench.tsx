@@ -5,7 +5,7 @@
  * The editing core that lived inside `surfaces/DocumentAuthoring.tsx` (5,143
  * lines on 2026-09-21), moved here so that ONE component renders the section
  * outline, the canonical `RichSectionEditor` for the active section, and the
- * side rail — AnA, comments, history, sources, signatures, audit, exports,
+ * side rail — comments, history, sources, signatures, audit, exports,
  * project files, review tasks — for a given document. Two hosts mount it:
  *
  *   · `surfaces/DocumentAuthoring.tsx` — the Authoring surface: it owns the
@@ -32,31 +32,23 @@
  * honest failed-load, never a fixture; writes awaited; a success toast only
  * after the server confirms; attribution from the server, never guessed), the
  * same unsaved-work guard, the same §11.10(d)/(e) reason-for-change funnel,
- * the same one save path. Every DocumentAuthoring test runs unchanged against
- * the surface, which now renders this.
+ * the same one save path. Existing editor tests exercise that surface core;
+ * the AnA destination tests exercise its canonical conversation handoff.
  *
- * ── Where the AnA pane goes when the host is a conversation ──────────────────
- * The surface keeps its own AnA rail (the shell draws no rail beside an
- * `ownsConversation` surface). The canvas host passes `onAsk` instead: every
- * ask from the workbench — Draft with AnA, "Ask what changed", the empty
- * state's "Ask AnA to draft" — goes to the conversation the person is already
- * in, and the pane is not drawn. One conversation on screen, never two.
+ * ── AnA's one conversation ────────────────────────────────────────────────
+ * Every ask goes to ConversationThread, whose DocumentCanvas mounts this
+ * same editor and shares its governed bridge. A standalone ask carries only
+ * saved record identity, after the unsaved-work guard. Embedded asks prefill
+ * the visible host composer. Neither sends until the person presses Enter.
+
  */
-import { AnaActionChips } from '../AnaActionChips';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { useAnaChat } from '../../components/ana/useAnaChat';
-import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
-import { AnaActivity, activityPropsFor } from '../AnaActivity';
-import { AnaGrounding } from '../AnaGrounding';
-import { AnaOutputCards } from '../AnaOutputs';
-import { useAgentActivity } from '../useAgentActivity';
-import { useProgressDock } from '../workDock';
-import { shellProgramName } from '../shellProject';
-import { SignoffList } from '../SignoffList';
-import type { PendingSignoff } from '../../components/ana/useGovernedAction';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
+import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from './anaInsertGate';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
 import { apiRequest, serverMessage, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import { AuthoringFilingBar } from '../surfaces/AuthoringFilingBar';
@@ -68,32 +60,53 @@ import { newDocumentAction } from '../newDocumentAction';
 import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
 import { ReviewTasksPanel } from './ReviewTasksPanel';
+import { DocumentPermissionsPanel } from './DocumentPermissionsPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
-import { AssignReviewDialog } from './AssignReviewDialog';
+import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
-import { askAnaToDraftPrompt, openConversationWithPrompt } from './askAnaToDraft';
-import { describeProvenance, type DocumentProvenance } from './provenance';
+import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
+import { describeClaimsCheck, describeFigureCheck, describeProvenance, type ClaimsCheckSummary, type DocumentProvenance, type FigureCheckSummary } from './provenance';
+import { DraftFigureLine } from './DraftFigureLine';
+import { DraftClaimsLine } from './DraftClaimsLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
-import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
-import type { SuggestionDecision } from './suggestions';
+import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } from './RichSectionEditor';
+import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
+import { readSavedTemplateContext, savedTemplateFacts, type SavedTemplateContext } from './savedTemplateContext';
+import { AuthoringOversightActions } from './AuthoringOversightActions';
+import { ImportSourceNotice } from './ImportSourceNotice';
+import { TemplateGuidance } from './TemplateGuidance';
+import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
+import type {
+  ProposeRefusal,
+  ReplacementProposal,
+  SuggestionAuthor,
+  SuggestionDecision,
+} from './suggestions';
 import type { CommentAnchorPayload } from './commentAnchor';
-import { citedSourceIdsInHtml } from './citationNode';
+import { useProjectSourceCatalog } from './useProjectSourceCatalog';
+import { admittedCitationSources, admittedPrecedingSources, useDocumentCitationAdmission } from './citationAdmission';
+import { sourceCitationEligible, type ProjectSourceRecord } from './projectSourceCatalog';
 import { captionedObjectsInHtml } from './captionNumbering';
 import type { CaptionedObject } from '@shared/authoring/captions';
 import type { CitationSource } from '@shared/authoring/citations';
+import { citationRefreshRefusalMessage } from '@shared/authoring/citations';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
 import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
+import { outlineReadState, unboundNodeTitle, unboundNodeToast } from './outlineReadState';
+import { useStartOutlineSection, unstartedRowProps } from './startOutlineSection';
+import { FilingMarkets, FilingGaps, useCreateMarketCopy } from './FilingMarkets';
 import {
   editorTargetDocLabel,
   clearEditorTarget,
   describeEditorTarget,
   matchEditorTargetSection,
   peekEditorTarget,
+  setEditorTarget,
   type EditorTarget,
 } from '../editorTarget';
 import { consumeNavParams } from '../navParams';
@@ -108,8 +121,8 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from '../surfaces/AuthoringSignatures';
 import { useDialog } from '../useDialog';
-import { AnaMarkdown } from '../AnaMarkdown';
 import { AuthoredHtml } from './AuthoredHtml';
+import { usePublishSurfaceContext } from '../surfaceContext';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -121,6 +134,12 @@ interface AuthDoc {
   status: string;
   updated_at: string | null;
   section_count: number | string | null;
+  /** The author (GET /docs returns it): not offered as the document's reviewer. */
+  created_by?: string | number | null;
+  /** The governed filing this is the editing copy of; null when unbound,
+      absent when the list did not say. The outline starts a section only in
+      the filing's copy (startOutlineSection.ts startOffer). */
+  c2c_document_id?: string | null;
 }
 
 /**
@@ -285,6 +304,29 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
  * Unrecognised metadata is left alone rather than dumped as JSON: a rail is a
  * reading surface, and raw payloads are not read.
  */
+/**
+ * Whether the rail may call a proposer verified.
+ *
+ * It needs the turn record to have vouched for THESE WORDS, not merely a
+ * machine author id on the request, and not merely a turn that exists.
+ *
+ * The trail is append-only, and "verified" has not always meant the same
+ * thing. Under DP-43 it was a bare "this turn is in this organization" lookup;
+ * round 10 made it "this turn holds the words decided" and began recording
+ * `servedBy` alongside it. Rows from before that are still in the trail,
+ * including the case round 10 was written for — a person typing inside AnA's
+ * pending insertion with track changes off, the database default, whose words
+ * were filed as AnA's verified words. Those rows carry `verified: true` and no
+ * model list, so the presence of the list is what distinguishes a round-10
+ * verification from its namesake. Without that test the rail would put round
+ * 10's claim on exactly the rows round 10 exists to catch.
+ */
+function proposerVouched(metadata: Record<string, unknown>): boolean {
+  if (metadata.proposedByVerified !== true) return false;
+  const src = metadata.source as { verified?: unknown; servedBy?: unknown } | null | undefined;
+  return !!src && typeof src === 'object' && src.verified === true && Array.isArray(src.servedBy);
+}
+
 export function describeAuditMetadata(
   eventType: string | null,
   metadata: Record<string, unknown> | null,
@@ -309,8 +351,15 @@ export function describeAuditMetadata(
     /* `proposedBy` is copied by the server from the editing client's own
        request (the editor's suggestion mark carries the author's display
        name), not derived from a verified identity. Rendered unqualified it
-       read as the audit trail's finding; the qualifier keeps the two apart. */
-    const by = proposedBy ? ` (proposed by ${proposedBy}, as recorded by the editing client)` : '';
+       read as the audit trail's finding; the qualifier keeps the two apart.
+       Only a machine proposer whose turn record holds the words decided is
+       verified (DP-43, round 10), and then the rail says so (round 13). */
+    const by = proposedBy
+      ? ` (proposed by ${proposedBy}, ${proposerVouched(metadata) ? 'verified against its turn record' : 'as recorded by the editing client'})`
+      : '';
+    /* The turn this came from is its own line (describeAuditSource): packed in
+       here it made one run-on span in which the fact that matters most — a
+       model that may not write regulatory text — sat mid-sentence. */
     return `${verb} ${what}${by}${quoted}`;
   }
 
@@ -378,14 +427,147 @@ export function describeAuditMetadata(
     const provider = gen && typeof gen.provider === 'string' ? gen.provider : null;
     const who = [model, provider].filter(Boolean).join(' · ');
     const edited = metadata.draft_modified_on_accept === true;
+    // The turn the draft was filed as (round 12): its record holds the prompt, the draft and the check.
+    const turn = gen && typeof gen.turnRecordId === 'string' ? `, from AnA turn record ${gen.turnRecordId.slice(0, 8)}` : '';
     return (
       'accepted an AI draft' +
       (who ? ` generated by ${who}` : ' whose generating model was not recorded') +
+      turn +
       (edited ? ', edited before accepting — the saved text is not the model’s wording' : '')
     );
   }
 
   return null;
+}
+
+/** A served model as a decision row records it (approved-models.ts QualifiedServedModel). */
+interface RecordedServedModel {
+  model?: unknown;
+  qualified?: unknown;
+  approvedForHighRisk?: unknown;
+}
+
+/** Why RULE 2 does not let a model's text stand, in the insert gate's words; null when it does. */
+function servedModelRefusal(m: RecordedServedModel): string | null {
+  if (m.qualified === true) return null;
+  return m.approvedForHighRisk === true ? 'has not passed performance qualification' : 'is not approved for regulatory drafting';
+}
+
+/** "a", "a and b", "a, b and c". */
+function listed(names: string[]): string {
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/**
+ * The AnA turn a decided change came from — its own line under the decision.
+ *
+ * The server records this on every tracked-change decision (round 10,
+ * resolveTurnRecordSources): the turn verified against the WORDS decided, its
+ * outcome, and every model that served it with RULE 2's verdict on each. The
+ * rail showed none of it, so an inspector could not see that an accepted AnA
+ * insertion came from a model that may not write regulatory text.
+ *
+ * ── "Served by", not "written by" ───────────────────────────────────────────
+ * `servedBy` is every model that served ANY call in the turn
+ * (services/ana/turn-record-models.ts). It does not say which model wrote the
+ * decided words. The insert gate refuses to say "written in part by" for
+ * exactly that reason, and a rail that said "written by A and B" would claim
+ * more than the record holds — and would be plainly wrong on a DELETION, where
+ * the words struck are not AnA's at all. "Served by" is what the row supports,
+ * in one phrase that is true of every case.
+ *
+ * Null when the change names no turn, so the rail draws no second line.
+ *
+ * @param metadata a decision row's metadata — one change, or a bulk row
+ */
+export function describeAuditSource(metadata: Record<string, unknown> | null | undefined): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  if (Array.isArray(metadata.changes)) return describeBulkSource(metadata.changes);
+  return describeOneSource(metadata.source);
+}
+
+/** The models a turn was served by, and what RULE 2 says of them. */
+function servedClause(served: RecordedServedModel[]): string {
+  if (served.length === 0) return ', whose record names no model.';
+  const unnamed = served.filter((m) => !(typeof m.model === 'string' && m.model));
+  if (unnamed.length > 0) {
+    /* An unnamed model is not an unapproved one: there is nothing to judge, and
+       the gate says so rather than returning a verdict. */
+    return served.length === 1
+      ? '; the record does not name the model that served it.'
+      : '; the record does not name one of the models that served it.';
+  }
+  const names = served.map((m) => String(m.model));
+  const refusals = served.flatMap((m) => {
+    const why = servedModelRefusal(m);
+    return why ? [`${String(m.model)} ${why}.`] : [];
+  });
+  return `, served by ${listed(names)}.${refusals.length ? ` ${refusals.join(' ')}` : ''}`;
+}
+
+/** One change's source line. */
+function describeOneSource(source: unknown): string | null {
+  if (!source || typeof source !== 'object') return null;
+  const s = source as Record<string, unknown>;
+  if (s.verified === false && typeof s.claimed === 'string') {
+    return `Names AnA turn record ${s.claimed.slice(0, 8)}, not verified${typeof s.why === 'string' ? `: ${s.why}` : ''}.`;
+  }
+  if (s.verified !== true || typeof s.turnRecordId !== 'string') return null;
+  const from = `From AnA turn record ${s.turnRecordId.slice(0, 8)}`;
+  /* Absent and empty are different facts, and the gate draws the same line: a
+     row that recorded no list cannot be reported as a record that names none. */
+  const clause = Array.isArray(s.servedBy)
+    ? servedClause(s.servedBy as RecordedServedModel[])
+    : '; the models that served it were not recorded with this decision.';
+  /* The turn's own outcome. The insert gate can only read whether the answer
+     finished from live client state, which a reopened page does not have; the
+     decision row keeps it, so the rail is the one place it survives. */
+  const outcome = typeof s.outcome === 'string' && s.outcome !== 'answered' ? ` That turn ended: ${s.outcome}.` : '';
+  return `${from}${clause}${outcome}`;
+}
+
+/** A bulk row: how many changes came from AnA turns, and what is wrong with them. */
+function describeBulkSource(changes: unknown[]): string | null {
+  const sources = changes
+    .map((c) => (c && typeof c === 'object' ? (c as { source?: unknown }).source : null))
+    .filter((src): src is Record<string, unknown> => !!src && typeof src === 'object');
+  const verified = sources.filter((src) => src.verified === true);
+  /* Counted, not dropped. A change whose named turn did NOT verify is the one
+     an inspector most needs to see, and the single-decision line says so; a
+     bulk row that silently kept only the verified ones hid it. */
+  const unverified = sources.filter((src) => src.verified === false && typeof src.claimed === 'string');
+  if (verified.length === 0 && unverified.length === 0) return null;
+  const refused = verified.filter((src) =>
+    (Array.isArray(src.servedBy) ? (src.servedBy as RecordedServedModel[]) : []).some(
+      (m) => typeof m.model === 'string' && m.model && servedModelRefusal(m),
+    ),
+  );
+  const parts: string[] = [];
+  if (verified.length > 0) {
+    parts.push(`${verified.length} ${verified.length === 1 ? 'change from an AnA turn' : 'changes from AnA turns'}.`);
+  }
+  if (refused.length > 0) {
+    parts.push(`${refused.length} of them ${refused.length === 1 ? 'was' : 'were'} served by a model that is not allowed to write regulatory text.`);
+  }
+  if (unverified.length > 0) {
+    parts.push(`${unverified.length} ${verified.length > 0 ? 'more ' : ''}${unverified.length === 1 ? 'names' : 'name'} a turn that does not verify.`);
+  }
+  return parts.join(' ');
+}
+
+/**
+ * The AnA turn a decided change came from, on its own line under the decision.
+ * It is the part an inspector looks for, and packed into the sentence above it
+ * read as one more clause in a run-on.
+ */
+function AuditSourceLine({ metadata }: { metadata: Record<string, unknown> | null }) {
+  const source = describeAuditSource(metadata);
+  if (!source) return null;
+  return (
+    <span style={{ fontSize: 12, color: 'var(--text-300)' }} data-testid="audit-source">
+      {source}
+    </span>
+  );
 }
 
 function auditEventLabel(raw: string | null): string {
@@ -405,9 +587,62 @@ interface ScanDeficiency {
   recommendation?: string | null;
   location?: string | null;
 }
+/**
+ * What the canonical record says the open section must contain, as the scan
+ * serves it (server/routes/authoring.router.ts, `recordRequirementsFor`).
+ *
+ * READ-ONLY. The record's elements are descriptions ("Product development
+ * rationale linking unmet need, MOA, and program design (2.5.1)"), which no
+ * keyword test can verify — so the scan does not test them and the panel says
+ * so. `indexed: false` carries the resolver's own reason and must read as "not
+ * indexed", never as an empty list and never as "nothing required".
+ */
+interface RecordRequirements {
+  indexed: boolean;
+  /** Whose entry answered: the section's own, its containing section's, or its children. */
+  source?: 'exact' | 'ancestor' | 'parent';
+  /** The code whose entry answered. */
+  answered_by?: string;
+  title?: string;
+  elements?: string[];
+  /** For a parent code: the sections it contains, each with its own requirements. */
+  contains?: Array<{ code?: string; title?: string }>;
+  /** How many contained sections the server's cap withheld, so the list is never silently short. */
+  contains_omitted?: number;
+  verified_by_this_check?: boolean;
+  note?: string;
+  /** basisLabel() from the server — recall never reads as the regulator's text. */
+  basis?: string;
+  /** Present when `indexed` is false: the resolver's own words. */
+  reason?: string;
+}
+
+/**
+ * Whether the open DOCUMENT agrees with itself: the same figure, in the same frame, stated twice in
+ * two sections with two different values (server: authoring/document-figure-consistency.ts). Absent
+ * when the sections could not be read — never an empty result, which would read as "it agrees".
+ */
+interface DocumentFigureConsistency {
+  verdict: 'conflicts_found' | 'no_conflict_among_compared' | 'nothing_compared';
+  compared: number;
+  conflicts: number;
+  comparisons?: Array<{
+    outcome: 'conflict' | 'consistent';
+    measure?: string;
+    arm?: string;
+    a?: { section?: string; values?: string[] };
+    b?: { section?: string; values?: string[] };
+  }>;
+  truncated?: boolean;
+}
+
 interface ScanResults {
   section_id: string;
   section_code?: string;
+  /** The record's statement of required content, or its honest absence. */
+  record_requirements?: RecordRequirements;
+  /** Whether the open document's own figures agree with each other, across its sections. */
+  document_figure_consistency?: DocumentFigureConsistency;
   quality_score?: number;
   status?: string;
   deficiencies: ScanDeficiency[];
@@ -482,14 +717,7 @@ interface SectionSource {
 }
 
 /** A source in the project's Data Room, for the "add a source" picker. */
-export interface ProjectSource {
-  id: number;
-  title: string | null;
-  extractionStatus: string | null;
-  /** The source's content checksum — how the Project files rail tells that a
-   *  vault upload IS a data-room source (same bytes) and can be cited. */
-  checksum?: string | null;
-}
+export type ProjectSource = ProjectSourceRecord;
 
 /** How each citation state reads to an author. */
 function sourceStateLabel(s: SectionSource): {
@@ -526,9 +754,9 @@ function sourceStateLabel(s: SectionSource): {
       };
     case 'unresolved':
       return {
-        text: 'Source no longer available',
+        text: 'Source unavailable with current access',
         tone: 'warn',
-        hint: 'The citation is recorded but the source does not resolve in this organization — it may have been deleted.',
+        hint: 'This recorded citation’s source could not be resolved within your current access. The citation remains recorded.',
       };
     default:
       return {
@@ -549,8 +777,10 @@ async function readJson<T = any>(
     const res = await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
-  } catch {
-    return { ok: false, status: 0, body: null };
+  } catch (err) {
+    // apiRequest throws on a non-2xx other than 401; the status still says
+    // what the answer was (a 403 is a refusal, not a failed read).
+    return { ok: false, status: err instanceof ApiRequestError ? err.status : 0, body: null };
   }
 }
 
@@ -569,14 +799,21 @@ export interface DocumentActGate {
 export interface DocumentAccess {
   freeze: DocumentActGate | null;
   esign: DocumentActGate | null;
+  /** The review signature alone (E-sign, meaning Review): a Reviewer grant
+   *  suffices for it (QA 2026-10-08, j4). */
+  esignReview: DocumentActGate | null;
   fileToVault: DocumentActGate | null;
   assignReview: DocumentActGate | null;
+  /** Place into filing: its two writes require regulatory-author. */
+  placeIntoFiling: DocumentActGate | null;
 }
 export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
   freeze: null,
   esign: null,
+  esignReview: null,
   fileToVault: null,
   assignReview: null,
+  placeIntoFiling: null,
 };
 
 function readActGate(raw: unknown): DocumentActGate | null {
@@ -593,9 +830,71 @@ export function readDocumentAccess(raw: unknown): DocumentAccess {
   return {
     freeze: readActGate(a.freeze),
     esign: readActGate(a.esign),
+    esignReview: readActGate(a.esignReview),
     fileToVault: readActGate(a.fileToVault),
     assignReview: readActGate(a.assignReview),
+    placeIntoFiling: readActGate(a.placeIntoFiling),
   };
+}
+
+/**
+ * What a section save's `filing` field says, as a sentence appended to the save
+ * confirmation; '' when the server reported nothing (QA 2026-10-08, j4: the
+ * field was never read, so a save that did not reach the filing read exactly
+ * like one that did). The server's own reason is shown as given.
+ */
+export function filingCommitNote(filing: unknown): string {
+  if (!filing || typeof filing !== 'object') return '';
+  const f = filing as { committed?: unknown; reason?: unknown; partOf?: unknown };
+  /* QA 2026-10-08, walk 2: a section under an undivided outline node (2.5.1 of
+     the 2.5 Clinical Overview) goes into that node with the document's other
+     sections there; the server names the node as `partOf`. */
+  if (f.committed === true && typeof f.partOf === 'string' && f.partOf.trim()) {
+    return ` The text was committed to the filing as part of its section ${f.partOf}, with this document’s other sections under ${f.partOf}.`;
+  }
+  if (f.committed === true) return ' The text was committed to the filing.';
+  if (f.committed === false) {
+    const why = typeof f.reason === 'string' && f.reason.trim() ? f.reason.trim() : 'the server gave no reason.';
+    return ` The text is saved in Authoring but not in the filing: ${why}`;
+  }
+  return '';
+}
+
+/**
+ * What a section save's `machineText` field says, as a sentence appended to the
+ * save confirmation; '' when the save claimed nothing or everything it claimed
+ * was credited (AnA reasoning round 15, SEC-A-7 door 1).
+ *
+ * Without this the author sees an ordinary "Section saved" while the record
+ * now says they asserted words they believed were attributed to AnA. The
+ * server's own reason is shown as given — it is the reason the record keeps.
+ *
+ * A claim whose MODEL the governed-write rule refuses never reaches here: that
+ * save is refused outright, and the author reads the 403's own sentence.
+ */
+export function machineTextNote(machineText: unknown): string {
+  if (!machineText || typeof machineText !== 'object') return '';
+  const m = machineText as { refused?: unknown };
+  const refused = Array.isArray(m.refused) ? m.refused : [];
+  const reasons = [
+    ...new Set(
+      refused
+        .map((r) => (r as { why?: unknown })?.why)
+        .filter((why): why is string => typeof why === 'string' && why.trim().length > 0),
+    ),
+  ];
+  if (reasons.length === 0) return '';
+  const passages = refused.length === 1 ? 'One passage' : `${refused.length} passages`;
+  const was = refused.length === 1 ? 'was' : 'were';
+  return (
+    ` ${passages} you accepted from AnA ${was} recorded as your own words, because ` +
+    `${reasons.join('; ')}. The record says so.`
+  );
+}
+
+/** True when the server refuses every signature but the review signature. */
+export function esignReviewOnly(access: DocumentAccess): boolean {
+  return !!actRefusal(access.esign) && access.esignReview?.allowed === true;
 }
 
 /** The sentence to show for a refused act; null when allowed OR unknown. */
@@ -661,6 +960,152 @@ const STATUSES = ['all', 'draft', 'in_review', 'approved', 'frozen'];
 /** The document rows the host lists — the shape GET /api/authoring/docs returns. */
 export type { AuthDoc };
 
+/** What an embedding host may do with the open section (see `embedded.onEditorBridge`). */
+export interface EditorBridge {
+  docId: string;
+  sectionId?: string;
+  /** Actual sections this document holds; opening one uses the unsaved-work guard. */
+  sectionLabels?: Record<string, string>;
+  openSection?: (sectionId: string) => void;
+  sectionCode: string;
+  sectionTitle: string;
+  /** The host's actual read/edit view, so a remedy can open the section editor. */
+  viewMode?: 'section' | 'document';
+  /** False for a sealed document or assembled Document view: readable, but no insert. */
+  editable: boolean;
+  /** The real host's reason, including assembled Document view, when read-only. */
+  insertRefusal?: string | null;
+  /** The document and section open, as this editor's own chat sends them; null with no project. */
+  authoringContext: AuthoringContextPack | null;
+  /** Saved evidence/import identity, shared by the editor's chat hosts. */
+  moduleContext?: Record<string, unknown>;
+  /**
+   * Insert text as an attributed tracked suggestion; false when the section
+   * cannot take it. AnA's text also needs the record status of the turn that
+   * wrote it and whether that answer finished, and is refused unless it
+   * finished and the governed-write rule admits every model that wrote it
+   * (anaInsertGate.ts, rounds 11 and 13).
+   */
+  insert: (text: string, author: SuggestionAuthor, record?: AnaTurnRecordStatus, unfinished?: boolean) => boolean;
+  /**
+   * Redline one quoted passage of the open section as an attributed tracked
+   * suggestion (the editor handle's `proposeReplacement`). Asynchronous: the
+   * base hash is checked over the loaded content with WebCrypto. Refuses
+   * `model-not-approved`, `wrong-section`, `no-base`, `stale` and
+   * `not-editable` for itself (see EditorBridgeProposeResult); otherwise the
+   * editor's own refusals.
+   *
+   * `record` and `unfinished` are the AnA turn's, exactly as `insert` takes
+   * them, and are checked the same way: this door redlines AnA's words into
+   * the section and the person's next Save stores them, so the governed-write
+   * rule holds here too. Omitted for a person's own redline, which the rule
+   * is not about; omitted for AnA's, it refuses.
+   */
+  propose: (
+    proposal: EditorBridgeProposal,
+    author: SuggestionAuthor,
+    record?: AnaTurnRecordStatus,
+    unfinished?: boolean,
+  ) => Promise<EditorBridgeProposeResult>;
+  /** Observe only the current editor's actual application state; unavailable across scopes. */
+  getProposalState?: (receipt: EditorProposalReceipt) => ProposalState;
+  subscribeProposalChanges?: (listener: () => void) => () => void;
+  canPropose?: () => boolean;
+}
+
+/** An anchored proposal as the conversation hands it to the open section. */
+export interface EditorBridgeProposal extends ReplacementProposal {
+  /** The section the proposal is for. Only the open section takes it. */
+  sectionId: string;
+  /**
+   * The version of the section AnA read, as the section reader reports it
+   * (server/services/authoring/authoring-read.ts): `baseSha256` is the hex
+   * SHA-256 of the section's STORED content, `baseUpdatedAt` its
+   * `updated_at`. At least one is required, and every one given must be the
+   * section as this editor loaded it.
+   */
+  baseSha256?: string | null;
+  baseUpdatedAt?: string | null;
+}
+
+/**
+ * Why the bridge refused, beyond the editor's own reasons:
+ *   - model-not-approved: the governed-write rule does not admit the AnA turn
+ *     these words came from, or this view was not told which models served it.
+ *     Carries the reason as the sentence `anaInsertRefusal` returned, so a
+ *     caller shows the wording round 13 settled on instead of inventing its
+ *     own — the mistake that produced a toast naming a cause that was untrue.
+ *     (That sentence says "inserted", which is the insert door's verb. When a
+ *     caller renders it, it should become this door's: see round 14's README.)
+ *   - wrong-section: the proposal is for a section that is not the open one,
+ *     so its quote was read from other text;
+ *   - no-base: it names no version of the section, so nothing shows the quote
+ *     was chosen against the text that is there now;
+ *   - stale: the section was saved (or reverted, or the editor reopened) after
+ *     AnA read it, so the quote was chosen against text that is no longer the
+ *     record.
+ */
+export type EditorBridgeProposeResult =
+  | { ok: true; receipt?: EditorProposalReceipt }
+  | { ok: false; reason: 'model-not-approved'; message: string }
+  | { ok: false; reason: ProposeRefusal | 'stale' | 'wrong-section' | 'no-base' };
+
+/**
+ * Whether a proposal's base is the section version this editor loaded. Both
+ * are `updated_at` values, which reach the client through different
+ * serializers (a tool result, a route row), so the same instant may be written
+ * with or without milliseconds: compared as instants when both parse, as
+ * strings otherwise. A base with no loaded version to compare is not a match.
+ */
+function isLoadedVersion(base: string, loaded: string | null): boolean {
+  if (loaded == null) return false;
+  const a = Date.parse(base);
+  const b = Date.parse(loaded);
+  if (Number.isFinite(a) && Number.isFinite(b)) return a === b;
+  return base === loaded;
+}
+
+/**
+ * Hex SHA-256 of `text` as UTF-8 — what the section reader computes in SQL
+ * (`encode(sha256(convert_to(content, 'UTF8')), 'hex')`) — or null where
+ * WebCrypto is not available or fails, which the bridge treats as a base it
+ * cannot confirm.
+ */
+async function sha256Hex(text: string): Promise<string | null> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) return null;
+  try {
+    const digest = await subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
+}
+
+/** The section a bridge was built for, as its editor loaded it. */
+interface LoadedSection {
+  id: string;
+  updatedAt: string | null;
+  /** Hex SHA-256 of the stored content, computed once, on first need. */
+  sha256: () => Promise<string | null>;
+}
+
+/**
+ * Why a proposal's base is not the section as loaded — `no-base` when it
+ * names none, `stale` when any it names differs — or null when it is.
+ */
+async function baseRefusal(
+  proposal: EditorBridgeProposal,
+  loaded: LoadedSection,
+): Promise<'no-base' | 'stale' | null> {
+  const baseSha = proposal.baseSha256?.trim().toLowerCase() || null;
+  const baseAt = proposal.baseUpdatedAt?.trim() || null;
+  if (!baseSha && !baseAt) return 'no-base';
+  if (baseAt && !isLoadedVersion(baseAt, loaded.updatedAt)) return 'stale';
+  if (baseSha && (await loaded.sha256()) !== baseSha) return 'stale';
+  return null;
+}
+
 export interface DocumentWorkbenchProps {
   onNav: (id: string) => void;
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
@@ -680,13 +1125,22 @@ export interface DocumentWorkbenchProps {
   /** Pin the workbench to one document (the canvas). The tree lists only it
    *  and no document switch is offered. */
   pinnedDocId?: string | null;
-  /** Mounted inside a conversation: draws "Back to conversation", hides the
-   *  workbench's own AnA pane (the thread's composer is the conversation).
+  /** Mounted inside a conversation: draws "Back to conversation" and uses
+   *  that host's composer for every AnA request.
    *  `hostShowsBack` when the host's own chrome already carries the way back —
    *  the document canvas's bar does — so this component does not draw a
    *  second one into its crumb trail. `onBack` is still the one callback the
    *  way back runs, whoever draws the control. */
-  embedded?: { onBack: () => void; backLabel?: string; hostShowsBack?: boolean } | null;
+  embedded?: {
+    onBack: () => void;
+    backLabel?: string;
+    hostShowsBack?: boolean;
+    /** The host is told which section is open and given its suggestion door,
+     *  or null with no section open. A sealed document is reported as not editable. */
+    onEditorBridge?: (bridge: EditorBridge | null) => void;
+    /** A section the host asks to show; each new nonce is one request. */
+    focusSection?: { id: string; nonce: number } | null;
+  } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
   surfaceActionId?: string | null;
@@ -694,27 +1148,49 @@ export interface DocumentWorkbenchProps {
    *  Only the Authoring surface is a navigation destination. */
   consumeDeepLinks?: boolean;
   /** Where an ask goes when the host owns the conversation. */
-  onAsk?: ((text: string) => void) | null;
+  onAsk?: ((text: string, savedOrigin?: AskOrigin) => void) | null;
+  /** Keep the open buffer until the existing leave decision accepts a new scope. */
+  pendingProgramSwitch?: { id: string; label: string; onContinue: () => void; onCancel: () => void } | null;
+  programSwitchHeld?: boolean;
+}
+
+function contextForWorkbench({ projectId, documentId, document, section, filing, sections }: {
+  projectId: string | null; documentId: string | null; document: AuthDoc | null; section: AuthSection | null;
+  filing: { id: string; agency: string; doc_type: string } | null; sections: AuthSection[];
+}): AuthoringContextPack | null {
+  if (!projectId) return null;
+  return {
+    projectId, workflowStage: 'section-workspace', artifactId: documentId ?? undefined,
+    ...(document ? { artifactStatus: document.status, moduleCode: document.module ?? undefined } : {}),
+    ...(section ? { sectionCode: section.code, sectionTitle: section.title, sectionId: section.id,
+      sectionUpdatedAt: section.updated_at ?? undefined } : {}),
+    ...(filing ? { dossierId: filing.id, regulatorBody: filing.agency, submissionType: filing.doc_type } : {}),
+    linkedSectionCodes: sections.filter(s => s.id !== section?.id).map(s => s.code).filter(Boolean),
+  };
 }
 
 /* ════ Document Authoring surface ════ */
 
-/** The REAL Part 11 sign-off prompts AnA returned for governed commands issued
- *  from the editor's pane, each resolving through GovernedActionSignoff
- *  (POST /api/ana-ri/governed-action) to the server's confirmation. */
-function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
-  return (
-    <SignoffList
-      signoffs={signoffs}
-      style={{ display: 'grid', gap: 8, marginTop: 8 }}
-      doneClassName="cmt-body"
-    />
-  );
+/**
+ * Why this editor cannot take an insert at all, whoever wrote the answer; null
+ * when it can.
+ *
+ * These are the HOST's refusals and they come before the governed-write rule:
+ * a frozen document takes no edit, and document view assembles sections for
+ * reading and edits none of them. The sibling "Draft from sources" control
+ * refuses both the same way, in these words. The offer used to be drawn live
+ * in both states and fail on the click — the discovery-by-failure that the
+ * disabled-with-a-reason pattern exists to replace. The canonical conversation
+ * keeps this host's refusal visible alongside its disabled offer.
+ */
+function editorInsertRefusal(docSealed: boolean, viewMode: 'section' | 'document', sectionCode: string): string | null {
+  if (docSealed) return 'This document is frozen — its content cannot be edited, so nothing can be inserted into it.';
+  if (viewMode === 'document') return `Document view assembles sections for reading. Switch to Section view to insert into ${sectionCode}.`;
+  return null;
 }
 
 export function DocumentWorkbench({
   onNav,
-  liveDrive,
   docs,
   docsState,
   status,
@@ -726,12 +1202,15 @@ export function DocumentWorkbench({
   surfaceActionId = null,
   consumeDeepLinks = false,
   onAsk = null,
+  pendingProgramSwitch = null,
+  programSwitchHeld = false,
 }: DocumentWorkbenchProps) {
   // `module` is no longer a filter the user drives — the filing outline is. It
   // survives only as the value AuthoringCreateExport needs when creating a new
   // document, and it now follows the selected section instead of a dropdown
   // that defaulted every filing type to "M3".
   const [module, setModule] = useState('M3');
+  const [creationNoticeContainer, setCreationNoticeContainer] = useState<HTMLDivElement | null>(null);
 
   /* ── The project's governed filing outline ──
      The tree this canvas navigates by. A project's structure is fixed at
@@ -741,7 +1220,6 @@ export function DocumentWorkbench({
      Until now none of it reached here — the canvas showed a Module × status
      dropdown pair, defaulted to M3, identical for every filing type. */
   const projectIdForOutline = programId;
-  const filing = useFilingOutline(projectIdForOutline);
   /* The program's name and phase, for the header. Read from the one program
      route (GET /api/c2c/projects/:id); null while unread or with no program. */
   const program = useProgramSummary(programId);
@@ -851,7 +1329,6 @@ export function DocumentWorkbench({
 
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<
-    | 'ana'
     | 'history'
     | 'comments'
     | 'sources'
@@ -860,13 +1337,16 @@ export function DocumentWorkbench({
     | 'exports'
     | 'vault'
     | 'tasks'
+    | 'access'
     | null
-  >(embedded ? null : 'ana');
+  >(null);
   /* The two governed dialogs this workbench opens itself: filing the document
-     into the project vault (POST /docs/:id/file-to-vault) and assigning a
-     review task (POST /api/tasks/tasks). Both are closed until asked for. */
+     into the project vault (POST /docs/:id/file-to-vault) and sending it for
+     review (POST /documents/:id/request-review, then each reviewer's task,
+     POST /api/tasks/tasks: SendForReviewDialog.tsx). Both are closed until
+     asked for. */
   const [fileToVaultOpen, setFileToVaultOpen] = useState(false);
-  const [assignReviewOpen, setAssignReviewOpen] = useState(false);
+  const [sendForReviewOpen, setSendForReviewOpen] = useState(false);
   /* Bumped after a task is created so the Tasks rail re-reads. */
   const [tasksEpoch, setTasksEpoch] = useState(0);
   /* What the document header says about where its content came from — the
@@ -874,6 +1354,10 @@ export function DocumentWorkbench({
      the gateway reported, the conversation). Null until read; a failed read
      is a failed read, and the header then makes no origin claim. */
   const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
+  const [docTemplateContext, setDocTemplateContext] = useState<SavedTemplateContext | null>(null);
+  /* S5a: the save's check of the draft's figures against its cited sources. */
+  const [docFigures, setDocFigures] = useState<FigureCheckSummary | null>(null);
+  const [docClaims, setDocClaims] = useState<ClaimsCheckSummary | null>(null);
   /** What this caller may do to the open document (GE-P-3); unknown until read. */
   const [docAccess, setDocAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
   const assignRefusalId = useId();
@@ -922,7 +1406,9 @@ export function DocumentWorkbench({
      purpose: a failed read of the compliance record must never render as "no
      governed acts have occurred". */
   const [auditEvents, setAuditEvents] = useState<AuthAuditEvent[]>([]);
-  const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  // 'forbidden': the server answered that this person may not read this
+  // document's record (403) — not a failed read, and not an empty trail.
+  const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error' | 'forbidden'>('idle');
   /* The record export — busy while the server records the export on the chain
      and builds the package; `error` is the reason it did not arrive, kept on
      the rail until the next attempt. Scoped to the document it was asked for,
@@ -940,11 +1426,13 @@ export function DocumentWorkbench({
   // picker. Both are live reads; neither has a fixture fallback.
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
-  /* 2026-09-28 (GE-H-1, coverage-gap sweep): the data room's read state. A
-     failed read set the same [] as an empty data room, and the picker then told
-     the author to add documents to a data room that may already hold them. */
-  const [projectSourcesState, setProjectSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const projectCatalogue = useProjectSourceCatalog(programId);
+  const { sources: projectSources, state: projectSourcesState, retry: loadProjectSources } = projectCatalogue;
+  const citationAdmission = useDocumentCitationAdmission(activeDocId, programId);
+  const refreshCitationAdmission = citationAdmission.retry;
+  const citationScope = `${programId ?? ''}:${activeDocId ?? ''}:${activeSectionId ?? ''}`;
+  const citationScopeRef = useRef(citationScope);
+  citationScopeRef.current = citationScope;
   /** Citations the last document-wide re-read could NOT refresh, with the
    *  server's reason. Held rather than toasted away: "3 could not be re-read"
    *  is the finding, and a message that fades in four seconds is not where a
@@ -1016,6 +1504,14 @@ export function DocumentWorkbench({
   }, [consumeDeepLinks]);
 
   const activeDoc = docs.find(d => d.id === activeDocId) ?? null;
+  /* The filing the open document is the editing copy of: an added market's
+     Module 1 and 3.2.R when it is that market's copy (FILING_SPINE F22b),
+     otherwise the project's home filing. */
+  const filing = useFilingOutline(projectIdForOutline, activeDoc?.c2c_document_id ?? null);
+  /* The outline's keys: a node the outline does not subdivide opens the
+     document's sections under it (findSectionForNode; QA 2026-10-08, walk 2). */
+  const outlineKeys = useMemo(() => Array.from(filing.flat, n => n.key), [filing.flat]);
+  const unboundDraft = !!activeDoc && activeDoc.module === null && !activeDoc.c2c_document_id;
   const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
@@ -1042,12 +1538,26 @@ export function DocumentWorkbench({
      HELD and the author decides: save (deliberate, attributable), leave it on
      this device, or stay. */
   type LeaveTarget =
-    | { kind: 'section'; id: string; module?: string }
-    | { kind: 'document'; id: string; module?: string };
+    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string }
+    | { kind: 'document'; id: string; sectionId?: string; module?: string }
+    | { kind: 'external-document'; id: string; module?: string }
+    | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
+    | { kind: 'view'; mode: 'section' | 'document'; module?: never }
+    | { kind: 'conversation'; prompt: string; module?: never };
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
+  const pendingLeaveRef = useRef(pendingLeave);
+  pendingLeaveRef.current = pendingLeave;
   const [leaving, setLeaving] = useState(false);
+  const navigationSequence = useRef(0);
+  const sectionLoaderRef = useRef<((id: string) => Promise<void>) | null>(null);
+  const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
+  const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
 
-  const applyNav = useCallback((target: LeaveTarget) => {
+  const applyNav = useCallback((target: LeaveTarget, savedVersion?: SavedSectionVersion | null) => {
+    if (target.kind === 'conversation' && programSwitchHeld) {
+      fireToast('Finish the project switch before opening a conversation.', 'error');
+      return;
+    }
     // The editor's dirty flag belongs to the mount that is going away; clear
     // it first so the guard cannot re-fire against the section just left.
     setEditorDirty(false);
@@ -1058,15 +1568,37 @@ export function DocumentWorkbench({
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
-    if (target.kind === 'section') setActiveSectionId(target.id);
-    else setActiveDocId(target.id);
-  }, []);
+    if (target.kind === 'view') setViewMode(target.mode);
+    else if (target.kind === 'program') target.onContinue();
+    else if (target.kind === 'conversation') {
+      prefillConversation(target.prompt, originWithSavedVersion(oversightOriginRef.current, savedVersion), onNav);
+    }
+    else if (target.kind === 'external-document') {
+      setEditorTarget({ docType: null, docId: target.id, programId });
+      onNav('document-authoring');
+    } else if (target.kind === 'section') {
+      if (target.mode) setViewMode(target.mode);
+      setActiveSectionId(target.id);
+    }
+    else {
+      if (target.sectionId) targetSectionRef.current = { docId: target.id, sectionId: target.sectionId };
+      if (target.id === activeDocId && target.sectionId) void sectionLoaderRef.current?.(target.id);
+      else setActiveDocId(target.id);
+    }
+  }, [programId, onNav, activeDocId, programSwitchHeld, fireToast]);
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
     (target: LeaveTarget): boolean => {
+      if (target.kind === 'conversation' && programSwitchHeld) {
+        fireToast('Finish the project switch before opening a conversation.', 'error');
+        return false;
+      }
+      navigationSequence.current += 1;
       const alreadyThere =
-        target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
+        target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
+          ? target.id === activeSectionId && (!target.mode || target.mode === viewMode) : target.kind === 'document'
+          && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
       if (alreadyThere) return true;
       if (!dirty) {
         applyNav(target);
@@ -1077,8 +1609,55 @@ export function DocumentWorkbench({
       setPendingLeave(target);
       return false;
     },
-    [dirty, activeSectionId, activeDocId, applyNav]
+    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode]
   );
+  const requestLeaveRef = useRef(requestLeave);
+  requestLeaveRef.current = requestLeave;
+  useEffect(() => {
+    if (pendingProgramSwitch) requestLeaveRef.current({ kind: 'program', ...pendingProgramSwitch });
+    else setPendingLeave(previous => previous?.kind === 'program' ? null : previous);
+  }, [pendingProgramSwitch]);
+  const openProgramRef = useRef(programId);
+  openProgramRef.current = programId;
+  // Replacing this token also detects A → B → A round trips while a read is pending.
+  const creationScopeKey = `${programId}:${activeDocId}:${programSwitchHeld}:${status}:${pinnedDocId}`;
+  const creationScopeRef = useRef({ key: creationScopeKey });
+  if (creationScopeRef.current.key !== creationScopeKey) creationScopeRef.current = { key: creationScopeKey };
+  const aliveRef = useRef(true);
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => { aliveRef.current = false; };
+  }, []);
+
+  const openPulledDocument = useCallback(async (docId: string) => {
+    if (programSwitchHeld || openProgramRef.current !== programId) return;
+    const scope = creationScopeRef.current;
+    const sequence = navigationSequence.current;
+    // A pinned canvas cannot switch documents; a narrowed list may exclude
+    // the new draft. Both use the same exact-id handoff after the leave guard.
+    if (pinnedDocId || status !== 'all') {
+      requestLeaveRef.current({ kind: 'external-document', id: docId });
+      return;
+    }
+    await reloadDocs();
+    if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return;
+    // The author can type while the list refreshes; consult the guard from
+    // the current render so those new unsaved changes are held as well.
+    requestLeaveRef.current({ kind: 'document', id: docId });
+  }, [pinnedDocId, status, reloadDocs, programId, programSwitchHeld]);
+
+  /* The host asking for a section (the conversation canvas: "Ask AnA to draft"
+     opens the editor at it). Through requestLeave, so unsaved text in the open
+     section is held for the author to decide. Each request is applied once,
+     when its section is in the list, and never again on a later reload. */
+  const focusSection = embedded?.focusSection ?? null;
+  const appliedFocusRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!focusSection || appliedFocusRef.current === focusSection.nonce) return;
+    if (!sections.some(s => s.id === focusSection.id)) return;
+    appliedFocusRef.current = focusSection.nonce;
+    requestLeave({ kind: 'section', id: focusSection.id });
+  }, [focusSection, sections, requestLeave]);
 
   /** Save through the editor's one save path, then move. A refused save keeps
    *  the author here with the text intact — the toast says why. */
@@ -1087,10 +1666,12 @@ export function DocumentWorkbench({
     if (!target) return;
     setLeaving(true);
     try {
+      confirmedSaveVersionRef.current = null;
       const saved = await editorRef.current?.save();
       if (!saved) return; // stay put; the failure has already been reported
+      if (pendingLeaveRef.current !== target) return;
       setPendingLeave(null);
-      applyNav(target);
+      applyNav(target, confirmedSaveVersionRef.current);
     } finally {
       setLeaving(false);
     }
@@ -1105,34 +1686,123 @@ export function DocumentWorkbench({
     applyNav(target);
   }, [pendingLeave, applyNav]);
 
-  /* ── The editor's own conversation ──
-     Grounded on what is open: `authoringContext` is the contract the server's
-     orchestrator uses to resolve project / document / section instead of
-     guessing from the message text, so "tighten this" means this section. */
-  const [anaDraft, setAnaDraft] = useState('');
-  const anaScrollRef = useRef<HTMLDivElement>(null);
+  /* Saved context for AnA's one conversation: the server resolves the real
+     project, document and section without guessing from the request text. */
   const authoringContext = useMemo<AuthoringContextPack | null>(
-    () =>
-      projectIdForOutline
-        ? {
-            projectId: projectIdForOutline,
-            workflowStage: 'section-workspace',
-            artifactId: activeDocId ?? undefined,
-            artifactStatus: activeDoc?.status ?? undefined,
-            moduleCode: activeDoc?.module ?? undefined,
-            sectionCode: activeSection?.code ?? undefined,
-            sectionTitle: activeSection?.title ?? undefined,
-          }
-        : null,
-    [
-      projectIdForOutline,
-      activeDocId,
-      activeDoc?.status,
-      activeDoc?.module,
-      activeSection?.code,
-      activeSection?.title,
-    ]
+    () => contextForWorkbench({ projectId: projectIdForOutline, documentId: activeDocId, document: activeDoc, section: activeSection, filing: unboundDraft ? null : filing.document, sections }),
+    [projectIdForOutline, activeDocId, activeDoc, activeSection, filing.document, sections, unboundDraft],
   );
+  /* The conversation's canvas receives the editor's same governed suggestion
+     door and saved authoring context. A sealed document and assembled Document
+     view remain readable, with explicit reasons why they cannot take an insert. */
+  /* AnA's text goes into the section only under the governed-write rule
+     (anaInsertGate.ts, round 11): this is the one suggestion door exposed by
+     the bridge. A turn it admits is remembered, so a paste of that suggestion
+     keeps AnA's name (suggestions.ts, the paste door); any other pasted AnA
+     suggestion becomes the pasting person's, still naming its turn. */
+  const admittedAnaSources = useRef(new Set<string>());
+  /* The same rule `insertAnaText` applies, in the shape `propose` returns. Its
+     own function so the bridge effect's arrow stays under the file's limits. */
+  const anaProposeRefusal = useCallback(
+    (
+      author: SuggestionAuthor,
+      record: AnaTurnRecordStatus | undefined,
+      unfinished: boolean,
+    ): { ok: false; reason: 'model-not-approved'; message: string } | null => {
+      if (author.id !== ANA_SUGGESTION_AUTHOR_ID) return null;
+      const message = anaInsertRefusal(record, unfinished);
+      return message ? { ok: false, reason: 'model-not-approved', message } : null;
+    },
+    [],
+  );
+  const insertAnaText = useCallback(
+    (text: string, author: SuggestionAuthor, record: AnaTurnRecordStatus | undefined, unfinished = false): boolean => {
+      if (editorInsertRefusal(docSealed, viewMode, activeSection?.code ?? 'the section')) return false;
+      if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record, unfinished)) return false;
+      const ok = editorRef.current?.insertSuggestion(text, author) ?? false;
+      if (ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
+      return ok;
+    },
+    [docSealed, viewMode, activeSection?.code],
+  );
+  const admitsAnaSource = useCallback((id: string | null) => id !== null && admittedAnaSources.current.has(id), []);
+  // Evidence/context reads can settle while a version hash is computing.
+  // They update context, not the saved text that a proposal is anchored to.
+  const authoringContextRef = useRef(authoringContext);
+  authoringContextRef.current = authoringContext;
+  const editorModuleContextRef = useRef<Record<string, unknown>>({});
+  const editorSectionLabelsRef = useRef<Record<string, string>>({});
+  editorSectionLabelsRef.current = Object.fromEntries(sections.map(s => [s.id, `${s.code} ${s.title}`.trim()]));
+  const onEditorBridge = embedded?.onEditorBridge;
+  useEffect(() => {
+    if (!activeSection || !activeDocId) {
+      onEditorBridge?.(null);
+      return undefined;
+    }
+    /* The section as this editor loaded it. The row is replaced on every
+       save (and a revert or a section switch replaces the editor), and each
+       of those re-runs this effect, so a bridge whose effect has been
+       cleaned up describes a section that may no longer be the record: it
+       refuses `stale`. (So does one rebuilt for a sealed
+       flag — which costs the caller one re-read,
+       never a redline on the wrong text.) */
+    const content = activeSection.content ?? '';
+    let sha: Promise<string | null> | null = null;
+    const loaded: LoadedSection = {
+      id: activeSection.id,
+      updatedAt: activeSection.updated_at ?? null,
+      sha256: () => (sha ??= sha256Hex(content)),
+    };
+    let live = true;
+    const bridge: EditorBridge = {
+      docId: activeDocId,
+      sectionId: activeSection.id,
+      get sectionLabels() { return editorSectionLabelsRef.current; },
+      openSection: (id) => {
+        if (Object.hasOwn(editorSectionLabelsRef.current, id)) requestLeaveRef.current({ kind: 'section', id, mode: 'section' });
+      },
+      sectionCode: activeSection.code,
+      sectionTitle: activeSection.title,
+      viewMode,
+      editable: !editorInsertRefusal(docSealed, viewMode, activeSection.code),
+      insertRefusal: editorInsertRefusal(docSealed, viewMode, activeSection.code),
+      get authoringContext() { return authoringContextRef.current; },
+      get moduleContext() { return editorModuleContextRef.current; },
+      insert: (text, author, record, unfinished) => insertAnaText(text, author, record, unfinished),
+      /* A proposal is anchored to text AnA read, in one section. It must name
+         this section and the version of it AnA read; every base it gives is
+         checked against the section as this editor loaded it, so a section
+         saved since is refused rather than redlined on a guess. Sealed before
+         the base: re-reading would not make a frozen document take it. The
+         hash is WebCrypto's, so this is asynchronous — and the section is
+         checked again after it, since a save can land while it runs. */
+      /* Every AnA replacement uses this governed bridge. The model check
+         precedes the version check. */
+      propose: async (proposal, author, record, unfinished = false) => {
+        const refusedModel = anaProposeRefusal(author, record, unfinished);
+        if (refusedModel) return refusedModel;
+        if (!live) return { ok: false, reason: 'stale' };
+        if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' };
+        if (docSealed || viewMode !== 'section') return { ok: false, reason: 'not-editable' };
+        const refused = await baseRefusal(proposal, loaded);
+        if (refused) return { ok: false, reason: refused };
+        if (!live) return { ok: false, reason: 'stale' };
+        const result = editorRef.current?.proposeReplacement(proposal, author) ?? { ok: false as const, reason: 'not-editable' as const };
+        if (result.ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
+        return scopedProposalResult(result, activeDocId, loaded.id);
+      },
+      getProposalState: receipt => live && receipt.docId === activeDocId && receipt.sectionId === loaded.id
+        ? editorRef.current?.getProposalState(receipt) ?? 'unavailable' : 'unavailable',
+      subscribeProposalChanges: listener => live ? editorRef.current?.subscribeProposalChanges(listener) ?? (() => {}) : () => {},
+      canPropose: () => live && editorRef.current?.canProposeReplacement() === true,
+    };
+    onEditorBridge?.(bridge);
+    return () => {
+      live = false;
+      onEditorBridge?.(null);
+    };
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, viewMode, insertAnaText, anaProposeRefusal]);
+
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
      context rather than being dropped. */
@@ -1144,6 +1814,22 @@ export function DocumentWorkbench({
       sectionId: activeSectionId,
       sectionCode: activeSection?.code ?? null,
       sectionTitle: activeSection?.title ?? null,
+      sectionUpdatedAt: activeSection?.updated_at ?? null,
+      savedRecordOnly: true,
+      ...savedTemplateFacts(docTemplateContext, activeDocId),
+      evidenceSourceIds: sources.flatMap(s => s.source ? [String(s.source.id)] : []),
+      evidenceSourcesRead: sourcesState,
+      ...(docProvenance?.importSource ? { importSource: {
+        kind: docProvenance.importSource.kind,
+        id: docProvenance.importSource.id,
+        programId: docProvenance.importSource.programId,
+        ...(isWorkflowImportOrigin(docProvenance.importSource)
+          ? { fingerprint: docProvenance.importSource.fingerprint, selection: docProvenance.importSource.selection,
+            sectionOrigins: docProvenance.importSource.sectionOrigins, gaps: docProvenance.importSource.gaps }
+          : { sha256: docProvenance.importSource.sha256 }),
+        conversion: docProvenance.importSource.conversion,
+        warnings: docProvenance.importSource.warnings,
+      } } : {}),
     };
     /* The screen's OPERABLE vocabulary from the shared surface-action registry
        (aliases applied), folded exactly as the shell folds it for railed
@@ -1152,113 +1838,34 @@ export function DocumentWorkbench({
        rather than sending an empty claim. */
     const screenActions = advertisedScreenActions('document-authoring');
     return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
-  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title]);
-  const ana = useAnaChat({
-    screenName: 'document-authoring',
-    projectId: projectIdForOutline,
-    authoringContext,
-    moduleContext,
-    /* Live Drive rides the shell's bridge (SurfaceViewProps.liveDrive): this
-       dock's turns carry the same opt-in and feed the same shell-level
-       apply/take-over machine as the rail's turns. */
-    liveDrive: liveDrive?.on,
-    onDriveEvent: liveDrive?.onDriveEvent,
-    onArtifactSaved: liveDrive?.onWorkSaved,
+  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance, docTemplateContext]);
+  editorModuleContextRef.current = moduleContext;
+  usePublishSurfaceContext('document-authoring', embedded ? null : {
+    summary: activeDoc ? 'A saved authoring document is open.' : 'Authoring documents for the open project.',
+    facts: { ...moduleContext, authoringContext },
+    availableActions: ['Review section', 'Review document', 'Reconcile project evidence', 'Prepare targeted fixes'],
   });
-  /* AnA's progress panel for this pane: one shared show/hide memory with
-     every other host (workDock.ts), toggled by the chip in the pane header,
-     and the background queue read only while shown. */
-  const dock = useProgressDock();
-  const anaWorkQueue = useAgentActivity(dock.open, ana.isStreaming);
-  const anaComposerRef = useRef<HTMLTextAreaElement>(null);
-  const anaReturnFocusRef = useRef<HTMLElement | null>(null);
-  const anaWasOpenRef = useRef(false);
-  /* The pane ships open, so the first paint is not an "open" the user asked
-     for: moving focus there would take the caret out of the document before
-     they have typed a word. Every later open still focuses the composer. */
-  const anaFirstPaintRef = useRef(true);
-
-  const rememberAnaTrigger = useCallback(() => {
-    const active = document.activeElement;
-    if (
-      active instanceof HTMLElement &&
-      !active.closest('[aria-label="AnA — document authoring"]')
-    ) {
-      anaReturnFocusRef.current = active;
-    }
-  }, []);
-
-  const openAna = useCallback(
-    (trigger?: HTMLElement | null) => {
-      if (trigger) {
-        anaReturnFocusRef.current = trigger;
-      } else {
-        rememberAnaTrigger();
-      }
-      setRail('ana');
-    },
-    [rememberAnaTrigger]
-  );
-
-  const closeAna = useCallback(() => {
-    setRail(null);
-  }, []);
-
-  /* Every ask on this surface goes here. It OPENS the pane first — the whole
-     defect was a question with no visible destination, so a silent send would
-     only move the silence. */
-  const askAna = useCallback(
-    (text: string) => {
-      const clean = (text ?? '').trim();
-      if (!clean) return;
-      /* A host that owns the conversation takes the ask; the pane is not
-         drawn there, so opening it would be a question with no destination —
-         the very defect this pane was built to end. */
-      if (onAsk) {
-        onAsk(clean);
-        return;
-      }
-      openAna();
-      void ana.send(clean);
-    },
-    [ana, openAna, onAsk]
-  );
-  /* "Ask AnA to draft" from an empty state: in a conversation host the
-     prompt lands in that composer; on the Authoring surface it opens a new
-     conversation seeded with the prompt, the same channel the Home composer
-     uses (window.C2C_CONVO → conversation-thread). */
+  oversightOriginRef.current = {
+    surfaceId: 'document-authoring', label: 'Authoring', moduleContext, authoringContext,
+    ...(activeDoc && programId ? { authoringDocument: {
+      docId: activeDoc.id, programId, ...(activeSection ? { sectionId: activeSection.id } : {}),
+    } } : {}),
+  };
+  /* Every editor ask uses the one conversation. Embedded hosts prefill it
+     in place; standalone asks wait for the same unsaved-work disposition. */
+  const askAna = useCallback((text: string) => {
+    const prompt = text.trim();
+    if (!prompt) return;
+    if (programSwitchHeld) { fireToast('Finish the project switch before opening a conversation.', 'error'); return; }
+    if (onAsk) onAsk(prompt, originWithSavedVersion(oversightOriginRef.current, confirmedSaveVersionRef.current));
+    else requestLeave({ kind: 'conversation', prompt });
+  }, [onAsk, requestLeave, programSwitchHeld, fireToast]);
   const askAnaToDraft = useCallback(() => {
-    const prompt = askAnaToDraftPrompt(programName(program));
-    if (onAsk) {
-      onAsk(prompt);
-      return;
-    }
-    openConversationWithPrompt(prompt, onNav);
-  }, [onAsk, onNav, program]);
+    askAna(askAnaToDraftPrompt(programName(program)));
+  }, [askAna, program]);
 
-  useEffect(() => {
-    if (rail !== 'ana') return;
-    const el = anaScrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [rail, ana.messages.length, ana.isStreaming]);
-
-  useEffect(() => {
-    if (rail !== 'ana') return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      /* An Escape something inside already handled — the section rename, the
-         governed sign-off dialog in this rail — is not also a request to close
-         AnA (2026-09-28; it closed both). The composer does not handle Escape,
-         so Escape there still closes the rail. */
-      if (event.key !== 'Escape' || event.defaultPrevented) return;
-      event.preventDefault();
-      closeAna();
-    };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
-  }, [closeAna, rail]);
-
-  /* 2026-09-28, coverage-gap sweep GA-4. Escape closed only the AnA rail
-     (above), and six rails had no close control, so the way out of History,
+  /* 2026-09-28, coverage-gap sweep GA-4: six record rails had no close control,
+     so the way out of History,
      Comments, Sources, Signatures, Audit or Exports was to find the toolbar
      toggle again. Every other rail now closes on Escape and from its own
      close button, and focus goes back to the toggle that opened it — the
@@ -1278,10 +1885,10 @@ export function DocumentWorkbench({
     if (rail !== null) return;
     const from = railReturnFocusRef.current;
     railReturnFocusRef.current = null;
-    if (from && from !== 'ana') railToggleRefs.current[from]?.focus({ preventScroll: true });
+    if (from) railToggleRefs.current[from]?.focus({ preventScroll: true });
   }, [rail]);
   useEffect(() => {
-    if (rail === null || rail === 'ana') return;
+    if (rail === null) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || event.defaultPrevented) return;
       if (escapeBelongsToInner(event.target)) return;
@@ -1298,21 +1905,6 @@ export function DocumentWorkbench({
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [closeRail, rail]);
 
-  useEffect(() => {
-    if (anaFirstPaintRef.current) {
-      anaFirstPaintRef.current = false;
-      anaWasOpenRef.current = rail === 'ana';
-      return;
-    }
-    if (rail === 'ana') {
-      anaComposerRef.current?.focus({ preventScroll: true });
-    } else if (anaWasOpenRef.current) {
-      anaReturnFocusRef.current?.focus({ preventScroll: true });
-      anaReturnFocusRef.current = null;
-    }
-    anaWasOpenRef.current = rail === 'ana';
-  }, [rail]);
-
   /* ── The document list is the host's ──
      The Authoring surface reads it (status filter, program scope) and the
      canvas passes exactly one document. What was `loadDocs` here is the
@@ -1326,18 +1918,31 @@ export function DocumentWorkbench({
      a document with none, or a failed read, gets no origin line rather than a
      guessed one. Doc-scoped like the other loaders. */
   const provenanceDocRef = useRef<string | null>(null);
+  const [docTemplateId, setDocTemplateId] = useState<string | null>(null);
   useEffect(() => {
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
+    setDocTemplateContext(null);
+    setDocTemplateId(null);
+    setDocFigures(null);
+    setDocClaims(null);
     setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
     if (!activeDocId) return;
     const wanted = activeDocId;
-    void readJson<{ document?: { provenance?: unknown }; access?: unknown }>(
+    void readJson<{ document?: { provenance?: unknown; template_id?: unknown }; access?: unknown }>(
       `/api/authoring/docs/${encodeURIComponent(wanted)}`,
     ).then(({ ok, body }) => {
       if (provenanceDocRef.current !== wanted) return;
-      if (!ok || !body?.document) return;
-      setDocProvenance(describeProvenance(body.document.provenance));
+      if (!ok || !body?.document) {
+        setDocTemplateContext({ documentId: wanted, templateId: null, templateSourceState: 'unavailable' });
+        return;
+      }
+      const template = readSavedTemplateContext(wanted, body.document);
+      setDocTemplateContext(template);
+      setDocProvenance(describeProvenance(body.document.provenance, { templateId: template.templateId }));
+      setDocTemplateId(typeof body.document.template_id === 'string' ? body.document.template_id : null);
+      setDocFigures(describeFigureCheck(body.document.provenance));
+      setDocClaims(describeClaimsCheck(body.document.provenance));
       /* GE-P-3: the same read carries the caller's access. */
       setDocAccess(readDocumentAccess(body.access));
     });
@@ -1355,13 +1960,16 @@ export function DocumentWorkbench({
   /** Document-level structural findings from GET …/sections. */
   const [structure, setStructure] = useState<SectionStructure | null>(null);
   const sectionsDocRef = useRef<string | null>(null);
-  const loadSections = useCallback(async (docId: string) => {
+  const sectionsReadSequence = useRef(0);
+  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void) => {
+    const scope = creationScopeRef.current;
+    const sequence = ++sectionsReadSequence.current;
     sectionsDocRef.current = docId;
     setSectionsState('loading');
     const { ok, body } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
     );
-    if (sectionsDocRef.current !== docId) return;
+    if (!aliveRef.current || creationScopeRef.current !== scope || sectionsDocRef.current !== docId || sectionsReadSequence.current !== sequence) return;
     if (!ok || !body) {
       setSectionsState('error');
       setSections([]);
@@ -1389,7 +1997,31 @@ export function DocumentWorkbench({
       if (landTarget) return target!.sectionId;
       return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
     });
+    afterRead?.(list);
   }, []);
+  sectionLoaderRef.current = loadSections;
+
+  const openCreatedSection = useCallback(async (section: { id: string; code: string }) => {
+    if (!activeDocId || programSwitchHeld) return;
+    const sequence = navigationSequence.current;
+    await loadSections(activeDocId, rows => {
+      if (navigationSequence.current === sequence && rows.some(row => row.id === section.id)) {
+        requestLeaveRef.current({ kind: 'section', id: section.id });
+      }
+    });
+  }, [activeDocId, programSwitchHeld, loadSections]);
+
+  const checkCreation = useCallback(async (kind: 'document' | 'section') => {
+    if (programSwitchHeld || openProgramRef.current !== programId) return;
+    if (kind === 'section') {
+      if (activeDocId) await loadSections(activeDocId);
+    } else if (pinnedDocId) {
+      requestLeaveRef.current({ kind: 'external-document', id: pinnedDocId });
+    } else {
+      onStatusChange?.('all');
+      await reloadDocs();
+    }
+  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, reloadDocs]);
 
   useEffect(() => {
     if (!activeDocId) {
@@ -1399,7 +2031,17 @@ export function DocumentWorkbench({
       return;
     }
     void loadSections(activeDocId);
-  }, [activeDocId, loadSections]);
+  }, [activeDocId, loadSections, creationScopeKey]);
+
+  /* F4: a click on an outline node with no section here starts it — created
+     through POST /api/authoring/sections, opened, the cursor put in it — but
+     only in the document that is the filing's editing copy. */
+  const startNode = useStartOutlineSection({
+    activeDoc, filing: filing.document, docs, sections, loadSections, requestLeave, fireToast,
+    activeSectionId, docPane: () => docScrollRef.current,
+  });
+  /* F22b: a market's editing copy, created bound to its document and opened. */
+  const marketCopy = useCreateMarketCopy({ programId, fireToast, openDocument: openPulledDocument });
 
   /* ── Reset editor bookkeeping on section switch ──
      The canonical editor remounts per section (key includes the id) and reads
@@ -1424,18 +2066,29 @@ export function DocumentWorkbench({
      a dep-change cleanup would cancel the in-flight search the moment the
      state write re-ran the effect. `aliveRef` guards only real unmount. */
   const targetAttemptedRef = useRef(false);
-  const aliveRef = useRef(true);
-  useEffect(() => {
-    aliveRef.current = true;
-    return () => {
-      aliveRef.current = false;
-    };
-  }, []);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
+  const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
+    const sequence = navigationSequence.current;
+    const reply = await readJson<{ sections?: AuthSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
+    if (!aliveRef.current || openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
+    const matches = (reply.body?.sections ?? []).filter(s => s.code.toLowerCase() === code.toLowerCase());
+    if (!reply.ok || matches.length !== 1) {
+      setTargetNotice(`The linked document's section ${code} could not be resolved uniquely. Nothing else was opened.`);
+      return;
+    }
+    setTargetNotice(null);
+    requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
+    setTreeScrollNonce(n => n + 1);
+  }, [programId]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
     if (!sectionOpenTarget || docsState === 'loading') return;
     const t = sectionOpenTarget;
+    if (t.programId && t.programId !== projectIdForOutline) {
+      targetAttemptedRef.current = true;
+      setTargetNotice(`Couldn’t open the linked document — it belongs to ${t.programTitle ?? 'a different program'}. Open that program and retry.`);
+      return;
+    }
     if (docsState === 'error') {
       /* A failed docs read must NOT spend the one attempt: the ref stays
          unlatched, so when the list does load (a retry, a status-filter
@@ -1461,6 +2114,10 @@ export function DocumentWorkbench({
       targetAttemptedRef.current = true;
       const linked = docs.find((d) => d.id === t.docId);
       if (linked) {
+        if (t.sectionCode) {
+          void openExactDocumentSection(linked.id, t.sectionCode);
+          return;
+        }
         // A docs-error notice posted moments ago must not outlive the open.
         setTargetNotice(null);
         /* Through the unsaved-work gate, not a bare setActiveDocId: a doc
@@ -1561,6 +2218,8 @@ export function DocumentWorkbench({
     loadSections,
     requestLeave,
     fireToast,
+    programId,
+    openExactDocumentSection,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -1813,10 +2472,15 @@ export function DocumentWorkbench({
     // wrong document is worse than a late one.
     auditDocRef.current = docId;
     setAuditState('loading');
-    const { ok, body } = await readJson<{ events?: AuthAuditEvent[] }>(
+    const { ok, status, body } = await readJson<{ events?: AuthAuditEvent[] }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/audit?limit=100`
     );
     if (auditDocRef.current !== docId) return;
+    if (status === 403) {
+      setAuditState('forbidden');
+      setAuditEvents([]);
+      return;
+    }
     if (!ok || !body) {
       setAuditState('error');
       setAuditEvents([]);
@@ -1896,26 +2560,6 @@ export function DocumentWorkbench({
     setSourcesState('ready');
   }, []);
 
-  /* ── The project's Data Room, for the picker ──
-     The project comes from window.C2C_PROJECT, the same runtime channel the
-     sibling surfaces use. With no project in context there is nothing to offer,
-     and the picker says so instead of listing every source in the org. */
-  const loadProjectSources = useCallback(async () => {
-    const pid = programId;
-    if (!pid) {
-      setProjectSources([]);
-      setProjectSourcesState('idle');
-      return;
-    }
-    setProjectSourcesState('loading');
-    const { ok, body } = await readJson<{ sources?: ProjectSource[] }>(
-      `/api/c2c/projects/${encodeURIComponent(pid)}/sources`
-    );
-    const read = ok && Array.isArray(body?.sources);
-    setProjectSources(read ? body!.sources! : []);
-    setProjectSourcesState(read ? 'ready' : 'error');
-  }, [programId]);
-
   /* ── Recompute the revision ledger server-side ──
      The server walks the section's revision chain oldest-first and recomputes
      every hash from stored content. "Verified" here is a computation result,
@@ -1937,6 +2581,10 @@ export function DocumentWorkbench({
   }, [activeSectionId]);
 
   useEffect(() => {
+    if (rail === 'sources') { loadProjectSources(); refreshCitationAdmission(); }
+  }, [rail, loadProjectSources, refreshCitationAdmission]);
+
+  useEffect(() => {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
     if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
@@ -1946,7 +2594,6 @@ export function DocumentWorkbench({
        list exist. The rail re-reads on open through the same callbacks. */
     if (activeSectionId) {
       void loadSources(activeSectionId);
-      void loadProjectSources();
     }
   }, [
     rail,
@@ -1956,51 +2603,17 @@ export function DocumentWorkbench({
     loadComments,
     loadAudit,
     loadSources,
-    loadProjectSources,
   ]);
 
-  /* ── The source library the editor's citation picker offers ──
-     The sources this section already cites, then the rest of the project's Data
-     Room. Merged rather than kept apart because a writer citing mid-sentence is
-     choosing a source, not choosing between two lists; de-duplicated on the
-     source's identity so a source already cited appears once.
-
-     Only the id and the title travel here. That is all the canvas needs — the
-     picker's label and the node's cached name — and the reference list a
-     reviewer reads is assembled server-side at export, where the source
-     registry's sponsor, date and identifier are available. Nothing here is
-     invented to fill a field the client cannot see. */
-  const citationLibrary = useMemo<CitationSource[]>(() => {
-    const out: CitationSource[] = [];
-    const seen = new Set<string>();
-    const add = (id: unknown, title: string | null | undefined) => {
-      if (id == null) return;
-      const key = String(id);
-      if (seen.has(key)) return;
-      seen.add(key);
-      out.push({ id: key, title: title ?? null });
-    };
-    for (const s of sources) if (s.source) add(s.source.id, s.source.title);
-    for (const p of projectSources) add(p.id, p.title);
-    return out;
-  }, [sources, projectSources]);
-
-  /* ── Where this section's citation numbering continues from ──
-     A citation's number is its position in the DOCUMENT's reference list, and
-     the editor holds one section. Without the sources cited above it, the canvas
-     would number from 1 and show "[1]" for a claim the filed document prints as
-     "[7]" — a plausible-looking wrong number, which is the failure the whole
-     design exists to remove. Read from the sections' SAVED content, in the
-     document's own order, which is what the export will read too. */
-  const precedingSourceIds = useMemo<string[]>(() => {
-    if (!activeSectionId) return [];
-    const ids: string[] = [];
-    for (const sec of sections) {
-      if (sec.id === activeSectionId) break;
-      ids.push(...citedSourceIdsInHtml(sec.content ?? ''));
-    }
-    return ids;
-  }, [sections, activeSectionId]);
+  /* The catalogue supplies metadata, while exact recorded associations admit
+     each section's references. Previous sections advance the same registry. */
+  const citationLibrary = useMemo<CitationSource[]>(() => admittedCitationSources(projectSources, citationAdmission.admissions, activeSectionId),
+    [projectSources, citationAdmission.admissions, activeSectionId]);
+  const precedingCitations = useMemo(() => admittedPrecedingSources(sections, activeSectionId, projectSources, citationAdmission.admissions),
+    [sections, activeSectionId, projectSources, citationAdmission.admissions]);
+  const citationChoices = useMemo(() => projectSources.filter(sourceCitationEligible).map(source => ({ id: String(source.id), title: source.title })), [projectSources]);
+  const citationResolutionState = projectSourcesState === 'error' || citationAdmission.state === 'error' ? 'error'
+    : projectSourcesState === 'loading' || citationAdmission.state === 'loading' ? 'loading' : 'ready';
 
   /* ── The document's tables and figures, either side of the open section ──
      A caption's number is the object's POSITION among the document's tables
@@ -2035,7 +2648,9 @@ export function DocumentWorkbench({
   /* ── Record that this section is drafted from a source ── */
   const citeSource = useCallback(
     async (sourceId: number) => {
-      if (!activeSectionId) return;
+      if (!activeSectionId || citationResolutionState !== 'ready'
+        || !projectSources.some(source => source.id === sourceId && sourceCitationEligible(source))) return false;
+      const scope = citationScope;
       try {
         const res = await apiRequest(
           'POST',
@@ -2045,22 +2660,25 @@ export function DocumentWorkbench({
           }
         );
         const json = await res.json().catch(() => null);
-        if (!res.ok) {
+        if (citationScopeRef.current !== scope) return false;
+        if (!res.ok || !json || json.success !== true) {
           fireToast(
             'Couldn’t record the source — ' +
               (serverMessage(json) ?? 'the server refused it') +
               '. Nothing was saved.',
             'error'
           );
-          return;
+          return false;
         }
+        const created = json.created === true;
         fireToast(
-          (json as any)?.created
+          created
             ? 'Source recorded — this section now cites it, with the source’s current checksum.'
-            : 'Source re-resolved against its current content.'
+            : 'This section already records the source; its original citation checksum is retained.'
         );
+        citationAdmission.admit(activeSectionId, sourceId);
         setPicking(false);
-        if ((json as any)?.created) {
+        if (created) {
           // Same staleness as the comment count: the section row is the only
           // source of the rail button's number.
           setSections(ss =>
@@ -2068,14 +2686,17 @@ export function DocumentWorkbench({
           );
         }
         void loadSources(activeSectionId);
+        return true;
       } catch (e) {
+        if (citationScopeRef.current !== scope) return false;
         fireToast(
           'Couldn’t record the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
+        return false;
       }
     },
-    [activeSectionId, fireToast, loadSources]
+    [activeSectionId, citationScope, citationResolutionState, projectSources, citationAdmission, fireToast, loadSources]
   );
 
   /* ── Stop citing a source ── */
@@ -2101,6 +2722,7 @@ export function DocumentWorkbench({
           fireToast('Couldn’t remove the citation — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
           return;
         }
+        citationAdmission.retry();
         fireToast('Citation removed.');
         void loadSources(activeSectionId);
       } catch (e) {
@@ -2110,7 +2732,7 @@ export function DocumentWorkbench({
         );
       }
     },
-    [activeSectionId, fireToast, loadSources]
+    [activeSectionId, fireToast, loadSources, citationAdmission]
   );
 
   /* ── Re-read the source and record what it says now ──
@@ -2241,18 +2863,22 @@ export function DocumentWorkbench({
 
       setSaving(true);
       try {
-        /* Authors whose insertions this reviewer accepted since the last save.
-           Accepting a suggestion strips the mark that named its author, so
-           without this the revision would attribute an AnA draft entirely to
-           whoever pressed accept. Read-and-clear: an author counts once, for
-           the save that carried their text in. */
-        const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        /* Authors whose insertions this reviewer accepted and no save has
+           carried in yet. Accepting a suggestion strips the mark that named
+           its author, so without this the revision would attribute an AnA
+           draft entirely to whoever pressed accept.
+           READ, not read-and-clear: the store is emptied by the save that
+           LANDS, below. It used to be emptied here, before the request — so
+           every refused save lost the attribution and the retry recorded AnA's
+           clauses as a human's. See `clearAcceptedContributions`. */
+        const acceptedAuthors = editorRef.current?.peekAcceptedAuthors?.() ?? [];
         /* And the accepted text itself, per insertion. The author list says
            WHO contributed to this save; this says WHICH words, so the lineage
            gate can record the machine's clauses as the machine's. The server
            keeps only machine authors it names — a colleague's accepted text is
-           simply the document. */
-        const acceptedMachineText = editorRef.current?.takeAcceptedInsertions?.() ?? [];
+           simply the document — and believes a claim only when the AnA turn
+           record it names holds the words. */
+        const acceptedMachineText = editorRef.current?.peekAcceptedInsertions?.() ?? [];
         /* The concurrency token. `updated_at` is the value THIS editor loaded;
            the server refuses with 409 SECTION_CHANGED if the row has moved
            since. Without it the PATCH is a blind last-write-wins, and two
@@ -2299,6 +2925,7 @@ export function DocumentWorkbench({
            `!res.ok` test here any more. */
         void json;
         const adopted = (json as { section?: AuthSection })?.section;
+        confirmedSaveVersionRef.current = { sectionId: activeSection.id, updatedAt: adopted?.updated_at ?? null };
         const persisted = adopted?.content ?? serialized;
         // Adopt the server row (revision counter, updated_at) into the tree.
         setSections(ss =>
@@ -2306,6 +2933,11 @@ export function DocumentWorkbench({
             s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
           )
         );
+        /* THE SAVE LANDED, so the accepted contributions it carried in are
+           spent. Not before the request: a refused save must leave the claim
+           for the retry, or the attribution is lost and the next save records
+           AnA's clauses as this person's own. */
+        editorRef.current?.clearAcceptedContributions?.();
         // This save just persisted whatever content reflects any decisions
         // made since the section was last saved — the unsaved-work guard's
         // count belongs to what is still unsaved, not to what this save
@@ -2316,9 +2948,11 @@ export function DocumentWorkbench({
            row's counter; the sentence now names what came back, and defers to
            the History rail when nothing did. */
         fireToast(
-          adopted && adopted.revision_count != null
+          (adopted && adopted.revision_count != null
             ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
-            : `Section saved (${activeSection.code}) — open History to confirm the revision.`
+            : `Section saved (${activeSection.code}) — open History to confirm the revision.`) +
+            filingCommitNote((json as { filing?: unknown } | null)?.filing) +
+            machineTextNote((json as { machineText?: unknown } | null)?.machineText)
         );
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
@@ -2328,6 +2962,8 @@ export function DocumentWorkbench({
            the rail re-reads on mount, so bumping while it is closed simply
            means it opens on the truth rather than on a cached verdict. */
         setExportsEpoch(e => e + 1);
+        // A saved content change invalidates earlier peer verdict bindings.
+        setTasksEpoch(e => e + 1);
       } catch (err) {
         /* THE AUTHOR IS TOLD WHY THE RECORD REFUSED THEIR WORK.
            `apiRequest` throws ApiRequestError for every non-2xx except 401, so
@@ -2380,9 +3016,15 @@ export function DocumentWorkbench({
      inserts the returned REFERENCE; section HTML never carries image bytes,
      so the revision ledger stays lean and the device cache stays inside its
      quota. Thrown reasons surface in the editor's own notice bar. */
+  const imageContextRef = useRef('');
+  imageContextRef.current = programSwitchHeld ? 'scope-switch-held' : `${activeDocId}:${activeSectionId}:${contentEpoch}:${programId}`;
   const uploadSectionImage = useCallback(async (file: File) => {
+    if (!activeDocId || !activeSectionId || docSealed || programSwitchHeld) throw new Error('Open an editable document in the current project before uploading an image.');
+    const context = `${activeDocId}:${activeSectionId}:${contentEpoch}:${programId}`;
+    const sequence = navigationSequence.current;
     const form = new FormData();
     form.append('file', file);
+    form.append('documentId', activeDocId);
     const token = getAuthToken();
     const res = await fetch('/api/authoring/images', {
       method: 'POST',
@@ -2394,6 +3036,9 @@ export function DocumentWorkbench({
       image?: { id?: unknown; url?: unknown };
       error?: unknown;
     } | null;
+    if (!aliveRef.current || sequence !== navigationSequence.current || context !== imageContextRef.current) {
+      throw new Error('The editor context changed. This image was not inserted.');
+    }
     if (!res.ok || typeof json?.image?.url !== 'string') {
       // The envelope's error goes through the canonical reader, which drops an
       // enum token or internal text before it reaches the thrown message a toast
@@ -2401,7 +3046,7 @@ export function DocumentWorkbench({
       throw new Error(serverMessage(json) ?? `the image store returned HTTP ${res.status}`);
     }
     return { id: String(json.image.id), url: json.image.url };
-  }, []);
+  }, [activeDocId, activeSectionId, docSealed, programSwitchHeld, contentEpoch, programId]);
 
   /* ── Track changes: the store's own column drives the suggestion engine ──
      The server column is flipped FIRST; the editor enables suggestion capture
@@ -3029,7 +3674,7 @@ export function DocumentWorkbench({
   // What the filing outline was built FROM, in the words the filer sees.
   // Null only when there is no governed document, in which case there is no
   // outline to qualify either.
-  const provenance = filing.document
+  const provenance = !unboundDraft && filing.document
     ? describeRulePackProvenance(filing.document.provenance)
     : null;
 
@@ -3039,10 +3684,10 @@ export function DocumentWorkbench({
       <aside className="ed-tree">
         <div className="ed-tree-h">
           <div className="ed-tree-t">
-            {filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
+            {unboundDraft ? activeDoc?.title : filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
           </div>
           <div className="ed-tree-m">
-            {filing.document
+            {unboundDraft ? 'Saved draft sections · unbound' : filing.document
               ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
                   filing.flat.length
                 } sections`
@@ -3056,14 +3701,15 @@ export function DocumentWorkbench({
           {/* A failed outline read used to degrade this pane, silently, to the
               flat document list — indistinguishable from a project with no
               rule pack. The failure and the wait are now said. */}
-          {filing.loading && (
+          {!unboundDraft && filing.loading && (
             <div role="status" className="scaf-note" style={{ padding: '4px 0' }}>Reading the governed filing outline…</div>
           )}
-          {filing.error && (
+          {!unboundDraft && filing.error && (
             <div className="scaf-note" role="alert" style={{ padding: '4px 0' }}>
               The governed filing outline could not be read — what is listed below is the document list, not the filing outline.
             </div>
           )}
+          {unboundDraft && <p className="scaf-note">Unbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.</p>}
           {onStatusChange && (
             <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
               {/* The Module select is gone. It defaulted every filing type to
@@ -3088,6 +3734,21 @@ export function DocumentWorkbench({
           )}
         </div>
 
+        {/* The project's filings: its home filing and each market added to it
+            (FILING_SPINE F22b), and from here, which one to open. */}
+        {!unboundDraft && !pinnedDocId && (
+          <FilingMarkets
+            home={filing.home}
+            markets={filing.markets}
+            marketsError={filing.marketsError}
+            shownId={filing.document?.id ?? null}
+            docs={docs}
+            onOpen={(id) => requestLeave({ kind: 'document', id })}
+            onCreate={(m) => void marketCopy.create(m)}
+            creatingId={marketCopy.creatingId}
+          />
+        )}
+
         {/* ── What the outline below was built FROM ──
             Until this shipped, a tree transcribed from 21 CFR 814.20(b) and a
             tree constructed by reasoning about a regulation with no enumerated
@@ -3110,7 +3771,7 @@ export function DocumentWorkbench({
             Derived from (doc_type × agency) via c2c_rule_packs, so a BLA shows
             its 71 nested sections and a 510(k) shows A/B/C/D/E. Nodes bind to
             the authored section that holds the text by code. */}
-        {filing.tree.length > 0 && (
+        {!unboundDraft && filing.tree.length > 0 && (
           <div
             className="ed-tree-scroll"
             style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}
@@ -3120,10 +3781,16 @@ export function DocumentWorkbench({
                  failed, so every node rendered dimmed, "not started in this
                  document yet", with its "required" chip and a "no draft yet"
                  toast on click — drafting-status claims produced by a read that
-                 had not happened. Unread is now its own state. */
-              const sectionsUnread = sectionsState !== 'ready';
-              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key);
+                 had not happened. Unread is now its own state — and so is
+                 "no document open", which read as "still being read" forever
+                 (QA 2026-10-08, walk 2, j4; ./outlineReadState.ts). */
+              const readState = outlineReadState({ activeDocId, docsState, sectionsState });
+              const sectionsUnread = readState !== 'ready';
+              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key, outlineKeys);
               const isActive = bound != null && bound.id === activeSectionId;
+              // F4: an unstarted node's tooltip, accessible name, disabled and
+              // busy state (spread last, so its title is the one shown).
+              const startProps = bound || sectionsUnread ? null : unstartedRowProps(startNode, node);
               return (
                 <button
                   key={node.key}
@@ -3131,20 +3798,14 @@ export function DocumentWorkbench({
                   data-active={isActive || undefined}
                   style={{ paddingLeft: 10 + node.depth * 12, opacity: bound || sectionsUnread ? 1 : 0.62 }}
                   title={
-                    sectionsUnread
-                      ? `${node.label} — this document’s sections have not been read yet`
-                      : bound
-                        ? `${node.label} — open`
-                        : `${node.label} — not started in this document yet`
+                    readState !== 'ready'
+                      ? unboundNodeTitle(node.label, readState)
+                      : `${node.label} — open`
                   }
+                  {...startProps}
                   onClick={() => {
-                    if (sectionsUnread) {
-                      fireToast(
-                        sectionsState === 'error'
-                          ? 'This document’s sections could not be read, so nothing is known about whether this part is drafted. Retry from the tree.'
-                          : 'This document’s sections are still being read.',
-                        'error'
-                      );
+                    if (readState !== 'ready') {
+                      fireToast(unboundNodeToast(node, readState), 'error');
                     } else if (bound) {
                       // The module rides with the navigation: a nav the guard
                       // holds must not move the create/export default to a
@@ -3156,10 +3817,9 @@ export function DocumentWorkbench({
                         module: m ? `M${m}` : undefined,
                       });
                     } else {
-                      fireToast(
-                        `${node.key} ${node.label} — no draft yet in this document.`,
-                        'error'
-                      );
+                      // F4: the click starts the section (a person's act),
+                      // or says why it cannot be started in this document.
+                      void startNode(node);
                     }
                   }}
                 >
@@ -3187,6 +3847,10 @@ export function DocumentWorkbench({
               );
             })}
           </div>
+        )}
+
+        {!unboundDraft && filing.document?.filing_scope === 'market' && (
+          <FilingGaps gaps={filing.gaps} agency={filing.document.agency} />
         )}
 
         {/* Why there is no outline, said plainly rather than as a blank pane.
@@ -3350,7 +4014,7 @@ export function DocumentWorkbench({
                 className="ed-back"
                 onClick={() => {
                   if (embedded) embedded.onBack();
-                  else if (returnTo) openConversationWithPrompt(null, onNav, returnTo.conversationId);
+                  else if (returnTo && !programSwitchHeld) openConversationWithPrompt(null, onNav, returnTo.conversationId);
                 }}
                 data-testid="workbench-back"
               >
@@ -3365,7 +4029,7 @@ export function DocumentWorkbench({
                 <span className="sep" aria-hidden="true">›</span>
               </>
             )}
-            <span className="sep-first">{activeDoc?.module ?? 'eCTD'}</span>
+            <span className="sep-first">{activeDoc?.module ?? (activeDoc ? (activeDoc.c2c_document_id ? 'Unassigned module' : 'Unbound draft') : 'eCTD')}</span>
             <span className="sep" aria-hidden="true">›</span>
             <span className="doc-title" title={activeDoc?.title ?? undefined}>
               {activeDoc?.title ?? 'No document'}
@@ -3377,29 +4041,133 @@ export function DocumentWorkbench({
               </>
             )}
           </div>
+          {/* The governed acts — the reason for change, Save, lock / freeze /
+              e-sign, Place into filing — are a group of their own that wraps
+              and is never clipped. They sat at the far end of the panel
+              scroller below, past its edge at 1440px and at 390px, so an
+              author could not see Save or E-sign without scrolling a strip
+              that did not look scrollable (QA 2026-10-08, walk 2, j5). */}
+          <div className="ed-doc-commit" role="group" aria-label="Save and sign">
+            {/* Reason for change, stated once per section and carried on every
+                save of it. Inline beside Save rather than a dialog: there is no
+                autosave here, but Save and ⌘S each fire many times while
+                working through a section, and a modal on each would be the
+                friction the regulation does not ask for. */}
+            {/* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
+                placeholder, gone after one keystroke, and why Save stayed
+                inert was a `title` on a disabled button, which a keyboard
+                never reaches. The field is now aria-required, and the rule is
+                a persistent note both the field and Save are described by —
+                the ProtocolDevSection `pde-sec-state` pattern. */}
+            {dirty && !docSealed && (
+              <>
+                <input
+                  className="de-input"
+                  style={{ height: 30, width: 260 }}
+                  value={changeReason}
+                  onChange={e => setChangeReason(e.target.value)}
+                  placeholder="Why this changed (at least 8 characters)"
+                  aria-label="Reason for change"
+                  aria-required="true"
+                  aria-describedby={reasonNoteId}
+                  data-testid="change-reason"
+                />
+                <span
+                  id={reasonNoteId}
+                  aria-live="polite"
+                  style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 220 }}
+                  data-testid="change-reason-note"
+                >
+                  {changeReason.trim().length < 8
+                    ? 'Required to save: at least 8 characters, recorded with the revision.'
+                    : 'Recorded with the revision.'}
+                </span>
+              </>
+            )}
+            <button
+              className="btn primary"
+              style={{ height: 30 }}
+              onClick={() => void editorRef.current?.save()}
+              aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
+              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
+              title={
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : !activeSection
+                    ? 'Open a section to edit and save it.'
+                    : dirty && changeReason.trim().length < 8
+                      ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
+                      : undefined
+              }
+              data-testid="save-section"
+            >
+              {/* "Saved" is a claim about a section's save state. It fell through
+                  to that word whenever nothing was dirty — including with no
+                  document or section open ("eCTD › No document" … "Saved"). */}
+              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
+            </button>
+            {activeDoc && (
+              <AuthoringFilingBar
+                key={activeDoc.id}
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                docStatus={activeDoc.status}
+                onChanged={() => {
+                  void loadDocs();
+                  if (activeDocId) void loadSections(activeDocId);
+                }}
+                fireToast={fireToast}
+                signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+                freezeRefusal={actRefusal(docAccess.freeze)}
+                /* A Reviewer grant may sign the review and nothing else: the
+                   control stays open for that one meaning (QA 2026-10-08, j4). */
+                esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
+                reviewOnly={esignReviewOnly(docAccess)}
+                workflowOrigin={docProvenance?.importSource && isWorkflowImportOrigin(docProvenance.importSource) ? docProvenance.importSource : undefined}
+                docRevision={`${activeDoc.updated_at ?? ''}:${contentEpoch}:${sections.map(s => s.updated_at ?? '').join('|')}`}
+              />
+            )}
+            {/* The authoring → filing seam: place the OPEN document into an
+                eCTD sequence of the canonical submission core. Beside the
+                freeze/e-sign bar because it is the same family of act — the
+                document leaving the editor for the governed record. */}
+            {activeDoc && (
+              <AuthoringPlaceIntoFiling
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                activeSectionCode={activeSection?.code ?? null}
+                /* The whole document is filed (QA 2026-10-08, j4), so the dialog
+                   files it at its own code; only a read it can trust. */
+                sectionCodes={sectionsState === 'ready' ? sections.map(s => s.code) : undefined}
+                /* The filing copy takes this state when placed (F17). */
+                docStatus={activeDoc.status ?? null}
+                refusal={actRefusal(docAccess.placeIntoFiling)}
+                dirty={dirty}
+                onNav={onNav}
+                fireToast={fireToast}
+              />
+            )}
+          </div>
           <div className="ed-doc-actions">
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
               docStatus={activeDoc?.status ?? null}
               module={module}
+              programId={programId}
+              programSwitchHeld={programSwitchHeld}
+              noticeContainer={creationNoticeContainer}
               fireToast={fireToast}
-              onDocCreated={d => {
-                // Adopt the server's document: refetch the tree and open it.
-                // Through the leave guard — creating a document is a deliberate
-                // act, but it must not be the thing that discards the paragraph
-                // the author had half-written in the section they were in.
-                void loadDocs().then(() => requestLeave({ kind: 'document', id: d.id }));
-              }}
-              onSectionCreated={s => {
-                if (activeDocId)
-                  void loadSections(activeDocId).then(() =>
-                    requestLeave({ kind: 'section', id: s.id })
-                  );
-              }}
-              /* A successful export re-baselines this document, so the Exports
+              onDocCreated={d => openPulledDocument(d.id)}
+              onSectionCreated={openCreatedSection}
+              onCheckCreation={checkCreation}
+              /* A confirmed export record re-baselines this document, so the Exports
                  rail's "changed since the last export" verdict is now stale. */
               onExported={() => setExportsEpoch(e => e + 1)}
+              onCheckExports={() => {
+                setExportsEpoch(e => e + 1);
+                setRail('exports');
+              }}
             />
             {/* Section / Document. An author writes a section but SHIPS a
                 document, and until now the whole document was never on screen
@@ -3408,7 +4176,7 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setViewMode('section')}
+                onClick={() => requestLeave({ kind: 'view', mode: 'section' })}
                 data-active={viewMode === 'section' || undefined}
                 aria-pressed={viewMode === 'section'}
                 title="Edit one section"
@@ -3418,7 +4186,7 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setViewMode('document')}
+                onClick={() => requestLeave({ kind: 'view', mode: 'document' })}
                 data-active={viewMode === 'document' || undefined}
                 aria-pressed={viewMode === 'document'}
                 title="Read the whole document"
@@ -3431,10 +4199,9 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={event => (rail === 'ana' ? closeAna() : openAna(event.currentTarget))}
-                data-active={rail === 'ana' || undefined}
+                onClick={() => requestLeave({ kind: 'conversation', prompt: '' })}
               >
-                {I.sparkles} AnA{ana.messages.length > 0 ? ' ' + ana.messages.length : ''}
+                {I.sparkles} AnA
               </button>
             )}
             <button
@@ -3537,18 +4304,33 @@ export function DocumentWorkbench({
             >
               {I.checkSquare} Tasks
             </button>
+            <button
+              className="btn ghost"
+              ref={el => { railToggleRefs.current.access = el; }}
+              onClick={() => setRail(rail === 'access' ? null : 'access')}
+              data-active={rail === 'access' || undefined}
+              data-testid="access-rail-open"
+            >
+              {I.shieldCheck} Access
+            </button>
             {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
-                will refuse this caller — the reason is the text beside it. */}
+                will refuse this caller — the reason is the text beside it.
+                2026-10-08: "Assign review" created a task the Review board
+                never reads. Send for review records the review request the
+                board lists, and each reviewer's task with it, as one act. The
+                gate is that act's: the task create's role check, then the
+                request's Owner or Author grant on a document that is not
+                sealed (wave 2D, authoring.router.ts callerDocumentAccess). */}
             {activeDoc && (
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setAssignReviewOpen(true)}
+                onClick={() => setSendForReviewOpen(true)}
                 disabled={!!actRefusal(docAccess.assignReview)}
                 aria-describedby={actRefusal(docAccess.assignReview) ? assignRefusalId : undefined}
-                data-testid="assign-review-open"
+                data-testid="send-for-review-open"
               >
-                {I.user} Assign review
+                {I.send} Send for review
               </button>
             )}
             {activeDoc && actRefusal(docAccess.assignReview) && (
@@ -3580,64 +4362,6 @@ export function DocumentWorkbench({
                 {actRefusal(docAccess.fileToVault)}
               </span>
             )}
-            {/* Reason for change, stated once per section and carried on every
-                save of it. Inline beside Save rather than a dialog: there is no
-                autosave here, but Save and ⌘S each fire many times while
-                working through a section, and a modal on each would be the
-                friction the regulation does not ask for. */}
-            {/* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
-                placeholder, gone after one keystroke, and why Save stayed
-                inert was a `title` on a disabled button, which a keyboard
-                never reaches. The field is now aria-required, and the rule is
-                a persistent note both the field and Save are described by —
-                the ProtocolDevSection `pde-sec-state` pattern. */}
-            {dirty && !docSealed && (
-              <>
-                <input
-                  className="de-input"
-                  style={{ height: 30, width: 260 }}
-                  value={changeReason}
-                  onChange={e => setChangeReason(e.target.value)}
-                  placeholder="Why this changed (at least 8 characters)"
-                  aria-label="Reason for change"
-                  aria-required="true"
-                  aria-describedby={reasonNoteId}
-                  data-testid="change-reason"
-                />
-                <span
-                  id={reasonNoteId}
-                  aria-live="polite"
-                  style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 220 }}
-                  data-testid="change-reason-note"
-                >
-                  {changeReason.trim().length < 8
-                    ? 'Required to save: at least 8 characters, recorded with the revision.'
-                    : 'Recorded with the revision.'}
-                </span>
-              </>
-            )}
-            <button
-              className="btn primary"
-              style={{ height: 30 }}
-              onClick={() => void editorRef.current?.save()}
-              aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
-              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
-              title={
-                docSealed
-                  ? 'This document is frozen — its content cannot be edited.'
-                  : !activeSection
-                    ? 'Open a section to edit and save it.'
-                    : dirty && changeReason.trim().length < 8
-                      ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
-                      : undefined
-              }
-              data-testid="save-section"
-            >
-              {/* "Saved" is a claim about a section's save state. It fell through
-                  to that word whenever nothing was dirty — including with no
-                  document or section open ("eCTD › No document" … "Saved"). */}
-              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
-            </button>
             <button
               className="btn ghost"
               style={{ height: 30 }}
@@ -3689,37 +4413,10 @@ export function DocumentWorkbench({
                 fireToast={fireToast}
               />
             )}
-            {activeDoc && (
-              <AuthoringFilingBar
-                docId={activeDoc.id}
-                docTitle={activeDoc.title}
-                docStatus={activeDoc.status}
-                onChanged={() => {
-                  void loadDocs();
-                  if (activeDocId) void loadSections(activeDocId);
-                }}
-                fireToast={fireToast}
-                signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
-                freezeRefusal={actRefusal(docAccess.freeze)}
-                esignRefusal={actRefusal(docAccess.esign)}
-              />
-            )}
-            {/* The authoring → filing seam: place the OPEN document into an
-                eCTD sequence of the canonical submission core. Beside the
-                freeze/e-sign bar because it is the same family of act — the
-                document leaving the editor for the governed record. */}
-            {activeDoc && (
-              <AuthoringPlaceIntoFiling
-                docId={activeDoc.id}
-                docTitle={activeDoc.title}
-                activeSectionCode={activeSection?.code ?? null}
-                dirty={dirty}
-                onNav={onNav}
-                fireToast={fireToast}
-              />
-            )}
           </div>
         </header>
+        <div ref={setCreationNoticeContainer} data-testid="authoring-creation-notices" />
+        <AuthoringOversightActions projectOpen={!!programId} sectionOpen={!!activeSection} documentOpen={!!activeDocId} dirty={dirty} onAsk={askAna} />
 
         {/* ── The deep-link's honest miss ──
             A workbench click named a section this canvas could not open. The
@@ -3755,13 +4452,16 @@ export function DocumentWorkbench({
                  save records. Click a section to go and edit it. */
               <div className="ed-full" aria-label={`${activeDoc.title} — full document`}>
                 <div className="ed-full-mast">
-                  <div className="ed-mast-num">{activeDoc.module}</div>
+                  <div className="ed-mast-num">{activeDoc.module ?? (activeDoc.c2c_document_id ? 'Unassigned module' : 'Unbound draft')}</div>
                   <h1 className="ed-mast-t">{activeDoc.title}</h1>
                   {docProvenance && (
                     <div className="ed-provline" data-source={docProvenance.source} data-testid="doc-provenance">
                       {docProvenance.line}
                     </div>
                   )}
+                  <ImportSourceNotice source={docProvenance?.importSource} />
+                  {docFigures && <DraftFigureLine check={docFigures} />}
+                  {docClaims && <DraftClaimsLine check={docClaims} />}
                   <div className="ed-mast-meta">
                     {/* "0 sections" printed over a failed or in-flight read,
                         directly above a body that said the read failed. */}
@@ -3810,8 +4510,7 @@ export function DocumentWorkbench({
                             className="btn ghost ed-full-edit"
                             style={{ height: 26 }}
                             onClick={() => {
-                              setViewMode('section');
-                              requestLeave({ kind: 'section', id: sec.id });
+                              requestLeave({ kind: 'section', id: sec.id, mode: 'section' });
                             }}
                           >
                             {I.penLine} Edit
@@ -3968,6 +4667,10 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  <ImportSourceNotice source={docProvenance?.importSource} />
+                  {docFigures && <DraftFigureLine check={docFigures} />}
+                  {docClaims && <DraftClaimsLine check={docClaims} />}
+                  {docTemplateId && <TemplateGuidance key={activeSection.id} sectionId={activeSection.id} />}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
@@ -4006,7 +4709,7 @@ export function DocumentWorkbench({
                       </b>
                       <span style={{ flex: 1 }} />
                       {dirty && (
-                        <span style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}>
+                        <span style={{ fontSize: 11, color: 'var(--warning)' }}>
                           checked the last saved content — unsaved edits are not in it
                         </span>
                       )}
@@ -4057,6 +4760,157 @@ export function DocumentWorkbench({
                             </span>
                           </div>
                         ))
+                    )}
+                    {/* ── What the record says this section must contain ──
+                        The scan's own expectations covered five CMC codes, so
+                        an author drafting 2.5 or 2.7.3 was shown nothing about
+                        required content while the record has carried it all
+                        along. This is the record's statement, read-only: the
+                        elements are descriptions, the scan does not test them,
+                        and the panel says so rather than implying a pass. A
+                        code the record does not index reads as the resolver's
+                        reason — never as an empty list, which would say
+                        "nothing required". Rendered only when the server sent
+                        it; honest silence otherwise. */}
+                    {check.record_requirements && (
+                      <div
+                        data-testid="section-check-record"
+                        style={{
+                          display: 'grid',
+                          gap: 4,
+                          marginTop: 2,
+                          paddingTop: 6,
+                          borderTop: '1px solid var(--border)',
+                          fontSize: 12,
+                        }}
+                      >
+                        {check.record_requirements.indexed === false ? (
+                          <span>
+                            <b style={{ fontWeight: 600 }}>Required content — not indexed.</b>{' '}
+                            {check.record_requirements.reason ??
+                              'The record has no entry for this section code.'}
+                          </span>
+                        ) : (
+                          <>
+                            <span>
+                              <b style={{ fontWeight: 600 }}>
+                                The record on {check.record_requirements.answered_by ?? activeSection.code}
+                                {check.record_requirements.title
+                                  ? ` — ${check.record_requirements.title}`
+                                  : ''}
+                              </b>
+                              {check.record_requirements.note ? ` ${check.record_requirements.note}` : ''}
+                            </span>
+                            {check.record_requirements.source === 'ancestor' && (
+                              <span style={{ opacity: 0.75 }}>
+                                These are the requirements of the containing section{' '}
+                                {check.record_requirements.answered_by};{' '}
+                                {check.section_code ?? activeSection.code} has no entry of its own in
+                                the record.
+                              </span>
+                            )}
+                            {(check.record_requirements.elements ?? []).length > 0 && (
+                              <>
+                                <span style={{ opacity: 0.75 }}>It must contain:</span>
+                                <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                                  {(check.record_requirements.elements ?? []).map((el, i) => (
+                                    <li key={i}>{el}</li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                            {(check.record_requirements.contains ?? []).length > 0 && (
+                              <>
+                                <span style={{ opacity: 0.75 }}>
+                                  The sections it contains, each with its own requirements:
+                                </span>
+                                <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                                  {(check.record_requirements.contains ?? []).map((c, i) => (
+                                    <li key={i}>
+                                      {c.code}
+                                      {c.title ? ` ${c.title}` : ''}
+                                    </li>
+                                  ))}
+                                </ul>
+                                {/* The server caps the listing; say what it
+                                    withheld rather than show a short list. */}
+                                {(check.record_requirements.contains_omitted ?? 0) > 0 && (
+                                  <span style={{ opacity: 0.75 }}>
+                                    and {check.record_requirements.contains_omitted} more.
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            {check.record_requirements.basis && (
+                              <span style={{ opacity: 0.75 }}>
+                                Basis: {check.record_requirements.basis}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                    {/* Whether the whole document agrees with itself: the same figure, in the same
+                        frame, stated twice in two sections with two different values. Rendered only
+                        when the server sent it — a failed read of the sections is not "it agrees" —
+                        and it never says the figures are consistent, only that none of the pairs it
+                        compared disagree, with the count it compared beside it. */}
+                    {check.document_figure_consistency && (
+                      <div
+                        data-testid="section-check-consistency"
+                        style={{
+                          display: 'grid',
+                          gap: 4,
+                          marginTop: 2,
+                          paddingTop: 6,
+                          borderTop: '1px solid var(--border)',
+                          fontSize: 12,
+                        }}
+                      >
+                        {check.document_figure_consistency.conflicts > 0 ? (
+                          <>
+                            <span>
+                              <b style={{ fontWeight: 600 }}>
+                                {check.document_figure_consistency.conflicts} of{' '}
+                                {check.document_figure_consistency.compared} figure pair(s) in this
+                                document disagree with each other.
+                              </b>{' '}
+                              Each pair states the same thing twice, in two sections, with two
+                              different values.
+                            </span>
+                            <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                              {(check.document_figure_consistency.comparisons ?? [])
+                                .filter((c) => c.outcome === 'conflict')
+                                .map((c, i) => (
+                                  <li key={i}>
+                                    <strong>{(c.a?.values ?? []).join(', ')}</strong>
+                                    {c.a?.section ? ` in ${c.a.section}` : ''}
+                                    {' vs '}
+                                    <strong>{(c.b?.values ?? []).join(', ')}</strong>
+                                    {c.b?.section ? ` in ${c.b.section}` : ''}
+                                    {c.measure ? ` — ${c.measure}` : ''}
+                                    {c.arm ? ` (${c.arm})` : ''}
+                                  </li>
+                                ))}
+                            </ul>
+                            {check.document_figure_consistency.truncated && (
+                              <span style={{ opacity: 0.75 }}>
+                                More were found than the panel lists.
+                              </span>
+                            )}
+                          </>
+                        ) : check.document_figure_consistency.compared > 0 ? (
+                          <span>
+                            {check.document_figure_consistency.compared} figure pair(s) in this
+                            document were set against each other and none disagree.
+                          </span>
+                        ) : (
+                          <span>
+                            No figure in this document could be set against another in a different
+                            section, so nothing was compared.
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -4174,6 +5028,7 @@ export function DocumentWorkbench({
                       },
                       onToggle: toggleTrackChanges,
                       onResolve: recordTrackedChangeDecision,
+                      admitsAnaSource,
                     }}
                     commentsApi={{
                       onCreate: requestAnchoredComment,
@@ -4220,20 +5075,14 @@ export function DocumentWorkbench({
                        recorded lineage cannot drift apart. */
                     citationsApi={{
                       sources: citationLibrary,
-                      precedingSourceIds,
-                      onCite: (sourceId: string) => {
-                        /* Only when the link is not already recorded: citing
-                           the same source a second time in the prose is not a
-                           new fact about this section's lineage, and re-posting
-                           it would announce a record that did not change. */
-                        const already = sources.some(
-                          s => s.source && String(s.source.id) === sourceId
-                        );
-                        const numeric = Number(sourceId);
-                        if (!already && Number.isInteger(numeric) && numeric > 0) {
-                          void citeSource(numeric);
-                        }
-                      },
+                      choices: citationChoices,
+                      precedingSources: precedingCitations.sources,
+                      precedingSourceIds: precedingCitations.ids,
+                      resolutionState: citationResolutionState,
+                      resolutionError: projectCatalogue.error ?? citationAdmission.error,
+                      onRetry: () => { loadProjectSources(); citationAdmission.retry(); },
+                      scopeKey: citationScope,
+                      onCite: sourceId => citeSource(Number(sourceId)),
                     }}
                     collab={
                       liveCoedit && activeDoc
@@ -4250,254 +5099,6 @@ export function DocumentWorkbench({
           </div>
         </div>
       </section>
-
-      {/* ── Right: AnA — this surface's own conversation ──
-          The editor holds the AnA rail's column (see the header note), so this
-          is where an ask on this surface is answered. Real streamed turns from
-          /api/ana-ri/stream grounded on the open document and section; nothing
-          is composed locally, and a governed command renders its real §11.50
-          sign-off here rather than in a rail this screen does not draw. */}
-      {rail === 'ana' && !embedded && (
-        <aside className="ed-comments" aria-label="AnA — document authoring">
-          <div className="ed-comments-h ed-comments-h-row">
-            <span>
-              AnA
-              {activeSection
-                ? ` · ${activeSection.code}`
-                : activeDoc
-                ? ` · ${activeDoc.title}`
-                : ''}
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <AnaProgressChip
-                ref={dock.chipRef}
-                messages={ana.messages}
-                streaming={ana.isStreaming}
-                open={dock.open}
-                onToggle={dock.toggle}
-                controls={dock.panelId}
-              />
-              <button
-                type="button"
-                className="ed-comments-close"
-                aria-label="Close AnA panel"
-                title="Close AnA panel"
-                onClick={closeAna}
-              >
-                {I.close}
-              </button>
-            </span>
-          </div>
-          {/* AnA's progress — the same panel the shell rail mounts — above the
-              conversation, so the work is seen before the words. */}
-          {dock.open && (
-            <div className="ana-work-host">
-              <AnaWorkPanel
-                id={dock.panelId}
-                messages={ana.messages}
-                streaming={ana.isStreaming}
-                runStatus={ana.runStatus}
-                pendingSteers={ana.pendingSteers}
-                queue={anaWorkQueue}
-                context={{
-                  project: shellProgramName(),
-                  module: 'Document authoring',
-                  surface: activeSection
-                    ? `Section ${activeSection.code}`
-                    : activeDoc
-                      ? activeDoc.title
-                      : null,
-                }}
-              />
-            </div>
-          )}
-          {/* A labelled region, NOT a live one. As a polite `log` marked busy
-              while streaming, it made the whole transcript a live region and
-              held every announcement inside it until the turn ended — the
-              per-turn record's own polite region (AnaActivity) included, so
-              "Searching the literature…" was never heard while it happened.
-              Status is announced by that narrow region alone, the same
-              arrangement as the rail (Shell.tsx). */}
-          <div
-            ref={anaScrollRef}
-            role="region"
-            aria-label="AnA conversation"
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
-              padding: '10px 12px',
-              display: 'grid',
-              gap: 12,
-              alignContent: 'start',
-            }}
-          >
-            {ana.messages.length === 0 ? (
-              <EmptyState
-                icon={I.sparkles}
-                title="Ask AnA about this section"
-                hint={
-                  activeSection
-                    ? `Draft, tighten or cite ${activeSection.code}. AnA answers here, grounded on the saved document — it proposes; you accept and save, and every save records an auditable revision.`
-                    : 'Select a section, then ask AnA to draft, tighten or cite it. AnA answers here, grounded on the saved document.'
-                }
-              />
-            ) : (
-              ana.messages.map((m, i) =>
-                m.role === 'user' ? (
-                  <div key={i} className="cmt">
-                    <div className="cmt-meta">
-                      <b>You</b>
-                    </div>
-                    <div className="cmt-body">{m.text}</div>
-                  </div>
-                ) : (
-                  <div key={i} className="cmt">
-                    <div className="cmt-meta">
-                      <b>AnA</b>
-                    </div>
-                    {/* Her work first — while she works, its live phase is the
-                        waiting state, so this pane no longer prints the same
-                        phase a second time under it — then the answer. */}
-                    <AnaActivity {...activityPropsFor(m)} />
-                    {m.text && <AnaMarkdown text={m.text} />}
-                    {/* The grounding verdict and her output — with the record
-                        above, the same three every host renders. This pane had
-                        its own copy of the record, which showed the raw tool
-                        payload and a raw lens code, and listed prompt-module
-                        ids as "Context used". */}
-                    <AnaGrounding evidence={m.evidence} />
-                    {Array.isArray(m.warnings) && m.warnings.length > 0 && (
-                      <div className="ana-msg-warnings" role="note">
-                        {m.warnings.map((w, wi) => (
-                          <div key={wi} className="ana-msg-warning">
-                            <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
-                            <span>{w}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <AnaOutputCards message={m} />
-                    {(m.suggestedActions ?? []).length > 0 && (
-                      <div className="ana-next-actions">
-                        <div className="ana-next-label">Next actions</div>
-                        <div className="ana-next-list">
-                          {(m.suggestedActions ?? []).map((action) => (
-                            <button
-                              key={action}
-                              type="button"
-                              className="ana-next-action"
-                              disabled={m.streaming}
-                              title={
-                                m.streaming ? 'Available after AnA finishes this response' : `Ask AnA: ${action}`
-                              }
-                              onClick={() => askAna(action)}
-                            >
-                              {I.arrowRight}
-                              <span>{action}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {/* AI output enters the record ONLY as an attributed
-                        in-text suggestion — struck-in green, pending until a
-                        human accepts or rejects each edit in the canvas.
-                        Never as settled text. */}
-                    {!m.streaming && m.text && activeSection && (
-                      <div style={{ marginTop: 6 }}>
-                        <button
-                          className="nda-open"
-                          onClick={() => {
-                            const ok = editorRef.current?.insertSuggestion(m.text, {
-                              id: 'ana',
-                              name: 'AnA (AI draft)',
-                              /* The turn that wrote this text, so accepting or
-                                 rejecting it later names that turn's record. */
-                              ...(m.turnRecord?.status === 'recorded' ? { sourceRecord: m.turnRecord.id } : {}),
-                            });
-                            if (ok) {
-                              fireToast(
-                                'Draft inserted as tracked suggestions — review each edit in the canvas, then save.'
-                              );
-                            } else {
-                              fireToast(
-                                'Couldn’t insert — the canvas is not editable right now.',
-                                'error'
-                              );
-                            }
-                          }}
-                        >
-                          {I.penLine} Insert into {activeSection.code} as tracked suggestion
-                        </button>
-                      </div>
-                    )}
-                    {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                        <AnaActionChips
-                          actions={m.executedActions}
-                          onNav={onNav}
-                          onStartDemo={liveDrive?.onStartDemo}
-                          inertClassName="rd-chip tone-ok"
-                        />
-                      </div>
-                    )}
-                    {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
-                      <AuthoringSignoffs signoffs={m.pendingSignoffs} />
-                    )}
-                  </div>
-                )
-              )
-            )}
-          </div>
-          <div style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
-            <textarea
-              className="c2c-input"
-              ref={anaComposerRef}
-              aria-label={activeSection ? `Ask AnA about ${activeSection.code}` : 'Ask AnA'}
-              value={anaDraft}
-              onChange={e => setAnaDraft(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  const t = anaDraft.trim();
-                  if (!t || ana.isStreaming) return;
-                  setAnaDraft('');
-                  askAna(t);
-                }
-              }}
-              placeholder={activeSection ? `Ask about ${activeSection.code}…` : 'Ask AnA…'}
-              style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
-            />
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 8,
-                marginTop: 6,
-              }}
-            >
-              <span style={{ fontSize: 11, opacity: 0.7 }}>
-                {I.lock} AnA proposes; you accept and save.
-              </span>
-              <button
-                className="btn primary"
-                style={{ height: 28 }}
-                disabled={!anaDraft.trim() || ana.isStreaming}
-                onClick={() => {
-                  const t = anaDraft.trim();
-                  if (!t) return;
-                  setAnaDraft('');
-                  askAna(t);
-                }}
-              >
-                {ana.isStreaming ? 'Answering…' : 'Send'}
-              </button>
-            </div>
-          </div>
-        </aside>
-      )}
 
       {/* ── Right: history / comments rail ── */}
       {rail === 'history' && (
@@ -4722,6 +5323,12 @@ export function DocumentWorkbench({
               title="No document selected"
               hint="Select a document to review its audit trail."
             />
+          ) : auditState === 'forbidden' ? (
+            <EmptyState
+              icon={I.lock}
+              title="No access to this document’s record"
+              hint="Reading it needs access to the document, or an audit role in the organization. Ask the document’s owner or your quality lead."
+            />
           ) : auditState === 'error' ? (
             <EmptyState
               tone="error"
@@ -4768,7 +5375,15 @@ export function DocumentWorkbench({
                       {ev.actor ?? 'Unknown actor'}
                     </b>
                     {ev.actor_role && <span className="cmt-role">{ev.actor_role}</span>}
+                    {/* The instant, not only "3 h ago". This rail now prints
+                        as-of claims — whether a model was allowed to write
+                        regulatory text, how the turn ended — and relTime caps
+                        at "N d ago", so an inspector diffing a screenshot
+                        against the trail had no date to diff against. The
+                        signatures and exports rails already use the governed
+                        stamp; this was the Part 11 rail that did not. */}
                     <span className="cmt-when">· {relTime(ev.created_at)}</span>
+                    <GovernedTimestamp value={ev.created_at} layout="inline" className="cmt-when" />
                   </div>
                   <div className="cmt-body" style={{ display: 'grid', gap: 3 }}>
                     <span>
@@ -4800,15 +5415,20 @@ export function DocumentWorkbench({
                         </span>
                       ) : null;
                     })()}
+                    <AuditSourceLine metadata={ev.metadata} />
                     {ev.change_reason && (
                       <span style={{ fontSize: 12, opacity: 0.85 }}>{ev.change_reason}</span>
                     )}
                     {(ev.content_hash_before || ev.content_hash_after) && (
                       <span
+                        /* --text-400 rather than opacity: text-200 at .7 over
+                           the rail composites to 4.36:1, just under AA at this
+                           size, and the token keeps its own contrast in both
+                           themes instead of depending on what is behind it. */
                         style={{
                           fontFamily: 'var(--font-mono, monospace)',
                           fontSize: 10.5,
-                          opacity: 0.7,
+                          color: 'var(--text-400)',
                         }}
                         title={`Content hash before: ${ev.content_hash_before ?? '—'}\nContent hash after: ${ev.content_hash_after ?? '—'}`}
                       >
@@ -4881,7 +5501,7 @@ export function DocumentWorkbench({
               </div>
               {skippedRefreshes.slice(0, 8).map(sk => (
                 <div key={sk.cite_id} style={{ marginTop: 4 }}>
-                  {sk.reason}
+                  {citationRefreshRefusalMessage(sk.reason)}
                 </div>
               ))}
               {skippedRefreshes.length > 8 && (
@@ -4958,11 +5578,11 @@ export function DocumentWorkbench({
                         key={ps.id}
                         className="nda-open"
                         style={{ textAlign: 'left' }}
-                        disabled={ps.extractionStatus !== 'extracted'}
+                        disabled={!sourceCitationEligible(ps)}
                         title={
-                          ps.extractionStatus === 'extracted'
+                          sourceCitationEligible(ps)
                             ? 'Record this section as drafted from this source'
-                            : 'This source has no readable text, so it cannot ground a draft'
+                            : 'Only current sources with eligible readable text can ground a draft'
                         }
                         onClick={() => void citeSource(ps.id)}
                       >
@@ -5066,9 +5686,11 @@ export function DocumentWorkbench({
             programName={programName(program)}
             sectionOpen={activeSection != null && !docSealed}
             sectionCode={activeSection?.code ?? null}
-            projectSources={projectSources}
+            projectSources={projectSources.filter(sourceCitationEligible)}
             onCite={(sourceId) => editorRef.current?.insertCitation(sourceId) ?? false}
             onInsertReference={(text) => editorRef.current?.insertReference(text) ?? false}
+            onOpenDocument={(docId) => void openPulledDocument(docId)}
+            onAsk={askAna}
             onClose={closeRail}
             fireToast={fireToast}
           />
@@ -5085,10 +5707,27 @@ export function DocumentWorkbench({
             docId={activeDocId}
             docTitle={activeDoc?.title ?? null}
             refreshKey={tasksEpoch}
-            onAssign={() => setAssignReviewOpen(true)}
-            assignRefusal={actRefusal(docAccess.assignReview)}
-            onNav={onNav}
+            onSendForReview={() => setSendForReviewOpen(true)}
+            sendRefusal={actRefusal(docAccess.assignReview)}
+            signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+            onOpenBoard={() => onNav('review')}
             onClose={closeRail}
+            fireToast={fireToast}
+          />
+        </aside>
+      )}
+
+      {rail === 'access' && (
+        <aside className="ed-comments" aria-label="Document access">
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Document access</span>
+            <RailClose label="Close document access" onClose={closeRail} />
+          </div>
+          <DocumentPermissionsPanel
+            docId={activeDocId}
+            docTitle={activeDoc?.title ?? null}
+            organizationId={user?.organizationId}
+            sections={sectionsState === 'ready' ? sections.filter(s => s.doc_id === activeDocId) : []}
             fireToast={fireToast}
           />
         </aside>
@@ -5195,7 +5834,7 @@ export function DocumentWorkbench({
                     focusedCommentId === c.id
                       ? {
                           background:
-                            'color-mix(in srgb, var(--accent-100,#2563eb) 7%, transparent)',
+                            'color-mix(in srgb, var(--accent-100) 7%, transparent)',
                         }
                       : undefined
                   }
@@ -5417,16 +6056,27 @@ export function DocumentWorkbench({
           fireToast={fireToast}
         />
       )}
-      {assignReviewOpen && activeDoc && (
-        <AssignReviewDialog
+      {sendForReviewOpen && activeDoc && (
+        <SendForReviewDialog
           docId={activeDoc.id}
           docTitle={activeDoc.title}
           programId={programId}
           sectionCode={activeSection?.code ?? null}
-          onClose={() => setAssignReviewOpen(false)}
-          onCreated={() => {
+          authorId={activeDoc.created_by != null ? String(activeDoc.created_by) : null}
+          onClose={() => setSendForReviewOpen(false)}
+          onSent={() => {
+            /* The tasks the act created are listed beside the document. */
             setTasksEpoch(e => e + 1);
             setRail('tasks');
+          }}
+          onCheckTasks={() => {
+            setSendForReviewOpen(false);
+            setTasksEpoch(e => e + 1);
+            setRail('tasks');
+          }}
+          onOpenBoard={() => {
+            setSendForReviewOpen(false);
+            onNav('review');
           }}
           fireToast={fireToast}
         />
@@ -5437,7 +6087,8 @@ export function DocumentWorkbench({
           sectionCode={activeSection.code}
           sectionTitle={activeSection.title}
           destination={
-            pendingLeave.kind === 'document'
+            pendingLeave.kind === 'view' ? `${pendingLeave.mode === 'document' ? 'Document' : 'Section'} view`
+              : pendingLeave.kind === 'program' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }
@@ -5445,7 +6096,7 @@ export function DocumentWorkbench({
           pendingDecisionCount={pendingDecisionCountRef.current}
           onSave={() => void saveAndLeave()}
           onLeave={leaveUnsaved}
-          onCancel={() => setPendingLeave(null)}
+          onCancel={() => { if (pendingLeave.kind === 'program') pendingLeave.onCancel(); setPendingLeave(null); }}
         />
       )}
 

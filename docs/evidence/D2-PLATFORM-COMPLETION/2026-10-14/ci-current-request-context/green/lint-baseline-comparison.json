@@ -1,0 +1,29 @@
+{
+  "healthBefore": {
+    "errors": 0,
+    "warnings": 1,
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'mockCommonDeps' has too many lines (224). Maximum allowed is 100.",
+        "line": 5
+      }
+    ]
+  },
+  "healthAfter": {
+    "errors": 0,
+    "warnings": 1,
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'mockCommonDeps' has too many lines (224). Maximum allowed is 100.",
+        "line": 5
+      }
+    ]
+  },
+  "sameHealthWarnings": true,
+  "nativeAfterErrors": 0,
+  "nativeAfterWarnings": 0
+}

@@ -1,0 +1,16 @@
+
+[ci:surface-discoverability] FAIL — 1 issue(s):
+
+  compliance-reports: renders but is in neither the Apps catalog nor the CONTEXTUAL list — a user can only reach it by knowing its URL
+
+A surface a user cannot find is, to that user, a surface that does not exist.
+Either add it to the Apps catalog seed
+  (db/migrations/20260810_reconcile_module_catalog.sql
+   migrations/20260814j_catalog_missing_product_surfaces.sql
+   migrations/20260814k_catalog_mission_control.sql
+   migrations/20260814l_catalog_filing_strategy.sql)
+or declare it in CONTEXTUAL in this file with the reason it is reached another way.
+Do not add a shell to the catalog to silence this — listing something as available
+that does not work is worse than it being hard to find.
+
+discover_exit=1

@@ -1,0 +1,22 @@
+Validated source commit: 4be7a67a18ca4a328149099de8e6f523df6f426d
+Branch: concept2cure-v2; direct push, no PR.
+TypeScript and ESLint: success, job 112600894136.
+Run: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37561922939
+The canonical TypeScript gate used baseline 0 and found 0 errors, tsc exit 0.
+Selected decoded job-log lines:
+2026-10-07T02:26:36.2584903Z > node scripts/ci/typecheck-no-regression.mjs
+2026-10-07T02:26:36.2912691Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T02:29:45.5581093Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T02:29:45.5582540Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+CI security checks for the same source commit: success.
+Run: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37561923068
+Security Scan: 112600894529, success.
+Secret scan (full history): 112600894787, success.
+Security Contract Tests: 112600894808, success.
+The broader CI Lint/proof/build/release workflow remained in progress when this evidence was recorded; this record does not claim full release qualification.
+
+Local final verification: 432 integrated tests in 15 files, 14 actual-handler scan tests, and 4 PGlite source-resolution/clause-lineage tests: 450 passing checks in 17 files.
+Server bundle, existing canvas path, and all canonical preflight checks preceding local TypeScript passed. Changed-file lint: zero errors, net one fewer warning.
+Repo-health bot commits changed only two reports and preserve the validated source tree.
+This final evidence update is documentation only; it does not change executable source, dependencies, schemas or baselines.

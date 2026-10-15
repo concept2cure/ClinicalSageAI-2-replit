@@ -123,12 +123,26 @@ describe('mapConsistencyResult — divergence shape + defensiveness', () => {
     expect(out?.divergenceCount).toBe(1);
   });
 
-  it('coerces an unknown verdict to clean and unknown severity to medium', () => {
+  // Row 74, ADR-0015 §7: a verdict the client does not know is no result, never
+  // "clean". It used to be coerced to clean: a value the server added later
+  // (a not-assessed outcome, say) would have read as a finding of consistency.
+  it('an unknown verdict is no result, never clean', () => {
     const out = mapConsistencyResult({
       verdict: 'on_fire',
       divergences: [{ kind: 'mystery', severity: 'apocalyptic', draftValue: 'q' }],
     });
-    expect(out?.verdict).toBe('clean');
+    expect(out).toBeNull();
+  });
+
+  it('a missing verdict is no result, never clean', () => {
+    expect(mapConsistencyResult({ divergences: [] })).toBeNull();
+  });
+
+  it('a known verdict keeps an unknown severity, as medium (a divergence is never dropped)', () => {
+    const out = mapConsistencyResult({
+      verdict: 'minor_issues',
+      divergences: [{ kind: 'mystery', severity: 'apocalyptic', draftValue: 'q' }],
+    });
     expect(out?.divergences[0].severity).toBe('medium');
     expect(out?.divergences[0].kind).toBe('mystery');
   });

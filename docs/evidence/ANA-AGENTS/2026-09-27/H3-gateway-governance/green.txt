@@ -1,0 +1,194 @@
+# Track GW (H3) — green records. ANSI stripped. See README.md "Proof".
+
+## Run 1: every test under server/services/ai-gateway and server/services/ai-governance
+
+  ✓ server/services/ai-governance/__tests__/approved-models-invariant.test.ts  10 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/governance-review.test.ts  37 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/pq-production-gate.test.ts  11 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts  22 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts  9 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/effort.test.ts  45 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts  6 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts  25 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/content-blocks-carried.test.ts  3 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/governance-parity.test.ts  3 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/local-provider-tools.test.ts  9 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts  15 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts  9 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts  12 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway.test.ts  37 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/drive-regressions.test.ts  32 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts  10 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/openai-tool-calls.test.ts  27 passed, 0 failed
+  ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts  9 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts  12 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/context-window-admission.test.ts  3 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/tier-model-approval.test.ts  15 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts  7 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts  1 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-server-tools.test.ts  11 passed, 0 failed
+  ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts  22 passed, 0 failed
+  ✓ server/services/ai-governance/__tests__/model-cards.test.ts  4 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts  10 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-model-declined.test.ts  7 passed, 0 failed
+  ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts  11 passed, 0 failed
+  ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts  7 passed, 0 failed
+  ✓ server/services/ai-governance/__tests__/groundedness.test.ts  12 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/reasoning.test.ts  31 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/promptInjection.test.ts  20 passed, 0 failed
+  ✓ server/services/ai-governance/classification/__tests__/heuristic-classifier.test.ts  5 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts  7 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-structured-output.test.ts  13 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-inline-system.test.ts  9 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-terminal-round-cache.test.ts  6 passed, 0 failed
+  ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts  10 passed, 0 failed
+  ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts  6 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts  5 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-citations.test.ts  6 passed, 0 failed
+  ✓ server/services/ai-gateway/providers/__tests__/provider-preference.test.ts  10 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/openai-stream.test.ts  10 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/gateway-openai-stream.test.ts  3 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts  13 passed, 0 failed
+  ✓ server/services/ai-governance/__tests__/review-policy.test.ts  16 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts  8 passed, 0 failed
+  ✓ server/services/ai-governance/__tests__/approved-models.test.ts  5 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/server-tool-policy.test.ts  8 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/flagship-opus-5-5.test.ts  9 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/ledger-migration.test.ts  3 passed, 0 failed
+  ✓ server/services/ai-gateway/providers/__tests__/org-placement-migration.test.ts  2 passed, 0 failed
+  ✓ server/services/ai-governance/__tests__/governing-entry.test.ts  5 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/finish-reason.test.ts  6 passed, 0 failed
+  ✓ server/services/ai-gateway/providers/__tests__/provider-preference-db.test.ts  3 passed, 0 failed
+  ✓ server/services/ai-gateway/__tests__/seed-provenance.test.ts  4 passed, 0 failed
+
+Test Files  58 passed (58)
+Tests  676 passed (676)
+
+## Run 2: the track's other test files and their neighbours (governed-write gate, council, Module 3, CMC drafting routes, quick completion, stream pin, aiProviderRouter, PQ runner and verdict, AI route classifiers, keyless and demo-mode guards)
+
+  ✓ server/api/cmc/__tests__/cmc-drafting-governance.test.ts  6 passed, 0 failed
+  ✓ server/services/ana/__tests__/quick-complete-governance.test.ts  3 passed, 0 failed
+  ✓ server/services/ana/__tests__/governed-write-gate.test.ts  41 passed, 0 failed
+  ✓ server/services/__tests__/pq-refusal-consumers.test.ts  2 passed, 0 failed
+  ✓ tests/audit-ai-gateway-keyless-prod.test.ts  1 passed, 0 failed
+  ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts  6 passed, 0 failed
+  ✓ server/services/ana/__tests__/model-call-linkage.test.ts  8 passed, 0 failed
+  ✓ server/routes/__tests__/ai-assistance-refusal.test.ts  2 passed, 0 failed
+  ✓ tests/routes/ana-features-coded-503-containment.test.ts  5 passed, 0 failed
+  ✓ server/eval/pq/__tests__/run-pq.test.ts  18 passed, 0 failed
+  ✓ server/routes/__tests__/ana-intelligence-gateway-errors.test.ts  4 passed, 0 failed
+  ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts  5 passed, 0 failed
+  ✓ server/routes/__tests__/ana-intelligence-identity.test.ts  3 passed, 0 failed
+  ✓ server/routes/__tests__/ai-placement-policy.test.ts  7 passed, 0 failed
+  ✓ server/routes/__tests__/ana-intelligence-quick-provenance.test.ts  1 passed, 0 failed
+  ✓ server/services/__tests__/multi-agent-council.test.ts  26 passed, 0 failed
+  ✓ tests/unit/module3-narrative-extension.test.ts  19 passed, 0 failed
+  ✓ server/services/ana-ri/__tests__/mdx-tool-rate-limit.test.ts  6 passed, 0 failed
+  ✓ server/services/__tests__/aiProviderRouter-served-model.test.ts  6 passed, 0 failed
+  ✓ server/services/cmc/__tests__/module3-narrative-governance-refusal.test.ts  5 passed, 0 failed
+  ✓ tests/services/aiService.test.ts  16 passed, 0 failed
+  ✓ server/services/__tests__/aiProviderRouter-refusal-final.test.ts  2 passed, 0 failed
+  ✓ tests/resolution/ai-gateway-demo-mode.test.ts  15 passed, 0 failed
+  ✓ server/services/submission-ai/__tests__/dispatch-qc-deterministic.test.ts  11 passed, 0 failed
+  ✓ server/eval/pq/__tests__/pq-verdict.test.ts  26 passed, 0 failed
+  ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts  7 passed, 0 failed
+  ✓ server/services/ana/__tests__/council-tool-claim-counts.test.ts  1 passed, 0 failed
+
+Test Files  27 passed (27)
+Tests  252 passed (252)
+
+## npx tsc --noEmit (full project, final tree, --max-old-space-size=8192)
+
+  error TS lines: 0; exit 0
+
+## npx eslint on every track file (final tree)
+
+0 errors, 1 warnings  scripts/ci/check-pq-evaluation-callers.mjs  (matches an eslint ignore pattern)
+0 errors, 1 warnings  scripts/ops/ga-readiness-report.mjs  (matches an eslint ignore pattern)
+0 errors, 0 warnings  server/api/cmc/__tests__/cmc-drafting-governance.test.ts
+0 errors, 2 warnings  server/routes/ana-intelligence.ts
+0 errors, 0 warnings  server/services/__tests__/pq-refusal-consumers.test.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/governance-parity.test.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/governance-review.test.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/nominal-pin-resolvers.test.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/pq-production-gate.test.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/support/governed-gateway.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/support/selection-table.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/tenant-capacity.test.ts
+0 errors, 0 warnings  server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts
+0 errors, 0 warnings  server/services/ai-gateway/effort.ts
+0 errors, 0 warnings  server/services/ai-gateway/gateway-error-map.ts
+0 errors, 25 warnings  server/services/ai-gateway/gateway.ts
+0 errors, 0 warnings  server/services/ai-gateway/model-governance.ts
+0 errors, 0 warnings  server/services/ai-gateway/policy.ts
+0 errors, 0 warnings  server/services/ai-governance/__tests__/approved-models-invariant.test.ts
+0 errors, 0 warnings  server/services/ai-governance/approved-models.ts
+0 errors, 8 warnings  server/services/ana/AnaDocumentDraftingService.ts
+0 errors, 0 warnings  server/services/ana/__tests__/governed-write-pq-production.test.ts
+0 errors, 0 warnings  server/services/ana/__tests__/quick-complete-governance.test.ts
+0 errors, 3 warnings  server/services/cmc/module3-narrative-builder.ts
+0 errors, 9 warnings  server/services/multi-agent-council.ts
+0 errors, 0 warnings  tests/audit-ai-gateway-keyless-prod.test.ts
+TOTAL 0 errors 49 warnings over 27 files
+
+Against HEAD content (eslint --stdin), no file gained a warning: gateway.ts 26 at HEAD, 25 now; ana-intelligence.ts 2 = 2; AnaDocumentDraftingService.ts 8 = 8; module3-narrative-builder.ts 3 = 3; multi-agent-council.ts 9 = 9; effort.ts 0 = 0. The two .mjs scripts match an eslint ignore pattern.
+
+## CI gates
+
+=== npm run ci:unapproved-model-pins
+✓ unapproved-model-pins: 54 known pin(s), each with a recorded reason; no new ones
+exit 0
+=== npm run ci:gateway-bypass
+[check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+exit 0
+=== npm run ci:ai-tenant-binding
+✓ ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules
+exit 0
+=== npm run ci:pq-evaluation-callers
+✓ pq-evaluation-callers: AIGateway.evaluateModel is called only from server/eval/pq/ and tests
+exit 0
+=== npm run ci:pq-evaluation-callers:selftest
+  ✓ a service calls it across a line break
+  ✓ a service reaches it by bracket access
+  ✓ a service destructures it
+  ✓ a service binds it
+
+✓ self-test: 8 cases, every violation caught and the controls clean
+exit 0
+99:    "ci:ai-tenant-binding:selftest": "node scripts/ci/check-ai-tenant-binding.mjs --self-test",
+101:    "ci:unapproved-model-pins:selftest": "node scripts/ci/check-unapproved-model-pins.mjs --self-test",
+=== npm run ci:ai-tenant-binding:selftest
+  ✓ end to end — the walk finds the unbound call and the public declaration, skips tests
+
+✓ self-test: 35 cases, every violation caught and the controls clean
+exit 0
+=== npm run ci:unapproved-model-pins:selftest
+  ✓ a baseline entry with no reason
+
+✓ self-test: 14 cases, every violation caught and the controls clean
+exit 0
+
+
+## Label audit for review [20] (heuristic candidate list; not a gate)
+
+Method: every gateway call whose taskType is regulatory_review, structured_output, general, summarization, document_analysis or chat, with a drafting verb followed by a document noun in the 60 lines before it. 'persist-nearby' is a grep for a write within 120 lines, not a trace.
+
+server/api/cmc/change-impact-simulator.js:209	regulatory_review	persist-nearby=yes	«Generate a detailed report»
+server/routes/cortex-unified.ts:925	chat	persist-nearby=yes	«Generate working memory summary»
+server/routes/haq-manager.ts:612	regulatory_review	persist-nearby=yes	«Draft a Health Authority Question response»
+server/api/cmc/routes.ts:1952	regulatory_review	persist-nearby=no	«Generate ICH Q-series compliant Module 3.2.S/P section»
+server/openai-service.ts:64	structured_output	persist-nearby=no	«Generate a structured response»
+server/openai-service.ts:96	document_analysis	persist-nearby=no	«Generate a structured response»
+server/openai-service.ts:162	summarization	persist-nearby=no	«Generate a concise context summary»
+server/routes/cortexQueryRoutes.ts:417	regulatory_review	persist-nearby=no	«Generate advisory response»
+server/routes/csr-builder-routes.ts:403	regulatory_review	persist-nearby=no	«Generate a structured benefit-risk analysis suitable for ICH E3 Sectio»
+server/routes/deep-research.ts:431	regulatory_review	persist-nearby=no	«Generate content for each section»
+server/services/safety-narrative-service.ts:451	regulatory_review	persist-nearby=no	«Generate an aggregate safety narrative»
+server/services/safety-narrative-service.ts:592	regulatory_review	persist-nearby=no	«Generate an SAE narrative»
+server/services/safety-narrative-service.ts:713	regulatory_review	persist-nearby=no	«Generate a benefit-risk assessment narrative»
+server/services/safety-narrative-service.ts:832	regulatory_review	persist-nearby=no	«Generate a comprehensive signal assessment summary»
+server/services/safety-narrative-service.ts:918	regulatory_review	persist-nearby=no	«Generate a cross-study safety comparison narrative»
+server/src/services/ai/stability.ts:176	document_analysis	persist-nearby=no	«Draft section»
+server/src/services/ai/stability.ts:237	regulatory_review	persist-nearby=no	«Draft the protocol»
+17 candidates

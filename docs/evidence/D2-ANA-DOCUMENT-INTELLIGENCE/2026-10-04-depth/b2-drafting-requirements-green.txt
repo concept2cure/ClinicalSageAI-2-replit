@@ -1,0 +1,29 @@
+# b2-drafting-requirements — green (2026-10-04)
+## New test + every test file importing the changed files (except the figures suite, below)
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (a) anchored program: hands the ZIP bytes to the governed export consequence 10ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (b) unanchored program: audited-unplaced delivery with the sha256, bytes still returned 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (c) no authored content: 422 NO_AUTHORED_CONTENT, no consequence, no export audit 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (d) program from another organization: 404 and the assembler is never invoked 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (e) size cap: the consequence refusing the bytes is an honest 413, never a 200 with empty data 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /sequences/:seqId/technical-file/assemble > (f) reads the bundle bytes before cleanup and delivers them through the export path 30ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > 2.7.3: the requirements are the Summary of Clinical Efficacy brief, exact 7ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a code nothing indexes: the requirements say so, source none 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a container code: source parent 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a sub-section deeper than any entry: source ancestor 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > section-generation@v1.1 at the gateway, on the draft and in the audit row, with the source 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > the system prompt asks for the impersonal register, labelled platform convention, not second person 2ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > resolves to an absolute directory that exists 7ms
+ ✓ tests/ci/prompts-dir.test.ts > ai-gateway PROMPTS_DIR resolution > contains every prompt the services load at runtime 3ms
+ ✓ tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 792ms
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 3624ms
+ Test Files  5 passed (5)
+      Tests  16 passed (16)
+
+## section-generation-figures.test.ts (not in this step's files): 8/23 red, all at :285, the it.each that pins metadata.authoring with toEqual {promptVersion 'section-generation@v1.0', citations, ungrounded, submissionId}. Expected: the version is now v1.1 and requirementsSource is recorded.
+      1       Tests  8 failed | 15 passed (23)
+      8    → expected { authoring: { …(5) } } to deeply equal { authoring: { …(4) } }
+      1  Test Files  1 failed (1)
+      3 AssertionError: expected { authoring: { …(5) } } to deeply equal { authoring: { …(4) } }
+      1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+## The same suite with only line 285 changed to { promptVersion: 'section-generation@v1.1', requirementsSource: 'ancestor', ... } (transient copy, deleted after the run): 23/23 passed. '2.3.P.8' resolves to its ancestor entry.

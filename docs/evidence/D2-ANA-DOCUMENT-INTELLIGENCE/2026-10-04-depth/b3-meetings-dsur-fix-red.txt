@@ -1,0 +1,28 @@
+# b3-meetings-dsur review fix — RED run, 2026-10-05, before code change
+# npx vitest run tests/regulatory/meetings-and-dsur-truth.test.ts server/services/ana-ri/__tests__/document-templates.test.ts
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "end of phase 1 meeting" is not served the EOP2 (Type B(EOP)) template 6ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's meeting templates are derived from the lifecycle record > "EOP1 meeting package" is not served the EOP2 (Type B(EOP)) template 1ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > every E2F section is required: E2F says complete all of them, stating when there is nothing to report 2ms
+ × tests/regulatory/meetings-and-dsur-truth.test.ts > ana-ri's DSUR template is the E2F outline > the injected block lists the E2F headings in E2F order, none of them optional 4ms
+ × server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Pre-Phase 3 meeting 4ms
+ × server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP1 meeting 3ms
+ × server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP1 abbreviation 1ms
+
+   → expected 'fda_eop_meeting_package' to be 'fda_formal_meeting_package' // Object.is equality
+   → expected 'fda_eop_meeting_package' to be 'fda_formal_meeting_package' // Object.is equality
+   → Safety Findings from Non-interventional Studies: expected false to be true // Object.is equality
+   → expected '## DOCUMENT TYPE DETECTED: DEVELOPMEN…' not to contain 'Optional sections'
+   → Expected match for: "pre-phase 3 meeting briefing": expected null not to be null
+   → expected 'fda_eop_meeting_package' to be 'fda_formal_meeting_package' // Object.is equality
+   → expected 'fda_eop_meeting_package' to be 'fda_formal_meeting_package' // Object.is equality
+
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes regulatory references when present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes word count targets in the section outline 0ms
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 93 passed (100)
+   Start at  00:32:49
+   Duration  836ms (transform 886ms, setup 158ms, import 887ms, tests 77ms, environment 0ms)
+
+
+# The DSUR block as injected before the fix (excerpt): seven E2F sections after '20. Conclusions', as optional

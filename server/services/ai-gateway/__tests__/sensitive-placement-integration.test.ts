@@ -1,16 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AIGateway, GatewayPolicyError } from '../gateway';
+import { resetOrgPlacementResolver, setOrgPlacementResolver } from '../providers/org-placement';
 
 describe('sensitive placement dispatch integration', () => {
   const saved = { ...process.env };
   afterEach(() => {
     process.env = { ...saved };
+    resetOrgPlacementResolver();
   });
 
   it('never invokes a provider client when production placement is blocked', async () => {
     process.env.NODE_ENV = 'production';
     process.env.AI_PII_ENFORCEMENT = 'block';
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = '{}';
+    // The tenant has elected OpenAI; without it production refuses earlier, as
+    // DENY_TENANT_POLICY (ADR-0014 §1, P1-45). This case is about the decider.
+    setOrgPlacementResolver({ resolve: async () => ({ allowedProviders: ['openai'] }) });
     const gateway = new AIGateway({
       deterministicMode: false,
       auditEnabled: true,

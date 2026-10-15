@@ -1,0 +1,7 @@
+# 2026-10-01T14:56:53Z. The same mutant stack with this item's deploy-aws.yml. Runs that passed are omitted below.
+$ terraform test
+run "renders_the_boot_contract"... fail
+run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket"... fail
+run "staging_carries_every_name_the_deploy_preflight_requires"... fail
+Failure! 40 passed, 3 failed.
+exit=1

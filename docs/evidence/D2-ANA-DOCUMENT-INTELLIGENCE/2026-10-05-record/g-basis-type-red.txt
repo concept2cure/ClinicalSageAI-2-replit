@@ -1,0 +1,62 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/regulatory-basis.test.ts [ tests/regulatory/regulatory-basis.test.ts ]
+Error: Cannot find module '../../shared/regulatory/regulatory-basis' imported from /home/user/ClinicalSageAI-2-replit/tests/regulatory/regulatory-basis.test.ts
+ ❯ tests/regulatory/regulatory-basis.test.ts:22:1
+     20| import { readFileSync } from 'node:fs';
+     21| import path from 'node:path';
+     22| import {
+       | ^
+     23|   REGULATOR_HOSTS,
+     24|   basisLabel,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  02:05:51
+   Duration  349ms (transform 75ms, setup 80ms, import 0ms, tests 0ms, environment 0ms)
+
+
+=== Red, part 2: shared/regulatory/regulatory-basis.ts present, ind/ctd/types.ts and shared/ivd/types.ts at HEAD ===
+ ✓ tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > imports nothing, so client and server can both use it 2ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > shared/regulatory/regulatory-basis.ts is the one provenance type > lists exactly the regulator hosts the record accepts 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts regulator-text with a regulator URL (subdomains included) and a checked date 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts regulator-text read from a vendored regulator artifact with a checked date 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text without a checked date 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text with neither a URL nor a vendored artifact 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text whose URL is not on a regulator host, including look-alikes 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a URL that does not parse or is not http(s) 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a checked value that is not a real ISO calendar date 1ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses a vendored path that is absolute or leaves the repository 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses an empty ref and an unknown confidence 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisProblems > accepts recall and platform convention with no URL or date, and with a secondary-source URL 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > says a recalled fact was not checked against the regulator text 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > says a platform convention is not a regulatory requirement 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > gives the checked date for well-formed regulator text 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > basisLabel > never presents a malformed regulator-text claim as checked 0ms
+ × tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > ind/ctd/types.ts declares no provenance type of its own 5ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > the types are identical 0ms
+ ✓ tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > every basis constant the CSR record ships is well formed under the shared rules 0ms
+ × tests/regulatory/regulatory-basis.test.ts > the IVD Citation carries provenance from the same type > confidence and checked are typed from shared/regulatory/regulatory-basis 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/regulatory/regulatory-basis.test.ts > E3Basis is an alias, not a second declaration > ind/ctd/types.ts declares no provenance type of its own
+AssertionError: expected '/**\n * CTD authoring types — the dee…' not to match /export\s+interface\s+E3Basis\b/
+ FAIL  tests/regulatory/regulatory-basis.test.ts > the IVD Citation carries provenance from the same type > confidence and checked are typed from shared/regulatory/regulatory-basis
+AssertionError: expected '/**\n * IVD knowledge base — shared t…' to match /from '\.\.\/regulatory\/re…/regulatory\
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+
+=== Mutation: isRegulatorHost uses h.includes(r) instead of exact-or-subdomain ===
+ × tests/regulatory/regulatory-basis.test.ts > basisProblems > refuses regulator-text whose URL is not on a regulator host, including look-alikes 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: https://fda.gov.example.com/media/71271: expected [] to not deeply equal []
+      Tests  1 failed | 19 passed (20)

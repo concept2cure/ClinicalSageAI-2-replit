@@ -16,6 +16,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const VALID_SECRET = 'a'.repeat(32);
 const SHORT_SECRET = 'a'.repeat(16);
 
+// Every production posture below also needs the audit export key (P1-19b).
+// Each setup snapshots and restores process.env, so this survives every case;
+// the key's own cases are in environment-audit-export-key.test.ts.
+process.env.AUDIT_EXPORT_SIGNING_KEY = 'x'.repeat(32);
+
 describe('getJwtSecret', () => {
   let originalEnv: NodeJS.ProcessEnv;
 

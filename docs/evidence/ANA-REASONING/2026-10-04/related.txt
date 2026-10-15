@@ -1,0 +1,13 @@
+Every suite of the modules this change touches, on the merged tree (trunk d8fbec61d plus this change).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <the suites below>
+
+Suites: server/routes/ana-ri/__tests__/ server/services/ai-gateway/__tests__/ server/services/ana/__tests__/ server/services/ana-ri/__tests__/ server/services/__tests__/ana-trust-summary.test.ts tests/services/answer-check.test.ts tests/services/answer-grounding*.test.ts tests/services/agentic-loop.test.ts tests/ai-safety/ server/services/evidence/__tests__/ tests/ana-single-brain.test.ts server/services/clinical-regulatory-evidence/__tests__/governance*.test.ts client/src/concept2cure/components/ana/__tests__/ and the v2 strip, carriage, conversation-thread, artifact-panel, files-adopt, authoring-pane and shell suites.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 379 passed | 1 skipped (381)
+      Tests  15 failed | 5226 passed | 3 skipped (5244)
+
+The one failing file, mdx-esg-transmit-gateway.test.ts (15 tests), fails on 'Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production', which this container does not set. It fails identically, 15 of 15, on an export of the unmodified trunk (git archive HEAD before this change):
+   → handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+   → handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+   → handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality

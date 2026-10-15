@@ -10,7 +10,7 @@
  * Uses the real requireRole; authMiddleware and the postgres client are mocked.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.hoisted(() => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
@@ -21,13 +21,14 @@ import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 
-const { ORG_A, TARGET_ORG, CREATED_ORG, queries, authState, provisionLaunchModules } = vi.hoisted(() => ({
+const { ORG_A, TARGET_ORG, CREATED_ORG, queries, authState, provisionLaunchModules, grantQuery } = vi.hoisted(() => ({
   ORG_A: 7,
   TARGET_ORG: 999,
   CREATED_ORG: 4242,
   provisionLaunchModules: vi.fn(async () => ({ granted: [], failed: [] })),
   queries: [] as Array<{ text: string; values: any[] }>,
   authState: { user: null as any },
+  grantQuery: vi.fn(),
 }));
 
 // Mock the postgres tagged-template client used by the router.
@@ -52,8 +53,29 @@ vi.mock('../../auth', () => ({
   authMiddleware: (req: Request, res: Response, next: NextFunction) => {
     if (!authState.user) return res.status(401).json({ error: 'unauthorized' });
     (req as any).user = authState.user;
+    // server/auth.ts sets req.userId; the platform-grant lookup keys on it.
+    (req as any).userId = authState.user.id;
     next();
   },
+}));
+
+// Platform standing, as production gives it (D6, 2026-10-05,
+// docs/evidence/D6/2026-10-05-platform-standing/). The request role is the
+// tenant membership role and is not read. Every path here — the writes'
+// requirePlatformAdmin and, since 2026-10-05 (docs/evidence/D6/2026-10-05-cross-tenant-staff/),
+// the reads' resolvePlatformAdmin — admits the PLATFORM_ADMIN_EMAILS allowlist
+// on the owner's own (non-SAML) sign-in, or an active platform_role_grants row.
+// GRANTS maps a user id to the platform role its grant row names.
+const OWNER_EMAIL = 'owner@platform.test';
+const allowlistedOwner = { id: 2, organizationId: ORG_A, role: 'user', roles: ['user'], email: OWNER_EMAIL, provider: 'local-jwt' };
+const GRANT_HOLDER_ID = 3;
+const grantHolder = { id: GRANT_HOLDER_ID, organizationId: ORG_A, role: 'user', roles: ['user'] };
+const SUPPORT_GRANT_HOLDER_ID = 4;
+const supportGrantHolder = { id: SUPPORT_GRANT_HOLDER_ID, organizationId: ORG_A, role: 'user', roles: ['user'] };
+const GRANTS = new Map<number, string>([[GRANT_HOLDER_ID, 'platform_admin'], [SUPPORT_GRANT_HOLDER_ID, 'support']]);
+vi.mock('../../db', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../db')>()),
+  query: grantQuery,
 }));
 
 // The launch catalog is provisioned for every new tenant (D2). Its real SQL runs
@@ -65,15 +87,30 @@ vi.mock('../../services/entitlements/launch-scope.js', () => ({ provisionLaunchM
 vi.mock('../../db/tenantAdmission', () => ({ assertCanAdmitNewTenant: async () => undefined }));
 
 let app: express.Express;
+const SAVED_PLATFORM_ADMIN_EMAILS = process.env.PLATFORM_ADMIN_EMAILS;
 
 beforeEach(async () => {
   vi.clearAllMocks();
   queries.length = 0;
+  process.env.PLATFORM_ADMIN_EMAILS = OWNER_EMAIL;
+  grantQuery.mockImplementation(async (text: string, params?: unknown[]) => {
+    const granted = GRANTS.get(params?.[0] as number);
+    return {
+      rows: /FROM platform_role_grants/.test(text) && granted
+        && Array.isArray(params?.[1]) && (params![1] as string[]).includes(granted)
+        ? [{ '?column?': 1 }] : [],
+    };
+  });
   authState.user = { id: 1, organizationId: ORG_A, role: 'user', roles: ['user'] };
   const router = (await import('../../routes/tenants-simple')).default;
   app = express();
   app.use(express.json());
   app.use('/api/tenants', router);
+});
+
+afterEach(() => {
+  if (SAVED_PLATFORM_ADMIN_EMAILS === undefined) delete process.env.PLATFORM_ADMIN_EMAILS;
+  else process.env.PLATFORM_ADMIN_EMAILS = SAVED_PLATFORM_ADMIN_EMAILS;
 });
 
 const dataQueries = () => queries.filter(q => /select|insert|update|delete/i.test(q.text));
@@ -89,7 +126,7 @@ describe('Tenant list — membership scoping', () => {
   });
 
   it('a platform admin gets the full list (no membership join)', async () => {
-    authState.user = { id: 1, organizationId: ORG_A, role: 'super_admin', roles: ['super_admin'] };
+    authState.user = allowlistedOwner;
     const res = await request(app).get('/api/tenants');
     expect(res.status).toBe(200);
     const q = dataQueries().find(q => /from organizations/i.test(q.text));
@@ -98,8 +135,8 @@ describe('Tenant list — membership scoping', () => {
 
   it('an ORG admin does NOT get the cross-tenant list — only their own orgs', async () => {
     // Regression guard: an org-scoped `admin` is NOT a platform operator. The
-    // read path must use the strict isPlatformAdmin (super_admin/platform_admin/
-    // support only), so a tenant admin is membership-scoped exactly like a member
+    // read path must use the strict platform-standing check (resolvePlatformAdmin:
+    // allowlist or platform grant only), so a tenant admin is membership-scoped exactly like a member
     // — never handed the full customer directory (GET /api/tenants leak).
     authState.user = { id: 1, organizationId: ORG_A, role: 'admin', roles: ['admin'] };
     const res = await request(app).get('/api/tenants');
@@ -108,6 +145,45 @@ describe('Tenant list — membership scoping', () => {
     expect(q, 'a list query should run').toBeTruthy();
     expect(q!.text).toMatch(/organization_users/i); // membership-scoped, not the full list
     expect(q!.values).toContain(1); // bound to the caller's own user id
+  });
+
+  // D6, 2026-10-05 (docs/evidence/D6/2026-10-05-cross-tenant-staff/): the list
+  // used the synchronous isPlatformAdmin, which never consults platform_role_grants,
+  // so designated staff got the member-scoped view.
+  it.each([
+    ['platform_admin', grantHolder],
+    ['support', supportGrantHolder],
+  ])('a %s platform grant holder (not on the allowlist) gets the full list (no membership join)', async (_granted, user) => {
+    authState.user = user;
+    const res = await request(app).get('/api/tenants');
+    expect(res.status).toBe(200);
+    const q = dataQueries().find(q => /from organizations/i.test(q.text));
+    expect(q, 'a list query should run').toBeTruthy();
+    expect(q!.text).not.toMatch(/organization_users/i);
+    expect(grantQuery).toHaveBeenCalledWith(expect.stringMatching(/FROM platform_role_grants/), [user.id, ['platform_admin', 'super_admin', 'support']]);
+  });
+
+  it.each(['platform_admin', 'support'])('a membership role of %s with no platform grant does NOT get the cross-tenant list (D6)', async role => {
+    authState.user = { id: 1, organizationId: ORG_A, role, roles: [role] };
+    const res = await request(app).get('/api/tenants');
+    expect(res.status).toBe(200);
+    const q = dataQueries().find(q => /from organizations/i.test(q.text));
+    expect(q, 'a list query should run').toBeTruthy();
+    expect(q!.text).toMatch(/organization_users/i);
+    expect(q!.values).toContain(1);
+  });
+
+  it('a membership role of super_admin does NOT get the cross-tenant list (D6)', async () => {
+    // The request role is the tenant membership role (organization_users.role,
+    // no CHECK); a row naming super_admin is not platform standing —
+    // docs/evidence/D6/2026-10-05-platform-standing/.
+    authState.user = { id: 1, organizationId: ORG_A, role: 'super_admin', roles: ['super_admin'] };
+    const res = await request(app).get('/api/tenants');
+    expect(res.status).toBe(200);
+    const q = dataQueries().find(q => /from organizations/i.test(q.text));
+    expect(q, 'a list query should run').toBeTruthy();
+    expect(q!.text).toMatch(/organization_users/i);
+    expect(q!.values).toContain(1);
   });
 });
 
@@ -125,9 +201,28 @@ describe('Tenant users — scoping', () => {
   });
 
   it('a platform admin can read any tenant directory', async () => {
-    authState.user = { id: 1, organizationId: ORG_A, role: 'super_admin', roles: ['super_admin'] };
+    authState.user = allowlistedOwner;
     const res = await request(app).get(`/api/tenants/${TARGET_ORG}/users`);
     expect(res.status).toBe(200);
+  });
+
+  // D6, 2026-10-05: the directory read used the synchronous isPlatformAdmin too,
+  // so a grant holder was refused another tenant's directory.
+  it.each([
+    ['platform_admin', grantHolder],
+    ['support', supportGrantHolder],
+  ])('a %s platform grant holder (not on the allowlist) can read another tenant directory', async (_granted, user) => {
+    authState.user = user;
+    const res = await request(app).get(`/api/tenants/${TARGET_ORG}/users`);
+    expect(res.status).toBe(200);
+    expect(dataQueries().some(q => /organization_users/i.test(q.text) && q.values.includes(TARGET_ORG))).toBe(true);
+  });
+
+  it.each(['super_admin', 'platform_admin', 'support'])('a membership role of %s with no platform grant cannot read another tenant directory (403, no query runs)', async role => {
+    authState.user = { id: 1, organizationId: ORG_A, role, roles: [role] };
+    const res = await request(app).get(`/api/tenants/${TARGET_ORG}/users`);
+    expect(res.status).toBe(403);
+    expect(dataQueries()).toHaveLength(0);
   });
 });
 
@@ -150,7 +245,7 @@ describe('Tenant mutations — admin only', () => {
     // `organizations.api_key` in plaintext that no verifier read (audit DP-27,
     // plan P1-27). Organisation API keys are `server/routes/api-keys.ts`:
     // hashed, scoped, admin-only, and the surface `AdminAccess.tsx` manages.
-    authState.user = { id: 1, organizationId: ORG_A, role: 'super_admin', roles: ['super_admin'] };
+    authState.user = allowlistedOwner;
     await request(app).post('/api/tenants/5/api-key').expect(404);
     expect(dataQueries()).toHaveLength(0);
   });
@@ -158,7 +253,7 @@ describe('Tenant mutations — admin only', () => {
 
 describe('Tenant creation — the launch catalog comes with it (D2)', () => {
   it('a platform admin creating a tenant provisions the launch catalog for THAT tenant', async () => {
-    authState.user = { id: 1, organizationId: ORG_A, role: 'super_admin', roles: ['super_admin'] };
+    authState.user = grantHolder;
     const res = await request(app).post('/api/tenants').send({ name: 'Acme Corp', slug: 'acme' });
     expect(res.status).toBe(201);
     // Until 2026-09-22 this path created a tenant with no launch grants at all.

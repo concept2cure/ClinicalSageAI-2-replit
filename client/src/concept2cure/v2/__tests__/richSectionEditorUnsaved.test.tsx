@@ -20,9 +20,10 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 
 import { RichSectionEditor } from '../editor/RichSectionEditor';
+import { reserveSessionChange, releaseSessionChange } from '@/lib/sessionChangeGuard';
 import type { Editor } from '@tiptap/core';
 
 const emptyRects = function () {
@@ -62,6 +63,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  releaseSessionChange();
   vi.useRealTimers();
 });
 
@@ -100,6 +102,22 @@ describe('the browser is asked to confirm before unsaved work is discarded', () 
     unmount();
     // A listener left behind would block every later navigation in the app.
     expect(discardTab()).toBe(false);
+  });
+});
+
+describe('delayed work retains the existing tab-discard guard', () => {
+
+  it('keeps the existing tab-discard guard armed when delayed work dirties a session-held canvas', async () => {
+    render(<RichSectionEditor value="<p>Saved narrative.</p>" onSave={vi.fn()} storageKey={null} />);
+    await waitFor(() => expect(document.querySelector('.rse-body .tiptap')).toBeTruthy());
+    let release!: () => void;
+    act(() => { release = reserveSessionChange()!; });
+    expect(canvas().isEditable).toBe(false);
+    expect(discardTab()).toBe(false);
+    act(() => { canvas().commands.setContent('<p>Unexpected delayed edit.</p>'); });
+    await waitFor(() => expect(discardTab()).toBe(true));
+    act(() => { release(); });
+    expect(canvas().isEditable).toBe(true);
   });
 });
 

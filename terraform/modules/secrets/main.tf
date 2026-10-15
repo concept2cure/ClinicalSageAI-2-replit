@@ -14,6 +14,7 @@ resource "aws_secretsmanager_secret" "this" {
 
   name        = "${var.prefix}/${each.key}"
   description = nonsensitive(var.secrets[each.key].description)
+  kms_key_id  = var.kms_key_id
 
   tags = merge(var.tags, { SecretName = each.key })
 }

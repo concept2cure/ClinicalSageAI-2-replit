@@ -76,14 +76,21 @@ export async function readContradictionRegisters(
       : noRows,
     // The engine reads `validationStatus` (ICH Q2 validated / verified /
     // transferred); the table's column is `status`, and its name is `title`.
+    /* This program's methods and studies, and the unfiled ones (a record with
+       no program is unfiled, not another program's). Read organisation-wide,
+       program A's sweep raised program B's unvalidated method and failed
+       study as A's contradictions (discovery map, core-registers-not-project-
+       scoped); the tables carry their program since 20261005. */
     pool.query(
       `SELECT title as "methodName", purpose, status as "validationStatus"
-         FROM analytical_methods WHERE organization_id = $1`,
-      [orgId],
+         FROM analytical_methods
+        WHERE organization_id = $1 AND (project_id = $2 OR project_id IS NULL)`,
+      [orgId, String(projectId)],
     ),
     pool.query(
-      `SELECT study_title as "studyName", status FROM stability_studies WHERE organization_id = $1`,
-      [orgId],
+      `SELECT study_title as "studyName", status FROM stability_studies
+        WHERE organization_id = $1 AND (project_id = $2 OR project_id IS NULL)`,
+      [orgId, String(projectId)],
     ),
     isUuidProject
       ? pool.query(

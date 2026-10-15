@@ -57,7 +57,8 @@ describe('the registry wrapper', () => {
     expect(await run('qms_change_transition', { change_id: 3, to: 'closed' }, { ...CTX, humanConfirmed: true })).toMatchObject({
       error: 'NOT_AN_ANA_ACTION',
     });
-    expect(await run('qms_change_transition', { change_id: 3, to: 'under_assessment' })).toMatchObject({
+    // With the person's reason stated (2026-09-29: without one she is asked for it first).
+    expect(await run('qms_change_transition', { change_id: 3, to: 'under_assessment', reason: 'Begin impact assessment.' })).toMatchObject({
       error: 'HUMAN_CONFIRMATION_REQUIRED',
     });
   });

@@ -40,7 +40,7 @@ import {
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { recordGovernedAction } from '../routes/c2c/actions';
 import { resolveSignerIdentity, type SignerIdentity } from './part11/resolve-signer-identity';
-import { ARTIFACT_ACT_MEANING } from './artifact-approval-act';
+import { ARTIFACT_ACT_MEANING, artifactStatusUpdate, reviewQuorumVerdict } from './artifact-approval-act';
 
 export type ArtifactTx = Parameters<Parameters<(typeof db)['transaction']>[0]>[0];
 type ArtifactRow = typeof concept2cureArtifacts.$inferSelect;
@@ -59,8 +59,23 @@ export interface SignedArtifactActInput {
   version: VersionRow | null;
   status: 'approved' | 'locked';
   previousStatus: string;
-  /** The status route's column changes for this transition. */
+  /**
+   * The caller's expected status-only changes. Validated against the canonical
+   * act; the commit derives its own write instead of accepting arbitrary fields.
+   */
   updateData: Partial<ArtifactRow>;
+  /**
+   * The artifact's `metadata` as this act should leave it — the governance
+   * harness block the status route recomputes for the new lifecycle state.
+   *
+   * 2026-10-11: it is named here rather than carried inside `updateData`.
+   * `validatedStatusChanges` admits only the canonical approval/lock columns,
+   * so a route that put `metadata` on `updateData` failed the key-set check and
+   * EVERY approve and lock answered 409 ARTIFACT_CHANGED. It is not part of the
+   * signed state (`sameSignedTarget` does not compare it) and it cannot bring
+   * another column with it: only this one key is merged.
+   */
+  metadata?: unknown;
   organizationId: number;
   userId: number;
   userRole: string;
@@ -69,6 +84,14 @@ export interface SignedArtifactActInput {
   /** True only when the re-authentication verified a second factor. */
   secondFactorVerified: boolean;
   ipAddress: string | null;
+  /** The door the act was taken through, on its ledger row. The status route's when omitted. */
+  surface?: string;
+  /**
+   * When the signer was re-authenticated, when that was before this commit
+   * (AnA's sign-off is verified by the governed-action route); the commit time
+   * otherwise, as the status route re-authenticates immediately before it.
+   */
+  authenticatedAt?: Date;
 }
 
 export interface SignedArtifactAct {
@@ -87,32 +110,58 @@ export interface SignedArtifactAct {
  */
 export class ArtifactActConflictError extends Error {
   readonly code = 'ARTIFACT_CHANGED' as const;
-  constructor() {
-    super('The document changed while it was being signed. Reload it and sign again. Nothing was signed.');
+  constructor(message = 'The document changed while it was being signed. Reload it and sign again. Nothing was signed.') {
+    super(message);
     this.name = 'ArtifactActConflictError';
+  }
+}
+
+/**
+ * The caller handed this act a column set that is not the canonical one for an
+ * approve or a lock. That is the server disagreeing with itself, not the
+ * document moving, and it must never be reported as a conflict: on 2026-10-11
+ * the status route added one extra key (`metadata`) and every approve and lock
+ * answered 409 "The document changed while it was being signed" — a sentence
+ * that was not true, sent to users, for a mismatch between two of our own
+ * modules. The route answers 500 and logs this; it is a defect to fix, not a
+ * state for a signer to retry.
+ */
+export class ArtifactActContractError extends Error {
+  readonly code = 'ARTIFACT_ACT_CONTRACT' as const;
+  constructor(readonly detail: string) {
+    super(`The signed act was given a column set it does not accept: ${detail}`);
+    this.name = 'ArtifactActContractError';
   }
 }
 
 /**
  * Commit the act on `tx`. The caller has already refused a wrong meaning and
  * re-authenticated the signer. Throws ArtifactActConflictError when the
- * artifact is no longer in the state the caller read.
+ * artifact is no longer in the state the caller read, and
+ * ArtifactActContractError when the caller's column set is not the canonical one.
  */
 export async function commitSignedArtifactAct(
   tx: ArtifactTx,
   input: SignedArtifactActInput,
 ): Promise<SignedArtifactAct> {
-  if (input.status === 'locked' && input.artifact.approvedVersionId == null) {
-    // The route refuses this first (a lock must cover the approval). A lock
-    // that names no approved version is never written.
-    throw new Error('A lock must name the approved version it covers.');
+  // Recheck the target on THIS transaction. A preflight read is not a lock,
+  // and a caller's cached VersionRow must never become the signed record.
+  const updateData = validatedStatusChanges(input);
+  const artifact = await lockCurrentSignedTarget(tx, input);
+  const storedVersion = await lockCurrentSignedVersion(tx, input, artifact);
+  const q = queryableFromDrizzle(tx);
+  if (input.status === 'approved') {
+    const quorum = await reviewQuorumVerdict(q, artifact.id, input.organizationId, artifact.version);
+    if (!quorum.met) throw new ArtifactActConflictError(`${quorum.message} Nothing was signed.`);
   }
-  const row = await updateFromStateAsRead(tx, input);
-  const version = input.version ?? (await recordSignedVersion(tx, input));
+  // This recheck catches decisions that changed since preflight. It does NOT
+  // serialize all review/source writers or qualify the science in a document.
+  const bound = { ...input, artifact, updateData };
+  const row = await updateFromStateAsRead(tx, bound);
+  const version = storedVersion ?? (await recordSignedVersion(tx, bound));
 
   // §11.50: the printed name is the account's, resolved on this transaction.
   // It fails closed (SignerNotAttributableError) when the signer cannot be named.
-  const q = queryableFromDrizzle(tx);
   const signer = await resolveSignerIdentity(
     q,
     input.userId,
@@ -138,10 +187,10 @@ export async function commitSignedArtifactAct(
       signatureId,
     },
     domain: 'authoring',
-    surface: 'artifact-status',
+    surface: input.surface ?? 'artifact-status',
   });
 
-  const signature = await insertActSignature(tx, input, version, {
+  const signature = await insertActSignature(tx, bound, version, {
     signatureId,
     signedAt,
     signer,
@@ -149,23 +198,130 @@ export async function commitSignedArtifactAct(
     ledger: gov,
   });
   const snapshot =
-    input.status === 'locked' ? await insertLockSnapshot(tx, input, version, signer, signature.signatureId) : null;
+    input.status === 'locked' ? await insertLockSnapshot(tx, bound, version, signer, signature.signatureId) : null;
   return { row, version, signature, snapshot, signer };
 }
 
+/** Positive PostgreSQL integer keys; never coerce a foreign/malformed selector. */
+function validSignedId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+}
+
+/** Only the canonical approval/lock columns can be changed by this act. */
+function validatedStatusChanges(input: SignedArtifactActInput): Partial<ArtifactRow> {
+  const artifact = input.artifact;
+  if (
+    !artifact || ![artifact.id, artifact.projectId, artifact.version, input.organizationId, input.userId].every(validSignedId) ||
+    artifact.organizationId !== input.organizationId ||
+    typeof artifact.artifactId !== 'string' || !artifact.artifactId.trim() ||
+    typeof artifact.content !== 'string' ||
+    artifact.status !== input.previousStatus ||
+    !((input.previousStatus === 'review' && input.status === 'approved') ||
+      (input.previousStatus === 'approved' && input.status === 'locked')) ||
+    (input.status === 'locked' && artifact.approvedVersionId !== artifact.version)
+  ) throw new ArtifactActConflictError();
+
+  const expected = artifactStatusUpdate(artifact, input.previousStatus, input.status, input.userId);
+  const supplied = input.updateData;
+  if (!supplied) throw new ArtifactActContractError('no columns were supplied');
+  const extra = Object.keys(supplied).filter(k => !Object.prototype.hasOwnProperty.call(expected, k));
+  const missing = Object.keys(expected).filter(k => !Object.prototype.hasOwnProperty.call(supplied, k));
+  if (extra.length || missing.length) {
+    throw new ArtifactActContractError(
+      `${extra.length ? `columns it does not write: ${extra.join(', ')}. ` : ''}${missing.length ? `columns it must write: ${missing.join(', ')}.` : ''}`.trim(),
+    );
+  }
+  // Same columns, different values: the row moved under the caller, which IS a
+  // conflict and is the signer's to retry.
+  if (Object.entries(supplied).some(([key, value]) =>
+    expected[key] instanceof Date
+      ? !(value instanceof Date) || !Number.isFinite(value.getTime())
+      : value !== expected[key])) {
+    throw new ArtifactActConflictError();
+  }
+  return expected as Partial<ArtifactRow>;
+}
+
+/** Relevant snapshot fields, including the metadata a lock would publish. */
+function sameSignedTarget(actual: ArtifactRow, expected: ArtifactRow, compareTime = true): boolean {
+  const fields = [
+    'id', 'artifactId', 'organizationId', 'projectId', 'version', 'status',
+    'approvedVersionId', 'publishedVersionId', 'content', 'contentHash',
+    'title', 'ctdSection', 'templateId', 'createdById',
+  ] as const;
+  const time = (value: Date | null): number | null => value === null ? null : value instanceof Date ? value.getTime() : NaN;
+  return fields.every(key => actual[key] === expected[key]) &&
+    (!compareTime || time(actual.updatedAt) === time(expected.updatedAt));
+}
+
+/** Lock head first. Version locks and the audit-chain lock always follow it. */
+async function lockCurrentSignedTarget(tx: ArtifactTx, input: SignedArtifactActInput): Promise<ArtifactRow> {
+  const { artifact } = input;
+  const rows = await tx.select().from(concept2cureArtifacts).where(and(
+    eq(concept2cureArtifacts.id, artifact.id),
+    eq(concept2cureArtifacts.artifactId, artifact.artifactId),
+    eq(concept2cureArtifacts.organizationId, input.organizationId),
+    eq(concept2cureArtifacts.projectId, artifact.projectId),
+  )).for('update').limit(2);
+  if (rows.length !== 1 || !sameSignedTarget(rows[0], artifact)) throw new ArtifactActConflictError();
+  const current = rows[0];
+  const hash = crypto.createHash('sha256').update(current.content).digest('hex');
+  // Some importers have not populated the optional head hash. Bind exact text
+  // anyway, and require a populated head hash to be correct, not just equal.
+  if (current.contentHash !== null && current.contentHash !== hash) throw new ArtifactActConflictError();
+  return current;
+}
+
+/** Re-read the stored version under a shared lock; never trust cached bytes. */
+async function lockCurrentSignedVersion(
+  tx: ArtifactTx,
+  input: SignedArtifactActInput,
+  artifact: ArtifactRow,
+): Promise<VersionRow | null> {
+  const rows = await tx.select().from(concept2cureArtifactVersions).where(and(
+    eq(concept2cureArtifactVersions.artifactId, artifact.id),
+    eq(concept2cureArtifactVersions.organizationId, input.organizationId),
+    eq(concept2cureArtifactVersions.version, artifact.version),
+  )).for('share').limit(2);
+  if (input.version === null) {
+    // A version that appeared after preflight requires a fresh signing attempt,
+    // not silent rebinding. The unique insert below handles a later contender.
+    if (rows.length !== 0) throw new ArtifactActConflictError();
+    return null;
+  }
+  const cached = input.version;
+  const current = rows[0];
+  if (!cached || rows.length !== 1 || !validSignedId(cached.id) ||
+    current.id !== cached.id || current.artifactId !== cached.artifactId ||
+    current.organizationId !== cached.organizationId || current.version !== cached.version ||
+    current.content !== cached.content || current.contentHash !== cached.contentHash ||
+    current.content !== artifact.content ||
+    current.contentHash !== crypto.createHash('sha256').update(artifact.content).digest('hex')) {
+    throw new ArtifactActConflictError();
+  }
+  return current;
+}
+
 /**
- * The status change, only from the state the signer was shown — status,
- * version and approved version. A concurrent edit, a second approval, or an
- * approval revoked and given again in between leaves nothing to sign.
+ * Compare-and-set repeats tenant, project, external identity and exact text
+ * conditions even though the head was locked above. Any refusal rolls back
+ * the caller's transaction, including a version inserted by this act.
  */
 async function updateFromStateAsRead(tx: ArtifactTx, input: SignedArtifactActInput): Promise<ArtifactRow> {
   const { artifact } = input;
   const [row] = await tx
     .update(concept2cureArtifacts)
-    .set(input.updateData)
+    .set(input.metadata === undefined ? input.updateData : { ...input.updateData, metadata: input.metadata })
     .where(
       and(
         eq(concept2cureArtifacts.id, artifact.id),
+        eq(concept2cureArtifacts.organizationId, input.organizationId),
+        eq(concept2cureArtifacts.projectId, artifact.projectId),
+        eq(concept2cureArtifacts.artifactId, artifact.artifactId),
+        eq(concept2cureArtifacts.content, artifact.content),
+        artifact.contentHash === null
+          ? isNull(concept2cureArtifacts.contentHash)
+          : eq(concept2cureArtifacts.contentHash, artifact.contentHash),
         eq(concept2cureArtifacts.status, input.previousStatus),
         eq(concept2cureArtifacts.version, artifact.version),
         artifact.approvedVersionId == null
@@ -174,7 +330,9 @@ async function updateFromStateAsRead(tx: ArtifactTx, input: SignedArtifactActInp
       ),
     )
     .returning();
-  if (!row) throw new ArtifactActConflictError();
+  if (!row || !sameSignedTarget(row, { ...artifact, ...input.updateData } as ArtifactRow, false)) {
+    throw new ArtifactActConflictError();
+  }
   return row;
 }
 
@@ -198,7 +356,12 @@ async function recordSignedVersion(tx: ArtifactTx, input: SignedArtifactActInput
     })
     .onConflictDoNothing()
     .returning();
-  if (!version) throw new ArtifactActConflictError();
+  if (!version || !validSignedId(version.id) || version.artifactId !== artifact.id ||
+    version.organizationId !== input.organizationId || version.version !== artifact.version ||
+    version.content !== artifact.content ||
+    version.contentHash !== crypto.createHash('sha256').update(artifact.content).digest('hex')) {
+    throw new ArtifactActConflictError();
+  }
   return version;
 }
 
@@ -247,7 +410,7 @@ async function insertActSignature(
       signerEmail: act.signer.email,
       signerRole: input.userRole,
       authenticationMethod: input.secondFactorVerified ? 'password+totp' : 'password',
-      authenticationTimestamp: act.signedAt,
+      authenticationTimestamp: input.authenticatedAt ?? act.signedAt,
       secondFactorVerified: input.secondFactorVerified,
       signatureHash,
       signatureManifest: {
@@ -269,6 +432,7 @@ async function insertActSignature(
       signedAt: act.signedAt,
     })
     .returning();
+  if (!signature) throw new Error('The signature record could not be confirmed.');
   return signature;
 }
 
@@ -311,5 +475,6 @@ async function insertLockSnapshot(
       },
     })
     .returning();
+  if (!snapshot) throw new Error('The release snapshot record could not be confirmed.');
   return snapshot;
 }

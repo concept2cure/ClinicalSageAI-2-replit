@@ -36,6 +36,8 @@
 import type { PoolClient } from 'pg';
 import type { AnaTool } from '../ai-gateway/types';
 import type { ToolContext } from './AnaToolExecutor.js';
+import type { ReadinessComponentKey } from './project-readiness-aggregator.js';
+import { STATED_REASON_INPUT, gatedReason, requireStatedReason } from './stated-reason-input.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Contract
@@ -50,7 +52,14 @@ export interface CanonicalRevisionRequest {
   title: string;
   content: string;
   documentType?: string;
-  reasonForChange?: string;
+  /**
+   * The person's stated reason for the change (at least 8 characters, trimmed),
+   * recorded on the version and as the ledger row's reason. Required: the
+   * spine records no reason nobody gave (2026-09-29; it used to write
+   * `AnA revised "<title>" (v<n>)` when none was passed). A caller with no
+   * person's reason does not commit through the spine.
+   */
+  reasonForChange: string;
   /** eCTD section to place the artifact at (step 7). Omit to leave placement as-is. */
   ctdSection?: string | null;
   /** Model that authored the revision, recorded on the AI-action ledger. */
@@ -59,6 +68,18 @@ export interface CanonicalRevisionRequest {
   triggerReview?: boolean;
   /** Provenance records to persist as lineage (step 3). Opaque to the core. */
   provenance?: unknown[];
+}
+
+/**
+ * The readiness figure recomputed after a revision. 2026-10-15: this was the
+ * bare score, so a score that left components out (no scan on record, or a
+ * store that could not be read) was reported as the whole readiness figure.
+ */
+export interface SpineReadiness {
+  /** 0–100 over the components that were measured. */
+  score: number;
+  /** Components the score leaves out because they were not assessed. */
+  notAssessed: ReadinessComponentKey[];
 }
 
 export interface VersionWriteResult {
@@ -80,7 +101,7 @@ export interface CanonicalRevisionResult {
   actionId: string | null;
   auditId: string | null;
   provenanceLinks: number;
-  readiness: number | null;
+  readiness: SpineReadiness | null;
   /** Ordered record of the steps that ran — surfaced to the model and asserted in tests. */
   steps: string[];
 }
@@ -115,7 +136,7 @@ export interface SpineDeps {
   /** Step 3 — persist provenance as lineage (post-commit, append-only, fail-soft). */
   persistProvenance(req: CanonicalRevisionRequest, artifactId: string): Promise<number>;
   /** Step 5 — recompute readiness from committed state (post-commit). */
-  recomputeReadiness(organizationId: number, projectId: number): Promise<number | null>;
+  recomputeReadiness(organizationId: number, projectId: number): Promise<SpineReadiness | null>;
   /** Notify the UI to refresh (post-commit). */
   emitRefresh(event: {
     organizationId: number;
@@ -145,13 +166,17 @@ export async function commitCanonicalRevision(
   if (!req.anaThreadId || !req.title || typeof req.content !== 'string' || req.content.length === 0) {
     throw new Error('commitCanonicalRevision requires anaThreadId, title and non-empty content.');
   }
+  // The person's reason, or nothing is opened: ReasonNotStatedError before the
+  // transaction. The tool handler has already asked (gatedReason); this holds
+  // every other caller of the core to the same rule.
+  const reason = requireStatedReason(req.reasonForChange, 'reason_for_change');
 
   const steps: string[] = [];
   const triggerReview = req.triggerReview !== false;
 
   // ── Atomic governed core: version + AI action + audit + review + placement ──
   const core = await deps.withTransaction(req.organizationId, async (client) => {
-    const version = await deps.writeVersionTx(client, req);
+    const version = await deps.writeVersionTx(client, { ...req, reasonForChange: reason });
     steps.push('version');
 
     const gov = await deps.recordGovernedActionTx(client, {
@@ -159,9 +184,7 @@ export async function commitCanonicalRevision(
       userId: req.userId ?? 0,
       target: `artifact:${version.artifactId}`,
       command: version.created ? 'update' : 'reaffirm',
-      reason:
-        (req.reasonForChange && req.reasonForChange.trim()) ||
-        `AnA revised "${req.title}" (v${version.version})`,
+      reason,
       payload: {
         title: req.title,
         version: version.version,
@@ -347,7 +370,9 @@ export function defaultSpineDeps(): SpineDeps {
       try {
         const { getProjectReadinessAggregate } = await import('./project-readiness-aggregator.js');
         const agg = await getProjectReadinessAggregate(projectId, organizationId);
-        return typeof agg.score === 'number' ? agg.score : null;
+        return typeof agg.score === 'number'
+          ? { score: agg.score, notAssessed: agg.notAssessed.map(n => n.component) }
+          : null;
       } catch {
         return null; // derived figure; a recompute hiccup never fails the revision
       }
@@ -391,7 +416,7 @@ export const COMMIT_DOCUMENT_REVISION: AnaTool = {
       ana_thread_id: { type: 'string', description: 'The AnA thread this document belongs to. Defaults to the current thread when omitted.' },
       project_id: { type: 'number', description: 'Project id. Defaults to the current project when omitted.' },
       document_type: { type: 'string', description: 'Optional document type (e.g. "clinical_overview", "cover_letter").' },
-      reason_for_change: { type: 'string', description: 'Reason-for-change recorded on the version and the audit event (Part 11 E6b).' },
+      reason_for_change: STATED_REASON_INPUT,
       ctd_section: { type: 'string', description: 'Optional eCTD section to place the artifact at (e.g. "2.5", "3.2.S.4.1"). Omit to leave placement unchanged.' },
       ai_model_used: { type: 'string', description: 'Optional model identifier that authored the revision, recorded on the AI-action ledger.' },
       trigger_review: { type: 'boolean', description: 'Move the document into review state after saving. Default true; pass false to keep it a draft.' },
@@ -440,6 +465,8 @@ export function registerDocumentSpineHandlers(register: RegisterFn): void {
     if (!anaThreadId) {
       return JSON.stringify({ error: 'ana_thread_id is required (no active thread in context).' });
     }
+    // Recorded on the version and the ledger row; refused before anything opens without it.
+    const reasonForChange = gatedReason(input, 'reason_for_change');
 
     try {
       const result = await commitCanonicalRevision(
@@ -451,7 +478,7 @@ export function registerDocumentSpineHandlers(register: RegisterFn): void {
           title,
           content,
           documentType: typeof input.document_type === 'string' ? input.document_type : undefined,
-          reasonForChange: typeof input.reason_for_change === 'string' ? input.reason_for_change : undefined,
+          reasonForChange,
           ctdSection: typeof input.ctd_section === 'string' ? input.ctd_section : null,
           aiModelUsed: typeof input.ai_model_used === 'string' ? input.ai_model_used : null,
           triggerReview: input.trigger_review !== false,

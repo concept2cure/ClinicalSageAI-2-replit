@@ -1,0 +1,5 @@
+== M1 no tenant uuid from the scope:       Tests  1 failed | 5 passed (6)
+== M2 program not resolved:       Tests  2 failed | 4 passed (6)
+== M3 resolve for a fixed org, not the caller's (cross-tenant):       Tests  1 failed | 5 passed (6)
+== M4 another tenant's uuid accepted:       Tests  1 failed | 5 passed (6)
+== O1 overcorrection: a failed lookup becomes a project:       Tests  1 failed | 5 passed (6)

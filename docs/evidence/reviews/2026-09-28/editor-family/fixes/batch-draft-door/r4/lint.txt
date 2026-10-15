@@ -1,0 +1,45 @@
+eslint on every file this round touched or added (and review-probes/).
+
+=== BEFORE (HEAD f2d3fed2c, the files that existed) ===
+
+<repo>/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+  507:3   warning  Function 'RichSectionEditor' has too many lines (1790). Maximum allowed is 100  max-lines-per-function
+  507:3   warning  Function 'RichSectionEditor' has a complexity of 173. Maximum allowed is 15     complexity
+  962:1   warning  File has too many lines (2034). Maximum allowed is 500                          max-lines
+  969:19  warning  The value assigned to 'drift' is not used in subsequent statements              no-useless-assignment
+
+<repo>/server/routes/batch-draft-routes.ts
+  296:16  warning  Function 'createBatchDraftRoutes' has too many lines (236). Maximum allowed is 100  max-lines-per-function
+  437:76  warning  Async arrow function has too many lines (156). Maximum allowed is 100               max-lines-per-function
+  437:76  warning  Async arrow function has a complexity of 33. Maximum allowed is 15                  complexity
+
+<repo>/server/services/clinical-regulatory-evidence/lineage-gate.ts
+   99:1  warning  Async function 'attributeMachineThenAuthor' has too many parameters (8). Maximum allowed is 5     max-params
+  147:8  warning  Async function 'enforceAuthorLineage' has too many parameters (6). Maximum allowed is 5           max-params
+  253:8  warning  Async function 'enforceSourceAndAuthorLineage' has too many parameters (7). Maximum allowed is 5  max-params
+
+✖ 10 problems (0 errors, 10 warnings)
+
+
+=== AFTER ===
+
+<repo>/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+  508:3   warning  Function 'RichSectionEditor' has too many lines (1790). Maximum allowed is 100  max-lines-per-function
+  508:3   warning  Function 'RichSectionEditor' has a complexity of 173. Maximum allowed is 15     complexity
+  963:1   warning  File has too many lines (2035). Maximum allowed is 500                          max-lines
+  971:19  warning  The value assigned to 'drift' is not used in subsequent statements              no-useless-assignment
+
+<repo>/server/routes/batch-draft-routes.ts
+  296:16  warning  Function 'createBatchDraftRoutes' has too many lines (239). Maximum allowed is 100  max-lines-per-function
+  437:76  warning  Async arrow function has too many lines (159). Maximum allowed is 100               max-lines-per-function
+  437:76  warning  Async arrow function has a complexity of 33. Maximum allowed is 15                  complexity
+
+<repo>/server/services/clinical-regulatory-evidence/lineage-gate.ts
+  136:1  warning  Async function 'attributeMachineThenAuthor' has too many parameters (6). Maximum allowed is 5     max-params
+  183:8  warning  Async function 'enforceAuthorLineage' has too many parameters (6). Maximum allowed is 5           max-params
+  289:8  warning  Async function 'enforceSourceAndAuthorLineage' has too many parameters (7). Maximum allowed is 5  max-params
+
+✖ 10 problems (0 errors, 10 warnings)
+
+
+Same 10 warnings, same rules, same functions: RichSectionEditor (4: function length, complexity, file length, a useless assignment), batch-draft-routes (3: the factory and the accept handler, length and complexity), lineage-gate (3: max-params on attributeMachineThenAuthor, enforceAuthorLineage, enforceSourceAndAuthorLineage; attributeMachineThenAuthor went from 8 parameters to 6). No file gained a warning; the new files have none.

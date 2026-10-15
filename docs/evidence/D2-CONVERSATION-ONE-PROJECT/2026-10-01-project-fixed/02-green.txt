@@ -1,0 +1,51 @@
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > returns the org rows on a healthy read
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 503s when the thread store is not provisioned — never a 200 empty list
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s on any other read failure — never a 200 empty list
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s when the PROJECT-scoped ai_threads read fails (previously swallowed)
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 500s when the transcript read fails — an unreadable thread is not an empty one
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 404s only when the thread genuinely resolves to no store
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 503s when the message store is not provisioned
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > programIdForThread > accepts a UUID (normalised to lower case) and nothing else
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > refuses a program id that is not a UUID rather than querying with it
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > returns nothing without an organization — never a cross-tenant list
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot persist a message — the INSERT the code issues fails
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves an AnA thread its own transcript from chat_messages
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves a submission-chat thread from ai_messages, not from the other store
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > resolves the store org-scoped, so another tenant's thread is not found
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > needs an organization
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > updates the store the thread lives in
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > writes a title change scoped to the organization, not by id alone
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (42) is refused 409, and nothing is written
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (0f3c1a2b-1111-4222-8333-444455556666) is refused 409, and nothing is written
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (null) is refused 409, and nothing is written
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the ai store (0f3c1a2b-1111-4222-8333-444455556666) is refused 409, and nothing is written
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a colleague's conversation is refused 403, and nothing is written
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > the owner renames their own conversation
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a colleague's thread id is refused, not forked and not read
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > another tenant's thread id is never resolved — the caller gets a fresh thread
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > the caller's own thread id resolves to itself
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > a thread with no recorded owner is scoped by organization alone
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unknown id mints a fresh thread, as it always did
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > with no organization to scope by, a supplied id is never honoured
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > getOrCreateThread resolves a supplied id as the caller > an unidentified caller does not get an owned thread
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > resolveAccessibleThread — the history gate the context builder uses > returns null for a foreign tenant and throws for a colleague
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > ensureThread cannot adopt someone else’s stable id > refuses a colleague's id and a foreign tenant's id, creates its own
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the organization's own program is bound, lower-cased
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > another organization's program is never bound: the thread is minted unbound
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > a deleted program of the organization is not bound either
+ ✓ tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the program list shows the thread under its own program, never under another organization's
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot read context — the SELECT the code issues fails
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > cannot read token counts either
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > the defect, reproduced against the runtime-created shape > the 20260601 metadata patch alone does NOT fix it
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > round-trips a message through the real INSERT and SELECTs
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > supports the wider thread shape the routes write
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > tokens_used defaults to 0, not NULL
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a FRESH database, the migration creates a working store > cascades messages when a thread is deleted
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > adds the missing columns to tables the app already created
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > preserves existing rows while widening the table
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > composes with 20260601 in either order
+ ✓ tests/schema-contract/chat-thread-store.contract.test.ts > on a LONG-LIVED database, the migration repairs the narrow shape > is idempotent
+ Test Files  5 passed (5)
+      Tests  49 passed (49)

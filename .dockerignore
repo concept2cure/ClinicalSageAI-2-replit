@@ -12,11 +12,15 @@ tmp
 .vscode
 .devcontainer
 docs
+# The GAMP 5 validation kit, listed and served by server/routes/validation-kit.ts.
+!docs/validation
 tests
 scripts/audits
 storybook-static
 *.md
 !README.md
+# Served at /.well-known/security-policy (server/routes/well-known.ts).
+!SECURITY.md
 npm-debug.log*
 yarn-debug.log*
 _archive

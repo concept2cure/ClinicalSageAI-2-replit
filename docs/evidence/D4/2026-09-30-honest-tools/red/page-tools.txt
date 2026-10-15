@@ -1,0 +1,192 @@
+# red at 00b361e7: handlers as on trunk, final test file (approved model for pdf_overlay)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:20:46.808Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:20:46.809Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/rasterize-page-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:20:46.809Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/rasterize-page-honest.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/rasterize-page-honest.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/rasterize-page-honest.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > writes a PNG of the page asked for, and succeeds only when it exists 7ms
+   → The "path" argument must be of type string or an instance of Buffer or URL. Received undefined
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a page the document does not have, naming how many it has 4ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a path outside the tenant's workspace without opening it 1ms
+   → expected true not to be true // Object.is equality
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses another tenant's file 1ms
+   → expected true not to be true // Object.is equality
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > converts a DOCX through the one DOCX→PDF pipeline first 1ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > reports a failed conversion as a failure 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > says it is unavailable and writes nothing, instead of reporting overlays queued 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > does not offer signatures or approval stamps in its definition 1ms
+   → expected 'Overlay text, images, or regulatory s…' not to match /signature|approval stamp/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > writes a PNG of the page asked for, and succeeds only when it exists
+TypeError: The "path" argument must be of type string or an instance of Buffer or URL. Received undefined
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:51:26
+     49|     const out = await run('rasterize_page', { document_path: pdfPath, …
+     50|     expect(out.success).toBe(true);
+     51|     const png = await fs.readFile(out.pngPath);
+       |                          ^
+     52|     expect(png.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, …
+     53|     expect(out).toMatchObject({ page: 2, pageCount: 3, dpi: 72, widthP…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_INVALID_ARG_TYPE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a page the document does not have, naming how many it has
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:61:25
+     59|   it('refuses a page the document does not have, naming how many it ha…
+     60|     const out = await run('rasterize_page', { document_path: pdfPath, …
+     61|     expect(out.success).toBe(false);
+       |                         ^
+     62|     expect(out.error).toMatch(/has 3 pages/);
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a path outside the tenant's workspace without opening it
+AssertionError: expected true not to be true // Object.is equality
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:67:29
+     65|   it('refuses a path outside the tenant\'s workspace without opening i…
+     66|     const out = await run('rasterize_page', { document_path: 'dist/ind…
+     67|     expect(out.success).not.toBe(true);
+       |                             ^
+     68|     expect(out.error).toMatch(/document_path/);
+     69|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses another tenant's file
+AssertionError: expected true not to be true // Object.is equality
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:73:29
+     71|   it('refuses another tenant\'s file', async () => {
+     72|     const out = await run('rasterize_page', { document_path: pdfPath }…
+     73|     expect(out.success).not.toBe(true);
+       |                             ^
+     74|   });
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > converts a DOCX through the one DOCX→PDF pipeline first
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:84:32
+     82|     });
+     83|     const out = await run('rasterize_page', { document_path: docx, pag…
+     84|     expect(runDocxPdfPipeline).toHaveBeenCalledTimes(1);
+       |                                ^
+     85|     expect(out).toMatchObject({ success: true, page: 1, widthPx: 612, …
+     86|     expect(out.convertedPdf).toMatch(/memo\.pdf$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > reports a failed conversion as a failure
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:94:25
+     92|     runDocxPdfPipeline.mockRejectedValue(new Error('LibreOffice (soffi…
+     93|     const out = await run('rasterize_page', { document_path: docx });
+     94|     expect(out.success).toBe(false);
+       |                         ^
+     95|     expect(out.error).toMatch(/soffice/);
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > says it is unavailable and writes nothing, instead of reporting overlays queued
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:108:25
+    106|       { organizationId: ORG, servingModel: { provider: 'anthropic', mo…
+    107|     );
+    108|     expect(out.success).toBe(false);
+       |                         ^
+    109|     expect(out.status).toBe('unavailable');
+    110|     expect(JSON.stringify(out)).not.toMatch(/queued|will be applied/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > does not offer signatures or approval stamps in its definition
+AssertionError: expected 'Overlay text, images, or regulatory s…' not to match /signature|approval stamp/i
+
+- Expected:
+/signature|approval stamp/i
+
++ Received:
+"Overlay text, images, or regulatory stamps onto specific coordinates of an existing PDF template. Use for form filling, adding signatures, watermarks, approval stamps, or finalizing templates with positioned content. Supports multi-page overlay."
+
+ ❯ server/services/ana/__tests__/rasterize-page-honest.test.ts:116:33
+    114|   it('does not offer signatures or approval stamps in its definition',…
+    115|     const def = ALL_ANA_TOOLS.find((t) => t.name === 'pdf_overlay')!;
+    116|     expect(def.description).not.toMatch(/signature|approval stamp/i);
+       |                                 ^
+    117|     expect(def.description).toMatch(/unavailable/i);
+    118|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  00:20:43
+   Duration  6.71s (transform 4.55s, setup 82ms, import 6.24s, tests 40ms, environment 0ms)
+

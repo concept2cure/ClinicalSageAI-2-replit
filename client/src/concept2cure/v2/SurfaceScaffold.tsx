@@ -57,14 +57,16 @@ export function SurfaceDegraded({ kind = 'load' }: { kind?: 'load' | 'crash' }) 
  * Both reach this boundary through React's render phase — a rejected
  * `React.lazy` import rethrows there — so the class has to be read off the
  * message. These are the strings the three bundlers/browsers in play produce for
- * a failed dynamic import; anything else is our own code throwing.
+ * a failed dynamic import, plus Vite's preload helper ("Unable to preload CSS
+ * for …"), which rejects first when the lazy chunk imports a stylesheet;
+ * anything else is our own code throwing.
  *
  * Deliberately conservative: an unrecognised message is treated as a CRASH, so
  * a new failure mode gets reported and honestly described rather than quietly
  * filed under "network hiccup" — which is the exact mistake this replaces.
  */
 export function isChunkLoadFailure(message: string): boolean {
-  return /failed to fetch dynamically imported module|error loading dynamically imported module|loading chunk \S+ failed|importing a module script failed|dynamically imported module/i.test(
+  return /failed to fetch dynamically imported module|error loading dynamically imported module|loading chunk \S+ failed|importing a module script failed|dynamically imported module|unable to preload css/i.test(
     message,
   );
 }

@@ -12,6 +12,26 @@ import { requireOrganizationContext } from '../middleware/tenantContext';
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
+// The one settings writer and its record, shared with the AnA platform
+// controller (P1-49, DP-58): services/tenant/tenant-settings-writer.ts.
+import {
+  DISCOVERY_NOT_A_GENERAL_SETTING,
+  DiscoverySettingRefusedError,
+  asSettings,
+  namesOnboardingDiscovery,
+  overlaySettings,
+  writeTenantSettings,
+  type Settings,
+} from '../services/tenant/tenant-settings-writer';
+import {
+  CLAUDE_CONNECTOR_SETTING,
+  CONNECTOR_NOT_A_GENERAL_SETTING,
+  CONNECTOR_OPENER_ONLY,
+  claudeConnectorEnabled,
+  mayChangeClaudeConnector,
+  namesClaudeConnector,
+} from '../mcp/auth/connector-enablement';
 
 const logger = createScopedLogger('tenant-config-api');
 const router = Router();
@@ -35,8 +55,25 @@ const router = Router();
  */
 const staffAcrossOrgs = staffCrossOrgScope({
   param: 'tenantId',
-  isStaff: req => req.userRole === 'super_admin',
+  isStaff: req => isTenantStaff(req),
 });
+
+/**
+ * Platform staff for this router: platform standing for super_admin
+ * (holdsPlatformRole), never the request role. Behind server/auth.ts the
+ * request role is the tenant membership role, so a membership row naming
+ * super_admin used to read and write any tenant's settings (D6, 2026-10-05,
+ * docs/evidence/D6/2026-10-05-cross-tenant-staff/).
+ */
+function isTenantStaff(req: Parameters<typeof holdsPlatformRole>[0]): Promise<boolean> {
+  return holdsPlatformRole(req, ['super_admin']);
+}
+
+/** An administrator of THIS tenant, or platform staff. The handlers' write rule. */
+async function mayWriteTenant(req: Parameters<typeof holdsPlatformRole>[0], tenantId: number): Promise<boolean> {
+  if (req.userRole === 'admin' && tenantId === req.tenantId) return true;
+  return isTenantStaff(req);
+}
 
 const tenantSettingsSchema = z.object({
   branding: z
@@ -120,6 +157,55 @@ const tenantSettingsSchema = z.object({
     .optional(),
 });
 
+/** The defaults a reset restores, by tier. */
+function defaultSettingsFor(tier: string): Settings {
+  return {
+    branding: {
+      primaryColor: '#292524', // Stone-800
+    },
+    security: {
+      mfaRequired: tier === 'enterprise',
+      passwordPolicy: {
+        minLength: 8,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: tier !== 'standard',
+        passwordExpiryDays: tier === 'enterprise' ? 90 : 0,
+      },
+      sessionTimeoutMinutes: tier === 'enterprise' ? 30 : 60,
+    },
+    notifications: {
+      emailEnabled: true,
+      slackEnabled: false,
+      teamsEnabled: false,
+      smsEnabled: tier === 'enterprise',
+    },
+    workflow: {
+      defaultApprovalWorkflow: tier === 'enterprise' ? 'sequential' : 'single',
+      requiredApprovers: tier === 'enterprise' ? 2 : 1,
+      enableAutoReminders: tier !== 'standard',
+    },
+    cer: {
+      autoSaveIntervalMinutes: 5,
+      trackChangesEnabled: tier !== 'standard',
+      enableAiAssistant: tier === 'enterprise',
+      requireCtqGatingOnGeneration: tier === 'enterprise',
+    },
+    qmp: {
+      requireQmpForAllProjects: tier === 'enterprise',
+      enforceStrictCompliance: tier === 'enterprise',
+      auditTrailRetentionDays: tier === 'enterprise' ? 3650 : 365,
+    },
+    integration: {
+      vaultEnabled: true,
+    },
+  };
+}
+
+/** The connector's own door takes exactly `{ enabled: boolean }`. */
+const connectorBodySchema = z.object({ enabled: z.boolean() }).strict();
+
 /**
  * Get tenant settings
  * Organization admins can view their own settings, super admins can view any tenant's settings
@@ -132,7 +218,7 @@ router.get('/:tenantId/settings', authMiddleware, requireOrganizationContext, as
     }
 
     // Check permissions
-    if (req.userRole !== 'super_admin' && tenantId !== req.tenantId) {
+    if (tenantId !== req.tenantId && !(await isTenantStaff(req))) {
       return res
         .status(403)
         .json({ error: 'You can only view settings for your own organization' });
@@ -173,16 +259,22 @@ router.patch(
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
 
-      // Check permissions
-      if (req.userRole !== 'super_admin' && req.userRole !== 'admin') {
-        return res.status(403).json({ error: 'Only organization admins can update settings' });
+      // The connector for Claude has its own door (P1-47): named here it is
+      // refused, whoever asks, not silently dropped by the schema below.
+      if (namesClaudeConnector(req.body)) {
+        return res.status(403).json({ error: CONNECTOR_NOT_A_GENERAL_SETTING });
+      }
+      if (namesOnboardingDiscovery(req.body)) {
+        return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       }
 
-      // For regular admins, ensure they're updating their own organization
-      if (req.userRole === 'admin' && tenantId !== req.tenantId) {
-        return res
-          .status(403)
-          .json({ error: 'You can only update settings for your own organization' });
+      // Check permissions: this tenant's administrator, or platform staff.
+      if (!(await mayWriteTenant(req, tenantId))) {
+        return res.status(403).json({
+          error: req.userRole === 'admin'
+            ? 'You can only update settings for your own organization'
+            : 'Only organization admins can update settings',
+        });
       }
 
       // Validate request body
@@ -196,34 +288,21 @@ router.patch(
 
       const newSettings = validationResult.data;
 
-      // Get current settings
-      const tenant = await requestDb(req)
-        .select()
-        .from(organizations)
-        .where(eq(organizations.id, tenantId))
-        .limit(1);
-
-      if (tenant.length === 0) {
-        return res.status(404).json({ error: 'Tenant not found' });
-      }
-
-      // Merge current settings with new settings
-      const currentSettings = tenant[0].settings || {};
-      const mergedSettings = { ...currentSettings, ...newSettings };
-
-      // Update the tenant settings
-      const updatedTenant = await requestDb(req)
-        .update(organizations)
-        .set({ settings: mergedSettings })
-        .where(eq(organizations.id, tenantId))
-        .returning();
-      if (!updatedTenant[0]) {
+      // Each section named in the body is merged field by field over the stored
+      // one (DP-62): a field the body does not send is kept, never dropped.
+      const stored = await writeTenantSettings(req, tenantId, {
+        action: 'tenant_settings_changed',
+        next: current => overlaySettings(current, newSettings),
+        sections: () => Object.keys(newSettings).sort(),
+      });
+      if (!stored) {
         return res.status(404).json({ error: 'Tenant not found' });
       }
 
       // Return the updated settings
-      return res.json(updatedTenant[0].settings);
+      return res.json(stored);
     } catch (error) {
+      if (error instanceof DiscoverySettingRefusedError) return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       logger.error(`Error updating settings for tenant ${req.params.tenantId}`, error);
       return res.status(500).json({ error: 'Failed to update tenant settings' });
     }
@@ -246,88 +325,31 @@ router.post(
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
 
-      // Check permissions
-      if (req.userRole !== 'super_admin' && req.userRole !== 'admin') {
-        return res.status(403).json({ error: 'Only organization admins can reset settings' });
+      // Check permissions: this tenant's administrator, or platform staff.
+      if (!(await mayWriteTenant(req, tenantId))) {
+        return res.status(403).json({
+          error: req.userRole === 'admin'
+            ? 'You can only reset settings for your own organization'
+            : 'Only organization admins can reset settings',
+        });
       }
 
-      // For regular admins, ensure they're updating their own organization
-      if (req.userRole === 'admin' && tenantId !== req.tenantId) {
-        return res
-          .status(403)
-          .json({ error: 'You can only reset settings for your own organization' });
-      }
-
-      // Define default settings based on tenant tier
-      const tenant = await requestDb(req)
-        .select()
-        .from(organizations)
-        .where(eq(organizations.id, tenantId))
-        .limit(1);
-
-      if (tenant.length === 0) {
-        return res.status(404).json({ error: 'Tenant not found' });
-      }
-
-      const tier = tenant[0].tier || 'standard';
-
-      // Define default settings based on tier
-      const defaultSettings = {
-        branding: {
-          primaryColor: '#292524', // Stone-800
-        },
-        security: {
-          mfaRequired: tier === 'enterprise',
-          passwordPolicy: {
-            minLength: 8,
-            requireUppercase: true,
-            requireLowercase: true,
-            requireNumbers: true,
-            requireSpecialChars: tier !== 'standard',
-            passwordExpiryDays: tier === 'enterprise' ? 90 : 0,
-          },
-          sessionTimeoutMinutes: tier === 'enterprise' ? 30 : 60,
-        },
-        notifications: {
-          emailEnabled: true,
-          slackEnabled: false,
-          teamsEnabled: false,
-          smsEnabled: tier === 'enterprise',
-        },
-        workflow: {
-          defaultApprovalWorkflow: tier === 'enterprise' ? 'sequential' : 'single',
-          requiredApprovers: tier === 'enterprise' ? 2 : 1,
-          enableAutoReminders: tier !== 'standard',
-        },
-        cer: {
-          autoSaveIntervalMinutes: 5,
-          trackChangesEnabled: tier !== 'standard',
-          enableAiAssistant: tier === 'enterprise',
-          requireCtqGatingOnGeneration: tier === 'enterprise',
-        },
-        qmp: {
-          requireQmpForAllProjects: tier === 'enterprise',
-          enforceStrictCompliance: tier === 'enterprise',
-          auditTrailRetentionDays: tier === 'enterprise' ? 3650 : 365,
-        },
-        integration: {
-          vaultEnabled: true,
-        },
-      };
-
-      // Update with default settings
-      const updatedTenant = await requestDb(req)
-        .update(organizations)
-        .set({ settings: defaultSettings })
-        .where(eq(organizations.id, tenantId))
-        .returning();
-      if (!updatedTenant[0]) {
+      // Every setting the tier's defaults define is restored; what they do not
+      // define is kept (DP-62): the organisation's AnA tool policy and the
+      // server-enforced security keys are not this reset's to erase.
+      const stored = await writeTenantSettings(req, tenantId, {
+        action: 'tenant_settings_reset',
+        next: (current, tier) => overlaySettings(current, defaultSettingsFor(tier)),
+        sections: (current, next) => [...new Set([...Object.keys(current), ...Object.keys(next)])].sort(),
+      });
+      if (!stored) {
         return res.status(404).json({ error: 'Tenant not found' });
       }
 
       // Return the default settings
-      return res.json(updatedTenant[0].settings);
+      return res.json(stored);
     } catch (error) {
+      if (error instanceof DiscoverySettingRefusedError) return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       logger.error(`Error resetting settings for tenant ${req.params.tenantId}`, error);
       return res.status(500).json({ error: 'Failed to reset tenant settings' });
     }
@@ -368,16 +390,13 @@ router.patch(
         });
       }
 
-      // Check permissions
-      if (req.userRole !== 'super_admin' && req.userRole !== 'admin') {
-        return res.status(403).json({ error: 'Only organization admins can update settings' });
-      }
-
-      // For regular admins, ensure they're updating their own organization
-      if (req.userRole === 'admin' && tenantId !== req.tenantId) {
-        return res
-          .status(403)
-          .json({ error: 'You can only update settings for your own organization' });
+      // Check permissions: this tenant's administrator, or platform staff.
+      if (!(await mayWriteTenant(req, tenantId))) {
+        return res.status(403).json({
+          error: req.userRole === 'admin'
+            ? 'You can only update settings for your own organization'
+            : 'Only organization admins can update settings',
+        });
       }
 
       // Get schema for just this section
@@ -398,42 +417,23 @@ router.patch(
 
       const sectionData = validationResult.data;
 
-      // Get current settings
-      const tenant = await requestDb(req)
-        .select()
-        .from(organizations)
-        .where(eq(organizations.id, tenantId))
-        .limit(1);
-
-      if (tenant.length === 0) {
-        return res.status(404).json({ error: 'Tenant not found' });
-      }
-
-      // Merge current settings with new section settings
-      // `settings` is an untyped JSON column; treat it as a keyed record here.
-      const currentSettings = (tenant[0].settings || {}) as Record<string, unknown>;
-      const mergedSettings = {
-        ...currentSettings,
-        [section]: {
-          ...((currentSettings[section] as Record<string, unknown>) || {}),
-          ...sectionData,
-        },
-      };
-
-      // Update the tenant settings
-      const updatedTenant = await requestDb(req)
-        .update(organizations)
-        .set({ settings: mergedSettings })
-        .where(eq(organizations.id, tenantId))
-        .returning();
-      if (!updatedTenant[0]) {
+      // The named section, merged field by field over the stored one.
+      const stored = await writeTenantSettings(req, tenantId, {
+        action: 'tenant_settings_changed',
+        next: current => ({
+          ...current,
+          [section]: { ...asSettings(current[section]), ...sectionData },
+        }),
+        sections: () => [section],
+      });
+      if (!stored) {
         return res.status(404).json({ error: 'Tenant not found' });
       }
 
       // Return just the updated section
-      const updatedSettings = (updatedTenant[0].settings || {}) as Record<string, unknown>;
-      return res.json(updatedSettings[section]);
+      return res.json(stored[section]);
     } catch (error) {
+      if (error instanceof DiscoverySettingRefusedError) return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       logger.error(
         `Error updating ${req.params.section} settings for tenant ${req.params.tenantId}`,
         error
@@ -442,5 +442,84 @@ router.patch(
     }
   }
 );
+
+/**
+ * The connector for Claude, per organisation (ADR-0014 §10, plan P1-47;
+ * mcp/auth/connector-enablement.ts). Off until the organisation's owner or
+ * administrator turns it on; the connector reads it live on every request.
+ *
+ *   GET /:tenantId/claude-connector  any member of the organisation:
+ *       { connector: { enabled, canChange } }, canChange true for its owner or administrator
+ *   PUT /:tenantId/claude-connector  { enabled: boolean }, its owner or administrator only
+ *
+ * Who changes it is mayChangeClaudeConnector's list, owner and admin (IAM-25,
+ * decided by the product owner 2026-10-01): no product path writes `owner` to
+ * organization_users.role, and the administrator is the customer's highest
+ * in-product role, so the customer still decides. Refused: a manager, member
+ * or viewer, platform staff (super_admin), and the administrator or owner of
+ * another organisation. The general doors above refuse it by name (PATCH
+ * /settings), whoever asks, or do not know it (PATCH /settings/:section; a
+ * reset keeps it, since tier defaults do not define it), and the one settings
+ * writer refuses any write but this door's that would change it (connectorDoor;
+ * IAM-24 fix round). The change goes through that writer, so the setting and
+ * its chained audit row, with the value before and after, commit or roll back
+ * together.
+ */
+router.get('/:tenantId/claude-connector', authMiddleware, requireOrganizationContext, async (req, res) => {
+  try {
+    const tenantId = parseInt(String(req.params.tenantId));
+    if (isNaN(tenantId)) {
+      return res.status(400).json({ error: 'Invalid tenant ID' });
+    }
+    if (Number(req.tenantId) !== tenantId) {
+      return res.status(403).json({ error: 'You can only view settings for your own organization' });
+    }
+    const [tenant] = await requestDb(req)
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, tenantId))
+      .limit(1);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    return res.json({
+      connector: { enabled: claudeConnectorEnabled(tenant.settings), canChange: mayChangeClaudeConnector(req.userRole) },
+    });
+  } catch (error) {
+    logger.error(`Error reading the connector setting for tenant ${req.params.tenantId}`, error);
+    return res.status(500).json({ error: 'The connector setting could not be read.' });
+  }
+});
+
+router.put('/:tenantId/claude-connector', authMiddleware, requireOrganizationContext, async (req, res) => {
+  try {
+    const tenantId = parseInt(String(req.params.tenantId));
+    if (isNaN(tenantId)) {
+      return res.status(400).json({ error: 'Invalid tenant ID' });
+    }
+    if (!mayChangeClaudeConnector(req.userRole) || Number(req.tenantId) !== tenantId) {
+      return res.status(403).json({ error: CONNECTOR_OPENER_ONLY });
+    }
+    const body = connectorBodySchema.safeParse(req.body);
+    if (!body.success) {
+      return res.status(400).json({ error: 'Send { "enabled": true } or { "enabled": false }.' });
+    }
+    const { enabled } = body.data;
+    const stored = await writeTenantSettings(req, tenantId, {
+      action: 'tenant_settings_changed',
+      next: current => ({ ...current, [CLAUDE_CONNECTOR_SETTING]: { enabled } }),
+      sections: () => [CLAUDE_CONNECTOR_SETTING],
+      // The one door the writer lets change it (IAM-24 fix round).
+      connectorDoor: true,
+    });
+    if (!stored) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    return res.json({ connector: { enabled: claudeConnectorEnabled(stored), canChange: true } });
+  } catch (error) {
+    logger.error(`Error changing the connector setting for tenant ${req.params.tenantId}`, error);
+    return res.status(500).json({ error: 'The connector setting was not changed.' });
+  }
+});
 
 export default router;

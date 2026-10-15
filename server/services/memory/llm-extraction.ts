@@ -11,21 +11,33 @@
  * no model is configured (e.g. an air-gapped deployment without a local model)
  * or the gateway rejects the request.
  *
+ * 2026-10-15: drafts carry no confidence. This asked the model for a
+ * "confidenceScore (0-1)", kept its self-report and filled 0.6 when it gave
+ * none, and the heuristic rules stamped constants; AnA was shown those as
+ * "confidence: NN%". A figure nobody measured is not stored (the row's
+ * confidence_score is null).
+ *
  * @module server/services/memory/llm-extraction
  */
 import { z } from 'zod';
+
+/** Which extractor produced a memory atom: the governed model, or the regex/keyword rules. */
+export type MemoryExtractor = 'ai' | 'heuristic';
 
 export interface MemoryEntryDraft {
   category: string;
   subcategory: string;
   title: string;
   content: string;
-  confidenceScore: number;
   importanceLevel: string;
+  /**
+   * 2026-10-15: drafts did not say which extractor produced them, and the
+   * ingest writer stored every atom as 'ai', heuristic matches included.
+   */
+  extractedBy: MemoryExtractor;
 }
 
 const IMPORTANCE_LEVELS = new Set(['low', 'medium', 'high']);
-const DEFAULT_CONFIDENCE = 0.6;
 const MAX_ENTRIES = 40;
 const MAX_INPUT_CHARS = 24000;
 
@@ -40,13 +52,12 @@ export const MEMORY_ENTRIES_JSON_SCHEMA: Record<string, unknown> = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['category', 'subcategory', 'title', 'content', 'confidenceScore', 'importanceLevel'],
+        required: ['category', 'subcategory', 'title', 'content', 'importanceLevel'],
         properties: {
           category: { type: 'string' },
           subcategory: { type: 'string' },
           title: { type: 'string' },
           content: { type: 'string' },
-          confidenceScore: { type: 'number' },
           importanceLevel: { type: 'string', enum: ['low', 'medium', 'high'] },
         },
       },
@@ -59,14 +70,8 @@ const RawEntrySchema = z.object({
   subcategory: z.string().trim().min(1).max(80),
   title: z.string().trim().min(1).max(200),
   content: z.string().trim().min(1).max(4000),
-  confidenceScore: z.coerce.number().catch(DEFAULT_CONFIDENCE),
   importanceLevel: z.string().trim().catch('medium'),
 });
-
-function clamp01(n: number): number {
-  if (!Number.isFinite(n)) return DEFAULT_CONFIDENCE;
-  return Math.min(1, Math.max(0, n));
-}
 
 function normalizeImportance(v: string): string {
   const s = v.toLowerCase();
@@ -81,9 +86,9 @@ function extractJsonBlock(raw: string): string {
 
 /**
  * Parse + validate a model response into memory-entry drafts. Pure and
- * defensive: never throws, drops malformed entries, clamps confidence to
- * [0,1], normalizes importanceLevel to low|medium|high, and caps the count.
- * Accepts either a bare array or a `{ "entries": [...] }` envelope.
+ * defensive: never throws, drops malformed entries, ignores any confidence the
+ * model volunteers, normalizes importanceLevel to low|medium|high, and caps the
+ * count. Accepts either a bare array or a `{ "entries": [...] }` envelope.
  */
 export function parseMemoryEntries(raw: string, opts?: { max?: number }): MemoryEntryDraft[] {
   const max = opts?.max ?? MAX_ENTRIES;
@@ -114,8 +119,8 @@ export function parseMemoryEntries(raw: string, opts?: { max?: number }): Memory
       subcategory: e.subcategory,
       title: e.title,
       content: e.content,
-      confidenceScore: clamp01(e.confidenceScore),
       importanceLevel: normalizeImportance(e.importanceLevel),
+      extractedBy: 'ai',
     });
     if (out.length >= max) break;
   }
@@ -127,8 +132,8 @@ const SYSTEM_PROMPT =
   'life-sciences organization from an uploaded document. Extract only facts explicitly ' +
   'supported by the text — never invent. Return STRICT JSON matching the schema: an object ' +
   'with an "entries" array, where each entry has category, subcategory, title, content, ' +
-  'confidenceScore (0-1), and importanceLevel (one of low|medium|high). Prefer fewer, ' +
-  'higher-quality entries over many weak ones.';
+  'and importanceLevel (one of low|medium|high). Prefer fewer, higher-quality entries over ' +
+  'many weak ones.';
 
 export interface MemoryExtractionInput {
   kind: 'client' | 'project';

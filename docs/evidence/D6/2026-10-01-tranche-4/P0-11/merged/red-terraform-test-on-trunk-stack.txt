@@ -1,0 +1,4 @@
+  run "renders_the_boot_contract"... fail
+Error: No value for required variable
+  run "accepts_the_fail_closed_interim_approvals"... skip
+Failure! 0 passed, 1 failed, 42 skipped.

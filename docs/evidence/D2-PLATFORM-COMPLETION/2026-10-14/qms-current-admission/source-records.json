@@ -1,0 +1,91 @@
+{
+  "branch": "concept2cure-v2",
+  "baseCommit": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+  "files": [
+    {
+      "path": "docs/design/QMS_CURRENT_SIGNING_AND_TRAINING_ADMISSION.md",
+      "sha256": "51108ab79f047b33ed7305b78b411d455be580265d7acadea7244671cfb28b31",
+      "bytes": 11316
+    },
+    {
+      "path": "server/routes/mdx-qms.ts",
+      "sha256": "84df7c04949d4a5f3d35d63a7b436074c187b69dc0f79506eedb03cb58210121",
+      "bytes": 82187
+    },
+    {
+      "path": "server/services/qms/current-signing-admission.ts",
+      "sha256": "a3f13fcc96b34e97c1fb71ace80f33d2221119d03eb19b4abe53b11a286de4cb",
+      "bytes": 1830
+    },
+    {
+      "path": "server/services/qms/current-release-approval.ts",
+      "sha256": "6c07aafc54e5d172f58bc8e632ee0a00e0df671ede9ccb1fc3ba368a9e36f56d",
+      "bytes": 6327
+    },
+    {
+      "path": "server/services/qms/document-approval-signature.ts",
+      "sha256": "63b24f65f6decc9dfda97b9cfe6f11c84e5251cf4d36656c2309edf6ce9da6df",
+      "bytes": 23881
+    },
+    {
+      "path": "server/services/qms/change-approval-signature.ts",
+      "sha256": "f78d3ce63a44c68a7a6e0bb9dd7ccb3cdaa5c613ddddf6ada9b8a4cf3e2ee83b",
+      "bytes": 10437
+    },
+    {
+      "path": "server/services/qms/training.ts",
+      "sha256": "83f70608a14b6ba4d7b7e7c21f72efc3dbd0adaee66dbdd7f8306372fa10501b",
+      "bytes": 9134
+    },
+    {
+      "path": "server/services/qms/training-compliance.ts",
+      "sha256": "2c7cb96ec6f12f7f85acb8f356ee5170f4454392eea3d5fcc7ef78446b047eb4",
+      "bytes": 2924
+    },
+    {
+      "path": "server/services/qms/__tests__/_release-approval-fixture.ts",
+      "sha256": "18440dce7f1b92e9a2e003d7c0a4f0c20ae5ec928892c7c8b850593df9455bb9",
+      "bytes": 3293
+    },
+    {
+      "path": "server/services/qms/__tests__/training.pglite.integration.test.ts",
+      "sha256": "6bd9e2823562f2ac20b1bfdc8c74e7ce056a81a5243e4f0447e40f7c8911fbf7",
+      "bytes": 29265
+    },
+    {
+      "path": "server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts",
+      "sha256": "713da2ccf72e213e5dd7cd5aa1a9c696dc7cb83672478dbea51ff9550cf0d2be",
+      "bytes": 20820
+    },
+    {
+      "path": "server/routes/__tests__/qms-personal-training.test.ts",
+      "sha256": "f0d394854c958e0ca8e7ec2c1517fc80da6ee32be7fc171572d35e1b2b77f43b",
+      "bytes": 14561
+    },
+    {
+      "path": "server/routes/__tests__/qms-document-approval-signature.test.ts",
+      "sha256": "e573c704dc2d95be7b726e38171ea951cb259785447f100cafb44f81657dd521",
+      "bytes": 19331
+    },
+    {
+      "path": "server/routes/__tests__/qms-change-approval-signature.test.ts",
+      "sha256": "23ffacb2fca14a660ec67e70da60125d7075e536eeff667729f95e645dc3afb9",
+      "bytes": 10186
+    },
+    {
+      "path": "server/routes/__tests__/mdx-qms-retire.test.ts",
+      "sha256": "3c06a52fd477014bf0f44a1e95381b59c3aa69a89c67f52b4e50a1b94fb8204b",
+      "bytes": 17196
+    },
+    {
+      "path": "server/routes/__tests__/qms-legacy-api-retired.test.ts",
+      "sha256": "ef6955f17e5e4a7dfa2f557758986e4aca54981051c3be05d21ffa54b11b13dc",
+      "bytes": 14610
+    },
+    {
+      "path": "tests/db/qms-current-signing-and-training-admission.dbtest.ts",
+      "sha256": "1161467de5bc831c8e02ad9dbbb8b481c7a3bed6a73f030eae39359bbd855d4e",
+      "bytes": 16127
+    }
+  ]
+}

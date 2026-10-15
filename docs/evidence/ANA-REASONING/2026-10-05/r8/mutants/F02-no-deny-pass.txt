@@ -1,0 +1,12 @@
+Mutant F02-no-deny-pass: a value one answer found vouches for the same value another answer could not find
+
+--- server/services/ana/memory-fact-check.ts
+- if (basis.notFound.length > 0 && checkAnswer(item, basis.notFound).found > 0) return false;
++ 
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a value one answer found never vouches for the same value another answer could not find 7ms
+      Tests  1 failed | 12 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

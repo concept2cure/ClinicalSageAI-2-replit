@@ -74,9 +74,12 @@ describe('solveSampleSize', () => {
     const report = solveSampleSize(design(), prior, { targetPower: 0.8, targetAssurance: 0.8 });
     expect(report.nPerArmForPower).toBe(sampleSizeForPower(0.4, 0.025, 0.8));
     expect(report.nPerArmForAssurance).not.toBeNull();
-    expect(report.nPerArmForAssurance!).toBeGreaterThan(report.nPerArmForPower);
+    // A continuous endpoint is always sized in subjects, so the power N is present.
+    const nForPower = report.nPerArmForPower!;
+    expect(nForPower).not.toBeNull();
+    expect(report.nPerArmForAssurance!).toBeGreaterThan(nForPower);
     // Power at the solved N meets the target.
-    expect(powerTwoSampleMeans(0.4, report.nPerArmForPower, 0.025, true)).toBeGreaterThanOrEqual(0.8);
+    expect(powerTwoSampleMeans(0.4, nForPower, 0.025, true)).toBeGreaterThanOrEqual(0.8);
     // Planned-N diagnostics present.
     expect(report.atPlannedN).not.toBeNull();
     expect(report.atPlannedN!.power).toBeGreaterThan(0);
@@ -95,7 +98,7 @@ describe('solveSampleSize', () => {
     const d = design({ statisticalPlan: { alpha: 0.05, oneSided: false, dropoutRate: 0.2, plannedSampleSize: 200, plannedAnalyses: [] } });
     const report = solveSampleSize(d, prior, {});
     expect(report.dropoutAdjusted).not.toBeNull();
-    expect(report.dropoutAdjusted!.enrollPerArmForPower).toBeGreaterThan(report.nPerArmForPower);
+    expect(report.dropoutAdjusted!.enrollPerArmForPower).toBeGreaterThan(report.nPerArmForPower!);
   });
 
   it('cross-checks: the assurance-based N reproduces the target PoS in the simulator', () => {

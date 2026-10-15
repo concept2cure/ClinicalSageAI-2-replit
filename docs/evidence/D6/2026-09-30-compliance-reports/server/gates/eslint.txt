@@ -1,0 +1,42 @@
+
+/home/user/ClinicalSageAI-2-replit/server/bootstrap/register-inline-routes.ts
+   125:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   140:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   149:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   237:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   242:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   270:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   275:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   280:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   291:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   299:8  warning  Async function 'registerInlineAiWorkflowRoutes' has too many lines (596). Maximum allowed is 100  max-lines-per-function
+   299:8  warning  Async function 'registerInlineAiWorkflowRoutes' has a complexity of 80. Maximum allowed is 15     complexity
+   314:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   320:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   329:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+   726:1  warning  File has too many lines (847). Maximum allowed is 500                                             max-lines
+  1100:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1108:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1111:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1118:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1128:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1138:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1151:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1169:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1244:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1245:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1246:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1247:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1248:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1254:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1258:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1262:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1264:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+  1266:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info           no-console
+
+/home/user/ClinicalSageAI-2-replit/server/services/audit/signedAuditExport.ts
+  437:47  warning  The value assigned to 'idx' is not used in subsequent statements  no-useless-assignment
+
+✖ 34 problems (0 errors, 34 warnings)
+
+exit=0

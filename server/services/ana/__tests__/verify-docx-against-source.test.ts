@@ -29,6 +29,10 @@ describe('verify_docx_against_source — registration & schema', () => {
     const props = def!.input_schema.properties as Record<string, unknown>;
     expect(props.expected_text).toBeDefined();
     expect(props.required_strings).toBeDefined();
+    expect(props.artifact_id).toMatchObject({ type: 'string' });
+    expect(props.version_number).toMatchObject({ type: 'integer' });
+    expect(def!.input_schema.required).not.toContain('artifact_id');
+    expect(def!.input_schema.required).not.toContain('version_number');
   });
 });
 

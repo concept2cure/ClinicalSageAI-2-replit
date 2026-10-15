@@ -1,0 +1,30 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition list 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition term 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition detail 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > table caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > still refuses to treat a tag-shaped prose token as markup 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > does not report a glossary as faithfully editable in rich mode 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > reads a glossary as the words a reviewer sees, not as its tags 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still passes content the editor genuinely represents 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still catches real text loss 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the two allowlists agree > the server parser recognises exactly what the client does 2ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > docToPlainText — exact plain-text round trip > returns ordinary prose unchanged 27ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > docToPlainText — exact plain-text round trip > exposes collapsed runs of spaces (a space-aligned column) as a difference 7ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > docToPlainText — exact plain-text round trip > exposes extra blank lines folded into one break 5ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > assessPasteFidelity — the one-word floor is for long pastes only > reports a single dropped word on a short paste 3ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > assessPasteFidelity — the one-word floor is for long pastes only > keeps the noise floor on a long paste 3ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > structural drift between clipboard HTML and the parsed slice — the paste gate's comparison > names a definition list the schema flattened, though every word survived 21ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > structural drift between clipboard HTML and the parsed slice — the paste gate's comparison > names a table the schema (without the table extension) flattened into paragraphs 10ms
+ ✓ client/src/concept2cure/v2/__tests__/roundTripPlainText.test.ts > structural drift between clipboard HTML and the parsed slice — the paste gate's comparison > is silent on ordinary paragraphs and headings the schema keeps 6ms
+
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+   Start at  23:44:35
+   Duration  1.09s (transform 204ms, setup 336ms, import 190ms, tests 123ms, environment 1.13s)
+

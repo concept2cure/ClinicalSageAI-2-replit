@@ -76,17 +76,21 @@ const PREREQ = `
   -- The accounts, with the one column a connection reads of them: whether each
   -- is in use (services/account-standing.ts, VSR-001 F-29), as
   -- migrations/0000_sweet_joseph.sql defines it.
-  CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP);
+  CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP, sessions_ended_at TIMESTAMPTZ);
   INSERT INTO users (id) VALUES (10), (11), (20);
   -- The handshake admits a CURRENT member only (checkOrgMembership reads this
   -- row; security audit 2026-09-24 IAM-12, P1-9), so each account holds the
   -- membership its token claims. organizations.uuid is enrichment the lookup
   -- falls back from when absent.
+  -- created_at as migrations/0000_sweet_joseph.sql defines it: every
+  -- authenticator reads when the membership began with the account's standing
+  -- (P0-4b R1).
   CREATE TABLE organization_users (
     id SERIAL PRIMARY KEY,
     organization_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    role TEXT NOT NULL DEFAULT 'member'
+    role TEXT NOT NULL DEFAULT 'member',
+    created_at TIMESTAMP NOT NULL DEFAULT now()
   );
   INSERT INTO organization_users (organization_id, user_id) VALUES
     (${ORG_A}, 10), (${ORG_A}, 11), (${ORG_B}, 20);

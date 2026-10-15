@@ -1,0 +1,6 @@
+[css-shadowing] 3 baseline entr(y/ies) no longer shadowed — delete these lines:
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .ana-composer
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .pj-convo
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .pj-convo-t
+
+[css-shadowing] OK — 42 stylesheets, 18 known shadowed selector(s), 0 new.

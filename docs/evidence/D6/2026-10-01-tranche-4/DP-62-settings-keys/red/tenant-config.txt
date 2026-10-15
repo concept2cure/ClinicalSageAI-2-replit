@@ -1,0 +1,8 @@
+ × server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a reset restores the defaults and keeps the tool policy and the session limit 1717ms
+   → expected undefined to deeply equal { deny: [ 'send_external_email' ] }
+ × server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a PATCH of one field of a section keeps the section's other fields 8ms
+   → expected undefined to be 3 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to deeply equal { deny: [ 'send_external_email' ] }
+AssertionError: expected undefined to be 3 // Object.is equality
+      Tests  2 failed | 8 skipped (10)

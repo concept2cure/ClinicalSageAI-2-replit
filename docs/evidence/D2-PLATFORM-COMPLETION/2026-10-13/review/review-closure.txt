@@ -1,0 +1,13 @@
+Independent reporting review closure, 2026-10-13 19:51 UTC.
+
+All four follow-ups in acl-checklist.txt and the initial review are resolved in reviewed source:
+A. Saved delivery register uses primary project and actual complete carried run/bundle scopes. A lost second-project permission cannot expose a multi-project message. Missing targets are omitted; corrupt/mismatched-tenant records refuse.
+B. Group list hides inaccessible complete groups before joining metadata; create/patch require requested projects and current group access; snapshot reads use retained projectIds and refuse corrupt sets; snapshot capture requires live complete group access.
+C. Shared compute copies the actual validated program project set into summary.accessProjectIds; retained pack items copy it. Saved reads and SQL history authorize this retained set rather than mutable group membership. Ordinary roles refuse unbound legacy program output; canonical organization management retains its existing all-project policy.
+D. Health counts now have explicit organization predicates and canonical organization-management gate, while registry types remain global. Live project prediction checks current sharing before model/calibration IO, with no prediction-engine changes.
+
+Final independent read-boundary verification: 25/25 in three files (saved-read-access, PGlite run-history, PGlite health tenancy), final-read-boundaries-green.txt. Two positive real SQL proofs show history access before total/pagination and tenant-predicated diagnostics with RLS absent; negative cases cover group mutation, historical sets, corrupt snapshots/deliveries and access revocation. Endpoint-matrix.txt now records all 30 reviewed mounted handlers with no open reporting ACL finding.
+
+Our implemented narrow changes remain frozen: creator/recipient project sharing, current actor subscription register/toggle guards, and prediction project guard. Red/green and lint logs are retained. Backend owner's larger frozen run separately reports 757/757 in 64 files; this independent check does not claim to have personally run that larger command.
+
+PGlite and mocked-edge route suites do not certify deployed RLS, production worker health, external transport, regulatory acceptance or clinical validation. Control tower owns native PostgreSQL, complete static/build/browser and publication gates. No commits or pushes made by this review agent.

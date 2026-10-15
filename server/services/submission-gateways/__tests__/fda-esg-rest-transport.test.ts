@@ -45,7 +45,9 @@ const ENV_KEYS = [
   'FDA_ESG_TRANSPORT', 'FDA_ESG_STAGING_TRANSPORT',
   'FDA_ESG_REST_URL', 'FDA_ESG_REST_CLIENT_ID', 'FDA_ESG_REST_CLIENT_SECRET', 'FDA_ESG_REST_SUBMITTER_ID',
   'FDA_ESG_STAGING_REST_URL', 'FDA_ESG_STAGING_REST_CLIENT_ID', 'FDA_ESG_STAGING_REST_CLIENT_SECRET', 'FDA_ESG_STAGING_REST_SUBMITTER_ID',
-  'FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH',
+  'FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_AS2_TO', 'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH',
+  'FDA_ESG_STAGING_URL', 'FDA_ESG_STAGING_AS2_FROM', 'FDA_ESG_STAGING_AS2_TO',
+  'FDA_ESG_STAGING_CERT_PATH', 'FDA_ESG_STAGING_KEY_PATH', 'FDA_ESG_STAGING_FDA_CERT_PATH',
 ];
 let saved: Record<string, string | undefined> = {};
 
@@ -157,6 +159,23 @@ describe('FdaEsgGateway with FDA_ESG_TRANSPORT=rest', () => {
     const gw = new FdaEsgGateway();
     const err = await gw.transmit(request()).catch((e) => e);
     expect(err).toBeInstanceOf(CredentialError);
-    expect(err.missing).toEqual(['FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH']);
+    expect(err.missing).toEqual(['FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_AS2_TO', 'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH']);
+  });
+
+  /* 2026-10-01 (W5/D7, sweep F16): FDA's AS2 identifier fell back to
+     'FDA-CESUB' when unset — a value with no FDA source, the same for the
+     production and the test environment, so every AS2 envelope was addressed
+     to it. Unset, it is a missing credential like the others, named before
+     any connection, and one environment's value never stands in for the other's. */
+  it.each([
+    ['production', 'FDA_ESG_', 'FDA_ESG_STAGING_AS2_TO'],
+    ['staging', 'FDA_ESG_STAGING_', 'FDA_ESG_AS2_TO'],
+  ] as const)('%s: with every AS2 variable but AS2_TO set, transmit refuses with a CredentialError naming it, before any connection', async (environment, prefix, otherEnvironmentAs2To) => {
+    for (const k of ['URL', 'AS2_FROM', 'CERT_PATH', 'KEY_PATH', 'FDA_CERT_PATH']) process.env[prefix + k] = `/configured/${k}`;
+    process.env[otherEnvironmentAs2To] = 'OTHER-ENVIRONMENT-AS2-ID';
+    const err = await new FdaEsgGateway().transmit({ ...request(), environment }).catch((e) => e);
+    expect(err).toBeInstanceOf(CredentialError);
+    expect(err.missing).toEqual([`${prefix}AS2_TO`]);
+    expect(httpsRequests).toHaveLength(0);
   });
 });

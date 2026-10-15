@@ -1,0 +1,13 @@
+diff --git a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+index c97221e55..f3c645372 100644
+--- a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx
++++ b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+@@ -160,7 +160,7 @@ function placedMessage(sectionCode: string, sequenceNumber: string, refusal: str
+   return (
+     `Filed as leaf ${sectionCode} in sequence ${sequenceNumber}. ` +
+     'The vault copy is what will be assembled — nothing was duplicated.' +
+-    (refusal ? ` It will not be transmitted until this leaf names an approved, current version (${refusal}).` : '')
++    ''
+   );
+ }
+ 

@@ -1,0 +1,167 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | tests/routes/source-tracer-recorded.test.ts
+{
+  "timestamp": "2026-10-14T06:13:19.356Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:13:19.358Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/source-tracer-recorded.test.ts
+{
+  "timestamp": "2026-10-14T06:13:19.358Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/source-tracer-recorded.test.ts
+[database] Database connection successful
+
+stderr | tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > shapes recorded citations for the surface, state passed through untouched
+{
+  "timestamp": "2026-10-14T06:13:19.460Z",
+  "level": "error",
+  "message": "[source-tracer-routes] source tracer sections error",
+  "context": {
+    "err": "Request-scoped database context is required"
+  }
+}
+
+stderr | tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > keeps an unresolved citation in the payload with null source fields
+{
+  "timestamp": "2026-10-14T06:13:19.468Z",
+  "level": "error",
+  "message": "[source-tracer-routes] source tracer sections error",
+  "context": {
+    "err": "Request-scoped database context is required"
+  }
+}
+
+stderr | tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > passes a valid documentId filter through
+{
+  "timestamp": "2026-10-14T06:13:19.471Z",
+  "level": "error",
+  "message": "[source-tracer-routes] source tracer sections error",
+  "context": {
+    "err": "Request-scoped database context is required"
+  }
+}
+
+stderr | tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > fails closed with 503 when the citation store is not provisioned
+{
+  "timestamp": "2026-10-14T06:13:19.473Z",
+  "level": "error",
+  "message": "[source-tracer-routes] source tracer sections error",
+  "context": {
+    "err": "Request-scoped database context is required"
+  }
+}
+
+stderr | tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > returns 500 with an honest message on any other failure
+{
+  "timestamp": "2026-10-14T06:13:19.475Z",
+  "level": "error",
+  "message": "[source-tracer-routes] source tracer sections error",
+  "context": {
+    "err": "Request-scoped database context is required"
+  }
+}
+
+ × tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > shapes recorded citations for the surface, state passed through untouched 10ms
+   → expected false to be true // Object.is equality
+ × tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > keeps an unresolved citation in the payload with null source fields 2ms
+   → Cannot read properties of undefined (reading 'sections')
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > refuses without authenticated tenant context 1ms
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > rejects a non-UUID documentId before it reaches Postgres 1ms
+ × tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > passes a valid documentId filter through 3ms
+   → expected "vi.fn()" to be called with arguments: [ 91, …(1) ]
+
+Number of calls: 0
+
+ × tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > fails closed with 503 when the citation store is not provisioned 1ms
+   → expected 500 to be 503 // Object.is equality
+ ✓ tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > returns 500 with an honest message on any other failure 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > shapes recorded citations for the surface, state passed through untouched
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/routes/source-tracer-recorded.test.ts:82:26
+     80|
+     81|     const body = (res.json as any).mock.calls[0][0];
+     82|     expect(body.success).toBe(true);
+       |                          ^
+     83|     expect(body.data.total).toBe(1);
+     84|     const sec = body.data.sections[0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > keeps an unresolved citation in the payload with null source fields
+TypeError: Cannot read properties of undefined (reading 'sections')
+ ❯ tests/routes/source-tracer-recorded.test.ts:104:57
+    102|     await getHandler()(authedReq(), res);
+    103|
+    104|     const src = (res.json as any).mock.calls[0][0].data.sections[0].so…
+       |                                                         ^
+    105|     expect(src.state).toBe('unresolved');
+    106|     expect(src.sourceId).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > passes a valid documentId filter through
+AssertionError: expected "vi.fn()" to be called with arguments: [ 91, …(1) ]
+
+Number of calls: 0
+
+ ❯ tests/routes/source-tracer-recorded.test.ts:128:35
+    126|     const res = createMockResponse();
+    127|     await getHandler()(authedReq({ documentId: DOC }), res);
+    128|     expect(mockListCitedSections).toHaveBeenCalledWith(ORG, { document…
+       |                                   ^
+    129|   });
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/routes/source-tracer-recorded.test.ts > GET /api/source-tracer/sections > fails closed with 503 when the citation store is not provisioned
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ tests/routes/source-tracer-recorded.test.ts:137:50
+    135|     const res = createMockResponse();
+    136|     await getHandler()(authedReq(), res);
+    137|     expect((res.status as any).mock.calls[0][0]).toBe(503);
+       |                                                  ^
+    138|     expect((res.json as any).mock.calls[0][0].error).toBe('CITATION_ST…
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  06:13:17
+   Duration  2.15s (transform 954ms, setup 86ms, import 1.71s, tests 22ms, environment 0ms)

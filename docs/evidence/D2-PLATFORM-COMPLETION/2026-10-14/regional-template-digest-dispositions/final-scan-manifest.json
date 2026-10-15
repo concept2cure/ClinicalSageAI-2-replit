@@ -1,0 +1,23 @@
+{
+  "command": "gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts=\"--full-history --diff-filter=tuxdb HEAD\" --report-format json",
+  "sourceHead": "31ec977a619ebb380f8e06737b8692ab852e7d15",
+  "observedExitCode": 0,
+  "findings": 0,
+  "qualification": "Actual unchanged full-history command after16 exact independently verified dispositions; working-tree ignore file applied, no history rewrite or credential revocation claim. New staged files are scanned separately before publication.",
+  "records": [
+    {
+      "path": "full-history-after-exact-dispositions.raw.txt.gz",
+      "encoding": "gzip",
+      "decodedBytes": 117,
+      "decodedHexDigest": "65fa000f912b76c3cadabb2f351b0b1d20f97209fff753de1627445e2d0ce6f4",
+      "archivedHexDigest": "352c239dfd7f5c10c6c66eccdc62b7bc5d68f516fd7e0f2db3b09d46735f82fa"
+    },
+    {
+      "path": "full-history-after-exact-dispositions.report.json.gz",
+      "encoding": "gzip",
+      "decodedBytes": 3,
+      "decodedHexDigest": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "archivedHexDigest": "2ca4529576310b626c1bd48352d283b521d029d54f195d8416536872d826e4c6"
+    }
+  ]
+}

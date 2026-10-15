@@ -170,7 +170,13 @@ async function addMember(key: string, enrolTotp: boolean): Promise<Member> {
     [email, `Lane Replay ${key}`, await bcrypt.hash(PASSWORD, 4), ORG],
   );
   const id = user.rows[0].id as number;
-  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [ORG, id]);
+  // The membership begins a minute before the suite's faked clock (T0), as a membership
+  // precedes every session in life; one begun after a session ends it (plan P0-4b R1).
+  // A timestamptz, so the naive column holds it in this connection's zone, as now() would.
+  await owner.query(
+    `INSERT INTO organization_users (organization_id, user_id, role, created_at) VALUES ($1, $2, 'admin', $3::timestamptz)`,
+    [ORG, id, new Date(T0 - 60_000).toISOString()],
+  );
   let secret = '';
   if (enrolTotp) {
     // Through the functions /api/auth/mfa/setup and /enable call, in the

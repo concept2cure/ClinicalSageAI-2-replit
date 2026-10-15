@@ -1,0 +1,19 @@
+ESLint warnings/errors per file touched by round 11, on the round-11 tree, and on trunk where the file exists there.
+Command: npx eslint --no-warn-ignored <file>
+No file gains a warning; the new files have none. client/src/concept2cure/components/ana/* is outside ESLint's scope (eslint.config.js ignores client/src/concept2cure/* but v2/), as it was.
+
+server/services/ana/turn-record.ts                                               round11=0/0      trunk=0/0
+server/services/ana/__tests__/turn-record-served-by.pglite.test.ts               round11=0/0      trunk=new
+client/src/concept2cure/components/ana/anaProgress.ts                            round11=ignored  trunk=ignored
+client/src/concept2cure/components/ana/useAnaChat.types.ts                       round11=ignored  trunk=ignored
+client/src/concept2cure/v2/editor/anaInsertGate.ts                               round11=0/0      trunk=new
+client/src/concept2cure/v2/editor/suggestions.ts                                 round11=8/0      trunk=8/0
+client/src/concept2cure/v2/editor/RichSectionEditor.tsx                          round11=4/0      trunk=4/0
+client/src/concept2cure/v2/editor/DocumentWorkbench.tsx                          round11=14/0     trunk=14/0
+client/src/concept2cure/v2/surfaces/ConversationThread.tsx                       round11=6/0      trunk=6/0
+client/src/concept2cure/v2/fixtures/conversation-thread-data.ts                  round11=0/0      trunk=0/0
+client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts                round11=0/0      trunk=new
+client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts           round11=0/0      trunk=new
+client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx             round11=0/0      trunk=new
+client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx           round11=0/0      trunk=0/0
+client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx         round11=0/0      trunk=0/0

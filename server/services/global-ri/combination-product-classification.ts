@@ -16,17 +16,23 @@
  *
  * Regions: FDA (US), EU.
  *
+ * The FDA lead center is not decided here: it is read from the canonical
+ * combination-product engine, determinePrimaryModeOfAction in
+ * server/services/combination-products/combination-products-knowledge.ts. This
+ * module adapts that answer to the per-region shape served by
+ * POST /api/global-ri/combination/classify.
+ *
  * Pure / deterministic — no DB, no IO. The classification is an indicative
  * reference aid; the binding classification rests with the agency (FDA Office of
  * Combination Products via a Request for Designation, or the EU competent
  * authority together with a Notified Body).
  *
  * References:
- *  - FDA: 21 CFR Part 3 — combination-product definition 21 CFR 3.2(e); lead
- *    center assignment by PMOA 21 CFR 3.4 (drug→CDER, biologic→CBER,
- *    device→CDRH); Request for Designation to the Office of Combination Products
- *    (OCP) when the PMOA is unclear (21 CFR Part 3); statutory basis 21 USC
- *    353(g).
+ *  - FDA: 21 CFR Part 3 — combination-product definition 21 CFR 3.2(e); primary
+ *    mode of action 21 CFR 3.2(m); lead center assignment by PMOA 21 CFR 3.4;
+ *    Request for Designation to the Office of Combination Products (OCP) when the
+ *    PMOA is unclear (21 CFR 3.7), answered by a letter of designation (21 CFR
+ *    3.8); statutory basis 21 USC 353(g).
  *  - EU: MDR (EU) 2017/745 Article 117 (Notified Body Opinion on the device part
  *    of a single integral drug-device combination), which amended Annex I of
  *    Directive 2001/83/EC; device General Safety and Performance Requirements
@@ -35,10 +41,15 @@
  * @module server/services/global-ri/combination-product-classification
  */
 
+import {
+  determinePrimaryModeOfAction,
+  type ConstituentType,
+} from '../combination-products/combination-products-knowledge';
+
 export type CombinationRegion = 'FDA' | 'EU';
 
 /** Primary Mode of Action of the combination product (drives FDA lead center). */
-export type PrimaryModeOfAction = 'drug' | 'biologic' | 'device';
+export type PrimaryModeOfAction = ConstituentType;
 
 /** FDA lead center, or OCP (RFD) when the PMOA is unclear. */
 export type FdaLeadCenter = 'CDER' | 'CBER' | 'CDRH' | 'OCP (RFD)';
@@ -62,16 +73,18 @@ export interface CombinationFramework {
   notes: string[];
 }
 
+const FDA_CITATION = '21 CFR Part 3 (3.2(e), 3.2(m), 3.4, 3.7, 3.8); 21 USC 353(g)';
+
 const FRAMEWORKS: Record<CombinationRegion, CombinationFramework> = {
   FDA: {
     region: 'FDA',
-    basis: 'A combination product (21 CFR 3.2(e)) is assigned to a lead FDA Center by its Primary Mode of Action (PMOA) per 21 CFR 3.4.',
+    basis: 'A combination product (21 CFR 3.2(e)) is assigned to a lead FDA Center by its Primary Mode of Action (PMOA, 21 CFR 3.2(m)) per 21 CFR 3.4.',
     leadAuthorityConcept: 'Single lead Center (CDER, CBER, or CDRH) determined by PMOA; a single marketing application is generally submitted to the lead center.',
     decisionFactor: 'Primary Mode of Action (PMOA): drug → CDER, biological product → CBER, device → CDRH.',
-    consultationMechanism: 'The lead center has primary jurisdiction; the other center consults on the secondary mode of action. If the PMOA is unclear, the sponsor may file a Request for Designation (RFD) to the Office of Combination Products (OCP), which assigns the lead center.',
-    citation: '21 CFR Part 3 (3.2(e), 3.4); 21 USC 353(g)',
+    consultationMechanism: 'The lead center has primary jurisdiction; the other center consults on the secondary mode of action. If the PMOA is unclear, the sponsor may file a Request for Designation (RFD, 21 CFR 3.7) to the Office of Combination Products (OCP), which assigns the lead center in a letter of designation (21 CFR 3.8).',
+    citation: FDA_CITATION,
     notes: [
-      'When the PMOA is not reasonably certain, file a Request for Designation (RFD) with the Office of Combination Products (OCP) per 21 CFR Part 3.',
+      'When the PMOA is not reasonably certain, file a Request for Designation (RFD) with the Office of Combination Products (OCP) under 21 CFR 3.7.',
       'Final classification and lead-center assignment rest with FDA (the Office of Combination Products).',
     ],
   },
@@ -107,7 +120,7 @@ export interface CombinationClassificationInput {
   region: CombinationRegion;
   /** FDA: the Primary Mode of Action. Omitted/unclear → OCP (RFD). */
   primaryModeOfAction?: PrimaryModeOfAction;
-  /** EU: whether the device is integral to the medicinal product. Defaults to true. */
+  /** EU: whether the device is integral to the medicinal product. Required for EU: it decides the route. */
   integral?: boolean;
 }
 
@@ -137,51 +150,56 @@ export type CombinationClassification =
   | FdaCombinationClassification
   | EuCombinationClassification;
 
-const FDA_PMOA_CENTER: Record<PrimaryModeOfAction, FdaLeadCenter> = {
-  drug: 'CDER',
-  biologic: 'CBER',
-  device: 'CDRH',
-};
-
 function classifyFda(input: CombinationClassificationInput): FdaCombinationClassification {
   const pmoa = input.primaryModeOfAction;
-  const citation = '21 CFR Part 3 (3.2(e), 3.4); 21 USC 353(g)';
+  const citation = FDA_CITATION;
 
   if (!pmoa) {
+    // No PMOA supplied: the canonical engine would fall back to the 3.4(b)
+    // algorithm with no facts to apply it to, so this region answer names no
+    // Center and sends the sponsor to OCP.
     return {
       region: 'FDA',
       leadCenter: 'OCP (RFD)',
       route: 'Request for Designation (RFD) to the Office of Combination Products to determine the lead center.',
-      rationale: 'The Primary Mode of Action is unclear; under 21 CFR Part 3 the sponsor may submit an RFD to OCP, which assigns the lead center.',
+      rationale: 'The Primary Mode of Action is unclear; the sponsor may submit an RFD to OCP under 21 CFR 3.7, and OCP assigns the lead center in a letter of designation (21 CFR 3.8).',
       citation,
       notes: [
-        'File a Request for Designation (RFD) with the Office of Combination Products (OCP) to obtain the lead-center assignment (21 CFR Part 3).',
+        'File a Request for Designation (RFD) with the Office of Combination Products (OCP) under 21 CFR 3.7 to obtain the lead-center assignment.',
         AGENCY_CAVEAT,
       ],
     };
   }
 
-  const leadCenter = FDA_PMOA_CENTER[pmoa];
+  // Throws on anything other than drug, device or biologic.
+  const { leadCenter } = determinePrimaryModeOfAction({ constituents: [], assertedPmoaType: pmoa });
   const pmoaLabel = pmoa === 'biologic' ? 'biological product' : pmoa;
   return {
     region: 'FDA',
     leadCenter,
     route: `Single marketing application to the lead center (${leadCenter}); the other center consults on the secondary mode of action.`,
-    rationale: `The Primary Mode of Action is ${pmoaLabel}, so the lead center is ${leadCenter} per 21 CFR 3.4.`,
+    rationale: `The Primary Mode of Action (21 CFR 3.2(m)) is ${pmoaLabel}, so the lead center is ${leadCenter} per 21 CFR 3.4.`,
     citation,
     notes: [
       'Lead-center assignment follows the Primary Mode of Action (21 CFR 3.4); the secondary center consults.',
-      'If the PMOA were not reasonably certain, a Request for Designation (RFD) to OCP would resolve the assignment.',
+      'If the PMOA were not reasonably certain, a Request for Designation (RFD, 21 CFR 3.7) to OCP would resolve the assignment.',
       AGENCY_CAVEAT,
     ],
   };
 }
 
 function classifyEu(input: CombinationClassificationInput): EuCombinationClassification {
-  const integral = input.integral ?? true;
+  // 2026-10-15: this was `input.integral ?? true`, so an unstated fact picked the
+  // EU route (Notified Body Opinion vs a separately CE-marked device) and nothing
+  // in the result said it was assumed. It is now refused until stated.
+  if (typeof input.integral !== 'boolean') {
+    throw new Error(
+      'EU combination classification needs integral (true/false): whether the device and the medicinal product form a single integral product (e.g. prefilled syringe, pen injector) or the device is co-packaged / supplied separately. It decides the EU route, so it is not assumed.',
+    );
+  }
   const citation = 'MDR (EU) 2017/745 Art 117; Directive 2001/83/EC Annex I';
 
-  if (integral) {
+  if (input.integral) {
     return {
       region: 'EU',
       regulatoryRoute: 'Medicinal product (integral, MDR Art 117 NBOp)',

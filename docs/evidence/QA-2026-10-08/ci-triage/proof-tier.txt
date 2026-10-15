@@ -1,0 +1,31 @@
+# Proof tier (npm run test:proof-tier = vitest run --config vitest.config.ts tests/schema-contract tests/golden-journeys tests/export-contract), RLS_ENFORCE=off CI=true
+
+## HEAD e79cca4d9 export, run in batches
+(87 of the 100 schema-contract files below; the other 13 ran with no failure in a first sequential pass that was
+stopped for time. The one-process run further down covers all 119 files.)
+### golden-journeys + export-contract
+ Test Files  19 passed (19)
+      Tests  30 passed (30)
+### schema-contract batch (proof-sc-cand.log)
+ Test Files  16 passed (16)
+      Tests  177 passed (177)
+### schema-contract batch (proof-sc-cand2.log)
+ Test Files  18 passed (18)
+      Tests  167 passed (167)
+### schema-contract batch (proof-sc-rest.log)
+ × tests/schema-contract/biopharma-programs-router-columns.contract.test.ts > biopharma/programs.ts SQL matches the schema > the fixture table matches the Drizzle definition column-for-column 42ms
+   → expected [ 'actual_submission_date', …(41) ] to deeply equal [ 'actual_submission_date', …(43) ]
+ Test Files  1 failed | 29 passed (30)
+      Tests  1 failed | 216 passed (217)
+### schema-contract files that boot no PGlite (23): 22 passed; rds-ca-bundle fails only because a git-archive export has no .git (passes in the checkout, below)
+
+## HEAD + this change, whole tier in one process, as the Lint step runs it
+ × tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > is tracked by git, not merely present in this working tree 11ms
+   → expected [Function] to not throw an error but 'Error: Command failed: git ls-files -…' was thrown
+ Test Files  1 failed | 118 passed (119)
+      Tests  1 failed | 1324 passed (1325)
+   Duration  996.93s (transform 12.07s, setup 2.02s, import 43.98s, tests 929.71s, environment 12ms)
+
+## rds-ca-bundle + readiness-security-tables in the real checkout (git present)
+ Test Files  2 passed (2)
+      Tests  11 passed (11)

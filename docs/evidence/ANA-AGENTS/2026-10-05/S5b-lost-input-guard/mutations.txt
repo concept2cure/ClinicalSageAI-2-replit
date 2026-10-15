@@ -1,0 +1,14 @@
+## drop the inputParseError carry in toToolCall: RED
+ × server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > the handler is never called, and the model reads the lost-input result 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
+
+## guard placed before the allowlist: RED
+ × server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > a tool outside the allowlist is still answered TOOL_NOT_OFFERED, not lost input 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)
+
+## guard removed from dispatch: RED
+ × server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > the handler is never called, and the model reads the lost-input result 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

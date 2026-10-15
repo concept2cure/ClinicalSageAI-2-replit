@@ -1,0 +1,5 @@
+MUTANT 3 diff:
+641c641
+<   if (!history || history.redo) return true;
+---
+>   if (!history) return true; // MUTANT 3: redo refused at the floor too

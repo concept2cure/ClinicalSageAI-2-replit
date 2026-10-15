@@ -20,16 +20,22 @@ import crypto from 'crypto';
 import type { Pool } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { resolveGovernedDocument } from '../c2c/governed-document-binding.js';
+import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
 import { programInOrganization } from '../c2c/program-access';
+import { getBuiltinAuthoringTemplate } from './builtin-authoring-templates';
+import { resolveTemplateSections, refuseBuiltinTemplateStart, builtinTemplateSource, builtinTemplateDocumentFields, builtinTemplateSectionMetadata, templateWorkingBinding, type TemplateSectionSeed } from './authoring-template-sections';
+export type { TemplateSectionSeed } from './authoring-template-sections';
 import {
   canonicalIdFor,
   recordDocumentAlias,
   DocumentAliasConflictError,
 } from '../c2c/document-alias-map.js';
 import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
+import { replaceVaultFigureSpans } from '../clinical-regulatory-evidence/span-lineage-vault';
 import { grantAuthoringPermission } from './authoring-permissions';
-import { sectionInsertIndex } from '../../../shared/regulatory/section-code';
-import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
+import { describeRefusedFigures, refusedFigures, refusedKind } from './authoring-html-sanitizer';
+import { isSectionCodeConflict, placeNewSection, sectionCodeExists } from './section-placement';
+import { LOCKED_DOCUMENT_STATUSES, reserveWritableDocument, DocumentWriteReservationError } from './document-lock';
 import {
   bindingColumnState,
   createRevision,
@@ -45,7 +51,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 /** The pool as these functions need it: queries, and a client for a transaction. */
 export type AuthoringPool = Pool;
 
-type TxClient = Queryable & { release: () => void };
+type TxClient = Queryable & { release: (error?: Error) => void };
 
 /** The verified principal creating the record. */
 export interface AuthoringActor {
@@ -62,7 +68,7 @@ export interface CreateContext {
   audit: AuthoringAuditContext;
 }
 
-export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 503; error: string; code?: string };
+export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 409 | 503; error: string; code?: string };
 
 export interface Binding {
   documentId: string | null;
@@ -72,82 +78,6 @@ export interface Binding {
 // ─────────────────────────────────────────────────────────────────────────────
 // Template resolution and governed binding (POST /docs)
 // ─────────────────────────────────────────────────────────────────────────────
-
-export interface TemplateSectionSeed {
-  code: string;
-  title: string;
-  content: string;
-  ordering: number;
-}
-
-/**
- * Resolve the template BEFORE anything is written.
- *
- * Two template stores are legitimate here and the picker offers both: the
- * GLOBAL regulatory reference store (intelligence.document_templates —
- * structure + guidance, no prose) and the org's own authoring_templates
- * (tenant-scoped, sections WITH content). A create that cannot honor its
- * chosen template must refuse before the INSERT, not lie after it.
- */
-async function resolveTemplateSections(
-  pool: AuthoringPool,
-  tenantId: number,
-  templateId: string,
-): Promise<TemplateSectionSeed[] | Refusal> {
-  if (!UUID_RE.test(templateId)) {
-    return { kind: 'refused', status: 400, error: 'template_id must be a valid UUID' };
-  }
-  // (a) The global reference store. Deliberately no tenant filter — these
-  // templates describe agency expectations, not customer content; tenancy
-  // comes from the document being created. FAIL SOFT to zero rows when the
-  // intelligence schema is absent (a separate bundle, missing in some
-  // deployments and the authoring harness).
-  let globalSections: { rows: any[] } = { rows: [] };
-  try {
-    globalSections = await pool.query(
-      `SELECT ts.section_code, ts.section_title, ts.ordering
-         FROM intelligence.template_sections ts
-        WHERE ts.template_id = $1
-        ORDER BY ts.ordering`,
-      [templateId],
-    );
-  } catch (intelErr) {
-    logger.warn('Global template store unavailable during create; trying the org store', {
-      error: intelErr instanceof Error ? intelErr.message : String(intelErr),
-    });
-  }
-  if (globalSections.rows.length > 0) {
-    return globalSections.rows.map((r: any, i: number) => ({
-      code: String(r.section_code),
-      title: String(r.section_title),
-      // Structure and guidance only — the honest scaffold starts empty.
-      content: '',
-      ordering: Number.isFinite(Number(r.ordering)) ? Number(r.ordering) : i,
-    }));
-  }
-  // (b) The org's own template store (tenant-scoped, carries content).
-  const orgTemplate = await pool.query(
-    `SELECT template_content FROM authoring_templates
-      WHERE id = $1 AND tenant_id = $2 AND is_active = true`,
-    [templateId, tenantId],
-  );
-  const orgSections = orgTemplate.rows[0]?.template_content?.sections;
-  if (Array.isArray(orgSections) && orgSections.length > 0) {
-    return orgSections.map((s: any, i: number) => ({
-      code: String(s.code ?? ''),
-      title: String(s.title ?? ''),
-      content: typeof s.content === 'string' ? s.content : '',
-      ordering: Number.isFinite(Number(s.order_index)) ? Number(s.order_index) : i,
-    }));
-  }
-  return {
-    kind: 'refused',
-    status: 404,
-    // The client appends its own "Nothing was persisted." on every failed
-    // create — the reason must not restate it (double-period, said twice).
-    error: 'No template with this id has any sections in your organization or the global reference store.',
-  };
-}
 
 /** The reason a document is created in its project without a filing binding. */
 const filingAlreadyHeld = (filingId: string, holder: string): string =>
@@ -181,10 +111,11 @@ export async function resolveBinding(
   pool: AuthoringPool,
   tenantId: number,
   clientProgramId: string | null,
+  marketDocumentId: string | null = null,
 ): Promise<Binding> {
   let binding: Binding;
   try {
-    binding = await resolveGovernedDocument({ db: pool, orgId: tenantId, projectId: clientProgramId });
+    binding = await resolveGovernedDocument({ db: pool, orgId: tenantId, projectId: clientProgramId, marketDocumentId });
   } catch (bindErr) {
     logger.warn('Governed-document binding unavailable; creating unbound document', {
       error: bindErr instanceof Error ? bindErr.message : String(bindErr),
@@ -229,7 +160,7 @@ export async function resolveBinding(
 export interface DocumentRowSpec {
   docId: string;
   title: string;
-  module: string;
+  module: string | null;
   productCode: string | null;
   locale: string;
   templateId: string | null;
@@ -237,6 +168,8 @@ export interface DocumentRowSpec {
   binding: Binding;
   /** Set only by the from-draft path; the column is referenced only then. */
   provenance?: Record<string, unknown>;
+  /** Internal source imports compose and validate one coherent MVCC snapshot. */
+  isolation?: 'serializable';
 }
 
 /** One section to seed into a new document, inside its create transaction. */
@@ -251,7 +184,19 @@ export interface SectionSeed {
   /** Non-human contributors recorded on the genesis revision. */
   contributors?: { id: string; name: string }[];
   /** Enlist the lineage gate — the from-draft path, where content is prose. */
-  lineage?: { machineDraft: { authorId: string } | null };
+  lineage?: {
+    machineDraft: { authorId: string } | null;
+    /**
+     * The section's figures the cited Vault versions state (S5c), read after
+     * beforeInsert has verified the sources: recorded as 'derived' lineage in
+     * this transaction, beside the clause attribution.
+     */
+    figureSpans?: () => import('./draft-figure-check').FigureSpan[];
+  };
+}
+
+function verifiedGenesisReceipt(spec: DocumentRowSpec): Record<string, unknown> | undefined {
+  return spec.provenance?.importSource as Record<string, unknown> | undefined;
 }
 
 /**
@@ -304,6 +249,19 @@ async function recordAliasesTx(client: Queryable, tenantId: number, spec: Docume
 }
 
 /**
+ * A seeded section's lineage, in the insert's transaction: who wrote each
+ * clause, then (S5c) the figures the cited Vault versions state.
+ */
+async function recordSeedLineage(client: TxClient, tenantId: number, actorId: string, sectionId: string, s: SectionSeed): Promise<void> {
+  if (!s.lineage) return;
+  const ref = { documentTable: 'authoring_sections', documentId: sectionId };
+  await enforceAuthorLineage(client, tenantId, ref, s.content, actorId,
+    s.lineage.machineDraft ? { machineDraft: s.lineage.machineDraft } : undefined);
+  const figures = s.lineage.figureSpans?.() ?? [];
+  if (figures.length > 0) await replaceVaultFigureSpans(tenantId, ref, figures, { createdBy: actorId }, client);
+}
+
+/**
  * The create transaction: the document, its identity aliases, its section
  * skeleton and their Part 11 evidence land together or not at all. Was the
  * BEGIN/COMMIT block of POST /docs; the seeding loop now takes the seeds it
@@ -313,26 +271,31 @@ export async function insertDocumentTx(
   ctx: CreateContext,
   spec: DocumentRowSpec,
   seeds: SectionSeed[],
+  beforeInsert?: (client: Queryable) => Promise<void>,
 ): Promise<{ document: Record<string, unknown>; binding: Binding }> {
   const { pool, tenantId, actor } = ctx;
-  // Build the INSERT so the program-scope / binding / provenance columns are
-  // referenced ONLY when supplied, so a create without them emits the exact
-  // original statement and databases lacking those migrations keep working.
-  const cols = ['id', 'title', 'module', 'product_code', 'locale', 'status', 'created_by', 'created_at', 'updated_at', 'tenant_id', 'template_id'];
-  const vals = ['$1', '$2', '$3', '$4', '$5', `'draft'`, '$6', 'NOW()', 'NOW()', '$7', '$8'];
-  const args: unknown[] = [spec.docId, spec.title, spec.module, spec.productCode, spec.locale, actor.id, tenantId, spec.templateId];
-  const addCol = (col: string, value: unknown, cast = '') => {
-    args.push(value);
-    cols.push(col);
-    vals.push(`$${args.length}${cast}`);
-  };
-  if (spec.clientProgramId) addCol('client_program_id', spec.clientProgramId);
-  if (spec.binding.documentId) addCol('c2c_document_id', spec.binding.documentId);
-  if (spec.provenance) addCol('provenance', JSON.stringify(spec.provenance), '::jsonb');
-
   const client: TxClient = await pool.connect();
+  let discardConnection: Error | undefined;
   try {
-    await client.query('BEGIN');
+    await client.query(spec.isolation === 'serializable' ? 'BEGIN ISOLATION LEVEL SERIALIZABLE' : 'BEGIN');
+    // Source eligibility must be checked/locked before any regulated write,
+    // and before provenance is serialized into the INSERT arguments.
+    await beforeInsert?.(client);
+    // Build the INSERT so the program-scope / binding / provenance columns are
+    // referenced ONLY when supplied, so a create without them emits the exact
+    // original statement and databases lacking those migrations keep working.
+    const cols = ['id', 'title', 'module', 'product_code', 'locale', 'status', 'created_by', 'created_at', 'updated_at', 'tenant_id', 'template_id'];
+    const vals = ['$1', '$2', '$3', '$4', '$5', `'draft'`, '$6', 'NOW()', 'NOW()', '$7', '$8'];
+    const args: unknown[] = [spec.docId, spec.title, spec.module, spec.productCode, spec.locale, actor.id, tenantId, spec.templateId];
+    const addCol = (col: string, value: unknown, cast = '') => {
+      args.push(value);
+      cols.push(col);
+      vals.push(`$${args.length}${cast}`);
+    };
+    if (spec.clientProgramId) addCol('client_program_id', spec.clientProgramId);
+    if (spec.binding.documentId) addCol('c2c_document_id', spec.binding.documentId);
+    if (spec.provenance) addCol('provenance', JSON.stringify(spec.provenance), '::jsonb');
+
     const result = await client.query(
       `INSERT INTO authoring_documents (${cols.join(', ')})
        VALUES (${vals.join(', ')})
@@ -353,16 +316,7 @@ export async function insertDocumentTx(
         [spec.docId, s.code, s.title, s.content, s.orderIndex, tenantId],
       );
       const row = seededRow.rows[0];
-      if (s.lineage) {
-        await enforceAuthorLineage(
-          client,
-          tenantId,
-          { documentTable: 'authoring_sections', documentId: String(row.id) },
-          s.content,
-          actor.id,
-          s.lineage.machineDraft ? { machineDraft: s.lineage.machineDraft } : undefined,
-        );
-      }
+      if (s.lineage) await recordSeedLineage(client, tenantId, actor.id, String(row.id), s);
       await createRevision(client, {
         sectionId: row.id,
         content: row.content ?? '',
@@ -370,6 +324,8 @@ export async function insertDocumentTx(
         tenantId,
         origin: 'genesis',
         contributors: s.contributors ?? [],
+        // beforeInsert has already verified/reserved this internal receipt.
+        verifiedImport: verifiedGenesisReceipt(spec),
       });
       await writeAuthoringAuditTrail(ctx.audit, {
         docId: spec.docId,
@@ -385,10 +341,10 @@ export async function insertDocumentTx(
     await client.query('COMMIT');
     return { document, binding };
   } catch (txErr) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => { discardConnection = new Error('Authoring transaction rollback failed'); });
     throw txErr;
   } finally {
-    client.release();
+    client.release(discardConnection);
   }
 }
 
@@ -434,6 +390,12 @@ export interface CreateDocumentInput {
   locale?: unknown;
   template_id?: unknown;
   client_program_id?: unknown;
+  /**
+   * Bind to this market's document of the project rather than the home filing
+   * (FILING_SPINE F22b). A market document that cannot be bound is refused,
+   * never created unbound: the person asked for that market's copy.
+   */
+  c2c_document_id?: unknown;
 }
 
 export type CreateDocumentOutcome =
@@ -470,6 +432,74 @@ async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown)
   return null;
 }
 
+/**
+ * AN IMAGE IN A SECTION IS AN UPLOADED FIGURE OR NOTHING, on create as on save
+ * (periodic review 2026-09-28, editor family, SEC-B-1/2 follow-on b1). An
+ * organization template's sections are copied into the new document as they
+ * are stored, and the template store never checked them, so a template
+ * seeded exactly what the section save refuses. The first section holding
+ * such an image refuses the create before anything is written; nothing is
+ * rewritten, because the template's words are its author's.
+ *
+ * The images are named in the section save's words (refusedKind), but the
+ * advice is not the save's "upload the image or remove it, then save again":
+ * a template has no edit route, so the person creating the document can act
+ * only on the choice of template (fix-up).
+ */
+async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<Refusal | null> {
+  for (const [i, seed] of seeds.entries()) {
+    const refused = await refusedFigures(seed.content);
+    if (refused.length > 0) {
+      const section = seed.code || seed.title || String(i + 1);
+      const notFigures = refused.filter((r) => r.reason !== 'read-differently');
+      // refusedFigures reports a misread image only when nothing else is refused.
+      const what =
+        notFigures.length === 0
+          ? 'an image written in a way the editor and the filed document would read differently ' +
+            '(a repeated attribute, or an image inside a comment, a text box or a template). '
+          : `${notFigures.length === 1 ? 'an image that is not an uploaded figure' : `${notFigures.length} images that are not uploaded figures`} ` +
+            `(${[...new Set(notFigures.map((r) => refusedKind(r.src)))].join(', ')}). ` +
+            'A section can only hold images uploaded to the document (PNG, JPEG or GIF). ';
+      const error = `Template section ${section} holds ${what}Choose another template, or create the document without one.`;
+      return { kind: 'refused', status: 400, error };
+    }
+  }
+  return null;
+}
+
+/**
+ * What a create refuses before anything is read: a project the organization
+ * does not own, and a market's copy seeded from a template. A template seeds
+ * the sections it carries, of any code; a market's copy holds only its Module 1
+ * and 3.2.R (security review, 2026-10-15).
+ */
+async function refuseStart(ctx: CreateContext, input: CreateDocumentInput): Promise<Refusal | null> {
+  const programRefusal = await refuseProgramAnchor(ctx, input.client_program_id);
+  if (programRefusal) return programRefusal;
+  if (!input.c2c_document_id || !input.template_id) return null;
+  return {
+    kind: 'refused', status: 400, code: 'MARKET_DOCUMENT_TEMPLATE',
+    error: "A market's document starts without a template: it holds only that market's Module 1 and 3.2.R. Nothing was created.",
+  };
+}
+
+const programIdOf = (v: unknown): string | null => (v ? String(v) : null);
+
+/**
+ * The new document's binding: the project's home filing, or the market's
+ * document the caller named (FILING_SPINE F22b). A named market document that
+ * cannot be bound is a refusal, never an unbound create: the person asked for
+ * that market's copy.
+ */
+async function createBinding(
+  ctx: CreateContext, builtin: Parameters<typeof templateWorkingBinding>[0], clientProgramId: string | null, named: unknown,
+): Promise<Binding | Refusal> {
+  const marketDocumentId = named ? String(named) : null;
+  const binding = await templateWorkingBinding(builtin, () => resolveBinding(ctx.pool, ctx.tenantId, clientProgramId, marketDocumentId));
+  if (!marketDocumentId || binding.documentId === marketDocumentId) return binding;
+  return { kind: 'refused', status: 409, code: 'MARKET_DOCUMENT_NOT_BOUND', error: binding.reason ?? "The market's document could not be bound." };
+}
+
 /** POST /docs. The caller has already resolved the actor (401 without one). */
 export async function createDocument(ctx: CreateContext, input: CreateDocumentInput): Promise<CreateDocumentOutcome> {
   const { title, module = 'M3', product_code, locale = 'en-US', template_id, client_program_id } = input;
@@ -477,25 +507,33 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
 
   if (!title) return { kind: 'refused', status: 400, error: 'Document title is required' };
 
-  const programRefusal = await refuseProgramAnchor(ctx, client_program_id);
-  if (programRefusal) return programRefusal;
+  const startRefusal = await refuseStart(ctx, input);
+  if (startRefusal) return startRefusal;
+
+  const builtin = template_id ? await getBuiltinAuthoringTemplate(String(template_id)) : undefined;
+  const templateRefusal = await refuseBuiltinTemplateStart(ctx, input, builtin);
+  if (templateRefusal) return templateRefusal;
 
   let templateSections: TemplateSectionSeed[] | null = null;
   if (template_id) {
-    const resolved = await resolveTemplateSections(ctx.pool, ctx.tenantId, String(template_id));
+    const resolved = await resolveTemplateSections(ctx.pool, ctx.tenantId, String(template_id), { builtin });
     if (!Array.isArray(resolved)) return resolved;
+    const seedRefusal = await refuseTemplateFigures(resolved);
+    if (seedRefusal) return seedRefusal;
     templateSections = resolved;
   }
 
-  const clientProgramId = client_program_id ? String(client_program_id) : null;
-  const resolvedBinding = await resolveBinding(ctx.pool, ctx.tenantId, clientProgramId);
+  const clientProgramId = programIdOf(client_program_id);
+  const resolvedBinding = await createBinding(ctx, builtin, clientProgramId, input.c2c_document_id);
+  if ('kind' in resolvedBinding) return resolvedBinding;
+  const templateSource = builtinTemplateSource(builtin);
 
   const { document, binding } = await insertDocumentTx(
     ctx,
     {
       docId,
       title: String(title),
-      module: String(module),
+      ...builtinTemplateDocumentFields(builtin, module, templateSource),
       productCode: product_code == null ? null : String(product_code),
       locale: String(locale),
       templateId: template_id ? String(template_id) : null,
@@ -511,7 +549,7 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
       content: s.content,
       orderIndex: s.ordering,
       changeReason: 'Seeded from template',
-      metadata: { template_id, seeded: true },
+      metadata: { template_id, seeded: true, ...builtinTemplateSectionMetadata(builtin, templateSource, s.code) },
     })),
   );
   await grantCreatorOwnership(ctx, docId);
@@ -542,6 +580,69 @@ export type CreateSectionOutcome =
   | { kind: 'lineage_failed' }
   | { kind: 'created'; section: Record<string, unknown> };
 
+/**
+ * What POST /sections refuses before the parent document is read: a missing
+ * field, and content the section save would refuse.
+ *
+ * The section save refuses content holding an image that is not an uploaded
+ * figure; this create stored the same content as sent, so it was the way round
+ * that refusal (periodic review 2026-09-28, editor family, SEC-B-1/2 follow-on
+ * b1). Refused the same way, with the images named, and never rewritten.
+ * Content that is not text is refused as well: the driver stores an object as
+ * its JSON, which no figure check would have read.
+ */
+async function refuseSectionInput(input: CreateSectionInput): Promise<Refusal | null> {
+  const { doc_id, code, title, content } = input;
+  if (!doc_id || !code || !title) {
+    return { kind: 'refused', status: 400, error: 'doc_id, code, and title are required' };
+  }
+  if (content != null && typeof content !== 'string') {
+    return { kind: 'refused', status: 400, error: 'content must be text' };
+  }
+  const refused = await refusedFigures(content ?? '');
+  return refused.length > 0 ? { kind: 'refused', status: 400, error: describeRefusedFigures(refused) } : null;
+}
+
+/**
+ * A market's document holds only its Module 1 and 3.2.R (FILING_SPINE F22b).
+ * A section of another code in its editing copy would never reach the filing
+ * (commit-section-to-filing.ts refuses it), so it is not created. Read through
+ * to_jsonb, and a store that cannot be read is no market document: the
+ * section is created as before, and the commit still refuses.
+ */
+async function isMarketDocumentCopy(pool: AuthoringPool, tenantId: number, docId: string): Promise<boolean> {
+  try {
+    const r = await pool.query(
+      `SELECT 1 FROM authoring_documents a
+         JOIN c2c_documents d ON d.id = to_jsonb(a)->>'c2c_document_id' AND d.org_id = a.tenant_id
+        WHERE a.id = $1 AND a.tenant_id = $2 AND to_jsonb(d)->>'filing_scope' = 'market'
+        LIMIT 1`,
+      [docId, tenantId],
+    );
+    return (r.rowCount ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * What the parent document refuses: a section added to a FROZEN or APPROVED
+ * document (the same Part 11 lock the save applies, C2C-AUTHOR-001), and a
+ * common section in a market's copy (above).
+ */
+async function refuseSectionParent(
+  pool: AuthoringPool, tenantId: number, parent: { status?: string | null }, docId: string, code: string,
+): Promise<Refusal | null> {
+  if (LOCKED_DOCUMENT_STATUSES.has(String(parent.status ?? '').toUpperCase())) {
+    return { kind: 'refused', status: 403, error: 'Document is FROZEN/APPROVED; cannot add sections' };
+  }
+  if (isRegionalSectionKey(code) || !(await isMarketDocumentCopy(pool, tenantId, docId))) return null;
+  return {
+    kind: 'refused', status: 409, code: 'WRONG_FILING_SCOPE',
+    error: `This document is a market's own part of the filing, its Module 1 and 3.2.R. Section ${code} belongs to the project's home filing; start it there. Nothing was created.`,
+  };
+}
+
 /** POST /sections. The caller has already resolved the actor (401 without one). */
 export async function createSection(ctx: CreateContext, input: CreateSectionInput): Promise<CreateSectionOutcome> {
   const { pool, tenantId, actor } = ctx;
@@ -555,9 +656,8 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     : undefined;
   const sectionId = crypto.randomUUID();
 
-  if (!doc_id || !code || !title) {
-    return { kind: 'refused', status: 400, error: 'doc_id, code, and title are required' };
-  }
+  const inputRefusal = await refuseSectionInput({ doc_id, code, title, content });
+  if (inputRefusal) return inputRefusal;
 
   // The same Part 11 immutability lock the /sections/:sectionId guard applies
   // (C2C-AUTHOR-001): adding a section to a FROZEN or APPROVED document alters
@@ -568,10 +668,8 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     [doc_id, tenantId],
   );
   if ((parentDoc.rowCount ?? 0) === 0) return { kind: 'refused', status: 404, error: 'Document not found' };
-  const parentStatus = String((parentDoc.rows[0] as { status?: string | null }).status ?? '').toUpperCase();
-  if (LOCKED_DOCUMENT_STATUSES.has(parentStatus)) {
-    return { kind: 'refused', status: 403, error: 'Document is FROZEN/APPROVED; cannot add sections' };
-  }
+  const parentRefusal = await refuseSectionParent(pool, tenantId, parentDoc.rows[0] as { status?: string | null }, String(doc_id), String(code));
+  if (parentRefusal) return parentRefusal;
 
   // Create + lineage commit together, exactly like the interactive save gate:
   // a section created WITH authored content records its provenance in the same
@@ -581,28 +679,17 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
   let result: { rows: any[] };
   try {
     await client.query('BEGIN');
-    /* Where the new section goes. Relative, not absolute: a document someone
-       has deliberately reordered keeps that order. Locked FOR UPDATE because two
-       concurrent creates reading the same order would otherwise both compute
-       the same index and land on top of each other. */
-    let orderIndex = requestedOrderIndex;
-    if (orderIndex === undefined) {
-      const existing = await client.query(
-        `SELECT id, code FROM authoring_sections
-          WHERE doc_id = $1 AND tenant_id = $2
-          ORDER BY order_index, created_at
-          FOR UPDATE`,
-        [doc_id, tenantId],
-      );
-      const codes = existing.rows.map((r: { code: string }) => String(r.code ?? ''));
-      orderIndex = sectionInsertIndex(codes, String(code));
-      // Everything at or after the insertion point moves down by one.
-      await client.query(
-        `UPDATE authoring_sections SET order_index = order_index + 1
-          WHERE doc_id = $1 AND tenant_id = $2 AND order_index >= $3`,
-        [doc_id, tenantId, orderIndex],
-      );
+    // Canonical parent reservation coordinates all child writers with sealing.
+    await reserveWritableDocument(client, String(doc_id), tenantId);
+    /* Where the new section goes (relative: a document someone has reordered
+       keeps that order), and whether its code is already taken — refused as a
+       conflict before anything moves (QA 2026-10-08, j4; section-placement.ts). */
+    const placed = await placeNewSection(client, { docId: doc_id, tenantId, code: String(code), requestedOrderIndex });
+    if (placed.kind === 'duplicate') {
+      await client.query('ROLLBACK');
+      return sectionCodeExists(String(code));
     }
+    const orderIndex = placed.orderIndex;
 
     result = await client.query(
       `INSERT INTO authoring_sections
@@ -621,6 +708,10 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof DocumentWriteReservationError) return { kind: 'refused', status: err.status, code: err.code, error: err.message };
+    // A concurrent create of the same code passes the check above and loses at
+    // the unique index: still a conflict, not a lineage failure.
+    if (isSectionCodeConflict(err)) return sectionCodeExists(String(code));
     logger.error('Section create refused — content and lineage rolled back together', {
       sectionId,
       tenantId,
